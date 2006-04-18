@@ -1,0 +1,536 @@
+#/*##########################################################################
+# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
+import EventHandler
+import Specfit
+import sys
+
+#from qt import *
+import qt
+import FitConfigGUI
+import MultiParameters
+import FitActionsGUI
+import FitStatusGUI
+import EventHandler
+import QScriptOption
+
+class SpecfitGUI(qt.QWidget):
+    def __init__(self,parent = None,name = None,fl = 0, specfit = None,
+                 config = 0, status = 0, buttons = 0, eh = None):
+        qt.QWidget.__init__(self,parent,name,fl)
+        layout= qt.QVBoxLayout(self)
+        layout.setAutoAdd(1)
+        if name == None:
+            self.setName("SpecfitGUI")
+        if eh == None:
+            self.eh = EventHandler.EventHandler()
+        else:
+            self.eh = eh
+        if specfit is None:
+            self.specfit = Specfit.Specfit(eh=self.eh)
+            self.specfit.importfun("SpecfitFunctions.py")
+        else:
+            self.specfit = specfit
+        #copy specfit configure method for direct access
+        self.configure=self.specfit.configure
+        self.fitconfig=self.specfit.fitconfig
+
+        self.setdata=self.specfit.setdata
+        self.guiconfig=None
+        if config:
+            self.guiconfig = FitConfigGUI.FitConfigGUI(self)
+            self.guiconfig.connect(self.guiconfig.MCACheckBox,
+                                   qt.SIGNAL("stateChanged(int)"),self.mcaevent) 
+            self.guiconfig.connect(self.guiconfig.WeightCheckBox,
+                                   qt.SIGNAL("stateChanged(int)"),self.weightevent) 
+            self.guiconfig.connect(self.guiconfig.AutoFWHMCheckBox,
+                                   qt.SIGNAL("stateChanged(int)"),self.autofwhmevent) 
+            self.guiconfig.connect(self.guiconfig.AutoScalingCheckBox,
+                                   qt.SIGNAL("stateChanged(int)"),self.autoscaleevent) 
+            self.guiconfig.connect(self.guiconfig.ConfigureButton,
+                                   qt.SIGNAL("clicked()"),self.__configureGUI) 
+            self.guiconfig.connect(self.guiconfig.PrintPushButton,
+                                   qt.SIGNAL("clicked()"),self.printps) 
+            self.guiconfig.connect(self.guiconfig.BkgComBox,
+                                qt.SIGNAL("activated(const QString &)"),self.bkgevent)
+            self.guiconfig.connect(self.guiconfig.FunComBox,
+                                qt.SIGNAL("activated(const QString &)"),self.funevent)
+            
+        self.guiparameters = MultiParameters.ParametersTab(self)
+        self.connect(self.guiparameters,qt.PYSIGNAL('MultiParametersSignal'),
+            self.__forward)
+        if config:
+            for key in self.specfit.bkgdict.keys():            
+                self.guiconfig.BkgComBox.insertItem(str(key))
+            for key in self.specfit.theorylist:            
+                self.guiconfig.FunComBox.insertItem(str(key))
+            configuration={}
+            if specfit is not None:
+                configuration = specfit.configure()
+                if configuration['fittheory'] is None:
+                    self.guiconfig.FunComBox.setCurrentItem(1)
+                    self.funevent(self.specfit.theorylist[0])
+                else:
+                    self.funevent(configuration['fittheory'])
+                if configuration['fitbkg']    is None:
+                    self.guiconfig.BkgComBox.setCurrentItem(1)
+                    self.bkgevent(self.specfit.bkgdict.keys()[0])
+                else:
+                    self.bkgevent(configuration['fitbkg'])
+            else:
+                self.guiconfig.BkgComBox.setCurrentItem(1)
+                self.guiconfig.FunComBox.setCurrentItem(1)
+                self.funevent(self.specfit.theorylist[0])
+                self.bkgevent(self.specfit.bkgdict.keys()[0])
+            configuration.update(self.configure())
+            if configuration['McaMode']:            
+                self.guiconfig.MCACheckBox.setChecked(1)
+            else:
+                self.guiconfig.MCACheckBox.setChecked(0)
+            if configuration['WeightFlag']:            
+                self.guiconfig.WeightCheckBox.setChecked(1)
+            else:
+                self.guiconfig.WeightCheckBox.setChecked(0)
+            if configuration['AutoFwhm']:            
+                self.guiconfig.AutoFWHMCheckBox.setChecked(1)
+            else:
+                self.guiconfig.AutoFWHMCheckBox.setChecked(0)
+            if configuration['AutoScaling']:            
+                self.guiconfig.AutoScalingCheckBox.setChecked(1)
+            else:
+                self.guiconfig.AutoScalingCheckBox.setChecked(0)
+
+        if status:
+            self.guistatus =  FitStatusGUI.FitStatusGUI(self)
+            self.eh.register('FitStatusChanged',self.fitstatus)
+            
+        if buttons:
+            self.guibuttons = FitActionsGUI.FitActionsGUI(self)
+            self.guibuttons.connect(self.guibuttons.EstimateButton,
+                                    qt.SIGNAL("clicked()"),self.estimate)
+            self.guibuttons.connect(self.guibuttons.StartfitButton,
+                                    qt.SIGNAL("clicked()"),self.startfit)
+            self.guibuttons.connect(self.guibuttons.DismissButton,
+                                    qt.SIGNAL("clicked()"),self.dismiss)
+
+    def updateGUI(self,configuration=None):
+        self.__configureGUI(configuration)
+
+    def __configureGUI(self,newconfiguration=None):
+        if self.guiconfig is not None:
+            #get current dictionary
+            #print "before ",self.specfit.fitconfig['fitbkg']
+            configuration=self.configure()
+            #get new dictionary
+            if newconfiguration is None:
+                newconfiguration=self.configureGUI(configuration)
+            #update configuration
+            configuration.update(self.configure(**newconfiguration))
+            #print "after =",self.specfit.fitconfig['fitbkg']
+            #update GUI
+            #current function
+            #self.funevent(self.specfit.theorylist[0])
+            try:
+                i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])
+                self.guiconfig.FunComBox.setCurrentItem(i)
+                self.funevent(self.specfit.fitconfig['fittheory'])
+            except:
+                print  "Function not in list"
+                self.funevent(self.specfit.theorylist[0])
+            #current background
+            try:
+                i=1+self.specfit.bkgdict.keys().index(self.specfit.fitconfig['fitbkg'])
+                self.guiconfig.BkgComBox.setCurrentItem(i)
+            except:
+                print "Background not in list"
+                self.bkgevent(self.specfit.bkgdict.keys()[0])
+            #and all the rest
+            if configuration['McaMode']:            
+                self.guiconfig.MCACheckBox.setChecked(1)
+            else:
+                self.guiconfig.MCACheckBox.setChecked(0)
+            if configuration['WeightFlag']:            
+                self.guiconfig.WeightCheckBox.setChecked(1)
+            else:
+                self.guiconfig.WeightCheckBox.setChecked(0)
+            if configuration['AutoFwhm']:            
+                self.guiconfig.AutoFWHMCheckBox.setChecked(1)
+            else:
+                self.guiconfig.AutoFWHMCheckBox.setChecked(0)
+            if configuration['AutoScaling']:            
+                self.guiconfig.AutoScalingCheckBox.setChecked(1)
+            else:
+                self.guiconfig.AutoScalingCheckBox.setChecked(0)
+            #update the GUI
+            self.__initialparameters() 
+
+    
+    def configureGUI(self,oldconfiguration):
+        #this method can be overwritten for custom
+        #it should give back a new dictionary
+        newconfiguration={}
+        newconfiguration.update(oldconfiguration)
+        if (0):
+        #example to force a given default configuration
+            newconfiguration['FitTheory']="Pseudo-Voigt Line"
+            newconfiguration['AutoFwhm']=1
+            newconfiguration['AutoScaling']=1
+        
+        #example script options like
+        if (1):
+            import QScriptOption
+            sheet1={'notetitle':'Restrains',
+                'fields':(["CheckField",'HeightAreaFlag','Force positive Height/Area'],
+                          ["CheckField",'PositionFlag','Force position in interval'],
+                          ["CheckField",'PosFwhmFlag','Force positive FWHM'],
+                          ["CheckField",'SameFwhmFlag','Force same FWHM'],
+                          ["CheckField",'EtaFlag','Force Eta between 0 and 1'],
+                          ["CheckField",'NoConstrainsFlag','Ignore Restrains'])}
+ 
+            sheet2={'notetitle':'Search',
+                'fields':(["EntryField",'FwhmPoints', 'Fwhm Points: '],
+                          ["EntryField",'Sensitivity','Sensitivity: '],
+                          ["EntryField",'Yscaling',   'Y Factor   : '])}
+            w=QScriptOption.QScriptOption(self,name='Fit Configuration',
+                            sheets=(sheet1,sheet2),
+                            default=oldconfiguration)
+            
+            w.show()
+            w.exec_loop()
+            if w.result():
+                newconfiguration.update(w.output)
+            #we do not need the dialog any longer
+            del w
+            newconfiguration['FwhmPoints']=int(float(newconfiguration['FwhmPoints']))
+            newconfiguration['Sensitivity']=float(newconfiguration['Sensitivity'])
+            newconfiguration['Yscaling']=float(newconfiguration['Yscaling'])
+        return newconfiguration
+
+    def estimate(self):
+        if self.specfit.fitconfig['McaMode']:
+            try:
+                mcaresult=self.specfit.mcafit()
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error on mcafit")
+                msg.exec_loop()
+                dict={}
+                dict['event'] = 'FitError'
+                self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+                return
+            self.guiparameters.fillfrommca(mcaresult)
+            dict={}
+            dict['event'] = 'McaFitFinished'
+            dict['data']  = mcaresult
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            #self.guiparameters.removeallviews(keep='Region 1')
+        else:
+            try:
+                self.specfit.estimate()
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error on estimate")
+                msg.exec_loop()
+                return
+            self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
+            self.guiparameters.removeallviews(keep='Fit')
+            dict={}
+            dict['event'] = 'EstimateFinished'
+            dict['data']  = self.specfit.paramlist
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            
+        return
+
+    def __forward(self,dict):
+        self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))    
+    
+    def startfit(self):
+        if self.specfit.fitconfig['McaMode']:
+            try:
+                mcaresult=self.specfit.mcafit()
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error on mcafit")
+                msg.exec_loop()
+                return
+            self.guiparameters.fillfrommca(mcaresult)
+            dict={}
+            dict['event'] = 'McaFitFinished'
+            dict['data']  = mcaresult
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            #self.guiparameters.removeview(view='Fit')
+        else:
+            #for param in self.specfit.paramlist:
+            #    print param['name'],param['group'],param['estimation']
+            self.specfit.paramlist=self.guiparameters.fillfitfromtable()
+            #for param in self.specfit.paramlist:
+            #    print param['name'],param['group'],param['estimation']
+            try:
+                self.specfit.startfit()
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error on Fit")
+                msg.exec_loop()
+                return
+            self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
+            self.guiparameters.removeallviews(keep='Fit')
+            dict={}
+            dict['event'] = 'FitFinished'
+            dict['data']  = self.specfit.paramlist
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+        return
+    
+    
+    def printps(self,**kw):
+        text = self.guiparameters.gettext(**kw)
+        if __name__ == "__main__":
+            self.__printps(text)
+        else:
+            dict={}
+            dict['event'] = 'print'
+            dict['text']  = text
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+        return
+    
+    def __printps(self,text):
+        printer = qt.QPrinter()
+        if printer.setup(self):
+            painter = qt.QPainter()
+            if not(painter.begin(printer)):
+                return 0
+        metrics = qt.QPaintDeviceMetrics(printer)
+        dpiy    = metrics.logicalDpiY()
+        margin  = int((2/2.54) * dpiy) #2cm margin
+        body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
+        #text = self.mcatable.gettext()
+        #html output -> print text
+        richtext = qt.QSimpleRichText(text, qt.QFont(),
+                                            qt.QString(""),
+                                            #0,
+                                            qt.QStyleSheet.defaultSheet(),
+                                            qt.QMimeSourceFactory.defaultFactory(),
+                                            body.height())
+        view = qt.QRect(body)
+        richtext.setWidth(painter,view.width())
+        page = 1                
+        while(1):
+            if qt.qVersion() < '3.0.0':
+                richtext.draw(painter,body.left(),body.top(),
+                            qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
+                            qt.QColorGroup())
+                #richtext.draw(painter,body.left(),body.top(),
+                #            qt.QRegion(view),
+                #            qt.QColorGroup())
+            else:
+                richtext.draw(painter,body.left(),body.top(),
+                            view,qt.QColorGroup())
+            view.moveBy(0, body.height())
+            painter.translate(0, -body.height())
+            painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
+                             view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
+            if view.top() >= richtext.height():
+                break
+            printer.newPage()
+            page += 1
+
+        #painter.flush()
+        painter.end()
+
+    
+    
+    def mcaevent(self,item):
+        if int(item):
+            self.configure(McaMode=1)
+        else:
+            self.configure(McaMode=0)
+        self.__initialparameters() 
+        return
+
+    def weightevent(self,item):
+        if int(item):
+            self.configure(WeightFlag=1)
+        else:
+            self.configure(WeightFlag=0)
+        return
+
+    def autofwhmevent(self,item):
+        if int(item):
+            self.configure(AutoFwhm=1)
+        else:
+            self.configure(AutoFwhm=0)
+        return
+
+    def autoscaleevent(self,item):
+        if int(item):
+            self.configure(AutoScaling=1)
+        else:
+            self.configure(AutoScaling=0)
+        return
+    
+    def bkgevent(self,item):
+        item=str(item)
+        if item in self.specfit.bkgdict.keys():
+            self.specfit.setbackground(item)
+        else:
+            print " Funtion not implemented"
+            i=1+self.specfit.bkgdict.keys().index(self.specfit.fitconfig['fitbkg'])
+            self.guiconfig.BkgComBox.setCurrentItem(i)
+        self.__initialparameters()
+        return
+
+    def funevent(self,item):
+        item=str(item)
+        if item in self.specfit.theorylist:
+            self.specfit.settheory(item)
+        else:
+            #if qVersion()>="3.0.0":
+            if 1:
+                fn = qt.QFileDialog.getOpenFileName()
+            else:
+                dlg=qt.QFileDialog(qt.QString.null,qt.QString.null,self,None,1)
+                dlg.show()            
+                fn=dlg.selectedFile()
+            if fn.isEmpty():
+                functionsfile = ""
+            else:
+                functionsfile="%s" % fn
+            if len(functionsfile):
+                try:
+                    if self.specfit.importfun(functionsfile):
+                        print "Unsuccessful import "
+                    else:
+                        #empty the ComboBox
+                        n=self.guiconfig.FunComBox.count()
+                        while(self.guiconfig.FunComBox.count()>1):
+                          self.guiconfig.FunComBox.removeItem(1)
+                        #and fill it again
+                        for key in self.specfit.theorylist:
+                            self.guiconfig.FunComBox.insertItem(str(key))
+                        #self.guiconfig.connect(self.guiconfig.FunComBox,
+                        #        qt.SIGNAL("activated(const qt.QString &)"),self.funevent)
+                except:
+                    print "Error importing file ",functionsfile
+            #print " Funtion not yet implemented"
+            i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])
+            self.guiconfig.FunComBox.setCurrentItem(i)
+        self.__initialparameters()
+        return
+    
+    def __initialparameters(self):
+        self.specfit.final_theory=[]
+        self.specfit.paramlist=[]
+        for pname in self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1]:
+            self.specfit.final_theory.append(pname)
+            self.specfit.paramlist.append({'name':pname,
+                                       'estimation':0,
+                                       'group':0,
+                                       'code':'FREE',
+                                       'cons1':0,
+                                       'cons2':0,
+                                       'fitresult':0.0,
+                                       'sigma':0.0,
+                                       'xmin':None,
+                                       'xmax':None})
+        if self.specfit.fitconfig['fittheory'] is not None:
+          for pname in self.specfit.theorydict[self.specfit.fitconfig['fittheory']][1]:
+            self.specfit.final_theory.append(pname+`1`)
+            self.specfit.paramlist.append({'name':pname+`1`,
+                                       'estimation':0,
+                                       'group':1,
+                                       'code':'FREE',
+                                       'cons1':0,
+                                       'cons2':0,
+                                       'fitresult':0.0,
+                                       'sigma':0.0,
+                                       'xmin':None,
+                                       'xmax':None})
+        if self.specfit.fitconfig['McaMode']:
+            self.guiparameters.fillfromfit(self.specfit.paramlist,current='Region 1')
+            self.guiparameters.removeallviews(keep='Region 1')
+        else:
+            self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
+            self.guiparameters.removeallviews(keep='Fit')
+        return
+
+    def fitstatus(self,data):
+        if data.has_key('chisq'):
+            if data['chisq'] is None:
+                self.guistatus.ChisqLine.setText(" ")
+            else:
+                chisq=data['chisq']
+                self.guistatus.ChisqLine.setText("%6.2f" % chisq)
+            
+        if data.has_key('status'):
+            status=data['status']
+            self.guistatus.StatusLine.setText(str(status))
+        return
+
+
+    
+    def dismiss(self):
+        self.close()
+        return
+        
+if __name__ == "__main__":
+    import Numeric
+    import SpecfitFunctions
+    a=SpecfitFunctions.SpecfitFunctions()
+    x = Numeric.arange(2000).astype(Numeric.Float)
+    p1 = Numeric.array([1500,100.,30.0])
+    p2 = Numeric.array([1500,300.,30.0])
+    p3 = Numeric.array([1500,500.,30.0])
+    p4 = Numeric.array([1500,700.,30.0])
+    p5 = Numeric.array([1500,900.,30.0])
+    p6 = Numeric.array([1500,1100.,30.0])
+    p7 = Numeric.array([1500,1300.,30.0])
+    p8 = Numeric.array([1500,1500.,30.0])
+    p9 = Numeric.array([1500,1700.,30.0])
+    p10 = Numeric.array([1500,1900.,30.0])
+    y = a.gauss(p1,x)+1
+    y = y + a.gauss(p2,x)
+    y = y + a.gauss(p3,x)
+    y = y + a.gauss(p4,x)
+    y = y + a.gauss(p5,x)
+    #y = y + a.gauss(p6,x)
+    #y = y + a.gauss(p7,x)
+    #y = y + a.gauss(p8,x)
+    #y = y + a.gauss(p9,x)
+    #y = y + a.gauss(p10,x)
+    y=y/1000.0
+    a = qt.QApplication(sys.argv)
+    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    w = SpecfitGUI(config=1, status=1, buttons=1)
+    w.setdata(x=x,y=y)
+    a.setMainWidget(w)
+    w.show()
+    a.exec_loop()
+
+
+    

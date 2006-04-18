@@ -1,0 +1,459 @@
+#/*##########################################################################
+# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
+__revision__ = "$Revision: 1.8 $"
+"""
+    EdfFileData.py
+    Data derived class to access Edf files    
+"""
+
+
+
+################################################################################  
+#import fast_EdfFile as EdfFile
+import EdfFile
+import string
+################################################################################
+
+SOURCE_TYPE = "EdfFile"
+DEBUG = 0
+
+class EdfFileLayer:
+    """
+    Specializes Data class in order to access Edf files.    
+    Interface: Data class interface.
+    """
+    def __init__(self,refresh_interval=None,info={},fastedf=None):
+        """
+        See Data.__init__
+        """
+        info["Class"]="EdfFileData"        
+        #Data.__init__(self,refresh_interval,info)
+        self.SourceName= None
+        self.SourceInfo= None
+        if fastedf is None:fastedf =0
+        self.fastedf = fastedf
+        self.GetData   = self.LoadSource
+
+    def GetPageInfo(self,index={}):
+        if index.has_key('SourceName'):
+            self.SetSource(index['SourceName'])
+            if index.has_key('Key'):
+                info=self.GetData(index['Key'])   
+                return info[0]
+
+    def AppendPage(self,info={}, array=None):
+        return info,array
+
+    def SetSource (self,source_name=None, source_obj = None):
+        """
+        Sets a new source for data retrieving, an edf file.
+        If the file exists, self.Source will be the EdfFile
+        object associated to this file.
+        Parameters:
+        source_name: name of the edf file 
+        """
+        if source_name==self.SourceName: return 1
+        if (type(source_name) != type([])):source_name = [source_name]
+        if (source_name is not None):
+            if source_obj is not None:
+                self.Source= source_obj
+            else:
+                if (type(source_name) == type([])):
+                    if DEBUG:
+                        print "List of files"
+                    self.Source=[]
+                    for name in source_name:
+                        try:
+                            self.Source.append(EdfFile.EdfFile(name,fastedf=self.fastedf))
+                        except:
+                            #print "EdfFileLayer.SetSource: Error trying to read EDF file %s" % name
+                            self.Source.append( None)                
+                else:
+                    try:
+                        self.Source = EdfFile.EdfFile(source_name, fastedf=self.fastedf)
+                    except:
+                        #print "EdfFileLayer.SetSource: Error trying to read EDF file" 
+                        self.Source=None
+        else:
+            self.Source=None
+        self.SourceInfo= None
+        if self.Source is None:
+            self.SourceName= None
+            return 0
+        else:
+            self.SourceName=""
+            for name in source_name:
+                if self.SourceName != "":self.SourceName+="|"
+                self.SourceName+= name                
+            return 1
+
+
+
+
+    def GetPageArray(self,index=0):
+        """
+        Returns page's data (NumPy array)
+        Parameters:
+        index: Either an integer meaning the sequencial position of the page
+               or a dictionary that logically index the page based on keys of
+               the page's Info dictionary.
+        """
+        index=self.GetPageListIndex(index)
+        if index is None or index >= len(self.Pages): return None
+        return self.Pages[index].Array
+            
+
+    def GetPageListIndex(self,index):
+        """
+        Converts a physical or logical index, into a physical one
+        """
+        try:
+            index = int(index)
+        except:
+            pass
+        if type(index) is not  type({}): return index
+        for i in range(self.GetNumberPages()):
+            found = 1
+            for key in index.keys():
+                if key not in self.Pages[i].Info.keys() or self.Pages[i].Info[key] != index[key]:
+                    found=0
+                    break
+            if found: return i
+        return None
+
+    def GetSourceInfo (self,key=None):
+        """
+        Returns information about the EdfFile object created by
+        SetSource, to give application possibility to know about
+        it before loading.
+        Returns a dictionary with the keys "Size" (number of possible
+        keys to this source) and "KeyList" (list of all available keys
+        in this source). Each element in "KeyList" is an integer
+        meaning the index of the array in the file.
+        """        
+        if self.SourceName == None: return None
+        if type(self.Source) == type([]):
+            enumtype = 1
+        else:
+            enumtype = 0
+        if not enumtype:
+            if key is None:
+                    source_info={}
+                    if self.SourceInfo is None:
+                        NumImages=self.Source.GetNumImages()
+                        self.SourceInfo={}
+                        self.SourceInfo["Size"]=NumImages
+                        self.SourceInfo["KeyList"]=range(NumImages)                    
+                    source_info.update(self.SourceInfo)
+                    return source_info
+            else:        
+                NumImages=self.Source.GetNumImages()
+                source_info={}
+                source_info["Size"]=NumImages
+                source_info["KeyList"]=range(NumImages)
+            return source_info
+        else:
+            source_info0=[]
+            if key is None:
+                source_info={}
+                self.SourceInfo={}
+                self.SourceInfo["Size"]   = 0
+                self.SourceInfo["KeyList"]= []
+                for source in self.Source:
+                    NumImages=source.GetNumImages()
+                    self.SourceInfo["Size"] += NumImages
+                    for imagenumber in range(NumImages):
+                        self.SourceInfo["KeyList"].append('%d.%d' % (self.Source.index(source)+1,
+                                                                     imagenumber+1))                    
+                    source_info.update(self.SourceInfo)
+                return source_info
+            else:
+                try:
+                    index,image = key.split(".")
+                    index = int(index)-1
+                    image = int(image)-1                    
+                except:
+                    print "Error trying to interpret key =",key
+                    return {}
+                source = self.Source[index]
+                NumImages=source.GetNumImages()
+                source_info={}
+                source_info["Size"]=NumImages
+                source_info["KeyList"]=[]
+                for imagenumber in range(NumImages):
+                    source_info.append('%d.%d' % (index+1,imagenumber+1))
+            return source_info
+
+
+    def LoadSource(self,key_list="ALL",append=0,invalidate=1,pos=None,size=None):
+        """
+        Creates a given number of pages, getting data from the actual
+        source (set by SetSource)
+        Parameters:
+        key_list: list of all keys to be read from source. It is a list of
+                 keys, meaning the indexes to be read from the file.
+                 It can be also one integer, if only one array is to be read.
+        append: If non-zero appends to the end of page list.
+                Otherwise, initializes the page list                
+        invalidate: if non-zero performas an invalidade call after
+                    loading
+        pos and size: (x), (x,y) or (x,y,z) tuples defining a roi
+                      If not defined, takes full array
+                      Stored in page's info
+        """
+        #AS if append==0: Data.Delete(self)
+        #numimages=self.Source.GetNumImages()
+        sourceinfo = self.GetSourceInfo()
+        numimages=sourceinfo['Size']
+        if key_list == "ALL": key_list=sourceinfo['KeyList']
+        elif type(key_list) != type([]): key_list=[key_list]
+        
+        #AS elif type(key_list) is types.IntType: key_list=[key_list]
+        if pos is not None:
+            edf_pos=list(pos)
+            for i in range(len(edf_pos)):
+                if edf_pos[i]=="ALL":edf_pos[i]=0
+        else: edf_pos=None
+            
+        if size is not None:
+            edf_size=list(size)
+            for i in range(len(edf_size)):
+                if edf_size[i]=="ALL":edf_size[i]=0
+        else: edf_size=None
+
+        output = []
+        for key0 in key_list:
+            f = 1
+            sumrequested = 0
+            if type(key0) == type({}):
+                if key0.has_key('Key'):
+                    key = key0['Key']              
+            if type(key0) == type(''):
+                if len(key0.split(".")) == 2:
+                    f,i = key0.split(".")
+                    f=int(f)
+                    i=int(i)
+                    if (i==0):
+                        if f == 0:sumrequested=1
+                        else:i=1
+                    key = "%d.%d" % (f,i)
+                else:
+                    i=int(key0)
+                    if i < len(sourceinfo['KeyList']):
+                        key = sourceinfo['KeyList'][i]
+                        f,i = key.split(".")
+                        f=int(f)
+                        i=int(i)                       
+                    else:
+                        key = "%d.%d" % (f,i)
+            else:
+                i = key0
+                if i >= numimages: raise "EdfFileData: index out of bounds"
+                imgcount   =0
+                f=0
+                for source in self.Source:
+                    f+=1
+                    n = source.GetNumImages()
+                    if i < (imgcount+n):
+                        i = i - imgcount
+                        break
+                    imgcount += n
+                i+=1
+                key = "%d.%d" % (f,i)
+            if key == "0.0":sumrequested=1
+            info={}
+            info["SourceType"]=SOURCE_TYPE
+            info["SourceName"]=self.SourceName
+            info["Key"]=key
+            info["Source"]=self.Source
+            info["pos"]=pos
+            info["size"]=size
+            if not sumrequested:
+                info.update(self.Source[f-1].GetStaticHeader(i-1))
+                info.update(self.Source[f-1].GetHeader(i-1))
+                if info["DataType"]=="UnsignedShort":array=self.Source[f-1].GetData(i-1,"SignedLong",Pos=edf_pos,Size=edf_size)
+                elif info["DataType"]=="UnsignedLong":array=self.Source[f-1].GetData(i-1,"DoubleValue",Pos=edf_pos,Size=edf_size)
+                else: array=self.Source[f-1].GetData(i-1,Pos=edf_pos,Size=edf_size)
+                if info.has_key('Channel0'):
+                    info['Channel0'] = int(float(info['Channel0']))
+                elif info.has_key('MCA start ch'):
+                    info['Channel0'] = int(float(info['MCA start ch']))
+                else:
+                    info['Channel0'] = 0
+                if not info.has_key('McaCalib'):
+                    if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
+                        info['McaCalib'] = [string.atof(info['MCA a']),
+                                            string.atof(info['MCA b']),
+                                            string.atof(info['MCA c'])]
+            else:
+                # this is not correct, I assume info
+                # is the same for all sources
+                f=1
+                i=1
+                info.update(self.Source[f-1].GetStaticHeader(i-1))
+                info.update(self.Source[f-1].GetHeader(i-1))
+                if info.has_key('Channel0'):
+                    info['Channel0'] = int(float(info['Channel0']))
+                elif info.has_key('MCA start ch'):
+                    info['Channel0'] = int(float(info['MCA start ch']))
+                else:
+                    info['Channel0'] = 0
+                if not info.has_key('McaCalib'):
+                    if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
+                        info['McaCalib'] = [string.atof(info['MCA a']),
+                                            string.atof(info['MCA b']),
+                                            string.atof(info['MCA c'])]
+                f=0
+                for source in self.Source:
+                    for i in range(source.GetNumImages()):
+                        if info["DataType"]=="UnsignedShort":array0=source.GetData(i,"SignedLong",Pos=edf_pos,
+                                                                                        Size=edf_size)
+                        elif info["DataType"]=="UnsignedLong":array0=source.GetData(i,"DoubleValue",Pos=edf_pos,
+                                                                                        Size=edf_size)
+                        else: array0=source.GetData(i,Pos=edf_pos,Size=edf_size)
+                        if (f==0) and (i==0):
+                            array = 1 * array0
+                        else:
+                            array += array0 
+                    f+=1
+            output.append([info,array])
+            #AS self.AppendPage(info,array)
+        if len(output) == 1:
+            return output[0]
+        else:
+            return output        
+        #AS if invalidate: self.Invalidate()
+
+    def LoadSourceSingle(self,key_list="ALL",append=0,invalidate=1,pos=None,size=None):
+        """
+        Creates a given number of pages, getting data from the actual
+        source (set by SetSource)
+        Parameters:
+        key_list: list of all keys to be read from source. It is a list of
+                 keys, meaning the indexes to be read from the file.
+                 It can be also one integer, if only one array is to be read.
+        append: If non-zero appends to the end of page list.
+                Otherwise, initializes the page list                
+        invalidate: if non-zero performas an invalidade call after
+                    loading
+        pos and size: (x), (x,y) or (x,y,z) tuples defining a roi
+                      If not defined, takes full array
+                      Stored in page's info
+        """
+        #AS if append==0: Data.Delete(self)
+        numimages=self.Source.GetNumImages()
+        if key_list == "ALL": key_list=range(numimages)
+        elif type(key_list) != type([]): key_list=[key_list]
+        #AS elif type(key_list) is types.IntType: key_list=[key_list]
+        if pos is not None:
+            edf_pos=list(pos)
+            for i in range(len(edf_pos)):
+                if edf_pos[i]=="ALL":edf_pos[i]=0
+        else: edf_pos=None
+            
+        if size is not None:
+            edf_size=list(size)
+            for i in range(len(edf_size)):
+                if edf_size[i]=="ALL":edf_size[i]=0
+        else: edf_size=None
+
+        output = []
+        for key in key_list:
+            if type(key) == type({}):
+                if key.has_key('Key'):
+                    key = key['Key']              
+            if type(key) == type(''):
+                i=int(key)
+            else:
+                i = key
+            if i >= numimages: raise "EdfFileData: index out of bounds"
+            info={}
+            info["SourceType"]=SOURCE_TYPE
+            info["SourceName"]=self.SourceName
+            info["Key"]=i
+            info["Source"]=self.Source
+            info["pos"]=pos
+            info["size"]=size
+            info.update(self.Source.GetStaticHeader(i))
+            info.update(self.Source.GetHeader(i))
+            if info["DataType"]=="UnsignedShort":array=self.Source.GetData(i,"SignedLong",Pos=edf_pos,Size=edf_size)
+            elif info["DataType"]=="UnsignedLong":array=self.Source.GetData(i,"DoubleValue",Pos=edf_pos,Size=edf_size)
+            else: array=self.Source.GetData(i,Pos=edf_pos,Size=edf_size)
+            if info.has_key('MCA start ch'):
+                info['Channel0'] = int(info['MCA start ch'])
+            else:
+                info['Channel0'] = 0
+            if not info.has_key('McaCalib'):
+                if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
+                    info['McaCalib'] = [string.atof(info['MCA a']),
+                                        string.atof(info['MCA b']),
+                                        string.atof(info['MCA c'])]                    
+            output.append([info,array])
+            #AS self.AppendPage(info,array)
+        if len(output) == 1:
+            return output[0]
+        else:
+            return output        
+        #AS if invalidate: self.Invalidate()
+
+################################################################################
+#EXEMPLE CODE:
+    
+if __name__ == "__main__":
+    import sys,time
+    try:
+        filename=sys.argv[1]
+        key=sys.argv[2]    
+        fast = int(sys.argv[3])
+        obj=EdfFileLayer(fastedf=fast)
+        if not obj.SetSource([filename]):
+            print "ERROR: cannot open file", filename
+            sys.exit()
+        #obj.LoadSource(key)
+    except:
+        print "Usage: EdfFileData.py <filename> <image> <fastflag>"
+        sys.exit()
+    print obj.GetSourceInfo()    
+    for i in range(1):
+        #this works obj.LoadSource("%d" % i)
+        import time
+        print "Full"
+        e=time.time()
+        info,data = obj.LoadSource(key)
+        print "elapsed = ",time.time()-e
+        print "selection"
+        e=time.time()
+        info,data = obj.LoadSource(key,pos=(0,0),size=(90,0))
+        print "elapsed = ",time.time()-e
+        print info
+        #print obj.GetPageInfo("%d" % i)
+        #print obj.GetPageInfo(i)
+        #print obj.GetPageInfo({'Key':i})        
+        #print obj.GetPageArray(i)
+    
+
+        
