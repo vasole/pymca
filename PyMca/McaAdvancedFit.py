@@ -2193,7 +2193,6 @@ class McaGraphWindow(qt.QWidget):
                 tb.setToolTip(tip)
                 if toggle is not None:
                     if toggle:
-                        print "tip = ",tip, "checkable"
                         tb.setCheckable(1)
                         if state is not None:
                             if state:
