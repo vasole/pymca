@@ -683,16 +683,25 @@ class SpecFileSelector(qt.QWidget):
                                  self,
                                 "openFile", "Open a new SpecFile"))
             else:
-                filename= qt.QFileDialog(self.lastInputDir,
-                         self.lastInputFilter,
-                         self,"Open a new SpecFile", 1)
-                #filename.setFilters("Specfiles (*.dat)\nSpecfiles (*.mca)\nAll files (*)")
-                if filename.exec_loop() == qt.QDialog.Accepted:
-                    #selectedfilter = str(filename.selectedFilter())
-                    filename= str(filename.selectedFile())
-                    #print selectedfilter
-                else:
-                    return
+                try:
+                    filename= qt.QFileDialog(self.lastInputDir,
+                             self.lastInputFilter,
+                             self,"Open a new SpecFile", 1)
+                    #filename.setFilters("Specfiles (*.dat)\nSpecfiles (*.mca)\nAll files (*)")
+                    if filename.exec_loop() == qt.QDialog.Accepted:
+                        #selectedfilter = str(filename.selectedFilter())
+                        filename= str(filename.selectedFile())
+                        #print selectedfilter
+                    else:
+                        return
+                except:
+                    windir = self.lastInputDir
+                    if windir is None:windir = ""
+                    filename= str(qt.QFileDialog.getOpenFileName(windir,
+                                     self.lastInputFilter,
+                                     self,
+                                    "openFile", "Open a new SpecFile"))
+                    
             if not len(filename):    return
             else:
                 self.lastInputDir    = os.path.dirname(filename)
