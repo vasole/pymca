@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+__revision__ = "$Revision: 1.4 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -24,8 +26,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-#!/usr/bin/env python
-__revision__ = "$Revision: 1.4 $"
 from MyEdfFileSelector import *
 
 class EdfFileSimpleViewer(EdfFileSelector):

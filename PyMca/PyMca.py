@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+__revision__ = "$Revision: 1.46 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -24,8 +26,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-#!/usr/bin/env python
-__revision__ = "$Revision: 1.46 $"
 import sys, getopt, string
 import qt
 import PyMcaMdi
@@ -56,7 +56,7 @@ if (sys.platform != 'win32') and (sys.platform != 'darwin'):
     SOURCES["SPS"] = {'widget':SPSSelector.SPSSelector,'data':SPSLayer.SPSLayer}
     SOURCESLIST.append("SPS")
 
-__version__ = "3.7p2"
+__version__ = "3.7p3"
 class PyMca(PyMcaMdi.PyMca):
     def __init__(self, parent=None, name="PyMca", fl=qt.Qt.WDestructiveClose,**kw):
             PyMcaMdi.PyMca.__init__(self, parent, name, fl)

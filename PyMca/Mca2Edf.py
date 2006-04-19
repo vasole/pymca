@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.5 $"
+__revision__ = "$Revision: 1.8 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -21,21 +21,22 @@ __revision__ = "$Revision: 1.5 $"
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem to you.
 #############################################################################*/
 import qt
 import os
 import sys
 import time
+import Numeric
 import McaCustomEvent
-import ConfigDict
-ROIWIDTH = 250.
+import EdfFile
+import SpecFileLayer
 
-class Fit2SpecGUI(qt.QWidget):
-    def __init__(self,parent=None,name="Fit to Spec Conversion",fl=qt.Qt.WDestructiveClose,
+class Mca2EdfGUI(qt.QWidget):
+    def __init__(self,parent=None,name="Mca to Edf Conversion",fl=qt.Qt.WDestructiveClose,
                 filelist=None,outputdir=None, actions=0):
         qt.QWidget.__init__(self,parent,name,fl)
         layout = qt.QVBoxLayout(self)
@@ -50,7 +51,7 @@ class Fit2SpecGUI(qt.QWidget):
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
         #self.__grid.setGeometry(qt.QRect(30,30,288,156))
-        grid       = qt.QGridLayout(self.__grid,2,3,11,6)
+        grid       = qt.QGridLayout(self.__grid,3,3,11,6)
         grid.setColStretch(0,0)
         grid.setColStretch(1,1)
         grid.setColStretch(2,0)
@@ -83,7 +84,21 @@ class Fit2SpecGUI(qt.QWidget):
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
 
-
+        #step
+        filesteprow =2
+        filesteplabel = qt.QLabel(self.__grid)
+        filesteplabel.setText("New EDF file each")
+        filesteplabel2 = qt.QLabel(self.__grid)
+        self.__fileSpin = qt.QSpinBox(self.__grid)
+        self.__fileSpin.setMinValue(1)
+        self.__fileSpin.setMaxValue(999)
+        self.__fileSpin.setValue(1)
+        
+        filesteplabel2.setText("mca")
+        grid.addWidget(filesteplabel,  filesteprow, 0, qt.Qt.AlignLeft)
+        grid.addWidget(self.__fileSpin,filesteprow, 1)
+        grid.addWidget(filesteplabel2, filesteprow, 2, qt.Qt.AlignLeft)
+        
         if actions: self.__buildActions()
 
     def __buildActions(self):
@@ -135,12 +150,12 @@ class Fit2SpecGUI(qt.QWidget):
     def browseList(self):
         filedialog = qt.QFileDialog(self,"Open a set of files",1)
         filedialog.setMode(filedialog.ExistingFiles)
-        filedialog.setFilters("Fit Files (*.fit)\n")
+        filedialog.setFilters("Mca Files (*.mca)\nSpec Files (*.dat)\nAll Files (*)\n")
         if filedialog.exec_loop() == qt.QDialog.Accepted:
-            filelist0= filedialog.selectedFiles()
+            filelist0=filedialog.selectedFiles()
         else:
             self.raiseW()
-            return    
+            return
         filelist = []
         for f in filelist0:
             filelist.append(str(f)) 
@@ -148,14 +163,14 @@ class Fit2SpecGUI(qt.QWidget):
         self.raiseW()
 
     def browseConfig(self):
-        filename= qt.QFileDialog(self,"Open a new fit config file",1)
-        filename.setMode(filedialog.ExistingFiles)
+        filename = qt.QFileDialog(self,"Open a new fit config file",1)
+        filename.setMode(filename.ExistingFiles)
         filename.setFilters("Config Files (*.cfg)\nAll files (*)")
         if filename.exec_loop() == qt.QDialog.Accepted:
             filename = filename.selectedFile()
         else:
             self.raiseW()
-            return                
+            return
         filename= str(filename)
         if len(filename):self.setConfigFile(filename)  
         self.raiseW()
@@ -186,8 +201,9 @@ class Fit2SpecGUI(qt.QWidget):
         name = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
 
-        window =  Fit2SpecWindow(name="Fit 2 Spec "+name,actions=1)
-        b = Fit2SpecBatch(window,self.fileList,self.outputDir)
+        window =  Mca2EdfWindow(name="Mca 2 Edf "+name,actions=1)
+        self.fileStep = int(str(self.__fileSpin.text()))
+        b = Mca2EdfBatch(window,self.fileList,self.outputDir, self.fileStep)
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1
@@ -215,39 +231,68 @@ class HorizontalSpacer(qt.QWidget):
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
         
-class Fit2SpecBatch(qt.QThread):
-    def __init__(self, parent, filelist=None, outputdir = None):
+class Mca2EdfBatch(qt.QThread):
+    def __init__(self, parent, filelist=None, outputdir = None, filestep = 1):
         self._filelist  = filelist
         self.outputdir = outputdir
+        self.filestep  = filestep
         qt.QThread.__init__(self)
         self.parent = parent
         self.pleasePause = 0
 
     def processList(self):
+        self.__ncols = None
+        self.__nrows = self.filestep
+        counter = 0
+        file   = SpecFileLayer.SpecFileLayer()
         for fitfile in self._filelist:
-            self.onNewFile(fitfile, self._filelist)
-            d = ConfigDict.ConfigDict()
-            d.read(fitfile)
-            f = open(os.path.join(self.outputdir,os.path.basename(fitfile)+".dat"),'w+')
-            npoints = len(d['result']['xdata'])
-            f.write("\n")
-            f.write("#S 1 %s\n" % fitfile)
-            i=0
-            for parameter in d['result']['parameters']:
-                f.write("#U%d %s %.6g +/- %.3g\n" % (i, parameter,
-                                                     d['result']['fittedpar'][i],
-                                                     d['result']['sigmapar'][i]))
-                i+=1
-            f.write("#N 6\n")
-            f.write("#L Energy  channel  counts  fit  continuum  pileup\n")
-            for i in range(npoints):
-                f.write("%.6g  %.6g   %.6g  %.6g  %.6g  %.6g\n" % (d['result']['energy'][i],
-                                   d['result']['xdata'][i],
-                                   d['result']['ydata'][i],
-                                   d['result']['yfit'][i],
-                                   d['result']['continuum'][i],
-                                   d['result']['pileup'][i]))
-            f.close()
+            self.onNewFile(fitfile, self._filelist) 
+            file.SetSource(fitfile)
+            fileinfo = file.GetSourceInfo()
+            nscans = len(fileinfo['KeyList'])
+            for scankey in  fileinfo['KeyList']:
+                scan,order = scankey.split(".")
+                info,data  = file.LoadSource(scankey)
+                if info['NbMca'] > 0:
+                    for i in range(info['NbMca']):
+                        point = int(i/info['NbMcaDet']) + 1
+                        mca   = (i % info['NbMcaDet'])  + 1 
+                        key = "%s.%s.%04d.%02d" % (scan,order,point,mca)
+                        mcainfo,mcadata = file.LoadSource(key)
+                        y0 = Numeric.array(mcadata, Numeric.Float)
+                        if counter == 0:
+                            key0 = "%s key %s" % (os.path.basename(fitfile), key)
+                            self.__ncols = len(y0)
+                            image = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
+                        if self.__ncols !=  len(y0):
+                            print "spectrum has different number of columns"
+                            print "skipping it"
+                        else:
+                            image[counter,:] = y0[:]
+                            if (counter+1) == self.filestep:
+                                if self.filestep > 1:
+                                    key1    = "%s key %s" % (os.path.basename(fitfile), key)
+                                    title = "%s to %s" % (key0, key1)
+                                else:
+                                    title = key0
+                                if 1:
+                                    dict={}
+                                    if mcainfo.has_key('Channel0'):
+                                        dict['MCA start ch'] = int(mcainfo['Channel0'])
+                                    if mcainfo.has_key('McaCalib'):
+                                        dict['Mca a'] = mcainfo['McaCalib'][0]
+                                        dict['Mca b'] = mcainfo['McaCalib'][1]
+                                        dict['Mca c'] = mcainfo['McaCalib'][2]
+                                else:
+                                    dict = mcainfo
+                                dict['Title'] = title
+                                edfname = os.path.join(self.outputdir,title.replace(" ","_")+".edf")
+                                edfout  = EdfFile.EdfFile(edfname)
+                                edfout.WriteImage (dict , image, Append=0)
+                                counter = 0
+                            else:
+                                counter += 1
+
         self.onEnd()
 
     def run(self):
@@ -271,7 +316,7 @@ class Fit2SpecBatch(qt.QThread):
         self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
             
 
-class Fit2SpecWindow(qt.QWidget):
+class Mca2EdfWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0):
         qt.QWidget.__init__(self, parent, name, fl)
         self.setCaption(name)
@@ -358,10 +403,11 @@ class Fit2SpecWindow(qt.QWidget):
 if __name__ == "__main__":
     import getopt
     options     = 'f'
-    longoptions = ['outdir=', 'listfile=']
+    longoptions = ['outdir=', 'listfile=', 'mcastep=']
     filelist = None
     outdir   = None
-    listfile = None    
+    listfile = None
+    mcastep  = 1
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -371,6 +417,8 @@ if __name__ == "__main__":
             outdir = arg
         elif opt in  ('--listfile'):
             listfile  = arg
+        elif opt in  ('--mcastep'):
+            mcastep  = int(arg)
     if listfile is None: 
         filelist=[]
         for item in args:
@@ -381,21 +429,20 @@ if __name__ == "__main__":
         fd.close()
         for i in range(len(filelist)):
             filelist[i]=filelist[i].replace('\n','')
-             
     app=qt.QApplication(sys.argv) 
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)       
     if len(filelist) == 0:
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
-        w = Fit2SpecGUI(actions=1)
+        w = Mca2EdfGUI(actions=1)
         app.setMainWidget(w)
         w.show()
         app.exec_loop()
     else:
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
-        window =  Fit2SpecWindow(name=text,actions=1)
-        b = Fit2SpecBatch(window,filelist,outdir)
+        window =  Mca2EdfWindow(name=text,actions=1)
+        b = Mca2EdfBatch(window,filelist,outdir,mcastep)
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1
@@ -417,7 +464,7 @@ if __name__ == "__main__":
         app.setMainWidget(window)
         app.exec_loop()
  
- 
+# Mca2Edf.py  --outdir=/tmp --mcastep=1 *.mca
  
 # PyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &
 # PyMcaBatch.exe --cfg=E:/COTTE/WithLead.cfg --outdir=C:/tmp/   E:/COTTE/ch09/ch09__mca_0003_0000_0007.edf E:/COTTE/ch09/ch09__mca_0003_0000_0008.edf
