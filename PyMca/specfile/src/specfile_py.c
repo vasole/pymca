@@ -1141,7 +1141,7 @@ scandata_mca      (PyObject *self,PyObject *args)
 
     scandataobject *s = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args,"i",&mcano)) 
+    if (!PyArg_ParseTuple(args,"l",&mcano)) 
             onError("cannot decode arguments for line data"); 
     
     idx = s->index;
