@@ -141,7 +141,7 @@ class McaTable(QTable):
                         item = self.item(line, col)
                         if item is not None:
                             item.setText("")
-                    self.setItem(line, col, item)
+                        self.setItem(line, col, item)
                 col=col+1
             line += 1
             #Lemon Chiffon = (255,250,205)

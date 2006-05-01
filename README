@@ -12,7 +12,11 @@ INSTALLATION
 In order to simplify the tasks, I have put all the .py modules together.
 You will need to build some libraries (sps, specfile, specfit, edf, ...)
 Those libraries can be build in the respective directories thru the usual
-python setup.py build methods. 
+python setup.py build methods. Alternatively you can use the toplevel
+setup.py contributed by Darren Dale dealing with the build process and 
+installing PyMCA in  a specific directory:
+
+python setup.py install --install-lib DESTINATION_DIRECTORY
 
 You will need:
 
@@ -48,6 +52,8 @@ PyQt application, I recommend you to use the McaAdvancedFit.py module. It is
 already functional under Qt4 and very easy to embed. All the tools around PyMca
 are PyQt4 compatible (PyMcaBatch, PeakIdentifier, QPeriodicTable, ...) and PyQt4
 will be the major development platform within one year.
+
+MacOS X users will need malloc.h
 
 DEVELOPMENT PLANS
 
