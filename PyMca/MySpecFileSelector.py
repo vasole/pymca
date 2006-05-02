@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.12 $"
+__revision__ = "$Revision: 1.14 $"
 import qt
 if qt.qVersion() < '3.0.0':
     import Myqttable as qttable
@@ -684,10 +684,10 @@ class SpecFileSelector(qt.QWidget):
                                 "openFile", "Open a new SpecFile"))
             else:
                 try:
-                    filename= qt.QFileDialog(self.lastInputDir,
-                             self.lastInputFilter,
-                             self,"Open a new SpecFile", 1)
-                    #filename.setFilters("Specfiles (*.dat)\nSpecfiles (*.mca)\nAll files (*)")
+                    filename = qt.QFileDialog(self, "Open a new SpecFile", 1)
+                    filename.setFilters(self.lastInputFilter)
+                    filename.setDir(self.lastInputDir)
+                    filename.setMode(qt.QFileDialog.ExistingFile)
                     if filename.exec_loop() == qt.QDialog.Accepted:
                         #selectedfilter = str(filename.selectedFilter())
                         filename= str(filename.selectedFile())
@@ -695,6 +695,7 @@ class SpecFileSelector(qt.QWidget):
                     else:
                         return
                 except:
+                    print "USING STATIC METHODS, PLEASE REPORT THIS ISSUE"
                     windir = self.lastInputDir
                     if windir is None:windir = ""
                     filename= str(qt.QFileDialog.getOpenFileName(windir,
