@@ -98,7 +98,8 @@ class ConfigDict(dict):
 
         for sect in readsect:
             dict= self
-            for subsect in sect.split('.'):
+            for subsectw in sect.split('.'):
+                subsect = subsectw.replace("_|_",".")
                 if not dict.has_key(subsect):
                     dict[subsect]= {}
                 dict= dict[subsect]
@@ -181,9 +182,9 @@ class ConfigDict(dict):
         #    print "dictkey after = ",dictkey
         for key in dictkey:
             if secthead is None:
-                newsecthead= key
+                newsecthead= key.replace(".","_|_")
             else:
-                newsecthead = '%s.%s'%(secthead, key)
+                newsecthead = '%s.%s'%(secthead, key.replace(".","_|_"))
             #print "newsecthead = ",newsecthead
             fp.write('\n[%s]\n'%newsecthead)
             self.__write(fp, dict[key], key,newsecthead)

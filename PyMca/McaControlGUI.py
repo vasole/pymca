@@ -26,15 +26,17 @@
 #############################################################################*/
 import qt
 import McaROIWidget
-#import McaControlWidget
+import os
+import sys
 DEBUG = 0
 class McaControlGUI(qt.QWidget):
-    def __init__(self, parent=None, name=None,fl=0):
+    def __init__(self, parent=None, name="",fl=0):
         qt.QWidget.__init__(self, parent, name, fl)
         self.roilist = ['ICR']
         self.roidict = {}
         self.roidict['ICR'] = {'type':'Default',
                                'from':0,'to':-1}
+        self.lastInputDir = None
         self.build()
         self.connections()
 
@@ -68,6 +70,9 @@ class McaControlGUI(qt.QWidget):
         self.calmenu = qt.QPopupMenu()
         self.calmenu.insertItem(qt.QString("Edit"),    self.__copysignal)
         self.calmenu.insertItem(qt.QString("Compute") ,self.__computesignal)
+        self.calmenu.insertSeparator()
+        self.calmenu.insertItem(qt.QString("Load") ,   self.__loadsignal)
+        self.calmenu.insertItem(qt.QString("Save") ,   self.__savesignal)
 
         
         #self.mousezoombox = controlbox.mousezoombox
@@ -156,6 +161,9 @@ class McaControlGUI(qt.QWidget):
         self.__emitpysignal(box=[comboitem,combotext],boxname='Source',
                            event='activated')
 
+    def _calboxactivated(self, item):
+        self.__calboxactivated(item)
+        
     def __calboxactivated(self,item):
         item = str(item)
         if DEBUG:
@@ -188,7 +196,8 @@ class McaControlGUI(qt.QWidget):
         if DEBUG:
             print "Source button clicked"
         comboitem,combotext = self.sourcebox.getcurrent()
-        self.__emitpysignal(button="Source",box=[comboitem,combotext],event='clicked')
+        self.__emitpysignal(button="Source",
+                            box=[comboitem,combotext],event='clicked')
         
     def __calbuttonclicked(self):
         if DEBUG:
@@ -197,15 +206,85 @@ class McaControlGUI(qt.QWidget):
         
     def __copysignal(self):
         comboitem,combotext = self.calbox.getcurrent()
-        self.__emitpysignal(button="CalibrationCopy",box=[comboitem,combotext],event='clicked')
+        self.__emitpysignal(button="CalibrationCopy",
+                            box=[comboitem,combotext],event='clicked')
                 
     def __computesignal(self):
         comboitem,combotext = self.calbox.getcurrent()
-        self.__emitpysignal(button="Calibration",box=[comboitem,combotext],event='clicked')
+        self.__emitpysignal(button="Calibration",
+                            box=[comboitem,combotext],event='clicked')
                 
-    def __calibrationsignal(self):
+    def __loadsignal(self):
+        if self.lastInputDir is not None:
+            if not os.path.exists(self.lastInputDir):
+                self.lastInputDir = None
+        self.lastInputFilter = "Calibration files (*.calib)\n"
+        if sys.platform == "win32":
+            windir = self.lastInputDir
+            if windir is None:windir = ""
+            filename= str(qt.QFileDialog.getOpenFileName(windir,
+                             self.lastInputFilter,
+                             self,
+                            "Save File", "Open a new calibration file"))
+        else:
+            filename = qt.QFileDialog(self, "Open a new calibration file", 1)
+            filename.setFilters(self.lastInputFilter)
+            if self.lastInputDir is not None:
+                filename.setDir(self.lastInputDir)
+            filename.setMode(qt.QFileDialog.ExistingFile)
+            if filename.exec_loop() == qt.QDialog.Accepted:
+                #selectedfilter = str(filename.selectedFilter())
+                filename= str(filename.selectedFile())
+                #print selectedfilter
+            else:
+                return
+        if not len(filename):    return
+        if len(filename) < 6:
+            filename = filename + ".calib"
+        elif filename[-6:] != ".calib":
+            filename = filename + ".calib"        
+        self.lastInputDir = os.path.dirname(filename)
         comboitem,combotext = self.calbox.getcurrent()
-        self.__emitpysignal(button="Calibration",box=[comboitem,combotext],event='clicked')
+        self.__emitpysignal(button="CalibrationLoad",
+                            box=[comboitem,combotext],
+                            line_edit = filename,
+                            event='clicked')
+                
+    def __savesignal(self):
+        if self.lastInputDir is not None:
+            if not os.path.exists(self.lastInputDir):
+                self.lastInputDir = None
+        self.lastInputFilter = "Calibration files (*.calib)\n"
+        if sys.platform == "win32":
+            windir = self.lastInputDir
+            if windir is None:windir = ""
+            filename= str(qt.QFileDialog.getSaveFileName(windir,
+                             self.lastInputFilter,
+                             self,
+                            "Save File", "Open a new calibration file"))
+        else:
+            filename = qt.QFileDialog(self, "Open a new calibration file", 1)
+            filename.setFilters(self.lastInputFilter)
+            if self.lastInputDir is not None:
+                filename.setDir(self.lastInputDir)
+            filename.setMode(qt.QFileDialog.AnyFile)
+            if filename.exec_loop() == qt.QDialog.Accepted:
+                #selectedfilter = str(filename.selectedFilter())
+                filename= str(filename.selectedFile())
+                #print selectedfilter
+            else:
+                return
+        if not len(filename):    return
+        if len(filename) < 6:
+            filename = filename + ".calib"
+        elif filename[-6:] != ".calib":
+            filename = filename + ".calib"        
+        self.lastInputDir = os.path.dirname(filename)
+        comboitem,combotext = self.calbox.getcurrent()
+        self.__emitpysignal(button="CalibrationSave",
+                            box=[comboitem,combotext],
+                            line_edit = filename,
+                            event='clicked')
 
     def __fitbuttonclicked(self):
         if DEBUG:

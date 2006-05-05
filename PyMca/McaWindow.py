@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.43 $"
+__revision__ = "$Revision: 1.44 $"
 import sys
 import qt
 import qwt
@@ -60,6 +60,7 @@ import string
 import Elements
 import copy
 import SimpleMath
+import ConfigDict
 #import SpecfitGUI
 DEBUG = 0
 
@@ -931,6 +932,65 @@ class McaWidget(qt.QWidget):
                         self.control.calbox.setCurrentItem(item)
                         self.refresh()
                     del caldialog
+            elif dict['button'] == 'CalibrationLoad':
+                item     = dict['box'][0]
+                itemtext = dict['box'][1]
+                filename = dict['line_edit']
+                if not os.path.exists(filename):
+                    text = "Error. Calibration file %s not found " % filename
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText(text)
+                    msg.exec_loop() 
+                    return
+                cald = ConfigDict.ConfigDict()
+                try:
+                    cald.read(filename)
+                except:
+                    text = "Error. Cannot read calibration file %s" % filename
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText(text)
+                    msg.exec_loop() 
+                    return
+                self.caldict.update(cald)
+                options = []
+                for option in self.calboxoptions:
+                    options.append(option)
+                for key in self.caldict.keys():
+                    if key not in options:
+                        options.append(key)
+                try:
+                    self.ana.calbox.setoptions(options)
+                except:
+                    pass
+                try:
+                    self.control.calbox.setoptions(options)
+                    self.control.calbox.setCurrentItem(options.index(itemtext))
+                    self.calibration = itemtext * 1
+                    self.control._calboxactivated(itemtext)
+                except:
+                    text = "Error. Problem updating combobox"
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText(text)
+                    msg.exec_loop() 
+                    return
+            elif dict['button'] == 'CalibrationSave':
+                filename = dict['line_edit']
+                cald = ConfigDict.ConfigDict()
+                if os.path.exists(filename):
+                    try:
+                        os.remove(filename)
+                    except:
+                        text = "Error. Problem deleting existing file %s" % filename
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText(text)
+                        msg.exec_loop() 
+                        return
+                cald.update(self.caldict)
+                cald.write(filename)
             elif dict['button'] == 'Detector':
                 pass
             elif dict['button'] == 'Search':
@@ -1173,7 +1233,8 @@ class McaWidget(qt.QWidget):
                 #if dict['event'] == 'McaAdvancedFitFinished':
                 if 1:
                     self.control.calbox.setCurrentItem(options.index(legend))
-                    self.calibration = legend                        
+                    self.calibration = legend
+                    self.control._calboxactivated(legend)
             except:
                 pass                        
 
