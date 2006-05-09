@@ -686,7 +686,8 @@ class SpecFileSelector(qt.QWidget):
                 try:
                     filename = qt.QFileDialog(self, "Open a new SpecFile", 1)
                     filename.setFilters(self.lastInputFilter)
-                    filename.setDir(self.lastInputDir)
+                    if self.lastInputDir is not None:
+                        filename.setDir(self.lastInputDir)
                     filename.setMode(qt.QFileDialog.ExistingFile)
                     if filename.exec_loop() == qt.QDialog.Accepted:
                         #selectedfilter = str(filename.selectedFilter())

@@ -3134,7 +3134,10 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     double  *output;
     
     if (!PyArg_ParseTuple(args, "O|d", &input, &dpoints))
+    {
+        printf("Error parsing arguments\n");
         return NULL;
+    }
     array = (PyArrayObject *)
              PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
     if (array == NULL)
@@ -3146,6 +3149,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     ret = (PyArrayObject *)
         PyArray_FromDims(1, dimensions, PyArray_DOUBLE);
     if (ret == NULL){
+        printf("Error creating array from dimensions\n"); 
         Py_DECREF(array);
         return NULL;
     }
