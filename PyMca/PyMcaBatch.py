@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.37 $"
+__revision__ = "$Revision: 1.38 $"
 ###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -687,7 +687,7 @@ class McaBatchGUI(qt.QWidget):
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch") 
             else:
-                myself  = os.path.join(dirname, "PyMcaBatch.py")
+                myself  = sys.executable+" "+ os.path.join(dirname, "PyMcaBatch.py")
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
@@ -1113,7 +1113,7 @@ class McaBatchWindow(qt.QWidget):
                 myself  = os.path.dirname(dirname) 
                 myself  = os.path.join(myself, "EdfFileSimpleViewer")
             else:
-                myself  = os.path.join(dirname, "EdfFileSimpleViewer.py")
+                myself  = sys.executable+" "+os.path.join(dirname, "EdfFileSimpleViewer.py")
             cmd = "%s %s &" % (myself, filelist)
             if DEBUG:print "cmd = ",cmd
             os.system(cmd)
