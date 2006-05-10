@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.51 $"
+__revision__ = "$Revision: 1.53 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 try:
     import PyQt4.Qt as qt
@@ -382,10 +382,10 @@ class McaAdvancedFit(qt.QWidget):
     def __configure(self):
         config = {}
         config.update(self.mcafit.config)
-        config['fit']['use_limit'] = 1
+        #config['fit']['use_limit'] = 1
         dialog = FitParam.FitParamDialog(modal=1,fl=0, initdir=self.configDir)        
         dialog.setParameters(config)
-        dialog.fitparam.regionCheck.setDisabled(True)
+        #dialog.fitparam.regionCheck.setDisabled(True)
         #dialog.fitparam.minSpin.setDisabled(True)
         #dialog.fitparam.maxSpin.setDisabled(True)
         if qt.qVersion() < '4.0.0':

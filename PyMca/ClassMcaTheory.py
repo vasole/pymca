@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.63 $"
+__revision__ = "$Revision: 1.64 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -750,22 +750,20 @@ class McaTheory:
             self.sigmay0=Numeric.array(sigmay)
             self.sigmay=Numeric.array(sigmay)
 
-        if kw.has_key('xmin'):
-            xmin=kw['xmin']
-            self.config['fit']['xmin'] = xmin
-        else:
-            if self.config['fit']['use_limit']:
-                xmin = self.config['fit']['xmin']                
+        xmin = self.config['fit']['xmin']
+        if not self.config['fit']['use_limit']:
+            if kw.has_key('xmin'):
+                xmin=kw['xmin']
+                self.config['fit']['xmin'] = xmin
             elif len(self.xdata):
                 xmin=min(self.xdata)
-        if kw.has_key('xmax'):
-            xmax=kw['xmax']
-            self.config['fit']['xmax'] = xmax
-        else:
-            if self.config['fit']['use_limit']:
-                xmax = self.config['fit']['xmax']                
+        xmax = self.config['fit']['xmax']
+        if not self.config['fit']['use_limit']:
+            if kw.has_key('xmax'):
+                xmax=kw['xmax']
+                self.config['fit']['xmax'] = xmax
             elif len(self.xdata):
-                xmax=max(self.xdata)
+                    xmax=max(self.xdata)
 
         if len(self.xdata):
             #sort the data

@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.26 $"
+__revision__ = "$Revision: 1.27 $"
 import ClassMcaTheory
 import SpecFileLayer
 import EdfFileLayer
@@ -277,6 +277,8 @@ class McaAdvancedFitBatch:
             else:
                 useExistingResult = 0
                 try:
+                    #I make sure I take the fit limits configuration
+                    self.mcafit.config['fit']['use_limit'] = 1
                     self.mcafit.setdata(x,y)
                 except:
                     print "Error entering data of file with output = ",filename
