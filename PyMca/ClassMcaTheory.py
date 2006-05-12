@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.64 $"
+___revision__ = "$Revision: 1.66 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -749,7 +749,7 @@ class McaTheory:
         else:
             self.sigmay0=Numeric.array(sigmay)
             self.sigmay=Numeric.array(sigmay)
-
+            
         xmin = self.config['fit']['xmin']
         if not self.config['fit']['use_limit']:
             if kw.has_key('xmin'):
@@ -980,13 +980,14 @@ class McaTheory:
             sumfactor = param[4]
             xmax=int(x[-1])
             xmin=int(x[0])
+            offset = zero / gain
             for i in range(len(result)):
-                pileup[i+xmin:i+len(result)+xmin-i] += sumfactor * result[i] *result[0:len(result)-i] 
+                pileup[i+xmin-offset:i+len(result)+xmin-i-offset] += sumfactor * result[i] *result[0:len(result)-i] 
             return result+pileup[0:len(result)]
           else:
             #summing takes 0.0047 seconds
             xmin=int(x[0])
-            return result+param[4]*SpecfitFuns.pileup(result,xmin)
+            return result+param[4]*SpecfitFuns.pileup(result, xmin, zero, gain)
         else:
             return result
 
@@ -1366,7 +1367,7 @@ class McaTheory:
         noise = param[2] * param[2]
         fano  = param[3] * 2.3548*2.3548*0.00385
         yfitw = self.mcatheory(param,xw,summing=0)
-        pileup= param[4]*SpecfitFuns.pileup(yfitw,int(xw[0]))
+        pileup= param[4]*SpecfitFuns.pileup(yfitw,int(xw[0]), zero, gain)
         yfitw += pileup
         # + Numeric.ravel(self.zz)
         #reduced chi square

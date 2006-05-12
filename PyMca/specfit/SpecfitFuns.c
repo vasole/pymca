@@ -2592,9 +2592,9 @@ long SpecfitFuns_seek2(long BeginChannel, long EndChannel,
     *n_peaks = 0;
     cch = begincalc;
     if(debug_info){
-        printf("nrfactor  = %d\n", nr_factor);
-        printf("begincalc = %d\n", begincalc);
-        printf("endcalc   = %d\n", endcalc);
+        printf("nrfactor  = %ld\n", nr_factor);
+        printf("begincalc = %ld\n", begincalc);
+        printf("endcalc   = %ld\n", endcalc);
     }    
     /* calculates smoothed value and variance at begincalc */
     cch = MAX(BeginChannel,0);
@@ -2859,7 +2859,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
             break;
         }
         if (xdata[i]->dimensions[0] != ydata->dimensions[i]){
-            printf("xdata[%d] does not have appropriate dimension\n",i);
+            printf("xdata[%ld] does not have appropriate dimension\n",i);
             j++;
             break;
         }
@@ -2975,7 +2975,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                             k++;
                         }
                         if (ju != index1){
-                            printf("i = %d, j= %d, value = %.5f indexvalue = %d, newvalue = %d\n",i,j,value,ju, index1);
+                            printf("i = %ld, j= %ld, value = %.5f indexvalue = %ld, newvalue = %ld\n",i,j,value,ju, index1);
                         }
                     }
                     if (index1 < 0){
@@ -3050,17 +3050,19 @@ static PyObject *
 SpecfitFuns_pileup(PyObject *self, PyObject *args)
 {
     PyObject *input1;
-    int   input2=0;
+    int    input2=0;
+    double zero=0.0;
+    double gain=1.0;
     int debug=0;
     PyArrayObject   *x;
     PyArrayObject   *ret;
     int nd_x;
     int dim_x[2];
-    int i, j;
+    int i, j, k;
     double  *px, *pret, *pall;
 
     /** statements **/
-    if (!PyArg_ParseTuple(args, "O|ii", &input1,&input2,&debug))
+    if (!PyArg_ParseTuple(args, "O|iddi", &input1, &input2, &zero, &gain, &debug))
         return NULL;
 
     x = (PyArrayObject *)
@@ -3103,13 +3105,17 @@ SpecfitFuns_pileup(PyObject *self, PyObject *args)
 
     if(1){
         *pret = 0;
+        k = (int )(zero/gain);
         for (i=input2;i<dim_x[0];i++){
             pall=(double *) x->data;
-            pret = (double *) ret->data+i;
-            for (j=0;j<dim_x[0]-i;j++){
-                *pret += *px * (*pall);
-                 pall++;
-                 pret++;
+            if ((i+k) >= 0) 
+            {
+                pret = (double *) ret->data+(i+k);
+                for (j=0;j<dim_x[0]-i-k;j++){
+                    *pret += *px * (*pall);
+                    pall++;
+                    pret++;
+                }
             }
             px++;
         }
@@ -3134,10 +3140,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     double  *output;
     
     if (!PyArg_ParseTuple(args, "O|d", &input, &dpoints))
-    {
-        printf("Error parsing arguments\n");
         return NULL;
-    }
     array = (PyArrayObject *)
              PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
     if (array == NULL)
@@ -3149,7 +3152,6 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     ret = (PyArrayObject *)
         PyArray_FromDims(1, dimensions, PyArray_DOUBLE);
     if (ret == NULL){
-        printf("Error creating array from dimensions\n"); 
         Py_DECREF(array);
         return NULL;
     }
