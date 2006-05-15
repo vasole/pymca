@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.66 $"
+___revision__ = "$Revision: 1.67 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -798,9 +798,18 @@ class McaTheory:
     def __smooth(self,y):
         f=[0.25,0.5,0.25]
         try:
-            result=SpecfitFuns.SavitskyGolay(Numeric.array(y).astype(Numeric.Float), self.config['fit']['stripfilterwidth'])
-        except:
-            print "Unsuccessful Savitsky-Golay smoothing"
+            if hasattr(y, "shape"):
+                if len(y.shape) > 1:
+                    result=SpecfitFuns.SavitskyGolay(Numeric.ravel(y).astype(Numeric.Float), 
+                                    self.config['fit']['stripfilterwidth'])
+                else:                                
+                    result=SpecfitFuns.SavitskyGolay(Numeric.array(y).astype(Numeric.Float), 
+                                    self.config['fit']['stripfilterwidth'])
+            else:
+                result=SpecfitFuns.SavitskyGolay(Numeric.array(y).astype(Numeric.Float), 
+                                    self.config['fit']['stripfilterwidth'])
+        except Exception, err:
+            raise "Error", "Unsuccessful Savitsky-Golay smoothing: %s" % err
             result=Numeric.array(y).astype(Numeric.Float)
         if len(result) > 1:
             result[1:-1]=Numeric.convolve(result,f,mode=0)
