@@ -3,7 +3,8 @@ import glob
 from distutils.core import Extension, setup
 import distutils.sysconfig
 
-for line in file('PyMca/PyMca.py').readlines():
+
+for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
     if line[:11] == '__version__':
         exec(line)
         # Append cvs tag if working from cvs tree

@@ -26,12 +26,24 @@
 #############################################################################*/
 import os
 import sys
+MATPLOTLIB = False
 try:
+    #for the time being I force to have Qt.
+    #This is to use matplotlib on Qt4 and Qwt on Qt3 and Qt2.
+    #If matplotlib is installed this module should be able
+    #to generate the HTML from the fitresult file without having Qt
+    #installed. To test just comment next line.
     import PyQt4.Qt as qt
+    try:
+        from matplotlib.font_manager import FontProperties
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
+        MATPLOTLIB = True
+    except:
+        import QtBlissGraph
 except:
     import qt
-
-import QtBlissGraph
+    import QtBlissGraph
 import ConfigDict
 import time
 import string
@@ -474,18 +486,51 @@ class QtMcaAdvancedFitReport:
        
     def getImage(self):
         dict=self.fitresult
-        if True or qt.qVersion() < '3.0.0':
-            if self.graph is None:
-                self.widget   = qt.QWidget()
-                self.widget.l = qt.QVBoxLayout(self.widget)
-                self.graph  = QtBlissGraph.QtBlissGraph(self.widget)
-                self.widget.l.addWidget(self.graph)
-            widget = self.widget
-            graph  = self.graph
+ 
+        if MATPLOTLIB:
+            fig = Figure(figsize=(6,3)) # in inches
+            canvas = FigureCanvas(fig)
+            ax = fig.add_axes([.1, .15, .8, .8])
+            try:
+                ax.grid(linestyle='--', color=0.7, linewidth=0.1)
+            except:
+                #above line is not supported on all matplotlib versions
+                pass
+            ax.set_axisbelow(True)
+            ax.semilogy(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
+            ax.semilogy(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+            ax.semilogy(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
+            fontproperties = FontProperties(size=8)
+            if dict['result']['config']['fit']['sumflag']:
+                ax.semilogy(dict['result']['energy'],
+                            dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
+                legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
+                                   prop = fontproperties, labelsep=0.02)
+            else:
+                legend = ax.legend(('spectrum', 'continuum', 'fit'),0,
+                                   prop = fontproperties, labelsep=0.02)
+
+            ax.set_xlabel('Energy')
+            ax.set_ylabel('Counts')
+            legend.draw_frame(False)
+
+            outfile = self.outdir+"/"+self.outfile+".png"
+            try:
+                os.remove(outfile)
+            except:
+                pass
+
+            canvas.print_figure(outfile)
+            return self.__getFitImage(self.outfile+".png")
+
+        if self.graph is None:
+            self.widget   = qt.QWidget()
+            self.widget.l = qt.QVBoxLayout(self.widget)
+            self.graph  = QtBlissGraph.QtBlissGraph(self.widget)
+            self.widget.l.addWidget(self.graph)
+        widget = self.widget
+        graph  = self.graph
             
-        else:
-            widget= qt.QVBox()
-            graph = QtBlissGraph.QtBlissGraph(widget)
         graph.xlabel('Energy')
         graph.ylabel('Counts')
         graph.setCanvasBackground(qt.Qt.white)

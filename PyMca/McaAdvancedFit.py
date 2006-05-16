@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.53 $"
+__revision__ = "$Revision: 1.54 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 try:
     import PyQt4.Qt as qt
@@ -1025,9 +1025,11 @@ class McaAdvancedFit(qt.QWidget):
             self.browser.layout = qt.QVBoxLayout(self.browser)
             if qt.qVersion() < '4.0.0':
                 self.__printmenu.insertSeparator()
+                self.__printmenu.insertItem(qt.QString("Last Report"),self.showLastReport)
             else:
                 self.__printmenu.addSeparator()
-            self.__printmenu.insertItem(qt.QString("Last Report"),self.showLastReport)
+                self.__printmenu.addAction(qt.QString("Last Report"),self.showLastReport)
+                
             if qt.qVersion() < '4.0.0':
                 self.browsertext= qt.QTextView(self.browser)
             else:
