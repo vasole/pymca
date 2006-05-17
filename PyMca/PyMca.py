@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.51 $"
+__revision__ = "$Revision: 1.52 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #

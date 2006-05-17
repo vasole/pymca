@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+import os
+import sys
+try:
+    import PyMca
+except ImportError:
+    print "PyMca.py has to be in your PYTHONPATH"
+    sys.exit(1)
+#this way of starting PyMca prevents to initilize
+#twice all the modules
+PyMca.main(sys.argv)

@@ -2,7 +2,7 @@ import sys,os
 import glob
 from distutils.core import Extension, setup
 import distutils.sysconfig
-
+global PYMCA_INSTALL_DIR
 
 for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
     if line[:11] == '__version__':
@@ -23,6 +23,7 @@ data_files = [('PyMca', ['PyMca/Scofield1973.dict', 'PyMca/McaTheory.cfg']),
               ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
               ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
+
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
 packages = ['PyMca']
@@ -32,6 +33,7 @@ if sys.platform == "win32":
     define_macros = [('WIN32',None)]
 else:
     define_macros = []
+    script_files = glob.glob('PyMca/scripts/*')
 
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca.FastEdf',
@@ -78,10 +80,29 @@ build_sps(ext_modules)
 from distutils.command.install_data import install_data
 class smart_install_data(install_data):
     def run(self):
+        global PYMCA_INSTALL_DIR
         #need to change self.install_dir to the library dir
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
+        PYMCA_INSTALL_DIR = self.install_dir
+        print "PyMCA to be installed in %s" %  self.install_dir
         return install_data.run(self)
+
+from distutils.command.install_scripts import install_scripts
+class smart_install_scripts(install_scripts):
+    def run(self):
+        #I prefer not to translate the python used during the build
+        #process for the case of having an installation on a disk shared
+        #by different machines
+        self.skip_build = True
+        install_cmd = self.get_finalized_command('install')
+        #I ignore the usual keyword, and work only with install_lib
+        #print "install_scripts", getattr(install_cmd, 'install_scripts') 
+        #print "install_lib    ", getattr(install_cmd, 'install_lib')
+        self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca')
+        if sys.platform != "win32":
+            print "PyMCA scripts to be installed in %s" %  self.install_dir
+        return install_scripts.run(self)
 
 description = ""
 long_description = """
@@ -101,5 +122,90 @@ distrib = setup(name="PyMca",
                 data_files = data_files,
 ##                package_data = package_data,
 ##                package_dir = {'': 'lib'},
-                cmdclass = {'install_data':smart_install_data},
+                cmdclass = {'install_data':smart_install_data, 
+                            'install_scripts':smart_install_scripts},
+                scripts=script_files,
                 )
+
+
+
+#post installation checks
+try:
+    import sip
+    SIP = True
+except ImportError:
+    SIP = False
+    print "sip must be installed for full pymca functionality."
+
+badtext  = "No valid PyQt with qwt or PyQt4 with PyQwt5 installation found.\n"
+badtext += "You will only be able to develop applications using  a very \n"
+badtext += "small subset of PyMCA."
+print "PyMCA is installed in %s " % PYMCA_INSTALL_DIR
+if SIP:
+    try:
+        import qt
+        QT3 = True
+    except ImportError:
+        QT3 = False
+
+    try:
+        import qwt
+        QWT4 = True        
+    except ImportError:
+        QWT4 = False
+
+    try:
+        import PyQt4.Qt as qt
+        QT4 = True
+    except ImportError:
+        QT4 = False
+
+    try:        
+        from PyQt4 import Qwt5 as qwt
+        QWT5 = True        
+    except ImportError:
+        QWT5 = False
+
+    if QT4 and QT3:
+        print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"
+        if QWT5:
+            print "PyMCA is fully functional under PyQt with qwt."
+            print "You have PyQt4 and PyQwt5 installed."
+            print "That will be the preferred setup within one year."
+            print "Batch fitting should already work."
+            print "You can easily embed PyMCA fitting in your Qt4 graphical "
+            print "applications using McaAdvancedFit.py"
+        else:
+            print badtext
+    elif QT3 and not QWT4:
+        print "PyMCA PyQt installations need PyQwt4"
+        print badtext
+    elif QT4 and QWT5:
+        print "PyMCA is fully functional under PyQt with qwt."
+        print "You have PyQt4 and PyQwt5 installed."
+        print "That will be the preferred setup within one year."
+        print "Batch fitting should work."
+        print "You can easily embed PyMCA fitting in your Qt4 graphical "
+        print "applications using McaAdvancedFit.py"
+        if sys.platform != 'win32':
+            print "Please make sure %s is in your path" % os.path.join(PYMCA_INSTALL_DIR, 'bin')
+            print "and try the scripts:"
+            for script in script_files:
+                s = os.path.basename(script)
+                if s.upper() == "PYMCA":continue
+                if s.upper() == "MCA2EDF":continue
+                print script
+                                
+    elif QT3 and QWT4:
+        print "PyMCA installation successfully completed."
+        if sys.platform != 'win32':
+            print "Please make sure %s is in your path" % os.path.join(PYMCA_INSTALL_DIR, 'bin')
+            print "and try the scripts:"
+            for script in script_files:
+                print os.path.basename(script)               
+    else:
+        print badtext
+else:
+    print "No valid PyQt with qwt or PyQt4 with PyQwt5 installation found."
+    print "You will only be able to develop applications using  a very "
+    print "small subset of PyMCA."

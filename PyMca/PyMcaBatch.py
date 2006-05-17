@@ -1117,9 +1117,8 @@ class McaBatchWindow(qt.QWidget):
             cmd = "%s %s &" % (myself, filelist)
             if DEBUG:print "cmd = ",cmd
             os.system(cmd)
-
                               
-if __name__ == "__main__":
+def main():
     import getopt
     options     = 'f'
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
@@ -1232,6 +1231,8 @@ if __name__ == "__main__":
         else:
             app.exec_()
  
+if __name__ == "__main__":
+    main()
  
  
 # PyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &

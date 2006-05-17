@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__= "$Revision: 1.6 $"
+__revision__= "$Revision: 1.8 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 try:
     import PyQt4.Qt as qt
@@ -273,8 +273,7 @@ class MyQLineEdit(qt.QLineEdit):
             self.setPaletteBackgroundColor(qt.QColor('white'))
         #self.emit(qt.SIGNAL("returnPressed()"),())
 
-
-if __name__ == "__main__":
+def main():
     import sys
     app  = qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
@@ -303,3 +302,5 @@ if __name__ == "__main__":
         mw.show()
         app.exec_()
         
+if __name__ == "__main__":
+    main()

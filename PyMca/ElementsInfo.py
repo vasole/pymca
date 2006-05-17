@@ -32,7 +32,7 @@ import ElementHtml
 import Elements
 from QPeriodicTable import QPeriodicTable
 
-__revision__ = "$Revision: 1.12 $"
+__revision__ = "$Revision: 1.13 $"
 
 DEBUG = 0
 CLOSE_ICON =[
@@ -328,7 +328,7 @@ class MyQLineEdit(qt.QLineEdit):
         else:
             self.emit(qt.SIGNAL("focusOut"),())
 
-if __name__ == "__main__":
+def main():
     import sys
     app  = qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
@@ -346,4 +346,5 @@ if __name__ == "__main__":
         w.show()
         app.exec_()
     
-        
+if __name__ == "__main__":
+    main()        

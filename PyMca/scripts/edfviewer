@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+import os
+import sys
+try:
+    import EdfFileSimpleViewer
+except ImportError:
+    print "EdfFileSimpleViewer.py has to be in your PYTHONPATH"
+    sys.exit(1)
+EdfFileSimpleViewer.main()

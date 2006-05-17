@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.4 $"
+__revision__ = "$Revision: 1.5 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -39,9 +39,7 @@ class EdfFileSimpleViewer(EdfFileSelector):
         for file in filelist:
             self.openFile(file, justloaded=1)
             
-
-
-if __name__ == "__main__":
+def main():
     import sys
     import EdfFileLayer
     import getopt
@@ -69,3 +67,6 @@ if __name__ == "__main__":
         app.exec_loop()
     else:
         app.exec_()
+
+if __name__ == "__main__":
+    main()

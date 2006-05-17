@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.8 $"
+__revision__ = "$Revision: 1.9 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -399,8 +399,8 @@ class Mca2EdfWindow(qt.QWidget):
 
     def onResume(self):    
         pass
-                
-if __name__ == "__main__":
+
+def main():
     import getopt
     options     = 'f'
     longoptions = ['outdir=', 'listfile=', 'mcastep=']
@@ -463,6 +463,9 @@ if __name__ == "__main__":
         b.start()
         app.setMainWidget(window)
         app.exec_loop()
+                
+if __name__ == "__main__":
+    main()
  
 # Mca2Edf.py  --outdir=/tmp --mcastep=1 *.mca
  
