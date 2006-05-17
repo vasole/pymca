@@ -1,9 +1,1 @@
-#!/usr/bin/env python
-import os
-import sys
-try:
-    import PeakIdentifier
-except ImportError:
-    print "PeakIdentifier.py has to be in your PYTHONPATH"
-    sys.exit(1)
-PeakIdentifier.main()
+PeakIdentifier.py

@@ -116,7 +116,17 @@ class smart_install_scripts(install_scripts):
             filedest = os.path.join(self.install_dir, os.path.basename(filein))
             if os.path.exists(filedest):
                 os.remove(filedest)
-            self.copy_file(filein, filedest)
+            moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca")
+            f = open(filein, 'r')
+            modfile = f.readline().replace("\n","")
+            f.close()
+            text  = "#!/bin/bash\n"
+            text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
+            text += "exec python %s $*\n" %  os.path.join(moddir, modfile)
+            f=open(filedest, 'w')
+            f.write(text)
+            f.close()
+            #self.copy_file(filein, filedest)
             self.outfiles.append(filedest)
         if os.name == 'posix':
             # Set the executable bits (owner, group, and world) on
