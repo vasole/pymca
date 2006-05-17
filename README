@@ -14,9 +14,20 @@ You will need to build some libraries (sps, specfile, specfit, edf, ...)
 Those libraries can be build in the respective directories thru the usual
 python setup.py build methods. Alternatively you can use the toplevel
 setup.py contributed by Darren Dale dealing with the build process and 
-installing PyMCA in  a specific directory:
+installing PyMCA in  a specific directory. Examples of use:
 
+Install everything in default directories (typical for windows users):
+
+python setup.py install
+
+Install to specific destinations (typical for posix systems):
+
+python setup.py install --install-scripts SCRIPTS_DIRECTORY
 python setup.py install --install-lib DESTINATION_DIRECTORY
+python setup.py install --install-lib DESTINATION_DIRECTORY --install-scripts SCRIPTS_DIRECTORY
+
+In any case you need write privileges to the final directories.
+
 
 You will need:
 

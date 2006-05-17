@@ -3,6 +3,7 @@ import glob
 from distutils.core import Extension, setup
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
+global PYMCA_SCRIPTS_DIR
 
 for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
     if line[:11] == '__version__':
@@ -90,20 +91,44 @@ class smart_install_data(install_data):
 
 from distutils.command.install_scripts import install_scripts
 class smart_install_scripts(install_scripts):
-    def run(self):
+    def run (self):
+        global PYMCA_SCRIPTS_DIR
         #I prefer not to translate the python used during the build
         #process for the case of having an installation on a disk shared
-        #by different machines
-        self.skip_build = True
+        #by different machines and starting python from a shell script
+        #that positions the environment
+        from distutils import log
+        from stat import ST_MODE
         install_cmd = self.get_finalized_command('install')
-        #I ignore the usual keyword, and work only with install_lib
-        #print "install_scripts", getattr(install_cmd, 'install_scripts') 
-        #print "install_lib    ", getattr(install_cmd, 'install_lib')
-        self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca')
+        #This is to ignore the --install-scripts keyword
+        #I do not know if to leave it optional ...
+        if False:
+            self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca')
+            self.install_dir = os.path.join(self.install_dir, 'bin')        
+        else:
+            self.install_dir = getattr(install_cmd, 'install_scripts')
+        PYMCA_SCRIPTS_DIR = self.install_dir        
         if sys.platform != "win32":
             print "PyMCA scripts to be installed in %s" %  self.install_dir
-        return install_scripts.run(self)
-
+        self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
+        self.outfiles = []
+        for filein in glob.glob('PyMca/scripts/*'):
+            filedest = os.path.join(self.install_dir, os.path.basename(filein))
+            if os.path.exists(filedest):
+                os.remove(filedest)
+            self.copy_file(filein, filedest)
+            self.outfiles.append(filedest)
+        if os.name == 'posix':
+            # Set the executable bits (owner, group, and world) on
+            # all the scripts we just installed.
+            for file in self.get_outputs():
+                if self.dry_run:
+                    log.info("changing mode of %s", file)
+                else:
+                    mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
+                    log.info("changing mode of %s to %o", file, mode)
+                    os.chmod(file, mode)
+   
 description = ""
 long_description = """
 """
@@ -188,7 +213,7 @@ if SIP:
         print "You can easily embed PyMCA fitting in your Qt4 graphical "
         print "applications using McaAdvancedFit.py"
         if sys.platform != 'win32':
-            print "Please make sure %s is in your path" % os.path.join(PYMCA_INSTALL_DIR, 'bin')
+            print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
             print "and try the scripts:"
             for script in script_files:
                 s = os.path.basename(script)
@@ -199,7 +224,7 @@ if SIP:
     elif QT3 and QWT4:
         print "PyMCA installation successfully completed."
         if sys.platform != 'win32':
-            print "Please make sure %s is in your path" % os.path.join(PYMCA_INSTALL_DIR, 'bin')
+            print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
             print "and try the scripts:"
             for script in script_files:
                 print os.path.basename(script)               
