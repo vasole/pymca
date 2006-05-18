@@ -178,28 +178,36 @@ badtext += "small subset of PyMCA."
 print "PyMCA is installed in %s " % PYMCA_INSTALL_DIR
 if SIP:
     try:
-        import qt
-        QT3 = True
-    except ImportError:
-        QT3 = False
-
-    try:
-        import qwt
-        QWT4 = True        
-    except ImportError:
-        QWT4 = False
-
-    try:
-        import PyQt4.Qt as qt
+        import PyQt4.QtCore
         QT4 = True
     except ImportError:
         QT4 = False
+    except:
+        QT4 = True
 
     try:        
-        from PyQt4 import Qwt5 as qwt
+        from PyQt4 import Qwt5
         QWT5 = True        
     except ImportError:
         QWT5 = False
+
+    QT3  = False
+    QWT4 = False
+    if not QT4:
+        try:
+            import qt
+            QT3 = True
+        except ImportError:
+            QT3 = False
+        except:
+	    pass
+
+        try:
+            import qwt
+            QWT4 = True        
+        except ImportError:
+            QWT4 = False
+
 
     if QT4 and QT3:
         print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"

@@ -16,7 +16,7 @@ python setup.py build methods. Alternatively you can use the toplevel
 setup.py contributed by Darren Dale dealing with the build process and 
 installing PyMCA in  a specific directory. Examples of use:
 
-Install everything in default directories (typical for windows users):
+Install everything in default directories (typical for windows users or system administrators):
 
 python setup.py install
 
@@ -25,6 +25,8 @@ Install to specific destinations (typical for posix systems):
 python setup.py install --install-scripts SCRIPTS_DIRECTORY
 python setup.py install --install-lib DESTINATION_DIRECTORY
 python setup.py install --install-lib DESTINATION_DIRECTORY --install-scripts SCRIPTS_DIRECTORY
+
+The directories have to be specified with their full path without the last "/".
 
 In any case you need write privileges to the final directories.
 
