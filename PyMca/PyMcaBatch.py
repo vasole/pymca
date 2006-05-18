@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.38 $"
+__revision__ = "$Revision: 1.39 $"
 ###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -886,6 +886,8 @@ class McaBatchWindow(qt.QWidget):
             self.report= None
             if self.html:
                 self.htmlindex = os.path.join(self.outputdir, 'HTML')
+                htmlindex = os.path.join(os.path.basename(file)+"_HTMLDIR", 
+                            "index.html")
                 self.htmlindex = os.path.join(self.htmlindex,htmlindex)
                 if os.path.exists(self.htmlindex):
                     try:

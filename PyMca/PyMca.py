@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.52 $"
+__revision__ = "$Revision: 1.53 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -56,7 +56,7 @@ if (sys.platform != 'win32') and (sys.platform != 'darwin'):
     SOURCES["SPS"] = {'widget':SPSSelector.SPSSelector,'data':SPSLayer.SPSLayer}
     SOURCESLIST.append("SPS")
 
-__version__ = "3.8.2"
+__version__ = "3.8.3"
 class PyMca(PyMcaMdi.PyMca):
     def __init__(self, parent=None, name="PyMca", fl=qt.Qt.WDestructiveClose,**kw):
             PyMcaMdi.PyMca.__init__(self, parent, name, fl)
