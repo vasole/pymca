@@ -30,7 +30,7 @@
 #define isARRAY(a) ((a) && PyArray_Check((PyArrayObject *)a))
 #define A_SIZE(a) PyArray_Size((PyObject *) a)
 #define isARRAY(a) ((a) && PyArray_Check((PyArrayObject *)a))
-# if sun || linux
+#ifndef WIN32
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #else

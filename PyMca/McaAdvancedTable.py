@@ -109,7 +109,7 @@ class McaTable(QTable):
         alreadyforced = 0
         for group in result['groups']:
             ele,group0 = string.split(group)
-            fitarea    = qt.QString("%.6e" % (result[group]['fitarea']))
+            fitarea    = qt.QString("%.4e" % (result[group]['fitarea']))
             sigmaarea  = qt.QString("%.2e" % (result[group]['sigmaarea']))
             fields = [ele,group0,fitarea,sigmaarea]
             col = 0
@@ -150,7 +150,7 @@ class McaTable(QTable):
                 name  = peak
                 energy = qt.QString("%.3f" % (result[group][peak]['energy']))
                 ratio  = qt.QString("%.5f" % (result[group][peak]['ratio']))
-                area   = qt.QString("%.6e" % (result[group][peak]['fitarea']))
+                area   = qt.QString("%.4e" % (result[group][peak]['fitarea']))
                 sigma  = qt.QString("%.2e" % (result[group][peak]['sigmaarea']))
                 fwhm   = qt.QString("%.3f" % (result[group][peak]['fwhm']))
                 chisq  = qt.QString("%.2f" % (result[group][peak]['chisq']))
@@ -181,7 +181,7 @@ class McaTable(QTable):
                 if result[group][peak]['ratio'] > 0.0:
                     energy = qt.QString("%.3f" % (result[group][peak]['energy']))
                     ratio  = qt.QString("%.5f" % (result[group][peak]['ratio']))
-                    area   = qt.QString("%.6e" % (result[group][peak]['fitarea']))
+                    area   = qt.QString("%.4e" % (result[group][peak]['fitarea']))
                     sigma  = qt.QString("%.2e" % (result[group][peak]['sigmaarea']))
                     fwhm   = qt.QString("%.3f" % (result[group][peak]['fwhm']))
                     chisq  = qt.QString("%.2f" % (result[group][peak]['chisq']))

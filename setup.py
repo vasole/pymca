@@ -32,6 +32,7 @@ packages = ['PyMca']
 sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]
+    script_files = []
 else:
     define_macros = []
     script_files = glob.glob('PyMca/scripts/*')

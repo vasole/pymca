@@ -40,7 +40,7 @@
 #ifndef LISTS_H
 #define LISTS_H
 
-#include <malloc.h>
+/* #include <malloc.h> */
 
 typedef struct _ObjectList {
   struct _ObjectList   *next;

@@ -77,7 +77,7 @@
 #endif
 
 #include <limits.h>
-#include <malloc.h>
+/* #include <malloc.h> */
 #include <sps.h>
 #include <sps_lut.h>
 #include <blissmalloc.h>
