@@ -1723,11 +1723,13 @@ class QtBlissGraph(qwt.QwtPlot):
             else:
                 return exp(ymin),exp(ymax)
 
-    def setx1axislimits(self,xmin,xmax):
+    def setx1axislimits(self, xmin, xmax, replot=None):
+        if replot is None: replot = True
         self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
-        self.replot()
+        if replot:self.replot()
         
-    def sety1axislimits(self,ymin,ymax):
+    def sety1axislimits(self, ymin, ymax, replot=None):
+        if replot is None: replot = True
         if self.__logy1:
             if ymin <= 0:
                 ymin = 1
@@ -1738,7 +1740,7 @@ class QtBlissGraph(qwt.QwtPlot):
             #else:
             #    ymax = log(ymax)            
         self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
-        self.replot()
+        if replot:self.replot()
 
     def sety2axislimits(self,ymin,ymax):
         if self.__logy2:

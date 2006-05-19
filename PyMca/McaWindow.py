@@ -1230,11 +1230,26 @@ class McaWidget(qt.QWidget):
                 pass
             try:
                 self.control.calbox.setoptions(options)
-                #if dict['event'] == 'McaAdvancedFitFinished':
-                if 1:
+                #I only reset the graph scale after a fit, not on a matrix spectrum
+                if dict['event'] == 'McaAdvancedFitFinished':
+                    #get current limits
+                    if self.calibration == 'None':
+                        xmin,xmax =self.graph.getx1axislimits()
+                        emin    = dict['result']['fittedpar'][0] + \
+                                  dict['result']['fittedpar'][1] * xmin
+                        emax    = dict['result']['fittedpar'][0] + \
+                                  dict['result']['fittedpar'][1] * xmax
+                    else:
+                        emin,emax = self.graph.getx1axislimits()
+                    ymin,ymax =self.graph.gety1axislimits()
                     self.control.calbox.setCurrentItem(options.index(legend))
                     self.calibration = legend
                     self.control._calboxactivated(legend)
+                    self.graph.sety1axislimits(ymin, ymax, False)
+                    if emin < emax:
+                        self.graph.setx1axislimits(emin, emax, True)
+                    else:
+                        self.graph.setx1axislimits(emax, emin, True)
             except:
                 pass                        
 
