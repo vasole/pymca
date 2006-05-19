@@ -24,14 +24,27 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-import qt
+try:
+    import PyQt4.Qt as qt
+    #qt.PYSIGNAL = qt.SIGNAL    
+    def tQt(x):
+        return x
+except:
+    import qt
+    def tQt(x):
+        return (x,)
 import McaROIWidget
 import os
 import sys
 DEBUG = 0
 class McaControlGUI(qt.QWidget):
     def __init__(self, parent=None, name="",fl=0):
-        qt.QWidget.__init__(self, parent, name, fl)
+        if qt.qVersion() < '4.0.0':
+            qt.QWidget.__init__(self, parent, name,fl)
+            if name is not None:self.setCaption(name)
+        else:
+            qt.QWidget.__init__(self, parent)
+            if name is not None:self.setWindowTitle(name)
         self.roilist = ['ICR']
         self.roidict = {}
         self.roidict['ICR'] = {'type':'Default',
@@ -42,7 +55,7 @@ class McaControlGUI(qt.QWidget):
 
     def build(self):
         layout = qt.QVBoxLayout(self)
-        layout.setAutoAdd(1)
+
         # control
         control = 0
         if control:
@@ -54,6 +67,7 @@ class McaControlGUI(qt.QWidget):
              self.fitbox = controlbox.fitbox
              self.fitbut = controlbox.fitbut
              self.controlbox = controlbox
+             layout.addWidget(controlbox)
         else:
              self.controlbox= None
              self.sourcebox = None
@@ -67,14 +81,25 @@ class McaControlGUI(qt.QWidget):
         self.calbox  = calibration.calbox
         self.calbut  = calibration.calbut
         self.calinfo = McaCalInfoLine(self)
-        self.calmenu = qt.QPopupMenu()
-        self.calmenu.insertItem(qt.QString("Edit"),    self.__copysignal)
-        self.calmenu.insertItem(qt.QString("Compute") ,self.__computesignal)
-        self.calmenu.insertSeparator()
-        self.calmenu.insertItem(qt.QString("Load") ,   self.__loadsignal)
-        self.calmenu.insertItem(qt.QString("Save") ,   self.__savesignal)
 
-        
+        if qt.qVersion() < '4.0.0':
+            self.calmenu = qt.QPopupMenu()
+            self.calmenu.insertItem(qt.QString("Edit"),    self.__copysignal)
+            self.calmenu.insertItem(qt.QString("Compute") ,self.__computesignal)
+            self.calmenu.insertSeparator()
+            self.calmenu.insertItem(qt.QString("Load") ,   self.__loadsignal)
+            self.calmenu.insertItem(qt.QString("Save") ,   self.__savesignal)
+        else:
+            self.calmenu = qt.QMenu()
+            self.calmenu.addAction(qt.QString("Edit"),    self.__copysignal)
+            self.calmenu.addAction(qt.QString("Compute") ,self.__computesignal)
+            self.calmenu.addSeparator()
+            self.calmenu.addAction(qt.QString("Load") ,   self.__loadsignal)
+            self.calmenu.addAction(qt.QString("Save") ,   self.__savesignal)
+
+        layout.addWidget(calibration)
+        layout.addWidget(self.calinfo)
+
         #self.mousezoombox = controlbox.mousezoombox
         #self.mouseroibox  = controlbox.mouseroibox
         #a = HorizontalSpacer(self)
@@ -82,7 +107,8 @@ class McaControlGUI(qt.QWidget):
         # ROI
         #roibox = qt.QHGroupBox(self)
         #roibox.setTitle(' ROI ')
-        roibox = qt.QHBox(self)
+        roibox = qt.QWidget(self)
+        roiboxlayout = qt.QHBoxLayout(roibox)
         #roibox.setAlignment(qt.Qt.AlignHCenter)
         self.roiwidget = McaROIWidget.McaROIWidget(roibox)
         self.roiwidget.fillfromroidict(roilist=self.roilist,
@@ -90,6 +116,8 @@ class McaControlGUI(qt.QWidget):
         self.fillfromroidict = self.roiwidget.fillfromroidict
         self.addroi          = self.roiwidget.addroi
 
+        roiboxlayout.addWidget(self.roiwidget)
+        layout.addWidget(roibox)
         
     def connections(self):
         #QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"
@@ -202,7 +230,10 @@ class McaControlGUI(qt.QWidget):
     def __calbuttonclicked(self):
         if DEBUG:
             print "Calibration button clicked"
-        self.calmenu.exec_loop(self.cursor().pos())
+        if qt.qVersion() < '4.0.0':
+            self.calmenu.exec_loop(self.cursor().pos())
+        else:
+            self.calmenu.exec_(self.cursor().pos())
         
     def __copysignal(self):
         comboitem,combotext = self.calbox.getcurrent()
@@ -222,12 +253,18 @@ class McaControlGUI(qt.QWidget):
         if sys.platform == "win32":
             windir = self.lastInputDir
             if windir is None:windir = ""
-            filename= str(qt.QFileDialog.getOpenFileName(windir,
+            if qt.qVersion() < '4.0.0':
+                filename= str(qt.QFileDialog.getOpenFileName(windir,
                              self.lastInputFilter,
                              self,
-                            "Save File", "Open a new calibration file"))
+                            "Load File", "Load existing calibration file"))
+            else:
+                filename= str(qt.QFileDialog.getOpenFileName(self,
+                              "Load existing calibration file",
+                              windir,
+                              self.lastInputFilter))                
         else:
-            filename = qt.QFileDialog(self, "Open a new calibration file", 1)
+            filename = qt.QFileDialog(self, "Load existing calibration file", 1)
             filename.setFilters(self.lastInputFilter)
             if self.lastInputDir is not None:
                 filename.setDir(self.lastInputDir)
@@ -258,12 +295,18 @@ class McaControlGUI(qt.QWidget):
         if sys.platform == "win32":
             windir = self.lastInputDir
             if windir is None:windir = ""
-            filename= str(qt.QFileDialog.getSaveFileName(windir,
+            if qt.qVersion() < '4.0.0':
+                filename= str(qt.QFileDialog.getSaveFileName(windir,
                              self.lastInputFilter,
                              self,
-                            "Save File", "Open a new calibration file"))
+                            "Save File", "Save a new calibration file"))
+            else:
+                filename= str(qt.QFileDialog.getSaveFileName(self,
+                              "Save a new calibration file",
+                              windir,
+                              self.lastInputFilter))                
         else:
-            filename = qt.QFileDialog(self, "Open a new calibration file", 1)
+            filename = qt.QFileDialog(self, "Save a new calibration file", 1)
             filename.setFilters(self.lastInputFilter)
             if self.lastInputDir is not None:
                 filename.setDir(self.lastInputDir)
@@ -318,9 +361,13 @@ class McaControlGUI(qt.QWidget):
 class McaCalControlLine(qt.QWidget):
     def __init__(self, parent=None, name=None, calname="",
                  caldict = {},fl=0):
-        qt.QWidget.__init__(self, parent, name, fl)
-        layout = qt.QHBoxLayout(self)
-        layout.setAutoAdd(1)
+        if qt.qVersion() < '4.0.0':
+            qt.QWidget.__init__(self, parent, name,fl)
+            if name is not None:self.setCaption(name)
+        else:
+            qt.QWidget.__init__(self, parent)
+            if name is not None:self.setWindowTitle(name)
+        self.l = qt.QHBoxLayout(self)
         self.build()
     
     def build(self):
@@ -334,12 +381,20 @@ class McaCalControlLine(qt.QWidget):
         self.calbut.setText('Calibrate')
         self.calbut.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Fixed))
 
+        self.l.addWidget(callabel)
+        self.l.addWidget(self.calbox)
+        self.l.addWidget(self.calbut)
 
 
 class McaCalInfoLine(qt.QWidget):
     def __init__(self, parent=None, name=None, calname="",
                  caldict = {},fl=0):
-        qt.QWidget.__init__(self, parent, name, fl)
+        if qt.qVersion() < '4.0.0':
+            qt.QWidget.__init__(self, parent, name,fl)
+            if name is not None:self.setCaption(name)
+        else:
+            qt.QWidget.__init__(self, parent)
+            if name is not None:self.setWindowTitle(name)
         self.caldict=caldict
         if calname not in self.caldict.keys():
             self.caldict[calname] = {}
@@ -354,17 +409,30 @@ class McaCalInfoLine(qt.QWidget):
     def build(self):
         layout= qt.QHBoxLayout(self)
         parw = self
-        layout.setAutoAdd(1)
+
         self.lab= qt.QLabel("<nobr><b>Active Curve Uses</b></nobr>", parw)
+        layout.addWidget(self.lab)
+
         lab= qt.QLabel("A:", parw)
+        layout.addWidget(lab)
+
         self.AText= qt.QLineEdit(parw)
         self.AText.setReadOnly(1)
+        layout.addWidget(self.AText)
+
         lab= qt.QLabel("B:", parw)
+        layout.addWidget(lab)
+
         self.BText= qt.QLineEdit(parw)
         self.BText.setReadOnly(1)
+        layout.addWidget(self.BText)
+
         lab= qt.QLabel("C:", parw)
+        layout.addWidget(lab)
+
         self.CText= qt.QLineEdit(parw)
         self.CText.setReadOnly(1)
+        layout.addWidget(self.CText)
 
     def setParameters(self, pars, name = None):
         if name is not None:
@@ -410,11 +478,19 @@ class SimpleComboBox(qt.QComboBox):
             self.setoptions(options) 
             
         def setoptions(self,options=['1','2','3']):
-            self.clear()    
-            self.insertStrList(options)
+            self.clear()
+            if qt.qVersion() < '4.0.0':
+                self.insertStrList(options)
+            else:
+                for item in options:
+                    self.addItem(item)
+                    
             
         def getcurrent(self):
-            return   self.currentItem(),str(self.currentText())
+            if qt.qVersion() < '4.0.0':
+                return   self.currentItem(),str(self.currentText())
+            else:
+                return   self.currentIndex(),str(self.currentText())
              
 
 if __name__ == '__main__':
@@ -423,9 +499,13 @@ if __name__ == '__main__':
         app = qt.QApplication(sys.argv)
         #demo = make()
         demo = McaControlGUI()
-        app.setMainWidget(demo)
-        demo.show()
-        app.exec_loop()
+        if qt.qVersion() < '4.0.0':
+            app.setMainWidget(demo)
+            demo.show()
+            app.exec_loop()
+        else:
+            demo.show()
+            app.exec_()            
     else:
         app = qt.QApplication(sys.argv)
         #demo = make()
