@@ -1590,7 +1590,7 @@ class McaTheory:
             #pmcaarea      = Numeric.sum(y-(yfit-contrib))
             pmcaarea      = Numeric.sum(y-ycon)
             result[group]['mcaarea']   = pmcaarea
-            #pmcasigmaarea = Numeric.sqrt(Numeric.where(y<0, -y, y))
+            #pmcasigmaarea = Numeric.sqrt(Numeric.sum(Numeric.where(y<0, -y, y)))
             #result[group]['mcasigmaarea'] = pmcasigmaarea
             i+=1
         result['niter']        = self.__niter * 1
