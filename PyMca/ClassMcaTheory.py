@@ -1589,8 +1589,9 @@ class McaTheory:
             y   = Numeric.take(yw     ,index)
             #pmcaarea      = Numeric.sum(y-(yfit-contrib))
             pmcaarea      = Numeric.sum(y-ycon)
-            pmcasigmaarea = Numeric.sqrt(abs(Numeric.sum(y)))
             result[group]['mcaarea']   = pmcaarea
+            #pmcasigmaarea = Numeric.sqrt(Numeric.where(y<0, -y, y))
+            #result[group]['mcasigmaarea'] = pmcasigmaarea
             i+=1
         result['niter']        = self.__niter * 1
         result['lastdeltachi'] = self.__lastdeltachi * 1.0
