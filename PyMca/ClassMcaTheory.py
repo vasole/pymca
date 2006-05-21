@@ -1588,23 +1588,10 @@ class McaTheory:
                 ycon = yfit - contrib
             y   = Numeric.take(yw     ,index)
             #pmcaarea      = Numeric.sum(y-(yfit-contrib))
-            pmcaarea      = Numeric.sum(y-ycon)            
-            pmcasigmaarea = Numeric.sqrt(Numeric.sum(y))
+            pmcaarea      = Numeric.sum(y-ycon)
+            pmcasigmaarea = Numeric.sqrt(abs(Numeric.sum(y)))
             result[group]['mcaarea']   = pmcaarea
             i+=1
-            if 0:
-             if i==5:
-                import Tkinter
-                import SimplePlot
-                root=Tkinter.Tk()
-                #SimplePlot.plot([energy,Numeric.ravel(y),yfit,contrib])
-                SimplePlot.plot([energy,y+b,yfit,ycon])
-                #SimplePlot.plot([energy,yfit,ycon,yfit-contrib-b])
-                #print "y = ",Numeric.sum(y)
-                #print "yfit ",Numeric.sum(yfit)
-                #print "yfit-cont = ",Numeric.sum(yfit-contrib)
-                #print "ycon = ",Numeric.sum(ycon)
-                root.mainloop()
         result['niter']        = self.__niter * 1
         result['lastdeltachi'] = self.__lastdeltachi * 1.0
         if outfile is not None:
