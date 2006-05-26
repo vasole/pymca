@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.67 $"
+___revision__ = "$Revision: 1.68 $"
 import Elements
 import SpecfitFuns
 import ConfigDict

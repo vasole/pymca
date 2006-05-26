@@ -737,7 +737,11 @@ class QtMcaAdvancedFitReport:
                     else:
                         text+=('<td align="right" bgcolor="%s">%s</td>' % (lemmon,field))
                 text+="</tr>"
-            for peak0 in result[group]['escapepeaks']:
+            if type(result[group]['escapepeaks']) != type([]):
+                iterator = [result[group]['escapepeaks']]
+            else:
+                iterator = 1 * result[group]['escapepeaks']
+            for peak0 in iterator:
                 name  = peak0+"esc"
                 peak  = peak0+"esc"
                 if result[group][name]['ratio'] > 0.0:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.39 $"
+__revision__ = "$Revision: 1.40 $"
 ###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -950,8 +950,8 @@ class McaBatchWindow(qt.QWidget):
                         self.__htmlReport(filename, key, outputdir, useExistingFiles, info, firstmca = True)
                     else:
                         self.__htmlReport(filename, key, outputdir, useExistingFiles, info, firstmca = False)
-            except:
-                print "ERROR on REPORT",sys.exc_info()
+            except Exception, err:
+                print "ERROR on REPORT",sys.exc_info(),err
         if qt.qVersion() < '4.0.0':
             self.mcaBar.setTotalSteps(nmca)
             self.mcaBar.setProgress(mca)
