@@ -421,7 +421,7 @@ class McaAdvancedFit(qt.QWidget):
         if self.mcatable is not None:
             self.mcatable.setRowCount(0)
             
-        if DEBUG:
+        if DEBUG or (qt.qVersion() < '3.0.0'):
             self.mcafit.configure(config)
         else:
             try:
@@ -503,15 +503,15 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.delcurve(key)
         self.plot()
 
-        if 1:
+        if DEBUG or (qt.qVersion() < '3.0.0'):
+            self.mcafit.configure(config)
+        else:
             threadResult=self._submitThread(self.mcafit.configure, config,
                              "Configuring, please wait")
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
                         raise threadResult[1],threadResult[2]
-        else:
-            self.mcafit.configure(config)
 
     def _tabChanged(self, w):
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
@@ -822,7 +822,7 @@ class McaAdvancedFit(qt.QWidget):
         dict = {}
         dict.update(config['concentrations'])
         tool.configure(dict)
-        if DEBUG:
+        if DEBUG or (qt.qVersion() < '3.0.0'):
             dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
         else:
@@ -1305,14 +1305,14 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 msg.exec_()
             return
-        if DEBUG:
-            print "calling estimate"
+        if DEBUG or (qt.qVersion() < '3.0.0'):
+            if DEBUG: print "calling estimate"
             self.mcafit.estimate()
-            print "calling startfit"
+            if DEBUG: print "calling startfit"
             fitresult,result = self.mcafit.startfit(digest=1)
-            print "filling table"
+            if DEBUG: print "filling table"
             self.mcatable.fillfrommca(result)
-            print "finished"
+            if DEBUG: print "finished"
         else:
             try:
                 self.mcafit.estimate()
