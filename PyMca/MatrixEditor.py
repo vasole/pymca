@@ -236,7 +236,7 @@ class MyQLineEdit(qt.QLineEdit):
             pass
         else:
             self.setPaletteBackgroundColor(qt.QColor('white'))
-        #self.__mySlot()
+        self.__mySlot()
 
     def setPaletteBackgroundColor(self, color):
         if qt.qVersion() < '3.0.0':
