@@ -589,6 +589,8 @@ class QtMcaAdvancedFitReport:
         #the table
         labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
         if result.has_key('layerlist'):
+            if type(result['layerlist']) != type([]):
+                result['layerlist'] = [result['layerlist']]
             for label in result['layerlist']:
                 labels += [label]
         lemmon=string.upper("#%x%x%x" % (255,250,205))
@@ -653,6 +655,8 @@ class QtMcaAdvancedFitReport:
         #the table
         labels = ['Element','Group','Fit_Area','Sigma_Area', 'Mass_fraction']
         if result.has_key('layerlist'):
+            if type(result['layerlist']) != type([]):
+                result['layerlist'] = [result['layerlist']]
             for label in result['layerlist']:
                 labels += [label.replace(' ','')]
         for l in labels:
