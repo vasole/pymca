@@ -267,10 +267,15 @@ class McaTheory:
 #######################################
             #--- renormalize to account for filter effects ---
             div = sum([x[0] for x in newpeaks])
-            for i in range(len(newpeaks)):
-                newpeaks[i][0] /= div 
-            #--- sort ---
-            
+            try:
+                for i in range(len(newpeaks)):
+                    newpeaks[i][0] /= div
+            except ZeroDivisionError:
+                text  = "Intensity of %s %s is zero\n"% (ele, rays)
+                text += "Too high attenuation?"
+                raise "ZeroDivisionError", text
+
+            #--- sort ---            
             div=[[newpeaks[i][1],newpeaks[i][0],newpeaksnames[i]] for i in range(len(newpeaks))]
             div.sort()
             #print "before = ",len(newpeaksnames)
@@ -287,7 +292,6 @@ class McaTheory:
                 text  = "No %s for element %s" % (rays, ele)
                 text += "\nToo high attenuation?"
                 raise "ValueError",text
-                continue
             (r,c)=Numeric.shape(Numeric.array(newpeaks))
             PEAKS0ESCAPE.append([])                
             _nescape_ = 0
@@ -455,8 +459,13 @@ class McaTheory:
                                         raise "ValueError","Invalid excitation energy"
                     #--- renormalize
                     div = sum([x[0] for x in newpeaks])
-                    for i in range(len(newpeaks)):
-                        newpeaks[i][0] /= div 
+                    try:
+                        for i in range(len(newpeaks)):
+                            newpeaks[i][0] /= div 
+                    except ZeroDivisionError:
+                        text  = "Intensity of %s %s is zero\n"% (ele, rays)
+                        text += "Too high attenuation?"
+                        raise "ZeroDivisionError", text
                     """
                     if ele == 'Pb':
                         dummyNew = [[newpeaks[i][1],oldRatio[i],newpeaks[i][0],newpeaks[i][0]/ oldRatio[i] ] for i in range(len(newpeaks))]

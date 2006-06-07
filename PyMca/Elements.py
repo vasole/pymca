@@ -1066,10 +1066,18 @@ def _getAttFilteredElementDict(elementsList,
             try:
                 trans = Numeric.exp(-coeffs)
             except OverflowError:
-                for coef in coeffs:
+                #deal with underflows reported as overflows
+                trans = Numeric.zeros(len(energies), Numeric.Float)
+                for i in range(len(energies)):
+                    coef = coeffs[i]
                     if coef < 0.0:
-                        raise "ValueError","Positive exponent in attenuators transmission term"    
-                trans = 0.0 * coeffs            
+                        raise "ValueError","Positive exponent in attenuators transmission term"
+                    else:
+                        try:
+                            trans[i] = Numeric.exp(-coef)
+                        except OverflowError:
+                            #if we are here we know it is not an overflow and trans[i] has the proper value
+                            pass
             for i in range(len(rates)):
                 rates[i] *= trans[i]
             #detector term
@@ -1080,10 +1088,18 @@ def _getAttFilteredElementDict(elementsList,
                 try:
                     trans = (1.0 - Numeric.exp(-coeffs))
                 except OverflowError:
-                    for coef in coeffs:
-                        if coeffs < 0.0:
-                            raise "ValueError","Positive exponent in detector transmission term"
+                    #deal with underflows reported as overflows
                     trans = Numeric.ones(len(energies), Numeric.Float)
+                    for i in range(len(energies)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise "ValueError","Positive exponent in detector transmission term"
+                        else:
+                            try:
+                                trans[i] = 1.0 - Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             i = 0
