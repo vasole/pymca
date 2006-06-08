@@ -796,7 +796,7 @@ class McaAdvancedFit(qt.QWidget):
     def __clearPeaksSpectrum(self):
         delcurves = []
         for key in self.graph.curves.keys():
-            if key not in ["Data", "Fit", "Continuum", "Summing", "Matrix"]:
+            if key not in ["Data", "Fit", "Continuum", "Pile-up", "Matrix"]:
                 delcurves.append(key)
         for key in delcurves:
             self.graph.delcurve(key)
@@ -1164,7 +1164,7 @@ class McaAdvancedFit(qt.QWidget):
         h+="    <TD>%s</TD>" % escapeflag
         h+="    <TD><SPACER TYPE=BLOCK WIDTH=5></B></TD>"
 
-        h+="    <TD ALIGN=LEFT><B>Summing</B></TD>"
+        h+="    <TD ALIGN=LEFT><B>Pile-up</B></TD>"
         h+="    <TD><B>:</B></TD>"
         h+="    <TD ALIGN=LEFT>%s</TD>" % sumflag
         h+="    <TD><SPACER TYPE=BLOCK WIDTH=5></B></TD>"
@@ -1485,11 +1485,11 @@ class McaAdvancedFit(qt.QWidget):
                                    dict['result']['continuum'],logfilter=logfilter)
                                    
         if config['fit']['sumflag']:
-            self.graph.newcurve("Summing", xdata,
+            self.graph.newcurve("Pile-up", xdata,
                                        dict['result']['pileup']+dict['result']['continuum'],
                                        logfilter=logfilter)
-        elif "Summing" in self.graph.curves.keys():
-            self.graph.delcurve("Summing")
+        elif "Pile-up" in self.graph.curves.keys():
+            self.graph.delcurve("Pile-up")
         
         if self.matrixSpectrumButton.isChecked():
             if dict['result'].has_key('ymatrix'):
@@ -1503,7 +1503,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.graph.delcurve("Matrix")
 
         if self.peaksSpectrumButton.isChecked():
-            keep = ['Data','Fit','Continuum','Matrix','Summing']
+            keep = ['Data','Fit','Continuum','Matrix','Pile-up']
             for group in dict['result']['groups']:
                 keep += ['y'+group]
             for key in self.graph.curves.keys():
@@ -1814,7 +1814,7 @@ class Top(qt.QWidget):
         self.escapebox = qt.QCheckBox(f)
         self.escapebox.setText('Escape')        
         self.sumbox = qt.QCheckBox(f)
-        self.sumbox.setText('Summing')        
+        self.sumbox.setText('Pile-up')        
         self.stripbox = qt.QCheckBox(f)
         self.stripbox.setText('Strip Back.')
         #checkbox connections

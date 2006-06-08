@@ -101,6 +101,9 @@ class McaTheory:
         for material in self.config['materials'].keys():
             Elements.Material[material] = copy.deepcopy(self.config['materials'][material])        
         #that was it
+
+        #linear fitting option
+        self.config['fit']['linearfitflag']   = self.config['fit'].get('linearfitflag', 0)        
         self.config['fit']['energy']       = self.config['fit'].get('energy',None)
         if type(self.config['fit']['energy']) == type(""):
             self.config['fit']['energy'] = None
@@ -705,7 +708,8 @@ class McaTheory:
                     self.datatofit = Numeric.concatenate((self.xdata, 
                                     self.ydata, self.sigmay),1)
                     self.laststrip = 0
-            except:
+            except AttributeError:
+                #this happens at initialization because self.xdata, self.ydata and so on do not exist yet
                 pass
         if self.ydata0 is not None:
             self.setdata(x=self.xdata0,
@@ -791,7 +795,14 @@ class McaTheory:
             self.ydata=Numeric.take(self.ydata,i1)
             
             #calculate the background here gives better results
-            self.__getselfzz()
+            if not self.config['fit']['linearfitflag']:
+                self.__getselfzz()
+            else:
+                if self.STRIP:
+                    self.__getselfzz()
+                else:
+                    self.laststrip = None
+                    self.zz     = Numeric.zeros((n,1),Numeric.Float)
 
             self.sigmay=Numeric.take(self.sigmay,i1)
             self.xdata = Numeric.resize(self.xdata,(n,1))
@@ -802,7 +813,10 @@ class McaTheory:
                 self.laststrip = 1 
             else:
                 self.datatofit = Numeric.concatenate((self.xdata,self.ydata,self.sigmay),1)
-                self.laststrip = 0
+                if self.config['fit']['linearfitflag']:
+                    self.laststrip = None
+                else:
+                    self.laststrip = 0
 
     def __smooth(self,y):
         f=[0.25,0.5,0.25]
@@ -1179,30 +1193,50 @@ class McaTheory:
         newpar.append(self.config['detector']['noise'])
         newpar.append(self.config['detector']['fano'])
         newpar.append(sumfactor)
+
+        #linear fit flag
+        linearfit = self.config['fit'].get("linearfitflag", 0)
+        
         #####################
-        if 1:
-            if CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial'):
-                backpar,backcodes=self.estimatelinpol(self.xdata, self.ydata,self.zz)
-            elif CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial'):   
-                backpar,backcodes=self.estimateexppol(self.xdata, self.ydata,self.zz)
-            else:
+        if CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial'):
+            if linearfit:
+                #no need to estimate background
                 backpar = []
-                if HYPERMET:
-                    for i in range(5,NGLOBAL-5):
-                        backpar.append(0.0)
-                else:
-                    for i in range(5,NGLOBAL):
-                        backpar.append(0.0)
+                for i in range(self.config['fit']['linpolorder']+1):
+                    backpar.append(0.0)
                 backcodes=Numeric.zeros((3,len(backpar)),Numeric.Float)
-                if CONTINUUM == 0:
-                    backcodes[0,:]=3
-                elif CONTINUUM == CONTINUUM_LIST.index('Constant'):
-                    backcodes[0,1]=3
-            for par in backpar:
-                newpar.append(par)
+            else:
+                backpar,backcodes=self.estimatelinpol(self.xdata, self.ydata,self.zz)
+        elif CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial'):
+            if linearfit:
+                if 1:
+                    text  = "Linear fit is incompatible with current implementation\n"
+                    text += "of the Exponential Polynomial background"
+                    raise "ValueError", text
+                else:
+                    #no need to estimate background
+                    backpar = []
+                    for i in range(self.config['fit']['exppolorder']+1):
+                        backpar.append(0.0)
+                    backcodes=Numeric.zeros((3,len(backpar)),Numeric.Float)
+            else:
+                backpar,backcodes=self.estimateexppol(self.xdata, self.ydata,self.zz)
         else:
-            newpar.append(0.0)
-            newpar.append(0.0)
+            backpar = []
+            if HYPERMET:
+                for i in range(5,NGLOBAL-5):
+                    backpar.append(0.0)
+            else:
+                for i in range(5,NGLOBAL):
+                    backpar.append(0.0)
+            backcodes=Numeric.zeros((3,len(backpar)),Numeric.Float)
+            if CONTINUUM == 0:
+                backcodes[0,:] = Gefit.CFIXED
+            elif CONTINUUM == CONTINUUM_LIST.index('Constant'):
+                backcodes[0,1] = Gefit.CFIXED
+        for par in backpar:
+            newpar.append(par)
+
         #initial areas
         if HYPERMET:
             hypermetflag = HYPERMET
@@ -1235,40 +1269,27 @@ class McaTheory:
             newpar.append(10000.0)
         # the codes
         codes = Numeric.zeros((3,len(newpar)),Numeric.Float)
-        codes[0,:]   = 1 # POSITIVE
-        codes[0,0:4] = 2 # QUOTED
+        codes[0,:]   = Gefit.CPOSITIVE # POSITIVE
+        codes[0,0:4] = Gefit.CQUOTED # QUOTED
         if self.__SUM==0:
             newpar[PARAMETERS.index('Sum')]  = 0.0
-            codes[0,PARAMETERS.index('Sum')] = 3
-        else:
-            codes[0,PARAMETERS.index('Sum')] = 2
-        if 1:
-            for i in range(len(backpar)):
-                newpar[PARAMETERS.index('Sum')+i+1]  = backpar[i]    
-                codes [0,PARAMETERS.index('Sum')+i+1]= backcodes[0,i]
-                codes [1,PARAMETERS.index('Sum')+i+1]= backcodes[1,i]
-                codes [2,PARAMETERS.index('Sum')+i+1]= backcodes[2,i]         
-        else:    
-            newpar[PARAMETERS.index('Constant')] = 0.
-            codes[0,PARAMETERS.index('Constant')] = 3
-            newpar[PARAMETERS.index('1st Order')] = 0.
-            codes[0,PARAMETERS.index('1st Order')] = 3
+            codes[0,PARAMETERS.index('Sum')] = Gefit.CFIXED
 
-            if CONTINUUM == 1: 
-                newpar[PARAMETERS.index('Constant')] = 10.
-                codes[0,PARAMETERS.index('Constant')] = 1
-            elif CONTINUUM == 1:
-                newpar[PARAMETERS.index('Constant')] = 10.
-                codes[0,PARAMETERS.index('Constant')] = 1
-                newpar[PARAMETERS.index('1st Order')] = -0.001
-                codes[0,PARAMETERS.index('1st Order')] = 0
-        #codes[0,2] = 2 # QUOTED
-        #codes[0,3] = 2 # QUOTED
-        if self.config['detector']['fixedzero'] :codes[0,PARAMETERS.index('Zero')] = 3
-        if self.config['detector']['fixedgain'] :codes[0,PARAMETERS.index('Gain')] = 3
-        if self.config['detector']['fixednoise']:codes[0,PARAMETERS.index('Noise')]= 3
-        if self.config['detector']['fixedfano'] :codes[0,PARAMETERS.index('Fano')] = 3
-        if self.config['detector']['fixedsum']  :codes[0,PARAMETERS.index('Sum')]  = 3
+        else:
+            codes[0,PARAMETERS.index('Sum')] = Gefit.CQUOTED
+
+        for i in range(len(backpar)):
+            newpar[PARAMETERS.index('Sum')+i+1]  = backpar[i]    
+            codes [0,PARAMETERS.index('Sum')+i+1]= backcodes[0,i]
+            codes [1,PARAMETERS.index('Sum')+i+1]= backcodes[1,i]
+            codes [2,PARAMETERS.index('Sum')+i+1]= backcodes[2,i]         
+
+        #in case of linear fit all non linear parameters have to be fixed to the initial values        
+        if self.config['detector']['fixedzero'] or linearfit :codes[0,PARAMETERS.index('Zero')] = Gefit.CFIXED
+        if self.config['detector']['fixedgain'] or linearfit :codes[0,PARAMETERS.index('Gain')] = Gefit.CFIXED
+        if self.config['detector']['fixednoise']or linearfit :codes[0,PARAMETERS.index('Noise')]= Gefit.CFIXED
+        if self.config['detector']['fixedfano'] or linearfit :codes[0,PARAMETERS.index('Fano')] = Gefit.CFIXED
+        if self.config['detector']['fixedsum']  or linearfit :codes[0,PARAMETERS.index('Sum')]  = Gefit.CFIXED
         codes[1,0] = newpar[0] - self.config['detector']['deltazero']
         codes[1,1] = newpar[1] - self.config['detector']['deltagain']
         codes[1,2] = newpar[2] - self.config['detector']['deltanoise']
@@ -1282,38 +1303,39 @@ class McaTheory:
         if HYPERMET:
             i = PARAMETERS.index('ST AreaR')
             for j in range(5):
-                codes[0,i+j] = 3
+                codes[0,i+j] = Gefit.CFIXED
             if st_term:
                 i = PARAMETERS.index('ST AreaR') 
-                codes[0,i] = 2
-                if self.config['peakshape']['fixedst_arearatio']:codes[0,i] = 3
+                codes[0,i] = Gefit.CQUOTED
+                if self.config['peakshape']['fixedst_arearatio'] or linearfit:codes[0,i] = Gefit.CFIXED
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltast_arearatio']
                 codes[2,i] = newpar[i] - self.config['peakshape']['deltast_arearatio']
                 i = PARAMETERS.index('ST SlopeR') 
-                codes[0,i] = 2
-                if self.config['peakshape']['fixedst_sloperatio']:codes[0,i] = 3
+                codes[0,i] = Gefit.CQUOTED
+                if self.config['peakshape']['fixedst_sloperatio'] or linearfit:codes[0,i] = Gefit.CFIXED
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltast_sloperatio']
                 codes[2,i] = newpar[i] - self.config['peakshape']['deltast_sloperatio']
             if lt_term:
                 i = PARAMETERS.index('LT AreaR') 
-                codes[0,i] = 2
-                if self.config['peakshape']['fixedlt_arearatio']:codes[0,i] = 3
+                codes[0,i] = Gefit.CQUOTED
+                if self.config['peakshape']['fixedlt_arearatio'] or linearfit:codes[0,i] = Gefit.CFIXED
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltalt_arearatio']
                 codes[2,i] = newpar[i] - self.config['peakshape']['deltalt_arearatio']
                 i = PARAMETERS.index('LT SlopeR') 
-                codes[0,i] = 2
-                if self.config['peakshape']['fixedlt_sloperatio']:codes[0,i] = 3
+                codes[0,i] = Gefit.CQUOTED
+                if self.config['peakshape']['fixedlt_sloperatio'] or linearfit:codes[0,i] = Gefit.CFIXED
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltalt_sloperatio']
                 codes[2,i] = newpar[i] - self.config['peakshape']['deltalt_sloperatio']
             if step_term:
                 i = PARAMETERS.index('STEP HeightR') 
-                codes[0,i] = 2
-                if self.config['peakshape']['fixedstep_heightratio']:codes[0,i] = 3
+                codes[0,i] = Gefit.CQUOTED
+                if self.config['peakshape']['fixedstep_heightratio'] or linearfit:codes[0,i] = Gefit.CFIXED
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltastep_heightratio']
                 codes[2,i] = newpar[i] - self.config['peakshape']['deltastep_heightratio']    
         #"""
         #firstshot=mcatheory(newpar,x)
-        if 1:
+        #a linear fit does not need an initial estimate of the areas
+        if not linearfit:
          for i in range(len(PARAMETERS)-NGLOBAL):
             rates = PEAKS0[i][:,0]
             positions = (self.PEAKS0[i][:,1] - zero)/gain
@@ -1342,11 +1364,13 @@ class McaTheory:
                 #peaks outside fitting region
                 #print "peak ",i,"outside fitting region"
                 newpar[i+NGLOBAL] = 0.0
-                codes[0,i+NGLOBAL]= 3
+                codes[0,i+NGLOBAL]= Gefit.CFIXED
         return newpar,codes
     
     def startfit(self,digest=0, linear=None):
-        if linear is None:linear=0
+        if linear is None:
+            linear = self.config['fit'].get("linearfitflag", 0)
+            
         fitresult =  Gefit.LeastSquaresFit(self.mcatheory,
                                            self.parameters,
                                            self.datatofit,
