@@ -24,11 +24,39 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-import qt
+try:
+    import PyQt4.Qt as qt
+except:
+    import qt
+    
 if 0 and qt.qVersion() < '3.0.0':
     import Myqttable as qttable
-else:
+elif qt.qVersion() < '4.0.0':
     import qttable
+if qt.qVersion() < '4.0.0':
+    class QTable(qttable.QTable):
+        def __init__(self, parent=None, name=""):
+            qttable.QTable.__init__(self, parent, name)
+            self.rowCount    = self.numRows
+            self.columnCount = self.numCols
+            self.setRowCount = self.setNumRows
+            self.setColumnCount = self.setNumCols
+            self.resizeColumnToContents = self.adjustColumn
+else:
+    class QTable(qt.QTableWidget):
+        def setText(self, row, col, text):
+            if qt.qVersion() < "4.0.0":
+                QTable.setText(self, row, col, text)
+            else:
+                item = self.item(row, col)
+                if item is None:
+                    item = qt.QTableWidgetItem(text,
+                                               qt.QTableWidgetItem.Type)
+                else:
+                    item.setText(text)
+                self.setItem(row, col, item)
+
+    
 import string
 
 class SpecFileDataInfo(qt.QTabWidget):
@@ -48,9 +76,12 @@ class SpecFileDataInfo(qt.QTabWidget):
     ]
 
     def __init__(self, info, parent=None, name="DataSpecFileInfo", fl=0):
-        qt.QTabWidget.__init__(self, parent, name, fl)
-
-        self.setMargin(5)
+        if qt.qVersion() < '4.0.0':
+            qt.QTabWidget.__init__(self, parent, name, fl)
+            self.setMargin(5)
+        else:
+            qt.QTabWidget.__init__(self, parent)
+            if name is not None:self.setWindowTitle(name)
         self.info= info
         self.__createInfoTable()
         self.__createMotorTable()
@@ -69,21 +100,41 @@ class SpecFileDataInfo(qt.QTabWidget):
             self.addTab(table, "Info")
 
     def __createTable(self, rows, head_par, head_val):
-        table= qttable.QTable(self)
-        table.setNumCols(2)
-        table.setNumRows(rows)
+        if qt.qVersion() < '4.0.0':
+            table= QTable(self)
+        else:
+            table= QTable()
+        table.setColumnCount(2)
+        table.setRowCount(rows)
         if qt.qVersion() > '3.0.0':
-            table.setReadOnly(1)
-            table.setSelectionMode(qttable.QTable.SingleRow)
+            if qt.qVersion() < '4.0.0':
+                table.setReadOnly(1)
+                table.setSelectionMode(QTable.SingleRow)
+            else:
+                table.setSelectionMode(qt.QTableWidget.NoSelection)
         table.verticalHeader().hide()
-        table.setLeftMargin(0)
-        table.horizontalHeader().setLabel(0, head_par)
-        table.horizontalHeader().setLabel(1, head_val)
+        if qt.qVersion() < '4.0.0':            
+            table.setLeftMargin(0)
+            table.horizontalHeader().setLabel(0, head_par)
+            table.horizontalHeader().setLabel(1, head_val)
+        else:
+            labels = [head_par, head_val]
+            for i in range(len(labels)):                
+                item = table.horizontalHeaderItem(i)
+                if item is None:
+                    item = qt.QTableWidgetItem(labels[i],
+                                               qt.QTableWidgetItem.Type)
+                item.setText(labels[i])
+                table.setHorizontalHeaderItem(i,item)
         return table
 
     def __adjustTable(self, table):
-        for col in range(table.numCols()):
-            table.adjustColumn(col)
+        for col in range(table.columnCount()):
+            table.resizeColumnToContents(col)
+        if qt.qVersion() > '4.0.0':
+            rheight = table.horizontalHeader().sizeHint().height()
+            for row in range(table.rowCount()):
+                table.setRowHeight(row, rheight)
 
     def __createMotorTable(self):
         names= self.info.get("MotorNames", None)
@@ -116,18 +167,24 @@ class SpecFileDataInfo(qt.QTabWidget):
         if text is not None:
             if qt.qVersion() < '3.0.0':
                 wid = qt.QTextView(self)
-            else:
+            elif qt.qVersion() < '4.0.0':
                 wid = qt.QTextEdit(self)
                 wid.setReadOnly(1)
-            wid.setText(string.join(text, "\n"))
-            self.addTab(wid, "File Header")
+            else:
+                wid = qt.QTextEdit()
+                wid.setReadOnly(1)
+            if qt.qVersion() < '4.0.0':
+                wid.setText(string.join(text, "\n"))
+                self.addTab(wid, "File Header")
+            else:
+                wid.insertHtml(string.join(text, "<BR>"))
+                self.addTab(wid, "File Header")
 
 def test():
     import sys
-    #from SpecFileData import SpecFileData
     import SpecFileLayer
 
-    if not len(sys.argv):
+    if len(sys.argv) < 3:
         print "USAGE: %s <filename> <key>"%sys.argv[0]
         sys.exit(0)
 
@@ -138,12 +195,18 @@ def test():
     info,data = d.LoadSource(sys.argv[2])
     #info= d.GetPageInfo({"SourceName":sys.argv[1], "Key":sys.argv[2]})
 
-    app= qt.QApplication(sys.argv)
-    wid= SpecFileDataInfo(info)
-    wid.show()
+    if qt.qVersion() < '4.0.0':
+        app= qt.QApplication(sys.argv)
+        wid= SpecFileDataInfo(info)
+        wid.show()
 
-    app.setMainWidget(wid)
-    app.exec_loop()
+        app.setMainWidget(wid)
+        app.exec_loop()
+    else:
+        app= qt.QApplication([])
+        wid= SpecFileDataInfo(info)
+        wid.show()
+        app.exec_()
 
 if __name__=="__main__":
     test()
