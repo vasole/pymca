@@ -28,7 +28,7 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.80 $"
+__revision__ = "$Revision: 1.82 $"
 import string
 import Numeric
 import imp
@@ -2129,21 +2129,26 @@ def getLWeights(ele,energy=None, normalize = None, shellist = None):
     else:
         ele = getsymbol(int(ele))
     if energy is None:
+        #Use the L shell jumps
         w = getLJumpWeight(ele,excitedshells=[1.0,1.0,1.0])
+        #weights due to Coster Kronig transitions and fluorescence yields
+        ck= LShell.getCosterKronig(ele)
+        w[0] *=  1.0
+        w[1] *= (1.0 + ck['f12'] * w[0])
+        w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
+        omega = [ getomegal1(ele), getomegal2(ele), getomegal3(ele)]
+        for i in range(len(w)):
+            w[i] *= omega[i]
     else:
-        w = getPhotoWeight(ele,shellist,energy, normalize = normalize)
-    #weights due to Coster Kronig transitions and fluorescence yields
-    ck= LShell.getCosterKronig(ele)
-    w[0] *=  1.0
-    w[1] *= (1.0 + ck['f12'] * w[0])
-    w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
-    omega = [ getomegal1(ele), getomegal2(ele), getomegal3(ele)]
-    for i in range(len(w)):
-        w[i] *= omega[i]
+        #Take into account the cascade as in the getFluorescence method
+        #The PyMCA fit was already using that when there was a matrix but
+        #it was not shown in the Elements Info window.
+        allweights = _getFluorescenceWeights(ele, energy, normalize = False, cascade = True)
+        w   = allweights[1:4]
     if normalize:
         cum = sum(w)
-        for i in range(len(w)):
-            if cum > 0.0:
+        if cum > 0.0:
+            for i in range(len(w)):
                 w[i] /= cum
     return w
 
@@ -2156,18 +2161,22 @@ def getMWeights(ele,energy=None, normalize = None, shellist = None):
         ele = getsymbol(int(ele))
     if energy is None:
         w = getMJumpWeight(ele,excitedshells=[1.0,1.0,1.0,1.0,1.0])
+        #weights due to Coster Kronig transitions and fluorescence yields
+        ck= MShell.getCosterKronig(ele)
+        w[0] *=  1.0
+        w[1] *= (1.0 + ck['f12'] * w[0])
+        w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
+        w[3] *= (1.0 + ck['f14'] * w[0] + ck['f24'] * w[1] + ck['f34'] * w[2])
+        w[4] *= (1.0 + ck['f15'] * w[0] + ck['f25'] * w[1] + ck['f35'] * w[2] + ck['f45'] * w[3])
+        omega = [ getomegam1(ele), getomegam2(ele), getomegam3(ele), getomegam4(ele), getomegam5(ele)]
+        for i in range(len(w)):
+            w[i] *= omega[i]
     else:
-        w = getPhotoWeight(ele,shellist,energy)
-    #weights due to Coster Kronig transitions and fluorescence yields
-    ck= MShell.getCosterKronig(ele)
-    w[0] *=  1.0
-    w[1] *= (1.0 + ck['f12'] * w[0])
-    w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
-    w[3] *= (1.0 + ck['f14'] * w[0] + ck['f24'] * w[1] + ck['f34'] * w[2])
-    w[4] *= (1.0 + ck['f15'] * w[0] + ck['f25'] * w[1] + ck['f35'] * w[2] + ck['f45'] * w[3])
-    omega = [ getomegam1(ele), getomegam2(ele), getomegam3(ele), getomegam4(ele), getomegam5(ele)]
-    for i in range(len(w)):
-        w[i] *= omega[i]
+        #Take into account the cascade as in the getFluorescence method
+        #The PyMCA fit was already using that when there was a matrix but
+        #it was not shown in the Elements Info window.
+        allweights = _getFluorescenceWeights(ele, energy, normalize = False, cascade = True)
+        w   = allweights[4:9]
     if normalize:
         cum = sum(w)
         for i in range(len(w)):
