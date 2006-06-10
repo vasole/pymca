@@ -1320,10 +1320,18 @@ def getMultilayerFluorescence(multilayer0,
             try:
                 trans = Numeric.exp(-coeffs)
             except OverflowError:
-                for coe in  coeffs:
-                    if coe < 0.0:
-                        raise "ValueError", "Positive exponent in transmission term"
-                trans = 0.0 * coeffs
+                #deal with underflows reported as overflows
+                trans = Numeric.zeros(len(energyList), Numeric.Float)
+                for i in range(len(energyList)):
+                    coef = coeffs[i]
+                    if coef < 0.0:
+                        raise "ValueError","Positive exponent in attenuators transmission term"
+                    else:
+                        try:
+                            trans[i] = Numeric.exp(-coef)
+                        except OverflowError:
+                            #if we are here we know it is not an overflow and trans[i] has the proper value
+                            pass
             newweightlist = weightList * trans
         else:
             newweightlist = weightList * 1
@@ -1391,10 +1399,18 @@ def getMultilayerFluorescence(multilayer0,
                 try:
                     trans = Numeric.exp(-coeffs)
                 except OverflowError:
-                    for coe in  coeffs:
-                        if coe < 0.0:
-                            raise "ValueError", "Positive exponent in transmission term"
-                    trans = 0.0 * coeffs
+                    #deal with underflows reported as overflows
+                    trans = Numeric.zeros(len(energyList), Numeric.Float)
+                    for i in range(len(energyList)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise "ValueError","Positive exponent in attenuators transmission term"
+                        else:
+                            try:
+                                trans[i] = Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
                 newweightlist2 = newweightlist2 * trans
                 #get beam2
                 for iene in  range(len(energyList)):
@@ -1425,10 +1441,18 @@ def getMultilayerFluorescence(multilayer0,
                         try:
                             trans = Numeric.exp(-coeffs)
                         except OverflowError:
-                            for coe in  coeffs:
-                                if coe < 0.0:
-                                    raise "ValueError", "Positive exponent in transmission term"
-                            trans = 0.0 * coeffs
+                            #deal with underflows reported as overflows
+                            trans = Numeric.zeros(len(energyList2), Numeric.Float)
+                            for i in range(len(energyList2)):
+                                coef = coeffs[i]
+                                if coef < 0.0:
+                                    raise "ValueError","Positive exponent in attenuators transmission term"
+                                else:
+                                    try:
+                                        trans[i] = Numeric.exp(-coef)
+                                    except OverflowError:
+                                        #if we are here we know it is not an overflow and trans[i] has the proper value
+                                        pass
                         weightList3 = weightList3 * trans
                         
                     for iene2 in range(len(energyList2)):
@@ -1587,10 +1611,18 @@ def getMatrixFluorescence(matrix, energyList0, weightList0=None,flagList0=None,
         try:
             trans = Numeric.exp(-coeffs)
         except OverflowError:
-            for coe in  coeffs:
-                if coe < 0.0:
-                    raise "ValueError", "Positive exponent in transmission term"
-            trans = 0.0 * coeffs
+            #deal with underflows reported as overflows
+            trans = Numeric.zeros(len(energyList), Numeric.Float)
+            for i in range(len(energyList)):
+                coef = coeffs[i]
+                if coef < 0.0:
+                    raise "ValueError","Positive exponent in attenuators transmission term"
+                else:
+                    try:
+                        trans[i] = Numeric.exp(-coef)
+                    except OverflowError:
+                        #if we are here we know it is not an overflow and trans[i] has the proper value
+                        pass
         weightList = weightList * trans
 
     if total <= 0.0:raise "ValueError","Sum of weights lower or equal to 0"
@@ -1632,10 +1664,18 @@ def getMatrixFluorescence(matrix, energyList0, weightList0=None,flagList0=None,
                 try:
                     trans = Numeric.exp(-coeffs)
                 except OverflowError:
-                    for coe in  coeffs:
-                        if coe < 0.0:
-                            raise "ValueError", "Positive exponent in transmission term"
-                    trans = 0.0 * coeffs
+                    #deal with underflows reported as overflows
+                    trans = Numeric.zeros(len(energyList), Numeric.Float)
+                    for i in range(len(energyList)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise "ValueError","Positive exponent in attenuators transmission term"
+                        else:
+                            try:
+                                trans[i] = Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
                 weightList0 = weightList0 * trans
             for i in range(len(energyList)):
                 dict = getFluorescence(pseudomatrix, 
@@ -1779,10 +1819,18 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                 try:
                     trans = Numeric.exp(-coeffs)
                 except OverflowError:
-                    for coe in  coeffs:
-                        if coe < 0.0:
-                            raise "ValueError", "Positive exponent in transmission term"
-                    trans = 0.0 * coeffs
+                    #deal with underflows reported as overflows
+                    trans = Numeric.zeros(len(energies), Numeric.Float)
+                    for i in range(len(energies)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise "ValueError","Positive exponent in attenuators transmission term"
+                        else:
+                            try:
+                                trans[i] = Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             
@@ -1794,10 +1842,18 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                 try:
                     trans = (1.0 - Numeric.exp(-coeffs))
                 except OverflowError:
-                    for coe in coeffs:
-                        if coe < 0.0:
-                            raise "ValueError","Positive exponent in detector transmission term"
+                    #deal with underflows reported as overflows
                     trans = Numeric.ones(len(rates), Numeric.Float) 
+                    for i in range(len(rates)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise "ValueError","Positive exponent in attenuators transmission term"
+                        else:
+                            try:
+                                trans[i] = 1.0 - Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             #matrix term
@@ -1983,10 +2039,18 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 try:
                     trans = (1.0 - Numeric.exp(-coeffs))
                 except OverflowError:
-                    for coe in coeffs:
-                        if coe < 0.0:
-                            raise "ValueError","Positive exponent in detector transmission term"
-                    trans = Numeric.ones(len(rates), Numeric.Float)
+                    #deal with underflows reported as overflows
+                    trans = Numeric.ones(len(rates), Numeric.Float) 
+                    for i in range(len(rates)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise "ValueError","Positive exponent in attenuators transmission term"
+                        else:
+                            try:
+                                trans[i] = 1.0 - Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             #matrix term
