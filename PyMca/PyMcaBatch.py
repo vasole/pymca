@@ -146,7 +146,7 @@ class McaBatchGUI(qt.QWidget):
             palette.setDisabled(palette.active())
         else:
             print "palette set disabled"
-        self.__fitBox.setChecked(True)
+        self.__fitBox.setChecked(False)
         self.__fitBox.setEnabled(False)
         vbox1.l.addWidget(self.__fitBox)
 
@@ -181,10 +181,10 @@ class McaBatchGUI(qt.QWidget):
         self.__tableBox = qt.QCheckBox(vbox1)
         self.__tableBox.setText('Table in Report')
         palette = self.__tableBox.palette()
-        if qt.qVersion() < '4.0.0':
-            palette.setDisabled(palette.active())
-        else:
-            print "palette set disabled"
+        #if qt.qVersion() < '4.0.0':
+        #    palette.setDisabled(palette.active())
+        #else:
+        #    print "palette set disabled"
         self.__tableBox.setChecked(True)
         self.__tableBox.setEnabled(False)
         vbox1.l.addWidget(self.__tableBox)
@@ -198,7 +198,8 @@ class McaBatchGUI(qt.QWidget):
         self.__concentrationsBox = qt.QCheckBox(vbox3)
         self.__concentrationsBox.setText('Concentrations (SLOW!)')
         self.__concentrationsBox.setChecked(False)
-        self.__concentrationsBox.setEnabled(True)
+        #self.__concentrationsBox.setEnabled(True)
+        self.__concentrationsBox.setEnabled(False)
         vbox3.l.addWidget(self.__concentrationsBox)
         self._layout.addWidget(box)
         
@@ -221,9 +222,14 @@ class McaBatchGUI(qt.QWidget):
         
         #self.useGroup.setExclusive(1)
         #if qt.qVersion() > '3.0.0':self.useGroup.setFlat(1)
-        self.connect(self.__overwrite,   qt.SIGNAL("clicked()"), self.__clickSignal0)
-        self.connect(self.__useExisting, qt.SIGNAL("clicked()"), self.__clickSignal1)
-        self.connect(self.__concentrationsBox, qt.SIGNAL("clicked()"), self.__clickSignal2)
+        self.connect(self.__overwrite,   qt.SIGNAL("clicked()"),
+                                         self.__clickSignal0)
+        self.connect(self.__useExisting, qt.SIGNAL("clicked()"),
+                                         self.__clickSignal1)
+        self.connect(self.__concentrationsBox, qt.SIGNAL("clicked()"),
+                                               self.__clickSignal2)
+        self.connect(self.__htmlBox, qt.SIGNAL("clicked()"),
+                                               self.__clickSignal3)
         
         boxStep0   = qt.QWidget(bigbox)
         boxStep0.l = qt.QVBoxLayout(boxStep0)
@@ -311,6 +317,16 @@ class McaBatchGUI(qt.QWidget):
 
     def __clickSignal2(self):
         self.__tableBox.setEnabled(True)
+
+    def __clickSignal3(self):
+        if self.__htmlBox.isChecked():
+            self.__tableBox.setEnabled(True)
+            self.__concentrationsBox.setEnabled(True)
+            self.__fitBox.setChecked(True)
+        else:
+            self.__tableBox.setEnabled(False)
+            self.__concentrationsBox.setEnabled(False)
+            self.__fitBox.setChecked(False)
 
     def __buildActions(self):
         box = qt.QWidget(self)
@@ -587,12 +603,14 @@ class McaBatchGUI(qt.QWidget):
         overwrite= self.__overwrite.isChecked()
         filestep = int(str(self.__fileSpin.text()))
         mcastep  = int(str(self.__mcaSpin.text()))
+        fitfiles = self.__fitBox.isChecked()
 
         if roifit:
             window =  McaBatchWindow(name="ROI"+name,actions=1, outputdir=self.outputDir,
                                      html=html, htmlindex=htmlindex, table = 0)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
-                         roiwidth=roiwidth,overwrite=overwrite,filestep=1,mcastep=1, concentrations=0)
+                         roiwidth=roiwidth,overwrite=overwrite,filestep=1,mcastep=1,
+                         concentrations=0, fitfiles=fitfiles)
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
@@ -619,7 +637,7 @@ class McaBatchGUI(qt.QWidget):
                                      html=html,htmlindex=htmlindex, table = table)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
                          roiwidth=roiwidth,overwrite=overwrite,filestep=filestep,
-                         mcastep=mcastep, concentrations=concentrations)
+                         mcastep=mcastep, concentrations=concentrations, fitfiles=fitfiles)
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
@@ -725,11 +743,13 @@ class HorizontalSpacer(qt.QWidget):
 class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,
                      roifit = None, roiwidth=None, overwrite=1,
-                     filestep=1, mcastep=1, concentrations=0):
+                     filestep=1, mcastep=1, concentrations=0, fitfiles=0):
         McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile, filelist, outputdir,
                                                          roifit=roifit, roiwidth=roiwidth,
                                                          overwrite=overwrite, filestep=filestep,
-                                                         mcastep=mcastep, concentrations=concentrations) 
+                                                         mcastep=mcastep,
+                                                         concentrations=concentrations,
+                                                         fitfiles=fitfiles) 
         qt.QThread.__init__(self)        
         self.parent = parent
         self.pleasePause = 0
@@ -1207,7 +1227,7 @@ def main():
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table)
         b = McaBatch(window,cfg,filelist,outdir,roifit=roifit,roiwidth=roiwidth,
                      overwrite = overwrite, filestep=filestep, mcastep=mcastep,
-                      concentrations=concentrations)
+                      concentrations=concentrations, fitfiles=html)
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1
