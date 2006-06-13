@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.27 $"
+__revision__ = "$Revision: 1.28 $"
 import ClassMcaTheory
 import SpecFileLayer
 import EdfFileLayer
@@ -40,8 +40,13 @@ class McaAdvancedFitBatch:
     def __init__(self,initdict,filelist=None,outputdir=None,
                     roifit=None,roiwidth=None,
                     overwrite=1, filestep=1, mcastep=1,
-                    concentrations=0):
-        self._concentrations = concentrations
+                    concentrations=0, fitfiles=1):
+        #for the time being the concentrations are bound to the .fit files
+        #that is not necessary, but it will be correctly implemented in
+        #future releases
+        self.fitFiles = fitfiles
+        if self.fitFiles: self._concentrations = concentrations
+        else: self._concentrations = 0
         if type(initdict) == type([]):
             self.mcafit = ClassMcaTheory.McaTheory(initdict[0])
             self.__configList = initdict
@@ -52,7 +57,6 @@ class McaAdvancedFitBatch:
             self._tool = ConcentrationsTool.ConcentrationsTool()
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
-        self.fitFiles = 1
         self.fitImages= 1
         self.fileStep = filestep
         self.mcaStep  = mcastep 
@@ -63,6 +67,9 @@ class McaAdvancedFitBatch:
         self.pleaseBreak = 0
         self.roiFit   = roifit
         self.roiWidth = roiwidth
+        self.fitImages = False
+        self.__ncols = None
+
         
     def setFileList(self,filelist=None):
         self._rootname = ""
@@ -127,8 +134,9 @@ class McaAdvancedFitBatch:
             self.__processOneFile()
         if self.counter:
             if not self.roiFit: 
-                self.listfile.write(']\n')
-                self.listfile.close()
+                if self.fitFiles:
+                    self.listfile.write(']\n')
+                    self.listfile.close()
             if self.__ncols is not None:
                 if self.__ncols:self.saveImage()
         self.onEnd()
@@ -225,11 +233,13 @@ class McaAdvancedFitBatch:
                                                     key=key,
                                                     info=infoDict)
                 else:
-                    self.fitImages = False
-                    self.__ncols = None
                     if info['NbMca'] > 0:
+                        self.fitImages = True
+                        self.__ncols = info['NbMca'] * 1
+                        self.__col   = -1
                         for i in range(info['NbMca']):
                             if self.pleaseBreak: break
+                            self.__col += 1
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
                             key = "%s.%s.%03d.%d" % (scan,order,point,mca)
@@ -285,10 +295,10 @@ class McaAdvancedFitBatch:
                     return
                 try:
                     self.mcafit.estimate()
-                    if self.fitFiles:
+                    if self.fitFiles or self._concentrations:
                         fitresult, result = self.mcafit.startfit(digest=1)
                     else:
-                        print "no fit files"
+                        #just images
                         fitresult = self.mcafit.startfit(digest=0)
                 except:
                     print "Error fitting file with output = ",filename
@@ -302,6 +312,8 @@ class McaAdvancedFitBatch:
                             conf = result['config']
                         else:
                             fitresult0={}
+                            if result is None:
+                                result = self.mcafit.digestresult()
                             fitresult0['result']    = result
                             fitresult0['fitresult'] = fitresult
                             conf = self.mcafit.configure()
@@ -375,7 +387,8 @@ class McaAdvancedFitBatch:
                 else: 
                     self.listfile.write(',\n'+outfile)
             else:
-                if not useExistingResult:result = self.mcafit.digestresult()
+                if not useExistingResult:
+                    if result is None:result = self.mcafit.digestresult()
 
             #IMAGES
             if self.fitImages:
