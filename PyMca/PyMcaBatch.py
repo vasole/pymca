@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.40 $"
+__revision__ = "$Revision: 1.41 $"
 ###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -142,12 +142,12 @@ class McaBatchGUI(qt.QWidget):
         self.__fitBox = qt.QCheckBox(vbox1)
         self.__fitBox.setText('Generate .fit Files')
         palette = self.__fitBox.palette()
-        if qt.qVersion() < '4.0.0':
-            palette.setDisabled(palette.active())
-        else:
-            print "palette set disabled"
+        #if qt.qVersion() < '4.0.0':
+        #    palette.setDisabled(palette.active())
+        #else:
+        #    print "palette set disabled"
         self.__fitBox.setChecked(False)
-        self.__fitBox.setEnabled(False)
+        self.__fitBox.setEnabled(True)
         vbox1.l.addWidget(self.__fitBox)
 
         self.__imgBox = qt.QCheckBox(vbox2)
@@ -203,7 +203,7 @@ class McaBatchGUI(qt.QWidget):
         vbox3.l.addWidget(self.__concentrationsBox)
         self._layout.addWidget(box)
         
-        # other staff
+        # other stuff
         bigbox   = qt.QWidget(self)
         bigbox.l = qt.QHBoxLayout(bigbox)
         
@@ -323,10 +323,13 @@ class McaBatchGUI(qt.QWidget):
             self.__tableBox.setEnabled(True)
             self.__concentrationsBox.setEnabled(True)
             self.__fitBox.setChecked(True)
+            self.__fitBox.setEnabled(False)
         else:
             self.__tableBox.setEnabled(False)
             self.__concentrationsBox.setEnabled(False)
             self.__fitBox.setChecked(False)
+            self.__fitBox.setEnabled(True)
+
 
     def __buildActions(self):
         box = qt.QWidget(self)
@@ -674,21 +677,21 @@ class McaBatchGUI(qt.QWidget):
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
-                cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d' % (myself,
+                cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table)
+                                                                    table, fitfiles)
             else:
-                cmd = '"%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d' % (myself,
+                cmd = '"%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table)
+                                                                    table, fitfiles)
             self.hide()
             qt.qApp.processEvents()
             if DEBUG:print "cmd = ", cmd
@@ -709,18 +712,19 @@ class McaBatchGUI(qt.QWidget):
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
-                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d &" % (myself,
+                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % (myself,
                                                     cfglistfile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex, listfile,
-                                                    concentrations, table)
+                                                    concentrations, table, fitfiles)
             else:
-                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d &" % (myself, self.configFile,
+                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % (myself, self.configFile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex,
-                                                    listfile, concentrations, table)
+                                                    listfile, concentrations, table, fitfiles)
             if DEBUG:print "cmd = ", cmd
             os.system(cmd)
+            
     def genListFile(self,listfile, config=None):
         try:
             os.remove(listfile)
@@ -1145,7 +1149,7 @@ def main():
     options     = 'f'
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
-                   'listfile=','cfglistfile=', 'concentrations=', 'table=']
+                   'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=']
     filelist = None
     outdir   = None
     cfg      = None
@@ -1159,6 +1163,7 @@ def main():
     htmlindex= None
     mcastep  = 1
     table    = 2
+    fitfiles = 1
     concentrations = 0
     opts, args = getopt.getopt(
                     sys.argv[1:],
@@ -1191,6 +1196,8 @@ def main():
             concentrations  = int(arg)
         elif opt in ('--table'):
             table  = int(arg)
+        elif opt in ('--fitfiles'):
+            fitfiles  = int(arg)
     if listfile is None: 
         filelist=[]
         for item in args:
@@ -1225,9 +1232,11 @@ def main():
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window =  McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table)
+                                
+        if html or concentrations:fitfiles=1
         b = McaBatch(window,cfg,filelist,outdir,roifit=roifit,roiwidth=roiwidth,
                      overwrite = overwrite, filestep=filestep, mcastep=mcastep,
-                      concentrations=concentrations, fitfiles=html)
+                      concentrations=concentrations, fitfiles=fitfiles)
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1

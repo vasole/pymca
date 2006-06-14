@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.28 $"
+__revision__ = "$Revision: 1.30 $"
 import ClassMcaTheory
 import SpecFileLayer
 import EdfFileLayer
@@ -40,7 +40,7 @@ class McaAdvancedFitBatch:
     def __init__(self,initdict,filelist=None,outputdir=None,
                     roifit=None,roiwidth=None,
                     overwrite=1, filestep=1, mcastep=1,
-                    concentrations=0, fitfiles=1):
+                    concentrations=0, fitfiles=1, fitimages=1):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
@@ -57,18 +57,21 @@ class McaAdvancedFitBatch:
             self._tool = ConcentrationsTool.ConcentrationsTool()
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
-        self.fitImages= 1
+        if fitimages:
+            self.fitImages=  1
+            self.__ncols  =  None
+        else:
+            self.fitImages = False
+            self.__ncols = None
         self.fileStep = filestep
         self.mcaStep  = mcastep 
         self.useExistingFiles = not overwrite
         self.savedImages=[]
         if roifit   is None:roifit   = False
-        if roiwidth is None:roiwidth = 250.
+        if roiwidth is None:roiwidth = 100.
         self.pleaseBreak = 0
         self.roiFit   = roifit
         self.roiWidth = roiwidth
-        self.fitImages = False
-        self.__ncols = None
 
         
     def setFileList(self,filelist=None):
