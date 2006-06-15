@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.56 $"
+__revision__ = "$Revision: 1.59 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -31,6 +31,65 @@ import qt
 import PyMcaMdi
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
+import os
+__version__ = "3.9.1"
+if qt.qVersion() < '3.0.0':
+    class SplashScreen(qt.QWidget):
+        def __init__(self,parent=None,name="SplashScreen",
+                        fl=qt.Qt.WStyle_Customize  | qt.Qt.WDestructiveClose,
+                        pixmap = None):
+            qt.QWidget.__init__(self,parent,name,fl)
+            self.setCaption("PyMCA %s" % __version__)
+            layout = qt.QVBoxLayout(self)
+            layout.setAutoAdd(1)
+            label = qt.QLabel(self)
+            if pixmap is not None:label.setPixmap(pixmap)
+            else:label.setText("Hello") 
+            self.bottomText = qt.QLabel(self)
+
+        def message(self, text):
+            font = self.bottomText.font()
+            font.setBold(True)
+            self.bottomText.setFont(font)
+            self.bottomText.setText(text)
+            self.bottomText.show()
+            self.show()
+            self.raiseW()
+
+if __name__ == "__main__":
+    app = qt.QApplication(sys.argv)
+    if qt.qVersion >= '3.0.0':
+        strlist = qt.QStyleFactory.keys()
+        if sys.platform == "win32":
+            for item in strlist:
+                text = str(item)
+                if text == "WindowsXP":
+                    style = qt.QStyleFactory.create(item)
+                    app.setStyle(style)
+                    break
+    if 1:
+        winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
+        app.setPalette(winpalette)
+
+    mpath = os.path.dirname(PyMcaMdi.__file__)
+    if mpath[-3:] == "exe":
+        mpath = os.path.dirname(mpath)
+    qt.QMimeSourceFactory.defaultFactory().addFilePath(mpath)
+    if qt.qVersion() < '3.0.0':
+        pixmap = qt.QPixmap('PyMcaSplashImage.png')    
+        splash  = SplashScreen(pixmap=pixmap)
+        splash.message( 'PyMCA version %s\n' % __version__)        
+    else:
+        pixmap = qt.QPixmap.fromMimeSource('PyMcaSplashImage.png')
+        splash  = qt.QSplashScreen(pixmap)
+        splash.show()
+        font = splash.font()
+        font.setBold(True)
+        splash.setFont(font)
+        splash.message( 'PyMCA %s' % __version__, 
+                qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
+                qt.Qt.white)
+
 
 import McaWindow
 import EdfFileLayer
@@ -42,7 +101,6 @@ import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
 import Fit2Spec
-import os
 import ConfigDict
 DEBUG = 0
 
@@ -56,7 +114,6 @@ if (sys.platform != 'win32') and (sys.platform != 'darwin'):
     SOURCES["SPS"] = {'widget':SPSSelector.SPSSelector,'data':SPSLayer.SPSLayer}
     SOURCESLIST.append("SPS")
 
-__version__ = "3.9.0"
 class PyMca(PyMcaMdi.PyMca):
     def __init__(self, parent=None, name="PyMca", fl=qt.Qt.WDestructiveClose,**kw):
             PyMcaMdi.PyMca.__init__(self, parent, name, fl)
@@ -732,44 +789,7 @@ class PixmapLabel(qt.QLabel):
         dict['data'] = event
         self.emit(qt.PYSIGNAL("PixmapLabelMousePressEvent"),(dict,))
 
-
-"""
-class SplashScreen(qt.QMainWindow):
-    def __init__(self,parent=None,name="SplashScreen",fl=qt.Qt.WStyle_Customize | qt.Qt.WStyle_Splash | qt.Qt.WDestructiveClose):
-        qt.QMainWindow.__init__(self,parent,name,fl)
-        self.setCaption(name)
-        wid = qt.QWidget(self, '',  qt.Qt.WStyle_Customize | qt.Qt.WStyle_Splash | qt.Qt.WDestructiveClose)
-        layout = qt.QVBoxLayout(wid)
-        layout.setAutoAdd(1)
-        label = qt.QLabel(wid)
-        label.setText("Hello") 
-        scr = qt.QApplication.desktop().screenGeometry()
-        self.setCentralWidget(wid)
-        self.move(scr.center() - self.rect().center())
-        wid.show()
-        qt.QApplication.flush()
-        self.raiseW()
-"""        
-    
-
-def main(args):
-    app = qt.QApplication(args)
-    #app.setFont(qt.QFont("Helvetica [Adobe]",10))    
-    #if sys.platform == 'win32':
-    if qt.qVersion >= '3.0.0':
-        strlist = qt.QStyleFactory.keys()
-        if sys.platform == "win32":
-            for item in strlist:
-                text = str(item)
-                if text == "WindowsXP":
-                    style = qt.QStyleFactory.create(item)
-                    #print "setting windowsXP style"
-                    app.setStyle(style)
-                    break
-    if 1:
-        winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
-        app.setPalette(winpalette)
-
+if __name__ == '__main__':
     options     = '-f'
     longoptions = ['spec=','shm=','debug=']
     try:
@@ -779,9 +799,9 @@ def main(args):
                      longoptions)
     except getopt.error,msg:
         print msg
+        splash.close()
         sys.exit(1)
     
-
     kw={}
     debugreport = 0
     for opt, arg in opts:
@@ -801,8 +821,6 @@ def main(args):
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                             app,qt.SLOT("quit()"))
     # --- close waiting widget
+    splash.close()
     app.exec_loop()
-
-if __name__ == '__main__':
-    main(sys.argv)
 

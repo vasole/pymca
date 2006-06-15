@@ -19,7 +19,7 @@ for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
         break
 
 # Specify all the required PyMca data
-data_files = [('PyMca', ['PyMca/Scofield1973.dict', 'PyMca/McaTheory.cfg']),
+data_files = [('PyMca', ['PyMca/Scofield1973.dict', 'PyMca/McaTheory.cfg','PyMca/PyMcaSplashImage.png']),
               ('PyMca/attdata', glob.glob('PyMca/attdata/*')),
               ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
