@@ -33,7 +33,7 @@ from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
 __version__ = "3.9.1"
-if qt.qVersion() < '3.0.0':
+if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
                         fl=qt.Qt.WStyle_Customize  | qt.Qt.WDestructiveClose,
@@ -75,10 +75,10 @@ if __name__ == "__main__":
     if mpath[-3:] == "exe":
         mpath = os.path.dirname(mpath)
     qt.QMimeSourceFactory.defaultFactory().addFilePath(mpath)
-    if qt.qVersion() < '3.0.0':
+    if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
         pixmap = qt.QPixmap('PyMcaSplashImage.png')    
         splash  = SplashScreen(pixmap=pixmap)
-        splash.message( 'PyMCA version %s\n' % __version__)        
+        splash.message( 'PyMCA version %s\n' % __version__)     
     else:
         pixmap = qt.QPixmap.fromMimeSource('PyMcaSplashImage.png')
         splash  = qt.QSplashScreen(pixmap)
