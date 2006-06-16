@@ -205,7 +205,6 @@ class EdfFile_StandardArray(qt.QWidget):
         if not str(self.plotCombo.currentText()) == "Rows":
             return
         current = self.yList.currentItem()
-        print "current = ",current
         n       = self.yList.count()
         self.yList.clear()
         for index in range(n):

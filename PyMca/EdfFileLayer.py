@@ -340,6 +340,15 @@ class EdfFileLayer:
                         else:
                             array += array0 
                     f+=1
+            if info.has_key('McaCalib'):
+                if type(info['McaCalib']) == type(" "):
+                    info['McaCalib'] = info['McaCalib'].replace("[","")
+                    info['McaCalib'] = info['McaCalib'].replace("]","")
+                    cala, calb, calc = info['McaCalib'].split(",")
+                    info['McaCalib'] = [string.atof(cala),
+                                        string.atof(calb),
+                                        string.atof(calc)]
+                
             output.append([info,array])
             #AS self.AppendPage(info,array)
         if len(output) == 1:
