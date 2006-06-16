@@ -553,7 +553,7 @@ class QtMcaAdvancedFitReport:
         graph.sety1axislimits(ymin,ymax)
         graph.sety2axislimits(ymin,ymax)
         graph.show()
-        if qt.qVersion() < '3.0.0':
+        if True or qt.qVersion() < '3.0.0':
             widget.resize(450,300)
             #widget.show()
         
