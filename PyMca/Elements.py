@@ -2499,7 +2499,10 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
             nbs =[1]
         else:
             elts= [ w for w in re.split('[0-9]', compound) if w<>'' ]
-            nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w<>'' ]
+            try:
+                nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w<>'' ]
+            except:
+                raise "ValueError", "Compound '%s' not understood" % compound                
             if len(elts)==1 and len(nbs)==0:
                 elts=[compound]
                 nbs =[1]
