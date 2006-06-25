@@ -284,15 +284,20 @@ class QtMcaAdvancedFitReport:
         stdsum  = self.fitresult['result']['sigmapar'][self.fitresult['result']['parameters'].index('Sum')]
 
         hypermetflag = self.fitresult['result']['config']['fit']['hypermetflag']
-
-        #   PARAMETERS.append('Constant')
-        #   PARAMETERS.append('1st Order')
-        #if HYPERMET:
-        #    PARAMETERS.append('ST AreaR')
-        #    PARAMETERS.append('ST SlopeR')
-        #    PARAMETERS.append('LT AreaR')
-        #    PARAMETERS.append('LT SlopeR')
-        #    PARAMETERS.append('STEP HeightR')
+        if hypermetflag > 1:
+            hypermetnames = ['ST AreaR', 'ST SlopeR',
+                             'LT AreaR', 'LT SlopeR',
+                             'STEP HeightR']
+            hypermetvalues=[]
+            hypermetstd   =[]
+            hypermetfinalnames = []
+            for name in hypermetnames:
+                if name in self.fitresult['result']['parameters']:
+                    hypermetvalues.append(self.fitresult['result']['fittedpar'] \
+                            [self.fitresult['result']['parameters'].index(name)])
+                    hypermetstd.append(self.fitresult['result']['sigmapar'] \
+                            [self.fitresult['result']['parameters'].index(name)])
+                    hypermetfinalnames.append(name)
 
         # --- html table
         text+="<H2><FONT color=#009999>"
@@ -355,6 +360,25 @@ class QtMcaAdvancedFitReport:
         text+="        </TABLE>"
         text+="    </TD>"
         text+="</TR>"
+
+        # --- Peak shape parameters ---
+        if hypermetflag > 1:
+            text+="<TR>"
+            text+="    <TD><TABLE border=1 cellpadding=1 cellspacing=0 width=100%>"
+            text+="        <TR align=center>"
+            text+="            <TH colspan=2>Peak shape parameters</TH>"
+            text+="        </TR>"
+            for i in range(len(hypermetfinalnames)):
+                text+="        <TR align=left>"
+                text+="            <TD><I>&nbsp;%s</I></TD>" % hypermetnames[i]
+                text+="            <TD>&nbsp;% .5E +/- % .5E</TD>" % (hypermetvalues[i],
+                                                                      hypermetstd[i])
+                text+="        </TR>"
+            text+="        </TABLE>"
+            text+="    </TD>"
+            text+="</TR>"
+        
+
         
         # --- Continuum parameters ---
         text+="<TR>"
@@ -382,6 +406,7 @@ class QtMcaAdvancedFitReport:
              text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Iterations"
              text+="            <TD>&nbsp;%d</TD>" % iterations
              text+="        </TR>"
+
         # --- Background Function
         if self.fitresult['result']['config']['fit']['continuum']:
              text+="        <TR align=left>"

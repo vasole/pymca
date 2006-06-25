@@ -225,7 +225,14 @@ class McaTheory:
           if matrix[0].upper() != "MULTILAYER":
               multilayer = [matrix * 1]
           else:
-              multilayer  = multilayerlist * 1
+              if multilayerlist is not None:
+                  multilayer  = multilayerlist * 1
+              else:
+                  text  = "Your matrix is not properly defined.\n"
+                  text += "If you used the graphical interface,\n"
+                  text += "Please check the MATRIX tab" 
+                  raise "ValueError",text
+                  
           dict=Elements.getMultilayerFluorescence(multilayer,
                                      energylist,
                                      layerList = None,
@@ -331,7 +338,9 @@ class McaTheory:
 #######################################
         else:
             if usematrix and (maxenergy is None):
-                raise "ValueError","Invalid energy for matrix configuration"
+                text  = "Invalid energy for matrix configuration.\n"
+                text += "Please check your BEAM parameters."
+                raise "ValueError", text
             elif ((not usematrix) and (self.config['fit']['energy'] is None)) or \
                  ((not usematrix) and (self.config['fit']['energy'] == [None])) or\
                  ((not usematrix) and (self.config['fit']['energy'] == ["None"])) or\

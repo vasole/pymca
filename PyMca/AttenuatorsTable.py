@@ -138,7 +138,7 @@ class AttenuatorsTableWidget(QTable):
                 self.horizontalHeader().setLabel(labels.index(label),label)
         else:
             if DEBUG:
-                print "margin to addjust"
+                print "margin to adjust"
                 print "focus style"
             self.setFrameShape(qt.QTableWidget.NoFrame)
             self.setSelectionMode(qt.QTableWidget.NoSelection)
@@ -208,6 +208,9 @@ class AttenuatorsTableWidget(QTable):
                     combo = MyQComboBox(options=a)
                     combo.setEditable(True)
                     self.setCellWidget(idx,2,combo)
+                    qt.QObject.connect(combo,
+                                       qt.PYSIGNAL("MaterialComboBoxSignal"),
+                                       self._comboSlot)
             else:
                 for idx in range(self.rowCount()):
                     item= qt.QCheckBox(self)
@@ -226,7 +229,7 @@ class AttenuatorsTableWidget(QTable):
                     combo = MyQComboBox(self,options=a, row = idx, col = 2)
                     combo.setEditable(True)
                     self.setCellWidget(idx,2,combo)
-            qt.QObject.connect(combo,
+                    qt.QObject.connect(combo,
                                        qt.PYSIGNAL("MaterialComboBoxSignal"),
                                        self._comboSlot)
             return

@@ -205,6 +205,7 @@ class EdfFile_StandardArray(qt.QWidget):
         if not str(self.plotCombo.currentText()) == "Rows":
             return
         current = self.yList.currentItem()
+        print "current = ",current
         n       = self.yList.count()
         self.yList.clear()
         for index in range(n):
@@ -839,7 +840,8 @@ class EdfFileSelector(qt.QWidget):
             
     def __getSelectedKeys(self):
         selkeys= []
-        parwid= self.paramWidget.visibleWidget()
+        parwid= self.paramWidget
+        #.visibleWidget()
         if self.currentArray is not None:
             for sel in parwid.getSelection():
                 sel["SourceName"]= self.currentFile
