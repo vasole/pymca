@@ -24,21 +24,26 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.2 $"
+__revision__ = "$Revision: 1.3 $"
 
-from Scofield_HS import ElementL1ShellTransitions
-from Scofield_HS import ElementL1ShellRates
-from Scofield_HS import ElementL2ShellTransitions
-from Scofield_HS import ElementL2ShellRates
-from Scofield_HS import ElementL3ShellTransitions
-from Scofield_HS import ElementL3ShellRates
-from LShell_Chen   import ElementL1ShellConstants
-from LShell_Chen   import ElementL1ShellValues
-from LShell_Chen   import ElementL2ShellConstants
-from LShell_Chen   import ElementL2ShellValues
-from LShell_Chen   import ElementL3ShellConstants
-from LShell_Chen   import ElementL3ShellValues
 import Numeric
+import specfile
+sf=specfile.Specfile("LShellRates.dat")
+ElementL1ShellTransitions = sf[0].alllabels()
+ElementL2ShellTransitions = sf[1].alllabels()
+ElementL3ShellTransitions = sf[2].alllabels()
+ElementL1ShellRates = Numeric.transpose(sf[0].data()).tolist()
+ElementL2ShellRates = Numeric.transpose(sf[1].data()).tolist()
+ElementL3ShellRates = Numeric.transpose(sf[2].data()).tolist()
+
+sf=specfile.Specfile("LShellConstants.dat")
+ElementL1ShellConstants = sf[0].alllabels()
+ElementL2ShellConstants = sf[1].alllabels()
+ElementL3ShellConstants = sf[2].alllabels()
+ElementL1ShellValues = Numeric.transpose(sf[0].data()).tolist()
+ElementL2ShellValues = Numeric.transpose(sf[1].data()).tolist()
+ElementL3ShellValues = Numeric.transpose(sf[2].data()).tolist()
+sf=None
 
 Elements = ['H', 'He', 
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',

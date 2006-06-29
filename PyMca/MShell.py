@@ -24,27 +24,34 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-from MShell_Bhalla import ElementM1ShellTransitions
-from MShell_Bhalla import ElementM1ShellRates
-from MShell_Bhalla import ElementM2ShellTransitions
-from MShell_Bhalla import ElementM2ShellRates
-from MShell_Bhalla import ElementM3ShellTransitions
-from MShell_Bhalla import ElementM3ShellRates
-from MShell_Bhalla import ElementM4ShellTransitions
-from MShell_Bhalla import ElementM4ShellRates
-from MShell_Bhalla import ElementM5ShellTransitions
-from MShell_Bhalla import ElementM5ShellRates
-from MShell_Chen   import ElementM1ShellConstants
-from MShell_Chen   import ElementM1ShellValues
-from MShell_Chen   import ElementM2ShellConstants
-from MShell_Chen   import ElementM2ShellValues
-from MShell_Chen   import ElementM3ShellConstants
-from MShell_Chen   import ElementM3ShellValues
-from MShell_Chen   import ElementM4ShellConstants
-from MShell_Chen   import ElementM4ShellValues
-from MShell_Chen   import ElementM5ShellConstants
-from MShell_Chen   import ElementM5ShellValues
 import Numeric
+import specfile
+sf=specfile.Specfile("MShellRates.dat")
+ElementM1ShellTransitions = sf[0].alllabels()
+ElementM2ShellTransitions = sf[1].alllabels()
+ElementM3ShellTransitions = sf[2].alllabels()
+ElementM4ShellTransitions = sf[3].alllabels()
+ElementM5ShellTransitions = sf[4].alllabels()
+ElementM1ShellRates = Numeric.transpose(sf[0].data()).tolist()
+ElementM2ShellRates = Numeric.transpose(sf[1].data()).tolist()
+ElementM3ShellRates = Numeric.transpose(sf[2].data()).tolist()
+ElementM4ShellRates = Numeric.transpose(sf[3].data()).tolist()
+ElementM5ShellRates = Numeric.transpose(sf[4].data()).tolist()
+
+sf=specfile.Specfile("MShellConstants.dat")
+ElementM1ShellConstants = sf[0].alllabels()
+ElementM2ShellConstants = sf[1].alllabels()
+ElementM3ShellConstants = sf[2].alllabels()
+ElementM4ShellConstants = sf[3].alllabels()
+ElementM5ShellConstants = sf[4].alllabels()
+ElementM1ShellValues = Numeric.transpose(sf[0].data()).tolist()
+ElementM2ShellValues = Numeric.transpose(sf[1].data()).tolist()
+ElementM3ShellValues = Numeric.transpose(sf[2].data()).tolist()
+ElementM4ShellValues = Numeric.transpose(sf[3].data()).tolist()
+ElementM5ShellValues = Numeric.transpose(sf[4].data()).tolist()
+sf=None
+
+
 Elements = ['H', 'He', 
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',

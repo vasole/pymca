@@ -28,7 +28,7 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.82 $"
+__revision__ = "$Revision: 1.83 $"
 import string
 import Numeric
 import imp
@@ -265,29 +265,22 @@ ElementBinding=[[1,  0.01360,  0.00000,  0.00000,  0.00000,  0.00000,  0.00000, 
 [103,  152.97000,  30.08300,  29.10300,  22.35900,  7.93000,  7.47400,  5.86000,  5.17600,  4.87600,  2.18000,  1.96300,  1.52300,  1.19200,  1.11200,  0.68000,  0.65800,  0.51600,  0.42900,  0.29600,  0.17400,  0.15400,  0.01990,  0.01700,  0.07100,  0.04400,  0.02100,  0.00390,  0.00690],
 [104,  156.28800,  30.88100,  29.98600,  22.90700,  8.16100,  7.73800,  6.00900,  5.33600,  5.01400,  2.23700,  2.03500,  1.55400,  1.23300,  1.14900,  0.72500,  0.70100,  0.53500,  0.44800,  0.31900,  0.19000,  0.17100,  0.02600,  0.02280,  0.08200,  0.05500,  0.03300,  0.00500,  0.00750],]
 
-#from Scofield_HS import *
-#K shell rates awful at Ca 
-from Scofield_HS import ElementKShellTransitions
-from Scofield_HS import ElementKShellRates
-from Scofield_HS import ElementL1ShellTransitions
-from Scofield_HS import ElementL1ShellRates
-from Scofield_HS import ElementL2ShellTransitions
-from Scofield_HS import ElementL2ShellRates
-from Scofield_HS import ElementL3ShellTransitions
-from Scofield_HS import ElementL3ShellRates
-#Hartree-Fock works better for K shells
-from Scofield_HF import ElementKShellTransitions
-from Scofield_HF import ElementKShellRates
-#import LShell_Chen
+import KShell
 import LShell
 import MShell
 #Scofield's photoelectric dictionnary
 import Scofield1973
-ElementShellTransitions = [ElementKShellTransitions,LShell.ElementLShellTransitions,
-                            ElementL1ShellTransitions,ElementL2ShellTransitions,ElementL3ShellTransitions,
-                            MShell.ElementMShellTransitions]
-ElementShellRates = [ElementKShellRates, LShell.ElementLShellRates,
-                     ElementL1ShellRates,ElementL2ShellRates,ElementL3ShellRates,MShell.ElementMShellRates]
+ElementShellTransitions = [KShell.ElementKShellTransitions,
+                           LShell.ElementLShellTransitions,
+                           LShell.ElementL1ShellTransitions,
+                           LShell.ElementL2ShellTransitions,
+                           LShell.ElementL3ShellTransitions,
+                           MShell.ElementMShellTransitions]
+ElementShellRates = [KShell.ElementKShellRates,
+                     LShell.ElementLShellRates,
+                     LShell.ElementL1ShellRates,
+                     LShell.ElementL2ShellRates,
+                     LShell.ElementL3ShellRates,MShell.ElementMShellRates]
 
 ElementXrays      = ['K xrays','L xrays','L1 xrays','L2 xrays','L3 xrays','M xrays']
 
@@ -311,13 +304,8 @@ def getz(ele):
         
 #fluorescence yields
 def getomegak(ele):
-    a=[0.0370,0.03112,5.44E-05,-1.250E-06]
-    z=float(getz(ele))
-    rhelp = a[0]
-    for i in range(1,4):
-        rhelp += a[i]*pow(z,i)
-    rhelp = pow(rhelp,4)
-    return rhelp/(1.0+rhelp)
+    index = KShell.ElementKShellConstants.index('omegaK')
+    return  KShell.ElementKShellValues[getz(ele)-1][index]
 
 def getomegal1(ele):
     index = LShell.ElementL1ShellConstants.index('omegaL1')
@@ -3121,21 +3109,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         ele = sys.argv[1]
-        if ele in Material.keys():
-            print "NEW Air=",getMatrixFluorescence([ele,1.0,0.01],[10.,20],[1.,1.0],[1,1])['Ar']['KL3']
-            print "OLD 10 =",getFluorescence([ele,1.0,0.01],10.)['Ar']['KL3']
-            print "OLD 20 =",getFluorescence([ele,1.0,0.01],20.)['Ar']['KL3']
-            sys.exit(0)
-        elif ele in Element.keys():
-            print "NEW =",getMatrixFluorescence([ele,1.0,0.01],[13.,18],[1.,1.0],[1,1])[ele]['L3M5']
-            a = getFluorescence([ele,1.0,0.01],13.)[ele]
-            b = getFluorescence([ele,1.0,0.01],18.)[ele]
-            transition = 'L3M5'
-            print "OLD 1 =",a[transition]
-            print "OLD 2 =",b[transition]
-            print  0.5 * (a[transition]['rate'] + b[transition]['rate'])
-            sys.exit(0)            
-        elif ele in Element.keys():
+        if ele in Element.keys():
             print "Symbol        = ",getsymbol(getz(ele))
             print "Atomic Number = ",getz(ele)
             print "Name          = ",getname(getz(ele))
