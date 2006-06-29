@@ -28,11 +28,19 @@ __revision__ = "$Revision: 1.3 $"
 
 import Numeric
 import specfile
-sf=specfile.Specfile("KShellRates.dat")
+import os
+
+dirname   = os.path.dirname(__file__)
+inputfile = os.path.join(dirname, "KShellRates.dat")
+if not os.path.exists(inputfile):
+    if len(dirname) > 3:
+        if dirname[-4:] == ".exe":dirname = os.path.dirname(dirname)
+        
+sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
 ElementKShellTransitions = sf[0].alllabels()
 ElementKShellRates = Numeric.transpose(sf[0].data()).tolist()
 
-sf=specfile.Specfile("KShellConstants.dat")
+sf=specfile.Specfile(os.path.join(dirname, "KShellConstants.dat"))
 ElementKShellConstants = sf[0].alllabels()
 ElementKShellValues = Numeric.transpose(sf[0].data()).tolist()
 sf=None

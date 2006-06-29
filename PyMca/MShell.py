@@ -26,7 +26,14 @@
 #############################################################################*/
 import Numeric
 import specfile
-sf=specfile.Specfile("MShellRates.dat")
+import os
+dirname   = os.path.dirname(__file__)
+inputfile = os.path.join(dirname, "MShellRates.dat")
+if not os.path.exists(inputfile):
+    if len(dirname) > 3:
+        if dirname[-4:] == ".exe":dirname = os.path.dirname(dirname)
+        
+sf=specfile.Specfile(os.path.join(dirname, "MShellRates.dat"))
 ElementM1ShellTransitions = sf[0].alllabels()
 ElementM2ShellTransitions = sf[1].alllabels()
 ElementM3ShellTransitions = sf[2].alllabels()
@@ -38,7 +45,7 @@ ElementM3ShellRates = Numeric.transpose(sf[2].data()).tolist()
 ElementM4ShellRates = Numeric.transpose(sf[3].data()).tolist()
 ElementM5ShellRates = Numeric.transpose(sf[4].data()).tolist()
 
-sf=specfile.Specfile("MShellConstants.dat")
+sf=specfile.Specfile(os.path.join(dirname, "MShellConstants.dat"))
 ElementM1ShellConstants = sf[0].alllabels()
 ElementM2ShellConstants = sf[1].alllabels()
 ElementM3ShellConstants = sf[2].alllabels()
