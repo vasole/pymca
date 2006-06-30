@@ -822,9 +822,19 @@ class McaAdvancedFit(qt.QWidget):
         dict = {}
         dict.update(config['concentrations'])
         tool.configure(dict)
-        if DEBUG or (qt.qVersion() < '3.0.0'):
+        if DEBUG:
             dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
+        elif (qt.qVersion() < '3.0.0')
+            try:
+                dict = tool.processFitResult(fitresult=fitresult,
+                                         elementsfrommatrix=True)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error: %s" % (sys.exc_info()[1]))
+                msg.exec_loop()
+                return
         else:
             try:
                 threadResult = self._submitThread(tool.processFitResult,

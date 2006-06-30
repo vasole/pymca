@@ -33,7 +33,7 @@ dirname   = os.path.dirname(__file__)
 inputfile = os.path.join(dirname, "LShellRates.dat")
 if not os.path.exists(inputfile):
     if len(dirname) > 3:
-        if dirname[-4:] == ".exe":dirname = os.path.dirname(dirname)
+        if dirname[-4:] in [".exe", ".zip"]:dirname = os.path.dirname(dirname)
 sf=specfile.Specfile(os.path.join(dirname, "LShellRates.dat"))
 ElementL1ShellTransitions = sf[0].alllabels()
 ElementL2ShellTransitions = sf[1].alllabels()

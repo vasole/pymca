@@ -43,7 +43,16 @@ try:
         import QtBlissGraph
 except:
     import qt
-    import QtBlissGraph
+    if qt.qVersion() < '3.0.0':
+        try:
+            from matplotlib.font_manager import FontProperties
+            from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            MATPLOTLIB = True
+        except:
+            import QtBlissGraph
+    else:        
+        import QtBlissGraph
 import ConfigDict
 import time
 import string
