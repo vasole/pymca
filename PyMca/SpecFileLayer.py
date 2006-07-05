@@ -222,8 +222,9 @@ class SpecFileLayer:
                 scan_data= Numeric.transpose(scan_data).copy()
             except: raise self.Error, "SF_MESH read failed"
         elif scan_type&SF_MCA:
-            try: scan_data= scan_obj.mca(1)
-            except: raise self.Error, "SF_MCA read failed"
+            return self.AppendPage(scan_info, scan_data)
+        elif scan_type&SF_NMCA:
+            return self.AppendPage(scan_info, scan_data)
 
         if scan_data is not None:
             return self.AppendPage(scan_info, scan_data)
