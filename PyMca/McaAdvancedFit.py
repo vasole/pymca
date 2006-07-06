@@ -825,7 +825,7 @@ class McaAdvancedFit(qt.QWidget):
         if DEBUG:
             dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
-        elif (qt.qVersion() < '3.0.0')
+        elif (qt.qVersion() < '3.0.0'):
             try:
                 dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
