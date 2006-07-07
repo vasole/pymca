@@ -262,6 +262,7 @@ class FitParamWidget(FitParamForm):
         pars= {}
         sections = FitParamSections * 1
         sections.append('multilayer')
+        sections.append('materials')
         for key in sections:
             pars[key]= self.__getPar(key)
         return pars
@@ -279,6 +280,8 @@ class FitParamWidget(FitParamForm):
             return self.__getAttPar()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
+        if parname in ["materials", "MATERIALS"]:
+            return self.__getMaterialsPar()
         if parname in ["concentrations", "CONCENTRATIONS"]:
             return self.__getConPar()
         return None
@@ -436,6 +439,12 @@ class FitParamWidget(FitParamForm):
                     attpar= [0, '-', 0., 0.]
                     self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
                 pars[att]= attpar
+        return pars
+        
+    def __getMaterialsPar(self):
+        pars = {}
+        for key in Elements.Material.keys():
+            pars[key] = copy.deepcopy(Elements.Material[key])
         return pars
 
     def __setConPar(self, pardict):
