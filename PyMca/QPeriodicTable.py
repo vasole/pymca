@@ -25,23 +25,32 @@
 # is a problem to you.
 #############################################################################*/
 try:
-    from PyQt4.Qt import *
-    if qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
+    from PyQt4.QtCore import Qt, SIGNAL, SLOT, QObject, QRect, QString, \
+        QStringList, qVersion
+    from PyQt4.QtGui import QApplication, QAbstractItemView, QBrush, QColor, QComboBox, \
+        QGridLayout, QLabel, QListWidget, QListWidgetItem, QPainter, \
+        QPushButton, QSizePolicy, QSpacerItem, QTableWidget, QTabWidget, \
+        QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 except:
-    from qt import *
-if qVersion() < '3.0.0':
+    from qt import PYSIGNAL, SIGNAL, SLOT, QApplication, QBrush, QColor, \
+            QComboBox, QGridLayout, QLabel, QListView, QListViewItem, QObject, \
+            QPainter, QPushButton, QRect, QSizePolicy, QSpacerItem, QString, \
+            QStringList, Qt, qVersion, QTabWidget, QVBoxLayout, QWidget
+
+QTVERSION = qVersion()
+
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-    QComboTableItem = qttable.QComboTableItem
-    MyQListView = QListView
-elif qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     import qttable
     QComboTableItem = qttable.QComboTableItem
-    MyQListView = QListView
+    QTreeWidget = QListView
+    QTreeWidgetItem = QListViewItem
 else:
-    qttable = QTableWidget
+    # TODO: These next lines can be dropped once support for qt3 is dropped
     QComboTableItem = QComboBox
-    MyQListView = QListWidget
+    PYSIGNAL = SIGNAL
+
 #
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
@@ -163,7 +172,7 @@ ElementList= [ elt[0] for elt in Elements ]
 
 class ElementButton(QPushButton):
     def __init__(self, parent, symbol, Z, name):
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             QPushButton.__init__(self, parent, symbol)
         else:
             QPushButton.__init__(self, parent)
@@ -175,7 +184,7 @@ class ElementButton(QPushButton):
 
         self.setText(symbol)
         self.setFlat(1)
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setToggleButton(0)
         else:
             self.setCheckable(0)
@@ -185,7 +194,7 @@ class ElementButton(QPushButton):
         self.selected= 0
         self.current= 0
         self.colors= [ QColor(Qt.yellow), QColor(Qt.darkYellow), QColor(Qt.gray) ]
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.brush = None
         else:
             self.brush= QBrush()
@@ -218,7 +227,7 @@ class ElementButton(QPushButton):
         self.update()
 
     def paintEvent(self, pEvent):
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             QPushButton.paintEvent(self, pEvent)
         else:
             p = QPainter(self)
@@ -242,7 +251,7 @@ class ElementButton(QPushButton):
         p.drawRect(pr)
 
     def enterEvent(self, e):
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(PYSIGNAL("elementEnter"), (self.symbol,self.Z,self.name))
         else:
             self.emit(SIGNAL("elementEnter(QString, int, QString)"),
@@ -250,16 +259,16 @@ class ElementButton(QPushButton):
                               QString(self.name))
             
     def leaveEvent(self, e):
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(PYSIGNAL("elementLeave"), (self.symbol,))
         else:
-            self.emit(SIGNAL("elementLeave(QString)"), self.symbol)
+            self.emit(SIGNAL("elementLeave"), self.symbol)
 
     def clickedSlot(self):
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(PYSIGNAL("elementClicked"), (self.symbol,))
         else:
-            self.emit(SIGNAL("elementClicked(QString)"), self.symbol)
+            self.emit(SIGNAL("elementClicked"), self.symbol)
 
 
 class QPeriodicTable(QWidget):
@@ -275,7 +284,7 @@ class QPeriodicTable(QWidget):
             elementClicked(symbol):
     """
     def __init__(self, parent=None, name="PeriodicTable", fl=0):
-        if qVersion() < '4.0.0': 
+        if QTVERSION < '4.0.0': 
             QWidget.__init__(self,parent,name,fl)
             self.setName(name)
             self.setCaption("QPeriodicTable")
@@ -299,7 +308,7 @@ class QPeriodicTable(QWidget):
         f.setBold(1)
         self.eltLabel.setFont(f)
         self.eltLabel.setAlignment(Qt.AlignHCenter)
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.gridLayout.addMultiCellWidget(self.eltLabel, 1, 1, 3, 10)
         else:
             self.gridLayout.addWidget(self.eltLabel, 1, 1, 3, 10)
@@ -317,14 +326,14 @@ class QPeriodicTable(QWidget):
         self.eltButton[symbol]= b
         self.gridLayout.addWidget(b, row, col)
 
-        if qVersion() <'4.0.0':
+        if QTVERSION <'4.0.0':
             QObject.connect(b, PYSIGNAL("elementEnter"), self.elementEnter)
             QObject.connect(b, PYSIGNAL("elementLeave"), self.elementLeave)
             QObject.connect(b, PYSIGNAL("elementClicked"), self.elementClicked)
         else:
             QObject.connect(b, SIGNAL(("elementEnter(QString, int, QString)")), self.elementEnter)
-            QObject.connect(b, SIGNAL("elementLeave(QString)"), self.elementLeave)
-            QObject.connect(b, SIGNAL("elementClicked(QString)"), self.elementClicked)
+            QObject.connect(b, SIGNAL("elementLeave"), self.elementLeave)
+            QObject.connect(b, SIGNAL("elementClicked"), self.elementClicked)
 
     def elementEnter(self, symbol, z, name):
         self.eltLabel.setText("%s(%d) - %s"%(symbol, z, name))
@@ -335,13 +344,13 @@ class QPeriodicTable(QWidget):
     def elementClicked(self, symbol):
         if self.eltCurrent is not None:
             self.eltCurrent.setCurrent(0)
-        if qVersion() > '4.0.0': symbol = str(symbol)
+        if QTVERSION > '4.0.0': symbol = str(symbol)
         self.eltButton[symbol].setCurrent(1)
         self.eltCurrent= self.eltButton[symbol]
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(PYSIGNAL("elementClicked"), (symbol,))
         else:
-            self.emit(SIGNAL("elementClicked(QString)"), symbol)
+            self.emit(SIGNAL("elementClicked"), symbol)
             
     def getSelection(self):
         return [ e for (e,b) in self.eltButton.items() if b.isSelected() ]
@@ -357,10 +366,14 @@ class QPeriodicTable(QWidget):
         return self.eltButton[symbol].isSelected()
 
     def elementToggle(self, symbol):
-        if qVersion() > '4.0.0':symbol = str(symbol)
+        if QTVERSION > '4.0.0':symbol = str(symbol)
         b= self.eltButton[symbol]
         b.setSelected(not b.isSelected())
 
+# TODO: QPeriodicComboTableItem should derive from QComboBox once support for 
+# PyQt3 and earlier has been dropped. Actually, I wonder if this class is needed
+# with PyQt4, can't QPeriodicCombo be used instead?
+##class QPeriodicComboTableItem(QComboBox):
 class QPeriodicComboTableItem(QComboTableItem):
     """ Periodic Table Combo List to be used in a QTable
         Init options:
@@ -388,10 +401,11 @@ class QPeriodicComboTableItem(QComboTableItem):
             if detailed:    txt= "%2s (%d) - %s"%(symbol, Z, name)
             else:       txt= "%2s (%d)"%(symbol, Z)
             strlist.append(txt)
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             QComboTableItem.__init__(self, table, strlist)
         else:
-            QComboTableItem.__init__(self)
+            QComboBox.__init__(self)
+            self.addItems(strlist)
             print "still to continue"
 
     def setSelection(self, symbol=None):
@@ -405,7 +419,8 @@ class QPeriodicComboTableItem(QComboTableItem):
         id= self.currentItem()
         if self.addnone and not id: return None
         else: return ElementList[id-self.addnone]
-        
+
+
 class QPeriodicCombo(QComboBox):
     """ Periodic Table Element list in a QComboBox
         Init options:
@@ -423,24 +438,19 @@ class QPeriodicCombo(QComboBox):
                 send symbol of element selected
     """
     def __init__(self, parent=None, name=None, detailed=1):
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             QComboBox.__init__(self, parent, name)
         else:
             QComboBox.__init__(self, parent)
-            self.setAccessibleName(name)
+            if name: self.setAccessibleName(name)
 
-        if qVersion() < '4.0.0':
-            for (symbol, Z, x, y, name, mass, density) in Elements:
-                if detailed:    txt= "%2s (%d) - %s"%(symbol, Z, name)
-                else:       txt= "%2s (%d)"%(symbol, Z)
-                self.insertItem(txt)
-        else:
-            i = 0
-            for (symbol, Z, x, y, name, mass, density) in Elements:
-                if detailed:    txt= "%2s (%d) - %s"%(symbol, Z, name)
-                else:       txt= "%2s (%d)"%(symbol, Z)
-                self.insertItem(i,txt)
-                i += 1
+        i = 0
+        for (symbol, Z, x, y, name, mass, density) in Elements:
+            if detailed:    txt= "%2s (%d) - %s"%(symbol, Z, name)
+            else:       txt= "%2s (%d)"%(symbol, Z)
+            if QTVERSION < '4.0.0': self.insertItem(txt)
+            else: self.insertItem(i,txt)
+            i += 1
 
         self.connect(self, SIGNAL("activated(int)"), self.__selectionChanged)
 
@@ -453,9 +463,9 @@ class QPeriodicCombo(QComboBox):
     def setSelection(self, symbol):
         symblist= [ elt[0] for elt in Elements ]
         self.setCurrentItem(symblist.index(symbol))
-        
 
-class QPeriodicList(MyQListView):
+
+class QPeriodicList(QTreeWidget):
     """ Periodic Table Element list in a QListView
         Init options:
             detailed= 1 (default) display element symbol, Z and name
@@ -474,16 +484,15 @@ class QPeriodicList(MyQListView):
                 send list of symbol selected
     """
     def __init__(self, master=None, name=None, fl=0, detailed=1, single=0):
-        if qVersion() < '4.0.0':
-            MyQListView.__init__(self, master, name, fl)
+        if QTVERSION < '4.0.0':
+            QTreeWidget.__init__(self, master, name, fl)
         else:
-            MyQListView.__init__(self, master)
-            self.setAccessibleName(name)
+            QTreeWidget.__init__(self, master)
+            if name: self.setAccessibleName(name)
 
-    
         self.detailed= (detailed==1)    
 
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.addColumn("Z")
             self.addColumn("Symbol")
             if detailed: self.addColumn("Name")
@@ -494,9 +503,18 @@ class QPeriodicList(MyQListView):
             self.connect(self, SIGNAL("selectionChanged()"), self.__selectionChanged)
             self.__fill_list()
         else:
-            self.addItem("Z")
-            self.addItem("Symbol")
-            if detailed: self.addItem("Name")
+            strlist= QStringList()
+            strlist.append("Z")
+            strlist.append("Symbol")
+            if detailed:
+                strlist.append("Name")
+                self.setColumnCount(3)
+            else:
+                self.setColumnCount(2)
+            self.setHeaderLabels(strlist)
+            self.header().setStretchLastSection(False)
+            self.setRootIsDecorated(0)
+            self.connect(self, SIGNAL("itemSelectionChanged()"), self.__selectionChanged)
             print "what to do? "
             """
             self.header().setClickEnabled(0, -1)
@@ -504,31 +522,49 @@ class QPeriodicList(MyQListView):
             self.setSelectionMode((single and QListView.Single) or QListView.Extended)
             self.setSorting(-1)
             """
-
-
+            self.setSelectionMode((single and QAbstractItemView.SingleSelection) or QAbstractItemView.ExtendedSelection)
+            self.__fill_list()
+            self.resizeColumnToContents(0)
+            self.resizeColumnToContents(1)
+            if detailed: self.resizeColumnToContents(2)
 
     def __fill_list(self):
         self.items= []
         after= None
         for (symbol, Z, x, y, name, mass, density) in Elements:
-            if after is None: item= QListViewItem(self)
-            else: item= QListViewItem(self, after)
+            if after is None: item= QTreeWidgetItem(self)
+            else: item= QTreeWidgetItem(self, after)
             item.setText(0, str(Z))
             item.setText(1, symbol)
-            if self.detailed: item.setText(2, name)
-            self.insertItem(item)
+            if self.detailed:
+                item.setText(2, name)
             self.items.append(item)
-            after= item
+            if QTVERSION < '4.0.0':
+                self.insertItem(item)
+            after = item
 
     def __selectionChanged(self):
-        self.emit(PYSIGNAL("selectionChanged"), (self.getSelection(),))
+        if QTVERSION < "4.0.0":
+            self.emit(PYSIGNAL("selectionChanged"), (self.getSelection(),))
+        else:
+            self.emit(SIGNAL("selectionChanged"), self.getSelection())
     
     def getSelection(self):
-        return [ Elements[idx][0] for idx in range(len(self.items)) if self.items[idx].isSelected() ]   
+        if QTVERSION < "4.0.0":
+            return [ Elements[idx][0] for idx in range(len(self.items)) \
+                    if self.items[idx].isSelected() ]
+        else:
+            return [ Elements[idx][0] for idx in range(len(self.items)) \
+                    if self.isItemSelected(self.items[idx]) ]
+            
+            #return self.selectedItems()
 
-    def setSelection(self, symbolList):
-        for idx in range(len(self.items)):
-            self.items[idx].setSelected(Elements[idx][0] in symbolList)
+    if QTVERSION < "4.0.0":
+        def setSelection(self, symbolList):
+            for idx in range(len(self.items)):
+                if QTVERSION < "4.0.0":
+                    self.items[idx].setSelected(Elements[idx][0] in symbolList)
+
 
 def testwidget():
     import sys
@@ -541,11 +577,12 @@ def testwidget():
 
     w = QTabWidget()
 
-    if qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         f = QPeriodicTable(w)
     else:
-        f = QPeriodicTable()        
-    if qVersion() < '4.0.0':
+        f = QPeriodicTable()
+
+    if QTVERSION < '4.0.0':
         o= QWidget(w)
         ol= QVBoxLayout(o)
         #ol.setAutoAdd(1)
@@ -558,39 +595,54 @@ def testwidget():
         ol.addWidget(t)
         l = QPeriodicList(o)
         ol.addWidget(l)
+    else:
+        o= QWidget()
+        ol= QVBoxLayout(o)
+        #ol.setAutoAdd(1)
+        tlabel = QLabel("QPeriodicCombo", o)
+        ol.addWidget(tlabel)
+        c = QPeriodicCombo(o)
+        ol.addWidget(c)
+        
+        t = QLabel("QPeriodicList", o)
+        ol.addWidget(t)
+        l = QPeriodicList(o)
+        ol.addWidget(l)
 
-        if qVersion() < '4.0.0':
-            tab = qttable.QTable(w)
-            tab.setNumRows(2)
-            tab.setNumCols(1)
-            tab.setItem(0, 0, QPeriodicComboTableItem(tab, addnone=0))
-            tab.setItem(1, 0, QPeriodicComboTableItem(tab))
-        else:
-            tab = QTableWidget()
-            tab.setRowCount(2)
-            tab.setColumnCount(1)
-            tab.setCellWidget(0, 0, QPeriodicComboTableItem(tab, addnone=0))
-            tab.setCellWidget(1, 0, QPeriodicComboTableItem(tab))
+    if QTVERSION < '4.0.0':
+        tab = qttable.QTable(w)
+        tab.setNumRows(2)
+        tab.setNumCols(1)
+        tab.setItem(0, 0, QPeriodicComboTableItem(tab, addnone=0))
+        tab.setItem(1, 0, QPeriodicComboTableItem(tab))
+    else:
+        tab = QTableWidget()
+        tab.setRowCount(2)
+        tab.setColumnCount(1)
+        tab.setCellWidget(0, 0, QPeriodicCombo(tab, detailed=0))
+        tab.setCellWidget(1, 0, QPeriodicCombo(tab, detailed=0))
     
     w.addTab(f, "QPeriodicTable")
-    if qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         w.addTab(o, "QPeriodicList/Combo")
         w.addTab(tab, "QPeriodicComboTableItem")
-
+    else:
+        w.addTab(o, "QPeriodicList/Combo")
+        w.addTab(tab, "QPeriodicComboTableItem")
     f.setSelection(['H', 'Fe', 'Si'])
     
-    if qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         QObject.connect(f, PYSIGNAL("elementClicked"), f.elementToggle)
         QObject.connect(l, PYSIGNAL("selectionChanged"), change)
         QObject.connect(c, PYSIGNAL("selectionChanged"), change)
     else:
-        QObject.connect(f, SIGNAL("elementClicked(QString)"), f.elementToggle)
-        #QObject.connect(l, SIGNAL("selectionChanged"), change)
-        #QObject.connect(c, SIGNAL("selectionChanged"), change)
+        QObject.connect(f, SIGNAL("elementClicked"), f.elementToggle)
+        QObject.connect(l, SIGNAL("selectionChanged"), change)
+        QObject.connect(c, SIGNAL("selectionChanged"), change)
 
-    if qVersion() < '4.0.0': a.setMainWidget(w)
+    if QTVERSION < '4.0.0': a.setMainWidget(w)
     w.show()
-    if qVersion() < '4.0.0':a.exec_loop()
+    if QTVERSION < '4.0.0':a.exec_loop()
     else:a.exec_()
 if __name__ == "__main__":
     testwidget()
