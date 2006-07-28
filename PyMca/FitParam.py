@@ -262,7 +262,6 @@ class FitParamWidget(FitParamForm):
         pars= {}
         sections = FitParamSections * 1
         sections.append('multilayer')
-        sections.append('materials')
         for key in sections:
             pars[key]= self.__getPar(key)
         return pars
@@ -280,8 +279,6 @@ class FitParamWidget(FitParamForm):
             return self.__getAttPar()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
-        if parname in ["materials", "MATERIALS"]:
-            return self.__getMaterialsPar()
         if parname in ["concentrations", "CONCENTRATIONS"]:
             return self.__getConPar()
         return None
@@ -440,12 +437,6 @@ class FitParamWidget(FitParamForm):
                     self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
                 pars[att]= attpar
         return pars
-        
-    def __getMaterialsPar(self):
-        pars = {}
-        for key in Elements.Material.keys():
-            pars[key] = copy.deepcopy(Elements.Material[key])
-        return pars
 
     def __setConPar(self, pardict):
         if pardict.has_key('concentrations'):
@@ -543,11 +534,13 @@ class FitParamWidget(FitParamForm):
             energylist = [energy]
             weightlist = [1.0]
             flaglist   = [1]
+            scatterlist   = [1]
         else:
             energy      = energylist[0]
             weightlist  = self.__get("fit", "energyweight", None, None)
             flaglist    = self.__get("fit", "energyflag", None, None)
-        self.energyTable.setParameters(energylist, weightlist, flaglist)
+            scatterlist    = self.__get("fit", "energyscatter", None, None)
+        self.energyTable.setParameters(energylist, weightlist, flaglist, scatterlist)
         
 
     def __getFitPar(self):
@@ -581,7 +574,7 @@ class FitParamWidget(FitParamForm):
             longflag= int(self.longCheck.isChecked())
             stepflag= int(self.stepCheck.isChecked())
             pars["hypermetflag"]= 1 + shortflag*2 + longflag*4 + stepflag*8
-            pars['energy'],pars['energyweight'],pars['energyflag']= \
+            pars['energy'],pars['energyweight'],pars['energyflag'], pars['energyscatter']= \
                                 self.energyTable.getParameters()
             return pars
         #else:

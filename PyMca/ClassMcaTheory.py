@@ -106,15 +106,17 @@ class McaTheory:
         self.config['fit']['linearfitflag']   = self.config['fit'].get('linearfitflag', 0)        
         self.config['fit']['energy']       = self.config['fit'].get('energy',None)
         if type(self.config['fit']['energy']) == type(""):
-            self.config['fit']['energy'] = None
-            self.config['fit']['energyweight'] = [1.0]
-            self.config['fit']['energyflag']   = [1]
+            self.config['fit']['energy']          = None
+            self.config['fit']['energyweight']    = [1.0]
+            self.config['fit']['energyflag']      = [1]
+            self.config['fit']['energyscatter']   = [1]
         elif type(self.config['fit']['energy']) == type([]):
             pass
         else:
             self.config['fit']['energy']=[self.config['fit']['energy']]
             self.config['fit']['energyweight'] = [1.0]
             self.config['fit']['energyflag']   = [1]
+            self.config['fit']['energyscatter']   = [1]
         maxenergy = None
         energylist= None
         if self.config['fit']['energy'] is not None:
@@ -124,6 +126,7 @@ class McaTheory:
             energylist    = []
             energyweight  = []
             energyflag    = []
+            energyscatter = []
 
             for i in range(len(self.config['fit']['energy'])):
                 if self.config['fit']['energyflag'][i]:
@@ -131,10 +134,15 @@ class McaTheory:
                         energyflag.append(self.config['fit']['energyflag'][i])
                         energylist.append(self.config['fit']['energy'][i])    
                         energyweight.append(self.config['fit']['energyweight'][i])
+                        if self.config['fit'].has_key('energyscatter'):
+                            energyscatter.append(self.config['fit']['energyscatter'][i])
+                        elif i==1:
+                            energyscatter.append(1)
+                        else:
+                            energyscatter.append(0)
                         if maxenergy is None:maxenergy=self.config['fit']['energy'][i]
                         if maxenergy < self.config['fit']['energy'][i]:
                             maxenergy = self.config['fit']['energy'][i]
-                        
         self.config['fit']['scatterflag']  = self.config['fit'].get('scatterflag',0)
         self.config['fit']['deltaonepeak'] = self.config['fit'].get('deltaonepeak',0.010)
         self.config['fit']['linpolorder']  = self.config['fit'].get('linpolorder',6)
@@ -599,55 +607,57 @@ class McaTheory:
         if energylist is not None:
             if len(energylist) and \
                (self.config['fit']['scatterflag']):
-                ene = energylist[0]
-                #print "scatter for first energy" 
-                if ene > 0.2:
-                    for i in range(2):
-                        ene = energylist[0]
-                        if i == 1:
-                            try:
-                                alphaIn  = self.config['attenuators']['Matrix'][4]
-                            except:
-                                alphaIn  = 45.0
-                            try:
-                                alphaOut = self.config['attenuators']['Matrix'][5]
-                            except:
-                                alphaOut  = 45.0
-                            scatAngle = (alphaIn + alphaOut) * Numeric.pi/180.
-                            ene = ene / (1.0 + (ene/511.0) * (1.0 - Numeric.cos(scatAngle)))
-                        fwhm = Numeric.sqrt(noise*noise + \
-                                0.00385 *ene* fano*2.3548*2.3548)
-                        PEAKS0.append(Numeric.array([[1.0, ene, fwhm, 0.0]]))
-                        PEAKS0NAMES.append(['Scatter'])                    
-                        PEAKS0ESCAPE.append([])        
-                        _nescape_ = 0
-                        if self.config['fit']['escapeflag']:
-                            _esc_ = Elements.getEscape([detele,1.0,1.0], 
-                                                ene,
-                                                ethreshold=ethreshold, ithreshold=ithreshold,
-                                                nthreshold=nthreshold)
-                            PEAKS0ESCAPE[-1].append(_esc_)
-                            _nescape_ += len(_esc_)
-                        r = 1
-                        if not HYPERMET:
-                            if self.config['fit']['escapeflag']:
-                                if OLDESCAPE:
-                                    PEAKSW.append(Numeric.ones((2*r,3),Numeric.Float))
+                for scatterindex in range(len(energylist)):
+                    if energyscatter[scatterindex]:
+                        ene = energylist[scatterindex]
+                        #print "ene = ",ene,"scatterindex = ",scatterindex
+                        #print "scatter for first energy" 
+                        if ene > 0.2:
+                            for i in range(2):
+                                ene = energylist[scatterindex]
+                                if i == 1:
+                                    try:
+                                        alphaIn  = self.config['attenuators']['Matrix'][4]
+                                    except:
+                                        alphaIn  = 45.0
+                                    try:
+                                        alphaOut = self.config['attenuators']['Matrix'][5]
+                                    except:
+                                        alphaOut  = 45.0
+                                    scatAngle = (alphaIn + alphaOut) * Numeric.pi/180.
+                                    ene = ene / (1.0 + (ene/511.0) * (1.0 - Numeric.cos(scatAngle)))
+                                fwhm = Numeric.sqrt(noise*noise + \
+                                        0.00385 *ene* fano*2.3548*2.3548)
+                                PEAKS0.append(Numeric.array([[1.0, ene, fwhm, 0.0]]))
+                                PEAKS0NAMES.append(['Scatter %03d' % scatterindex])
+                                PEAKS0ESCAPE.append([])        
+                                _nescape_ = 0
+                                if self.config['fit']['escapeflag']:
+                                    _esc_ = Elements.getEscape([detele,1.0,1.0], 
+                                                        ene,
+                                                        ethreshold=ethreshold, ithreshold=ithreshold,
+                                                        nthreshold=nthreshold)
+                                    PEAKS0ESCAPE[-1].append(_esc_)
+                                    _nescape_ += len(_esc_)
+                                r = 1
+                                if not HYPERMET:
+                                    if self.config['fit']['escapeflag']:
+                                        if OLDESCAPE:
+                                            PEAKSW.append(Numeric.ones((2*r,3),Numeric.Float))
+                                        else:
+                                            PEAKSW.append(Numeric.ones(((r+_nescape_),3),
+                                                                        Numeric.Float))
+                                    else:
+                                        PEAKSW.append(Numeric.ones((r,3),Numeric.Float))
                                 else:
-                                    PEAKSW.append(Numeric.ones(((r+_nescape_),3),
-                                                                Numeric.Float))
-                            else:
-                                PEAKSW.append(Numeric.ones((r,3),Numeric.Float))
-                        else:
-                            if self.config['fit']['escapeflag']:
-                                if OLDESCAPE:
-                                    PEAKSW.append(Numeric.ones((2*r,3+5),Numeric.Float))
-                                else:
-                                    PEAKSW.append(Numeric.ones(((r+_nescape_),3+5),
-                                                                Numeric.Float))
-                            else:
-                                PEAKSW.append(Numeric.ones((r,3+5),Numeric.Float))
-
+                                    if self.config['fit']['escapeflag']:
+                                        if OLDESCAPE:
+                                            PEAKSW.append(Numeric.ones((2*r,3+5),Numeric.Float))
+                                        else:
+                                            PEAKSW.append(Numeric.ones(((r+_nescape_),3+5),
+                                                                        Numeric.Float))
+                                    else:
+                                        PEAKSW.append(Numeric.ones((r,3+5),Numeric.Float))
 #########        
         PARAMETERS=['Zero','Gain','Noise','Fano','Sum']
         CONTINUUM    = self.config['fit']['continuum']
@@ -677,10 +687,16 @@ class McaTheory:
         if energylist is not None:
             if len(energylist) and \
                (self.config['fit']['scatterflag']):
-                ene = energylist[0] 
-                if ene > 0.2:
-                    PARAMETERS.append("Scatter Peak")    
-                    PARAMETERS.append("Scatter Compton")
+                for scatterindex in range(len(energylist)):
+                    if energyscatter[scatterindex]:
+                        ene = energylist[scatterindex]
+                        #print "ene = ",ene,"scatterindex = ",scatterindex
+                        #print "scatter for first energy" 
+                        if ene > 0.2:
+                            PARAMETERS.append("Scatter Peak%03d " % scatterindex)    
+                            PARAMETERS.append("Scatter Compton%03d " % scatterindex)
+                            #PARAMETERS.append("Scatter Peak")    
+                            #PARAMETERS.append("Scatter Compton")
    
         self.PEAKS0     = PEAKS0
         self.PEAKS0ESCAPE = PEAKS0ESCAPE 

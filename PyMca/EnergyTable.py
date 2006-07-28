@@ -51,18 +51,20 @@ else:
 
 class EnergyTable(QTable):
     def __init__(self, parent=None, name="Energy Table",
-                     energylist=None, weightlist=None, flaglist=None,offset=None):
+                     energylist=None, weightlist=None, flaglist=None,offset=None,scatterlist=None):
         QTable.__init__(self, parent)
         if energylist is  None:energylist=[]
         if weightlist is  None:weightlist  =[]
         if flaglist   is  None:flaglist  =[]
+        if scatterlist   is  None:scatterlist  =[]
         if offset is None:offset = 0
-        self.energyList = energylist
-        self.weightList = weightlist
-        self.flagList   = flaglist
-        self.offset     = offset
+        self.energyList  = energylist
+        self.weightList  = weightlist
+        self.flagList    = flaglist
+        self.offset      = offset
+        self.scatterList = scatterlist
         self.verticalHeader().hide()
-        self.dataColumns = 4
+        self.dataColumns = 7
         if qt.qVersion() < '4.0.0':
             self.setLeftMargin(0)
             self.setFrameShape(qttable.QTable.NoFrame)
@@ -112,7 +114,10 @@ class EnergyTable(QTable):
         if qt.qVersion() < '4.0.0':
             self.connect(self, qt.SIGNAL("valueChanged(int,int)"),self.mySlot)
         else:
-            self.connect(self, qt.SIGNAL("cellChanged(int,int)"),self.mySlot)
+            self.connect(self, qt.SIGNAL("cellChanged(int, int)"),self.mySlot)
+
+    def _itemSlot(self, *var):
+        self.mySlot(self.currentRow(), self.currentColumn())
 
     def __build(self,nrows=None):
         #self.setNumRows(int(nrows/2))
@@ -129,18 +134,32 @@ class EnergyTable(QTable):
         coloffset = 0
         rowoffset = 0
         for idx in range(nrows):
-            text = "Energy %2d" % (idx)
+            text = "Energy %3d" % (idx)
             if idx >= (nrows/self.dataColumns):
                 rowoffset= (-int(idx/self.__rows))*(nrows/self.dataColumns)
                 coloffset=  3*int(idx/self.__rows)
             r = idx + rowoffset
+            color = qt.Qt.white
+            if len(self.scatterList):
+                if idx < len(self.scatterList):
+                    if (self.scatterList[idx] is not None)and \
+                       (self.scatterList[idx] != "None"):
+                        if self.scatterList[idx]:color = qt.QColor(255, 20, 147)
+            elif idx == 0:
+                color = qt.QColor(255, 20, 147)
             if qt.qVersion() < '4.0.0':
-                item= qttable.QCheckTableItem(self, text)
+                #item= qttable.QCheckTableItem(self, text)
+                if qt.qVersion() < '3.0.0':
+                    print "background  color to implement in qt 2.3.0"
+                else:
+                    self.viewport().setPaletteBackgroundColor(color)
+                item= ColorQTableItem(self, text, color)                
                 self.setItem(r, 0+coloffset, item)
             else:
-                item= qt.QCheckBox(self)
+                item= ColorQTableItem(self, text, color)
                 self.setCellWidget(r, 0+coloffset, item)
-            item.setText(text)
+                item.setText(text)
+                self.connect(item, qt.SIGNAL("stateChanged(int)"),self._itemSlot)
             if idx < len(self.energyList):
                 item.setChecked(self.flagList[idx])
                 if (self.energyList[idx] is not None) and \
@@ -156,13 +175,26 @@ class EnergyTable(QTable):
             else:
                 self.setText(r, 2+coloffset,"")
 
-    def setParameters(self, energylist, weightlist, flaglist):
-        if type(energylist) != type([]):self.energyList=[energylist]
+    def setParameters(self, energylist, weightlist, flaglist, scatterlist=None):
+        if type(energylist) == Numeric.ArrayType:self.energyList=energylist.tolist()
+        elif type(energylist) != type([]):self.energyList=[energylist]
         else: self.energyList =energylist
-        if type(weightlist) != type([]):self.energyList=[weightlist]
+
+        if   type(weightlist) == Numeric.ArrayType:self.weightList=weightlist.tolist()
+        elif type(weightlist) != type([]):self.energyList=[weightlist]
         else: self.weightList =weightlist
-        if type(flaglist) != type([]):self.flagList=[flaglist]
+        
+        if   type(flaglist) == Numeric.ArrayType:self.flagList=flaglist.tolist()
+        elif type(flaglist) != type([]):self.flagList=[flaglist]
         else: self.flagList =flaglist
+
+        
+        if scatterlist is None:
+            scatterlist = Numeric.zeros(len(self.energyList)).tolist()
+            scatterlist[0] = 1
+        if type(scatterlist) == Numeric.ArrayType:self.scatterList=scatterlist.tolist()
+        elif type(scatterlist) != type([]):self.scatterList=[scatterlist]
+        else: self.scatterList =scatterlist
         self.__fillTable()
 
     def getParameters(self):
@@ -170,20 +202,27 @@ class EnergyTable(QTable):
             nrows = self.numRows()*self.dataColumns
         else:
             nrows = self.rowCount() * self.dataColumns
-        coloffset = 0
-        rowoffset = 0
-        energyList =[]
-        weightList =[]
-        flagList   =[]
+        coloffset   = 0
+        rowoffset   = 0
+        energyList  = []
+        weightList  = []
+        flagList    = []
+        scatterList = []
         for idx in range(nrows):
             if idx >= (nrows/self.dataColumns):
                 rowoffset= (-int(idx/self.__rows))*(nrows/self.dataColumns)
                 coloffset=  3*int(idx/self.__rows)
             r = idx + rowoffset
             if qt.qVersion() < '4.0.0':
-                energyflag = int(self.item(r,0+coloffset).isChecked())
+                item = self.item(r,0+coloffset)
+                energyflag = int(item.isChecked())
             else:
-                energyflag = int(self.cellWidget(r,0+coloffset).isChecked())
+                item = self.cellWidget(r,0+coloffset)
+                energyflag = int(item.isChecked())
+            if item.color == qt.Qt.white:
+                scatterflag = 0
+            else:
+                scatterflag = 1
             text = str(self.text(r,1+coloffset))
             text=text.replace(" ","")
             if len(text):
@@ -209,7 +248,8 @@ class EnergyTable(QTable):
             energyList.append(energy)
             weightList.append(energyweight)
             flagList.append(energyflag)
-        return energyList, weightList, flagList
+            scatterList.append(scatterflag)
+        return energyList, weightList, flagList, scatterList
 
     def __fillTable(self):
         self.__build(max(self.__rows*self.dataColumns,len(self.energyList)))
@@ -290,6 +330,7 @@ class EnergyTable(QTable):
         dict['energy'] = []
         dict['rate']   = []
         dict['flag']   = []
+        dict['scatterflag']   = []
         for i in range(n * self.dataColumns):
                 if i >= (n*self.__rows/self.dataColumns):
                     rowoffset= (-int(i/self.__rows))*(self.__rows)
@@ -312,6 +353,10 @@ class EnergyTable(QTable):
                             flag = 1
                         else:
                             flag = 0
+                        if selfitem.color != qt.Qt.white:
+                            scatterflag = 1
+                        else:
+                            scatterflag = 0
                         s = str(self.text(r, 2+coffset))
                         s=s.replace(" ","")
                         if len(s):
@@ -319,6 +364,7 @@ class EnergyTable(QTable):
                             dict['flag'].append(flag)
                             dict['energy'].append(ene)
                             dict['rate'].append(rate)
+                            dict['scatterflag'].append(scatterflag)
                 except:
                 #else:
                     msg = qt.QMessageBox(self)       
@@ -331,12 +377,52 @@ class EnergyTable(QTable):
                     return {}
         return dict
 
+if qt.qVersion() < '4.0.0':
+    class ColorQTableItem(qttable.QCheckTableItem):
+             def __init__(self, table, text,color=qt.Qt.white,bold=0):
+                qttable.QCheckTableItem.__init__(self, table, text)
+                self.color = color
+                self.bold  = bold
+
+             def paint(self, painter, colorgroup, rect, selected):
+                painter.font().setBold(self.bold)
+                cg = qt.QColorGroup()
+                #colorgroup)
+                cg.setColor(qt.QColorGroup.Base, self.color)
+                cg.setColor(qt.QColorGroup.Foreground, self.color)
+                cg.setColor(qt.QColorGroup.HighlightedText, self.color)
+                qttable.QCheckTableItem.paint(self,painter, cg, rect, selected)
+                painter.font().setBold(0)
+
+else:
+    class ColorQTableItem(qt.QCheckBox):
+             def __init__(self, table, text, color=qt.Qt.white,bold=0):
+                qt.QCheckBox.__init__(self, table)
+                self.color = color
+                self.bold  = bold
+                self.setText(text)
+                #this is the critical line
+                self.setAutoFillBackground(1)
+
+             def paintEvent(self, painter):
+                palette = self.palette()
+                role = self.backgroundRole()
+                palette.setColor(role, self.color)
+                self.setPalette(palette)
+                return qt.QCheckBox.paintEvent(self, painter)
+            
 def main(args):
     app=qt.QApplication(args)
     #tab = AttenuatorsTableWidget(None)
     def dummy(ddict):
         print "dict =",ddict
     tab = EnergyTable(None)
+    energy = Numeric.arange(100.).astype(Numeric.Float)+ 1.5
+    weight = Numeric.ones(len(energy), Numeric.Float)
+    flag  = Numeric.zeros(len(energy)).tolist()
+    scatterlist = Numeric.zeros(len(energy))
+    scatterlist[0:10] = 1
+    tab.setParameters(energy, weight, flag, scatterlist)
     if qt.qVersion() < '4.0.0':
         qt.QObject.connect(tab,qt.PYSIGNAL('EnergyTableSignal'),dummy)
         tab.show()

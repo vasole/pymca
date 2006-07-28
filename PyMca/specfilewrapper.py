@@ -103,13 +103,14 @@ class specfilewrapper:
                     start, stop = [int(i) for i in line.split()]
                     self._qxasHeader['@CHANN'] = ['#@CHANN  %d  %d  %d  1' % (stop-start+1, start, stop)]
                     break
-                line = f.readline().replace("\n","")                
+                line = f.readline().replace("\n","")
         if qxas:
             outdata = [float(x) for x in f.read().split()]
             nlines = len(outdata)
             f.close()
             self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,1))
         else:
+            line = line.replace("\t"," ")
             while(len(line)):
                 values = string.split(line)
                 if len(values):
@@ -124,7 +125,7 @@ class specfilewrapper:
                         self.header.append(line.replace("\n",""))
                 else:
                     self.header.append(line.replace("\n",""))
-                line = f.readline()
+                line = f.readline().replace("\t"," ")
             f.close()
             self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,ncol0))
         if self.amptek:
