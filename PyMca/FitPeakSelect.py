@@ -343,7 +343,7 @@ class FitPeakSelect(qt.QWidget):
         if DEBUG:
             print "_energyTableAction called",
             print "ddict = ",ddict.dict
-        elist, wlist, flist = self.energyTable.getParameters()
+        elist, wlist, flist, slist= self.energyTable.getParameters()
         maxenergy = 0.0
         for i in range(len(flist)):
             if flist[i]:
