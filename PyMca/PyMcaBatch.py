@@ -1234,9 +1234,21 @@ def main():
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table)
                                 
         if html or concentrations:fitfiles=1
-        b = McaBatch(window,cfg,filelist,outdir,roifit=roifit,roiwidth=roiwidth,
+        try:
+            b = McaBatch(window,cfg,filelist,outdir,roifit=roifit,roiwidth=roiwidth,
                      overwrite = overwrite, filestep=filestep, mcastep=mcastep,
                       concentrations=concentrations, fitfiles=fitfiles)
+        except:
+            msg = qt.QMessageBox()
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s" % sys.exc_info()[1])
+            if qt.qVersion() < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            return
+
+            
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1
