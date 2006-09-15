@@ -134,6 +134,9 @@ class FitParamWidget(FitParamForm):
         beamlayout.addWidget(self.energyTab, 0, 0)
         self.energyTable = self.energyTab.table
 
+        #the x-ray tube (if any)
+        self.xRayTube = self.energyTab.tube
+
         #The peak select tab
         if qt.qVersion() < '4.0.0':
             layout= qt.QGridLayout(self.TabPeaks,1,1)
@@ -257,11 +260,13 @@ class FitParamWidget(FitParamForm):
         self.__setConPar(pardict)
         self.__setDetPar()
         self.__setPeakShapePar()
+        if pardict.has_key("tube"): self.xRayTube.setParameters(pardict["tube"])
 
     def getParameters(self):
         pars= {}
         sections = FitParamSections * 1
         sections.append('multilayer')
+        sections.append('tube')
         for key in sections:
             pars[key]= self.__getPar(key)
         return pars
@@ -279,6 +284,8 @@ class FitParamWidget(FitParamForm):
             return self.__getAttPar()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
+        if parname in ["tube", "TUBE"]:
+            return self.__getTubePar()
         if parname in ["concentrations", "CONCENTRATIONS"]:
             return self.__getConPar()
         return None
@@ -436,6 +443,10 @@ class FitParamWidget(FitParamForm):
                     attpar= [0, '-', 0., 0.]
                     self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
                 pars[att]= attpar
+        return pars
+
+    def __getTubePar(self):
+        pars = self.xRayTube.getParameters()
         return pars
 
     def __setConPar(self, pardict):

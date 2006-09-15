@@ -27,22 +27,59 @@
 __revision__ = "$Revision: 1.10 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
-try:
-    import PyQt4.Qt as qt
-except:
-    import qt
+import Numeric
+import QXTube
+from   QXTube import qt as qt
 if qt.qVersion() < '3.0.0':
     import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
     import qttable
-import Numeric
+
 DEBUG=0
 class EnergyTab(qt.QWidget):
     def __init__(self,parent=None, name="Energy Tab"):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
-        self.table  = EnergyTable(self)
-        layout.addWidget(self.table)
+        hbox = qt.QWidget(self)
+        self.hbox = qt.QHBoxLayout(hbox)
+        self.tube = QXTube.QXTube(hbox)
+        self.table  = EnergyTable(hbox)
+        self.hbox.addWidget(self.tube)
+        self.hbox.addWidget(self.table)
+        self.tube.plot()
+        self.tube.hide()
+        self.tubeButton = qt.QPushButton(self)
+        self.tubeButton.setText("I have an x-ray tube!")        
+        layout.addWidget(self.tubeButton)
+        layout.addWidget(hbox)
+        self.connect(self.tubeButton,
+                     qt.SIGNAL("clicked()"),
+                     self.tubeButtonClicked)
+
+        self.__calculating = 0
+        if qt.qVersion() < '4.0.0':
+            self.connect(self.tube, qt.PYSIGNAL("QXTubeSignal"), self.__tubeUpdated)
+        else:
+            self.connect(self.tube, qt.SIGNAL("QXTubeSignal"), self.__tubeUpdated)
+
+    def tubeButtonClicked(self):
+        if self.tube.isHidden():
+            self.tube.show()
+            self.tubeButton.setText("I don't have an x-ray tube!")
+        else:
+            self.tube.hide()
+            self.tubeButton.setText("I have an x-ray tube!")
+
+    def __tubeUpdated(self, d):
+        if    self.__calculating:return
+        else: self.__calculating = 1
+        self.table.setParameters(d["energylist"],
+                                 d["weightlist"],
+                                 d["flaglist"],
+                                 d["scatterlist"])
+        self.__calculating = 0
+        self.tubeButtonClicked()
+
 
 if qt.qVersion() < '4.0.0':
     QTable = qttable.QTable
