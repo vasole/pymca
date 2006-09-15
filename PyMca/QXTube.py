@@ -344,16 +344,16 @@ class TubeWidget(qt.QWidget):
             d["transmission"]    = 1
         else:
             d["transmission"]    = 0
-        d["voltage"] = float(self.voltage.text())
+        d["voltage"] = float(str(self.voltage.text()))
         d["anode"] = self.anodeCombo.getCurrent()[1]
-        d["anodethickness"]  = float(self.anodeThickness.text())
-        d["anodedensity"]    = float(self.anodeDensity.text())
+        d["anodethickness"]  = float(str(self.anodeThickness.text()))
+        d["anodedensity"]    = float(str(self.anodeDensity.text()))
         d["window"] = self.windowCombo.getCurrent()[1]
-        d["windowthickness"]  = float(self.windowThickness.text())
-        d["windowdensity"]    = float(self.windowDensity.text())
-        d["alphax"]          = float(self.alphaX.text())
-        d["alphae"]          = float(self.alphaE.text())
-        d["deltaplotting"]   = float(self.delta.text())
+        d["windowthickness"]  = float(str(self.windowThickness.text()))
+        d["windowdensity"]    = float(str(self.windowDensity.text()))
+        d["alphax"]          = float(str(self.alphaX.text()))
+        d["alphae"]          = float(str(self.alphaE.text()))
+        d["deltaplotting"]   = float(str(self.delta.text()))
         return d
 
     def _anodeSlot(self, ddict):

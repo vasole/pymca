@@ -187,7 +187,8 @@ class EnergyTable(QTable):
             if qt.qVersion() < '4.0.0':
                 #item= qttable.QCheckTableItem(self, text)
                 if qt.qVersion() < '3.0.0':
-                    print "background  color to implement in qt 2.3.0"
+                    if DEBUG:
+                        print "background  color to implement in qt 2.3.0"
                 else:
                     self.viewport().setPaletteBackgroundColor(color)
                 item= ColorQTableItem(self, text, color)                
@@ -290,6 +291,13 @@ class EnergyTable(QTable):
 
     def __fillTable(self):
         self.__build(max(self.__rows*self.dataColumns,len(self.energyList)))
+        for i in range(self.dataColumns):
+            if qt.qVersion() < '4.0.0':
+                self.adjustColumn(0 + 3*i)
+            else:
+                if DEBUG:
+                    print "column adjustment missing"
+
         ddict = self._getDict()
         if ddict != {}:
             ddict['event'] = "TableFilled"

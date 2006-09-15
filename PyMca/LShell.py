@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.3 $"
+__revision__ = "$Revision: 1.4 $"
 
 import Numeric
 import specfile
@@ -32,11 +32,8 @@ import os
 dirname   = os.path.dirname(__file__)
 inputfile = os.path.join(dirname, "LShellRates.dat")
 if not os.path.exists(inputfile):
-    dirname = os.path.dirname(dirname)
-    inputfile = os.path.join(dirname, "LShellRates.dat")
-    if not os.path.exists(inputfile):
-         print "Cannot find inputfile ",inputfile
-
+    if len(dirname) > 3:
+        if dirname[-4:] in [".exe", ".zip"]:dirname = os.path.dirname(dirname)
 sf=specfile.Specfile(os.path.join(dirname, "LShellRates.dat"))
 ElementL1ShellTransitions = sf[0].alllabels()
 ElementL2ShellTransitions = sf[1].alllabels()
@@ -157,9 +154,14 @@ def getweights(ele,excitedshells=None):
             w[i] /= cum        
     return w
 
+if 'TOTAL' in  ElementL1ShellTransitions:
+    labeloffset = 2
+else:
+    labeloffset = 1
 ElementLShellTransitions = ElementL1ShellTransitions     +  \
-                           ElementL2ShellTransitions[2:] +  \
-                           ElementL3ShellTransitions[2:] 
+                           ElementL2ShellTransitions[labeloffset:] +  \
+                           ElementL3ShellTransitions[labeloffset:]
+    
 for i in range(len(ElementLShellTransitions)):
     ElementLShellTransitions[i]+="*"    
  
@@ -172,12 +174,13 @@ weights = Numeric.array(weights).astype(Numeric.Float)
 ElementLShellRates = Numeric.zeros((len(ElementL1ShellRates),len(ElementLShellTransitions)),Numeric.Float)
 ElementLShellRates[:,0]     = Numeric.arange(len(ElementL1ShellRates)) + 1 
 n1 = len(ElementL1ShellTransitions)
-ElementLShellRates[:,2:n1] = Numeric.array(ElementL1ShellRates).astype(Numeric.Float)[:,2:] * Numeric.resize(weights[:,0],(nele,1))
-n2 = n1 + len(ElementL2ShellTransitions) - 2
-ElementLShellRates[:,n1:n2] = Numeric.array(ElementL2ShellRates).astype(Numeric.Float)[:,2:]* Numeric.resize(weights[:,1],(nele,1))
+lo = labeloffset
+ElementLShellRates[:,lo:n1] = Numeric.array(ElementL1ShellRates).astype(Numeric.Float)[:,lo:] * Numeric.resize(weights[:,0],(nele,1))
+n2 = n1 + len(ElementL2ShellTransitions) - lo
+ElementLShellRates[:,n1:n2] = Numeric.array(ElementL2ShellRates).astype(Numeric.Float)[:,lo:]* Numeric.resize(weights[:,1],(nele,1))
 n1 = n2
-n2 = n1 + len(ElementL3ShellTransitions) - 2
-ElementLShellRates[:,n1:n2] = Numeric.array(ElementL3ShellRates).astype(Numeric.Float)[:,2:]* Numeric.resize(weights[:,2],(nele,1))
+n2 = n1 + len(ElementL3ShellTransitions) - lo
+ElementLShellRates[:,n1:n2] = Numeric.array(ElementL3ShellRates).astype(Numeric.Float)[:,lo:]* Numeric.resize(weights[:,2],(nele,1))
 
 if __name__ == "__main__":
     import sys

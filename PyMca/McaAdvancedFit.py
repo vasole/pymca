@@ -412,7 +412,18 @@ class McaAdvancedFit(qt.QWidget):
             return
         self.__fitdone = False
         self._concentrationsDict = None
-        npar = dialog.getParameters()
+        try:
+            #this may crash in qt 2.3.0
+            npar = dialog.getParameters()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s" % sys.exc_info()[1])
+            if qt.qVersion() < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            return
         config.update(npar)
         dialog.close()
         del dialog
@@ -421,8 +432,16 @@ class McaAdvancedFit(qt.QWidget):
         if self.mcatable is not None:
             self.mcatable.setRowCount(0)
             
-        if DEBUG or (qt.qVersion() < '3.0.0'):
+        if DEBUG:
             self.mcafit.configure(config)
+        elif (qt.qVersion() < '3.0.0'):
+            try:
+                self.mcafit.configure(config)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1]) 
+                msg.exec_loop()
         else:
             try:
                 threadResult=self._submitThread(self.mcafit.configure, config,

@@ -28,7 +28,7 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.83 $"
+__revision__ = "$Revision: 1.84 $"
 import string
 import Numeric
 import imp
@@ -86,7 +86,7 @@ ElementsInfo = [
    ["Mo",  42,   6,5,   "molybdenum", 95.9500,     10220.00  ],
    ["Tc",  43,   7,5,   "technetium", 99.0000,     11500.0   ],
    ["Ru",  44,   8,5,   "ruthenium",  101.0700,    12410.0   ],
-   ["Rh",  45,   9,5,   "rhodium",    102.9100,    12440.0   ],
+   ["Rh",  45,   9,5,   "rhodium",    102.9100,    12440.0    ],
    ["Pd",  46,  10,5,   "palladium",  106.400,     12160.0   ],
    ["Ag",  47,  11,5,   "silver",     107.880,     10500.00  ],
    ["Cd",  48,  12,5,   "cadmium",    112.410,     8650.00   ],
@@ -270,6 +270,7 @@ import LShell
 import MShell
 #Scofield's photoelectric dictionnary
 import Scofield1973
+
 ElementShellTransitions = [KShell.ElementKShellTransitions,
                            LShell.ElementLShellTransitions,
                            LShell.ElementL1ShellTransitions,
@@ -2837,16 +2838,19 @@ def getElementLShellRates(symbol,energy=None,photoweights = None):
     shellrates = Numeric.arange(len(LShell.ElementLShellTransitions)).astype(Numeric.Float)
     shellrates[0] = z
     shellrates[1] = 0
+    lo = 0
+    if 'Z' in LShell.ElementL1ShellTransitions[0:2]:lo=1
+    if 'TOTAL' in LShell.ElementL1ShellTransitions[0:2]:lo=lo+1
     n1 = len(LShell.ElementL1ShellTransitions)
     rates = Numeric.array(LShell.ElementL1ShellRates[index]).astype(Numeric.Float)
-    shellrates[2:n1] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[0]
-    n2 = n1 + len(LShell.ElementL2ShellTransitions) - 2
+    shellrates[lo:n1] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[0]
+    n2 = n1 + len(LShell.ElementL2ShellTransitions) - lo
     rates = Numeric.array(LShell.ElementL2ShellRates[index]).astype(Numeric.Float)
-    shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[1]
+    shellrates[n1:n2] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[1]
     n1 = n2
-    n2 = n1 + len(LShell.ElementL3ShellTransitions) - 2
+    n2 = n1 + len(LShell.ElementL3ShellTransitions) - lo
     rates = Numeric.array(LShell.ElementL3ShellRates[index]).astype(Numeric.Float)
-    shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[2]
+    shellrates[n1:n2] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[2]
     return shellrates
 
 def getElementMShellRates(symbol,energy=None, photoweights = None):
@@ -2888,7 +2892,8 @@ def getElementMShellRates(symbol,energy=None, photoweights = None):
     return shellrates
 
 
-def _getUnfilteredElementDict(symbol, energy): 
+def _getUnfilteredElementDict(symbol, energy, photoweights=None):
+    if photoweights == None:photoweights = False
     dict = {}
     if len(symbol) > 1:
         ele = string.upper(symbol[0])+string.lower(symbol[1])
@@ -2900,9 +2905,9 @@ def _getUnfilteredElementDict(symbol, energy):
     for n in range(len(ElementXrays)):
         rays = ElementXrays[n]
         if   (rays == 'L xrays'):
-            shellrates = getElementLShellRates(ele,energy=energy,photoweights=False)
+            shellrates = getElementLShellRates(ele,energy=energy,photoweights=photoweights)
         elif (rays == 'M xrays'):
-            shellrates = getElementMShellRates(ele,energy=energy,photoweights=False)
+            shellrates = getElementMShellRates(ele,energy=energy,photoweights=photoweights)
         else:
             shellrates = ElementShellRates[n][z-1]
         shelltransitions = ElementShellTransitions[n]
