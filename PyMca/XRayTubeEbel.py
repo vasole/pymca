@@ -333,6 +333,7 @@ def generateLists(target, e0, window = None,
                                  targetthickness=targetthickness)
     energyweight[0:len(x1)] *= step1
     energyweight[len(x1):(len(x1)+len(x2))] *= step2
+    energyweight[len(x1)] *= (energy[len(x1)] - energy[len(x1) - 1])/step2 
     finalenergy = Numeric.zeros(len(fllines)+len(energyweight), Numeric.Float)
     finalweight = Numeric.zeros(len(fllines)+len(energyweight), Numeric.Float)
     scatterflag = Numeric.zeros(len(fllines)+len(energyweight))
