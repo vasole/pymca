@@ -33,9 +33,11 @@ import os
 dirname   = os.path.dirname(__file__)
 inputfile = os.path.join(dirname, "KShellRates.dat")
 if not os.path.exists(inputfile):
-    if len(dirname) > 3:
-        if dirname[-4:] in [".exe", ".zip"]:dirname = os.path.dirname(dirname)
-        
+    dirname = os.path.dirname(dirname)
+    inputfile = os.path.join(dirname, "KShellRates.dat")
+    if not os.path.exists(inputfile):
+         print "Cannot find inputfile ",inputfile    
+
 sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
 ElementKShellTransitions = sf[0].alllabels()
 ElementKShellRates = Numeric.transpose(sf[0].data()).tolist()
