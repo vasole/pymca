@@ -25,32 +25,25 @@
 # is a problem to you.
 #############################################################################*/
 try:
-    from PyQt4.QtCore import Qt, SIGNAL, SLOT, QObject, QRect, QString, \
-        QStringList, qVersion
-    from PyQt4.QtGui import QApplication, QAbstractItemView, QBrush, QColor, QComboBox, \
-        QGridLayout, QLabel, QListWidget, QListWidgetItem, QPainter, \
-        QPushButton, QSizePolicy, QSpacerItem, QTableWidget, QTabWidget, \
-        QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+    from PyQt4.Qt import *
+    if qVersion() < '4.0.0':
+        print "WARNING: Using Qt %s version" % qt.QTVERSION
 except:
-    from qt import PYSIGNAL, SIGNAL, SLOT, QApplication, QBrush, QColor, \
-            QComboBox, QGridLayout, QLabel, QListView, QListViewItem, QObject, \
-            QPainter, QPushButton, QRect, QSizePolicy, QSpacerItem, QString, \
-            QStringList, Qt, qVersion, QTabWidget, QVBoxLayout, QWidget
-
+    from qt import *
 QTVERSION = qVersion()
-
 if QTVERSION < '3.0.0':
     import Myqttable as qttable
-if QTVERSION < '4.0.0':
+    QComboTableItem = qttable.QComboTableItem
+    MyQListView = QListView
+elif QTVERSION < '4.0.0':
     import qttable
     QComboTableItem = qttable.QComboTableItem
-    QTreeWidget = QListView
-    QTreeWidgetItem = QListViewItem
+    MyQListView = QListView
 else:
-    # TODO: These next lines can be dropped once support for qt3 is dropped
+    qttable = QTableWidget
     QComboTableItem = QComboBox
-    PYSIGNAL = SIGNAL
-
+    MyQListView = QTreeWidget
+    QListViewItem = QTreeWidgetItem
 #
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
@@ -102,7 +95,7 @@ Elements = [
    ["Mo",  42,   6,5,   "molybdenum", 95.9500,     10220.00  ],
    ["Tc",  43,   7,5,   "technetium", 99.0000,     11500.0   ],
    ["Ru",  44,   8,5,   "ruthenium",  101.0700,    12410.0   ],
-   ["Rh",  45,   9,5,   "rhodium",    102.9100,    12440.0   ],
+   ["Rh",  45,   9,5,   "rhodium",    102.9100,    12440.0    ],
    ["Pd",  46,  10,5,   "palladium",  106.400,     12160.0   ],
    ["Ag",  47,  11,5,   "silver",     107.880,     10500.00  ],
    ["Cd",  48,  12,5,   "cadmium",    112.410,     8650.00   ],
@@ -370,10 +363,6 @@ class QPeriodicTable(QWidget):
         b= self.eltButton[symbol]
         b.setSelected(not b.isSelected())
 
-# TODO: QPeriodicComboTableItem should derive from QComboBox once support for 
-# PyQt3 and earlier has been dropped. Actually, I wonder if this class is needed
-# with PyQt4, can't QPeriodicCombo be used instead?
-##class QPeriodicComboTableItem(QComboBox):
 class QPeriodicComboTableItem(QComboTableItem):
     """ Periodic Table Combo List to be used in a QTable
         Init options:
@@ -419,8 +408,7 @@ class QPeriodicComboTableItem(QComboTableItem):
         id= self.currentItem()
         if self.addnone and not id: return None
         else: return ElementList[id-self.addnone]
-
-
+        
 class QPeriodicCombo(QComboBox):
     """ Periodic Table Element list in a QComboBox
         Init options:
@@ -442,7 +430,7 @@ class QPeriodicCombo(QComboBox):
             QComboBox.__init__(self, parent, name)
         else:
             QComboBox.__init__(self, parent)
-            if name: self.setAccessibleName(name)
+            if name:self.setAccessibleName(name)
 
         i = 0
         for (symbol, Z, x, y, name, mass, density) in Elements:
@@ -451,11 +439,14 @@ class QPeriodicCombo(QComboBox):
             if QTVERSION < '4.0.0': self.insertItem(txt)
             else: self.insertItem(i,txt)
             i += 1
-
+            
         self.connect(self, SIGNAL("activated(int)"), self.__selectionChanged)
 
     def __selectionChanged(self, idx):
-        self.emit(PYSIGNAL("selectionChanged"), (Elements[idx][0],))
+        if QTVERSION < '4.0.0':
+            self.emit(PYSIGNAL("selectionChanged"), (Elements[idx][0],))
+        else:
+            self.emit(SIGNAL("selectionChanged"), Elements[idx][0])
 
     def getSelection(self):
         return Elements[self.currentItem()]
@@ -463,9 +454,9 @@ class QPeriodicCombo(QComboBox):
     def setSelection(self, symbol):
         symblist= [ elt[0] for elt in Elements ]
         self.setCurrentItem(symblist.index(symbol))
+        
 
-
-class QPeriodicList(QTreeWidget):
+class QPeriodicList(MyQListView):
     """ Periodic Table Element list in a QListView
         Init options:
             detailed= 1 (default) display element symbol, Z and name
@@ -485,11 +476,12 @@ class QPeriodicList(QTreeWidget):
     """
     def __init__(self, master=None, name=None, fl=0, detailed=1, single=0):
         if QTVERSION < '4.0.0':
-            QTreeWidget.__init__(self, master, name, fl)
+            MyQListView.__init__(self, master, name, fl)
         else:
-            QTreeWidget.__init__(self, master)
-            if name: self.setAccessibleName(name)
+            MyQListView.__init__(self, master)
+            if name:self.setAccessibleName(name)
 
+    
         self.detailed= (detailed==1)    
 
         if QTVERSION < '4.0.0':
@@ -528,12 +520,13 @@ class QPeriodicList(QTreeWidget):
             self.resizeColumnToContents(1)
             if detailed: self.resizeColumnToContents(2)
 
+
     def __fill_list(self):
         self.items= []
         after= None
         for (symbol, Z, x, y, name, mass, density) in Elements:
-            if after is None: item= QTreeWidgetItem(self)
-            else: item= QTreeWidgetItem(self, after)
+            if after is None: item= QListViewItem(self)
+            else: item= QListViewItem(self, after)
             item.setText(0, str(Z))
             item.setText(1, symbol)
             if self.detailed:
@@ -541,8 +534,18 @@ class QPeriodicList(QTreeWidget):
             self.items.append(item)
             if QTVERSION < '4.0.0':
                 self.insertItem(item)
-            after = item
+            after= item
+    """
+    def __selectionChanged(self):
+        self.emit(PYSIGNAL("selectionChanged"), (self.getSelection(),))
+    
+    def getSelection(self):
+        return [ Elements[idx][0] for idx in range(len(self.items)) if self.items[idx].isSelected() ]   
 
+    def setSelection(self, symbolList):
+        for idx in range(len(self.items)):
+            self.items[idx].setSelected(Elements[idx][0] in symbolList)
+    """
     def __selectionChanged(self):
         if QTVERSION < "4.0.0":
             self.emit(PYSIGNAL("selectionChanged"), (self.getSelection(),))
@@ -580,8 +583,7 @@ def testwidget():
     if QTVERSION < '4.0.0':
         f = QPeriodicTable(w)
     else:
-        f = QPeriodicTable()
-
+        f = QPeriodicTable()        
     if QTVERSION < '4.0.0':
         o= QWidget(w)
         ol= QVBoxLayout(o)
@@ -607,7 +609,7 @@ def testwidget():
         t = QLabel("QPeriodicList", o)
         ol.addWidget(t)
         l = QPeriodicList(o)
-        ol.addWidget(l)
+        ol.addWidget(l)        
 
     if QTVERSION < '4.0.0':
         tab = qttable.QTable(w)
@@ -621,7 +623,7 @@ def testwidget():
         tab.setColumnCount(1)
         tab.setCellWidget(0, 0, QPeriodicCombo(tab, detailed=0))
         tab.setCellWidget(1, 0, QPeriodicCombo(tab, detailed=0))
-    
+        
     w.addTab(f, "QPeriodicTable")
     if QTVERSION < '4.0.0':
         w.addTab(o, "QPeriodicList/Combo")
@@ -629,6 +631,8 @@ def testwidget():
     else:
         w.addTab(o, "QPeriodicList/Combo")
         w.addTab(tab, "QPeriodicComboTableItem")
+        
+
     f.setSelection(['H', 'Fe', 'Si'])
     
     if QTVERSION < '4.0.0':
