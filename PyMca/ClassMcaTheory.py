@@ -1073,15 +1073,15 @@ class McaTheory:
                 return self.exppol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL],energy) 
         else:
             return 0.0 * x
-    def num_deriv(param0,index,t0):
+    def num_deriv(self, param0,index,t0):
             #numerical derivative
-            x=array(t0)
-            delta = (param0[index] + equal(param0[index],0.0)) * 0.00001
+            x=Numeric.array(t0)
+            delta = (param0[index] + Numeric.equal(param0[index],0.0)) * 0.00001
             newpar = param0.__copy__()
             newpar[index] = param0[index] + delta
-            f1 = mcatheory(newpar, x)
+            f1 = self.mcatheory(newpar, x)
             newpar[index] = param0[index] - delta
-            f2 = mcatheory(newpar, x)
+            f2 = self.mcatheory(newpar, x)
             return (f1-f2) / (2.0 * delta)
 
 
@@ -1104,13 +1104,34 @@ class McaTheory:
          #for i in range(len(param[index-4]))):
          if ESCAPE:
             (r,c) = Numeric.shape(PEAKS0[i])
-            dummy      = Numeric.ones((2*r,3+5*(HYPERMET > 0)),Numeric.Float)
-            dummy[0:r,0] = PEAKS0[i][:,0] * gain
-            dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
-            dummy[0:r,2] = Numeric.sqrt(noise+ PEAKS0[i][:,1] * fano)
-            dummy[r:,0] = PEAKS0[i][:,0] * gain * PEAKS0[i][:,3]
-            dummy[r:,1] = PEAKS0[i][:,1] - self.config['detector']['detene']
-            dummy[r:,2] = Numeric.sqrt(noise + (dummy[r:,1]>0) * dummy[r:,1] * fano)            
+            if OLDESCAPE:
+                dummy      = Numeric.ones((2*r,3+5*(HYPERMET > 0)), Numeric.Float)
+                dummy[0:r,0] = PEAKS0[i][:,0] * gain
+                dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
+                dummy[0:r,2] = Numeric.sqrt(noise+ PEAKS0[i][:,1] * fano)
+                dummy[r:,0] = PEAKS0[i][:,0] * gain * PEAKS0[i][:,3]
+                dummy[r:,1] = PEAKS0[i][:,1] - self.config['detector']['detene']
+                dummy[r:,2] = Numeric.sqrt(noise + (dummy[r:,1]>0) * dummy[r:,1] * fano)
+            else:
+                n_escape_lines = self.PEAKSW[i].shape[0] - r
+                #if 1:print "nlines = ",r, "n escape lines =",n_escape_lines
+                dummy    = Numeric.ones((r + n_escape_lines, 3+5*(HYPERMET > 0)), Numeric.Float)
+                dummy[0:r,0] = PEAKS0[i][:,0] * gain
+                dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
+                dummy[0:r,2] = Numeric.sqrt(noise+ PEAKS0[i][:,1] * fano)
+                ii=0
+                j=0
+                for esc_group in self.PEAKS0ESCAPE[i]:
+                    for esc_line in esc_group:
+                        esc_ene  = esc_line[0] * 1.0
+                        esc_rate = esc_line[1]
+                        dummy[j+r, 0] =  dummy[ii,0] * esc_rate
+                        dummy[j+r, 1] =  esc_ene
+                        j = j + 1
+                    ii = ii + 1
+                dummy[r:, 2] = Numeric.sqrt(noise + (dummy[r:,1]>0) * dummy[r:,1] * fano)
+                #for jj in range(r+n_escape_lines):
+                #    print index, dummy[jj, 1], dummy[jj, 0], dummy[jj, 2]                
          else:
             (r,c) = Numeric.shape(PEAKS0[i])
             dummy      = Numeric.ones((r,3+5*(HYPERMET > 0)),Numeric.Float)
@@ -1126,6 +1147,18 @@ class McaTheory:
                 dummy[:,6] = param[PARAMETERS.index('LT SlopeR')]
                 dummy[0:r,7] = param[PARAMETERS.index('STEP HeightR')]
                 dummy[r:,7]  = 0.0
+         #this was to test the analytical versus the numerical derivative
+         #nderiv = self.num_deriv(param0,index,t0)
+         #try:
+         #    self.g.newcurve("num", t0, nderiv)
+         #except:
+         #    import QtBlissGraph
+         #    self.g = QtBlissGraph.QtBlissGraph()
+         #    self.g.newcurve("num", t0, nderiv)
+         #ader = SpecfitFuns.fastahypermet(dummy,energy, HYPERMET)
+         #self.g.newcurve("ana", t0, ader)
+         #self.g.replot()
+         #self.g.show()
          if self.FASTER:
             if HYPERMET:
                 return SpecfitFuns.fastahypermet(dummy,energy,HYPERMET)        
@@ -1360,9 +1393,11 @@ class McaTheory:
         #"""
         #firstshot=mcatheory(newpar,x)
         #a linear fit does not need an initial estimate of the areas
+        noise = pow(self.config['detector']['noise'], 2)
+        fano = self.config['detector']['fano'] * 2.3548*2.3548*0.00385
         if not linearfit:
          for i in range(len(PARAMETERS)-NGLOBAL):
-            rates = PEAKS0[i][:,0]
+            rates     =  self.PEAKS0[i][:,0]
             positions = (self.PEAKS0[i][:,1] - zero)/gain
             fwhms     = (self.PEAKS0[i][:,2])/gain
             i1 = Numeric.nonzero((positions >= x[0]) & (positions <= x[-1]))
@@ -1383,13 +1418,64 @@ class McaTheory:
                  #area = ((height * fwhm/2.3548)*sqrt(2*3.14159))/fmax
                  area = ((height * fwhm/2.3548)*Numeric.sqrt(2*3.14159))
                  newpar[i+NGLOBAL] = area
-                 #print area
-                 #print "peak ",i,"in fitting region" 
-            else:
+            elif not self.config['fit']['escapeflag']:
                 #peaks outside fitting region
-                #print "peak ",i,"outside fitting region"
+                #force zero area
                 newpar[i+NGLOBAL] = 0.0
                 codes[0,i+NGLOBAL]= Gefit.CFIXED
+            else:
+                #peaks outside fitting region
+                #prior to force them to zero area, let's
+                #check if their escape peaks fall into the
+                #fitting region
+                #print "expected shape = ",self.PEAKSW[i].shape
+                #print "n escape lines = ",self.PEAKSW[i].shape[0] - len(rates)
+                #get the number of escape lines to get a proper buffer
+                n_escape_lines = self.PEAKSW[i].shape[0] - len(rates)
+                peak_buffer    = Numeric.zeros((n_escape_lines, 3)).astype(Numeric.Float)
+                ii=0
+                jj=0
+                for esc_group in self.PEAKS0ESCAPE[i]:
+                    for esc_line in esc_group:
+                        esc_ene  = esc_line[0] * 1.0
+                        esc_rate = esc_line[1]
+                        peak_buffer[jj,0] =  self.PEAKS0[i][ii,0] * esc_rate
+                        peak_buffer[jj,1] =  esc_ene
+                        jj = jj + 1
+                    ii = ii + 1
+                peak_buffer[:, 2] = Numeric.sqrt(noise + \
+                                    (peak_buffer[:,1]>0) * peak_buffer[:,1] * \
+                                     fano)
+                rates     =  peak_buffer[:,0]
+                positions = (peak_buffer[:,1] - zero)/gain
+                i1 = Numeric.nonzero((positions >= x[0]) & (positions <= x[-1]))
+                inpeaks = Numeric.take(peak_buffer,i1)
+                if len(inpeaks):
+                     fmax = max(inpeaks[:,0])            
+                     jmax = 0
+                     for j in range(len(inpeaks[:,1])):
+                         if fmax < inpeaks[j,0]:
+                             fmax = inpeaks[j,0]
+                             jmax = j
+                     if fmax <= 0:
+                         newpar[i+NGLOBAL] = 0.0
+                         codes[0,i+NGLOBAL]= Gefit.CFIXED
+                     else:                             
+                         j = jmax
+                         position  = (inpeaks[j,1] - zero)/gain
+                         fwhm      = (inpeaks[j,2])/gain
+                         n      = max(Numeric.nonzero(Numeric.ravel(x)<=position))
+                         height = Numeric.ravel(y - z)[n]
+                         #area = ((height * fwhm/2.3548)*sqrt(2*3.14159))/fmax
+                         area = ((height * fwhm/2.3548)*Numeric.sqrt(2*3.14159))
+                         newpar[i+NGLOBAL] = area/fmax
+                         #print PARAMETERS[i+NGLOBAL], "index = ", i + NGLOBAL
+                         #print "Starting area = ", area/fmax
+                         #print "alternative =   ", area
+                else:
+                    #none of the escape peaks falls into the fitting region
+                    newpar[i+NGLOBAL] = 0.0
+                    codes[0,i+NGLOBAL]= Gefit.CFIXED
         return newpar,codes
     
     def startfit(self,digest=0, linear=None):
