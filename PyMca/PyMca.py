@@ -32,7 +32,7 @@ import PyMcaMdi
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "3.9.2"
+__version__ = "3.9.3"
 if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",

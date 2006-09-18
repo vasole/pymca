@@ -55,25 +55,25 @@ else:
     QTable = qt.QTableWidget
     class QComboTableItem(qt.QComboBox):
         def __init__(self, parent=None, row = None, col = None):
-            self.row = row
-            self.col = col
+            self._row = row
+            self._col = col
             qt.QComboBox.__init__(self,parent)
             self.connect(self, qt.SIGNAL('activated(int)'), self._cellChanged)
 
         def _cellChanged(self, idx):
             if DEBUG:
                 print "cell changed",idx
-            self.emit(qt.SIGNAL('cellChanged(int,int)'), self.row, self.col)
+            self.emit(qt.SIGNAL('cellChanged(int,int)'), self._row, self._col)
 
     class QCheckBoxItem(qt.QCheckBox):
         def __init__(self, parent=None, row = None, col = None):
-            self.row = row
-            self.col = col
+            self._row = row
+            self._col = col
             qt.QCheckBox.__init__(self,parent)
             self.connect(self, qt.SIGNAL('clicked()'), self._cellChanged)
 
         def _cellChanged(self):
-            self.emit(qt.SIGNAL('cellChanged'), self.row, self.col)
+            self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
 
 
 class PeakTableWidget(QTable):
@@ -570,8 +570,8 @@ class QPeriodicComboTableItem(QComboTableItem):
             strlist.append(txt)
         if row is None: row = 0
         if col is None: col = 0
-        self.row = row
-        self.col = col
+        self._row = row
+        self._col = col
         if qt.qVersion() < '4.0.0':
             qttable.QComboTableItem.__init__(self, table, strlist)
         else:
@@ -581,7 +581,7 @@ class QPeriodicComboTableItem(QComboTableItem):
 
     if qt.qVersion() > "4.0.0":
         def _cellChanged(self, idx):
-            self.emit(qt.SIGNAL('cellChanged(int, int)'), self.row, self.col)
+            self.emit(qt.SIGNAL('cellChanged(int, int)'), self._row, self._col)
 
     def setSelection(self, symbol=None):
         if symbol is None:

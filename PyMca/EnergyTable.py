@@ -49,7 +49,7 @@ class EnergyTab(qt.QWidget):
         self.tube.plot()
         self.tube.hide()
         self.tubeButton = qt.QPushButton(self)
-        self.tubeButton.setText("I have an x-ray tube!")        
+        self.tubeButton.setText("Open X-Ray Tube Setup")        
         layout.addWidget(self.tubeButton)
         layout.addWidget(hbox)
         self.connect(self.tubeButton,
@@ -65,10 +65,10 @@ class EnergyTab(qt.QWidget):
     def tubeButtonClicked(self):
         if self.tube.isHidden():
             self.tube.show()
-            self.tubeButton.setText("I don't have an x-ray tube!")
+            self.tubeButton.setText("Close X-Ray Tube Setup")
         else:
             self.tube.hide()
-            self.tubeButton.setText("I have an x-ray tube!")
+            self.tubeButton.setText("Open X-Ray Tube Setup")
 
     def __tubeUpdated(self, d):
         if    self.__calculating:return
