@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
+__revision__ = "$Revision: 1.24 $"
 import sys
 try:
     import PyQt4.Qt as qt
@@ -38,11 +39,52 @@ if qt.qVersion() < '3.0.0':
     import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
     import qttable
+
+if qt.qVersion() > '4.0.0':
+    qt.QLabel.AlignRight  = qt.Qt.AlignRight
+    qt.QLabel.AlignCenter = qt.Qt.AlignCenter
+    qt.QLabel.AlignVCenter= qt.Qt.AlignVCenter
+
+    class Q3GridLayout(qt.QGridLayout):
+        def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
+            self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
+
 import Elements
 import MaterialEditor
 import MatrixEditor
 import re
 DEBUG=0
+
+class HorizontalSpacer(qt.QWidget):
+    def __init__(self, *args):
+        qt.QWidget.__init__(self, *args)
+
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, 
+                                          qt.QSizePolicy.Fixed))
+
+class MyQLabel(qt.QLabel):
+    def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
+        qt.QLabel.__init__(self,parent)
+        if qt.qVersion() <'4.0.0':
+            self.color = color
+            self.bold  = bold
+        else:
+            palette = self.palette()
+            role = self.foregroundRole()
+            palette.setColor(role,color)
+            self.setPalette(palette)
+            self.font().setBold(bold)
+
+
+    if qt.qVersion() < '4.0.0':
+        def drawContents(self, painter):
+            painter.font().setBold(self.bold)
+            pal =self.palette()
+            pal.setColor(qt.QColorGroup.Foreground,self.color)
+            self.setPalette(pal)
+            qt.QLabel.drawContents(self,painter)
+            painter.font().setBold(0)
+
 class AttenuatorsTab(qt.QWidget):
     def __init__(self,parent=None, name="Attenuators Tab",attenuators=None):
         qt.QWidget.__init__(self, parent)
@@ -93,6 +135,221 @@ class MultilayerTab(qt.QWidget):
                                                   matrixmode=True)
         layout.addWidget(self.matrixTable)
 
+class CompoundFittingTab(qt.QWidget):
+    def __init__(self,parent=None, name="Compound Tab",
+                    layerlist=None):
+        qt.QWidget.__init__(self, parent)
+        if layerlist is None:
+            self.nlayers = 5
+        else:
+            self.nlayers = len(layerlist)
+        layout = qt.QVBoxLayout(self)
+        hbox = qt.QWidget(self)
+        hboxlayout  = qt.QHBoxLayout(hbox)
+        #hboxlayout.addWidget(HorizontalSpacer(hbox))
+        self._compoundFittingLabel = MyQLabel(hbox, color = qt.Qt.red)
+        self._compoundFittingLabel.setText("Compound Fitting Mode is OFF")
+        self._compoundFittingLabel.setAlignment(qt.QLabel.AlignCenter)
+        hboxlayout.addWidget(self._compoundFittingLabel)
+        #hboxlayout.addWidget(HorizontalSpacer(hbox))
+        layout.addWidget(hbox)
+        
+        grid = qt.QWidget(self)
+        if qt.qVersion() < '4.0.0':
+            glt = qt.QGridLayout(grid,1,1,11,2,"gridlayout")
+        else:
+            glt = Q3GridLayout(grid)
+            glt.setMargin(11)
+            glt.setSpacing(2)
+        
+        self._layerFlagWidgetList = []
+        options = ["FREE", "FIXED", "IGNORED"]
+        for i in range(self.nlayers):
+            r = int(i / 5)
+            c = 3 * (i % 5)
+            label = qt.QLabel(grid)
+            label.setText("Layer%d" % i)
+            cbox  = qt.QComboBox(grid)
+            if qt.qVersion() < '4.0.0':
+                cbox.insertStrList(options)
+                if i == 0:
+                    cbox.setCurrentItem(0)
+                else:
+                    cbox.setCurrentItem(1)
+            else:
+                for item in options:
+                    cbox.addItem(item)
+                if i == 0:
+                    cbox.setCurrentIndex(0)
+                else:
+                    cbox.setCurrentIndex(1)
+            glt.addWidget(label, r, c)
+            glt.addWidget(cbox, r, c+1)
+            glt.addWidget(qt.QWidget(grid), r, c+2)
+        
+        layout.addWidget(grid)
+        if qt.qVersion() < '4.0.0':
+            self.mainTab = qt.QTabWidget(self, "mainTab")
+            layout.addWidget(self.mainTab)
+            self._editorList = []
+            for i in range(self.nlayers):
+                editor = CompoundFittingTab0(self.mainTab, layerindex=i)
+                self.mainTab.insertTab(editor,str("Layer%d" % i))
+                self._editorList.append(editor)
+        else:
+            self.mainTab = qt.QTabWidget(self)
+            layout.addWidget(self.mainTab)
+            self._editorList = []
+            for i in range(self.nlayers):
+                editor = CompoundFittingTab0(layerindex=i)
+                self.mainTab.addTab(editor, "layer Editor")
+                self._editorList.append(editor)
+                
+class CompoundFittingTab0(qt.QWidget):
+    def __init__(self,parent=None, name="Compound Tab",
+                    layerindex=None, compoundlist=None):
+        if layerindex is None:layerindex = 0
+        if compoundlist is None:
+            compoundlist=[]
+            for i in range(10):
+                compoundlist.append("Compound%d%d" % (layerindex, i))
+        qt.QWidget.__init__(self, parent)
+        layout = qt.QVBoxLayout(self)
+        
+        grid = qt.QWidget(self)
+        if qt.qVersion() < '4.0.0':
+            gl = qt.QGridLayout(grid,1,1,11,2,"gridlayout")
+        else:
+            gl = Q3GridLayout(grid)
+            gl.setMargin(11)
+            gl.setSpacing(2)
+        
+
+        # Layer name
+        nameLabel = qt.QLabel(grid)
+        nameLabel.setText("Name")
+        
+        self.nameLine = qt.QLineEdit(grid)
+        self.nameLine.setText("Compound fitting layer %d" % layerindex)
+        
+        gl.addWidget(nameLabel, 0, 0)
+        gl.addMultiCellWidget(self.nameLine, 0, 0, 1, 5)
+
+        Line = qt.QFrame(grid)
+        Line.setFrameShape(qt.QFrame.HLine)
+        Line.setFrameShadow(qt.QFrame.Sunken)
+        Line.setFrameShape(qt.QFrame.HLine)
+        gl.addMultiCellWidget(Line,1,1,0,5)
+        
+        
+        #labels
+        fixedLabel = qt.QLabel(grid)
+        fixedLabel_font = qt.QFont(fixedLabel.font())
+        fixedLabel_font.setItalic(1)
+        fixedLabel.setFont(fixedLabel_font)
+        fixedLabel.setText(str("Fixed"))
+        if qt.qVersion() < '4.0.0':
+            fixedLabel.setAlignment(qt.QLabel.AlignVCenter)
+            fixedLabel.setAlignment(qt.QLabel.AlignHCenter)
+        else:
+            fixedLabel.setAlignment(qt.Qt.AlignVCenter)
+
+
+        valueLabel = qt.QLabel(grid)
+        valueLabel_font = qt.QFont(valueLabel.font())
+        valueLabel_font.setItalic(1)
+        valueLabel.setFont(valueLabel_font)
+        valueLabel.setText(str("Value"))
+        valueLabel.setAlignment(qt.QLabel.AlignCenter)
+
+
+        errorLabel = qt.QLabel(grid)
+        errorLabel_font = qt.QFont(errorLabel.font())
+        errorLabel_font.setItalic(1)
+        errorLabel.setFont(errorLabel_font)
+        errorLabel.setText(str("Error"))
+        errorLabel.setAlignment(qt.QLabel.AlignCenter)
+
+        gl.addWidget(fixedLabel,2,2)
+        gl.addWidget(valueLabel,2,3)
+        gl.addWidget(errorLabel,2,5)
+        
+        #density
+        densityLabel = qt.QLabel(grid)
+        densityLabel.setText("Density")
+        
+        self.densityCheck = qt.QCheckBox(grid)
+        self.densityCheck.setText(str(""))
+
+        self.densityValue = qt.QLineEdit(grid)
+        densitySepLabel = qt.QLabel(grid)
+        densitySepLabel_font = qt.QFont(densitySepLabel.font())
+        densitySepLabel_font.setBold(1)
+        densitySepLabel.setFont(densitySepLabel_font)
+        densitySepLabel.setText(str("+/-"))
+        
+        self.densityError = qt.QLineEdit(grid)
+
+        gl.addWidget(densityLabel, 3, 0)
+        gl.addWidget(HorizontalSpacer(grid), 3, 1)
+        gl.addWidget(self.densityCheck, 3, 2)
+        gl.addWidget(self.densityValue, 3, 3)
+        gl.addWidget(densitySepLabel, 3, 4)
+        gl.addWidget(self.densityError, 3, 5)
+        
+        #thickness
+        thicknessLabel = qt.QLabel(grid)
+        thicknessLabel.setText("Thickness")
+        
+        self.thicknessCheck = qt.QCheckBox(grid)
+        self.thicknessCheck.setText(str(""))
+
+        self.thicknessValue = qt.QLineEdit(grid)
+        thicknessSepLabel = qt.QLabel(grid)
+        thicknessSepLabel_font = qt.QFont(thicknessSepLabel.font())
+        thicknessSepLabel_font.setBold(1)
+        thicknessSepLabel.setFont(thicknessSepLabel_font)
+        thicknessSepLabel.setText(str("+/-"))
+        
+        self.thicknessError = qt.QLineEdit(grid)
+
+        gl.addWidget(thicknessLabel, 4, 0)
+        gl.addWidget(self.thicknessCheck, 4, 2)
+        gl.addWidget(self.thicknessValue, 4, 3)
+        gl.addWidget(thicknessSepLabel, 4, 4)
+        gl.addWidget(self.thicknessError, 4, 5)
+        
+        Line = qt.QFrame(grid)
+        Line.setFrameShape(qt.QFrame.HLine)
+        Line.setFrameShadow(qt.QFrame.Sunken)
+        Line.setFrameShape(qt.QFrame.HLine)
+        gl.addMultiCellWidget(Line,5,5,0,5)
+        
+        layout.addWidget(grid)
+        """
+        self.matrixGeometry = MatrixEditor.MatrixEditor(self,"tabMatrix",
+                                   table=False, orientation="horizontal",
+                                   density=False, thickness=False,
+                                   size="image2")
+        layout.addWidget(self.matrixGeometry)
+        
+        text  ="This matrix definition will only be "
+        text +="considered if Matrix is selected and material is set to "
+        text +="MULTILAYER in the ATTENUATORS tab.\n  "
+        self.matrixInfo  = qt.QLabel(self)
+        layout.addWidget(self.matrixInfo)
+        self.matrixInfo.setText(text)
+        """ 
+        self.matrixTable = AttenuatorsTableWidget(self,name,
+                                                  attenuators=compoundlist,
+                                                  matrixmode=False,
+                                                  compoundmode=True,
+                                                  layerindex=layerindex)
+        layout.addWidget(self.matrixTable)
+
+
+
+
 if qt.qVersion() < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
@@ -107,7 +364,8 @@ else:
 
 class AttenuatorsTableWidget(QTable):
     def __init__(self, parent=None, name="Attenuators Table",
-                 attenuators=None, matrixmode=None):
+                 attenuators=None, matrixmode=None, compoundmode=None,
+                 layerindex=0):
         attenuators0= ["Atmosphere", "Air", "Window", "Contact", "DeadLayer",
                        "Filter5", "Filter6","Filter7","BeamFilter1",
                        "BeamFilter2","Detector", "Matrix"]
@@ -122,7 +380,17 @@ class AttenuatorsTableWidget(QTable):
 
         if attenuators is None:attenuators = attenuators0
         if matrixmode is None:matrixmode = False
-        labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)"]
+        if matrixmode:
+            self.compoundMode = False
+        elif compoundmode is None:
+            self.compoundMode = False
+        else:
+            self.compoundMode = compoundmode
+        if self.compoundMode:
+            labels = ["Compound","Name", "Material","Initial Amount"]        
+        else:
+            labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)"]
+        self.layerindex = layerindex
         self.matrixMode = matrixmode
         self.attenuators = attenuators
         self.verticalHeader().hide()
@@ -152,6 +420,8 @@ class AttenuatorsTableWidget(QTable):
                 self.setHorizontalHeaderItem(i,item)
         if self.matrixMode:
             self.__build(len(attenuators))
+        elif self.compoundMode:
+            self.__build(len(attenuators))        
         else:
             self.__build(len(attenuators0))
             #self.adjustColumn(0)
@@ -162,13 +432,20 @@ class AttenuatorsTableWidget(QTable):
                 item = self.horizontalHeaderItem(0)
                 item.setText('Layer')
                 self.setHorizontalHeaderItem(0,item)
-                
+        if self.compoundMode:
+            if qt.qVersion() < '4.0.0':
+                self.adjustColumn(0)
+                self.adjustColumn(1)
+            else:
+                self.resizeColumnToContents(0)
+                self.resizeColumnToContents(1)
+                                           
         self.connect(self, qt.SIGNAL("valueChanged(int,int)"),self.mySlot)
         
 
     def __build(self,nfilters=12):
         n = 0
-        if not self.matrixMode:
+        if (not self.matrixMode) and (not self.compoundMode):
             if "Matrix"      not in self.attenuators: n += 1
             if "Detector"    not in self.attenuators: n += 1
             if "BeamFilter1" not in self.attenuators: n += 1
@@ -192,18 +469,21 @@ class AttenuatorsTableWidget(QTable):
         self.comboList=[]
         matlist = Elements.Material.keys()
         matlist.sort()
-        if self.matrixMode:
+        if self.matrixMode or self.compoundMode:
+            if self.matrixMode:roottext = "Layer"
+            else: roottext = "Compound%d" % self.layerindex
             a = []
             #a.append('')            
             for key in matlist:
                 a.append(key)
             if qt.qVersion() < '4.0.0':
                 for idx in range(self.numRows()):
-                    item= qttable.QCheckTableItem(self, "Layer%d" % idx)
+                    item= qttable.QCheckTableItem(self, roottext+"%d" % idx)
                     self.setItem(idx, 0, item)
-                    item.setText("Layer%d" % idx)
+                    item.setText(roottext+"%d" % idx)
+                    #item= qttable.QTableItem(self, qttable.QTableItem.OnTyping,
                     item= qttable.QTableItem(self, qttable.QTableItem.Never,
-                                             "Layer%d" % idx)
+                                             self.attenuators[idx])
                     self.setItem(idx, 1,item)
                     combo = MyQComboBox(options=a)
                     combo.setEditable(True)
@@ -215,7 +495,7 @@ class AttenuatorsTableWidget(QTable):
                 for idx in range(self.rowCount()):
                     item= qt.QCheckBox(self)
                     self.setCellWidget(idx, 0, item)
-                    text = "Layer%d" % idx
+                    text = roottext+"%d" % idx
                     item.setText(text)
                     item = self.item(idx,1)
                     if item is None:
@@ -531,6 +811,8 @@ def main(args):
     #tab = AttenuatorsTableWidget(None)
     if len(args) < 2:
         tab = AttenuatorsTab(None)
+    elif len(args) > 3:
+        tab = CompoundFittingTab(None)
     else:
         tab = MultilayerTab(None)
     if qt.qVersion() < '4.0.0':

@@ -43,8 +43,12 @@ import AttenuatorsTable
 import ConcentrationsWidget
 import EnergyTable
 
-FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations"]
-FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS"]
+if 0:
+    FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations","compound_fit"]
+    FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS", "COMPOUND_FIT"]
+else:
+    FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations"]
+    FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS"]
 
 class FitParamWidget(FitParamForm):
     attenuators= ["Filter 0", "Filter 1", "Filter 2", "Filter 3", "Filter 4", "Filter 5",
@@ -116,6 +120,30 @@ class FitParamWidget(FitParamForm):
         #end concentrations tab
         
         #self.matrixGeometry = self.tabAttenuators.matrixGeometry
+        if 0:
+            #The compound fit tab
+            if qt.qVersion() < '4.0.0':
+                self.tabCompoundFit =  qt.QWidget(self.mainTab,
+                                                     "tabCompound_fit")
+                tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit,
+                                                         1,1,11,6,"tabCompound_fitLayout")
+                self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
+                                                                               "tabCompound_fit")
+                tabCompoundFitLayout.addWidget(self.compoundFitWidget,0,0)
+                self.mainTab.insertTab(self.tabCompoundFit,str("COMPOUND FIT"))
+            else:
+                self.tabCompoundFit =  qt.QWidget()
+                tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit)
+                tabCompoundFitLayout.setMargin(11)
+                tabCompoundFitLayout.setSpacing(6)
+                self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
+                                                                               "tabCompound_fit")
+                tabConcentrationsLayout.addWidget(self.compoundFitWidget,0,0)
+                self.mainTab.addTab(self.tabConcentrations,str("COMPOUND FIT"))
+            #end compound fit tab
+
+
+
         
         self.layout().setMargin(0)
 
@@ -266,6 +294,7 @@ class FitParamWidget(FitParamForm):
         pars= {}
         sections = FitParamSections * 1
         sections.append('multilayer')
+        if 0: sections.append('materials')
         sections.append('tube')
         for key in sections:
             pars[key]= self.__getPar(key)
@@ -284,6 +313,9 @@ class FitParamWidget(FitParamForm):
             return self.__getAttPar()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
+        if 0:       
+            if parname in ["materials", "MATERIALS"]:
+                return self.__getMaterialsPar()            
         if parname in ["tube", "TUBE"]:
             return self.__getTubePar()
         if parname in ["concentrations", "CONCENTRATIONS"]:
@@ -447,6 +479,12 @@ class FitParamWidget(FitParamForm):
 
     def __getTubePar(self):
         pars = self.xRayTube.getParameters()
+        return pars
+
+    def __getMaterialsPar(self):
+        pars = {}
+        for key in Elements.Material.keys():
+            pars[key] = copy.deepcopy(Elements.Material[key])
         return pars
 
     def __setConPar(self, pardict):
