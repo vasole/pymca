@@ -298,26 +298,36 @@ class FitPeakSelect(qt.QWidget):
         z = self.__getZ(symbol)
         if   z > 66:
             #self.peaks.setDisabled(['Ka','Kb'])
-            disabled = ['Ka','Kb']
+            #disabled = ['Ka','Kb']
+            disabled = []
         elif z > 24:
             #self.peaks.setDisabled(['Ka','Kb','M'])
-            disabled = ['Ka','Kb','M']
+            #disabled = ['Ka','Kb','M']
+            disabled = ['M']
         elif z > 2:
             #self.peaks.setDisabled(['Ka','Kb','L','L1','L2','L3','M'])
-            disabled = ['Ka','Kb','L','L1','L2','L3','M']
+            #disabled = ['Ka','Kb','L','L1','L2','L3','M']
+            disabled = ['L','L1','L2','L3','M']
         else:
             #self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
-            disabled = ['Ka','Kb','L','L1','L2','L3','M']
+            #disabled = ['Ka','Kb','L','L1','L2','L3','M']
+            disabled = ['Ka', 'Kb','L','L1','L2','L3','M']
         
         ele = symbol
         if self.energyValue is not None:
-            for peak in ['K','L','L1','L2','L3','M']:
+            for peak in ['K', 'Ka', 'Kb', 'L','L1','L2','L3','M']:
                 if peak not in disabled:
                     if peak == 'L':
                         if Elements.Element[ele]['binding']['L3'] > self.energyValue:
                             disabled.append(peak)
                     elif peak == 'M':
                         if Elements.Element[ele]['binding']['M5'] > self.energyValue:
+                            disabled.append(peak)
+                    elif peak == 'Ka':
+                        if Elements.Element[ele]['binding']['K'] > self.energyValue:
+                            disabled.append(peak)
+                    elif peak == 'Kb':
+                        if Elements.Element[ele]['binding']['K'] > self.energyValue:
                             disabled.append(peak)
                     elif Elements.Element[ele]['binding'][peak] > self.energyValue:
                             disabled.append(peak)
@@ -387,6 +397,12 @@ class FitPeakSelect(qt.QWidget):
                             del self.peakdict[ele][index]
                     elif peak == 'M':
                         if Elements.Element[ele]['binding']['M5'] > self.energyValue:
+                            del self.peakdict[ele][index]
+                    elif peak == "Ka":
+                        if Elements.Element[ele]['binding']['K'] > self.energyValue:
+                            del self.peakdict[ele][index]
+                    elif peak == "Kb":
+                        if Elements.Element[ele]['binding']['K'] > self.energyValue:
                             del self.peakdict[ele][index]
                     elif Elements.Element[ele]['binding'][peak] > self.energyValue:
                         del self.peakdict[ele][index]

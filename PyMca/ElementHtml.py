@@ -225,6 +225,8 @@ class ElementHtml:
         hcolor = 'white'
         finalcolor = 'white'
         for rays in Elements.Element[ele]['rays']:
+            if rays == "Ka xrays":continue
+            if rays == "Kb xrays":continue
             #text+="<center>"
             text+="<br><b><font color=blue size=4>%s Emission Energies</font></b>" % rays[0:-1]
             #text+="</center>"

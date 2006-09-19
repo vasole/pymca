@@ -272,18 +272,22 @@ import MShell
 import Scofield1973
 
 ElementShellTransitions = [KShell.ElementKShellTransitions,
+                           KShell.ElementKAlphaTransitions,
+                           KShell.ElementKBetaTransitions,
                            LShell.ElementLShellTransitions,
                            LShell.ElementL1ShellTransitions,
                            LShell.ElementL2ShellTransitions,
                            LShell.ElementL3ShellTransitions,
                            MShell.ElementMShellTransitions]
 ElementShellRates = [KShell.ElementKShellRates,
+                     KShell.ElementKAlphaRates,
+                     KShell.ElementKBetaRates,
                      LShell.ElementLShellRates,
                      LShell.ElementL1ShellRates,
                      LShell.ElementL2ShellRates,
                      LShell.ElementL3ShellRates,MShell.ElementMShellRates]
 
-ElementXrays      = ['K xrays','L xrays','L1 xrays','L2 xrays','L3 xrays','M xrays']
+ElementXrays      = ['K xrays', 'Ka xrays', 'Kb xrays', 'L xrays','L1 xrays','L2 xrays','L3 xrays','M xrays']
 
 def getsymbol(z):
     if (z > 0) and (z<=len(ElementList)):
@@ -839,12 +843,21 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
                 outputDict[ele][transition]={}
                 outputDict[ele][transition]['rate'] = 0.0
                 if transition[0] == "K":
-                    rates.append(fluoWeights[0] *  elementDict[transition]['rate'])              
+                    """
+                    if transition[-1] == 'a':
+
+                    elif transition[-1] == 'b':
+
+                    else:
+                    """
+                    rates.append(fluoWeights[0] *  elementDict[transition]['rate'])
                 else:
                     rates.append(fluoWeights[shelllist.index(transition[0:2])] * elementDict[transition]['rate'])
                 ene = elementDict[transition]['energy']
                 energies += [ene]
                 outputDict[ele][transition]['energy'] = ene
+                if ene < 0.0:
+                    print "element = ", ele, "transition = ", transition, "exc. energy = ", energy
                 
             #matrix term
             formula   = matrix[0]
@@ -1332,14 +1345,14 @@ def getMultilayerFluorescence(multilayer0,
             newelementsListWork = [newelementsList * 1]
         for justone in newelementsListWork:
             if optimized:
-                if len(justone[2]) == 2:
+                if justone[2].upper()[0] == 'K':
+                    shellIdent = 'K'
+                elif len(justone[2]) == 2:
                     shellIdent = justone[2].upper()
                 elif justone[2].upper() == 'L':
                     shellIdent = 'L3'
                 elif justone[2].upper() == 'M':
                     shellIdent = 'M5'
-                elif justone[2].upper() == 'K':
-                    shellIdent = 'K'
                 else:
                     raise "ValueError","Unknown Element shell %s" % justone[2]
                 bindingEnergy = Element[justone[1]]['binding'][shellIdent]
@@ -1556,7 +1569,7 @@ def getMatrixFluorescence(matrix, energyList0, weightList0=None,flagList0=None,
         else:
             elementsList = []
             for pseudomatrix in multilayer:
-                print "pseudomatrix[0] = ",pseudomatrix[0]
+                #print "pseudomatrix[0] = ",pseudomatrix[0]
                 eleDict = getMaterialMassFractions([pseudomatrix[0] * 1], [1.0])
                 if eleDict == {}:
                     raise "ValueError", "Invalid layer material %s" % pseudomatrix[0]
@@ -1984,7 +1997,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             else:
                 raysforloop = []
                 for item in elementsRays[raysforloopindex]:
-                    raysforloop.append(item + " xrays ")
+                    raysforloop.append(item + " xrays")
             raysforloopindex +=1
         for rays in raysforloop:
             if rays not in elementDict['rays']:continue
@@ -2894,13 +2907,13 @@ def getElementMShellRates(symbol,energy=None, photoweights = None):
 
 def _getUnfilteredElementDict(symbol, energy, photoweights=None):
     if photoweights == None:photoweights = False
-    dict = {}
+    ddict = {}
     if len(symbol) > 1:
         ele = string.upper(symbol[0])+string.lower(symbol[1])
     else:
         ele = string.upper(symbol)
     #fill the dictionnary
-    dict['rays']=[]
+    ddict['rays']=[]
     z = getz(ele)
     for n in range(len(ElementXrays)):
         rays = ElementXrays[n]
@@ -2911,25 +2924,34 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
         else:
             shellrates = ElementShellRates[n][z-1]
         shelltransitions = ElementShellTransitions[n]
-        dict[rays] = []
+        ddict[rays] = []
         minenergy = 0.300
-        for i in range(2,len(shelltransitions)):
+        if 'TOTAL' in shelltransitions:
+            indexoffset = 2
+        else:
+            indexoffset = 1
+        for i in range(indexoffset, len(shelltransitions)):
                 rate = shellrates [i]            
                 transition = shelltransitions[i]        
-                if n==0:dict[transition] = {}                   
-                xenergy = getxrayenergy(ele,transition.replace('*',''))
+                if n==0:ddict[transition] = {}
+                if (rays == "Ka xrays"):
+                    xenergy = getxrayenergy(ele,transition.replace('a',''))
+                elif (rays == "Kb xrays"):
+                    xenergy = getxrayenergy(ele,transition.replace('b',''))
+                else:
+                    xenergy = getxrayenergy(ele,transition.replace('*',''))
                 if xenergy > minenergy:
-                    dict[transition] = {}
-                    dict[rays].append(transition)
-                    dict[transition]['energy'] = getxrayenergy(ele,transition)
-                    dict[transition]['rate']   = rate
-                    if rays not in dict['rays']:
-                        dict['rays'].append(rays)
-    dict['buildparameters']={}
-    dict['buildparameters']['energy']    = energy
-    dict['buildparameters']['minenergy'] = minenergy
-    dict['buildparameters']['minrate']   = 0.0
-    return dict    
+                    ddict[transition] = {}
+                    ddict[rays].append(transition)
+                    ddict[transition]['energy'] = xenergy
+                    ddict[transition]['rate']   = rate
+                    if rays not in ddict['rays']:
+                        ddict['rays'].append(rays)
+    ddict['buildparameters']={}
+    ddict['buildparameters']['energy']    = energy
+    ddict['buildparameters']['minenergy'] = minenergy
+    ddict['buildparameters']['minrate']   = 0.0
+    return ddict    
 
     
 def _updateElementDict(symbol, dict, energy=None, minenergy=0.3990, minrate=0.0010,
@@ -2961,14 +2983,23 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=0.3990, minrate=0.00
             shellrates = ElementShellRates[n][z-1]
         shelltransitions = ElementShellTransitions[n]
         dict[rays] = []
-        maxrate = max(shellrates[2:])
+        if 'TOTAL' in shelltransitions:
+            transitionoffset = 2
+        else:
+            transitionoffset = 1
+        maxrate = max(shellrates[transitionoffset:])
         cum     = 0.0
         if maxrate > minrate:
-            for i in range(2,len(shelltransitions)):
+            for i in range(transitionoffset, len(shelltransitions)):
                 rate = shellrates [i]            
                 if (rate/maxrate) > minrate:
                     transition = shelltransitions[i]        
-                    xenergy = getxrayenergy(ele,transition.replace('*',''))
+                    if (rays == "Ka xrays"):
+                        xenergy = getxrayenergy(ele,transition.replace('a',''))
+                    elif (rays == "Kb xrays"):
+                        xenergy = getxrayenergy(ele,transition.replace('b',''))
+                    else:
+                        xenergy = getxrayenergy(ele,transition.replace('*',''))
                     if (xenergy > minenergy) or (n == 0) :
                         dict[transition] = {}
                         dict[rays].append(transition)

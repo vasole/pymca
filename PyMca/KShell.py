@@ -42,6 +42,51 @@ sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
 ElementKShellTransitions = sf[0].alllabels()
 ElementKShellRates = Numeric.transpose(sf[0].data()).tolist()
 
+ElementKAlphaTransitions = []
+ElementKBetaTransitions = []
+for transition in ElementKShellTransitions:
+    if transition[0] == 'K':
+        if transition[1] == 'L':
+            ElementKAlphaTransitions.append(transition)
+        else:
+            ElementKBetaTransitions.append(transition)
+    elif transition[0] == 'Z':
+        ElementKAlphaTransitions.append(transition)
+        ElementKBetaTransitions.append(transition)
+    else:
+        #TOTAL column meaningless
+        pass
+
+filedata = sf[0].data()
+ndata    = sf[0].lines()
+ElementKAlphaRates = filedata[0] * 1
+ElementKAlphaRates.shape = [ndata, 1]
+ElementKBetaRates = filedata[0] * 1
+ElementKBetaRates.shape  = [ndata, 1]
+for transition in ElementKAlphaTransitions:
+    if transition[0] != 'Z':
+        data = filedata[ElementKShellTransitions.index(transition)] * 1
+        data.shape = [ndata, 1]
+        ElementKAlphaRates = Numeric.concatenate((ElementKAlphaRates, data),
+                                                 axis = 1)
+
+for transition in ElementKBetaTransitions:
+    if transition[0] != 'Z':
+        data = filedata[ElementKShellTransitions.index(transition)] * 1
+        data.shape = [ndata, 1] 
+        ElementKBetaRates = Numeric.concatenate((ElementKBetaRates, data),
+                                                axis = 1)
+for i in range(len(ElementKAlphaTransitions)):
+    if ElementKAlphaTransitions[i] != 'Z':
+        ElementKAlphaTransitions[i] = ElementKAlphaTransitions[i] + "a"
+
+for i in range(len(ElementKBetaTransitions)):
+    if ElementKBetaTransitions[i] != 'Z':
+        ElementKBetaTransitions[i] = ElementKBetaTransitions[i] + "b"
+
+ElementKAlphaRates = ElementKAlphaRates.tolist()
+ElementKBetaRates  = ElementKBetaRates.tolist()
+
 sf=specfile.Specfile(os.path.join(dirname, "KShellConstants.dat"))
 ElementKShellConstants = sf[0].alllabels()
 ElementKShellValues = Numeric.transpose(sf[0].data()).tolist()
