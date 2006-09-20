@@ -30,11 +30,9 @@ try:
     import PyQt4.Qt as qt
     if qt.qVersion() < '4.0.0':
         print "WARNING: Using Qt %s version" % qt.qVersion()
-    from PyQt4 import Qwt5 as qwt
     qt.PYSIGNAL = qt.SIGNAL
 except:
     import qt
-    import qwt
 import sys
 import QtBlissGraph
 import os

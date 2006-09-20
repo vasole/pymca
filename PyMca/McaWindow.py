@@ -27,7 +27,6 @@
 __revision__ = "$Revision: 1.44 $"
 import sys
 import qt
-import qwt
 import QtBlissGraph
 import os
 import Numeric

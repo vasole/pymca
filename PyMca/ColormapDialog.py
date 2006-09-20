@@ -26,12 +26,12 @@
 #############################################################################*/
 try:
     import PyQt4.Qt as qt
-    from PyQt4.Qwt5 import Qwt as qwt
+    #from PyQt4.Qwt5 import Qwt as qwt
     qt.PYSIGNAL = qt.SIGNAL
 except:
     import qt
-    import qwt
-
+    #import qwt
+from QtBlissGraph import qwt
 import sys
 import os
 #from GraphWidget import *

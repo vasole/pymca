@@ -38,7 +38,10 @@ try:
     from PyQt4 import Qwt5 as qwt
 except:
     import qt
-    import qwt
+    try:
+        import Qwt4 as qwt 
+    except:
+        import qwt
     
 if qt.qVersion() < '4.0.0':
     if qwt.QWT_VERSION_STR[0] > '4':
@@ -333,8 +336,16 @@ class QtBlissGraph(qwt.QwtPlot):
         self.__timer      = time.time()
         #legend
         if qwt.QWT_VERSION_STR[0] < '5':
-            self.setAutoLegend(1)
             self.enableLegend(1)
+            # font needed for Q.. version
+            if sys.platform == "win32":
+                if qt.qVersion() > "3.3.2":  #I have that commercial version
+                    oqtFont = qt.QFont( 'MS Sans Serif', 8)
+                    if oqtFont.exactMatch():
+                       self.setLegendFont( oqtFont )
+                       self.setLegendFrameStyle( 2 );
+            self.setAutoLegend(1)
+            
             if kw.has_key('LegendPos'):
                 self.setLegendPos(kw['LegendPos'])
             else:
