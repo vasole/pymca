@@ -209,11 +209,17 @@ if SIP:
 	    pass
 
         try:
-            import qwt
+            import Qwt4 as qwt
             QWT4 = True        
         except ImportError:
             QWT4 = False
 
+        if not QWT4:
+            try:
+                import qwt
+                QWT4 = True        
+            except ImportError:
+                QWT4 = False
 
     if QT4 and QT3:
         print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"
