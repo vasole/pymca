@@ -47,7 +47,7 @@ class QXTube(qt.QWidget):
         f.setItalic(1)
         label.setFont(f)
         label.setAlignment(qt.Qt.AlignRight)
-        label.setText("H. Ebel, X-Ray Spectrometry 28 (1999) 255-256    ")
+        label.setText("H. Ebel, X-Ray Spectrometry 28 (1999) 255-266    ")
         self.l.addWidget(label)
         
         self.l.addWidget(hbox)
