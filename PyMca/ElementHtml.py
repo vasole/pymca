@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.7 $"
+__revision__ = "$Revision: 1.8 $"
 import Elements
 
 class ElementHtml:

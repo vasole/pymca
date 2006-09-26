@@ -653,9 +653,11 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
     else:
         #l shell (neglecting holes due to k shell transitions)
         w = [wall[1], wall[2], wall[3]]
-    w[0] *=  1.0
-    w[1] *= (1.0 + ck['f12'] * w[0])
-    w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
+
+    w[0] = w[0]
+    w[1] = w[1] + ck['f12'] * w[0]
+    w[2] = w[2] + ck['f13'] * w[0] + ck['f23'] * w[1]
+    
     wall[1] = w[0] * 1.0
     wall[2] = w[1] * 1.0
     wall[3] = w[2] * 1.0
@@ -762,11 +764,13 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
         w = [wall[4]+cor[0], wall[5]+cor[1], wall[6]+cor[2], wall[7]+cor[3], wall[8]+cor[4]]
     else:
         w = [wall[4], wall[5], wall[6], wall[7], wall[8]]
-    w[0] *=  1.0
-    w[1] *= (1.0 + ck['f12'] * w[0])
-    w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
-    w[3] *= (1.0 + ck['f14'] * w[0] + ck['f24'] * w[1] + ck['f34'] * w[2])
-    w[4] *= (1.0 + ck['f15'] * w[0] + ck['f25'] * w[1] + ck['f35'] * w[2] + ck['f45'] * w[3])
+
+    w[0] =  w[0]
+    w[1] =  w[1] + ck['f12'] * w[0]
+    w[2] =  w[2] + ck['f13'] * w[0] + ck['f23'] * w[1]
+    w[3] =  w[3] + ck['f14'] * w[0] + ck['f24'] * w[1] + ck['f34'] * w[2]
+    w[4] =  w[4] + ck['f15'] * w[0] + ck['f25'] * w[1] + ck['f35'] * w[2] +\
+                                                             ck['f45'] * w[3]
     wall[4] = w[0] * 1.0
     wall[5] = w[1] * 1.0
     wall[6] = w[2] * 1.0
@@ -2135,9 +2139,9 @@ def getLWeights(ele,energy=None, normalize = None, shellist = None):
         w = getLJumpWeight(ele,excitedshells=[1.0,1.0,1.0])
         #weights due to Coster Kronig transitions and fluorescence yields
         ck= LShell.getCosterKronig(ele)
-        w[0] *=  1.0
-        w[1] *= (1.0 + ck['f12'] * w[0])
-        w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
+        w[0] = w[0]
+        w[1] = w[1] + ck['f12'] * w[0]
+        w[2] = w[2] + ck['f13'] * w[0] + ck['f23'] * w[1]
         omega = [ getomegal1(ele), getomegal2(ele), getomegal3(ele)]
         for i in range(len(w)):
             w[i] *= omega[i]
@@ -2165,11 +2169,11 @@ def getMWeights(ele,energy=None, normalize = None, shellist = None):
         w = getMJumpWeight(ele,excitedshells=[1.0,1.0,1.0,1.0,1.0])
         #weights due to Coster Kronig transitions and fluorescence yields
         ck= MShell.getCosterKronig(ele)
-        w[0] *=  1.0
-        w[1] *= (1.0 + ck['f12'] * w[0])
-        w[2] *= (1.0 + ck['f13'] * w[0] + ck['f23'] * w[1])
-        w[3] *= (1.0 + ck['f14'] * w[0] + ck['f24'] * w[1] + ck['f34'] * w[2])
-        w[4] *= (1.0 + ck['f15'] * w[0] + ck['f25'] * w[1] + ck['f35'] * w[2] + ck['f45'] * w[3])
+        w[0] =  w[0]
+        w[1] =  w[1] + ck['f12'] * w[0]
+        w[2] =  w[2] + ck['f13'] * w[0] + ck['f23'] * w[1]
+        w[3] =  w[3] + ck['f14'] * w[0] + ck['f24'] * w[1] + ck['f34'] * w[2]
+        w[4] =  w[4] + ck['f15'] * w[0] + ck['f25'] * w[1] + ck['f35'] * w[2] + ck['f45'] * w[3]
         omega = [ getomegam1(ele), getomegam2(ele), getomegam3(ele), getomegam4(ele), getomegam5(ele)]
         for i in range(len(w)):
             w[i] *= omega[i]
