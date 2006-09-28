@@ -33,6 +33,15 @@ try:
     qt.PYSIGNAL = qt.SIGNAL
 except:
     import qt
+
+try:
+    from matplotlib.font_manager import FontProperties
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+    MATPLOTLIB = True
+except:
+    MATPLOTLIB = False
+    
 import ClassMcaTheory
 import FitParam
 import McaAdvancedTable
@@ -1597,21 +1606,31 @@ class McaAdvancedFit(qt.QWidget):
         outfile.setModal(1)
         if qt.qVersion() < '4.0.0':
             outfile.setCaption("Output File Selection")
-            outfile.setFilters('Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt')
+            if MATPLOTLIB:
+                filterlist = 'Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt'
+                filterlist += '\nGraphics EPS *.eps\nGraphics PNG *.png'
+                filterlist += '\nB/WGraphics EPS *.eps\nB/WGraphics PNG *.png'
+                outfile.setFilters(filterlist)
             outfile.setMode(outfile.AnyFile)
             ret = outfile.exec_loop()
         else:
             outfile.setWindowTitle("Output File Selection")
             strlist = qt.QStringList()
-            for f in ['Specfile MCA  *.mca','nSpecfile Scan *.dat','Raw ASCII  *.txt']:
+            format_list = ['Specfile MCA  *.mca','Specfile Scan *.dat','Raw ASCII  *.txt']
+            if MATPLOTLIB:
+                format_list.append('Graphics PNG *.png')
+                format_list.append('Graphics EPS *.eps')
+                format_list.append('B/WGraphics PNG *.png')
+                format_list.append('B/WGraphics EPS *.eps')
+            for f in format_list:
                 strlist.append(f)
             outfile.setFilters(strlist)
             outfile.setFileMode(outfile.AnyFile)
             ret = outfile.exec_()
-            
-            
+
         if ret:
             filterused = str(outfile.selectedFilter()).split()
+            filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
             outstr=str(outfile.selectedFile())
@@ -1642,6 +1661,133 @@ class McaAdvancedFit(qt.QWidget):
             pass
         systemline = os.linesep
         os.linesep = '\n'
+        try:
+            if MATPLOTLIB:
+                if filetype in ['EPS', 'PNG']:
+                    fig = Figure(figsize=(6,3)) # in inches
+                    canvas = FigureCanvas(fig)
+                    #decide if we are going to write the legends or not
+                    if self.peaksSpectrumButton.isChecked():  legends = True
+                    elif 'ymatrix' in fitresult['result'].keys(): legends = False
+                    else:
+                        legends = False
+                    if not legends:
+                        if self._logY:
+                            ax = fig.add_axes([.1, .15, .78, .8])
+                        else:
+                            ax = fig.add_axes([.15, .15, .78, .8])
+                    else:
+                        if self._logY:
+                            ax = fig.add_axes([.1, .15, .7, .8])
+                        else:
+                            ax = fig.add_axes([.15, .15, .7, .8])
+                    ax.set_axisbelow(True)
+                    keys = fitresult['result'].keys()
+                    #print dir(ax)
+                    
+                    colorlist  = ['r', 'g', 'b', 'y','c']
+                    stylelist  = ['-', '--', '-.', ':']
+                    cl = []
+                    ncs = 0
+                    for style in stylelist:
+                        for color in colorlist:
+                           cl.append(color+style) 
+                           ncs += 1
+                    #deal with BW graphics
+                    if filedescription == "B/WGraphics":
+                        cl[0] = 'k-'
+                        cl[1] = 'k-.'
+                        cl[2] = 'k--'
+                        cl[3] = 'k-..'
+                        ncs   = 4
+                        nocolor = True
+                    else:
+                        nocolor = False
+
+                    ci = 0
+                    if self._energyAxis:
+                        x = fitresult['result']['energy']
+                    else:
+                        x = fitresult['result']['xdata']
+                    if self._logY:
+                        axfunction = ax.semilogy
+                    else:
+                        axfunction = ax.plot
+                    if nocolor:
+                        axfunction( x,
+                                fitresult['result']['ydata'], 'k.', lw=1.5, markersize=3)
+                    else:
+                        axfunction( x,
+                                fitresult['result']['ydata'], 'k-', lw=1.5)
+                        
+                    ci = 0
+                    axfunction( x,
+                                fitresult['result']['yfit'],  cl[ci], lw=1.5)
+
+                    ci+=1
+                    axfunction( x,
+                                fitresult['result']['continuum'], cl[ci], lw=1.5)
+                    ci += 1
+                    legendlist = ['data', 'fit', 'bck']
+                    if self.top.sumbox.isChecked():
+                        axfunction( x,
+                                fitresult['result']['pileup'], cl[ci], lw=1.5)
+                        ci += 1
+                        legendlist.append('pile up')
+                    if 'ymatrix' in fitresult['result'].keys():
+                        axfunction( x,
+                                fitresult['result']['ymatrix'], cl[ci], lw=1.5)
+                        ci += 1
+                        legendlist.append('matrix')
+                    loc = (1.01, 0.7)
+                    if self.peaksSpectrumButton.isChecked():
+                        loc = (1.01, 0.01)
+                        for group in fitresult['result']['groups']:
+                            label = 'y'+group
+                            if label in keys:
+                                axfunction( x,
+                                    fitresult['result'][label], cl[ci], lw=1.5)
+                                ci += 1
+                                ci = ci % ncs
+                            legendlist.append(group)
+                        if len(fitresult['result']['groups']) > 12:
+                            fontproperties = FontProperties(size=6)
+                        else:
+                            fontproperties = FontProperties(size=8)
+                        labelsep = 0.015
+                    else:
+                        fontproperties = FontProperties(size=8)
+                    if legends:
+                        labelsep = 0.02
+                        legend = ax.legend(legendlist,
+                                   loc = loc,
+                                   prop = fontproperties,
+                                   labelsep = labelsep)
+                        legend.draw_frame(False)
+                    xmin, xmax = self.graph.getx1axislimits()
+                    ymin, ymax = self.graph.gety1axislimits()
+                    ax.set_ylim(ymin, ymax)
+                    ax.set_xlim(xmin, xmax)
+                    if self._energyAxis:
+                        ax.set_xlabel('Energy (keV)')
+                    else:
+                        ax.set_xlabel('Channel')
+                    ax.set_ylabel('Counts')
+                    try:
+                        os.remove(specFile)
+                    except:
+                        pass
+                    canvas.print_figure(specFile)
+                    return
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            if qt.qVersion() < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            return
         try:
             file=open(specFile,'wb')
         except IOError:
@@ -2367,7 +2513,7 @@ class McaGraphWindow(qt.QWidget):
     
 def test(file='03novs060sum.mca'):
     import Numeric
-    import specfile
+    import specfilewrapper as specfile
     app = qt.QApplication([])
     sf=specfile.Specfile(file)
     scan=sf[0]
