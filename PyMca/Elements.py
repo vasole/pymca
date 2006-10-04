@@ -28,7 +28,7 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.84 $"
+__revision__ = "$Revision: 1.88 $"
 import string
 import Numeric
 import imp
@@ -2780,9 +2780,14 @@ def getelementmassattcoef(ele,energy=None):
         Element[ele]['xcom']['compton']=Numeric.take(Element[ele]['xcom']['compton'],i1)
         Element[ele]['xcom']['photo']=Numeric.take(Element[ele]['xcom']['photo'],i1)
         Element[ele]['xcom']['pair']=Numeric.take(Element[ele]['xcom']['pair'],i1)
-        Element[ele]['xcom']['coherentlog10']=Numeric.log10(Element[ele]['xcom']['coherent'])
-        Element[ele]['xcom']['comptonlog10']=Numeric.log10(Element[ele]['xcom']['compton'])
-        Element[ele]['xcom']['photolog10']=Numeric.log10(Element[ele]['xcom']['photo'])
+        if Element[ele]['xcom']['coherent'][0] <= 0:
+           Element[ele]['xcom']['coherent'][0] = Element[ele]['xcom']['coherent'][1] * 1.0
+        try:
+            Element[ele]['xcom']['coherentlog10']=Numeric.log10(Element[ele]['xcom']['coherent'])
+            Element[ele]['xcom']['comptonlog10']=Numeric.log10(Element[ele]['xcom']['compton'])
+            Element[ele]['xcom']['photolog10']=Numeric.log10(Element[ele]['xcom']['photo'])
+        except:
+            raise "Math error", "Problem calculating logaritm of %s.mat file data" % ele
         for i in range(0,len(Element[ele]['xcom']['energy'])):
             Element[ele]['xcom']['total'].append(Element[ele]['xcom']['coherent'][i]+\
                                                  Element[ele]['xcom']['compton'] [i]+\
