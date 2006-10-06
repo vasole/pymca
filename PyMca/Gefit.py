@@ -25,10 +25,10 @@
 # is a problem to you.
 #############################################################################*/
 from Numeric import *
-from LinearAlgebra import *
+from LinearAlgebra import inverse
 import time
 __author__ = "V.A. Sole <sole@esrf.fr>"
-__revision__ = "$Revision: 1.16 $"
+__revision__ = "$Revision: 1.17 $"
 # codes understood by the routine
 CFREE       = 0
 CPOSITIVE   = 1
@@ -44,7 +44,7 @@ ONED = 0
 def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=[],
                         weightflag = 0,model_deriv=None,deltachi=None,fulloutput=0,
                         xdata=None,ydata=None,sigmadata=None,linear=None):
-    parameters = array(parameters0)
+    parameters = array(parameters0).astype(Float)
     if linear is None:linear=0
     if deltachi is None:
         deltachi = 0.01
