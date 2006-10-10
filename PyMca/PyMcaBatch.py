@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.41 $"
+__revision__ = "$Revision: 1.42 $"
 ###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -63,6 +63,7 @@ class McaBatchGUI(qt.QWidget):
         self.setFileList(filelist)
         self.setConfigFile(config)
         self.setOutputDir(outputdir)
+        self._lastInputDir = os.getcwd()
     
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
@@ -442,12 +443,15 @@ class McaBatchGUI(qt.QWidget):
             return None
 
     def browseList(self):
+        if not os.path.exists(self._lastInputDir): self._lastInputDir = os.getcwd()
         if qt.qVersion() < '4.0.0':
             filedialog = qt.QFileDialog(self,"Open a set of files",1)
+            filedialog.setDir(self._lastInputDir)
             filedialog.setMode(filedialog.ExistingFiles)
         else:
             filedialog = qt.QFileDialog(self)
             filedialog.setWindowTitle("Open a set of files")
+            filedialog.setDirectory(self._lastInputDir)
             filedialog.setModal(1)
             filedialog.setFileMode(filedialog.ExistingFiles)
         if qt.qVersion() < '4.0.0' and (sys.platform == "win32"):
@@ -472,8 +476,13 @@ class McaBatchGUI(qt.QWidget):
                 return
         #filelist0.sort()
         filelist = []
+        i = 0
         for f in filelist0:
-            filelist.append(str(f)) 
+            filelist.append(str(f))
+            if i == 0:
+                self._lastInputDir = os.path.dirname(filelist[0])
+                i = 1
+
         if len(filelist):self.setFileList(filelist)
         if qt.qVersion() < '4.0.0':
             self.raiseW()
@@ -481,12 +490,15 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
     def browseConfig(self):
+        if not os.path.exists(self._lastInputDir): self._lastInputDir = os.getcwd()
         if qt.qVersion() < '4.0.0':
             filename = qt.QFileDialog(self,"Open a new fit config file",1)
+            filename.setDir(self._lastInputDir)
             filename.setMode(filename.ExistingFiles)
         else:
             filename = qt.QFileDialog(self)
             filename.setWindowTitle("Open a new fit config file")
+            filename.setDirectory(self._lastInputDir)
             filename.setModal(1)
             filename.setFileMode(filename.ExistingFiles)
         if (qt.qVersion() < '4.0.0') and (sys.platform == "win32"):
@@ -510,9 +522,12 @@ class McaBatchGUI(qt.QWidget):
                     self.raise_()
                 return
         filename = []
+        i = 0
         for f in filenameList:
             filename.append(str(f))
-
+            if i == 0:
+                self._lastInputDir = os.path.dirname(filename[0])
+                i = 1
         if len(filename) == 1:self.setConfigFile(str(filename[0]))
         elif len(filenameList):self.setConfigFile(filename)
         if qt.qVersion() < '4.0.0':
@@ -521,13 +536,16 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
     def browseOutputDir(self):
+        if not os.path.exists(self._lastInputDir): self._lastInputDir = os.getcwd()
         if qt.qVersion() < '4.0.0':
             outfile = qt.QFileDialog(self,"Output Directory Selection",1)
+            outfile.setDir(self._lastInputDir)
             outfile.setMode(outfile.DirectoryOnly)
             ret = outfile.exec_loop()
         else:
             outfile = qt.QFileDialog(self)
             outfile.setWindowTitle("Output Directory Selection")
+            outfile.setDirectory(self._lastInputDir)
             outfile.setModal(1)
             outfile.setFileMode(outfile.DirectoryOnly)
             ret = outfile.exec_()
