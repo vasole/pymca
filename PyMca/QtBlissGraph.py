@@ -1826,23 +1826,39 @@ class QtBlissGraph(qwt.QwtPlot):
             label = kw['label']
         else:
             label = ""
-        
-        marker = self.insertLineMarker(label,qwt.QwtPlot.yLeft)
+
+        if qt.qVersion() < '4.0.0':
+            marker = self.insertLineMarker(label,qwt.QwtPlot.yLeft)
+            mX = marker
+        else:
+            mX = Qwt.QwtPlotMarker()
+            mX.setLabel(Qwt.QwtText(label))
+            mX.setLabelAlignment(qt.Qt.AlignRight | qt.Qt.AlignTop)
+            mX.setLineStyle(Qwt.QwtPlotMarker.HLine)
+            marker = id(mX)
+
         if marker == 0:
             print "Error inserting marker!!!!"
             return -1
         if x is None:
-            self.setMarkerYPos(marker,y)
+            if qt.qVersion() < '4.0.0':
+                self.setMarkerYPos(marker,y)
+            else:
+                mX.setYValue(y)
         else:
-            self.setMarkerPos(marker, x,y)
+            if qt.qVersion() < '4.0.0':
+                self.setMarkerPos(marker, x,y)
+            else:
+                mX.setXValue(x)
+                mX.setYValue(y)
         if marker in self.markersdict.keys():
-            self.markersdict[marker]['marker'] = marker
+            self.markersdict[marker]['marker'] = mX
         else:
             self.markersdict[marker]={}
-            self.markersdict[marker]['marker']      = marker
+            self.markersdict[marker]['marker']      = mX
             self.markersdict[marker]['followmouse'] = 0
+        if qt.qVersion() > '4.0.0':    mX.attach(self)
         return marker
-
 
     def setx1markerpos(self,marker,x,y=None):
         if y is None:
