@@ -182,7 +182,13 @@ except ImportError:
 badtext  = "No valid PyQt with qwt or PyQt4 with PyQwt5 installation found.\n"
 badtext += "You will only be able to develop applications using  a very \n"
 badtext += "small subset of PyMCA."
-print "PyMCA is installed in %s " % PYMCA_INSTALL_DIR
+
+try:
+    print "PyMCA is installed in %s " % PYMCA_INSTALL_DIR
+except NameError:
+    #I really do not see how this may happen but ...
+    pass
+    
 if SIP:
     try:
         import PyQt4.QtCore
@@ -243,22 +249,28 @@ if SIP:
         print "Batch fitting should work."
         print "You can easily embed PyMCA fitting in your Qt4 graphical "
         print "applications using McaAdvancedFit.py"
-        if sys.platform != 'win32':
-            print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
-            print "and try the scripts:"
-            for script in script_files:
-                s = os.path.basename(script)
-                if s.upper() == "PYMCA":continue
-                if s.upper() == "MCA2EDF":continue
-                print script
+        try:
+            if sys.platform != 'win32':
+                print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
+                print "and try the scripts:"
+                for script in script_files:
+                    s = os.path.basename(script)
+                    if s.upper() == "PYMCA":continue
+                    if s.upper() == "MCA2EDF":continue
+                    print script
+        except NameError:
+            pass            
                                 
     elif QT3 and QWT4:
         print "PyMCA installation successfully completed."
-        if sys.platform != 'win32':
-            print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
-            print "and try the scripts:"
-            for script in script_files:
-                print os.path.basename(script)               
+        try:
+            if sys.platform != 'win32':
+                print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
+                print "and try the scripts:"
+                for script in script_files:
+                    print os.path.basename(script)
+        except NameError:
+            pass
     else:
         print badtext
 else:
