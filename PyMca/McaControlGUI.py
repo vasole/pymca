@@ -356,7 +356,10 @@ class McaControlGUI(qt.QWidget):
         data['line_edit']     = line_edit
         data['event']         = event
         data['boxname']       = boxname
-        self.emit(qt.PYSIGNAL("McaControlGUISignal"),(data,))
+        if qt.qVersion() < '4.0.0':
+            self.emit(qt.PYSIGNAL("McaControlGUISignal"),(data,))
+        else:
+            self.emit(qt.SIGNAL("McaControlGUISignal"), data)
 
 class McaCalControlLine(qt.QWidget):
     def __init__(self, parent=None, name=None, calname="",
