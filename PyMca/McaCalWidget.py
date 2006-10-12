@@ -30,7 +30,6 @@ try:
     import PyQt4.Qt as qt
     if qt.qVersion() < '4.0.0':
         print "WARNING: Using Qt %s version" % qt.qVersion()
-    qt.PYSIGNAL = qt.SIGNAL
 except:
     import qt
 import sys
@@ -265,15 +264,24 @@ class McaCalWidget(qt.QDialog):
         
     def connections(self):
         self.connect(self.peakpar.searchbut,qt.SIGNAL('clicked()')  ,self.peaksearch)
-        self.connect(self.graph, qt.PYSIGNAL('QtBlissGraphSignal')  ,
-                     self.__graphsignal) 
-        self.connect(self.peaktable, qt.PYSIGNAL('PeakTableWidgetSignal') , 
-                     self.__peaktablesignal)
-        self.connect(self.calpar, qt.PYSIGNAL('CalibrationParametersSignal'),
-                     self.__calparsignal)
-        self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
-        self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
-
+        if qt.qVersion() < '4.0.0':
+            self.connect(self.graph, qt.PYSIGNAL('QtBlissGraphSignal')  ,
+                         self.__graphsignal) 
+            self.connect(self.peaktable, qt.PYSIGNAL('PeakTableWidgetSignal') , 
+                         self.__peaktablesignal)
+            self.connect(self.calpar, qt.PYSIGNAL('CalibrationParametersSignal'),
+                         self.__calparsignal)
+            self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
+            self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
+        else:
+            self.connect(self.graph, qt.SIGNAL('QtBlissGraphSignal')  ,
+                         self.__graphsignal) 
+            self.connect(self.peaktable, qt.SIGNAL('PeakTableWidgetSignal') , 
+                         self.__peaktablesignal)
+            self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),
+                         self.__calparsignal)
+            self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
+            self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
     
     def plot(self,x,y,legend):
         #clear graph
@@ -897,8 +905,11 @@ class CalibrationParameters(qt.QWidget):
                 dict={}
                 dict['event']         = "savebox"
                 dict['calname' ]      = self.currentcal
-                dict['caldict']       = self.caldict          
-            self.emit(qt.PYSIGNAL('CalibrationParametersSignal'),(dict,))
+                dict['caldict']       = self.caldict
+            if qt.qVersion() < '4.0.0':
+                self.emit(qt.PYSIGNAL('CalibrationParametersSignal'),(dict,))
+            else:
+                self.emit(qt.PYSIGNAL('CalibrationParametersSignal'), dict)
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
