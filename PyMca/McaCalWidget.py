@@ -142,7 +142,8 @@ class McaCalWidget(qt.QDialog):
         self.calpar         = CalibrationParameters(self.bottomPanel)
         self.calpar. setSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed)
         """
-        self.bottomPanel.layout.addWidget(HorizontalSpacer(self.bottomPanel))
+        if qt.qVersion() < '4.0.0':
+            self.bottomPanel.layout.addWidget(HorizontalSpacer(self.bottomPanel))
         #self.cal.setSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding)
         self.peakpar.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
                                                   qt.QSizePolicy.Fixed))       
@@ -950,6 +951,7 @@ class InputLine(qt.QDialog):
             qt.QDialog.__init__(self, parent)
             self.setModal(modal)
             self.setWindowTitle(name)
+            self.resize(600,200)
         layout = qt.QVBoxLayout(self)
         self.table = PeakTableWidget.PeakTableWidget(self)
         layout.addWidget(self.table)

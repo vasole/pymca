@@ -162,7 +162,6 @@ class McaTable(QTable):
                     if qt.qVersion() < '4.0.0':
                         item=ColorQTableItem(self, qttable.QTableItem.Never,
                                             field,color=color)
-                        self.setItem(line, col, item)
                     else:
                         item = self.item(line, col)
                         text = field
@@ -174,6 +173,7 @@ class McaTable(QTable):
                         item.setBackgroundColor(color)
                         item.setFlags(qt.Qt.ItemIsSelectable|
                                       qt.Qt.ItemIsEnabled)                    
+                    self.setItem(line, col, item)
                     col=col+1
                 line+=1
             for peak0 in result[group]['escapepeaks']:
@@ -197,10 +197,10 @@ class McaTable(QTable):
                         else:
                             item = self.item(line, col)
                             if item is None:
-                                item = qt.QTableWidgetItem(text,
+                                item = qt.QTableWidgetItem(field,
                                                            qt.QTableWidgetItem.Type)
                             else:
-                                item.setText(text)
+                                item.setText(field)
                             item.setBackgroundColor(color)
                             item.setFlags(qt.Qt.ItemIsSelectable|
                                           qt.Qt.ItemIsEnabled)
