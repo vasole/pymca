@@ -26,13 +26,9 @@
 #############################################################################*/
 try:
     import PyQt4.Qt as qt
-    qt.PYSIGNAL = qt.SIGNAL    
-    def tQt(x):
-        return x
 except:
     import qt
-    def tQt(x):
-        return (x,)
+
 if qt.qVersion() < '3.0.0':
     import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
@@ -105,7 +101,10 @@ class McaROIWidget(qt.QWidget):
         self.connect(self.addbutton,  qt.SIGNAL("clicked()"), self.__add)
         self.connect(self.delbutton,  qt.SIGNAL("clicked()"), self.__del)
         self.connect(self.resetbutton,qt.SIGNAL("clicked()"), self.__reset)
-        self.connect(self.mcaroitable,  qt.PYSIGNAL('McaROITableSignal') ,self.__forward)
+        if qt.qVersion() < '4.0.0':
+            self.connect(self.mcaroitable,  qt.PYSIGNAL('McaROITableSignal') ,self.__forward)
+        else:
+            self.connect(self.mcaroitable,  qt.SIGNAL('McaROITableSignal') ,self.__forward)
 
     def __add(self):
         ddict={}
@@ -113,7 +112,11 @@ class McaROIWidget(qt.QWidget):
         roilist,roidict  = self.mcaroitable.getroilistanddict()
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
-        self.emit(qt.PYSIGNAL('McaROIWidgetSignal'),tQt(ddict))
+        if qt.qVersion() < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaROIWidgetSignal'),(ddict,))
+        else:
+            self.emit(qt.SIGNAL('McaROIWidgetSignal'),ddict)
+        
         
     def __del(self):
         row = self.mcaroitable.currentRow()
@@ -143,11 +146,18 @@ class McaROIWidget(qt.QWidget):
             ddict['roilist']    = roilist
             ddict['roidict']    = roidict
             #ddict['currentrow'] = self.mcaroitable.currentRow()
-            self.emit(qt.PYSIGNAL('McaROIWidgetSignal'),tQt(ddict))
+            if qt.qVersion() < '4.0.0':
+                self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,))
+            else:
+                self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict)
         
     
     def __forward(self,ddict):
-        self.emit(qt.PYSIGNAL('McaROIWidgetSignal'),tQt(ddict)) 
+        if qt.qVersion() < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,)) 
+        else:
+            self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict) 
+        
     
     def __reset(self):
         ddict={}
@@ -166,7 +176,10 @@ class McaROIWidget(qt.QWidget):
         self.mcaroitable.fillfromroidict(roilist=roilist,roidict=roidict)
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
-        self.emit(qt.PYSIGNAL('McaROIWidgetSignal'),tQt(ddict))
+        if qt.qVersion() < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,))
+        else:
+            self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict)
         
     def setdata(self,*var,**kw):
         self.info ={}
@@ -341,7 +354,12 @@ class McaROITable(QTable):
                     self.setCurrentCell(self.roidict[currentroi]['line'],0)
                 else:
                     self.selectRow(self.roidict[currentroi]['line'])
-                self.ensureCellVisible(self.roidict[currentroi]['line'],0)
+                if qt.qVersion() < '4.0.0':
+                    self.ensureCellVisible(self.roidict[currentroi]['line'],0)
+                else:
+                    if DEBUG:
+                        print "Qt4 ensureCellVisible to be implemented"
+                
 
     def addroi(self,roi,key=None):
         nlines=self.numRows()
@@ -411,7 +429,10 @@ class McaROITable(QTable):
                 ddict['key']   = self.roilist[row]
                 ddict['colheader'] = self.labels[col]
                 ddict['rowheader'] = "%d" % row
-                self.emit(qt.PYSIGNAL('McaROITableSignal'),tQt(ddict))
+                if qt.qVersion() < '4.0.0':
+                    self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
+                else:
+                    self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
         else:
             if len(var) == 2:
                 ddict={}
@@ -437,7 +458,10 @@ class McaROITable(QTable):
                             ddict['key']   = self.roilist[row]
                             ddict['colheader'] = self.labels[col]
                             ddict['rowheader'] = "%d" % row
-                            self.emit(qt.PYSIGNAL('McaROITableSignal'),tQt(ddict))                
+                            if qt.qVersion() < '4.0.0':
+                                self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
+                            else:
+                                self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
                         else:
                             self.setText(row, col, self.roilist[row])
 

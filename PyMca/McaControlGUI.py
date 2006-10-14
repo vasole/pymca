@@ -26,13 +26,8 @@
 #############################################################################*/
 try:
     import PyQt4.Qt as qt
-    #qt.PYSIGNAL = qt.SIGNAL    
-    def tQt(x):
-        return x
 except:
     import qt
-    def tQt(x):
-        return (x,)
 import McaROIWidget
 import os
 import sys
@@ -132,7 +127,11 @@ class McaControlGUI(qt.QWidget):
         self.connect(self.calbox,qt.SIGNAL("activated(const QString &)"),
                     self.__calboxactivated)
         self.connect(self.calbut,qt.SIGNAL("clicked()"),self.__calbuttonclicked)
-        self.connect(self.roiwidget,qt.PYSIGNAL("McaROIWidgetSignal"),
+        if qt.qVersion() < '4.0.0':
+            self.connect(self.roiwidget,qt.PYSIGNAL("McaROIWidgetSignal"),
+                    self.__forward)
+        else:
+            self.connect(self.roiwidget,qt.SIGNAL("McaROIWidgetSignal"),
                     self.__forward)
 
     
@@ -218,7 +217,10 @@ class McaControlGUI(qt.QWidget):
                             event='activated')
     """
     def __forward(self,dict):
-        self.emit(qt.PYSIGNAL("McaControlGUISignal"),(dict,))    
+        if qt.qVersion() < '4.0.0':
+            self.emit(qt.PYSIGNAL("McaControlGUISignal"), (dict,))    
+        else:
+            self.emit(qt.SIGNAL("McaControlGUISignal"), dict)  
 
     def __sourcebuttonclicked(self):
         if DEBUG:
