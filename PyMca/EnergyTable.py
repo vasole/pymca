@@ -40,8 +40,12 @@ class EnergyTab(qt.QWidget):
     def __init__(self,parent=None, name="Energy Tab"):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(4)
         hbox = qt.QWidget(self)
         self.hbox = qt.QHBoxLayout(hbox)
+        self.hbox.setMargin(0)
+        self.hbox.setSpacing(0)
         self.tube = QXTube.QXTube(hbox)
         self.table  = EnergyTable(hbox)
         self.hbox.addWidget(self.tube)

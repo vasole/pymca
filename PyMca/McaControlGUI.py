@@ -28,6 +28,7 @@ try:
     import PyQt4.Qt as qt
 except:
     import qt
+
 import McaROIWidget
 import os
 import sys
@@ -50,6 +51,8 @@ class McaControlGUI(qt.QWidget):
 
     def build(self):
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
 
         # control
         control = 0
@@ -104,6 +107,9 @@ class McaControlGUI(qt.QWidget):
         #roibox.setTitle(' ROI ')
         roibox = qt.QWidget(self)
         roiboxlayout = qt.QHBoxLayout(roibox)
+        roiboxlayout.setMargin(0)
+        roiboxlayout.setSpacing(0)
+        
         #roibox.setAlignment(qt.Qt.AlignHCenter)
         self.roiwidget = McaROIWidget.McaROIWidget(roibox)
         self.roiwidget.fillfromroidict(roilist=self.roilist,

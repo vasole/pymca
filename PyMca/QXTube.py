@@ -19,6 +19,8 @@ class QXTube(qt.QWidget):
             qt.QWidget.__init__(self, parent)
 
         self.l = qt.QVBoxLayout(self)
+        self.l.setMargin(0)
+        self.l.setSpacing(0)
         
         self.tubeWidget = TubeWidget(self, initdict = initdict)
         self.setParameters = self.tubeWidget.setParameters
@@ -29,6 +31,8 @@ class QXTube(qt.QWidget):
         
         hbox = qt.QWidget(self)
         hboxl = qt.QHBoxLayout(hbox)
+        hboxl.setMargin(0)
+        hboxl.setSpacing(0)
         self.plotButton = qt.QPushButton(hbox)
         self.plotButton.setText("Plot Continuum")
 
@@ -226,7 +230,7 @@ class TubeWidget(qt.QWidget):
             grid = qt.QGridLayout(gridwidget, 8, 4, 0, 6)
         else:
             grid = QGridLayout(gridwidget)
-            grid.setMargin(11)
+            grid.setMargin(0)
             grid.setSpacing(6)
 
 

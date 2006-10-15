@@ -55,9 +55,13 @@ class MaterialEditor(qt.QWidget):
 
     def build(self,comments, height):
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         hbox   = qt.QWidget(self)
         layout.addWidget(hbox)
         hboxlayout = qt.QHBoxLayout(hbox)
+        hboxlayout.setMargin(0)
+        hboxlayout.setSpacing(0)
         label = qt.QLabel(hbox)
         label.setText("Material")
         a = []
@@ -304,16 +308,25 @@ class MaterialGUI(qt.QWidget):
         
     def build(self,comments="True",height=3):
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         self.__comments = comments
         commentsHBox   = qt.QWidget(self)
         layout.addWidget(commentsHBox)
         commentsHBoxLayout = qt.QHBoxLayout(commentsHBox)
+        commentsHBoxLayout.setMargin(0)
+        commentsHBoxLayout.setSpacing(0)
+
         tableContainer = qt.QWidget(commentsHBox)
         commentsHBoxLayout.addWidget(tableContainer)
         tableContainerLayout = qt.QVBoxLayout(tableContainer)
+        tableContainerLayout.setMargin(0)
+        tableContainerLayout.setSpacing(0)
         hbox = qt.QWidget(tableContainer)
         tableContainerLayout.addWidget(hbox)
         hboxLayout = qt.QHBoxLayout(hbox)
+        hboxLayout.setMargin(0)
+        hboxLayout.setSpacing(0)
         numberLabel  = qt.QLabel(hbox)
         hboxLayout.addWidget(numberLabel)
         numberLabel.setText("Number  of  Compounds:")
