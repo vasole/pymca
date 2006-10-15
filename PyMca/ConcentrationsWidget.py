@@ -73,6 +73,8 @@ class Concentrations(qt.QWidget):
 
     def build(self):
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         self.concentrationsTool   = ConcentrationsTool.ConcentrationsTool()
         self.concentrationsWidget = ConcentrationsWidget(self)
         self.concentrationsTable  = ConcentrationsTable(self)
@@ -227,17 +229,23 @@ class ConcentrationsWidget(qt.QWidget):
         
     def build(self):
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         if qt.qVersion() < '4.0.0':
             buttonGroup = qt.QVButtonGroup("Estimate concentrations", self)
             buttonGroup.setExclusive(True)
         else:
             buttonGroup = qt.QGroupBox(self)
             buttonGroup.layout = qt.QVBoxLayout(buttonGroup)
+            buttonGroup.layout.setMargin(0)
+            buttonGroup.layout.setSpacing(0)
         layout.addWidget(buttonGroup)
         self.fluxCheckBox = qt.QCheckBox(buttonGroup)
         self.fluxCheckBox.setText("From fundamental parameters")
         wf = qt.QWidget(buttonGroup)
         wf.layout = qt.QHBoxLayout(wf)
+        wf.layout.setMargin(0)
+        wf.layout.setSpacing(0)
         wf.layout.addWidget(HorizontalSpacer(wf))
         self.fundamentalWidget = FundamentalWidget(wf)
         wf.layout.addWidget(self.fundamentalWidget)
@@ -247,6 +255,8 @@ class ConcentrationsWidget(qt.QWidget):
         self.fluxCheckBox.setChecked(True)
         wm = qt.QWidget(buttonGroup)
         wm.layout = qt.QHBoxLayout(wm)
+        wm.layout.setMargin(0)
+        wm.layout.setSpacing(0)
         wm.layout.addWidget(HorizontalSpacer(wm))
         referenceLabel = qt.QLabel(wm)
         wm.layout.addWidget(referenceLabel)
@@ -452,9 +462,14 @@ class FundamentalWidget(qt.QWidget):
 
     def build(self):
         layout = qt.QHBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
+        
         #column 0
         c0 = qt.QWidget(self)
         c0.layout = qt.QVBoxLayout(c0)
+        c0.layout.setMargin(0)
+        c0.layout.setSpacing(0)
         
         c0l1 = qt.QLabel(c0)
         #c0l1.setText("Integrated Flux")
@@ -480,6 +495,8 @@ class FundamentalWidget(qt.QWidget):
         #column 1
         c1 = qt.QWidget(self)
         c1.layout = qt.QVBoxLayout(c1)
+        c1.layout.setMargin(6)
+        c1.layout.setSpacing(0)
 
         c1l1 = qt.QLabel(c1)
         c1l1.setText("")
@@ -505,6 +522,8 @@ class FundamentalWidget(qt.QWidget):
         #column 2
         c2 = qt.QWidget(self)
         c2.layout = qt.QVBoxLayout(c2)
+        c2.layout.setMargin(6)
+        c2.layout.setSpacing(0)
 
         c2l1 = qt.QLabel(c2)
         c2l1.setText("")
@@ -529,6 +548,8 @@ class FundamentalWidget(qt.QWidget):
         #column 3
         c3 = qt.QWidget(self)
         c3.layout = qt.QVBoxLayout(c3)
+        c3.layout.setMargin(6)
+        c3.layout.setSpacing(0)
 
         c3l1 = qt.QLabel(c3)
         c3l1.setText("")
