@@ -407,10 +407,11 @@ class QtBlissGraph(qwt.QwtPlot):
         #self.__activecolor = self.colors['blue']
       
         #styles
-        self.styleslist=['line','spline','steps','sticks','none']
+        ##self.styleslist=['line','spline','steps','sticks','none']
+        self.styleslist=['line','steps','sticks','none']
         self.styles={}
         self.styles['line'] = qwt.QwtCurve.Lines
-        self.styles['spline'] = qwt.QwtCurve.Spline
+        ##self.styles['spline'] = qwt.QwtCurve.Spline
         self.styles['steps'] = qwt.QwtCurve.Steps
         self.styles['sticks'] = qwt.QwtCurve.Sticks
         self.styles['none'] = qwt.QwtCurve.NoCurve
@@ -1189,16 +1190,23 @@ class QtBlissGraph(qwt.QwtPlot):
     def xlabel(self,label=None):
         # set axis titles
         if label is None:
-            return self.axisTitle(qwt.QwtPlot.xBottom)
+            if qwt.QWT_VERSION_STR[0] > '4':
+                return self.axisTitle(qwt.QwtPlot.xBottom).text()
+            else:
+                return self.axisTitle(qwt.QwtPlot.xBottom)
         else:
             self.setAxisTitle(qwt.QwtPlot.xBottom, label)
     
     def ylabel(self,label=None):
         # set axis titles
         if label is None:
-            return self.axisTitle(qwt.QwtPlot.yLeft)
+            if qwt.QWT_VERSION_STR[0] > '4':
+                return self.axisTitle(qwt.QwtPlot.yLeft).text()
+            else:
+                return self.axisTitle(qwt.QwtPlot.yLeft)
         else:
             self.setAxisTitle(qwt.QwtPlot.yLeft, label)
+    
 
     def enableOutline(self, value):
         if qt.qVersion() < '4.0.0':
@@ -1521,7 +1529,7 @@ class QtBlissGraph(qwt.QwtPlot):
                     x.append(self.curve(index).x(i))
                     y.append(self.curve(index).y(i))
             else:
-                print "get curve data to be implemented"
+                print "QtBlissGraph: get curve data to be implemented"
             return legend,array(x).astype(Float),array(y).astype(Float)
         else:
             return None,None,None
@@ -2262,19 +2270,26 @@ def make():
 
 def main(args):
     app = qt.QApplication(args)
-    #demo = make()
-    demo = make0()
-    def myslot(ddict):
-        if ddict['event'] == "RemoveCurveEvent":
-            #self.removeCurve
-            demo.graph.delcurve(ddict['legend'])
-            demo.graph.replot()
     if qt.qVersion() < '4.0.0':
+        demo = make0()
+        def myslot(ddict):
+            if ddict['event'] == "RemoveCurveEvent":
+                #self.removeCurve
+                demo.graph.delcurve(ddict['legend'])
+                demo.graph.replot()
         qt.QObject.connect(demo.graph,qt.PYSIGNAL('QtBlissGraphSignal'), myslot)
         app.setMainWidget(demo)
         app.exec_loop()
     else:
-        import sys
+        demo = make0()
+        demo.resize(500, 300)
+        # set axis titles
+        def myslot(ddict):
+            if ddict['event'] == "RemoveCurveEvent":
+                #self.removeCurve
+                demo.graph.delcurve(ddict['legend'])
+                demo.graph.replot()
+        demo.show()
         qt.QObject.connect(demo.graph,qt.SIGNAL('QtBlissGraphSignal'), myslot)
         sys.exit(app.exec_())
 
