@@ -26,13 +26,18 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.54 $"
 __author__="V.A. Sole - ESRF BLISS Group"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-    qt.PYSIGNAL = qt.SIGNAL
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+        if qt.qVersion() < '4.0.0':
+            print "WARNING: Using Qt %s version" % qt.qVersion()
+    except:
+        import qt
+else:
     import qt
+
+QTVERSION = qt.qVersion()
 
 try:
     from matplotlib.font_manager import FontProperties
@@ -50,7 +55,6 @@ import ConcentrationsWidget
 import ConcentrationsTool
 import types
 import copy
-import sys
 import os
 import QtBlissGraph
 from Icons import IconDict
@@ -315,7 +319,10 @@ class McaAdvancedFit(qt.QWidget):
         self.connect(self.dismissButton,            qt.SIGNAL("clicked()"),self.dismiss)
         self.connect(self.top.configureButton,qt.SIGNAL("clicked()") ,   self.__configure)
         self.connect(self.top.printButton,qt.SIGNAL("clicked()") ,self.__printps)
-        self.connect(self.top,qt.PYSIGNAL("TopSignal"), self.__updatefromtop)
+        if QTVERSION < '4.0.0':
+            self.connect(self.top,qt.PYSIGNAL("TopSignal"), self.__updatefromtop)
+        else:
+            self.connect(self.top,qt.SIGNAL("TopSignal"), self.__updatefromtop)
         self._updateTop()
     
     def __mainTabPatch(self, index):
@@ -603,9 +610,16 @@ class McaAdvancedFit(qt.QWidget):
             w = self.mcatable
             parent = self.tabMca
         if w.parent() is not None:
-            w.reparent(None,self.cursor().pos(),1)
+            if QTVERSION < '4.0.0':
+                w.reparent(None,self.cursor().pos(),1)
+            else:
+                w.setParent(None)
+                w.show()
         else: 
-            w.reparent(parent,qt.QPoint(),1)
+            if QTVERSION < '4.0.0':
+                w.reparent(parent,qt.QPoint(),1)
+            else:
+                w.setParent(parent)
 
     def _calibrate(self):
         
@@ -771,7 +785,11 @@ class McaAdvancedFit(qt.QWidget):
         #tool = ConcentrationsWidget.Concentrations(fl=qt.Qt.WDestructiveClose)
         if self.concentrationsWidget is None:
            self.concentrationsWidget = ConcentrationsWidget.Concentrations()
-           self.connect(self.concentrationsWidget,qt.PYSIGNAL("ConcentrationsSignal"),
+           if QTVERSION < '4.0.0':
+               self.connect(self.concentrationsWidget,qt.PYSIGNAL("ConcentrationsSignal"),
+                                    self.__configureFromConcentrations)
+           else:
+               self.connect(self.concentrationsWidget,qt.SIGNAL("ConcentrationsSignal"),
                                     self.__configureFromConcentrations)
         tool = self.concentrationsWidget 
         toolconfig = tool.getParameters()
@@ -2160,8 +2178,13 @@ class McaGraphWindow(qt.QWidget):
         layout.addWidget(self.toolbar)
         layout.addWidget(self.graph)
         self.initToolBar()
-        self.connect(self.graph,
+        if QTVERSION < '4.0.0':
+            self.connect(self.graph,
                          qt.PYSIGNAL('QtBlissGraphSignal'),
+                         self.__graphSignal)
+        else:
+            self.connect(self.graph,
+                         qt.SIGNAL('QtBlissGraphSignal'),
                          self.__graphSignal)
         
 
@@ -2424,7 +2447,11 @@ class McaGraphWindow(qt.QWidget):
 
     def _initRoi(self):
         self.roiwidget = McaROIWidget.McaROIWidget(None)
-        self.connect(self.roiwidget,qt.PYSIGNAL("McaROIWidgetSignal"),
+        if QTVERSION < '4.0.0':
+            self.connect(self.roiwidget,qt.PYSIGNAL("McaROIWidgetSignal"),
+                     self.__roiSlot)
+        else:
+            self.connect(self.roiwidget,qt.SIGNAL("McaROIWidgetSignal"),
                      self.__roiSlot)
         self.__roiSlot()
     
