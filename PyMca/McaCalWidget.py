@@ -26,25 +26,15 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.13 $"
 __author__="V.A. Sole - ESRF BLISS Group"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
-    import qt
+
 import sys
+from QtBlissGraph import qt
 import QtBlissGraph
 import os
 import Numeric
 from LinearAlgebra import inverse
 import Specfit
 import SpecfitFuns
-PYDVT = 0
-if PYDVT:
-    import SpecFileData
-else:
-    import SpecFileLayer
-#import MySpecFileSelector as SpecFileSelector
 from Icons import IconDict
 import PeakTableWidget
 import copy
@@ -116,8 +106,12 @@ class McaCalWidget(qt.QDialog):
         
     def build(self):
         self.layout = qt.QVBoxLayout(self)
+        self.layout.setMargin(0)
+        self.layout.setSpacing(0)
         self.toolbar   = qt.QWidget(self)
         self.toolbar.layout = qt.QHBoxLayout(self.toolbar)
+        self.toolbar.layout.setMargin(0)
+        self.toolbar.layout.setSpacing(0)
         self.layout.addWidget(self.toolbar)
         self.container = qt.QWidget(self)
         self.container.layout = qt.QVBoxLayout(self.container)
@@ -135,6 +129,7 @@ class McaCalWidget(qt.QDialog):
         #The calibration Widget
         self.bottomPanel = qt.QWidget(self.container)
         self.bottomPanel.layout = qt.QHBoxLayout(self.bottomPanel)
+        self.bottomPanel.layout.setSpacing(0)
         self.bottomPanel.layout.setMargin(10)
         self.peakpar        = PeakSearchParameters(self.bottomPanel)
         self.bottomPanel.layout.addWidget(self.peakpar)
@@ -230,6 +225,8 @@ class McaCalWidget(qt.QDialog):
         toolbar2 = qt.QWidget(self)
         self.layout.addWidget(toolbar2)
         toolbar2.layout = qt.QHBoxLayout(toolbar2)
+        toolbar2.layout.setMargin(0)
+        toolbar2.layout.setSpacing(0)
         self.calpar         = CalibrationParameters(toolbar2,
                                 calname=self.current,caldict=self.caldict)
         self.calpar. setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
