@@ -33,19 +33,28 @@ except:
 import copy
 import sys
 import string
-try:
-    import PyQt4.Qt as qt
-    from PyQt4 import Qwt5 as qwt
-except:
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+        from PyQt4 import Qwt5 as qwt
+    except:
+        import qt
+        try:
+            import Qwt4 as qwt 
+        except:
+            import qwt
+else:
     import qt
     try:
         import Qwt4 as qwt 
     except:
         import qwt
+
+QTVERSION = qt.qVersion()
     
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     if qwt.QWT_VERSION_STR[0] > '4':
-        raise "ValueError","Unsupported combination %s and %s" % (qt.qVersion(), 
+        raise "ValueError","Unsupported combination %s and %s" % (QTVERSION, 
                                                                 qwt.QWT_VERSION_STR)
 
 if qwt.QWT_VERSION_STR[0] > '4':
@@ -68,7 +77,7 @@ if USE_SPS_LUT:
             
 
 #import arrayfns
-if qt.qVersion() < '3.0.0':
+if QTVERSION < '3.0.0':
     qt.QCursor.ArrowCursor   = qt.ArrowCursor
     qt.QCursor.UpArrowCursor = qt.UpArrowCursor
     qt.QCursor.WaitCursor    = qt.WaitCursor
@@ -77,7 +86,7 @@ if qt.qVersion() < '3.0.0':
     qt.QCursor.SizeHorCursor = qt.SizeHorCursor
     qt.QCursor.PointingHandCursor = qt.ArrowCursor
 
-elif qt.qVersion() > '4.0.0':
+elif QTVERSION > '4.0.0':
     qt.QCursor.ArrowCursor   = qt.Qt.ArrowCursor
     qt.QCursor.UpArrowCursor = qt.Qt.UpArrowCursor
     qt.QCursor.WaitCursor    = qt.Qt.WaitCursor
@@ -553,6 +562,10 @@ class QtBlissGraph(qwt.QwtPlot):
             self.setAxisScaleDraw(qwt.QwtPlot.xBottom,qwt.QwtScaleDraw())
 
     def ToggleLogY(self):
+        if DEBUG:print "use toggleLogY"
+        return self.toggleLogY()
+
+    def toggleLogY(self):
         if self.__logy1: 
             #get the current limits
             if qt.qVersion() < '4.0.0':
@@ -1448,8 +1461,7 @@ class QtBlissGraph(qwt.QwtPlot):
     if qt.qVersion() > '4.0.0':
         def removeCurves(self):
             pass
-            #print "remove curves to implement?????"
-
+        
         def removeMarkers(self):
             for key in self.markersdict.keys():
                 self.markersdict[key]['marker'].detach()
@@ -1718,7 +1730,7 @@ class QtBlissGraph(qwt.QwtPlot):
         
     def getx1axislimits(self):
         #get the current limits
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
             xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
         else:
@@ -1728,7 +1740,7 @@ class QtBlissGraph(qwt.QwtPlot):
         
     def gety1axislimits(self):
         #get the current limits
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
             ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
         else:
@@ -1737,10 +1749,7 @@ class QtBlissGraph(qwt.QwtPlot):
         if not self.__logy1:
             return ymin,ymax
         else:
-            if ymin == 0:
-                return 0,exp(ymax)
-            else:
-                return exp(ymin),exp(ymax)
+            return ymin, ymax
 
     def setx1axislimits(self, xmin, xmax, replot=None):
         if replot is None: replot = True
