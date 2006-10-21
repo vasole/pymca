@@ -40,6 +40,8 @@ else:
 QTVERSION = qt.qVersion()
 
 try:
+    from matplotlib import rcParams
+    rcParams['numerix'] = "numeric"
     from matplotlib.font_manager import FontProperties
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     from matplotlib.figure import Figure
@@ -81,6 +83,7 @@ class McaAdvancedFit(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+        self.lastInputDir = None
         self.layout = qt.QVBoxLayout(self)
         if sections is None:sections=["TABLE"]
         self.headerLabel = qt.QLabel(self)
@@ -1597,7 +1600,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 text = "Sorry, You need to perform a fit first.\n"
                 msg.setText(text)
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -1622,14 +1625,17 @@ class McaAdvancedFit(qt.QWidget):
         #get outputfile
         outfile = qt.QFileDialog(self)
         outfile.setModal(1)
-        if qt.qVersion() < '4.0.0':
+        if self.lastInputDir is None:self.lastInputDir = os.getcwd()
+        if QTVERSION < '4.0.0':
             outfile.setCaption("Output File Selection")
             if MATPLOTLIB:
                 filterlist = 'Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt'
                 filterlist += '\nGraphics EPS *.eps\nGraphics PNG *.png'
-                filterlist += '\nB/WGraphics EPS *.eps\nB/WGraphics PNG *.png'
+                if not self.peaksSpectrumButton.isChecked():
+                    filterlist += '\nB/WGraphics EPS *.eps\nB/WGraphics PNG *.png'
                 outfile.setFilters(filterlist)
             outfile.setMode(outfile.AnyFile)
+            outfile.setDir(self.lastInputDir)
             ret = outfile.exec_loop()
         else:
             outfile.setWindowTitle("Output File Selection")
@@ -1638,12 +1644,14 @@ class McaAdvancedFit(qt.QWidget):
             if MATPLOTLIB:
                 format_list.append('Graphics PNG *.png')
                 format_list.append('Graphics EPS *.eps')
-                format_list.append('B/WGraphics PNG *.png')
-                format_list.append('B/WGraphics EPS *.eps')
+                if not self.peaksSpectrumButton.isChecked():
+                    format_list.append('B/WGraphics PNG *.png')
+                    format_list.append('B/WGraphics EPS *.eps')
             for f in format_list:
                 strlist.append(f)
             outfile.setFilters(strlist)
             outfile.setFileMode(outfile.AnyFile)
+            outfile.setDirectory(self.lastInputDir)
             ret = outfile.exec_()
 
         if ret:
@@ -1651,7 +1659,10 @@ class McaAdvancedFit(qt.QWidget):
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
-            outstr=str(outfile.selectedFile())
+            if QTVERSION < '4.0.0':
+                outstr=str(outfile.selectedFile())
+            else:
+                outstr=str(outfile.selectedFiles()[0])
             try:            
                 outputDir  = os.path.dirname(outstr)
             except:
@@ -1691,9 +1702,9 @@ class McaAdvancedFit(qt.QWidget):
                         legends = False
                     if not legends:
                         if self._logY:
-                            ax = fig.add_axes([.1, .15, .78, .8])
+                            ax = fig.add_axes([.1, .15, .75, .8])
                         else:
-                            ax = fig.add_axes([.15, .15, .78, .8])
+                            ax = fig.add_axes([.15, .15, .75, .75])
                     else:
                         if self._logY:
                             ax = fig.add_axes([.1, .15, .7, .8])
@@ -1702,15 +1713,43 @@ class McaAdvancedFit(qt.QWidget):
                     ax.set_axisbelow(True)
                     keys = fitresult['result'].keys()
                     #print dir(ax)
-                    
-                    colorlist  = ['r', 'g', 'b', 'y','c']
-                    stylelist  = ['-', '--', '-.', ':']
-                    cl = []
-                    ncs = 0
-                    for style in stylelist:
-                        for color in colorlist:
-                           cl.append(color+style) 
-                           ncs += 1
+                    colordict = {}
+                    colordict['blue']  = '#0000ff'
+                    colordict['red']   = '#ff0000'
+                    colordict['green'] = '#00ff00'
+                    colordict['black'] = '#000000'
+                    colordict['white'] = '#ffffff'
+                    colordict['pink'] = '#ff66ff'
+                    colordict['brown'] = '#a52a2a'
+                    colordict['orange'] = '#ff9900'
+                    colordict['violet'] = '#6600ff'
+                    colordict['grey']   = '#808080'
+                    colordict['yellow'] = '#ffff00'
+                    colordict['darkgreen']  = 'g'
+                    colordict['darkbrown'] = '#660000' 
+                    colordict['magenta'] = 'm' 
+                    colordict['cyan']  = 'c'
+                    colordict['bluegreen']  = '#33ffff'
+                    colorlist  = [colordict['black'],
+                                  colordict['red'],
+                                  colordict['blue'],
+                                  colordict['green'],
+                                  colordict['pink'],
+                                  colordict['brown'],
+                                  colordict['cyan'],
+                                  colordict['orange'],
+                                  colordict['violet'],
+                                  colordict['bluegreen'],
+                                  colordict['grey'],
+                                  colordict['magenta'],
+                                  colordict['darkgreen'],
+                                  colordict['darkbrown'],
+                                  colordict['yellow']]                    
+                    #colorlist  = ['r', 'g', 'b', 'y','c']
+                    #stylelist  = ['-', '--', '-.', ':']
+                    stylelist  = ['-', '-.']
+                    cl = colorlist
+                    ncs = len(colorlist)
                     #deal with BW graphics
                     if filedescription == "B/WGraphics":
                         cl[0] = 'k-'
@@ -1721,69 +1760,92 @@ class McaAdvancedFit(qt.QWidget):
                         nocolor = True
                     else:
                         nocolor = False
-
                     ci = 0
                     if self._energyAxis:
                         x = fitresult['result']['energy']
                     else:
                         x = fitresult['result']['xdata']
+                    xmin, xmax = self.graph.getx1axislimits()
+                    ymin, ymax = self.graph.gety1axislimits()
+                    index = Numeric.nonzero((xmin <= x) and (x <= xmax))
+                    x = Numeric.take(x, index)
                     if self._logY:
                         axfunction = ax.semilogy
                     else:
                         axfunction = ax.plot
                     if nocolor:
                         axfunction( x,
-                                fitresult['result']['ydata'], 'k.', lw=1.5, markersize=3)
+                                Numeric.take(fitresult['result']['ydata'],index),
+                                'k.', lw=1.5, markersize=3)
                     else:
                         axfunction( x,
-                                fitresult['result']['ydata'], 'k-', lw=1.5)
+                                Numeric.take(fitresult['result']['ydata'],index),
+                                'k-', lw=1.)
                         
-                    ci = 0
-                    axfunction( x,
-                                fitresult['result']['yfit'],  cl[ci], lw=1.5)
-
-                    ci+=1
-                    axfunction( x,
-                                fitresult['result']['continuum'], cl[ci], lw=1.5)
                     ci += 1
-                    legendlist = ['data', 'fit', 'bck']
+                    axfunction( x,
+                                Numeric.take(fitresult['result']['yfit'],index),
+                                color=cl[ci], lw=1.5)
+
+                    legendlist = ['data', 'fit']
+                    if not self.peaksSpectrumButton.isChecked():
+                        ci += 1
+                        axfunction( x,
+                                    Numeric.take(fitresult['result']['continuum'],index),
+                                    color=cl[ci], lw=1.5)
+                        legendlist.append('bck')
+                    ci += 1
+                    if ci == ncs:ci = 2
                     if self.top.sumbox.isChecked():
                         axfunction( x,
-                                fitresult['result']['pileup'], cl[ci], lw=1.5)
+                                Numeric.take(fitresult['result']['pileup']+\
+                                             fitresult['result']['continuum'],index),
+                                    color=cl[ci], lw=1.5)
                         ci += 1
+                        if ci == ncs:ci = 2
                         legendlist.append('pile up')
                     if 'ymatrix' in fitresult['result'].keys():
                         axfunction( x,
-                                fitresult['result']['ymatrix'], cl[ci], lw=1.5)
+                                Numeric.take(fitresult['result']['ymatrix'],index),
+                                    color=cl[ci], lw=1.5)
                         ci += 1
+                        if ci == ncs:ci = 2
                         legendlist.append('matrix')
-                    loc = (1.01, 0.7)
+                    loc = (1.01, 0.0)
+                    labelsep = 0.015
+                    drawframe = True
                     if self.peaksSpectrumButton.isChecked():
                         loc = (1.01, 0.01)
+                        lsindex = 0
                         for group in fitresult['result']['groups']:
                             label = 'y'+group
                             if label in keys:
                                 axfunction( x,
-                                    fitresult['result'][label], cl[ci], lw=1.5)
+                                    Numeric.take(fitresult['result'][label],index),
+                                    ls=stylelist[lsindex], color=cl[ci], lw=1.5)
                                 ci += 1
-                                ci = ci % ncs
+                                if ci == ncs:
+                                    ci = 2
+                                    ls = 1
                             legendlist.append(group)
-                        if len(fitresult['result']['groups']) > 12:
-                            fontproperties = FontProperties(size=6)
-                        else:
+                        if len(legendlist) > 19:
+                            legends = False
+                        elif len(legendlist) > 14:
+                            drawframe = False
+                            loc = (1.05, -0.2)
                             fontproperties = FontProperties(size=8)
-                        labelsep = 0.015
+                        else:
+                            fontproperties = FontProperties(size=10)
                     else:
-                        fontproperties = FontProperties(size=8)
+                        fontproperties = FontProperties(size=10)
                     if legends:
-                        labelsep = 0.02
+                        labelsep = labelsep
                         legend = ax.legend(legendlist,
                                    loc = loc,
                                    prop = fontproperties,
-                                   labelsep = labelsep)
-                        legend.draw_frame(False)
-                    xmin, xmax = self.graph.getx1axislimits()
-                    ymin, ymax = self.graph.gety1axislimits()
+                                   labelsep = labelsep,
+                                   pad = 0.15)
+                        legend.draw_frame(drawframe)
                     ax.set_ylim(ymin, ymax)
                     ax.set_xlim(xmin, xmax)
                     if self._energyAxis:
@@ -1800,7 +1862,7 @@ class McaAdvancedFit(qt.QWidget):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.setText("Matplotlib or Input Output Error: %s" % (sys.exc_info()[1]))
             if qt.qVersion() < '4.0.0':
                 msg.exec_loop()
             else:
@@ -1934,7 +1996,8 @@ class Top(qt.QWidget):
         self.build()
         
     def build(self):
-        w=qt.QWidget(self)
+        self.__w=qt.QWidget(self)
+        w = self.__w
         self.layout.addWidget(w)
         wlayout = qt.QGridLayout(w)
         wlayout.setSpacing(5)

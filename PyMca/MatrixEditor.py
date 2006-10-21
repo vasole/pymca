@@ -102,7 +102,8 @@ class MatrixEditor(qt.QWidget):
         if orientation != "vertical":
             labelHBoxLayout.addWidget(VerticalSpacer(labelHBox))   
         #the input fields container
-        grid = qt.QWidget(sampleBox)
+        self.__gridSampleBox = qt.QWidget(sampleBox)
+        grid = self.__gridSampleBox
         sampleBoxLayout.addWidget(grid)
         if qt.qVersion() < '4.0.0':
             gridLayout=qt.QGridLayout(grid,5,2,11,4)

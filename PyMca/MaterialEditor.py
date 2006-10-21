@@ -25,15 +25,19 @@
 # is a problem to you.
 #############################################################################*/
 __revision__ = "$Revision: 1.11 $"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
     import qt
-if qt.qVersion() < '3.0.0':
+
+QTVERSION = qt.qVersion()
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+elif QTVERSION < '4.0.0':
     import qttable
 
 import Elements
@@ -57,7 +61,8 @@ class MaterialEditor(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
-        hbox   = qt.QWidget(self)
+        self.__hboxMaterialCombo   = qt.QWidget(self)
+        hbox = self.__hboxMaterialCombo
         layout.addWidget(hbox)
         hboxlayout = qt.QHBoxLayout(hbox)
         hboxlayout.setMargin(0)
@@ -72,7 +77,11 @@ class MaterialEditor(qt.QWidget):
         #self.matCombo.setEditable(True)
         self.materialGUI = MaterialGUI(self,comments=comments, height=height)
         #HorizontalSpacer(hbox)
-        self.connect(self.matCombo,qt.PYSIGNAL('MaterialComboBoxSignal'),
+        if QTVERSION < '4.0.0':
+            self.connect(self.matCombo,qt.PYSIGNAL('MaterialComboBoxSignal'),
+                         self._comboSlot)
+        else:
+            self.connect(self.matCombo,qt.SIGNAL('MaterialComboBoxSignal'),
                          self._comboSlot)
         self.materialGUI.setCurrent(a[0])
 
@@ -322,7 +331,8 @@ class MaterialGUI(qt.QWidget):
         tableContainerLayout = qt.QVBoxLayout(tableContainer)
         tableContainerLayout.setMargin(0)
         tableContainerLayout.setSpacing(0)
-        hbox = qt.QWidget(tableContainer)
+        self.__hboxTableContainer = qt.QWidget(tableContainer)
+        hbox = self.__hboxTableContainer
         tableContainerLayout.addWidget(hbox)
         hboxLayout = qt.QHBoxLayout(hbox)
         hboxLayout.setMargin(0)
@@ -381,7 +391,8 @@ class MaterialGUI(qt.QWidget):
             vboxLayout = qt.QVBoxLayout(vbox)
             
             #default thickness and density
-            grid = qt.QWidget(vbox)
+            self.__gridVBox = qt.QWidget(vbox)
+            grid = self.__gridVBox
             vboxLayout.addWidget(grid)
             if qt.qVersion() < '4.0.0':
                 gridLayout = qt.QGridLayout(grid, 2, 2, 11, 4)
@@ -679,9 +690,10 @@ class VerticalSpacer(qt.QWidget):
         
 if __name__ == "__main__":
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),app,qt.SLOT("quit()"))
+    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
+                       app,qt.SLOT("quit()"))
     demo = MaterialEditor()
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
         demo.show()
         app.exec_loop()

@@ -423,6 +423,7 @@ class QtBlissGraph(qwt.QwtPlot):
         ##self.styles['spline'] = qwt.QwtCurve.Spline
         self.styles['steps'] = qwt.QwtCurve.Steps
         self.styles['sticks'] = qwt.QwtCurve.Sticks
+        
         self.styles['none'] = qwt.QwtCurve.NoCurve
         #symbols
         self.symbolslist=['cross','ellipse','xcross','none']
@@ -430,7 +431,11 @@ class QtBlissGraph(qwt.QwtPlot):
         self.symbols['cross'] = qwt.QwtSymbol.Cross
         self.symbols['ellipse'] = qwt.QwtSymbol.Ellipse
         self.symbols['xcross'] = qwt.QwtSymbol.XCross
-        self.symbols['none'] = qwt.QwtSymbol.None
+        if hasattr(qwt.QwtSymbol,"None"):
+            self.symbols['none'] = qwt.QwtSymbol.None
+        else:
+            #latest API
+            self.symbols['none'] = qwt.QwtSymbol.NoSymbol
         #types
         self.linetypeslist=['solid','dot','dash','dashdot','dashdotdot']
         self.linetypes={}
@@ -731,7 +736,11 @@ class QtBlissGraph(qwt.QwtPlot):
         y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
         if self.__markermode:
             if self.__markermoving in self.markersdict.keys():
-                self.setMarkerXPos(self.__markermoving, x)
+                if QTVERSION < '4.0.0':
+                    self.setMarkerXPos(self.__markermoving, x)
+                else:
+                    self.setMarkerXPos(self.markersdict[self.__markermoving]['marker'],
+                                                       x)
                 ddict ={}
                 ddict['event']    = "markerMoving"
                 ddict['marker']   = self.__markermoving
@@ -798,8 +807,12 @@ class QtBlissGraph(qwt.QwtPlot):
                             print "Wrong Marker selection"
                         else:
                             if self.markersdict[marker]['followmouse']:
-                                self.__markermoving = marker 
-                                self.setMarkerXPos(marker, x)
+                                self.__markermoving = marker
+                                if QTVERSION < '4.0.0':
+                                    self.setMarkerXPos(marker, x)
+                                else:
+                                    self.setMarkerXPos(self.markersdict[marker]['marker'],
+                                                       x)
                         self._zooming = 0
                                 
             if self._zooming:
@@ -1878,10 +1891,18 @@ class QtBlissGraph(qwt.QwtPlot):
         return marker
 
     def setx1markerpos(self,marker,x,y=None):
-        if y is None:
-            self.setMarkerXPos(marker, x)
+        if QTVERSION < '4.0.0':
+            if y is None:
+                self.setMarkerXPos(marker, x)
+            else:
+                self.setMarkerPos(marker, x,y)
         else:
-            self.setMarkerPos(marker, x,y)
+            #marker is the marker id
+            marker = self.markersdict[marker]['marker']
+            if y is None:
+                self.setMarkerXPos(marker, x)
+            else:
+                self.setMarkerPos(marker, x,y)
          
     def clearmarkers(self):
         self.removeMarkers()

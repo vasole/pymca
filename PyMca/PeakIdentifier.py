@@ -26,11 +26,13 @@
 #############################################################################*/
 __revision__= "$Revision: 1.8 $"
 __author__="V.A. Sole - ESRF BLISS Group"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
     import qt
 import Elements
 from QPeriodicTable import QPeriodicTable
@@ -61,8 +63,11 @@ class PeakIdentifier(qt.QWidget):
         
         layout = qt.QVBoxLayout(self)
         #heading
-        hbox=qt.QWidget(self)
+        self.__energyHBox=qt.QWidget(self)
+        hbox = self.__energyHBox
         hbox.layout = qt.QHBoxLayout(hbox)
+        hbox.layout.setMargin(0)
+        hbox.layout.setSpacing(0)
         layout.addWidget(hbox)
         hbox.layout.addWidget(HorizontalSpacer(hbox))
 
@@ -79,9 +84,13 @@ class PeakIdentifier(qt.QWidget):
         hbox.layout.addWidget(HorizontalSpacer(hbox))
         self.connect(self.energy,qt.SIGNAL('returnPressed()'),self._energySlot)
         #parameters
-        hbox2 = qt.QWidget(self)
+        self.__hbox2 = qt.QWidget(self)
+        hbox2 = self.__hbox2
+
         layout.addWidget(hbox2)
         hbox2.layout = qt.QHBoxLayout(hbox2)
+        hbox2.layout.setMargin(0)
+        hbox2.layout.setSpacing(0)
         font=hbox2.font()
         font.setBold(1)
         hbox2.setFont(font)

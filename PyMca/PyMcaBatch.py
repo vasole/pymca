@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.42 $"
+__revision__ = "$Revision: 1.41 $"
 ###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -26,13 +26,16 @@ __revision__ = "$Revision: 1.42 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################
-try:
-    import PyQt4.Qt as qt
-    qt.Qt.WDestructiveClose = "TO BE DONE"
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+        qt.Qt.WDestructiveClose = "TO BE DONE"
+    except:
+        import qt
+else:
     import qt
 import os
-import sys
 import McaAdvancedFitBatch
 import EdfFileLayer
 import SpecFileLayer
@@ -56,6 +59,9 @@ class McaBatchGUI(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
         self._layout = qt.QVBoxLayout(self)
+        self._layout.setMargin(0)
+        self._layout.setSpacing(0)
+        
         self.__build(actions)               
         if filelist is None: filelist = []
         self.outputDir  = None
@@ -63,7 +69,6 @@ class McaBatchGUI(qt.QWidget):
         self.setFileList(filelist)
         self.setConfigFile(config)
         self.setOutputDir(outputdir)
-        self._lastInputDir = os.getcwd()
     
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
@@ -131,14 +136,24 @@ class McaBatchGUI(qt.QWidget):
 
         box  = qt.QWidget(self)
         box.l = qt.QHBoxLayout(box)
+        box.l.setMargin(0)
+        box.l.setSpacing(0)
         vbox1 = qt.QWidget(box)
         vbox1.l = qt.QVBoxLayout(vbox1)
+        vbox1.l.setMargin(0)
+        vbox1.l.setSpacing(0)
         box.l.addWidget(vbox1)
         vbox2 = qt.QWidget(box)
         vbox2.l = qt.QVBoxLayout(vbox2)
+        vbox2.l.setMargin(0)
+        vbox2.l.setSpacing(0)
+
         box.l.addWidget(vbox2)
         vbox3 = qt.QWidget(box)
         vbox3.l = qt.QVBoxLayout(vbox3)
+        vbox3.l.setMargin(0)
+        vbox3.l.setSpacing(0)
+
         box.l.addWidget(vbox3)
         self.__fitBox = qt.QCheckBox(vbox1)
         self.__fitBox.setText('Generate .fit Files')
@@ -157,7 +172,7 @@ class McaBatchGUI(qt.QWidget):
         if qt.qVersion() < '4.0.0':
             palette.setDisabled(palette.active())
         else:
-            print "palette set disabled"
+            if DEBUG: print "palette set disabled"
         self.__imgBox.setChecked(True)
         self.__imgBox.setEnabled(False)
         vbox2.l.addWidget(self.__imgBox)
@@ -239,7 +254,8 @@ class McaBatchGUI(qt.QWidget):
         boxStep0.l.addWidget(boxStep)
         bigbox.l.addWidget(boxStep0)
         
-        boxFStep   = qt.QWidget(boxStep)
+        self.__boxFStep   = qt.QWidget(boxStep)
+        boxFStep = self.__boxFStep
         boxFStep.l = qt.QHBoxLayout(boxFStep)
         boxStep.l.addWidget(boxFStep)
         label= qt.QLabel(boxFStep)
@@ -256,7 +272,8 @@ class McaBatchGUI(qt.QWidget):
         boxFStep.l.addWidget(self.__fileSpin)
 
 
-        boxMStep   = qt.QWidget(boxStep0)
+        self.__boxMStep   = qt.QWidget(boxStep0)
+        boxMStep = self.__boxMStep
         boxMStep.l = qt.QHBoxLayout(boxMStep)
         boxStep0.l.addWidget(boxMStep)
         
@@ -281,7 +298,8 @@ class McaBatchGUI(qt.QWidget):
         self.__roiBox.setText('ROI Fitting Mode')
         vBox.l.addWidget(self.__roiBox)
         #box3 = qt.QHBox(box2)
-        box3 = qt.QWidget(boxStep0)
+        self.__box3 = qt.QWidget(boxStep0)
+        box3 = self.__box3
         box3.l = qt.QHBoxLayout(box3)
         boxStep0.l.addWidget(box3)
 
@@ -443,15 +461,12 @@ class McaBatchGUI(qt.QWidget):
             return None
 
     def browseList(self):
-        if not os.path.exists(self._lastInputDir): self._lastInputDir = os.getcwd()
         if qt.qVersion() < '4.0.0':
             filedialog = qt.QFileDialog(self,"Open a set of files",1)
-            filedialog.setDir(self._lastInputDir)
             filedialog.setMode(filedialog.ExistingFiles)
         else:
             filedialog = qt.QFileDialog(self)
             filedialog.setWindowTitle("Open a set of files")
-            filedialog.setDirectory(self._lastInputDir)
             filedialog.setModal(1)
             filedialog.setFileMode(filedialog.ExistingFiles)
         if qt.qVersion() < '4.0.0' and (sys.platform == "win32"):
@@ -476,13 +491,8 @@ class McaBatchGUI(qt.QWidget):
                 return
         #filelist0.sort()
         filelist = []
-        i = 0
         for f in filelist0:
-            filelist.append(str(f))
-            if i == 0:
-                self._lastInputDir = os.path.dirname(filelist[0])
-                i = 1
-
+            filelist.append(str(f)) 
         if len(filelist):self.setFileList(filelist)
         if qt.qVersion() < '4.0.0':
             self.raiseW()
@@ -490,15 +500,12 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
     def browseConfig(self):
-        if not os.path.exists(self._lastInputDir): self._lastInputDir = os.getcwd()
         if qt.qVersion() < '4.0.0':
             filename = qt.QFileDialog(self,"Open a new fit config file",1)
-            filename.setDir(self._lastInputDir)
             filename.setMode(filename.ExistingFiles)
         else:
             filename = qt.QFileDialog(self)
             filename.setWindowTitle("Open a new fit config file")
-            filename.setDirectory(self._lastInputDir)
             filename.setModal(1)
             filename.setFileMode(filename.ExistingFiles)
         if (qt.qVersion() < '4.0.0') and (sys.platform == "win32"):
@@ -522,12 +529,9 @@ class McaBatchGUI(qt.QWidget):
                     self.raise_()
                 return
         filename = []
-        i = 0
         for f in filenameList:
             filename.append(str(f))
-            if i == 0:
-                self._lastInputDir = os.path.dirname(filename[0])
-                i = 1
+
         if len(filename) == 1:self.setConfigFile(str(filename[0]))
         elif len(filenameList):self.setConfigFile(filename)
         if qt.qVersion() < '4.0.0':
@@ -536,16 +540,13 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
     def browseOutputDir(self):
-        if not os.path.exists(self._lastInputDir): self._lastInputDir = os.getcwd()
         if qt.qVersion() < '4.0.0':
             outfile = qt.QFileDialog(self,"Output Directory Selection",1)
-            outfile.setDir(self._lastInputDir)
             outfile.setMode(outfile.DirectoryOnly)
             ret = outfile.exec_loop()
         else:
             outfile = qt.QFileDialog(self)
             outfile.setWindowTitle("Output Directory Selection")
-            outfile.setDirectory(self._lastInputDir)
             outfile.setModal(1)
             outfile.setFileMode(outfile.DirectoryOnly)
             ret = outfile.exec_()
