@@ -1469,7 +1469,11 @@ class QtBlissGraph(qwt.QwtPlot):
         #line type
         self.linetype= 0
         self.removeCurves()
-        self.clear()
+        if 0:
+            self.removeMarkers() #necessary because clear() will get rid of them
+            self.clear()         #this deletes also plot items in Qwt5!
+        else:                    #try to remove just the curves
+            self.replot()
         
     if qt.qVersion() > '4.0.0':
         def removeCurves(self):
@@ -1914,7 +1918,8 @@ class QtBlissGraph(qwt.QwtPlot):
             qwt.QwtPlot.removeMarker(self,marker)
 
     def removemarker(self,marker):
-        self.removeMarker(marker)
+        print "Deprecation warning: use removeMarker instead"
+        return self.removeMarker(marker)
         
     def printps(self):
         printer = qt.QPrinter()

@@ -24,17 +24,23 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-try:
-    import PyQt4.Qt as qt
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
     import qt
+    
+QTVERSION = qt.qVersion()
 
-if qt.qVersion() < '3.0.0':
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+elif QTVERSION < '4.0.0':
     import qttable
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -50,7 +56,7 @@ else:
 DEBUG = 0
 class McaROIWidget(qt.QWidget):
     def __init__(self, parent=None, name=None, fl=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name,fl)
             if name is not None:self.setCaption(name)
         else:
@@ -64,7 +70,7 @@ class McaROIWidget(qt.QWidget):
         layout.addWidget(self.headerlabel)
         ##############
         self.mcaroitable     = McaROITable(self)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mcaroitable.setMinimumHeight(4*self.mcaroitable.sizeHint().height())
             self.mcaroitable.setMaximumHeight(4*self.mcaroitable.sizeHint().height())
         else:
@@ -81,6 +87,8 @@ class McaROIWidget(qt.QWidget):
         
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
+        hboxlayout.setMargin(0)
+        hboxlayout.setSpacing(0)
 
         hboxlayout.addWidget(HorizontalSpacer(hbox))
         
@@ -101,7 +109,7 @@ class McaROIWidget(qt.QWidget):
         self.connect(self.addbutton,  qt.SIGNAL("clicked()"), self.__add)
         self.connect(self.delbutton,  qt.SIGNAL("clicked()"), self.__del)
         self.connect(self.resetbutton,qt.SIGNAL("clicked()"), self.__reset)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(self.mcaroitable,  qt.PYSIGNAL('McaROITableSignal') ,self.__forward)
         else:
             self.connect(self.mcaroitable,  qt.SIGNAL('McaROITableSignal') ,self.__forward)
@@ -252,9 +260,14 @@ class McaROITable(QTable):
         if kw.has_key('roidict'):
             self.roidict.update(kw['roilist'])
         self.build()
-        self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
         #self.connect(self,qt.SIGNAL("currentChanged(int,int)"),self.myslot)
-        self.connect(self,qt.SIGNAL("selectionChanged()"),self.myslot)
+        if QTVERSION < '4.0.0':
+            self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
+            self.connect(self,qt.SIGNAL("selectionChanged()"),self.myslot)
+        else:
+            self.connect(self,qt.SIGNAL("cellClicked(int, int)"),self.myslot)
+            self.connect(self,qt.SIGNAL("cellChanged(int, int)"),self.myslot)
+            self.connect(self,qt.SIGNAL("itemSelectionChanged()"),self.myslot)
         #self.connect(self,qt.SIGNAL("pressed(int,int,QPoint())"),self.myslot)
         if qt.qVersion() > '2.3.0':
             if qt.qVersion() < '4.0.0':
@@ -443,7 +456,12 @@ class McaROITable(QTable):
                         if DEBUG:
                             print "deleting???"
                     else:
-                        text = str(self.text(row, col))
+                        if QTVERSION < '4.0.0':
+                            text = str(self.text(row, col))
+                        else:
+                            item = self.item(row, col)
+                            if item is None:text=""
+                            else:text = str(item.text())
                         if len(text) and (text not in self.roilist):
                             old = self.roilist[row]
                             self.roilist[row] = text
@@ -463,7 +481,14 @@ class McaROITable(QTable):
                             else:
                                 self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
                         else:
-                            self.setText(row, col, self.roilist[row])
+                            if QTVERSION < '4.0.0':
+                                self.setText(row, col, self.roilist[row])
+                            else:
+                                if item is None:
+                                    item = qt.QTableWidgetItem(text,
+                                               qt.QTableWidgetItem.Type)
+                                else:
+                                    item.setText(text)
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
