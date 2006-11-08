@@ -24,12 +24,17 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-try:
-    from PyQt4.Qt import *
-    if qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.QTVERSION
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        from PyQt4.Qt import *
+        if qVersion() < '4.0.0':
+            print "WARNING: Using Qt %s version" % qt.QTVERSION
+    except:
+        from qt import *
+else:
     from qt import *
+
 QTVERSION = qVersion()
 if QTVERSION < '3.0.0':
     import Myqttable as qttable

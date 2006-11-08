@@ -24,23 +24,26 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-import qt
+import sys
+from SpecfitGUI import qt
+QTVERSION = qt.qVersion()
 import SpecfitGUI
 import Specfit
 import string
-import sys
 
 class McaSimpleFit(qt.QWidget):
     def __init__(self, parent=None, name="McaSimpleFit", specfit=None,fl=0): 
-                #fl=qt.Qt.WDestructiveClose):
-        qt.QWidget.__init__(self, parent, name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self, parent, name,fl)
+            self.setCaption(name)
+        else:
+            qt.QWidget.__init__(self, parent)
+            self.setWindowTitle(name)
         if specfit is None:
             self.specfit = Specfit.Specfit()
         else:
             self.specfit = specfit
         layout = qt.QVBoxLayout(self)
-        layout.setAutoAdd(1)
-        self.setCaption(name)
         ##############
         self.headerlabel = qt.QLabel(self)
         self.headerlabel.setAlignment(qt.Qt.AlignHCenter)       
@@ -56,23 +59,40 @@ class McaSimpleFit(qt.QWidget):
         self.specfit.configure(**fitconfig)
         self.specfitGUI = SpecfitGUI.SpecfitGUI(self,config=1, status=1, buttons=0,
                                     specfit = self.specfit,eh=self.specfit.eh)
+
+        layout.addWidget(self.headerlabel)
+        layout.addWidget(self.specfitGUI)
         #self.specfitGUI.updateGUI(configuration=fitconfig)
         #self.setdata = self.specfit.setdata
         
         self.specfitGUI.guiconfig.MCACheckBox.setEnabled(0)
         palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
-        palette.setDisabled(palette.active())
+        if QTVERSION < '4.0.0':
+            palette.setDisabled(palette.active())
         ##############
-        hbox=qt.QHBox(self)
-        HorizontalSpacer(hbox)
+        hbox = qt.QWidget(self)
+        hboxLayout = qt.QHBoxLayout(hbox)
+        hs1 = HorizontalSpacer(hbox)
         self.fitbutton = qt.QPushButton(hbox)
         self.fitbutton.setText("Fit Again!")
         self.dismissbutton = qt.QPushButton(hbox)
         self.dismissbutton.setText("Dismiss")        
         self.connect(self.fitbutton,    qt.SIGNAL("clicked()"),self.fit)
         self.connect(self.dismissbutton,qt.SIGNAL("clicked()"),self.dismiss)
-        self.connect(self.specfitGUI,  qt.PYSIGNAL('SpecfitGUISignal') ,   self.__anasignal)
-        HorizontalSpacer(hbox)
+        if QTVERSION < '4.0.0':
+            self.connect(self.specfitGUI,
+                         qt.PYSIGNAL('SpecfitGUISignal') ,
+                         self.__anasignal)
+        else:
+            self.connect(self.specfitGUI,
+                         qt.SIGNAL('SpecfitGUISignal') ,
+                         self.__anasignal)
+        hs2 = HorizontalSpacer(hbox)
+        hboxLayout.addWidget(hs1)
+        hboxLayout.addWidget(self.fitbutton)
+        hboxLayout.addWidget(self.dismissbutton)
+        hboxLayout.addWidget(hs2)
+        layout.addWidget(hbox)
 
     def setdata(self,*var,**kw):
         self.info ={}
@@ -123,25 +143,31 @@ class McaSimpleFit(qt.QWidget):
             self.specfitGUI.startfit()
     
     
-    def __anasignal(self,dict):
-        if type(dict) != type({}):
+    def __anasignal(self,ddict):
+        if type(ddict) != type({}):
             return
-        if dict.has_key('event'):
-            if string.upper(dict['event']) == "PRINT":
+        if ddict.has_key('event'):
+            if string.upper(ddict['event']) == "PRINT":
                 h = self.__htmlheader()
                 if __name__ == "__main__":
-                    self.__print(h+dict['text'])
+                    self.__print(h+ddict['text'])
                 else:
                     ndict={}
                     ndict['event'] = "McaSimpleFitPrint"
-                    ndict['text' ] = h+dict['text']
+                    ndict['text' ] = h+ddict['text']
                     ndict['info' ] = {}
                     ndict['info'].update(self.info)
-                    self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ndict,))             
+                    if QTVERSION < '4.0.0':
+                        self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ndict,))
+                    else:
+                        self.emit(qt.SIGNAL('McaSimpleFitSignal'), ndict)
             else:
-                dict['info'] = {}
-                dict['info'].update(self.info)
-                self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(dict,))    
+                ddict['info'] = {}
+                ddict['info'].update(self.info)
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ddict,))
+                else:
+                    self.emit(qt.SIGNAL('McaSimpleFitSignal'), ddict)
         
     def dismiss(self):
         self.close()
@@ -264,6 +290,10 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     demo = McaSimpleFit()
-    app.setMainWidget(demo)
-    demo.show()
-    app.exec_loop()
+    if QTVERSION < '4.0.0':
+        app.setMainWidget(demo)
+        demo.show()
+        app.exec_loop()
+    else:
+        demo.show()
+        app.exec_()

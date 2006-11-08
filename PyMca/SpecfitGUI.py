@@ -28,23 +28,36 @@ import EventHandler
 import Specfit
 import sys
 
-#from qt import *
-import qt
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+    
+QTVERSION = qt.qVersion()
 import FitConfigGUI
 import MultiParameters
 import FitActionsGUI
 import FitStatusGUI
 import EventHandler
-import QScriptOption
+if 1 or QTVERSION < '4.0.0':
+    import QScriptOption
+else:
+    print "QScriptOption not ported yet"
 
 class SpecfitGUI(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
                  config = 0, status = 0, buttons = 0, eh = None):
-        qt.QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
+            if name == None:
+                self.setName("SpecfitGUI")
+        else:
+            qt.QWidget.__init__(self, parent)
         layout= qt.QVBoxLayout(self)
-        layout.setAutoAdd(1)
-        if name == None:
-            self.setName("SpecfitGUI")
+        #layout.setAutoAdd(1)
         if eh == None:
             self.eh = EventHandler.EventHandler()
         else:
@@ -78,31 +91,50 @@ class SpecfitGUI(qt.QWidget):
                                 qt.SIGNAL("activated(const QString &)"),self.bkgevent)
             self.guiconfig.connect(self.guiconfig.FunComBox,
                                 qt.SIGNAL("activated(const QString &)"),self.funevent)
-            
+            layout.addWidget(self.guiconfig)
+
         self.guiparameters = MultiParameters.ParametersTab(self)
-        self.connect(self.guiparameters,qt.PYSIGNAL('MultiParametersSignal'),
-            self.__forward)
+        layout.addWidget(self.guiparameters)
+        if QTVERSION < '4.0.0':
+            self.connect(self.guiparameters,qt.PYSIGNAL('MultiParametersSignal'),
+                self.__forward)
+        else:
+            self.connect(self.guiparameters,
+                         qt.SIGNAL('MultiParametersSignal'),
+                         self.__forward)
         if config:
-            for key in self.specfit.bkgdict.keys():            
-                self.guiconfig.BkgComBox.insertItem(str(key))
-            for key in self.specfit.theorylist:            
-                self.guiconfig.FunComBox.insertItem(str(key))
+            if QTVERSION < '4.0.0':
+                for key in self.specfit.bkgdict.keys():
+                    self.guiconfig.BkgComBox.insertItem(str(key))
+                for key in self.specfit.theorylist:            
+                    self.guiconfig.FunComBox.insertItem(str(key))
+            else:
+                for key in self.specfit.bkgdict.keys():
+                    self.guiconfig.BkgComBox.addItem(str(key))
+                for key in self.specfit.theorylist:            
+                    self.guiconfig.FunComBox.addItem(str(key))
             configuration={}
             if specfit is not None:
                 configuration = specfit.configure()
                 if configuration['fittheory'] is None:
-                    self.guiconfig.FunComBox.setCurrentItem(1)
+                    if QTVERSION < '4.0.0': self.guiconfig.FunComBox.setCurrentItem(1)
+                    else:  self.guiconfig.FunComBox.setCurrentIndex(1)
                     self.funevent(self.specfit.theorylist[0])
                 else:
                     self.funevent(configuration['fittheory'])
                 if configuration['fitbkg']    is None:
-                    self.guiconfig.BkgComBox.setCurrentItem(1)
+                    if QTVERSION < '4.0.0': self.guiconfig.BkgComBox.setCurrentItem(1)
+                    else: self.guiconfig.BkgComBox.setCurrentIndex(1)
                     self.bkgevent(self.specfit.bkgdict.keys()[0])
                 else:
                     self.bkgevent(configuration['fitbkg'])
             else:
-                self.guiconfig.BkgComBox.setCurrentItem(1)
-                self.guiconfig.FunComBox.setCurrentItem(1)
+                if QTVERSION < '4.0.0':
+                    self.guiconfig.BkgComBox.setCurrentItem(1)
+                    self.guiconfig.FunComBox.setCurrentItem(1)
+                else:
+                    self.guiconfig.BkgComBox.setCurrentIndex(1)
+                    self.guiconfig.FunComBox.setCurrentIndex(1)
                 self.funevent(self.specfit.theorylist[0])
                 self.bkgevent(self.specfit.bkgdict.keys()[0])
             configuration.update(self.configure())
@@ -126,7 +158,7 @@ class SpecfitGUI(qt.QWidget):
         if status:
             self.guistatus =  FitStatusGUI.FitStatusGUI(self)
             self.eh.register('FitStatusChanged',self.fitstatus)
-            
+            layout.addWidget(self.guistatus)
         if buttons:
             self.guibuttons = FitActionsGUI.FitActionsGUI(self)
             self.guibuttons.connect(self.guibuttons.EstimateButton,
@@ -135,6 +167,7 @@ class SpecfitGUI(qt.QWidget):
                                     qt.SIGNAL("clicked()"),self.startfit)
             self.guibuttons.connect(self.guibuttons.DismissButton,
                                     qt.SIGNAL("clicked()"),self.dismiss)
+            layout.addWidget(self.guibuttons)
 
     def updateGUI(self,configuration=None):
         self.__configureGUI(configuration)
@@ -155,7 +188,10 @@ class SpecfitGUI(qt.QWidget):
             #self.funevent(self.specfit.theorylist[0])
             try:
                 i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])
-                self.guiconfig.FunComBox.setCurrentItem(i)
+                if QTVERSION < '4.0.0':
+                    self.guiconfig.FunComBox.setCurrentItem(i)
+                else:
+                    self.guiconfig.FunComBox.setCurrentIndex(i)
                 self.funevent(self.specfit.fitconfig['fittheory'])
             except:
                 print  "Function not in list"
@@ -163,7 +199,10 @@ class SpecfitGUI(qt.QWidget):
             #current background
             try:
                 i=1+self.specfit.bkgdict.keys().index(self.specfit.fitconfig['fitbkg'])
-                self.guiconfig.BkgComBox.setCurrentItem(i)
+                if QTVERSION < '4.0.0':
+                    self.guiconfig.BkgComBox.setCurrentItem(i)
+                else:
+                    self.guiconfig.BkgComBox.setCurrentIndex(i)
             except:
                 print "Background not in list"
                 self.bkgevent(self.specfit.bkgdict.keys()[0])
@@ -201,7 +240,6 @@ class SpecfitGUI(qt.QWidget):
         
         #example script options like
         if (1):
-            import QScriptOption
             sheet1={'notetitle':'Restrains',
                 'fields':(["CheckField",'HeightAreaFlag','Force positive Height/Area'],
                           ["CheckField",'PositionFlag','Force position in interval'],
@@ -219,7 +257,8 @@ class SpecfitGUI(qt.QWidget):
                             default=oldconfiguration)
             
             w.show()
-            w.exec_loop()
+            if QTVERSION < '4.0.0': w.exec_loop()
+            else:  w.exec_()
             if w.result():
                 newconfiguration.update(w.output)
             #we do not need the dialog any longer
@@ -237,16 +276,23 @@ class SpecfitGUI(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit")
-                msg.exec_loop()
-                dict={}
-                dict['event'] = 'FitError'
-                self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+                if QTVERSION < '4.0.0':msg.exec_loop()
+                else: msg.exec_()
+                ddict={}
+                ddict['event'] = 'FitError'
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+                else:
+                    self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
                 return
             self.guiparameters.fillfrommca(mcaresult)
-            dict={}
-            dict['event'] = 'McaFitFinished'
-            dict['data']  = mcaresult
-            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            ddict={}
+            ddict['event'] = 'McaFitFinished'
+            ddict['data']  = mcaresult
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+            else:
+                self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
             #self.guiparameters.removeallviews(keep='Region 1')
         else:
             try:
@@ -255,19 +301,26 @@ class SpecfitGUI(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on estimate")
-                msg.exec_loop()
+                if QTVERSION < '4.0.0':msg.exec_loop()
+                else: msg.exec_()
                 return
             self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
             self.guiparameters.removeallviews(keep='Fit')
-            dict={}
-            dict['event'] = 'EstimateFinished'
-            dict['data']  = self.specfit.paramlist
-            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            ddict={}
+            ddict['event'] = 'EstimateFinished'
+            ddict['data']  = self.specfit.paramlist
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+            else:
+                self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
             
         return
 
-    def __forward(self,dict):
-        self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))    
+    def __forward(self,ddict):
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+        else:
+            self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
     
     def startfit(self):
         if self.specfit.fitconfig['McaMode']:
@@ -277,13 +330,17 @@ class SpecfitGUI(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit")
-                msg.exec_loop()
+                if QTVERSION < '4.0.0':msg.exec_loop()
+                else: msg.exec_()
                 return
             self.guiparameters.fillfrommca(mcaresult)
-            dict={}
-            dict['event'] = 'McaFitFinished'
-            dict['data']  = mcaresult
-            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            ddict={}
+            ddict['event'] = 'McaFitFinished'
+            ddict['data']  = mcaresult
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+            else:
+                self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
             #self.guiparameters.removeview(view='Fit')
         else:
             #for param in self.specfit.paramlist:
@@ -297,14 +354,18 @@ class SpecfitGUI(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on Fit")
-                msg.exec_loop()
+                if QTVERSION < '4.0.0':msg.exec_loop()
+                else: msg.exec_()
                 return
             self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
             self.guiparameters.removeallviews(keep='Fit')
-            dict={}
-            dict['event'] = 'FitFinished'
-            dict['data']  = self.specfit.paramlist
-            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
+            ddict={}
+            ddict['event'] = 'FitFinished'
+            ddict['data']  = self.specfit.paramlist
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+            else:
+                self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
         return
     
     
@@ -313,57 +374,66 @@ class SpecfitGUI(qt.QWidget):
         if __name__ == "__main__":
             self.__printps(text)
         else:
-            dict={}
-            dict['event'] = 'print'
-            dict['text']  = text
-            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(dict,))
-        return
-    
-    def __printps(self,text):
-        printer = qt.QPrinter()
-        if printer.setup(self):
-            painter = qt.QPainter()
-            if not(painter.begin(printer)):
-                return 0
-        metrics = qt.QPaintDeviceMetrics(printer)
-        dpiy    = metrics.logicalDpiY()
-        margin  = int((2/2.54) * dpiy) #2cm margin
-        body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
-        #text = self.mcatable.gettext()
-        #html output -> print text
-        richtext = qt.QSimpleRichText(text, qt.QFont(),
-                                            qt.QString(""),
-                                            #0,
-                                            qt.QStyleSheet.defaultSheet(),
-                                            qt.QMimeSourceFactory.defaultFactory(),
-                                            body.height())
-        view = qt.QRect(body)
-        richtext.setWidth(painter,view.width())
-        page = 1                
-        while(1):
-            if qt.qVersion() < '3.0.0':
-                richtext.draw(painter,body.left(),body.top(),
-                            qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
-                            qt.QColorGroup())
-                #richtext.draw(painter,body.left(),body.top(),
-                #            qt.QRegion(view),
-                #            qt.QColorGroup())
+            ddict={}
+            ddict['event'] = 'print'
+            ddict['text']  = text
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL('SpecfitGUISignal'), (ddict,))
             else:
-                richtext.draw(painter,body.left(),body.top(),
-                            view,qt.QColorGroup())
-            view.moveBy(0, body.height())
-            painter.translate(0, -body.height())
-            painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
-                             view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
-            if view.top() >= richtext.height():
-                break
-            printer.newPage()
-            page += 1
+                self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
+        return
 
-        #painter.flush()
-        painter.end()
+    if QTVERSION < '4.0.0':        
+        def __printps(self,text):
+            printer = qt.QPrinter()
+            if printer.setup(self):
+                painter = qt.QPainter()
+                if not(painter.begin(printer)):
+                    return 0
+            metrics = qt.QPaintDeviceMetrics(printer)
+            dpiy    = metrics.logicalDpiY()
+            margin  = int((2/2.54) * dpiy) #2cm margin
+            body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
+            #text = self.mcatable.gettext()
+            #html output -> print text
+            richtext = qt.QSimpleRichText(text, qt.QFont(),
+                                                qt.QString(""),
+                                                #0,
+                                                qt.QStyleSheet.defaultSheet(),
+                                                qt.QMimeSourceFactory.defaultFactory(),
+                                                body.height())
+            view = qt.QRect(body)
+            richtext.setWidth(painter,view.width())
+            page = 1                
+            while(1):
+                if qt.qVersion() < '3.0.0':
+                    richtext.draw(painter,body.left(),body.top(),
+                                qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
+                                qt.QColorGroup())
+                    #richtext.draw(painter,body.left(),body.top(),
+                    #            qt.QRegion(view),
+                    #            qt.QColorGroup())
+                else:
+                    richtext.draw(painter,body.left(),body.top(),
+                                view,qt.QColorGroup())
+                view.moveBy(0, body.height())
+                painter.translate(0, -body.height())
+                painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
+                                 view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
+                if view.top() >= richtext.height():
+                    break
+                printer.newPage()
+                page += 1
 
-    
+            #painter.flush()
+            painter.end()
+    else:
+        def __printps(self, text):
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Sorry, Qt4 printing not implemented yet")
+            msg.exec_()
+            
     
     def mcaevent(self,item):
         if int(item):
@@ -528,9 +598,13 @@ if __name__ == "__main__":
     qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
     w = SpecfitGUI(config=1, status=1, buttons=1)
     w.setdata(x=x,y=y)
-    a.setMainWidget(w)
-    w.show()
-    a.exec_loop()
+    if QTVERSION < '4.0.0':
+        a.setMainWidget(w)
+        w.show()
+        a.exec_loop()
+    else:
+        w.show()
+        a.exec_()
 
 
     

@@ -24,14 +24,17 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.33 $"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
-    import qt
+__revision__ = "$Revision: 1.34 $"
 import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+        if qt.qVersion() < '4.0.0':
+            print "WARNING: Using Qt %s version" % qt.qVersion()
+    except:
+        import qt
+else:
+    import qt
 import ConfigDict
 import Icons
 import os.path

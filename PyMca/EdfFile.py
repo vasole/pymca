@@ -379,11 +379,19 @@ class  EdfFile:
                 sizex,sizey=self.Images[Index].Dim1,self.Images[Index].Dim2
                 if Size[0]==0:Size[0]=sizex-Pos[0]
                 if Size[1]==0:Size[1]=sizey-Pos[1]
+                #print len(range(Pos[1],Pos[1]+Size[1])), "LECTURES OF ", Size[0], "POINTS"
+                #print "sizex = ", sizex, "sizey = ", sizey
+                Data = Numeric.zeros((Size[1],Size[0]), type)
+                dataindex =0
                 for y in range(Pos[1],Pos[1]+Size[1]):
                     self.File.seek((((y*sizex)+Pos[0])*size_pixel)+self.Images[Index].DataPosition,0)
                     line = Numeric.fromstring(self.File.read(Size[0]*size_pixel), type)
-                    Data=Numeric.concatenate((Data,line))
-                Data = Numeric.reshape(Data, (Size[1],Size[0]))                            
+                    Data[dataindex,:] =  line[:]
+                    #Data=Numeric.concatenate((Data,line))
+                    dataindex += 1
+                #print "DataSize = ",Data.shape
+                #print "Requested reshape = ",Size[1],'x',Size[0]
+                #Data = Numeric.reshape(Data, (Size[1],Size[0]))                            
             elif self.Images[Index].NumDim==3:
                 if Pos==None: Pos=(0,0,0)
                 if Size==None: Size=(0,0,0)
@@ -699,7 +707,31 @@ def GetRegion(Arr,Pos,Size):
     return ArrRet
 
 #EXEMPLE CODE:        
-if __name__ == "__main__":    
+if __name__ == "__main__":
+    if 1:
+        a = Numeric.zeros((5, 10))
+        for i in range(5):
+            for j in range(10):
+                 a[i,j] = 10*i + j 
+        edf = EdfFile("armando.edf")
+        edf.WriteImage({},a)
+        del edf #force to close the file
+        inp = EdfFile("armando.edf")
+        b = inp.GetData(0)
+        out = EdfFile("armando2.edf")
+        out.WriteImage({}, b)
+        del out #force to close the file
+        inp2 = EdfFile("armando2.edf")
+        c = inp2.GetData(0)
+        print "A SHAPE = ", a.shape
+        print "B SHAPE = ", b.shape
+        print "C SHAPE = ", c.shape
+        for i in range(5):
+            print "A", a[i,:]
+            print "B", b[i,:]
+            print "C", c[i,:]
+        sys.exit(0)
+    
     #Creates object based on file exe.edf
     exe=EdfFile("images/test_image.edf")
     x=EdfFile("images/test_getdata.edf")

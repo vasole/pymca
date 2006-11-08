@@ -24,14 +24,17 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-try:
-    import PyQt4.Qt as qt
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
     import qt
 
 import McaROIWidget
 import os
-import sys
 DEBUG = 0
 class McaControlGUI(qt.QWidget):
     def __init__(self, parent=None, name="",fl=0):
@@ -379,6 +382,8 @@ class McaCalControlLine(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             if name is not None:self.setWindowTitle(name)
         self.l = qt.QHBoxLayout(self)
+        self.l.setMargin(0)
+        self.l.setSpacing(0)
         self.build()
     
     def build(self):
@@ -419,6 +424,8 @@ class McaCalInfoLine(qt.QWidget):
     
     def build(self):
         layout= qt.QHBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         parw = self
 
         self.lab= qt.QLabel("<nobr><b>Active Curve Uses</b></nobr>", parw)

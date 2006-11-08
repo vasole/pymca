@@ -26,8 +26,16 @@
 #############################################################################*/
 #!/usr/bin/env python
 import sys, getopt, string
-import qt
-#import McaWindow
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+    
+QTVERSION = qt.qVersion()
+
 from PyMca_Icons import IconDict
 from PyMca_help  import HelpDict
 DEBUG = 0
@@ -35,9 +43,15 @@ DEBUG = 0
 __version__ = "1.5"
 
 class PyMca(qt.QMainWindow):
-    def __init__(self, parent=None, name="PyMca Mdi", fl=qt.Qt.WDestructiveClose, options={}):
-        qt.QMainWindow.__init__(self, parent, name, fl)
-        self.setCaption(name)
+    def __init__(self, parent=None, name="PyMca Mdi", fl=None, options={}):
+        if QTVERSION < '4.0.0':
+            if fl is None: fl=qt.Qt.WDestructiveClose
+            qt.QMainWindow.__init__(self, parent, name, fl)
+            self.setCaption(name)
+        else:
+            qt.QMainWindow.__init__(self, parent)
+            self.setWindowTitle(name)
+            if fl is None: fl = qt.Qt.WA_DeleteOnClose
 
         self.options= {}
         self.options["FileToolBar"]= options.get("FileToolBar", 1)
@@ -49,21 +63,40 @@ class PyMca(qt.QMainWindow):
 
         self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Horizontal)
+        #self.splitterLayout = qt.QVBoxLayout(self.splitter)
+        #self.splitterLayout.setMargin(0)
+        #self.splitterLayout.setSpacing(0)
+        
         self.printer= qt.QPrinter()
         if qt.qVersion()>="3.0.0":
                 self.mdi= qt.QWorkspace(self.splitter)
                 self.mdi.setScrollBarsEnabled(1)
+                #if QTVERSION > '4.0.0':self.mdi.setBackground(qt.QBrush(qt.QColor(238,234,238)))
                 #self.setCentralWidget(self.mdi)
         else:
                 self.mdi= qt.QWorkspace(self.splitter)
                 self.mdi.setBackgroundColor(qt.QColor("gainsboro"))
                 #self.setCentralWidget(self.mdi)
+        #self.splitterLayout.addWidget(self.mdi)
+            
         self.setCentralWidget(self.splitter)
-        self.splitter.moveToLast(self.mdi)
+        if QTVERSION < '4.0.0':
+            self.splitter.moveToLast(self.mdi)
+        else:
+            self.splitter.insertWidget(1, self.mdi)
+            self.windowMapper = qt.QSignalMapper(self)
+            self.connect(self.windowMapper, qt.SIGNAL("mapped(QWidget *)"),
+                         self.mdi, qt.SLOT("setActiveWindow(QWidget *)"))
+
 
         #self.setDockEnabled(qt.Qt.DockTop, 0)
 
+        
+
         self.initIcons()
+        if QTVERSION > '4.0.0':
+            self.createActions()
+
         self.initMenuBar()
         self.initToolBar()
 
@@ -71,15 +104,62 @@ class PyMca(qt.QMainWindow):
 
         self.mdi.show()
         #self.resize(600,400)
+        
+    if QTVERSION > '4.0.0':
+        def createActions(self):
+                #fileopen
+                self.actionOpen = qt.QAction(self)
+                self.actionOpen.setText(qt.QString("&Open"))
+                self.actionOpen.setIcon(self.Icons["fileopen"])
+                self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
+                self.connect(self.actionOpen, qt.SIGNAL("triggered(bool)"),
+                             self.onOpen)
+                #filesaveas
+                self.actionSaveAs = qt.QAction(self)
+                self.actionSaveAs.setText(qt.QString("&Save"))
+                self.actionSaveAs.setIcon(self.Icons["filesave"])
+                self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+                self.connect(self.actionSaveAs, qt.SIGNAL("triggered(bool)"),
+                             self.onSaveAs)
+
+                #filesave
+                self.actionSave = qt.QAction(self)
+                self.actionSave.setText(qt.QString("Save &Defaults"))
+                #self.actionSave.setIcon(self.Icons["filesave"])
+                #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+                self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
+                             self.onSave)
+
+                #fileprint
+                self.actionPrint = qt.QAction(self)
+                self.actionPrint.setText(qt.QString("&Print"))
+                self.actionPrint.setIcon(self.Icons["fileprint"])
+                self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
+                self.connect(self.actionPrint, qt.SIGNAL("triggered(bool)"),
+                             self.onPrint)
+
+                #filequit
+                self.actionQuit = qt.QAction(self)
+                self.actionQuit.setText(qt.QString("&Quit"))
+                #self.actionQuit.setIcon(self.Icons["fileprint"])
+                self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
+                qt.QObject.connect(self.actionQuit,
+                                   qt.SIGNAL("triggered(bool)"),
+                                   qt.qApp,
+                                   qt.SLOT("closeAllWindows()"))
 
     def initIcons(self):
         self.Icons= {}
         for (name, icon) in IconDict.items():
             pixmap= qt.QPixmap(icon)
-            self.Icons[name]= qt.QIconSet(pixmap)
+            if QTVERSION < '4.0.0':
+                self.Icons[name]= qt.QIconSet(pixmap)
+            else:
+                self.Icons[name]= qt.QIcon(pixmap)
 
     def initToolBar(self):
         if self.options["FileToolBar"]:
+            if QTVERSION < '4.0.0':
                 self.fileToolBar= qt.QToolBar(self, "filetoolbar")
                 self.fileToolBar.setLabel("File Operations")
                 self.onInitFileToolBar(self.fileToolBar)
@@ -91,31 +171,40 @@ class PyMca(qt.QMainWindow):
                 qt.QWhatsThis.add(filePrint, HelpDict["fileprint"])
                 self.fileToolBar.addSeparator()
                 qt.QWhatsThis.whatsThisButton(self.fileToolBar)
+            else:
+                self.fileToolBar= self.addToolBar("filetoolbar")
+                self.fileToolBar.addAction(self.actionOpen)
+                self.fileToolBar.addAction(self.actionSaveAs)
+                self.fileToolBar.addAction(self.actionPrint)
+                self.fileToolBar.addSeparator()
 
         self.onInitToolBar()
 
         if self.options["WinToolBar"]:
-                self.winToolBar= qt.QToolBar(self, "wintoolbar")
-                self.winToolBar.setLabel("Window resize")
-                self.onInitWinToolBar(self.winToolBar)
-                FullScreen= qt.QToolButton(self.Icons["window_fullscreen"], "Full Screen", qt.QString.null,
-                                self.windowFullScreen, self.winToolBar, "fullscreen")
-                qt.QWhatsThis.add(FullScreen, HelpDict["fullscreen"])
-                self.winToolButton= qt.QToolButton(self.Icons["window_nofullscreen"], "Tile",
-                                                qt.QString.null, self.onWinToolAction, self.winToolBar, "wintile")
-                qt.QWhatsThis.add(self.winToolButton, HelpDict["nofullscreen"])
-                self.winToolMenu= qt.QPopupMenu(self.winToolButton)
-                self.winToolMenu.setCheckable(1)
-                self.winToolMenuText= ["Cascade", "Tile", "Tile Horizontally", "Tile Vertically"]
-                self.winToolMenuIndex= []
-                for text in self.winToolMenuText:
-                        self.winToolMenuIndex.append(self.winToolMenu.insertItem(text, self.onWinToolMenu))
+                if QTVERSION < '4.0.0':
+                    self.winToolBar= qt.QToolBar(self, "wintoolbar")
+                    self.winToolBar.setLabel("Window resize")
+                    self.onInitWinToolBar(self.winToolBar)
+                    FullScreen= qt.QToolButton(self.Icons["window_fullscreen"], "Full Screen", qt.QString.null,
+                                    self.windowFullScreen, self.winToolBar, "fullscreen")
+                    qt.QWhatsThis.add(FullScreen, HelpDict["fullscreen"])
+                    self.winToolButton= qt.QToolButton(self.Icons["window_nofullscreen"], "Tile",
+                                                    qt.QString.null, self.onWinToolAction, self.winToolBar, "wintile")
+                    qt.QWhatsThis.add(self.winToolButton, HelpDict["nofullscreen"])
+                    self.winToolMenu= qt.QPopupMenu(self.winToolButton)
+                    self.winToolMenu.setCheckable(1)
+                    self.winToolMenuText= ["Cascade", "Tile", "Tile Horizontally", "Tile Vertically"]
+                    self.winToolMenuIndex= []
+                    for text in self.winToolMenuText:
+                            self.winToolMenuIndex.append(self.winToolMenu.insertItem(text, self.onWinToolMenu))
 
-                self.winToolMenu.setItemChecked(self.winToolMenuIndex[1], 1)
-                self.winToolMenuAction= self.windowTile
+                    self.winToolMenu.setItemChecked(self.winToolMenuIndex[1], 1)
+                    self.winToolMenuAction= self.windowTile
 
-                self.winToolButton.setPopup(self.winToolMenu)
-                self.winToolButton.setPopupDelay(0)
+                    self.winToolButton.setPopup(self.winToolMenu)
+                    self.winToolButton.setPopupDelay(0)
+                else:
+                    self.winToolBar = self.addToolBar("wintoolbar")
 
     def onWinToolMenu(self, idx):
         if DEBUG:
@@ -157,7 +246,10 @@ class PyMca(qt.QMainWindow):
                     window.parentWidget().showNormal()
                     window.parentWidget().setGeometry(0, int(windowheight*i),
                                             self.mdi.width(),int(windowheight))
-                    window.parentWidget().raiseW()
+                    if QTVERSION < '4.0.0':
+                        window.parentWidget().raiseW()
+                    else:
+                        window.parentWidget().raise_()
                     i+=1
             self.mdi.update()
             self.update()
@@ -172,7 +264,11 @@ class PyMca(qt.QMainWindow):
                     window.parentWidget().showNormal()
                     window.parentWidget().setGeometry(int(windowwidth*i),0,
                                             int(windowwidth),self.mdi.height())
-                    window.parentWidget().raiseW()
+                    
+                    if QTVERSION < '4.0.0':
+                        window.parentWidget().raiseW()
+                    else:
+                        window.parentWidget().raise_()
                     i+=1
             self.mdi.update()
             self.update()
@@ -185,66 +281,141 @@ class PyMca(qt.QMainWindow):
 
     def initMenuBar(self):
         if self.options["MenuFile"]:
-            self.menuFile= qt.QPopupMenu(self.menuBar())
-            idx= self.menuFile.insertItem(self.Icons["fileopen"], qt.QString("&Open"), self.onOpen, qt.Qt.CTRL+qt.Qt.Key_O)
-            self.menuFile.setWhatsThis(idx, HelpDict["fileopen"])
-            idx= self.menuFile.insertItem(self.Icons["filesave"], "&Save", self.onSave, qt.Qt.CTRL+qt.Qt.Key_S)
-            self.menuFile.setWhatsThis(idx, HelpDict["filesave"])
-            self.menuFile.insertItem("Save &as", self.onSaveAs)
-            self.menuFile.insertSeparator()
-            idx= self.menuFile.insertItem(self.Icons["fileprint"], "&Print", self.onPrint, qt.Qt.CTRL+qt.Qt.Key_P)
-            self.menuFile.setWhatsThis(idx, HelpDict["fileprint"])
-            self.menuFile.insertSeparator()
-            self.menuFile.insertItem("&Quit", qt.qApp, qt.SLOT("closeAllWindows()"), qt.Qt.CTRL+qt.Qt.Key_Q)
-            self.menuBar().insertItem('&File',self.menuFile)
-
-        self.onInitMenuBar(self.menuBar())
+            if QTVERSION < '4.0.0':
+                self.menuFile= qt.QPopupMenu(self.menuBar())
+                idx= self.menuFile.insertItem(self.Icons["fileopen"],
+                                              qt.QString("&Open"),
+                                              self.onOpen,
+                                              qt.Qt.CTRL+qt.Qt.Key_O)
+                self.menuFile.setWhatsThis(idx, HelpDict["fileopen"])
+                idx= self.menuFile.insertItem(self.Icons["filesave"], "&Save",
+                                              self.onSave,
+                                              qt.Qt.CTRL+qt.Qt.Key_S)
+                self.menuFile.setWhatsThis(idx, HelpDict["filesave"])
+                self.menuFile.insertItem("Save &as", self.onSaveAs)
+                self.menuFile.insertSeparator()
+                idx= self.menuFile.insertItem(self.Icons["fileprint"],
+                                              "&Print", self.onPrint,
+                                              qt.Qt.CTRL+qt.Qt.Key_P)
+                self.menuFile.setWhatsThis(idx, HelpDict["fileprint"])
+                self.menuFile.insertSeparator()
+                self.menuFile.insertItem("&Quit", qt.qApp,
+                                         qt.SLOT("closeAllWindows()"),
+                                         qt.Qt.CTRL+qt.Qt.Key_Q)
+                self.menuBar().insertItem('&File',self.menuFile)
+                self.onInitMenuBar(self.menuBar())
+            else:
+                #self.menubar = qt.QMenuBar(self)
+                self.menuFile= qt.QMenu()
+                self.menuFile.addAction(self.actionOpen)
+                self.menuFile.addAction(self.actionSaveAs)
+                self.menuFile.addAction(self.actionSave)
+                self.menuFile.addSeparator()
+                self.menuFile.addAction(self.actionPrint)
+                self.menuFile.addSeparator()
+                self.menuFile.addAction(self.actionQuit)
+                self.menuFile.setTitle("&File")
+                self.menuBar().addMenu(self.menuFile)
+                self.onInitMenuBar(self.menuBar())
 
         if self.options["MenuTools"]:
-            self.menuTools= qt.QPopupMenu()
-            self.menuTools.setCheckable(1)
-            self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"), self.menuToolsAboutToShow)
-            self.menuBar().insertItem("&Tools", self.menuTools)
-
+            if QTVERSION < '4.0.0':
+                self.menuTools= qt.QPopupMenu()
+                self.menuTools.setCheckable(1)
+                self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"), self.menuToolsAboutToShow)
+                self.menuBar().insertItem("&Tools", self.menuTools)
+            else:
+                self.menuTools= qt.QMenu()
+                #self.menuTools.setCheckable(1)
+                self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"),
+                             self.menuToolsAboutToShow)
+                self.menuTools.setTitle("&Tools")
+                self.menuBar().addMenu(self.menuTools)
+                
         if self.options["MenuWindow"]:
-            self.menuWindow= qt.QPopupMenu()
-            self.menuWindow.setCheckable(1)
-            self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
-            self.menuBar().insertItem("&Window", self.menuWindow)
+            if QTVERSION < '4.0.0':
+                self.menuWindow= qt.QPopupMenu()
+                self.menuWindow.setCheckable(1)
+                self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
+                self.menuBar().insertItem("&Window", self.menuWindow)
+            else:
+                self.menuWindow= qt.QMenu()
+                #self.menuWindow.setCheckable(1)
+                self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
+                self.menuWindow.setTitle("&Window")
+                self.menuBar().addMenu(self.menuWindow)
 
         if self.options["MenuHelp"]:
-            self.menuHelp= qt.QPopupMenu(self)
-            self.menuHelp.insertItem("&About", self.onAbout)
-            self.menuHelp.insertItem("About &Qt",self.onAboutQt)
-            self.menuBar().insertSeparator()
-            self.menuBar().insertItem("&Help", self.menuHelp)
+            if QTVERSION < '4.0.0':
+                self.menuHelp= qt.QPopupMenu(self)
+                self.menuHelp.insertItem("&About", self.onAbout)
+                self.menuHelp.insertItem("About &Qt",self.onAboutQt)
+                self.menuBar().insertSeparator()
+                self.menuBar().insertItem("&Help", self.menuHelp)
+            else:
+                self.menuHelp= qt.QMenu()
+                self.menuHelp.addAction("&About", self.onAbout)
+                self.menuHelp.addAction("About &Qt",self.onAboutQt)
+                self.menuBar().addSeparator()
+                self.menuHelp.setTitle("&Help")
+                self.menuBar().addMenu(self.menuHelp)
 
     def menuWindowAboutToShow(self):
         if DEBUG:
             print "menuWindowAboutToShow"
         self.menuWindow.clear()
         if len(self.mdi.windowList())==0: return
-        self.menuWindow.insertItem("&Cascade", self.windowCascade)
-        self.menuWindow.insertItem("&Tile", self.windowTile)
-        self.menuWindow.insertItem("&Tile Horizontally", self.windowHorizontal)
-        self.menuWindow.insertItem("&Tile Vertically", self.windowVertical)
-        self.menuWindow.insertSeparator()
-
-        num= 0
-        self.menuWindowMap= {}
-        for window in self.mdi.windowList():
-                idx= self.menuWindow.insertItem("&%d %s"%(num, str(window.caption())), self.menuWindowActivated)
+        if QTVERSION < '4.0.0':
+            self.menuWindow.insertItem("&Cascade", self.windowCascade)
+            self.menuWindow.insertItem("&Tile", self.windowTile)
+            self.menuWindow.insertItem("&Tile Horizontally", self.windowHorizontal)
+            self.menuWindow.insertItem("&Tile Vertically", self.windowVertical)
+            self.menuWindow.insertSeparator()
+            num= 0
+            self.menuWindowMap= {}
+            for window in self.mdi.windowList():
+                if QTVERSION < '4.0.0':
+                    idx= self.menuWindow.insertItem("&%d %s"%(num, str(window.caption())),
+                                                    self.menuWindowActivated)
+                else:
+                    idx= self.menuWindow.addAction("&%d %s"%(num, str(window.windowTitle())),
+                                                    self.menuWindowActivated)                
                 self.menuWindowMap[idx]= window
                 num += 1
                 if window==self.mdi.activeWindow():
+                    if QTVERSION < '4.0.0':
                         self.menuWindow.setItemChecked(idx, 1)
+                    else:
+                        if DEBUG:
+                            print "self.menuWindow.setItemChecked(idx, 1) equivalent missing"
+        else:
+            self.menuWindow.addAction("&Cascade", self.windowCascade)
+            self.menuWindow.addAction("&Tile", self.windowTile)
+            self.menuWindow.addAction("&Tile Horizontally", self.windowHorizontal)
+            self.menuWindow.addAction("&Tile Vertically", self.windowVertical)
+            windows=self.mdi.windowList()
+            if len(windows) > 0: self.menuWindow.addSeparator()
+            num = 0
+            for window in windows:
+                text = "&%d %s"%(num, str(window.windowTitle()))
+                num += 1                
+                action = self.menuWindow.addAction(text)
+                action.setCheckable(True)
+                action.setChecked(window == self.mdi.activeWindow())
+                self.connect(action, qt.SIGNAL("triggered()"),
+                             self.windowMapper, qt.SLOT("map()"))
+                self.windowMapper.setMapping(action, window)
 
-    def menuWindowActivated(self, idx):
+    def menuWindowActivated(self, idx = None):
         if DEBUG:
             print "menuWindowActivated idx = ",idx
+        if idx is None:return
         if self.menuWindowMap[idx].isHidden():
-           self.menuWindowMap[idx].show()
-           self.menuWindowMap[idx].raiseW()
+            self.menuWindowMap[idx].show()
+            if QTVERSION < '4.0.0':
+                self.menuWindowMap[idx].raiseW()
+            else:
+                self.menuWindowMap[idx].raise_()
         self.menuWindowMap[idx].setFocus()
 
     def __connectFollow(self):
@@ -376,10 +547,11 @@ def main(args):
         print msg
         sys.exit(1)
     # --- waiting widget
-    wa= qt.QMessageBox("PyMca", "PyMca v. 1.5 loading ...", qt.QMessageBox.NoIcon,
+    if QTVERSION < '4.0.0':
+        wa= qt.QMessageBox("PyMca", "PyMca v. 1.5 loading ...", qt.QMessageBox.NoIcon,
                                 qt.QMessageBox.NoButton, qt.QMessageBox.NoButton,
                                 qt.QMessageBox.NoButton, None, None)
-    wa.show()
+        wa.show()
     kw={}
     for opt, arg in opts:
         if  opt in ('--spec'):
@@ -388,13 +560,17 @@ def main(args):
             kw['shm']  = arg
     #demo = McaWindow.McaWidget(**kw)
     demo = PyMca()
-    app.setMainWidget(demo)
-    demo.show()
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                             app,qt.SLOT("quit()"))
-    # --- close waiting widget
-    wa.close()
-    app.exec_loop()
+    if QTVERSION < '4.0.0':
+        app.setMainWidget(demo)
+        demo.show()
+        # --- close waiting widget
+        wa.close()
+        app.exec_loop()
+    else:
+        demo.show()
+        app.exec_()
 
 if __name__ == '__main__':
     main(sys.argv)

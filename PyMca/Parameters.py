@@ -25,43 +25,149 @@
 # is a problem to you.
 #############################################################################*/
 import sys
-from qt import *
-import qttable
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+    
+QTVERSION = qt.qVersion()
+if QTVERSION < '3.0.0':
+    import Myqttable as qttable
+elif QTVERSION < '4.0.0':
+    import qttable
+
+if QTVERSION < '4.0.0':
+    class QTable(qttable.QTable):
+        def __init__(self, parent=None, name=""):
+            qttable.QTable.__init__(self, parent, name)
+            self.rowCount    = self.numRows
+            self.columnCount = self.numCols
+            self.setRowCount = self.setNumRows
+            self.setColumnCount = self.setNumCols
+            self.resizeColumnToContents = self.adjustColumn
+
+    #Class added for compatibility with previous Qt versions
+    class QComboTableItem(qttable.QTableItem):
+        def __init__(self, table,list):
+            qttable.QTableItem.__init__(self,table,qttable.QTableItem.Always,"")
+            self.setReplaceable(0)
+            self.table=table
+            self.list=list
+            
+        def setCurrentItem(self,cur):
+            for i in range (len(self.list)):
+                if str(cur)==str(self.list[i]):
+                    self.cb.setCurrentItem(i)
+                    return
+
+     
+        def createEditor(self):
+            self.cb=qt.QComboBox(self.table.viewport())
+            self.cb.insertStringList(self.list)
+            self.cb.connect(self.cb,SIGNAL("activated(int)"),self.mySlot)
+            return self.cb
+
+        def mySlot (self,index):
+            self.table.setText(self.row(),self.col(),self.cb.currentText())
+            self.table.myslot(self.row(),self.col())
+        
+else:
+    QTable = qt.QTableWidget
+    class QComboTableItem(qt.QComboBox):
+        def __init__(self, parent=None, row = None, col = None):
+            self._row = row
+            self._col = col
+            qt.QComboBox.__init__(self,parent)
+            self.connect(self, qt.SIGNAL('activated(int)'), self._cellChanged)
+
+        def _cellChanged(self, idx):
+            if DEBUG:
+                print "cell changed",idx
+            self.emit(qt.SIGNAL('cellChanged(int,int)'), self._row, self._col)
+
+    class QCheckBoxItem(qt.QCheckBox):
+        def __init__(self, parent=None, row = None, col = None):
+            self._row = row
+            self._col = col
+            qt.QCheckBox.__init__(self,parent)
+            self.connect(self, qt.SIGNAL('clicked()'), self._cellChanged)
+
+        def _cellChanged(self):
+            self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
+
+
+
 import string
 
 DEBUG=0
 
-class Parameters(qttable.QTable):
+class Parameters(QTable):
     def __init__(self, *args,**kw):
-        apply(qttable.QTable.__init__, (self, ) + args)
-        self.setNumRows(1)
-        self.setNumCols(1)
+        apply(QTable.__init__, (self, ) + args)
+        if QTVERSION < '4.0.0':
+            self.setNumRows(1)
+            self.setNumCols(1)
+        else:
+            self.setRowCount(1)
+            self.setColumnCount(1)
         self.labels=['Parameter','Estimation','Fit Value','Sigma',
-                     'Restrains','Min/Parame','Max/Factor/Delta/']
+                     'Constraints','Min/Parame','Max/Factor/Delta/']
         self.code_options=["FREE","POSITIVE","QUOTED",
                  "FIXED","FACTOR","DELTA","SUM","IGNORE","ADD","SHOW"]
 
-        self.setNumCols(len(self.labels))
+        self.setColumnCount(len(self.labels))
         i=0
         if kw.has_key('labels'):
-            for label in kw['labels']:
-                QHeader.setLabel(self.horizontalHeader(),i,label)
-                i=i+1
+            if QTVERSION < '4.0.0':
+                for label in kw['labels']:
+                    qt.QHeader.setLabel(self.horizontalHeader(),i,label)
+                    i=i+1
+            else:
+                for label in kw['labels']:
+                    item = self.horizontalHeaderItem(i)
+                    if item is None:
+                        item = qt.QTableWidgetItem(self.labels[i],
+                                                   qt.QTableWidgetItem.Type)
+                        self.setHorizontalHeaderItem(i,item)
+                    item.setText(self.labels[i])
+                    i = i+1
+                
         else:
-            for label in self.labels:
-                QHeader.setLabel(self.horizontalHeader(),i,label)
-                i=i+1
-        self.adjustColumn(self.labels.index('Parameter'))
-        self.adjustColumn(1)
-        self.adjustColumn(3)
-        self.adjustColumn(len(self.labels)-1)
-        self.adjustColumn(len(self.labels)-2)
+            if QTVERSION < '4.0.0':
+                for label in self.labels:
+                    qt.QHeader.setLabel(self.horizontalHeader(),i,label)
+                    i=i+1
+            else:
+                for label in self.labels:
+                    item = self.horizontalHeaderItem(i)
+                    if item is None:
+                        item = qt.QTableWidgetItem(self.labels[i],
+                                                   qt.QTableWidgetItem.Type)
+                        self.setHorizontalHeaderItem(i,item)
+                    item.setText(self.labels[i])
+                    i = i+1
+        if QTVERSION < '4.0.0':
+            self.adjustColumn(self.labels.index('Parameter'))
+            self.adjustColumn(1)
+            self.adjustColumn(3)
+            self.adjustColumn(len(self.labels)-1)
+            self.adjustColumn(len(self.labels)-2)
+        else:
+            self.resizeColumnToContents(self.labels.index('Parameter'))
+            self.resizeColumnToContents(1)
+            self.resizeColumnToContents(3)
+            self.resizeColumnToContents(len(self.labels)-1)
+            self.resizeColumnToContents(len(self.labels)-2)
+            
         self.parameters={}
         self.paramlist=[]
         if kw.has_key('paramlist'):
             self.paramlist = kw['paramlist']
         self.build()
-        self.connect(self,SIGNAL("valueChanged(int,int)"),self.myslot)
+        self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
 
     def build(self):
         line = 1
@@ -73,13 +179,15 @@ class Parameters(qttable.QTable):
 
     def newparameterline(self,param,line):
         #get current number of lines
-        nlines=self.numRows()
-        #print "nlines =",nlines
-        #if the number of lines is smaller than line resize table
+        if QTVERSION < '4.0.0':
+            nlines=self.numRows()
+        else:
+            nlines=self.rowCount()
         if (line > nlines):
-            self.setNumRows(line)
-        #self.show()
-        #fill the line
+            if QTVERSION < '4.0.0':
+                self.setNumRows(line)
+            else:
+                self.setRowCount(line)
         linew=line-1
         self.parameters[param]={'line':linew,
                                 'fields':['name',
@@ -89,22 +197,22 @@ class Parameters(qttable.QTable):
                                           'code',
                                           'val1',
                                           'val2'],
-                                'estimation':QString('0'),          
-                                'fitresult':QString(),
-                                'sigma':QString(),
-                                'code':QString('FREE'),
-                                'val1':QString(),
-                                'val2':QString(),
+                                'estimation':qt.QString('0'),          
+                                'fitresult':qt.QString(),
+                                'sigma':qt.QString(),
+                                'code':qt.QString('FREE'),
+                                'val1':qt.QString(),
+                                'val2':qt.QString(),
                                 'cons1':0,
                                 'cons2':0,
-                                'vmin':QString('0'),
-                                'vmax':QString('1'),
-                                'relatedto':QString(),
-                                'factor':QString('1.0'),
-                                'delta':QString('0.0'),
-                                'sum':QString('0.0'),
-                                'group':QString(),
-                                'name':QString(param),
+                                'vmin':qt.QString('0'),
+                                'vmax':qt.QString('1'),
+                                'relatedto':qt.QString(),
+                                'factor':qt.QString('1.0'),
+                                'delta':qt.QString('0.0'),
+                                'sum':qt.QString('0.0'),
+                                'group':qt.QString(),
+                                'name':qt.QString(param),
                                 'xmin':None,
                                 'xmax':None}
         self.paramlist.append(param)
@@ -113,25 +221,30 @@ class Parameters(qttable.QTable):
         self.setReadOnly(param,['name','fitresult','sigma','val1','val2'])
 
         #the code
-        a=QStringList()
+        a=qt.QStringList()
         for option in self.code_options:
             a.append(option)
-        if qVersion()>='3.0.0':
-            self.parameters[param]['code_item']=qttable.QComboTableItem(self,a)
+        if QTVERSION < '4.0.0':
+            if QTVERSION >='3.0.0':
+                self.parameters[param]['code_item']=qttable.QComboTableItem(self,a)
+            else:
+                self.parameters[param]['code_item']=qt.QComboTableItem(self,a)
+            self.setItem(linew,
+                         self.parameters[param]['fields'].index('code'),
+                         self.parameters[param]['code_item'])
         else:
-            self.parameters[param]['code_item']=QComboTableItem(self,a)
-        self.setItem(linew,
-                     self.parameters[param]['fields'].index('code'),
-                     self.parameters[param]['code_item'])
+            self.parameters[param]['code_item']= QComboTableItem(self)
+            self.parameters[param]['code_item'].addItems(a)
+            self.setCellWidget(linew,
+                         self.parameters[param]['fields'].index('code'),
+                         self.parameters[param]['code_item'])            
         self.parameters[param]['relatedto_item']=None
 
-        #Aleixandre request: Not supported below 3.0
-        #self.setColumnReadOnly(self.parameters[param]['fields'].index('name'),1)
-        #self.setColumnReadOnly(self.parameters[param]['fields'].index('fitresult'),1)
-        #self.setColumnReadOnly(self.parameters[param]['fields'].index('sigma'),1)
-
     def fillfromfit(self,fitparameterslist):
-        self.setNumRows(len(fitparameterslist))
+        if QTVERSION < '4.0.0':
+            self.setNumRows(len(fitparameterslist))
+        else:
+            self.setRowCount(len(fitparameterslist))
         self.parameters={}
         self.paramlist=[]
         line=1
@@ -460,12 +573,21 @@ class Parameters(qttable.QTable):
     def setReadOnly(self,parameter,fields):
         if DEBUG:
             print "parameter ",parameter,"fields = ",fields,"asked to be read only"
-        self.setfield(parameter,fields,qttable.QTableItem.Never)
+        if QTVERSION < '4.0.0':
+            self.setfield(parameter,fields,qttable.QTableItem.Never)
+        else:
+            editflags = qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled
+            self.setfield(parameter, fields, editflags)
+            
         
     def setReadWrite(self,parameter,fields):
         if DEBUG:
             print "parameter ",parameter,"fields = ",fields,"asked to be read write"
-        self.setfield(parameter,fields,qttable.QTableItem.OnTyping)
+        if QTVERSION < '4.0.0':
+            self.setfield(parameter,fields,qttable.QTableItem.OnTyping)
+        else:
+            editflags = qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled|qt.Qt.ItemIsEditable
+            self.setfield(parameter, fields, editflags)
                             
     def setfield(self,parameter,fields,EditType):
         if DEBUG:
@@ -492,9 +614,19 @@ class Parameters(qttable.QTable):
                             col=self.parameters[param]['fields'].index(field)
                         if field != 'code':
                             key=field+"_item"
-                            self.parameters[param][key]=qttable.QTableItem(self,EditType,
+                            if QTVERSION < '4.0.0':
+                                self.parameters[param][key]=qttable.QTableItem(self,EditType,
                                         self.parameters[param][field])
-                            self.setItem(row,col,self.parameters[param][key])
+                                self.setItem(row,col,self.parameters[param][key])
+                            else:
+                                item = self.item(row, col)
+                                if item is None:
+                                    item = qt.QTableWidgetItem(self.parameters[param][field])
+                                    self.setItem(row, col, item)
+                                else:
+                                    item.setText(self.parameters[param][field])
+                                self.parameters[param][key] = item
+                                item.setFlags(EditType)
 
     def configure(self,*vars,**kw):
         if DEBUG:
@@ -513,7 +645,7 @@ class Parameters(qttable.QTable):
                     col=self.parameters[name]['fields'].index(key)
                     oldvalue=self.parameters[name][key]
                     if key is 'code':
-                        newvalue=QString(str(kw[key]))
+                        newvalue=qt.QString(str(kw[key]))
                     else:
                         if len(str(kw[key])):
                             newvalue=string.atof(str(kw[key]))
@@ -523,7 +655,7 @@ class Parameters(qttable.QTable):
                                 newvalue= "%8g" % newvalue
                         else:
                             newvalue=""
-                        newvalue=QString(newvalue)
+                        newvalue=qt.QString(newvalue)
                     #avoid endless recursivity
                     if key is not 'code':
                         if self.validate(name,key,oldvalue,newvalue):
@@ -537,7 +669,7 @@ class Parameters(qttable.QTable):
                     #    self.parameters[name][key]=newvalue
                     #    self.parameters[name]['code_item'].setCurrentItem(newvalue)
                 elif key in self.parameters[name].keys():
-                    newvalue=QString(str(kw[key]))
+                    newvalue=qt.QString(str(kw[key]))
                     self.parameters[name][key]=newvalue
                     #if key == 'relatedto':
                     #    self.parameters[name]['relatedto_item'].setCurrentItem(newvalue)    
@@ -546,9 +678,17 @@ class Parameters(qttable.QTable):
             #if error == 0:
             if 1:
                 if 'code' in kw.keys():
-                    newvalue=QString(kw['code'])
+                    newvalue=qt.QString(kw['code'])
                     self.parameters[name]['code']=newvalue
-                    self.parameters[name]['code_item'].setCurrentItem(newvalue)
+                    if QTVERSION < '4.0.0':
+                        self.parameters[name]['code_item'].setCurrentItem(newvalue)
+                    else:
+                        done = 0
+                        for i in range(self.parameters[name]['code_item'].count()):
+                            if str(newvalue) == self.parameters[name]['code_item'].itemText(i):
+                                self.parameters[name]['code_item'].setCurrentIndex(i)
+                                done = 1
+                                break
                     if str(self.parameters[name]['code']) == 'QUOTED':
                       if 'val1'in kw.keys():
                         self.parameters[name]['vmin']=self.parameters[name]['val1']
@@ -605,8 +745,8 @@ class Parameters(qttable.QTable):
                    str(self.parameters[name]['code']) == 'POSITIVE' or \
                    str(self.parameters[name]['code']) == 'IGNORE' or\
                    str(self.parameters[name]['code']) == 'FIXED' :
-                    self.parameters[name]['val1']=QString()
-                    self.parameters[name]['val2']=QString()                   
+                    self.parameters[name]['val1']=qt.QString()
+                    self.parameters[name]['val2']=qt.QString()                   
                     self.parameters[name]['cons1']=0                   
                     self.parameters[name]['cons2']=0                   
                     self.setReadWrite(name,'estimation')
@@ -701,35 +841,10 @@ class Parameters(qttable.QTable):
             constraints = [code,cons1,cons2]
         return estimation,constraints 
         
-#Class added for compatibility with previous Qt versions
-class QComboTableItem(qttable.QTableItem):
-    def __init__(self, table,list):
-        qttable.QTableItem.__init__(self,table,qttable.QTableItem.Always,"")
-        self.setReplaceable(0)
-        self.table=table
-        self.list=list
-        
-    def setCurrentItem(self,cur):
-        for i in range (len(self.list)):
-            if str(cur)==str(self.list[i]):
-                self.cb.setCurrentItem(i)
-                return
-
- 
-    def createEditor(self):
-        self.cb=QComboBox(self.table.viewport())
-        self.cb.insertStringList(self.list)
-        self.cb.connect(self.cb,SIGNAL("activated(int)"),self.mySlot)
-        return self.cb
-
-    def mySlot (self,index):
-        self.table.setText(self.row(),self.col(),self.cb.currentText())
-        self.table.myslot(self.row(),self.col())
-
                     
 def main(args):
-    app=QApplication(args)
-    win=QMainWindow()
+    app=qt.QApplication(args)
+    win=qt.QMainWindow()
     tab=Parameters(labels=['Parameter','Estimation','Fit Value','Sigma',
                         'Restrains','Min/Parame','Max/Factor/Delta/'],
                    paramlist=['Height','Position','FWHM'])
@@ -783,13 +898,14 @@ def main(args):
     tab.show()
     #button = QPushButton('bla',None)
     #button.show()
-
-    app.setMainWidget( tab )
-    #app.connect(app, SIGNAL("lastWindowClosed()")
-    #                             , app
-    #                             , SLOT("quit()")
-    #                             )
-    app.exec_loop()
-
+    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()")
+                                 , app
+                                 , qt.SLOT("quit()")
+                                 )
+    if QTVERSION < '4.0.0':
+        app.setMainWidget( tab )
+        app.exec_loop()
+    else:
+        app.exec_()
 if __name__=="__main__":
     main(sys.argv)	

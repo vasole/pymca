@@ -24,12 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.16 $"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
+__revision__ = "$Revision: 1.17 $"
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
     import qt
 if qt.qVersion() < '3.0.0':
     import Myqttable as qttable
@@ -51,7 +53,6 @@ else:
 
 import ConcentrationsTool
 import Elements
-import sys
 import time
 DEBUG=0
 if DEBUG:

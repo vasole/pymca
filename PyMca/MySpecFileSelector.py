@@ -31,7 +31,6 @@ if qt.qVersion() < '3.0.0':
 else:
     import qttable
 import types, os.path
-import EventHandler
 import sys
 #if sys.platform == "win32":
 if 1:
@@ -121,6 +120,12 @@ class ScanList(qt.QWidget):
             print "setData(self, specfiledata) called"
             print "specfiledata = ",specfiledata
         self.data= specfiledata
+        self.refresh()
+
+    def setDataSource(self, specfiledata):
+        self.data= specfiledata
+        self.data.SourceName = specfiledata.sourceName[0]
+        self.data.GetSourceInfo = self.data.getSourceInfo
         self.refresh()
 
     def refresh(self):
@@ -238,6 +243,10 @@ class McaTable(qt.QWidget):
     # data management
     #
     def setData(self, specfiledata):
+        self.data= specfiledata
+        self.reset()
+
+    def setDataSource(self, specfiledata):
         self.data= specfiledata
         self.reset()
 
@@ -408,6 +417,10 @@ class CntTable(qt.QWidget):
     # data management
     #
     def setData(self, specfiledata):
+        self.data= specfiledata
+        self.reset()
+
+    def setDataSource(self, specfiledata):
         self.data= specfiledata
         self.reset()
 
@@ -605,10 +618,6 @@ class SpecFileSelector(qt.QWidget):
 
         mainLayout= qt.QVBoxLayout(self)
 
-        # --- event handler
-        self.eh= EventHandler.EventHandler()
-        self.addEvent= self.eh.create("addSelection")
-        self.delEvent= self.eh.create("delSelection")
         
         # --- file combo/open/close
         fileWidget= qt.QWidget(self)
@@ -800,6 +809,13 @@ class SpecFileSelector(qt.QWidget):
         self.scanList.setData(specfiledata)
         self.mcaTable.setData(specfiledata)
         self.cntTable.setData(specfiledata)
+
+    def setDataSource(self, specfiledata):
+        self.data= specfiledata
+        self.data.SourceName = specfiledata.sourceName[0]
+        self.scanList.setDataSource(specfiledata)
+        self.mcaTable.setDataSource(specfiledata)
+        self.cntTable.setDataSource(specfiledata)
 
     def setSelected(self, sellist,reset=1):
         if DEBUG:

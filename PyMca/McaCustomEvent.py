@@ -24,10 +24,15 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-try:
-    from PyQt4 import QtCore
-    QT4 = True
-except:    
+import sys
+if 'qt' not in sys.modules:
+    try:
+        from PyQt4 import QtCore
+        QT4 = True
+    except:    
+        import qt
+        QT4 = False
+else:
     import qt
     QT4 = False
 

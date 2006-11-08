@@ -27,21 +27,34 @@
 import os
 import sys
 MATPLOTLIB = False
-try:
-    #for the time being I force to have Qt.
-    #This is to use matplotlib on Qt4 and Qwt on Qt3 and Qt2.
-    #If matplotlib is installed this module should be able
-    #to generate the HTML from the fitresult file without having Qt
-    #installed. To test just comment next line.
-    import PyQt4.Qt as qt
+if 'qt' not in sys.modules:
     try:
-        from matplotlib.font_manager import FontProperties
-        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        from matplotlib.figure import Figure
-        MATPLOTLIB = True
+        #for the time being I force to have Qt.
+        #This is to use matplotlib on Qt4 and Qwt on Qt3 and Qt2.
+        #If matplotlib is installed this module should be able
+        #to generate the HTML from the fitresult file without having Qt
+        #installed. To test just comment next line.
+        import PyQt4.Qt as qt
+        try:
+            from matplotlib.font_manager import FontProperties
+            from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            MATPLOTLIB = True
+        except:
+            import QtBlissGraph
     except:
-        import QtBlissGraph
-except:
+        import qt
+        if qt.qVersion() < '3.0.0':
+            try:
+                from matplotlib.font_manager import FontProperties
+                from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+                from matplotlib.figure import Figure
+                MATPLOTLIB = True
+            except:
+                import QtBlissGraph
+        else:        
+            import QtBlissGraph
+else:
     import qt
     if qt.qVersion() < '3.0.0':
         try:

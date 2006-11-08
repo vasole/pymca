@@ -229,12 +229,10 @@ if SIP:
                 QWT4 = False
 
     if QT4 and QT3:
-        print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"
+        #print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"
         if QWT5:
-            print "PyMCA is fully functional under PyQt with qwt."
             print "You have PyQt4 and PyQwt5 installed."
-            print "That will be the preferred setup within one year."
-            print "Batch fitting should already work."
+            print "PyMCA is fully functional under PyQt4 with PyQwt5."
             print "You can easily embed PyMCA fitting in your Qt4 graphical "
             print "applications using McaAdvancedFit.py"
         else:
@@ -243,10 +241,8 @@ if SIP:
         print "PyMCA PyQt installations need PyQwt4"
         print badtext
     elif QT4 and QWT5:
-        print "PyMCA is fully functional under PyQt with qwt."
         print "You have PyQt4 and PyQwt5 installed."
-        print "That will be the preferred setup within one year."
-        print "Batch fitting should work."
+        print "PyMCA is fully functional under PyQt4 with PyQwt5."
         print "You can easily embed PyMCA fitting in your Qt4 graphical "
         print "applications using McaAdvancedFit.py"
         try:

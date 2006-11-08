@@ -32,46 +32,64 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from qt import *
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
 
-def uic_load_pixmap_FitStatusGUI(name):
-    pix = QPixmap()
-    m = QMimeSourceFactory.defaultFactory().data(name)
+QTVERSION = qt.qVersion()
 
-    if m:
-        QImageDrag.decode(m,pix)
+def uic_load_pixmap_FitActionsGUI(name):
+    pix = qt.QPixmap()
+    if QTVERSION < '4.0.0':
+        m = qt.QMimeSourceFactory.defaultFactory().data(name)
+
+        if m:
+            qt.QImageDrag.decode(m,pix)
 
     return pix
 
-
-class FitStatusGUI(QWidget):
+class FitStatusGUI(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
 
-        if name == None:
-            self.setName("FitStatusGUI")
+            if name == None:
+                self.setName("FitStatusGUI")
+
+            self.setCaption(str("FitStatusGUI"))
+        else:
+            qt.QWidget.__init__(self,parent)
 
         self.resize(535,47)
-        self.setCaption(str("FitStatusGUI"))
 
-        FitStatusGUILayout = QHBoxLayout(self,11,6,"FitStatusGUILayout")
+        if QTVERSION < '4.0.0':
+            FitStatusGUILayout = qt.QHBoxLayout(self,11,6,"FitStatusGUILayout")
+        else:
+            FitStatusGUILayout = qt.QHBoxLayout(self)
+            FitStatusGUILayout.setMargin(11)
+            FitStatusGUILayout.setSpacing(6)
 
-        self.StatusLabel = QLabel(self,"StatusLabel")
+        self.StatusLabel = qt.QLabel(self)
         self.StatusLabel.setText(str("Status:"))
         FitStatusGUILayout.addWidget(self.StatusLabel)
 
-        self.StatusLine = QLineEdit(self,"StatusLine")
+        self.StatusLine = qt.QLineEdit(self)
         self.StatusLine.setText(str("Ready"))
         self.StatusLine.setReadOnly(1)
         FitStatusGUILayout.addWidget(self.StatusLine)
 
-        self.ChisqLabel = QLabel(self,"ChisqLabel")
+        self.ChisqLabel = qt.QLabel(self)
         self.ChisqLabel.setText(str("Chisq:"))
         FitStatusGUILayout.addWidget(self.ChisqLabel)
 
-        self.ChisqLine = QLineEdit(self,"ChisqLine")
+        self.ChisqLine = qt.QLineEdit(self)
         #self.ChisqLine.setSizePolicy(QSizePolicy(1,0,0,0,self.ChisqLine.sizePolicy().hasHeightForWidth()))
-        self.ChisqLine.setMaximumSize(QSize(16000,32767))
+        self.ChisqLine.setMaximumSize(qt.QSize(16000,32767))
         self.ChisqLine.setText(str(""))
         self.ChisqLine.setReadOnly(1)
         FitStatusGUILayout.addWidget(self.ChisqLine)

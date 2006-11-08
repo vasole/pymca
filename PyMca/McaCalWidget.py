@@ -648,6 +648,8 @@ class PeakSearchParameters(qt.QWidget):
         if 1:
             if qt.qVersion() < '4.0.0':
                 layout= qt.QVBoxLayout(self)
+                layout.setMargin(0)
+                layout.setSpacing(0)
 
             # --- parameters
                 parf= qt.QHGroupBox(self)

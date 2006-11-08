@@ -378,6 +378,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.legendmenu    = None
         if qwt.QWT_VERSION_STR[0] < '5':
             self.setLegendFrameStyle(qt.QFrame.Box | qt.QFrame.Sunken)
+        self.enableZoom(True)
         self._zooming = 0
         self.__zoomback   = 1
         self.__markermode = 0
@@ -634,9 +635,37 @@ class QtBlissGraph(qwt.QwtPlot):
         
         if self.xAutoScale:
             self.setAxisAutoScale(qwt.QwtPlot.xTop) 
-            self.setAxisAutoScale(qwt.QwtPlot.xBottom) 
+            self.setAxisAutoScale(qwt.QwtPlot.xBottom)
+
+        #the above part is enough is there are some curves
+        #but is not enough is there is just an image
+        if len(self.zoomStack):
+            autoreplot = self.autoReplot()
+            self.setAutoReplot(False)
+            if len(self.zoomStack):
+                xmin, xmax, ymin, ymax = self.zoomStack[0]
+                if self.xAutoScale:
+                    self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
+                if self.yAutoScale:
+                    if qt.qVersion() < '4.0.0':
+                        self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
+                    else:
+                        self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
+                xmin, xmax, ymin, ymax = self.zoomStack2[0]
+                if self.axisEnabled(qwt.QwtPlot.xTop):
+                    if self.xAutoScale:
+                        self.setAxisScale(qwt.QwtPlot.xTop, xmin, xmax)
+                if self.axisEnabled(qwt.QwtPlot.yRight):
+                    if self.yAutoScale:
+                        if qt.qVersion() < '4.0.0':
+                            self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
+                        else:
+                            self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)                            
+            self.setAutoReplot(autoreplot)
+
         self.zoomStack =  []
         self.zoomStack2 = []
+
         self.replot()
         if self.checky1scale() or self.checky2scale():
             self.replot()
@@ -644,6 +673,9 @@ class QtBlissGraph(qwt.QwtPlot):
     def ResetZoom(self):
         if DEBUG:print "ResetZoom kept for compatibility, use zoomReset"
         self.zoomReset()
+
+    def enableZoom(self, flag=True):
+        self.__zoomEnabled = flag
         
     def checky2scale(self):
         flag = 0
@@ -698,7 +730,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
                 ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
                 ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
-                
+            #print "xmin, xmax, ymin, ymax = ",xmin, xmax, ymin, ymax                
             if self.plotImage is None:
                 if qt.qVersion() < '4.0.0':
                     self.plotImage=QwtPlotImage(self)
@@ -791,7 +823,7 @@ class QtBlissGraph(qwt.QwtPlot):
         if qt.Qt.LeftButton == e.button():
             # Python semantics: self.pos = e.pos() does not work; force a copy
             #decide zooming or marker
-            self._zooming = 1
+            self._zooming = self.__zoomEnabled
             self.xpos = e.pos().x()
             self.ypos = e.pos().y()
             self.__timer      = time.time()
@@ -1497,6 +1529,11 @@ class QtBlissGraph(qwt.QwtPlot):
                     if distancew < distance:
                         distance = distancew
                         marker   = key
+            #this distance is in x coordenates
+            #but I decide on distance in pixels ...
+            if distance is not None:
+                x1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, xpixel+4)-x)/4.0
+                distance = distance / x1pixel
             return (marker, distance)
 
     def toggleCurve(self, keyorindex):
@@ -1813,15 +1850,23 @@ class QtBlissGraph(qwt.QwtPlot):
             label = kw['label']
         else:
             label = ""
+        if kw.has_key('noline'):
+            noline = kw['noline']
+        else:
+            noline = False
 
         if qt.qVersion() < '4.0.0':
-            marker = self.insertLineMarker(label,qwt.QwtPlot.xBottom)
+            if not noline:
+                marker = self.insertLineMarker(label,qwt.QwtPlot.xBottom)
+            else:
+                marker = self.insertMarker()
             mX = marker
         else:
             mX = Qwt.QwtPlotMarker()
             mX.setLabel(Qwt.QwtText(label))
             mX.setLabelAlignment(qt.Qt.AlignRight | qt.Qt.AlignTop)
-            mX.setLineStyle(Qwt.QwtPlotMarker.VLine)
+            if not noline:
+                mX.setLineStyle(Qwt.QwtPlotMarker.VLine)
             marker = id(mX)
 
         if marker == 0:

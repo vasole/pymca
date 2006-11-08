@@ -107,6 +107,11 @@ class PeakTableWidget(QTable):
             self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
         else:
             self.connect(self,qt.SIGNAL("cellChanged(int,int)"),self.myslot)
+
+        if qt.qVersion() > '4.0.0':
+            rheight = self.horizontalHeader().sizeHint().height()
+            for idx in range(self.rowCount()):
+                self.setRowHeight(idx, rheight)
         
 
     def build(self):
@@ -123,7 +128,7 @@ class PeakTableWidget(QTable):
             self.adjustColumn(5)
         else:
             self.resizeColumnToContents(0)
-            self.resizeColumnToContents(1)
+            #self.resizeColumnToContents(1)
             #self.resizeColumnToContents(2)
             self.resizeColumnToContents(5)
 

@@ -24,11 +24,15 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+        if qt.qVersion() < '4.0.0':
+            print "WARNING: Using Qt %s version" % qt.qVersion()
+    except:
+        import qt
+else:
     import qt
 import ElementHtml
 image2=["312 177 16 1",
@@ -524,7 +528,6 @@ class MatrixImage(qt.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
     a= qt.QApplication([])
     a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
     if len(sys.argv) > 1:

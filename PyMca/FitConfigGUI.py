@@ -31,94 +31,143 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-
-from qt import *
-
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+    
+QTVERSION = qt.qVersion()
 def uic_load_pixmap_FitConfigGUI(name):
-    pix = QPixmap()
-    m = QMimeSourceFactory.defaultFactory().data(name)
+    pix = qt.QPixmap()
+    m = qt.QMimeSourceFactory.defaultFactory().data(name)
 
     if m:
-        QImageDrag.decode(m,pix)
+        qt.QImageDrag.decode(m,pix)
 
     return pix
 
 
-class FitConfigGUI(QWidget):
+class FitConfigGUI(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
 
-        if name == None:
-            self.setName("FitConfigGUI")
+            if name == None:
+                self.setName("FitConfigGUI")
 
-        #self.resize(555,285)
-        self.setCaption(str("FitConfigGUI"))
+            self.setCaption(str("FitConfigGUI"))
 
-        FitConfigGUILayout = QHBoxLayout(self,11,6,"FitConfigGUILayout")
+            FitConfigGUILayout = qt.QHBoxLayout(self,11,6,"FitConfigGUILayout")
+    
+            Layout9 = qt.QHBoxLayout(None,0,6,"Layout9")
+    
+            Layout2 = qt.QGridLayout(None,1,1,0,6,"Layout2")
+        else:
+            qt.QWidget.__init__(self,parent)
 
-        Layout9 = QHBoxLayout(None,0,6,"Layout9")
+            self.setWindowTitle(str("FitConfigGUI"))
 
-        Layout2 = QGridLayout(None,1,1,0,6,"Layout2")
+            FitConfigGUILayout = qt.QHBoxLayout(self)
+            FitConfigGUILayout.setMargin(11)
+            FitConfigGUILayout.setSpacing(6)
+    
+            Layout9 = qt.QHBoxLayout(None)
+            Layout9.setMargin(0)
+            Layout9.setSpacing(6)
+    
+            Layout2 = qt.QGridLayout(None)
+            Layout2.setMargin(0)
+            Layout2.setSpacing(6)
 
-        self.BkgComBox = QComboBox(0,self,"BkgComBox")
-        self.BkgComBox.insertItem(str("Add Background"))
+        if QTVERSION < '4.0.0':
+            self.BkgComBox = qt.QComboBox(0,self,"BkgComBox")
+            self.BkgComBox.insertItem(str("Add Background"))
+        else:
+            self.BkgComBox = qt.QComboBox(self)
+            self.BkgComBox.addItem(str("Add Background"))
 
         Layout2.addWidget(self.BkgComBox,1,1)
 
-        self.BkgLabel = QLabel(self,"BkgLabel")
+        self.BkgLabel = qt.QLabel(self)
         self.BkgLabel.setText(str("Background"))
 
         Layout2.addWidget(self.BkgLabel,1,0)
 
-        self.FunComBox = QComboBox(0,self,"FunComBox")
-        self.FunComBox.insertItem(str("Add Function(s)"))
+        if QTVERSION < '4.0.0':
+            self.FunComBox = qt.QComboBox(0,self,"FunComBox")
+            self.FunComBox.insertItem(str("Add Function(s)"))
+        else:
+            self.FunComBox = qt.QComboBox(self)
+            self.FunComBox.addItem(str("Add Function(s)"))
 
         Layout2.addWidget(self.FunComBox,0,1)
 
-        self.FunLabel = QLabel(self,"FunLabel")
+        self.FunLabel = qt.QLabel(self)
         self.FunLabel.setText(str("Function"))
 
         Layout2.addWidget(self.FunLabel,0,0)
         Layout9.addLayout(Layout2)
-        spacer = QSpacerItem(20,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacer = qt.QSpacerItem(20,20,
+                                qt.QSizePolicy.Expanding,
+                                qt.QSizePolicy.Minimum)
         Layout9.addItem(spacer)
 
-        Layout6 = QGridLayout(None,1,1,0,6,"Layout6")
+        if QTVERSION < '4.0.0':
+            Layout6 = qt.QGridLayout(None,1,1,0,6,"Layout6")
+        else:
+            Layout6 = qt.QGridLayout(None)
+            Layout6.setMargin(0)
+            Layout6.setSpacing(6)
 
-        self.WeightCheckBox = QCheckBox(self,"WeightCheckBox")
+        self.WeightCheckBox = qt.QCheckBox(self)
         self.WeightCheckBox.setText(str("Weight"))
 
         Layout6.addWidget(self.WeightCheckBox,0,0)
 
-        self.MCACheckBox = QCheckBox(self,"MCACheckBox")
+        self.MCACheckBox = qt.QCheckBox(self)
         self.MCACheckBox.setText(str("MCA Mode"))
 
         Layout6.addWidget(self.MCACheckBox,1,0)
         Layout9.addLayout(Layout6)
 
-        Layout6_2 = QGridLayout(None,1,1,0,6,"Layout6_2")
-
-        self.AutoFWHMCheckBox = QCheckBox(self,"AutoFWHMCheckBox")
+        if QTVERSION < '4.0.0':
+            Layout6_2 = qt.QGridLayout(None,1,1,0,6,"Layout6_2")
+        else:
+            Layout6_2 = qt.QGridLayout(None)
+            Layout6_2.setMargin(0)
+            Layout6_2.setSpacing(6)
+            
+        self.AutoFWHMCheckBox = qt.QCheckBox(self)
         self.AutoFWHMCheckBox.setText(str("Auto FWHM"))
 
         Layout6_2.addWidget(self.AutoFWHMCheckBox,0,0)
 
-        self.AutoScalingCheckBox = QCheckBox(self,"AutoScalingCheckBox")
+        self.AutoScalingCheckBox = qt.QCheckBox(self)
         self.AutoScalingCheckBox.setText(str("Auto Scaling"))
 
         Layout6_2.addWidget(self.AutoScalingCheckBox,1,0)
         Layout9.addLayout(Layout6_2)
-        spacer_2 = QSpacerItem(20,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacer_2 = qt.QSpacerItem(20,20,qt.QSizePolicy.Expanding,
+                                  qt.QSizePolicy.Minimum)
         Layout9.addItem(spacer_2)
 
-        Layout5 = QGridLayout(None,1,1,0,6,"Layout5")
+        if QTVERSION < '4.0.0':
+            Layout5 = qt.QGridLayout(None,1,1,0,6,"Layout5")
+        else:
+            Layout5 = qt.QGridLayout(None)
+            Layout5.setMargin(0)
+            Layout5.setSpacing(6)
 
-        self.PrintPushButton = QPushButton(self,"PrintPushButton")
+        self.PrintPushButton = qt.QPushButton(self)
         self.PrintPushButton.setText(str("Print"))
 
         Layout5.addWidget(self.PrintPushButton,1,0)
 
-        self.ConfigureButton = QPushButton(self,"ConfigureButton")
+        self.ConfigureButton = qt.QPushButton(self)
         self.ConfigureButton.setText(str("Configure"))
 
         Layout5.addWidget(self.ConfigureButton,0,0)

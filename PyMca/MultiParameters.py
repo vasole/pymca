@@ -33,17 +33,20 @@
 
 
 import sys
-from qt import *
-#from qttable import QTable
+from Parameters import qt
 import Parameters
+QTVERSION = qt.qVersion()
 import McaTable
 import string
 
-class ParametersTab(QTabWidget):
+DEBUG = 0
+
+class ParametersTab(qt.QTabWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-#    def __init__(self,*args):
-        QTabWidget.__init__(self, parent, name, fl)
-        #apply(QTabWidget.__init__,(self,) + args)
+        if QTVERSION < '4.0.0':
+            qt.QTabWidget.__init__(self, parent, name, fl)
+        else:
+            qt.QTabWidget.__init__(self, parent)
 
         #if name == None:
         #    self.setName("FitParameters")
@@ -62,8 +65,10 @@ class ParametersTab(QTabWidget):
         #the widgets/tables themselves
         self.tables={}
         self.mcatable=None
-        self.setMargin(10)
-        #create the first tab
+        if QTVERSION < '4.0.0':
+            self.setMargin(10)
+        else:
+            if DEBUG: "self.setMargin(10) omitted"
         self.setview(name="Region 1")
 
     def setview(self,name=None,fitparameterslist=None):
@@ -85,7 +90,10 @@ class ParametersTab(QTabWidget):
         if fitparameterslist is not None:
             table.fillfromfit(fitparameterslist)
         #print "SHowing page ",name
-        self.showPage(self.views[name])
+        if QTVERSION < '4.0.0':
+            self.showPage(self.views[name])
+        else:
+            self.setCurrentWidget(self.views[name])
         self.current=name        
 
     def renameview(self,oldname=None,newname=None):
@@ -134,8 +142,14 @@ class ParametersTab(QTabWidget):
             return error
         if view in self.views.keys():
                 self.tabs.remove(view)
-                self.removePage(self.tables[view])
-                self.removePage(self.views[view])
+                if QTVERSION < '4.0.0':
+                    self.removePage(self.tables[view])
+                    self.removePage(self.views[view])
+                else:
+                    index = self.indexOf(self.tables[view])
+                    self.removeTab(index)
+                    index = self.indexOf(self.views[view])
+                    self.removeTab(index)
                 del self.tables[view]
                 del self.views[view]
                 error =0
@@ -165,13 +179,19 @@ class ParametersTab(QTabWidget):
            self.views[name]=table
            #self.addTab(table,self.trUtf8(name))
            self.addTab(table,str(name))
-           self.connect(table,PYSIGNAL('McaTableSignal'),self.__forward)
+           if QTVERSION < '4.0.0':
+               self.connect(table,qt.PYSIGNAL('McaTableSignal'),self.__forward)
+           else:
+               self.connect(table,qt.SIGNAL('McaTableSignal'),self.__forward)
         table.fillfrommca(mcaresult)
         self.setview(name=name)        
         return
         
-    def __forward(self,dict):
-        self.emit(PYSIGNAL('MultiParametersSignal'),(dict,))
+    def __forward(self,ddict):
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('MultiParametersSignal'),(ddict,))
+        else:
+            self.emit(qt.SIGNAL('MultiParametersSignal'),(ddict))
 
 
     def gettext(self,**kw):
@@ -181,24 +201,41 @@ class ParametersTab(QTabWidget):
             name = self.current
         table = self.tables[name]
         lemon=string.upper("#%x%x%x" % (255,250,205))
-        if qVersion() < '3.0.0':
-            hcolor = string.upper("#%x%x%x" % (230,240,249))
+        if QTVERSION < '4.0.0':
+            if QTVERSION < '3.0.0':
+                hcolor = string.upper("#%x%x%x" % (230,240,249))
+            else:
+                hb = table.horizontalHeader().paletteBackgroundColor()
+                hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
         else:
-            hb = table.horizontalHeader().paletteBackgroundColor()
-            hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
+            if DEBUG: print "Actual color to ge got"
+            hcolor = string.upper("#%x%x%x" % (230,240,249))
         text=""
         text+=("<nobr>")
         text+=( "<table>")
         text+=( "<tr>")
-        for l in range(table.numCols()):
+        if QTVERSION < '4.0.0': ncols = table.numCols()
+        else:  ncols = table.columnCount()
+        for l in range(ncols):
             text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
-            text+=(str(table.horizontalHeader().label(l)))
+            if QTVERSION < '4.0.0':
+                text+=(str(table.horizontalHeader().label(l)))
+            else:
+                text+=(str(table.horizontalHeaderItem(l).text()))
             text+=("</b></td>")
         text+=("</tr>")
-        #text+=( str(qt.QString("</br>"))
-        for r in range(table.numRows()):
+        if QTVERSION < '4.0.0': nrows = table.numRows()
+        else: nrows = table.rowCount()
+        for r in range(nrows):
             text+=("<tr>")
-            if len(str(table.text(r,0))):
+            if QTVERSION < '4.0.0':
+                newtext = str(table.text(r,0))
+            else:
+                item = table.item(r, 0)
+                newtext = ""
+                if item is not None:
+                    newtext = str(item.text())
+            if len(newtext):
                 color = "white"
                 b="<b>"                
             else:
@@ -211,8 +248,15 @@ class ParametersTab(QTabWidget):
                 color = cc
             except:
                 pass
-            for c in range(table.numCols()):
-                if len(table.text(r,c)):
+            for c in range(ncols):
+                if QTVERSION < '4.0.0':
+                    newtext = str(table.text(r,c))
+                else:
+                    item = table.item(r, c)
+                    newtext = ""
+                    if item is not None:
+                        newtext = str(item.text())
+                if len(newtext):
                     finalcolor = color
                 else:
                     finalcolor = "white"
@@ -220,12 +264,19 @@ class ParametersTab(QTabWidget):
                     text+=('<td align="left" bgcolor="%s">%s' % (finalcolor,b))
                 else:
                     text+=('<td align="right" bgcolor="%s">%s' % (finalcolor,b))
-                text+=( str(table.text(r,c)))
+                text+=(newtext)
                 if len(b):
                     text+=("</td>")
                 else:
                     text+=("</b></td>") 
-            if len(str(table.text(r,0))):
+            if QTVERSION < '4.0.0':
+                newtext = str(table.text(r,0))
+            else:
+                item = table.item(r, 0)
+                newtext = ""
+                if item is not None:
+                    newtext = str(item.text())
+            if len(newtext):
                 text+=("</b>")
             text+=("</tr>")
             #text+=( str(qt.QString("<br>"))
@@ -235,10 +286,10 @@ class ParametersTab(QTabWidget):
         return text
 
 def test():
-    a = QApplication(sys.argv)
-    QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"))
+    a = qt.QApplication(sys.argv)
+    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
     w = ParametersTab()
-    a.setMainWidget(w)
+    if QTVERSION < '4.0.0':a.setMainWidget(w)
     w.show()
     if 1:
         import specfile
@@ -287,8 +338,10 @@ def test():
             fit.startfit()
             w.fillfromfit(fit.paramlist,current='Fit')
             w.removeview(view='Region 1')
-
-    a.exec_loop()
+    if QTVERSION < '4.0.0':
+        a.exec_loop()
+    else:
+        a.exec_()
         
 if __name__ == "__main__":
     bench=0

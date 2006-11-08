@@ -25,17 +25,55 @@
 # is a problem to you.
 #############################################################################*/
 import sys
-import qt
-import qttable
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+    
+QTVERSION = qt.qVersion()
+if QTVERSION < '3.0.0':
+    import Myqttable as qttable
+elif QTVERSION < '4.0.0':
+    import qttable
+
+if QTVERSION < '4.0.0':
+    class QTable(qttable.QTable):
+        def __init__(self, parent=None, name=""):
+            qttable.QTable.__init__(self, parent, name)
+            self.rowCount    = self.numRows
+            self.columnCount = self.numCols
+            self.setRowCount = self.setNumRows
+            self.setColumnCount = self.setNumCols
+            self.resizeColumnToContents = self.adjustColumn
+
+    class MyQTableItem(qttable.QTableItem):
+         def __init__(self, table, edittype, text,color=qt.Qt.white):
+                 qttable.QTableItem.__init__(self, table, edittype, text)
+                 self.color = color
+         def paint(self, painter, colorgroup, rect, selected):
+                 cg = qt.QColorGroup(colorgroup)
+                 cg.setColor(qt.QColorGroup.Base, self.color)
+                 qttable.QTableItem.paint(self,painter, cg, rect, selected)
+else:
+    QTable = qt.QTableWidget
+    
+
 import string
 
 DEBUG=0
 
-class McaTable(qttable.QTable):
+class McaTable(QTable):
     def __init__(self, *args,**kw):
-        apply(qttable.QTable.__init__, (self, ) + args)
-        self.setNumRows(1)
-        self.setNumCols(1)
+        apply(QTable.__init__, (self, ) + args)
+        if QTVERSION < '4.0.0':
+            self.setNumRows(1)
+            self.setNumCols(1)
+        else:
+            self.setRowCount(1)
+            self.setColumnCount(1)            
         self.labels=['Parameter','Estimation','Fit Value','Sigma',
                      'Restrains','Min/Parame','Max/Factor/Delta/']
         self.code_options=["FREE","POSITIVE","QUOTED",
@@ -49,22 +87,32 @@ class McaTable(qttable.QTable):
         else:
             self.labels=['Position','Fit Area','MCA Area','Sigma','Fwhm','Chisq',
                          'Region','XBegin','XEnd']
-        self.setNumCols(len(self.labels))
-        
-        for label in self.labels:
-            qt.QHeader.setLabel(self.horizontalHeader(),i,label)
-            #if (i != 1) and (i!=2):
-            #if (i != 2):
-            if 1:
+        if QTVERSION < '4.0.0':
+            self.setNumCols(len(self.labels))        
+            for label in self.labels:
+                qt.QHeader.setLabel(self.horizontalHeader(),i,label)
                 self.adjustColumn(i)
-            i=i+1
+                i=i+1
+        else:
+            self.setColumnCount(len(self.labels))
+            for label in self.labels:
+                item = self.horizontalHeaderItem(i)
+                if item is None:
+                    item = qt.QTableWidgetItem(self.labels[i],
+                                               qt.QTableWidgetItem.Type)
+                    self.setHorizontalHeaderItem(i,item)
+                item.setText(self.labels[i])
+                self.resizeColumnToContents(i)
+                i=i+1
                 
         self.regionlist=[]
         self.regiondict={}
-        self.verticalHeader().setClickEnabled(1)
-        self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
+        if QTVERSION < '4.0.0':
+            self.verticalHeader().setClickEnabled(1)
+            self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
+        else:
+            print "MCATABLE click on vertical header items?"
         self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
-        #self.setSelectionMode(qttable.QTable.SingleRow)
 
                 
     def fillfrommca(self,mcaresult,diag=1):
@@ -81,13 +129,22 @@ class McaTable(qttable.QTable):
                 xbegin=qt.QString("%6g" % (result['xbegin']))
                 xend=qt.QString("%6g" % (result['xend']))
                 fitlabel,fitpars, fitsigmas = self.__getfitpar(result)
-                qt.QHeader.setLabel(self.horizontalHeader(),1,"Fit "+fitlabel)
+                if QTVERSION < '4.0.0':
+                    qt.QHeader.setLabel(self.horizontalHeader(),1,"Fit "+fitlabel)
+                else:
+                    item = self.horizontalHeaderItem(1)
+                    item.setText("Fit "+fitlabel)
                 i = 0
                 for (pos,area,sigma,fwhm) in result['mca_areas']:
                     line0=line0+1
-                    nlines=self.numRows()
-                    if (line0 > nlines):
-                        self.setNumRows(line0)
+                    if QTVERSION < '4.0.0':
+                        nlines=self.numRows()
+                        if (line0 > nlines):
+                            self.setNumRows(line0)
+                    else:
+                        nlines=self.rowCount()
+                        if (line0 > nlines):
+                            self.setRowCount(line0)
                     line=line0-1
                     #pos=QString(str(pos))
                     #area=QString(str(area))
@@ -111,25 +168,47 @@ class McaTable(qttable.QTable):
                                 color = qt.QColor(255,182,193)
                                 recolor = 1
                     for field in fields:
-                        if recolor:
-                            key=MyQTableItem(self,qttable.QTableItem.Never,field,color=color)
+                        if QTVERSION < '4.0.0':
+                            if recolor:
+                                key=MyQTableItem(self,qttable.QTableItem.Never,field,color=color)
+                            else:
+                                key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
+                            self.setItem(line,col,key)
                         else:
-                            key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
-                        self.setItem(line,col,key)
+                            key = self.item(line, col)
+                            if key is None:
+                                key = qt.QTableWidgetItem(field)
+                                self.setItem(line, col, key)
+                            else:
+                                item.setText(field)
+                            if recolor:
+                                #function introduced in Qt 4.2.0
+                                if QTVERSION >= '4.2.0':
+                                    item.setBackground(qt.QBrush(color))
+                            item.setFlags(qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)                            
                         col=col+1
                     if recolor:
                         if not alreadyforced:
                             alreadyforced = 1
-                            self.ensureCellVisible(line,0)
+                            if QTVERSION < '4.0.0':
+                                self.ensureCellVisible(line,0)
+                            else:
+                                self.scrollToItem(self.item(line, 0))
                     i += 1 
 
         i = 0
         for label in self.labels:
-            self.adjustColumn(i)
+            if QTVERSION < '4.0.0':
+                self.adjustColumn(i)
+            else:
+                self.resizeColumnToContents(i)
             i=i+1
         ndict = {}
         ndict['event'] = 'McaTableFilled'
-        self.emit(qt.PYSIGNAL('McaTableSignal'),(ndict,))
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaTableSignal'),(ndict,))
+        else:
+            self.emit(qt.SIGNAL('McaTableSignal'), ndict)
 
 
     def __getfitpar(self,result):
@@ -183,12 +262,3 @@ class McaTable(qttable.QTable):
                     dict[label] = str(self.text(row,col))
                 col +=1
         self.emit(qt.PYSIGNAL('McaTableSignal'),(dict,))
-
-class MyQTableItem(qttable.QTableItem):
-         def __init__(self, table, edittype, text,color=qt.Qt.white):
-                 qttable.QTableItem.__init__(self, table, edittype, text)
-                 self.color = color
-         def paint(self, painter, colorgroup, rect, selected):
-                 cg = qt.QColorGroup(colorgroup)
-                 cg.setColor(qt.QColorGroup.Base, self.color)
-                 qttable.QTableItem.paint(self,painter, cg, rect, selected)

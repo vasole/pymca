@@ -27,13 +27,16 @@ __revision__ = "$Revision: 1.64 $"
 # is a problem to you.
 #############################################################################*/
 import sys, getopt, string
-import qt
 import PyMcaMdi
+from PyMcaMdi import qt
+
+QTVERSION = qt.qVersion()
+
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "3.9.4"
-if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
+__version__ = "3.9.4 Qt3 & Qt4 WARNING: ALPHA soft"
+if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
                         fl=qt.Qt.WStyle_Customize  | qt.Qt.WDestructiveClose,
@@ -67,42 +70,58 @@ if __name__ == "__main__":
                     style = qt.QStyleFactory.create(item)
                     app.setStyle(style)
                     break
-    if 1:
+    if 1 or QTVERSION < '4.0.0':
         winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
         app.setPalette(winpalette)
+    else:
+        palette = app.palette()
+        role = qt.QPalette.Window           #this is the background
+        palette.setColor(role, qt.QColor(238,234,238))
+        app.setPalette(palette)
 
     mpath = os.path.dirname(PyMcaMdi.__file__)
     if mpath[-3:] == "exe":
         mpath = os.path.dirname(mpath)
-    qt.QMimeSourceFactory.defaultFactory().addFilePath(mpath)
-    if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
-        pixmap = qt.QPixmap('PyMcaSplashImage.png')    
-        splash  = SplashScreen(pixmap=pixmap)
-        splash.message( 'PyMCA version %s\n' % __version__)     
+    if QTVERSION < '4.0.0':
+        qt.QMimeSourceFactory.defaultFactory().addFilePath(mpath)
+        if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
+            pixmap = qt.QPixmap('PyMcaSplashImage.png')    
+            splash  = SplashScreen(pixmap=pixmap)
+            splash.message( 'PyMCA version %s\n' % __version__)     
+        else:
+            pixmap = qt.QPixmap.fromMimeSource('PyMcaSplashImage.png')
+            splash  = qt.QSplashScreen(pixmap)
+            splash.show()
+            font = splash.font()
+            font.setBold(True)
+            splash.setFont(font)
+            splash.message( 'PyMCA %s' % __version__, 
+                    qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
+                    qt.Qt.white)
     else:
-        pixmap = qt.QPixmap.fromMimeSource('PyMcaSplashImage.png')
+        pixmap = qt.QPixmap(qt.QString(os.path.join(mpath,'PyMcaSplashImage.png')))
         splash  = qt.QSplashScreen(pixmap)
         splash.show()
         font = splash.font()
-        font.setBold(True)
+        font.setBold(1)
         splash.setFont(font)
-        splash.message( 'PyMCA %s' % __version__, 
+        splash.showMessage( 'PyMCA %s' % __version__, 
                 qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
                 qt.Qt.white)
 
-
 import McaWindow
-import EdfFileLayer
-import SpecFileLayer
-import SPSLayer
-import MySpecFileSelector as SpecFileSelector
-import MyEdfFileSelector  as EdfFileSelector
+import ScanWindow
+import QDispatcher
 import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
-import Fit2Spec
+###########import Fit2Spec
 import ConfigDict
+
 DEBUG = 0
+SOURCESLIST = QDispatcher.QDataSource.source_types.keys()
+
+"""
 
 SOURCES = {"SpecFile":{'widget':SpecFileSelector.SpecFileSelector,'data':SpecFileLayer.SpecFileLayer},
            "EdfFile":{'widget':EdfFileSelector.EdfFileSelector,'data':EdfFileLayer.EdfFileLayer}}
@@ -113,48 +132,66 @@ if (sys.platform != 'win32') and (sys.platform != 'darwin'):
     import MySPSSelector as SPSSelector
     SOURCES["SPS"] = {'widget':SPSSelector.SPSSelector,'data':SPSLayer.SPSLayer}
     SOURCESLIST.append("SPS")
+"""
 
 class PyMca(PyMcaMdi.PyMca):
-    def __init__(self, parent=None, name="PyMca", fl=qt.Qt.WDestructiveClose,**kw):
-            PyMcaMdi.PyMca.__init__(self, parent, name, fl)
-            
-            self.setCaption(name)
-            self.setIcon(qt.QPixmap(IconDict['gioconda16']))            
-            self.menuBar().setIcon(qt.QPixmap(IconDict['gioconda16']))            
+    def __init__(self, parent=None, name="PyMca", fl=None,**kw):
+            if QTVERSION < '4.0.0':
+                if fl is None:qt.Qt.WDestructiveClose
+                PyMcaMdi.PyMca.__init__(self, parent, name, fl)
+                self.setCaption(name)
+                self.setIcon(qt.QPixmap(IconDict['gioconda16']))
+                self.menuBar().setIcon(qt.QPixmap(IconDict['gioconda16']))            
+            else:
+                if fl is None: fl = qt.Qt.WA_DeleteOnClose
+                PyMcaMdi.PyMca.__init__(self, parent, name, fl)
+                self.setWindowTitle(name)
+                self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.initSourceBrowser()
             self.initSource()
-            self.openMenu = qt.QPopupMenu()
             self.elementsInfo= None
             self.identifier  = None
             self.__batch     = None
             self.__fit2Spec  = None
-            self.openMenu.insertItem("PyMca Configuration",0)
-            i=1
-            for source in SOURCESLIST:
-                self.openMenu.insertItem(source,i)
-                i+=1
-            self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
-            
+            if QTVERSION < '4.0.0':
+                self.openMenu = qt.QPopupMenu()
+                self.openMenu.insertItem("PyMca Configuration",0)
+                self.openMenu.insertItem("Data Source",1)
+                self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
+            else:
+                self.openMenu = qt.QMenu()
+                self.openMenu.addAction("PyMca Configuration", self.openSource)
+                self.openMenu.addAction("Data Source",
+                             self.sourceWidget.sourceSelector._openFileSlot)
+                self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
-            if (sys.platform != 'win32') and (sys.platform != 'darwin'):
-                self.mcawindow = McaWindow.McaWidget(parent=self.mdi,
-                                                     SpecFileWidget= self.sourceWidget['SpecFile'],
-                                                     EdfFileWidget = self.sourceWidget['EdfFile'],                
-                                                     SPSWidget     = self.sourceWidget['SPS'],
-                                                     fl=0,**kw)
+
+            self.mcawindow = McaWindow.McaWidget(self.mdi)
+            self.mcawindow.setDispatcher(self.sourceWidget)
+            self.scanwindow = ScanWindow.ScanWindow(self.mdi)
+            self.scanwindow.setDispatcher(self.sourceWidget)
+            if QTVERSION < '4.0.0':
+                pass
             else:
-                self.mcawindow = McaWindow.McaWidget(parent=self.mdi,
-                                                     SpecFileWidget= self.sourceWidget['SpecFile'],
-                                                     EdfFileWidget = self.sourceWidget['EdfFile'],
-                                                     fl=0,**kw)
-            self.connect(self.mcawindow,qt.PYSIGNAL('McaWindowSignal'),self.__McaWindowSignal)
-            if kw.has_key('shm'):
-                if len(kw['shm']) >= 8:
-                    if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
-                        self.mcawindow.showMaximized()
-                        self.toggleSource()
-            else:
-                self.mcawindow.showMaximized()
+                self.mdi.addWindow(self.mcawindow)
+                self.mdi.addWindow(self.scanwindow)
+                #self.scanwindow.showMaximized()
+                #self.mcawindow.showMaximized()
+
+            if 0:
+                if QTVERSION < '4.0.0':
+                    self.connect(self.mcawindow,qt.PYSIGNAL('McaWindowSignal'),
+                                 self.__McaWindowSignal)
+                else:
+                    self.connect(self.mcawindow,qt.SIGNAL('McaWindowSignal'),
+                                 self.__McaWindowSignal)
+                if kw.has_key('shm'):
+                    if len(kw['shm']) >= 8:
+                        if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
+                            self.mcawindow.showMaximized()
+                            self.toggleSource()
+                else:
+                    self.mcawindow.showMaximized()
             currentConfigDict = ConfigDict.ConfigDict()
             defaultFileName = self.__getDefaultSettingsFile()
             self.configDir  = os.path.dirname(defaultFileName)
@@ -191,22 +228,24 @@ class PyMca(PyMcaMdi.PyMca):
         d['PyMca']['Sources'] = {}
         for source in SOURCESLIST:
             d['PyMca'][source] = {}
-            if 'lastInputDir' in self.sourceWidget[source].__dict__.keys():
-                if self.sourceWidget[source].lastInputDir is not None:
-                    d['PyMca'][source]['lastInputDir'] = self.sourceWidget[source].lastInputDir
-                else:
-                    d['PyMca'][source]['lastInputDir'] = "None"
+            if self.sourceWidget.sourceSelector.lastInputDir is not None:
+                d['PyMca'][source]['lastInputDir'] = self.sourceWidget.sourceSelector.lastInputDir
+            else:
+                d['PyMca'][source]['lastInputDir'] = "None"
             if source == "SpecFile":
                 d['PyMca'][source]['SourceName'] = []
-                for key in self.sourceWidget[source].mapComboName.keys():
-                    d['PyMca'][source]['SourceName'].append(key)
+                for key in self.sourceWidget.sourceList:
+                    if key.sourceType == source:
+                        d['PyMca'][source]['SourceName'].append(key.sourceName)
             elif source == "EdfFile":
                 d['PyMca'][source]['SourceName'] = []
-                for key in self.sourceWidget[source].mapComboName.keys():
-                    if key == "EDF Stack":
-                        d['PyMca'][source]['SourceName'].append(self.sourceWidget[source]._edfstack)
-                    else:
-                        d['PyMca'][source]['SourceName'].append(self.sourceWidget[source].mapComboName[key])
+                for key in self.sourceWidget.sourceList:
+                    if key.sourceType == source:
+                        d['PyMca'][source]['SourceName'].append(key.sourceName)
+                    #if key == "EDF Stack":
+                    #    d['PyMca'][source]['SourceName'].append(self.sourceWidget.selectorWidget[source]._edfstack)
+                    #else:
+                    #    d['PyMca'][source]['SourceName'].append(self.sourceWidget.selectorWidget[source].mapComboName[key])
             
             #d['PyMca'][source]['Selection'] = self.sourceWidget[source].getSelection()
         #ROIs
@@ -272,23 +311,32 @@ class PyMca(PyMcaMdi.PyMca):
             if dict.has_key(source):
                 if dict[source].has_key('lastInputDir'):
                     if dict[source] ['lastInputDir'] != "None":
-                        self.sourceWidget[source].lastInputDir =  dict[source] ['lastInputDir']
-                    else:
-                        self.sourceWidget[source].lastInputDir =  None
+                        self.sourceWidget.sourceSelector.lastInputDir =  dict[source] ['lastInputDir']
+                    #else:
+                    #    self.sourceWidget.selectorWidget[source].lastInputDir =  None
                 if dict[source].has_key('SourceName'):
                     if type(dict[source]['SourceName']) != type([]):
                         dict[source]['SourceName'] = [dict[source]['SourceName'] * 1]
                     for SourceName in dict[source]['SourceName']:
-                        try:
-                            if source == "EdfFile":
-                                self.sourceWidget[source].openFile(SourceName, justloaded=1)
-                            else:
-                                self.sourceWidget[source].openFile(SourceName)
-                        except:
-                            msg = qt.QMessageBox(self)
-                            msg.setIcon(qt.QMessageBox.Critical)
-                            msg.setText("Error: %s\n opening file %s" % (sys.exc_info()[1],SourceName ))
-                            msg.exec_loop()
+                        if len(SourceName):
+                            try:
+                                ndict = {}
+                                ndict["event"] = "NewSourceSelected"
+                                ndict["sourcelist"] = [SourceName]
+                                self.sourceWidget._sourceSelectorSlot(ndict)
+                                continue
+                                if source == "EdfFile":
+                                    self.sourceWidget.selectorWidget[source].openFile(SourceName, justloaded=1)
+                                else:
+                                    self.sourceWidget.selectorWidget[source].openFile(SourceName)
+                            except:
+                                msg = qt.QMessageBox(self)
+                                msg.setIcon(qt.QMessageBox.Critical)
+                                msg.setText("Error: %s\n opening file %s" % (sys.exc_info()[1],SourceName ))
+                                if QTVERSION < '4.0.0':
+                                    msg.exec_loop()
+                                else:
+                                    msg.exec_()
                 """
                 if dict[source].has_key('Selection'):
                     if type(dict[source]['Selection']) != type([]):
@@ -296,10 +344,6 @@ class PyMca(PyMcaMdi.PyMca):
                     if source == "EdfFile":
                         self.sourceWidget[source].setSelected(dict[source]['Selection'])
                 """    
-        if self.sourceWidget["SpecFile"].lastInputDir  is None:
-            self.sourceWidget["SpecFile"].lastInputDir = self.sourceWidget["EdfFile"].lastInputDir
-        if self.sourceWidget["EdfFile"].lastInputDir is None:
-            self.sourceWidget["EdfFile"].lastInputDir  = self.sourceWidget["SpecFile"].lastInputDir
 
 
     def __configureRoi(self, dict):
@@ -347,58 +391,149 @@ class PyMca(PyMcaMdi.PyMca):
                 
     def initMenuBar(self):
         if self.options["MenuFile"]:
-            self.menuFile= qt.QPopupMenu(self.menuBar())
-            idx= self.menuFile.insertItem(self.Icons["fileopen"], qt.QString("&Open"), self.onOpen, qt.Qt.CTRL+qt.Qt.Key_O)
-            self.menuFile.setWhatsThis(idx, HelpDict["fileopen"])
-            idx= self.menuFile.insertItem(self.Icons["filesave"], "&Save as", self.onSaveAs, qt.Qt.CTRL+qt.Qt.Key_S)
-            self.menuFile.setWhatsThis(idx, HelpDict["filesave"])
-            self.menuFile.insertItem("Save &Defaults", self.onSave)
-            self.menuFile.insertSeparator()
-            idx= self.menuFile.insertItem(self.Icons["fileprint"], "&Print", self.onPrint, qt.Qt.CTRL+qt.Qt.Key_P)
-            self.menuFile.setWhatsThis(idx, HelpDict["fileprint"])
-            self.menuFile.insertSeparator()
-            self.menuFile.insertItem("&Quit", qt.qApp, qt.SLOT("closeAllWindows()"), qt.Qt.CTRL+qt.Qt.Key_Q)
-            self.menuBar().insertItem('&File',self.menuFile)
+            if QTVERSION < '4.0.0':
+                self.menuFile= qt.QPopupMenu(self.menuBar())
+                idx= self.menuFile.insertItem(self.Icons["fileopen"], qt.QString("&Open"), self.onOpen, qt.Qt.CTRL+qt.Qt.Key_O)
+                self.menuFile.setWhatsThis(idx, HelpDict["fileopen"])
+                idx= self.menuFile.insertItem(self.Icons["filesave"], "&Save as", self.onSaveAs, qt.Qt.CTRL+qt.Qt.Key_S)
+                self.menuFile.setWhatsThis(idx, HelpDict["filesave"])
+                self.menuFile.insertItem("Save &Defaults", self.onSave)
+                self.menuFile.insertSeparator()
+                idx= self.menuFile.insertItem(self.Icons["fileprint"], "&Print", self.onPrint, qt.Qt.CTRL+qt.Qt.Key_P)
+                self.menuFile.setWhatsThis(idx, HelpDict["fileprint"])
+                self.menuFile.insertSeparator()
+                self.menuFile.insertItem("&Quit", qt.qApp, qt.SLOT("closeAllWindows()"), qt.Qt.CTRL+qt.Qt.Key_Q)
+                self.menuBar().insertItem('&File',self.menuFile)
+                self.onInitMenuBar(self.menuBar())
 
-        self.onInitMenuBar(self.menuBar())
+            else:
+                #build the actions
+                #fileopen
+                self.actionOpen = qt.QAction(self)
+                self.actionOpen.setText(qt.QString("&Open"))
+                self.actionOpen.setIcon(self.Icons["fileopen"])
+                self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
+                self.connect(self.actionOpen, qt.SIGNAL("triggered(bool)"),
+                             self.onOpen)
+                #filesaveas
+                self.actionSaveAs = qt.QAction(self)
+                self.actionSaveAs.setText(qt.QString("&Save"))
+                self.actionSaveAs.setIcon(self.Icons["filesave"])
+                self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+                self.connect(self.actionSaveAs, qt.SIGNAL("triggered(bool)"),
+                             self.onSaveAs)
+
+                #filesave
+                self.actionSave = qt.QAction(self)
+                self.actionSave.setText(qt.QString("Save &Defaults"))
+                #self.actionSave.setIcon(self.Icons["filesave"])
+                #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+                self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
+                             self.onSave)
+                #fileprint
+                self.actionPrint = qt.QAction(self)
+                self.actionPrint.setText(qt.QString("&Print"))
+                self.actionPrint.setIcon(self.Icons["fileprint"])
+                self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
+                self.connect(self.actionPrint, qt.SIGNAL("triggered(bool)"),
+                             self.onPrint)
+
+                #filequit
+                self.actionQuit = qt.QAction(self)
+                self.actionQuit.setText(qt.QString("&Quit"))
+                #self.actionQuit.setIcon(self.Icons["fileprint"])
+                self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
+                qt.QObject.connect(self.actionQuit,
+                                   qt.SIGNAL("triggered(bool)"),
+                                   qt.qApp,
+                                   qt.SLOT("closeAllWindows()"))
+
+                #self.menubar = qt.QMenuBar(self)
+                self.menuFile= qt.QMenu(self.menuBar())
+                self.menuFile.addAction(self.actionOpen)
+                self.menuFile.addAction(self.actionSaveAs)
+                self.menuFile.addAction(self.actionSave)
+                self.menuFile.addSeparator()
+                self.menuFile.addAction(self.actionPrint)
+                self.menuFile.addSeparator()
+                self.menuFile.addAction(self.actionQuit)
+                self.menuBar().addMenu(self.menuFile)
+                self.menuFile.setTitle("&File")
+                self.onInitMenuBar(self.menuBar())
 
         if self.options["MenuTools"]:
-            self.menuTools= qt.QPopupMenu()
-            self.menuTools.setCheckable(1)
-            self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"), self.menuToolsAboutToShow)
-            self.menuBar().insertItem("&Tools", self.menuTools)
+            if QTVERSION < '4.0.0':
+                self.menuTools= qt.QPopupMenu()
+                self.menuTools.setCheckable(1)
+                self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"), self.menuToolsAboutToShow)
+                self.menuBar().insertItem("&Tools", self.menuTools)
+            else:
+                self.menuTools= qt.QMenu()
+                #self.menuTools.setCheckable(1)
+                self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"),
+                             self.menuToolsAboutToShow)
+                self.menuTools.setTitle("&Tools")
+                self.menuBar().addMenu(self.menuTools)
 
         if self.options["MenuWindow"]:
-            self.menuWindow= qt.QPopupMenu()
-            self.menuWindow.setCheckable(1)
-            self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
-            self.menuBar().insertItem("&Window", self.menuWindow)
+            if QTVERSION < '4.0.0':
+                self.menuWindow= qt.QPopupMenu()
+                self.menuWindow.setCheckable(1)
+                self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
+                self.menuBar().insertItem("&Window", self.menuWindow)
+            else:
+                self.menuWindow= qt.QMenu()
+                #self.menuWindow.setCheckable(1)
+                self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
+                self.menuWindow.setTitle("&Window")
+                self.menuBar().addMenu(self.menuWindow)
 
         if self.options["MenuHelp"]:
-            self.menuHelp= qt.QPopupMenu(self)
-            self.menuHelp.insertItem("&Menu", self.onMenuHelp)
-            self.menuHelp.insertItem("&Data Display HOWTOs", self.onDisplayHowto)
-            self.menuHelp.insertItem("MCA &HOWTOs",self.onMcaHowto)
-            self.menuHelp.insertSeparator()
-            self.menuHelp.insertItem("&About", self.onAbout)
-            self.menuHelp.insertItem("About &Qt",self.onAboutQt)
-            self.menuBar().insertSeparator()
-            self.menuBar().insertItem("&Help", self.menuHelp)
-            self.menuBrowser    = None
-            self.displayBrowser = None
-            self.mcaBrowser     = None
+            if QTVERSION < '4.0.0':
+                self.menuHelp= qt.QPopupMenu(self)
+                self.menuHelp.insertItem("&Menu", self.onMenuHelp)
+                self.menuHelp.insertItem("&Data Display HOWTOs", self.onDisplayHowto)
+                self.menuHelp.insertItem("MCA &HOWTOs",self.onMcaHowto)
+                self.menuHelp.insertSeparator()
+                self.menuHelp.insertItem("&About", self.onAbout)
+                self.menuHelp.insertItem("About &Qt",self.onAboutQt)
+                self.menuBar().insertSeparator()
+                self.menuBar().insertItem("&Help", self.menuHelp)
+                self.menuBrowser    = None
+                self.displayBrowser = None
+                self.mcaBrowser     = None
+            else:
+                self.menuHelp= qt.QMenu(self)
+                self.menuHelp.addAction("&Menu", self.onMenuHelp)
+                self.menuHelp.addAction("&Data Display HOWTOs", self.onDisplayHowto)
+                self.menuHelp.addAction("MCA &HOWTOs",self.onMcaHowto)
+                self.menuHelp.addSeparator()
+                self.menuHelp.addAction("&About", self.onAbout)
+                self.menuHelp.addAction("About &Qt",self.onAboutQt)
+                self.menuBar().addSeparator()
+                self.menuHelp.setTitle("&Help")
+                self.menuBar().addMenu(self.menuHelp)
+                self.menuBrowser    = None
+                self.displayBrowser = None
+                self.mcaBrowser     = None
+
 
     def initSourceBrowser(self):
-        self.sourceFrame     =qt.QWidget(self.splitter)
-        self.splitter.moveToFirst(self.sourceFrame)
+        self.sourceFrame     = qt.QWidget(self.splitter)
+        if QTVERSION < '4.0.0':
+            self.splitter.moveToFirst(self.sourceFrame)
+        else:
+            self.splitter.insertWidget(0, self.sourceFrame)
         #self.splitter.setResizeMode(self.sourceFrame,qt.QSplitter.KeepSize)
-        layout = qt.QVBoxLayout(self.sourceFrame)
-        layout.setAutoAdd(1)
+        self.sourceFrameLayout = qt.QVBoxLayout(self.sourceFrame)
+        self.sourceFrameLayout.setMargin(0)
+        self.sourceFrameLayout.setSpacing(0)
+        #layout.setAutoAdd(1)
         
         sourceToolbar = qt.QWidget(self.sourceFrame)
         layout1       = qt.QHBoxLayout(sourceToolbar)
         #self.line1 = qt.QFrame(sourceToolbar,"line1")
-        self.line1 = Line(sourceToolbar,"line1")
+        self.line1 = Line(sourceToolbar)
         self.line1.setFrameShape(qt.QFrame.HLine)
         self.line1.setFrameShadow(qt.QFrame.Sunken)
         self.line1.setFrameShape(qt.QFrame.HLine)
@@ -408,49 +543,71 @@ class PyMca(PyMcaMdi.PyMca):
         self.closelabel.setPixmap(qt.QPixmap(IconDict['close']))
         layout1.addWidget(self.closelabel)
         self.closelabel.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
-        self.sourceBrowserTab=qt.QTabWidget(self.sourceFrame)
+        #self.sourceBrowserTab=qt.QTabWidget(self.sourceFrame)
+
+        self.sourceFrameLayout.addWidget(sourceToolbar)
         
-        #connections
-        self.connect(self.line1,qt.PYSIGNAL("LineDoubleClickEvent"),self.sourceReparent)
-        self.connect(self.closelabel,qt.PYSIGNAL("PixmapLabelMousePressEvent"),self.toggleSource)
+        if QTVERSION < '4.0.0':
+            #connections
+            self.connect(self.line1,qt.PYSIGNAL("LineDoubleClickEvent"),self.sourceReparent)
+            self.connect(self.closelabel,qt.PYSIGNAL("PixmapLabelMousePressEvent"),self.toggleSource)
         
-        #tips
-        qt.QToolTip.add(self.line1,"DoubleClick toggles floating window mode")
-        qt.QToolTip.add(self.closelabel,"Hides Source Area")
+            #tips
+            qt.QToolTip.add(self.line1,"DoubleClick toggles floating window mode")
+            qt.QToolTip.add(self.closelabel,"Hides Source Area")
+        else:
+            #connections
+            self.connect(self.line1,qt.SIGNAL("LineDoubleClickEvent"),self.sourceReparent)
+            self.connect(self.closelabel,qt.SIGNAL("PixmapLabelMousePressEvent"),self.toggleSource)
         
+            #tips
+            self.line1.setToolTip("DoubleClick toggles floating window mode")
+            self.closelabel.setToolTip("Hides Source Area")
+            
     def sourceReparent(self,dict):
         if self.sourceFrame.parent() is not None:
-            self.sourceFrame.reparent(None,self.cursor().pos(),1)
+            if QTVERSION < '4.0.0':
+                self.sourceFrame.reparent(None,self.cursor().pos(),1)
+                self.splitter.moveToFirst(self.sourceFrame)
+            else:
+                self.sourceFrame.setParent(None)
+                self.sourceFrame.show()
+                #,self.cursor().pos(),1)
         else:
-            self.sourceFrame.reparent(self.splitter,qt.QPoint(),1)
-            self.splitter.moveToFirst(self.sourceFrame)
+            if QTVERSION < '4.0.0':
+                self.sourceFrame.reparent(self.splitter,qt.QPoint(),1)
+                self.splitter.moveToFirst(self.sourceFrame)
+            else:
+                self.sourceFrame.setParent(self.splitter)
         
     def initSource(self):
-        self.sourceWidget = {}
-        i = 0
-        for source in SOURCESLIST:
-            data = SOURCES[source]['data']()
-            wid = SOURCES[source]['widget'](self.sourceBrowserTab)
-            wid.setData(data)
-            self.sourceBrowserTab.insertTab(wid, source,i)
-            self.sourceWidget[source]= wid
-            #self.sourceBrowserTab.removePage(wid)
-            i += 1
+        self.sourceWidget = QDispatcher.QDispatcher(self.sourceFrame)
+        self.sourceFrameLayout.addWidget(self.sourceWidget)
 
     def menuToolsAboutToShow(self):
         if DEBUG:
             print "menu ToolsAboutToShow"
         self.menuTools.clear()
-        if self.sourceFrame.isHidden():
-            self.menuTools.insertItem("Show Source",self.toggleSource)
+        if QTVERSION < '4.0.0':
+            if self.sourceFrame.isHidden():
+                self.menuTools.insertItem("Show Source",self.toggleSource)
+            else:
+                self.menuTools.insertItem("Hide Source",self.toggleSource)
+            #self.menuTools.insertItem("Choose Font",self.fontdialog)
+            self.menuTools.insertItem("Elements   Info",self.__elementsInfo)
+            self.menuTools.insertItem("Identify  Peaks",self.__peakIdentifier)
+            self.menuTools.insertItem("Batch   Fitting",self.__batchFitting)
+            #self.menuTools.insertItem("Fit to Specfile",self.__fit2SpecConversion)
         else:
-            self.menuTools.insertItem("Hide Source",self.toggleSource)
-        #self.menuTools.insertItem("Choose Font",self.fontdialog)
-        self.menuTools.insertItem("Elements   Info",self.__elementsInfo)
-        self.menuTools.insertItem("Identify  Peaks",self.__peakIdentifier)
-        self.menuTools.insertItem("Batch   Fitting",self.__batchFitting)
-        self.menuTools.insertItem("Fit to Specfile",self.__fit2SpecConversion)
-        
+            if self.sourceFrame.isHidden():
+                self.menuTools.addAction("Show Source",self.toggleSource)
+            else:
+                self.menuTools.addAction("Hide Source",self.toggleSource)
+            self.menuTools.addAction("Elements   Info",self.__elementsInfo)
+            self.menuTools.addAction("Identify  Peaks",self.__peakIdentifier)
+            self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
+            #self.menuTools.addAction("Fit to Specfile",self.__fit2SpecConversion)
+        if DEBUG:"print Fit to Specfile missing"
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
         if fontd[1]:
@@ -462,7 +619,8 @@ class PyMca(PyMcaMdi.PyMca):
             print "toggleSource called"
         if self.sourceFrame.isHidden():
             self.sourceFrame.show()
-            self.sourceFrame.raiseW()
+            if QTVERSION < '4.0.0': self.sourceFrame.raiseW()
+            else:self.sourceFrame.raise_()
         else:
             self.sourceFrame.hide()
             
@@ -470,7 +628,8 @@ class PyMca(PyMcaMdi.PyMca):
         if self.elementsInfo is None:self.elementsInfo=ElementsInfo.ElementsInfo(None,"Elements Info")
         if self.elementsInfo.isHidden():
            self.elementsInfo.show()
-        self.elementsInfo.raiseW()
+        if QTVERSION < '4.0.0': self.elementsInfo.raiseW()
+        else:self.elementsInfo.raise_()
 
     def __peakIdentifier(self):
         if self.identifier is None:
@@ -479,36 +638,53 @@ class PyMca(PyMcaMdi.PyMca):
             self.identifier.myslot()
         if self.identifier.isHidden():
             self.identifier.show()
-        self.identifier.raiseW()
-        
+        if QTVERSION < '4.0.0': self.identifier.raiseW()
+        else:self.identifier.raise_()
+            
     def __batchFitting(self):
         if self.__batch is None:self.__batch = PyMcaBatch.McaBatchGUI(fl=0,actions=1)
         if self.__batch.isHidden():self.__batch.show()
-        self.__batch.raiseW()
+        if QTVERSION < '4.0.0': self.__batch.raiseW()
+        else: self.__batch.raise_()
 
     def __fit2SpecConversion(self):
         if self.__fit2Spec is None:self.__fit2Spec = Fit2Spec.Fit2SpecGUI(fl=0,actions=1)
         if self.__fit2Spec.isHidden():self.__fit2Spec.show()
-        self.__fit2Spec.raiseW()
+        if QTVERSION < '4.0.0': self.__fit2Spec.raiseW()
+        else:self.__fit2Spec.raise_()
 
     def onOpen(self):
-        self.openMenu.exec_loop(self.cursor().pos())
+        if QTVERSION < '4.0.0':
+            self.openMenu.exec_loop(self.cursor().pos())
+        else:
+            self.openMenu.exec_(self.cursor().pos())
 
     def onSave(self):
         self._saveAs()
 
     def onSaveAs(self):
         cwd = os.getcwd()
-        outfile = qt.QFileDialog(self,"Output File Selection",1)
-        if os.path.exists(self.configDir):
-            outfile.setDir(self.configDir)        
-        outfile.setFilters('PyMca  *.ini')
-        outfile.setMode(outfile.AnyFile)
-        ret = outfile.exec_loop()
+        if QTVERSION < '4.0.0':
+            outfile = qt.QFileDialog(self,"Output File Selection",1)
+            outfile.setFilters('PyMca  *.ini')
+            outfile.setMode(outfile.AnyFile)
+        else:
+            outfile = qt.QFileDialog(self)
+            outfile.setFilter('PyMca  *.ini')
+            outfile.setFileMode(outfile.AnyFile)
+
+        if os.path.exists(self.configDir):cwd =self.configDir 
+        if QTVERSION < '4.0.0': outfile.setDir(cwd)
+        else: outfile.setDirectory(cwd)
+        if QTVERSION < '4.0.0':ret = outfile.exec_loop()
+        else:ret = outfile.exec_()
         if ret:
             filterused = str(outfile.selectedFilter()).split()
             extension = ".ini"
-            outdir=str(outfile.selectedFile())
+            if QTVERSION < '4.0.0':
+                outdir=str(outfile.selectedFile())
+            else:
+                outdir=str(outfile.selectedFiles()[0])
             try:
                 outputDir  = os.path.dirname(outdir)
             except:
@@ -536,7 +712,10 @@ class PyMca(PyMcaMdi.PyMca):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-                msg.exec_loop()
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
                 return
         try:
             self._saveAs(filename)
@@ -545,7 +724,10 @@ class PyMca(PyMcaMdi.PyMca):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error Saving Configuration: %s" % (sys.exc_info()[1]))
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             return
 
     def _saveAs(self, filename=None):
@@ -583,19 +765,28 @@ class PyMca(PyMcaMdi.PyMca):
             finalfile =  os.path.join(directory, filename)
         return finalfile
 
-    def openSource(self,index):
+    def openSource(self,index=0):
         if DEBUG:
             print "index = ",index
-            print "Source to open = ",SOURCESLIST[index]
         if index <= 0:
-            outfile = qt.QFileDialog(self,"Select PyMca Configuration File",1)
-            if os.path.exists(self.configDir):
-                outfile.setDir(self.configDir)        
-            outfile.setFilters('PyMca  *.ini')
-            outfile.setMode(outfile.ExistingFile)
-            ret = outfile.exec_loop()
+            if QTVERSION < '4.0.0':
+                outfile = qt.QFileDialog(self,"Select PyMca Configuration File",1)
+                if os.path.exists(self.configDir):
+                    outfile.setDir(self.configDir)        
+                outfile.setFilters('PyMca  *.ini')
+                outfile.setMode(outfile.ExistingFile)
+                ret = outfile.exec_loop()
+            else:
+                outfile = qt.QFileDialog(self)
+                outfile.setWindowTitle("Select PyMca Configuration File")
+                if os.path.exists(self.configDir):
+                    outfile.setDirectory(self.configDir)        
+                outfile.setFilters(['PyMca  *.ini'])
+                outfile.setFileMode(outfile.ExistingFile)
+                ret = outfile.exec_()
             if ret:
-                filename=str(outfile.selectedFile())
+                if QTVERSION < '4.0.0':filename=str(outfile.selectedFile())
+                else:filename=str(outfile.selectedFiles()[0])
                 outfile.close()
                 del outfile
             else:
@@ -612,7 +803,8 @@ class PyMca(PyMcaMdi.PyMca):
         source = SOURCESLIST[index]
         if self.sourceFrame.isHidden():
             self.sourceFrame.show()
-        self.sourceFrame.raiseW()
+        if QTVERSION < '4.0.0':self.sourceFrame.raiseW()
+        else:self.sourceFrame.raise_()
         self.sourceBrowserTab.showPage(self.sourceWidget[source])
         qt.qApp.processEvents()
         self.sourceWidget[source].openFile()
@@ -620,42 +812,69 @@ class PyMca(PyMcaMdi.PyMca):
     def onMenuHelp(self):
         if self.menuBrowser is None:
             self.menuBrowser= qt.QTextBrowser()
-            self.menuBrowser.setCaption(qt.QString("Main Menu Help"))
+            if QTVERSION < '4.0.0':
+                self.menuBrowser.setCaption(qt.QString("Main Menu Help"))
+            else:
+                self.menuBrowser.setWindowTitle(qt.QString("Main Menu Help"))
             dir=os.path.dirname(PyMcaMdi.__file__)
-            if not os.path.exists(dir+"/HTML"+"/Menu.html"):
+            if not os.path.exists(os.path.join(dir,"HTML","Menu.html")):
                 dir = os.path.dirname(dir)
-            self.menuBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
-            self.menuBrowser.setSource(qt.QString("Menu.html"))
+            if QTVERSION < '4.0.0':
+                self.menuBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
+                self.menuBrowser.setSource(qt.QString("Menu.html"))
+            else:
+                self.menuBrowser.setSearchPaths([os.path.join(dir,"HTML")])
+                self.menuBrowser.setSource(qt.QUrl(qt.QString("Menu.html")))
             self.menuBrowser.show()
         if self.menuBrowser.isHidden():self.menuBrowser.show()
-        self.menuBrowser.raiseW()
+        if QTVERSION < '4.0.0': self.menuBrowser.raiseW()
+        else: self.menuBrowser.raise_()
 
     def onDisplayHowto(self):
         if self.displayBrowser is None:
             self.displayBrowser= qt.QTextBrowser()
-            self.displayBrowser.setCaption(qt.QString("Data Display HOWTO"))
+            if QTVERSION < '4.0.0':
+                self.displayBrowser.setCaption(qt.QString("Data Display HOWTO"))
+            else:
+                self.displayBrowser.setWindowTitle(qt.QString("Data Display HOWTO"))                
             dir=os.path.dirname(PyMcaMdi.__file__)
-            if not os.path.exists(dir+"/HTML"+"/Display-HOWTO.html"):
+            if not os.path.exists(os.path.join(dir,"HTML","Display-HOWTO.html")):
                 dir = os.path.dirname(dir)
-            self.displayBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
-            self.displayBrowser.setSource(qt.QString("Display-HOWTO.html"))
+            if QTVERSION < '4.0.0':
+                self.displayBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
+                self.displayBrowser.setSource(qt.QString("Display-HOWTO.html"))
+            else:
+                self.displayBrowser.setSearchPaths([os.path.join(dir,"HTML")])
+                self.displayBrowser.setSource(qt.QUrl(qt.QString("Display-HOWTO.html")))
             self.displayBrowser.show()
         if self.displayBrowser.isHidden():self.displayBrowser.show()
-        self.displayBrowser.raiseW()
+        if QTVERSION < '4.0.0':self.displayBrowser.raiseW()
+        else:self.displayBrowser.raise_()
     
     def onMcaHowto(self):
         if self.mcaBrowser is None:
             self.mcaBrowser= MyQTextBrowser()
-            self.mcaBrowser.setCaption(qt.QString("MCA HOWTO"))
+            if QTVERSION < '4.0.0':
+                self.mcaBrowser.setCaption(qt.QString("MCA HOWTO"))
+            else:
+                self.mcaBrowser.setWindowTitle(qt.QString("MCA HOWTO"))
             dir=os.path.dirname(PyMcaMdi.__file__)
             if not os.path.exists(dir+"/HTML"+"/MCA-HOWTO.html"):
                 dir = os.path.dirname(dir)
-            self.mcaBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
-            self.mcaBrowser.setSource(qt.QString("MCA-HOWTO.html"))
+            if QTVERSION < '4.0.0':
+                self.mcaBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
+                self.mcaBrowser.setSource(qt.QString("MCA-HOWTO.html"))
+            else:
+                self.mcaBrowser.setSearchPaths([os.path.join(dir,"HTML")])
+                self.mcaBrowser.setSource(qt.QUrl(qt.QString("MCA-HOWTO.html")))
+                #f = open(os.path.join(dir,"HTML","MCA-HOWTO.html"))
+                #self.mcaBrowser.setHtml(f.read())
+                #f.close()
             self.mcaBrowser.show()
         if self.mcaBrowser.isHidden():self.mcaBrowser.show()
-        self.mcaBrowser.raiseW()
-
+        if QTVERSION < '4.0.0':self.mcaBrowser.raiseW()
+        else:self.mcaBrowser.raise_()
+            
     def onAbout(self):
             qt.QMessageBox.about(self, "PyMca",
                     "PyMca Application\nVersion: "+__version__)
@@ -675,11 +894,12 @@ class PyMca(PyMcaMdi.PyMca):
     def onPrint(self):
         if DEBUG:
             print "onPrint called"
-        if self.mcawindow.scanwindow.hasFocus():
-            self.mcawindow.scanwindow.graph.printps() 
+        if self.scanwindow.hasFocus():
+            self.scanwindow.graph.printps() 
         else:
             self.mcawindow.show()
-            self.mcawindow.raiseW()
+            if QTVERSION < '4.0.0':self.mcawindow.raiseW()
+            else:self.mcawindow.raise_()
             self.mcawindow.graph.printps()    
 
     def __McaWindowSignal(self,dict):
@@ -775,19 +995,25 @@ class Line(qt.QFrame):
     def mouseDoubleClickEvent(self,event):
         if DEBUG:
             print "Double Click Event"
-        dict={}
-        dict['event']="DoubleClick"
-        dict['data'] = event
-        self.emit(qt.PYSIGNAL("LineDoubleClickEvent"),(dict,))
+        ddict={}
+        ddict['event']="DoubleClick"
+        ddict['data'] = event
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"),(ddict,))
+        else:
+            self.emit(qt.SIGNAL("LineDoubleClickEvent"),(ddict))
 
 class PixmapLabel(qt.QLabel):
     def mousePressEvent(self,event):
         if DEBUG:
             print "Mouse Press Event"
-        dict={}
-        dict['event']="MousePress"
-        dict['data'] = event
-        self.emit(qt.PYSIGNAL("PixmapLabelMousePressEvent"),(dict,))
+        ddict={}
+        ddict['event']="MousePress"
+        ddict['data'] = event
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("PixmapLabelMousePressEvent"),(ddict,))
+        else:
+            self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"),(ddict))
 
 if __name__ == '__main__':
     options     = '-f'
@@ -816,11 +1042,17 @@ if __name__ == '__main__':
     #demo = McaWindow.McaWidget(**kw)
     demo = PyMca(**kw)
     if debugreport:demo.onDebug()
-    app.setMainWidget(demo)
-    demo.show()
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                             app,qt.SLOT("quit()"))
-    # --- close waiting widget
-    splash.close()
-    app.exec_loop()
+    if QTVERSION < '4.0.0':
+        app.setMainWidget(demo)
+        demo.show()
+        # --- close waiting widget
+        splash.close()
+        app.exec_loop()
+    else:
+        demo.show()
+        # --- close waiting widget
+        splash.close()
+        app.exec_()
 

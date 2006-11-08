@@ -32,11 +32,14 @@
 # WARNING! All changes made in this file will be lost!
 __revision__ = "$Revision: 1.15 $"
 import sys
-try:
-    from PyQt4.Qt import *
-    if qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-except:
+if 'qt' not in sys.modules:
+    try:
+        from PyQt4.Qt import *
+        if qVersion() < '4.0.0':
+            print "WARNING: Using Qt %s version" % qt.qVersion()
+    except:
+        from qt import *
+else:
     from qt import *
 #from qttable import QTable
 #import AttenuatorsTable

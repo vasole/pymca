@@ -32,44 +32,44 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from qt import *
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
 
-def uic_load_pixmap_EntryField(name):
-    pix = QPixmap()
-    m = QMimeSourceFactory.defaultFactory().data(name)
+QTVERSION = qt.qVersion()
 
-    if m:
-        QImageDrag.decode(m,pix)
+def uic_load_pixmap_FitActionsGUI(name):
+    pix = qt.QPixmap()
+    if QTVERSION < '4.0.0':
+        m = qt.QMimeSourceFactory.defaultFactory().data(name)
+
+        if m:
+            qt.QImageDrag.decode(m,pix)
 
     return pix
 
-
-class EntryField(QWidget):
+class EntryField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
 
-        if name == None:
-            self.setName("EntryField")
+            if name == None:
+                self.setName("EntryField")
 
-        #self.resize(317,65)
-        #self.setSizePolicy(QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
-        self.setCaption(str("EntryField"))
+            self.setCaption(str("EntryField"))
+        else:
+            qt.QWidget.__init__(self,parent)
 
-        #EntryFieldLayout = QVBoxLayout(self,11,6,"EntryFieldLayout")
-        #spacer = QSpacerItem(20,20,QSizePolicy.Minimum,QSizePolicy.Expanding)
-        #EntryFieldLayout.addItem(spacer)
-
-        Layout1 = QHBoxLayout(self)
-        Layout1.setAutoAdd(1)
-
-        self.TextLabel = QLabel(self,"TextLabel")
-        #self.TextLabel.setSizePolicy(QSizePolicy(1,1,0,0,self.TextLabel.sizePolicy().hasHeightForWidth()))
+        Layout1 = qt.QHBoxLayout(self)
+        
+        self.TextLabel = qt.QLabel(self)
         self.TextLabel.setText(str("TextLabel"))
-        #Layout1.addWidget(self.TextLabel)
-
-        self.Entry = QLineEdit(self,"Entry")
-        #self.Entry.setSizePolicy(QSizePolicy(7,1,0,0,self.Entry.sizePolicy().hasHeightForWidth()))
-        #Layout1.addWidget(self.Entry)
-        #EntryFieldLayout.addLayout(Layout1)
-        #spacer_2 = QSpacerItem(20,20,QSizePolicy.Minimum,QSizePolicy.Expanding)
-        #EntryFieldLayout.addItem(spacer_2)
+        
+        self.Entry = qt.QLineEdit(self)
+        Layout1.addWidget(self.TextLabel)
+        Layout1.addWidget(self.Entry)

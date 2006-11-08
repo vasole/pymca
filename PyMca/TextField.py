@@ -32,39 +32,66 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from qt import *
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
 
-def uic_load_pixmap_TextField(name):
-    pix = QPixmap()
-    m = QMimeSourceFactory.defaultFactory().data(name)
+QTVERSION = qt.qVersion()
+DEBUG = 0
 
-    if m:
-        QImageDrag.decode(m,pix)
+def uic_load_pixmap_FitActionsGUI(name):
+    pix = qt.QPixmap()
+    if QTVERSION < '4.0.0':
+        m = qt.QMimeSourceFactory.defaultFactory().data(name)
+
+        if m:
+            qt.QImageDrag.decode(m,pix)
 
     return pix
 
-
-class TextField(QWidget):
+class TextField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
 
-        if name == None:
-            self.setName("TextField")
+            if name == None:
+                self.setName("TextField")
 
+            self.setCaption(str("TextField"))
+        else:
+            qt.QWidget.__init__(self,parent)
         self.resize(373,44)
-        self.setSizePolicy(QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
-        self.setCaption(str("TextField"))
+        try:
+            self.setSizePolicy(qt.QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
+        except:
+            if DEBUG:print "TextField Bad Size policy"
 
-        TextFieldLayout = QHBoxLayout(self,11,6,"TextFieldLayout")
-
-        Layout2 = QHBoxLayout(None,0,6,"Layout2")
-        spacer = QSpacerItem(20,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        if QTVERSION < '4.0.0':
+            TextFieldLayout = qt.QHBoxLayout(self,11,6,"TextFieldLayout")
+            Layout2 = qt.QHBoxLayout(None,0,6,"Layout2")
+        else:
+            TextFieldLayout = qt.QHBoxLayout(self)
+            Layout2 = qt.QHBoxLayout(None)
+            Layout2.setMargin(0)
+            Layout2.setSpacing(6)
+        spacer = qt.QSpacerItem(20,20,
+                                qt.QSizePolicy.Expanding,qt.QSizePolicy.Minimum)
         Layout2.addItem(spacer)
 
-        self.TextLabel = QLabel(self,"TextLabel")
-        self.TextLabel.setSizePolicy(QSizePolicy(7,1,0,0,self.TextLabel.sizePolicy().hasHeightForWidth()))
+        self.TextLabel = qt.QLabel(self)
+        try:
+            self.TextLabel.setSizePolicy(qt.QSizePolicy(7,1,0,0,self.TextLabel.sizePolicy().hasHeightForWidth()))
+        except:
+            if DEBUG:print "TextField Bad Size policy"
+            
         self.TextLabel.setText(str("TextLabel"))
         Layout2.addWidget(self.TextLabel)
-        spacer_2 = QSpacerItem(20,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacer_2 = qt.QSpacerItem(20,20,
+                                  qt.QSizePolicy.Expanding,qt.QSizePolicy.Minimum)
         Layout2.addItem(spacer_2)
         TextFieldLayout.addLayout(Layout2)

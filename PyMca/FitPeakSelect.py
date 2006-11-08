@@ -24,14 +24,8 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-    qt.PYSIGNAL = qt.SIGNAL
-except:
-    import qt
 import types
+from EnergyTable import qt
 from QPeriodicTable import QPeriodicTable
 #from QPeriodicTable import ElementList
 import EnergyTable
@@ -222,12 +216,20 @@ class FitPeakSelect(qt.QWidget):
         self.peaks = PeakButtonList(self)
         self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
 
-        self.connect(self.energyTable, qt.PYSIGNAL("EnergyTableSignal"),
-                     self._energyTableAction)
-        self.connect(self.table, qt.PYSIGNAL("elementClicked"),
-                     self.elementClicked)
-        self.connect(self.peaks, qt.PYSIGNAL("selectionChanged"),
-                     self.peakSelectionChanged)
+        if qt.qVersion() < '4.0.0':
+            self.connect(self.energyTable, qt.PYSIGNAL("EnergyTableSignal"),
+                         self._energyTableAction)
+            self.connect(self.table, qt.PYSIGNAL("elementClicked"),
+                         self.elementClicked)
+            self.connect(self.peaks, qt.PYSIGNAL("selectionChanged"),
+                         self.peakSelectionChanged)
+        else:
+            self.connect(self.energyTable, qt.SIGNAL("EnergyTableSignal"),
+                         self._energyTableAction)
+            self.connect(self.table, qt.SIGNAL("elementClicked"),
+                         self.elementClicked)
+            self.connect(self.peaks, qt.SIGNAL("selectionChanged"),
+                         self.peakSelectionChanged)
 
         layout.addWidget(self.table)
         layout.addWidget(line)

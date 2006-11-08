@@ -25,21 +25,29 @@
 # is a problem to you.
 #############################################################################*/
 import sys
-from qt import *
-import TextField
-#import RadioField
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+QTVERSION = qt.qVersion()
 import CheckField
 import EntryField
+import TextField
+#import RadioField
+
 import TabSheets
 
 TupleType=type(())
 
 def uic_load_pixmap_RadioField(name):
-    pix = QPixmap()
-    m = QMimeSourceFactory.defaultFactory().data(name)
+    pix = qt.QPixmap()
+    m = qt.QMimeSourceFactory.defaultFactory().data(name)
 
     if m:
-        QImageDrag.decode(m,pix)
+        qt.QImageDrag.decode(m,pix)
 
     return pix
 
@@ -48,17 +56,32 @@ class QScriptOption(TabSheets.TabSheets):
                 sheets=(),default=None,nohelp=1,nodefaults=1):
         TabSheets.TabSheets.__init__(self,parent,name,modal,fl,
                                     nohelp,nodefaults)
-        if name is not None:
-            self.setCaption(str(name))
+        if QTVERSION < '4.0.0':
+            if name is not None:self.setCaption(str(name))
+        else:
+            if name is not None:self.setWindowTitle(str(name))
         self.sheets={}
         self.sheetslist=[]
         self.default=default
         self.output={}
         self.output.update(self.default)
-        if qVersion() >= '3.0.0':
+        if QTVERSION >= '3.0.0':
             ntabs=self.tabWidget.count()
         else:
             ntabs = 2
+
+        #remove anything not having to do with my sheets
+        for i in range(ntabs):
+            if QTVERSION < '4.0.0':
+                if QTVERSION >= '3.0.0':
+                    page=self.tabWidget.page(0)
+                    self.tabWidget.removePage(page)
+                else:
+                    self.tabWidget.setCurrentPage(i)
+                    self.tabWidget.removePage(self.tabWidget.currentPage())
+            else:
+                self.tabWidget.setCurrentIndex(0)
+                self.tabWidget.removeTab(self.tabWidget.currentIndex())            
 
         for sheet in sheets:
             name=sheet['notetitle']
@@ -67,23 +90,21 @@ class QScriptOption(TabSheets.TabSheets):
             a.setdefaults(self.default)
             self.sheetslist.append(name)
             self.tabWidget.addTab(self.sheets[name],str(name))
-            self.tabWidget.showPage(self.sheets[name])
-        #remove anything not having to do with my sheets
-        for i in range(ntabs):
-            if qVersion() >= '3.0.0':
-                page=self.tabWidget.page(0)
-                self.tabWidget.removePage(page)
+            if QTVERSION < '4.0.0':
+                self.tabWidget.showPage(self.sheets[name])
             else:
-                self.tabWidget.setCurrentPage(i)
-                self.tabWidget.removePage(self.tabWidget.currentPage())
-            
+                if QTVERSION < '4.2.0':
+                    i = self.tabWidget.indexOf(self.sheets[name])
+                    self.tabWidget.setCurrentIndex(i)
+                else:
+                    self.tabWidget.setCurrentWidget(self.sheets[name])
         #perform the binding to the buttons
-        self.connect(self.buttonOk,SIGNAL("clicked()"),self.myaccept)
-        self.connect(self.buttonCancel,SIGNAL("clicked()"),self.myreject)
+        self.connect(self.buttonOk,qt.SIGNAL("clicked()"),self.myaccept)
+        self.connect(self.buttonCancel,qt.SIGNAL("clicked()"),self.myreject)
         if not nodefaults:
-            self.connect(self.buttonDefaults,SIGNAL("clicked()"),self.defaults)
+            self.connect(self.buttonDefaults,qt.SIGNAL("clicked()"),self.defaults)
         if not nohelp:
-            self.connect(self.buttonHelp,SIGNAL("clicked()"),self.myhelp)
+            self.connect(self.buttonHelp,qt.SIGNAL("clicked()"),self.myhelp)
         
         
     def myaccept(self):
@@ -114,11 +135,16 @@ class QScriptOption(TabSheets.TabSheets):
         print "Cancel  - Sets back to the initial parameters and quits" 
         print "OK      - Updates the parameters and quits" 
         
-class FieldSheet(QWidget):
+class FieldSheet(qt.QWidget):
     def __init__(self,parent = None,name=None,fl = 0,fields=()):
-        QWidget.__init__(self,parent,name,fl)
-        layout= QVBoxLayout(self)
-        layout.setAutoAdd(1)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
+        else:
+            qt.QWidget.__init__(self,parent)
+        layout= qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
+        
         #self.fields = ([,,,])
         self.fields=[]
         self.nbfield= 1
@@ -130,13 +156,21 @@ class FieldSheet(QWidget):
                 key = None
             parameters=field[-1]
             if fieldtype == "TextField":
-                self.fields.append(MyTextField(self,keys=key,params=parameters))
+                myTextField = MyTextField(self,keys=key,params=parameters)
+                self.fields.append(myTextField)
+                layout.addWidget(myTextField)
             if fieldtype == "CheckField":
-                self.fields.append(MyCheckField(self,keys=key,params=parameters))
+                myCheckField = MyCheckField(self,keys=key,params=parameters)
+                self.fields.append(myCheckField)
+                layout.addWidget(myCheckField)
             if fieldtype == "EntryField":
-                self.fields.append(MyEntryField(self,keys=key,params=parameters))
+                myEntryField = MyEntryField(self,keys=key,params=parameters)
+                self.fields.append(myEntryField)
+                layout.addWidget(myEntryField)
             if fieldtype == "RadioField":
-                self.fields.append(RadioField(self,keys=key,params=parameters))
+                radioField = RadioField(self,keys=key,params=parameters)
+                self.fields.append(radioField)
+                layout.addWidget(radioField)
             
     def get(self):
         result={}
@@ -178,7 +212,7 @@ class MyEntryField(EntryField.EntryField):
         else:
             self.dict[keys]=None
         self.TextLabel.setText(str(params))
-        self.connect(self.Entry,SIGNAL("textChanged(const QString&)"),self.setvalue)
+        self.connect(self.Entry,qt.SIGNAL("textChanged(const QString&)"),self.setvalue)
                  
     def getvalue(self):
         return self.dict
@@ -208,7 +242,7 @@ class MyCheckField(CheckField.CheckField):
         else:
             self.dict[keys]=None
         self.CheckBox.setText(str(params))
-        self.connect(self.CheckBox,SIGNAL("stateChanged(int)"),self.setvalue)
+        self.connect(self.CheckBox,qt.SIGNAL("stateChanged(int)"),self.setvalue)
                  
     def getvalue(self):
         return self.dict
@@ -233,29 +267,36 @@ class MyCheckField(CheckField.CheckField):
                     self.dict[key]=0 
         return
 
-class RadioField(QWidget):
+class RadioField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0,
                             keys=(), params = ()):
-            QWidget.__init__(self,parent,name,fl)
+            if QTVERSION < '4.0.0':
+                qt.QWidget.__init__(self,parent,name,fl)
+    
+                if name == None:
+                    self.setName("RadioField")
 
-            if name == None:
-                self.setName("RadioField")
+                #self.resize(166,607)
+                self.setSizePolicy(qt.QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
+                self.setCaption(str("RadioField"))
+                RadioFieldLayout = qt.QHBoxLayout(self,11,6,"RadioFieldLayout")
+            else:
+                qt.QWidget.__init__(self,parent)
+                RadioFieldLayout = qt.QHBoxLayout(self)
+                RadioFieldLayout.setMargin(11)
+                RadioFieldLayout.setSpacing(6)
 
-            #self.resize(166,607)
-            self.setSizePolicy(QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
-            self.setCaption(str("RadioField"))
 
-            RadioFieldLayout = QHBoxLayout(self,11,6,"RadioFieldLayout")
-
-            self.RadioFieldBox = QButtonGroup(self,"RadioFieldBox")
-            self.RadioFieldBox.setSizePolicy(QSizePolicy(1,1,0,0,self.RadioFieldBox.sizePolicy().hasHeightForWidth()))
+            self.RadioFieldBox = qt.QButtonGroup(self)
+            if QTVERSION < '4.0.0':
+                self.RadioFieldBox.setSizePolicy(qt.QSizePolicy(1,1,0,0,self.RadioFieldBox.sizePolicy().hasHeightForWidth()))
             self.RadioFieldBox.setTitle(str(""))
-            self.RadioFieldBox.setColumnLayout(0,Qt.Vertical)
+            self.RadioFieldBox.setColumnLayout(0,qt.Qt.Vertical)
             self.RadioFieldBox.layout().setSpacing(6)
             self.RadioFieldBox.layout().setMargin(11)
-            RadioFieldBoxLayout = QVBoxLayout(self.RadioFieldBox.layout())
-            RadioFieldBoxLayout.setAlignment(Qt.AlignTop)
-            Layout1 = QVBoxLayout(None,0,6,"Layout1")
+            RadioFieldBoxLayout = qt.QVBoxLayout(self.RadioFieldBox.layout())
+            RadioFieldBoxLayout.setAlignment(qt.Qt.AlignTop)
+            Layout1 = qt.QVBoxLayout(None,0,6,"Layout1")
             
             self.dict={}
             if type(keys) == TupleType:
@@ -266,9 +307,9 @@ class RadioField(QWidget):
             self.RadioButton=[]
             i=0
             for text in params:
-                self.RadioButton.append(QRadioButton(self.RadioFieldBox,
+                self.RadioButton.append(qt.QRadioButton(self.RadioFieldBox,
                                                         "RadioButton"+`i`))
-                self.RadioButton[-1].setSizePolicy(QSizePolicy(1,1,0,0,
+                self.RadioButton[-1].setSizePolicy(qt.QSizePolicy(1,1,0,0,
                                 self.RadioButton[-1].sizePolicy().hasHeightForWidth()))
                 self.RadioButton[-1].setText(str(text))
                 Layout1.addWidget(self.RadioButton[-1])
@@ -277,7 +318,7 @@ class RadioField(QWidget):
             RadioFieldBoxLayout.addLayout(Layout1)
             RadioFieldLayout.addWidget(self.RadioFieldBox)
             self.RadioButton[0].setChecked(1)
-            self.connect(self.RadioFieldBox,SIGNAL("clicked(int)"),
+            self.connect(self.RadioFieldBox,qt.SIGNAL("clicked(int)"),
                                 self.setvalue)
                  
     def getvalue(self):
@@ -301,8 +342,9 @@ class RadioField(QWidget):
         return
 
 def test():
-    a = QApplication(sys.argv)
-    QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"))
+    a = qt.QApplication(sys.argv)
+    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),
+                       a,qt.SLOT("quit()"))
     #w = FieldSheet(fields=(["TextField",'Simple Entry'],
     #                       ["EntryField",'entry','MyLabel'],
     #                       ["CheckField",'label','Check Label'],
@@ -316,9 +358,13 @@ def test():
                            ["RadioField",'radio',('Button1','hmmm','3')])}
     w=QScriptOption(name='QScriptOptions',sheets=(sheet1,sheet2),
                             default={'radio':1,'entry':'type here','label':1})
-    a.setMainWidget(w)
-    w.show()
-    a.exec_loop()
+    if QTVERSION < '4.0.0':
+        a.setMainWidget(w)
+        w.show()
+        a.exec_loop()
+    else:
+        w.show()
+        a.exec_()
     print w.output
     
 if __name__ == "__main__":

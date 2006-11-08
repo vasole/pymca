@@ -24,16 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.7 $"
-try:
-    import PyQt4.Qt as qt
-    if qt.qVersion() < '4.0.0':
-        print "WARNING: Using Qt %s version" % qt.qVersion()
-    qt.PYSIGNAL = qt.SIGNAL
-except:
-    import qt
-import MatrixImage
+__revision__ = "$Revision: 1.8 $"
+from MaterialEditor import qt
 import MaterialEditor
+import MatrixImage
 
 
 class MatrixEditor(qt.QWidget):
@@ -169,16 +163,30 @@ class MatrixEditor(qt.QWidget):
             rowoffset=4
         else:
             self.__thicknessLine  = None
-        self.connect(self.__angle1Line,qt.PYSIGNAL('MyQLineEditSignal'),
-                     self.__angle1Slot)
-        self.connect(self.__angle2Line, qt.PYSIGNAL('MyQLineEditSignal'),
-                     self.__angle2Slot)
-        if self.__densityLine is not None:
-            self.connect(self.__densityLine, qt.PYSIGNAL('MyQLineEditSignal'),
-                     self.__densitySlot)
-        if self.__thicknessLine is not None:
-            self.connect(self.__thicknessLine,qt.PYSIGNAL('MyQLineEditSignal'),
-                     self.__thicknessSlot)
+
+        if qt.qVersion() < '4.0.0':
+            self.connect(self.__angle1Line,qt.PYSIGNAL('MyQLineEditSignal'),
+                         self.__angle1Slot)
+            self.connect(self.__angle2Line, qt.PYSIGNAL('MyQLineEditSignal'),
+                         self.__angle2Slot)
+            if self.__densityLine is not None:
+                self.connect(self.__densityLine, qt.PYSIGNAL('MyQLineEditSignal'),
+                         self.__densitySlot)
+            if self.__thicknessLine is not None:
+                self.connect(self.__thicknessLine,qt.PYSIGNAL('MyQLineEditSignal'),
+                         self.__thicknessSlot)
+        else:
+            self.connect(self.__angle1Line,qt.SIGNAL('MyQLineEditSignal'),
+                         self.__angle1Slot)
+            self.connect(self.__angle2Line, qt.SIGNAL('MyQLineEditSignal'),
+                         self.__angle2Slot)
+            if self.__densityLine is not None:
+                self.connect(self.__densityLine, qt.SIGNAL('MyQLineEditSignal'),
+                         self.__densitySlot)
+            if self.__thicknessLine is not None:
+                self.connect(self.__thicknessLine,qt.SIGNAL('MyQLineEditSignal'),
+                         self.__thicknessSlot)
+
         if orientation == "vertical":
             sampleBoxLayout.addWidget(VerticalSpacer(sampleBox))
     

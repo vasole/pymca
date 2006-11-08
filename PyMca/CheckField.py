@@ -32,30 +32,49 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from qt import *
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
 
-def uic_load_pixmap_CheckField(name):
-    pix = QPixmap()
-    m = QMimeSourceFactory.defaultFactory().data(name)
+QTVERSION = qt.qVersion()
 
-    if m:
-        QImageDrag.decode(m,pix)
+def uic_load_pixmap_FitActionsGUI(name):
+    pix = qt.QPixmap()
+    if QTVERSION < '4.0.0':
+        m = qt.QMimeSourceFactory.defaultFactory().data(name)
+
+        if m:
+            qt.QImageDrag.decode(m,pix)
 
     return pix
 
-
-class CheckField(QWidget):
+class CheckField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
 
-        if name == None:
-            self.setName("CheckField")
+            if name == None:
+                self.setName("CheckField")
 
+            self.setCaption(str("CheckField"))
+        else:
+            qt.QWidget.__init__(self,parent)
         self.resize(321,45)
-        self.setCaption(str("CheckField"))
 
-        CheckFieldLayout = QHBoxLayout(self,11,6,"CheckFieldLayout")
 
-        self.CheckBox = QCheckBox(self,"CheckBox")
+        if QTVERSION < '4.0.0':
+            CheckFieldLayout = qt.QHBoxLayout(self,11,6,"CheckFieldLayout")
+        else:
+            CheckFieldLayout = qt.QHBoxLayout(self)
+            CheckFieldLayout.setMargin(11)
+            CheckFieldLayout.setSpacing(6)
+
+
+        self.CheckBox = qt.QCheckBox(self)
         self.CheckBox.setText(str("CheckBox"))
         CheckFieldLayout.addWidget(self.CheckBox)
