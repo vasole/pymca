@@ -331,6 +331,10 @@ class McaWidget(qt.QWidget):
 
 
     def setDispatcher(self, w):
+        """
+        OBSOLETE: Prefer to make the connections at the parent level 
+        even better replace the connections by direct calls from the parent.
+        """
         if QTVERSION < '4.0.0':
             self.connect(w, qt.PYSIGNAL("addSelection"),
                              self._addSelection)
@@ -614,9 +618,6 @@ class McaWidget(qt.QWidget):
         else:
             info,x,y = self.getinfodatafromlegend(legend)
             curveinfo = self.graph.getcurveinfo(legend)
-            print curveinfo.keys()
-            print info.keys()
-            
             if self.calibration == 'None':
                 xmin,xmax =self.graph.getx1axislimits()
                 if curveinfo.has_key('McaCalibSource'):
@@ -1400,18 +1401,12 @@ class McaWidget(qt.QWidget):
             #WARNING this is to be called just from the graph!"
             #get selection from legend
             legend = dict['legend']
-            if dict.has_key('sel'):
-                sel = dict['sel']
-            else:
-                sel = self.getselfromlegend(legend)
-            if sel == {}:
-                print "Empty selection?????"
-                return
-            if DEBUG:
-                print "calling to remove sel = ",sel
-            self.inputdict[sel['SourceType']]['widget'].removeSelection([sel])
+            self.graph.delcurve(legend)
+            if self.dataObjectsDict.has_key(legend):
+                del self.dataObjectsDict[legend]
             self.graph.replot()
-            self.scanwindow.graph.replot()
+            #I should generate an event to allow the controller
+            #to eventually inform other widgets
         else:
             if DEBUG:
                 print "Unhandled event ",   dict['event']   
@@ -1618,7 +1613,7 @@ class McaWidget(qt.QWidget):
             print "OLD getselfromlegend = ",self.OLDgetselfromlegend(legend)
             print "complete             = ",self.graph.getcurveinfo(legend)
             print "NEW getselfromlegend = ",self.graph.getcurveinfo(legend)['sel']
-        return self.graph.getcurveinfo(legend)['sel']
+        return self.graph.getcurveinfo(legend)
 
     
     def getinfodatafromlegend(self,legend,full=0):

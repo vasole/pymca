@@ -165,11 +165,12 @@ class PyMca(PyMcaMdi.PyMca):
                              self.sourceWidget.sourceSelector._openFileSlot)
                 self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
-
             self.mcawindow = McaWindow.McaWidget(self.mdi)
-            self.mcawindow.setDispatcher(self.sourceWidget)
             self.scanwindow = ScanWindow.ScanWindow(self.mdi)
             self.scanwindow.setDispatcher(self.sourceWidget)
+            self.connectDispatcher(self.mcawindow, self.sourceWidget)
+            self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                                   
             if QTVERSION < '4.0.0':
                 pass
             else:
@@ -200,6 +201,25 @@ class PyMca(PyMcaMdi.PyMca):
                     currentConfigDict.read(defaultFileName)
                     self.setConfig(currentConfigDict)
 
+    def connectDispatcher(self, viewer, dispatcher = None):
+        #I could connect sourceWidget to myself and then
+        #pass the selections to the active window!!
+        #That will be made in a next iteration I guess
+        if dispatcher is None: dispatcher = self.sourceWidget
+        if QTVERSION < '4.0.0':
+            self.connect(dispatcher, qt.PYSIGNAL("addSelection"),
+                             viewer._addSelection)
+            self.connect(dispatcher, qt.PYSIGNAL("removeSelection"),
+                             viewer._removeSelection)
+            self.connect(dispatcher, qt.PYSIGNAL("replaceSelection"),
+                             viewer._replaceSelection)
+        else:
+            self.connect(dispatcher, qt.SIGNAL("addSelection"),
+                             viewer._addSelection)
+            self.connect(dispatcher, qt.SIGNAL("removeSelection"),
+                             viewer._removeSelection)
+            self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
+                             viewer._replaceSelection)
                 
     def setConfig(self, configDict):
         if configDict.has_key('PyMca'):    self.__configurePyMca(configDict['PyMca'])
