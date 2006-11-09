@@ -1965,22 +1965,44 @@ class QtBlissGraph(qwt.QwtPlot):
     def removemarker(self,marker):
         print "Deprecation warning: use removeMarker instead"
         return self.removeMarker(marker)
-        
-    def printps(self):
-        printer = qt.QPrinter()
-        if printer.setup(self):
-            painter = qt.QPainter()
-            if not(painter.begin(printer)):
-                return 0
-            metrics = qt.QPaintDeviceMetrics(printer)
-            dpiy    = metrics.logicalDpiY()
-            margin  = int((2/2.54) * dpiy) #2cm margin
-            body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
-            fil  = qwt.QwtPlotPrintFilter()
-            fil.setOptions(fil.PrintAll)
-            fil.apply(self)
-            self.printPlot(painter,body)
-            painter.end()
+
+    if QTVERSION < '4.0.0':
+        def printps(self):
+            printer = qt.QPrinter()
+            if printer.setup(self):
+                painter = qt.QPainter()
+                if not(painter.begin(printer)):
+                    return 0
+                metrics = qt.QPaintDeviceMetrics(printer)
+                dpiy    = metrics.logicalDpiY()
+                margin  = int((2/2.54) * dpiy) #2cm margin
+                body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
+                fil  = qwt.QwtPlotPrintFilter()
+                fil.setOptions(fil.PrintAll)
+                fil.apply(self)
+                self.printPlot(painter,body)
+                painter.end()
+    else:
+        def printps(self):
+            printer = qt.QPrinter()
+            printDialog = qt.QPrintDialog(printer, self)
+            if printDialog.exec_():
+                try:
+                    painter = qt.QPainter()
+                    if not(painter.begin(printer)):
+                        return 0
+                    dpiy    = printer.logicalDpiY()
+                    margin  = int((2/2.54) * dpiy) #2cm margin
+                    body = qt.QRect(0.5*margin,
+                                    margin,
+                                    printer.width()- 1 * margin,
+                                    printer.height() - 2 * margin)
+                    fil  = qwt.QwtPlotPrintFilter()
+                    fil.setOptions(fil.PrintAll)
+                    fil.apply(self)
+                    self.print_(painter,body)
+                finally:
+                    painter.end()
         
 class Qwt5PlotImage(qwt.QwtPlotItem):
     def __init__(self, parent, palette=None):

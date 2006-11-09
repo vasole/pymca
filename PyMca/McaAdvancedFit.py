@@ -1237,49 +1237,61 @@ class McaAdvancedFit(qt.QWidget):
         h+="</CENTER>"
         return h
 
-        
-    def __print(self,text):
-        printer = qt.QPrinter()
-        if printer.setup(self):
-            painter = qt.QPainter()
-            if not(painter.begin(printer)):
-                return 0
-            metrics = qt.QPaintDeviceMetrics(printer)
-            dpiy    = metrics.logicalDpiY()
-            margin  = int((2/2.54) * dpiy) #2cm margin
-            body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
-            #html output -> print text
-            richtext = qt.QSimpleRichText(text, qt.QFont(),
-                                                qt.QString(""),
-                                                #0,
-                                                qt.QStyleSheet.defaultSheet(),
-                                                qt.QMimeSourceFactory.defaultFactory(),
-                                                body.height())
-            view = qt.QRect(body)
-            richtext.setWidth(painter,view.width())
-            page = 1                
-            while(1):
-                if qt.qVersion() < '3.0.0':
-                    richtext.draw(painter,body.left(),body.top(),
-                                qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
-                                qt.QColorGroup())
-                    #richtext.draw(painter,body.left(),body.top(),
-                    #            qt.QRegion(view),
-                    #            qt.QColorGroup())
-                else:
-                    richtext.draw(painter,body.left(),body.top(),
-                                view,qt.QColorGroup())
-                view.moveBy(0, body.height())
-                painter.translate(0, -body.height())
-                painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
-                                 view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
-                if view.top() >= richtext.height():
-                    break
-                printer.newPage()
-                page += 1
 
-            #painter.flush()
-            painter.end()
+    if QTVERSION < '4.0.0':
+        def __print(self,text):
+            printer = qt.QPrinter()
+            if printer.setup(self):
+                painter = qt.QPainter()
+                if not(painter.begin(printer)):
+                    return 0
+                metrics = qt.QPaintDeviceMetrics(printer)
+                dpiy    = metrics.logicalDpiY()
+                margin  = int((2/2.54) * dpiy) #2cm margin
+                body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
+                #html output -> print text
+                richtext = qt.QSimpleRichText(text, qt.QFont(),
+                                                    qt.QString(""),
+                                                    #0,
+                                                    qt.QStyleSheet.defaultSheet(),
+                                                    qt.QMimeSourceFactory.defaultFactory(),
+                                                    body.height())
+                view = qt.QRect(body)
+                richtext.setWidth(painter,view.width())
+                page = 1                
+                while(1):
+                    if qt.qVersion() < '3.0.0':
+                        richtext.draw(painter,body.left(),body.top(),
+                                    qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
+                                    qt.QColorGroup())
+                        #richtext.draw(painter,body.left(),body.top(),
+                        #            qt.QRegion(view),
+                        #            qt.QColorGroup())
+                    else:
+                        richtext.draw(painter,body.left(),body.top(),
+                                    view,qt.QColorGroup())
+                    view.moveBy(0, body.height())
+                    painter.translate(0, -body.height())
+                    painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
+                                     view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
+                    if view.top() >= richtext.height():
+                        break
+                    printer.newPage()
+                    page += 1
+
+                #painter.flush()
+                painter.end()
+    else:
+        def __print(self,text):
+            printer = qt.QPrinter()
+            printDialog = qt.QPrintDialog(printer, self)
+            if printDialog.exec_():
+                editor = qt.QTextEdit()
+                cursor = editor.textCursor()
+                cursor.movePosition(qt.QTextCursor.Start)
+                editor.insertHtml(text)
+                document = editor.document()
+                document.print_(printer)
 
     def setdata(self,*var,**kw):
         self.__fitdone = 0

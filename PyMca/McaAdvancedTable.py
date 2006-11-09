@@ -34,15 +34,16 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
-if qt.qVersion() < '3.0.0':
+QTVERSION = qt.qVersion()
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+elif QTVERSION < '4.0.0':
     import qttable
 import string
 
 DEBUG=0
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -67,7 +68,7 @@ class McaTable(QTable):
             self.labels=['Element','Group','Fit Area','Sigma','Energy','Ratio','FWHM','Chi square']
         self.setColumnCount(len(self.labels))
 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             i=0        
             for label in self.labels:
                 qt.QHeader.setLabel(self.horizontalHeader(),i,label)
@@ -84,7 +85,7 @@ class McaTable(QTable):
                 
         self.regionlist=[]
         self.regiondict={}
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.verticalHeader().setClickEnabled(1)
         else:
             if DEBUG:
@@ -264,26 +265,44 @@ class McaTable(QTable):
                 except:
                     dict[label] = str(self.text(row,col))
                 col +=1
-        self.emit(qt.PYSIGNAL('McaTableSignal'),(dict,))
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaTableSignal'),(dict,))
+        else:
+            self.emit(qt.SIGNAL('McaTableSignal'), dict)
 
     def gettext(self):
         lemon=string.upper("#%x%x%x" % (255,250,205))
-        if qt.qVersion() < '3.0.0':
-            hcolor = string.upper("#%x%x%x" % (230,240,249))
+        if QTVERSION < '4.0.0':
+            if QTVERSION < '3.0.0':
+                hcolor = string.upper("#%x%x%x" % (230,240,249))
+            else:
+                hb = self.horizontalHeader().paletteBackgroundColor()
+                hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
         else:
-            hb = self.horizontalHeader().paletteBackgroundColor()
-            hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
+            if DEBUG:print "color background to implement"
+            hcolor = string.upper("#%x%x%x" % (230,240,249))
         text=""
         text+=("<nobr>")
         text+=( "<table>")
         text+=( "<tr>")
-        for l in range(self.numCols()):
+        if QTVERSION < '4.0.0':
+            ncols = self.numCols()
+        else:
+            ncols = self.columnCount()
+        for l in range(ncols):
             text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
-            text+=(str(self.horizontalHeader().label(l)))
+            if QTVERSION < '4.0.0':
+                text+=(str(self.horizontalHeader().label(l)))
+            else:
+                text+=(str(self.horizontalHeaderItem(l).text()))
             text+=("</b></td>")
         text+=("</tr>")
         #text+=( str(qt.QString("</br>"))
-        for r in range(self.rowCount()):
+        if QTVERSION < '4.0.0':
+            nrows = self.numRows()
+        else:
+            nrows = self.rowCount()
+        for r in range(nrows):
             text+=("<tr>")
             if len(str(self.text(r,0))):
                 color = "white"
@@ -291,7 +310,7 @@ class McaTable(QTable):
             else:
                 b=""
                 color = lemon
-            for c in range(self.numCols()):
+            for c in range(ncols):
                 if len(self.text(r,c)):
                     finalcolor = color
                 else:
@@ -323,7 +342,7 @@ class McaTable(QTable):
         else:
             self.emit(qt.SIGNAL('closed'), dict)
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class ColorQTableItem(qttable.QTableItem):
              def __init__(self, table, edittype, text,color=qt.Qt.white,bold=0):
                      qttable.QTableItem.__init__(self, table, edittype, text)
