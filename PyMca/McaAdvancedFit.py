@@ -1028,15 +1028,18 @@ class McaAdvancedFit(qt.QWidget):
             return
         oldoutdir = self.outdir
         if self.outdir is None:
+            cwd = os.getcwd()
             if qt.qVersion() < '4.0.0':
                 outfile = qt.QFileDialog(self,"Output Directory Selection",1) 
                 outfile.setMode(outfile.DirectoryOnly)
+                outfile.setDir(cwd)
                 ret = outfile.exec_loop()
             else:
                 outfile = qt.QFileDialog(self)
                 outfile.setWindowTitle("Output Directory Selection")
                 outfile.setModal(1) 
                 outfile.setFileMode(outfile.DirectoryOnly)
+                outfile.setDirectory(cwd)
                 ret = outfile.exec_()
             if ret:
                 if qt.qVersion() < '4.0.0':
@@ -1053,7 +1056,10 @@ class McaAdvancedFit(qt.QWidget):
         try:
             report = self.__htmlReport()
         except IOError:
-            self.outdir = oldoutdir
+            self.outdir = os.getcwd()
+            if oldoutdir is not None:
+                if os.path.exists(oldoutdir):
+                    self.outdir = oldoutdir
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))

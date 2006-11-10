@@ -539,7 +539,7 @@ class QtMcaAdvancedFitReport:
             canvas = FigureCanvas(fig)
             ax = fig.add_axes([.1, .15, .8, .8])
             try:
-                ax.grid(linestyle='--', color=0.7, linewidth=0.1)
+                ax.grid(linestyle='--', color='0.7', linewidth=0.1)
             except:
                 #above line is not supported on all matplotlib versions
                 pass
