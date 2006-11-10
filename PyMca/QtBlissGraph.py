@@ -1510,7 +1510,7 @@ class QtBlissGraph(qwt.QwtPlot):
     if qt.qVersion() > '4.0.0':
         def removeCurves(self):
             pass
-        
+                
         def removeMarkers(self):
             for key in self.markersdict.keys():
                 self.markersdict[key]['marker'].detach()
@@ -1959,8 +1959,14 @@ class QtBlissGraph(qwt.QwtPlot):
         
     def removeMarker(self,marker):
         if marker in self.markersdict.keys():
-            del self.markersdict[marker]
-            qwt.QwtPlot.removeMarker(self,marker)
+            if QTVERSION < '4.0.0':
+                qwt.QwtPlot.removeMarker(self,marker)
+                del self.markersdict[marker]
+            else:
+                self.markersdict[marker]['marker'].detach()
+                del self.markersdict[marker]
+        else:
+            print "unknown marker to remove = ", marker
 
     def removemarker(self,marker):
         print "Deprecation warning: use removeMarker instead"
