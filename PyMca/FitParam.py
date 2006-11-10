@@ -959,17 +959,21 @@ class FitParamDialog(qt.QDialog):
                 self.loadParameters(filename, sections)
         else:
             if sys.platform != 'win32':
-                #this crashes on PyQt4 when selecting the filter
-                diag= SectionFileDialog(self, "Load parameters", FitParamSections, None,
-                                        qt.QFileDialog.ExistingFile, initdir = self.initDir)
-                
-                diag.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-
-                if diag.exec_()==qt.QDialog.Accepted:
-                    filename= diag.getFilename()
-                    sections= diag.getSections()
-                    self.loadParameters(filename, sections)
-
+                filedialog = qt.QFileDialog(self)
+                filedialog.setFileMode(filedialog.ExistingFiles)
+                filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+                initdir = os.path.curdir
+                if self.initDir is not None:
+                    if os.path.exists(self.initDir):
+                        initdir = self.initDir
+                filename = filedialog.getOpenFileName(
+                            self,
+                            "Choose fit configuration file",
+                            initdir,
+                            "Fit configuration files (*.cfg)\nAll Files (*)")
+                filename = str(filename)
+                if len(filename):
+                    self.loadParameters(filename, None)
             else:
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.ExistingFiles)
@@ -1000,13 +1004,25 @@ class FitParamDialog(qt.QDialog):
                 self.saveParameters(filename, sections)
         else:
             if sys.platform != 'win32':
-                diag= SectionFileDialog(self, "Save Parameters", FitParamSections,
-                                        None, qt.QFileDialog.AnyFile, initdir = self.initDir)
-                diag.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-                if diag.exec_()==qt.QDialog.Accepted:
-                    filename= diag.getFilename()
-                    sections= diag.getSections()
-                    self.saveParameters(filename, sections)
+                filedialog = qt.QFileDialog(self)
+                filedialog.setFileMode(filedialog.AnyFile)
+                filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+                initdir = os.path.curdir
+                if self.initDir is not None:
+                    if os.path.exists(self.initDir):
+                        initdir = self.initDir
+                filename = filedialog.getSaveFileName(
+                            self,
+                            "Enter output fit configuration file",
+                            initdir,
+                            "Fit configuration files (*.cfg)\nAll Files (*)")
+                filename = str(filename)
+                if len(filename):
+                    if len(filename) < 4:
+                        filename = filename+".cfg"
+                    elif filename[-4:] != ".cfg":
+                        filename = filename+".cfg"
+                    self.saveParameters(filename, None)
             else:
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.AnyFile)
