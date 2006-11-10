@@ -306,8 +306,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 self.emit(qt.PYSIGNAL("scanDoubleClicked"), (ddict,))
             else:
                 self.emit(qt.SIGNAL("scanDoubleClicked"), ddict)
-            #shortcut selec + remove
-            self._()
+            #shortcut selec + remove?
+            #for the time being just add
+            self._addClicked()
 
     if qt.qVersion() < '4.0.0':        
         def __contextMenu(self, item, point, col=None):

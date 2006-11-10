@@ -9,7 +9,7 @@ else:
 
 QTVERSION = qt.qVersion()
 
-DEBUG = 1
+DEBUG = 0
 
 if QTVERSION < '4.0.0':
     if qt.qVersion() < '3.0.0':
