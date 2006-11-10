@@ -26,22 +26,96 @@ __revision__ = "$Revision: 1.5 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-from MyEdfFileSelector import *
+import sys
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
+    import qt
+    
+QTVERSION = qt.qVersion()
+DEBUG = 0
 
-class EdfFileSimpleViewer(EdfFileSelector):
-    def __init__(self, parent=None, name="EdfSelector", fl=0):
-        EdfFileSelector.__init__(self,parent,name,fl,justviewer=1)   
-        if 1 or  qt.qVersion() < '3.0.0':
-            wid= self.getParamWidget("array")
-            wid.iCombo.setMinimumWidth(wid.iCombo.sizeHint().width()*3)
-        
+import QSourceSelector
+import QDataSource
+import QEdfFileWidget
+class EdfFileSimpleViewer(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
+        self.sourceList = []
+        self.sourceSelector = QSourceSelector.QSourceSelector(self)
+        self.selectorWidget = {}
+        self.selectorWidget[QEdfFileWidget.SOURCE_TYPE] = QEdfFileWidget.\
+                                        QEdfFileWidget(self,justviewer=1)
+        self.mainLayout.addWidget(self.sourceSelector)
+        self.mainLayout.addWidget(self.selectorWidget[QEdfFileWidget.SOURCE_TYPE])
+
+        if QTVERSION < '4.0.0':
+            self.connect(self.sourceSelector, 
+                    qt.PYSIGNAL("SourceSelectorSignal"), 
+                    self._sourceSelectorSlot)
+        else:
+            self.connect(self.sourceSelector, 
+                    qt.SIGNAL("SourceSelectorSignal"), 
+                    self._sourceSelectorSlot)
+
+    def _sourceSelectorSlot(self, ddict):
+        if DEBUG:
+            print "_sourceSelectorSlot(self, ddict)"
+            print "ddict = ",ddict
+        if ddict["event"] == "NewSourceSelected":
+            source = QDataSource.QDataSource(ddict["sourcelist"])
+            self.sourceList.append(source)
+            sourceType = source.sourceType
+            self.selectorWidget[sourceType].setDataSource(source)
+        elif ddict["event"] == "SourceSelected":
+            found = 0
+            for source in self.sourceList:
+                if source.sourceName == ddict["sourcelist"]:
+                    found = 1
+                    break
+            if not found:
+                if DEBUG:
+                    print "WARNING: source not found"
+                return
+            sourceType = source.sourceType
+            self.selectorWidget[sourceType].setDataSource(source)
+        elif ddict["event"] == "SourceClosed":
+            found = 0
+            for source in self.sourceList:
+                if source.sourceName == ddict["sourcelist"]:
+                    found = 1
+                    break
+            if not found:
+                if DEBUG:
+                    print "WARNING: source not found"
+                return
+            sourceType = source.sourceType
+            del self.sourceList[self.sourceList.index(source)]
+            for source in self.sourceList:
+                if sourceType == source.sourceType:
+                    self.selectorWidget[sourceType].setDataSource(source)
+                    return
+            #there is no other selection of that type
+            if len(self.sourceList):
+                source = self.sourceList[0]
+                sourceType = source.sourceType
+                self.selectorWidget[sourceType].setDataSource(source)
+            else:
+                self.selectorWidget[sourceType].setDataSource(None)
+
     def setFileList(self, filelist):
         for file in filelist:
-            self.openFile(file, justloaded=1)
+            self.sourceSelector.openFile(file, justloaded = 1)
+                    
             
 def main():
     import sys
-    import EdfFileLayer
     import getopt
     app=qt.QApplication(sys.argv) 
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
@@ -57,15 +131,14 @@ def main():
     filelist=args
     qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
     w=EdfFileSimpleViewer()
-    if qt.qVersion() < '4.0.0' :
+    if QTVERSION < '4.0.0' :
         app.setMainWidget(w)
-    d = EdfFileLayer.EdfFileLayer()
-    w.setData(d)
-    w.show()
-    if len(filelist):w.setFileList(filelist)
-    if qt.qVersion() < '4.0.0' :
+        w.show()
+        if len(filelist):w.setFileList(filelist)
         app.exec_loop()
     else:
+        if len(filelist):w.setFileList(filelist)
+        w.show()
         app.exec_()
 
 if __name__ == "__main__":

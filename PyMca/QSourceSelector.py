@@ -9,24 +9,26 @@ if 'qt' not in sys.modules:
 else:
     import qt
 QTVERSION = qt.qVersion()
-if QTVERSION < '4.0.0':
-    import MySpecFileSelector
-else:
-    import SpecFileCntTable
-    import SpecFileMcaTable
-import SpecFileDataInfo
 import Icons as icons
 import os
 
 DEBUG = 0
 
 class QSourceSelector(qt.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, filetypelist=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout= qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-
+        if filetypelist is None:
+            self.fileTypeList = ["Spec Files (*mca)",
+                                "Spec Files (*dat)",
+                                "Spec Files (*spec)",
+                                "EDF Files (*edf)",
+                                "EDF Files (*ccd)",
+                                "All Files (*)"]
+        else:
+            self.fileTypeList = filetypelist
         # --- file combo/open/close
         self.lastInputDir = None
         self.fileWidget= qt.QWidget(self)
@@ -58,14 +60,10 @@ class QSourceSelector(qt.QWidget):
         self.connect(self.fileCombo, qt.SIGNAL("activated(const QString &)"),
                                                      self._fileSelection)
 
-        #specfile
-        #self.specfileWidget = ScanList(self)
-
         fileWidgetLayout.addWidget(self.fileCombo)
         fileWidgetLayout.addWidget(openButton)
         fileWidgetLayout.addWidget(closeButton)
         self.mainLayout.addWidget(self.fileWidget)
-        #self.mainLayout.addWidget(self.specfileWidget)
 
     def _openFileSlot(self):
         self.openFile(None, None)
@@ -82,11 +80,8 @@ class QSourceSelector(qt.QWidget):
             if wdir is None:wdir = os.getcwd()
             if QTVERSION < '4.0.0':
                 filetypes = ""
-                filetypes += "Spec Files (*mca)\n"
-                filetypes += "Spec Files (*dat)\n"
-                filetypes += "EDF Files (*edf)\n"
-                filetypes += "EDF Files (*ccd)\n"
-                filetypes += "All Files (*)\n"
+                for filetype in self.fileTypeList:
+                    filetypes += filetype+"\n"
                 if sys.platform == 'win32':
                     filelist = qt.QFileDialog.getOpenFileNames(filetypes,
                                 wdir,
@@ -104,11 +99,8 @@ class QSourceSelector(qt.QWidget):
                 #if sys.platform == 'win32':
                 if sys.platform != 'darwin':
                     filetypes = ""
-                    filetypes += "Spec Files *mca\n"
-                    filetypes += "Spec Files *dat\n"
-                    filetypes += "EDF Files *edf\n"
-                    filetypes += "EDF Files *ccd\n"
-                    filetypes += "All Files *\n"
+                    for filetype in self.fileTypeList:
+                        filetypes += filetype+"\n"
                     filelist = qt.QFileDialog.getOpenFileNames(self,
                                 "Open a new source file",          wdir,
                                 filetypes)
@@ -117,11 +109,8 @@ class QSourceSelector(qt.QWidget):
                     fdialog.setModal(True)
                     fdialog.setWindowTitle("Open a new EdfFile")
                     strlist = qt.QStringList()
-                    strlist.append("Spec Files *mca")
-                    strlist.append("Spec Files *dat")
-                    strlist.append("EDF Files *edf")
-                    strlist.append("EDF Files *ccd")
-                    strlist.append("All Files *")
+                    for filetype in self.fileTypeList:
+                        strlist.append(filetype.replace("(","").replace(")",""))
                     fdialog.setFilters(strlist)
                     fdialog.setFileMode(fdialog.ExistingFiles)
                     fdialog.setDirectory(wdir)
@@ -215,217 +204,22 @@ class QSourceSelector(qt.QWidget):
         else:
             self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
 
-class ScanList(qt.QWidget):
-    def __init__(self, parent=None, name=None, fl=0):
-        qt.QWidget.__init__(self, parent)
-        if name is not None:self.setWindowTitle(name)
-        self.layout= qt.QVBoxLayout(self)
-        self.list  = qt.QTreeWidget(self)
-        self.mainTab = qt.QTabWidget(self)
-
-        self.cntTable = SpecFileTable.CntTable()
-        self.mcaTable = SpecFileMcaTable.McaTable()
-
-        self.mainTab.addTab(self.cntTable,str("Counters"))
-        self.mainTab.addTab(self.mcaTable,str("MCA"))
-        self.layout.addWidget(self.list)
-        self.layout.addWidget(self.mainTab)
-
-        # --- list headers
-        labels = ["X", "S#", "Command", "Points", "Nb. Mca"]
-        ncols  = len(labels)
-        self.list.setColumnCount(ncols)
-        self.list.setHeaderLabels(labels)
-        #size=50
-        #self.list.header().resizeSection(0, size)
-        #self.list.header().resizeSection(1, size)
-        #self.list.header().resizeSection(2, 4 * size)
-        #self.list.header().resizeSection(3, size)
-        #self.list.header().resizeSection(4, size)
-
-        self.list.header().setStretchLastSection(False)
-        self.list.header().setResizeMode(0, qt.QHeaderView.Custom)
-        self.list.header().setResizeMode(1, qt.QHeaderView.Custom)
-        self.list.header().setResizeMode(2, qt.QHeaderView.Stretch)
-        self.list.header().setResizeMode(3, qt.QHeaderView.Custom)
-        self.list.header().setResizeMode(4, qt.QHeaderView.Custom)
-
-        # --- signal handling
-        self.connect(self.list, qt.SIGNAL("itemSelectionChanged()"), self.__selectionChanged)
-        self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
-        self.connect(self.list, qt.SIGNAL("customContextMenuRequested(const QPoint &)"), self.__contextMenu)
-        self.connect(self.list, qt.SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"), self.__doubleClicked)
-
-        self.disableMca    = 0 #(type=="scan")
-        self.disableScan   = 0 #(type=="mca")
-
-        # --- context menu        
-        self.data= None
-        self.scans= []
-
-
-
-    # 
-    # Data management
-    #
-    #NEW data management
-    def setDataSource(self, datasource):
-        self.data = datasource
-        self.refresh()
-    
-    #OLD data management
-    def setData(self, specfiledata):
-        if DEBUG:
-            print "setData(self, specfiledata) called"
-            print "specfiledata = ",specfiledata
-        self.data= specfiledata
-        self.refresh()
-
-    def refresh(self):
-        self.list.clear()
-        if self.data is None: return
-        try:
-            if self.data.sourceName is None: return        
-        except:
-            if self.data.SourceName is None: return
-        try:
-            #new
-            info= self.data.getSourceInfo()
-        except:
-            #old
-            info= self.data.GetSourceInfo()
-        self.scans= []
-        after= None
-        i = 0
-        for (sn, cmd, pts, mca) in zip(info["KeyList"], info["Commands"], info["NumPts"], info["NumMca"]):
-            if after is not None:
-                #print "after is not none"
-                #item= qt.QTreeWidgetItem(self.list, [after, "", sn, cmd, str(pts), str(mca)])
-                item= qt.QTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
-            else:
-                item= qt.QTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
-            if (self.disableMca and not mca) or (self.disableScan and not pts):
-                item.setSelectable(0)
-                #XXX: not possible to put in italic: other solutions ??
-            self.scans.append(sn)
-            after= item
-            i = i + 1
-
-    def clear(self):
-        self.list.clear()
-        self.data= None
-        self.scans= []
-
-    def markScanSelected(self, scanlist):
-        if qt.qVersion() > '3.0.0':
-            for sn in self.scans:
-                item= self.list.findItem(sn, 1)
-                if item is not None:
-                    if sn in scanlist:
-                        item.setText(0, "X")
-                    else:
-                        item.setText(0, "")
-        else:
-            item = self.list.firstChild()
-            while item:
-                    if str(item.text(1)) in scanlist:
-                        item.setText(0, "X")
-                    else:
-                        item.setText(0, "")
-                    item = item.nextSibling()
-
-
-    #
-    # signal/slot handling
-    #
-    def __selectionChanged(self):
-        if DEBUG:print "__selectionChanged"
-        itemlist = self.list.selectedItems()
-        sel = [str(item.text(1)) for item in itemlist]
-        if DEBUG: print "selection = ",sel
-        #try:
-        info = self.data.getKeyInfo(sel[0])
-        #except:
-        #    info, data = self.data.LoadSource(sel[0])
-        self.cntTable.build(info['LabelNames'])
-        self.mcaTable.build(info)
-        self.emit(qt.SIGNAL("scanSelection"), (sel))
-
-    def __doubleClicked(self, item):
-        if DEBUG:print "__doubleCliked"
-        if item is not None:
-            sn  = str(item.text(1))
-            dict={}
-            dict['Key']      = sn
-            dict['Command']  = str(item.text(2))
-            dict['NbPoints'] = int(str(item.text(3)))
-            dict['NbMca']    = int(str(item.text(4)))
-            self.emit(qt.SIGNAL("scanDoubleClicked"), dict)
-
-    if qt.qVersion() < '4.0.0':        
-        def __contextMenu(self, item, point, col=None):
-            if DEBUG:print "__contextMenu"
-            if item is not None:
-                sn= str(item.text(1))
-                self.menu.setItemParameter(self.menu.idAt(0), self.scans.index(sn))
-                self.menu.popup(point)
-    else:
-        def __contextMenu(self, point):
-            if DEBUG:print "__contextMenu",point
-            item = self.list.itemAt(point)
-            if item is not None:
-                sn= str(item.text(1))
-                self.menu= qt.QMenu()
-                self.menu.addAction("Show scan header", self.__showScanInfo)
-                self.menu_idx = self.scans.index(sn)
-                self.menu.popup(self.cursor().pos())
-
-    def __showScanInfo(self, idx = None):
-        if idx is None:
-            if qt.qVersion() > '4.0.0': 
-                idx = self.menu_idx
-        if DEBUG:
-            print "Scan information:"
-            print self.data.GetSourceInfo(self.scans[idx])
-        info, data = self.data.LoadSource(self.scans[idx])
-        self.dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
-        self.dataInfoWidget.show()
-
 def test():
     a = qt.QApplication(sys.argv)
-    if 0:
-        w = ScanList()
-        if len(sys.argv) > 1:
-            d.SetSource(sys.argv[1])
-        else:
-            d.SetSource('03novs060sum.mca')
-        w.setData(d)    
-    elif 0:
-        import SpecFileLayer
-        d = SpecFileLayer.SpecFileLayer()
-        w= FileSelector()
-        def mySlot(ddict):
-            print ddict
-            if ddict["event"] == "NewSourceSelected":
-                d.SetSource(ddict["sourcelist"][0])
-                w.specfileWidget.setData(d)
-        a.connect(w, qt.SIGNAL("SourceSelectorSignal"),
-                           mySlot)
-    else:
-        #new access
-        import DataSource
-        w= QSourceSelector()
-        def mySlot(ddict):
-            print ddict
-            if ddict["event"] == "NewSourceSelected":
-                d = DataSource.DataSource(ddict["sourcelist"][0])
-                w.specfileWidget.setDataSource(d)
-                if QTVERSION < '4.0.0':
-                    a.connect(w, qt.PYSIGNAL("SourceSelectorSignal"),
-                          mySlot)
-                else:
-                    a.connect(w, qt.SIGNAL("SourceSelectorSignal"),
-                           mySlot)
+    #new access
+    import QDataSource
+    w= QSourceSelector()
+    def mySlot(ddict):
+        print ddict
+        if ddict["event"] == "NewSourceSelected":
+            d = QDataSource.QDataSource(ddict["sourcelist"][0])
+            w.specfileWidget.setDataSource(d)
+            if QTVERSION < '4.0.0':
+                a.connect(w, qt.PYSIGNAL("SourceSelectorSignal"),
+                      mySlot)
+            else:
+                a.connect(w, qt.SIGNAL("SourceSelectorSignal"),
+                       mySlot)
 
         
     qt.QObject.connect(a, qt.SIGNAL("lastWindowClosed()"),

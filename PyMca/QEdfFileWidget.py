@@ -452,6 +452,11 @@ class QEdfFileWidget(qt.QWidget):
                 col = min(int(round(dict['y'])), self._y1Limit - 1)
                 if row < 0: row = 0
                 if col < 0: col = 0
+                if self.data is None: 
+                    self.graph.plotImage=None
+                    wid = self.__getParamWidget('array')
+                    wid.setImages(1)
+                    return
                 if self.data.sourceName is None:return
                 if self.selection is None:
                     self.selection = {}
@@ -725,7 +730,7 @@ class QEdfFileWidget(qt.QWidget):
                 break
 
         if not self.fileCombo.count():
-            self.data.SourceName = None
+            self.data.sourceName = None
             self.graph.plotImage = None
             self.oldsource = None
             self.graph.clearmarkers()
@@ -756,7 +761,10 @@ class QEdfFileWidget(qt.QWidget):
     def refresh(self):
         if DEBUG:
             print "refresh method called"
-        if self.data is None:return
+        if self.data is None:
+            wid = self.__getParamWidget('array')
+            wid.setImages(1)
+            return
         if self.data.sourceName is None:    return
         self.currentFile = self.data.sourceName
         #this gives the number of images in the file
