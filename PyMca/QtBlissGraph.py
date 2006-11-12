@@ -716,6 +716,14 @@ class QtBlissGraph(qwt.QwtPlot):
                         ymin = self.canvasMap(qwt.QwtPlot.yRight).s1()
                         self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
         return flag
+
+    def pixmapPlot(self, pixmap, size):
+        if self.plotImage is None:
+            if qt.qVersion() < '4.0.0':
+                self.plotImage=QwtPlotImage(self)
+            else:
+                self.plotImage=Qwt5PlotImage(self)
+        self.plotImage.setPixmap(pixmap, size)
         
     def imagePlot(self, data=None, colormap=None):
         if data is not None:           
@@ -756,6 +764,8 @@ class QtBlissGraph(qwt.QwtPlot):
         qwt.QwtPlot.drawCanvasItems(self, painter, rectangle, maps, filter)
     
     def removeImage(self, legend=None):
+        if QTVERSION > '4.0.0':
+            self.plotImage.detach()
         self.plotImage = None
     
     def onMouseMoved(self,event):
@@ -2111,6 +2121,41 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             else:
                 self.image = qt.QImage(self.image_buffer,size[0], size[1], qt.QImage.Format_RGB32).mirrored(0,1)
 
+    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None):
+        #I have to receive an array
+        if type(pixmap) == type(""):
+            shape = size
+        else:
+            shape = size
+       #     shape = pixmap.shape
+       #     if len(shape) == 1:
+       #         shape = (shape[0], 1)
+        if xScale is None:
+            xRange = (0, shape[0])
+        else:
+            xRange = xScale * 1
+
+        if yScale is None:
+            yRange = (0, shape[1])
+        else:
+            yRange = yScale * 1
+        
+        self.xMap = Qwt.QwtScaleMap(0, shape[0], *xRange)
+        self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
+        self.yMap = Qwt.QwtScaleMap(0, shape[1], *yRange)
+        self.plot().setAxisScale(Qwt.QwtPlot.yLeft, *yRange)
+
+        if type(pixmap) == type(""):
+            self.image = qt.QImage(pixmap,
+                               size[0],
+                               size[1],
+                               qt.QImage.Format_RGB32).mirrored(0,1)
+        else:
+            self.image = qt.QImage(pixmap.tostring(),
+                               size[0],
+                               size[1],
+                               qt.QImage.Format_RGB32).mirrored(0,1)
+
 
 class QwtPlotImage(qwt.QwtPlotMappedItem):
     def __init__(self, parent, palette=None):
@@ -2201,6 +2246,43 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
                                          (spslut.LINEAR,3.0), "BGRX", COLORMAPLIST[colormap[0]],
                                           colormap[1], (colormap[2],colormap[3]))
             self.image=qt.QImage(self.image_buffer,size[0], size[1],32, None, 0, qt.QImage.IgnoreEndian).mirror(0,1)
+
+    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None):
+        #I have to receive an array
+        if type(pixmap) == type(""):
+            shape = size
+        else:
+            shape = size
+       #     shape = pixmap.shape
+       #     if len(shape) == 1:
+       #         shape = (shape[0], 1)
+        if xScale is None:
+            xRange = (0, shape[0])
+        else:
+            xRange = xScale * 1
+
+        if yScale is None:
+            yRange = (0, shape[1])
+        else:
+            yRange = yScale * 1
+        
+        self.xMap = Qwt.QwtScaleMap(0, shape[0], *xRange)
+        self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
+        self.yMap = Qwt.QwtScaleMap(0, shape[1], *yRange)
+        self.plot().setAxisScale(Qwt.QwtPlot.yLeft, *yRange)
+        if type(pixmap) == type(""):
+            self.image=qt.QImage(pixmap,
+                                 size[0],
+                                 size[1],
+                                 32, None, 0,
+                                 qt.QImage.IgnoreEndian).mirror(0,1)
+        else:
+            self.image=qt.QImage(pixmap.tostring(),
+                                 size[0],
+                                 size[1],
+                                 32, None, 0,
+                                 qt.QImage.IgnoreEndian).mirror(0,1)
+
 
 class BlissCurve(qwt.QwtPlotCurve):
     def __init__(self,parent=None,name="",regions=[[0,-1]],baseline=[]):

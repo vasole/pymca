@@ -453,7 +453,7 @@ class QEdfFileWidget(qt.QWidget):
                 if row < 0: row = 0
                 if col < 0: col = 0
                 if self.data is None: 
-                    self.graph.plotImage=None
+                    self.graph.removeImage()
                     wid = self.__getParamWidget('array')
                     wid.setImages(1)
                     return
@@ -731,7 +731,7 @@ class QEdfFileWidget(qt.QWidget):
 
         if not self.fileCombo.count():
             self.data.sourceName = None
-            self.graph.plotImage = None
+            self.graph.removeImage()
             self.oldsource = None
             self.graph.clearmarkers()
             self.graph.replot()
