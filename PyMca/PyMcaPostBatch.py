@@ -38,11 +38,11 @@ class PyMcaPostBatch(qt.QWidget):
         lines = f.readlines()
         f.close()
         labels = lines[0].replace("\n","").split("  ")
-        i = 0
+        i = 1
         while (not len( lines[-i].replace("\n",""))):
                i += 1
         nlabels = len(labels)
-        nrows = len(lines) -2 -i
+        nrows = len(lines) - i
         totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
         for i in range(nrows):
             totalArray[i, :] = map(float, lines[i+1].split())
