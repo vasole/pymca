@@ -26,7 +26,8 @@
 #############################################################################*/
 #include <stdio.h>
 /* AS + AM */
-#ifdef __linux__
+//#ifdef __linux__
+#if 0
 	#warning "Assuming LINUX and using the functions lrint() and lrintf ()."
 	#define	_ISOC9X_SOURCE	1
 	#define _ISOC99_SOURCE	1
@@ -104,7 +105,7 @@ typedef union {
     unsigned char G;
     unsigned char B;
   } c;
-  unsigned long p;
+  unsigned int p;
 } RGB24bits;
 
 typedef union {
@@ -114,16 +115,16 @@ typedef union {
     unsigned char b3;
     unsigned char b4;
   } c;
-  unsigned long p;
+  unsigned int p;
 } swaptype;
 
 int SPS_Size_VLUT (int t)
 {
   switch (t) {
   case SPS_USHORT: return(sizeof(unsigned short));
-  case SPS_ULONG:  return(sizeof(unsigned long));
+  case SPS_ULONG:  return(sizeof(unsigned int));
   case SPS_SHORT:  return(sizeof(short));
-  case SPS_LONG:   return(sizeof(long));
+  case SPS_LONG:   return(sizeof(int));
   case SPS_UCHAR:  return(sizeof(unsigned char));
   case SPS_CHAR:   return(sizeof(char));
   case SPS_STRING: return(sizeof(char));
@@ -288,10 +289,10 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
      FINDMINMAX(float, FLT_MAX);
      break;
    case SPS_LONG :
-     FINDMINMAX(long, LONG_MAX);
+     FINDMINMAX(int, LONG_MAX);
      break;
    case SPS_ULONG :
-     FINDMINMAX(unsigned long, ULONG_MAX);
+     FINDMINMAX(unsigned int, ULONG_MAX);
      break;
    case SPS_SHORT :
      FINDMINMAX(short, SHRT_MAX);
@@ -349,7 +350,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
      }\
    } else if (mapbytes == 3) {\
      register unsigned char * Xend = (unsigned char *)Xdata + (3 * size); \
-     register unsigned long *palette = (unsigned long *)pal;\
+     register unsigned int *palette = (unsigned int *)pal;\
      register unsigned char *Xptr;\
      register RGB24bits pval;\
      for (Xptr=(unsigned char *)Xdata;Xptr!=Xend;Xptr++,ptr++) {\
@@ -393,7 +394,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
      }\
    } else if (mapbytes == 3) {\
      register unsigned char * Xend = (unsigned char *)Xdata + (3 * size); \
-     register unsigned long *palette = (unsigned long *)pal;\
+     register unsigned int *palette = (unsigned int *)pal;\
      register unsigned char *Xptr;\
      register RGB24bits pval;\
      for (Xptr=(unsigned char *)Xdata;Xptr!=Xend;Xptr++,ptr++) {\
@@ -437,7 +438,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
      }\
    } else if (mapbytes == 3) {\
      register unsigned char * Xend = (unsigned char *)Xdata + (3 * size); \
-     register unsigned long *palette = (unsigned long *)pal;\
+     register unsigned int *palette = (unsigned int *)pal;\
      register unsigned char *Xptr;\
      register RGB24bits pval;\
      for (Xptr=(unsigned char *)Xdata;Xptr!=Xend;Xptr++,ptr++) {\
@@ -476,7 +477,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
   int size = cols*rows;\
   if (mapbytes == 3) {\
     register unsigned char * Xend = (unsigned char *)Xdata + (3 * size); \
-    register unsigned long *palette = (unsigned long *)pal;\
+    register unsigned int *palette = (unsigned int *)pal;\
     register unsigned char *Xptr;\
     register RGB24bits pval;\
     for (Xptr=(unsigned char *)Xdata;Xptr!=Xend;Xptr++,ptr++) {\
@@ -503,7 +504,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
  ty val;\
  mapty *Xptr;\
  mapty *fb;\
- long lval;\
+ int lval;\
  register ty *ptr;\
  register mty Au = A;\
  register mty Bu = B;\
@@ -517,16 +518,16 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
  }\
  fb=Xptr=(mapty*)malloc (sizeof(mapty)*(premax-premin+1));\
  Xend = Xptr + (premax-premin+1);\
- for (lval=premin;lval<=(long)vmin;lval++) \
+ for (lval=premin;lval<=(int)vmin;lval++) \
    *Xptr++=cmin;\
    if (meth == SPS_LINEAR) {\
-   for (;lval<(long)vmax;lval++) \
+   for (;lval<(int)vmax;lval++) \
      *Xptr++ = (mapty)(Au * (mty) lval + Bu);\
  } else if (meth == SPS_LOG) {\
-   for (;lval<(long)vmax;lval++) \
+   for (;lval<(int)vmax;lval++) \
      *Xptr++ = (mapty)(Au * logfct((mty)lval) + Bu);\
  } else if (meth == SPS_GAMMA) {\
-   for (;lval<(long)vmax;lval++) \
+   for (;lval<(int)vmax;lval++) \
      *Xptr++ = (mapty)(Au * powfct((mty)lval,(mty)gamma) + Bu);\
  }\
  for (;Xptr < Xend;) \
@@ -670,7 +671,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      } else if (mapbytes == 2) {
        CALCDATA(double, double, unsigned short, log10, pow);
      } else if (mapbytes == 4 || mapbytes == 3) {
-       CALCDATA(double, double, unsigned long, log10, pow);
+       CALCDATA(double, double, unsigned int, log10, pow);
      }
      break;
    case SPS_FLOAT :
@@ -684,33 +685,33 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      } else if (mapbytes == 2) {
        CALCDATA(float, float, unsigned short, log10f, powf);
      } else if (mapbytes == 4 || mapbytes == 3) {
-       CALCDATA(float, float, unsigned long, log10f, powf);
+       CALCDATA(float, float, unsigned int, log10f, powf);
      }
      break;
    case SPS_LONG :
      if (mapbytes == 1) {
        if (meth == SPS_LOG) {
-         FASTLOG(long, unsigned char);
+         FASTLOG(int, unsigned char);
        } else {
-         CALCDATA(long, float, unsigned char, log10f, powf);
+         CALCDATA(int, float, unsigned char, log10f, powf);
        }
      } else if (mapbytes == 2){
-       CALCDATA(long, float, unsigned short, log10f, powf);
+       CALCDATA(int, float, unsigned short, log10f, powf);
      } else if (mapbytes == 4 || mapbytes == 3){
-       CALCDATA(long, float, unsigned long, log10f, powf);
+       CALCDATA(int, float, unsigned int, log10f, powf);
      } 
      break;
    case SPS_ULONG :
      if (mapbytes == 1) {
        if (meth == SPS_LOG) {
-         FASTLOG(unsigned long, unsigned char);
+         FASTLOG(unsigned int, unsigned char);
        } else {
-         CALCDATA(unsigned long, float, unsigned char, log10f,powf);
+         CALCDATA(unsigned int, float, unsigned char, log10f,powf);
        }
      } else if (mapbytes == 2){
-       CALCDATA(unsigned long, float, unsigned short, log10f, powf);
+       CALCDATA(unsigned int, float, unsigned short, log10f, powf);
      } else if (mapbytes == 4 || mapbytes == 3){
-       CALCDATA(unsigned long, float, unsigned long, log10f, powf);
+       CALCDATA(unsigned int, float, unsigned int, log10f, powf);
      } 
      break;
    case SPS_SHORT :
@@ -723,7 +724,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      } else if (mapbytes == 2) {
 	CALCDATA_NOMAP(unsigned short, unsigned short);
      } else if (mapbytes == 4 || mapbytes == 3) {
-	CALCDATA_NOMAP(unsigned short, unsigned long);
+	CALCDATA_NOMAP(unsigned short, unsigned int);
      }
      break;
    case SPS_USHORT :
@@ -736,7 +737,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      } else if (mapbytes == 2) {
 	CALCDATA_NOMAP(unsigned short, unsigned short);
      } else if (mapbytes == 4 || mapbytes == 3) {
-	CALCDATA_NOMAP(unsigned short, unsigned long);
+	CALCDATA_NOMAP(unsigned short, unsigned int);
      }
      break;
    case SPS_CHAR :
@@ -745,7 +746,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      } else if (mapbytes == 2){
        CALCDATA_NOMAP(unsigned char, unsigned short);
      } else if (mapbytes == 4 || mapbytes == 3){
-       CALCDATA_NOMAP(unsigned char, unsigned long);
+       CALCDATA_NOMAP(unsigned char, unsigned int);
      }
      break;
    case SPS_UCHAR :
@@ -754,7 +755,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      } else if (mapbytes == 2){
        CALCDATA_NOMAP(unsigned char, unsigned short);
      } else if (mapbytes == 4 || mapbytes == 3){
-       CALCDATA_NOMAP(unsigned char, unsigned long);
+       CALCDATA_NOMAP(unsigned char, unsigned int);
      }
      break;
  }
@@ -859,10 +860,10 @@ void *SPS_ReduceData (void *data, int type,
      CALCREDUCFAST(float);
      break;
    case SPS_LONG :
-     CALCREDUCFAST(long);
+     CALCREDUCFAST(int);
      break;
    case SPS_ULONG :
-     CALCREDUCFAST(unsigned long);
+     CALCREDUCFAST(unsigned int);
      break;
    case SPS_SHORT :
      CALCREDUCFAST(short);
@@ -886,16 +887,16 @@ void *SPS_ReduceData (void *data, int type,
      CALCREDUC(float,double);
      break;
    case SPS_LONG :
-     CALCREDUC(long,long);
+     CALCREDUC(int,int);
      break;
    case SPS_ULONG :
-     CALCREDUC(unsigned long,unsigned long);
+     CALCREDUC(unsigned int,unsigned int);
      break;
    case SPS_SHORT :
-     CALCREDUC(short,long);
+     CALCREDUC(short,int);
      break;
    case SPS_USHORT :
-     CALCREDUC(unsigned short,unsigned long);
+     CALCREDUC(unsigned short,unsigned int);
      break;
    case SPS_CHAR :
      CALCREDUC(char,short);
@@ -909,12 +910,12 @@ void *SPS_ReduceData (void *data, int type,
 }
 
 void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
-                 unsigned long *val, int from, int to,
+                 unsigned int *val, int from, int to,
                  double R1,double G1,double B1,double R2,double G2,double B2, 
                  int rbit,int gbit,int bbit,int rshift,int gshift,int bshift)
 {
- unsigned long *ptr;
- unsigned long R, G, B;
+ unsigned int *ptr;
+ unsigned int R, G, B;
  double Rcol, Gcol, Bcol, Rcst, Gcst, Bcst;
  double coef, width, rwidth, gwidth, bwidth; 
  swaptype value;
@@ -1003,12 +1004,12 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
  }
 }
 
-unsigned long *CalcPalette (XServer_Info Xservinfo, int palette_type) 
+unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type) 
 {
-  static unsigned long *full_palette = NULL;
+  static unsigned int *full_palette = NULL;
   static old_type = -1;
   static old_mapbytes = -1;
-  unsigned long col;
+  unsigned int col;
   int rbit, gbit, bbit, rshift, gshift, bshift, pcbyteorder;
   swaptype val;
   
@@ -1019,7 +1020,7 @@ unsigned long *CalcPalette (XServer_Info Xservinfo, int palette_type)
   }
   
   if (full_palette == NULL) {
-    full_palette = (void*) malloc (0x10000 * sizeof (unsigned long));
+    full_palette = (void*) malloc (0x10000 * sizeof (unsigned int));
     if (full_palette == NULL) {
       fprintf(stderr, "Error - can not malloc memory in FillPalette\n");
       return NULL;
@@ -1133,7 +1134,7 @@ FillPalette (XServer_Info Xservinfo,
 {
   double A, B, round_min;
   double lmin, lmax;
-  unsigned long *full_palette;
+  unsigned int *full_palette;
   int idx;
   
   /*
@@ -1206,8 +1207,8 @@ FillPalette (XServer_Info Xservinfo,
       }
     }
   } else if (Xservinfo.pixel_size == 4 || Xservinfo.pixel_size == 3) {
-    register unsigned long *pal = palette;
-    register unsigned long *palend = palette;
+    register unsigned int *pal = palette;
+    register unsigned int *palend = palette;
     register int j = 0;
 
     pal += fmin ; palend += fmax;
@@ -1317,9 +1318,9 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
       while (dest < end)
 	*dest++ = src;
     } else if (Xservinfo.pixel_size == 4 || Xservinfo.pixel_size == 3) {
-      register unsigned long *dest = ((unsigned long *) palette) + pmin; 
-      register unsigned long src = *(((unsigned long *) palette) + fmin); 
-      register unsigned long *end  = ((unsigned long *) palette) + fmin;
+      register unsigned int *dest = ((unsigned int *) palette) + pmin; 
+      register unsigned int src = *(((unsigned int *) palette) + fmin); 
+      register unsigned int *end  = ((unsigned int *) palette) + fmin;
       while (dest < end)
 	*dest++ = src;
     }
@@ -1333,9 +1334,9 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
       while (dest <= end)
 	*dest++ = src;
     } else if (Xservinfo.pixel_size == 4 || Xservinfo.pixel_size == 3) {
-      register unsigned long *dest = ((unsigned long *) palette) + fmax + 1; 
-      register unsigned long src = *(((unsigned long *) palette) + fmax); 
-      register unsigned long *end  = ((unsigned long *) palette) + pmax;
+      register unsigned int *dest = ((unsigned int *) palette) + fmax + 1; 
+      register unsigned int src = *(((unsigned int *) palette) + fmax); 
+      register unsigned int *end  = ((unsigned int *) palette) + pmax;
       while (dest <= end)
 	*dest++ = src;
     }
@@ -1366,10 +1367,10 @@ double SPS_GetZdata(void *data, int type, int cols, int rows, int x, int y)
      return((double)(*((float *)data + ind)));
      break;
    case SPS_LONG :
-     return((double)(*((long *)data + ind)));
+     return((double)(*((int *)data + ind)));
      break;
    case SPS_ULONG :
-     return((double)(*((unsigned long *)data + ind)));
+     return((double)(*((unsigned int *)data + ind)));
      break;
    case SPS_SHORT :
      return((double)(*((short *)data + ind)));
@@ -1402,10 +1403,10 @@ void SPS_PutZdata(void *data, int type, int cols, int rows, int x, int y,
     *((float *)data + ind) = z;
     break;
   case SPS_LONG :
-    *((long *)data + ind) = z;
+    *((int *)data + ind) = z;
     break;
   case SPS_ULONG :
-    *((unsigned long *)data + ind) = z;
+    *((unsigned int *)data + ind) = z;
     break;
   case SPS_SHORT :
     *((short *)data + ind) = z;
@@ -1457,10 +1458,10 @@ void SPS_CalcStat(void *data, int type, int cols, int rows,
      CALCSTAT(float,double);
      break;
    case SPS_LONG :
-     CALCSTAT(long,double);
+     CALCSTAT(int,double);
      break;
    case SPS_ULONG :
-     CALCSTAT(unsigned long,double);
+     CALCSTAT(unsigned int,double);
      break;
    case SPS_SHORT :
      CALCSTAT(short,double);
@@ -1469,10 +1470,10 @@ void SPS_CalcStat(void *data, int type, int cols, int rows,
      CALCSTAT(unsigned short,double);
      break;
    case SPS_CHAR :
-     CALCSTAT(char,long);
+     CALCSTAT(char,int);
      break;
    case SPS_UCHAR :
-     CALCSTAT(unsigned char, unsigned long);
+     CALCSTAT(unsigned char, unsigned int);
      break;
  }
 
@@ -1553,10 +1554,10 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
      DATADIST(float);
      break;
    case SPS_LONG :
-     DATADIST(long);
+     DATADIST(int);
      break;
    case SPS_ULONG :
-     DATADIST(unsigned long);
+     DATADIST(unsigned int);
      break;
    case SPS_SHORT :
      DATADIST(short);

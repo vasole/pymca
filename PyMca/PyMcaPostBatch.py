@@ -47,8 +47,8 @@ class PyMcaPostBatch(qt.QWidget):
         for i in range(nrows):
             totalArray[i, :] = map(float, lines[i+1].split())
 
-        nrows = max(totalArray[:,0]) + 1
-        ncols = max(totalArray[:,1]) + 1
+        nrows = int(max(totalArray[:,0]) + 1)
+        ncols = int(max(totalArray[:,1]) + 1)
         singleArray = Numeric.zeros((nrows* ncols, 1), Numeric.Float)
         for i in range(2, nlabels, step):
             singleArray[:, 0] = totalArray[:,i] * 1

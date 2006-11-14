@@ -41,9 +41,9 @@
 typedef struct XServer_Info {
   int byte_order;
   int pixel_size;
-  unsigned long red_mask;
-  unsigned long green_mask;
-  unsigned long blue_mask;
+  unsigned int red_mask;
+  unsigned int green_mask;
+  unsigned int blue_mask;
 } XServer_Info;
 
 /* GILLES DOC is as usual absent ... but at least these are the different
