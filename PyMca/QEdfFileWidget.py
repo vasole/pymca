@@ -40,8 +40,6 @@ DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
 
-
-
 class EdfFile_StandardArray(qt.QWidget):
     def __init__(self, parent=None, name="Edf_StandardArray", fl=0, images=None, rows=None, cols=None):
         if images is None:images = 1
@@ -406,10 +404,10 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.zoomReset()
 
     def _saveIconSignal(self):
-        pass
+        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")        
     
     def printGraph(self):
-        pass
+        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
 
     def _buildActions(self):
         self.buttonBox = qt.QWidget(self)
