@@ -488,7 +488,7 @@ class MyQLabel(qt.QLabel):
             painter.font().setBold(0)
 
 def test():
-    import QtBlissGraph
+    import RGBCorrelatorGraph
     app = qt.QApplication([])
     qt.QObject.connect(app,
                        qt.SIGNAL("lastWindowClosed()"),
@@ -498,7 +498,7 @@ def test():
     container = qt.QSplitter()
     #containerLayout = qt.QHBoxLayout(container)
     w = RGBCorrelatorWidget(container)
-    graph = QtBlissGraph.QtBlissGraph(container)
+    graph = RGBCorrelatorGraph.RGBCorrelatorGraph(container)
     def slot(ddict):
         if ddict.has_key('image'):
             image_buffer = ddict['image'].tostring()
@@ -517,9 +517,14 @@ def test():
         pass
     filelist=args
     if len(filelist):
-        import DataSource
+        try:
+            import DataSource
+            DataReader = DataSource.DataSource
+        except:
+            import EdfFileDataSource
+            DataReader = EdfFileDataSource.EdfFileDataSource
         for fname in filelist:
-            source = DataSource.DataSource(fname)
+            source = DataReader(fname)
             for key in source.getSourceInfo()['KeyList']:
                 dataObject = source.getDataObject(key)
                 w.addImage(dataObject.data, os.path.basename(fname)+" "+key)

@@ -28,17 +28,45 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
+import RGBCorrelatorWidget
+qt = RGBCorrelatorWidget.qt
+import RGBCorrelatorGraph
 try:
     import DataSource
     DataReader = DataSource.DataSource
 except:
     import EdfFileDataSource
     DataReader = EdfFileDataSource.EdfFileDataSource
-import RGBCorrelator
-qt = RGBCorrelator.qt
 import Numeric
 
-class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
+class RGBCorrelator(qt.QWidget):
+    def __init__(self, parent = None, graph = None, bgrx = True):
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle("PyMCA RGB Correlator")
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(RGBCorrelatorGraph.IconDict['gioconda16'])))
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(6)
+        self.splitter   = qt.QSplitter(self)
+        self.splitter.setOrientation(qt.Qt.Horizontal)
+        self.controller = RGBCorrelatorWidget.RGBCorrelatorWidget(self.splitter)
+        if graph is None:
+            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter)
+            self.graph = self.graphWidget.graph
+        else:
+            self.graph = graph
+        #self.splitter.setStretchFactor(0,1)
+        #self.splitter.setStretchFactor(1,1)
+        self.mainLayout.addWidget(self.splitter)
+        
+        self.addImage = self.controller.addImage
+        self.reset    = self.controller.reset
+        self.addImage = self.controller.addImage
+        self.connect(self.controller,
+                     qt.SIGNAL("RGBCorrelatorWidgetSignal"),
+                     self.correlatorSignalSlot)
+
+
     def addBatchDatFile(self, filename, ignoresigma=True):
         if ignoresigma:step = 2
         else:step=1
@@ -73,13 +101,44 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                 self.controller.addImage(dataObject.data,
                                          os.path.basename(fname)+" "+key)
 
+    def correlatorSignalSlot(self, ddict):
+        if ddict.has_key('image'):
+            image_buffer = ddict['image'].tostring()
+            size = ddict['size']
+            if not self.graph.yAutoScale:
+                #store graph settings
+                ylimits = self.graph.gety1axislimits()
+            if not self.graph.xAutoScale:
+                #store graph settings
+                xlimits = self.graph.getx1axislimits()
+            #zoomstack = graph.zoomStack * 1
+            self.graph.pixmapPlot(image_buffer,size)
+            #graph.zoomStack = 1 *  zoomstack
+            if not self.graph.yAutoScale:
+                self.graph.sety1axislimits(ylimits[0], ylimits[1])
+            if not self.graph.xAutoScale:
+                self.graph.setx1axislimits(xlimits[0], xlimits[1])
+            self.graph.replot()
+
+    def closeEvent(self, event):
+        ddict = {}
+        ddict['event'] = "RGBCorrelatorClosed"
+        ddict['id']    = id(self)
+        self.emit(qt.SIGNAL("RGBCorrelatorSignal"),ddict)
+
 def test():
     app = qt.QApplication([])
     qt.QObject.connect(app,
                        qt.SIGNAL("lastWindowClosed()"),
                        app,
                        qt.SLOT('quit()'))
-
+    if 0:
+        graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph()
+        graph = graphWidget.graph
+        w = RGBCorrelator(graph=graph)
+    else:
+        w = RGBCorrelator()
+        w.resize(800, 600)
     import getopt
     options=''
     longoptions=[]
@@ -90,15 +149,17 @@ def test():
     for opt,arg in opts:
         pass
     filelist=args
-    if not len(filelist):
-        print "Usage:"
-        print "python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE"
-        sys.exit(app.quit())
-    w = PyMcaPostBatch()
     if len(filelist) == 1:
         w.addBatchDatFile(filelist[0])
-    else:
+    elif len(filelist):
         w.addFileList(filelist)
+    else:
+        filelist = qt.QFileDialog.getOpenFileNames(None,
+                                                   "Select EDF files",
+                                                   os.getcwd())
+        if len(filelist):
+            filelist = map(str, filelist)
+            w.addFileList(filelist)
     w.show()
     app.exec_()
 

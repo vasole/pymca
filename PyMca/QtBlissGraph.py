@@ -1073,9 +1073,17 @@ class QtBlissGraph(qwt.QwtPlot):
             return                    
 
     def enablezoomback(self):
-        self.__zoomback = 1
+        if DEBUG:print "enablezoomback deprecated use enableZoomBack"
+        return self.enableZoomBack()
 
     def disablezoomback(self):
+        if DEBUG:print "enablezoomback deprecated use disableZoomBack"
+        return self.disableZoomBack()
+
+    def enableZoomBack(self): 
+        self.__zoomback = 1
+
+    def disableZoomBack(self):
         self.__zoomback = 0        
 
     def enablemarkermode(self):

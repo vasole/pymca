@@ -116,6 +116,8 @@ import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
 ###########import Fit2Spec
+if QTVERSION > '4.0.0':
+    import PyMcaPostBatch
 import ConfigDict
 
 DEBUG = 0
@@ -153,6 +155,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.identifier  = None
             self.__batch     = None
             self.__fit2Spec  = None
+            self.__correlator  = None
             if QTVERSION < '4.0.0':
                 self.openMenu = qt.QPopupMenu()
                 self.openMenu.insertItem("PyMca Configuration",0)
@@ -627,6 +630,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.addAction("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
             #self.menuTools.addAction("Fit to Specfile",self.__fit2SpecConversion)
+            self.menuTools.addAction("RGB Correlator",self.__rgbCorrelator)
         if DEBUG:"print Fit to Specfile missing"
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
@@ -673,6 +677,70 @@ class PyMca(PyMcaMdi.PyMca):
         if QTVERSION < '4.0.0': self.__fit2Spec.raiseW()
         else:self.__fit2Spec.raise_()
 
+    def __rgbCorrelator(self):
+        if self.__correlator is None:self.__correlator = []
+        wdir = os.getcwd()
+        if self.sourceWidget.sourceSelector.lastInputDir is not None:
+            if os.path.exists(self.sourceWidget.sourceSelector.lastInputDir):
+                wdir =  self.sourceWidget.sourceSelector.lastInputDir
+        fileTypeList = ["Batch Result Files (*dat)",
+                        "EDF Files (*edf)",
+                        "EDF Files (*ccd)",
+                        "All Files (*)"]
+
+        if sys.platform != 'darwin':
+            filetypes = ""
+            for filetype in fileTypeList:
+                filetypes += filetype+"\n"
+            filelist = qt.QFileDialog.getOpenFileNames(self,
+                        "Open a Batch result file or several EDF files",
+                        wdir,
+                        filetypes)
+            if not len(filelist):return
+        else:
+            fdialog = qt.QFileDialog(self)
+            fdialog.setModal(True)
+            fdialog.setWindowTitle("Open ONE Batch result file or SEVERAL EDF files")
+            strlist = qt.QStringList()
+            for filetype in fileTypeList:
+                strlist.append(filetype.replace("(","").replace(")",""))
+            fdialog.setFilters(strlist)
+            fdialog.setFileMode(fdialog.ExistingFiles)
+            fdialog.setDirectory(wdir)
+            ret = fdialog.exec_()
+            if ret == qt.QDialog.Accepted:
+                filelist = fdialog.selectedFiles()
+                fdialog.close()
+                del fdialog                        
+            else:
+                fdialog.close()
+                del fdialog
+                return            
+        filelist.sort()
+        filelist = map(str, filelist)
+        self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
+        self.__correlator.append(PyMcaPostBatch.PyMcaPostBatch())
+        for correlator in self.__correlator:
+            if correlator.isHidden():
+                correlator.show()
+            correlator.raise_()
+        self.connect(self.__correlator[-1],
+                     qt.SIGNAL("RGBCorrelatorSignal"),
+                     self._deleteCorrelator)
+        if len(filelist) == 1:
+            correlator.addBatchDatFile(filelist[0])
+        else:
+            correlator.addFileList(filelist)
+
+    def _deleteCorrelator(self, ddict):        
+        n = len(self.__correlator)
+        if ddict['event'] == "RGBCorrelatorClosed":
+            for i in range(n):
+                if id(self.__correlator[i]) == ddict["id"]:
+                    self.__correlator[i].deleteLater()
+                    del self.__correlator[i]
+                    break
+    
     def onOpen(self):
         if QTVERSION < '4.0.0':
             self.openMenu.exec_loop(self.cursor().pos())
