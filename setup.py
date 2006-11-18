@@ -179,7 +179,8 @@ except ImportError:
     SIP = False
     print "sip must be installed for full pymca functionality."
 
-badtext  = "No valid PyQt with qwt or PyQt4 with PyQwt5 installation found.\n"
+badtext  = "No valid PyQt  with PyQwt4 or PyQwt5 installation found.\n"
+badtext += "No valid PyQt4 with PyQwt5 installation found.\n"
 badtext += "You will only be able to develop applications using  a very \n"
 badtext += "small subset of PyMCA."
 
@@ -216,17 +217,26 @@ if SIP:
 	    pass
 
         try:
-            import Qwt4 as qwt
-            QWT4 = True        
+            import Qwt5 as qwt
+            QWT5 = True
         except ImportError:
-            QWT4 = False
+            QWT5 = False
+        except:
+            pass
 
-        if not QWT4:
+        if not QWT5:
             try:
-                import qwt
+                import Qwt4 as qwt
                 QWT4 = True        
             except ImportError:
                 QWT4 = False
+
+            if not QWT4:
+                try:
+                    import qwt
+                    QWT4 = True        
+                except ImportError:
+                    QWT4 = False
 
     if QT4 and QT3:
         #print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"
@@ -237,8 +247,12 @@ if SIP:
             print "applications using McaAdvancedFit.py"
         else:
             print badtext
+    elif QT3 and QWT5:
+        print "PyMCA PyQt installations tested with PyQwt4"
+        print "You have PyQwt5 installed. It should also work."
+        print "PyMCA installation successfully completed."
     elif QT3 and not QWT4:
-        print "PyMCA PyQt installations need PyQwt4"
+        print "PyMCA PyQt installations need PyQwt5 or PyQwt4"
         print badtext
     elif QT4 and QWT5:
         print "You have PyQt4 and PyQwt5 installed."
@@ -255,8 +269,7 @@ if SIP:
                     if s.upper() == "MCA2EDF":continue
                     print script
         except NameError:
-            pass            
-                                
+            pass
     elif QT3 and QWT4:
         print "PyMCA installation successfully completed."
         try:
