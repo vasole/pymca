@@ -31,12 +31,7 @@ import os
 import RGBCorrelatorWidget
 qt = RGBCorrelatorWidget.qt
 import RGBCorrelatorGraph
-try:
-    import DataSource
-    DataReader = DataSource.DataSource
-except:
-    import EdfFileDataSource
-    DataReader = EdfFileDataSource.EdfFileDataSource
+QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
 import Numeric
 
 class RGBCorrelator(qt.QWidget):
@@ -50,11 +45,21 @@ class RGBCorrelator(qt.QWidget):
         self.splitter   = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Horizontal)
         self.controller = RGBCorrelatorWidget.RGBCorrelatorWidget(self.splitter)
+        self._y1AxisInverted = False
         if graph is None:
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter)
             self.graph = self.graphWidget.graph
+            if not QWTVERSION4:
+                #add flip Icon
+                self.connect(self.graphWidget.hFlipToolButton,
+                             qt.SIGNAL("clicked()"),
+                             self._hFlipIconSignal)
+                self._handleGraph    = True
+            else:
+                self._handleGraph = False
         else:
             self.graph = graph
+            self._handleGraph = False 
         #self.splitter.setStretchFactor(0,1)
         #self.splitter.setStretchFactor(1,1)
         self.mainLayout.addWidget(self.splitter)
@@ -62,62 +67,50 @@ class RGBCorrelator(qt.QWidget):
         self.addImage = self.controller.addImage
         self.reset    = self.controller.reset
         self.addImage = self.controller.addImage
+        self.setImageShape = self.controller.setImageShape
+        self.update   = self.controller.update
         self.connect(self.controller,
                      qt.SIGNAL("RGBCorrelatorWidgetSignal"),
                      self.correlatorSignalSlot)
 
-
-    def addBatchDatFile(self, filename, ignoresigma=True):
-        if ignoresigma:step = 2
-        else:step=1
-        f = open(filename)
-        lines = f.readlines()
-        f.close()
-        labels = lines[0].replace("\n","").split("  ")
-        i = 1
-        while (not len( lines[-i].replace("\n",""))):
-               i += 1
-        nlabels = len(labels)
-        nrows = len(lines) - i
-        totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
-        for i in range(nrows):
-            totalArray[i, :] = map(float, lines[i+1].split())
-
-        nrows = int(max(totalArray[:,0]) + 1)
-        ncols = int(max(totalArray[:,1]) + 1)
-        singleArray = Numeric.zeros((nrows* ncols, 1), Numeric.Float)
-        for i in range(2, nlabels, step):
-            singleArray[:, 0] = totalArray[:,i] * 1
-            self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
-
-    def addFileList(self, filelist):
-        """
-        Expected to work just with EDF files
-        """
-        for fname in filelist:
-            source = DataReader(fname)
-            for key in source.getSourceInfo()['KeyList']:
-                dataObject = source.getDataObject(key)
-                self.controller.addImage(dataObject.data,
-                                         os.path.basename(fname)+" "+key)
+    if not QWTVERSION4:
+        def _hFlipIconSignal(self):
+            if self._handleGraph:
+                if not self.graph.yAutoScale:
+                    qt.QMessageBox.information(self, "Open",
+                            "Please set Y Axis to AutoScale first")
+                    return
+                if not self.graph.xAutoScale:
+                    qt.QMessageBox.information(self, "Open",
+                            "Please set X Axis to AutoScale first")
+                    return
+                if self._y1AxisInverted:
+                    self._y1AxisInverted = False
+                else:
+                    self._y1AxisInverted = True
+                self.graph.setY1AxisInverted(self._y1AxisInverted)
+                self.graph.zoomReset()
+                self.controller.update()
+                return
 
     def correlatorSignalSlot(self, ddict):
         if ddict.has_key('image'):
-            image_buffer = ddict['image'].tostring()
+            self.image_buffer = ddict['image'].tostring()
             size = ddict['size']
             if not self.graph.yAutoScale:
-                #store graph settings
-                ylimits = self.graph.gety1axislimits()
+                ylimits = self.graph.getY1AxisLimits()
             if not self.graph.xAutoScale:
-                #store graph settings
-                xlimits = self.graph.getx1axislimits()
-            #zoomstack = graph.zoomStack * 1
-            self.graph.pixmapPlot(image_buffer,size)
-            #graph.zoomStack = 1 *  zoomstack
+                xlimits = self.graph.getX1AxisLimits()
+            if self._handleGraph:
+                self.graph.pixmapPlot(self.image_buffer,size, xmirror = 0,
+                                  ymirror = not self._y1AxisInverted)
+            else:
+                self.graph.pixmapPlot(self.image_buffer,size)
             if not self.graph.yAutoScale:
-                self.graph.sety1axislimits(ylimits[0], ylimits[1])
+                self.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
             if not self.graph.xAutoScale:
-                self.graph.setx1axislimits(xlimits[0], xlimits[1])
+                self.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)
+            
             self.graph.replot()
 
     def closeEvent(self, event):
@@ -149,17 +142,27 @@ def test():
     for opt,arg in opts:
         pass
     filelist=args
-    if len(filelist) == 1:
-        w.addBatchDatFile(filelist[0])
-    elif len(filelist):
-        w.addFileList(filelist)
+    if len(filelist):
+        try:
+            import DataSource
+            DataReader = DataSource.DataSource
+        except:
+            import EdfFileDataSource
+            DataReader = EdfFileDataSource.EdfFileDataSource
+        for fname in filelist:
+            source = DataReader(fname)
+            for key in source.getSourceInfo()['KeyList']:
+                dataObject = source.getDataObject(key)
+                w.addImage(dataObject.data, os.path.basename(fname)+" "+key)
     else:
-        filelist = qt.QFileDialog.getOpenFileNames(None,
-                                                   "Select EDF files",
-                                                   os.getcwd())
-        if len(filelist):
-            filelist = map(str, filelist)
-            w.addFileList(filelist)
+        array1 = Numeric.arange(10000)
+        array2 = Numeric.resize(Numeric.arange(10000), (100, 100))
+        array2 = Numeric.transpose(array2)
+        array3 = array1 * 1
+        w.addImage(array1)
+        w.addImage(array2)
+        w.addImage(array3)
+        w.setImageShape([100, 100])
     w.show()
     app.exec_()
 

@@ -32,6 +32,7 @@ from Icons import IconDict
 import PyMcaPrintPreview
 
 QTVERSION = qt.qVersion()
+QWTVERSION4 = QtBlissGraph.QWTVERSION4
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
@@ -65,7 +66,8 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
             self.xAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
             self.yAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
-
+            if not QWTVERSION4:
+                self.hFlipIcon	= qt.QIconSet(qt.QPixmap(IconDict["gioconda16mirror"]))
         else:
             self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
             self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
@@ -73,6 +75,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
             self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
             self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
+            self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
         self.toolBarLayout.setMargin(0)
@@ -107,7 +110,14 @@ class RGBCorrelatorGraph(qt.QWidget):
         #self._addToolButton(self.colormapIcon,
         #                    self.selectColormap,
         #                    'Auto-Scale the Graph')
-        
+
+        #flip
+        if not QWTVERSION4:
+            tb = self._addToolButton(self.hFlipIcon,
+                                     None,
+                                     'Flip Horizontal')
+            self.hFlipToolButton = tb
+
 
         #save
         tb = self._addToolButton(self.saveIcon,
@@ -144,7 +154,8 @@ class RGBCorrelatorGraph(qt.QWidget):
                     else:
                         tb.setChecked(False)
         self.toolBarLayout.addWidget(tb)
-        self.connect(tb,qt.SIGNAL('clicked()'), action)
+        if action is not None:
+            self.connect(tb,qt.SIGNAL('clicked()'), action)
         return tb
 
     def _zoomReset(self):

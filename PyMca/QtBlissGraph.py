@@ -738,13 +738,16 @@ class QtBlissGraph(qwt.QwtPlot):
                         self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
         return flag
 
-    def pixmapPlot(self, pixmap, size):
+    def pixmapPlot(self, pixmap, size, xmirror = None, ymirror = None):
+        if xmirror is None: xmirror = self._xImageMirror
+        if ymirror is None: ymirror = self._yImageMirror
         if self.plotImage is None:
             if QWTVERSION4:
                 self.plotImage=QwtPlotImage(self)
             else:
                 self.plotImage=Qwt5PlotImage(self)
-        self.plotImage.setPixmap(pixmap, size)
+        self.plotImage.setPixmap(pixmap, size,
+                                 xmirror = xmirror, ymirror=ymirror)
         
     def imagePlot(self, data=None, colormap=None, 
                 xmirror=None, ymirror=None):
@@ -1818,8 +1821,8 @@ class QtBlissGraph(qwt.QwtPlot):
         x = self.curveXAxis(index)
         y = self.curveXAxis(index)
         return x,y
-        
-    def getx1axislimits(self):
+
+    def getX1AxisLimits(self):
         #get the current limits
         if QWTVERSION4:
             xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
@@ -1828,8 +1831,12 @@ class QtBlissGraph(qwt.QwtPlot):
             xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
             xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
         return xmin,xmax
+
+    def getx1axislimits(self):
+        if DEBUG:print "getx1axislimits deprecated, use getX1AxisLimits instead"
+        return self.getX1AxisLimits()
         
-    def gety1axislimits(self):
+    def getY1AxisLimits(self):
         #get the current limits
         if QWTVERSION4:
             ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
@@ -1837,10 +1844,11 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
             ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
-        if not self.__logy1:
-            return ymin,ymax
-        else:
-            return ymin, ymax
+        return ymin,ymax
+
+    def gety1axislimits(self):
+        if DEBUG:print "gety1axislimits deprecated, use getY1AxisLimits instead"
+        return self.getY1AxisLimits()
 
     def setX1AxisInverted(self, flag):
         self.axisScaleEngine(qwt.QwtPlot.xBottom).setAttribute(qwt.QwtScaleEngine.Inverted,
@@ -1850,23 +1858,36 @@ class QtBlissGraph(qwt.QwtPlot):
         self.axisScaleEngine(qwt.QwtPlot.yLeft).setAttribute(qwt.QwtScaleEngine.Inverted,
                                                              flag)
 
+    def isX1AxisInverted(self):
+        return self.axisScaleEngine(qwt.QwtPlot.xBottom).    \
+                                   testAttribute(qwt.QwtScaleEngine.Inverted)
+
+    def isY1AxisInverted(self):
+        return self.axisScaleEngine(qwt.QwtPlot.yLeft).    \
+                                   testAttribute(qwt.QwtScaleEngine.Inverted)
+
+    def isY2AxisInverted(self):
+        return self.axisScaleEngine(qwt.QwtPlot.yRight).    \
+                                   testAttribute(qwt.QwtScaleEngine.Inverted)
+
     def setY2AxisInverted(self, flag):
         self.axisScaleEngine(qwt.QwtPlot.yRight).setAttribute(qwt.QwtScaleEngine.Inverted,
                                                               flag)
 
-    def setx1axislimits(self, xmin, xmax, replot=None):
+    def setx1axislimits(self, *var, **kw):
+        if DEBUG:print "setx1axislimits deprecated, use setX1AxisLimits instead"
+        return self.setX1AxisLimits(*var, **kw)
+
+    def setX1AxisLimits(self, xmin, xmax, replot=None):
         if replot is None: replot = True
-        if not QWTVERSION4:
-            if self.axisScaleEngine(qwt.QwtPlot.xBottom).testAttribute(qwt.QwtScaleEngine.Inverted):
-                if DEBUG:print "x1 axis INVERTED "
-                self.setAxisScale(qwt.QwtPlot.xBottom, xmax, xmin)
-            else:
-                self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
-        else:
-                self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
+        self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
         if replot:self.replot()
+
+    def sety1axislimits(self, *var, **kw):
+        if DEBUG:print "sety1axislimits deprecated, use setY1AxisLimits instead"
+        return self.setY1AxisLimits(*var, **kw)
         
-    def sety1axislimits(self, ymin, ymax, replot=None):
+    def setY1AxisLimits(self, ymin, ymax, replot=None):
         if replot is None: replot = True
         if self.__logy1:
             if ymin <= 0:
@@ -1877,14 +1898,14 @@ class QtBlissGraph(qwt.QwtPlot):
                 ymax = ymin+1
             #else:
             #    ymax = log(ymax)
-        if self.axisScaleEngine(qwt.QwtPlot.yLeft).testAttribute(qwt.QwtScaleEngine.Inverted):            
-            if DEBUG:print "y1 axis INVERTED "
-            self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
-        else:
-            self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
+        self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
         if replot:self.replot()
 
-    def sety2axislimits(self,ymin,ymax):
+    def sety2axislimits(self,*var):
+        if DEBUG:print "Deprecation warning: use setY2AxisLimits instead"
+        return sety2axislimits(*var)
+
+    def setY2AxisLimits(self, ymin, ymax):
         if self.__logy2:
             if ymin <= 0:
                 ymin = 1
@@ -1894,11 +1915,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 ymax = ymin+1
             #else:
             #    ymax = log(ymax)            
-        if self.axisScaleEngine(qwt.QwtPlot.yRight).testAttribute(qwt.QwtScaleEngine.Inverted):            
-            if DEBUG:print "y2 axis INVERTED "
-            self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
-        else:
-            self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
+        self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
         self.replot()
 
     def insertx1marker(self,*var,**kw):
@@ -2147,10 +2164,18 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
         else:
             yRange = yScale * 1
         
-        self.xMap = Qwt.QwtScaleMap(0, xyzs.shape[0], *xRange)
-        self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
-        self.yMap = Qwt.QwtScaleMap(0, xyzs.shape[1], *yRange)
-        self.plot().setAxisScale(Qwt.QwtPlot.yLeft, *yRange)
+        if self.plot().isX1AxisInverted():
+            self.xMap = Qwt.QwtScaleMap(0, shape[0], xRange[1], xRange[0])
+            self.plot().setAxisScale(Qwt.QwtPlot.xBottom, xRange[1], xRange[0])
+        else:
+            self.xMap = Qwt.QwtScaleMap(0, shape[0], *xRange)
+            self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
+        if self.plot().isY1AxisInverted():
+            self.yMap = Qwt.QwtScaleMap(0, shape[1], yRange[1], yRange[0])
+            self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[1], yRange[0])
+        else:
+            self.yMap = Qwt.QwtScaleMap(0, shape[1], yRange[0], yRange[1])
+            self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[0], yRange[1])
 
         if not USE_SPS_LUT:
             #calculated palette
@@ -2181,7 +2206,8 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                 self.image = qt.QImage(self.image_buffer,size[0], size[1],
                                        qt.QImage.Format_RGB32).mirrored(xmirror,ymirror)
 
-    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None):
+    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
+                  xmirror = 0, ymirror = 1):
         #I have to receive an array
         if type(pixmap) == type(""):
             shape = size
@@ -2199,22 +2225,31 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             yRange = (0, shape[1])
         else:
             yRange = yScale * 1
-        
-        self.xMap = Qwt.QwtScaleMap(0, shape[0], *xRange)
-        self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
-        self.yMap = Qwt.QwtScaleMap(0, shape[1], *yRange)
-        self.plot().setAxisScale(Qwt.QwtPlot.yLeft, *yRange)
+
+        if self.plot().isX1AxisInverted():
+            self.xMap = Qwt.QwtScaleMap(0, shape[0], xRange[1], xRange[0])
+            self.plot().setAxisScale(Qwt.QwtPlot.xBottom, xRange[1], xRange[0])
+        else:
+            self.xMap = Qwt.QwtScaleMap(0, shape[0], xRange[0], xRange[1])
+            self.plot().setAxisScale(Qwt.QwtPlot.xBottom,  xRange[0], xRange[1])
+            
+        if self.plot().isY1AxisInverted():
+            self.yMap = Qwt.QwtScaleMap(0, shape[1], yRange[1], yRange[0])
+            self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[1], yRange[0])
+        else:
+            self.yMap = Qwt.QwtScaleMap(0, shape[1], yRange[0], yRange[1])
+            self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[0], yRange[1])
 
         if type(pixmap) == type(""):
             self.image = qt.QImage(pixmap,
                                size[0],
                                size[1],
-                               qt.QImage.Format_RGB32).mirrored(0,1)
+                               qt.QImage.Format_RGB32).mirrored(xmirror,ymirror)
         else:
             self.image = qt.QImage(pixmap.tostring(),
                                size[0],
                                size[1],
-                               qt.QImage.Format_RGB32).mirrored(0,1)
+                               qt.QImage.Format_RGB32).mirrored(xmirror,ymirror)
 
 
 class QwtPlotImage(qwt.QwtPlotMappedItem):
@@ -2309,7 +2344,8 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
             self.image=qt.QImage(self.image_buffer,size[0], size[1],32, None, 0,
                                  qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
 
-    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None):
+    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
+                  xmirror = 0, ymirror=1):
         #I have to receive an array
         if type(pixmap) == type(""):
             shape = size
@@ -2337,13 +2373,13 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
                                  size[0],
                                  size[1],
                                  32, None, 0,
-                                 qt.QImage.IgnoreEndian).mirror(0,1)
+                                 qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
         else:
             self.image=qt.QImage(pixmap.tostring(),
                                  size[0],
                                  size[1],
                                  32, None, 0,
-                                 qt.QImage.IgnoreEndian).mirror(0,1)
+                                 qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
 
 
 class BlissCurve(qwt.QwtPlotCurve):

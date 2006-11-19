@@ -412,6 +412,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         self._updateSizeLabel()
         self.tableWidget.setRowCount(0)
 
+    def update(self):
+        self.__recolor()
+
     def tiffExport(self, filename = "test.tif"):
         import Image
         Image.preinit()
