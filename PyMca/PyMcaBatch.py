@@ -421,9 +421,6 @@ class McaBatchGUI(qt.QWidget):
             else:
                 self.__configLine.setText(configfile)
                 self.lastInputDir = os.path.dirname(self.configFile)
-        else:
-            qt.QMessageBox.critical(self, "ERROR",
-                        "Cannot find fit configuration file:\n%s"% (configfile))           
         
     def setOutputDir(self,outputdir=None):
         if outputdir is None:return
@@ -456,6 +453,14 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(configfile):
                 qt.QMessageBox.critical(self,
                              "ERROR",'File %s\ndoes not exists' % configfile)
+                if qt.qVersion() < '4.0.0':
+                    self.raiseW()
+                else:
+                    self.raise_()
+                return False
+            elif len(configfile.split()) > 1:
+                qt.QMessageBox.critical(self,
+                             "ERROR",'Configuration File:\n %s\ncontains spaces in the path' % configfile)
                 if qt.qVersion() < '4.0.0':
                     self.raiseW()
                 else:
