@@ -1970,7 +1970,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.markersdict[marker]={}
             self.markersdict[marker]['marker']      = mX
             self.markersdict[marker]['followmouse'] = 0
-        if QWTVERSION4:    mX.attach(self)
+        if not QWTVERSION4:    mX.attach(self)
         return marker
 
     def inserty1marker(self,*var,**kw):
