@@ -171,6 +171,15 @@ class McaSimpleFit(qt.QWidget):
         
     def dismiss(self):
         self.close()
+
+    def closeEvent(self, event):
+        ddict = {}
+        ddict["event"] = "McaSimpleFitClosed"
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ddict,))
+        else:
+            self.emit(qt.SIGNAL('McaSimpleFitSignal'), ddict)
+        return qt.QWidget.closeEvent(self, event)
         
     def __htmlheader(self):
         try:

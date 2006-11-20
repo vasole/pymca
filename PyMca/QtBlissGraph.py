@@ -1722,7 +1722,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.setMarkerLabel(self.markersdict[marker]['marker'],
                                     qt.QString(label) )
             else:
-                self.markersdict[marker]['marker'].setLabel(qt.QString(label))
+                self.markersdict[marker]['marker'].setLabel(Qwt.QwtText(label))
                 
         return 0
 
@@ -1776,7 +1776,7 @@ class QtBlissGraph(qwt.QwtPlot):
             try:
                 m.setLabelAlignment(position)
             except:
-                print "marker label error"
+                #print "marker label error"
                 m.setLabelAlignment(qt.Qt.AlignLeft | qt.Qt.AlignTop)
             m.attach(self)
             return m
@@ -1785,12 +1785,16 @@ class QtBlissGraph(qwt.QwtPlot):
         if QWTVERSION4:
             return qwt.QwtPlot.setMarkerYPos(self, m, value)
         else:
+            if m in self.markersdict.keys():
+                m = self.markersdict[m]['marker']
             return m.setYValue(value)
                       
     def setMarkerXPos(self, m, value):
         if QWTVERSION4:
             return qwt.QwtPlot.setMarkerXPos(self, m, value)
         else:
+            if m in self.markersdict.keys():
+                m = self.markersdict[m]['marker']
             return m.setXValue(value)
                       
     def getnewpen(self):
@@ -2027,14 +2031,19 @@ class QtBlissGraph(qwt.QwtPlot):
             else:
                 self.setMarkerPos(marker, x,y)
         else:
-            #marker is the marker id
-            marker = self.markersdict[marker]['marker']
+            if marker in self.markersdict.keys():
+                marker = self.markersdict[marker]['marker']
+
             if y is None:
                 self.setMarkerXPos(marker, x)
             else:
                 self.setMarkerPos(marker, x,y)
          
     def clearmarkers(self):
+        if DEBUG:print "Deprecation warning: use clearMarkers instead"
+        return self.clearMarkers()
+
+    def clearMarkers(self):
         self.removeMarkers()
         self.markersdict = {}
         
@@ -2047,7 +2056,11 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.markersdict[marker]['marker'].detach()
                 del self.markersdict[marker]
         else:
-            print "unknown marker to remove = ", marker
+            for m in self.markerdict.keys():
+                if id(self.markerdict[m]) == id(marker):
+                    marker.detach()
+                    del self.markersdict[m]
+                    break
 
     def removemarker(self,marker):
         print "Deprecation warning: use removeMarker instead"

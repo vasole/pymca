@@ -26,6 +26,8 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.44 $"
 import sys
+import os
+import time
 from QtBlissGraph import qt
 from QtBlissGraph import qwt
 import QtBlissGraph
@@ -44,18 +46,6 @@ import Specfit
 DEBUG = 0
 QTVERSION = qt.qVersion()
 
-class qtQHBoxLayout(qt.QHBoxLayout):
-    def __init__(self, *var):
-        qt.QHBoxLayout.__init__(self, *var)
-        self.setMargin(0)
-        self.setSpacing(0)
-        
-class qtQVBoxLayout(qt.QVBoxLayout):
-    def __init__(self, *var):
-        qt.QVBoxLayout.__init__(self, *var)
-        self.setMargin(0)
-        self.setSpacing(0)
-
 class McaWindow(qt.QMainWindow):
     def __init__(self, parent=None, name="McaWindow", specfit=None, fl=None,**kw):
         if qt.qVersion() < '4.0.0':
@@ -72,17 +62,12 @@ class McaWindow(qt.QMainWindow):
 class McaWidget(qt.QWidget):
     def __init__(self, parent=None, name="Mca Window", specfit=None,fl=None,**kw):
         if qt.qVersion() < '4.0.0':
-            if fl is None: fl = qt.Qt.WDestructiveClose
-            self.parent = parent
-        else:
-            if fl is None:
-                    fl = qt.Qt.WA_DeleteOnClose
-
-        if qt.qVersion() < '4.0.0':
-            qt.QWidget.__init__(self, parent, name, fl)
+            qt.QWidget.__init__(self, parent)
+            self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
+        self.outputdir = None
         """ 
         class McaWidget(qt.QSplitter):
             def __init__(self, parent=None, specfit=None,fl=None,**kw):
@@ -132,11 +117,15 @@ class McaWidget(qt.QWidget):
         
         #the box to contain the graphics
         self.graphbox = qt.QWidget(self.splitter)
-        self.graphboxlayout = qtQVBoxLayout(self.graphbox)
+        self.graphboxlayout = qt.QVBoxLayout(self.graphbox)
+        self.graphboxlayout.setMargin(0)
+        self.graphboxlayout.setSpacing(0)
         #self.layout.addWidget(self.graphbox)
         
         self.toolbar  = qt.QWidget(self.graphbox)
-        self.toolbar.layout  = qtQHBoxLayout(self.toolbar)
+        self.toolbar.layout  = qt.QHBoxLayout(self.toolbar)
+        self.toolbar.layout.setMargin(0)
+        self.toolbar.layout.setSpacing(0)
         self.graphboxlayout.addWidget(self.toolbar)
         
         self.graph    = QtBlissGraph.QtBlissGraph(self.graphbox,uselegendmenu=1)
@@ -148,7 +137,9 @@ class McaWidget(qt.QWidget):
             
         #the box to contain the control widget(s)
         self.controlbox = qt.QWidget(self.splitter) 
-        self.controlboxlayout = qtQVBoxLayout(self.controlbox)
+        self.controlboxlayout = qt.QVBoxLayout(self.controlbox)
+        self.controlboxlayout.setMargin(0)
+        self.controlboxlayout.setSpacing(0)
         self.control    = McaControlGUI.McaControlGUI(self.controlbox)
         self.controlboxlayout.addWidget(self.control)
 
@@ -424,19 +415,38 @@ class McaWidget(qt.QWidget):
                 msg.exec_()
             return
         #get outputfile
-        outfile = qt.QFileDialog(self,"Output File Selection",1)
-        #outfile.addFilter('Specfile MCA  *.mca')
-        #outfile.addFilter('Specfile Scan *.dat')
-        #outfile.addFilter('Raw ASCII  *.txt')
-        outfile.setFilters('Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt')
-         
-        outfile.setMode(outfile.AnyFile)
-        ret = outfile.exec_loop()
+        if self.outputdir is None:
+            self.outputdir = os.getcwd()
+            wdir = os.getcwd()
+        elif os.path.exists(self.outputdir): wdir = self.outputdir
+        else:
+            self.outputdir = os.getcwd()
+            wdir = self.outputdir
+            
+        if QTVERSION < '4.0.0':
+            outfile = qt.QFileDialog(self,"Output File Selection",1)
+            outfile.setFilters('Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt')
+            outfile.setMode(outfile.AnyFile)
+            outfile.setDir(wdir)
+            ret = outfile.exec_loop()
+        else:
+            outfile = qt.QFileDialog(self)
+            outfile.setWindowTitle("Output File Selection")
+            outfile.setModal(1)
+            outfile.setFilters(['Specfile MCA  *.mca',
+                                'Specfile Scan *.dat',
+                                'Raw ASCII  *.txt'])
+            outfile.setFileMode(outfile.AnyFile)
+            outfile.setDirectory(wdir)
+            ret = outfile.exec_()
         if ret:
             filterused = str(outfile.selectedFilter()).split()
             filetype  = filterused[1]
             extension = filterused[2]
-            self.outdir=str(outfile.selectedFile())
+            if QTVERSION < '4.0.0':
+                self.outdir=str(outfile.selectedFile())
+            else:
+                self.outdir=str(outfile.selectedFiles()[0])
             try:            
                 outputDir  = os.path.dirname(self.outdir)
             except:
@@ -564,7 +574,7 @@ class McaWidget(qt.QWidget):
 
 
     def mcasimplefitsignal(self):
-        legend,x,y = self.graph.getactivecurve()
+        legend = self.graph.getactivecurve(justlegend = 1)
         if legend is None:
            msg = qt.QMessageBox(self)
            msg.setIcon(qt.QMessageBox.Critical)
@@ -938,8 +948,8 @@ class McaWidget(qt.QWidget):
             yb     = dict['result']['continuum']
             legend0= dict['info']['legend']
             if dict['event'] == 'McaAdvancedFitMatrixFinished':
-                legend = dict['info']['legend'] + "A"
-                legend3 = dict['info']['legend'] + "Matrix"
+                legend = dict['info']['legend'] + " Fit"
+                legend3 = dict['info']['legend'] + " Matrix"
                 ymatrix   = dict['result']['ymatrix'] * 1.0
                 #copy the original info from the curve
                 newDataObject = DataObject.DataObject()
@@ -954,7 +964,7 @@ class McaWidget(qt.QWidget):
                 self.dataObjectsDict[legend3] = newDataObject
                 self.graph.newcurve(legend3,x=x,y=ymatrix,logfilter=1)
             else:
-                legend = dict['info']['legend'] + "A"
+                legend = dict['info']['legend'] + " Fit"
                 yfit   = dict['result']['yfit'] * 1.0
 
                 #copy the original info from the curve
@@ -972,19 +982,19 @@ class McaWidget(qt.QWidget):
                 self.graph.newcurve(legend,x=x,y=yfit,logfilter=1)
 
                 #the same for the background
-                legend = dict['info']['legend'] + "B"
+                legend2 = dict['info']['legend'] + " Bkg"
                 newDataObject2 = DataObject.DataObject()
                 newDataObject2.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
                 newDataObject2.info['SourceType']= 'AdvancedFit'
                 newDataObject2.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
-                newDataObject2.info['legend'] = legend
-                newDataObject2.info['Key']  = legend
+                newDataObject2.info['legend'] = legend2
+                newDataObject2.info['Key']  = legend2
                 newDataObject2.data = None
                 newDataObject2.x = [x]
                 newDataObject2.y = [yb]
                 newDataObject2.m = None
-                self.dataObjectsDict[legend] = newDataObject2
-                self.graph.newcurve(legend,x=x,y=yb,logfilter=1)
+                self.dataObjectsDict[legend2] = newDataObject2
+                self.graph.newcurve(legend2,x=x,y=yb,logfilter=1)
 
             if not self.caldict.has_key(legend):
                 self.caldict[legend] = {}
@@ -1046,7 +1056,7 @@ class McaWidget(qt.QWidget):
                      ybfinal= ybfinal + yb.tolist()
                     #self.graph.newcurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
             legend0= dict['info']['legend']
-            legend = legend0 + " Fit"            
+            legend = legend0 + " SFit"            
             #copy the original info from the curve
             newDataObject = DataObject.DataObject()
             newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
@@ -1160,6 +1170,11 @@ class McaWidget(qt.QWidget):
         elif dict['event'] == 'McaSimpleFitPrint':
             self.printhtml(dict['text'])
 
+        elif dict['event'] == 'McaSimpleFitClosed':
+            if self.peakmarker is not None:
+                self.graph.removeMarker(self.peakmarker)
+            self.peakmarker = None
+            self.graph.replot()
         elif dict['event'] == 'ScanFitPrint':
             self.printhtml(dict['text'])
 
@@ -1229,7 +1244,7 @@ class McaWidget(qt.QWidget):
                 print "Selection changed"
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             fromdata = dict['roi']['from']
-            todata   = dict['roi']['to']   
+            todata   = dict['roi']['to']
             if self.roimarkers[0] < 0:
                 self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
                                         label = 'ROI min')

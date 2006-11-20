@@ -111,7 +111,10 @@ class McaTable(QTable):
             self.verticalHeader().setClickEnabled(1)
             self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
         else:
-            print "MCATABLE click on vertical header items?"
+            if DEBUG:print "MCATABLE click on vertical header items?"
+            self.connect(self,
+                         qt.SIGNAL('cellClicked(int, int)'),
+                         self.__myslot)
         self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
 
                 
@@ -239,26 +242,33 @@ class McaTable(QTable):
 
 
     def __myslot(self,*var):
-        dict={}
+        ddict={}
         if len(var) == 0:
             #selection changed event
             #get the current selection
-            dict['event']       = 'McaTableClicked'
+            ddict['event']       = 'McaTableClicked'
             row = self.currentRow()
         else:
             #Header click
-            dict['event']       = 'McaTableRowHeaderClicked'
+            ddict['event']       = 'McaTableRowHeaderClicked'
             row = var[0]
         ccol = self.currentColumn()
-        dict['row'  ]       = row
-        dict['col']         = ccol
-        dict['labelslist']  = self.labels
+        ddict['row'  ]       = row
+        ddict['col']         = ccol
+        ddict['labelslist']  = self.labels
         if row >= 0:
             col = 0
             for label in self.labels:
+                if QTVERSION < '4.0.0':
+                    text = str(self.text(row,col))
+                else:
+                    text = str(self.item(row, col).text())
                 try:
-                    dict[label] = string.atof(str(self.text(row,col)))
+                    ddict[label] = string.atof(text)
                 except:
-                    dict[label] = str(self.text(row,col))
+                    ddict[label] = text
                 col +=1
-        self.emit(qt.PYSIGNAL('McaTableSignal'),(dict,))
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaTableSignal'),(ddict,))
+        else:
+            self.emit(qt.SIGNAL('McaTableSignal'), ddict)
