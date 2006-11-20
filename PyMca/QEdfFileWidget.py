@@ -417,8 +417,11 @@ class QEdfFileWidget(qt.QWidget):
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
-        self.printPreview.raise_()
-        self.printPreview.graphicsView.update()
+        if QTVERSION < '4.0.0':
+            self.printPreview.raiseW()
+        else:
+            self.printPreview.raise_()
+            self.printPreview.graphicsView.update()
         #qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
 
     def _buildActions(self):

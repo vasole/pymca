@@ -25,10 +25,11 @@
 # is a problem to you.
 #############################################################################*/
 import sys
-from QtBlissGraph import qt
-from QtBlissGraph import qwt
 import QtBlissGraph
+qt = QtBlissGraph.qt
+qwt = QtBlissGraph.qwt
 QTVERSION = qt.qVersion()
+QWTVERSION4 = QtBlissGraph.QWTVERSION4
 import os
 #from copy import *
 import Numeric
@@ -61,7 +62,7 @@ Manage colormap Widget class
 """
 class ColormapDialog(qt.QDialog):
     def __init__(self, parent=None, name="Colormap Dialog"):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QDialog.__init__(self, parent, name)
             self.setCaption(name)
         else:
@@ -85,7 +86,7 @@ class ColormapDialog(qt.QDialog):
         self.autoscale   = False
         self.autoscale90 = False
         # main layout
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             vlayout = qt.QVBoxLayout(self, 0, -1, "Main ColormapDialog Layout")
         else:
             vlayout = qt.QVBoxLayout(self)
@@ -104,7 +105,7 @@ class ColormapDialog(qt.QDialog):
         # combo
         self.combo = qt.QComboBox(hbox1)
         for colormap in self.colormapList:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.combo.insertItem(colormap)
             else:
                 self.combo.addItem(colormap)
@@ -127,7 +128,7 @@ class ColormapDialog(qt.QDialog):
 
         # autoscale 90%
         self.autoScale90Button = qt.QPushButton("Autoscale 90%", hbox1)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.autoScale90Button.setToggleButton(True)
         else:
             self.autoScale90Button.setCheckable(True)
@@ -206,7 +207,7 @@ class ColormapDialog(qt.QDialog):
 
         self.c.setx1axislimits(self.minmd, self.maxpd)
         self.c.sety1axislimits(-11.5, 11.5)
-        if QTVERSION < '4.0.0':
+        if QWTVERSION4:
             self.c.setAutoLegend(0)
             self.c.enableLegend(0)
             self.c.enableXTopAxis(0)
@@ -226,7 +227,7 @@ class ColormapDialog(qt.QDialog):
             marker = self.c.markersdict[index]['marker']
             if i in [1,2]:
                 self.c.setmarkerfollowmouse(index, 1)
-            if QTVERSION < '4.0.0':
+            if QWTVERSION4:
                 self.c.setMarkerPen(marker,qt.QPen(qt.Qt.green, 2, qt.Qt.DashDotLine))
                 self.c.setMarkerSymbol(marker,qwt.QwtSymbol(qwt.QwtSymbol.Diamond, 
                                            qt.QBrush(qt.Qt.blue),
@@ -315,7 +316,7 @@ class ColormapDialog(qt.QDialog):
     """
     def setColormap(self, colormap):
         self.colormapIndex = colormap
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.combo.setCurrentItem(colormap)
         else:
             self.combo.setCurrentIndex(colormap)
@@ -337,7 +338,7 @@ class ColormapDialog(qt.QDialog):
         if DEBUG:
             print "setAutoscale called", val
         if val:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.autoScaleButton.setOn(True)
                 self.autoScale90Button.setOn(False)
             else:
@@ -352,7 +353,7 @@ class ColormapDialog(qt.QDialog):
             self.c.setEnabled(0)
             self.c.disablemarkermode()
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.autoScaleButton.setOn(False)
                 self.autoScale90Button.setOn(False)
             else:
@@ -373,7 +374,7 @@ class ColormapDialog(qt.QDialog):
 
     def setAutoscale90(self, val):
         if val:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.autoScaleButton.setOn(False)
             else:
                 self.autoScaleButton.setChecked(False)
@@ -385,7 +386,7 @@ class ColormapDialog(qt.QDialog):
             self.c.setEnabled(0)
             self.c.disablemarkermode()
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.autoScale90Button.setOn(False)
             else:
                 self.autoScale90Button.setChecked(False)
@@ -574,7 +575,7 @@ class MarkedCurve:
         diam = self.diams[point]
         self.movePoint(diam,x,y)
         self.graph._movedDiam = (diam, x, y)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.graph.setMarkerPos(diam, x, y)
         else:
             diam.setXValue(x)
@@ -587,10 +588,10 @@ def test():
     demo = ColormapDialog()
 
     demo.setAutoscale(1)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
     demo.show()
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.exec_loop()
     else:
         app.exec_()

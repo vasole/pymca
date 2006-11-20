@@ -1,4 +1,29 @@
-import qwt
+#/*##########################################################################
+# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
 import qt
 import qtcanvas
 
@@ -557,97 +582,6 @@ class PrintCanvasTitle(qtcanvas.QCanvasText):
         """
         return PC_RTTI_Title
 
-PC_RTTI_Colormap = 3502
-class PrintCanvasImageColormap(qtcanvas.QCanvasRectangle):
-    """
-    """
-    def __init__(self, x, y, img, canvas, min, max):
-        """
-        """
-        qtcanvas.QCanvasRectangle.__init__(self, x, y, img.width(), img.height(), canvas)
-
-        self.setPen(qt.QPen(qt.Qt.black, 1))
-        self.__pen = None
-
-        self.image = img
-        self.pixmap = qt.QPixmap(img)
-        self.pixmap.setOptimization(qt.QPixmap.BestOptim)
-        self.fullRedrawFlag = 1
-    
-        self.autoScale = QwtAutoScale()
-        self.autoScale.setOptions(QwtAutoScale.Floating)
-        self.autoScale.adjust(min, max)
-
-        self.scale = QwtScaleDraw()
-        self.scale.setScale(self.autoScale.scaleDiv())
-
-    def setActive(self):
-        """
-        """
-        self.__pen = self.pen()
-        self.setPen(qt.QPen(qt.QColor(qt.Qt.red), 1))
-
-    def setNormal(self):
-        """
-        """
-        self.setPen(self.__pen)
-        self.__pen = None
-
-    def getBoundingRect(self):
-        """
-        """
-        rect = self.rect()
-        return BoundingRect(rect.x(), rect.y(), rect.width(), rect.height())
-
-    def setBoundingRect(self, rect):
-        """
-        """
-        self.move(rect.x(), rect.y())
-        self.setSize(rect.width(), rect.height())
-        
-    def draw(self, p):
-        """
-        """
-        if self.fullRedrawFlag:
-            scaleWidth = float(self.width())/float(self.image.width())
-            scaleHeight = float(self.height())/float(self.image.height())
-            x = int(self.x()/scaleWidth)+1
-            y = int(self.y()/scaleHeight)+1
-
-            wm = p.worldMatrix()
-            nwm = qt.QWMatrix(wm.m11(),wm.m12(),wm.m21(),wm.m22(),wm.dx(),wm.dy())
-            nwm = nwm.scale(scaleWidth, scaleHeight)
-            np = qt.QPainter(p.device())
-            np.setWorldMatrix(nwm)
-            np.drawPixmap(x, y, self.pixmap)
-
-            self.scale.setGeometry(self.x(), self.y()+self.height(),     \
-                                   self.width(), QwtScaleDraw.Bottom)
-            self.scale.draw(p)
-
-            if self.__pen is not None:
-                qtcanvas.QCanvasRectangle.draw(self, p)
-        else:
-            qtcanvas.QCanvasRectangle.draw(self, p)
-
-    def fullRedraw(self):
-        """
-        """
-        self.fullRedrawFlag = 1
-        self.update()
-        return 1
-
-    def printTo(self, painter):
-        """
-        """
-        print "printTo: not implemented"
-
-    def rtti(self):
-        """
-        """
-        return PC_RTTI_Colormap
-
-
 PC_RTTI_Rect = 3501
 class PrintCanvasRectangle(qtcanvas.QCanvasRectangle):
     """
@@ -952,7 +886,7 @@ class PrintCanvasView(qtcanvas.QCanvasView):
     def resizeItem(self, item):
         """
         """
-        if item.rtti() in [PC_RTTI_Rect, PC_RTTI_Colormap]:
+        if item.rtti() in [PC_RTTI_Rect]:
             rect = item.getBoundingRect()
             rect.resizeIn(self.marginItem.rect())
             item.setBoundingRect(rect)
@@ -1014,8 +948,7 @@ class PrintCanvasView(qtcanvas.QCanvasView):
         self.__moving_start = None
         self.__moving_scale = 0
 
-        if not len(ilist) or ilist[0].rtti() not in [PC_RTTI_Rect,     \
-                                                     PC_RTTI_Colormap]:
+        if not len(ilist) or ilist[0].rtti() not in [PC_RTTI_Rect]:
             return
 
         if self.__active_item!=ilist[0]:
@@ -1123,11 +1056,11 @@ class PrintCanvasView(qtcanvas.QCanvasView):
 
             
 ################################################################################
-##################             QubPrintPreview               ###################
+##################             PrintPreview               ###################
 ################################################################################
-class QubPrintPreview(qt.QDialog):
+class PrintPreview(qt.QDialog):
     """
-    QubPrintPreview is a widget designed to show and manage items to print. It
+    PrintPreview is a widget designed to show and manage items to print. It
     is possible to
     - add/remove pixmaps to the PP canvas
     - move and resize pixmaps
@@ -1363,7 +1296,7 @@ class QubPrintPreview(qt.QDialog):
 
 
 ################################################################################
-#####################    TEST -- QubPrintPreview  -- TEST   ####################
+#####################    TEST -- PrintPreview  -- TEST   ####################
 ################################################################################
 def testPreview():
     """
@@ -1389,7 +1322,7 @@ def testPreview():
     p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
     p.setColorMode(qt.QPrinter.Color)
 
-    w = QubPrintPreview( parent = None, printer = p, name = 'Print Prev',
+    w = PrintPreview( parent = None, printer = p, name = 'Print Prev',
                       modal = 0, fl = 0)
     w.resize(400,500)
 
