@@ -816,15 +816,18 @@ class QEdfFileWidget(qt.QWidget):
             if nimages > 1:
                 if info.has_key('Title'):
                     i = 0
-                    for key in self.data.GetSourceInfo()['KeyList']:
+                    for key in self.data.getSourceInfo()['KeyList']:
                         source,image = key.split(".")
                         source = int(source)
                         image  = int(image)
-                        header = self.data.Source[(source-1)].GetHeader(image-1)
+                        dataObject = self.data.getDataObject(key)
+                        header = dataObject.info
                         if header.has_key('Title'):
-                            imageinfo[i] +=  header['Title']
+                            imageinfo[i] += "- " + header['Title']
                         i+=1
-                wid.setImages(nimages+1,info = imageinfo+["0.0 - SUM"])
+                if DEBUG:
+                    print "NOT ADDING 0.0 - SUM KEY"
+                    wid.setImages(nimages+1,info = imageinfo+["0.0 - SUM"])
             else:
                 if info.has_key('Title'):imageinfo [self.currentArray] += info['Title']  
                 wid.setImages(nimages,  info = imageinfo)                
