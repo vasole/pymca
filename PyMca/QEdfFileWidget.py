@@ -36,6 +36,8 @@ import Numeric
 import sys
 from Icons import IconDict
 import ColormapDialog
+import PyMcaPrintPreview
+
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
@@ -254,6 +256,7 @@ class QEdfFileWidget(qt.QWidget):
             qt.QWidget.__init__(self, parent)
         else:
             qt.QWidget.__init__(self, parent)
+        self.justViewer = justviewer
         self.dataSource= None
         self.oldsource = ""
         self.oldcurrentArray = None
@@ -266,6 +269,9 @@ class QEdfFileWidget(qt.QWidget):
         self.lastInputDir = None
         self.colormapDialog = None
         self.colormap  = None
+        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        if DEBUG: print "printPreview id = ", id(self.printPreview)
+
         #self.selectPixmap= qt.QPixmap(icons.selected)
         #self.unselectPixamp= qt.QPixmap(icons.unselected)
         self.mapComboName= {}
@@ -407,7 +413,13 @@ class QEdfFileWidget(qt.QWidget):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")        
     
     def printGraph(self):
-        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
+        pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
+        self.printPreview.addPixmap(pixmap)
+        if self.printPreview.isHidden():
+            self.printPreview.show()
+        self.printPreview.raise_()
+        self.printPreview.graphicsView.update()
+        #qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
 
     def _buildActions(self):
         self.buttonBox = qt.QWidget(self)
@@ -446,6 +458,7 @@ class QEdfFileWidget(qt.QWidget):
                 self.__plotting = dict['plot']
                 self.__refreshSelection()
             elif dict['event']    == 'MouseClick':
+                if self.justViewer:return
                 row = min(int(round(dict['x'])), self._x1Limit - 1)
                 col = min(int(round(dict['y'])), self._y1Limit - 1)
                 if row < 0: row = 0

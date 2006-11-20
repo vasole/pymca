@@ -82,13 +82,14 @@ try:
                 layout = self.p.layout()
                 layout.setMargin(0)
                 layout.setSpacing(0)
-                button1 = qt.QPushButton(parent)
-                button1.setText("Save")
-                layout.addWidget(button1)
-                #layout.addWidget(HorizontalSpacer(self.p))
-                #button2 = qt.QPushButton(parent)
-                #button2.setText("Print")
-                #layout.addWidget(button2)
+                if 0:   #they are not implemented yet
+                    button1 = qt.QPushButton(parent)
+                    button1.setText("Save")
+                    layout.addWidget(button1)
+                    #layout.addWidget(HorizontalSpacer(self.p))
+                    #button2 = qt.QPushButton(parent)
+                    #button2.setText("Print")
+                    #layout.addWidget(button2)
             if QTVERSION < '4.0.0':
                 if parent is not None:
                     self.reparent(parent, QPoint(0, 0))
@@ -149,11 +150,11 @@ try:
                     continue
                 if key.upper() == "XMIN":
                     if kw[key]:xmin = kw[key]
-                    else:      xmin = xdata[0]
+                    else:      xmin = xlist[0]
                     continue
                 if key.upper() == "XMAX":
                     if kw[key]:xmax = kw[key]
-                    else:      xmax = xdata[-1]
+                    else:      xmax = xlist[-1]
                     continue
                 if key.upper() == "YMIN":
                     if kw[key]:ymin = kw[key]
