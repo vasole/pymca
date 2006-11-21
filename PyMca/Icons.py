@@ -161,6 +161,146 @@ gioconda16=[
 "  3 , * ; 4 [ @.{   7.6.5.4.3.  ",
 "                                "
 ]
+
+gioconda16mirror=[
+"16 16 118 2",
+"   c #000000",
+".  c #330b0e",
+"X  c #390d0e",
+"o  c #330b11",
+"O  c #3e0d12",
+"+  c #3d120c",
+"@  c #3a1211",
+"#  c #005072",
+"$  c #005a7f",
+"%  c #450f0e",
+"&  c #43150d",
+"*  c #461d0d",
+"=  c #49180d",
+"-  c #421510",
+";  c #461c12",
+":  c #57190b",
+">  c #521d10",
+",  c #4c2413",
+"<  c #532412",
+"1  c #592215",
+"2  c #5b311c",
+"3  c #5d3b1b",
+"4  c #622a13",
+"5  c #662f19",
+"6  c #693114",
+"7  c #6b3118",
+"8  c #6d3e18",
+"9  c #7f3c14",
+"0  c #624423",
+"q  c #6a4423",
+"w  c #694822",
+"e  c #734b28",
+"r  c #7b4730",
+"t  c #7c512b",
+"y  c #7c5f2d",
+"u  c #555555",
+"i  c #006286",
+"p  c #00709f",
+"a  c #0097c3",
+"s  c #05aada",
+"d  c #60b2d0",
+"f  c #803f1f",
+"g  c #8b461c",
+"h  c #815134",
+"j  c #9a4c29",
+"k  c #975326",
+"l  c #97532a",
+"z  c #925531",
+"x  c #8c7233",
+"c  c #916c36",
+"v  c #90762f",
+"b  c #957530",
+"n  c #967933",
+"m  c #9a7a35",
+"M  c #a05117",
+"N  c #b7621e",
+"B  c #ab6532",
+"V  c #a86f31",
+"C  c #b86325",
+"Z  c #bf7c2c",
+"A  c #a9704a",
+"S  c #b6784b",
+"D  c #bb774a",
+"F  c #cf7616",
+"G  c #d47315",
+"H  c #c47222",
+"J  c #ce7c25",
+"K  c #a28a3e",
+"L  c #a88d3b",
+"P  c #b09039",
+"I  c #bd9b3e",
+"U  c #9e8641",
+"Y  c #9e8c45",
+"T  c #a58740",
+"R  c #a78f46",
+"E  c #a59444",
+"W  c #a3944c",
+"Q  c #a5994c",
+"!  c #af9b4b",
+"~  c #ab9a51",
+"^  c #b29441",
+"/  c #b3964a",
+"(  c #b09f4f",
+")  c #bf9b44",
+"_  c #bb984c",
+"`  c #b1a155",
+"'  c #b8a453",
+"]  c #bfab5a",
+"[  c #c68239",
+"{  c #ce8733",
+"}  c #d49139",
+"|  c #e38c38",
+" . c #e39734",
+".. c #e39c36",
+"X. c #c59c4e",
+"o. c #d78d44",
+"O. c #d4894d",
+"+. c #d48e5b",
+"@. c #d5944e",
+"#. c #c5a14a",
+"$. c #c0ab59",
+"%. c #cca552",
+"&. c #e6a251",
+"*. c #eca45d",
+"=. c #e1b452",
+"-. c #e9b252",
+";. c #eaa663",
+":. c #e9b461",
+">. c #edb963",
+",. c #808080",
+"<. c #96d7e9",
+"1. c #a2e0f1",
+"2. c #c3c3c3",
+"3. c #fffedd",
+"4. c #fffee3",
+"5. c #fffeeb",
+"6. c #fefef3",
+"7. c #fefefd",
+"                                ",
+"  3 , * ; 4 [ @.{   7.6.5.4.3.  ",
+"  x w * & X h h r i 7.6.5.5.3.  ",
+"  y 3 * + = 1 & & i 7.7.7.5.5.  ",
+"  3 , = 1 J H k > i u u i i #   ",
+"  < = = D H f +.z i 2.A s a p   ",
+"  < = 1 *.} M *.S i 7.<.1.<.d   ",
+"  8 2 7 }  .G -.| i i i i i i   ",
+"  X.t 1 9 B j z g : + X , E E   ",
+"  =.V 4 H ..F C N > O X 0 ` `   ",
+"  %.%.5 &.:.>.;.A & o o U ' '   ",
+"  #.%.c Z :.>.O.> . . 0 $.$.$.  ",
+"  I X._ 2 6 7 - o o , / ` ! `   ",
+"  P P L T e , @ ; 0 K ~ E E ~   ",
+"  m v n x n R ~ K T E Q Y Y W   ",
+"                                "
+]
+
+
 energy = [
 "16 16 3 1",
 "  c blue",
@@ -1587,12 +1727,19 @@ IconDict= {
     "yauto":    yauto,
     "colormap": colormap,
     "colormap16": colormap16,
-    "gioconda16": gioconda16
+    "gioconda16": gioconda16,
+    "gioconda16mirror": gioconda16mirror
 }
 
 def showIcons():
-	import qt
 	import sys
+	if 'qt'not in sys.modules:
+            try:
+                import PyQt4.Qt as qt
+            except:
+                import qt
+        else:
+        	import qt
 
 	a= qt.QApplication(sys.argv)
 	a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
@@ -1610,7 +1757,10 @@ def showIcons():
 		idx+= 1
 
 	w.show()
-	a.exec_loop()
+	if qt.qVersion () < '4.0.0':
+        	a.exec_loop()
+        else:
+                a.exec_()
 
 if __name__=='__main__':
 	showIcons()
