@@ -505,7 +505,6 @@ class PyMcaPrintPreview(qt.QDialog):
         if printer == None:
             printer = qt.QPrinter()
             #qt.QPrinter.PrinterMode.HighResolution)
-            
         self.setPrinter(printer)
 
     def setPrinter(self, printer):
@@ -546,6 +545,11 @@ class PyMcaPrintPreview(qt.QDialog):
             metrics = self.printer
             psize = (metrics.width(), metrics.height())
             self.scene_.setSceneRect(0, 0, psize[0], psize[1])
+            if (psize[0] <= 0) or (psize[1] <= 0):
+                print "Unable to initialize printer"
+                print "Unable to use preview"
+                self.printer = None
+                return
             if self.graphicsView.marginItem is None:
                 self.graphicsView.marginItem = qt.QGraphicsRectItem(0, 0, psize[0], psize[1])
                 self.scene_.addItem(self.graphicsView.marginItem)
