@@ -33,12 +33,15 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
-if qt.qVersion() < '3.0.0':
+    
+QTVERSION = qt.qVersion()
+
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+elif QTVERSION < '4.0.0':
     import qttable
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -164,31 +167,51 @@ class Concentrations(qt.QWidget):
         sthread.start()
         if qt.qVersion() < '3.0.0':
             msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
-        else:
+        elif qt.qVersion() < '4.0.0':
             msg = qt.QDialog(self, "Please Wait", 1,qt.Qt.WStyle_NoBorder)
+        else:
+            msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
+            msg.setModal(0)
+            msg.setWindowTitle("Please Wait")
         layout = qt.QHBoxLayout(msg)
-        layout.setAutoAdd(1)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         l1 = qt.QLabel(msg)
         l1.setFixedWidth(l1.fontMetrics().width('##'))
         l2 = qt.QLabel(msg)
         l2.setText("%s" % message)
         l3 = qt.QLabel(msg)
         l3.setFixedWidth(l3.fontMetrics().width('##'))
+        layout.addWidget(l1)
+        layout.addWidget(l2)
+        layout.addWidget(l3)
         msg.show()
         qt.qApp.processEvents()
         t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
-        while (sthread.running()):
-            i = (i+1) % 8
-            l1.setText(ticks[i])
-            l3.setText(" "+ticks[i])
-            qt.qApp.processEvents()
-            time.sleep(1)
-        msg.close(True)
+        if QTVERSION < '4.0.0':
+            while (sthread.running()):
+                i = (i+1) % 8
+                l1.setText(ticks[i])
+                l3.setText(" "+ticks[i])
+                qt.qApp.processEvents()
+                time.sleep(1)
+                msg.close(True)
+        else:
+            while (sthread.isRunning()):
+                i = (i+1) % 8
+                l1.setText(ticks[i])
+                l3.setText(" "+ticks[i])
+                qt.qApp.processEvents()
+                time.sleep(1)
+                msg.close()
         result = sthread._result
         del sthread
-        self.raiseW()
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
         return result
 
 class SimpleThread(qt.QThread):

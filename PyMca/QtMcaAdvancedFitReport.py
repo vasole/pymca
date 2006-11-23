@@ -276,15 +276,15 @@ class QtMcaAdvancedFitReport:
         text+="</TD></TR>"
 
         """
-        text+= "  <TR><TH ALIGN=RIGHT>Source : &nbsp;</TH><TD ALIGN=LEFT>%s</TD>"%(self.sourcename)
-        text+= "  <TH ALIGN=RIGHT>Selection : &nbsp;</TH><TD ALIGN=LEFT>%s</TD></TR>"%(self.selection)
+        text+= "  <TR><TH ALIGN=RIGHT>Source : </TH><TD ALIGN=LEFT>%s</TD>"%(self.sourcename)
+        text+= "  <TH ALIGN=RIGHT>Selection : </TH><TD ALIGN=LEFT>%s</TD></TR>"%(self.selection)
         keys= [ key for key in info.keys() if key not in ['paramfile', 'peakfile'] ]
         for idx in range(0, len(keys), 2):
-            text+= "  <TR><TH ALIGN=RIGHT>%s : &nbsp;</TH><TD ALIGN=LEFT>%s</TD>"%(keys[idx], info[keys[idx]])
+            text+= "  <TR><TH ALIGN=RIGHT>%s : </TH><TD ALIGN=LEFT>%s</TD>"%(keys[idx], info[keys[idx]])
             if idx+1<len(keys):
-                text+= "  <TH ALIGN=RIGHT>&nbsp;&nbsp;%s : &nbsp;</TH><TD ALIGN=LEFT>%s</TD></TR>"%(keys[idx+1], info[keys[idx+1]])
+                text+= "  <TH ALIGN=RIGHT>%s : </TH><TD ALIGN=LEFT>%s</TD></TR>"%(keys[idx+1], info[keys[idx+1]])
             else:
-                text+= "  <TD COLSPAN=2>&nbsp;</TD></TR>"
+                text+= "  <TD COLSPAN=2></TD></TR>"
         """
         text+= "</TABLE>"
         text+= "</TD></TR></TABLE>"
@@ -644,14 +644,12 @@ class QtMcaAdvancedFitReport:
         white ='#FFFFFF' 
         hcolor = string.upper("#%x%x%x" % (230,240,249))       
         text+="<CENTER>"
-        text+=("<nobr>")
-        text+=( "<table WIDTH=80%%")
-        text+=( "<tr>")
+        text+= "<nobr>"
+        text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
+        text+= "<tr>"
         for l in labels:
-            text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
-            text+=l
-            text+=("</b></td>")
-        text+=("</tr>")
+            text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, l)
+        text+= "</tr>"
         line = 0
         for group in result['groups']:
             text+=("<tr>")
@@ -681,10 +679,10 @@ class QtMcaAdvancedFitReport:
             for field in fields:
                 if (i<2):
                     #text += '<td align="left"  bgcolor="%s"><b>%s</b></td>' % (color, field)
-                    text += '<td align="left"  bgcolor="%s">%s</td>' % (color, field)
+                    text += '<td align="left"  bgcolor=%s>%s</td>' % (color, field)
                 else:
                     #text += '<td align="right" bgcolor="%s"><b>%s</b></td>' % (color, field)
-                    text += '<td align="right" bgcolor="%s">%s</td>' % (color, field)
+                    text += '<td align="right" bgcolor=%s>%s</td>' % (color, field)
                 i+=1
             text += '</tr>'
             line +=1           
@@ -746,18 +744,22 @@ class QtMcaAdvancedFitReport:
         text+= "</FONT></H2>"
         text+="<br>"
         result = self.fitresult['result']
-        labels=['Element','Group','Fit Area','Sigma','Energy','Ratio','FWHM','Chi square']   
+        labels=['Element','Group','Fit&nbsp; Area','Sigma','Energy','Ratio','FWHM','Chi&nbsp; square']
         lemmon=string.upper("#%x%x%x" % (255,250,205))
         hcolor = string.upper("#%x%x%x" % (230,240,249))       
         text+="<CENTER>"
         text+=("<nobr>")
-        text+=( "<table WIDTH=80%%")
-        text+=( "<tr>")
-        for l in labels:
-            text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
-            text+=l
-            text+=("</b></td>")
-        text+=("</tr>")
+        text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
+        text+=( "<tr><b>")
+        for l in range(len(labels)):
+            if l < 2:
+                text += '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
+            elif l > 3:
+                text += '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
+            else:
+                text += '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])                
+        text+="</b></tr>\n"
+        
         for group in result['groups']:
             text+=("<tr>")
             ele,group0 = string.split(group)
@@ -767,13 +769,17 @@ class QtMcaAdvancedFitReport:
             sigmaarea  = "%.2e" % result[group]['sigmaarea']
             text += '<td align="right"><b>%s</b></td>' % fitarea
             text += '<td align="right"><b>%s</b></td>' % sigmaarea
-            text += '</tr>'
+            text += '<td align="right"><b>&nbsp;</b></td>'
+            text += '<td align="right"><b>&nbsp;</b></td>'
+            text += '<td align="right"><b>&nbsp;</b></td>'
+            text += '<td align="right"><b>&nbsp;</b></td>'
+            text += '</tr>\n'
             if type(result[group]['peaks']) != type([]):
                 iterator = [result[group]['peaks']]
             else:
                 iterator = 1 * result[group]['peaks']
             for peak in iterator:
-                text += '<tr><td></td>'
+                text += '<tr><td>&nbsp;</td>'
                 name  = peak
                 energy = ("%.3f" % (result[group][peak]['energy']))
                 ratio  = ("%.5f" % (result[group][peak]['ratio']))
@@ -784,10 +790,10 @@ class QtMcaAdvancedFitReport:
                 fields = [name,area,sigma,energy,ratio,fwhm,chisq]
                 for field in fields:
                     if field == name:
-                        text+=('<td align="left"  bgcolor="%s">%s</td>' % (lemmon,field))
+                        text+=('<td align="left"  bgcolor=%s>%s</td>' % (lemmon,field))
                     else:
-                        text+=('<td align="right" bgcolor="%s">%s</td>' % (lemmon,field))
-                text+="</tr>"
+                        text+=('<td align="right" bgcolor=%s>%s</td>' % (lemmon,field))
+                text+="</tr>\n"
             if type(result[group]['escapepeaks']) != type([]):
                 iterator = [result[group]['escapepeaks']]
             else:
@@ -806,10 +812,10 @@ class QtMcaAdvancedFitReport:
                     fields = [name,area,sigma,energy,ratio,fwhm,chisq]
                     for field in fields:
                         if field == name:
-                            text+=('<td align="left"  bgcolor="%s">%s</td>' % (lemmon,field))
+                            text+=('<td align="left"  bgcolor=%s>%s</td>' % (lemmon,field))
                         else:
-                            text+=('<td align="right" bgcolor="%s">%s</td>' % (lemmon,field))
-                    text+="</tr>"
+                            text+=('<td align="right" bgcolor=%s>%s</td>' % (lemmon,field))
+                    text+="</tr>\n"
         text+=("</table>")
         text+=("</nobr>")
         text+="</CENTER>"

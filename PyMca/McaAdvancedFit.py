@@ -75,7 +75,7 @@ if DEBUG:
 class McaAdvancedFit(qt.QWidget):
     def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,sections=None): 
                 #fl=qt.Qt.WDestructiveClose):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name,fl)
             self.setCaption(name)
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -106,14 +106,14 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.mainTab = qt.QTabWidget(self)
             self.layout.addWidget(self.mainTab)
-            if  qt.qVersion() < '3.0.0':
+            if  QTVERSION < '3.0.0':
                 self.mainTab.label = self.__mainTabPatch
                 self.mainTab.tabText = self.mainTab.label
                 self.mainTab.currentIndex = self.mainTab.currentPageIndex
                 self.mainTab.setCurrentIndex = self.mainTab.setCurrentPage
                 self.mainTabLabels = ["GRAPH", "TABLE", "CONCENTRATIONS", "DIAGNOSTICS"]
             #graph
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.mainTab.tabText = self.mainTab.label
                 self.mainTab.currentIndex = self.mainTab.currentPageIndex
                 self.mainTab.setCurrentIndex = self.mainTab.setCurrentPage
@@ -132,7 +132,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.ylabel('Counts')
             self.graph.canvas().setMouseTracking(1)
             self.graph.setCanvasBackground(qt.Qt.white)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(self.tabGraph,"GRAPH")
                 qt.QObject.connect(self.graphWindow,    
                                    qt.PYSIGNAL('McaGraphSignal'),
@@ -143,7 +143,7 @@ class McaAdvancedFit(qt.QWidget):
                                    qt.SIGNAL('McaGraphSignal'),
                                    self._mcaGraphSignalSlot)
             #table
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.tabMca  = qt.QWidget(self.mainTab)
             else:
                 self.tabMca  = qt.QWidget()
@@ -154,12 +154,12 @@ class McaAdvancedFit(qt.QWidget):
             line = Line(w, info="TABLE")
             tabMcaLayout.addWidget(line)
 
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 qt.QToolTip.add(line,"DoubleClick toggles floating window mode")
             else:
                 line.setToolTip("DoubleClick toggles floating window mode")
 
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.mcatable  = McaAdvancedTable.McaTable(w)
                 tabMcaLayout.addWidget(self.mcatable)
                 self.mainTab.insertTab(w,"TABLE")
@@ -177,7 +177,7 @@ class McaAdvancedFit(qt.QWidget):
                                 self._mcatableClose)             
             
             #concentrations
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.tabConcentrations  = qt.QWidget(self.mainTab,"tabConcentrations")
             else:
                 self.tabConcentrations  = qt.QWidget()
@@ -190,7 +190,7 @@ class McaAdvancedFit(qt.QWidget):
             tabConcentrationsLayout.addWidget(self.concentrationsWidget)
             
 
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(self.tabConcentrations,"CONCENTRATIONS")
                 qt.QToolTip.add(line2,"DoubleClick toggles floating window mode")
                 self.connect(self.concentrationsWidget,
@@ -212,7 +212,7 @@ class McaAdvancedFit(qt.QWidget):
                                 self._concentrationsWidgetClose)
 
             #diagnostics
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.tabDiagnostics  = qt.QWidget(self.mainTab)
             else:
                 self.tabDiagnostics  = qt.QWidget()
@@ -220,14 +220,14 @@ class McaAdvancedFit(qt.QWidget):
             tabDiagnosticsLayout.setMargin(11)
             tabDiagnosticsLayout.setSpacing(6)
             w = self.tabDiagnostics
-            if  qt.qVersion() < '3.0.0':
+            if  QTVERSION < '3.0.0':
                 self.diagnosticsWidget = qt.QTextView(w)
             else:
                 self.diagnosticsWidget = qt.QTextEdit(w)
                 self.diagnosticsWidget.setReadOnly(1)
                 
             tabDiagnosticsLayout.addWidget(self.diagnosticsWidget)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(w,"DIAGNOSTICS")
             else:
                 self.mainTab.addTab(w,"DIAGNOSTICS")
@@ -236,7 +236,7 @@ class McaAdvancedFit(qt.QWidget):
 
         self._logY       = False
         self._energyAxis = False
-        if qt.qVersion() < '4.0.0' :
+        if QTVERSION < '4.0.0' :
             self.__printmenu = qt.QPopupMenu()
             self.__printmenu.insertItem(qt.QString("Calibrate"),     self._calibrate)        
             self.__printmenu.insertItem(qt.QString("Identify Peaks"),self.__peakIdentifier)
@@ -286,7 +286,7 @@ class McaAdvancedFit(qt.QWidget):
         self.peaksSpectrumButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.peaksSpectrumButton)
         self.peaksSpectrumButton.setText("Peaks Spectrum")
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.matrixSpectrumButton.setToggleButton(1)
             self.peaksSpectrumButton.setToggleButton(1)
             self.matrixSpectrumButton.isChecked = self.matrixSpectrumButton.isOn
@@ -301,7 +301,7 @@ class McaAdvancedFit(qt.QWidget):
         hboxLayout.addWidget(HorizontalSpacer(hbox))
         
         self.layout.addWidget(hbox)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QToolTip.add(self.printButton,'Print Active Tab')
             qt.QToolTip.add(self.htmlReportButton,'Generate Browser Compatible Output\nin Chosen Directory')
             qt.QToolTip.add(self.matrixSpectrumButton,'Toggle Matrix Spectrum Calculation On/Off')
@@ -348,17 +348,16 @@ class McaAdvancedFit(qt.QWidget):
         sthread.start()
         #except:
         #    raise "ThreadError",sys.exc_info()
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
-        elif qt.qVersion() < '4.0.0':
+        elif QTVERSION < '4.0.0':
             msg = qt.QDialog(self, "Please Wait",
                              1,
                              qt.Qt.WStyle_NoBorder)
         else:
             msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
             msg.setModal(0)
-            msg.setWindowTitle("Please Wait")
-                
+            msg.setWindowTitle("Please Wait")                
         layout = qt.QHBoxLayout(msg)
         l1 = qt.QLabel(msg)
         layout.addWidget(l1)
@@ -374,13 +373,14 @@ class McaAdvancedFit(qt.QWidget):
         t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             while (sthread.running()):
                 i = (i+1) % 8
                 l1.setText(ticks[i])
                 l3.setText(" "+ticks[i])
                 qt.qApp.processEvents()
                 time.sleep(1)
+            msg.close(True)
         else:
             while (sthread.isRunning()):
                 i = (i+1) % 8
@@ -388,13 +388,10 @@ class McaAdvancedFit(qt.QWidget):
                 l3.setText(" "+ticks[i])
                 qt.qApp.processEvents()
                 time.sleep(1)
-        if qt.qVersion() < '4.0.0':
-            msg.close(True)
-        else:
             msg.close()
         result = sthread._result
         del sthread
-        if qt.qVersion() < '4.0.0':self.raiseW()
+        if QTVERSION < '4.0.0':self.raiseW()
         else:self.raise_()
         return result
         
@@ -407,7 +404,7 @@ class McaAdvancedFit(qt.QWidget):
         #dialog.fitparam.regionCheck.setDisabled(True)
         #dialog.fitparam.minSpin.setDisabled(True)
         #dialog.fitparam.maxSpin.setDisabled(True)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(dialog.fitparam.peakTable,
                          qt.PYSIGNAL("FitPeakSelect"),
                          self.__elementclicked)
@@ -438,7 +435,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -453,7 +450,7 @@ class McaAdvancedFit(qt.QWidget):
             
         if DEBUG:
             self.mcafit.configure(config)
-        elif (qt.qVersion() < '3.0.0'):
+        elif (QTVERSION < '3.0.0'):
             try:
                 self.mcafit.configure(config)
             except:
@@ -473,7 +470,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -541,7 +538,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.delcurve(key)
         self.plot()
 
-        if DEBUG or (qt.qVersion() < '3.0.0'):
+        if DEBUG or (QTVERSION < '3.0.0'):
             self.mcafit.configure(config)
         else:
             threadResult=self._submitThread(self.mcafit.configure, config,
@@ -558,7 +555,7 @@ class McaAdvancedFit(qt.QWidget):
             if w.parent() is None:
                 if w.isHidden():
                     w.show()
-                if qt.qVersion() < '4.0.0': w.raiseW()
+                if QTVERSION < '4.0.0': w.raiseW()
                 else:w.raise_()
                 self.printButton.setEnabled(True)
                 #do not calculate again. It should be already updated
@@ -576,7 +573,7 @@ class McaAdvancedFit(qt.QWidget):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Concentrations error: %s" % sys.exc_info()[1])
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         msg.exec_loop()
                     else:
                         msg.exec_()
@@ -587,7 +584,7 @@ class McaAdvancedFit(qt.QWidget):
             if w.parent() is None:
                 if w.isHidden():
                     w.show()
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     w.raiseW()
                 else:
                     w.raise_()
@@ -643,7 +640,7 @@ class McaAdvancedFit(qt.QWidget):
         caldialog.calpar.orderbox.setEnabled(0)
         caldialog.calpar.CText.setEnabled(0)
         caldialog.calpar.savebox.setEnabled(0)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             ret = caldialog.exec_loop()
         else:
             ret = caldialog.exec_()
@@ -662,7 +659,7 @@ class McaAdvancedFit(qt.QWidget):
         if self.elementsInfo is None:self.elementsInfo=ElementsInfo.ElementsInfo(None,"Elements Info")
         if self.elementsInfo.isHidden():
            self.elementsInfo.show()
-        if qt.qVersion() < '4.0.0':self.elementsInfo.raiseW()
+        if QTVERSION < '4.0.0':self.elementsInfo.raiseW()
         else:self.elementsInfo.raise_()
 
     def __peakIdentifier(self):
@@ -690,7 +687,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, You need to perform a fit first.\n"
             msg.setText(text)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -758,7 +755,7 @@ class McaAdvancedFit(qt.QWidget):
                 text+="</td>"        
             text+="</tr>"
             text+="</table>"
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.diagnosticsWidget.setText(text)
         else:
             self.diagnosticsWidget.clear()
@@ -771,7 +768,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, You need to perform a fit first.\n"
             msg.setText(text)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -810,7 +807,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -820,7 +817,7 @@ class McaAdvancedFit(qt.QWidget):
         self._concentrationsDict = dict
         tool.show()
         tool.setFocus()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             tool.raiseW()
         else:
             tool.raise_()
@@ -858,7 +855,7 @@ class McaAdvancedFit(qt.QWidget):
             text+= "in order to calculate the spectrum derived from the matrix.\n"
             text+= "Background and detector parameters are taken from last fit"
             msg.setText(text)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -874,7 +871,7 @@ class McaAdvancedFit(qt.QWidget):
         if DEBUG:
             dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
-        elif (qt.qVersion() < '3.0.0'):
+        elif (QTVERSION < '3.0.0'):
             try:
                 dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
@@ -899,7 +896,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -968,7 +965,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "You need to perform a fit first\n"
             msg.setText(text)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -1011,7 +1008,7 @@ class McaAdvancedFit(qt.QWidget):
             print "zz      shape = ", self.mcafit.zz.shape
     
     def __printps(self):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__printmenu.exec_loop(self.cursor().pos())
         else:
             self.__printmenu.exec_(self.cursor().pos())    
@@ -1021,7 +1018,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("You should perform a fit \nfirst,\n shouldn't you?")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -1029,7 +1026,7 @@ class McaAdvancedFit(qt.QWidget):
         oldoutdir = self.outdir
         if self.outdir is None:
             cwd = os.getcwd()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 outfile = qt.QFileDialog(self,"Output Directory Selection",1) 
                 outfile.setMode(outfile.DirectoryOnly)
                 outfile.setDir(cwd)
@@ -1042,7 +1039,7 @@ class McaAdvancedFit(qt.QWidget):
                 outfile.setDirectory(cwd)
                 ret = outfile.exec_()
             if ret:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.outdir=str(outfile.selectedFile())
                 else:
                     self.outdir=str(outfile.selectedFiles()[0])
@@ -1063,7 +1060,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -1083,28 +1080,36 @@ class McaAdvancedFit(qt.QWidget):
             self.__lastreport = report.writeReport(text=text)
         if self.browser is None:
             self.browser= qt.QWidget()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.browser.setCaption(qt.QString(self.__lastreport))
             else:
                 self.browser.setWindowTitle(qt.QString(self.__lastreport))
             self.browser.layout = qt.QVBoxLayout(self.browser)
-            if qt.qVersion() < '4.0.0':
+            self.browser.layout.setMargin(0)
+            self.browser.layout.setSpacing(0)
+            if QTVERSION < '4.0.0':
                 self.__printmenu.insertSeparator()
                 self.__printmenu.insertItem(qt.QString("Last Report"),self.showLastReport)
             else:
                 self.__printmenu.addSeparator()
                 self.__printmenu.addAction(qt.QString("Last Report"),self.showLastReport)
                 
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.browsertext= qt.QTextView(self.browser)
             else:
-                self.browsertext = qt.QTextEdit(self.browser)
+                self.browsertext = qt.QTextBrowser(self.browser)
                 self.browsertext.setReadOnly(1)
             self.browser.layout.addWidget(self.browsertext)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.browsertext.mimeSourceFactory().addFilePath(qt.QString(os.path.dirname(self.__lastreport)))
             self.browsertext.setText(text)
         else:
+            dirname  = os.path.dirname(self.__lastreport)
+            basename = os.path.basename(self.__lastreport)
+            #self.browsertext.setMimeSourceFactory(qt.QMimeFactory.defaultFactory())
+            #self.browsertext.mimeSourceFactory().addFilePath(qt.QString(dirname))
+            self.browsertext.setSearchPaths([qt.QString(dirname)])
+            #self.browsertext.setSource(qt.QUrl(qt.QString(basename)))
             self.browsertext.insertHtml(text)
         self.browsertext.show()
         self.showLastReport()
@@ -1112,7 +1117,7 @@ class McaAdvancedFit(qt.QWidget):
     def showLastReport(self):
         if self.browser is not None:
             self.browser.show()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.browser.raiseW()
             else:
                 self.browser.raise_()
@@ -1126,7 +1131,7 @@ class McaAdvancedFit(qt.QWidget):
             dict={}
             dict['event'] = "McaAdvancedFitPrint"
             dict['text' ] = h+text
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
@@ -1142,7 +1147,7 @@ class McaAdvancedFit(qt.QWidget):
             dict={}
             dict['event'] = "McaAdvancedFitPrint"
             dict['text' ] = h+text
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
@@ -1266,7 +1271,7 @@ class McaAdvancedFit(qt.QWidget):
                 richtext.setWidth(painter,view.width())
                 page = 1                
                 while(1):
-                    if qt.qVersion() < '3.0.0':
+                    if QTVERSION < '3.0.0':
                         richtext.draw(painter,body.left(),body.top(),
                                     qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
                                     qt.QColorGroup())
@@ -1377,12 +1382,12 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("No peaks defined.\nPlease configure peaks")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
             return
-        if DEBUG or (qt.qVersion() < '3.0.0'):
+        if DEBUG or (QTVERSION < '3.0.0'):
             if DEBUG: print "calling estimate"
             self.mcafit.estimate()
             if DEBUG: print "calling startfit"
@@ -1407,7 +1412,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on fit: %s" % (sys.exc_info()[1]))
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -1419,7 +1424,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -1460,7 +1465,7 @@ class McaAdvancedFit(qt.QWidget):
                             msg = qt.QMessageBox(self)
                             msg.setIcon(qt.QMessageBox.Critical)
                             msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
-                            if qt.qVersion() < '4.0.0':
+                            if QTVERSION < '4.0.0':
                                 msg.exec_loop()
                             else:
                                 msg.exec_()
@@ -1471,7 +1476,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Diagnostics Error: %s" % (sys.exc_info()[1]))
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -1486,7 +1491,7 @@ class McaAdvancedFit(qt.QWidget):
         if dict.has_key('event'):
             dict['info'] = {}
             dict['info'].update(self.info)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
@@ -1881,7 +1886,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Matplotlib or Input Output Error: %s" % (sys.exc_info()[1]))
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -1892,7 +1897,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -2022,7 +2027,7 @@ class Top(qt.QWidget):
         #function
         FunLabel = qt.QLabel(w)
         FunLabel.setText(str("Function"))
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.FunComBox = qt.QComboBox(0,w,"FunComBox")
             self.FunComBox.insertStrList(["Mca Hypermet"])
         else:
@@ -2033,7 +2038,7 @@ class Top(qt.QWidget):
         #background
         BkgLabel = qt.QLabel(w)
         BkgLabel.setText(str("Background"))
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.BkgComBox = qt.QComboBox(0,w,"BkgComBox")
             self.BkgComBox.insertStrList(['No Background',
                                           'Constant',
@@ -2159,7 +2164,7 @@ class Top(qt.QWidget):
                 self.escapebox.setChecked(0)
         
         if ddict.has_key('continuum'):
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.BkgComBox.setCurrentItem(ddict['continuum'])
             else:
                 self.BkgComBox.setCurrentIndex(ddict['continuum'])
@@ -2189,7 +2194,7 @@ class Top(qt.QWidget):
             ddict['escapeflag'] = 1
         else:
             ddict['escapeflag'] = 0
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             ddict['continuum'] = self.BkgComBox.currentItem()
         else:
             ddict['continuum'] = self.BkgComBox.currentIndex()
@@ -2197,7 +2202,7 @@ class Top(qt.QWidget):
 
     def mysignal(self,*var):
         ddict = self.getParameters()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('TopSignal'),(ddict,))
         else:
             self.emit(qt.SIGNAL('TopSignal'),(ddict))
@@ -2224,7 +2229,7 @@ class Line(qt.QFrame):
         dict['event']="DoubleClick"
         dict['data'] = event
         dict['info'] = self.info
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("LineDoubleClickEvent"),(dict,))
         else:
             self.emit(qt.SIGNAL("LineDoubleClickEvent"), dict)
@@ -2333,7 +2338,7 @@ class McaGraphWindow(qt.QWidget):
         self.__graphSignal(ndict)
 
     def initIcons(self):
-		if qt.qVersion() > '4.0.0':qt.QIconSet = qt.QIcon
+		if QTVERSION > '4.0.0':qt.QIconSet = qt.QIcon
 		self.normalIcon	= qt.QIconSet(qt.QPixmap(IconDict["normal"]))
 		self.zoomIcon	= qt.QIconSet(qt.QPixmap(IconDict["zoom"]))
 		self.roiIcon	= qt.QIconSet(qt.QPixmap(IconDict["roi"]))
@@ -2459,7 +2464,7 @@ class McaGraphWindow(qt.QWidget):
     def _addToolButton(self, icon, action, tip, toggle=None, state=None):
             toolbar = self.toolbar
             tb      = qt.QToolButton(toolbar)            
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 tb.setIconSet(icon)
                 qt.QToolTip.add(tb,tip) 
                 if toggle is not None:
@@ -2501,7 +2506,7 @@ class McaGraphWindow(qt.QWidget):
         dict={}
         dict['event']  = 'EnergyClicked'
         dict['active'] = legend
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
@@ -2511,7 +2516,7 @@ class McaGraphWindow(qt.QWidget):
         dict={}
         dict['event']  = 'LogClicked'
         dict['active'] = legend
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
@@ -2521,7 +2526,7 @@ class McaGraphWindow(qt.QWidget):
         dict={}
         dict['event']  = 'FitClicked'
         dict['active'] = legend
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
@@ -2539,7 +2544,7 @@ class McaGraphWindow(qt.QWidget):
     def _roiIconSignal(self):
         if self.roiwidget is None:self._initRoi()
         if self.roiwidget.isHidden():self.roiwidget.show()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.roiwidget.raiseW()
         else:
             self.roiwidget.raise_()
@@ -2547,7 +2552,7 @@ class McaGraphWindow(qt.QWidget):
         dict={}
         dict['event']  = 'RoiClicked'
         dict['active'] = legend
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
@@ -2557,7 +2562,7 @@ class McaGraphWindow(qt.QWidget):
         dict={}
         dict['event']  = 'SaveClicked'
         dict['active'] = legend
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
@@ -2632,7 +2637,7 @@ def test(file='03novs060sum.mca'):
     xmin = demo.mcafit.config['fit']['xmin']
     xmax = demo.mcafit.config['fit']['xmax']
     demo.setdata(x,y0,xmin=xmin,xmax=xmax,sourcename=file)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
         demo.show()
         app.exec_loop()
