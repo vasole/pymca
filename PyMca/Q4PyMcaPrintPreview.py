@@ -47,6 +47,7 @@ class PyMcaPrintPreview(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle(name)
         self.setModal(modal)
+        self.resize(400, 500)
 
         if printer is None:
             printer = qt.QPrinter(qt.QPrinter.HighResolution)
