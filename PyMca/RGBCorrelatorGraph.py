@@ -198,7 +198,6 @@ class RGBCorrelatorGraph(qt.QWidget):
         if self.printPreview.isHidden():
             self.printPreview.show()
         self.printPreview.raise_()
-        self.printPreview.graphicsView.update()
 
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  

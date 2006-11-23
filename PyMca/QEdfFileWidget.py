@@ -421,7 +421,6 @@ class QEdfFileWidget(qt.QWidget):
             self.printPreview.raiseW()
         else:
             self.printPreview.raise_()
-            self.printPreview.graphicsView.update()
         #qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
 
     def _buildActions(self):
