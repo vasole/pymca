@@ -1907,7 +1907,7 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def sety2axislimits(self,*var):
         if DEBUG:print "Deprecation warning: use setY2AxisLimits instead"
-        return sety2axislimits(*var)
+        return self.setY2AxisLimits(*var)
 
     def setY2AxisLimits(self, ymin, ymax):
         if self.__logy2:
