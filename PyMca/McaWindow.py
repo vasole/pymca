@@ -28,9 +28,9 @@ __revision__ = "$Revision: 1.44 $"
 import sys
 import os
 import time
-from QtBlissGraph import qt
-from QtBlissGraph import qwt
 import QtBlissGraph
+qt = QtBlissGraph.qt
+qwt = QtBlissGraph.qwt
 from Icons import IconDict
 import McaControlGUI
 import Numeric
@@ -85,7 +85,7 @@ class McaWidget(qt.QWidget):
                     self.setOrientation(qt.Qt.Vertical)
         """
         self.calibration = 'None'
-        self.calboxoptions = ['None','Original (from Source)','Internal (from Source or PyMca)']
+        self.calboxoptions = ['None','Original (from Source)','Internal (from Source OR PyMca)']
         self.caldict={}
         self.calwidget   =  None
         self.roilist = None
@@ -581,10 +581,7 @@ class McaWidget(qt.QWidget):
            msg.setText("Please Select an active curve")
            msg.exec_loop()
            return
-        if self.calibration == 'None':
-            info,x,y = self.getinfodatafromlegend(legend)
-        else:
-            info,xdummy,ydummy = self.getinfodatafromlegend(legend)
+        info,x,y = self.getinfodatafromlegend(legend)
         self.advancedfit.hide()
         self.simplefit.show()
         self.simplefit.setFocus()
@@ -913,6 +910,7 @@ class McaWidget(qt.QWidget):
                 pass
             elif dict['boxname'] == 'Calibration':
                 self.calibration = dict['box'][1]
+                self.graph.clearMarkers()
                 self.roimarkers = [-1,-1]
                 self.refresh()
                 self.graph.ResetZoom()
@@ -1227,6 +1225,8 @@ class McaWidget(qt.QWidget):
             self.__graphsignal(ndict)
             
         elif dict['event'] == 'ResetROI':
+            self.graph.clearMarkers()
+            self.roimarkers = [-1, -1]
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             self.currentroi = self.roidict.keys()[0]
             self.roiwidget.fillfromroidict(roilist=self.roilist,
