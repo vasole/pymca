@@ -647,8 +647,13 @@ class QtMcaAdvancedFitReport:
         text+= "<nobr>"
         text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
         text+= "<tr>"
-        for l in labels:
-            text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, l)
+        for l in range(len(labels)):
+            if l < 2:
+                text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+            elif l == 2:
+                text+= '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+            else:
+                text+= '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
         text+= "</tr>"
         line = 0
         for group in result['groups']:

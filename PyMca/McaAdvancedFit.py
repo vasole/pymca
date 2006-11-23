@@ -229,10 +229,13 @@ class McaAdvancedFit(qt.QWidget):
             tabDiagnosticsLayout.addWidget(self.diagnosticsWidget)
             if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(w,"DIAGNOSTICS")
+                self.connect(self.mainTab, qt.SIGNAL('currentChanged(QWidget *)'),
+                             self._tabChanged)
             else:
                 self.mainTab.addTab(w,"DIAGNOSTICS")
+                self.connect(self.mainTab, qt.SIGNAL('currentChanged(int)'),
+                             self._tabChanged)
 
-            self.connect(self.mainTab, qt.SIGNAL('currentChanged(QWidget *)'),self._tabChanged)
 
         self._logY       = False
         self._energyAxis = False
@@ -548,7 +551,8 @@ class McaAdvancedFit(qt.QWidget):
                     if threadResult[0] == "Exception":
                         raise threadResult[1],threadResult[2]
 
-    def _tabChanged(self, w):
+    def _tabChanged(self, value):
+        if DEBUG:print "_tabChanged(self, value) called"
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
             self.printButton.setEnabled(False)
             w = self.concentrationsWidget
@@ -1067,7 +1071,7 @@ class McaAdvancedFit(qt.QWidget):
 
             
                     
-    def __htmlReport(self,outfile=None):    
+    def __htmlReport(self,outfile=None):
         report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(None,
                     outfile,self.outdir,self.info['sourcename'],
                     self.info['legend'],self.dict,
@@ -1469,6 +1473,7 @@ class McaAdvancedFit(qt.QWidget):
                                 msg.exec_loop()
                             else:
                                 msg.exec_()
+                            return
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'DIAGNOSTICS':
             try:
                 self.diagnostics()
@@ -1480,7 +1485,7 @@ class McaAdvancedFit(qt.QWidget):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-                
+                return
                 
         self.__anasignal(dict)
         

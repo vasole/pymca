@@ -127,18 +127,18 @@ class Concentrations(qt.QWidget):
         self.__lastVar= var
         self.__lastKw = kw
         if DEBUG:
-            dict = self.concentrationsTool.processFitResult(*var, **kw)        
-            self.concentrationsTable.fillFromResult(dict)
-            return dict
+            ddict = self.concentrationsTool.processFitResult(*var, **kw)        
+            self.concentrationsTable.fillFromResult(ddict)
+            return ddict
         try:
             threadResult = self._submitThread(*var, **kw)
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
                         raise threadResult[1],threadResult[2]
-            dict = threadResult
-            self.concentrationsTable.fillFromResult(dict)
-            return dict
+            ddict = threadResult
+            self.concentrationsTable.fillFromResult(ddict)
+            return ddict
         except:
             self.__lastKw = None
             self.concentrationsTable.setRowCount(0)
@@ -149,6 +149,7 @@ class Concentrations(qt.QWidget):
                 msg.exec_loop()
             else:
                 msg.exec_()
+            
 
     def closeEvent(self, event):
         qt.QWidget.closeEvent(self, event)
@@ -197,7 +198,7 @@ class Concentrations(qt.QWidget):
                 l3.setText(" "+ticks[i])
                 qt.qApp.processEvents()
                 time.sleep(1)
-                msg.close(True)
+            msg.close(True)
         else:
             while (sthread.isRunning()):
                 i = (i+1) % 8
@@ -205,7 +206,7 @@ class Concentrations(qt.QWidget):
                 l3.setText(" "+ticks[i])
                 qt.qApp.processEvents()
                 time.sleep(1)
-                msg.close()
+            msg.close()
         result = sthread._result
         del sthread
         if QTVERSION < '4.0.0':
