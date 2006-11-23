@@ -43,9 +43,56 @@ QTVERSION = qt.qVersion()
 class PyMcaPrintPreview(qt.QDialog):
     def __init__(self, parent = None, printer = None, name = "PyMcaPrintPreview", \
                  modal = 0, fl = 0):
+
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle(name)
         self.setModal(modal)
+
+        if printer is None:
+            printer = qt.QPrinter(qt.QPrinter.HighResolution)
+            printer.setPageSize(qt.QPrinter.A4)
+            printer.setFullPage(True)
+            if (printer.width() <= 0) or (printer.height() <= 0):
+                if QTVERSION < '4.2.0':         #this is impossible (no QGraphicsView)
+                    filename = "PyMCA_print.pdf"
+                else:
+                    filename = "PyMCA_print.ps"
+                if sys.platform == 'win32':
+                    home = os.getenv('USERPROFILE')
+                    try:
+                        l = len(home)
+                        directory = os.path.join(home,"My Documents")
+                    except:
+                        home = '\\'
+                        directory = '\\'
+                    if os.path.isdir('%s' % directory):
+                        directory = os.path.join(directory,"PyMca")
+                    else:
+                        directory = os.path.join(home,"PyMca")
+                    if not os.path.exists('%s' % directory):
+                        os.mkdir('%s' % directory)
+                    finalfile = os.path.join(directory, filename)
+                else:
+                    home = os.getenv('HOME')
+                    directory = os.path.join(home,"PyMca")
+                    if not os.path.exists('%s' % directory):
+                        os.mkdir('%s' % directory)
+                    finalfile =  os.path.join(directory, filename)
+                printer.setOutputFileName(finalfile)
+                printer.setColorMode(qt.QPrinter.Color)
+
+        if (printer.width() <= 0) or (printer.height() <= 0):
+            self.message = qt.QMessageBox(self)
+            self.message.setIcon(qt.QMessageBox.Critical)
+            self.message.setText("Unknown library error \non printer initialization")
+            self.message.setWindowTitle("Library Error")
+            self.message.setModal(0)
+            self.badNews = True
+            self.printer = None
+            return
+        else:
+            self.badNews = False
+            self.printer = printer
         
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
@@ -56,38 +103,6 @@ class PyMcaPrintPreview(qt.QDialog):
         self.scene = qt.QGraphicsScene()
         self.scene.setBackgroundBrush(qt.QColor(qt.Qt.lightGray))
 
-        printer = qt.QPrinter(qt.QPrinter.HighResolution)
-        printer.setPageSize(qt.QPrinter.A4)
-        printer.setFullPage(True)
-        if QTVERSION < '4.2.0':
-            filename = "PyMCA_print.pdf"
-        else:
-            filename = "PyMCA_print.ps"
-        if sys.platform == 'win32':
-            home = os.getenv('USERPROFILE')
-            try:
-                l = len(home)
-                directory = os.path.join(home,"My Documents")
-            except:
-                home = '\\'
-                directory = '\\'
-            if os.path.isdir('%s' % directory):
-                directory = os.path.join(directory,"PyMca")
-            else:
-                directory = os.path.join(home,"PyMca")
-            if not os.path.exists('%s' % directory):
-                os.mkdir('%s' % directory)
-            finalfile = os.path.join(directory, filename)
-        else:
-            home = os.getenv('HOME')
-            directory = os.path.join(home,"PyMca")
-            if not os.path.exists('%s' % directory):
-                os.mkdir('%s' % directory)
-            finalfile =  os.path.join(directory, filename)
-        printer.setOutputFileName(finalfile)
-        printer.setColorMode(qt.QPrinter.Color)
-
-        self.printer    = printer
         
         self.page = qt.QGraphicsRectItem(0,0, printer.width(), printer.height())
         self.page.setBrush(qt.QColor(qt.Qt.white))
@@ -254,6 +269,9 @@ class PyMcaPrintPreview(qt.QDialog):
         """
         add a pixmap to the print preview scene
         """
+        if self.badNews:
+            self.message.exec_()
+            return
         rectItem = qt.QGraphicsRectItem(self.page, self.scene)
         rectItem.setRect(qt.QRectF(1, 1,
                                          pixmap.width(), pixmap.height()))
