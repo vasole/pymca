@@ -597,8 +597,8 @@ class QtMcaAdvancedFitReport:
         graph.ToggleLogY()
         ymin=min(min(dict['result']['ydata']),min(dict['result']['yfit']))
         ymax=max(max(dict['result']['ydata']),max(dict['result']['yfit']))
-        graph.sety1axislimits(ymin,ymax)
-        graph.sety2axislimits(ymin,ymax)
+        graph.setY1AxisLimits(ymin,ymax)
+        graph.setY2AxisLimits(ymin,ymax)
         graph.show()
         if True or qt.qVersion() < '3.0.0':
             widget.resize(450,300)

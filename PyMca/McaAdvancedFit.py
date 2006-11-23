@@ -617,6 +617,7 @@ class McaAdvancedFit(qt.QWidget):
             if QTVERSION < '4.0.0':
                 w.reparent(None,self.cursor().pos(),1)
             else:
+                parent.layout().removeWidget(w)
                 w.setParent(None)
                 w.show()
         else: 
@@ -624,9 +625,9 @@ class McaAdvancedFit(qt.QWidget):
                 w.reparent(parent,qt.QPoint(),1)
             else:
                 w.setParent(parent)
+                parent.layout().addWidget(w)
 
     def _calibrate(self):
-        
         config = self.mcafit.configure()
         x = self.mcafit.xdata0[:]
         y = self.mcafit.ydata0[:]

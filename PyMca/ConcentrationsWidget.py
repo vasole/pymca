@@ -727,15 +727,15 @@ class ConcentrationsTable(QTable):
                                                    qt.QTableWidgetItem.Type)
                     else:
                         item.setText(field)
-                        item.setBackgroundColor(color)
-                        item.setFlags(qt.Qt.ItemIsSelectable|
-                                      qt.Qt.ItemIsEnabled)
+                    item.setBackgroundColor(color)
+                    item.setFlags(qt.Qt.ItemIsSelectable|
+                                  qt.Qt.ItemIsEnabled)
                     self.setItem(line, col, item)                    
                 col=col+1
             line +=1
         
         for i in range(self.columnCount()):
-            if i > 1:
+            if (i > 1) and (i < 5):
                 self.resizeColumnToContents(i)
 
 

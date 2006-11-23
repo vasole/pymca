@@ -26,10 +26,6 @@
 #############################################################################*/
 # The Python version of qwt-*/examples/simple_plot/simple.cpp
 #from QMdiApp.mdi_icons import IconDict
-try:
-    from Icons import IconDict
-except:
-    pass
 import copy
 import sys
 import string
@@ -65,7 +61,10 @@ if qwt.QWT_VERSION_STR[0] > '4':
     QWTVERSION4 = False
 else:
     QWTVERSION4 = True
-
+try:
+    from Icons import IconDict
+except:
+    pass
 import time
 from Numeric import *
 DEBUG = 0
@@ -1200,7 +1199,7 @@ class QtBlissGraph(qwt.QwtPlot):
 
     if not QWTVERSION4:
         def setCurveYAxis(self, index, axis):
-            self.curves[self.curveslist[index]]['curve'].setYAxis(axis)
+            self.curves[self.curveslist[index-1]]['curve'].setYAxis(axis)
 
 
     def _legendClicked(self, itemorindex):
@@ -1919,7 +1918,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 ymax = ymin+1
             #else:
             #    ymax = log(ymax)            
-        self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
+        self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
         self.replot()
 
     def insertx1marker(self,*var,**kw):

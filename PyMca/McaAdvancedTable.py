@@ -334,13 +334,13 @@ class McaTable(QTable):
         return text
 
     def closeEvent(self, event):
-        qttable.QTable.closeEvent(self, event)
-        dict={}
-        dict['event']= 'closed'
+        QTable.closeEvent(self, event)
+        ddict={}
+        ddict['event']= 'closed'
         if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL('closed'),(dict,))
+            self.emit(qt.PYSIGNAL('closed'),(ddict,))
         else:
-            self.emit(qt.SIGNAL('closed'), dict)
+            self.emit(qt.SIGNAL('closed'), ddict)
 
 if QTVERSION < '4.0.0':
     class ColorQTableItem(qttable.QTableItem):
