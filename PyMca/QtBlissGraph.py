@@ -76,8 +76,6 @@ if USE_SPS_LUT:
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
     except:
         USE_SPS_LUT = 0
-        
-            
 
 #import arrayfns
 if QTVERSION < '3.0.0':
@@ -1132,6 +1130,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.setactivecurve(self.getactivecurve(justlegend=1))
 
     def __legendremovesignal(self):
+        if DEBUG: print  "__legendremovesignal"
         self.__removecurveevent = {}
         self.__removecurveevent['event'] = "RemoveCurveEvent"
         self.__removecurveevent['legend'] = self.__activelegendname
@@ -1153,8 +1152,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.onMousePressed(newevent)
             elif event.dict['event'] == qt.QEvent.MouseButtonRelease:
                 self.onMouseReleased(newevent)
-            
-        
+                    
     def maptoy1(self,keyorindex):
         print "maptoy1 deprecated, use mapToY1"
         self.mapToY1(keyorindex)
@@ -1316,96 +1314,125 @@ class QtBlissGraph(qwt.QwtPlot):
         if QWTVERSION4:
             qwt.QwtPlot.setOutlineStyle(self, value)
 
-    def eventFilter(self,object,event):
-        if object == self.canvas():
-            if qt.qVersion() < '4.0.0':return 0
-            if event.type() == qt.QEvent.MouseMove:
-                e = GraphCustomEvent()
-                e.dict['event']  = qt.QEvent.MouseMove
-                e.dict['x']      = event.pos().x()
-                e.dict['y']      = event.pos().y()
-                e.dict['button'] = event.button()
-                qt.QApplication.postEvent(self, e)
-            elif event.type() == qt.QEvent.MouseButtonPress:
-                e = GraphCustomEvent()
-                e.dict['event']  = qt.QEvent.MouseButtonPress
-                e.dict['x']      = event.pos().x()
-                e.dict['y']      = event.pos().y()
-                e.dict['button'] = event.button()
-                qt.QApplication.postEvent(self, e)
-            elif event.type() == qt.QEvent.MouseButtonRelease:
-                e = GraphCustomEvent()
-                e.dict['event']  = qt.QEvent.MouseButtonRelease
-                e.dict['x']      = event.pos().x()
-                e.dict['y']      = event.pos().y()
-                e.dict['button'] = event.button()
-                qt.QApplication.postEvent(self, e)
-            else:return 0
-            return 1
-        elif event.type() == qt.QEvent.MouseButtonRelease:
-            #if event.button() == qt.Qt.LeftButton:
-            #    if qt.qVersion() > '4.0.0':
-            #        legendname = str(object.text().text())
-            #        self.setactivecurve(legendname)
-            #        return 1
-            if event.button() == qt.Qt.RightButton:
-                if QWTVERSION4:
-                    self.__activelegendname = str(object.text())
-                else:
-                    #print type(object.text())
-                    #print type(object.text().text())
-                    self.__activelegendname = str(object.text().text())
-                if not self.__uselegendmenu:
-                        return 0
-                self.__removecurveevent = None
-                if self.legendmenu is None:
-                    if qt.qVersion() < '4.0.0':
-                         self.legendmenu = qt.QPopupMenu()
-                         self.legendmenu.insertItem(qt.QString("Set Active"),self.__legendsetactive)
-                         self.legendmenu.insertSeparator()
-                         self.legendmenu.insertItem(qt.QString("Map to y1") ,self.__legendmaptoy1)
-                         self.legendmenu.insertItem(qt.QString("Map to y2") ,self.__legendmaptoy2)
-                         self.legendmenu.insertSeparator()
-                         self.legendmenu.insertItem(qt.QString("Remove curve") ,self.__legendremovesignal)
-                    else:
-                         self.legendmenu = qt.QMenu()
-                         self.legendmenu.addAction(qt.QString("Set Active"),self.__legendsetactive)
-                         self.legendmenu.addSeparator()
-                         self.legendmenu.addAction(qt.QString("Map to y1") ,self.__legendmaptoy1)
-                         self.legendmenu.addAction(qt.QString("Map to y2") ,self.__legendmaptoy2)
-                         self.legendmenu.addSeparator()
-                         self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
-                if qt.qVersion() < '4.0.0':
-                    self.legendmenu.exec_loop(self.cursor().pos())
-                else:
-                    self.legendmenu.exec_(self.cursor().pos())
-                if self.__removecurveevent is not None:
-                    if 0:
-                        #This crashes windows Qt 3.3.2
-                        if qt.qVersion() < '4.0.0':
-                            self.emit(qt.PYSIGNAL('QtBlissGraphSignal'),
-                                               (self.__removecurveevent,))
-                        else:
-                            self.emit(qt.SIGNAL('QtBlissGraphSignal'),
-                                                self.__removecurveevent)
-                    else:
-                        #This does not crash Qt 3.3.2
-                        event = GraphCustomEvent()
-                        event.dict['event' ]  = "RemoveCurveEvent"
-                        event.dict['legend']  = self.__removecurveevent['legend']
-                        qt.QApplication.postEvent(self, event)
-                return 1
-        return 0
 
-    def testmethod(self, *var, **kw):
-        print "test method"
-        print var
-        print kw
+    if QWTVERSION4:
+        def eventFilter(self,object,event):
+            if object == self.canvas():
+                if qt.qVersion() < '4.0.0':return 0
+                if event.type() == qt.QEvent.MouseMove:
+                    e = GraphCustomEvent()
+                    e.dict['event']  = qt.QEvent.MouseMove
+                    e.dict['x']      = event.pos().x()
+                    e.dict['y']      = event.pos().y()
+                    e.dict['button'] = event.button()
+                    qt.QApplication.postEvent(self, e)
+                elif event.type() == qt.QEvent.MouseButtonPress:
+                    e = GraphCustomEvent()
+                    e.dict['event']  = qt.QEvent.MouseButtonPress
+                    e.dict['x']      = event.pos().x()
+                    e.dict['y']      = event.pos().y()
+                    e.dict['button'] = event.button()
+                    qt.QApplication.postEvent(self, e)
+                elif event.type() == qt.QEvent.MouseButtonRelease:
+                    e = GraphCustomEvent()
+                    e.dict['event']  = qt.QEvent.MouseButtonRelease
+                    e.dict['x']      = event.pos().x()
+                    e.dict['y']      = event.pos().y()
+                    e.dict['button'] = event.button()
+                    qt.QApplication.postEvent(self, e)
+                else:return 0
+                return 1
+            elif event.type() == qt.QEvent.MouseButtonRelease:
+                #if event.button() == qt.Qt.LeftButton:
+                #    if qt.qVersion() > '4.0.0':
+                #        legendname = str(object.text().text())
+                #        self.setactivecurve(legendname)
+                #        return 1
+                if event.button() == qt.Qt.RightButton:
+                    if QWTVERSION4:
+                        self.__activelegendname = str(object.text())
+                    else:
+                        #print type(object.text())
+                        #print type(object.text().text())
+                        self.__activelegendname = str(object.text().text())
+                    if not self.__uselegendmenu:
+                            return 0
+                    self.__event = None
+                    if self.legendmenu is None:
+                        if qt.qVersion() < '4.0.0':
+                             self.legendmenu = qt.QPopupMenu()
+                             self.legendmenu.insertItem(qt.QString("Set Active"),self.__legendsetactive)
+                             self.legendmenu.insertSeparator()
+                             self.legendmenu.insertItem(qt.QString("Map to y1") ,self.__legendmaptoy1)
+                             self.legendmenu.insertItem(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                             self.legendmenu.insertSeparator()
+                             self.legendmenu.insertItem(qt.QString("Remove curve") ,self.__legendremovesignal)
+                        else:
+                             self.legendmenu = qt.QMenu()
+                             self.legendmenu.addAction(qt.QString("Set Active"),self.__legendsetactive)
+                             self.legendmenu.addSeparator()
+                             self.legendmenu.addAction(qt.QString("Map to y1") ,self.__legendmaptoy1)
+                             self.legendmenu.addAction(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                             self.legendmenu.addSeparator()
+                             self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
+                    if qt.qVersion() < '4.0.0':
+                        self.legendmenu.exec_loop(self.cursor().pos())
+                    else:
+                        self.legendmenu.exec_(self.cursor().pos())
+                    if self.__removecurveevent is not None:
+                        if 0:
+                            #This crashes windows Qt 3.3.2
+                            if qt.qVersion() < '4.0.0':
+                                self.emit(qt.PYSIGNAL('QtBlissGraphSignal'),
+                                                   (self.__removecurveevent,))
+                            else:
+                                self.emit(qt.SIGNAL('QtBlissGraphSignal'),
+                                                    self.__removecurveevent)
+                        else:
+                            #This does not crash Qt 3.3.2
+                            event = GraphCustomEvent()
+                            event.dict['event' ]  = "RemoveCurveEvent"
+                            event.dict['legend']  = self.__removecurveevent['legend']
+                            qt.QApplication.postEvent(self, event)
+                    return 1
+            return 0
+    else:
+        def legendItemSlot(self, ddict):
+            if ddict['event'] == "leftMousePressed": return self.setactivecurve(ddict['legend'])
+            if ddict['event'] != "rightMouseReleased": return
+            self.__activelegendname = ddict['legend']
+            self.__event = None
+            self.__removecurveevent = None
+            if self.legendmenu is None:
+                if QTVERSION < '4.0.0':
+                     self.legendmenu = qt.QPopupMenu()
+                     self.legendmenu.insertItem(qt.QString("Set Active"),self.__legendsetactive)
+                     self.legendmenu.insertSeparator()
+                     self.legendmenu.insertItem(qt.QString("Map to y1") ,self.__legendmaptoy1)
+                     self.legendmenu.insertItem(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                     self.legendmenu.insertSeparator()
+                     self.legendmenu.insertItem(qt.QString("Remove curve") ,self.__legendremovesignal)
+                else:
+                     self.legendmenu = qt.QMenu()
+                     self.legendmenu.addAction(qt.QString("Set Active"),self.__legendsetactive)
+                     self.legendmenu.addSeparator()
+                     self.legendmenu.addAction(qt.QString("Map to y1") ,self.__legendmaptoy1)
+                     self.legendmenu.addAction(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                     self.legendmenu.addSeparator()
+                     self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
+            if QTVERSION < '4.0.0':
+                self.legendmenu.exec_loop(self.cursor().pos())
+            else:
+                self.legendmenu.exec_(self.cursor().pos())
+            if self.__removecurveevent is not None:
+                event = GraphCustomEvent()
+                event.dict['event' ]  = "RemoveCurveEvent"
+                event.dict['legend']  = self.__removecurveevent['legend']
+                qt.QApplication.postEvent(self, event)
     
     def newcurve(self,*var,**kw):
         if DEBUG: print "newcurve obsolete, use newCurve instead"
         return self.newCurve(*var,**kw)
-    
         
     def newCurve(self,key,x=None,y=None,logfilter=0,curveinfo=None,**kw):
         if key not in self.curves.keys():
@@ -1430,7 +1457,12 @@ class QtBlissGraph(qwt.QwtPlot):
                     else:
                         item = self.legend().find(self.curves[key]['curve'])
                         if self.__uselegendmenu:
-                            item.installEventFilter(self)
+                            if QTVERSION < '4.0.0':
+                                self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
+                                             self.legendItemSlot)
+                            else:
+                                self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
+                                             self.legendItemSlot)
         else:
             #curve already exists
             pass
@@ -1452,7 +1484,8 @@ class QtBlissGraph(qwt.QwtPlot):
             if len(y):
                 ymin = min(y)
             else:
-                pass
+                self.delcurve(key)
+                return
                 #if len(self.curves.keys()) != 1:
                 #    self.delcurve(key)
                 #    return                    
@@ -1463,7 +1496,10 @@ class QtBlissGraph(qwt.QwtPlot):
                     i1 = nonzero(ybase<=0)
                     for i in i1:
                         ybase[i] = ymin
-                self.curve(self.curves[key]['curve']).setbaseline(ybase)
+                if QWTVERSION4:
+                    self.curve(self.curves[key]['curve']).setbaseline(ybase)
+                else:
+                    self.curves[key]['curve'].setbaseline(ybase)
             if kw.has_key('regions'):
                 #print "x0 = ",x[0]
                 #print "x-1= ",x[-1]
@@ -1476,7 +1512,10 @@ class QtBlissGraph(qwt.QwtPlot):
                     #print "i1,i2 ",i1,i2
                     #print len(x)
                     regions.append([int(i1),int(i2)])
-                self.curve(self.curves[key]['curve']).setregions(regions)
+                if QWTVERSION4:
+                    self.curve(self.curves[key]['curve']).setregions(regions)
+                else:
+                    self.curves[key]['curve'].setregions(regions)
             if len(self.curves.keys()) == 1:
                 #set the active curve
                 #self.legendclicked(1)
@@ -1729,8 +1768,13 @@ class QtBlissGraph(qwt.QwtPlot):
         self.curves[key] =  {}
         #self.curves[key] =  self.insertCurve(key)
         if len(kw.keys()):
-            curve = BlissCurve(self,key,**kw)
-            self.curves[key] ["curve"] = self.insertCurve(curve)
+            if QWTVERSION4:
+                curve = BlissCurve(self,key,**kw)
+                self.curves[key] ["curve"] = self.insertCurve(curve)
+            else:
+                curve = BlissCurve(key,**kw)
+                curve.attach(self)
+                self.curves[key] ["curve"] = curve
         else:
             self.curves[key] ["curve"] = self.insertCurve(key)
         self.curves[key] ["name"] = qt.QString(str(key))
@@ -1750,7 +1794,8 @@ class QtBlissGraph(qwt.QwtPlot):
         if QWTVERSION4:
             return qwt.QwtPlot.insertCurve(self, key)
         else:
-            curve = qwt.Qwt.QwtPlotCurve(key)
+            #curve = qwt.Qwt.QwtPlotCurve(key)
+            curve = MyQwtPlotCurve(key)
             curve.attach(self)
             return curve
         
@@ -2393,50 +2438,6 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
                                  32, None, 0,
                                  qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
 
-
-class BlissCurve(qwt.QwtPlotCurve):
-    def __init__(self,parent=None,name="",regions=[[0,-1]],baseline=[]):
-        qwt.QwtPlotCurve.__init__(self,parent,name)
-        self.regions = regions
-        self.setStyle(qwt.QwtCurve.Sticks)
-        self.baselinedata = baseline 
-        #self.setOptions(qwt.QwtCurve.Xfy)
-        
-    def draw(self,painter,xMap,yMap,a,b):
-        for region in self.regions:
-            if len(self.baselinedata):
-                for i in range(int(region[0]),int(region[1])):
-                    #get the point
-                    self.setBaseline(self.baselinedata[i])
-                    qwt.QwtCurve.draw(self,painter,xMap,yMap,i,i)
-            else: 
-                qwt.QwtCurve.draw(self,painter,xMap,yMap,region[0],region[1])
-
-    def setregions(self,regions):
-        self.regions = regions
-
-    def setbaseline(self,baseline):
-        self.baselinedata = baseline
-
-class TimeScaleDraw(qwt.QwtScaleDraw):
-    def label(self, value):
-        if int(value) - value == 0:
-            value = abs(int(value))
-            h = value / 3600
-            m = (value % 3600) / 60
-            s = value - 3600*h - 60*m
-
-
-            if h == 0 and m == 0:
-                return '%ds' % s
-            else:
-                if h == 0:
-                    return '%dm%02ds' % (m, s)
-                else:
-                    return '%dh%02dm%02ds' % (h, m, s)
-        else:
-            return ''
-
 if qwt.QWT_VERSION_STR[0] > '4':
     class MyPicker(Qwt.QwtPicker):
         def widgetMousePressEvent(self, event):
@@ -2473,6 +2474,122 @@ if qwt.QWT_VERSION_STR[0] > '4':
             else:
                 self.emit(qt.SIGNAL("MouseMoved(const QMouseEvent&)"), event)
             Qwt.QwtPicker.widgetMouseMoveEvent(self, event)
+
+    class MyQwtPlotCurve(Qwt.QwtPlotCurve):
+        def __init__(self, key):
+            Qwt.QwtPlotCurve.__init__(self, key)
+
+        #These two methods to be overloaded to use ANY widget as legend item.
+        #Default implementation is a QwtLegendItem            
+        def legendItem(self):
+            if DEBUG:print "in legend item"
+            #return Qwt.QwtPlotCurve.legendItem(self)
+            return MyQwtLegendItem(self.plot().legend())
+
+        def updateLegend(self, legend):
+            if DEBUG:print "in update legend!"
+            return Qwt.QwtPlotCurve.updateLegend(self, legend)
+
+    class MyQwtLegendItem(Qwt.QwtLegendItem):
+        def __init__(self, *var):
+            Qwt.QwtLegendItem.__init__(self, *var)
+            self.legendMenu = None
+                     
+        def mousePressEvent(self, event):
+            if DEBUG:print "MyQwtLegendItem mouse pressed"
+            if event.button() == qt.Qt.LeftButton:
+                text = "leftMousePressed"
+            elif event.button() == qt.Qt.RightButton:
+                text = "rightMousePressed"
+            else:
+                text = "centralMousePressed" 
+            self.__emitSignal(text)
+
+        def mouseReleaseEvent(self, event):
+            if DEBUG:print "MyQwtLegendItem mouse released"
+            if event.button() == qt.Qt.LeftButton:
+                text = "leftMouseReleased"
+            elif event.button() == qt.Qt.RightButton:
+                text = "rightMouseReleased"
+            else:
+                text = "centralMouseReleased" 
+            self.__emitSignal(text)
+
+        def __emitSignal(self, eventText):
+            ddict = {}
+            ddict['legend'] = str(self.text().text())
+            ddict['event']  = eventText 
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL("MyQwtLegendItemSignal"), (ddict,))
+            else:
+                self.emit(qt.SIGNAL("MyQwtLegendItemSignal"), ddict)
+if QWTVERSION4:
+    class BlissCurve(qwt.QwtPlotCurve):
+        def __init__(self,parent=None,name="",regions=[[0,-1]],baseline=[]):
+            qwtQwtPlotCurve.__init__(self,parent,name)
+            self.regions = regions
+            self.setStyle(qwt.QwtCurve.Sticks)
+            self.baselinedata = baseline 
+            #self.setOptions(qwt.QwtCurve.Xfy)
+            
+        def draw(self,painter,xMap,yMap,a,b):
+            for region in self.regions:
+                if len(self.baselinedata):
+                    for i in range(int(region[0]),int(region[1])):
+                        #get the point
+                        self.setBaseline(self.baselinedata[i])
+                        qwt.QwtCurve.draw(self,painter,xMap,yMap,i,i)
+                else: 
+                    qwt.QwtCurve.draw(self,painter,xMap,yMap,region[0],region[1])
+
+        def setregions(self,regions):
+            self.regions = regions
+
+        def setbaseline(self,baseline):
+            self.baselinedata = baseline
+else:
+    class BlissCurve(MyQwtPlotCurve):
+        def __init__(self,name="",regions=[[0,-1]],baseline=[]):
+            MyQwtPlotCurve.__init__(self,name)
+            self.regions = regions
+            self.setStyle(qwt.QwtCurve.Sticks)
+            self.baselinedata = baseline
+            #self.setOptions(qwt.QwtCurve.Xfy)
+
+        def drawFromTo(self,painter,xMap,yMap,a,b):
+            for region in self.regions:
+                if len(self.baselinedata):
+                    for i in range(int(region[0]),int(region[1])):
+                        #get the point
+                        self.setBaseline(self.baselinedata[i])
+                        MyQwtPlotCurve.drawFromTo(self,painter,xMap,yMap,i,i)
+                else: 
+                    MyQwtPlotCurve.drawFromTo(self,painter,xMap,yMap,region[0],region[1])
+
+        def setregions(self,regions):
+            self.regions = regions
+
+        def setbaseline(self,baseline):
+            self.baselinedata = baseline
+
+class TimeScaleDraw(qwt.QwtScaleDraw):
+    def label(self, value):
+        if int(value) - value == 0:
+            value = abs(int(value))
+            h = value / 3600
+            m = (value % 3600) / 60
+            s = value - 3600*h - 60*m
+
+
+            if h == 0 and m == 0:
+                return '%ds' % s
+            else:
+                if h == 0:
+                    return '%dm%02ds' % (m, s)
+                else:
+                    return '%dh%02dm%02ds' % (h, m, s)
+        else:
+            return ''
 
 def make0():
     demo = QtBlissGraphContainer(uselegendmenu=1)

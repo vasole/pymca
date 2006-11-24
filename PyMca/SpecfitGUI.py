@@ -469,9 +469,13 @@ class SpecfitGUI(qt.QWidget):
         if item in self.specfit.bkgdict.keys():
             self.specfit.setbackground(item)
         else:
-            print " Funtion not implemented"
+            qt.QMessageBox.information(self, "Info", "Function not implemented")
+            return
             i=1+self.specfit.bkgdict.keys().index(self.specfit.fitconfig['fitbkg'])
-            self.guiconfig.BkgComBox.setCurrentItem(i)
+            if qt.qVersion() < '4.0.0':
+                self.guiconfig.BkgComBox.setCurrentItem(i)
+            else:
+                self.guiconfig.BkgComBox.setCurrentIndex(i)
         self.__initialparameters()
         return
 
@@ -494,7 +498,9 @@ class SpecfitGUI(qt.QWidget):
             if len(functionsfile):
                 try:
                     if self.specfit.importfun(functionsfile):
-                        print "Unsuccessful import "
+                        qt.QMessageBox.critical(self, "ERROR",
+                                                "Function not imported")
+                        return
                     else:
                         #empty the ComboBox
                         n=self.guiconfig.FunComBox.count()

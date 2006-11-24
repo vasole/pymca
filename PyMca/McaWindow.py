@@ -1072,7 +1072,7 @@ class McaWidget(qt.QWidget):
             newDataObject.m = None
             newDataObject.baseline = [yb]
             self.dataObjectsDict[legend] = newDataObject
-            if QTVERSION < '4.0.0':
+            if 1 or QTVERSION < '4.0.0':
                 self.graph.newCurve(legend,x=x,
                                     y=yfit,
                                     logfilter=1,
