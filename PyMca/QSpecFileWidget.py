@@ -31,8 +31,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.list.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.mainTab = qt.QTabWidget(self)
 
-        self.cntTable = SpecFileCntTable.CntTable()
-        self.mcaTable = SpecFileMcaTable.McaTable()
+        self.cntTable = SpecFileCntTable.SpecFileCntTable()
+        self.mcaTable = SpecFileMcaTable.SpecFileMcaTable()
 
         self.mainTab.addTab(self.cntTable,str("Counters"))
         self.mainTab.addTab(self.mcaTable,str("MCA"))

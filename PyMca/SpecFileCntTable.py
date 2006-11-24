@@ -16,7 +16,7 @@ if QTVERSION < '4.0.0':
     else:
         import qttable
     
-    class CntTable(qt.QWidget):
+    class SpecFileCntTable(qt.QWidget):
         def __init__(self, parent=None, name=None, fl=0):
             qt.QWidget.__init__(self, parent, name, fl)
 
@@ -285,7 +285,7 @@ if QTVERSION < '4.0.0':
             return (row, col)
 
 else:
-    class CntTable(qt.QTableWidget):
+    class SpecFileCntTable(qt.QTableWidget):
         def __init__(self, parent=None):
             qt.QTableWidget.__init__(self, parent)
             self.cntList      = []
@@ -470,7 +470,7 @@ class CheckBoxItem(qt.QCheckBox):
 
 def main():
     app = qt.QApplication([])
-    tab = CntTable()
+    tab = SpecFileCntTable()
     tab.build(["Cnt1", "Cnt2", "Cnt3"])
     tab.setCounterSelection({'x':[1, 2], 'y':[4], 'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()

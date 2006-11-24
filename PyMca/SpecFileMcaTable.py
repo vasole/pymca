@@ -17,7 +17,7 @@ if QTVERSION < '4.0.0':
     else:
         import qttable
 
-    class McaTable(qt.QWidget):
+    class SpecFileMcaTable(qt.QWidget):
         def __init__(self, parent=None, name=None, fl=0):
             qt.QWidget.__init__(self, parent, name, fl)
 
@@ -211,7 +211,7 @@ if QTVERSION < '4.0.0':
 
 
 else:
-    class McaTable(qt.QWidget):
+    class SpecFileMcaTable(qt.QWidget):
         def __init__(self, parent=None):
             qt.QWidget.__init__(self, parent)
             self.l = qt.QVBoxLayout(self)
@@ -340,7 +340,7 @@ def test():
     import sys
     import SpecFileLayer
     app = qt.QApplication([])
-    tab = McaTable()
+    tab = SpecFileMcaTable()
     d = SpecFileLayer.SpecFileLayer()
     if len(sys.argv) > 1:
         d.SetSource(sys.argv[1])
