@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.64 $"
+__revision__ = "$Revision: 1.66 $"
 #/*##########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
@@ -27,6 +27,35 @@ __revision__ = "$Revision: 1.64 $"
 # is a problem to you.
 #############################################################################*/
 import sys, getopt, string
+if __name__ == '__main__':
+    options     = '-f'
+    longoptions = ['spec=','shm=','debug=', 'qt=']
+    try:
+        opts, args = getopt.getopt(
+                     sys.argv[1:],
+                     options,
+                     longoptions)
+    except getopt.error,msg:
+        print msg
+        sys.exit(1)
+    
+    keywords={}
+    debugreport = 0
+    qtversion = '4'
+    for opt, arg in opts:
+        if  opt in ('--spec'):
+            keywords['spec'] = arg
+        elif opt in ('--shm'):
+            keywords['shm']  = arg
+        elif opt in ('--debug'):
+            debugreport = 1
+        elif opt in ('-f'):
+            keywords['fresh'] = 1
+        elif opt in ('--qt'):
+            qtversion = arg
+    if qtversion == '3':
+        import qt
+
 import PyMcaMdi
 from PyMcaMdi import qt
 
@@ -1055,7 +1084,6 @@ if 0:
                     idx += 1
             return "Graph %d"%(idx)
 
-
 class MyQTextBrowser(qt.QTextBrowser):
     def  setSource(self,name):
         if name == qt.QString("./PyMCA.html"):
@@ -1104,31 +1132,7 @@ class PixmapLabel(qt.QLabel):
             self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"),(ddict))
 
 if __name__ == '__main__':
-    options     = '-f'
-    longoptions = ['spec=','shm=','debug=']
-    try:
-        opts, args = getopt.getopt(
-                     sys.argv[1:],
-                     options,
-                     longoptions)
-    except getopt.error,msg:
-        print msg
-        splash.close()
-        sys.exit(1)
-    
-    kw={}
-    debugreport = 0
-    for opt, arg in opts:
-        if  opt in ('--spec'):
-            kw['spec'] = arg
-        elif opt in ('--shm'):
-            kw['shm']  = arg
-        elif opt in ('--debug'):
-            debugreport = 1
-        elif opt in ('-f'):
-            kw['fresh'] = 1
-    #demo = McaWindow.McaWidget(**kw)
-    demo = PyMca(**kw)
+    demo = PyMca(**keywords)
     if debugreport:demo.onDebug()
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                             app,qt.SLOT("quit()"))

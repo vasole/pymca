@@ -1438,31 +1438,22 @@ class QtBlissGraph(qwt.QwtPlot):
         if key not in self.curves.keys():
             self.curveinit(key,**kw)
             n = self.legend().itemCount()
-            ###
-            if 0:
-             for i in range(n):
-                item=self.legend().findItem(i+1)
-                item.setFocusPolicy(qt.QWidget.ClickFocus)
-                if self.__uselegendmenu:
-                    item.installEventFilter(self)
-                #item.setFocusPolicy(qt.QWidget.StrongFocus)
-            else:
-                if n > 0:
-                    if QWTVERSION4:
-                        #do it only for the last curve
-                        item=self.legend().findItem(self.curves[key]['curve'])
-                        item.setFocusPolicy(qt.QWidget.ClickFocus)
-                        if self.__uselegendmenu:
-                            item.installEventFilter(self)
-                    else:
-                        item = self.legend().find(self.curves[key]['curve'])
-                        if self.__uselegendmenu:
-                            if QTVERSION < '4.0.0':
-                                self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
-                                             self.legendItemSlot)
-                            else:
-                                self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
-                                             self.legendItemSlot)
+            if n > 0:
+                if QWTVERSION4:
+                    #do it only for the last curve
+                    item=self.legend().findItem(self.curves[key]['curve'])
+                    item.setFocusPolicy(qt.QWidget.ClickFocus)
+                    if self.__uselegendmenu:
+                        item.installEventFilter(self)
+                else:
+                    item = self.legend().find(self.curves[key]['curve'])
+                    if self.__uselegendmenu:
+                        if QTVERSION < '4.0.0':
+                            self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
+                                         self.legendItemSlot)
+                        else:
+                            self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
+                                         self.legendItemSlot)
         else:
             #curve already exists
             pass
@@ -2526,7 +2517,7 @@ if qwt.QWT_VERSION_STR[0] > '4':
 if QWTVERSION4:
     class BlissCurve(qwt.QwtPlotCurve):
         def __init__(self,parent=None,name="",regions=[[0,-1]],baseline=[]):
-            qwtQwtPlotCurve.__init__(self,parent,name)
+            qwt.QwtPlotCurve.__init__(self,parent,name)
             self.regions = regions
             self.setStyle(qwt.QwtCurve.Sticks)
             self.baselinedata = baseline 
