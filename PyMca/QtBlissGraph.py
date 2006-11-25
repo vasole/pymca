@@ -381,6 +381,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.setLegendFrameStyle(qt.QFrame.Box | qt.QFrame.Sunken)
         self.enableZoom(True)
         self._zooming = 0
+        self._selecting = 0
         self.__zoomback   = 1
         self.__markermode = 0
         self.__markermoving= 0
@@ -694,7 +695,12 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def enableZoom(self, flag=True):
         self.__zoomEnabled = flag
-        
+        if flag:self._selecting = False
+
+    def enableSelection(self, flag=True):
+        self._selecting    = flag
+        if flag: self.__zoomEnabled = False
+
     def checky2scale(self):
         flag = 0
         if len(self.curves.keys()):
@@ -918,6 +924,13 @@ class QtBlissGraph(qwt.QwtPlot):
                                 self.canvasMap(qwt.QwtPlot.xTop).s2(),
                                 self.canvasMap(qwt.QwtPlot.yRight).s2(),
                                 self.canvasMap(qwt.QwtPlot.yRight).s1())
+            elif self._selecting:
+                self.enableOutline(1)
+                self.setOutlinePen(qt.QPen(qt.Qt.black))
+                if  QWTVERSION4:
+                    self.setOutlineStyle(qwt.Qwt.Rect)
+                else:
+                    self.picker.setRubberBand(Qwt.QwtPicker.RectRubberBand)                    
         elif qt.Qt.RightButton == e.button():
             self._zooming = 0
             """
@@ -1035,6 +1048,35 @@ class QtBlissGraph(qwt.QwtPlot):
                     self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(dict,))
                 else:
                     self.emit(qt.SIGNAL("QtBlissGraphSignal"),(dict))
+            elif self._selecting:
+                xmin0 = min(self.xpos, e.pos().x())
+                xmax0 = max(self.xpos, e.pos().x())
+                ymin0 = min(self.ypos, e.pos().y())
+                ymax0 = max(self.ypos, e.pos().y())
+                if QWTVERSION4:
+                    self.setOutlineStyle(qwt.Qwt.Cross)
+                else:
+                    self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+                xmin = self.invTransform(qwt.QwtPlot.xBottom, xmin0)
+                xmax = self.invTransform(qwt.QwtPlot.xBottom, xmax0)
+                ymin = self.invTransform(qwt.QwtPlot.yLeft, ymin0)
+                ymax = self.invTransform(qwt.QwtPlot.yLeft, ymax0)
+                self.enableOutline(0)
+                self.replot()                
+                ddict = {}
+                ddict['event']    = "MouseSelection"
+                ddict['xmin']        = min(xmin,xmax)
+                ddict['xpixel_min']   = min(xmin0,xmax0)
+                ddict['ymin']        = min(ymin,ymax)
+                ddict['ypixel_min']   = min(ymin0,ymax0)
+                ddict['xmax']        = max(xmin,xmax)
+                ddict['xpixel_max']   = max(xmin0,xmax0)
+                ddict['ymax']        = max(ymin,ymax)
+                ddict['ypixel_max']   = max(ymin0,ymax0)
+                if qt.qVersion() < '4.0.0':
+                    self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(ddict,))
+                else:
+                    self.emit(qt.SIGNAL("QtBlissGraphSignal"),(ddict))
             else:
                 if self.__markermode:
                     if len(self.markersdict.keys()):
