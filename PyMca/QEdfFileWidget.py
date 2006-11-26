@@ -372,7 +372,7 @@ class QEdfFileWidget(qt.QWidget):
         #colormap
         self._addToolButton(self.colormapIcon,
                             self.selectColormap,
-                            'Auto-Scale the Graph')
+                            'Color-Scale the Graph')
         
 
         #save
@@ -851,7 +851,7 @@ class QEdfFileWidget(qt.QWidget):
             self.lastData = data
             if self.colormapDialog is None:
                 wasnone = 1
-                self.colormapDialog = ColormapDialog.ColormapDialog()                
+                self.colormapDialog = ColormapDialog.ColormapDialog()
                 self.colormapDialog.colormapIndex  = self.colormapDialog.colormapList.index("Temperature")
                 self.colormapDialog.colormapString = "Temperature"
                 if QTVERSION < '4.0.0':

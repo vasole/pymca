@@ -1209,7 +1209,6 @@ class McaWidget(qt.QWidget):
                                            roidict=self.roidict,
                                            currentroi=newroi)
             self.currentroi = newroi
-                                        
             ndict = {}
             ndict['event'] = "SetActiveCurveEvent"
             self.__graphsignal(ndict)
@@ -1270,6 +1269,7 @@ class McaWidget(qt.QWidget):
                 self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
                 self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
                 self.graph.enablemarkermode()
+            self.emitCurrentROISignal()
             if dict['colheader'] == 'From':
                 #I should put the table in RW mode
                 pass
@@ -1352,8 +1352,24 @@ class McaWidget(qt.QWidget):
             if legend is not None:
                 legend = self.graph.getactivecurve(justlegend=1)
                 if legend in self.dataObjectsDict.keys():
-                    x = self.dataObjectsDict[legend].x[0]
+                    x0 = self.dataObjectsDict[legend].x[0]
                     y = self.dataObjectsDict[legend].y[0]
+                    #those are the actual data
+                    if str(self.graph.xlabel()).upper() != "CHANNEL":
+                        #I have to get the energy
+                        A = self.control.calinfo.caldict['']['A']
+                        B = self.control.calinfo.caldict['']['B']
+                        C = self.control.calinfo.caldict['']['C']
+                        order = self.control.calinfo.caldict['']['order']
+                    else:
+                        A = 0.0
+                        B = 1.0
+                        C = 0.0
+                        order = 1
+                    calib = [A,B,C]
+                    x = calib[0]+ \
+                        calib[1]* x0 + \
+                        calib[2]* x0 * x0
                 else:
                     print "Should not be here"
                     return
@@ -1375,14 +1391,21 @@ class McaWidget(qt.QWidget):
                             #if len(x) > 3:
                             #    fromdata = x[3]
                             #else:
-                            fromdata = x[0]
-                            todata   = x[-1]
+                            fromdata = x0[0]
+                            todata   = x0[-1]
+                            #I profit to update ICR
+                            self.roidict[key]['from'] = x0[0]
+                            self.roidict[key]['to'] = x0[-1]
                         else:
                             fromdata = self.roidict[key]['from']
                             todata   = self.roidict[key]['to']
-                        i1 = Numeric.nonzero(x>=fromdata)
-                        xw = Numeric.take(x,i1)
-                        yw = Numeric.take(y,i1)
+                        if self.roidict[key]['type'].upper() != "CHANNEL":
+                            i1 = Numeric.nonzero(x>=fromdata)
+                            xw = Numeric.take(x,i1)
+                        else:
+                            i1 = Numeric.nonzero(x0>=fromdata)
+                            xw = Numeric.take(x0,i1)
+                        yw = Numeric.take(y, i1)
                         i1 = Numeric.nonzero(xw<=todata)
                         xw = Numeric.take(xw,i1)
                         yw = Numeric.take(yw,i1)
@@ -1393,8 +1416,7 @@ class McaWidget(qt.QWidget):
                                                       len(yw) *  0.5 * (yw[0] + yw[-1])
                         else:
                             self.roidict[key]['netcounts'] = 0
-                        self.roidict[key]['from'  ] = fromdata
-                        self.roidict[key]['to'    ] = todata
+                    self.emitCurrentROISignal()
                 xlabel = self.graph.xlabel()
                 #self.roiwidget.setheader(text="%s ROIs of %s" % (xlabel,legend))
                 self.roiwidget.setheader(text="ROIs of %s" % (legend))
@@ -1426,6 +1448,36 @@ class McaWidget(qt.QWidget):
             if DEBUG:
                 print "Unhandled event ",   dict['event']   
 
+    def emitCurrentROISignal(self):
+        if self.currentroi is None: return
+        #I have to get the current calibration
+        if str(self.graph.xlabel()).upper() != "CHANNEL":
+            #I have to get the energy
+            A = self.control.calinfo.caldict['']['A']
+            B = self.control.calinfo.caldict['']['B']
+            C = self.control.calinfo.caldict['']['C']
+            order = self.control.calinfo.caldict['']['order']
+        else:
+            A = 0.0
+            B = 1.0
+            C = 0.0
+            order = 1
+        key = self.currentroi
+        fromdata = self.roidict[key]['from' ]
+        todata   = self.roidict[key]['to']
+        ddict = {}
+        ddict['event']      = "ROISignal"
+        ddict['name'] = key
+        ddict['from'] = fromdata
+        ddict['to']   = todata
+        ddict['type'] = self.roidict[self.currentroi]["type"]
+        ddict['calibration']= [A, B, C, order]
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("McaWindowSignal"),
+                    (ddict,))
+        else:
+            self.emit(qt.SIGNAL("McaWindowSignal"),
+                    ddict)
 
     def _addSelection(self,selection):
         if DEBUG:
@@ -1524,8 +1576,6 @@ class McaWidget(qt.QWidget):
                     del self.dataObjectsDict[legend]
                     raise
         self.graph.replot()
-
-
     
     def _removeSelection(self,selection):
         if DEBUG: print "McaWindow._removeSelection, selection =  ",selection

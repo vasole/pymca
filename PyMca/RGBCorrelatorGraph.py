@@ -36,12 +36,12 @@ QWTVERSION4 = QtBlissGraph.QWTVERSION4
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, selection=False, colormap=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        self._buildToolBar()
+        self._buildToolBar(selection, colormap)
         self.graph = QtBlissGraph.QtBlissGraph(self)
         self.graph.xlabel("Row")
         self.graph.ylabel("Column")
@@ -55,12 +55,13 @@ class RGBCorrelatorGraph(qt.QWidget):
         return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
                         qt.QWidget.sizeHint(self).height())
 
-    def _buildToolBar(self):
+    def _buildToolBar(self, selection=False, colormap=False):
         if QTVERSION < '4.0.0':
             if qt.qVersion() < '3.0':
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
             else:
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap"]))
+            self.selectionIcon	= qt.QIconSet(qt.QPixmap(IconDict["normal"]))
             self.zoomResetIcon	= qt.QIconSet(qt.QPixmap(IconDict["zoomreset"]))
             self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
@@ -70,6 +71,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self.hFlipIcon	= qt.QIconSet(qt.QPixmap(IconDict["gioconda16mirror"]))
         else:
             self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
+            self.selectionIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
             self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
             self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
@@ -81,6 +83,18 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.toolBarLayout.setMargin(0)
         self.toolBarLayout.setSpacing(0)
         self.mainLayout.addWidget(self.toolBar)
+        #Selection
+        if selection:
+            tb = self._addToolButton(self.selectionIcon,
+                                None,
+                                'Set Selection Mode',
+                                toggle = True,
+                                state = True)
+            if qt.qVersion() < '4.0.0':
+                tb.setState(qt.QButton.On)
+            else:
+                tb.setDown(True)
+            self.selectionToolButton = tb
         #Autoscale
         self._addToolButton(self.zoomResetIcon,
                             self._zoomReset,
@@ -107,10 +121,11 @@ class RGBCorrelatorGraph(qt.QWidget):
         tb.setDown(True)
 
         #colormap
-        #self._addToolButton(self.colormapIcon,
-        #                    self.selectColormap,
-        #                    'Auto-Scale the Graph')
-
+        if colormap:
+            tb = self._addToolButton(self.colormapIcon,
+                                     None,
+                                    'Change Colormap')
+            self.colormapToolButton = tb
         #flip
         if not QWTVERSION4:
             tb = self._addToolButton(self.hFlipIcon,
@@ -189,7 +204,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self.xAutoScaleToolButton.setDown(True)
 
     def _saveIconSignal(self):
-        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")        
+        qt.QMessageBox.information(self, "Save", "Not implemented (yet)")        
     
 
     def printGraph(self):

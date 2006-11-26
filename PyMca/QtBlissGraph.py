@@ -1324,6 +1324,10 @@ class QtBlissGraph(qwt.QwtPlot):
         return self.__activelinewidth
         
     def xlabel(self,label=None):
+        if DEBUG:"print xlabel deprecated, use x1Label"
+        return self.x1Label(label)
+
+    def x1Label(self,label=None):
         # set axis titles
         if label is None:
             if qwt.QWT_VERSION_STR[0] > '4':
@@ -1331,9 +1335,13 @@ class QtBlissGraph(qwt.QwtPlot):
             else:
                 return self.axisTitle(qwt.QwtPlot.xBottom)
         else:
-            self.setAxisTitle(qwt.QwtPlot.xBottom, label)
+            return self.setAxisTitle(qwt.QwtPlot.xBottom, label)
     
     def ylabel(self,label=None):
+        if DEBUG:"print ylabel deprecated, use y1Label"
+        self.y1Label(label)
+
+    def y1Label(self,label=None):
         # set axis titles
         if label is None:
             if qwt.QWT_VERSION_STR[0] > '4':
@@ -1341,7 +1349,7 @@ class QtBlissGraph(qwt.QwtPlot):
             else:
                 return self.axisTitle(qwt.QwtPlot.yLeft)
         else:
-            self.setAxisTitle(qwt.QwtPlot.yLeft, label)
+            return self.setAxisTitle(qwt.QwtPlot.yLeft, label)
     
 
     def enableOutline(self, value):
@@ -2253,13 +2261,14 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             yRange = (0, shape[1])
         else:
             yRange = yScale * 1
-        
+
         if self.plot().isX1AxisInverted():
             self.xMap = Qwt.QwtScaleMap(0, shape[0], xRange[1], xRange[0])
             self.plot().setAxisScale(Qwt.QwtPlot.xBottom, xRange[1], xRange[0])
         else:
-            self.xMap = Qwt.QwtScaleMap(0, shape[0], *xRange)
-            self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
+            self.xMap = Qwt.QwtScaleMap(0, shape[0], xRange[0], xRange[1])
+            self.plot().setAxisScale(Qwt.QwtPlot.xBottom,  xRange[0], xRange[1])
+
         if self.plot().isY1AxisInverted():
             self.yMap = Qwt.QwtScaleMap(0, shape[1], yRange[1], yRange[0])
             self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[1], yRange[0])
@@ -2291,10 +2300,12 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             if QTVERSION < '4.0.0':
                 self.image=qt.QImage(self.image_buffer,size[0], size[1],
                                     32, None,
-                                    0, qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
+                                    0, qt.QImage.IgnoreEndian).mirror(xmirror,
+                                                                      ymirror)
             else:
                 self.image = qt.QImage(self.image_buffer,size[0], size[1],
-                                       qt.QImage.Format_RGB32).mirrored(xmirror,ymirror)
+                                       qt.QImage.Format_RGB32).mirrored(xmirror,
+                                                                        ymirror)
 
     def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
                   xmirror = 0, ymirror = 1):
