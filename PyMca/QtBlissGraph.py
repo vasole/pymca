@@ -766,20 +766,36 @@ class QtBlissGraph(qwt.QwtPlot):
                 xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
                 ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
                 ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
-            #print "xmin, xmax, ymin, ymax = ",xmin, xmax, ymin, ymax                
             if self.plotImage is None:
                 if QWTVERSION4:
                     self.plotImage=QwtPlotImage(self)
                 else:
                     self.plotImage=Qwt5PlotImage(self)
             if xmirror is None: xmirror = self._xImageMirror        
-            if ymirror is None: ymirror = self._yImageMirror        
-            self.plotImage.setData(data,(xmin,xmax),(ymin,ymax),
+            if ymirror is None: ymirror = self._yImageMirror
+            if len(self.curveslist):
+                self.plotImage.setData(data,(xmin,xmax),yrange,
                                    colormap=colormap,
                                    xmirror = xmirror,
                                    ymirror = ymirror)
+            else:
+                #let the scale be governed by the image
+                self.plotImage.setData(data,None,None,
+                                   colormap=colormap,
+                                   xmirror = xmirror,
+                                   ymirror = ymirror)
+                self.replot()
+                if QWTVERSION4:
+                    xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
+                    xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
+                    ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
+                    ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
+                else:
+                    xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+                    xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+                    ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+                    ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             self.imageratio = (ymax - ymin)/(xmax - xmin)
-            #self.replot()
 
 
     def plotimage(self, *var, **kw):
