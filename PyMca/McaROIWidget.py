@@ -328,13 +328,16 @@ class McaROITable(QTable):
                         else:
                             key2.setText(field)
                         if (ROI.upper() == 'ICR') or (ROI.upper() == 'DEFAULT'):
-                                key2.setFlags(qt.Qt.ItemIsSelectable) 
+                                key2.setFlags(qt.Qt.ItemIsSelectable|
+                                              qt.Qt.ItemIsEnabled) 
                         else:
                             if col == 0:
                                 key2.setFlags(qt.Qt.ItemIsSelectable|
-                                              qt.Qt.ItemIsEnabled)                        
+                                              qt.Qt.ItemIsEnabled|
+                                              qt.Qt.ItemIsEditable)                        
                             else:
-                                key2.setFlags(qt.Qt.ItemIsSelectable) 
+                                key2.setFlags(qt.Qt.ItemIsSelectable|
+                                              qt.Qt.ItemIsEnabled) 
                     self.setItem(line,col,key2)
                     col=col+1
         self.setRowCount(line0)

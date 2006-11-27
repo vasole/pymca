@@ -399,7 +399,7 @@ class QEDFStackWidget(qt.QWidget):
 
 
 if __name__ == "__main__":
-    import getopt
+    import getopt, os
     options = ''
     longoptions = []
     try:
