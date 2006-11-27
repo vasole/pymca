@@ -10,7 +10,9 @@ import DataObject
 import EDFStack
 import Numeric
 import ColormapDialog
-
+import spslut
+COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
+                spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 DEBUG = 0
 
@@ -74,6 +76,7 @@ class QEDFStackWidget(qt.QWidget):
                                                                 selection = True,
                                                               colormap=True)
         self.roiGraphWidget.graph.enableSelection(True)
+        self.roiGraphWidget.graph.enableZoom(False)
         self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
         self.roiWindow.mainLayout.addWidget(self.roiGraphWidget)
         boxLayout.addWidget(self.stackWindow)
@@ -90,11 +93,14 @@ class QEDFStackWidget(qt.QWidget):
     def setSelectionMode(self, mode = None):
         if mode:
             self.roiGraphWidget.graph.enableSelection(True)
+            self.roiGraphWidget.graph.enableZoom(False)
             self.roiGraphWidget.selectionToolButton.setDown(True)
         else:
             self.roiGraphWidget.graph.enableZoom(True)
             self.roiGraphWidget.selectionToolButton.setDown(False)
-
+            self.plotStackImage(update = True)
+            self.plotROIImage(update = True)
+            
     def _buildAndConnectButtonBox(self):
         #the MCA selection
         self.mcaButtonBox = qt.QWidget(self.stackWindow)
@@ -166,25 +172,68 @@ class QEDFStackWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self._hFlipIconSignal)
 
+
         if QTVERSION < "4.0.0":
+            self.connect(self.roiGraphWidget.graph,
+                         qt.PYSIGNAL("QtBlissGraphSignal"),
+                         self._roiGraphSignal)
             self.connect(self.mcaWidget,
                          qt.PYSIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
         else:
+            self.connect(self.roiGraphWidget.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         self._roiGraphSignal)
             self.connect(self.mcaWidget,
                          qt.SIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
 
-    def changeStackColormap(self):
-        pass
-        #qt.QMessageBox.information(self,
-        #                           "Stack Colormap",
-        #                           "Not implemented (yet)")        
+    def _roiGraphSignal(self, ddict):
+        if ddict['event'] == "MouseSelection":
+            ix1 = int(ddict['xmin'])
+            ix2 = int(ddict['xmax'])+1
+            iy1 = int(ddict['xmin'])
+            iy2 = int(ddict['xmax'])+1
+            if self.mcaIndex == 0:
+                selectedData = Numeric.sum(Numeric.sum(self.stack.data[:,ix1:ix2, iy1:iy2], 2),1)
+            else:
+                selectedData = Numeric.sum(Numeric.sum(self.stack.data[ix1:ix2,:, iy1:iy2], 2),0)
+            dataObject = DataObject.DataObject()
+            dataObject.info = {"McaCalib": self.stack.info['McaCalib'],
+                               "selectiontype":"1D",
+                               "SourceName":"EDF Stack",
+                               "Key":"Selection"}
+            dataObject.x = [Numeric.arange(len(selectedData)).astype(Numeric.Float)
+                            + self.stack.info['Channel0']]
+            dataObject.y = [selectedData]
+            self.sendMcaSelection(dataObject,
+                                  key = "Selection",
+                                  legend="EDF Stack Selection",
+                                  action = "ADD")
 
-    def changeRoiColormap(self):
-        qt.QMessageBox.information(self,
-                                   "ROI Colormap",
-                                   "Not implemented (yet)")        
+        elif ddict['event'] == "MouseAt":
+            return
+            #if follow mouse is not activated
+            #it only enters here when the mouse is pressed.
+            #Therefore is perfect for "brush" selections.
+            print ddict
+            self.__brushWidth = 1
+            width = self.__brushWidth   #in (row, column) units
+            r = self.__stackImageData.shape[0]
+            c = self.__stackImageData.shape[1]
+            i1 = max((int(ddict['x'])-width+1), 0)
+            i2 = min((int(ddict['x'])+width), r)
+            j1 = max(int(ddict['y'])-width+1, 0)
+            j2 = min(int(ddict['y'])+width, c)
+            #if self.__adding:
+            if 1:
+                self.__stackPixmap[j1:j2,i1:i2,:] = 0
+                self.__selectionMask[i1:i2, j1:j2] = 1
+            else:
+                self.__stackPixmap[j1:j2,i1:i2,:] = self.__stackPixmap0[j1:j2,i1:i2,:]
+                self.__selectionMask[i1:i2, j1:j2] = 0
+            self.plotROIImage(update = False)
+            self.plotStackImage(update = False)
 
     def setStack(self, stack):
         #stack.data is an XYZ array
@@ -248,7 +297,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.stackGraphWidget.graph.setY1AxisLimits(0, ymax, replot=False)
                 self.stackGraphWidget.graph.setX1AxisLimits(0, xmax, replot=False)
                 self.stackGraphWidget.graph.replot() #I need it to update the canvas
-            self.plotStackImage()
+            self.plotStackImage(update=True)
         else:
             self.stackGraphWidget.graph.zoomReset()
             self.stackGraphWidget.graph.setY1AxisInverted(False)
@@ -256,8 +305,10 @@ class QEDFStackWidget(qt.QWidget):
                 self.stackGraphWidget.graph.setY1AxisLimits(0, ymax, replot=False)
                 self.stackGraphWidget.graph.setX1AxisLimits(0, xmax, replot=False)
                 self.stackGraphWidget.graph.replot() #I need it to update the canvas
-            self.plotStackImage()
-                
+            self.plotStackImage(update=True)
+
+        self.__selectionMask = Numeric.zeros((xmax, ymax), Numeric.UInt8)
+
         #init the ROI
         self.roiGraphWidget.graph.setTitle("ICR ROI")
         self.roiGraphWidget.graph.y1Label(self.stackGraphWidget.graph.y1Label())
@@ -270,7 +321,7 @@ class QEDFStackWidget(qt.QWidget):
                                             self.__stackImageData.shape[1])
             self.roiGraphWidget.graph.replot()
         self.__ROIImageData = 1 * self.__stackImageData
-        self.plotROIImage()
+        self.plotROIImage(update = True)
 
     def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
         if action is None:action = "ADD"
@@ -317,37 +368,100 @@ class QEDFStackWidget(qt.QWidget):
                 self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,0,:],0)
             else:
                 self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
-            self.plotROIImage()
+            self.plotROIImage(update=True)
 
-    def plotROIImage(self):
+    def plotROIImage(self, update = True):
         if self.__ROIImageData is None:
             self.roiGraphWidget.graph.clear()
             return
+        if update:
+            self.getROIPixmapFromData()
+            self.__ROIPixmap0 = 1 * self.__ROIPixmap
         if not self.roiGraphWidget.graph.yAutoScale:
             ylimits = self.roiGraphWidget.graph.getY1AxisLimits()
         if not self.roiGraphWidget.graph.xAutoScale:
             xlimits = self.roiGraphWidget.graph.getX1AxisLimits()
-        self.roiGraphWidget.graph.imagePlot(self.__ROIImageData,
-                                            colormap = self.__ROIColormap,
-                                            xmirror = 0,
-                                            ymirror = not self._y1AxisInverted)
+        self.roiGraphWidget.graph.pixmapPlot(self.__ROIPixmap.tostring(),
+            (self.__ROIImageData.shape[0], self.__ROIImageData.shape[1]),
+                                        xmirror = 0,
+                                        ymirror = not self._y1AxisInverted)
         if not self.roiGraphWidget.graph.yAutoScale:
             self.roiGraphWidget.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
         if not self.roiGraphWidget.graph.xAutoScale:
             self.roiGraphWidget.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)
         self.roiGraphWidget.graph.replot()
 
-    def plotStackImage(self):
+    def getROIPixmapFromData(self):
+        #It does not look nice, but I avoid copying data
+        colormap = self.__ROIColormap
+        if colormap is None:
+            (self.__ROIPixmap,size,minmax)= spslut.transform(\
+                                Numeric.transpose(self.__ROIImageData),
+                                (1,0),
+                                (spslut.LINEAR,3.0),
+                                "BGRX",
+                                spslut.TEMP,
+                                1,
+                                (0,1))
+        else:
+            (self.__ROIPixmap,size,minmax)= spslut.transform(\
+                                Numeric.transpose(self.__ROIImageData),
+                                (1,0),
+                                (spslut.LINEAR,3.0),
+                                "BGRX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                colormap[1],
+                                (colormap[2],colormap[3]))
+        #I hope to find the time to write a new spslut giving back arrays ..
+        self.__ROIPixmap = Numeric.array(self.__ROIPixmap).\
+                                        astype(Numeric.UInt8)
+        self.__ROIPixmap.shape = [self.__ROIImageData.shape[1],
+                                    self.__ROIImageData.shape[0],
+                                    4]
+
+    def getStackPixmapFromData(self):
+        colormap = self.__stackColormap
+        if colormap is None:
+            (self.__stackPixmap,size,minmax)= spslut.transform(\
+                                Numeric.transpose(self.__stackImageData),
+                                (1,0),
+                                (spslut.LINEAR,3.0),
+                                "BGRX",
+                                spslut.TEMP,
+                                1,
+                                (0,1))
+        else:
+            (self.__stackPixmap,size,minmax)= spslut.transform(\
+                                Numeric.transpose(self.__stackImageData),
+                                (1,0),
+                                (spslut.LINEAR,3.0),
+                                "BGRX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                colormap[1],
+                                (colormap[2],colormap[3]))
+            
+        #I hope to find the time to write a new spslut giving back arrays ..
+        self.__stackPixmap = Numeric.array(self.__stackPixmap).\
+                                        astype(Numeric.UInt8)
+        self.__stackPixmap.shape = [self.__stackImageData.shape[1],
+                                    self.__stackImageData.shape[0],
+                                    4]
+
+    def plotStackImage(self, update = True):
         if self.__stackImageData is None:
             self.stackGraphWidget.graph.clear()
             return
+        if update:
+            self.getStackPixmapFromData()
+            self.__stackPixmap0 = 1 * self.__stackPixmap
         if not self.stackGraphWidget.graph.yAutoScale:
             ylimits = self.stackGraphWidget.graph.getY1AxisLimits()
         if not self.stackGraphWidget.graph.xAutoScale:
             xlimits = self.stackGraphWidget.graph.getX1AxisLimits()
-        self.stackGraphWidget.graph.imagePlot(self.__stackImageData,
-                        colormap = self.__stackColormap,
-                        ymirror = not self._y1AxisInverted)
+        self.stackGraphWidget.graph.pixmapPlot(self.__stackPixmap.tostring(),
+            (self.__stackImageData.shape[0], self.__stackImageData.shape[1]),
+                    xmirror = 0,
+                    ymirror = not self._y1AxisInverted)            
         if not self.stackGraphWidget.graph.yAutoScale:
             self.stackGraphWidget.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
         if not self.stackGraphWidget.graph.xAutoScale:
@@ -383,8 +497,8 @@ class QEDFStackWidget(qt.QWidget):
         self.roiGraphWidget.graph.zoomReset()
         self.stackGraphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
         self.roiGraphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
-        self.plotStackImage()
-        self.plotROIImage()
+        self.plotStackImage(True)
+        self.plotROIImage(True)
 
     def selectStackColormap(self):
         if self.__stackImageData is None:return
@@ -439,7 +553,7 @@ class QEDFStackWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        self.plotStackImage()
+        self.plotStackImage(True)
 
     def selectROIColormap(self):
         if self.__ROIImageData is None:return
@@ -494,8 +608,7 @@ class QEDFStackWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        self.plotROIImage()
-
+        self.plotROIImage(True)
 
     def _addImageClicked(self):
         self.rgbWidget.addImage(self.__ROIImageData,
