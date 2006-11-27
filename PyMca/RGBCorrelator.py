@@ -67,6 +67,7 @@ class RGBCorrelator(qt.QWidget):
         self.addImage = self.controller.addImage
         self.reset    = self.controller.reset
         self.addImage = self.controller.addImage
+        self.removeImage = self.controller.removeImage
         self.setImageShape = self.controller.setImageShape
         self.update   = self.controller.update
         self.connect(self.controller,

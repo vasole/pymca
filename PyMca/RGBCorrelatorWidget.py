@@ -336,6 +336,13 @@ class RGBCorrelatorWidget(qt.QWidget):
             #self.__recolor()
             #self.tableWidget._update()
 
+    def removeImage(self, label):
+        if label not in self._imageList:return
+        self._imageDict[label] = {}
+        del self._imageDict[label]
+        del self._imageList[self._imageList.index(label)]
+        self.tableWidget.build(self._imageList)
+        self.tableWidget._update()
 
     def _imageResizeSlot(self):
         if self.__imageLength is None: return

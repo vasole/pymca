@@ -17,19 +17,13 @@ class QEDFStackWidget(qt.QWidget):
     def __init__(self, parent = None, mcawidget = None, rgbwidget = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self._build()
+        self.mainLayout.setMargin(6)
+        self.mainLayout.setSpacing(0)
         if mcawidget is None:
             self.mcaWidget = McaWindow.McaWidget()
             self.mcaWidget.show()
         else:
             self.mcaWidget = mcawidget
-        self._y1AxisInverted = False
-        self.__stackImageData = None
-        self.__ROIImageData  = None
-        self.__stackColormap = None
-        self.__stackColormapDialog = None
-        self.__ROIColormap       = None
-        self.__ROIColormapDialog = None
         if rgbwidget is None:
             if QTVERSION > '4.0.0':
                 #I have not implemented it for Qt3
@@ -37,13 +31,20 @@ class QEDFStackWidget(qt.QWidget):
                 self.rgbWidget.show()
         else:
             self.rgbWidget = rgbwidget
+        self._build()
+        self._y1AxisInverted = False
+        self.__stackImageData = None
+        self.__ROIImageData  = None
+        self.__stackColormap = None
+        self.__stackColormapDialog = None
+        self.__ROIColormap       = None
+        self.__ROIColormapDialog = None
         self._buildConnections()
 
     def _build(self):
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self, colormap=True)
         self.roiGraphWidget   = RGBCorrelatorGraph.RGBCorrelatorGraph(self, selection = True,
                                                               colormap=True)
-
         self.roiGraphWidget.graph.enableSelection(True)
         self.mainLayout.addWidget(self.stackGraphWidget)
         self.mainLayout.addWidget(self.roiGraphWidget)
@@ -63,7 +64,36 @@ class QEDFStackWidget(qt.QWidget):
             self.roiGraphWidget.graph.enableZoom(True)
             self.roiGraphWidget.selectionToolButton.setDown(False)
 
+    def _buildAndConnectButtonBox(self):
+        self.buttonBox = qt.QWidget(self)
+        buttonBox = self.buttonBox
+        self.buttonBoxLayout = qt.QHBoxLayout(buttonBox)
+        self.buttonBoxLayout.setMargin(0)
+        self.buttonBoxLayout.setSpacing(0)
+        self.addButton = qt.QPushButton(buttonBox)
+        self.addButton.setText("ADD")
+        self.removeButton = qt.QPushButton(buttonBox)
+        self.removeButton.setText("REMOVE")
+        self.replaceButton = qt.QPushButton(buttonBox)
+        self.replaceButton.setText("REPLACE")
+        self.buttonBoxLayout.addWidget(self.addButton)
+        self.buttonBoxLayout.addWidget(self.removeButton)
+        self.buttonBoxLayout.addWidget(self.replaceButton)
+        
+        self.mainLayout.addWidget(buttonBox)
+        
+        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
+                    self._addClicked)
+
+        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
+                    self._removeClicked)
+
+        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
+                    self._replaceClicked)
+
     def _buildConnections(self):
+        if self.rgbWidget is not None:
+            self._buildAndConnectButtonBox()
         self.connect(self.stackGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectStackColormap)
@@ -134,6 +164,9 @@ class QEDFStackWidget(qt.QWidget):
         dataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)
                         + self.stack.info['Channel0']]
         dataObject.y = [mcaData0]
+
+        #store the original spectrum
+        self.__mcaData0 = dataObject
         
         #add the original image
         self.__addOriginalImage()
@@ -210,7 +243,21 @@ class QEDFStackWidget(qt.QWidget):
                 i1 = 0
                 i2 = self.stack.data.shape[self.mcaIndex]
             elif (ddict["type"]).upper() != "CHANNEL":
-                pass
+                #energy roi
+                xw =  ddict['calibration'][0] + \
+                      ddict['calibration'][1] * self.__mcaData0.x[0] + \
+                      ddict['calibration'][2] * self.__mcaData0.x[0] * \
+                                                self.__mcaData0.x[0]
+                i1 = Numeric.nonzero(ddict['from'] <= xw)
+                if len(i1):
+                    i1 = min(i1)
+                else:
+                    return
+                i2 = Numeric.nonzero(xw <= ddict['to'])
+                if len(i2):
+                    i2 = max(i2) + 1
+                else:
+                    return
             else:
                 i1 = max(int(ddict["from"]), 0)
                 i2 = min(int(ddict["to"])+1, self.stack.data.shape[self.mcaIndex])
@@ -396,6 +443,19 @@ class QEDFStackWidget(qt.QWidget):
                              var[4],
                              var[5]]
         self.plotROIImage()
+
+
+    def _addClicked(self):
+        self.rgbWidget.addImage(self.__ROIImageData,
+                                str(self.roiGraphWidget.graph.title().text()))
+
+    def _removeClicked(self):
+        self.rgbWidget.removeImage(str(self.roiGraphWidget.graph.title().text()))
+
+    def _replaceClicked(self):
+        self.rgbWidget.reset()
+        self.rgbWidget.addImage(self.__ROIImageData,
+                                str(self.roiGraphWidget.graph.title().text()))
 
 
 if __name__ == "__main__":
