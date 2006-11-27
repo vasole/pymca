@@ -31,7 +31,7 @@ DEBUG = 0
 class RGBCorrelatorTable(qt.QTableWidget):
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
-        self.elemenList      = []
+        self.elementList      = []
         self.rSelection   = []
         self.gSelection   = []
         self.bSelection = []
@@ -55,7 +55,7 @@ class RGBCorrelatorTable(qt.QTableWidget):
         """
 
     def build(self, elementlist):
-        self.elemenList = elementlist
+        self.elementList = elementlist
         n = len(elementlist)
         self.setRowCount(n)
         if n > 0:
@@ -162,16 +162,21 @@ class RGBCorrelatorTable(qt.QTableWidget):
 
     def getElementSelection(self):
         ddict = {}
-        ddict['elementlist'] = self.elemenList * 1
-        ddict['r']       = self.rSelection * 1
-        ddict['g']       = self.gSelection * 1
+        ddict['elementlist'] = self.elementList * 1
+        n = len(self.elementList)
+        if n == 0:
+            self.rSelection = []
+            self.gSelection = []
+            self.bSelection = []            
+        ddict['r'] = self.rSelection * 1
+        ddict['g'] = self.gSelection * 1
         ddict['b'] = self.bSelection * 1        
         return ddict
 
     def setElementSelection(self, ddict):
         keys = ddict.keys()
         if 'elementlist' in keys: elementlist = ddict['elementlist']
-        else: elementlist = self.elemenList * 1
+        else: elementlist = self.elementList * 1
 
         if 'r' in keys: x = ddict['r']
         else: x = []
@@ -187,8 +192,8 @@ class RGBCorrelatorTable(qt.QTableWidget):
             if item < len(elementlist):
                 counter = elementlist[item]
                 if 0:
-                    if counter in self.elemenList:
-                        self.rSelection.append(self.elemenList.index(counter))
+                    if counter in self.elementList:
+                        self.rSelection.append(self.elementList.index(counter))
                 else:
                     self.rSelection.append(item)
 
@@ -196,14 +201,14 @@ class RGBCorrelatorTable(qt.QTableWidget):
         for item in y:
             if item < len(elementlist):
                 counter = elementlist[item]
-                if counter in self.elemenList:
-                    self.gSelection.append(self.elemenList.index(counter))
+                if counter in self.elementList:
+                    self.gSelection.append(self.elementList.index(counter))
         self.bSelection = []
         for item in monitor:
             if item < len(elementlist):
                 counter = elementlist[item]
-                if counter in self.elemenList:
-                    self.bSelection.append(self.elemenList.index(counter))
+                if counter in self.elementList:
+                    self.bSelection.append(self.elementList.index(counter))
         self._update()
         
 

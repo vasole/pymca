@@ -341,6 +341,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         self._imageDict[label] = {}
         del self._imageDict[label]
         del self._imageList[self._imageList.index(label)]
+        if self.__redLabel == label:   self.__redLabel = None
+        if self.__greenLabel == label: self.__greenLabel = None
+        if self.__blueLabel == label:self.__blueLabel = None 
+
         self.tableWidget.build(self._imageList)
         self.tableWidget._update()
 

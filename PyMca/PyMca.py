@@ -144,6 +144,8 @@ import QDispatcher
 import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
+import EDFStack
+import QEDFStackWidget
 ###########import Fit2Spec
 if QTVERSION > '4.0.0':
     import PyMcaPostBatch
@@ -185,6 +187,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.__batch     = None
             self.__fit2Spec  = None
             self.__correlator  = None
+            self.__imagingTool = None
             if QTVERSION < '4.0.0':
                 self.openMenu = qt.QPopupMenu()
                 self.openMenu.insertItem("PyMca Configuration",0)
@@ -199,7 +202,6 @@ class PyMca(PyMcaMdi.PyMca):
 
             self.mcawindow = McaWindow.McaWidget(self.mdi)
             self.scanwindow = ScanWindow.ScanWindow(self.mdi)
-            self.scanwindow.setDispatcher(self.sourceWidget)
             self.connectDispatcher(self.mcawindow, self.sourceWidget)
             self.connectDispatcher(self.scanwindow, self.sourceWidget)
                                    
@@ -616,7 +618,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.line1.setToolTip("DoubleClick toggles floating window mode")
             self.closelabel.setToolTip("Hides Source Area")
             
-    def sourceReparent(self,dict):
+    def sourceReparent(self,ddict = None):
         if self.sourceFrame.parent() is not None:
             if QTVERSION < '4.0.0':
                 self.sourceFrame.reparent(None,self.cursor().pos(),1)
@@ -650,6 +652,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.insertItem("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.insertItem("Batch   Fitting",self.__batchFitting)
             #self.menuTools.insertItem("Fit to Specfile",self.__fit2SpecConversion)
+            self.menuTools.insertItem("ROI Imaging",self.__roiImaging)
         else:
             if self.sourceFrame.isHidden():
                 self.menuTools.addAction("Show Source",self.toggleSource)
@@ -659,7 +662,8 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.addAction("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
             #self.menuTools.addAction("Fit to Specfile",self.__fit2SpecConversion)
-            self.menuTools.addAction("RGB Correlator",self.__rgbCorrelator)
+            self.menuTools.addAction("PyMCA Post-batch",self.__rgbCorrelator)
+            self.menuTools.addAction("ROI Imaging",self.__roiImaging)
         if DEBUG:"print Fit to Specfile missing"
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
@@ -708,28 +712,57 @@ class PyMca(PyMcaMdi.PyMca):
 
     def __rgbCorrelator(self):
         if self.__correlator is None:self.__correlator = []
-        wdir = os.getcwd()
-        if self.sourceWidget.sourceSelector.lastInputDir is not None:
-            if os.path.exists(self.sourceWidget.sourceSelector.lastInputDir):
-                wdir =  self.sourceWidget.sourceSelector.lastInputDir
         fileTypeList = ["Batch Result Files (*dat)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "All Files (*)"]
+        message = "Open ONE Batch result file or SEVERAL EDF files"
+        filelist = self.__getStackOfFiles(fileTypeList, message) 
+        if not(len(filelist)): return
+        filelist.sort()
+        self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
+        self.__correlator.append(PyMcaPostBatch.PyMcaPostBatch())
+        for correlator in self.__correlator:
+            if correlator.isHidden():
+                correlator.show()
+            correlator.raise_()
+        self.connect(self.__correlator[-1],
+                     qt.SIGNAL("RGBCorrelatorSignal"),
+                     self._deleteCorrelator)
 
+        if len(filelist) == 1:
+            correlator.addBatchDatFile(filelist[0])
+        else:
+            correlator.addFileList(filelist)
+
+    def _deleteCorrelator(self, ddict):        
+        n = len(self.__correlator)
+        if ddict['event'] == "RGBCorrelatorClosed":
+            for i in range(n):
+                if id(self.__correlator[i]) == ddict["id"]:
+                    self.__correlator[i].deleteLater()
+                    del self.__correlator[i]
+                    break
+
+    def __getStackOfFiles(self, typelist, message = ""):
+        wdir = os.getcwd()
+        if self.sourceWidget.sourceSelector.lastInputDir is not None:
+            if os.path.exists(self.sourceWidget.sourceSelector.lastInputDir):
+                wdir =  self.sourceWidget.sourceSelector.lastInputDir
+        fileTypeList = typelist
         if sys.platform != 'darwin':
             filetypes = ""
             for filetype in fileTypeList:
                 filetypes += filetype+"\n"
             filelist = qt.QFileDialog.getOpenFileNames(self,
-                        "Open a Batch result file or several EDF files",
+                        message,
                         wdir,
                         filetypes)
-            if not len(filelist):return
+            if not len(filelist):return []
         else:
             fdialog = qt.QFileDialog(self)
             fdialog.setModal(True)
-            fdialog.setWindowTitle("Open ONE Batch result file or SEVERAL EDF files")
+            fdialog.setWindowTitle(message)
             strlist = qt.QStringList()
             for filetype in fileTypeList:
                 strlist.append(filetype.replace("(","").replace(")",""))
@@ -744,31 +777,55 @@ class PyMca(PyMcaMdi.PyMca):
             else:
                 fdialog.close()
                 del fdialog
-                return            
-        filelist.sort()
+                return []
         filelist = map(str, filelist)
-        self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
-        self.__correlator.append(PyMcaPostBatch.PyMcaPostBatch())
-        for correlator in self.__correlator:
-            if correlator.isHidden():
-                correlator.show()
-            correlator.raise_()
-        self.connect(self.__correlator[-1],
-                     qt.SIGNAL("RGBCorrelatorSignal"),
-                     self._deleteCorrelator)
-        if len(filelist) == 1:
-            correlator.addBatchDatFile(filelist[0])
-        else:
-            correlator.addFileList(filelist)
+        return filelist
 
-    def _deleteCorrelator(self, ddict):        
-        n = len(self.__correlator)
-        if ddict['event'] == "RGBCorrelatorClosed":
-            for i in range(n):
-                if id(self.__correlator[i]) == ddict["id"]:
-                    self.__correlator[i].deleteLater()
-                    del self.__correlator[i]
-                    break
+
+    def __roiImaging(self):
+        if self.__imagingTool is None:
+            fileTypeList = ["EDF Files (*edf)",
+                    "EDF Files (*ccd)",
+                    "All Files (*)"]
+            message = "Open SEVERAL EDF files"
+            filelist = self.__getStackOfFiles(fileTypeList, message)
+            if not(len(filelist)): return
+            filelist.sort()
+            self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
+            """
+            if QTVERSION > '4.0.0':
+                rgbWidget = PyMcaPostBatch.RGBCorrelator.RGBCorrelator(self.mdi)
+                rgbWidget.setWindowTitle("ROI Imaging RGB Correlator")
+                self.mdi.addWindow(rgbWidget)
+                rgbWidget.show()
+            else:
+                rgbWidget = None
+            """
+            rgbWidget = None
+            self.__imagingTool = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
+                                                                 rgbwidget=rgbWidget)
+            if QTVERSION < '4.0.0':
+                self.connect(self.__imagingTool,
+                             qt.PYSIGNAL("StackWidgetSignal"),
+                             self._deleteImagingTool)
+            else:
+                self.connect(self.__imagingTool,
+                             qt.SIGNAL("StackWidgetSignal"),
+                             self._deleteImagingTool)
+            self.__imagingTool.setStack(EDFStack.EDFStack(filelist))
+            self.__imagingTool.show()
+        else:
+            if self.__imagingTool.isHidden():
+                self.__imagingTool.show()
+            if QTVERSION < '4.0.0':
+                self.__imagingTool.raiseW()
+            else:
+                self.__imagingTool.raise_()
+
+    def _deleteImagingTool(self, ddict):
+        if ddict['event'] == "StackWidgetClosed":
+            del self.__imagingTool
+            self.__imagingTool = None
     
     def onOpen(self):
         if QTVERSION < '4.0.0':

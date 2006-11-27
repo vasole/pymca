@@ -5,6 +5,7 @@ QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     import RGBCorrelator
 import RGBCorrelatorGraph
+from Icons import IconDict
 import DataObject
 import EDFStack
 import Numeric
@@ -14,11 +15,21 @@ QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 DEBUG = 0
 
 class QEDFStackWidget(qt.QWidget):
-    def __init__(self, parent = None, mcawidget = None, rgbwidget = None):
+    def __init__(self, parent = None,
+                 mcawidget = None,
+                 rgbwidget = None,
+                 vertical = False):
         qt.QWidget.__init__(self, parent)
+        if QTVERSION < '4.0.0':
+            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
+            self.setCaption("ROI Imaging Tool")
+        else:
+            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+            self.setWindowTitle("ROI Imaging Tool")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(6)
         self.mainLayout.setSpacing(0)
+        self._build(vertical)
         if mcawidget is None:
             self.mcaWidget = McaWindow.McaWidget()
             self.mcaWidget.show()
@@ -27,11 +38,11 @@ class QEDFStackWidget(qt.QWidget):
         if rgbwidget is None:
             if QTVERSION > '4.0.0':
                 #I have not implemented it for Qt3
-                self.rgbWidget = RGBCorrelator.RGBCorrelator()
-                self.rgbWidget.show()
+                #self.rgbWidget = RGBCorrelator.RGBCorrelator()
+                self.rgbWidget = RGBCorrelator.RGBCorrelator(self)
+                self.mainLayout.addWidget(self.rgbWidget)
         else:
             self.rgbWidget = rgbwidget
-        self._build()
         self._y1AxisInverted = False
         self.__stackImageData = None
         self.__ROIImageData  = None
@@ -41,13 +52,33 @@ class QEDFStackWidget(qt.QWidget):
         self.__ROIColormapDialog = None
         self._buildConnections()
 
-    def _build(self):
-        self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self, colormap=True)
-        self.roiGraphWidget   = RGBCorrelatorGraph.RGBCorrelatorGraph(self, selection = True,
+    def _build(self, vertical = False):
+        box = qt.QWidget(self)
+        if vertical:
+            boxLayout  = qt.QVBoxLayout(box)
+        else:
+            boxLayout  = qt.QHBoxLayout(box)
+        boxLayout.setMargin(0)
+        boxLayout.setSpacing(6)
+        self.stackWindow = qt.QWidget(box)
+        self.stackWindow.mainLayout = qt.QVBoxLayout(self.stackWindow)
+        self.stackWindow.mainLayout.setMargin(0)
+        self.stackWindow.mainLayout.setSpacing(0)
+        self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
+                                                            colormap=True)
+        self.roiWindow = qt.QWidget(box)
+        self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
+        self.roiWindow.mainLayout.setMargin(0)
+        self.roiWindow.mainLayout.setSpacing(0)
+        self.roiGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.roiWindow,
+                                                                selection = True,
                                                               colormap=True)
         self.roiGraphWidget.graph.enableSelection(True)
-        self.mainLayout.addWidget(self.stackGraphWidget)
-        self.mainLayout.addWidget(self.roiGraphWidget)
+        self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
+        self.roiWindow.mainLayout.addWidget(self.roiGraphWidget)
+        boxLayout.addWidget(self.stackWindow)
+        boxLayout.addWidget(self.roiWindow)
+        self.mainLayout.addWidget(box)
         
     def toggleSelectionMode(self):
         if self.roiGraphWidget.graph._selecting:
@@ -65,31 +96,54 @@ class QEDFStackWidget(qt.QWidget):
             self.roiGraphWidget.selectionToolButton.setDown(False)
 
     def _buildAndConnectButtonBox(self):
-        self.buttonBox = qt.QWidget(self)
-        buttonBox = self.buttonBox
-        self.buttonBoxLayout = qt.QHBoxLayout(buttonBox)
-        self.buttonBoxLayout.setMargin(0)
-        self.buttonBoxLayout.setSpacing(0)
-        self.addButton = qt.QPushButton(buttonBox)
-        self.addButton.setText("ADD")
-        self.removeButton = qt.QPushButton(buttonBox)
-        self.removeButton.setText("REMOVE")
-        self.replaceButton = qt.QPushButton(buttonBox)
-        self.replaceButton.setText("REPLACE")
-        self.buttonBoxLayout.addWidget(self.addButton)
-        self.buttonBoxLayout.addWidget(self.removeButton)
-        self.buttonBoxLayout.addWidget(self.replaceButton)
+        #the MCA selection
+        self.mcaButtonBox = qt.QWidget(self.stackWindow)
+        self.mcaButtonBoxLayout = qt.QHBoxLayout(self.mcaButtonBox)
+        self.mcaButtonBoxLayout.setMargin(0)
+        self.mcaButtonBoxLayout.setSpacing(0)
+        self.addMcaButton = qt.QPushButton(self.mcaButtonBox)
+        self.addMcaButton.setText("ADD MCA")
+        self.removeMcaButton = qt.QPushButton(self.mcaButtonBox)
+        self.removeMcaButton.setText("REMOVE MCA")
+        self.replaceMcaButton = qt.QPushButton(self.mcaButtonBox)
+        self.replaceMcaButton.setText("REPLACE MCA")
+        self.mcaButtonBoxLayout.addWidget(self.addMcaButton)
+        self.mcaButtonBoxLayout.addWidget(self.removeMcaButton)
+        self.mcaButtonBoxLayout.addWidget(self.replaceMcaButton)
         
-        self.mainLayout.addWidget(buttonBox)
+        self.stackWindow.mainLayout.addWidget(self.mcaButtonBox)
+
+        self.connect(self.addMcaButton, qt.SIGNAL("clicked()"), 
+                    self._addMcaClicked)
+        self.connect(self.removeMcaButton, qt.SIGNAL("clicked()"), 
+                    self._removeMcaClicked)
+        self.connect(self.replaceMcaButton, qt.SIGNAL("clicked()"), 
+                    self._replaceMcaClicked)
         
-        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
-                    self._addClicked)
-
-        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
-                    self._removeClicked)
-
-        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
-                    self._replaceClicked)
+        # The IMAGE selection
+        self.imageButtonBox = qt.QWidget(self.roiWindow)
+        buttonBox = self.imageButtonBox
+        self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
+        self.imageButtonBoxLayout.setMargin(0)
+        self.imageButtonBoxLayout.setSpacing(0)
+        self.addImageButton = qt.QPushButton(buttonBox)
+        self.addImageButton.setText("ADD")
+        self.removeImageButton = qt.QPushButton(buttonBox)
+        self.removeImageButton.setText("REMOVE")
+        self.replaceImageButton = qt.QPushButton(buttonBox)
+        self.replaceImageButton.setText("REPLACE")
+        self.imageButtonBoxLayout.addWidget(self.addImageButton)
+        self.imageButtonBoxLayout.addWidget(self.removeImageButton)
+        self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
+        
+        self.roiWindow.mainLayout.addWidget(buttonBox)
+        
+        self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
+                    self._addImageClicked)
+        self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
+                    self._removeImageClicked)
+        self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
+                    self._replaceImageClicked)
 
     def _buildConnections(self):
         if self.rgbWidget is not None:
@@ -172,10 +226,10 @@ class QEDFStackWidget(qt.QWidget):
         self.__addOriginalImage()
 
         #add the ICR ROI Image
-        self.updateRoiImage(roidict=None)
+        #self.updateRoiImage(roidict=None)
 
         #add the mca
-        self.addMcaObject(dataObject)
+        self.sendMcaSelection(dataObject, action = "ADD")
 
     def __addOriginalImage(self):
         #init the original image
@@ -218,15 +272,8 @@ class QEDFStackWidget(qt.QWidget):
         self.__ROIImageData = 1 * self.__stackImageData
         self.plotROIImage()
 
-    def updateRoiImage(self, roidict = None):
-        """
-        Roi dict carries information as expected from the McaROITable.
-        That means: Name, type, start, stop, and, mainly for the case
-        of energy ROIs, the calibrarion.
-        """
-        pass
-
-    def addMcaObject(self, mcaObject, key = None, legend = None):
+    def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
+        if action is None:action = "ADD"
         if key is None: key = "SUM"
         if legend is None: legend = "EDF Stack SUM"
         sel = {}
@@ -234,7 +281,12 @@ class QEDFStackWidget(qt.QWidget):
         sel['Key']        =  key
         sel['legend']     =  legend
         sel['dataobject'] =  mcaObject
-        self.mcaWidget._addSelection([sel])
+        if action == "ADD":
+            self.mcaWidget._addSelection([sel])
+        elif action == "REMOVE":
+            self.mcaWidget._removeSelection([sel])
+        elif action == "REPLACE":
+            self.mcaWidget._replaceSelection([sel])
 
     def _mcaWidgetSignal(self, ddict):
         if ddict['event'] == "ROISignal":
@@ -445,18 +497,64 @@ class QEDFStackWidget(qt.QWidget):
         self.plotROIImage()
 
 
-    def _addClicked(self):
+    def _addImageClicked(self):
         self.rgbWidget.addImage(self.__ROIImageData,
                                 str(self.roiGraphWidget.graph.title().text()))
 
-    def _removeClicked(self):
+        if self.rgbWidget.isHidden():
+            self.rgbWidget.show()
+        self.rgbWidget.raise_()
+
+    def _removeImageClicked(self):
         self.rgbWidget.removeImage(str(self.roiGraphWidget.graph.title().text()))
 
-    def _replaceClicked(self):
+    def _replaceImageClicked(self):
         self.rgbWidget.reset()
         self.rgbWidget.addImage(self.__ROIImageData,
                                 str(self.roiGraphWidget.graph.title().text()))
+        if self.rgbWidget.isHidden():
+            self.rgbWidget.show()
+        self.rgbWidget.raise_()
 
+    def _addMcaClicked(self):
+        #original ICR mca
+        """
+        if self.mcaIndex == 0:
+            mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),1)
+        else:
+            mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),0)
+        """
+        dataObject = self.__mcaData0
+
+        """
+        calib = self.stack.info['McaCalib']
+        dataObject = DataObject.DataObject()
+        dataObject.info = {"McaCalib": calib,
+                           "selectiontype":"1D",
+                           "SourceName":"EDF Stack",
+                           "Key":"SUM"}
+        dataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)
+                        + self.stack.info['Channel0']]
+        dataObject.y = [mcaData0]
+        """
+        #add the mca
+        self.sendMcaSelection(dataObject, action = "ADD")
+    
+    def _removeMcaClicked(self):
+        #remove the mca
+        dataObject = self.__mcaData0
+        self.sendMcaSelection(dataObject, action = "REMOVE")
+    
+    def _replaceMcaClicked(self):
+        #replace the mca
+        dataObject = self.__mcaData0
+        self.sendMcaSelection(dataObject, action = "REPLACE")
+        
+    def closeEvent(self, event):
+        ddict = {}
+        ddict['event'] = "StackWidgetClosed"
+        ddict['id']    = id(self)
+        self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
 
 if __name__ == "__main__":
     import getopt, os
@@ -474,7 +572,7 @@ if __name__ == "__main__":
     #t0= time.time()
     stack = EDFStack.EDFStack()
     if len(args):
-        stack.loadFileList(args)
+        stack.setFileList(args)
     else:
         if os.path.exists(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
