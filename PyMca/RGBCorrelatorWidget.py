@@ -248,13 +248,15 @@ class RGBCorrelatorWidget(qt.QWidget):
             raise "ValueError", "Unknown color scheme %s" % colormap
 
         if (datamin is None) or (datamax is None):
-            tmp = Numeric.ravel(image)
+            #spslut already calculates min and max
+            #tmp = Numeric.ravel(image)
             (image_buffer, size, minmax)= spslut.transform(Numeric.transpose(image),
                                      (1,0),
                                      (spslut.LINEAR,3.0),
                                       self.bgrx, colormap,
                                       1,
-                                     (min(tmp),max(tmp)))
+                                      (0,1))
+                                     #(min(tmp),max(tmp)))
         else:
             (image_buffer, size, minmax)= spslut.transform(Numeric.transpose(image),
                                      (1,0),
