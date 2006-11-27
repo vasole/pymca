@@ -802,18 +802,40 @@ class PyMca(PyMcaMdi.PyMca):
                 rgbWidget = None
             """
             rgbWidget = None
-            self.__imagingTool = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
-                                                                 rgbwidget=rgbWidget)
-            if QTVERSION < '4.0.0':
-                self.connect(self.__imagingTool,
-                             qt.PYSIGNAL("StackWidgetSignal"),
-                             self._deleteImagingTool)
-            else:
-                self.connect(self.__imagingTool,
-                             qt.SIGNAL("StackWidgetSignal"),
-                             self._deleteImagingTool)
-            self.__imagingTool.setStack(EDFStack.EDFStack(filelist))
-            self.__imagingTool.show()
+            try:
+                self.__imagingTool = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
+                                                                     rgbwidget=rgbWidget)
+                if QTVERSION < '4.0.0':
+                    self.connect(self.__imagingTool,
+                                 qt.PYSIGNAL("StackWidgetSignal"),
+                                 self._deleteImagingTool)
+                else:
+                    self.connect(self.__imagingTool,
+                                 qt.SIGNAL("StackWidgetSignal"),
+                                 self._deleteImagingTool)
+                self.__imagingTool.setStack(EDFStack.EDFStack(filelist))
+                self.__imagingTool.show()
+            except IOError:
+                self.__imagingTool = None
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                return
+            except:
+                self.__imagingTool = None
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                print "Error info = ",sys.exc_info()
+                msg.setText("Unexpected Error: %s" % (sys.exc_info()[1]))
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                return                
         else:
             if self.__imagingTool.isHidden():
                 self.__imagingTool.show()
