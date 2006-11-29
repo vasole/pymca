@@ -31,6 +31,13 @@ class QEDFStackWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(6)
         self.mainLayout.setSpacing(0)
+        self._y1AxisInverted = False
+        self.__stackImageData = None
+        self.__ROIImageData  = None
+        self.__stackColormap = None
+        self.__stackColormapDialog = None
+        self.__ROIColormap       = None
+        self.__ROIColormapDialog = None
         self._build(vertical)
         if mcawidget is None:
             self.mcaWidget = McaWindow.McaWidget()
@@ -45,13 +52,10 @@ class QEDFStackWidget(qt.QWidget):
                 self.mainLayout.addWidget(self.rgbWidget)
         else:
             self.rgbWidget = rgbwidget
-        self._y1AxisInverted = False
-        self.__stackImageData = None
-        self.__ROIImageData  = None
-        self.__stackColormap = None
-        self.__stackColormapDialog = None
-        self.__ROIColormap       = None
-        self.__ROIColormapDialog = None
+        self.__ROIBrushMenu  = None
+        self.__ROIBrushMode  = False
+        self.__ROIEraseMode  = False
+        self.__setROIBrush2()
         self._buildConnections()
 
     def _build(self, vertical = False):
@@ -74,32 +78,40 @@ class QEDFStackWidget(qt.QWidget):
         self.roiWindow.mainLayout.setSpacing(0)
         self.roiGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.roiWindow,
                                                                 selection = True,
-                                                              colormap=True)
-        self.roiGraphWidget.graph.enableSelection(True)
-        self.roiGraphWidget.graph.enableZoom(False)
+                                                                colormap=True,
+                                                                imageicons=True)
+        self.roiGraphWidget.graph.enableSelection(False)
+        self.roiGraphWidget.graph.enableZoom(True)
+        self.setROISelectionMode(False)
         self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
         self.roiWindow.mainLayout.addWidget(self.roiGraphWidget)
         boxLayout.addWidget(self.stackWindow)
         boxLayout.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
         
-    def toggleSelectionMode(self):
+    def _toggleROISelectionMode(self):
         if self.roiGraphWidget.graph._selecting:
-            self.setSelectionMode(False)
+            self.setROISelectionMode(False)
         else:
-            self.setSelectionMode(True)
+            self.setROISelectionMode(True)
 
 
-    def setSelectionMode(self, mode = None):
+    def setROISelectionMode(self, mode = None):
         if mode:
             self.roiGraphWidget.graph.enableSelection(True)
             self.roiGraphWidget.graph.enableZoom(False)
             self.roiGraphWidget.selectionToolButton.setDown(True)
+            self.roiGraphWidget.showImageIcons()
+            
         else:
             self.roiGraphWidget.graph.enableZoom(True)
             self.roiGraphWidget.selectionToolButton.setDown(False)
-            self.plotStackImage(update = True)
-            self.plotROIImage(update = True)
+            self.roiGraphWidget.hideImageIcons()
+            #self.plotStackImage(update = True)
+            #self.plotROIImage(update = True)
+        if self.__stackImageData is None: return
+        #do not reset the selection
+        #self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
             
     def _buildAndConnectButtonBox(self):
         #the MCA selection
@@ -157,21 +169,39 @@ class QEDFStackWidget(qt.QWidget):
         self.connect(self.stackGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectStackColormap)
-        self.connect(self.roiGraphWidget.selectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self.toggleSelectionMode)
-        self.connect(self.roiGraphWidget.colormapToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self.selectROIColormap)
 
         self.connect(self.stackGraphWidget.hFlipToolButton,
                      qt.SIGNAL("clicked()"),
                      self._hFlipIconSignal)
-        
-        self.connect(self.roiGraphWidget.hFlipToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._hFlipIconSignal)
 
+        #ROI Image
+        self.connect(self.roiGraphWidget.colormapToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self.selectROIColormap)
+
+        self.connect(self.roiGraphWidget.selectionToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._toggleROISelectionMode)
+        
+        self.connect(self.roiGraphWidget.imageToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._resetSelection)
+
+        self.connect(self.roiGraphWidget.eraseSelectionToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._setROIEraseSelectionMode)
+
+        self.connect(self.roiGraphWidget.rectSelectionToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._setROIRectSelectionMode)
+
+        self.connect(self.roiGraphWidget.brushSelectionToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._setROIBrushSelectionMode)
+
+        self.connect(self.roiGraphWidget.brushToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._setROIBrush)
 
         if QTVERSION < "4.0.0":
             self.connect(self.roiGraphWidget.graph,
@@ -190,50 +220,130 @@ class QEDFStackWidget(qt.QWidget):
 
     def _roiGraphSignal(self, ddict):
         if ddict['event'] == "MouseSelection":
-            ix1 = int(ddict['xmin'])
-            ix2 = int(ddict['xmax'])+1
-            iy1 = int(ddict['xmin'])
-            iy2 = int(ddict['xmax'])+1
-            if self.mcaIndex == 0:
-                selectedData = Numeric.sum(Numeric.sum(self.stack.data[:,ix1:ix2, iy1:iy2], 2),1)
-            else:
-                selectedData = Numeric.sum(Numeric.sum(self.stack.data[ix1:ix2,:, iy1:iy2], 2),0)
-            dataObject = DataObject.DataObject()
-            dataObject.info = {"McaCalib": self.stack.info['McaCalib'],
-                               "selectiontype":"1D",
-                               "SourceName":"EDF Stack",
-                               "Key":"Selection"}
-            dataObject.x = [Numeric.arange(len(selectedData)).astype(Numeric.Float)
-                            + self.stack.info['Channel0']]
-            dataObject.y = [selectedData]
-            self.sendMcaSelection(dataObject,
-                                  key = "Selection",
-                                  legend="EDF Stack Selection",
-                                  action = "ADD")
-
-        elif ddict['event'] == "MouseAt":
-            return
-            #if follow mouse is not activated
-            #it only enters here when the mouse is pressed.
-            #Therefore is perfect for "brush" selections.
             print ddict
-            self.__brushWidth = 1
-            width = self.__brushWidth   #in (row, column) units
-            r = self.__stackImageData.shape[0]
-            c = self.__stackImageData.shape[1]
-            i1 = max((int(ddict['x'])-width+1), 0)
-            i2 = min((int(ddict['x'])+width), r)
-            j1 = max(int(ddict['y'])-width+1, 0)
-            j2 = min(int(ddict['y'])+width, c)
-            #if self.__adding:
-            if 1:
-                self.__stackPixmap[j1:j2,i1:i2,:] = 0
-                self.__selectionMask[i1:i2, j1:j2] = 1
+            if ddict['xmin'] < ddict['xmax']:
+                xmin = ddict['xmin']
+                xmax = ddict['xmax']
             else:
-                self.__stackPixmap[j1:j2,i1:i2,:] = self.__stackPixmap0[j1:j2,i1:i2,:]
-                self.__selectionMask[i1:i2, j1:j2] = 0
+                xmin = ddict['xmax']
+                xmax = ddict['xmin']
+            if ddict['ymin'] < ddict['ymax']:
+                ymin = ddict['ymin']
+                ymax = ddict['ymax']
+            else:
+                ymin = ddict['ymax']
+                ymax = ddict['ymin']
+            i1 = max(int(xmin), 0)
+            i2 = min(abs(int(xmax))+1, self.__stackImageData.shape[0])
+            j1 = max(int(ymin),0)
+            j2 = min(abs(int(ymax))+1,self.__stackImageData.shape[1])
+            self.__selectionMask[i1:i2, j1:j2] = 1
+            #Stack Image
+            if self.__stackColormap is None:
+                a = Numeric.array(map(int,
+                    0.8* Numeric.ravel(self.__stackPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
+                a.shape = [j2-j1, i2-i1, 4]
+                self.__stackPixmap[j1:j2,i1:i2,:]  = a
+            elif int(str(self.__stackColormap[0])) > 1:     #color
+                a = Numeric.array(map(int,
+                    0.8* Numeric.ravel(self.__stackPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
+                a.shape = [j2-j1, i2-i1, 4]
+                self.__stackPixmap[j1:j2,i1:i2,:]  = a
+            else:
+                #self.__stackPixmap[j1:j2,i1:i2,0:2]  = 0    #that changes grey by red but gives the problem that 0
+                #                                            #remains 0 and appears as not selected in the image
+                self.__stackPixmap[j1:j2,i1:i2,0]    = 0x40
+                self.__stackPixmap[j1:j2,i1:i2,2]    = 0x70
+                self.__stackPixmap[j1:j2,i1:i2,1]    = self.__stackPixmap0[j1:j2,i1:i2,0]
+                self.__stackPixmap[j1:j2,i1:i2,3]    = 0x40
+            #ROI Image
+            if self.__ROIColormap is None:
+                a = Numeric.array(map(int,
+                    0.8* Numeric.ravel(self.__ROIPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
+                a.shape = [j2-j1, i2-i1, 4]
+                self.__ROIPixmap[j1:j2,i1:i2,:]  = a
+            elif int(str(self.__ROIColormap[0])) > 1:     #color
+                a = Numeric.array(map(int,
+                    0.8* Numeric.ravel(self.__ROIPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
+                a.shape = [j2-j1, i2-i1, 4]
+                self.__ROIPixmap[j1:j2,i1:i2,:]  = a
+            else:
+                self.__ROIPixmap[j1:j2,i1:i2,0]    = 0x40
+                self.__ROIPixmap[j1:j2,i1:i2,2]    = 0x70
+                self.__ROIPixmap[j1:j2,i1:i2,1]    = self.__ROIPixmap0[j1:j2,i1:i2,0]
+                self.__ROIPixmap[j1:j2,i1:i2,3]    = 0x40
             self.plotROIImage(update = False)
             self.plotStackImage(update = False)
+            return
+
+        elif ddict['event'] == "MouseAt":
+            if self.__ROIBrushMode:
+                #return
+                #if follow mouse is not activated
+                #it only enters here when the mouse is pressed.
+                #Therefore is perfect for "brush" selections.
+                width = self.__ROIBrushWidth   #in (row, column) units
+                r = self.__stackImageData.shape[0]
+                c = self.__stackImageData.shape[1]
+                xmin = max(abs(ddict['x']-0.5*width), 0)
+                xmax = min(abs(ddict['x']+0.5*width), r)
+                ymin = max(abs(ddict['y']-0.5*width), 0)
+                ymax = min(abs(ddict['y']+0.5*width), c)
+                i1 = min(int(xmin), r-1)
+                i2 = min(int(xmax)+1, r)
+                j1 = min(int(ymin),c-1)
+                j2 = min(int(ymax)+1, c)
+                if i1 == i2: i2 = i1+1
+                if j1 == j2: j2 = j1+1
+                #print i1, i2, j1, j2
+                if self.__ROIEraseMode:
+                    self.__stackPixmap[j1:j2,i1:i2,:]    = self.__stackPixmap0[j1:j2,i1:i2,:]
+                    self.__ROIPixmap[j1:j2,i1:i2,:]    = self.__ROIPixmap0[j1:j2,i1:i2,:]
+                    self.__selectionMask[i1:i2, j1:j2] = 0
+                else:
+                    #stack image
+                    if self.__stackColormap is None:
+                        a = Numeric.array(map(int,
+                                        0.8* Numeric.ravel(self.__stackPixmap0[j1:j2,i1:i2,:]))).\
+                                        astype(Numeric.UInt8)
+                        a.shape = [j2-j1, i2-i1, 4]
+                        self.__stackPixmap[j1:j2,i1:i2,:]  = a
+                    elif int(str(self.__stackColormap[0])) > 1:     #color
+                        a = Numeric.array(map(int,
+                                        0.8* Numeric.ravel(self.__stackPixmap0[j1:j2,i1:i2,:]))).\
+                                        astype(Numeric.UInt8)
+                        a.shape = [j2-j1, i2-i1, 4]
+                        self.__stackPixmap[j1:j2,i1:i2,:]  = a
+                    else:
+                        #self.__stackPixmap[j1:j2,i1:i2,0:2]  = 0    #that changes grey by red but gives the problem that 0
+                        #                                            #remains 0 and appears as not selected in the image
+                        self.__stackPixmap[j1:j2,i1:i2,0]    = 0x40
+                        self.__stackPixmap[j1:j2,i1:i2,2]    = 0x70
+                        self.__stackPixmap[j1:j2,i1:i2,1]    = self.__stackPixmap0[j1:j2,i1:i2,0]
+                        self.__stackPixmap[j1:j2,i1:i2,3]    = 0x40
+                    #ROI image
+                    if self.__ROIColormap is None:
+                        a = Numeric.array(map(int,
+                                        0.8* Numeric.ravel(self.__ROIPixmap0[j1:j2,i1:i2,:]))).\
+                                        astype(Numeric.UInt8)
+                        a.shape = [j2-j1, i2-i1, 4]
+                        self.__ROIPixmap[j1:j2,i1:i2,:]  = a
+                    elif int(str(self.__ROIColormap[0])) > 1:     #color
+                        a = Numeric.array(map(int,
+                                        0.8* Numeric.ravel(self.__ROIPixmap0[j1:j2,i1:i2,:]))).\
+                                        astype(Numeric.UInt8)
+                        a.shape = [j2-j1, i2-i1, 4]
+                        self.__ROIPixmap[j1:j2,i1:i2,:]  = a
+                    else:
+                        #self.__stackPixmap[j1:j2,i1:i2,0:2]  = 0    #that changes grey by red but gives the problem that 0
+                        #                                            #remains 0 and appears as not selected in the image
+                        self.__ROIPixmap[j1:j2,i1:i2,0]    = 0x40
+                        self.__ROIPixmap[j1:j2,i1:i2,2]    = 0x70
+                        self.__ROIPixmap[j1:j2,i1:i2,1]    = self.__ROIPixmap0[j1:j2,i1:i2,0]
+                        self.__ROIPixmap[j1:j2,i1:i2,3]    = 0x40
+                    self.__selectionMask[i1:i2, j1:j2] = 1
+                self.plotROIImage(update = False)
+                self.plotStackImage(update = False)
 
     def setStack(self, stack):
         #stack.data is an XYZ array
@@ -248,7 +358,7 @@ class QEDFStackWidget(qt.QWidget):
             if shape[i] > shape[imax]:
                 imax = i
         self.mcaIndex = imax
-                
+        
         #original image
         self.__stackImageData = Numeric.sum(stack.data, self.mcaIndex)
 
@@ -320,7 +430,7 @@ class QEDFStackWidget(qt.QWidget):
             self.roiGraphWidget.graph.setY1AxisLimits(0,
                                             self.__stackImageData.shape[1])
             self.roiGraphWidget.graph.replot()
-        self.__ROIImageData = 1 * self.__stackImageData
+        self.__ROIImageData = self.__stackImageData.copy()
         self.plotROIImage(update = True)
 
     def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
@@ -376,7 +486,7 @@ class QEDFStackWidget(qt.QWidget):
             return
         if update:
             self.getROIPixmapFromData()
-            self.__ROIPixmap0 = 1 * self.__ROIPixmap
+            self.__ROIPixmap0 = self.__ROIPixmap.copy()
         if not self.roiGraphWidget.graph.yAutoScale:
             ylimits = self.roiGraphWidget.graph.getY1AxisLimits()
         if not self.roiGraphWidget.graph.xAutoScale:
@@ -453,7 +563,7 @@ class QEDFStackWidget(qt.QWidget):
             return
         if update:
             self.getStackPixmapFromData()
-            self.__stackPixmap0 = 1 * self.__stackPixmap
+            self.__stackPixmap0 = self.__stackPixmap.copy()
         if not self.stackGraphWidget.graph.yAutoScale:
             ylimits = self.stackGraphWidget.graph.getY1AxisLimits()
         if not self.stackGraphWidget.graph.xAutoScale:
@@ -631,27 +741,39 @@ class QEDFStackWidget(qt.QWidget):
 
     def _addMcaClicked(self):
         #original ICR mca
-        """
-        if self.mcaIndex == 0:
-            mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),1)
-        else:
-            mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),0)
-        """
-        dataObject = self.__mcaData0
+        if self.__stackImageData is None: return
+        if self.__selectionMask is None:
+            dataObject = self.__mcaData0
+            self.sendMcaSelection(dataObject, action = "ADD")
+            return
+        if len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) == 0:
+            dataObject = self.__mcaData0
+            self.sendMcaSelection(dataObject, action = "ADD")
+            return
 
-        """
+        mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
+
+        if self.mcaIndex == 0:
+            for i in range(len(mcaData)):
+               mcaData[i] = sum(sum(stack.data[i,:,:] * self.__selectionMask))
+        else:
+            for i in range(len(mcaData)):
+               mcaData[i] = sum(sum(stack.data[:,i,:] * self.__selectionMask))
+
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
                            "selectiontype":"1D",
                            "SourceName":"EDF Stack",
-                           "Key":"SUM"}
-        dataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)
+                           "Key":"Selection"}
+        dataObject.x = [Numeric.arange(len(mcaData)).astype(Numeric.Float)
                         + self.stack.info['Channel0']]
-        dataObject.y = [mcaData0]
-        """
-        #add the mca
-        self.sendMcaSelection(dataObject, action = "ADD")
+        dataObject.y = [mcaData]
+
+        self.sendMcaSelection(dataObject,
+                              key = "Selection",
+                              legend ="EDF Stack Selection",
+                              action = "ADD")
     
     def _removeMcaClicked(self):
         #remove the mca
@@ -668,6 +790,75 @@ class QEDFStackWidget(qt.QWidget):
         ddict['event'] = "StackWidgetClosed"
         ddict['id']    = id(self)
         self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
+
+    def _resetSelection(self):
+        if DEBUG:print "_resetSelection"
+        self.plotStackImage(update = True)
+        self.plotROIImage(update = True)
+        if self.__stackImageData is None: return
+        self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
+
+
+
+    def _setROIEraseSelectionMode(self):
+        if DEBUG:print "_setROIEraseSelectionMode"
+        self.__ROIEraseMode = True
+        self.__ROIBrushMode = True
+        self.roiGraphWidget.graph.enableSelection(False)
+
+    def _setROIRectSelectionMode(self):
+        if DEBUG:print "_setROIRectSelectionMode"
+        self.__ROIEraseMode = False
+        self.__ROIBrushMode = False
+        self.roiGraphWidget.graph.enableSelection(True)
+        
+    def _setROIBrushSelectionMode(self):
+        if DEBUG:print "_setROIBrushSelectionMode"
+        self.__ROIEraseMode = False
+        self.__ROIBrushMode = True
+        self.roiGraphWidget.graph.enableSelection(False)
+        
+    def _setROIBrush(self):
+        if DEBUG:print "_setROIBrush"
+        if self.__ROIBrushMenu is None:
+            if QTVERSION < '4.0.0':
+                self.__ROIBrushMenu = qt.QPopupMenu()
+                self.__ROIBrushMenu.insertItem(qt.QString(" 1 Image Pixel Width"),self.__setROIBrush1)
+                self.__ROIBrushMenu.insertItem(qt.QString(" 2 Image Pixel Width"),self.__setROIBrush2)
+                self.__ROIBrushMenu.insertItem(qt.QString(" 3 Image Pixel Width"),self.__setROIBrush3)
+                self.__ROIBrushMenu.insertItem(qt.QString(" 5 Image Pixel Width"),self.__setROIBrush4)
+                self.__ROIBrushMenu.insertItem(qt.QString("10 Image Pixel Width"),self.__setROIBrush5)
+                self.__ROIBrushMenu.insertItem(qt.QString("20 Image Pixel Width"),self.__setROIBrush6)
+            else:
+                self.__ROIBrushMenu = qt.QMenu()
+                self.__ROIBrushMenu.addAction(qt.QString(" 1 Image Pixel Width"),self.__setROIBrush1)
+                self.__ROIBrushMenu.addAction(qt.QString(" 2 Image Pixel Width"),self.__setROIBrush2)
+                self.__ROIBrushMenu.addAction(qt.QString(" 3 Image Pixel Width"),self.__setROIBrush3)
+                self.__ROIBrushMenu.addAction(qt.QString(" 5 Image Pixel Width"),self.__setROIBrush4)
+                self.__ROIBrushMenu.addAction(qt.QString("10 Image Pixel Width"),self.__setROIBrush5)
+                self.__ROIBrushMenu.addAction(qt.QString("20 Image Pixel Width"),self.__setROIBrush6)
+        if QTVERSION < '4.0.0':
+            self.__ROIBrushMenu.exec_loop(self.cursor().pos())
+        else:
+            self.__ROIBrushMenu.exec_(self.cursor().pos())
+
+    def __setROIBrush1(self):
+        self.__ROIBrushWidth = 1
+
+    def __setROIBrush2(self):
+        self.__ROIBrushWidth = 2
+
+    def __setROIBrush3(self):
+        self.__ROIBrushWidth = 3
+
+    def __setROIBrush4(self):
+        self.__ROIBrushWidth = 5
+
+    def __setROIBrush5(self):
+        self.__ROIBrushWidth = 10
+
+    def __setROIBrush6(self):
+        self.__ROIBrushWidth = 20
 
 if __name__ == "__main__":
     import getopt, os

@@ -36,12 +36,13 @@ QWTVERSION4 = QtBlissGraph.QWTVERSION4
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
-    def __init__(self, parent = None, selection=False, colormap=False):
+    def __init__(self, parent = None, selection=False, colormap=False,
+                 imageicons=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        self._buildToolBar(selection, colormap)
+        self._buildToolBar(selection, colormap, imageicons)
         self.graph = QtBlissGraph.QtBlissGraph(self)
         self.graph.xlabel("Row")
         self.graph.ylabel("Column")
@@ -55,7 +56,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
                         qt.QWidget.sizeHint(self).height())
 
-    def _buildToolBar(self, selection=False, colormap=False):
+    def _buildToolBar(self, selection=False, colormap=False, imageicons=False):
         if QTVERSION < '4.0.0':
             if qt.qVersion() < '3.0':
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
@@ -67,6 +68,11 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
             self.xAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
             self.yAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
+            self.imageIcon      = qt.QIconSet(qt.QPixmap(IconDict["image"]))
+            self.eraseSelectionIcon     = qt.QIconSet(qt.QPixmap(IconDict["eraseselect"]))
+            self.rectSelectionIcon      = qt.QIconSet(qt.QPixmap(IconDict["boxselect"]))
+            self.brushSelectionIcon     = qt.QIconSet(qt.QPixmap(IconDict["brushselect"]))
+            self.brushIcon              = qt.QIconSet(qt.QPixmap(IconDict["brush"]))
             if not QWTVERSION4:
                 self.hFlipIcon	= qt.QIconSet(qt.QPixmap(IconDict["gioconda16mirror"]))
         else:
@@ -78,23 +84,17 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
             self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
             self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
+            self.imageIcon     = qt.QIcon(qt.QPixmap(IconDict["image"]))
+            self.eraseSelectionIcon     = qt.QIcon(qt.QPixmap(IconDict["eraseselect"]))
+            self.rectSelectionIcon      = qt.QIcon(qt.QPixmap(IconDict["boxselect"]))
+            self.brushSelectionIcon     = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))
+            self.brushIcon              = qt.QIcon(qt.QPixmap(IconDict["brush"]))
+
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
         self.toolBarLayout.setMargin(0)
         self.toolBarLayout.setSpacing(0)
         self.mainLayout.addWidget(self.toolBar)
-        #Selection
-        if selection:
-            tb = self._addToolButton(self.selectionIcon,
-                                None,
-                                'Set Selection Mode',
-                                toggle = True,
-                                state = True)
-            if qt.qVersion() < '4.0.0':
-                tb.setState(qt.QButton.On)
-            else:
-                tb.setDown(True)
-            self.selectionToolButton = tb
         #Autoscale
         self._addToolButton(self.zoomResetIcon,
                             self._zoomReset,
@@ -139,12 +139,69 @@ class RGBCorrelatorGraph(qt.QWidget):
                                  self._saveIconSignal,
                                  'Save Graph')
 
+        #Selection
+        if selection:
+            tb = self._addToolButton(self.selectionIcon,
+                                None,
+                                'Toggle Mode',
+                                toggle = True,
+                                state = False)
+            if qt.qVersion() < '4.0.0':
+                tb.setState(qt.QButton.Off)
+            else:
+                tb.setDown(False)
+            self.selectionToolButton = tb
+        #image selection icons
+        if imageicons:
+            tb = self._addToolButton(self.imageIcon,
+                                     None,
+                                     'Reset')
+            self.imageToolButton = tb
+
+            tb = self._addToolButton(self.eraseSelectionIcon,
+                                     None,
+                                     'Erase Selection')
+            self.eraseSelectionToolButton = tb
+
+            tb = self._addToolButton(self.rectSelectionIcon,
+                                     None,
+                                     'Rectangular Selection')
+            self.rectSelectionToolButton = tb
+
+            tb = self._addToolButton(self.brushSelectionIcon,
+                                     None,
+                                     'Brush Selection')
+            self.brushSelectionToolButton = tb
+
+            tb = self._addToolButton(self.brushIcon,
+                                     None,
+                                     'Select Brush')
+            self.brushToolButton = tb
+        else:
+            self.imageToolButton = None
+
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
                                  'Prints the Graph')
+
+    def hideImageIcons(self):
+        if self.imageToolButton is None:return
+        self.imageToolButton.hide()
+        self.eraseSelectionToolButton.hide()
+        self.rectSelectionToolButton.hide()
+        self.brushSelectionToolButton.hide()
+        self.brushToolButton.hide()
+
+    def showImageIcons(self):
+        if self.imageToolButton is None:return
+        self.imageToolButton.show()
+        self.eraseSelectionToolButton.show()
+        self.rectSelectionToolButton.show()
+        self.brushSelectionToolButton.show()
+        self.brushToolButton.show()
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None):
         tb      = qt.QToolButton(self.toolBar)            
