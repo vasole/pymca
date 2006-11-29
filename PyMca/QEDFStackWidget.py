@@ -220,7 +220,6 @@ class QEDFStackWidget(qt.QWidget):
 
     def _roiGraphSignal(self, ddict):
         if ddict['event'] == "MouseSelection":
-            print ddict
             if ddict['xmin'] < ddict['xmax']:
                 xmin = ddict['xmin']
                 xmax = ddict['xmax']
