@@ -2,21 +2,26 @@ This is the GPL version of the PyMCA XRF Toolkit.
 Please read the LICENSE.GPL file to know what that means.
 
 That license grants you the rights to distribute this code under
-the same license conditions. However, I would prefer that you refer
-to the original source (the ESRF) for download. That should allow
-to distribute the last version.
+the same license conditions. Nevertheless, you should keep using
+sourceforge or the ESRF for downloading in order to keep up-to-date.
 
 
 INSTALLATION
+
+I remind you that ready-to-use packages are available for the most
+common platforms. Please keep going if you want to build the code from
+source.
 
 In order to simplify the tasks, I have put all the .py modules together.
 You will need to build some libraries (sps, specfile, specfit, edf, ...)
 Those libraries can be build in the respective directories thru the usual
 python setup.py build methods. Alternatively you can use the toplevel
-setup.py contributed by Darren Dale dealing with the build process and 
-installing PyMCA in  a specific directory. Examples of use:
+setup.py contributed by D. Dale and install PyMCA in a specific directory.
 
-Install everything in default directories (typical for windows users or system administrators):
+Examples of use:
+
+Install everything in default directories (typical for windows users or system
+administrators):
 
 python setup.py install
 
@@ -30,13 +35,13 @@ The directories have to be specified with their full path without the last "/".
 
 In any case you need write privileges to the final directories.
 
-
 You will need:
 
-- Python (at least 2.3.x) I am currently using python 2.4.2
+- Python (at least 2.3.x) I use mostly 2.4.x except for MacOS.
+  I have never used the code under python 2.5.x.
 - Numeric (I'm using version 23.8 because I had a problem with the
-innerproduct function of the latest 24 windows version I had access). That could
-be corrected by the time you read this. To test:
+innerproduct function of the latest 24.x versions under windows and MacOS).
+That could already be corrected by the time you read this. To test:
 
 import Numeric
 x=Numeric.arange(100.)
@@ -56,33 +61,52 @@ I am getting this output:
 The version giving me problems had all elements but the first equal to 0.0
 
 If you want to use the graphical interfaces provided, you will need a running
-- PyQt 
-- PyQwt
+python installation with, at least:
 
-The data selection and display of the main interface need major refactoring.
-Besides that, it is not Qt4 compatible. If you want to embed PyMca in your own
-PyQt application, I recommend you to use the McaAdvancedFit.py module. It is 
-already functional under Qt4 and very easy to embed. All the tools around PyMca
-are PyQt4 compatible (PyMcaBatch, PeakIdentifier, QPeriodicTable, ...) and PyQt4
-will be the major development platform within one year.
+- PyQt + PyQwt4     NOT GPL UNDER WINDOWS. MAIN PLATFORM TILL 3.9.4
+
+OR
+
+- PyQt + PyQwt5     NOT GPL UNDER WINDOWS
+
+OR
+
+- PyQt4 + PyQwt5    GPL ON ALL PLATFORMS FROM 3.9.4Qt4 - RECOMMENDED
+
+If you want to embed PyMCA in your own PyQt application, I recommend you to use
+the McaAdvancedFit.py module. It is very easy to embed. A bit harder, but not so
+much would be to embed the McaWindow but you would not gain much more than the
+possibility to select ROIs.
+
+PyQt4 + PyQwt5 is the current main development platform for PyMCA.
+
+The program will take profit of a matplotlib installation if present in order to
+generate publication quality output. Originally I intended to replace PyQwt by
+matplotlib, but the degree of interactivity offered by PyQwt is very convenient.
 
 MacOS X users will need malloc.h
 
 DEVELOPMENT PLANS
 
-- Refactoring of data selection and display. This will involve a source
-abstraction to simplify support of other formats.
+I had not taken a look at this README since quite long :-)
+
+There are still some tasks left:
 
 - Compound fitting.
 
 - Fit configuration speed up to allow compound and multilayers fitting.
 
-- Use of matplotlib. This should improve printing capabilities. I am considering
-to use it to replace the QtBlissGraph.py module and to get rid of PyQwt.
-
 - Improve the doc ...
 
-If you have any questions or comments (or contributions!), you can contact me.
+- Try to replace Numeric by a more recent package.
+
+The first two are closely related. The documentation will arrive.
+
+My priority is to publish the code in a scientific journal.
+It is currently (December 2006) under review.
+
+If you have any questions or comments (or contributions!), please feel free to
+contact me.
 
 Enjoy,
 
