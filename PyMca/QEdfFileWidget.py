@@ -26,7 +26,7 @@
 #############################################################################*/
 import os.path
 import QtBlissGraph
-from QtBlissGraph import qt
+qt = QtBlissGraph.qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     QT4 = True
@@ -266,7 +266,7 @@ class QEdfFileWidget(qt.QWidget):
         self.selection= None
         self.__plotting = "Columns"
         self._edfstack = None
-        self.lastInputDir = None
+        self.lastInputDir = os.getcwd()
         self.colormapDialog = None
         self.colormap  = None
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
@@ -317,9 +317,25 @@ class QEdfFileWidget(qt.QWidget):
                 self.__dummyW.layout.addWidget(self.applygroup)            
                 if qt.qVersion() > '3.0.0': self.applygroup.setFlat(1)
                 self.applygroup.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.Fixed))
+                self.connect(self.applygroup,qt.SIGNAL("clicked(int)"),self.groupSignal)
             else:
-                self.applygroup = qt.QButtonGroup(self.__dummyW)
-            self.connect(self.applygroup,qt.SIGNAL("clicked(int)"),self.groupSignal)
+                self.applygroupContainer = qt.QWidget(self.__dummyW)
+                self.applytoone = qt.QCheckBox(self.applygroupContainer)
+                self.applytoone.setText("Apply to seen  image")
+                self.applytoone.setChecked(1)
+                self.applytoall = qt.QCheckBox(self.applygroupContainer)
+                self.applytoall.setText("Apply to all images in list")
+                self.applygroup = qt.QButtonGroup()
+                self.applygroup.addButton(self.applytoone, 0)
+                self.applygroup.addButton(self.applytoall, 1)
+                self.applygroup.setExclusive(True)
+                self.applygroupLayout = qt.QHBoxLayout(self.applygroupContainer)
+                self.applygroupLayout.addWidget(self.applytoone)
+                self.applygroupLayout.addWidget(self.applytoall)
+                self.__dummyW.layout.addWidget(self.applygroupContainer) 
+                self.connect(self.applygroup,qt.SIGNAL("buttonClicked(int)"),
+                             self.groupSignal)
+
         self.paramWidget = EdfFile_StandardArray(self.__dummyW)
         self.__dummyW.layout.addWidget(self.paramWidget)
         if QTVERSION < '4.0.0':
@@ -385,7 +401,7 @@ class QEdfFileWidget(qt.QWidget):
         # ---print
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
-                                 'Prints the Graph')
+                                 'Print the Graph')
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)            
@@ -410,7 +426,92 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.zoomReset()
 
     def _saveIconSignal(self):
-        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")        
+        if not os.path.exists(self.lastInputDir):
+            self.lastInputDir = os.getcwd()
+
+        fileTypeList = ["Image *.png",
+                        "Image *.jpg",
+                        "Widget *.png",
+                        "Widget *.jpg"]
+
+        outfile = qt.QFileDialog(self)
+        outfile.setModal(1)
+        if QTVERSION < '4.0.0':
+            outfile.setCaption("Output File Selection")
+            filterlist = fileTypeList[0]
+            for f in fileTypeList:
+                filterlist += "\n%s" % f
+            outfile.setFilters(filterlist)
+            outfile.setMode(outfile.AnyFile)
+            outfile.setDir(self.lastInputDir)
+            ret = outfile.exec_loop()
+        else:
+            outfile.setWindowTitle("Output File Selection")
+            strlist = qt.QStringList()
+            for f in fileTypeList:
+                strlist.append(f)
+            outfile.setFilters(strlist)
+            outfile.setFileMode(outfile.AnyFile)
+            outfile.setDirectory(self.lastInputDir)
+            ret = outfile.exec_()
+
+        if not ret: return
+        filterused = str(outfile.selectedFilter()).split()
+        filetype = filterused[0]
+        extension = filterused[1]
+        if QTVERSION < '4.0.0':
+            outstr=str(outfile.selectedFile())
+        else:
+            outstr=str(outfile.selectedFiles()[0])
+        try:            
+            outputFile = os.path.basename(outstr)
+        except:
+            outputFile  = outstr
+        outputDir  = os.path.dirname(outstr)
+        self.lastInputDir = outputDir
+
+        #always overwrite for the time being
+        if len(outputFile) < len(extension[1:]):
+            outputFile += extension[1:]
+        elif outputFile[-4:] != extension[1:]:
+            outputFile += extension[1:]
+        outputFile = os.path.join(outputDir, outputFile)
+        if os.path.exists(outputFile):
+            try:
+                os.remove(outputFile)
+            except:
+                qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
+                return
+
+        if filetype.upper() == "IMAGE":
+            self.saveGraphImage(outputFile)
+        else:
+            self.saveGraphWidget(outputFile)
+
+    def saveGraphImage(self, filename):
+        format = filename[-3:].upper()
+        pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+        if pixmap.save(filename, format):
+            return
+        else:
+            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            return
+
+    def saveGraphWidget(self, filename):
+        format = filename[-3:].upper()
+        pixmap = qt.QPixmap.grabWidget(self.graph)
+        if pixmap.save(filename, format):
+            return
+        else:
+            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            return
+
+    def setSaveDirectory(self, wdir):
+        if os.path.exists(wdir):
+            self.lastInputDir = wdir
+            return True
+        else:
+            return False
     
     def printGraph(self):
         pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
@@ -421,7 +522,6 @@ class QEdfFileWidget(qt.QWidget):
             self.printPreview.raiseW()
         else:
             self.printPreview.raise_()
-        #qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
 
     def _buildActions(self):
         self.buttonBox = qt.QWidget(self)
@@ -527,7 +627,7 @@ class QEdfFileWidget(qt.QWidget):
                         if QTVERSION < '4.0.0':
                             self.emit(qt.PYSIGNAL("addSelection"), ([signalsel],))
                         else:
-                            self.emit(qt.SIGNAL("addSelection"), [signalsell])
+                            self.emit(qt.SIGNAL("addSelection"), [signalsel])
                     elif not self.selection[nsel['SourceName']].has_key(key):
                         self.setSelected([nsel],reset=0)
                         if QTVERSION < '4.0.0':
@@ -801,7 +901,8 @@ class QEdfFileWidget(qt.QWidget):
                 print "I have to read again ... "
             if not loadsum:
                 if DEBUG:print "Not Loading the sum"
-                dataObject = self.data.getDataObject(infoSource['KeyList'][self.currentArray])
+                dataObject = self.data.getDataObject(infoSource['KeyList']\
+                                                     [self.currentArray])
                 info = dataObject.info
                 data = dataObject.data
                 imageinfo = infoSource['KeyList']
@@ -827,6 +928,7 @@ class QEdfFileWidget(qt.QWidget):
                 if DEBUG:
                     print "NOT ADDING 0.0 - SUM KEY"
                     wid.setImages(nimages+1,info = imageinfo+["0.0 - SUM"])
+                wid.setImages(nimages,info = imageinfo)
             else:
                 if info.has_key('Title'):imageinfo [self.currentArray] += info['Title']  
                 wid.setImages(nimages,  info = imageinfo)                
@@ -893,7 +995,7 @@ class QEdfFileWidget(qt.QWidget):
             if DEBUG:
                 print "Replace event"
             if self.allImages:
-                arraynamelist = self.data.SourceInfo['KeyList']
+                arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
                 arraynamelist = []
                 for selection in selkeys:
@@ -953,7 +1055,7 @@ class QEdfFileWidget(qt.QWidget):
             if DEBUG:
                 print "Select event"
             if self.allImages:
-                arraynamelist = self.data.getSourceInfo['KeyList']
+                arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
                 arraynamelist = []
                 for selection in selkeys:
@@ -1040,7 +1142,7 @@ class QEdfFileWidget(qt.QWidget):
                 print "Remove Event"
                 print "self.selection before = ",self.selection
             if self.allImages:
-                arraynamelist = self.data.SourceInfo['KeyList']
+                arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
                 arraynamelist = []
                 for selection in selkeys:
