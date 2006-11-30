@@ -26,6 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
+import os
 import QtBlissGraph
 qt = QtBlissGraph.qt
 from Icons import IconDict
@@ -37,17 +38,18 @@ DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
     def __init__(self, parent = None, selection=False, colormap=False,
-                 imageicons=False):
+                 imageicons=False, standalonesave=True):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        self._buildToolBar(selection, colormap, imageicons)
+        self._buildToolBar(selection, colormap, imageicons, standalonesave)
         self.graph = QtBlissGraph.QtBlissGraph(self)
         self.graph.xlabel("Row")
         self.graph.ylabel("Column")
         self.graph.yAutoScale = 1
         self.graph.xAutoScale = 1
+        self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
         if DEBUG: print "printPreview id = ", id(self.printPreview)
@@ -56,7 +58,8 @@ class RGBCorrelatorGraph(qt.QWidget):
         return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
                         qt.QWidget.sizeHint(self).height())
 
-    def _buildToolBar(self, selection=False, colormap=False, imageicons=False):
+    def _buildToolBar(self, selection=False, colormap=False,
+                      imageicons=False, standalonesave=True):
         if QTVERSION < '4.0.0':
             if qt.qVersion() < '3.0':
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
@@ -135,9 +138,15 @@ class RGBCorrelatorGraph(qt.QWidget):
 
 
         #save
-        tb = self._addToolButton(self.saveIcon,
+        if standalonesave:
+            tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
                                  'Save Graph')
+        else:
+            tb = self._addToolButton(self.saveIcon,
+                                 None,
+                                 'Save')
+        self.saveToolButton = tb
 
         #Selection
         if selection:
@@ -261,10 +270,97 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self.xAutoScaleToolButton.setDown(True)
 
     def _saveIconSignal(self):
-        qt.QMessageBox.information(self, "Save", "Not implemented (yet)")        
-    
+        if not os.path.exists(self.saveDirectory):
+            self.saveDirectory = os.getcwd()
+
+        fileTypeList = ["Image *.png",
+                        "Image *.jpg",
+                        "Widget *.png",
+                        "Widget *.jpg"]
+
+        outfile = qt.QFileDialog(self)
+        outfile.setModal(1)
+        if QTVERSION < '4.0.0':
+            outfile.setCaption("Output File Selection")
+            filterlist = fileTypeList[0]
+            for f in fileTypeList:
+                filterlist += "\n%s" % f
+            outfile.setFilters(filterlist)
+            outfile.setMode(outfile.AnyFile)
+            outfile.setDir(self.saveDirectory)
+            ret = outfile.exec_loop()
+        else:
+            outfile.setWindowTitle("Output File Selection")
+            strlist = qt.QStringList()
+            for f in fileTypeList:
+                strlist.append(f)
+            outfile.setFilters(strlist)
+            outfile.setFileMode(outfile.AnyFile)
+            outfile.setDirectory(self.saveDirectory)
+            ret = outfile.exec_()
+
+        if not ret: return
+        filterused = str(outfile.selectedFilter()).split()
+        filetype = filterused[0]
+        extension = filterused[1]
+        if QTVERSION < '4.0.0':
+            outstr=str(outfile.selectedFile())
+        else:
+            outstr=str(outfile.selectedFiles()[0])
+        try:            
+            outputFile = os.path.basename(outstr)
+        except:
+            outputFile  = outstr
+        outputDir  = os.path.dirname(outstr)
+        self.saveDirectory = outputDir
+
+        #always overwrite for the time being
+        if len(outputFile) < len(extension[1:]):
+            outputFile += extension[1:]
+        elif outputFile[-4:] != extension[1:]:
+            outputFile += extension[1:]
+        outputFile = os.path.join(outputDir, outputFile)
+        if os.path.exists(outputFile):
+            try:
+                os.remove(outputFile)
+            except:
+                qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
+                return
+
+        if filetype.upper() == "IMAGE":
+            self.saveGraphImage(outputFile)
+        else:
+            self.saveGraphWidget(outputFile)
+                
+        qt.QMessageBox.information(self, "Save", "Not implemented (yet)")
+
+    def saveGraphImage(self, filename):
+        format = filename[-3:].upper()
+        pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+        if pixmap.save(filename, format):
+            return
+        else:
+            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            return
+
+    def saveGraphWidget(self, filename):
+        format = filename[-3:].upper()
+        pixmap = qt.QPixmap.grabWidget(self.graph)
+        if pixmap.save(filename, format):
+            return
+        else:
+            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            return
+
+    def setSaveDirectory(self, wdir):
+        if os.path.exists(wdir):
+            self.saveDirectory = wdir
+            return True
+        else:
+            return False
 
     def printGraph(self):
+        #instead of the canvas is better the image
         pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():

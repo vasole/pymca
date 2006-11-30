@@ -14,6 +14,10 @@ import spslut
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
+
+if QWTVERSION4:
+    raise "ImportError","QEDFStackWidget needs Qwt5"
+
 DEBUG = 0
 
 class QEDFStackWidget(qt.QWidget):
@@ -50,6 +54,8 @@ class QEDFStackWidget(qt.QWidget):
                 #self.rgbWidget = RGBCorrelator.RGBCorrelator()
                 self.rgbWidget = RGBCorrelator.RGBCorrelator(self)
                 self.mainLayout.addWidget(self.rgbWidget)
+            else:
+                self.rgbWidget = None
         else:
             self.rgbWidget = rgbwidget
         self.__ROIBrushMenu  = None
@@ -171,8 +177,8 @@ class QEDFStackWidget(qt.QWidget):
                      self.selectStackColormap)
 
         self.connect(self.stackGraphWidget.hFlipToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._hFlipIconSignal)
+                 qt.SIGNAL("clicked()"),
+                 self._hFlipIconSignal)
 
         #ROI Image
         self.connect(self.roiGraphWidget.colormapToolButton,
