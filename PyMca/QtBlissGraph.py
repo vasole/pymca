@@ -774,7 +774,8 @@ class QtBlissGraph(qwt.QwtPlot):
             if xmirror is None: xmirror = self._xImageMirror        
             if ymirror is None: ymirror = self._yImageMirror
             if len(self.curveslist):
-                self.plotImage.setData(data,(xmin,xmax),yrange,
+                self.plotImage.setData(data,(xmin,xmax),
+                                   (ymin, ymax),
                                    colormap=colormap,
                                    xmirror = xmirror,
                                    ymirror = ymirror)
