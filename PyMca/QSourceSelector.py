@@ -29,6 +29,8 @@ class QSourceSelector(qt.QWidget):
                                 "All Files (*)"]
         else:
             self.fileTypeList = filetypelist
+        self.lastFileFilter = qt.QString(self.fileTypeList[0])
+
         # --- file combo/open/close
         self.lastInputDir = None
         self.fileWidget= qt.QWidget(self)
@@ -88,7 +90,8 @@ class QSourceSelector(qt.QWidget):
                                 self,"openFile", "Open a new EdfFile")
                 else:
                     filedialog = qt.QFileDialog(self,"Open new EdfFile(s)",1)
-                    if self.lastInputDir is not None:filedialog.setDir(self.lastInputDir)
+                    if self.lastInputDir is not None:
+                        filedialog.setDir(self.lastInputDir)
                     filedialog.setMode(filedialog.ExistingFiles)
                     filedialog.setFilters(filetypes)           
                     if filedialog.exec_loop() == qt.QDialog.Accepted:
@@ -103,20 +106,23 @@ class QSourceSelector(qt.QWidget):
                         filetypes += filetype+"\n"
                     filelist = qt.QFileDialog.getOpenFileNames(self,
                                 "Open a new source file",          wdir,
-                                filetypes)
+                                filetypes,
+                                self.lastFileFilter)
                 else:
                     fdialog = qt.QFileDialog(self)
                     fdialog.setModal(True)
                     fdialog.setWindowTitle("Open a new EdfFile")
                     strlist = qt.QStringList()
                     for filetype in self.fileTypeList:
-                        strlist.append(filetype.replace("(","").replace(")",""))
+                        strlist.append(filetype)
                     fdialog.setFilters(strlist)
+                    fdialog.selectFilter(self.lastFileFilter)
                     fdialog.setFileMode(fdialog.ExistingFiles)
                     fdialog.setDirectory(wdir)
                     ret = fdialog.exec_()
                     if ret == qt.QDialog.Accepted:
                         filelist = fdialog.selectedFiles()
+                        self.lastFileFilter = str(fdialog.selectedFilter())
                         fdialog.close()
                         del fdialog                        
                     else:
@@ -128,7 +134,8 @@ class QSourceSelector(qt.QWidget):
             for f in filelist:
                 filename.append(str(f))
             if not len(filename):    return
-            if len(filename):self.lastInputDir=os.path.dirname(filename[0])
+            if len(filename):
+                self.lastInputDir=os.path.dirname(filename[0])
             justloaded = True
         if justloaded:
             if type(filename) != type([]):
