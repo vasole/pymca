@@ -26,21 +26,22 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.24 $"
 import sys
-try:
-    import PyQt4.Qt as qt
-    qt.PYSIGNAL = qt.SIGNAL
-    def tQt(x):
-        return x
-except:
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+    except:
+        import qt
+else:
     import qt
-    def tQt(x):
-        return (x,)
-if qt.qVersion() < '3.0.0':
+    
+QTVERSION = qt.qVersion()
+
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+elif QTVERSION < '4.0.0':
     import qttable
 
-if qt.qVersion() > '4.0.0':
+if QTVERSION > '4.0.0':
     qt.QLabel.AlignRight  = qt.Qt.AlignRight
     qt.QLabel.AlignCenter = qt.Qt.AlignCenter
     qt.QLabel.AlignVCenter= qt.Qt.AlignVCenter
@@ -65,7 +66,7 @@ class HorizontalSpacer(qt.QWidget):
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
         qt.QLabel.__init__(self,parent)
-        if qt.qVersion() <'4.0.0':
+        if QTVERSION <'4.0.0':
             self.color = color
             self.bold  = bold
         else:
@@ -76,7 +77,7 @@ class MyQLabel(qt.QLabel):
             self.font().setBold(bold)
 
 
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         def drawContents(self, painter):
             painter.font().setBold(self.bold)
             pal =self.palette()
@@ -93,7 +94,7 @@ class AttenuatorsTab(qt.QWidget):
         layout.addWidget(self.table)
         spacer = MaterialEditor.VerticalSpacer(self)
         layout.addWidget(spacer)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mainTab = qt.QTabWidget(self,"mainTab")
             layout.addWidget(self.mainTab)
             self.editor = MaterialEditor.MaterialEditor(self.mainTab, "tabEditor")
@@ -155,7 +156,7 @@ class CompoundFittingTab(qt.QWidget):
         layout.addWidget(hbox)
         
         grid = qt.QWidget(self)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             glt = qt.QGridLayout(grid,1,1,11,2,"gridlayout")
         else:
             glt = Q3GridLayout(grid)
@@ -170,7 +171,7 @@ class CompoundFittingTab(qt.QWidget):
             label = qt.QLabel(grid)
             label.setText("Layer%d" % i)
             cbox  = qt.QComboBox(grid)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 cbox.insertStrList(options)
                 if i == 0:
                     cbox.setCurrentItem(0)
@@ -188,7 +189,7 @@ class CompoundFittingTab(qt.QWidget):
             glt.addWidget(qt.QWidget(grid), r, c+2)
         
         layout.addWidget(grid)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mainTab = qt.QTabWidget(self, "mainTab")
             layout.addWidget(self.mainTab)
             self._editorList = []
@@ -217,7 +218,7 @@ class CompoundFittingTab0(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         
         grid = qt.QWidget(self)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             gl = qt.QGridLayout(grid,1,1,11,2,"gridlayout")
         else:
             gl = Q3GridLayout(grid)
@@ -248,7 +249,7 @@ class CompoundFittingTab0(qt.QWidget):
         fixedLabel_font.setItalic(1)
         fixedLabel.setFont(fixedLabel_font)
         fixedLabel.setText(str("Fixed"))
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             fixedLabel.setAlignment(qt.QLabel.AlignVCenter)
             fixedLabel.setAlignment(qt.QLabel.AlignHCenter)
         else:
@@ -350,7 +351,7 @@ class CompoundFittingTab0(qt.QWidget):
 
 
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -370,7 +371,7 @@ class AttenuatorsTableWidget(QTable):
                        "Filter5", "Filter6","Filter7","BeamFilter1",
                        "BeamFilter2","Detector", "Matrix"]
 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             QTable.__init__(self, parent, name)
             self.setCaption(name)
         else:
@@ -394,12 +395,12 @@ class AttenuatorsTableWidget(QTable):
         self.matrixMode = matrixmode
         self.attenuators = attenuators
         self.verticalHeader().hide()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setLeftMargin(0)
             self.setFrameShape(qttable.QTable.NoFrame)
             #self.setFrameShadow(qttable.QTable.Sunken)
             self.setSelectionMode(qttable.QTable.Single)
-            if qt.qVersion() >= '3.0.0':
+            if QTVERSION >= '3.0.0':
                 self.setFocusStyle(qttable.QTable.FollowStyle)
             self.setNumCols(len(labels))                
             for label in labels:
@@ -426,14 +427,14 @@ class AttenuatorsTableWidget(QTable):
             self.__build(len(attenuators0))
             #self.adjustColumn(0)
         if self.matrixMode:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.horizontalHeader().setLabel(0,'Layer')
             else:
                 item = self.horizontalHeaderItem(0)
                 item.setText('Layer')
                 self.setHorizontalHeaderItem(0,item)
         if self.compoundMode:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.adjustColumn(0)
                 self.adjustColumn(1)
             else:
@@ -452,16 +453,16 @@ class AttenuatorsTableWidget(QTable):
             if "BeamFilter2" not in self.attenuators: n += 1
             n = 4
             #self.setNumRows(nfilters+n)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.setNumRows(12)
             else:
                 self.setRowCount(12)
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.setNumRows(nfilters)
             else:
                 self.setRowCount(nfilters)
-        if qt.qVersion() > '4.0.0':
+        if QTVERSION > '4.0.0':
             rheight = self.horizontalHeader().sizeHint().height()
             for idx in range(self.rowCount()):
                 self.setRowHeight(idx, rheight)
@@ -476,7 +477,7 @@ class AttenuatorsTableWidget(QTable):
             #a.append('')            
             for key in matlist:
                 a.append(key)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 for idx in range(self.numRows()):
                     item= qttable.QCheckTableItem(self, roottext+"%d" % idx)
                     self.setItem(idx, 0, item)
@@ -510,17 +511,17 @@ class AttenuatorsTableWidget(QTable):
                     combo.setEditable(True)
                     self.setCellWidget(idx,2,combo)
                     qt.QObject.connect(combo,
-                                       qt.PYSIGNAL("MaterialComboBoxSignal"),
+                                       qt.SIGNAL("MaterialComboBoxSignal"),
                                        self._comboSlot)
             return
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             selfnumRows = self.numRows()
         else:
             selfnumRows = self.rowCount()
             
         for idx in range(selfnumRows-n):
             text = "Filter% 2d" % idx
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 item= qttable.QCheckTableItem(self, text)
                 self.setItem(idx, 0, item)
                 item.setText(text)
@@ -553,12 +554,16 @@ class AttenuatorsTableWidget(QTable):
             combo.setEditable(True)
             self.setCellWidget(idx,2,combo)
             #self.setItem(idx,2,combo)
-            qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+            if QTVERSION < '4.0.0':
+                qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+                                   self._comboSlot)
+            else:
+                qt.QObject.connect(combo, qt.SIGNAL("MaterialComboBoxSignal"),
                                    self._comboSlot)
             
         for i in range(2):
             #BeamFilter(i)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 item= qttable.QCheckTableItem(self, "BeamFilter%d" % i)
                 #,color=qt.Qt.red)
                 idx = self.numRows()-(4-i)
@@ -586,10 +591,14 @@ class AttenuatorsTableWidget(QTable):
             combo = MyQComboBox(self, options=a, row = idx, col = 2)
             combo.setEditable(True)
             self.setCellWidget(idx,2,combo)
-            qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+            if QTVERSION < '4.0.0':
+                qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+                                   self._comboSlot)
+            else:
+                qt.QObject.connect(combo, qt.SIGNAL("MaterialComboBoxSignal"),
                                    self._comboSlot)
             
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             #Detector
             item= qttable.QCheckTableItem(self, "Detector")
             #,color=qt.Qt.red)
@@ -618,7 +627,7 @@ class AttenuatorsTableWidget(QTable):
         combo = MyQComboBox(self, options=a, row = idx, col = 2)
         combo.setEditable(True)
         self.setCellWidget(idx,2,combo)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             #Matrix            
             item= qttable.QCheckTableItem(self, "Matrix")
             #,color=qt.Qt.red)
@@ -643,7 +652,11 @@ class AttenuatorsTableWidget(QTable):
                           qt.Qt.ItemIsEnabled)
             self.setItem(idx, 1, item)
 
-        qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+        if QTVERSION < '4.0.0':
+            qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+                              self._comboSlot)
+        else:
+            qt.QObject.connect(combo, qt.SIGNAL("MaterialComboBoxSignal"),
                               self._comboSlot)
 
 
@@ -655,8 +668,13 @@ class AttenuatorsTableWidget(QTable):
         #combo = qttable.QComboTableItem(self,a)
         self.combo = MyQComboBox(self, options=a, row = idx, col = 2)
         self.setCellWidget(idx,2,self.combo)
-        self.connect(self.combo, qt.PYSIGNAL("MaterialComboBoxSignal"),self._comboSlot)
-        
+        if QTVERSION < '4.0.0':
+            self.connect(self.combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+                         self._comboSlot)
+        else:
+            self.connect(self.combo, qt.SIGNAL("MaterialComboBoxSignal"),
+                         self._comboSlot)
+            
     def mySlot(self,row,col):
         if DEBUG:
             print "Value changed row = ",row,"col = ",col
@@ -670,7 +688,7 @@ class AttenuatorsTableWidget(QTable):
         text = dict['text']
         self.setCurrentCell(row, col)
         self._checkDensityThickness(text,row)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.SIGNAL("valueChanged(int,int)"),(row,col))
         else:
             self.emit(qt.SIGNAL("valueChanged(int,int)"), row, col)
@@ -679,7 +697,7 @@ class AttenuatorsTableWidget(QTable):
         if col == 2:
             return self.cellWidget(row,col).currentText()
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 return qttable.QTable.text(self, row, col)
             else:
                 if col not in [1, 3, 4]:
@@ -690,7 +708,7 @@ class AttenuatorsTableWidget(QTable):
                     return item.text()
 
     def setText(self, row, col, text):
-        if qt.qVersion() < "4.0.0":
+        if QTVERSION < "4.0.0":
             QTable.setText(self, row, col, text)
         else:
             if col == 0:
@@ -709,7 +727,7 @@ class AttenuatorsTableWidget(QTable):
 
 
     def setCellWidget(self, row, col, w):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             w.row = row
             w.col = col
         QTable.setCellWidget(self, row, col, w)
@@ -766,12 +784,12 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
                                           "nor a valid Material.\n" \
                                           "Please define the material %s or correct the formula\n" % \
                                           (str(qstring), str(qstring)))
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.setCurrentItem(0)
                 else:
                     self.setCurrentIndex(0)
                 for i in range(self.count()):
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         selftext = self.text(i)
                     else:
                         selftext = self.itemText(i)
@@ -790,7 +808,7 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
             self.removeItem(self.count()-1)
         insert = True
         for i in range(self.count()):
-            if qt.qVersion() <'4.0.0':
+            if QTVERSION <'4.0.0':
                 selftext = self.text(i)
             else:
                 selftext = self.itemText(i)
@@ -798,13 +816,16 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
                 insert = False
         if insert:
             self.insertItem(qstring,-1)
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass        
         else:
             if self.lineEdit() is not None:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
-        self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'), tQt(dict))
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'), (dict,))
+        else:
+            self.emit(qt.SIGNAL('MaterialComboBoxSignal'), dict)
 
 def main(args):
     app=qt.QApplication(args)
@@ -815,7 +836,7 @@ def main(args):
         tab = CompoundFittingTab(None)
     else:
         tab = MultilayerTab(None)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         tab.show()
         app.setMainWidget( tab )
         app.exec_loop()

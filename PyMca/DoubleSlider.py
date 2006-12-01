@@ -61,6 +61,8 @@ class DoubleSlider(qt.QWidget):
     def __init__(self, parent = None, scale = False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(6)
+        self.mainLayout.setSpacing(1)
         orientation = qt.Qt.Horizontal
         
         self.minSliderContainer = MySlider(self, orientation)

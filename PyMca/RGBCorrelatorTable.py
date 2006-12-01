@@ -44,6 +44,8 @@ class RGBCorrelatorTable(qt.QTableWidget):
                                            qt.QTableWidgetItem.Type)
             item.setText(labels[i])
             self.setHorizontalHeaderItem(i,item)
+        rheight = self.horizontalHeader().sizeHint().height()
+        self.setMinimumHeight(5*rheight)
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)

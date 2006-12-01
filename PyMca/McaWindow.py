@@ -47,7 +47,7 @@ DEBUG = 0
 QTVERSION = qt.qVersion()
 
 class McaWindow(qt.QMainWindow):
-    def __init__(self, parent=None, name="McaWindow", specfit=None, fl=None,**kw):
+    def __init__(self, parent=None, name="MCA Window", specfit=None, fl=None,**kw):
         if qt.qVersion() < '4.0.0':
             if fl is None: fl = qt.Qt.WDestructiveClose
             qt.QMainWindow.__init__(self, parent, name, fl)
@@ -63,9 +63,11 @@ class McaWidget(qt.QWidget):
     def __init__(self, parent=None, name="Mca Window", specfit=None,fl=None,**kw):
         if qt.qVersion() < '4.0.0':
             qt.QWidget.__init__(self, parent)
+            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
+            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(name)
         self.outputdir = None
         """ 
