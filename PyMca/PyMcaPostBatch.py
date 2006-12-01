@@ -39,9 +39,7 @@ qt = RGBCorrelator.qt
 import Numeric
 
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
-    def addBatchDatFile(self, filename, ignoresigma=True):
-        if ignoresigma:step = 2
-        else:step=1
+    def addBatchDatFile(self, filename, ignoresigma=None):
         f = open(filename)
         lines = f.readlines()
         f.close()
@@ -51,6 +49,17 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                i += 1
         nlabels = len(labels)
         nrows = len(lines) - i
+        if ignoresigma is None:
+            step  = 1
+            if len(labels) > 4:
+                if len(labels[2]) == (len(labels[3])-3):
+                    if len(labels[3]) > 5:
+                        if labels[3][2:-1] == labels[2]:
+                            step = 2
+        elif ignoresigma:
+            step = 2
+        else:
+            step = 1
         totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
         for i in range(nrows):
             totalArray[i, :] = map(float, lines[i+1].split())
