@@ -78,6 +78,46 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                 self.controller.addImage(dataObject.data,
                                          os.path.basename(fname)+" "+key)
 
+    def _getStackOfFiles(self):
+        wdir = os.getcwd()
+        fileTypeList = ["Batch Result Files (*dat)",
+                        "EDF Files (*edf)",
+                        "EDF Files (*ccd)",
+                        "All Files (*)"]
+        message = "Open ONE Batch result file or SEVERAL EDF files"
+        if sys.platform != 'darwin':
+            filetypes = ""
+            for filetype in fileTypeList:
+                filetypes += filetype+"\n"
+            filelist = qt.QFileDialog.getOpenFileNames(self,
+                        message,
+                        wdir,
+                        filetypes)
+            if not len(filelist):return []
+        else:
+            fdialog = qt.QFileDialog(self)
+            fdialog.setModal(True)
+            fdialog.setWindowTitle(message)
+            strlist = qt.QStringList()
+            for filetype in fileTypeList:
+                strlist.append(filetype.replace("(","").replace(")",""))
+            fdialog.setFilters(strlist)
+            fdialog.setFileMode(fdialog.ExistingFiles)
+            fdialog.setDirectory(wdir)
+            ret = fdialog.exec_()
+            if ret == qt.QDialog.Accepted:
+                filelist = fdialog.selectedFiles()
+                fdialog.close()
+                del fdialog                        
+            else:
+                fdialog.close()
+                del fdialog
+                return []
+        filelist = map(str, filelist)
+        if not len(filelist):return []
+        filelist.sort()
+        return filelist
+
 def test():
     app = qt.QApplication([])
     qt.QObject.connect(app,
@@ -95,11 +135,13 @@ def test():
     for opt,arg in opts:
         pass
     filelist=args
+    w = PyMcaPostBatch()
+    if not len(filelist):
+        filelist = w._getStackOfFiles()
     if not len(filelist):
         print "Usage:"
         print "python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE"
-        sys.exit(app.quit())
-    w = PyMcaPostBatch()
+        sys.exit(app.quit())        
     if len(filelist) == 1:
         try:
             w.addBatchDatFile(filelist[0])

@@ -201,7 +201,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
 
-            if 0 and QTVERSION > '4.0.0':
+            if QTVERSION > '4.0.0':
                 self.__useTabWidget = True
             else:
                 self.__useTabWidget = False
@@ -803,7 +803,7 @@ class PyMca(PyMcaMdi.PyMca):
             fileTypeList = ["EDF Files (*edf)",
                     "EDF Files (*ccd)",
                     "All Files (*)"]
-            message = "Open SEVERAL EDF files"
+            message = "Open SEVERAL EDF files or Indexed EDF Stack"
             filelist = self.__getStackOfFiles(fileTypeList, message)
             if not(len(filelist)): return
             filelist.sort()

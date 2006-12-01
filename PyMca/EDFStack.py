@@ -17,7 +17,12 @@ class EDFStack(DataObject.DataObject):
         self.incrProgressBar=0
         self.__keyList = []
         if filelist is not None:
-            self.loadFileList(filelist)
+            if type(filelist) != type([]):
+                filelist = [filelist]
+            if len(filelist) == 1:
+                self.loadIndexedStack(filelist)
+            else:
+                self.loadFileList(filelist)
 
     def loadFileList(self, filelist):
         if type(filelist) == type(''):filelist = [filelist]
@@ -158,7 +163,8 @@ class EDFStack(DataObject.DataObject):
                 i = 0
             else:
                 if not os.path.exists(prefix+format % begin+suffix):
-                    raise "ValueError","Invalid start index"
+                    raise "ValueError","Invalid start index file = %s" % \
+                          prefix+format % begin+suffix
                 else:
                     i = begin
             while not os.path.exists(prefix+format % i+suffix):

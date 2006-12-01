@@ -457,6 +457,8 @@ class QEDFStackWidget(qt.QWidget):
             self.mcaWidget._removeSelection([sel])
         elif action == "REPLACE":
             self.mcaWidget._replaceSelection([sel])
+        if self.mcaWidget.isHidden():
+            self.mcaWidget.show()
 
     def _mcaWidgetSignal(self, ddict):
         if ddict['event'] == "ROISignal":
@@ -488,6 +490,9 @@ class QEDFStackWidget(qt.QWidget):
             else:
                 self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
             self.plotROIImage(update=True)
+            if self.isHidden():
+                self.show()
+
 
     def plotROIImage(self, update = True):
         if self.__ROIImageData is None:
@@ -869,10 +874,49 @@ class QEDFStackWidget(qt.QWidget):
     def __setROIBrush6(self):
         self.__ROIBrushWidth = 20
 
+    def _getStackOfFiles(self):
+        fileTypeList = ["EDF Files (*edf)",
+                        "EDF Files (*ccd)",
+                        "All Files (*)"]
+        message = "Open EDF Stack or several EDF files"
+        wdir = os.getcwd()
+        if sys.platform != 'darwin':
+            filetypes = ""
+            for filetype in fileTypeList:
+                filetypes += filetype+"\n"
+            filelist = qt.QFileDialog.getOpenFileNames(self,
+                        message,
+                        wdir,
+                        filetypes)
+            if not len(filelist):return []
+        else:
+            fdialog = qt.QFileDialog(self)
+            fdialog.setModal(True)
+            fdialog.setWindowTitle(message)
+            strlist = qt.QStringList()
+            for filetype in fileTypeList:
+                strlist.append(filetype)
+            fdialog.setFilters(strlist)
+            fdialog.setFileMode(fdialog.ExistingFiles)
+            fdialog.setDirectory(wdir)
+            ret = fdialog.exec_()
+            if ret == qt.QDialog.Accepted:
+                filelist = fdialog.selectedFiles()
+                fdialog.close()
+                del fdialog                        
+            else:
+                fdialog.close()
+                del fdialog
+                return []
+        filelist = map(str, filelist)
+        if not(len(filelist)): return []
+        filelist.sort()
+        return filelist
+
 if __name__ == "__main__":
     import getopt, os
     options = ''
-    longoptions = []
+    longoptions = ["begin=", "end="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -883,11 +927,33 @@ if __name__ == "__main__":
         sys.exit(1)
     #import time
     #t0= time.time()
+    begin = None
+    end = None
+    for opt, arg in opts:
+        if opt in '--begin':
+            begin = int(arg)
+        elif opt in '--end':
+            end = int(arg)
+    app = qt.QApplication([])
     stack = EDFStack.EDFStack()
-    if len(args):
-        stack.setFileList(args)
+    w = QEDFStackWidget()
+    if len(args) > 1:
+        stack.loadFileList(args)
+    elif len(args) == 1:
+        stack.loadIndexedStack(args, begin, end)
     else:
-        if os.path.exists(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
+        if 1:
+            filelist = w._getStackOfFiles()
+            if len(filelist) == 1:
+                stack.loadIndexedStack(filelist[0], begin, end)
+            elif len(filelist):
+                stack.loadFileList(filelist)
+            else:
+                print "Usage: "
+                print "python QEDFStackWidget.py SET_OF_EDF_FILES"
+                print "python QEDFStackWidget.py -begin=0 --end=XX INDEXED_EDF_FILE"
+                sys.exit(1)
+        elif os.path.exists(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
         elif os.path.exists("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
@@ -896,14 +962,12 @@ if __name__ == "__main__":
             print "python QEDFStackWidget.py SET_OF_EDF_FILES"
             sys.exit(1)
     shape = stack.data.shape
-    app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
 
-    w = QEDFStackWidget()
+    w.setStack(stack)
     w.show()
     #print "reading elapsed = ", time.time() - t0
-    w.setStack(stack)
     if qt.qVersion() < '4.0.0':
         app.exec_loop()
     else:
