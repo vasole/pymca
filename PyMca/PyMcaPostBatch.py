@@ -28,12 +28,8 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
-try:
-    import DataSource
-    DataReader = DataSource.DataSource
-except:
-    import EdfFileDataSource
-    DataReader = EdfFileDataSource.EdfFileDataSource
+import EdfFileDataSource
+DataReader = EdfFileDataSource.EdfFileDataSource
 import RGBCorrelator
 qt = RGBCorrelator.qt
 import Numeric
@@ -105,7 +101,10 @@ def test():
         sys.exit(app.quit())
     w = PyMcaPostBatch()
     if len(filelist) == 1:
-        w.addBatchDatFile(filelist[0])
+        try:
+            w.addBatchDatFile(filelist[0])
+        except ValueError:
+            w.addFileList(filelist)
     else:
         w.addFileList(filelist)
     w.show()
