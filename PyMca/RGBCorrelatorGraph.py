@@ -324,23 +324,28 @@ class RGBCorrelatorGraph(qt.QWidget):
             try:
                 os.remove(outputFile)
             except:
-                qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
+                qt.QMessageBox.critical(self, "Save Error",
+                                        "Cannot overwrite existing file")
                 return
 
         if filetype.upper() == "IMAGE":
             self.saveGraphImage(outputFile)
         else:
             self.saveGraphWidget(outputFile)
-                
-        qt.QMessageBox.information(self, "Save", "Not implemented (yet)")
 
     def saveGraphImage(self, filename):
         format = filename[-3:].upper()
-        pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+        #This is the whole image, not the zoomed one ...
+        #A pity because it is the real thing
+        if 1:
+            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+        else:
+            pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         if pixmap.save(filename, format):
             return
         else:
-            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            qt.QMessageBox.critical(self, "Save Error",
+                                    "%s" % sys.exc_info()[1])
             return
 
     def saveGraphWidget(self, filename):

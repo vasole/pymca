@@ -181,6 +181,10 @@ class QEDFStackWidget(qt.QWidget):
                  self._hFlipIconSignal)
 
         #ROI Image
+        self.connect(self.roiGraphWidget.hFlipToolButton,
+                 qt.SIGNAL("clicked()"),
+                 self._hFlipIconSignal)
+
         self.connect(self.roiGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectROIColormap)
@@ -760,10 +764,10 @@ class QEDFStackWidget(qt.QWidget):
 
         if self.mcaIndex == 0:
             for i in range(len(mcaData)):
-               mcaData[i] = sum(sum(stack.data[i,:,:] * self.__selectionMask))
+               mcaData[i] = sum(sum(self.stack.data[i,:,:] * self.__selectionMask))
         else:
             for i in range(len(mcaData)):
-               mcaData[i] = sum(sum(stack.data[:,i,:] * self.__selectionMask))
+               mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask))
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()

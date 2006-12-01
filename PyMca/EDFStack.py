@@ -3,6 +3,7 @@ import EdfFile
 import EdfFileDataSource
 import Numeric
 import sys
+import os
 SOURCE_TYPE = "EdfFileStack"
 DEBUG = 0
 
@@ -19,6 +20,7 @@ class EDFStack(DataObject.DataObject):
             self.loadFileList(filelist)
 
     def loadFileList(self, filelist):
+        if type(filelist) == type(''):filelist = [filelist]
         self.__keyList = []
         self.sourceName = filelist
         self.__indexedStack = True
@@ -101,7 +103,79 @@ class EDFStack(DataObject.DataObject):
         self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
         self.info["NumberOfFiles"] = self.__nFiles * 1
 
-    def loadIndexedStack(self,path,begin=0,end=70):
+    def loadIndexedStack(self,filename,begin=None,end=None, skip = None):
+        if begin is None: begin = 0
+        if type(filename) == type([]):
+            filename = filename[0]
+        if not os.path.exists(filename):
+            raise "IOError","File %s does not exists" % filename
+        name = os.path.basename(filename)
+        n = len(name)
+        i = 1
+        numbers = ['0', '1', '2', '3', '4', '5',
+                   '6', '7', '8','9']
+        while (i <= n):
+            c = name[n-i:n-i+1]
+            if c in ['0', '1', '2',
+                                '3', '4', '5',
+                                '6', '7', '8',
+                                '9']:
+                break
+            i += 1
+        suffix = name[n-i+1:]
+        if len(name) == len(suffix):
+            #just one file, one should use standard widget
+            #and not this one.
+            self.loadFileList(filename)
+        else:
+            nchain = []
+            while (i<=n):
+                c = name[n-i:n-i+1]
+                if c not in ['0', '1', '2',
+                                    '3', '4', '5',
+                                    '6', '7', '8',
+                                    '9']:
+                    break
+                else:
+                    nchain.append(c)
+                i += 1
+            number = ""
+            nchain.reverse()
+            for c in nchain:
+                number += c
+            format = "%" + "0%dd" % len(number)
+            if (len(number) + len(suffix)) == len(name):
+                prefix = ""
+            else:
+                prefix = name[0:n-i+1]
+            prefix = os.path.join(os.path.dirname(filename),prefix)
+            if not os.path.exists(prefix + number + suffix):
+                print "Internal error in EDFStack"
+                print "file should exist:",prefix + number + suffix
+                return
+            i = 0
+            if begin is None:
+                i = 0
+            else:
+                if not os.path.exists(prefix+format % begin+suffix):
+                    raise "ValueError","Invalid start index"
+                else:
+                    i = begin
+            while not os.path.exists(prefix+format % i+suffix):
+                i += 1
+            f = prefix+format % i+suffix
+            filelist = []
+            while os.path.exists(f):
+                filelist.append(f)
+                i += 1
+                if end is not None:
+                    if i > end:
+                        break
+                f = prefix+format % i+suffix
+            self.loadFileList(filelist)
+
+
+    def loadIndexedStackOLD(self,path,begin=0,end=70, format = "%04d"):
         """
         This is for Artemis-like indexed files
         """
@@ -112,8 +186,8 @@ class EDFStack(DataObject.DataObject):
         self.__indexedStack = True
         self.sourceName = ["IndexedStack",
                            "%s" % path,
-                           "%04d" % begin,
-                           "%04d" % end]
+                           format % begin,
+                           format % end]
         
         self.sourceType = SOURCE_TYPE
         

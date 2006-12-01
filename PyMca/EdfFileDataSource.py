@@ -141,10 +141,10 @@ class EdfFileDataSource:
             if 1:
                 MCAIMP = 1
                 if key_split[2].upper() == 'R':
-                    pos  = (0, int(key_split[3])-1)
+                    pos  = (0, int(key_split[3]))
                     size = (int(data.info['Dim_1']), 1) 
                 elif key_split[2].upper() == 'C':
-                    pos  = (int(key_split[3])-1, 0)
+                    pos  = (int(key_split[3]), 0)
                     size = (1,int(data.info['Dim_2']))
                 data.info['selectiontype'] = "1D"
             else:

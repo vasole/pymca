@@ -396,7 +396,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.colorslist=['blue','red','green','pink','brown',
                         'orange','violet','yellow']
         self.colors ={}
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.colors['blue']     = qt.Qt.blue 
             self.colors['red']      = qt.Qt.red 
             self.colors['yellow']   = qt.Qt.yellow 
@@ -499,39 +499,44 @@ class QtBlissGraph(qwt.QwtPlot):
             self.picker = None
         else:
             if QTVERSION < '4.0.0':
-                    self.picker = MyPicker(self.canvas())
-                    self.connect(self.picker,
-                         qt.PYSIGNAL('MouseMoved(const QMouseEvent&)'),
-                         self.onMouseMoved)
-                    self.connect(self.picker,
-                         qt.PYSIGNAL('MousePressed(const QMouseEvent&)'),
-                         self.onMousePressed)
-                    self.connect(self.picker,
-                         qt.PYSIGNAL('MouseReleased(const QMouseEvent&)'),
-                         self.onMouseReleased)
-                    self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
-                                                  Qwt.QwtPicker.RectSelection)
+                self.picker = MyPicker(self.canvas())
+                self.connect(self.picker,
+                     qt.PYSIGNAL('MouseMoved(const QMouseEvent&)'),
+                     self.onMouseMoved)
+                self.connect(self.picker,
+                     qt.PYSIGNAL('MousePressed(const QMouseEvent&)'),
+                     self.onMousePressed)
+                self.connect(self.picker,
+                     qt.PYSIGNAL('MouseReleased(const QMouseEvent&)'),
+                     self.onMouseReleased)
+                self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.RectSelection)
 
-                    self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
-                    self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
-                    self.picker.setEnabled(1)
+                self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+                self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
+                self.picker.setEnabled(1)
             elif 1:
-                    self.picker = MyPicker(self.canvas())
-                    self.connect(self.picker,
-                         qt.SIGNAL('MouseMoved(const QMouseEvent&)'),
-                         self.onMouseMoved)
-                    self.connect(self.picker,
-                         qt.SIGNAL('MousePressed(const QMouseEvent&)'),
-                         self.onMousePressed)
-                    self.connect(self.picker,
-                         qt.SIGNAL('MouseReleased(const QMouseEvent&)'),
-                         self.onMouseReleased)
-                    self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
-                                                  Qwt.QwtPicker.RectSelection)
+                if sys.platform == "win32":
+                    #self.canvas().setPaintAttribute(Qwt.QwtPlotCanvas.PaintPacked,
+                    #                                False)
+                    #this get rid of ugly black rectangles during painting
+                    self.canvas().setAttribute(qt.Qt.WA_PaintOnScreen, False)
+                self.picker = MyPicker(self.canvas())
+                self.connect(self.picker,
+                     qt.SIGNAL('MouseMoved(const QMouseEvent&)'),
+                     self.onMouseMoved)
+                self.connect(self.picker,
+                     qt.SIGNAL('MousePressed(const QMouseEvent&)'),
+                     self.onMousePressed)
+                self.connect(self.picker,
+                     qt.SIGNAL('MouseReleased(const QMouseEvent&)'),
+                     self.onMouseReleased)
+                self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.RectSelection)
 
-                    self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
-                    self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
-                    self.picker.setEnabled(1)
+                self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+                self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
+                self.picker.setEnabled(1)
             else:
                 if 0:
                     self.picker = Qwt.QwtPicker(self.canvas())

@@ -200,19 +200,35 @@ class PyMca(PyMcaMdi.PyMca):
                              self.sourceWidget.sourceSelector._openFileSlot)
                 self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
-            self.mcawindow = McaWindow.McaWidget(self.mdi)
-            self.scanwindow = ScanWindow.ScanWindow(self.mdi)
-            self.connectDispatcher(self.mcawindow, self.sourceWidget)
-            self.connectDispatcher(self.scanwindow, self.sourceWidget)
-                                   
-            if QTVERSION < '4.0.0':
-                pass
-            else:
-                self.mdi.addWindow(self.mcawindow)
-                self.mdi.addWindow(self.scanwindow)
-                #self.scanwindow.showMaximized()
-                #self.mcawindow.showMaximized()
 
+            if 0 and QTVERSION > '4.0.0':
+                self.__useTabWidget = True
+            else:
+                self.__useTabWidget = False
+            if not self.__useTabWidget:
+                self.mcawindow = McaWindow.McaWidget(self.mdi)
+                self.scanwindow = ScanWindow.ScanWindow(self.mdi)
+                self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                if QTVERSION < '4.0.0':
+                    pass
+                else:
+                    self.mdi.addWindow(self.mcawindow)
+                    self.mdi.addWindow(self.scanwindow)
+                    #self.scanwindow.showMaximized()
+                    #self.mcawindow.showMaximized()
+            else:
+                self.mainTabWidget = qt.QTabWidget(self.mdi)
+                self.mainTabWidget.setWindowTitle("Tab Widget")
+                self.mcawindow = McaWindow.McaWidget()
+                self.scanwindow = ScanWindow.ScanWindow()
+                self.mainTabWidget.addTab(self.mcawindow, "MCA")
+                self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                self.mdi.addWindow(self.mainTabWidget)
+                self.mainTabWidget.showMaximized()
+                self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                self.connectDispatcher(self.scanwindow, self.sourceWidget)             
+            
             if 0:
                 if QTVERSION < '4.0.0':
                     self.connect(self.mcawindow,qt.PYSIGNAL('McaWindowSignal'),
@@ -1222,8 +1238,8 @@ if __name__ == '__main__':
         splash.close()
         app.exec_loop()
     else:
+        splash.finish(demo)
         demo.show()
         # --- close waiting widget
-        splash.close()
-        app.exec_()
+        sys.exit(app.exec_())
 
