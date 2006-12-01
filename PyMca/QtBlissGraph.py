@@ -1472,6 +1472,7 @@ class QtBlissGraph(qwt.QwtPlot):
         def legendItemSlot(self, ddict):
             if ddict['event'] == "leftMousePressed": return self.setactivecurve(ddict['legend'])
             if ddict['event'] != "rightMouseReleased": return
+            if not self.__uselegendmenu: return
             self.__activelegendname = ddict['legend']
             self.__event = None
             self.__removecurveevent = None
@@ -1519,13 +1520,12 @@ class QtBlissGraph(qwt.QwtPlot):
                         item.installEventFilter(self)
                 else:
                     item = self.legend().find(self.curves[key]['curve'])
-                    if self.__uselegendmenu:
-                        if QTVERSION < '4.0.0':
-                            self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
-                                         self.legendItemSlot)
-                        else:
-                            self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
-                                         self.legendItemSlot)
+                    if QTVERSION < '4.0.0':
+                        self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
+                                     self.legendItemSlot)
+                    else:
+                        self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
+                                     self.legendItemSlot)
         else:
             #curve already exists
             pass
