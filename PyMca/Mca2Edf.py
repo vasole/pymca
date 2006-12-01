@@ -26,10 +26,19 @@ __revision__ = "$Revision: 1.9 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem to you.
 #############################################################################*/
-import qt
-import os
 import sys
+import os
+if 'qt' not in sys.modules:
+    try:
+        import PyQt4.Qt as qt
+        qt.Qt.WDestructiveClose = "TO BE DONE"
+    except:
+        import qt
+else:
+    import qt
+QTVERSION = qt.qVersion()
 import time
+from PyMca_Icons import IconDict
 import Numeric
 import McaCustomEvent
 import EdfFile
@@ -38,29 +47,46 @@ import SpecFileLayer
 class Mca2EdfGUI(qt.QWidget):
     def __init__(self,parent=None,name="Mca to Edf Conversion",fl=qt.Qt.WDestructiveClose,
                 filelist=None,outputdir=None, actions=0):
-        qt.QWidget.__init__(self,parent,name,fl)
-        layout = qt.QVBoxLayout(self)
-        layout.setAutoAdd(1)
-        self.setCaption(name)
+        if qt.qVersion() < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
+            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
+            self.setCaption(name)
+        else:
+            qt.QWidget.__init__(self, parent)
+            self.setWindowTitle(name)
+            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
+        #layout.setAutoAdd(1)
         self.__build(actions)               
         if filelist is None: filelist = []
-        self.outputDir  = None
+        self.outputDir = None
+        self.inputDir  = None
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
     
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
         #self.__grid.setGeometry(qt.QRect(30,30,288,156))
-        grid       = qt.QGridLayout(self.__grid,3,3,11,6)
-        grid.setColStretch(0,0)
-        grid.setColStretch(1,1)
-        grid.setColStretch(2,0)
+        if QTVERSION < '4.0.0':
+            grid       = qt.QGridLayout(self.__grid,3,3,11,6)
+            grid.setColStretch(0,0)
+            grid.setColStretch(1,1)
+            grid.setColStretch(2,0)
+        else:
+            grid  = qt.QGridLayout(self.__grid)
+            grid.setMargin(11)
+            grid.setSpacing(6)
         #input list
         listrow  = 0
         listlabel   = qt.QLabel(self.__grid)
         listlabel.setText("Input File list:")
-        listlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
-        self.__listView   = qt.QTextView(self.__grid)
+        if QTVERSION < '4.0.0':
+            listlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
+            self.__listView   = qt.QTextView(self.__grid)
+        else:
+            self.__listView   = qt.QTextEdit(self.__grid)
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
@@ -73,7 +99,8 @@ class Mca2EdfGUI(qt.QWidget):
         outrow    = 1
         outlabel   = qt.QLabel(self.__grid)
         outlabel.setText("Output dir:")
-        outlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
+        if QTVERSION < '4.0.0':
+            outlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
         self.__outLine = qt.QLineEdit(self.__grid)
         self.__outLine.setReadOnly(True)
         #self.__outLine.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Maximum, qt.QSizePolicy.Fixed))
@@ -90,26 +117,35 @@ class Mca2EdfGUI(qt.QWidget):
         filesteplabel.setText("New EDF file each")
         filesteplabel2 = qt.QLabel(self.__grid)
         self.__fileSpin = qt.QSpinBox(self.__grid)
-        self.__fileSpin.setMinValue(1)
-        self.__fileSpin.setMaxValue(999)
+        if QTVERSION < '4.0.0':
+            self.__fileSpin.setMinValue(1)
+            self.__fileSpin.setMaxValue(999)
+        else:
+            self.__fileSpin.setMinimum(1)
+            self.__fileSpin.setMaximum(999)
         self.__fileSpin.setValue(1)
         
         filesteplabel2.setText("mca")
         grid.addWidget(filesteplabel,  filesteprow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__fileSpin,filesteprow, 1)
         grid.addWidget(filesteplabel2, filesteprow, 2, qt.Qt.AlignLeft)
-        
+
+        self.mainLayout.addWidget(self.__grid)
         if actions: self.__buildActions()
 
     def __buildActions(self):
-        box = qt.QHBox(self)
-        HorizontalSpacer(box)
+        box = qt.QWidget(self)
+        boxLayout = qt.QHBoxLayout(box)
+        boxLayout.addWidget(HorizontalSpacer(box))
         self.__dismissButton = qt.QPushButton(box)
-        HorizontalSpacer(box)
+        boxLayout.addWidget(self.__dismissButton)
+        boxLayout.addWidget(HorizontalSpacer(box))
         self.__dismissButton.setText("Close")
         self.__startButton   = qt.QPushButton(box)
-        HorizontalSpacer(box)
+        boxLayout.addWidget(self.__startButton)
+        boxLayout.addWidget(HorizontalSpacer(box))
         self.__startButton.setText("Start")
+        self.mainLayout.addWidget(box)
         self.connect(self.__dismissButton,qt.SIGNAL("clicked()"),self.close)
         self.connect(self.__startButton,qt.SIGNAL("clicked()"),self.start)
 
@@ -148,19 +184,44 @@ class Mca2EdfGUI(qt.QWidget):
         else:return False
 
     def browseList(self):
-        filedialog = qt.QFileDialog(self,"Open a set of files",1)
-        filedialog.setMode(filedialog.ExistingFiles)
-        filedialog.setFilters("Mca Files (*.mca)\nSpec Files (*.dat)\nAll Files (*)\n")
-        if filedialog.exec_loop() == qt.QDialog.Accepted:
-            filelist0=filedialog.selectedFiles()
+        if self.inputDir is None:self.inputDir = os.getcwd()
+        if not os.path.exists(self.inputDir):
+            self.inputDir =  os.getcwd()
+        wdir = self.inputDir
+        if QTVERSION < '4.0.0':
+            filedialog = qt.QFileDialog(self,"Open a set of files",1)
+            filedialog.setMode(filedialog.ExistingFiles)
+            filedialog.setDir(wdir)
+            filedialog.setFilters("Mca Files (*.mca)\nSpec Files (*.dat)\nAll Files (*)\n")
+            if filedialog.exec_loop() == qt.QDialog.Accepted:
+                filelist0=filedialog.selectedFiles()
+            else:
+                self.raiseW()
+                return
         else:
-            self.raiseW()
-            return
+            filedialog = qt.QFileDialog(self)
+            filedialog.setWindowTitle("Open a set of files")
+            filedialog.setDirectory(wdir)
+            filedialog.setFilters(["Mca Files (*.mca)",
+                                   "Spec Files (*.dat)",
+                                   "All Files (*)"])
+            filedialog.setModal(1)
+            filedialog.setFileMode(filedialog.ExistingFiles)
+            ret = filedialog.exec_()
+            if  ret == qt.QDialog.Accepted:
+                filelist0=filedialog.selectedFiles()
+            else:
+                self.raise_()
+                return
+            
         filelist = []
         for f in filelist0:
-            filelist.append(str(f)) 
+            filelist.append(str(f))
         if len(filelist):self.setFileList(filelist)
-        self.raiseW()
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
 
     def browseConfig(self):
         filename = qt.QFileDialog(self,"Open a new fit config file",1)
@@ -176,27 +237,56 @@ class Mca2EdfGUI(qt.QWidget):
         self.raiseW()
 
     def browseOutputDir(self):
-        outfile = qt.QFileDialog(self,"Output Directory Selection",1)
-        outfile.setMode(outfile.DirectoryOnly)
-        ret = outfile.exec_loop()
+        if self.outputDir is None:
+            if self.inputDir is not None:
+                self.outputDir = self.inputDir * 1
+            else:
+                self.outputDir = os.getcwd()
+        if not os.path.exists(self.outputDir):
+            self.outputDir =  os.getcwd()
+        wdir = self.outputDir
+        if QTVERSION < '4.0.0':
+            outfile = qt.QFileDialog(self,"Output Directory Selection",1)
+            outfile.setMode(outfile.DirectoryOnly)
+            outfile.setDir(wdir)
+            ret = outfile.exec_loop()
+        else:
+            outfile = qt.QFileDialog(self)
+            outfile.setWindowTitle("Output Directory Selection")
+            outfile.setModal(1)
+            outfile.setDirectory(wdir)
+            outfile.setFileMode(outfile.DirectoryOnly)
+            ret = outfile.exec_()
         if ret:
-            outdir=str(outfile.selectedFile())
+            if QTVERSION < '4.0.0':
+                outdir=str(outfile.selectedFile())
+            else:
+                outdir=str(outfile.selectedFiles()[0])
             outfile.close()
             del outfile
             self.setOutputDir(outdir)
         else:
             outfile.close()
             del outfile
-        self.raiseW()
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
             
     def start(self):
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
-            self.raiseW()
+            if QTVERSION < '4.0.0':
+                self.raiseW()
+            else:
+                self.raise_()
             return
         if (self.outputDir is None) or (not self.__goodOutputDir(self.outputDir)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid output directory')
-            self.raiseW()
+            if QTVERSION < '4.0.0':
+                self.raiseW()
+            else:
+                self.raise_()
             return
         name = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
@@ -299,31 +389,42 @@ class Mca2EdfBatch(qt.QThread):
         self.processList()
 
     def onNewFile(self, file, filelist):
-        self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'file':file,
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'file':file,
                                                                    'filelist':filelist,
                                                                    'event':'onNewFile'}))
         if self.pleasePause:self.__pauseMethod()
 
     def onEnd(self):
-        self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'onEnd'}))
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'onEnd'}))
         if self.pleasePause:self.__pauseMethod()
         
 
     def __pauseMethod(self):
-        self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
         while(self.pleasePause):
             time.sleep(1)
-        self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
             
 
 class Mca2EdfWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0):
-        qt.QWidget.__init__(self, parent, name, fl)
-        self.setCaption(name)
+        if qt.qVersion() < '4.0.0':
+            qt.QWidget.__init__(self, parent, name, fl)
+            self.setCaption(name)
+        else:
+            qt.QWidget.__init__(self, parent)
+            self.setWindowTitle(name)
         self.l = qt.QVBoxLayout(self)
-        self.l.setAutoAdd(1)
+        self.l.setMargin(0)
+        self.l.setSpacing(0)
         self.bars =qt.QWidget(self)
-        self.barsLayout = qt.QGridLayout(self.bars,2,3)
+        self.l.addWidget(self.bars)
+        if QTVERSION < '4.0.0':
+            self.barsLayout = qt.QGridLayout(self.bars,2,3)
+        else:
+            self.barsLayout = qt.QGridLayout(self.bars)
+            self.barsLayout.setMargin(2)
+            self.barsLayout.setSpacing(3)
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('File Progress:')
@@ -331,27 +432,34 @@ class Mca2EdfWindow(qt.QWidget):
         self.barsLayout.addWidget(self.progressLabel,0,0)        
         self.barsLayout.addWidget(self.progressBar,0,1)
         self.status      = qt.QLabel(self)
+        self.l.addWidget(self.status)
         self.status.setText(" ")
         self.timeLeft      = qt.QLabel(self)
+        self.l.addWidget(self.timeLeft)
         self.timeLeft.setText("Estimated time left = ???? min")
         self.time0 = None
         if actions: self.addButtons()
         self.show()
-        self.raiseW()
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
 
 
     def addButtons(self):
         self.actions = 1
         self.buttonsBox = qt.QWidget(self)
         l = qt.QHBoxLayout(self.buttonsBox)
-        l.setAutoAdd(1)
-        HorizontalSpacer(self.buttonsBox)
+        l.addWidget(HorizontalSpacer(self.buttonsBox))        
         self.pauseButton = qt.QPushButton(self.buttonsBox)
-        HorizontalSpacer(self.buttonsBox)
+        l.addWidget(self.pauseButton)
+        l.addWidget(HorizontalSpacer(self.buttonsBox))
         self.pauseButton.setText("Pause")
         self.abortButton   = qt.QPushButton(self.buttonsBox)
-        HorizontalSpacer(self.buttonsBox)
+        l.addWidget(self.abortButton)
+        l.addWidget(HorizontalSpacer(self.buttonsBox))
         self.abortButton.setText("Abort")
+        self.l.addWidget(self.buttonsBox)
         self.update()
 
     def customEvent(self,event):
@@ -373,8 +481,12 @@ class Mca2EdfWindow(qt.QWidget):
         nfiles = len(indexlist)
         self.status.setText("Processing file %s" % file)
         e = time.time()
-        self.progressBar.setTotalSteps(nfiles)
-        self.progressBar.setProgress(index)
+        if QTVERSION < '4.0.0':
+            self.progressBar.setTotalSteps(nfiles)
+            self.progressBar.setProgress(index)
+        else:
+            self.progressBar.setMaximum(nfiles)
+            self.progressBar.setValue(index)
         if self.time0 is not None:
             t = (e - self.time0) * (nfiles - index)
             self.time0 =e
@@ -384,10 +496,16 @@ class Mca2EdfWindow(qt.QWidget):
                 self.timeLeft.setText("Estimated time left = %d min" % (int(t / 60.)))
         else:
             self.time0 = e
+        if sys.platform == 'darwin':
+            qt.qApp.processEvents()
 
-    def onEnd(self,dict):
-        n = self.progressBar.progress()
-        self.progressBar.setProgress(n+1)
+    def onEnd(self,ddict):
+        if QTVERSION < '4.0.0':
+            n = self.progressBar.progress()
+            self.progressBar.setProgress(n+1)
+        else:
+            n = self.progressBar.value()
+            self.progressBar.setValue(n+1)            
         self.status.setText  ("Batch Finished")
         self.timeLeft.setText("Estimated time left = 0 sec")
         if self.actions:
@@ -435,9 +553,13 @@ def main():
     if len(filelist) == 0:
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         w = Mca2EdfGUI(actions=1)
-        app.setMainWidget(w)
-        w.show()
-        app.exec_loop()
+        if QTVERSION < '4.0.0':
+            app.setMainWidget(window)
+            w.show()
+            app.exec_loop()
+        else:
+            w.show()
+            sys.exit(app.exec_())
     else:
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
@@ -461,8 +583,11 @@ def main():
         qt.QObject.connect(app,qt.SIGNAL("aboutToQuit()"),cleanup)        
         window.show()
         b.start()
-        app.setMainWidget(window)
-        app.exec_loop()
+        if QTVERSION < '4.0.0':
+            app.setMainWidget(window)
+            app.exec_loop()
+        else:
+            sys.exit(app.exec_())
                 
 if __name__ == "__main__":
     main()

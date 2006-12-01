@@ -58,6 +58,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
+            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self._layout = qt.QVBoxLayout(self)
         self._layout.setMargin(0)
         self._layout.setSpacing(0)
@@ -867,9 +868,9 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
     def onEnd(self):
         if DEBUG: print "onEnd"
         qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'onEnd',
-                                                                   'filestep':self.fileStep,
-                                                                   'mcastep':self.mcaStep,
-                                                                   'savedimages':self.savedImages}))
+                                             'filestep':self.fileStep,
+                                             'mcastep':self.mcaStep,
+                                             'savedimages':self.savedImages}))
         if self.pleasePause:self.__pauseMethod()
         
     def __pauseMethod(self):
