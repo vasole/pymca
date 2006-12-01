@@ -66,6 +66,8 @@ class ElementsInfo(qt.QWidget):
             self.setWindowTitle(name)
             
         layout = qt.QVBoxLayout(self)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         self.energyValue = None
         self.splitter = qt.QSplitter(self)
         layout.addWidget(self.splitter)
@@ -108,11 +110,15 @@ class ElementsInfo(qt.QWidget):
         #Dock window like widget
         frame = qt.QWidget(self.splitter)
         layout = qt.QVBoxLayout(frame)
-        
+        layout.setMargin(0)
+        layout.setSpacing(0)
+
         #The dock functionnality
         toolbar = qt.QWidget(frame)
         layout.addWidget(toolbar)
         layout1       = qt.QHBoxLayout(toolbar)
+        layout1.setMargin(0)
+        layout1.setSpacing(0)
         # --- the line
         if qt.qVersion() < '4.0.0':
             self.line1 = Line(toolbar,"line1")
@@ -141,9 +147,13 @@ class ElementsInfo(qt.QWidget):
         w= qt.QWidget(frame)
         layout.addWidget(w)
         l=qt.QVBoxLayout(w)
+        l.setMargin(0)
+        l.setSpacing(0)
         
         hbox = qt.QWidget(w)
         hbox.layout = qt.QHBoxLayout(hbox)
+        hbox.layout.setMargin(0)
+        hbox.layout.setSpacing(0)
         l.addWidget(hbox)
         hbox.layout.addWidget(HorizontalSpacer(hbox))
         l1=qt.QLabel(hbox)
