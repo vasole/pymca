@@ -91,11 +91,14 @@ class EdfFileDataSource:
             info['Channel0'] = int(info['MCA start ch'])
         else:
             info['Channel0'] = 0
+
         if not info.has_key('McaCalib'):
             if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
                 info['McaCalib'] = [string.atof(info['MCA a']),
                                     string.atof(info['MCA b']),
                                     string.atof(info['MCA c'])]
+            else:
+                info['McaCalib'] = [ 0.0, 1.0, 0.0]
         else:
             if type(info['McaCalib']) == type(" "):
                 info['McaCalib'] = info['McaCalib'].replace("[","")
