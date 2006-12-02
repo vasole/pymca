@@ -2363,16 +2363,34 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             self.yMap = Qwt.QwtScaleMap(0, shape[1], yRange[0], yRange[1])
             self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[0], yRange[1])
 
-        if type(pixmap) == type(""):
-            self.image = qt.QImage(pixmap,
-                               size[0],
-                               size[1],
-                               qt.QImage.Format_RGB32).mirrored(xmirror,ymirror)
+        if QTVERSION < '4.0.0':
+            if type(pixmap) == type(""):
+                self.image=qt.QImage(pixmap,
+                                     size[0],
+                                     size[1],
+                                     32, None, 0,
+                                     qt.QImage.IgnoreEndian).mirror(xmirror,
+                                                                    ymirror)
+            else:
+                self.image=qt.QImage(pixmap.tostring(),
+                                     size[0],
+                                     size[1],
+                                     32, None, 0,
+                                     qt.QImage.IgnoreEndian).mirror(xmirror,
+                                                                    ymirror)
         else:
-            self.image = qt.QImage(pixmap.tostring(),
-                               size[0],
-                               size[1],
-                               qt.QImage.Format_RGB32).mirrored(xmirror,ymirror)
+            if type(pixmap) == type(""):
+                self.image = qt.QImage(pixmap,
+                                   size[0],
+                                   size[1],
+                                   qt.QImage.Format_RGB32).mirrored(xmirror,
+                                                                    ymirror)
+            else:
+                self.image = qt.QImage(pixmap.tostring(),
+                                   size[0],
+                                   size[1],
+                                   qt.QImage.Format_RGB32).mirrored(xmirror,
+                                                                    ymirror)
 
 
 class QwtPlotImage(qwt.QwtPlotMappedItem):
