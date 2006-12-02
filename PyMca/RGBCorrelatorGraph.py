@@ -335,10 +335,13 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def saveGraphImage(self, filename):
         format = filename[-3:].upper()
-        #This is the whole image, not the zoomed one ...
-        #A pity because it is the real thing
         if 1:
-            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+            #This is the whole image, not the zoomed one ...
+            #A pity because it is the real thing
+            if QTVERSION < '4.0.0':
+                pixmap = qt.QPixmap(self.graph.plotImage.image)
+            else:
+                pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
         else:
             pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         if pixmap.save(filename, format):
@@ -370,7 +373,10 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
-        self.printPreview.raise_()
+        if QTVERSION < '4.0.0':
+            self.printPreview.raiseW()
+        else:
+            self.printPreview.raise_()
 
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
@@ -416,6 +422,7 @@ def test():
     container = RGBCorrelatorGraph()
     container.show()
     if QTVERSION < '4.0.0':
+        app.setMainWidget(container)
         app.exec_loop()
     else:
         app.exec_()

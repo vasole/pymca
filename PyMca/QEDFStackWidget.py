@@ -45,6 +45,10 @@ class QEDFStackWidget(qt.QWidget):
         self._build(vertical)
         if mcawidget is None:
             self.mcaWidget = McaWindow.McaWidget()
+            if QTVERSION < '4.0.0':
+                self.mcaWidget.setCaption("PyMCA - Mca Window")
+            else:
+                self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
             self.mcaWidget.show()
         else:
             self.mcaWidget = mcawidget
@@ -143,35 +147,35 @@ class QEDFStackWidget(qt.QWidget):
                     self._removeMcaClicked)
         self.connect(self.replaceMcaButton, qt.SIGNAL("clicked()"), 
                     self._replaceMcaClicked)
-        
-        # The IMAGE selection
-        self.imageButtonBox = qt.QWidget(self.roiWindow)
-        buttonBox = self.imageButtonBox
-        self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
-        self.imageButtonBoxLayout.setMargin(0)
-        self.imageButtonBoxLayout.setSpacing(0)
-        self.addImageButton = qt.QPushButton(buttonBox)
-        self.addImageButton.setText("ADD")
-        self.removeImageButton = qt.QPushButton(buttonBox)
-        self.removeImageButton.setText("REMOVE")
-        self.replaceImageButton = qt.QPushButton(buttonBox)
-        self.replaceImageButton.setText("REPLACE")
-        self.imageButtonBoxLayout.addWidget(self.addImageButton)
-        self.imageButtonBoxLayout.addWidget(self.removeImageButton)
-        self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
-        
-        self.roiWindow.mainLayout.addWidget(buttonBox)
-        
-        self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
-                    self._addImageClicked)
-        self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
-                    self._removeImageClicked)
-        self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
-                    self._replaceImageClicked)
+
+        if self.rgbWidget is not None:
+            # The IMAGE selection
+            self.imageButtonBox = qt.QWidget(self.roiWindow)
+            buttonBox = self.imageButtonBox
+            self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
+            self.imageButtonBoxLayout.setMargin(0)
+            self.imageButtonBoxLayout.setSpacing(0)
+            self.addImageButton = qt.QPushButton(buttonBox)
+            self.addImageButton.setText("ADD")
+            self.removeImageButton = qt.QPushButton(buttonBox)
+            self.removeImageButton.setText("REMOVE")
+            self.replaceImageButton = qt.QPushButton(buttonBox)
+            self.replaceImageButton.setText("REPLACE")
+            self.imageButtonBoxLayout.addWidget(self.addImageButton)
+            self.imageButtonBoxLayout.addWidget(self.removeImageButton)
+            self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
+            
+            self.roiWindow.mainLayout.addWidget(buttonBox)
+            
+            self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
+                        self._addImageClicked)
+            self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
+                        self._removeImageClicked)
+            self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
+                        self._replaceImageClicked)
 
     def _buildConnections(self):
-        if self.rgbWidget is not None:
-            self._buildAndConnectButtonBox()
+        self._buildAndConnectButtonBox()
         self.connect(self.stackGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectStackColormap)
@@ -803,7 +807,11 @@ class QEDFStackWidget(qt.QWidget):
         ddict = {}
         ddict['event'] = "StackWidgetClosed"
         ddict['id']    = id(self)
-        self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("StackWidgetSignal"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
+        qt.QWidget.closeEvent(self, event)
 
     def _resetSelection(self):
         if DEBUG:print "_resetSelection"
@@ -880,34 +888,46 @@ class QEDFStackWidget(qt.QWidget):
                         "All Files (*)"]
         message = "Open EDF Stack or several EDF files"
         wdir = os.getcwd()
-        if sys.platform != 'darwin':
-            filetypes = ""
-            for filetype in fileTypeList:
-                filetypes += filetype+"\n"
-            filelist = qt.QFileDialog.getOpenFileNames(self,
-                        message,
-                        wdir,
-                        filetypes)
-            if not len(filelist):return []
+        if QTVERSION < '4.0.0':
+            if sys.platform != 'darwin':
+                filetypes = ""
+                for filetype in fileTypeList:
+                    filetypes += filetype+"\n"
+                filelist = qt.QFileDialog.getOpenFileNames(filetypes,
+                            wdir,
+                            self,
+                            message,
+                            message)
+                if not len(filelist):return []
         else:
-            fdialog = qt.QFileDialog(self)
-            fdialog.setModal(True)
-            fdialog.setWindowTitle(message)
-            strlist = qt.QStringList()
-            for filetype in fileTypeList:
-                strlist.append(filetype)
-            fdialog.setFilters(strlist)
-            fdialog.setFileMode(fdialog.ExistingFiles)
-            fdialog.setDirectory(wdir)
-            ret = fdialog.exec_()
-            if ret == qt.QDialog.Accepted:
-                filelist = fdialog.selectedFiles()
-                fdialog.close()
-                del fdialog                        
+            if sys.platform != 'darwin':
+                filetypes = ""
+                for filetype in fileTypeList:
+                    filetypes += filetype+"\n"
+                filelist = qt.QFileDialog.getOpenFileNames(self,
+                            message,
+                            wdir,
+                            filetypes)
+                if not len(filelist):return []
             else:
-                fdialog.close()
-                del fdialog
-                return []
+                fdialog = qt.QFileDialog(self)
+                fdialog.setModal(True)
+                fdialog.setWindowTitle(message)
+                strlist = qt.QStringList()
+                for filetype in fileTypeList:
+                    strlist.append(filetype)
+                fdialog.setFilters(strlist)
+                fdialog.setFileMode(fdialog.ExistingFiles)
+                fdialog.setDirectory(wdir)
+                ret = fdialog.exec_()
+                if ret == qt.QDialog.Accepted:
+                    filelist = fdialog.selectedFiles()
+                    fdialog.close()
+                    del fdialog                        
+                else:
+                    fdialog.close()
+                    del fdialog
+                    return []
         filelist = map(str, filelist)
         if not(len(filelist)): return []
         filelist.sort()
@@ -969,6 +989,7 @@ if __name__ == "__main__":
     w.show()
     #print "reading elapsed = ", time.time() - t0
     if qt.qVersion() < '4.0.0':
+        app.setMainWidget(w)
         app.exec_loop()
     else:
         sys.exit(app.exec_())

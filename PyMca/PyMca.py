@@ -766,34 +766,45 @@ class PyMca(PyMcaMdi.PyMca):
             if os.path.exists(self.sourceWidget.sourceSelector.lastInputDir):
                 wdir =  self.sourceWidget.sourceSelector.lastInputDir
         fileTypeList = typelist
-        if sys.platform != 'darwin':
+        if QTVERSION < '4.0.0':
             filetypes = ""
             for filetype in fileTypeList:
                 filetypes += filetype+"\n"
-            filelist = qt.QFileDialog.getOpenFileNames(self,
-                        message,
+            filelist = qt.QFileDialog.getOpenFileNames(filetypes,
                         wdir,
-                        filetypes)
+                        self,
+                        message,
+                        message)
             if not len(filelist):return []
         else:
-            fdialog = qt.QFileDialog(self)
-            fdialog.setModal(True)
-            fdialog.setWindowTitle(message)
-            strlist = qt.QStringList()
-            for filetype in fileTypeList:
-                strlist.append(filetype.replace("(","").replace(")",""))
-            fdialog.setFilters(strlist)
-            fdialog.setFileMode(fdialog.ExistingFiles)
-            fdialog.setDirectory(wdir)
-            ret = fdialog.exec_()
-            if ret == qt.QDialog.Accepted:
-                filelist = fdialog.selectedFiles()
-                fdialog.close()
-                del fdialog                        
+            if sys.platform != 'darwin':
+                filetypes = ""
+                for filetype in fileTypeList:
+                    filetypes += filetype+"\n"
+                filelist = qt.QFileDialog.getOpenFileNames(self,
+                            message,
+                            wdir,
+                            filetypes)
+                if not len(filelist):return []
             else:
-                fdialog.close()
-                del fdialog
-                return []
+                fdialog = qt.QFileDialog(self)
+                fdialog.setModal(True)
+                fdialog.setWindowTitle(message)
+                strlist = qt.QStringList()
+                for filetype in fileTypeList:
+                    strlist.append(filetype.replace("(","").replace(")",""))
+                fdialog.setFilters(strlist)
+                fdialog.setFileMode(fdialog.ExistingFiles)
+                fdialog.setDirectory(wdir)
+                ret = fdialog.exec_()
+                if ret == qt.QDialog.Accepted:
+                    filelist = fdialog.selectedFiles()
+                    fdialog.close()
+                    del fdialog                        
+                else:
+                    fdialog.close()
+                    del fdialog
+                    return []
         filelist = map(str, filelist)
         return filelist
 
