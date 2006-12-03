@@ -598,7 +598,7 @@ class QtBlissGraph(qwt.QwtPlot):
     def toggleLogY(self):
         if self.__logy1: 
             #get the current limits
-            if qt.qVersion() < '4.0.0':
+            if QWTVERSION4:
                 xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
                 xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
                 ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
