@@ -28,8 +28,9 @@ __revision__ = "$Revision: 1.13 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
-from QtBlissGraph import qt
 import QtBlissGraph
+qt = QtBlissGraph.qt
+QTVERSION = qt.qVersion()
 import os
 import Numeric
 from LinearAlgebra import inverse
@@ -48,17 +49,18 @@ class HorizontalSpacer(qt.QWidget):
       
 #class McaCalWidget(qt.QWidget):
 class McaCalWidget(qt.QDialog):
-    def __init__(self, parent=None, name="McaCalWidget", 
+    def __init__(self, parent=None, name="MCA Calibration Widget", 
                 x = None,y=None,current=None,peaks=None,caldict=None,
                 specfit=None,legend="",modal=0,fl=0):
                 #fl=qt.Qt.WDestructiveClose):
         self.name= name
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QDialog.__init__(self, parent, name, modal,fl)
             self.setCaption(self.name)
         else:
             qt.QDialog.__init__(self, parent)
-            self.setModal(modal)            
+            self.setModal(modal)
+            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(self.name)
         #qt.QMainWindow.__init__(self, parent, name,qt.Qt.WType_Popup)
 
@@ -137,7 +139,7 @@ class McaCalWidget(qt.QDialog):
         self.calpar         = CalibrationParameters(self.bottomPanel)
         self.calpar. setSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed)
         """
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.bottomPanel.layout.addWidget(HorizontalSpacer(self.bottomPanel))
         #self.cal.setSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding)
         self.peakpar.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
@@ -145,7 +147,7 @@ class McaCalWidget(qt.QDialog):
         self.peaktable      = PeakTableWidget.PeakTableWidget(self.bottomPanel)
         self.bottomPanel.layout.addWidget(self.peaktable)
         self.peaktable.verticalHeader().hide()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.peaktable.setLeftMargin(0)
         self.container.layout.addWidget(self.graph)
         self.container.layout.addWidget(self.bottomPanel)
@@ -154,7 +156,7 @@ class McaCalWidget(qt.QDialog):
 
 
     def initIcons(self):
-        if qt.qVersion() < '4.0.0': qt.QIcon = qt.QIconSet
+        if QTVERSION < '4.0.0': qt.QIcon = qt.QIconSet
         self.normalIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
         self.zoomIcon	= qt.QIcon(qt.QPixmap(IconDict["zoom"]))
         self.roiIcon	= qt.QIcon(qt.QPixmap(IconDict["roi"]))
@@ -244,7 +246,7 @@ class McaCalWidget(qt.QDialog):
     def _addToolButton(self, icon, action, tip, toggle=None):
             toolbar = self.toolbar
             tb      = qt.QToolButton(toolbar)            
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 tb.setIconSet(icon)
                 qt.QToolTip.add(tb,tip) 
                 if toggle is not None:
@@ -262,7 +264,7 @@ class McaCalWidget(qt.QDialog):
         
     def connections(self):
         self.connect(self.peakpar.searchbut,qt.SIGNAL('clicked()')  ,self.peaksearch)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(self.graph, qt.PYSIGNAL('QtBlissGraphSignal')  ,
                          self.__graphsignal) 
             self.connect(self.peaktable, qt.PYSIGNAL('PeakTableWidgetSignal') , 
@@ -363,7 +365,7 @@ class McaCalWidget(qt.QDialog):
             qt.QToolTip.add(self.markerButton,'Allow Peak Selection from Graph') 
             """
             self.graph.disablemarkermode()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.graph.canvas().setCursor(qt.QCursor(qt.QCursor.CrossCursor))
             else:
                 self.graph.canvas().setCursor(qt.QCursor(qt.Qt.CrossCursor))                
@@ -379,7 +381,7 @@ class McaCalWidget(qt.QDialog):
             """
             self.markermode = 1
             self.nomarkercursor = self.graph.canvas().cursor().shape()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.graph.canvas().setCursor(qt.QCursor(qt.QCursor.PointingHandCursor))
             else:
                 self.graph.canvas().setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
@@ -465,7 +467,7 @@ class McaCalWidget(qt.QDialog):
             name   = "Peak %d" % marker
             number = marker
             #channel= dict['x']
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 channel=self.foundpeaks[marker-1]
             else:
                 channel=ddict['x']                
@@ -481,7 +483,7 @@ class McaCalWidget(qt.QDialog):
                                     'channel':channel,
                                     'use':1,
                                     'calenergy':calenergy})
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 ret = linewidget.exec_loop()
             else:
                 ret = linewidget.exec_()
@@ -535,7 +537,7 @@ class McaCalWidget(qt.QDialog):
                 self.graph.replot()
                 self.markermode = 0
                 self.__peakmarkermode()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.__msb.setState(qt.QButton.Off)
             else:
                 self.__msb.setChecked(0)
@@ -617,7 +619,7 @@ class McaCalWidget(qt.QDialog):
 class PeakSearchParameters(qt.QWidget):
     def __init__(self, parent=None, name="", specfit=None, config=None,
                 searchbutton=1,fl=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)    
             self.setCaption(name)
         else:
@@ -646,7 +648,7 @@ class PeakSearchParameters(qt.QWidget):
         
     def build(self):
         if 1:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 layout= qt.QVBoxLayout(self)
                 layout.setMargin(0)
                 layout.setSpacing(0)
@@ -668,7 +670,7 @@ class PeakSearchParameters(qt.QWidget):
                 parf.layout.addWidget(parw)
         else:
             parw = self
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             if self.searchbutton:
                 grid= qt.QGridLayout(parw, 4, 3)
             else:
@@ -729,7 +731,7 @@ class PeakSearchParameters(qt.QWidget):
 class CalibrationParameters(qt.QWidget):
     def __init__(self, parent=None, name="", calname="", 
                  caldict = {},fl=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)    
             self.setCaption(name)
         else:
@@ -796,13 +798,13 @@ class CalibrationParameters(qt.QWidget):
         self.BText.setText("%.4g" % pars["B"])
         self.CText.setText("%.4g" % pars["C"])
         if pars['order'] > 1:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.orderbox.setCurrentItem(1)
             else:
                 self.orderbox.setCurrentIndex(1)
             self.CText.setReadOnly(0)
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.orderbox.setCurrentItem(0)
             else:
                 self.orderbox.setCurrentIndex(0)
@@ -906,28 +908,28 @@ class CalibrationParameters(qt.QWidget):
                 dict['event']         = "savebox"
                 dict['calname' ]      = self.currentcal
                 dict['caldict']       = self.caldict
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('CalibrationParametersSignal'),(dict,))
             else:
-                self.emit(qt.PYSIGNAL('CalibrationParametersSignal'), dict)
+                self.emit(qt.SIGNAL('CalibrationParametersSignal'), dict)
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
         
     def focusInEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass        
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.backgroundcolor = self.paletteBackgroundColor()
                 self.setPaletteBackgroundColor(qt.QColor('yellow'))
     
     def focusOutEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass        
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.setPaletteBackgroundColor(qt.QColor('white'))
         self.emit(qt.SIGNAL("returnPressed()"),())
 
@@ -943,7 +945,7 @@ class Popup(qt.QWidget):
 class InputLine(qt.QDialog):
     def __init__(self,parent ,name = "Peak Parameters",modal=1,peakpars={},fl=0):
         #fl=qt.Qt.WDestructiveClose):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QDialog.__init__(self, parent, name, modal, fl)
             self.setCaption(name)
         else:
@@ -1217,7 +1219,7 @@ class SimpleComboBox(qt.QComboBox):
 
     def setoptions(self,options=['1','2','3']):
         self.clear()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.insertStrList(options)
         else:
             for item in options:
@@ -1228,11 +1230,11 @@ class SimpleComboBox(qt.QComboBox):
              
 def test(x,y,legend):
     app = qt.QApplication(args)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),
                            app, qt.SLOT("quit()"))
     demo = McaCalWidget(x=x,y=y,modal=1,legend=legend)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
         ret=demo.exec_loop()
     else:
