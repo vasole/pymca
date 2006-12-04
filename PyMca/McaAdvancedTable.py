@@ -304,14 +304,28 @@ class McaTable(QTable):
             nrows = self.rowCount()
         for r in range(nrows):
             text+=("<tr>")
-            if len(str(self.text(r,0))):
+            if QTVERSION < '4.0.0':
+                moretext = str(self.text(r,0))
+            else:
+                moretext = ""
+                item = self.item(r, 0)
+                if item is not None:
+                    moretext = str(item.text()) 
+            if len(moretext):
                 color = "white"
                 b="<b>"                
             else:
                 b=""
                 color = lemon
             for c in range(ncols):
-                if len(self.text(r,c)):
+                if QTVERSION < '4.0.0':
+                    moretext = str(self.text(r,c))
+                else:
+                    moretext = ""
+                    item = self.item(r, c)
+                if item is not None:
+                    moretext = str(item.text()) 
+                if len(moretext):
                     finalcolor = color
                 else:
                     finalcolor = "white"
@@ -319,12 +333,19 @@ class McaTable(QTable):
                     text+=('<td align="left" bgcolor="%s">%s' % (finalcolor,b))
                 else:
                     text+=('<td align="right" bgcolor="%s">%s' % (finalcolor,b))
-                text+=( str(self.text(r,c)))
+                text+= moretext
                 if len(b):
                     text+=("</td>")
                 else:
                     text+=("</b></td>") 
-            if len(str(self.text(r,0))):
+            if QTVERSION < '4.0.0':
+                moretext = str(self.text(r,0))
+            else:
+                moretext = ""
+                item = self.item(r, 0)
+                if item is not None:
+                    moretext = str(item.text()) 
+            if len(moretext):
                 text+=("</b>")
             text+=("</tr>")
             #text+=( str(qt.QString("<br>"))

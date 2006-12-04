@@ -742,18 +742,24 @@ class ConcentrationsTable(QTable):
     def getHtmlText(self):
         lemon=("#%x%x%x" % (255,250,205)).upper()
         white = "#FFFFFF"
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             hcolor = ("#%x%x%x" % (230,240,249)).upper()
-        else:
+        elif QTVERSION < '4.0.0':
             hb = self.horizontalHeader().paletteBackgroundColor()
             hcolor = ("#%x%x%x" % (hb.red(),hb.green(),hb.blue())).upper()
+        else:
+            hcolor = ("#%x%x%x" % (230,240,249)).upper()
         text=""
         text+=("<nobr>")
         text+=( "<table>")
         text+=( "<tr>")
         for l in range(self.columnCount()):
             text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
-            text+=(str(self.horizontalHeader().label(l)))
+            if QTVERSION < '4.0.0':
+                text+=(str(self.horizontalHeader().label(l)))
+            else:
+                item = self.horizontalHeaderItem(l)
+                text+=str(item.text())
             text+=("</b></td>")
         text+=("</tr>")
         #text+=( str(qt.QString("</br>"))
@@ -766,7 +772,14 @@ class ConcentrationsTable(QTable):
                 b="<b>"
                 color = lemon
             for c in range(self.columnCount()):
-                if len(self.text(r,c)):
+                if QTVERSION < '4.0.0':
+                    moretext = str(self.text(r,c))
+                else:
+                    moretext = ""
+                    item = self.item(r, c)
+                    if item is not None:
+                        moretext = str(item.text()) 
+                if len(moretext):
                     finalcolor = color
                 else:
                     finalcolor = white
@@ -774,12 +787,19 @@ class ConcentrationsTable(QTable):
                     text+=('<td align="left" bgcolor="%s">%s' % (finalcolor,b))
                 else:
                     text+=('<td align="right" bgcolor="%s">%s' % (finalcolor,b))
-                text+=( str(self.text(r,c)))
+                text+= moretext
                 if len(b):
                     text+=("</td>")
                 else:
                     text+=("</b></td>")
-            if len(str(self.text(r,0))):
+            if QTVERSION < '4.0.0':
+                moretext = str(self.text(r,0))
+            else:
+                moretext = ""
+                item = self.item(r, 0)
+                if item is not None:
+                    moretext = str(item.text()) 
+            if len(moretext):
                 text+=("</b>")
             text+=("</tr>")
             #text+=( str(qt.QString("<br>"))

@@ -1165,10 +1165,10 @@ class McaWidget(qt.QWidget):
                 
         elif dict['event'] == 'McaAdvancedFitPrint':
             #self.advancedfit.printps(doit=1)
-            self.printhtml(dict['text'])
+            self.printHtml(dict['text'])
 
         elif dict['event'] == 'McaSimpleFitPrint':
-            self.printhtml(dict['text'])
+            self.printHtml(dict['text'])
 
         elif dict['event'] == 'McaSimpleFitClosed':
             if self.peakmarker is not None:
@@ -1176,7 +1176,7 @@ class McaWidget(qt.QWidget):
             self.peakmarker = None
             self.graph.replot()
         elif dict['event'] == 'ScanFitPrint':
-            self.printhtml(dict['text'])
+            self.printHtml(dict['text'])
 
         elif dict['event'] == 'AddROI':
             xmin,xmax = self.graph.getx1axislimits()
@@ -1625,7 +1625,7 @@ class McaWidget(qt.QWidget):
         self._addSelection(selection)
 
     if QTVERSION < '4.0.0':
-        def printhtml(self,text):
+        def printHtml(self,text):
             printer = qt.QPrinter()
             if printer.setup(self):
                 painter = qt.QPainter()
@@ -1676,15 +1676,12 @@ class McaWidget(qt.QWidget):
                     msg.setText("%s" % sys.exc_info()[1])
                     msg.exec_loop()
     else:
-        def printhtml(self,text):
+        def printHtml(self,text):
             printer = qt.QPrinter()
             printDialog = qt.QPrintDialog(printer, self)
             if printDialog.exec_():
-                editor = qt.QTextEdit()
-                cursor = editor.textCursor()
-                cursor.movePosition(qt.QTextCursor.Start)
-                editor.insertHtml(text)
-                document = editor.document()
+                document = qt.QTextDocument()
+                document.setHtml(text)
                 document.print_(printer)
 
     def getselfromlegend(self,legend):

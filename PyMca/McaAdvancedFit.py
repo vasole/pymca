@@ -1302,11 +1302,17 @@ class McaAdvancedFit(qt.QWidget):
             printer = qt.QPrinter()
             printDialog = qt.QPrintDialog(printer, self)
             if printDialog.exec_():
-                editor = qt.QTextEdit()
-                cursor = editor.textCursor()
-                cursor.movePosition(qt.QTextCursor.Start)
-                editor.insertHtml(text)
-                document = editor.document()
+                if 0:
+                    #this was crashing in Qt 4.2.2
+                    #with the PyQt snapshot of 20061203
+                    editor = qt.QTextEdit()
+                    cursor = editor.textCursor()
+                    cursor.movePosition(qt.QTextCursor.Start)
+                    editor.insertHtml(text)
+                    document = editor.document()
+                else:
+                    document = qt.QTextDocument()
+                    document.setHtml(text)        
                 document.print_(printer)
 
     def setdata(self,*var,**kw):
