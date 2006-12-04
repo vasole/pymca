@@ -36,6 +36,10 @@ import Numeric
 
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
     def addBatchDatFile(self, filename, ignoresigma=None):
+        text = str(self.windowTitle())
+        text += ": " + str(os.path.basename(filename))
+        self.setWindowTitle(text)
+
         f = open(filename)
         lines = f.readlines()
         f.close()
@@ -71,6 +75,14 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         """
         Expected to work just with EDF files
         """
+        text = str(self.windowTitle())
+        if len(filelist) == 1:
+            text += ": " + str(os.path.basename(filelist[0]))
+        else:
+            text += ": from " + str(os.path.basename(filelist[0])) + \
+                    " to " + str(os.path.basename(filelist[-1]))
+        self.setWindowTitle(text)
+
         for fname in filelist:
             source = DataReader(fname)
             for key in source.getSourceInfo()['KeyList']:

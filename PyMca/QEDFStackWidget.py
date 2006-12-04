@@ -28,10 +28,10 @@ class QEDFStackWidget(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
-            self.setCaption("ROI Imaging Tool")
+            self.setCaption("PyMCA - ROI Imaging Tool")
         else:
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
-            self.setWindowTitle("ROI Imaging Tool")
+            self.setWindowTitle("PyMCA - ROI Imaging Tool")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(6)
         self.mainLayout.setSpacing(0)
@@ -51,6 +51,8 @@ class QEDFStackWidget(qt.QWidget):
         self.__ROIBrushMenu  = None
         self.__ROIBrushMode  = False
         self.__ROIEraseMode  = False
+        self.__ROIConnected = True
+
         self.__setROIBrush2()
         self._buildConnections()
 
@@ -108,14 +110,9 @@ class QEDFStackWidget(qt.QWidget):
             self.tab = qt.QTabWidget(self)
             self.mcaWidget = McaWindow.McaWidget(vertical = False)
             if QTVERSION > '4.0.0':
-                table = self.mcaWidget.roiwidget.mcaROITable
-                rheight = table.horizontalHeader().sizeHint().height()
-                table.setMinimumHeight(10 * rheight)
-                table.setMaximumHeight(13*rheight)
                 self.mcaWidget.graphBox.setMinimumWidth(0.5 * qt.QWidget.sizeHint(self).width())
+                self.tab.setMaximumHeight(1.3 * qt.QWidget.sizeHint(self).height())
             self.tab.addTab(self.mcaWidget, "MCA")
-            #self.mcaWidget.splitter.setStretchFactor(0, 1)
-            #self.mcaWidget.splitter.setStretchFactor(1, 0)
             if QTVERSION > '4.0.0':
                 #I have not implemented it for Qt3
                 #self.rgbWidget = RGBCorrelator.RGBCorrelator()
@@ -221,6 +218,9 @@ class QEDFStackWidget(qt.QWidget):
         self.connect(self.roiGraphWidget.selectionToolButton,
                      qt.SIGNAL("clicked()"),
                      self._toggleROISelectionMode)
+        text = "Toggle between Selection\nand Zoom modes"
+        if QTVERSION > '4.0.0':
+            self.roiGraphWidget.selectionToolButton.setToolTip(text)
         
         self.connect(self.roiGraphWidget.imageToolButton,
                      qt.SIGNAL("clicked()"),
@@ -493,6 +493,7 @@ class QEDFStackWidget(qt.QWidget):
             self.tab.setCurrentWidget(self.mcaWidget)
 
     def _mcaWidgetSignal(self, ddict):
+        if not self.__ROIConnected:return
         if ddict['event'] == "ROISignal":
             self.roiGraphWidget.graph.setTitle("%s" % ddict["name"])
             if (ddict["name"] == "ICR"):                
@@ -521,7 +522,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,0,:],0)
             else:
                 self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
-            self.plotROIImage(update=True)
+            self._resetSelection()
             if self.isHidden():
                 self.show()
                 if self.tab is not None:
@@ -795,16 +796,17 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self.tab.setCurrentWidget(self.rgbWidget)
 
-    def _addMcaClicked(self):
+    def _addMcaClicked(self, action = None):
+        if action is None:action = "ADD"
         #original ICR mca
         if self.__stackImageData is None: return
         if self.__selectionMask is None:
             dataObject = self.__mcaData0
-            self.sendMcaSelection(dataObject, action = "ADD")
+            self.sendMcaSelection(dataObject, action = action)
             return
         if len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) == 0:
             dataObject = self.__mcaData0
-            self.sendMcaSelection(dataObject, action = "ADD")
+            self.sendMcaSelection(dataObject, action = action)
             return
 
         mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
@@ -826,20 +828,29 @@ class QEDFStackWidget(qt.QWidget):
                         + self.stack.info['Channel0']]
         dataObject.y = [mcaData]
 
+        legend = self.__getLegend()
         self.sendMcaSelection(dataObject,
-                              key = "Selection",
-                              legend ="EDF Stack Selection",
-                              action = "ADD")
+                          key = "Selection",
+                          legend =legend,
+                          action = action)
+
+    def __getLegend(self):
+        title = str(self.roiGraphWidget.graph.title().text())
+        return "Stack " + title + " selection"
     
     def _removeMcaClicked(self):
         #remove the mca
-        dataObject = self.__mcaData0
-        self.sendMcaSelection(dataObject, action = "REMOVE")
+        #dataObject = self.__mcaData0
+        #send a dummy object
+        dataObject = DataObject.DataObject()
+        legend = self.__getLegend()
+        self.sendMcaSelection(dataObject, legend = legend, action = "REMOVE")
     
     def _replaceMcaClicked(self):
         #replace the mca
-        dataObject = self.__mcaData0
-        self.sendMcaSelection(dataObject, action = "REPLACE")
+        self.__ROIConnected = False
+        self._addMcaClicked(action="REPLACE")
+        self.__ROIConnected = True
         
     def closeEvent(self, event):
         ddict = {}

@@ -150,7 +150,11 @@ class McaWidget(qt.QWidget):
         self.control    = McaControlGUI.McaControlGUI(self.controlbox)
         self.controlboxlayout.addWidget(self.control)
 
-        self.roiwidget  = self.control.roiwidget        
+        self.roiwidget  = self.control.roiwidget
+        if not vertical:
+            table = self.roiwidget.mcaROITable
+            rheight = table.horizontalHeader().sizeHint().height()
+            table.setMinimumHeight(12 * rheight)
 
         if qt.qVersion() < '4.0.0':
             self.fitmenu = qt.QPopupMenu()
