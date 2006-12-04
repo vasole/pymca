@@ -47,7 +47,8 @@ DEBUG = 0
 QTVERSION = qt.qVersion()
 
 class McaWindow(qt.QMainWindow):
-    def __init__(self, parent=None, name="MCA Window", specfit=None, fl=None,**kw):
+    def __init__(self, parent=None, name="MCA Window", specfit=None,
+                         fl=None, **kw):
         if qt.qVersion() < '4.0.0':
             if fl is None: fl = qt.Qt.WDestructiveClose
             qt.QMainWindow.__init__(self, parent, name, fl)
@@ -60,7 +61,8 @@ class McaWindow(qt.QMainWindow):
         self.setCentralWidget(self.mcawidget)
 
 class McaWidget(qt.QWidget):
-    def __init__(self, parent=None, name="Mca Window", specfit=None,fl=None,**kw):
+    def __init__(self, parent=None, name="Mca Window", specfit=None,fl=None,
+                     vertical=True, **kw):
         if qt.qVersion() < '4.0.0':
             qt.QWidget.__init__(self, parent)
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -104,38 +106,41 @@ class McaWidget(qt.QWidget):
         self.simplefit   = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
         self.advancedfit = McaAdvancedFit.McaAdvancedFit()
 
-        self.build()
+        self.build(vertical)
         self.initIcons()
         self.initToolbar()
         self.connections()
 
 
-    def build(self):
+    def build(self, vertical=True):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(1)
         self.mainLayout.setSpacing(1)
         self.splitter = qt.QSplitter(self)
-        self.splitter.setOrientation(qt.Qt.Vertical)
+        if vertical:
+            self.splitter.setOrientation(qt.Qt.Vertical)
+        else:
+            self.splitter.setOrientation(qt.Qt.Horizontal)
         
         #the box to contain the graphics
-        self.graphbox = qt.QWidget(self.splitter)
-        self.graphboxlayout = qt.QVBoxLayout(self.graphbox)
-        self.graphboxlayout.setMargin(0)
-        self.graphboxlayout.setSpacing(0)
-        #self.layout.addWidget(self.graphbox)
+        self.graphBox = qt.QWidget(self.splitter)
+        self.graphBoxlayout = qt.QVBoxLayout(self.graphBox)
+        self.graphBoxlayout.setMargin(0)
+        self.graphBoxlayout.setSpacing(0)
+        #self.layout.addWidget(self.graphBox)
         
-        self.toolbar  = qt.QWidget(self.graphbox)
+        self.toolbar  = qt.QWidget(self.graphBox)
         self.toolbar.layout  = qt.QHBoxLayout(self.toolbar)
         self.toolbar.layout.setMargin(0)
         self.toolbar.layout.setSpacing(0)
-        self.graphboxlayout.addWidget(self.toolbar)
+        self.graphBoxlayout.addWidget(self.toolbar)
         
-        self.graph    = QtBlissGraph.QtBlissGraph(self.graphbox,uselegendmenu=1)
+        self.graph    = QtBlissGraph.QtBlissGraph(self.graphBox,uselegendmenu=1)
         self.graph.xlabel('Channel')
         self.graph.ylabel('Counts')
         self.graph.canvas().setMouseTracking(1)
         self.graph.setCanvasBackground(qt.Qt.white)
-        self.graphboxlayout.addWidget(self.graph)
+        self.graphBoxlayout.addWidget(self.graph)
             
         #the box to contain the control widget(s)
         self.controlbox = qt.QWidget(self.splitter) 
@@ -158,10 +163,10 @@ class McaWidget(qt.QWidget):
 
 
         if QTVERSION < '4.0.0':
-            self.splitter.moveToLast(self.graphbox)
+            self.splitter.moveToLast(self.graphBox)
             self.splitter.moveToLast(self.controlbox)
         else:
-            self.splitter.insertWidget(0, self.graphbox)
+            self.splitter.insertWidget(0, self.graphBox)
             self.splitter.insertWidget(1, self.controlbox)
             
         self.mainLayout.addWidget(self.splitter)

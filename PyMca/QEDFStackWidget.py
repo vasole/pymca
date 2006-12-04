@@ -42,26 +42,12 @@ class QEDFStackWidget(qt.QWidget):
         self.__stackColormapDialog = None
         self.__ROIColormap       = None
         self.__ROIColormapDialog = None
+        self.mcaWidget = mcawidget
+        self.rgbWidget = rgbwidget
+        self.tab = None
+
         self._build(vertical)
-        if mcawidget is None:
-            self.mcaWidget = McaWindow.McaWidget()
-            if QTVERSION < '4.0.0':
-                self.mcaWidget.setCaption("PyMCA - Mca Window")
-            else:
-                self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
-            self.mcaWidget.show()
-        else:
-            self.mcaWidget = mcawidget
-        if rgbwidget is None:
-            if QTVERSION > '4.0.0':
-                #I have not implemented it for Qt3
-                #self.rgbWidget = RGBCorrelator.RGBCorrelator()
-                self.rgbWidget = RGBCorrelator.RGBCorrelator(self)
-                self.mainLayout.addWidget(self.rgbWidget)
-            else:
-                self.rgbWidget = None
-        else:
-            self.rgbWidget = rgbwidget
+        self._buildBottom()
         self.__ROIBrushMenu  = None
         self.__ROIBrushMode  = False
         self.__ROIEraseMode  = False
@@ -98,6 +84,45 @@ class QEDFStackWidget(qt.QWidget):
         boxLayout.addWidget(self.stackWindow)
         boxLayout.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
+
+    def _buildBottom(self):
+        n = 0
+        if self.mcaWidget is None: n += 1
+        if self.rgbWidget is None: n += 1
+        if n == 1:
+            if self.mcaWidget is None:
+                self.mcaWidget = McaWindow.McaWidget(self, vertical = False)
+                if QTVERSION < '4.0.0':
+                    self.mcaWidget.setCaption("PyMCA - Mca Window")
+                else:
+                    self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
+                self.mainLayout.addWidget(self.mcaWidget)
+            if self.rgbWidget is None:
+                if QTVERSION > '4.0.0':
+                    #I have not implemented it for Qt3
+                    #self.rgbWidget = RGBCorrelator.RGBCorrelator()
+                    self.rgbWidget = RGBCorrelator.RGBCorrelator(self)
+                    self.mainLayout.addWidget(self.rgbWidget)
+            return
+        if n == 2:
+            self.tab = qt.QTabWidget(self)
+            self.mcaWidget = McaWindow.McaWidget(vertical = False)
+            if QTVERSION > '4.0.0':
+                table = self.mcaWidget.roiwidget.mcaROITable
+                rheight = table.horizontalHeader().sizeHint().height()
+                table.setMinimumHeight(10 * rheight)
+                table.setMaximumHeight(13*rheight)
+                self.mcaWidget.graphBox.setMinimumWidth(0.5 * qt.QWidget.sizeHint(self).width())
+            self.tab.addTab(self.mcaWidget, "MCA")
+            #self.mcaWidget.splitter.setStretchFactor(0, 1)
+            #self.mcaWidget.splitter.setStretchFactor(1, 0)
+            if QTVERSION > '4.0.0':
+                #I have not implemented it for Qt3
+                #self.rgbWidget = RGBCorrelator.RGBCorrelator()
+                self.rgbWidget = RGBCorrelator.RGBCorrelator()
+                self.tab.addTab(self.rgbWidget, "RGB Correlator")
+            self.mainLayout.addWidget(self.tab)
+
         
     def _toggleROISelectionMode(self):
         if self.roiGraphWidget.graph._selecting:
@@ -405,7 +430,7 @@ class QEDFStackWidget(qt.QWidget):
 
     def __addOriginalImage(self):
         #init the original image
-        self.stackGraphWidget.graph.setTitle("EDF Stack")
+        self.stackGraphWidget.graph.setTitle("Original Stack")
         self.stackGraphWidget.graph.y1Label("File")
         if self.mcaIndex == 0:
             self.stackGraphWidget.graph.x1Label('Column')
@@ -461,8 +486,11 @@ class QEDFStackWidget(qt.QWidget):
             self.mcaWidget._removeSelection([sel])
         elif action == "REPLACE":
             self.mcaWidget._replaceSelection([sel])
-        if self.mcaWidget.isHidden():
+        if self.tab is None:
             self.mcaWidget.show()
+            self.mcaWidget.raise_()
+        else:
+            self.tab.setCurrentWidget(self.mcaWidget)
 
     def _mcaWidgetSignal(self, ddict):
         if ddict['event'] == "ROISignal":
@@ -496,6 +524,8 @@ class QEDFStackWidget(qt.QWidget):
             self.plotROIImage(update=True)
             if self.isHidden():
                 self.show()
+                if self.tab is not None:
+                    self.tab.setCurrentWidget(self.rgbWidget)
 
 
     def plotROIImage(self, update = True):
@@ -743,8 +773,12 @@ class QEDFStackWidget(qt.QWidget):
                                 str(self.roiGraphWidget.graph.title().text()))
 
         if self.rgbWidget.isHidden():
-            self.rgbWidget.show()
-        self.rgbWidget.raise_()
+            if self.tab is None:
+                self.rgbWidget.show()
+                self.rgbWidget.raise_()
+            else:
+                self.tab.setCurrentWidget(self.rgbWidget)
+
 
     def _removeImageClicked(self):
         self.rgbWidget.removeImage(str(self.roiGraphWidget.graph.title().text()))
@@ -755,7 +789,11 @@ class QEDFStackWidget(qt.QWidget):
                                 str(self.roiGraphWidget.graph.title().text()))
         if self.rgbWidget.isHidden():
             self.rgbWidget.show()
-        self.rgbWidget.raise_()
+        if self.tab is None:
+            self.rgbWidget.show()
+            self.rgbWidget.raise_()
+        else:
+            self.tab.setCurrentWidget(self.rgbWidget)
 
     def _addMcaClicked(self):
         #original ICR mca

@@ -69,18 +69,18 @@ class McaROIWidget(qt.QWidget):
         self.setheader('<b>Channel ROIs of XXXXXXXXXX<\b>')
         layout.addWidget(self.headerlabel)
         ##############
-        self.mcaroitable     = McaROITable(self)
+        self.mcaROITable     = McaROITable(self)
         if QTVERSION < '4.0.0':
-            self.mcaroitable.setMinimumHeight(4*self.mcaroitable.sizeHint().height())
-            self.mcaroitable.setMaximumHeight(4*self.mcaroitable.sizeHint().height())
+            self.mcaROITable.setMinimumHeight(4*self.mcaROITable.sizeHint().height())
+            self.mcaROITable.setMaximumHeight(4*self.mcaROITable.sizeHint().height())
         else:
-            rheight = self.mcaroitable.horizontalHeader().sizeHint().height()
-            self.mcaroitable.setMinimumHeight(4*rheight)
-            self.mcaroitable.setMaximumHeight(4*rheight)
-        self.fillfromroidict = self.mcaroitable.fillfromroidict
-        self.addroi          = self.mcaroitable.addroi
-        self.getroilistanddict=self.mcaroitable.getroilistanddict
-        layout.addWidget(self.mcaroitable)
+            rheight = self.mcaROITable.horizontalHeader().sizeHint().height()
+            self.mcaROITable.setMinimumHeight(4*rheight)
+            self.mcaROITable.setMaximumHeight(4*rheight)
+        self.fillfromroidict = self.mcaROITable.fillfromroidict
+        self.addroi          = self.mcaROITable.addroi
+        self.getroilistanddict=self.mcaROITable.getroilistanddict
+        layout.addWidget(self.mcaROITable)
         #################
 
 
@@ -110,14 +110,14 @@ class McaROIWidget(qt.QWidget):
         self.connect(self.delbutton,  qt.SIGNAL("clicked()"), self.__del)
         self.connect(self.resetbutton,qt.SIGNAL("clicked()"), self.__reset)
         if QTVERSION < '4.0.0':
-            self.connect(self.mcaroitable,  qt.PYSIGNAL('McaROITableSignal') ,self.__forward)
+            self.connect(self.mcaROITable,  qt.PYSIGNAL('McaROITableSignal') ,self.__forward)
         else:
-            self.connect(self.mcaroitable,  qt.SIGNAL('McaROITableSignal') ,self.__forward)
+            self.connect(self.mcaROITable,  qt.SIGNAL('McaROITableSignal') ,self.__forward)
 
     def __add(self):
         ddict={}
         ddict['event']   = "AddROI"
-        roilist,roidict  = self.mcaroitable.getroilistanddict()
+        roilist,roidict  = self.mcaROITable.getroilistanddict()
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
         if qt.qVersion() < '4.0.0':
@@ -127,33 +127,33 @@ class McaROIWidget(qt.QWidget):
         
         
     def __del(self):
-        row = self.mcaroitable.currentRow()
+        row = self.mcaROITable.currentRow()
         if row >= 0:
-            index = self.mcaroitable.labels.index('Type')
+            index = self.mcaROITable.labels.index('Type')
             if qt.qVersion() < '4.0.0':
-                text = str(self.mcaroitable.text(row, index))
+                text = str(self.mcaROITable.text(row, index))
             else:
-                text = str(self.mcaroitable.item(row, index).text())
+                text = str(self.mcaROITable.item(row, index).text())
                 
             if text.upper() != 'DEFAULT':
-                index = self.mcaroitable.labels.index('ROI')
+                index = self.mcaROITable.labels.index('ROI')
                 if qt.qVersion() < '4.0.0':
-                    key = str(self.mcaroitable.text(row, index))
+                    key = str(self.mcaROITable.text(row, index))
                 else:
-                    key = str(self.mcaroitable.item(row, index).text())
+                    key = str(self.mcaROITable.item(row, index).text())
             else:return
-            roilist,roidict    = self.mcaroitable.getroilistanddict()
+            roilist,roidict    = self.mcaROITable.getroilistanddict()
             row = roilist.index(key)
             del roilist[row]
             del roidict[key]
-            self.mcaroitable.fillfromroidict(roilist=roilist,
+            self.mcaROITable.fillfromroidict(roilist=roilist,
                                              roidict=roidict,
                                              currentroi=roilist[0])
             ddict={}
             ddict['event']      = "DelROI"
             ddict['roilist']    = roilist
             ddict['roidict']    = roidict
-            #ddict['currentrow'] = self.mcaroitable.currentRow()
+            #ddict['currentrow'] = self.mcaROITable.currentRow()
             if qt.qVersion() < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,))
             else:
@@ -170,7 +170,7 @@ class McaROIWidget(qt.QWidget):
     def __reset(self):
         ddict={}
         ddict['event']   = "ResetROI"
-        roilist0,roidict0  = self.mcaroitable.getroilistanddict()
+        roilist0,roidict0  = self.mcaROITable.getroilistanddict()
         index = 0
         for key in roilist0:
             if roidict0[key]['type'].upper() == 'DEFAULT':
@@ -181,7 +181,7 @@ class McaROIWidget(qt.QWidget):
         roidict = {}
         roidict[roilist[0]] = {}
         roidict[roilist[0]].update(roidict0[roilist[0]])
-        self.mcaroitable.fillfromroidict(roilist=roilist,roidict=roidict)
+        self.mcaROITable.fillfromroidict(roilist=roilist,roidict=roidict)
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
         if qt.qVersion() < '4.0.0':
@@ -202,7 +202,7 @@ class McaROIWidget(qt.QWidget):
         else:
             self.info['xlabel'] = 'X'
         if kw.has_key('rois'):
-            self.mcaroitable.fillfromrois(rois)
+            self.mcaROITable.fillfromrois(rois)
         self.setheader(text="%s ROIs of %s" % (self.info['xlabel'],
                                                self.info['legend']))
 

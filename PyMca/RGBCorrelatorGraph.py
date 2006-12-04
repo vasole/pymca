@@ -152,7 +152,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         if selection:
             tb = self._addToolButton(self.selectionIcon,
                                 None,
-                                'Toggle Mode',
+                                'Toggle Selection Mode',
                                 toggle = True,
                                 state = False)
             if qt.qVersion() < '4.0.0':
