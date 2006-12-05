@@ -748,7 +748,6 @@ class QEdfFileWidget(qt.QWidget):
                 qt.QMessageBox.critical(self, "ERROR opening EdfFile",
                         "Cannot open following EdfFile:\n%s"%(filename))
             else:
-                print self.data.SourceName
                 filename= self.data.SourceName.split("|")
                 if len(filename) > 1:
                     combokey = 'EDF Stack'
@@ -758,7 +757,6 @@ class QEdfFileWidget(qt.QWidget):
                 if combokey not in self.mapComboName.keys():
                     self.mapComboName[combokey]= filename[0]
                     if QT4:
-                        print "self.fileCombo =",self.fileCombo 
                         self.fileCombo.addItem(combokey)                    
                     else:
                         self.fileCombo.insertItem(combokey)
@@ -1288,7 +1286,7 @@ class QEdfFileWidget(qt.QWidget):
 
                              
     def setSelected(self,sellist,reset=1):
-        if 1 or DEBUG:
+        if DEBUG:
             print "setSelected(self,sellist,reset=1) called"
             print "sellist = ",sellist
             print "selection before = ",self.selection
