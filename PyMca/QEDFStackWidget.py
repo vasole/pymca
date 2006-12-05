@@ -389,6 +389,17 @@ class QEDFStackWidget(qt.QWidget):
     def setStack(self, stack):
         #stack.data is an XYZ array
         self.stack = stack
+
+        if QTVERSION < '4.0.0':
+            title = str(self.caption())+\
+                    ": from %s to %s" % (os.path.basename(stack.sourceName[0]),
+                                        os.path.basename(stack.sourceName[-1]))                         
+            self.setCaption(title)
+        else:
+            title = str(self.windowTitle())+\
+                    ": from %s to %s" % (os.path.basename(stack.sourceName[0]),
+                                        os.path.basename(stack.sourceName[-1]))                         
+            self.setWindowTitle(title)
         
         #for the time being I deduce the MCA
         shape = self.stack.data.shape
