@@ -145,7 +145,11 @@ import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
 import EDFStack
-import QEDFStackWidget
+try:
+    import QEDFStackWidget
+    STACK = True
+except:
+    STACK = False
 ###########import Fit2Spec
 if QTVERSION > '4.0.0':
     import PyMcaPostBatch
@@ -668,7 +672,8 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.insertItem("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.insertItem("Batch   Fitting",self.__batchFitting)
             #self.menuTools.insertItem("Fit to Specfile",self.__fit2SpecConversion)
-            self.menuTools.insertItem("ROI Imaging",self.__roiImaging)
+            if STACK:
+                self.menuTools.insertItem("ROI Imaging",self.__roiImaging)
         else:
             if self.sourceFrame.isHidden():
                 self.menuTools.addAction("Show Source",self.toggleSource)
@@ -679,7 +684,8 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
             #self.menuTools.addAction("Fit to Specfile",self.__fit2SpecConversion)
             self.menuTools.addAction("PyMCA Post-batch",self.__rgbCorrelator)
-            self.menuTools.addAction("ROI Imaging",self.__roiImaging)
+            if STACK:
+                self.menuTools.addAction("ROI Imaging",self.__roiImaging)
         if DEBUG:"print Fit to Specfile missing"
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
@@ -1238,6 +1244,10 @@ class PixmapLabel(qt.QLabel):
             self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"),(ddict))
 
 if __name__ == '__main__':
+    PROFILING = 0
+    if PROFILING:
+        import profile
+        import pstats
     demo = PyMca(**keywords)
     if debugreport:demo.onDebug()
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
@@ -1247,10 +1257,19 @@ if __name__ == '__main__':
         demo.show()
         # --- close waiting widget
         splash.close()
-        app.exec_loop()
+        if PROFILING:
+            profile.run('sys.exit(app.exec_loop())',"test")
+            p=pstats.Stats("test")
+            p.strip_dirs().sort_stats(-1).print_stats()
+        else:
+            app.exec_loop()
     else:
         splash.finish(demo)
         demo.show()
-        # --- close waiting widget
-        sys.exit(app.exec_())
-
+        if PROFILING:
+            profile.run('sys.exit(app.exec_())',"test")
+            p=pstats.Stats("test")
+            p.strip_dirs().sort_stats(-1).print_stats()
+        else:
+            sys.exit(app.exec_())
+        
