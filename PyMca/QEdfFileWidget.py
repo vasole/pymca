@@ -96,7 +96,7 @@ class EdfFile_StandardArray(qt.QWidget):
         for i in range(images):
             if qt.qVersion() < '4.0.0':
                 if len(info) == images:
-                    self.iCombo.insertItem("Image %d Key %s" % (i,info[i]))            
+                    self.iCombo.insertItem("Image %d Key %s" % (i,info[i]))  
                 else:
                     self.iCombo.insertItem("Image %d" % i)
             else:
@@ -131,6 +131,7 @@ class EdfFile_StandardArray(qt.QWidget):
             txt= "Row"
             val= self.rows
         if qt.qVersion() < '4.0.0': self.yList.clear()
+        else:self.yList.clear()
         for x in range(val):
             if QT4:self.yList.addItem("%s %d"%(txt,x))
             else:  self.yList.insertItem("%s %d"%(txt,x))
@@ -291,8 +292,8 @@ class QEdfFileWidget(qt.QWidget):
         self.graph=QtBlissGraph.QtBlissGraph(self.splitter)
 
         self.graph.setTitle('')
-        self.graph.xlabel('Rows')
-        self.graph.ylabel('Columns')
+        self.graph.xlabel('Columns')
+        self.graph.ylabel('Rows')
         if QTVERSION < '4.0.0':
             self.connect(self.graph,qt.PYSIGNAL('QtBlissGraphSignal')  ,self.widgetSignal)
         else:
@@ -561,8 +562,8 @@ class QEdfFileWidget(qt.QWidget):
                 self.__refreshSelection()
             elif dict['event']    == 'MouseClick':
                 if self.justViewer:return
-                row = min(int(round(dict['x'])), self._x1Limit - 1)
-                col = min(int(round(dict['y'])), self._y1Limit - 1)
+                col = min(int(round(dict['x'])), self._x1Limit - 1)
+                row = min(int(round(dict['y'])), self._y1Limit - 1)
                 if row < 0: row = 0
                 if col < 0: col = 0
                 if self.data is None: 
@@ -936,7 +937,7 @@ class QEdfFileWidget(qt.QWidget):
             #P.B. -> pointer(a,d1,d2,i1,i2) = a+ (i1+i2 * d1) 
             wid.setSize(int(info["Dim_2"]), int(info["Dim_1"]))
             if DEBUG:
-                print "Image size = ",info["Dim_1"],"x",info["Dim_2"]
+                print "Image size = ",info["Dim_2"],"x",info["Dim_1"]
                 print "data  size = ",Numeric.shape(data) 
 
 
@@ -944,8 +945,8 @@ class QEdfFileWidget(qt.QWidget):
                 self.graph.show()
             self.graph.setx1axislimits(0, int(info["Dim_2"]))
             self.graph.sety1axislimits(0, int(info["Dim_1"]))
-            self._x1Limit = int(info["Dim_2"])
-            self._y1Limit = int(info["Dim_1"])
+            self._x1Limit = int(info["Dim_1"])
+            self._y1Limit = int(info["Dim_2"])
             self.graph.clear()
             minData = Numeric.minimum.reduce(Numeric.minimum.reduce(data))
             maxData = Numeric.maximum.reduce(Numeric.maximum.reduce(data))
@@ -1084,7 +1085,7 @@ class QEdfFileWidget(qt.QWidget):
                         selsignal["Key"] += ".c.%d" % int(selection['y'])
                         i = int(selsignal["Key"].split(".")[0])
                         if i > 0:
-                            selsignal['legend'] = os.path.basename(self.data.sourceName[i-1]) +" "+signalsel['Key']
+                            selsignal['legend'] = os.path.basename(self.data.sourceName[i-1]) +" "+selsignal['Key']
                         else:
                             selsignal['legend'] = "EDF Stack "+ os.path.basename(self.data.sourceName[0])+\
                                                   " "+selsignal['Key']
@@ -1287,7 +1288,7 @@ class QEdfFileWidget(qt.QWidget):
 
                              
     def setSelected(self,sellist,reset=1):
-        if DEBUG:
+        if 1 or DEBUG:
             print "setSelected(self,sellist,reset=1) called"
             print "sellist = ",sellist
             print "selection before = ",self.selection
@@ -1298,7 +1299,12 @@ class QEdfFileWidget(qt.QWidget):
             self.selection = {}
         for sel in sellist:
             specname = sel['SourceName']
-            if len(specname) == 1:specname=specname[0]
+            if type(specname) == type([]):
+                for i in range(len(sel['SourceName'])):
+                    if i == 0:
+                        specname = sel['SourceName'][i]
+                    else:
+                        specname += "|"+sel['SourceName'][i]
             #selkey is the array name what to do if multiple array names?
             if type(sel["Key"]) == type([]):
                 selkey = sel["Key"][0]
@@ -1347,11 +1353,12 @@ class QEdfFileWidget(qt.QWidget):
             if self.data.sourceName is None: return
             if type(self.data.sourceName) == type([]):
                 i = 0
-                for sourceName in self.data.sourceName:
+                for sname in self.data.sourceName:
                     if i == 0:
-                        selfdatasourceName = sourceName
+                        selfdatasourceName = sname
+                        i = 1
                     else:
-                        selfdatasourceName +="|"+sourceName
+                        selfdatasourceName += "|"+sname
             else:
                 selfdatasourceName = self.data.sourceName
             if "|" in self.data.sourceName:
@@ -1375,7 +1382,7 @@ class QEdfFileWidget(qt.QWidget):
             if self.currentArray == len(keylist):
                 imagedict = sel.get("0.0",{})
             else:
-                imagedict = sel.get(keylist[self.currentArray],{})                
+                imagedict = sel.get(keylist[self.currentArray],{})
             if not imagedict.has_key('rows'):
                 imagedict['rows'] = []
             if not imagedict.has_key('cols'):
@@ -1395,11 +1402,11 @@ class QEdfFileWidget(qt.QWidget):
             self.graph.clearmarkers()
             for i in rows:
                 label = "R%d" % i
-                marker=self.graph.insertx1marker(i,0.1,label=label)
+                marker=self.graph.inserty1marker(0.1,i,label=label)
                 self.graph.setmarkercolor(marker,"white")
             for i in cols:
                 label = "C%d" % i
-                marker=self.graph.inserty1marker(0.1,i,label=label)
+                marker=self.graph.insertx1marker(i, 0.1,label=label)
                 self.graph.setmarkercolor(marker,"white")
             self.graph.replot()
             return

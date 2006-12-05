@@ -272,10 +272,10 @@ class QEDFStackWidget(qt.QWidget):
                 ymin = ddict['ymax']
                 ymax = ddict['ymin']
             i1 = max(int(xmin), 0)
-            i2 = min(abs(int(xmax))+1, self.__stackImageData.shape[0])
+            i2 = min(abs(int(xmax))+1, self.__stackImageData.shape[1])
             j1 = max(int(ymin),0)
-            j2 = min(abs(int(ymax))+1,self.__stackImageData.shape[1])
-            self.__selectionMask[i1:i2, j1:j2] = 1
+            j2 = min(abs(int(ymax))+1,self.__stackImageData.shape[0])
+            self.__selectionMask[j1:j2, i1:i2] = 1
             #Stack Image
             if self.__stackColormap is None:
                 a = Numeric.array(map(int,
@@ -324,16 +324,15 @@ class QEDFStackWidget(qt.QWidget):
                 r = self.__stackImageData.shape[0]
                 c = self.__stackImageData.shape[1]
                 xmin = max(abs(ddict['x']-0.5*width), 0)
-                xmax = min(abs(ddict['x']+0.5*width), r)
+                xmax = min(abs(ddict['x']+0.5*width), c)
                 ymin = max(abs(ddict['y']-0.5*width), 0)
-                ymax = min(abs(ddict['y']+0.5*width), c)
-                i1 = min(int(xmin), r-1)
-                i2 = min(int(xmax)+1, r)
-                j1 = min(int(ymin),c-1)
-                j2 = min(int(ymax)+1, c)
+                ymax = min(abs(ddict['y']+0.5*width), r)
+                i1 = min(int(xmin), c-1)
+                i2 = min(int(xmax), c)
+                j1 = min(int(ymin),r-1)
+                j2 = min(int(ymax), r)
                 if i1 == i2: i2 = i1+1
                 if j1 == j2: j2 = j1+1
-                #print i1, i2, j1, j2
                 if self.__ROIEraseMode:
                     self.__stackPixmap[j1:j2,i1:i2,:]    = self.__stackPixmap0[j1:j2,i1:i2,:]
                     self.__ROIPixmap[j1:j2,i1:i2,:]    = self.__ROIPixmap0[j1:j2,i1:i2,:]
@@ -379,7 +378,7 @@ class QEDFStackWidget(qt.QWidget):
                         self.__ROIPixmap[j1:j2,i1:i2,2]    = 0x70
                         self.__ROIPixmap[j1:j2,i1:i2,1]    = self.__ROIPixmap0[j1:j2,i1:i2,0]
                         self.__ROIPixmap[j1:j2,i1:i2,3]    = 0x40
-                    self.__selectionMask[i1:i2, j1:j2] = 1
+                    self.__selectionMask[j1:j2, i1:i2] = 1
                 self.plotROIImage(update = False)
                 self.plotStackImage(update = False)
 
@@ -431,13 +430,13 @@ class QEDFStackWidget(qt.QWidget):
     def __addOriginalImage(self):
         #init the original image
         self.stackGraphWidget.graph.setTitle("Original Stack")
-        self.stackGraphWidget.graph.y1Label("File")
+        self.stackGraphWidget.graph.x1Label("File")
         if self.mcaIndex == 0:
-            self.stackGraphWidget.graph.x1Label('Column')
+            self.stackGraphWidget.graph.y1Label('Column')
         else:
-            self.stackGraphWidget.graph.x1Label('Row')
+            self.stackGraphWidget.graph.y1Label('Row')
 
-        [xmax, ymax] = self.__stackImageData.shape
+        [ymax, xmax] = self.__stackImageData.shape
         if self._y1AxisInverted:
             self.stackGraphWidget.graph.zoomReset()
             self.stackGraphWidget.graph.setY1AxisInverted(True)
@@ -455,7 +454,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.stackGraphWidget.graph.replot() #I need it to update the canvas
             self.plotStackImage(update=True)
 
-        self.__selectionMask = Numeric.zeros((xmax, ymax), Numeric.UInt8)
+        self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
 
         #init the ROI
         self.roiGraphWidget.graph.setTitle("ICR ROI")
@@ -541,7 +540,7 @@ class QEDFStackWidget(qt.QWidget):
         if not self.roiGraphWidget.graph.xAutoScale:
             xlimits = self.roiGraphWidget.graph.getX1AxisLimits()
         self.roiGraphWidget.graph.pixmapPlot(self.__ROIPixmap.tostring(),
-            (self.__ROIImageData.shape[0], self.__ROIImageData.shape[1]),
+            (self.__ROIImageData.shape[1], self.__ROIImageData.shape[0]),
                                         xmirror = 0,
                                         ymirror = not self._y1AxisInverted)
         if not self.roiGraphWidget.graph.yAutoScale:
@@ -555,7 +554,7 @@ class QEDFStackWidget(qt.QWidget):
         colormap = self.__ROIColormap
         if colormap is None:
             (self.__ROIPixmap,size,minmax)= spslut.transform(\
-                                Numeric.transpose(self.__ROIImageData),
+                                self.__ROIImageData,
                                 (1,0),
                                 (spslut.LINEAR,3.0),
                                 "BGRX",
@@ -564,7 +563,7 @@ class QEDFStackWidget(qt.QWidget):
                                 (0,1))
         else:
             (self.__ROIPixmap,size,minmax)= spslut.transform(\
-                                Numeric.transpose(self.__ROIImageData),
+                                self.__ROIImageData,
                                 (1,0),
                                 (spslut.LINEAR,3.0),
                                 "BGRX",
@@ -574,15 +573,15 @@ class QEDFStackWidget(qt.QWidget):
         #I hope to find the time to write a new spslut giving back arrays ..
         self.__ROIPixmap = Numeric.array(self.__ROIPixmap).\
                                         astype(Numeric.UInt8)
-        self.__ROIPixmap.shape = [self.__ROIImageData.shape[1],
-                                    self.__ROIImageData.shape[0],
+        self.__ROIPixmap.shape = [self.__ROIImageData.shape[0],
+                                    self.__ROIImageData.shape[1],
                                     4]
 
     def getStackPixmapFromData(self):
         colormap = self.__stackColormap
         if colormap is None:
             (self.__stackPixmap,size,minmax)= spslut.transform(\
-                                Numeric.transpose(self.__stackImageData),
+                                self.__stackImageData,
                                 (1,0),
                                 (spslut.LINEAR,3.0),
                                 "BGRX",
@@ -591,7 +590,7 @@ class QEDFStackWidget(qt.QWidget):
                                 (0,1))
         else:
             (self.__stackPixmap,size,minmax)= spslut.transform(\
-                                Numeric.transpose(self.__stackImageData),
+                                self.__stackImageData,
                                 (1,0),
                                 (spslut.LINEAR,3.0),
                                 "BGRX",
@@ -602,8 +601,8 @@ class QEDFStackWidget(qt.QWidget):
         #I hope to find the time to write a new spslut giving back arrays ..
         self.__stackPixmap = Numeric.array(self.__stackPixmap).\
                                         astype(Numeric.UInt8)
-        self.__stackPixmap.shape = [self.__stackImageData.shape[1],
-                                    self.__stackImageData.shape[0],
+        self.__stackPixmap.shape = [self.__stackImageData.shape[0],
+                                    self.__stackImageData.shape[1],
                                     4]
 
     def plotStackImage(self, update = True):
@@ -618,7 +617,7 @@ class QEDFStackWidget(qt.QWidget):
         if not self.stackGraphWidget.graph.xAutoScale:
             xlimits = self.stackGraphWidget.graph.getX1AxisLimits()
         self.stackGraphWidget.graph.pixmapPlot(self.__stackPixmap.tostring(),
-            (self.__stackImageData.shape[0], self.__stackImageData.shape[1]),
+            (self.__stackImageData.shape[1], self.__stackImageData.shape[0]),
                     xmirror = 0,
                     ymirror = not self._y1AxisInverted)            
         if not self.stackGraphWidget.graph.yAutoScale:
@@ -816,7 +815,7 @@ class QEDFStackWidget(qt.QWidget):
                mcaData[i] = sum(sum(self.stack.data[i,:,:] * self.__selectionMask))
         else:
             for i in range(len(mcaData)):
-               mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask))
+               mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask[:,:]))
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -868,7 +867,6 @@ class QEDFStackWidget(qt.QWidget):
         self.plotROIImage(update = True)
         if self.__stackImageData is None: return
         self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
-
 
 
     def _setROIEraseSelectionMode(self):

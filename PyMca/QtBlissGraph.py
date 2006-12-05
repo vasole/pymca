@@ -2275,12 +2275,12 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
         self.xyzs = xyzs
         shape = xyzs.shape
         if xScale is None:
-            xRange = (0, shape[0])
+            xRange = (0, shape[1])
         else:
             xRange = xScale * 1
 
         if yScale is None:
-            yRange = (0, shape[1])
+            yRange = (0, shape[0])
         else:
             yRange = yScale * 1
 
@@ -2311,11 +2311,11 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             
         else:
             if colormap is None:
-                (self.image_buffer,size,minmax)= spslut.transform(transpose(self.xyzs), (1,0),
+                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0), "BGRX", spslut.TEMP,
                                           1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
             else:
-                (self.image_buffer,size,minmax)= spslut.transform(transpose(self.xyzs), (1,0),
+                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0),
                                          "BGRX", COLORMAPLIST[int(str(colormap[0]))],
                                           colormap[1], (colormap[2],colormap[3]))
@@ -2475,11 +2475,11 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
                 self.image.setColor(i, self.palette[i])
         else:
             if colormap is None:
-                (self.image_buffer,size,minmax)= spslut.transform(transpose(self.xyzs), (1,0),
+                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0), "BGRX", spslut.TEMP,
                                           1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
             else:
-                (self.image_buffer,size,minmax)= spslut.transform(transpose(self.xyzs), (1,0),
+                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0), "BGRX", COLORMAPLIST[colormap[0]],
                                           colormap[1], (colormap[2],colormap[3]))
             self.image=qt.QImage(self.image_buffer,size[0], size[1],32, None, 0,

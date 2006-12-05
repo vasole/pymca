@@ -250,7 +250,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         if (datamin is None) or (datamax is None):
             #spslut already calculates min and max
             #tmp = Numeric.ravel(image)
-            (image_buffer, size, minmax)= spslut.transform(Numeric.transpose(image),
+            (image_buffer, size, minmax)= spslut.transform(image,
                                      (1,0),
                                      (spslut.LINEAR,3.0),
                                       self.bgrx, colormap,
@@ -258,7 +258,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                       (0,1))
                                      #(min(tmp),max(tmp)))
         else:
-            (image_buffer, size, minmax)= spslut.transform(Numeric.transpose(image),
+            (image_buffer, size, minmax)= spslut.transform(image,
                                      (1,0),
                                      (spslut.LINEAR,3.0),
                                       self.bgrx, colormap,

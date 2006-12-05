@@ -45,8 +45,8 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self._buildToolBar(selection, colormap, imageicons, standalonesave)
         self.graph = QtBlissGraph.QtBlissGraph(self)
-        self.graph.xlabel("Row")
-        self.graph.ylabel("Column")
+        self.graph.xlabel("Column")
+        self.graph.ylabel("Row")
         self.graph.yAutoScale = 1
         self.graph.xAutoScale = 1
         self.saveDirectory = os.getcwd()
