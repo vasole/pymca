@@ -428,6 +428,10 @@ class RGBCorrelatorWidget(qt.QWidget):
     def update(self):
         self.__recolor()
 
+    """
+    #This was for debugging
+    #left out in order to skip PIL from the list of
+    #packages when building binaries.
     def tiffExport(self, filename = "test.tif"):
         import Image
         Image.preinit()
@@ -437,7 +441,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         pilImage = Image.fromstring("RGBX",(width,height),image)
         if os.path.exists(filename):
             os.remove(filename)
-        pilImage.save(filename) 
+        pilImage.save(filename)
+    """
 
         
 

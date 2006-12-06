@@ -1,4 +1,5 @@
 import sys
+import os
 import McaWindow
 qt = McaWindow.qt
 QTVERSION = qt.qVersion()
@@ -996,7 +997,7 @@ class QEDFStackWidget(qt.QWidget):
         return filelist
 
 if __name__ == "__main__":
-    import getopt, os
+    import getopt
     options = ''
     longoptions = ["begin=", "end="]
     try:

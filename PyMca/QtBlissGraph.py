@@ -988,7 +988,11 @@ class QtBlissGraph(qwt.QwtPlot):
         if DEBUG:
             print "onMouseRealeased, event = ",e
         if qt.Qt.LeftButton == e.button():
+            #this is to solve a strange problem under darwin platform
+            #where the signals were sent twice
+            if self.__timer == -1:return
             etime = time.time() - self.__timer
+            self.__timer = -1
             if (etime < 0.2) and ((self.xpos - e.pos().x()) == 0) and ((self.xpos - e.pos().x()) == 0):
                 xpixel = e.pos().x()
                 ypixel = e.pos().y()
@@ -1000,7 +1004,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 dict['xpixel']   = xpixel
                 dict['y']        = y
                 dict['ypixel']   = ypixel
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(dict,))
                 else:
                     self.emit(qt.SIGNAL("QtBlissGraphSignal"),(dict))
