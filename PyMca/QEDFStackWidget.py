@@ -82,6 +82,7 @@ class QEDFStackWidget(qt.QWidget):
         self.roiGraphWidget.graph.enableSelection(False)
         self.roiGraphWidget.graph.enableZoom(True)
         self.setROISelectionMode(False)
+        self._toggleROISelectionMode()
         self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
         self.roiWindow.mainLayout.addWidget(self.roiGraphWidget)
         boxLayout.addWidget(self.stackWindow)
@@ -91,7 +92,7 @@ class QEDFStackWidget(qt.QWidget):
     def _buildBottom(self):
         n = 0
         if self.mcaWidget is None: n += 1
-        if self.rgbWidget is None: n += 1
+        if (QTVERSION > '4.0.0') and  (self.rgbWidget is None): n += 1
         if n == 1:
             if self.mcaWidget is None:
                 self.mcaWidget = McaWindow.McaWidget(self, vertical = False)
@@ -133,11 +134,19 @@ class QEDFStackWidget(qt.QWidget):
         if mode:
             self.roiGraphWidget.graph.enableSelection(True)
             self.roiGraphWidget.graph.enableZoom(False)
+            if QTVERSION < '4.0.0':
+                self.roiGraphWidget.selectionToolButton.setState(qt.QButton.On)
+            else:
+                self.roiGraphWidget.selectionToolButton.setChecked(True)
             self.roiGraphWidget.selectionToolButton.setDown(True)
             self.roiGraphWidget.showImageIcons()
             
         else:
             self.roiGraphWidget.graph.enableZoom(True)
+            if QTVERSION < '4.0.0':
+                self.roiGraphWidget.selectionToolButton.setState(qt.QButton.Off)
+            else:
+                self.roiGraphWidget.selectionToolButton.setChecked(False)
             self.roiGraphWidget.selectionToolButton.setDown(False)
             self.roiGraphWidget.hideImageIcons()
             #self.plotStackImage(update = True)
@@ -276,10 +285,10 @@ class QEDFStackWidget(qt.QWidget):
             else:
                 ymin = ddict['ymax']
                 ymax = ddict['ymin']
-            i1 = max(int(xmin), 0)
-            i2 = min(abs(int(xmax))+1, self.__stackImageData.shape[1])
-            j1 = max(int(ymin),0)
-            j2 = min(abs(int(ymax))+1,self.__stackImageData.shape[0])
+            i1 = max(int(round(xmin)), 0)
+            i2 = min(abs(int(round(xmax)))+1, self.__stackImageData.shape[1])
+            j1 = max(int(round(ymin)),0)
+            j2 = min(abs(int(round(ymax)))+1,self.__stackImageData.shape[0])
             self.__selectionMask[j1:j2, i1:i2] = 1
             #Stack Image
             if self.__stackColormap is None:
@@ -332,10 +341,10 @@ class QEDFStackWidget(qt.QWidget):
                 xmax = min(abs(ddict['x']+0.5*width), c)
                 ymin = max(abs(ddict['y']-0.5*width), 0)
                 ymax = min(abs(ddict['y']+0.5*width), r)
-                i1 = min(int(xmin), c-1)
-                i2 = min(int(xmax), c)
-                j1 = min(int(ymin),r-1)
-                j2 = min(int(ymax), r)
+                i1 = min(int(round(xmin)), c-1)
+                i2 = min(int(round(xmax)), c)
+                j1 = min(int(round(ymin)),r-1)
+                j2 = min(int(round(ymax)), r)
                 if i1 == i2: i2 = i1+1
                 if j1 == j2: j2 = j1+1
                 if self.__ROIEraseMode:
@@ -503,9 +512,15 @@ class QEDFStackWidget(qt.QWidget):
             self.mcaWidget._replaceSelection([sel])
         if self.tab is None:
             self.mcaWidget.show()
-            self.mcaWidget.raise_()
+            if QTVERSION < '4.0.0':
+                self.mcaWidget.raiseW()
+            else:
+                self.mcaWidget.raise_()
         else:
-            self.tab.setCurrentWidget(self.mcaWidget)
+            if QTVERSION < '4.0.0':
+                self.tab.setCurrentPage(self.tab.indexOf(self.mcaWidget))
+            else:
+                self.tab.setCurrentWidget(self.mcaWidget)
 
     def _mcaWidgetSignal(self, ddict):
         if not self.__ROIConnected:return
@@ -541,7 +556,10 @@ class QEDFStackWidget(qt.QWidget):
             if self.isHidden():
                 self.show()
                 if self.tab is not None:
-                    self.tab.setCurrentWidget(self.rgbWidget)
+                    if QTVERSION < '4.0.0':
+                        self.tab.setCurrentPage(self.tab.indexOf(self.rgbWidget))
+                    else:
+                        self.tab.setCurrentWidget(self.rgbWidget)
 
 
     def plotROIImage(self, update = True):
