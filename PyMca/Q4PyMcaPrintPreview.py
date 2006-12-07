@@ -162,31 +162,31 @@ class PyMcaPrintPreview(qt.QDialog):
                      self.__scaleChanged)
         
         hideBut   = qt.QPushButton("Hide", toolBar)
-        hideBut.setFixedWidth(buttonSize-10)
+        #hideBut.setFixedWidth(buttonSize-10)
         self.connect(hideBut, qt.SIGNAL("clicked()"), self.hide)
 
         cancelBut = qt.QPushButton("Clear All", toolBar)
-        cancelBut.setFixedWidth(buttonSize+10)
+        #cancelBut.setFixedWidth(buttonSize+10)
         self.connect(cancelBut, qt.SIGNAL("clicked()"), self.__clearAll)
 
         removeBut = qt.QPushButton("Remove", toolBar)
-        removeBut.setFixedWidth(buttonSize)
+        #removeBut.setFixedWidth(buttonSize)
         self.connect(removeBut, qt.SIGNAL("clicked()"), self.__remove)
 
         setupBut  = qt.QPushButton("Setup", toolBar)
-        setupBut.setFixedWidth(buttonSize-5)
+        #setupBut.setFixedWidth(buttonSize-5)
         self.connect(setupBut, qt.SIGNAL("clicked()"), self.__setup)
 
         printBut  = qt.QPushButton("Print", toolBar)
-        printBut.setFixedWidth(buttonSize-5)
+        #printBut.setFixedWidth(buttonSize-5)
         self.connect(printBut, qt.SIGNAL("clicked()"), self.__print)
         
         zoomPlusBut  = qt.QPushButton("Zoom +", toolBar)
-        zoomPlusBut.setFixedWidth(buttonSize-5)
+        #zoomPlusBut.setFixedWidth(buttonSize-5)
         self.connect(zoomPlusBut, qt.SIGNAL("clicked()"), self.__zoomPlus)
         
         zoomMinusBut  = qt.QPushButton("Zoom -", toolBar)
-        zoomMinusBut.setFixedWidth(buttonSize-5)
+        #zoomMinusBut.setFixedWidth(buttonSize-5)
         self.connect(zoomMinusBut, qt.SIGNAL("clicked()"), self.__zoomMinus)
         
         # now we put widgets in the toolLayout
@@ -203,7 +203,7 @@ class PyMcaPrintPreview(qt.QDialog):
         #toolsLayout.addWidget(scaleCombo)
         toolsLayout.addWidget(zoomPlusBut)
         toolsLayout.addWidget(zoomMinusBut)
-        toolsLayout.addStretch()
+        #toolsLayout.addStretch()
         self.toolBar = toolBar
         self.mainLayout.addWidget(self.toolBar)
 
