@@ -538,11 +538,6 @@ class QtMcaAdvancedFitReport:
             fig = Figure(figsize=(6,3)) # in inches
             canvas = FigureCanvas(fig)
             ax = fig.add_axes([.1, .15, .8, .8])
-            try:
-                ax.grid(linestyle='--', color='0.7', linewidth=0.1)
-            except:
-                #above line is not supported on all matplotlib versions
-                pass
             ax.set_axisbelow(True)
             ax.semilogy(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
             ax.semilogy(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
