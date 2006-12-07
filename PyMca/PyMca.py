@@ -128,8 +128,19 @@ if __name__ == "__main__":
                     qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
                     qt.Qt.white)
     else:
-        pixmap = qt.QPixmap(qt.QString(os.path.join(mpath,'PyMcaSplashImage.png')))
-        splash  = qt.QSplashScreen(pixmap)
+        fname = os.path.join(mpath,'PyMcaSplashImage.png')
+        if not os.path.exists(fname):
+           while len(mpath) > 3:
+             fname = os.path.join(mpath,'PyMcaSplashImage.png')
+             if not os.path.exists(fname):
+                 mpath = os.path.dirname(mpath)
+             else:
+                 break
+        if os.path.exists(fname):
+            pixmap = qt.QPixmap(qt.QString(fname))
+            splash  = qt.QSplashScreen(pixmap)
+        else:
+            splash = qt.QSplashScreen()
         splash.show()
         font = splash.font()
         font.setBold(1)
@@ -137,7 +148,7 @@ if __name__ == "__main__":
         splash.showMessage( 'PyMCA %s' % __version__, 
                 qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
                 qt.Qt.white)
-        if sys.plaform == "darwin":
+        if sys.platform == "darwin":
             qt.qApp.processEvents()
 
 import McaWindow
