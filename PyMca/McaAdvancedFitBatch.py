@@ -146,18 +146,18 @@ class McaAdvancedFitBatch:
 
     def getFileHandle(self,inputfile):
         try:
-            file = self.__tryEdf(inputfile)
-            if (file is None):
-                del file
-                file   = SpecFileLayer.SpecFileLayer()
-                file.SetSource(inputfile)
-            return file
+            ffile = self.__tryEdf(inputfile)
+            if (ffile is None):
+                del ffile
+                ffile   = SpecFileLayer.SpecFileLayer()
+                ffile.SetSource(inputfile)
+            return ffile
         except:
             raise "IOerror","I do not know what to do with file %s" % inputfile        
     
     
-    def onNewFile(self,file, filelist):
-        self.__log(file)
+    def onNewFile(self,ffile, filelist):
+        self.__log(ffile)
 
     def onImage(self,image,imagelist):
         pass
@@ -174,17 +174,17 @@ class McaAdvancedFitBatch:
             
     def __tryEdf(self,inputfile):
         try:
-            file   = EdfFileLayer.EdfFileLayer(fastedf=1)
-            file.SetSource(inputfile)
-            fileinfo = file.GetSourceInfo()
-            if fileinfo['KeyList'] == []:file=None
-            return file
+            ffile   = EdfFileLayer.EdfFileLayer(fastedf=1)
+            ffile.SetSource(inputfile)
+            fileinfo = ffile.GetSourceInfo()
+            if fileinfo['KeyList'] == []:ffile=None
+            return ffile
         except:
             return None
 
     def __processOneFile(self):
-        file=self.file
-        fileinfo = file.GetSourceInfo()
+        ffile=self.file
+        fileinfo = ffile.GetSourceInfo()
         nimages = nscans = len(fileinfo['KeyList'])
         if 1:
             i = 0
@@ -193,10 +193,10 @@ class McaAdvancedFitBatch:
                 self.onImage(scankey, fileinfo['KeyList'])
                 if 0:
                     scan,rc   = string.split(scankey,".")
-                    info,data  = file.LoadSource({'Key':int(image)-1})
+                    info,data  = ffile.LoadSource({'Key':int(image)-1})
                 else:
                     scan,order = scankey.split(".")
-                    info,data  = file.LoadSource(scankey)
+                    info,data  = ffile.LoadSource(scankey)
                 if info['SourceType'] == "EdfFile":
                     nrows = int(info['Dim_1'])
                     ncols = int(info['Dim_2'])
@@ -246,7 +246,7 @@ class McaAdvancedFitBatch:
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
                             key = "%s.%s.%03d.%d" % (scan,order,point,mca)
-                            mcainfo,mcadata = file.LoadSource(key)
+                            mcainfo,mcadata = ffile.LoadSource(key)
                             y0  = Numeric.array(mcadata)
                             x = Numeric.arange(len(y0))*1.0
                             filename = os.path.basename(info['SourceName'])
@@ -468,11 +468,11 @@ class McaAdvancedFitBatch:
         self.counter += 1
 
             
-    def saveImage(self,file=None):
+    def saveImage(self,ffile=None):
         self.savedImages=[]
-        if file is None:
-            file = os.path.splitext(self._rootname)[0]
-            file = os.path.join(self.imgDir,file)
+        if ffile is None:
+            ffile = os.path.splitext(self._rootname)[0]
+            ffile = os.path.join(self.imgDir,ffile)
         if not self.roiFit:
             if (self.fileStep > 1) or (self.mcaStep > 1):
                 trailing = "_filestep_%02d_mcastep_%02d" % ( self.fileStep,
@@ -486,10 +486,10 @@ class McaAdvancedFitBatch:
                     a,b = peak.split()
                     speclabel +="  %s" % (a+"-"+b)
                     speclabel +="  s(%s)" % (a+"-"+b)
-                    edfname = file +"_"+a+"_"+b+trailing+".edf"
+                    edfname = ffile +"_"+a+"_"+b+trailing+".edf"
                 else:
                     speclabel +="  %s" % (peak)
-                    edfname = file +"_"+peak+trailing+".edf"
+                    edfname = ffile +"_"+peak+trailing+".edf"
                 dirname = os.path.dirname(edfname)
                 if not os.path.exists(dirname):
                     try:
@@ -500,7 +500,7 @@ class McaAdvancedFitBatch:
                 edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=0)
                 self.savedImages.append(edfname)
             #save specfile format
-            specname = file+trailing+".dat"
+            specname = ffile+trailing+".dat"
             if os.path.exists(specname):
                 try:
                     os.remove(specname)
@@ -535,10 +535,10 @@ class McaAdvancedFitBatch:
                 for roi in self._ROIimages[group].keys():
                     #roitext = roi.replace(" ","-")
                     if (self.fileStep > 1) or (self.mcaStep > 1):
-                        edfname = file+"_"+grouptext+("_%04deVROI_filestep_%02d_mcastep_%02d.edf" % (self.roiWidth,
+                        edfname = ffile+"_"+grouptext+("_%04deVROI_filestep_%02d_mcastep_%02d.edf" % (self.roiWidth,
                                                                     self.fileStep, self.mcaStep ))
                     else: 
-                        edfname = file+"_"+grouptext+("_%04deVROI.edf" % self.roiWidth)
+                        edfname = ffile+"_"+grouptext+("_%04deVROI.edf" % self.roiWidth)
                     dirname = os.path.dirname(edfname)
                     if not os.path.exists(dirname):
                         try:

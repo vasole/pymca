@@ -110,8 +110,8 @@ class EdfFileSimpleViewer(qt.QWidget):
                 self.selectorWidget[sourceType].setDataSource(None)
 
     def setFileList(self, filelist):
-        for file in filelist:
-            self.sourceSelector.openFile(file, justloaded = 1)
+        for ffile in filelist:
+            self.sourceSelector.openFile(ffile, justloaded = 1)
                     
             
 def main():

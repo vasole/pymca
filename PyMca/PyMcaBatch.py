@@ -1180,8 +1180,8 @@ class McaBatchWindow(qt.QWidget):
     def plotImages(self,imagelist):
         if (sys.platform == 'win32') or (sys.platform == 'darwin'):
             filelist = " "
-            for file in imagelist:
-                filelist+=" %s" % file
+            for ffile in imagelist:
+                filelist+=" %s" % ffile
             try:
                 dirname = os.path.dirname(__file__)
             except:
@@ -1199,14 +1199,12 @@ class McaBatchWindow(qt.QWidget):
                 self.show()                
             else:
                 self.__viewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-                d = EdfFileLayer.EdfFileLayer()
-                self.__viewer.setData(d)
-                self.__viewer.show()
                 self.__viewer.setFileList(imagelist)
+                self.__viewer.show()
         else:
             filelist = " "
-            for file in imagelist:
-                filelist+=" %s" % file
+            for ffile in imagelist:
+                filelist+=" %s" % ffile
             try:
                 dirname = os.path.dirname(__file__)
             except:
