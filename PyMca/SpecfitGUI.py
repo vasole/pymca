@@ -300,7 +300,7 @@ class SpecfitGUI(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error on estimate")
+                msg.setText("Error on estimate: %s" % sys.exc_info()[1])
                 if QTVERSION < '4.0.0':msg.exec_loop()
                 else: msg.exec_()
                 return
@@ -329,7 +329,7 @@ class SpecfitGUI(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error on mcafit")
+                msg.setText("Error on mcafit: %s" % sys.exc_info()[1])
                 if QTVERSION < '4.0.0':msg.exec_loop()
                 else: msg.exec_()
                 return
@@ -432,8 +432,7 @@ class SpecfitGUI(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Sorry, Qt4 printing not implemented yet")
-            msg.exec_()
-            
+            msg.exec_()            
     
     def mcaevent(self,item):
         if int(item):

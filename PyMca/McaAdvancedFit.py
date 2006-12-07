@@ -1104,6 +1104,17 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.browsertext = qt.QTextBrowser(self.browser)
                 self.browsertext.setReadOnly(1)
+                screenWidth = qt.QDesktopWidget().width()
+                if screenWidth > 0:
+                    self.browsertext.setMinimumWidth(min(self.width(), int(0.5 * screenWidth)))
+                else:
+                    self.browsertext.setMinimumWidth(self.width())
+                screenHeight = qt.QDesktopWidget().height()
+                if screenHeight > 0:
+                    self.browsertext.setMinimumHeight(min(self.height(), int(0.5 * screenHeight)))
+                else:
+                    self.browsertext.setMinimumHeight(self.height())
+
             self.browser.layout.addWidget(self.browsertext)
         if QTVERSION < '4.0.0':
             self.browsertext.mimeSourceFactory().addFilePath(qt.QString(os.path.dirname(self.__lastreport)))
