@@ -832,11 +832,17 @@ class QtBlissGraph(qwt.QwtPlot):
         y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
         if self.__markermode:
             if self.__markermoving in self.markersdict.keys():
-                if QWTVERSION4:
-                    self.setMarkerXPos(self.__markermoving, x)
+                xmarker = self.markersdict[self.__markermoving]['xmarker']
+                if xmarker:
+                    if QWTVERSION4:
+                        self.setMarkerXPos(self.__markermoving, x)
+                    else:
+                        self.setMarkerXPos(self.markersdict[self.__markermoving]['marker'], x)
                 else:
-                    self.setMarkerXPos(self.markersdict[self.__markermoving]['marker'],
-                                                       x)
+                    if QWTVERSION4:
+                        self.setMarkerYPos(self.__markermoving, y)
+                    else:
+                        self.setMarkerYPos(self.markersdict[self.__markermoving]['marker'], y)
                 ddict ={}
                 ddict['event']    = "markerMoving"
                 ddict['marker']   = self.__markermoving
@@ -855,14 +861,25 @@ class QtBlissGraph(qwt.QwtPlot):
                     elif marker not in self.markersdict.keys():
                         print "Wrong Marker selection"
                     else:
+                        if not self.markersdict[marker].has_key('xmarker'):
+                            self.markersdict[marker]['xmarker'] = True
+                        else:
+                            xmarker = self.markersdict[marker]['xmarker']
                         if self.markersdict[marker]['followmouse']:
                             #self.canvas().setCursor(qt.QCursor(qt.QCursor.PointingHandCursor))
-                            if self.canvas().cursor().shape() != qt.QCursor.SizeHorCursor:
+                            if (self.canvas().cursor().shape() != qt.QCursor.SizeHorCursor) and \
+                               (self.canvas().cursor().shape() != qt.QCursor.SizeVerCursor):
                                 self.__oldcursor = self.canvas().cursor().shape()
-                            self.canvas().setCursor(qt.QCursor(qt.QCursor.SizeHorCursor))
+                            if xmarker:
+                                #for x marker
+                                self.canvas().setCursor(qt.QCursor(qt.QCursor.SizeHorCursor))
+                            else:
+                                #for y marker
+                                self.canvas().setCursor(qt.QCursor(qt.QCursor.SizeVerCursor))
                         else:
                             #the marker is selectable because we are in markermode
                             if (self.canvas().cursor().shape() != qt.QCursor.SizeHorCursor) and \
+                               (self.canvas().cursor().shape() != qt.QCursor.SizeVerCursor) and \
                                (self.canvas().cursor().shape() != qt.QCursor.PointingHandCursor):
                                 self.__oldcursor = self.canvas().cursor().shape()
                             self.canvas().setCursor(qt.QCursor(qt.QCursor.PointingHandCursor))
@@ -902,13 +919,24 @@ class QtBlissGraph(qwt.QwtPlot):
                         if marker not in self.markersdict.keys():
                             print "Wrong Marker selection"
                         else:
+                            if not self.markersdict[marker].has_key('xmarker'):
+                                self.markersdict[marker]['xmarker'] = True
+                            else:
+                                xmarker = self.markersdict[marker]['xmarker']
                             if self.markersdict[marker]['followmouse']:
                                 self.__markermoving = marker
                                 if  QWTVERSION4:
-                                    self.setMarkerXPos(marker, x)
+                                    if xmarker:
+                                        self.setMarkerXPos(marker, x)
+                                    else:
+                                        self.setMarkerYPos(marker, y)
                                 else:
-                                    self.setMarkerXPos(self.markersdict[marker]['marker'],
+                                    if xmarker:
+                                        self.setMarkerXPos(self.markersdict[marker]['marker'],
                                                        x)
+                                    else:
+                                        self.setMarkerYPos(self.markersdict[marker]['marker'],
+                                                       y)
                         self._zooming = 0
                                 
             if self._zooming:
@@ -1665,20 +1693,39 @@ class QtBlissGraph(qwt.QwtPlot):
             x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
             y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
             (marker, distance) = (None, None)
+            xmarker = True
             for key in self.markersdict.keys():
                 if marker is None:
                     marker   = key
-                    distance = abs(x - self.markersdict[key]['marker'].xValue())
+                    if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:
+                        #ymarker
+                        distance = abs(y - self.markersdict[key]['marker'].yValue())
+                        xmarker = False
+                    else:
+                        #xmarker
+                        distance = abs(x - self.markersdict[key]['marker'].xValue())
+                        xmarker = True
                 else:
-                    distancew = abs(x - self.markersdict[key]['marker'].xValue())
+                    if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:
+                        #ymarker
+                        distancew = abs(y - self.markersdict[key]['marker'].yValue())
+                        xmarker = False
+                    else:
+                        #xmarker
+                        distancew = abs(x - self.markersdict[key]['marker'].xValue())
+                        xmarker = True
                     if distancew < distance:
                         distance = distancew
                         marker   = key
             #this distance is in x coordenates
             #but I decide on distance in pixels ...
             if distance is not None:
-                x1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, xpixel+4)-x)/4.0
-                distance = distance / x1pixel
+                if xmarker:
+                    x1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, xpixel+4)-x)/4.0
+                    distance = distance / x1pixel
+                else:
+                    y1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, ypixel+4)-y)/4.0
+                    distance = distance / y1pixel
             return (marker, distance)
 
     def toggleCurve(self, keyorindex):
@@ -2085,6 +2132,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.markersdict[marker]={}
             self.markersdict[marker]['marker']      = mX
             self.markersdict[marker]['followmouse'] = 0
+        self.markersdict[marker]['xmarker'] = True
         if not QWTVERSION4:    mX.attach(self)
         return marker
 
@@ -2132,6 +2180,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.markersdict[marker]={}
             self.markersdict[marker]['marker']      = mX
             self.markersdict[marker]['followmouse'] = 0
+        self.markersdict[marker]['xmarker'] = False
         if not QWTVERSION4:    mX.attach(self)
         return marker
 
@@ -2701,11 +2750,13 @@ def make0():
         cSin[a] = demo.graph.newcurve('y = sin(x)'+a,x=x,y=y)
         cCos[a] = demo.graph.newcurve('y = cos(x)'+a,x=x,y=z)
     # insert a horizontal marker at y = 0
-    mY = demo.graph.insertLineMarker('y = 0', qwt.QwtPlot.yLeft)
-    demo.graph.setMarkerYPos(mY, 0.0)
+    mY = demo.graph.inserty1marker(0.0, 0.0, 'y = 0')
+    demo.graph.setmarkerfollowmouse(mY,True)
     # insert a vertical marker at x = 2 pi
-    mX = demo.graph.insertLineMarker('x = 2 pi', qwt.QwtPlot.xBottom)
-    demo.graph.setMarkerXPos(mX, 2*pi)
+    mX = demo.graph.insertx1marker(2*pi, 0.0, label='x = 2 pi')
+    demo.graph.setmarkerfollowmouse(mX,True)
+    demo.graph.enablemarkermode()
+    demo.graph.canvas().setMouseTracking(True)
     # replot
     #print dir(demo.graph)
     #print dir(demo.graph.curve)
@@ -2736,57 +2787,6 @@ def make0():
     demo.show()
     return demo
 
-
-def make():
-    demo = QtBlissGraphContainer()
-    demo.resize(500, 300)
-    # set axis titles
-    demo.graph.setAxisTitle(qwt.QwtPlot.xBottom, 'x -->')
-    demo.graph.setAxisTitle(qwt.QwtPlot.yLeft, 'y -->')
-    # insert a few curves
-    cSin={}
-    cCos={}
-    nplots=5
-    for i in range(nplots):
-        a=`i`
-        cSin[a] = demo.graph.insertCurve('y = sin(x)'+a)
-        cCos[a] = demo.graph.insertCurve('y = cos(x)'+a)
-    # set curve styles
-        demo.graph.setCurvePen(cSin[a], qt.QPen(qt.Qt.red))
-        demo.graph.setCurvePen(cCos[a], qt.QPen(qt.Qt.blue))
-    # calculate 3 NumPy arrays
-        x = arrayrange(0.0, 10.0, 0.1)
-        y = sin(x+(i/10.0) * 3.14)
-        z = cos(x+(i/10.0) * 3.14)
-    # copy the data
-        demo.graph.setCurveData(cSin[a], x, y)
-        demo.graph.setCurveData(cCos[a], x, z)
-    # insert a horizontal marker at y = 0
-    mY = demo.graph.insertLineMarker('y = 0', qwt.QwtPlot.yLeft)
-    demo.graph.setMarkerYPos(mY, 0.0)
-    # insert a vertical marker at x = 2 pi
-    mX = demo.graph.insertLineMarker('x = 2 pi', qwt.QwtPlot.xBottom)
-    demo.graph.setMarkerXPos(mX, 2*pi)
-    # replot
-    #print dir(demo.graph.curve)
-    #print dir(demo.graph.curve(cSin[a]))
-    print demo.graph.curve(cSin[a]).dataSize()
-    #first = 0
-    #last  = 0
-    #length,first,last = demo.graph.curve(cSin[a]).verifyRange(first,last)
-    #print length,first,last
-    
-    #how to retrieve the data
-    print demo.graph.curve(cSin[a]).x
-    if 0:
-        for i in range(demo.graph.curve(cSin[a]).dataSize()):
-            print demo.graph.curve(cSin[a]).x(i)
-    
-    demo.graph.replot()
-    
-    #demo.graph.show()
-    demo.show()
-    return demo
 
 def main(args):
     app = qt.QApplication(args)
