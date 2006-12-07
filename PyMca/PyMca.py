@@ -137,6 +137,8 @@ if __name__ == "__main__":
         splash.showMessage( 'PyMCA %s' % __version__, 
                 qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
                 qt.Qt.white)
+        if sys.plaform == "darwin":
+            qt.qApp.processEvents()
 
 import McaWindow
 import ScanWindow
@@ -172,7 +174,7 @@ if (sys.platform != 'win32') and (sys.platform != 'darwin'):
 """
 
 class PyMca(PyMcaMdi.PyMca):
-    def __init__(self, parent=None, name="PyMca", fl=None,**kw):
+    def __init__(self, parent=None, name="PyMCA", fl=None,**kw):
             if QTVERSION < '4.0.0':
                 if fl is None:qt.Qt.WDestructiveClose
                 PyMcaMdi.PyMca.__init__(self, parent, name, fl)
@@ -223,7 +225,7 @@ class PyMca(PyMcaMdi.PyMca):
                     #self.mcawindow.showMaximized()
             else:
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
-                self.mainTabWidget.setWindowTitle("Tab Widget")
+                self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcawindow = McaWindow.McaWidget()
                 self.scanwindow = ScanWindow.ScanWindow()
                 self.mainTabWidget.addTab(self.mcawindow, "MCA")
@@ -738,7 +740,7 @@ class PyMca(PyMcaMdi.PyMca):
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "All Files (*)"]
-        message = "Open ONE Batch result file or SEVERAL EDF files"
+        message = "Open ONE Batch result .dat file or SEVERAL EDF files"
         filelist = self.__getStackOfFiles(fileTypeList, message) 
         if not(len(filelist)): return
         filelist.sort()
