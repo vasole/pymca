@@ -1674,12 +1674,12 @@ class McaAdvancedFit(qt.QWidget):
         if self.lastInputDir is None:self.lastInputDir = os.getcwd()
         if QTVERSION < '4.0.0':
             outfile.setCaption("Output File Selection")
+            filterlist = 'Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt'
             if MATPLOTLIB:
-                filterlist = 'Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt'
                 filterlist += '\nGraphics EPS *.eps\nGraphics PNG *.png'
                 if not self.peaksSpectrumButton.isChecked():
                     filterlist += '\nB/WGraphics EPS *.eps\nB/WGraphics PNG *.png'
-                outfile.setFilters(filterlist)
+            outfile.setFilters(filterlist)
             outfile.setMode(outfile.AnyFile)
             outfile.setDir(self.lastInputDir)
             ret = outfile.exec_loop()
