@@ -335,7 +335,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def saveGraphImage(self, filename):
         format = filename[-3:].upper()
-        if 1:
+        if 0:
             #This is the whole image, not the zoomed one ...
             #A pity because it is the real thing
             if QTVERSION < '4.0.0':
@@ -368,7 +368,6 @@ class RGBCorrelatorGraph(qt.QWidget):
             return False
 
     def printGraph(self):
-        #instead of the canvas is better the image
         pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
