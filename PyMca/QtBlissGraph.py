@@ -326,16 +326,15 @@ else:
 class QtBlissGraph(qwt.QwtPlot):
     def __init__(self, *args,**kw):
         apply(qwt.QwtPlot.__init__, (self,) + args)
-        
         #font = self.parent().font()
         #font.setFamily(qt.QString('Helvetica'))
         #self.setFont(font)
-        if 1:
-            #I do not know the use of this ...
-            self.plotLayout().setMargin(0)
-            self.plotLayout().setCanvasMargin(0)
-            #if qt.qVersion() >= '3.0.0':
-                #self.plotLayout().setAlignCanvasToTicks(1)
+        self.plotLayout().setMargin(0)
+        self.plotLayout().setCanvasMargin(0)
+        if not QWTVERSION4:
+            self.setAutoReplot(False)
+            if QTVERSION > '4.0.0':
+                self.plotLayout().setAlignCanvasToScales(True)
         #self.setCanvasLineWidth(0)
         #self.setTitle('QtBlissGraph')
         self.setTitle('   ')

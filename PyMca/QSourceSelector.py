@@ -152,7 +152,6 @@ class QSourceSelector(qt.QWidget):
         ddict = {}
         ddict["event"] = "NewSourceSelected"
         if key in self.mapCombo.keys():
-            print self.mapCombo
             if self.mapCombo[key] == filename:
                 #Reloaded event
                 ddict["event"] = "SourceReloaded"
