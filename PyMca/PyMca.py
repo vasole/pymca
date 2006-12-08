@@ -215,7 +215,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.openMenu.addAction("PyMca Configuration", self.openSource)
                 self.openMenu.addAction("Data Source",
                              self.sourceWidget.sourceSelector._openFileSlot)
-                self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
+                #self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
 
             if QTVERSION > '4.0.0':
