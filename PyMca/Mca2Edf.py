@@ -554,7 +554,7 @@ def main():
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         w = Mca2EdfGUI(actions=1)
         if QTVERSION < '4.0.0':
-            app.setMainWidget(window)
+            app.setMainWidget(w)
             w.show()
             app.exec_loop()
         else:
