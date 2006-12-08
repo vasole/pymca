@@ -164,7 +164,11 @@ class ConfigDict(dict):
                 valkey.append(key)
 
         for key in valkey:
-            fp.write('%s = %s\n'%(key, dict[key]))
+            if type(dict[key])== Numeric.ArrayType:
+                fp.write('%s =' % key + ' [ '+string.join([str(val) for val in dict[key]], ' ')+' ]\n')
+            else:
+                fp.write('%s = %s\n'%(key, dict[key]))
+
         for key in listkey:
             fp.write('%s = '%key)
             list= []

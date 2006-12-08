@@ -29,28 +29,33 @@ import sys
 MATPLOTLIB = False
 if 'qt' not in sys.modules:
     try:
-        #If matplotlib is installed this module should be able
-        #to generate the HTML from the fitresult file without having Qt
-        #installed.
-        try:
-            from matplotlib.font_manager import FontProperties
-            from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-            from matplotlib.figure import Figure
-            MATPLOTLIB = True
-        except:
-            import PyQt4.Qt as qt
-            import QtBlissGraph
+        import PyQt4.Qt as qt
     except:
         import qt
-        import QtBlissGraph
-else:
+    #If matplotlib is installed this module should be able
+    #to generate the HTML from the fitresult file without having Qt
+    #installed.
     try:
+        #this is installation dependent I guess
+        from matplotlib import rcParams
+        rcParams['numerix'] = "numeric"
         from matplotlib.font_manager import FontProperties
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         from matplotlib.figure import Figure
         MATPLOTLIB = True
     except:
-        import qt
+        import QtBlissGraph
+else:
+    import qt
+    try:
+        #this is installation dependent I guess
+        from matplotlib import rcParams
+        rcParams['numerix'] = "numeric"
+        from matplotlib.font_manager import FontProperties
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
+        MATPLOTLIB = True
+    except:
         import QtBlissGraph
 
 import ConfigDict
