@@ -402,7 +402,16 @@ class McaAdvancedFit(qt.QWidget):
         config = {}
         config.update(self.mcafit.config)
         #config['fit']['use_limit'] = 1
-        dialog = FitParam.FitParamDialog(modal=1,fl=0, initdir=self.configDir)        
+        if self.__fitdone:
+            dialog = FitParam.FitParamDialog(modal=1,
+                                             fl=0,
+                                             initdir=self.configDir,
+                                             fitresult=self.dict['result'])  
+        else:
+            dialog = FitParam.FitParamDialog(modal=1,
+                                             fl=0,
+                                             initdir=self.configDir,
+                                             fitresult=None)
         dialog.setParameters(config)
         #dialog.fitparam.regionCheck.setDisabled(True)
         #dialog.fitparam.minSpin.setDisabled(True)

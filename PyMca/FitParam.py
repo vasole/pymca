@@ -839,7 +839,7 @@ class SectionFileWidget(qt.QWidget):
 
 class FitParamDialog(qt.QDialog):
     def __init__(self, parent=None, name="FitParam",
-                 modal=1, fl=0, initdir = None):
+                 modal=1, fl=0, initdir = None, fitresult=None):
         if qt.qVersion() < '4.0.0':
             qt.QDialog.__init__(self, parent, name, modal, fl)
             self.setCaption("PyMca - MCA Fit Parameters")
@@ -867,6 +867,13 @@ class FitParamDialog(qt.QDialog):
             #buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
             buts= qt.QGroupBox(self)
             buts.layout = qt.QHBoxLayout(buts)
+            if fitresult is not None:
+                loadfit = qt.QPushButton(buts)
+                loadfit.setText("Load From Fit")
+                loadfit.setToolTip("Take non linear parameters\nfrom last fit")
+                self.fitresult = fitresult
+            else:
+                loadfit = None
             load= qt.QPushButton(buts)
             load.setText("Load")
             save= qt.QPushButton(buts)
@@ -875,12 +882,15 @@ class FitParamDialog(qt.QDialog):
             reject.setText("Cancel")
             accept= qt.QPushButton(buts)
             accept.setText("OK")
+            if loadfit is not None: buts.layout.addWidget(loadfit)
             buts.layout.addWidget(load)
             buts.layout.addWidget(save)
             buts.layout.addWidget(reject)
             buts.layout.addWidget(accept)
         layout.addWidget(buts)
 
+        if loadfit is not None:
+            self.connect(loadfit, qt.SIGNAL("clicked()"), self.__loadFromFit)            
         self.connect(load, qt.SIGNAL("clicked()"), self.load)
         self.connect(save, qt.SIGNAL("clicked()"), self.save)
         self.connect(reject, qt.SIGNAL("clicked()"), self.reject)
@@ -946,6 +956,67 @@ class FitParamDialog(qt.QDialog):
             self.initDir = None
             return 0
 
+    def __loadFromFit(self):
+        """
+        Fill nonlinear parameters from last fit
+        """
+
+        #detector
+        zero = self.fitresult['fittedpar'][self.fitresult['parameters'].index('Zero')]
+        gain = self.fitresult['fittedpar'][self.fitresult['parameters'].index('Gain')]
+        noise= self.fitresult['fittedpar'][self.fitresult['parameters'].index('Noise')]
+        fano = self.fitresult['fittedpar'][self.fitresult['parameters'].index('Fano')]
+        sumf  = self.fitresult['fittedpar'][self.fitresult['parameters'].index('Sum')]
+
+        self.fitparam.zeroValue.setText("%.6g" % zero)
+        self.fitparam.gainValue.setText("%.6g" % gain)
+        self.fitparam.noiseValue.setText("%.6g" % noise)
+        self.fitparam.fanoValue.setText("%.6g" % fano)
+        self.fitparam.sumfacValue.setText("%.6g" % sumf)
+
+        #peak shape
+        hypermetflag = self.fitresult['config']['fit']['hypermetflag']
+        if hypermetflag > 1:
+            hypermetnames = ['ST AreaR', 'ST SlopeR',
+                             'LT AreaR', 'LT SlopeR',
+                             'STEP HeightR']
+            name = 'ST AreaR' 
+            if name in self.fitresult['parameters']:
+                value = self.fitresult['fittedpar'] \
+                        [self.fitresult['parameters'].index(name)]
+                self.fitparam.staValue.setText("%.6g" % value)
+
+            name = 'ST SlopeR' 
+            if name in self.fitresult['parameters']:
+                value = self.fitresult['fittedpar'] \
+                        [self.fitresult['parameters'].index(name)]
+                self.fitparam.stsValue.setText("%.6g" % value)
+
+            name = 'LT AreaR' 
+            if name in self.fitresult['parameters']:
+                value = self.fitresult['fittedpar'] \
+                        [self.fitresult['parameters'].index(name)]
+                self.fitparam.ltaValue.setText("%.6g" % value)
+
+            name = 'LT SlopeR' 
+            if name in self.fitresult['parameters']:
+                value = self.fitresult['fittedpar'] \
+                        [self.fitresult['parameters'].index(name)]
+                self.fitparam.ltsValue.setText("%.6g" % value)
+
+            name = 'STEP HeightR'
+            if name in self.fitresult['parameters']:
+                value = self.fitresult['fittedpar'] \
+                        [self.fitresult['parameters'].index(name)]
+                self.fitparam.shValue.setText("%.6g" % value)
+
+        text  = "If you do not use an exponential background,\n"
+        text += "you can now ask the program to perform a linear\n"
+        text += "fit, save the configuration, and you will be ready\n"
+        text += "for a speedy batch."
+        qt.QMessageBox.information(self,
+                                "Batch tip",
+                                text)
     def load(self):
         #diag= SectionFileDialog(self, "Load parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.ExistingFile)
         if qt.qVersion() < '4.0.0':
@@ -958,7 +1029,7 @@ class FitParamDialog(qt.QDialog):
                 sections= diag.getSections()
                 self.loadParameters(filename, sections)
         else:
-            if sys.platform != 'win32':
+            if sys.platform == 'darwin':
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.ExistingFiles)
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
