@@ -1126,7 +1126,11 @@ class McaAdvancedFit(qt.QWidget):
             #self.browsertext.mimeSourceFactory().addFilePath(qt.QString(dirname))
             self.browsertext.setSearchPaths([qt.QString(dirname)])
             #self.browsertext.setSource(qt.QUrl(qt.QString(basename)))
-            self.browsertext.insertHtml(text)
+            self.browsertext.clear()
+            if QTVERSION < '4.2.0':
+                self.browsertext.insertHtml(text)
+            else:
+                self.browsertext.setText(text)
         self.browsertext.show()
         self.showLastReport()
 
