@@ -1,3 +1,29 @@
+#/*##########################################################################
+# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
 """
 Demo example of generic access to data sources.
 
@@ -14,9 +40,9 @@ else:
     import qt
 QTVERSION = qt.qVersion()
 
+#import QSPSDataSource
 #import QSpecFileDataSource
 #import QEdfFileDataSource
-#import QSPSDataSource
 import SpecFileDataSource
 import EdfFileDataSource
 import QEdfFileWidget
@@ -27,14 +53,23 @@ if 0 and QTVERSION < '4.0.0':
 else:
     import QSpecFileWidget
 
-source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
-                 EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource}
-                 #,
-                 #QSPSDataSource.SOURCE_TYPE: QSPSDataSource.QSPSDataSource}
+if (sys.platform == "win32") or (sys.platform == "darwin"):
+    source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
+                     EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource}
 
-source_widgets = { SpecFileDataSource.SOURCE_TYPE: QSpecFileWidget.QSpecFileWidget,
-                   EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget}
+    source_widgets = { SpecFileDataSource.SOURCE_TYPE: QSpecFileWidget.QSpecFileWidget,
+                       EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget}
+else:
+    #import SpsDataSource
+    import QSpsDataSource
+    import QSpsWidget
+    source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
+                     EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource,
+                     QSpsDataSource.SOURCE_TYPE: QSpsDataSource.QSpsDataSource}
 
+    source_widgets = { SpecFileDataSource.SOURCE_TYPE: QSpecFileWidget.QSpecFileWidget,
+                       EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget,
+                       QSpsDataSource.SOURCE_TYPE: QSpsWidget.QSpsWidget}
 
 def getSourceType(sourceName0):
     if type(sourceName0) == type([]):
@@ -51,7 +86,7 @@ def getSourceType(sourceName0):
         else:
             return SpecFileDataSource.SOURCE_TYPE
     else:
-        return QSPSDataSource.SOURCE_TYPE
+        return QSpsDataSource.SOURCE_TYPE
 
 def QDataSource(name=None, source_type=None):
     if name is None:

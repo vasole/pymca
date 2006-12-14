@@ -1,3 +1,29 @@
+#/*##########################################################################
+# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
 from QSourceSelector import qt
 QTVERSION = qt.qVersion()
 import QSourceSelector
@@ -42,7 +68,7 @@ class QDispatcher(qt.QWidget):
                              self._removeSelectionSlot)                                                 
                 self.connect(self.selectorWidget[src_widget],
                              qt.SIGNAL("replaceSelection"),
-                             self._replaceSelectionSlot)                                                 
+                             self._replaceSelectionSlot)
         
         self.mainLayout.addWidget(self.sourceSelector)
         self.mainLayout.addWidget(self.tabWidget)
@@ -76,8 +102,14 @@ class QDispatcher(qt.QWidget):
                         #there is only one read out.
                         #I should create a weakref to it in order to be informed
                         #about its deletion.
-                        dataObject = source.getDataObject(sel['Key'],
+                        if source.sourceType != "SPS":
+                            dataObject = source.getDataObject(sel['Key'],
                                                       selection=sel['selection'])
+                        else:
+                            dataObject = source.getDataObject(sel['Key'],
+                                                      selection=sel['selection'], poll=False)
+                            dataObject.info['legend'] = sel['legend']
+                            source.addToPoller(dataObject)
                         ddict['dataobject'] = dataObject
                         if QTVERSION < '4.0.0':
                             self.emit(qt.PYSIGNAL(event), (ddict,))
@@ -133,6 +165,14 @@ class QDispatcher(qt.QWidget):
                 self.tabWidget.setCurrentPage(index)  
             else:
                 self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
+            if sourceType == "SPS":
+                if QTVERSION < '4.0.0':
+                    self.connect(source, qt.PYSIGNAL("updated"),
+                                        self._selectionUpdatedSlot)
+                else:                                                 
+                    self.connect(source, qt.SIGNAL("updated"),
+                                        self._selectionUpdatedSlot)
+
         elif ddict["event"] == "SourceSelected":
             found = 0
             for source in self.sourceList:
@@ -184,6 +224,18 @@ class QDispatcher(qt.QWidget):
             else:
                 self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
 
+    def _selectionUpdatedSlot(self, dict):
+        if DEBUG: print "_selectionUpdatedSlot(self, dict)",dict
+        sel_list = []
+        for objectReference in dict["id"]:
+            sel = {}
+            sel['SourceName'] = dict['SourceName']
+            sel['SourceType'] = dict['SourceType']
+            sel['Key']        = dict['Key']
+            sel['selection']  = objectReference.info['selection']
+            sel['legend']     = objectReference.info['legend']
+            sel_list.append(sel)
+        self._addSelectionSlot(sel_list)
 
 def test():
     app = qt.QApplication([])

@@ -1510,7 +1510,8 @@ class McaWidget(qt.QWidget):
                 curvesel={}
                 legend = sel['legend']
                 dataObject = sel['dataobject']
-                if dataObject.info["selectiontype"] != "1D": continue
+                if dataObject.info.has_key("selectiontype"):
+                    if dataObject.info["selectiontype"] != "1D": continue
                 if dataObject.x is None:
                     xhelp = None
                 else:
