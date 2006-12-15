@@ -228,6 +228,7 @@ class McaWidget(qt.QWidget):
         if qt.qVersion() < '4.0.0':
             tb.setState(qt.QButton.On)
         else:
+            tb.setChecked(True)
             tb.setDown(True)
         self.ytb = tb
         #x Autoscale
@@ -239,6 +240,7 @@ class McaWidget(qt.QWidget):
         if qt.qVersion() < '4.0.0':
             tb.setState(qt.QButton.On)
         else:
+            tb.setChecked(True)
             tb.setDown(True)
 
         # Logarithmic
@@ -319,17 +321,33 @@ class McaWidget(qt.QWidget):
         if self.graph.yAutoScale:
             self.graph.yAutoScale = False
             self.ytb.setDown(False)
+            if QTVERSION < '4.0.0':
+                self.ytb.setState(qt.QButton.Off)
+            else:
+                self.ytb.setChecked(False)
         else:
             self.graph.yAutoScale = True
             self.ytb.setDown(True)
+            if QTVERSION < '4.0.0':
+                self.ytb.setState(qt.QButton.On)
+            else:
+                self.ytb.setChecked(True)
             
     def _xAutoScaleToggle(self):
         if self.graph.xAutoScale:
             self.graph.xAutoScale = False
             self.xtb.setDown(False)
+            if QTVERSION < '4.0.0':
+                self.xtb.setState(qt.QButton.Off)
+            else:
+                self.xtb.setChecked(False)
         else:
             self.graph.xAutoScale = True
             self.xtb.setDown(True)
+            if QTVERSION < '4.0.0':
+                self.xtb.setState(qt.QButton.On)
+            else:
+                self.xtb.setChecked(True)
 
 
     def setDispatcher(self, w):

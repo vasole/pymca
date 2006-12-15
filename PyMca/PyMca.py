@@ -199,6 +199,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.initSourceBrowser()
             self.initSource()
+
             self.elementsInfo= None
             self.identifier  = None
             self.__batch     = None
@@ -216,7 +217,6 @@ class PyMca(PyMcaMdi.PyMca):
                 self.openMenu.addAction("Data Source",
                              self.sourceWidget.sourceSelector._openFileSlot)
                 #self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
-
 
             if QTVERSION > '4.0.0':
                 self.__useTabWidget = True
@@ -267,6 +267,20 @@ class PyMca(PyMcaMdi.PyMca):
                 if os.path.exists(defaultFileName):
                     currentConfigDict.read(defaultFileName)
                     self.setConfig(currentConfigDict)
+            if kw.has_key('spec') and kw.has_key('shm'):
+                if len(kw['shm']) >= 8:
+                    #if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
+                    if kw['shm'][0:8] in ['MCA_DATA']:
+                        #self.mcawindow.showMaximized()
+                        self.toggleSource()
+                        self._startupSelection(source=kw['spec'], 
+                                                selection=kw['shm'])
+                    else:
+                        self._startupSelection(source=kw['spec'], 
+                                                selection=None)
+                else:
+                     self._startupSelection(source=kw['spec'], 
+                                                selection=None)
 
     def connectDispatcher(self, viewer, dispatcher = None):
         #I could connect sourceWidget to myself and then
@@ -670,6 +684,31 @@ class PyMca(PyMcaMdi.PyMca):
     def initSource(self):
         self.sourceWidget = QDispatcher.QDispatcher(self.sourceFrame)
         self.sourceFrameLayout.addWidget(self.sourceWidget)
+
+    def _startupSelection(self, source, selection):
+        self.sourceWidget.sourceSelector.openSource(source)
+        if selection == "MCA_DATA":
+            ddict= {}
+            ddict['event'] = "addSelection"
+            ddict['SourceName'] = "armando5"
+            ddict['Key'] = selection
+            ddict["selection"] = {'cols': {'y': [1], 'x': [0]}}
+            ddict["legend"] = ddict['SourceName'] + ' MCA_DATA.c.1'
+            ddict["SourceType"] =  'SPS'
+            self.sourceWidget._addSelectionSlot([ddict])
+        else:
+            return
+        """ 
+        elif selection == "XIA_DATA":
+            ddict= {}
+            ddict['event'] = "addSelection"
+            ddict['SourceName'] = "armando5"
+            ddict['Key'] = selection
+            ddict["selection"] = {'rows': {'y': [1], 'x': [0]}}
+            ddict["legend"] = ddict['SourceName'] + ' XIA_DATA.c.1'
+            ddict["SourceType"] =  'SPS'
+            self.sourceWidget._addSelectionSlot([ddict])
+        """
 
     def menuToolsAboutToShow(self):
         if DEBUG:

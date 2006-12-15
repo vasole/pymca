@@ -1,4 +1,4 @@
-#/*##########################################################################
+###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
@@ -23,7 +23,7 @@
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
-#############################################################################*/
+#############################################################################
 from QSourceSelector import qt
 QTVERSION = qt.qVersion()
 import QSourceSelector
@@ -107,9 +107,14 @@ class QDispatcher(qt.QWidget):
                                                       selection=sel['selection'])
                         else:
                             dataObject = source.getDataObject(sel['Key'],
-                                                      selection=sel['selection'], poll=False)
-                            dataObject.info['legend'] = sel['legend']
-                            source.addToPoller(dataObject)
+                                                      selection=sel['selection'], 
+                                                      poll=False)
+                            if dataObject is not None:
+                                dataObject.info['legend'] = sel['legend']
+                                source.addToPoller(dataObject)
+                            else:
+                                #this may happen on deletion??
+                                return
                         ddict['dataobject'] = dataObject
                         if QTVERSION < '4.0.0':
                             self.emit(qt.PYSIGNAL(event), (ddict,))

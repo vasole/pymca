@@ -67,7 +67,9 @@ class SPSMcaArrayWidget(qt.QWidget):
             layout.addMultiCellWidget(self.title, 0, 0, 0, 1, qt.Qt.AlignCenter)
             layout.addRowSpacing(0, 40)
         else:
-            layout.addMultiCellWidget(self.title, 0, 0, 0, 1, qt.Qt.AlignCenter)
+            #layout.addMultiCellWidget(self.title, 0, 0, 0, 1, qt.Qt.AlignCenter)
+            layout.addWidget(self.title, 0, 0)
+            layout.setAlignment(self.title, qt.Qt.AlignCenter)
         self.setTitle(title)
         
     def setInfo(self, info):
@@ -115,7 +117,7 @@ class SPSXiaArrayWidget(qt.QWidget):
             layout.addWidget(self.detList, 1, 0)
         else:
             self.detList= qt.QListWidget(self)
-            #self.detList.setSelectionMode(qt.QListBox.Multi)
+            self.detList.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
 
             layout.addWidget(self.title, 0, 0)
             layout.setAlignment(self.title, qt.Qt.AlignCenter)
@@ -148,12 +150,12 @@ class SPSXiaArrayWidget(qt.QWidget):
     def getSelection(self):
         selection= []
         if QTVERSION < '4.0.0':
-            ylist= [ idx for idx in range(self.detList.count()) if self.detList.isSelected(idx) ]
+            ylist= [ (idx+1) for idx in range(self.detList.count()) if self.detList.isSelected(idx) ]
         else:
             itemlist = self.detList.selectedItems()
-            ylist = [int(str(item.text()).split()[-1])-1 for item in itemlist]
+            ylist = [int(str(item.text()).split()[-1]) for item in itemlist]
         for y in ylist:
-            selection.append({"plot":"rows", "x":0, "y":y+1})
+            selection.append({"plot":"XIA", "x":0, "y":y})
         return selection
  
 class SPS_StandardArray(qt.QWidget):
@@ -320,7 +322,8 @@ class QSpsWidget(qt.QWidget):
 
         self.connect(refreshButton, qt.SIGNAL("clicked()"), self.refreshSpecList)
         self.connect(closeButton,qt.SIGNAL("clicked()"), self.closeCurrentSpec)
-        self.connect(self.specCombo, qt.SIGNAL("activated(const QString &)"), self.refreshArrayList)
+        self.connect(self.specCombo, qt.SIGNAL("activated(const QString &)"), 
+                    self.refreshArrayList)
 
         # --- splitter
         self.splitter= qt.QSplitter(self)
@@ -409,7 +412,8 @@ class QSpsWidget(qt.QWidget):
             print "spec data = ",data
         self.data= data
         self.refreshSpecList()
-        self.refreshDataSelection()
+        self.refreshDataSelection()        
+        self.refreshArrayList(data.sourceName)
 
     def refreshSpecList(self):
         speclist= sps.getspeclist()
@@ -546,8 +550,14 @@ class QSpsWidget(qt.QWidget):
             if DEBUG:
                 print "Replace event"
             sel = {}
-            sel['SourceType'] = SOURCE_TYPE            
+            sel['SourceType'] = SOURCE_TYPE
+            sellistsignal = []
             for selection in selkeys:
+                selsignal = {}
+                selsignal['SourceType'] = self.data.sourceType
+                selsignal['SourceName'] = self.data.sourceName
+                selsignal['selection'] = None
+                selsignal['Key'] = selection['Key']
                 if not sel.has_key('SourceName'):
                     sel['SourceName'] = selection['SourceName']
                 arrayname = selection['Key']
@@ -556,18 +566,53 @@ class QSpsWidget(qt.QWidget):
                 if not sel.has_key(arrayname):
                     sel[arrayname] = {'rows':[],'cols':[]}
                 if selection['plot'] == 'cols':
+                     selsignal["selection"] = {"cols":{}}
+                     selsignal["selection"]["cols"] = {}
+                     selsignal["selection"]["cols"]["x"] = [selection['x']]
+                     selsignal["selection"]["cols"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        ".c.%d" % int(selection['y'])
                      sel[arrayname]['cols'].append({'x':selection['x'],'y':selection['y']})
-                if selection['plot'] == 'rows':
+                elif selection['plot'] == 'rows':
                      sel[arrayname]['rows'].append({'x':selection['x'],'y':selection['y']})                              
-                """
-                if selection['plot'] == 0:
-                     sel[arrayname]['mca'].append({'x':selection['x'],'y':selection['y']})
-                """                              
+                     selsignal["selection"] = {"rows":{}}
+                     selsignal["selection"]["rows"] = {}
+                     selsignal["selection"]["rows"]["x"] = [selection['x']]
+                     selsignal["selection"]["rows"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        ".r.%d" % int(selection['y'])
+                elif selection['plot'] == 'XIA':
+                     sel[arrayname]['rows'].append({'x':selection['x'],
+                                            'y':selection['y']})                              
+                     #selsignal["Key"] += ".r.%d" % int(selection['y'])
+                     selsignal["selection"] = {"rows":{}, "XIA":True}
+                     selsignal["selection"]["rows"] = {}
+                     selsignal["selection"]["rows"]["x"] = [selection['x']]
+                     selsignal["selection"]["rows"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        " #%02d" % int(selection['y'])
+
+                sellistsignal.append(selsignal)
             self.setSelected([sel],reset=1)
             if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("replaceSelection"), ([sel],))
+                self.emit(qt.PYSIGNAL("replaceSelection"), (sellistsignal,))
             else:
-                self.emit(qt.SIGNAL("replaceSelection"), ([sel]))
+                self.emit(qt.SIGNAL("replaceSelection"), sellistsignal)
 
     def __addClicked(self):
         if DEBUG:
@@ -595,7 +640,22 @@ class QSpsWidget(qt.QWidget):
                     sel['Key'] = selection['Key']
                 if not sel.has_key(arrayname):
                     sel[arrayname] = {'rows':[],'cols':[]}
-                if selection['plot'] == 'cols':
+                if selection['plot'] == 'XIA':
+                     sel[arrayname]['rows'].append({'x':selection['x'],
+                                            'y':selection['y']})                              
+                     #selsignal["Key"] += ".r.%d" % int(selection['y'])
+                     selsignal["selection"] = {"rows":{}, "XIA":True}
+                     selsignal["selection"]["rows"] = {}
+                     selsignal["selection"]["rows"]["x"] = [selection['x']]
+                     selsignal["selection"]["rows"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        " #%02d" % int(selection['y'])
+                elif selection['plot'] == 'cols':
                      sel[arrayname]['cols'].append({'x':selection['x'],
                                                     'y':selection['y']})
                      #selsignal["Key"] += ".c.%d" % int(selection['y'])
@@ -659,7 +719,13 @@ class QSpsWidget(qt.QWidget):
                 print "Remove Event"
                 print "self.selection before = ",self.selection
             returnedselection=[]
+            sellistsignal = []           
             for selection in selkeys:
+                selsignal = {}
+                selsignal['SourceType'] = self.data.sourceType
+                selsignal['SourceName'] = self.data.sourceName
+                selsignal['selection'] = None
+                selsignal['Key'] = selection['Key']
                 sel = {}
                 sel['SourceName'] = selection['SourceName']
                 sel['SourceType'] = SOURCE_TYPE            
@@ -668,8 +734,47 @@ class QSpsWidget(qt.QWidget):
                 sel[arrayname] = {'rows':[],'cols':[]}
                 if selection['plot'] == 'cols':
                      sel[arrayname]['cols'].append({'x':selection['x'],'y':selection['y']})
-                if selection['plot'] == 'rows':
+                     selsignal["selection"] = {"cols":{}}
+                     selsignal["selection"]["cols"] = {}
+                     selsignal["selection"]["cols"]["x"] = [selection['x']]
+                     selsignal["selection"]["cols"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        ".c.%d" % int(selection['y'])
+                elif selection['plot'] == 'rows':
                      sel[arrayname]['rows'].append({'x':selection['x'],'y':selection['y']})
+                     selsignal["selection"] = {"rows":{}}
+                     selsignal["selection"]["rows"] = {}
+                     selsignal["selection"]["rows"]["x"] = [selection['x']]
+                     selsignal["selection"]["rows"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        ".r.%d" % int(selection['y'])
+                elif selection['plot'] == 'XIA':
+                     sel[arrayname]['rows'].append({'x':selection['x'],
+                                            'y':selection['y']})                              
+                     #selsignal["Key"] += ".r.%d" % int(selection['y'])
+                     selsignal["selection"] = {"rows":{}, "XIA":True}
+                     selsignal["selection"]["rows"] = {}
+                     selsignal["selection"]["rows"]["x"] = [selection['x']]
+                     selsignal["selection"]["rows"]["y"] = [selection['y']]
+                     if type(self.data.sourceName) == type(''):
+                        sname = [self.data.sourceName]
+                     else:
+                        sname = self.data.sourceName
+                     selsignal["legend"] = sname[0] +\
+                                        " "+selsignal['Key']+\
+                                        " #%02d" % int(selection['y'])
+
+                sellistsignal.append(selsignal)
                 returnedselection.append(sel)
                 if self.selection is not None:
                     if DEBUG:
@@ -698,9 +803,9 @@ class QSpsWidget(qt.QWidget):
                                 seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                 self.setSelected([seln],reset=0)
             if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("removeSelection"), (returnedselection,))
+                self.emit(qt.PYSIGNAL("removeSelection"), (sellistsignal,))
             else:
-                self.emit(qt.SIGNAL("removeSelection"), (returnedselection))
+                self.emit(qt.SIGNAL("removeSelection"), sellistsignal)
             
     def removeSelection(self,selection):
         if type(selection) != type([]):

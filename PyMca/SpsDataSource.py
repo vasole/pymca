@@ -1,4 +1,4 @@
-#/*##########################################################################
+###########################################################################
 # Copyright (C) 2004-2006 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
@@ -23,7 +23,7 @@
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
-#############################################################################*/
+#############################################################################
 import DataObject
 import types
 import copy
@@ -87,6 +87,13 @@ class SpsDataSource:
                 data.data=sps.getdata (self.name,key)
                 if nolist:
                     if selection is not None:
+                        if (key in ["XIA_DATA"]) and selection.has_key("XIA"):
+                            if selection["XIA"]:
+                                if data.info.has_key('Detectors'):
+                                    for i in range(len(selection['rows']['y'])):
+                                        selection['rows']['y'][i] = \
+                                            data.info['Detectors'][selection['rows']['y'][i]]
+                                    del selection['XIA']
                         return data.select(selection)
                     else:
                         return data
