@@ -145,7 +145,12 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
 {
      double  *data  = NULL;
      long     headersize;
-
+     int                  old_fashion;
+     static char*         last_from = NULL;
+     static char*         last_pos = NULL;
+     static long          last_number = 0;
+     long int             scanno = 0;
+     static long int last_scanno = 0;
      char *ptr,
           *from,
           *to;
@@ -164,34 +169,16 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
      long    nb_lines,
              nb_pnts;
 
-     nb_mca     = SfNoMca(sf,index,error);
-
-     
-     if (nb_mca == 0 || nb_mca == -1) {
-          *retdata = (double *) NULL;
-           return(-1);
-     }
-    /* 
-     * try to guess number of points.
-     * otherwise use default initsize
-     */
-     nb_lines   = SfHeader(sf,index,"@CHANN",&retline,error);
-
-     if (nb_lines > 0) {
-        strptr = retline[0] + 8; 
-        sscanf(strptr,"%ld%*s",&nb_pnts);
-        initsize = nb_pnts;
-        /*free(retline);*/
-        freeArrNZ((void ***) &retline,nb_lines);
-     } 
 
      headersize = ((SpecScan *)sf->current->contents)->data_offset
                 - ((SpecScan *)sf->current->contents)->offset;
+                
+     scanno = ((SpecScan *)sf->current->contents)->scan_no;
 
     /*
      *  check that mca number is available
      */
-    if (nb_mca == 0 || number > nb_mca || number < 1) {
+    if (nb_mca == 0 || number < 1) {
         *error = SF_ERR_MCA_NOT_FOUND;
         *retdata = (double *)NULL;
          return(-1);
@@ -204,19 +191,41 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
      from = sf->scanbuffer + headersize;
      to   = sf->scanbuffer + ((SpecScan *)sf->current->contents)->size;
 
+     old_fashion = 1;
+     if (last_scanno == scanno)
+     {
+         if (last_from == from)
+         {
+            /* same scan as before */
+            if (number > last_number)
+            {
+                spect_no = last_number;
+                old_fashion = 0;
+            }
+         }
+    }
+    if (old_fashion)
+    {
+        last_scanno = scanno;  
+	    last_from = from;
+        spect_no   = 0;
+        last_pos  = from;
+    }
      /*
       * go and find the beginning of spectrum 
       */
-     ptr = from;
+     ptr = last_pos;
   
      if ( *ptr == '@' ) {
          spect_no++;
          ptr++; 
+         last_pos = ptr;
      } 
 
      while ( spect_no != number  && ptr < to ) {
             if (*ptr == '@') spect_no++;
             ptr++;
+            last_pos = ptr;
      } 
      ptr++;
 
@@ -225,7 +234,7 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
         *retdata = (double *)NULL;
          return(-1);
      }
-
+     last_number = spect_no;
     /*
      * Calculate size and book memory
      */ 

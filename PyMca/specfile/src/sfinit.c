@@ -353,10 +353,17 @@ SfClose( SpecFile *sf )
 	  free( (ObjectList *)ptr );
      }     
 
+     free ((char *)sf->sfname);
+     if (sf->scanbuffer != NULL)
+        free ((char *)sf->scanbuffer);
+
+     if (sf->filebuffer != NULL)
+        free ((char *)sf->filebuffer);
+
      if( close(sf->fd) ) {
 	  return( -1 ) ;
      }
-     free ((char *)sf->sfname);
+
      free (  sf );
      sf    = (SpecFile *)NULL;
 
