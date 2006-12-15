@@ -404,7 +404,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.plotROIImage(update = False)
                 self.plotStackImage(update = False)
 
-    def setStack(self, stack):
+    def setStack(self, stack, mcaindex=1):
         #stack.data is an XYZ array
         self.stack = stack
 
@@ -422,12 +422,15 @@ class QEDFStackWidget(qt.QWidget):
         #for the time being I deduce the MCA
         shape = self.stack.data.shape
 
-        #guess the MCA
-        imax = 0
-        for i in range(len(shape)):
-            if shape[i] > shape[imax]:
-                imax = i
-        self.mcaIndex = imax
+        if 0:
+            #guess the MCA
+            imax = 0
+            for i in range(len(shape)):
+                if shape[i] > shape[imax]:
+                    imax = i
+            self.mcaIndex = imax
+        else:
+            self.mcaIndex = mcaindex
         
         #original image
         self.__stackImageData = Numeric.sum(stack.data, self.mcaIndex)
