@@ -1125,6 +1125,12 @@ class McaAdvancedFit(qt.QWidget):
                     self.browsertext.setMinimumHeight(self.height())
 
             self.browser.layout.addWidget(self.browsertext)
+        else:
+            if QTVERSION < '4.0.0':
+                self.browser.setCaption(qt.QString(self.__lastreport))
+            else:
+                self.browser.setWindowTitle(qt.QString(self.__lastreport))
+
         if QTVERSION < '4.0.0':
             self.browsertext.mimeSourceFactory().addFilePath(qt.QString(os.path.dirname(self.__lastreport)))
             self.browsertext.setText(text)
