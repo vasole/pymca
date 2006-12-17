@@ -874,10 +874,10 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
         if self.pleasePause:self.__pauseMethod()
         
     def __pauseMethod(self):
-        self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
         while(self.pleasePause):
             time.sleep(1)
-        self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
             
 
 class McaBatchWindow(qt.QWidget):
