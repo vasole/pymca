@@ -76,10 +76,17 @@ class McaTheory:
         self.laststripconstant = None
         self.laststripiterations = None
         self.laststripwidth = None
+        self.disableOptimizedLinearFit()
         self.__configure()
         #incompatible with multiple energies 
         #Elements.registerUpdate(self._updateCallback)
 
+    def enableOptimizedLinearFit(self):
+        self._batchFlag = True
+
+    def disableOptimizedLinearFit(self):
+        self._batchFlag = False
+        self.linearMatrix = None
             
     def configure(self,newdict=None):
         if newdict is None:return copy.deepcopy(self.config)
@@ -94,6 +101,7 @@ class McaTheory:
         #self.__configure()
         
     def __configure(self):
+        self.linearMatrix = None
         #multilayer key
         self.config['multilayer'] = self.config.get('multilayer',{})
         #update Elements material information
@@ -896,8 +904,151 @@ class McaTheory:
             self.laststripwidth      = self.config['fit']['stripwidth']
             self.laststripconstant   = self.config['fit']['stripconstant'] 
             self.laststripiterations = self.config['fit']['stripiterations'] 
-            
-    
+
+    def getPeakMatrixContribution(self,param0,t0=None,hypermet=None,
+                                  continuum=None,summing=None):
+        """
+        For the time being a huge copy paste from mcatheory
+        """
+        if continuum is None:
+            continuum = self.__CONTINUUM
+        if hypermet is None:
+            hypermet = self.__HYPERMET
+        if summing is None:
+            summing  = self.__SUM
+        param= Numeric.array(param0)
+        #param= Numeric.ones(param.shape, Numeric.Float)
+        if t0 is None:t0 = self.xdata
+        x    = Numeric.array(t0)
+        matrix = Numeric.zeros((len(x),len(param)-self.NGLOBAL)).astype(Numeric.Float)
+
+        
+        zero = param[0]
+        gain = param[1]
+        energy=zero + gain * x
+        #print energy
+        noise= param[2] * param[2]
+        fano = param[3] * 2.3548*2.3548*0.00385
+        #t=time.time()
+        PEAKS0 = self.PEAKS0
+        PEAKS0ESCAPE = self.PEAKS0ESCAPE
+        PEAKSW = self.PEAKSW
+        PARAMETERS = self.PARAMETERS
+        FASTER = 0
+        for i in range(len(param[self.NGLOBAL:])):
+            result = 0 * energy
+            if self.ESCAPE:
+                #area = param[NGLOBAL+i]
+                (r,c) = Numeric.shape(PEAKS0[i])
+                PEAKSW[i][0:r,0] = PEAKS0[i][:,0] * 1 * gain
+                PEAKSW[i][0:r,1] = PEAKS0[i][:,1] * 1.0
+                PEAKSW[i][0:r,2] = Numeric.sqrt(noise + PEAKS0[i][:,1] * fano)
+                #escape
+                if OLDESCAPE:
+                    PEAKSW[i][r:,0] = PEAKSW[i][0:r,0] * PEAKS0[i][:,3]
+                    PEAKSW[i][r:,1] = PEAKS0[i][:,1] - self.config['detector']['detene']
+                    PEAKSW[i][r:,2] = Numeric.sqrt(noise + \
+                                        (PEAKSW[i][r:,1]>0) * PEAKSW[i][r:,1] * fano)
+                else:
+                    ii=0
+                    j=0
+                    for esc_group in PEAKS0ESCAPE[i]:
+                        for esc_line in esc_group:
+                            esc_ene  = esc_line[0] * 1.0
+                            esc_rate = esc_line[1]
+                            PEAKSW[i][j+r,0] =  PEAKSW[i][ii,0] * esc_rate
+                            PEAKSW[i][j+r,1] =  esc_ene
+                            j = j + 1
+                        ii = ii + 1   
+                    PEAKSW[i][r:, 2] = Numeric.sqrt(noise + \
+                                    (PEAKSW[i][r:,1]>0) * PEAKSW[i][r:,1] * fano)
+                (rw,cw) = Numeric.shape(PEAKSW[i])
+                if 0 and self.PARAMETERS[self.NGLOBAL+i] =='Fe K':
+                  for ii in range(rw):
+                    if ii < r:
+                        print self.PARAMETERS[self.NGLOBAL+i],"PEAK ",ii,PEAKSW[i][ii]
+                    else:
+                        print self.PARAMETERS[self.NGLOBAL+i],"PEAKesc ",ii,PEAKSW[i][ii]
+                #print PARAMETERS[self.NGLOBAL+i]
+                #print PEAKSW[i][:,1]
+                #print PEAKS0ESCAPE[i]
+                #for j in range(PEAKSW[i].shape[0]):
+                #    print "H = ", PEAKSW[i][j*r,0],"E = ",PEAKSW[i][j*r,1]
+                     
+                #if HYPERMET:
+                if hypermet:
+                    PEAKSW[i] [0:r,3] = param[PARAMETERS.index('ST AreaR')]
+                    PEAKSW[i] [:,4] = param[PARAMETERS.index('ST SlopeR')]
+                    PEAKSW[i] [0:r,5] = param[PARAMETERS.index('LT AreaR')]
+                    PEAKSW[i] [:,6] = param[PARAMETERS.index('LT SlopeR')]
+                    PEAKSW[i] [0:r,7] = param[PARAMETERS.index('STEP HeightR')]
+                    #neglect tails in escape peaks
+                    PEAKSW[i] [r:,3] = 0.0 
+                    PEAKSW[i] [r:,5] = 0.0 
+                    PEAKSW[i] [r:,7] = 0.0 
+                if not FASTER:
+                    #if HYPERMET:
+                    if hypermet:
+                        if i == 0:
+                            result = SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)
+                        else:
+                            result += SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)            
+                    else:
+                        if i == 0:
+                            result = SpecfitFuns.agauss(PEAKSW[i],energy)
+                        else:
+                            result += SpecfitFuns.agauss(PEAKSW[i],energy)            
+            else:
+                area = param[self.NGLOBAL+i]
+                PEAKSW[i][:,0] = PEAKS0[i][:,0] * param[self.NGLOBAL+i] * gain
+                PEAKSW[i][:,1] = PEAKS0[i][:,1] * 1.0
+                PEAKSW[i][:,2] = Numeric.sqrt(noise + PEAKS0[i][:,1] * fano)
+                if hypermet:
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('ST AreaR')]
+                    PEAKSW[i] [:,4] = param[PARAMETERS.index('ST SlopeR')]
+                    PEAKSW[i] [:,5] = param[PARAMETERS.index('LT AreaR')]
+                    PEAKSW[i] [:,6] = param[PARAMETERS.index('LT SlopeR')]
+                    PEAKSW[i] [:,7] = param[PARAMETERS.index('STEP HeightR')]
+                if not FASTER:
+                    if hypermet:
+                        if i == 0:
+                            result = SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)
+                        else:
+                            result += SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)            
+                    else:
+                        if i == 0:
+                            result = SpecfitFuns.agauss(PEAKSW[i],energy)
+                        else:
+                            result += SpecfitFuns.agauss(PEAKSW[i],energy)
+            #print "shape = ",result.shape
+            #print "matrix = ",matrix.shape
+            matrix[:,i] = result[:,0]
+        return matrix
+
+    def linearMcaTheory(self,param0,t0,hypermet=None,
+                        continuum=None,summing=None):
+        if continuum is None:
+            continuum = self.__CONTINUUM
+        if hypermet is None:
+            hypermet = self.__HYPERMET
+        if summing is None:
+            summing  = self.__SUM
+        param= Numeric.array(param0)
+        x    = Numeric.array(t0)
+        zero = param[0]
+        gain = param[1]
+        #the loop in mcatheory is replaced by this single line
+        if len(self.PEAKSW[:]):
+            result = Numeric.sum(param[self.NGLOBAL:] * self.linearMatrix, 1)
+        else:
+            result = 0.0 * x
+        if continuum:
+            result += self.continuum(param,x)
+        if summing:
+            xmin=int(x[0])
+            return result+param[4]*SpecfitFuns.pileup(result, xmin, zero, gain)
+        else:
+            return result
 
     def mcatheory(self,param0,t0,hypermet=None,continuum=None,summing=None):
         if continuum is None:
@@ -1084,6 +1235,45 @@ class McaTheory:
             f2 = self.mcatheory(newpar, x)
             return (f1-f2) / (2.0 * delta)
 
+    def linearMcaTheoryDerivative(self,param0,index,t0):
+        NGLOBAL = self.NGLOBAL
+        if index > NGLOBAL-1:
+             return self.linearMatrix[:,index-NGLOBAL]
+        PARAMETERS = self.PARAMETERS
+        if self.__CONTINUUM and (PARAMETERS[index] == 'Constant'):
+            return Numeric.ones(len(t0)).astype(Numeric.Float)
+        elif self.__CONTINUUM and (PARAMETERS[index] == '1st Order'):
+            return Numeric.array(t0).astype(Numeric.Float)
+        elif self.__CONTINUUM and (PARAMETERS[index] == '2nd Order'):
+            a = Numeric.array(t0).astype(Numeric.Float)
+            return a*a
+        elif (self.__CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial')) and \
+             (PARAMETERS[index] == ( 'A%d' % (index-PARAMETERS.index('Sum')-1))):
+            param=Numeric.array(param0)
+            x=Numeric.array(t0)
+            zero = param[0]
+            gain = param[1] * 1.0
+            energy=zero + gain * x
+            energy -= Numeric.sum(energy)/len(energy)
+            return pow(energy,index-PARAMETERS.index('Sum')-1) 
+        elif self.__CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial') and \
+            PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
+            text  = "Linear Least-Squares Fit incompatible\n"
+            text += "with Exponential Background"
+            raise "ValueError",text
+        else:
+            #I guess I will not arrive here
+            #numerical derivative
+            #print "index = ",index
+            x=Numeric.array(t0)
+            delta = (param0[index] + Numeric.equal(param0[index],0.0)) * 0.00001
+            newpar = param0.__copy__()
+            newpar[index] = param0[index] + delta
+            f1 = self.linearMcaTheory(newpar, x)
+            newpar[index] = param0[index] - delta
+            f2 = self.linearMcaTheory(newpar, x)
+            #print "f1,f2,delta = ",f1,f2,delta
+            return (f1-f2) / (2.0 * delta)
 
     def anal_deriv(self,param0,index,t0):
         NGLOBAL = self.NGLOBAL
@@ -1476,13 +1666,27 @@ class McaTheory:
                     #none of the escape peaks falls into the fitting region
                     newpar[i+NGLOBAL] = 0.0
                     codes[0,i+NGLOBAL]= Gefit.CFIXED
+        else:
+            if self._batchFlag and self.linearMatrix is None:
+                    self.linearMatrix = self.getPeakMatrixContribution(newpar)
         return newpar,codes
     
     def startfit(self,digest=0, linear=None):
         if linear is None:
             linear = self.config['fit'].get("linearfitflag", 0)
-            
-        fitresult =  Gefit.LeastSquaresFit(self.mcatheory,
+        
+        if linear and self._batchFlag and (self.linearMatrix is not None):
+            fitresult =  Gefit.LeastSquaresFit(self.linearMcaTheory,
+                                           self.parameters,
+                                           self.datatofit,
+                                           constrains=self.codes,
+                                           weightflag=1,
+                                           maxiter=self.MAXITER,
+                                    model_deriv=self.linearMcaTheoryDerivative,
+                                           deltachi=self.config['fit']['deltachi'],
+                                           fulloutput=1, linear=linear)    
+        else:
+            fitresult =  Gefit.LeastSquaresFit(self.mcatheory,
                                            self.parameters,
                                            self.datatofit,
                                            constrains=self.codes,
@@ -1502,6 +1706,33 @@ class McaTheory:
             return fitresult, self.digestresult()
         else:
             return fitresult
+
+    def imagingDigestResult(self):
+        """
+        minimalist dictionnary for imaging purposes
+        """
+        i = 0
+        result = {}
+        result['groups'] = []
+        result["chisq"] = self.chisq
+        n= self.NGLOBAL
+        for group in self.PARAMETERS[n:]:
+            fitarea   = self.fittedpar[n+i]
+            sigmaarea = self.sigmapar[n+i]
+            [ele, group0] = string.split(group)
+            result['groups'].append(group)
+            result[group]     = {}            
+            result[group]['peaks']    = self.PEAKS0NAMES[i]
+            if self.__HYPERMET:
+                result[group]['fitarea']  = self.fittedpar[n+i] * \
+                                    (1.0 + self.fittedpar[self.PARAMETERS.index('ST AreaR')])
+            else:
+                result[group]['fitarea']  = self.fittedpar[n+i]
+            result[group]['sigmaarea'] = sigmaarea
+            i += 1
+        return result
+
+
 
     def digestresult(self,outfile=None, info=None):
         param = self.fittedpar

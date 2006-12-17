@@ -129,6 +129,7 @@ class McaAdvancedFitBatch:
                 if self.__configList is not None:
                     if i != 0:
                         self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
+            self.mcafit.enableOptimizedLinearFit()
             inputfile   = self._filelist[i]
             self.__row += 1
             self.onNewFile(inputfile, self._filelist)
@@ -391,7 +392,11 @@ class McaAdvancedFitBatch:
                     self.listfile.write(',\n'+outfile)
             else:
                 if not useExistingResult:
-                    if result is None:result = self.mcafit.digestresult()
+                    if 0:
+                        #this is very slow and not needed just for imaging
+                        if result is None:result = self.mcafit.digestresult()
+                    else:
+                        if result is None:result = self.mcafit.imagingDigestResult()
 
             #IMAGES
             if self.fitImages:
