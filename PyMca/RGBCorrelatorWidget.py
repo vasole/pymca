@@ -31,6 +31,9 @@ import RGBCorrelatorSlider
 import RGBCorrelatorTable
 import Numeric
 import spslut
+from Icons import IconDict
+import ArraySave
+
 qt = RGBCorrelatorSlider.qt
 
 QTVERSION = qt.qVersion()
@@ -40,14 +43,20 @@ class RGBCorrelatorWidget(qt.QWidget):
     def __init__(self, parent = None, bgrx = True):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(11)
-        self.mainLayout.setSpacing(6)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(4)
         self.labelWidget = qt.QWidget(self)
         self.labelWidget.mainLayout = qt.QGridLayout(self.labelWidget)
         self.labelWidget.mainLayout.setMargin(0)
         self.labelWidget.mainLayout.setSpacing(0)
         alignment = qt.Qt.AlignVCenter | qt.Qt.AlignCenter
-        label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
+        hbox = qt.QWidget(self.labelWidget)
+        hbox.mainLayout = qt.QHBoxLayout(hbox)
+        hbox.mainLayout.setMargin(0)
+        self.saveButton = qt.QToolButton(hbox)
+        self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
+        label1 = MyQLabel(hbox, color = qt.Qt.black)
         label1.setAlignment(alignment)
         label1.setText("Image Size")
         self.__sizeLabel = MyQLabel(self.labelWidget,
@@ -61,7 +70,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__imageResizeButton = qt.QPushButton(self.labelWidget)
         self.__imageResizeButton.setText("Resize")
 
-        self.labelWidget.mainLayout.addWidget(label1, 0, 0)
+        hbox.mainLayout.addWidget(self.saveButton)
+        hbox.mainLayout.addWidget(label1)
+        self.labelWidget.mainLayout.addWidget(hbox, 0, 0)
         self.labelWidget.mainLayout.addWidget(self.__sizeLabel, 0, 1)
         
         #self.labelWidget.mainLayout.addWidget(self.__rowLineEdit, 1, 0)
@@ -98,7 +109,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__redImage = None
         self.__greenImage = None
         self.__blueImage = None
-        
+        self.outputDir   = None
+
+        self.connect(self.saveButton,
+                     qt.SIGNAL("clicked()"),
+                     self.saveImageList)
+
         self.connect(self.__imageResizeButton,
                      qt.SIGNAL("clicked()"),
                      self._imageResizeSlot)
@@ -427,6 +443,42 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def update(self):
         self.__recolor()
+
+    def getOutputFileName(self):
+        initdir = os.path.curdir
+        if self.outputDir is not None:
+            if os.path.exists(self.outputDir):
+                initdir = self.outputDir
+        filedialog = qt.QFileDialog(self)
+        filedialog.setFileMode(filedialog.AnyFile)
+        filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
+        filename = filedialog.getSaveFileName(
+                    self,
+                    "Enter ASCII output dat file",
+                    initdir,
+                    "ASCII dat files (*.dat)\nAll Files (*)")
+        if len(filename):
+            filename = str(filename)
+            self.outputDir = os.path.dirname(filename)
+            if len(filename) < 4:
+                filename = filename+".dat"
+            elif filename[-4:] != ".dat":
+                filename = filename+".dat"
+            return filename
+        return ""
+        
+
+    def saveImageList(self, filename = None):
+        if filename is None:
+            filename = self.getOutputFileName()
+            if not len(filename):return
+        datalist = []
+        labels = []
+        for label in self._imageList:
+            datalist.append(self._imageDict[label]['image'])
+            labels.append(label)
+        ArraySave.save2DArrayListAsASCII(datalist, filename, labels)
+        
 
     """
     #This was for debugging

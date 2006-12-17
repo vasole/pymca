@@ -79,6 +79,8 @@ class QEDFStackWidget(qt.QWidget):
         self.stackWindow.mainLayout.setSpacing(0)
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
                                                             colormap=True)
+
+        
         self.roiWindow = qt.QWidget(box)
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
         self.roiWindow.mainLayout.setMargin(0)
@@ -129,7 +131,6 @@ class QEDFStackWidget(qt.QWidget):
                 self.rgbWidget = RGBCorrelator.RGBCorrelator()
                 self.tab.addTab(self.rgbWidget, "RGB Correlator")
             self.mainLayout.addWidget(self.tab)
-
         
     def _toggleROISelectionMode(self):
         if self.roiGraphWidget.graph._selecting:
@@ -264,7 +265,16 @@ class QEDFStackWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self._setROIBrush)
 
+
+        self.stackGraphWidget.graph.canvas().setMouseTracking(1)
+        #self.roiGraphWidget.graph.canvas().setMouseTracking(1)
+        self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
+        self.stackGraphWidget.showInfo()
+        
         if QTVERSION < "4.0.0":
+            self.connect(self.stackGraphWidget.graph,
+                         qt.PYSIGNAL("QtBlissGraphSignal"),
+                         self._stackGraphSignal)
             self.connect(self.roiGraphWidget.graph,
                          qt.PYSIGNAL("QtBlissGraphSignal"),
                          self._roiGraphSignal)
@@ -272,12 +282,29 @@ class QEDFStackWidget(qt.QWidget):
                          qt.PYSIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
         else:
+            self.connect(self.stackGraphWidget.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         self._stackGraphSignal)
             self.connect(self.roiGraphWidget.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._roiGraphSignal)
             self.connect(self.mcaWidget,
                          qt.SIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
+
+    def _stackGraphSignal(self, ddict):
+        if ddict['event'] == "MouseAt":
+            x = round(ddict['y'])
+            if x < 0: x = 0
+            y = round(ddict['x'])
+            if y < 0: y = 0
+            limits = self.__stackImageData.shape
+            x = min(int(x), limits[0]-1)
+            y = min(int(y), limits[1]-1)
+            z = self.__stackImageData[x, y]
+            self.stackGraphWidget.setInfoText("    X = %d Y = %d Z = %.4g" %\
+                                               (y, x, z))
+
 
     def _roiGraphSignal(self, ddict):
         if ddict['event'] == "MouseSelection":
@@ -337,6 +364,7 @@ class QEDFStackWidget(qt.QWidget):
             return
 
         elif ddict['event'] == "MouseAt":
+            self._stackGraphSignal(ddict)
             if self.__ROIBrushMode:
                 #return
                 #if follow mouse is not activated

@@ -189,12 +189,34 @@ class RGBCorrelatorGraph(qt.QWidget):
         else:
             self.imageToolButton = None
 
+        self.infoWidget = qt.QWidget(self.toolBar)
+        self.infoWidget.mainLayout = qt.QHBoxLayout(self.infoWidget)
+        self.infoWidget.mainLayout.setMargin(0)
+        self.infoWidget.mainLayout.setSpacing(0)
+        self.infoWidget.label = qt.QLabel(self.infoWidget)
+        self.infoWidget.label.setText("X = ???? Y = ???? Z = ????")
+        self.infoWidget.mainLayout.addWidget(self.infoWidget.label)
+        self.toolBarLayout.addWidget(self.infoWidget)
+        self.infoWidget.hide()
+
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
                                  'Prints the Graph')
+
+    def showInfo(self):
+        self.infoWidget.show()
+
+    def hideInfo(self):
+        self.infoWidget.hide()
+
+    def setInfoText(self, text):
+        self.infoWidget.label.setText(text)
+
+    def infoText(self):
+        return self.infoWidget.label.text()
 
     def hideImageIcons(self):
         if self.imageToolButton is None:return
