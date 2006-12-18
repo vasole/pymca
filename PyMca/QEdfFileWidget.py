@@ -37,6 +37,7 @@ import sys
 from Icons import IconDict
 import ColormapDialog
 import PyMcaPrintPreview
+import ArraySave
 
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
@@ -395,7 +396,7 @@ class QEdfFileWidget(qt.QWidget):
         #save
         tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
-                                 'Save Graph')
+                                 'Export Graph')
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
@@ -430,8 +431,11 @@ class QEdfFileWidget(qt.QWidget):
         if not os.path.exists(self.lastInputDir):
             self.lastInputDir = os.getcwd()
 
-        fileTypeList = ["Image *.png",
+        fileTypeList = ["Data *.dat",
+                        "Image *.png",
                         "Image *.jpg",
+                        "ZoomedImage *.png",
+                        "ZoomedImage *.jpg",
                         "Widget *.png",
                         "Widget *.jpg"]
 
@@ -484,15 +488,42 @@ class QEdfFileWidget(qt.QWidget):
                 qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
                 return
 
-        if filetype.upper() == "IMAGE":
-            self.saveGraphImage(outputFile)
+        if filetype.upper() == "DATA":
+            if (self.data is None) or \
+               (self.currentArray is None):
+                qt.QMessageBox.information(self, "No data",\
+                                           "No data to be saved")
+                return
+            i = 0
+            for sname in self.data.sourceName:
+                if i == 0:
+                    selfdatasourceName = sname
+                    i = 1
+                else:
+                    selfdatasourceName += "|"+sname
+            key = self.data.getSourceInfo()['KeyList'][self.currentArray]
+            label = selfdatasourceName +"_"+"Key"+"_"+key
+            try:
+                ArraySave.save2DArrayListAsASCII([self.lastData],
+                                             outputFile,
+                                             labels = [label])
+            except:
+                qt.QMessageBox.critical(self, "Save Error", "%s" % \
+                                        sys.exc_info()[1])
+                return
+        elif filetype.upper() == "IMAGE":
+            self.saveGraphImage(outputFile, original=True)
+        elif filetype.upper() == "ZOOMEDIMAGE":
+            self.saveGraphImage(outputFile,original=False)
         else:
             self.saveGraphWidget(outputFile)
 
-    def saveGraphImage(self, filename):
+    def saveGraphImage(self, filename,original=True):
         format = filename[-3:].upper()
-        #pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
-        pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
+        if original:
+            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+        else:
+            pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         if pixmap.save(filename, format):
             return
         else:
@@ -799,7 +830,11 @@ class QEdfFileWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        self.graph.imagePlot(self.lastData, colormap = self.colormap)
+        self.graph.setY1AxisInverted(True)
+        self.graph.imagePlot(self.lastData,
+                             colormap = self.colormap,
+                             xmirror = False,
+                             ymirror = False)
         self.graph.replot()
 
     def closeFile(self, filename=None):
@@ -975,8 +1010,10 @@ class QEdfFileWidget(qt.QWidget):
                              minData, maxData)
             #self.graph.imagePlot(data=data, colormap = self.colormap)
             self.colormapDialog._update()
-
-            self.graph.imagePlot(data=data, colormap = self.colormap)
+            self.graph.setY1AxisInverted(True)
+            self.graph.imagePlot(data=data,
+                                 colormap = self.colormap,
+                                 ymirror = False)
             
         self.__refreshSelection()
         self.graph.replot()
