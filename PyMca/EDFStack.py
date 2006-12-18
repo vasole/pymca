@@ -49,6 +49,7 @@ class EDFStack(DataObject.DataObject):
             self.info.update(header)
             nImages = tempEdf.GetNumImages()
 
+        self.onBegin(self.nbFiles)
         singleImageShape = arrRet.shape
         if len(singleImageShape) == 1:
             #single line
@@ -65,6 +66,8 @@ class EDFStack(DataObject.DataObject):
                     pieceOfStack=tempEdf.GetData(i)
                     self.data[:,i, self.incrProgressBar] = pieceOfStack[:]
                 self.incrProgressBar += 1
+                self.onProgress(self.incrProgressBar)
+            self.onEnd()
         else:
             if nImages > 1:
                 #this is not the common case
@@ -96,6 +99,8 @@ class EDFStack(DataObject.DataObject):
                     pieceOfStack=tempEdf.GetData(0)    
                     self.data[:,:, self.incrProgressBar] = pieceOfStack[:,:]
                     self.incrProgressBar += 1
+                    self.onProgress(self.incrProgressBar)
+                self.onEnd()
 
         self.__nFiles         = self.incrProgressBar
         self.__nImagesPerFile = nImages
@@ -107,6 +112,15 @@ class EDFStack(DataObject.DataObject):
         self.info["SourceName"] = self.sourceName
         self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
         self.info["NumberOfFiles"] = self.__nFiles * 1
+
+    def onBegin(self, n):
+        pass
+
+    def onProgress(self, n):
+        pass
+
+    def onEnd(self):
+        pass
 
     def loadIndexedStack(self,filename,begin=None,end=None, skip = None):
         if begin is None: begin = 0

@@ -157,7 +157,6 @@ import QDispatcher
 import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
-import EDFStack
 try:
     import QEDFStackWidget
     STACK = True
@@ -898,7 +897,7 @@ class PyMca(PyMcaMdi.PyMca):
                     self.connect(self.__imagingTool,
                                  qt.SIGNAL("StackWidgetSignal"),
                                  self._deleteImagingTool)
-                self.__imagingTool.setStack(EDFStack.EDFStack(filelist))
+                self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
                 self.__imagingTool.show()
             except IOError:
                 self.__imagingTool = None

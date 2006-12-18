@@ -21,6 +21,40 @@ if QWTVERSION4:
 
 DEBUG = 0
 
+class QStack(EDFStack.EDFStack):
+    def onBegin(self, nfiles):
+        self.bars =qt.QWidget()
+        if QTVERSION < '4.0.0':
+            self.bars.setCaption("Reading progress")
+            self.barsLayout = qt.QGridLayout(self.bars,2,3)
+        else:
+            self.bars.setWindowTitle("Reading progress")
+            self.barsLayout = qt.QGridLayout(self.bars)
+            self.barsLayout.setMargin(2)
+            self.barsLayout.setSpacing(3)
+        self.progressBar   = qt.QProgressBar(self.bars)
+        self.progressLabel = qt.QLabel(self.bars)
+        self.progressLabel.setText('File Progress:')
+        self.barsLayout.addWidget(self.progressLabel,0,0)        
+        self.barsLayout.addWidget(self.progressBar,0,1)
+        if QTVERSION < '4.0.0':
+            self.progressBar.setTotalSteps(nfiles)
+            self.progressBar.setProgress(0)
+        else:
+            self.progressBar.setMaximum(nfiles)
+            self.progressBar.setValue(0)
+        self.bars.show()
+
+    def onProgress(self,index):
+        if QTVERSION < '4.0.0':
+            self.progressBar.setProgress(index)
+        else:
+            self.progressBar.setValue(index)
+
+    def onEnd(self):
+        self.bars.hide()
+        del self.bars
+
 class QEDFStackWidget(qt.QWidget):
     def __init__(self, parent = None,
                  mcawidget = None,
@@ -1075,7 +1109,7 @@ if __name__ == "__main__":
         elif opt in '--end':
             end = int(arg)
     app = qt.QApplication([])
-    stack = EDFStack.EDFStack()
+    stack = QStack()
     w = QEDFStackWidget()
     if len(args) > 1:
         stack.loadFileList(args)
