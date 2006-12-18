@@ -1058,7 +1058,8 @@ class McaWidget(qt.QWidget):
                     else:
                         self.graph.setx1axislimits(emax, emin, True)
             except:
-                pass                        
+                pass
+            self.graph.replot()
 
         elif dict['event'] == 'McaFitFinished':
             mcaresult = dict['data']
