@@ -214,15 +214,30 @@ class ElementButton(QPushButton):
         self.__setBrush()
 
     def __setBrush(self):
-        if self.current and self.selected:
-            self.brush= QBrush(self.colors[1])
-        elif self.selected:
-            self.brush= QBrush(self.colors[0])
-        elif self.current:
-            self.brush= QBrush(self.colors[2])
+        if QTVERSION < '4.0.0':
+            if self.current and self.selected:
+                self.brush= QBrush(self.colors[1])
+            elif self.selected:
+                self.brush= QBrush(self.colors[0])
+            elif self.current:
+                self.brush= QBrush(self.colors[2])
+            else:
+                self.brush= None
+            self.update()
         else:
-            self.brush= None
-        self.update()
+            role = self.backgroundRole()
+            palette = self.palette()
+            if self.current and self.selected:
+                self.brush= QBrush(self.colors[1])
+            elif self.selected:
+                self.brush= QBrush(self.colors[0])
+            elif self.current:
+                self.brush= QBrush(self.colors[2])
+            else:
+                self.brush= QBrush()
+            palette.setBrush( role,self.brush)
+            self.update()
+
 
     def paintEvent(self, pEvent):
         if QTVERSION < '4.0.0':
@@ -293,6 +308,7 @@ class QPeriodicTable(QWidget):
             self.setAccessibleName(name)
             self.setWindowTitle(name)
             self.gridLayout= QGridLayout(self)
+            self.gridLayout.setMargin(0)
             self.setAccessibleName("PTLayout")
             #, 6, 10, 0, 0, "PTLayout")
             self.gridLayout.addItem(QSpacerItem(0, 5), 7, 0)

@@ -32,6 +32,7 @@ import EnergyTable
 import Elements
 import copy
 DEBUG = 0
+QTVERSION = qt.qVersion()
 ElementList = Elements.ElementList
 __revision__ = "$Revision: 1.12 $"
 class PeakButton(qt.QPushButton):
@@ -59,6 +60,17 @@ class PeakButton(qt.QPushButton):
 
     def setSelected(self, b):
         self.selected= b
+        if QTVERSION > '4.0.0':
+            if b:
+                role = self.backgroundRole()
+                palette = self.palette()
+                palette.setBrush( role,self.brush)
+                self.setPalette(palette)
+            else:
+                role = self.backgroundRole()
+                palette = self.palette()
+                palette.setBrush( role, qt.QBrush())
+                self.setPalette(palette)
         self.update()
 
     def isSelected(self):
@@ -107,6 +119,8 @@ class PeakButtonList(qt.QWidget):
             layout= qt.QHBoxLayout(self, 0, 5)
         else:
             layout= qt.QHBoxLayout(self)
+            layout.setMargin(0)
+            layout.setSpacing(5)
             #, 0, 5)
             
         layout.addStretch(2)
@@ -171,9 +185,11 @@ class FitPeakSelect(qt.QWidget):
                                           qt.QSizePolicy.Minimum))
 
         layout=qt.QVBoxLayout(self)
+        layout.setMargin(0)
         layout.setSpacing(10)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
+        hboxLayout.setMargin(0)
         hboxLayout.setSpacing(20)
         hboxLayout.addWidget(HorizontalSpacer(hbox))
         l1=MyQLabel(hbox, bold=True, color=qt.QColor(0,0,0))
