@@ -100,13 +100,13 @@ class QEDFStackWidget(qt.QWidget):
         self._buildConnections()
 
     def _build(self, vertical = False):
-        box = qt.QWidget(self)
+        box = qt.QSplitter(self)
         if vertical:
-            boxLayout  = qt.QVBoxLayout(box)
+            box.setOrientation(qt.Qt.Vertical)
         else:
-            boxLayout  = qt.QHBoxLayout(box)
-        boxLayout.setMargin(0)
-        boxLayout.setSpacing(6)
+            box.setOrientation(qt.Qt.Horizontal)
+        #boxLayout.setMargin(0)
+        #boxLayout.setSpacing(6)
         self.stackWindow = qt.QWidget(box)
         self.stackWindow.mainLayout = qt.QVBoxLayout(self.stackWindow)
         self.stackWindow.mainLayout.setMargin(0)
@@ -129,8 +129,12 @@ class QEDFStackWidget(qt.QWidget):
         self._toggleROISelectionMode()
         self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
         self.roiWindow.mainLayout.addWidget(self.roiGraphWidget)
-        boxLayout.addWidget(self.stackWindow)
-        boxLayout.addWidget(self.roiWindow)
+        if QTVERSION < '4.0.0':
+            box.moveToLast(self.stackWindow)
+            box.moveToLast(self.roiWindow)
+        else:
+            box.addWidget(self.stackWindow)
+            box.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
 
     def _buildBottom(self):
