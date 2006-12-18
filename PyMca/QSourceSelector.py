@@ -101,6 +101,7 @@ class QSourceSelector(qt.QWidget):
         fileWidgetLayout.addWidget(openButton)
         fileWidgetLayout.addWidget(closeButton)
         fileWidgetLayout.addWidget(specButton)
+        if sys.platform == "win32":specButton.hide()
         self.mainLayout.addWidget(self.fileWidget)
 
     def _openFileSlot(self):
