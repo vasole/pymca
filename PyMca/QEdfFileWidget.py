@@ -291,14 +291,16 @@ class QEdfFileWidget(qt.QWidget):
     
         # --- graph
         self.graph=QtBlissGraph.QtBlissGraph(self.splitter)
-
+        self.graph.canvas().setMouseTracking(1)
         self.graph.setTitle('')
         self.graph.xlabel('Columns')
         self.graph.ylabel('Rows')
         if QTVERSION < '4.0.0':
-            self.connect(self.graph,qt.PYSIGNAL('QtBlissGraphSignal')  ,self.widgetSignal)
+            self.connect(self.graph,qt.PYSIGNAL('QtBlissGraphSignal')  ,
+                         self.widgetSignal)
         else:
-            self.connect(self.graph,qt.SIGNAL('QtBlissGraphSignal')  ,self.widgetSignal)
+            self.connect(self.graph,qt.SIGNAL('QtBlissGraphSignal')  ,
+                         self.widgetSignal)
         self._x1Limit = self.graph.getx1axislimits()[-1]
         self._y1Limit = self.graph.gety1axislimits()[-1]
         #self.graph.hide()
@@ -397,6 +399,11 @@ class QEdfFileWidget(qt.QWidget):
         tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
                                  'Export Graph')
+
+        #info
+        self.infoText = qt.QLabel(self.toolBar)
+        self.infoText.setText("    X = ???? Y = ???? Z = ????")
+        self.toolBarLayout.addWidget(self.infoText)
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
@@ -595,6 +602,23 @@ class QEdfFileWidget(qt.QWidget):
             if dict['event']    == 'plotChanged':
                 self.__plotting = dict['plot']
                 self.__refreshSelection()
+            elif dict['event']    == 'MouseAt':
+                x = round(dict['y'])
+                if x < 0: x = 0
+                y = round(dict['x'])
+                if y < 0: y = 0
+                if (self.data is None) or \
+                   (self.currentArray is None):
+                    self.infoText.setText("    X = %d Y = %d Z = ????" %\
+                                                   (y, x))
+                else:
+                    limits = self.lastData.shape
+                    x = min(int(x), limits[0]-1)
+                    y = min(int(y), limits[1]-1)
+
+                    z = self.lastData[x, y]
+                    self.infoText.setText("    X = %d Y = %d Z = %.4g" %\
+                                                   (y, x, z))
             elif dict['event']    == 'MouseClick':
                 if self.justViewer:return
                 col = min(int(round(dict['x'])), self._x1Limit - 1)
