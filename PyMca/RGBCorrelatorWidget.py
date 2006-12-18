@@ -445,27 +445,34 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__recolor()
 
     def getOutputFileName(self):
-        initdir = os.path.curdir
+        initdir = os.getcwd()
         if self.outputDir is not None:
             if os.path.exists(self.outputDir):
                 initdir = self.outputDir
         filedialog = qt.QFileDialog(self)
         filedialog.setFileMode(filedialog.AnyFile)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
-        filename = filedialog.getSaveFileName(
-                    self,
-                    "Enter ASCII output dat file",
-                    initdir,
-                    "ASCII dat files (*.dat)")
+        formatlist = ["ASCII Files *.dat",
+                      "EDF Files *.edf"]
+        strlist = qt.QStringList()
+        for f in formatlist:
+                strlist.append(f)
+        filedialog.setFilters(strlist)
+        filedialog.setDirectory(initdir)
+        ret = filedialog.exec_()
+        if not ret: return ""
+        filterused = "."+str(filedialog.selectedFilter()).split()[2][-3:]
+        filename = filedialog.selectedFiles()[0]
         if len(filename):
             filename = str(filename)
             self.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
-                filename = filename+".dat"
-            elif filename[-4:] != ".dat":
-                filename = filename+".dat"
-            return filename
-        return ""
+                filename = filename+ filterused
+            elif filename[-4:] != filterused :
+                filename = filename+ filterused
+        else:
+            filename = ""
+        return filename
         
 
     def saveImageList(self, filename = None):
@@ -481,7 +488,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         for label in self._imageList:
             datalist.append(self._imageDict[label]['image'])
             labels.append(label.replace(" ","_"))
-        ArraySave.save2DArrayListAsASCII(datalist, filename, labels)
+        if filename[-4:] == ".edf":
+            ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
+        else:
+            ArraySave.save2DArrayListAsASCII(datalist, filename, labels)
         
 
     """
