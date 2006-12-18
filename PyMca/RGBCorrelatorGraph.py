@@ -297,6 +297,8 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         fileTypeList = ["Image *.png",
                         "Image *.jpg",
+                        "ZoomedImage *.png",
+                        "ZoomedImage *.jpg",
                         "Widget *.png",
                         "Widget *.jpg"]
 
@@ -351,15 +353,16 @@ class RGBCorrelatorGraph(qt.QWidget):
                 return
 
         if filetype.upper() == "IMAGE":
-            self.saveGraphImage(outputFile)
+            self.saveGraphImage(outputFile, original = True)
+        elif filetype.upper() == "ZOOMEDIMAGE":
+            self.saveGraphImage(outputFile, original = False)
         else:
             self.saveGraphWidget(outputFile)
 
-    def saveGraphImage(self, filename):
+    def saveGraphImage(self, filename, original = False):
         format = filename[-3:].upper()
-        if 0:
+        if original:
             #This is the whole image, not the zoomed one ...
-            #A pity because it is the real thing
             if QTVERSION < '4.0.0':
                 pixmap = qt.QPixmap(self.graph.plotImage.image)
             else:

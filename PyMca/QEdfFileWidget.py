@@ -521,7 +521,10 @@ class QEdfFileWidget(qt.QWidget):
     def saveGraphImage(self, filename,original=True):
         format = filename[-3:].upper()
         if original:
-            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+            if QTVERSION < '4.0.0':
+                pixmap = qt.QPixmap(self.graph.plotImage.image)
+            else:
+                pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
         else:
             pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         if pixmap.save(filename, format):

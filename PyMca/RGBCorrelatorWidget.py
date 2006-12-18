@@ -456,7 +456,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                     self,
                     "Enter ASCII output dat file",
                     initdir,
-                    "ASCII dat files (*.dat)\nAll Files (*)")
+                    "ASCII dat files (*.dat)")
         if len(filename):
             filename = str(filename)
             self.outputDir = os.path.dirname(filename)
@@ -469,6 +469,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         
 
     def saveImageList(self, filename = None):
+        if not len(self._imageList):
+            qt.QMessageBox.information(self,"No Data",
+                            "Image list is empty.\nNothing to be saved")
+            return
         if filename is None:
             filename = self.getOutputFileName()
             if not len(filename):return
@@ -476,7 +480,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         labels = []
         for label in self._imageList:
             datalist.append(self._imageDict[label]['image'])
-            labels.append(label)
+            labels.append(label.replace(" ","_"))
         ArraySave.save2DArrayListAsASCII(datalist, filename, labels)
         
 
