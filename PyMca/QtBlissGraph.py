@@ -2080,6 +2080,14 @@ class QtBlissGraph(qwt.QwtPlot):
         self.replot()
 
     def insertx1marker(self,*var,**kw):
+        if DEBUG:"print insertx1marker deprecated, use insertX1Marker"
+        return self.insertX1Marker(*var, **kw)
+
+    def inserty1marker(self,*var,**kw):
+        if DEBUG:"print inserty1marker deprecated, use insertY1Marker"
+        return self.insertY1Marker(*var, **kw)
+
+    def insertX1Marker(self,*var,**kw):
         if len(var) < 1:
             return -1
         elif len(var) ==1:
@@ -2135,7 +2143,7 @@ class QtBlissGraph(qwt.QwtPlot):
         if not QWTVERSION4:    mX.attach(self)
         return marker
 
-    def inserty1marker(self,*var,**kw):
+    def insertY1Marker(self,*var,**kw):
         if len(var) < 1:
             return -1
         elif len(var) ==1:

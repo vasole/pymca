@@ -1142,54 +1142,10 @@ class McaWidget(qt.QWidget):
             self.peakmarker = None
             self.graph.replot()    
 
-        elif (dict['event'] == 'McaAdvancedFitElementClicked') or (dict['event'] == 'ElementClicked'):
-            for marker in self.elementmarkers:
-                self.graph.removeMarker(marker)
-            self.elementmarkers = []
-            if dict.has_key('current'):
-                legend = self.graph.getactivecurve(justlegend=1)
-                if legend is None:
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Please Select an active curve")
-                    msg.exec_loop()
-                    return
-                ele = dict['current']
-                items = []
-                if dict.has_key(ele):
-                    for rays in dict[ele]:
-                        for transition in  Elements.Element[ele][rays +" xrays"]:
-                            items.append([transition,Elements.Element[ele][transition]['energy'],
-                                                     Elements.Element[ele][transition]['rate']])
-
-                if self.calibration == 'None':
-                    xmin,xmax =self.graph.getx1axislimits()
-                    curveinfo = self.graph.getcurveinfo(legend)
-                    if 'McaCalibSource' in curveinfo.keys():
-                        calib = curveinfo['McaCalibSource']
-                    else:
-                        #it makes no sense to draw anything
-                        return
-                else:
-                    calib = self.graph.getcurveinfo(legend)['McaCalib']
-                    xmin,xmax = self.graph.getx1axislimits()
-                factor = 1 # Kev
-                if calib[1] > 0.1:factor = 1000. # ev 
-                #clear existing markers
-                xmin,xmax = self.graph.getx1axislimits()
-                ymin,ymax = self.graph.gety1axislimits()
-                for transition,energy,rate in items:
-                    marker = ""
-                    if self.calibration == 'None':
-                        if abs(calib[1]) > 0.0000001:
-                            x = (energy * factor - calib[0])/calib[1]
-                            marker=self.graph.insertx1marker(x,ymax*rate,label=transition)
-                    else: 
-                            marker=self.graph.insertx1marker(energy*factor,ymax*rate,label=transition)
-                    if marker is not "":
-                        self.elementmarkers.append(marker)
-                        self.graph.setmarkercolor(marker,'orange')
-            self.graph.replot()                  
+        elif (dict['event'] == 'McaAdvancedFitElementClicked') or \
+             (dict['event'] == 'ElementClicked'):
+            #this has been moved to the fit window
+            pass
                 
         elif dict['event'] == 'McaAdvancedFitPrint':
             #self.advancedfit.printps(doit=1)

@@ -64,6 +64,7 @@ import time
 import McaCalWidget
 import PeakIdentifier
 import ElementsInfo
+Elements = ElementsInfo.Elements
 #import McaROIWidget
 import Numeric
 
@@ -432,6 +433,8 @@ class McaAdvancedFit(qt.QWidget):
             self.disconnect(dialog.fitparam.peakTable,
                             qt.SIGNAL("FitPeakSelect"),
                             self.__elementclicked)
+        self.graph.removeMarkers()
+        self.graph.replot()
         if dialog.initDir is not None: self.configDir = 1 * dialog.initDir
         else: self.configDir = None
         if ret != qt.QDialog.Accepted:
@@ -510,9 +513,46 @@ class McaAdvancedFit(qt.QWidget):
         config = self.concentrationsWidget.getParameters()
         self.mcafit.config['concentrations'].update(config)
 
-    def __elementclicked(self,dict):
-        dict['event'] = 'McaAdvancedFitElementClicked'
-        self.__anasignal(dict)
+    def __elementclicked(self,ddict):
+        ddict['event'] = 'McaAdvancedFitElementClicked'
+        self.__showElementMarker(ddict)
+        self.__anasignal(ddict)
+
+    def __showElementMarker(self, dict):
+        self.graph.removeMarkers()
+        ele = dict['current']
+        items = []
+        if not dict.has_key(ele):
+            self.graph.replot()
+            return
+        for rays in dict[ele]:
+            for transition in Elements.Element[ele][rays +" xrays"]:
+                items.append([transition,
+                              Elements.Element[ele][transition]['energy'],
+                              Elements.Element[ele][transition]['rate']])
+
+        config = self.mcafit.configure()
+        xdata  = self.mcafit.xdata * 1.0
+        xmin = xdata[0]
+        xmax = xdata[-1]
+        ymin,ymax = self.graph.getY1AxisLimits()
+        calib = [config['detector'] ['zero'], config['detector'] ['gain']]
+        for transition,energy,rate in items:
+            marker = ""
+            x = (energy - calib[0])/calib[1]
+            if (x < xmin) or (x > xmax):continue
+            if not self._energyAxis:
+                if abs(calib[1]) > 0.0000001:
+                    marker=self.graph.insertX1Marker(x,
+                                                     ymax*rate,
+                                                     label=transition)
+            else: 
+                marker=self.graph.insertX1Marker(energy,
+                                                 ymax*rate,
+                                                 label=transition)
+            if marker is not "":
+                self.graph.setmarkercolor(marker,'orange')
+        self.graph.replot()
 
     def _updateTop(self):
         config = {}
