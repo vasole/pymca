@@ -458,40 +458,41 @@ class McaROITable(QTable):
                     if row >= len(self.roilist):
                         if DEBUG:
                             print "deleting???"
+                        row = 0
+                    if QTVERSION < '4.0.0':
+                        text = str(self.text(row, col))
+                    else:
+                        item = self.item(row, col)
+                        if item is None:text=""
+                        else:text = str(item.text())
+                    if len(text) and (text not in self.roilist):
+                        old = self.roilist[row]
+                        self.roilist[row] = text
+                        self.roidict[text] = {}
+                        self.roidict[text].update(self.roidict[old])
+                        del self.roidict[old]
+                        ddict = {}
+                        ddict['event'] = "selectionChanged"
+                        ddict['row'  ] = row
+                        ddict['col'  ] = col
+                        ddict['roi'  ] = self.roidict[self.roilist[row]]
+                        ddict['key']   = self.roilist[row]
+                        ddict['colheader'] = self.labels[col]
+                        ddict['rowheader'] = "%d" % row
+                        if qt.qVersion() < '4.0.0':
+                            self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
+                        else:
+                            self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
                     else:
                         if QTVERSION < '4.0.0':
-                            text = str(self.text(row, col))
+                            self.setText(row, col, self.roilist[row])
                         else:
-                            item = self.item(row, col)
-                            if item is None:text=""
-                            else:text = str(item.text())
-                        if len(text) and (text not in self.roilist):
-                            old = self.roilist[row]
-                            self.roilist[row] = text
-                            self.roidict[text] = {}
-                            self.roidict[text].update(self.roidict[old])
-                            del self.roidict[old]
-                            ddict = {}
-                            ddict['event'] = "selectionChanged"
-                            ddict['row'  ] = row
-                            ddict['col'  ] = col
-                            ddict['roi'  ] = self.roidict[self.roilist[row]]
-                            ddict['key']   = self.roilist[row]
-                            ddict['colheader'] = self.labels[col]
-                            ddict['rowheader'] = "%d" % row
-                            if qt.qVersion() < '4.0.0':
-                                self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
+                            if item is None:
+                                item = qt.QTableWidgetItem(text,
+                                           qt.QTableWidgetItem.Type)
                             else:
-                                self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
-                        else:
-                            if QTVERSION < '4.0.0':
-                                self.setText(row, col, self.roilist[row])
-                            else:
-                                if item is None:
-                                    item = qt.QTableWidgetItem(text,
-                                               qt.QTableWidgetItem.Type)
-                                else:
-                                    item.setText(text)
+                                item.setText(text)
+                        self.myslot()
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
