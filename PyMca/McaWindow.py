@@ -942,7 +942,7 @@ class McaWidget(qt.QWidget):
                 self.graph.clearMarkers()
                 self.roimarkers = [-1,-1]
                 self.refresh()
-                self.graph.ResetZoom()
+                self.graph.zoomReset()
                 
             elif dict['boxname'] == 'Detector':
                 pass
@@ -974,6 +974,9 @@ class McaWidget(qt.QWidget):
             x      = dict['result']['xdata']
             yb     = dict['result']['continuum']
             legend0= dict['info']['legend']
+            fitcalibration = [dict['result']['fittedpar'][0],
+                              dict['result']['fittedpar'][1],
+                              0.0] 
             if dict['event'] == 'McaAdvancedFitMatrixFinished':
                 legend = dict['info']['legend'] + " Fit"
                 legend3 = dict['info']['legend'] + " Matrix"
@@ -985,6 +988,7 @@ class McaWidget(qt.QWidget):
                 newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
                 newDataObject.info['legend']    = legend3
                 newDataObject.info['Key']       = legend3
+                newDataObject.info['McaCalib']  = fitcalibration * 1
                 newDataObject.x = [x]
                 newDataObject.y = [ymatrix]
                 newDataObject.m = None
@@ -1001,6 +1005,7 @@ class McaWidget(qt.QWidget):
                 newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
                 newDataObject.info['legend'] = legend
                 newDataObject.info['Key']  = legend
+                newDataObject.info['McaCalib']  = fitcalibration * 1
                 newDataObject.data = Numeric.reshape(Numeric.concatenate((x,yfit,yb),0),(3,len(x)))
                 newDataObject.x = [x]
                 newDataObject.y = [yfit]
@@ -1016,6 +1021,7 @@ class McaWidget(qt.QWidget):
                 newDataObject2.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
                 newDataObject2.info['legend'] = legend2
                 newDataObject2.info['Key']  = legend2
+                newDataObject2.info['McaCalib']  = fitcalibration * 1
                 newDataObject2.data = None
                 newDataObject2.x = [x]
                 newDataObject2.y = [yb]
@@ -1049,7 +1055,10 @@ class McaWidget(qt.QWidget):
                     else:
                         emin,emax = self.graph.getx1axislimits()
                     ymin,ymax =self.graph.gety1axislimits()
-                    self.control.calbox.setCurrentItem(options.index(legend))
+                    if QTVERSION < '4.0.0':
+                        self.control.calbox.setCurrentItem(options.index(legend))
+                    else:
+                        self.control.calbox.setCurrentIndex(options.index(legend))
                     self.calibration = legend
                     self.control._calboxactivated(legend)
                     self.graph.sety1axislimits(ymin, ymax, False)
@@ -1377,11 +1386,11 @@ class McaWidget(qt.QWidget):
                             #if len(x) > 3:
                             #    fromdata = x[3]
                             #else:
-                            fromdata = x0[0]
-                            todata   = x0[-1]
+                            fromdata = x[0]
+                            todata   = x[-1]
                             #I profit to update ICR
-                            self.roidict[key]['from'] = x0[0]
-                            self.roidict[key]['to'] = x0[-1]
+                            self.roidict[key]['from'] = x[0]
+                            self.roidict[key]['to'] = x[-1]
                         else:
                             fromdata = self.roidict[key]['from']
                             todata   = self.roidict[key]['to']

@@ -31,6 +31,7 @@ import sys
 import QtBlissGraph
 qt = QtBlissGraph.qt
 QTVERSION = qt.qVersion()
+QWTVERSION4 = QtBlissGraph.QWTVERSION4
 import os
 import Numeric
 from LinearAlgebra import inverse
@@ -467,7 +468,7 @@ class McaCalWidget(qt.QDialog):
             name   = "Peak %d" % marker
             number = marker
             #channel= dict['x']
-            if QTVERSION < '4.0.0':
+            if QWTVERSION4:
                 channel=self.foundpeaks[marker-1]
             else:
                 channel=ddict['x']                

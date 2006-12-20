@@ -858,7 +858,14 @@ class FitParamDialog(qt.QDialog):
         layout.addWidget(self.fitparam)
 
         if qt.qVersion() < '4.0.0':
-            buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
+            if fitresult is not None:
+                buts= qt.QButtonGroup(5, qt.Qt.Horizontal, self)
+                loadfit = qt.QPushButton(buts)
+                loadfit.setText("Load From Fit")
+                self.fitresult = fitresult
+            else:
+                buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
+                loadfit = None
             load= qt.QPushButton("Load", buts)
             save= qt.QPushButton("Save", buts)
             reject= qt.QPushButton("Cancel", buts)
@@ -1010,9 +1017,9 @@ class FitParamDialog(qt.QDialog):
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.shValue.setText("%.6g" % value)
 
-        text  = "If you do not use an exponential background,\n"
-        text += "you can now ask the program to perform a linear\n"
-        text += "fit, save the configuration, and you will be ready\n"
+        text  = "If you do not use an exponential background, "
+        text += "you can now ask the program to perform a linear "
+        text += "fit, save the configuration, and you will be ready "
         text += "for a speedy batch."
         qt.QMessageBox.information(self,
                                 "Batch tip",
