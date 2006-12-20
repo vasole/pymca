@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__= "$Revision: 1.8 $"
+__revision__= "$Revision: 1.9 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -57,7 +57,7 @@ class PeakIdentifier(qt.QWidget):
             self.setWindowTitle(name)
 
         if energy    is None: energy    = 5.9
-        if threshold is None: threshold = 0.010
+        if threshold is None: threshold = 0.030
         if useviewer is None: useviewer = 0
         self.__useviewer = useviewer
         

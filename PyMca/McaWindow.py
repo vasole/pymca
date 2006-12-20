@@ -1175,14 +1175,16 @@ class McaWidget(qt.QWidget):
             xmin,xmax = self.graph.getx1axislimits()
             fromdata = xmin+ 0.25 * (xmax - xmin)
             todata   = xmin+ 0.75 * (xmax - xmin)
-            if self.roimarkers[0] < 0:
-                self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
+            self.graph.clearMarkers()
+            self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
                                         label = 'ROI min')
-            if self.roimarkers[1] < 0:
-                self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
+            self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
                                         label = 'ROI max')
             self.graph.setmarkercolor(self.roimarkers[0],'blue')
             self.graph.setmarkercolor(self.roimarkers[1],'blue')
+            self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
+            self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
+            self.graph.enablemarkermode()
             self.graph.replot()
             #if self.roilist is None:
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
@@ -1209,6 +1211,8 @@ class McaWidget(qt.QWidget):
             self.__graphsignal(ndict)
 
         elif dict['event'] == 'DelROI':
+            self.graph.clearMarkers()
+            self.roimarkers = [-1, -1]
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             self.currentroi = self.roidict.keys()[0]
             self.roiwidget.fillfromroidict(roilist=self.roilist,
@@ -1217,6 +1221,7 @@ class McaWidget(qt.QWidget):
             ndict = {}
             ndict['event'] = "SetActiveCurveEvent"
             self.__graphsignal(ndict)
+            self.graph.replot()
             
         elif dict['event'] == 'ResetROI':
             self.graph.clearMarkers()
@@ -1229,6 +1234,7 @@ class McaWidget(qt.QWidget):
             ndict = {}
             ndict['event'] = "SetActiveCurveEvent"
             self.__graphsignal(ndict)
+            self.graph.replot()
             
         elif dict['event'] == 'ActiveROI':
             print "ActiveROI event"
@@ -1236,6 +1242,7 @@ class McaWidget(qt.QWidget):
         elif dict['event'] == 'selectionChanged':
             if DEBUG:
                 print "Selection changed"
+            ##############
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             fromdata = dict['roi']['from']
             todata   = dict['roi']['to']
