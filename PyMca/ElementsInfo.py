@@ -62,7 +62,6 @@ class ElementsInfo(qt.QWidget):
                 qt.QWidget.__init__(self, parent)
             else:
                 qt.QWidget.__init__(self, parent, fl)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
             
         layout = qt.QVBoxLayout(self)

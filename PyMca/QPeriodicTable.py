@@ -174,7 +174,6 @@ class ElementButton(QPushButton):
             QPushButton.__init__(self, parent, symbol)
         else:
             QPushButton.__init__(self, parent)
-            self.setAccessibleName(symbol)
             
         self.symbol = symbol
         self.Z      = Z
@@ -305,11 +304,9 @@ class QPeriodicTable(QWidget):
             self.gridLayout.addRowSpacing(7, 5)
         else:
             QWidget.__init__(self,parent)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
             self.gridLayout= QGridLayout(self)
             self.gridLayout.setMargin(0)
-            self.setAccessibleName("PTLayout")
             #, 6, 10, 0, 0, "PTLayout")
             self.gridLayout.addItem(QSpacerItem(0, 5), 7, 0)
 
@@ -451,7 +448,6 @@ class QPeriodicCombo(QComboBox):
             QComboBox.__init__(self, parent, name)
         else:
             QComboBox.__init__(self, parent)
-            if name:self.setAccessibleName(name)
 
         i = 0
         for (symbol, Z, x, y, name, mass, density) in Elements:
@@ -500,7 +496,6 @@ class QPeriodicList(MyQListView):
             MyQListView.__init__(self, master, name, fl)
         else:
             MyQListView.__init__(self, master)
-            if name:self.setAccessibleName(name)
 
     
         self.detailed= (detailed==1)    

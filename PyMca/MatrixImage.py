@@ -508,7 +508,6 @@ class MatrixImage(qt.QWidget):
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
 
         layout = qt.QVBoxLayout(self)

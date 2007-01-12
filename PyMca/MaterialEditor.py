@@ -53,7 +53,6 @@ class MaterialEditor(qt.QWidget):
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
         self.build(comments, height)
 
@@ -297,7 +296,6 @@ class MaterialGUI(qt.QWidget):
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
         self._default = default
         self._setCurrentDefault()

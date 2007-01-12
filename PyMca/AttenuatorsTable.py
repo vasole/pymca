@@ -376,7 +376,6 @@ class AttenuatorsTableWidget(QTable):
             self.setCaption(name)
         else:
             QTable.__init__(self, parent)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
 
         if attenuators is None:attenuators = attenuators0

@@ -39,7 +39,6 @@ class MatrixEditor(qt.QWidget):
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
-            self.setAccessibleName(name)
             self.setWindowTitle(name)
             
         self._current={'Density':     1.0,
