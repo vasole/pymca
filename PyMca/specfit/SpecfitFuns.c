@@ -189,7 +189,8 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     }
 
     if (n < (2*deltai+1)){
-        ret = (PyArrayObject *) PyArray_Copy(array);    
+        /*ret = (PyArrayObject *) PyArray_Copy(array);*/
+        memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
         Py_DECREF(array);
         return PyArray_Return(ret);
     }
@@ -210,7 +211,8 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
        }
     }
 
-    ret = (PyArrayObject *) PyArray_Copy(array);
+    /*ret = (PyArrayObject *) PyArray_Copy(array);*/
+    memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
     Py_DECREF(array);
     if (ret == NULL)
         return NULL;
