@@ -522,7 +522,8 @@ class McaBatchGUI(qt.QWidget):
                 ret = filedialog.exec_loop()
             else:
                 filedialog.setFilters(["McaFiles (*.mca)","EdfFiles (*.edf)",
-                                   "SpecFiles (*.spec)","All files (*)"])
+                                       "SpecFiles (*.spec)","SpecFiles (*.dat)",
+                                       "All files (*)"])
                 ret = filedialog.exec_()
             if  ret == qt.QDialog.Accepted:
                 filelist=filedialog.selectedFiles()

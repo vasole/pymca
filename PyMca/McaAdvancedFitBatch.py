@@ -241,13 +241,19 @@ class McaAdvancedFitBatch:
                         self.fitImages = True
                         self.__ncols = info['NbMca'] * 1
                         self.__col   = -1
+                        scan_key = "%s.%s" % (scan,order)
+                        scan_obj= ffile.Source.select(scan_key)
+                        #import time                        
                         for i in range(info['NbMca']):
+                            #e0 = time.time()
                             if self.pleaseBreak: break
                             self.__col += 1
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
                             key = "%s.%s.%03d.%d" % (scan,order,point,mca)
-                            mcainfo,mcadata = ffile.LoadSource(key)
+                            #get rid of slow info reading methods
+                            #mcainfo,mcadata = ffile.LoadSource(key)
+                            mcadata = scan_obj.mca(i+1)
                             y0  = Numeric.array(mcadata)
                             x = Numeric.arange(len(y0))*1.0
                             filename = os.path.basename(info['SourceName'])
@@ -259,6 +265,7 @@ class McaAdvancedFitBatch:
                             self.onMca(i, info['NbMca'],filename=filename,
                                                     key=key,
                                                     info=infoDict)
+                            #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
 
     def __getFitFile(self, filename, key):
            fitdir = os.path.join(self._outputdir,"FIT")
