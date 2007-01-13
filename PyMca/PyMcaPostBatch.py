@@ -148,6 +148,7 @@ def test():
         pass
     filelist=args
     w = PyMcaPostBatch()
+    w.layout().setMargin(11)
     if not len(filelist):
         filelist = w._getStackOfFiles()
     if not len(filelist):
