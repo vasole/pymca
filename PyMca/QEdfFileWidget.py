@@ -1004,8 +1004,8 @@ class QEdfFileWidget(qt.QWidget):
 
             if self.graph.isHidden():
                 self.graph.show()
-            self.graph.setx1axislimits(0, int(info["Dim_2"]))
-            self.graph.sety1axislimits(0, int(info["Dim_1"]))
+            ##self.graph.setx1axislimits(0, int(info["Dim_2"]))
+            ##self.graph.sety1axislimits(0, int(info["Dim_1"]))
             self._x1Limit = int(info["Dim_1"])
             self._y1Limit = int(info["Dim_2"])
             self.graph.clear()
