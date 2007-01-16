@@ -67,6 +67,7 @@ import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
 import Numeric
+import PyMcaPrintPreview
 
 DEBUG = 0
 if DEBUG:
@@ -2354,6 +2355,9 @@ class McaGraphWindow(qt.QWidget):
             self.connect(self.graph,
                          qt.SIGNAL('QtBlissGraphSignal'),
                          self.__graphSignal)
+
+        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        if DEBUG: print "printPreview id = ", id(self.printPreview)
         
 
                      
@@ -2539,9 +2543,25 @@ class McaGraphWindow(qt.QWidget):
         """
         self.toolbar.layout.addWidget(HorizontalSpacer(toolbar))
         # ---print
-        self._addToolButton(self.printIcon,
+        if 0:
+            self._addToolButton(self.printIcon,
                             self.graph.printps,
-                            'Prints the Graph') 
+                            'Prints the Graph')
+        else:
+            tb = self._addToolButton(self.printIcon,
+                    self.printGraph,
+                    'Print the graph')
+            toolbar.layout.addWidget(tb)
+            
+    def printGraph(self):
+        pixmap = qt.QPixmap.grabWidget(self.graph)
+        self.printPreview.addPixmap(pixmap)
+        if self.printPreview.isHidden():
+            self.printPreview.show()
+        if QTVERSION < '4.0.0':
+            self.printPreview.raiseW()
+        else:
+            self.printPreview.raise_()
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None):
             toolbar = self.toolbar
