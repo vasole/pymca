@@ -477,7 +477,7 @@ class McaBatchGUI(qt.QWidget):
         try:
             file = None
             try:
-                file   = EdfFileLayer.EdfFileLayer(fastedf=1)
+                file   = EdfFileLayer.EdfFileLayer(fastedf=0)
                 file.SetSource(inputfile)
                 fileinfo = file.GetSourceInfo()
                 if fileinfo['KeyList'] == []:file=None
