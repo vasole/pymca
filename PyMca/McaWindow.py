@@ -41,7 +41,7 @@ import McaCalWidget
 import Elements
 import McaSimpleFit
 import Specfit
-
+import PyMcaPrintPreview
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
@@ -105,6 +105,9 @@ class McaWidget(qt.QWidget):
             self.specfit = specfit
         self.simplefit   = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
         self.advancedfit = McaAdvancedFit.McaAdvancedFit()
+
+        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        if DEBUG: print "printPreview id = ", id(self.printPreview)
 
         self.build(vertical)
         self.initIcons()
@@ -297,6 +300,21 @@ class McaWidget(qt.QWidget):
             self.connect(tb,qt.SIGNAL('clicked()'),self.graph.printps)
             qt.QToolTip.add(tb,'Prints the Graph')
             toolbar.layout.addWidget(tb)
+        else:
+            tb = self._addToolButton(self.printIcon,
+                    self.printGraph,
+                    'Print the graph')
+            toolbar.layout.addWidget(tb)
+
+    def printGraph(self):
+        pixmap = qt.QPixmap.grabWidget(self.graph)
+        self.printPreview.addPixmap(pixmap)
+        if self.printPreview.isHidden():
+            self.printPreview.show()
+        if QTVERSION < '4.0.0':
+            self.printPreview.raiseW()
+        else:
+            self.printPreview.raise_()
             
     def _addToolButton(self, icon, action, tip, toggle=None):
             toolbar = self.toolbar

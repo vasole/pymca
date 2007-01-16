@@ -462,8 +462,12 @@ class QtBlissGraph(qwt.QwtPlot):
         #line type
         self.linetype= 0
         #width
-        self.linewidth     = 2
-        self.__activelinewidth = 2
+        if sys.platform == "win32":
+            self.linewidth     = 1
+            self.__activelinewidth = 1
+        else:
+            self.linewidth     = 2
+            self.__activelinewidth = 2
         
         #perhaps this should be somewhere else
         self.plotImage=None        
