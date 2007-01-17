@@ -470,7 +470,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.plotROIImage(update = False)
                 self.plotStackImage(update = False)
 
-    def setStack(self, stack, mcaindex=1):
+    def setStack(self, stack, mcaindex=1, fileindex = None):
         #stack.data is an XYZ array
         self.stack = stack
 
@@ -485,27 +485,31 @@ class QEDFStackWidget(qt.QWidget):
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setWindowTitle(title)
         
-        #for the time being I deduce the MCA
         shape = self.stack.data.shape
 
-        if 0:
-            #guess the MCA
-            imax = 0
-            for i in range(len(shape)):
-                if shape[i] > shape[imax]:
-                    imax = i
-            self.mcaIndex = imax
-        else:
-            self.mcaIndex = mcaindex
+        self.mcaIndex   = mcaindex
+        self.otherIndex = 0
+        if fileindex is None:
+            fileindex      = 2
+            if hasattr(self.stack, "info"):
+                if self.stack.info.has_key('FileIndex'):
+                    fileindex = stack.info['FileIndex']
+                if fileindex == 0:
+                    self.mcaIndex   = 2
+                    self.otherIndex = 1
+                else:
+                    self.mcaIndex = 1
+                    self.otherIndex = 0
+                
+        self.fileIndex = fileindex
         
         #original image
         self.__stackImageData = Numeric.sum(stack.data, self.mcaIndex)
 
         #original ICR mca
-        if self.mcaIndex == 0:
-            mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),1)
-        else:
-            mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),0)
+        i = max(self.otherIndex, self.fileIndex)
+        j = min(self.otherIndex, self.fileIndex)                
+        mcaData0 = Numeric.sum(Numeric.sum(stack.data, i), j)
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -532,11 +536,18 @@ class QEDFStackWidget(qt.QWidget):
     def __addOriginalImage(self):
         #init the original image
         self.stackGraphWidget.graph.setTitle("Original Stack")
-        self.stackGraphWidget.graph.x1Label("File")
-        if self.mcaIndex == 0:
-            self.stackGraphWidget.graph.y1Label('Column')
+        if self.fileIndex == 2:
+            self.stackGraphWidget.graph.x1Label("File")
+            if self.mcaIndex == 0:
+                self.stackGraphWidget.graph.y1Label('Column')
+            else:
+                self.stackGraphWidget.graph.y1Label('Row')
         else:
-            self.stackGraphWidget.graph.y1Label('Row')
+            self.stackGraphWidget.graph.y1Label("File")
+            if self.mcaIndex == 1:
+                self.stackGraphWidget.graph.x1Label('Row')
+            else:
+                self.stackGraphWidget.graph.x1Label('Column')
 
         [ymax, xmax] = self.__stackImageData.shape
         if self._y1AxisInverted:
@@ -625,10 +636,18 @@ class QEDFStackWidget(qt.QWidget):
             else:
                 i1 = max(int(ddict["from"]), 0)
                 i2 = min(int(ddict["to"])+1, self.stack.data.shape[self.mcaIndex])
-            if self.mcaIndex == 0:
-                self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,0,:],0)
+            if self.fileIndex == 0:
+                if self.mcaIndex == 1:
+                    self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                else:
+                    self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
             else:
-                self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                #self.fileIndex = 2
+                if self.mcaIndex == 0:
+                    self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,:,:],0)
+                else:
+                    self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                
             self._resetSelection()
             if self.isHidden():
                 self.show()
@@ -921,12 +940,20 @@ class QEDFStackWidget(qt.QWidget):
 
         mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
 
-        if self.mcaIndex == 0:
-            for i in range(len(mcaData)):
-               mcaData[i] = sum(sum(self.stack.data[i,:,:] * self.__selectionMask))
-        else:
-            for i in range(len(mcaData)):
-               mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask[:,:]))
+        if self.fileIndex == 2:
+            if self.mcaIndex == 0:
+                for i in range(len(mcaData)):
+                   mcaData[i] = sum(sum(self.stack.data[i,:,:] * self.__selectionMask))
+            else:
+                for i in range(len(mcaData)):
+                   mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask[:,:]))
+        else:    
+            if self.mcaIndex == 1:
+                for i in range(len(mcaData)):
+                   mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask))
+            else:
+                for i in range(len(mcaData)):
+                   mcaData[i] = sum(sum(self.stack.data[:,:,i] * self.__selectionMask[:,:]))
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -1094,7 +1121,7 @@ class QEDFStackWidget(qt.QWidget):
 if __name__ == "__main__":
     import getopt
     options = ''
-    longoptions = ["begin=", "end="]
+    longoptions = ["fileindex=","begin=", "end="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1105,6 +1132,7 @@ if __name__ == "__main__":
         sys.exit(1)
     #import time
     #t0= time.time()
+    fileindex = 2   #it is faster with fileindex=0
     begin = None
     end = None
     for opt, arg in opts:
@@ -1112,20 +1140,22 @@ if __name__ == "__main__":
             begin = int(arg)
         elif opt in '--end':
             end = int(arg)
+        elif opt in '--fileindex':
+            fileindex = int(arg)
     app = qt.QApplication([])
     stack = QStack()
     w = QEDFStackWidget()
     if len(args) > 1:
-        stack.loadFileList(args)
+        stack.loadFileList(args, fileindex =fileindex)
     elif len(args) == 1:
-        stack.loadIndexedStack(args, begin, end)
+        stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
     else:
         if 1:
             filelist = w._getStackOfFiles()
             if len(filelist) == 1:
-                stack.loadIndexedStack(filelist[0], begin, end)
+                stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
             elif len(filelist):
-                stack.loadFileList(filelist)
+                stack.loadFileList(filelist, fileindex=fileindex)
             else:
                 print "Usage: "
                 print "python QEDFStackWidget.py SET_OF_EDF_FILES"

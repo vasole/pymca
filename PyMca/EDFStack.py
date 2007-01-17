@@ -24,7 +24,7 @@ class EDFStack(DataObject.DataObject):
             else:
                 self.loadFileList(filelist)
 
-    def loadFileList(self, filelist):
+    def loadFileList(self, filelist, fileindex=2):
         if type(filelist) == type(''):filelist = [filelist]
         self.__keyList = []
         self.sourceName = filelist
@@ -35,72 +35,117 @@ class EDFStack(DataObject.DataObject):
 
         #read first edf file
         #get information
-        if 1:
-            tempEdf=EdfFileDataSource.EdfFileDataSource(filelist[0])
-            keylist = tempEdf.getSourceInfo()['KeyList']
-            nImages = len(keylist)
-            dataObject = tempEdf.getDataObject(keylist[0])
-            self.info.update(dataObject.info)
-            arrRet = dataObject.data
-        else:
-            tempEdf = EdfFile.EdfFile(filelist[0])        
-            header=tempEdf.GetHeader(0)
-            arrRet=tempEdf.GetData(0)
-            self.info.update(header)
-            nImages = tempEdf.GetNumImages()
+        tempEdf=EdfFileDataSource.EdfFileDataSource(filelist[0])
+        keylist = tempEdf.getSourceInfo()['KeyList']
+        nImages = len(keylist)
+        dataObject = tempEdf.getDataObject(keylist[0])
+        self.info.update(dataObject.info)
+        arrRet = dataObject.data
 
         self.onBegin(self.nbFiles)
         singleImageShape = arrRet.shape
-        if len(singleImageShape) == 1:
-            #single line
-            #be ready for specfile stack?
-            raise "IOError", "Not implemented yet"
-            self.data = Numeric.zeros((arrRet.shape[0],
-                                       nImages,
-                                       self.nbFiles),
-                                       arrRet.typecode())
-            self.incrProgressBar=0
-            for tempEdfFileName in filelist:
-                tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                for i in range(nImages):
-                    pieceOfStack=tempEdf.GetData(i)
-                    self.data[:,i, self.incrProgressBar] = pieceOfStack[:]
-                self.incrProgressBar += 1
-                self.onProgress(self.incrProgressBar)
-            self.onEnd()
-        else:
-            if nImages > 1:
-                #this is not the common case
-                #should I try to convert it to a standard one
-                #using a 3D matrix or kepp as 4D matrix?
+        if fileindex == 2:
+            if len(singleImageShape) == 1:
+                #single line
+                #be ready for specfile stack?
                 raise "IOError", "Not implemented yet"
                 self.data = Numeric.zeros((arrRet.shape[0],
-                                           arrRet.shape[1],
-                                           nImages * self.nbFiles),
+                                           nImages,
+                                           self.nbFiles),
                                            arrRet.typecode())
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
                     for i in range(nImages):
                         pieceOfStack=tempEdf.GetData(i)
-                        self.data[:,:,
-                                  nImages*self.incrProgressBar+i] = \
-                                                  pieceOfStack[:,:]
+                        self.data[:,i, self.incrProgressBar] = pieceOfStack[:]
                     self.incrProgressBar += 1
+                    self.onProgress(self.incrProgressBar)
+                self.onEnd()
             else:
-                #this is the common case
-                self.data = Numeric.zeros((arrRet.shape[0],
-                                           arrRet.shape[1],
-                                           self.nbFiles),
+                if nImages > 1:
+                    #this is not the common case
+                    #should I try to convert it to a standard one
+                    #using a 3D matrix or kepp as 4D matrix?
+                    raise "IOError", "Not implemented yet"
+                    self.data = Numeric.zeros((arrRet.shape[0],
+                                               arrRet.shape[1],
+                                               nImages * self.nbFiles),
+                                               arrRet.typecode())
+                    self.incrProgressBar=0
+                    for tempEdfFileName in filelist:
+                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                        for i in range(nImages):
+                            pieceOfStack=tempEdf.GetData(i)
+                            self.data[:,:,
+                                      nImages*self.incrProgressBar+i] = \
+                                                      pieceOfStack[:,:]
+                        self.incrProgressBar += 1
+                else:
+                    #this is the common case
+                    self.data = Numeric.zeros((arrRet.shape[0],
+                                               arrRet.shape[1],
+                                               self.nbFiles),
+                                               arrRet.typecode())
+                    self.incrProgressBar=0
+                    for tempEdfFileName in filelist:
+                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                        pieceOfStack=tempEdf.GetData(0)    
+                        self.data[:,:, self.incrProgressBar] = pieceOfStack[:,:]
+                        self.incrProgressBar += 1
+                        self.onProgress(self.incrProgressBar)
+                    self.onEnd()
+        else:
+            if len(singleImageShape) == 1:
+                #single line
+                #be ready for specfile stack?
+                raise "IOError", "Not implemented yet"
+                self.data = Numeric.zeros((self.nbFiles,
+                                           arrRet.shape[0],
+                                           nImages),
                                            arrRet.typecode())
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                    pieceOfStack=tempEdf.GetData(0)    
-                    self.data[:,:, self.incrProgressBar] = pieceOfStack[:,:]
+                    for i in range(nImages):
+                        pieceOfStack=tempEdf.GetData(i)
+                        self.data[self.incrProgressBar, :,i] = pieceOfStack[:]
                     self.incrProgressBar += 1
                     self.onProgress(self.incrProgressBar)
                 self.onEnd()
+            else:
+                if nImages > 1:
+                    #this is not the common case
+                    #should I try to convert it to a standard one
+                    #using a 3D matrix or kepp as 4D matrix?
+                    raise "IOError", "Not implemented yet"
+                    self.data = Numeric.zeros((nImages * self.nbFiles,
+                                               arrRet.shape[0],
+                                               arrRet.shape[1]),
+                                               arrRet.typecode())
+                    self.incrProgressBar=0
+                    for tempEdfFileName in filelist:
+                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                        for i in range(nImages):
+                            pieceOfStack=tempEdf.GetData(i)
+                            self.data[nImages*self.incrProgressBar+i,
+                                      :,:] = \
+                                                      pieceOfStack[:,:]
+                        self.incrProgressBar += 1
+                else:
+                    #this is the common case
+                    self.data = Numeric.zeros((self.nbFiles,
+                                               arrRet.shape[0],
+                                               arrRet.shape[1]),
+                                               arrRet.typecode())
+                    self.incrProgressBar=0
+                    for tempEdfFileName in filelist:
+                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                        pieceOfStack=tempEdf.GetData(0)    
+                        self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
+                        self.incrProgressBar += 1
+                        self.onProgress(self.incrProgressBar)
+                    self.onEnd()
 
         self.__nFiles         = self.incrProgressBar
         self.__nImagesPerFile = nImages
@@ -112,6 +157,7 @@ class EDFStack(DataObject.DataObject):
         self.info["SourceName"] = self.sourceName
         self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
         self.info["NumberOfFiles"] = self.__nFiles * 1
+        self.info["FileIndex"] = fileindex
 
     def onBegin(self, n):
         pass
@@ -122,7 +168,7 @@ class EDFStack(DataObject.DataObject):
     def onEnd(self):
         pass
 
-    def loadIndexedStack(self,filename,begin=None,end=None, skip = None):
+    def loadIndexedStack(self,filename,begin=None,end=None, skip = None, fileindex=2):
         if begin is None: begin = 0
         if type(filename) == type([]):
             filename = filename[0]
@@ -145,7 +191,7 @@ class EDFStack(DataObject.DataObject):
         if len(name) == len(suffix):
             #just one file, one should use standard widget
             #and not this one.
-            self.loadFileList(filename)
+            self.loadFileList(filename, fileindex=fileindex)
         else:
             nchain = []
             while (i<=n):
@@ -192,75 +238,7 @@ class EDFStack(DataObject.DataObject):
                     if i > end:
                         break
                 f = prefix+format % i+suffix
-            self.loadFileList(filelist)
-
-
-    def loadIndexedStackOLD(self,path,begin=0,end=70, format = "%04d"):
-        """
-        This is for Artemis-like indexed files
-        """
-        self.__keyList = []
-        radix=self.getRadix(path)
-        begin,end=int(begin),int(end)
-        
-        self.__indexedStack = True
-        self.sourceName = ["IndexedStack",
-                           "%s" % path,
-                           format % begin,
-                           format % end]
-        
-        self.sourceType = SOURCE_TYPE
-        
-        minVal,maxVal=0,0
-        x,y=0,0
-        self.nbFiles=end-begin+1
-
-        self.incrProgressBar=0
-        
-        #read first edf file thru EdfFileSource???
-        tempEdfFileName=radix+self.completeRadix(str(begin))
-        self.info = {}
-        if 1:
-            tempEdf=EdfFileDataSource.EdfFileDataSource(tempEdfFileName)
-            keylist = tempEdf.getSourceInfo()['KeyList']
-            dataObject = tempEdf.getDataObject(keylist[0])
-            self.info.update(dataObject.info)
-            arrRet = dataObject.data
-        else:
-            tempEdf=EdfFile.EdfFile(tempEdfFileName)
-            header=tempEdf.GetHeader(0)
-            arrRet=tempEdf.GetData(0)
-            self.info.update(header)
-        #self.eh.event(self.incrProgressBar)
-        self.incrProgressBar += 1
-
-        self.data = Numeric.zeros((arrRet.shape[0],
-                                   arrRet.shape[1],
-                                   self.nbFiles),
-                              arrRet.typecode())
-        for row in range(begin+1,end+1):
-            #build EDF file name
-            #print "read filename number : ",row
-            tempEdfFileName=radix+self.completeRadix(str(row))
-            tempEdf=EdfFile.EdfFile(tempEdfFileName)
-
-            pieceOfStack=tempEdf.GetData(0)
-            self.incrProgressBar += 1
-
-            #update extremal values perhaps temporary
-            self.Xmax,self.Ymax=pieceOfStack.shape
-            self.data[:,:, row] = pieceOfStack[:,:]
-
-        self.__nFiles         = self.incrProgressBar
-        self.__nImagesPerFile = 1
-        shape = self.data.shape
-        for i in range(len(shape)):
-            key = 'Dim_%d' % (i+1,)
-            self.info[key] = shape[i]
-        self.info["SourceType"] = SOURCE_TYPE
-        self.info["SourceName"] = self.sourceName
-        self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
-        self.info["NumberOfFiles"] = self.__nFiles * 1
+            self.loadFileList(filelist, fileindex=fileindex)
 
     def getSourceInfo(self):
         sourceInfo = {}
@@ -284,64 +262,6 @@ class EDFStack(DataObject.DataObject):
     def getXYSelectionArray(self,coord=(0,0)):
         x,y=coord    
         return (self.data[y,x,:]).astype(Numeric.Float)
-    
-    
-    def getRadix(self,chaine):
-        """
-        split the number extension (ex: '_0000.edf' ) of an edf filename
-        """
-        return(chaine[:(len(chaine)-9)])
-    
-    def completeRadix(self,strNumber):
-        """
-        return the number extension (ex: '_0000.edf' ) corresponding to the strNumber  to complete the radix and make a standard .edf filename
-        """
-        number=int(strNumber)
-        if (number<10) :
-            return("_000"+strNumber+".edf")
-        elif ((number>=10) and (number<100)) :
-            return("_00"+strNumber+".edf")
-        elif ((number>=100) and (number<1000)) :
-            return("_0"+strNumber+".edf")
-        else :
-            return("_"+strNumber+".edf")
-    
-    def packDownPages(self):
-        x,y=self.GetPageSize()
-        z=self.GetNumberPages()
-        arr=None
-        info=self.GetPageInfo(0)
-        for page in range(self.GetNumberPages()):
-            a=self.GetPageArray(0)
-            self.eh.event(self.incrProgressBar)
-            
-            if arr is None : 
-                arr=a
-            else:
-                arr=concatenate((arr,a))
-            self.Delete(0)
-                
-        arr=reshape(arr,(z,y,x))
-        self.AppendPage(info,arr)
-        
-    def splitPageAlongAxis(self,page=0,axis=X_AXIS):
-        x,y,z=self.GetPageArray(0).shape
-        info=self.GetPageInfo(0)
-        if axis==X_AXIS:
-            for i in range(x):
-                arraySlice=(self.GetPageArray(0))[i,:,:]
-                self.AppendPage(info,arraySlice)
-            self.Delete(0)
-        elif axis==Y_AXIS:
-            for i in range(y):
-                arraySlice=(self.GetPageArray(0))[:,i,:]
-                self.AppendPage(info,arraySlice)
-            self.Delete(0)
-        elif axis==Z_AXIS:
-            for i in range(z):
-                arraySlice=(self.GetPageArray(0))[:,:,i]
-                self.AppendPage(info,arraySlice)
-            self.Delete(0)
 
 if __name__ == "__main__":
     import time
