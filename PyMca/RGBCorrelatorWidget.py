@@ -451,6 +451,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 initdir = self.outputDir
         filedialog = qt.QFileDialog(self)
         filedialog.setFileMode(filedialog.AnyFile)
+        filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *.dat",
                       "EDF Files *.edf"]

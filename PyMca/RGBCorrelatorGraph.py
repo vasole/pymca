@@ -320,6 +320,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 strlist.append(f)
             outfile.setFilters(strlist)
             outfile.setFileMode(outfile.AnyFile)
+            outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
             outfile.setDirectory(self.saveDirectory)
             ret = outfile.exec_()
 
