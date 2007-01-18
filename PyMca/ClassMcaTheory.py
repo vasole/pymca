@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.68 $"
+___revision__ = "$Revision: 1.69 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -1531,8 +1531,12 @@ class McaTheory:
                 newpar.append(step_height)
             else:
                 newpar.append(0.0)
-        for i in range(len(PARAMETERS)-NGLOBAL):
-            newpar.append(10000.0)
+        if not linearfit:
+            for i in range(len(PARAMETERS)-NGLOBAL):
+                newpar.append(10000.0)
+        else:
+            for i in range(len(PARAMETERS)-NGLOBAL):
+                newpar.append(1.0)
         # the codes
         codes = Numeric.zeros((3,len(newpar)),Numeric.Float)
         codes[0,:]   = Gefit.CPOSITIVE # POSITIVE
