@@ -853,11 +853,13 @@ class McaAdvancedFit(qt.QWidget):
         tool.setParameters(dict, signal=False)
         if DEBUG:
             dict = tool.processFitResult(config=dict,fitresult=fitresult,
-                    elementsfrommatrix=False)        
+                    elementsfrommatrix=False,
+                    fluorates = self.mcafit._fluoRates)
         else:
             try:
                 dict = tool.processFitResult(config=dict,fitresult=fitresult,
-                    elementsfrommatrix=False)        
+                    elementsfrommatrix=False,
+                    fluorates = self.mcafit._fluoRates)        
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)

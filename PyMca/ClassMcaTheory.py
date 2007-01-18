@@ -174,6 +174,7 @@ class McaTheory:
         filterlist = []
         detector = None
         multilayerlist = None
+        self._fluoRates = None
         if self.attflag:
             for attenuator in self.config['attenuators'].keys():
                 if not self.config['attenuators'][attenuator][0]:continue
@@ -248,8 +249,8 @@ class McaTheory:
                   text += "If you used the graphical interface,\n"
                   text += "Please check the MATRIX tab" 
                   raise "ValueError",text
-                  
-          dict=Elements.getMultilayerFluorescence(multilayer,
+          if 0:
+              dict=Elements.getMultilayerFluorescence(multilayer,
                                      energylist,
                                      layerList = None,
                                      weightList = energyweight,
@@ -264,6 +265,23 @@ class McaTheory:
                                      detector=detector,
                                      beamfilters=filterlist,
                                      forcepresent = 1)
+          else:
+              self._fluoRates=Elements.getMultilayerFluorescence(multilayer,
+                                     energylist,
+                                     layerList = None,
+                                     weightList = energyweight,
+                                     flagList = energyflag,
+                                     fulloutput=1,
+                                     attenuators=attenuatorlist,
+                                     alphain = alphain,
+                                     alphaout = alphaout,
+                                     #elementsList = elementsList,
+                                     elementsList = data,
+                                     cascade = True,
+                                     detector=detector,
+                                     beamfilters=filterlist,
+                                     forcepresent = 1)
+              dict = self._fluoRates[0]
           #print "getMatrixFluorescence elapsed = ",time.time()-t0
           for item in data:
             newpeaks      = []

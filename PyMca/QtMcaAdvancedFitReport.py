@@ -62,6 +62,7 @@ import ConfigDict
 import time
 import string
 import PyMcaLogo
+from ConcentrationsTool import ConcentrationsConversion
 
 class QtMcaAdvancedFitReport:
     def __init__(self, fitfile = None, outfile = None, outdir = None,
@@ -71,6 +72,7 @@ class QtMcaAdvancedFitReport:
                     concentrations=None, table = None):
         
         self.concentrations = concentrations
+        self.concentrationsConversion = ConcentrationsConversion()
         if table is None: table = 2
         self.tableFlag = table
         if fitfile is not None:
@@ -610,122 +612,10 @@ class QtMcaAdvancedFitReport:
             return ""
 
     def getConcentrations(self):
-        text = ""
-        if self.concentrations is None:return text
-        text+="\n"
-        text+= "<H2><a NAME=""%s""></a><FONT color=#009999>" % 'Concentrations'
-        text+= "%s:" % 'Concentrations'
-        text+= "</FONT></H2>"
-        text+="<br>"
-        result =self.concentrations
-        #the header
-        
-        #the table
-        labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
-        if result.has_key('layerlist'):
-            if type(result['layerlist']) != type([]):
-                result['layerlist'] = [result['layerlist']]
-            for label in result['layerlist']:
-                labels += [label]
-        lemmon=string.upper("#%x%x%x" % (255,250,205))
-        white ='#FFFFFF' 
-        hcolor = string.upper("#%x%x%x" % (230,240,249))       
-        text+="<CENTER>"
-        text+= "<nobr>"
-        text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
-        text+= "<tr>"
-        for l in range(len(labels)):
-            if l < 2:
-                text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
-            elif l == 2:
-                text+= '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
-            else:
-                text+= '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
-        text+= "</tr>"
-        line = 0
-        for group in result['groups']:
-            text+=("<tr>")
-            element,group0 = string.split(group)
-            fitarea    = "%.6e" % result['fitarea'][group]
-            sigmaarea  = "%.2e" % result['sigmaarea'][group]
-            area       = "%.6e" % result['area'][group]
-            fraction   = "%.4g" % result['mass fraction'][group]
-            if 'Expected Area' in labels:
-                fields = [element,group0,fitarea,sigmaarea,area,fraction]
-            else:
-                fields = [element,group0,fitarea,sigmaarea,fraction]
-            if result.has_key('layerlist'):
-                for layer in result['layerlist']:
-                    #fitarea    = qt.QString("%.6e" % (result[layer]['fitarea'][group]))
-                    #area       = qt.QString("%.6e" % (result[layer]['area'][group]))
-                    if result[layer]['mass fraction'][group] < 0.0:
-                        fraction   = "Unknown"
-                    else:
-                        fraction   = "%.4g" % result[layer]['mass fraction'][group]
-                    fields += [fraction]
-            if line % 2:
-                color = lemmon
-            else:
-                color = white
-            i = 0 
-            for field in fields:
-                if (i<2):
-                    #text += '<td align="left"  bgcolor="%s"><b>%s</b></td>' % (color, field)
-                    text += '<td align="left"  bgcolor=%s>%s</td>' % (color, field)
-                else:
-                    #text += '<td align="right" bgcolor="%s"><b>%s</b></td>' % (color, field)
-                    text += '<td align="right" bgcolor=%s>%s</td>' % (color, field)
-                i+=1
-            text += '</tr>'
-            line +=1           
-        text+=("</table>")
-        text+=("</nobr>")
-        text+="</CENTER>"
-        return text        
+        return self.concentrationsConversion.getConcentrationsAsHtml(self.concentrations)
 
     def getConcentrationsASCII(self):
-        text = ""
-        if self.concentrations is None:return text
-        result =self.concentrations
-        #the header
-        
-        #the table
-        labels = ['Element','Group','Fit_Area','Sigma_Area', 'Mass_fraction']
-        if result.has_key('layerlist'):
-            if type(result['layerlist']) != type([]):
-                result['layerlist'] = [result['layerlist']]
-            for label in result['layerlist']:
-                labels += [label.replace(' ','')]
-        for l in labels:
-            text+="%s  " % l
-        text+=("\n")
-        line = 0
-        for group in result['groups']:
-            element,group0 = string.split(group)
-            fitarea    = "%.6e" % result['fitarea'][group]
-            sigmaarea  = "%.2e" % result['sigmaarea'][group]
-            area       = "%.6e" % result['area'][group]
-            fraction   = "%.4g" % result['mass fraction'][group]
-            if 'Expected Area' in labels:
-                fields = [element,group0,fitarea,sigmaarea,area,fraction]
-            else:
-                fields = [element,group0,fitarea,sigmaarea,fraction]
-            if result.has_key('layerlist'):
-                for layer in result['layerlist']:
-                    #fitarea    = qt.QString("%.6e" % (result[layer]['fitarea'][group]))
-                    #area       = qt.QString("%.6e" % (result[layer]['area'][group]))
-                    if result[layer]['mass fraction'][group] < 0.0:
-                        fraction   = "Unknown"
-                    else:
-                        fraction   = "%.4g" % result[layer]['mass fraction'][group]
-                    fields += [fraction]
-            i = 0 
-            for field in fields:
-                text += '%s  ' % (field)
-                i+=1
-            text += '\n'
-            line +=1
-        return text        
+        return self.concentrationsConversion.getConcentrationsAsAscii(self.concentrations)
 
     def getResult(self):
         text = ""

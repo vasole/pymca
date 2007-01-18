@@ -194,7 +194,7 @@ class McaBatchGUI(qt.QWidget):
         self.__specBox.setEnabled(False)
         """
         self.__htmlBox = qt.QCheckBox(vbox3)
-        self.__htmlBox.setText('Generate Report')
+        self.__htmlBox.setText('Generate Report (SLOW!)')
         #palette = self.__htmlBox.palette()
         #palette.setDisabled(palette.active())
         self.__htmlBox.setChecked(False)
@@ -221,10 +221,10 @@ class McaBatchGUI(qt.QWidget):
         vbox2.l.addWidget(self.__extendedTable)
         
         self.__concentrationsBox = qt.QCheckBox(vbox3)
-        self.__concentrationsBox.setText('Concentrations (SLOW!)')
+        self.__concentrationsBox.setText('Concentrations')
         self.__concentrationsBox.setChecked(False)
-        #self.__concentrationsBox.setEnabled(True)
-        self.__concentrationsBox.setEnabled(False)
+        self.__concentrationsBox.setEnabled(True)
+        #self.__concentrationsBox.setEnabled(False)
         vbox3.l.addWidget(self.__concentrationsBox)
         self._layout.addWidget(box)
         
@@ -354,17 +354,18 @@ class McaBatchGUI(qt.QWidget):
             self.__overwrite.setChecked(1)
 
     def __clickSignal2(self):
-        self.__tableBox.setEnabled(True)
+        #self.__tableBox.setEnabled(True)
+        pass
 
     def __clickSignal3(self):
         if self.__htmlBox.isChecked():
             self.__tableBox.setEnabled(True)
-            self.__concentrationsBox.setEnabled(True)
+            #self.__concentrationsBox.setEnabled(True)
             self.__fitBox.setChecked(True)
             self.__fitBox.setEnabled(False)
         else:
             self.__tableBox.setEnabled(False)
-            self.__concentrationsBox.setEnabled(False)
+            #self.__concentrationsBox.setEnabled(False)
             self.__fitBox.setChecked(False)
             self.__fitBox.setEnabled(True)
 
@@ -660,10 +661,10 @@ class McaBatchGUI(qt.QWidget):
                                           os.path.basename(self.fileList[-1]))
         roifit  = self.__roiBox.isChecked()
         html    = self.__htmlBox.isChecked()
-        if html:
-            concentrations = self.__concentrationsBox.isChecked()
-        else:
-            concentrations = 0
+        #if html:
+        concentrations = self.__concentrationsBox.isChecked()
+        #else:
+        #    concentrations = 0
         if self.__tableBox.isChecked():
             if self.__extendedTable.isChecked():
                 table = 2
@@ -1110,14 +1111,18 @@ class McaBatchWindow(qt.QWidget):
             return
         if self.report is None:
             #first file
-            self.forcereport = 0
+            self.forcereport = 0        
             self._concentrationsFile = os.path.join(outputdir,
                                 self._rootname + "_concentrations.txt")
             if os.path.exists(self._concentrationsFile):
+                """
+                #code removed, concentrations in McaAdvancedFitBatch.py
                 try:
                     os.remove(self._concentrationsFile)
                 except:
                     pass
+                """
+                pass
             else:
                 #this is to generate the concentrations file
                 #from an already existing set of fitfiles
@@ -1127,6 +1132,8 @@ class McaBatchWindow(qt.QWidget):
                         outfile = outfile, table = self.table)
             self.__writingReport = True
             a=self.report.writeReport()
+            """
+            #The code below has been moved to McaAdvancedFitBatch.py
             if len(self.report._concentrationsTextASCII) > 1:
                 text  = ""
                 text += "SOURCE: "+ filename +"\n"
@@ -1135,6 +1142,7 @@ class McaBatchWindow(qt.QWidget):
                 f=open(self._concentrationsFile,"a")
                 f.write(text)
                 f.close()
+            """
             self.__writingReport = False
             qt.QApplication.postEvent(self, McaCustomEvent.McaCustomEvent({'event':'reportWritten'}))
             
@@ -1309,7 +1317,7 @@ def main():
         window =  McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table)
                                 
-        if html or concentrations:fitfiles=1
+        if html:fitfiles=1
         try:
             b = McaBatch(window,cfg,filelist,outdir,roifit=roifit,roiwidth=roiwidth,
                      overwrite = overwrite, filestep=filestep, mcastep=mcastep,

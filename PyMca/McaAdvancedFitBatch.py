@@ -45,8 +45,7 @@ class McaAdvancedFitBatch:
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self.fitFiles = fitfiles
-        if self.fitFiles: self._concentrations = concentrations
-        else: self._concentrations = 0
+        self._concentrations = concentrations
         if type(initdict) == type([]):
             self.mcafit = ClassMcaTheory.McaTheory(initdict[0])
             self.__configList = initdict
@@ -55,6 +54,7 @@ class McaAdvancedFitBatch:
             self.mcafit = ClassMcaTheory.McaTheory(initdict)
         if self._concentrations:
             self._tool = ConcentrationsTool.ConcentrationsTool()
+            self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
         if fitimages:
@@ -175,7 +175,7 @@ class McaAdvancedFitBatch:
             
     def __tryEdf(self,inputfile):
         try:
-            ffile   = EdfFileLayer.EdfFileLayer(fastedf=1)
+            ffile   = EdfFileLayer.EdfFileLayer(fastedf=0)
             ffile.SetSource(inputfile)
             fileinfo = ffile.GetSourceInfo()
             if fileinfo['KeyList'] == []:ffile=None
@@ -220,7 +220,7 @@ class McaAdvancedFitBatch:
                         else:
                             xmin = 0.0
                         #key = "%s.%s.%02d.%02d" % (scan,order,row,col)
-                        key = "%s.%s.%02d" % (scan,order,mca)
+                        key = "%s.%s.%04d" % (scan,order,mca)
                         if 0:
                             #slow
                             y0  = Numeric.array(mcadata.tolist())
@@ -250,7 +250,7 @@ class McaAdvancedFitBatch:
                             self.__col += 1
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
-                            key = "%s.%s.%03d.%d" % (scan,order,point,mca)
+                            key = "%s.%s.%05d.%d" % (scan,order,point,mca)
                             #get rid of slow info reading methods
                             #mcainfo,mcadata = ffile.LoadSource(key)
                             mcadata = scan_obj.mca(i+1)
@@ -276,12 +276,23 @@ class McaAdvancedFitBatch:
 
                 
     def __processOneMca(self,x,y,filename,key,info=None):
+        self._concentrationsAsAscii = ""
         if not self.roiFit:
             result = None
             concentrationsdone = 0
             concentrations = None
             outfile=os.path.join(self._outputdir,filename)
             fitfile = self.__getFitFile(filename,key)
+            self._concentrationsFile = os.path.join(self._outputdir,
+                                    self._rootname+"_concentrations.txt")
+            #                        self._rootname+"_concentrationsNEW.txt")
+            if self.counter == 0:
+                if os.path.exists(self._concentrationsFile):
+                    try:
+                        os.remove(self._concentrationsFile)
+                    except:
+                        print "I could not delete existing concentrations file %s", self._concentrationsFile                        
+            #print "self._concentrationsFile", self._concentrationsFile
             if self.useExistingFiles and os.path.exists(fitfile):
                 useExistingResult = 1
                 try:
@@ -306,8 +317,26 @@ class McaAdvancedFitBatch:
                     return
                 try:
                     self.mcafit.estimate()
-                    if self.fitFiles or self._concentrations:
+                    if self.fitFiles:
                         fitresult, result = self.mcafit.startfit(digest=1)
+                    elif self._concentrations and (self.mcafit._fluoRates is None):
+                        fitresult, result = self.mcafit.startfit(digest=1)
+                    elif self._concentrations:
+                        fitresult = self.mcafit.startfit(digest=0)
+                        try:
+                            fitresult0 = {}
+                            fitresult0['fitresult'] = fitresult
+                            fitresult0['result'] = self.mcafit.imagingDigestResult()
+                            fitresult0['result']['config'] = self.mcafit.config
+                            tconf = self._tool.configure()
+                            concentrations = self._tool.processFitResult(config=tconf,
+                                            fitresult=fitresult0,
+                                            elementsfrommatrix=False,
+                                            fluorates = self.mcafit._fluoRates)
+                        except:
+                            print "error in concentrations"
+                            print sys.exc_info()[0:-1]
+                        concentrationsdone = True
                     else:
                         #just images
                         fitresult = self.mcafit.startfit(digest=0)
@@ -344,6 +373,15 @@ class McaAdvancedFitBatch:
                             print "error in concentrations"
                             print sys.exc_info()[0:-1]
                             #return
+                self._concentrationsAsAscii=self._toolConversion.getConcentrationsAsAscii(concentrations)
+                if len(self._concentrationsAsAscii) > 1:
+                    text  = ""
+                    text += "SOURCE: "+ filename +"\n"
+                    text += "KEY: "+key+"\n"
+                    text += self._concentrationsAsAscii + "\n"
+                    f=open(self._concentrationsFile,"a")
+                    f.write(text)
+                    f.close()
 
             #output options
             # .FIT files
@@ -381,7 +419,7 @@ class McaAdvancedFitBatch:
                             print "error deleting fit file"
                         f.write(outfile)
                     except:
-                        print "Error writing concentrations"
+                        print "Error writing concentrations to fit file"
                         print sys.exc_info()
 
                 #python like output list

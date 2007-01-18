@@ -30,6 +30,120 @@ import Elements
 import copy
 import types
 import Numeric
+import string
+
+class ConcentrationsConversion:
+    def getConcentrationsAsHtml(self, concentrations = None):
+        text = ""
+        if concentrations is None:return text
+        text+="\n"
+        text+= "<H2><a NAME=""%s""></a><FONT color=#009999>" % 'Concentrations'
+        text+= "%s:" % 'Concentrations'
+        text+= "</FONT></H2>"
+        text+="<br>"
+        result = concentrations
+        #the header
+        
+        #the table
+        labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
+        if result.has_key('layerlist'):
+            if type(result['layerlist']) != type([]):
+                result['layerlist'] = [result['layerlist']]
+            for label in result['layerlist']:
+                labels += [label]
+        lemmon=string.upper("#%x%x%x" % (255,250,205))
+        white ='#FFFFFF' 
+        hcolor = string.upper("#%x%x%x" % (230,240,249))       
+        text+="<CENTER>"
+        text+= "<nobr>"
+        text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
+        text+= "<tr>"
+        for l in range(len(labels)):
+            if l < 2:
+                text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+            elif l == 2:
+                text+= '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+            else:
+                text+= '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+        text+= "</tr>"
+        line = 0
+        for group in result['groups']:
+            text+=("<tr>")
+            element,group0 = string.split(group)
+            fitarea    = "%.6e" % result['fitarea'][group]
+            sigmaarea  = "%.2e" % result['sigmaarea'][group]
+            area       = "%.6e" % result['area'][group]
+            fraction   = "%.4g" % result['mass fraction'][group]
+            if 'Expected Area' in labels:
+                fields = [element,group0,fitarea,sigmaarea,area,fraction]
+            else:
+                fields = [element,group0,fitarea,sigmaarea,fraction]
+            if result.has_key('layerlist'):
+                for layer in result['layerlist']:
+                    if result[layer]['mass fraction'][group] < 0.0:
+                        fraction   = "Unknown"
+                    else:
+                        fraction   = "%.4g" % result[layer]['mass fraction'][group]
+                    fields += [fraction]
+            if line % 2:
+                color = lemmon
+            else:
+                color = white
+            i = 0 
+            for field in fields:
+                if (i<2):
+                    #text += '<td align="left"  bgcolor="%s"><b>%s</b></td>' % (color, field)
+                    text += '<td align="left"  bgcolor=%s>%s</td>' % (color, field)
+                else:
+                    #text += '<td align="right" bgcolor="%s"><b>%s</b></td>' % (color, field)
+                    text += '<td align="right" bgcolor=%s>%s</td>' % (color, field)
+                i+=1
+            text += '</tr>'
+            line +=1           
+        text+=("</table>")
+        text+=("</nobr>")
+        text+="</CENTER>"
+        return text        
+
+    def getConcentrationsAsAscii(self, concentrations=None):
+        text = ""
+        if concentrations is None:return text
+        result =concentrations       
+        #the table
+        labels = ['Element','Group','Fit_Area','Sigma_Area', 'Mass_fraction']
+        if result.has_key('layerlist'):
+            if type(result['layerlist']) != type([]):
+                result['layerlist'] = [result['layerlist']]
+            for label in result['layerlist']:
+                labels += [label.replace(' ','')]
+        for l in labels:
+            text+="%s  " % l
+        text+=("\n")
+        line = 0
+        for group in result['groups']:
+            element,group0 = string.split(group)
+            fitarea    = "%.6e" % result['fitarea'][group]
+            sigmaarea  = "%.2e" % result['sigmaarea'][group]
+            area       = "%.6e" % result['area'][group]
+            fraction   = "%.4g" % result['mass fraction'][group]
+            if 'Expected Area' in labels:
+                fields = [element,group0,fitarea,sigmaarea,area,fraction]
+            else:
+                fields = [element,group0,fitarea,sigmaarea,fraction]
+            if result.has_key('layerlist'):
+                for layer in result['layerlist']:
+                    if result[layer]['mass fraction'][group] < 0.0:
+                        fraction   = "Unknown"
+                    else:
+                        fraction   = "%.4g" % result[layer]['mass fraction'][group]
+                    fields += [fraction]
+            i = 0 
+            for field in fields:
+                text += '%s  ' % (field)
+                i+=1
+            text += '\n'
+            line +=1
+        return text
 
 class ConcentrationsTool:
     def __init__(self, config = None, fitresult=None):
@@ -53,7 +167,8 @@ class ConcentrationsTool:
                 self.config[key] = dict[key]
         return copy.deepcopy(self.config)
         
-    def processFitResult(self, config = None, fitresult=None, elementsfrommatrix = False):
+    def processFitResult(self, config = None, fitresult=None,
+                         elementsfrommatrix = False, fluorates = None):
         #I should check if fit was successful ...        
         if fitresult is None: fitresult = self.fitresult
         else: self.fitresult = fitresult
@@ -206,21 +321,23 @@ class ConcentrationsTool:
         else:
             if matrix[0].upper() != "MULTILAYER":
                 multilayer = [matrix * 1]
-            fluo0 = Elements.getMultilayerFluorescence(multilayer,
-                         energyList,
-                         layerList = None,
-                         weightList=weightList,
-                         flagList=flagList,
-                         fulloutput=1,
-                         beamfilters=beamfilters * 1,
-                         attenuators=attenuators * 1,
-                         elementsList = newelements * 1,
-                         alphain = alphain,
-                         alphaout = alphaout,
-                         cascade = True, detector=detectoratt,
-                         forcepresent=1,
-                         secondary=secondary)
-
+            if fluorates is None:
+                fluo0 = Elements.getMultilayerFluorescence(multilayer,
+                             energyList,
+                             layerList = None,
+                             weightList=weightList,
+                             flagList=flagList,
+                             fulloutput=1,
+                             beamfilters=beamfilters * 1,
+                             attenuators=attenuators * 1,
+                             elementsList = newelements * 1,
+                             alphain = alphain,
+                             alphaout = alphaout,
+                             cascade = True, detector=detectoratt,
+                             forcepresent=1,
+                             secondary=secondary)
+            else:
+                fluo0 = fluorates
             fluototal = fluo0[0]
             fluolist  = fluo0[1:]
         #I'll need total fluo element by element at some point
