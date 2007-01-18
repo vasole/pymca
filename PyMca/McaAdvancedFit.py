@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.54 $"
+__revision__ = "$Revision: 1.55 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -1758,7 +1758,9 @@ class McaAdvancedFit(qt.QWidget):
             for f in format_list:
                 strlist.append(f)
             outfile.setFilters(strlist)
+
             outfile.setFileMode(outfile.AnyFile)
+            outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
             outfile.setDirectory(self.lastInputDir)
             ret = outfile.exec_()
 

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -484,6 +484,7 @@ class McaWidget(qt.QWidget):
                                 'Specfile Scan *.dat',
                                 'Raw ASCII  *.txt'])
             outfile.setFileMode(outfile.AnyFile)
+            outfile.setAcceptMode(outfile.AcceptSave)
             outfile.setDirectory(wdir)
             ret = outfile.exec_()
         if ret:
