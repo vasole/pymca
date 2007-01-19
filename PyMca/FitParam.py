@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.34 $"
+__revision__ = "$Revision: 1.35 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -35,6 +35,8 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
+QTVERSION = qt.qVersion()
+
 import ConfigDict
 import Icons
 import os.path
@@ -558,6 +560,13 @@ class FitParamWidget(FitParamForm):
         else:
             self.contCombo.setCurrentIndex(continuum)
         self.__contComboActivated(continuum)
+
+        self.fitWeight = self.__get("fit", "fitweight", 1, int)
+        if QTVERSION < '4.0.0':
+            self.weightCombo.setCurrentItem(self.fitWeight)
+        else:
+            self.weightCombo.setCurrentIndex(self.fitWeight)        
+
         self.stripWidthSpin.setValue(self.__get("fit", "stripwidth", 1, int))
         self.stripFilterSpin.setValue(self.__get("fit", "stripfilterwidth", 1, int))
         #self.stripConstValue.setText(self.__get("fit", "stripconstant",1.0))
@@ -600,10 +609,12 @@ class FitParamWidget(FitParamForm):
         err = "__getFitPar"
         #if 1:
         try:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 pars["continuum"]= int(self.contCombo.currentItem())
+                pars["fitweight"]= int(self.weightCombo.currentItem())
             else:
                 pars["continuum"]= int(self.contCombo.currentIndex())
+                pars["fitweight"]= int(self.weightCombo.currentIndex())
             pars["linpolorder"]= self.linpolOrder or 1
             pars["exppolorder"]= self.exppolOrder or 1
             #pars["stripconstant"]= float(str(self.stripConstValue.text()))

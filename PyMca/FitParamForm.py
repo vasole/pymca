@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -30,7 +30,7 @@
 #      by: The PyQt User Interface Compiler (pyuic)
 #
 # WARNING! All changes made in this file will be lost!
-__revision__ = "$Revision: 1.15 $"
+__revision__ = "$Revision: 1.16 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -92,7 +92,7 @@ class FitParamForm(QWidget):
             self.tabFit = QWidget(self.mainTab,"tabFit")
             tabFitLayout = QVBoxLayout(self.tabFit,11,6,"tabFitLayout")
 
-            layout5 = QGridLayout(None,1,1,11,6,"layout5")
+            layout5 = QGridLayout(None,1,1,12,6,"layout5")
         else:
             FitParamFormLayout = QVBoxLayout(self)
             FitParamFormLayout.setMargin(11)
@@ -123,9 +123,9 @@ class FitParamForm(QWidget):
 
         layout5.addMultiCellWidget(self.stripWidthLabel,2,2,0,1)
         layout5.addMultiCellWidget(self.stripIterValue,3,3,3,4)
-        layout5.addWidget(self.chi2Label,6,0)
-        layout5.addMultiCellWidget(self.chi2Value,6,6,3,4)
-        layout5.addMultiCellWidget(self.linearFitFlagCheck,7,7,0,4)
+        layout5.addWidget(self.chi2Label,7,0)
+        layout5.addMultiCellWidget(self.chi2Value,7,7,3,4)
+        layout5.addMultiCellWidget(self.linearFitFlagCheck,8,8,0,4)
 
         self.mainTab.addTab(self.tabFit,str("FIT"))
 
@@ -135,24 +135,41 @@ class FitParamForm(QWidget):
         self.lastLabel.setFont(lastLabel_font)
         self.lastLabel.setText(str("Last channel :"))
         self.lastLabel.setAlignment(QLabel.AlignVCenter | QLabel.AlignRight)
-        layout5.addMultiCellWidget(self.lastLabel,11,11,2,3)
+        layout5.addMultiCellWidget(self.lastLabel,12,12,2,3)
 
         self.regionCheck = QCheckBox(self.tabFit)
         self.regionCheck.setText(str("Limit fitting region to :"))
 
-        layout5.addWidget(self.regionCheck,10,0)
+        layout5.addWidget(self.regionCheck,11,0)
 
         self.topLine = QFrame(self.tabFit)
         self.topLine.setFrameShape(QFrame.HLine)
         self.topLine.setFrameShadow(QFrame.Sunken)
         self.topLine.setFrameShape(QFrame.HLine)
 
-        layout5.addMultiCellWidget(self.topLine,8,9,0,4) ##########
+        layout5.addMultiCellWidget(self.topLine,9,10,0,4) ##########
 
+##########
+        self.weightLabel = QLabel(self.tabFit)
+        self.weightLabel.setText("Statistical weighting of data")
+        if qVersion() < '4.0.0':
+            self.weightCombo = QComboBox(0,self.tabFit)
+        else:
+            self.weightCombo = QComboBox(self.tabFit)
+            self.weightCombo.insertItem = self.weightCombo.addItem
+        
+        self.weightCombo.insertItem(str("NO Weight"))
+        self.weightCombo.insertItem(str("Poisson (1/Y)"))
+        #self.weightCombo.insertItem(str("Poisson (1/Y2)"))
+        layout5.addWidget(self.weightLabel,5,0)
+        layout5.addMultiCellWidget(self.weightCombo,5,5,3,4)
+
+
+##########
         self.iterLabel = QLabel(self.tabFit)
         self.iterLabel.setText(str("Number of fit iterations"))
 
-        layout5.addWidget(self.iterLabel,5,0)
+        layout5.addWidget(self.iterLabel,6,0)
 
         if qVersion() < '4.0.0':
             self.contCombo = QComboBox(0,self.tabFit)
@@ -181,22 +198,22 @@ class FitParamForm(QWidget):
         layout5.addMultiCellWidget(self.orderSpin,1,1,3,4)
 
         self.maxSpin = Q3SpinBox(self.tabFit)
-        self.maxSpin.setMaxValue(16384)
+        self.maxSpin.setMaxValue(16384*4)
         self.maxSpin.setLineStep(128)
 
-        layout5.addWidget(self.maxSpin,11,4)
+        layout5.addWidget(self.maxSpin,12,4)
         if qVersion() < '4.0.0':
             spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
-            layout5.addMultiCell(spacer,5,5,1,2)
+            layout5.addMultiCell(spacer,6,6,1,2)
         else:
-            layout5.addWidget(HorizontalSpacer(self.tabFit),5,5,1,2)
+            layout5.addWidget(HorizontalSpacer(self.tabFit),6,6,1,2)
             
 
         self.minSpin = Q3SpinBox(self.tabFit)
-        self.minSpin.setMaxValue(16384)
+        self.minSpin.setMaxValue(16384*4)
         self.minSpin.setLineStep(128)
 
-        layout5.addMultiCellWidget(self.minSpin,9,10,4,4)
+        layout5.addMultiCellWidget(self.minSpin,10,11,4,4)
 
         self.stripIterLabel = QLabel(self.tabFit)
         self.stripIterLabel.setText(str("Strip Background Iterations"))
@@ -206,7 +223,7 @@ class FitParamForm(QWidget):
         self.iterSpin = Q3SpinBox(self.tabFit)
         self.iterSpin.setMinValue(1)
 
-        layout5.addMultiCellWidget(self.iterSpin,5,5,3,4)
+        layout5.addMultiCellWidget(self.iterSpin,6,6,3,4)
 
         self.stripFilterLabel = QLabel(self.tabFit)
         self.stripFilterLabel.setText(str("Strip Background Smoothing Width (Savitsky-Golay)"))
@@ -232,7 +249,7 @@ class FitParamForm(QWidget):
         else:
             self.firstLabel.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
 
-        layout5.addMultiCellWidget(self.firstLabel,9, 10,2,3)
+        layout5.addMultiCellWidget(self.firstLabel,11, 11,2,3)
 
         self.typeLabel = QLabel(self.tabFit)
         self.typeLabel.setText(str("Continuum type"))

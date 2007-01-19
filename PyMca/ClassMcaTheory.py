@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.69 $"
+___revision__ = "$Revision: 1.70 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -112,6 +112,7 @@ class McaTheory:
 
         #linear fitting option
         self.config['fit']['linearfitflag']   = self.config['fit'].get('linearfitflag', 0)        
+        self.config['fit']['fitweight']    = self.config['fit'].get('fitweight', 1)        
         self.config['fit']['energy']       = self.config['fit'].get('energy',None)
         if type(self.config['fit']['energy']) == type(""):
             self.config['fit']['energy']          = None
@@ -1702,7 +1703,7 @@ class McaTheory:
                                            self.parameters,
                                            self.datatofit,
                                            constrains=self.codes,
-                                           weightflag=1,
+                                           weightflag=self.config['fit']['fitweight'],
                                            maxiter=self.MAXITER,
                                     model_deriv=self.linearMcaTheoryDerivative,
                                            deltachi=self.config['fit']['deltachi'],
@@ -1712,7 +1713,7 @@ class McaTheory:
                                            self.parameters,
                                            self.datatofit,
                                            constrains=self.codes,
-                                           weightflag=1,
+                                           weightflag=self.config['fit']['fitweight'],
                                            maxiter=self.MAXITER,
                                            model_deriv=self.anal_deriv,
                                            deltachi=self.config['fit']['deltachi'],
@@ -2242,7 +2243,7 @@ class McaTheory:
                                            p,
                                            datatofit,
                                            #constrains=self.codes,
-                                           weightflag=1,
+                                           weightflag=self.config['fit']['fitweight'],
                                            maxiter=10,
                                            model_deriv=self.linpol_deriv,
                                            #deltachi=self.config['fit']['deltachi'],
