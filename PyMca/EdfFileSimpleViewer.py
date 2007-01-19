@@ -48,7 +48,11 @@ class EdfFileSimpleViewer(qt.QWidget):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         self.sourceList = []
-        self.sourceSelector = QSourceSelector.QSourceSelector(self)
+        filetypelist = ["EDF Files (*edf)",
+                        "EDF Files (*ccd)",
+                        "All Files (*)"]
+
+        self.sourceSelector = QSourceSelector.QSourceSelector(self, filetypelist = filetypelist)
         self.selectorWidget = {}
         self.selectorWidget[QEdfFileWidget.SOURCE_TYPE] = QEdfFileWidget.\
                                         QEdfFileWidget(self,justviewer=1)
