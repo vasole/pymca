@@ -331,6 +331,8 @@ class QtBlissGraph(qwt.QwtPlot):
         #self.setFont(font)
         self.plotLayout().setMargin(0)
         self.plotLayout().setCanvasMargin(0)
+        if QTVERSION < '4.0.0':
+            self._selectedPrintDefaults = None            
         if not QWTVERSION4:
             self.setAutoReplot(False)
             if QTVERSION > '4.0.0':
@@ -2240,7 +2242,13 @@ class QtBlissGraph(qwt.QwtPlot):
     if QTVERSION < '4.0.0':
         def printps(self):
             printer = qt.QPrinter()
+            if self._selectedPrintDefaults is not None:
+                printer.setPageSize(self._selectedPrintDefaults["PageSize"])
+                printer.setOrientation(self._selectedPrintDefaults["Orientation"])
             if printer.setup(self):
+                self._selectedPrintDefaults = {}
+                self._selectedPrintDefaults["PageSize"] = printer.pageSize() 
+                self._selectedPrintDefaults["Orientation"] = printer.orientation() 
                 painter = qt.QPainter()
                 if not(painter.begin(printer)):
                     return 0
