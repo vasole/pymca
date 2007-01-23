@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -2051,7 +2051,8 @@ filesave = [
 "77@<56666666== 7",
 "7@,>;-666666&- 7",
 "7@:---==*662$; 7",
-"7@=$#$&$#.7",
+"7@:--=$#$&*2$; 7",
+#"7@ =$#$&$#.7",
 "@=$444+O+@@@* 77",
 "@%+444443O@@- 77",
 "   44444o+@$ 777",
