@@ -26,7 +26,6 @@
 # is a problem to you.
 #############################################################################*/
 import sys
-import os
 import McaWindow
 qt = McaWindow.qt
 QTVERSION = qt.qVersion()
@@ -39,6 +38,7 @@ import EDFStack
 import Numeric
 import ColormapDialog
 import spslut
+import os
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
@@ -661,8 +661,19 @@ class QEDFStackWidget(qt.QWidget):
                 else:
                     return
             else:
-                i1 = max(int(ddict["from"]), 0)
-                i2 = min(int(ddict["to"])+1, self.stack.data.shape[self.mcaIndex])
+                i1 = Numeric.nonzero(ddict['from'] <= self.__mcaData0.x[0])
+                if len(i1):
+                    i1 = min(i1)
+                else:
+                    i1 = 0
+                i1 = max(i1, 0)
+
+                i2 = Numeric.nonzero(self.__mcaData0.x[0] <= ddict['to'])
+                if len(i2):
+                    i2 = max(i2)
+                else:
+                    i2 = 0
+                i2 = min(i2+1, self.stack.data.shape[self.mcaIndex])
             if self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
