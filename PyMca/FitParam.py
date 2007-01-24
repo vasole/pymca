@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.35 $"
+__revision__ = "$Revision: 1.36 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -869,14 +869,10 @@ class FitParamDialog(qt.QDialog):
         layout.addWidget(self.fitparam)
 
         if qt.qVersion() < '4.0.0':
-            if fitresult is not None:
-                buts= qt.QButtonGroup(5, qt.Qt.Horizontal, self)
-                loadfit = qt.QPushButton(buts)
-                loadfit.setText("Load From Fit")
-                self.fitresult = fitresult
-            else:
-                buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
-                loadfit = None
+            buts= qt.QButtonGroup(5, qt.Qt.Horizontal, self)
+            loadfit = qt.QPushButton(buts)
+            loadfit.setText("Load From Fit")
+            self.fitresult = fitresult
             load= qt.QPushButton("Load", buts)
             save= qt.QPushButton("Save", buts)
             reject= qt.QPushButton("Cancel", buts)
@@ -885,13 +881,10 @@ class FitParamDialog(qt.QDialog):
             #buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
             buts= qt.QGroupBox(self)
             buts.layout = qt.QHBoxLayout(buts)
-            if fitresult is not None:
-                loadfit = qt.QPushButton(buts)
-                loadfit.setText("Load From Fit")
-                loadfit.setToolTip("Take non linear parameters\nfrom last fit")
-                self.fitresult = fitresult
-            else:
-                loadfit = None
+            loadfit = qt.QPushButton(buts)
+            loadfit.setText("Load From Fit")
+            loadfit.setToolTip("Take non linear parameters\nfrom last fit")
+            self.fitresult = fitresult
             load= qt.QPushButton(buts)
             load.setText("Load")
             save= qt.QPushButton(buts)
@@ -906,9 +899,13 @@ class FitParamDialog(qt.QDialog):
             buts.layout.addWidget(reject)
             buts.layout.addWidget(accept)
         layout.addWidget(buts)
+        self.loadfit = loadfit
 
-        if loadfit is not None:
-            self.connect(loadfit, qt.SIGNAL("clicked()"), self.__loadFromFit)            
+        if self.fitresult is None:
+            self.loadfit.setEnabled(False)
+        else:
+            self.loadfit.setEnabled(True)
+        self.connect(self.loadfit, qt.SIGNAL("clicked()"), self.__loadFromFit)            
         self.connect(load, qt.SIGNAL("clicked()"), self.load)
         self.connect(save, qt.SIGNAL("clicked()"), self.save)
         self.connect(reject, qt.SIGNAL("clicked()"), self.reject)
@@ -974,11 +971,26 @@ class FitParamDialog(qt.QDialog):
             self.initDir = None
             return 0
 
+    def setFitResult(self, result = None):
+        self.fitresult = result
+        if result is None:
+            self.loadfit.setEnabled(False)
+        else:
+            self.loadfit.setEnabled(True)
+
     def __loadFromFit(self):
         """
         Fill nonlinear parameters from last fit
         """
-
+        if self.fitresult is None:
+            text =  "Sorry. No fit parameters to be loaded.\n"
+            text += "You need to have performed a fit."
+            qt.QMessageBox.critical(self, "No fit data", 
+                                    text,
+                                    qt.QMessageBox.Ok,
+                                    qt.QMessageBox.NoButton,
+                                    qt.QMessageBox.NoButton)
+            return
         #detector
         zero = self.fitresult['fittedpar'][self.fitresult['parameters'].index('Zero')]
         gain = self.fitresult['fittedpar'][self.fitresult['parameters'].index('Gain')]

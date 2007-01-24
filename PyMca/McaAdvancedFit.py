@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.55 $"
+__revision__ = "$Revision: 1.56 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -86,6 +86,7 @@ class McaAdvancedFit(qt.QWidget):
             self.setWindowTitle(name)
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastInputDir = None
+        self.configDialog = None
         self.layout = qt.QVBoxLayout(self)
         if sections is None:sections=["TABLE"]
         self.headerLabel = qt.QLabel(self)
@@ -404,43 +405,45 @@ class McaAdvancedFit(qt.QWidget):
         config = {}
         config.update(self.mcafit.config)
         #config['fit']['use_limit'] = 1
-        if self.__fitdone:
-            dialog = FitParam.FitParamDialog(modal=1,
-                                             fl=0,
-                                             initdir=self.configDir,
-                                             fitresult=self.dict['result'])  
+        if self.configDialog is None:
+            if self.__fitdone:
+                dialog = FitParam.FitParamDialog(modal=1,
+                                                 fl=0,
+                                                 initdir=self.configDir,
+                                                 fitresult=self.dict['result'])  
+            else:
+                dialog = FitParam.FitParamDialog(modal=1,
+                                                 fl=0,
+                                                 initdir=self.configDir,
+                                                 fitresult=None)
+            if QTVERSION < '4.0.0':
+                self.connect(dialog.fitparam.peakTable,
+                             qt.PYSIGNAL("FitPeakSelect"),
+                             self.__elementclicked)
+            else:
+                self.connect(dialog.fitparam.peakTable,
+                             qt.SIGNAL("FitPeakSelect"),
+                             self.__elementclicked)
+            self.configDialog = dialog
         else:
-            dialog = FitParam.FitParamDialog(modal=1,
-                                             fl=0,
-                                             initdir=self.configDir,
-                                             fitresult=None)
+            dialog = self.configDialog
+            if self.__fitdone: dialog.setFitResult(self.dict['result'])
+            else:dialog.setFitResult(None)
         dialog.setParameters(config)
         #dialog.fitparam.regionCheck.setDisabled(True)
         #dialog.fitparam.minSpin.setDisabled(True)
         #dialog.fitparam.maxSpin.setDisabled(True)
         if QTVERSION < '4.0.0':
-            self.connect(dialog.fitparam.peakTable,
-                         qt.PYSIGNAL("FitPeakSelect"),
-                         self.__elementclicked)
             ret = dialog.exec_loop()
-            self.disconnect(dialog.fitparam.peakTable,
-                            qt.PYSIGNAL("FitPeakSelect"),
-                            self.__elementclicked)
         else:
-            self.connect(dialog.fitparam.peakTable,
-                         qt.SIGNAL("FitPeakSelect"),
-                         self.__elementclicked)
             ret = dialog.exec_()
-            self.disconnect(dialog.fitparam.peakTable,
-                            qt.SIGNAL("FitPeakSelect"),
-                            self.__elementclicked)
         self.graph.removeMarkers()
         self.graph.replot()
         if dialog.initDir is not None: self.configDir = 1 * dialog.initDir
         else: self.configDir = None
         if ret != qt.QDialog.Accepted:
             dialog.close()
-            del dialog
+            #del dialog
             return
         self.__fitdone = False
         self._concentrationsDict = None
@@ -740,7 +743,7 @@ class McaAdvancedFit(qt.QWidget):
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            text = "Sorry, You need to perform a fit first.\n"
+            text = "Sorry. You need to perform a fit first.\n"
             msg.setText(text)
             if QTVERSION < '4.0.0':
                 msg.exec_loop()

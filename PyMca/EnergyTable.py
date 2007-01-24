@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,15 +24,16 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.10 $"
+__revision__ = "$Revision: 1.12 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import Numeric
 import QXTube
-from   QXTube import qt as qt
-if qt.qVersion() < '3.0.0':
+qt = QXTube.qt
+QTVERSION = qt.qVersion()
+if QTVERSION < '3.0.0':
     import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+elif QTVERSION < '4.0.0':
     import qttable
 
 DEBUG=0
@@ -61,7 +62,7 @@ class EnergyTab(qt.QWidget):
                      self.tubeButtonClicked)
 
         self.__calculating = 0
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(self.tube, qt.PYSIGNAL("QXTubeSignal"), self.__tubeUpdated)
         else:
             self.connect(self.tube, qt.SIGNAL("QXTubeSignal"), self.__tubeUpdated)
@@ -85,7 +86,7 @@ class EnergyTab(qt.QWidget):
         self.tubeButtonClicked()
 
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     QTable = qttable.QTable
 else:
     QTable = qt.QTableWidget
@@ -106,13 +107,13 @@ class EnergyTable(QTable):
         self.scatterList = scatterlist
         self.verticalHeader().hide()
         self.dataColumns = 10
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setLeftMargin(0)
             self.setFrameShape(qttable.QTable.NoFrame)
             #self.setFrameShadow(qttable.QTable.Sunken)
             self.setSelectionMode(qttable.QTable.Single)
             self.setNumCols(3 * self.dataColumns)
-            if qt.qVersion() > '3.0.0':
+            if QTVERSION > '3.0.0':
                 self.setFocusStyle(qttable.QTable.FollowStyle)
         else:
                 if DEBUG:
@@ -128,7 +129,7 @@ class EnergyTable(QTable):
             labels.append("Use" + i * " ")
             labels.append("Energy" + i * " ")
             labels.append("Weight" + i * " ")
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             for label in labels:
                 self.horizontalHeader().setLabel(labels.index(label),label)
         else:
@@ -146,13 +147,14 @@ class EnergyTable(QTable):
                 
         self.__rows = 20
         self.__build(self.dataColumns * 20)
+        self.__disconnected = False
         for i in range(self.dataColumns):
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.adjustColumn(0 + 3*i)
             else:
                 if DEBUG:
                     print "column adjustment missing"
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(self, qt.SIGNAL("valueChanged(int,int)"),self.mySlot)
         else:
             self.connect(self, qt.SIGNAL("cellChanged(int, int)"),self.mySlot)
@@ -163,11 +165,11 @@ class EnergyTable(QTable):
     def __build(self,nrows=None):
         #self.setNumRows(int(nrows/2))
         if nrows is None: nrows = self.__rows *self.dataColumns
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setNumRows(int(nrows/self.dataColumns))
         else:
             self.setRowCount(int(nrows/self.dataColumns))
-        if qt.qVersion() > '4.0.0':
+        if QTVERSION > '4.0.0':
             rheight = self.horizontalHeader().sizeHint().height()
             for idx in range(self.rowCount()):
                 self.setRowHeight(idx, rheight)
@@ -188,9 +190,9 @@ class EnergyTable(QTable):
                         if self.scatterList[idx]:color = qt.QColor(255, 20, 147)
             elif idx == 0:
                 color = qt.QColor(255, 20, 147)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 #item= qttable.QCheckTableItem(self, text)
-                if qt.qVersion() < '3.0.0':
+                if QTVERSION < '3.0.0':
                     if DEBUG:
                         print "background  color to implement in qt 2.3.0"
                 else:
@@ -198,10 +200,17 @@ class EnergyTable(QTable):
                 item= ColorQTableItem(self, text, color)                
                 self.setItem(r, 0+coloffset, item)
             else:
-                item= ColorQTableItem(self, text, color)
-                self.setCellWidget(r, 0+coloffset, item)
-                item.setText(text)
-                self.connect(item, qt.SIGNAL("stateChanged(int)"),self._itemSlot)
+                item = self.cellWidget(r, 0+coloffset)
+                if item is None:
+                    item= ColorQTableItem(self, text, color)
+                    self.setCellWidget(r, 0+coloffset, item)
+                    self.connect(item, qt.SIGNAL("stateChanged(int)"),self._itemSlot)
+                else:
+                    item.setText(text)
+                oldcolor = item.color
+                if color != oldcolor:
+                    item.setColor(color)
+                    item.repaint(item.rect())
             if idx < len(self.energyList):
                 item.setChecked(self.flagList[idx])
                 if (self.energyList[idx] is not None) and \
@@ -240,7 +249,7 @@ class EnergyTable(QTable):
         self.__fillTable()
 
     def getParameters(self):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             nrows = self.numRows()*self.dataColumns
         else:
             nrows = self.rowCount() * self.dataColumns
@@ -255,7 +264,7 @@ class EnergyTable(QTable):
                 rowoffset= (-int(idx/self.__rows))*(nrows/self.dataColumns)
                 coloffset=  3*int(idx/self.__rows)
             r = idx + rowoffset
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 item = self.item(r,0+coloffset)
                 energyflag = int(item.isChecked())
             else:
@@ -294,25 +303,31 @@ class EnergyTable(QTable):
         return energyList, weightList, flagList, scatterList
 
     def __fillTable(self):
-        self.__build(max(self.__rows*self.dataColumns,len(self.energyList)))
-        for i in range(self.dataColumns):
-            if qt.qVersion() < '4.0.0':
-                self.adjustColumn(0 + 3*i)
-            else:
-                if DEBUG:
-                    print "column adjustment missing"
-
+        self.__disconnected = True
+        try:
+            self.__build(max(self.__rows*self.dataColumns,len(self.energyList)))
+            for i in range(self.dataColumns):
+                if QTVERSION < '4.0.0':
+                    self.adjustColumn(0 + 3*i)
+                else:
+                    if DEBUG:
+                        print "column adjustment missing"
+        except:
+            self.__disconnected = False
+            raise
+        self.__disconnected = False
         ddict = self._getDict()
         if ddict != {}:
             ddict['event'] = "TableFilled"
             ddict['row']   = 0
             ddict['col']   = 0
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("EnergyTableSignal"), (ddict,))
             else:
                 self.emit(qt.SIGNAL("EnergyTableSignal"), (ddict))
 
     def mySlot(self,row,col):
+        if self.__disconnected:return
         if DEBUG:
             print "Value changed row = ",row,"col = ",col
             print "Text = ", self.text(row,col)
@@ -326,7 +341,7 @@ class EnergyTable(QTable):
                 msg = qt.QMessageBox(self)       
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -336,13 +351,13 @@ class EnergyTable(QTable):
             ddict['event'] = "ValueChanged"
             ddict['row']   = row
             ddict['col']   = col
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("EnergyTableSignal"),(ddict,))
             else:
                 self.emit(qt.SIGNAL("EnergyTableSignal"),(ddict))
             
     def text(self, row, col):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             return qttable.QTable.text(self, row, col)
         else:
             if (col % 3) in [1,2]:
@@ -353,7 +368,7 @@ class EnergyTable(QTable):
                     return ''
 
     def setText(self, row, col, text):
-        if qt.qVersion() < "4.0.0":
+        if QTVERSION < "4.0.0":
             QTable.setText(self, row, col, text)
         else:
             #ncol = self.columnCount()
@@ -362,9 +377,9 @@ class EnergyTable(QTable):
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
+                    self.setItem(row, col, item)
                 else:
                     item.setText(text)
-                self.setItem(row, col, item)
             else:
                 if DEBUG:
                     print "checkbox can be called?"
@@ -372,7 +387,7 @@ class EnergyTable(QTable):
 
     def _getDict(self):
         dict ={}
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             n = self.numRows()
         else:
             n = self.rowCount()
@@ -394,7 +409,7 @@ class EnergyTable(QTable):
                     s=s.replace(" ","")
                     if len(s):
                         ene=float(s)
-                        if qt.qVersion() < '4.0.0':
+                        if QTVERSION < '4.0.0':
                             selfitem = self.item(r,0+coffset)
                         else:
                             selfitem = self.cellWidget(r, 0+coffset)
@@ -419,14 +434,14 @@ class EnergyTable(QTable):
                     msg = qt.QMessageBox(self)       
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("EnergyTable: Error on energy %d" % i)
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         msg.exec_loop()
                     else:
                         msg.exec_()
                     return {}
         return dict
 
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class ColorQTableItem(qttable.QCheckTableItem):
              def __init__(self, table, text,color=qt.Qt.white,bold=0):
                 qttable.QCheckTableItem.__init__(self, table, text)
@@ -453,6 +468,9 @@ else:
                 #this is the critical line
                 self.setAutoFillBackground(1)
 
+             def setColor(self, color):
+                 self.color = color
+
              def paintEvent(self, painter):
                 palette = self.palette()
                 role = self.backgroundRole()
@@ -472,7 +490,7 @@ def main(args):
     scatterlist = Numeric.zeros(len(energy))
     scatterlist[0:10] = 1
     tab.setParameters(energy, weight, flag, scatterlist)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         qt.QObject.connect(tab,qt.PYSIGNAL('EnergyTableSignal'),dummy)
         tab.show()
         app.setMainWidget( tab )
