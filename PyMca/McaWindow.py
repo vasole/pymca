@@ -26,7 +26,6 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.44 $"
 import sys
-import os
 import time
 import QtBlissGraph
 qt = QtBlissGraph.qt
@@ -42,6 +41,7 @@ import Elements
 import McaSimpleFit
 import Specfit
 import PyMcaPrintPreview
+import os
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
@@ -1480,6 +1480,12 @@ class McaWidget(qt.QWidget):
             order = self.control.calinfo.caldict['']['order']
         else:
             A = 0.0
+            try:
+                legend = self.graph.getactivecurve(justlegend=1)
+                if legend in self.dataObjectsDict.keys():
+                    A = self.dataObjectsDict[legend].x[0][0]
+            except:
+                if DEBUG:print "X axis offset not found" 
             B = 1.0
             C = 0.0
             order = 1
