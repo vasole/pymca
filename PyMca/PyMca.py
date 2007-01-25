@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.68 $"
+__revision__ = "$Revision: 1.69 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.2"
+__version__ = "4.0.3"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -142,6 +142,7 @@ if __name__ == "__main__":
         else:
             splash = qt.QSplashScreen()
         splash.show()
+        import ChangeLog
         font = splash.font()
         font.setBold(1)
         splash.setFont(font)
@@ -196,6 +197,8 @@ class PyMca(PyMcaMdi.PyMca):
                 PyMcaMdi.PyMca.__init__(self, parent, name, fl)
                 self.setWindowTitle(name)
                 self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+                self.changeLog = None
+
             self.initSourceBrowser()
             self.initSource()
 
@@ -609,6 +612,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.menuHelp.addAction("MCA &HOWTOs",self.onMcaHowto)
                 self.menuHelp.addSeparator()
                 self.menuHelp.addAction("&About", self.onAbout)
+                self.menuHelp.addAction("Changes", self.onChanges)
                 self.menuHelp.addAction("About &Qt",self.onAboutQt)
                 self.menuBar().addSeparator()
                 self.menuHelp.setTitle("&Help")
@@ -1159,7 +1163,31 @@ class PyMca(PyMcaMdi.PyMca):
             qt.QMessageBox.about(self, "PyMca",
                     "PyMca Application\nVersion: "+__version__)
             #self.onDebug()
-    
+
+    def onChanges(self):
+        if self.changeLog is None:
+            self.changeLog = qt.QTextEdit()
+            self.changeLog.setCursor(self.cursor())
+            self.changeLog.setWindowTitle("PyMCA %s Changes" % __version__)
+            self.changeLog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+            mpath = os.path.dirname(PyMcaMdi.__file__)
+            fname = os.path.join(mpath,'changelog.txt')
+            if not os.path.exists(fname):
+               while len(mpath) > 3:
+                 fname = os.path.join(mpath,'changelog.txt')
+                 print "looking for ", fname
+                 if not os.path.exists(fname):
+                     mpath = os.path.dirname(mpath)
+                 else:
+                     break
+            if os.path.exists(fname):
+                self.log = ChangeLog.ChangeLog(textfile='changelog.txt')
+                self.changeLog.setDocument(self.log)
+                self.changeLog.setMinimumWidth(500)
+            else:
+                self.log = ChangeLog.ChangeLog()
+                self.log.setPlainText('Cannot find file changelog.txt')
+        self.changeLog.show()
     
     def onDebug(self):
         print "Module name = ","PyMca",__revision__.replace("$","")

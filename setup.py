@@ -20,6 +20,7 @@ for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
 
 # Specify all the required PyMca data
 data_files = [('PyMca', ['PyMca/Scofield1973.dict',
+                         'PyMca/changelog.txt',
                          'PyMca/McaTheory.cfg',
                          'PyMca/PyMcaSplashImage.png',
                          'PyMca/KShellRates.dat','PyMca/KShellRatesScofieldHS.dat','PyMca/KShellConstants.dat',

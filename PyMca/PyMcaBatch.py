@@ -471,8 +471,18 @@ class McaBatchGUI(qt.QWidget):
         return True
 
     def __goodOutputDir(self,outputdir):
-        if os.path.isdir(outputdir):return True
-        else:return False
+        if not os.path.isdir(outputdir):return False
+        elif len(outputdir.split()) > 1:
+            qt.QMessageBox.critical(self,
+                "ERROR",
+                'Output Directory:\n %s\ncontains spaces in the path' % outputdir)
+            if qt.qVersion() < '4.0.0':
+                self.raiseW()
+            else:
+                self.raise_()
+            return False
+        else:
+            return True
 
     def __getFileType(self,inputfile):
         try:
