@@ -28,7 +28,7 @@ import sys
 import os
 import PyQt4.Qt as qt
 DEBUG = 0
-__revision__="$Revision: 1.5 $"
+__revision__="$Revision: 1.6 $"
 
 # TODO:
 # - automatic picture centering
@@ -274,8 +274,9 @@ class PyMcaPrintPreview(qt.QDialog):
             self.message.exec_()
             return
         rectItem = qt.QGraphicsRectItem(self.page, self.scene)
+        scale = float(0.5 * self.scene.width()/pixmap.width())
         rectItem.setRect(qt.QRectF(1, 1,
-                                         pixmap.width(), pixmap.height()))
+                        pixmap.width(), pixmap.height()))
         
         pen = rectItem.pen()
         color = qt.QColor(qt.Qt.red)
@@ -296,6 +297,7 @@ class PyMcaPrintPreview(qt.QDialog):
         pixmapItem.setPixmap(pixmap)
         pixmapItem.moveBy(1, 1)
         pixmapItem.setZValue(0)
+        rectItem.scale(scale, scale)
 
     def __setup(self):
         """
@@ -475,6 +477,11 @@ def testPreview():
     filename = sys.argv[1]
 
     a = qt.QApplication(sys.argv)
+    if filename[-3:] == "svg":
+        item = qt.QSvgWidget()
+        item.load(filename)
+        item.show()
+        sys.exit(a.exec_())
  
     p = qt.QPrinter()
     p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
@@ -487,9 +494,6 @@ def testPreview():
     w.addImage(qt.QImage(filename))
     #w.addImage(qt.QImage(filename))
     w.exec_()
-
-
-
 
 def testSimple():
     import sys
@@ -543,4 +547,3 @@ def testSimple():
 if  __name__ == '__main__':
     testPreview()
     #testSimple()
- 
