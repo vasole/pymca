@@ -1755,9 +1755,11 @@ class McaAdvancedFit(qt.QWidget):
             if MATPLOTLIB:
                 format_list.append('Graphics PNG *.png')
                 format_list.append('Graphics EPS *.eps')
+                format_list.append('Graphics SVG *.svg')
                 if not self.peaksSpectrumButton.isChecked():
                     format_list.append('B/WGraphics PNG *.png')
                     format_list.append('B/WGraphics EPS *.eps')
+                    format_list.append('B/WGraphics SVG *.svg')
             for f in format_list:
                 strlist.append(f)
             outfile.setFilters(strlist)
@@ -1805,7 +1807,7 @@ class McaAdvancedFit(qt.QWidget):
         os.linesep = '\n'
         try:
             if MATPLOTLIB:
-                if filetype in ['EPS', 'PNG']:
+                if filetype in ['EPS', 'PNG', 'SVG']:
                     fig = Figure(figsize=(6,3)) # in inches
                     canvas = FigureCanvas(fig)
                     #decide if we are going to write the legends or not
