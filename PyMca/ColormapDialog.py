@@ -82,6 +82,7 @@ class ColormapDialog(qt.QDialog):
         self.maxValue  = 1
 
         self.colormapIndex  = 2
+        self.colormapType   = 0
 
         self.autoscale   = False
         self.autoscale90 = False
@@ -138,6 +139,42 @@ class ColormapDialog(qt.QDialog):
                      qt.SIGNAL("toggled(bool)"),
                      self.autoscale90Change)
         hlayout1.addWidget(self.autoScale90Button)
+
+        # hlayout
+        if QTVERSION > '4.0.0':
+            hbox0    = qt.QWidget(self)
+            self.__hbox0 = hbox0
+            hlayout0 = qt.QHBoxLayout(hbox0)
+            hlayout0.setMargin(0)
+            hlayout0.setSpacing(0)
+            vlayout.addWidget(hbox0)
+            #hlayout0.addStretch(10)
+
+            self.buttonGroup = qt.QButtonGroup()
+            g1 = qt.QCheckBox(hbox0)
+            g1.setText("Linear")
+            g2 = qt.QCheckBox(hbox0)
+            g2.setText("Logarithmic")
+            g3 = qt.QCheckBox(hbox0)
+            g3.setText("Gamma")
+            self.buttonGroup.addButton(g1, 0)
+            self.buttonGroup.addButton(g2, 1)
+            self.buttonGroup.addButton(g3, 2)
+            self.buttonGroup.setExclusive(True)
+            if self.colormapType == 1:
+                self.buttonGroup.button(1).setChecked(True)
+            elif self.colormapType == 2:
+                self.buttonGroup.button(2).setChecked(True)
+            else:
+                self.buttonGroup.button(0).setChecked(True)
+            hlayout0.addWidget(g1)
+            hlayout0.addWidget(g2)
+            hlayout0.addWidget(g3)
+            vlayout.addWidget(hbox0)
+            self.connect(self.buttonGroup,
+                         qt.SIGNAL("buttonClicked(int)"),
+                         self.buttonGroupChange)
+
 
         vlayout.addSpacing(20)
 
@@ -276,7 +313,9 @@ class ColormapDialog(qt.QDialog):
         self.c.replot()
         self.sendColormap()
 
-
+    def buttonGroupChange(self, val):
+        self.colormapType = val
+        self._update()
 
     def chval(self, ddict):
         if ddict['event'] == 'markerMoving':
@@ -488,12 +527,14 @@ class ColormapDialog(qt.QDialog):
                 self.emit(qt.PYSIGNAL("ColormapChanged"),
                         (self.colormapIndex, self.autoscale,
                          self.minValue, self.maxValue,
-                         self.dataMin, self.dataMax))
+                         self.dataMin, self.dataMax,
+                         self.colormapType))
             else:
                 self.emit(qt.SIGNAL("ColormapChanged"),
                         self.colormapIndex, self.autoscale,
-                         self.minValue, self.maxValue,
-                         self.dataMin, self.dataMax)
+                        self.minValue, self.maxValue,
+                        self.dataMin, self.dataMax,
+                        self.colormapType)
             
         except:
             sys.excepthook(sys.exc_info()[0],

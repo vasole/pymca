@@ -844,7 +844,15 @@ class QEdfFileWidget(qt.QWidget):
         self.colormapDialog.show()
 
     def updateColormap(self, *var):
-        if len(var) > 5:
+        if len(var) > 6:
+            self.colormap = [var[0],
+                             var[1],
+                             var[2],
+                             var[3],
+                             var[4],
+                             var[5],
+                             var[6]]
+        elif len(var) > 5:
             self.colormap = [var[0],
                              var[1],
                              var[2],

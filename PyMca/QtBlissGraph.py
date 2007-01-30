@@ -2346,6 +2346,9 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                 xmirror=0, ymirror=1):
         self.xyzs = xyzs
         shape = xyzs.shape
+        if colormap is not None:
+            if len(colormap) < 7:
+                colormap.append(spslut.LINEAR)
         if xScale is None:
             xRange = (0, shape[1])
         else:
@@ -2388,7 +2391,7 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                                           1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
             else:
                 (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
-                                         (spslut.LINEAR,3.0),
+                                         (colormap[6],3.0),
                                          "BGRX", COLORMAPLIST[int(str(colormap[0]))],
                                           colormap[1], (colormap[2],colormap[3]))
             if QTVERSION < '4.0.0':
@@ -2530,6 +2533,9 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
                 xmirror=0, ymirror=1):
         self.xyzs = xyzs
         shape = xyzs.shape
+        if colormap is not None:
+            if len(colormap) < 7:
+                colormap.append(spslut.LINEAR)
         if xScale is not None:
             self.xMap = qwt.QwtDiMap(0, shape[0], xScale[0], xScale[1])
             self.plot.setAxisScale(qwt.QwtPlot.xBottom, *xScale)
@@ -2552,7 +2558,7 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
                                           1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
             else:
                 (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
-                                         (spslut.LINEAR,3.0), "BGRX", COLORMAPLIST[colormap[0]],
+                                         (colormap[6],3.0), "BGRX", COLORMAPLIST[colormap[0]],
                                           colormap[1], (colormap[2],colormap[3]))
             self.image=qt.QImage(self.image_buffer,size[0], size[1],32, None, 0,
                                  qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)

@@ -730,10 +730,11 @@ class QEDFStackWidget(qt.QWidget):
                                 1,
                                 (0,1))
         else:
+            if len(colormap) < 7: colormap.append(spslut.LINEAR)
             (self.__ROIPixmap,size,minmax)= spslut.transform(\
                                 self.__ROIImageData,
                                 (1,0),
-                                (spslut.LINEAR,3.0),
+                                (colormap[6],3.0),
                                 "BGRX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
@@ -757,10 +758,11 @@ class QEDFStackWidget(qt.QWidget):
                                 1,
                                 (0,1))
         else:
+            if len(colormap) < 7: colormap.append(spslut.LINEAR)
             (self.__stackPixmap,size,minmax)= spslut.transform(\
                                 self.__stackImageData,
                                 (1,0),
-                                (spslut.LINEAR,3.0),
+                                (colormap[6],3.0),
                                 "BGRX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
@@ -865,7 +867,15 @@ class QEDFStackWidget(qt.QWidget):
         self.__stackColormapDialog._update()
 
     def updateStackColormap(self, *var):
-        if len(var) > 5:
+        if len(var) > 6:
+            self.__stackColormap = [var[0],
+                             var[1],
+                             var[2],
+                             var[3],
+                             var[4],
+                             var[5],
+                             var[6]]
+        elif len(var) > 5:
             self.__stackColormap = [var[0],
                              var[1],
                              var[2],
@@ -920,7 +930,15 @@ class QEDFStackWidget(qt.QWidget):
         self.__ROIColormapDialog._update()
 
     def updateROIColormap(self, *var):
-        if len(var) > 5:
+        if len(var) > 6:
+            self.__ROIColormap = [var[0],
+                             var[1],
+                             var[2],
+                             var[3],
+                             var[4],
+                             var[5],
+                             var[6]]
+        elif len(var) > 5:
             self.__ROIColormap = [var[0],
                              var[1],
                              var[2],
