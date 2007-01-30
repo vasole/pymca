@@ -40,7 +40,7 @@
 #include <spec_shm.h>
 
 #ifndef IPCS
-#define IPCS "/bin/sh -c 'LC_ALL=C ipcs -m'"  /* let the system find the path. */
+#define IPCS "LC_ALL=C ipcs -m"  /* let the system find the path. */
 #endif
 
 #define SHM_MAX_ENTRIES 8192
