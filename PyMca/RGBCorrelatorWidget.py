@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -78,6 +78,28 @@ class RGBCorrelatorWidget(qt.QWidget):
         #self.labelWidget.mainLayout.addWidget(self.__rowLineEdit, 1, 0)
         #self.labelWidget.mainLayout.addWidget(self.__columnLineEdit, 1, 1)
         self.labelWidget.mainLayout.addWidget(self.__imageResizeButton, 0, 2)
+
+        self.colormapType = 0
+        self.buttonGroup = qt.QButtonGroup()
+        g1 = qt.QPushButton(self.labelWidget)
+        g1.setText("Linear")
+        g2 = qt.QPushButton(self.labelWidget)
+        g2.setText("Logarithmic")
+        g3 = qt.QPushButton(self.labelWidget)
+        g3.setText("Gamma")
+        g1.setCheckable(True)
+        g2.setCheckable(True)
+        g3.setCheckable(True)
+        self.buttonGroup.addButton(g1, 0)
+        self.buttonGroup.addButton(g2, 1)
+        self.buttonGroup.addButton(g3, 2)
+        self.buttonGroup.setExclusive(True)
+        self.buttonGroup.button(self.colormapType).setChecked(True)
+        self.labelWidget.mainLayout.addWidget(g1, 1, 0)
+        self.labelWidget.mainLayout.addWidget(g2, 1, 1)
+        self.labelWidget.mainLayout.addWidget(g3, 1, 2)
+        
+        self.buttonGroup.setExclusive(True)
         
         self.sliderWidget = RGBCorrelatorSlider.RGBCorrelatorSlider(self,
                                         autoscalelimits=[5.0, 80.0])
@@ -125,6 +147,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.connect(self.tableWidget,
                      qt.SIGNAL("RGBCorrelatorTableSignal"),
                      self._tableSlot)
+
+        self.connect(self.buttonGroup,
+                     qt.SIGNAL("buttonClicked(int)"),
+                     self._colormapTypeChange)
         
     def _sliderSlot(self, ddict):
         if DEBUG: print "RGBCorrelatorWidget._sliderSlot()"
@@ -257,6 +283,11 @@ class RGBCorrelatorWidget(qt.QWidget):
         ddict['image'] = image
         self.emit(qt.SIGNAL("RGBCorrelatorWidgetSignal"), ddict)
 
+    def _colormapTypeChange(self, val):
+        self.colormapType = val
+        self.__recolor()
+
+
     def getColorImage(self, image, colormap, datamin=None, datamax=None):
         COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -268,7 +299,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             #tmp = Numeric.ravel(image)
             (image_buffer, size, minmax)= spslut.transform(image,
                                      (1,0),
-                                     (spslut.LINEAR,3.0),
+                                     (self.colormapType,3.0),
                                       self.bgrx, colormap,
                                       1,
                                       (0,1))
@@ -276,7 +307,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         else:
             (image_buffer, size, minmax)= spslut.transform(image,
                                      (1,0),
-                                     (spslut.LINEAR,3.0),
+                                     (self.colormapType,3.0),
                                       self.bgrx, colormap,
                                       0,
                                      (datamin, datamax))
