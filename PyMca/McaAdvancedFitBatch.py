@@ -243,7 +243,17 @@ class McaAdvancedFitBatch:
                         self.__col   = -1
                         scan_key = "%s.%s" % (scan,order)
                         scan_obj= ffile.Source.select(scan_key)
-                        #import time                        
+                        #I assume always same number of detectors and
+                        #same offset for each detector otherways I would
+                        #slow down everything to deal with not very common
+                        #situations
+                        if self.__row == 0:
+                            self.__chann0List = Numeric.zeros(info['NbMca'])
+                            chan0list = scan_obj.header('@CHANN')
+                            if len(chan0list):
+                                for i in range(info['NbMca']):
+                                    self.__chann0List[i] = int(chan0list[i].split()[2])
+                        #import time
                         for i in range(info['NbMca']):
                             #e0 = time.time()
                             if self.pleaseBreak: break
@@ -255,7 +265,8 @@ class McaAdvancedFitBatch:
                             #mcainfo,mcadata = ffile.LoadSource(key)
                             mcadata = scan_obj.mca(i+1)
                             y0  = Numeric.array(mcadata)
-                            x = Numeric.arange(len(y0))*1.0
+                            x = Numeric.arange(len(y0))*1.0 + \
+                                self.__chann0List[i]
                             filename = os.path.basename(info['SourceName'])
 
                             infoDict = {}
