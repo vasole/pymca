@@ -143,6 +143,7 @@ class McaWidget(qt.QWidget):
         self.graph.ylabel('Counts')
         self.graph.canvas().setMouseTracking(1)
         self.graph.setCanvasBackground(qt.Qt.white)
+        self.graph.showGrid()
         self.graphBoxlayout.addWidget(self.graph)
             
         #the box to contain the control widget(s)

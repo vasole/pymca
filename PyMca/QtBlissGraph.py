@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -456,7 +456,9 @@ class QtBlissGraph(qwt.QwtPlot):
             self.linetypes['dash']      = qt.Qt.DashLine
             self.linetypes['dashdot']   = qt.Qt.DashDotLine
             self.linetypes['dashdotdot']= qt.Qt.DashDotDotLine
-            self.linetypes['dot']       = qt.Qt.DotLine        
+            self.linetypes['dot']       = qt.Qt.DotLine
+        #grid
+        self.grid = None
         #color counter
         self.color   = 0
         #symbol counter
@@ -1683,8 +1685,25 @@ class QtBlissGraph(qwt.QwtPlot):
             self.clear()         #this deletes also plot items in Qwt5!
         else:                    #try to remove just the curves
             self.replot()
+
+    if QWTVERSION4:
+        def removeGrid(self):
+            pass
+
+        def showGrid(self):
+            pass
+    else:
+        def removeGrid(self):
+            if self.grid is not None:
+                self.grid.detach()
+
+        def showGrid(self):
+            if self.grid is None:
+                self.grid = qwt.QwtPlotGrid()
+                self.grid.setPen(qt.QPen(self.colors['black'],
+                                0,self.linetypes['dot']))
+            self.grid.attach(self)
         
-    if not QWTVERSION4:
         def removeCurves(self):
             for key in self.curves.keys():
                 self.delcurve(key) 
