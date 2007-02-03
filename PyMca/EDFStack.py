@@ -195,7 +195,7 @@ class EDFStack(DataObject.DataObject):
         pass
 
     def loadIndexedStack(self,filename,begin=None,end=None, skip = None, fileindex=0):
-        if begin is None: begin = 0
+        #if begin is None: begin = 0
         if type(filename) == type([]):
             filename = filename[0]
         if not os.path.exists(filename):
@@ -246,15 +246,18 @@ class EDFStack(DataObject.DataObject):
                 return
             i = 0
             if begin is None:
-                i = 0
+                begin = 0
+                testname = prefix+format % begin+suffix
+                while not os.path.exists(prefix+format % begin+suffix):
+                    begin += 1
+                    testname = prefix+format % begin+suffix
+                    if len(testname) > len(filename):break
+                i = begin
             else:
-                if not os.path.exists(prefix+format % begin+suffix):
-                    raise "ValueError","Invalid start index file = %s" % \
-                          prefix+format % begin+suffix
-                else:
-                    i = begin
-            while not os.path.exists(prefix+format % i+suffix):
-                i += 1
+                i = begin
+            if not os.path.exists(prefix+format % i+suffix):
+                raise "ValueError","Invalid start index file = %s" % \
+                      prefix+format % i+suffix
             f = prefix+format % i+suffix
             filelist = []
             while os.path.exists(f):
