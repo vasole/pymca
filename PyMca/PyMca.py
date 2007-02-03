@@ -873,9 +873,11 @@ class PyMca(PyMcaMdi.PyMca):
     def __roiImaging(self):
         if self.__imagingTool is None:
             fileTypeList = ["EDF Files (*edf)",
-                    "EDF Files (*ccd)",
-                    "All Files (*)"]
-            message = "Open SEVERAL EDF files or Indexed EDF Stack"
+                        "EDF Files (*ccd)",
+                        "Specfile Files (*mca)",
+                        "Specfile Files (*dat)",
+                        "All Files (*)"]
+            message = "Open SEVERAL files or ONE Indexed Stack"
             filelist = self.__getStackOfFiles(fileTypeList, message)
             if not(len(filelist)): return
             filelist.sort()
@@ -901,7 +903,10 @@ class PyMca(PyMcaMdi.PyMca):
                     self.connect(self.__imagingTool,
                                  qt.SIGNAL("StackWidgetSignal"),
                                  self._deleteImagingTool)
-                self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
+                try:
+                    self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
+                except:
+                    self.__imagingTool.setStack(QEDFStackWidget.QSpecFileStack(filelist))
                 self.__imagingTool.show()
             except IOError:
                 self.__imagingTool = None

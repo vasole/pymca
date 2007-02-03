@@ -730,7 +730,13 @@ class QEDFStackWidget(qt.QWidget):
                     self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,:,:],0)
                 else:
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
-                
+
+            if self.__ROIColormapDialog is not None:
+                a = Numeric.ravel(self.__ROIImageData)
+                minData = min(a)
+                maxData = max(a)
+                self.__ROIColormapDialog.setDataMinMax(minData, maxData)
+    
             self._resetSelection()
             if self.isHidden():
                 self.show()
@@ -1265,7 +1271,7 @@ if __name__ == "__main__":
         if 1:
             filelist = w._getStackOfFiles()
             if len(filelist):
-                f = open(args[0])
+                f = open(filelist[0])
                 line = f.readline()
                 if not len(line):
                     line = f.readline()
