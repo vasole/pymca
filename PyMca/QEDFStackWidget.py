@@ -31,10 +31,12 @@ qt = McaWindow.qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     import RGBCorrelator
+    from RGBCorrelatorWidget import ImageShapeDialog
 import RGBCorrelatorGraph
 from Icons import IconDict
 import DataObject
 import EDFStack
+import SpecFileStack
 import Numeric
 import ColormapDialog
 import spslut
@@ -47,6 +49,40 @@ if QWTVERSION4:
     raise "ImportError","QEDFStackWidget needs Qwt5"
 
 DEBUG = 0
+
+class QSpecFileStack(SpecFileStack.SpecFileStack):
+    def onBegin(self, nfiles):
+        self.bars =qt.QWidget()
+        if QTVERSION < '4.0.0':
+            self.bars.setCaption("Reading progress")
+            self.barsLayout = qt.QGridLayout(self.bars,2,3)
+        else:
+            self.bars.setWindowTitle("Reading progress")
+            self.barsLayout = qt.QGridLayout(self.bars)
+            self.barsLayout.setMargin(2)
+            self.barsLayout.setSpacing(3)
+        self.progressBar   = qt.QProgressBar(self.bars)
+        self.progressLabel = qt.QLabel(self.bars)
+        self.progressLabel.setText('Mca Progress:')
+        self.barsLayout.addWidget(self.progressLabel,0,0)        
+        self.barsLayout.addWidget(self.progressBar,0,1)
+        if QTVERSION < '4.0.0':
+            self.progressBar.setTotalSteps(nfiles)
+            self.progressBar.setProgress(0)
+        else:
+            self.progressBar.setMaximum(nfiles)
+            self.progressBar.setValue(0)
+        self.bars.show()
+
+    def onProgress(self,index):
+        if QTVERSION < '4.0.0':
+            self.progressBar.setProgress(index)
+        else:
+            self.progressBar.setValue(index)
+
+    def onEnd(self):
+        self.bars.hide()
+        del self.bars
 
 class QStack(EDFStack.EDFStack):
     def onBegin(self, nfiles):
@@ -499,8 +535,6 @@ class QEDFStackWidget(qt.QWidget):
 
     def setStack(self, stack, mcaindex=1, fileindex = None):
         #stack.data is an XYZ array
-        self.stack = stack
-
         if QTVERSION < '4.0.0':
             title = str(self.caption())+\
                     ": from %s to %s" % (os.path.basename(stack.sourceName[0]),
@@ -512,8 +546,19 @@ class QEDFStackWidget(qt.QWidget):
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setWindowTitle(title)
         
-        shape = self.stack.data.shape
+        if stack.info["SourceType"] == "SpecFileStack" and (QTVERSION > '4.0.0'):
+            oldshape = stack.data.shape
+            dialog = ImageShapeDialog(self, shape = oldshape[0:2])
+            dialog.setModal(True)
+            ret = dialog.exec_()
+            if ret:
+                shape = dialog.getImageShape()
+                dialog.close()
+                del dialog
+                stack.data.shape = [shape[0], shape[1], oldshape[2]]
 
+        self.stack = stack
+        shape = self.stack.data.shape
         self.mcaIndex   = mcaindex
         self.otherIndex = 0
         if fileindex is None:
@@ -1126,6 +1171,8 @@ class QEDFStackWidget(qt.QWidget):
     def _getStackOfFiles(self):
         fileTypeList = ["EDF Files (*edf)",
                         "EDF Files (*ccd)",
+                        "Specfile Files (*mca)",
+                        "Specfile Files (*dat)",
                         "All Files (*)"]
         message = "Open EDF Stack or several EDF files"
         wdir = os.getcwd()
@@ -1199,8 +1246,17 @@ if __name__ == "__main__":
         elif opt in '--fileindex':
             fileindex = int(arg)
     app = qt.QApplication([])
-    stack = QStack()
     w = QEDFStackWidget()
+    if len(args):
+        f = open(args[0])
+        line = f.readline()
+        if not len(line):
+            line = f.readline()
+        if line[0] == "{":
+            stack = QStack()
+        else:
+            stack = QSpecFileStack()
+        f.close()
     if len(args) > 1:
         stack.loadFileList(args, fileindex =fileindex)
     elif len(args) == 1:
@@ -1208,6 +1264,16 @@ if __name__ == "__main__":
     else:
         if 1:
             filelist = w._getStackOfFiles()
+            if len(filelist):
+                f = open(args[0])
+                line = f.readline()
+                if not len(line):
+                    line = f.readline()
+                if line[0] == "{":
+                    stack = QStack()
+                else:
+                    stack = QSpecFileStack()
+                f.close()
             if len(filelist) == 1:
                 stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
             elif len(filelist):

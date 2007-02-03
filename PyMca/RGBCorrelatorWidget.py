@@ -551,9 +551,17 @@ class ImageShapeDialog(qt.QDialog):
         label1 = MyQLabel(self, bold = False, color= qt.Qt.black)
         label1.setText("Number of rows    = ")
         self.rows = qt.QLineEdit(self)
-        if shape is not None:self.rows.setText("%g" % shape[0])
+        self._size = None
         self.columns = qt.QLineEdit(self)
-        if shape is not None:self.columns.setText("%g" % shape[1])
+        if shape is not None:
+            self.rows.setText("%g" % shape[0])
+            self.columns.setText("%g" % shape[1])
+            self._size  = shape[0] * shape[1]
+            self._shape = shape
+            if QTVERSION < '4.0.0':
+                self.setCaption("Resize %d x %d image" % (shape[0], shape[1]))
+            else:
+                self.setWindowTitle("Resize %d x %d image" % (shape[0], shape[1]))
         label2 = MyQLabel(self, bold = False, color= qt.Qt.black)
         label2.setText("Number of columns = ")
         self.cancelButton = qt.QPushButton(self)
@@ -582,6 +590,28 @@ class ImageShapeDialog(qt.QDialog):
         else: ncolumns = None
         ncolumns = int(text)
         return nrows, ncolumns
+
+    def accept(self):
+        if self._size is None:return qt.QDialog.accept(self)
+        nrows, ncolumns = self.getImageShape()
+        try:
+            if (nrows * ncolumns) == self._size:
+                return qt.QDialog.accept(self)
+            else:
+                self.rows.setText("%g" % self._shape[0])
+                self.columns.setText("%g" % self._shape[1])
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Invalid shape %d x %d" % (nrows, ncolumns))
+                msg.exec_()
+        except:
+            self.rows.setText("%g" % self._shape[0])
+            self.columns.setText("%g" % self._shape[1])
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error reshaping: %s" % sys.exc_info()[1])
+            msg.exec_()
+
 
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
