@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -318,7 +318,10 @@ if(0){
                     */
                     for (    ptr = ptr + 2; 
                         (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ; 
-                        ptr++); 
+                        ptr++);
+                    if (ptr >= to){
+                        break;
+                    }
                 }
                 while(*ptr == '#'){
                     for (ptr = ptr; ptr < to;ptr++){

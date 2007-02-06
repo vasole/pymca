@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -159,15 +159,10 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
      double  val;
 
      int     i,spect_no=0;
-     long    vals,nb_mca;
+     long    vals;
 
      long    blocks=1, 
              initsize=1024;
-
-     char  **retline;
-     char   *strptr;
-     long    nb_lines,
-             nb_pnts;
 
 
      headersize = ((SpecScan *)sf->current->contents)->data_offset
@@ -178,7 +173,7 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
     /*
      *  check that mca number is available
      */
-    if (nb_mca == 0 || number < 1) {
+    if (number < 1) {
         *error = SF_ERR_MCA_NOT_FOUND;
         *retdata = (double *)NULL;
          return(-1);
