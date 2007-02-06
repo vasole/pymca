@@ -1194,7 +1194,7 @@ class QEDFStackWidget(qt.QWidget):
                             message)
                 if not len(filelist):return []
         else:
-            if sys.platform != 'darwin':
+            if 0 and (sys.platform != 'darwin'):
                 filetypes = ""
                 for filetype in fileTypeList:
                     filetypes += filetype+"\n"
