@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.41 $"
+__revision__ = "$Revision: 1.42 $"
 ###########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -35,6 +35,7 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
+QTVERSION = qt.qVersion()
 import os
 import McaAdvancedFitBatch
 import EdfFileLayer
@@ -51,7 +52,7 @@ DEBUG = 0
 class McaBatchGUI(qt.QWidget):
     def __init__(self,parent=None,name="PyMca batch fitting",fl=qt.Qt.WDestructiveClose,
                 filelist=None,config=None,outputdir=None, actions=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self,parent,name,fl)
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
             self.setCaption(name)
@@ -83,7 +84,7 @@ class McaBatchGUI(qt.QWidget):
         self.__grid= qt.QWidget(self)
         self._layout.addWidget(self.__grid)
         #self.__grid.setGeometry(qt.QRect(30,30,288,156))
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             grid       = qt.QGridLayout(self.__grid,3,3,11,6)
             grid.setColStretch(0,0)
             grid.setColStretch(1,1)
@@ -96,7 +97,7 @@ class McaBatchGUI(qt.QWidget):
         listrow  = 0
         listlabel   = qt.QLabel(self.__grid)
         listlabel.setText("Input File list:")
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             listlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
             self.__listView   = qt.QTextView(self.__grid)
             self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
@@ -114,7 +115,7 @@ class McaBatchGUI(qt.QWidget):
         configrow = 1
         configlabel = qt.QLabel(self.__grid)
         configlabel.setText("Fit Configuration File:")
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             configlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
         self.__configLine = qt.QLineEdit(self.__grid)
         self.__configLine.setReadOnly(True)
@@ -130,7 +131,7 @@ class McaBatchGUI(qt.QWidget):
         outrow    = 2
         outlabel   = qt.QLabel(self.__grid)
         outlabel.setText("Output dir:")
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             outlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
         self.__outLine = qt.QLineEdit(self.__grid)
         self.__outLine.setReadOnly(True)
@@ -167,7 +168,7 @@ class McaBatchGUI(qt.QWidget):
         self.__fitBox = qt.QCheckBox(vbox1)
         self.__fitBox.setText('Generate .fit Files')
         palette = self.__fitBox.palette()
-        #if qt.qVersion() < '4.0.0':
+        #if QTVERSION < '4.0.0':
         #    palette.setDisabled(palette.active())
         #else:
         #    print "palette set disabled"
@@ -178,7 +179,7 @@ class McaBatchGUI(qt.QWidget):
         self.__imgBox = qt.QCheckBox(vbox2)
         self.__imgBox.setText('Generate Peak Images')
         palette = self.__imgBox.palette()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             palette.setDisabled(palette.active())
         else:
             if DEBUG: print "palette set disabled"
@@ -206,7 +207,7 @@ class McaBatchGUI(qt.QWidget):
         self.__tableBox = qt.QCheckBox(vbox1)
         self.__tableBox.setText('Table in Report')
         palette = self.__tableBox.palette()
-        #if qt.qVersion() < '4.0.0':
+        #if QTVERSION < '4.0.0':
         #    palette.setDisabled(palette.active())
         #else:
         #    print "palette set disabled"
@@ -248,7 +249,7 @@ class McaBatchGUI(qt.QWidget):
         vBox.l.addWidget(self.__useExisting)
         
         #self.useGroup.setExclusive(1)
-        #if qt.qVersion() > '3.0.0':self.useGroup.setFlat(1)
+        #if QTVERSION > '3.0.0':self.useGroup.setFlat(1)
         self.connect(self.__overwrite,   qt.SIGNAL("clicked()"),
                                          self.__clickSignal0)
         self.connect(self.__useExisting, qt.SIGNAL("clicked()"),
@@ -276,7 +277,7 @@ class McaBatchGUI(qt.QWidget):
         label= qt.QLabel(boxFStep)
         label.setText("File Step:")
         self.__fileSpin = qt.QSpinBox(boxFStep)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__fileSpin.setMinValue(1)
             self.__fileSpin.setMaxValue(10)
         else:
@@ -297,7 +298,7 @@ class McaBatchGUI(qt.QWidget):
         label= qt.QLabel(boxMStep)
         label.setText("MCA Step:")
         self.__mcaSpin = qt.QSpinBox(boxMStep)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__mcaSpin.setMinValue(1)
             self.__mcaSpin.setMaxValue(10)
         else:
@@ -326,7 +327,7 @@ class McaBatchGUI(qt.QWidget):
         label= qt.QLabel(box3)
         label.setText("ROI Width (eV):")
         self.__roiSpin = qt.QSpinBox(box3)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__roiSpin.setMinValue(10)
             self.__roiSpin.setMaxValue(1000)
         else:
@@ -406,7 +407,7 @@ class McaBatchGUI(qt.QWidget):
             self.fileList = filelist
             if len(self.fileList):
                 self.inputDir = os.path.dirname(self.fileList[0])
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.__listView.setText(text)
             else:
                 self.__listView.clear()
@@ -439,7 +440,7 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(file):
                 qt.QMessageBox.critical(self, "ERROR",
                                     'File %s\ndoes not exists' % file)
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
@@ -455,7 +456,7 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(configfile):
                 qt.QMessageBox.critical(self,
                              "ERROR",'File %s\ndoes not exists' % configfile)
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
@@ -463,7 +464,7 @@ class McaBatchGUI(qt.QWidget):
             elif len(configfile.split()) > 1:
                 qt.QMessageBox.critical(self,
                              "ERROR",'Configuration File:\n %s\ncontains spaces in the path' % configfile)
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
@@ -476,7 +477,7 @@ class McaBatchGUI(qt.QWidget):
             qt.QMessageBox.critical(self,
                 "ERROR",
                 'Output Directory:\n %s\ncontains spaces in the path' % outputdir)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.raiseW()
             else:
                 self.raise_()
@@ -502,7 +503,7 @@ class McaBatchGUI(qt.QWidget):
             return "Specfile" 
         except:
             qt.QMessageBox.critical(self, sys.exc_info()[0],'I do not know what to do with file\n %s' % file)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.raiseW()
             else:
                 self.raise_()
@@ -513,7 +514,7 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             filedialog = qt.QFileDialog(self,"Open a set of files",1)
             filedialog.setMode(filedialog.ExistingFiles)
             filedialog.setDir(wdir)
@@ -523,12 +524,12 @@ class McaBatchGUI(qt.QWidget):
             filedialog.setDirectory(wdir)
             filedialog.setModal(1)
             filedialog.setFileMode(filedialog.ExistingFiles)
-        if qt.qVersion() < '4.0.0' and (sys.platform == "win32"):
+        if QTVERSION < '4.0.0' and (sys.platform == "win32"):
                 filelist= filedialog.getOpenFileNames(qt.QString("McaFiles (*.mca)\nEdfFiles (*.edf)\nSpecFiles (*.spec)\nAll files (*)"),
                             wdir,
                             self,"openFile", "Open a set of files")
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 filedialog.setFilters("McaFiles (*.mca)\nEdfFiles (*.edf)\nSpecFiles (*.spec)\nAll files (*)")
                 ret = filedialog.exec_loop()
             else:
@@ -539,7 +540,7 @@ class McaBatchGUI(qt.QWidget):
             if  ret == qt.QDialog.Accepted:
                 filelist=filedialog.selectedFiles()
             else:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
@@ -547,7 +548,7 @@ class McaBatchGUI(qt.QWidget):
         if len(filelist):
             filelist = map(str, filelist)
             self.setFileList(filelist)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.raiseW()
         else:
             self.raise_()
@@ -557,7 +558,7 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             filename = qt.QFileDialog(self,"Open a new fit config file",1)
             filename.setMode(filename.ExistingFiles)
             filename.setDir(wdir)
@@ -567,12 +568,12 @@ class McaBatchGUI(qt.QWidget):
             filename.setModal(1)
             filename.setFileMode(filename.ExistingFiles)
             filename.setDirectory(wdir)
-        if (qt.qVersion() < '4.0.0') and (sys.platform == "win32"):
+        if (QTVERSION < '4.0.0') and (sys.platform == "win32"):
             filenameList= filename.getOpenFileNames(qt.QString("Config Files (*.cfg)\nAll files (*)"),
                             wdir,
                             self,"openFile", "Open a new fit config file")
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 filename.setFilters("Config Files (*.cfg)\nAll files (*)")
                 ret = filename.exec_loop() 
             else:
@@ -582,7 +583,7 @@ class McaBatchGUI(qt.QWidget):
             if  ret == qt.QDialog.Accepted:
                 filenameList = filename.selectedFiles()
             else:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
@@ -594,7 +595,7 @@ class McaBatchGUI(qt.QWidget):
 
         if len(filename) == 1:self.setConfigFile(str(filename[0]))
         elif len(filenameList):self.setConfigFile(filename)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.raiseW()
         else:
             self.raise_()
@@ -608,7 +609,7 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             outfile = qt.QFileDialog(self,"Output Directory Selection",1)
             outfile.setMode(outfile.DirectoryOnly)
             outfile.setDir(wdir)
@@ -621,7 +622,7 @@ class McaBatchGUI(qt.QWidget):
             outfile.setFileMode(outfile.DirectoryOnly)
             ret = outfile.exec_()
         if ret:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 outdir=str(outfile.selectedFile())
             else:
                 outdir=str(outfile.selectedFiles()[0])
@@ -631,7 +632,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             outfile.close()
             del outfile
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.raiseW()
         else:
             self.raise_()
@@ -639,14 +640,14 @@ class McaBatchGUI(qt.QWidget):
     def start(self):
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.raiseW()
             else:
                 self.raise_()
             return
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.raiseW()
             else:
                 self.raise_()
@@ -655,14 +656,14 @@ class McaBatchGUI(qt.QWidget):
             if len(self.configFile) != len(self.fileList):
                 qt.QMessageBox.critical(self, "ERROR",
       'Number of config files should be either one or equal to number of files')
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
                 return    
         if (self.outputDir is None) or (not self.__goodOutputDir(self.outputDir)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid output directory')
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.raiseW()
             else:
                 self.raise_()
@@ -895,7 +896,7 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
 class McaBatchWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0, outputdir=None, html=0,
                                             htmlindex = None, table=2):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
             self.setCaption(name)
         else:
@@ -905,7 +906,7 @@ class McaBatchWindow(qt.QWidget):
         #self.l.setAutoAdd(1)
         self.bars =qt.QWidget(self)
         self.l.addWidget(self.bars)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.barsLayout = qt.QGridLayout(self.bars,2,3)
         else:
             self.barsLayout = qt.QGridLayout(self.bars)
@@ -945,7 +946,7 @@ class McaBatchWindow(qt.QWidget):
 
         if actions: self.addButtons()
         self.show()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.raiseW()
         else:
             self.raise_()
@@ -1010,7 +1011,7 @@ class McaBatchWindow(qt.QWidget):
         nfiles = len(indexlist)
         self.status.setText("Processing file %s" % file)
         e = time.time()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.progressBar.setTotalSteps(nfiles)
             self.progressBar.setProgress(index)
         else:
@@ -1032,7 +1033,7 @@ class McaBatchWindow(qt.QWidget):
         if DEBUG:print "onImage ",key
         i = keylist.index(key) + 1
         n = len(keylist)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.imageBar.setTotalSteps(n)
             self.imageBar.setProgress(i)
             self.mcaBar.setTotalSteps(1)
@@ -1065,7 +1066,7 @@ class McaBatchWindow(qt.QWidget):
                         self.__htmlReport(filename, key, outputdir, useExistingFiles, info, firstmca = False)
             except Exception, err:
                 print "ERROR on REPORT",sys.exc_info(),err
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mcaBar.setTotalSteps(nmca)
             self.mcaBar.setProgress(mca)
         else:
@@ -1158,7 +1159,7 @@ class McaBatchWindow(qt.QWidget):
             
     def onEnd(self,dict):
         self.__ended = True
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             n = self.progressBar.progress()
             self.progressBar.setProgress(n+dict['filestep'])
             n = self.mcaBar.progress()
@@ -1314,7 +1315,7 @@ def main():
     if len(filelist) == 0:
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         w = McaBatchGUI(actions=1)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             app.setMainWidget(w)
             w.show()
             app.exec_loop()
@@ -1336,7 +1337,7 @@ def main():
             msg = qt.QMessageBox()
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -1362,7 +1363,7 @@ def main():
         window._rootname = "%s"% b._rootname
         window.show()
         b.start()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             app.setMainWidget(window)
             app.exec_loop()
         else:

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.30 $"
+__revision__ = "$Revision: 1.31 $"
 import ClassMcaTheory
 import SpecFileLayer
 import EdfFileLayer
@@ -248,10 +248,10 @@ class McaAdvancedFitBatch:
                         #slow down everything to deal with not very common
                         #situations
                         if self.__row == 0:
-                            self.__chann0List = Numeric.zeros(info['NbMca'])
+                            self.__chann0List = Numeric.zeros(info['NbMcaDet'])
                             chan0list = scan_obj.header('@CHANN')
                             if len(chan0list):
-                                for i in range(info['NbMca']):
+                                for i in range(info['NbMcaDet']):
                                     self.__chann0List[i] = int(chan0list[i].split()[2])
                         #import time
                         for i in range(info['NbMca']):
@@ -266,7 +266,7 @@ class McaAdvancedFitBatch:
                             mcadata = scan_obj.mca(i+1)
                             y0  = Numeric.array(mcadata)
                             x = Numeric.arange(len(y0))*1.0 + \
-                                self.__chann0List[i]
+                                self.__chann0List[mca-1]
                             filename = os.path.basename(info['SourceName'])
 
                             infoDict = {}
