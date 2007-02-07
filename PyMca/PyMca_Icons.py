@@ -225,7 +225,8 @@ fileclose = [
 "%%o%%---%---   %",
 "%%o$=*-----.   %",
 "%%X#&=%---o    %",
-"%%.O#$---  ",
+#"%%.O#$---  %",
+"%%.O#$---      %",
 "%% .o---o---   %",
 "%%%  --.  --  %%",
 "%%%           %%",
@@ -634,7 +635,8 @@ reload = [
 "v:juew4i#vcovcvv",
 "vv,lw5i#vv$g vvv",
 "v v-ji#vv g88 vv",
-"vvvv##vd98 ",
+#"vvvv##vd98 ",
+"vvvv##vd98888 vv",
 "vvvvvvvoo 0&0ooo",
 "vvvvvvvvv&s& vvv",
 "v  vvvvvv p7Ovvv",
@@ -642,6 +644,7 @@ reload = [
 "vvvoO  8a9*Xvvvv",
 "vvvvvo$  O vvvvv"
 ]
+
 	
 roi = [
 "16 16 6 1",
@@ -1215,8 +1218,14 @@ IconDict= {
 }
 
 def showIcons():
-	import qt
 	import sys
+	if 'qt'not in sys.modules:
+            try:
+                import PyQt4.Qt as qt
+            except:
+                import qt
+        else:
+        	import qt
 
 	a= qt.QApplication(sys.argv)
 	a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
@@ -1225,6 +1234,7 @@ def showIcons():
 
 	idx= 0
 	for name,icon in IconDict.items():
+		#print name
 		lab= qt.QLabel(w)
 		lab.setText(str(name))
 		g.addWidget(lab, idx, 0)
@@ -1234,7 +1244,10 @@ def showIcons():
 		idx+= 1
 
 	w.show()
-	a.exec_loop()
+	if qt.qVersion () < '4.0.0':
+        	a.exec_loop()
+        else:
+                a.exec_()
 
 if __name__=='__main__':
 	showIcons()

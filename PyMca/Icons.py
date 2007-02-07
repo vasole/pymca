@@ -1889,7 +1889,8 @@ fileclose = [
 "%%o%%---%---   %",
 "%%o$=*-----.   %",
 "%%X#&=%---o    %",
-"%%.O#$---  ",
+#"%%.O#$---  %",
+"%%.O#$---      %",
 "%% .o---o---   %",
 "%%%  --.  --  %%",
 "%%%           %%",
@@ -2298,7 +2299,8 @@ reload = [
 "v:juew4i#vcovcvv",
 "vv,lw5i#vv$g vvv",
 "v v-ji#vv g88 vv",
-"vvvv##vd98 ",
+#"vvvv##vd98 ",
+"vvvv##vd98888 vv",
 "vvvvvvvoo 0&0ooo",
 "vvvvvvvvv&s& vvv",
 "v  vvvvvv p7Ovvv",
@@ -2967,6 +2969,7 @@ def showIcons():
 
 	idx= 0
 	for name,icon in IconDict.items():
+                #print "name",name
 		lab= qt.QLabel(w)
 		lab.setText(str(name))
 		g.addWidget(lab, idx, 0)
