@@ -614,6 +614,9 @@ class QEDFStackWidget(qt.QWidget):
                 self.stackGraphWidget.graph.y1Label('Column')
             else:
                 self.stackGraphWidget.graph.y1Label('Row')
+        elif self.stack.info["SourceType"] == "SpecFileStack":
+            self.stackGraphWidget.graph.y1Label('Row')
+            self.stackGraphWidget.graph.x1Label('Column')
         else:
             self.stackGraphWidget.graph.y1Label("File")
             if self.mcaIndex == 1:
@@ -1180,7 +1183,7 @@ class QEDFStackWidget(qt.QWidget):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "All Files (*)"]
-        message = "Open EDF Stack or several EDF files"
+        message = "Open ONE indexed stack or SEVERAL files"
         wdir = os.getcwd()
         if QTVERSION < '4.0.0':
             if sys.platform != 'darwin':

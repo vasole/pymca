@@ -1,3 +1,17 @@
+VERSION 4.0.4
+
+- Add the possibility to save graphics in vectorial format (svg).
+
+- Scale print preview to have a width equal to 50% of the page width.
+
+- Solve a problem in specfile batches when dealing with the @CHANN entry.
+
+- Correct ROI image colormap bug in ROI imaging tool.
+
+- Add specfile support to the ROI imaging tool.
+
+- Correct random crashes on startup and on specfile batches.
+
 VERSION 4.0.3
 
 - Correct a bug in the ROI imaging tool. 

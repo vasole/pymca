@@ -24,13 +24,11 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.36 $"
+__revision__ = "$Revision: 1.37 $"
 import sys
 if 'qt' not in sys.modules:
     try:
         import PyQt4.Qt as qt
-        if qt.qVersion() < '4.0.0':
-            print "WARNING: Using Qt %s version" % qt.qVersion()
     except:
         import qt
 else:
@@ -47,6 +45,7 @@ from FitPeakSelect import FitPeakSelect
 import AttenuatorsTable
 import ConcentrationsWidget
 import EnergyTable
+DEBUG = 0
 
 if 0:
     FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations","compound_fit"]
@@ -60,12 +59,12 @@ class FitParamWidget(FitParamForm):
                    "Filter 6","Filter 7","BeamFilter0", "BeamFilter1","Detector", "Matrix"]
     def __init__(self, parent=None, name="FitParamWidget", fl=0):
         FitParamForm.__init__(self, parent, name, fl)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
         else:
             self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
         #attenuators tab This was previously into FitParamForm.py: BEGIN
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.tabAtt = qt.QWidget(self.mainTab)
             tabAttLayout = qt.QGridLayout(self.tabAtt,1,1,11,6)
             self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt)
@@ -85,7 +84,7 @@ class FitParamWidget(FitParamForm):
             self.mainTab.addTab(self.tabAtt,str("ATTENUATORS"))
         #This was previously into FitParamForm.py: END
         
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.tabMul = qt.QWidget(self.mainTab,"tabMultilayer")
             #self.tabMultilayer = None
             tabMultilayerLayout = qt.QGridLayout(self.tabMul,1,1,11,6,"tabMultilayerLayout")
@@ -106,7 +105,7 @@ class FitParamWidget(FitParamForm):
             self.matrixGeometry = self.tabMultilayer.matrixGeometry
 
         #The concentrations
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.tabConcentrations =  qt.QWidget(self.mainTab,
                                                  "tabConcentrations")
             tabConcentrationsLayout = qt.QGridLayout(self.tabConcentrations,
@@ -127,7 +126,7 @@ class FitParamWidget(FitParamForm):
         #self.matrixGeometry = self.tabAttenuators.matrixGeometry
         if 0:
             #The compound fit tab
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.tabCompoundFit =  qt.QWidget(self.mainTab,
                                                      "tabCompound_fit")
                 tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit,
@@ -153,12 +152,12 @@ class FitParamWidget(FitParamForm):
         self.layout().setMargin(0)
 
         self.attTable.verticalHeader().hide()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.attTable.setLeftMargin(0)
         #self.attTable.adjustColumn(0)
 
         #The beam energies tab
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             beamlayout= qt.QGridLayout(self.TabBeam,1,1)
             self.energyTab = EnergyTable.EnergyTab(self.TabBeam)
         else:
@@ -171,7 +170,7 @@ class FitParamWidget(FitParamForm):
         self.xRayTube = self.energyTab.tube
 
         #The peak select tab
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             layout= qt.QGridLayout(self.TabPeaks,1,1)
         else:
             layout= qt.QGridLayout(self.TabPeaks)
@@ -182,7 +181,7 @@ class FitParamWidget(FitParamForm):
         else:
             self.peakTable= FitPeakSelect(self.TabPeaks,
                                           energyTable=self.energyTable)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 qt.QToolTip.add(self.peakTable.energy,
                                 "Energy is set in the BEAM tab")
             else:
@@ -203,25 +202,25 @@ class FitParamWidget(FitParamForm):
 
         self.prevTabIdx= None
         self.tabLabel= []
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             n = 1 + len(FitParamHeaders)
         else:
             n = self.mainTab.count()
             for idx in range(n):
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.tabLabel.append(self.mainTab.label(idx))
                 else:
                     self.tabLabel.append(str(self.mainTab.tabText(idx)))
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
         self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
-        if qt.qVersion() > '4.0.0' :
+        if QTVERSION > '4.0.0' :
             self.setMaximumWidth(700)
             self.setMaximumHeight(750)
         else:
             self.setMaximumWidth(800)
 
-    if qt.qVersion() < '4.0.0' :
+    if QTVERSION < '4.0.0' :
         def resizeEvent(self, re):
             FitParamForm.resizeEvent(self,re)
             try:
@@ -240,7 +239,7 @@ class FitParamWidget(FitParamForm):
             self.orderSpin.setEnabled(0)
 
     def __orderSpinChanged(self, value):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             continuum= int(self.contCombo.currentItem())
         else:
             continuum= int(self.contCombo.currentIndex())
@@ -250,7 +249,7 @@ class FitParamWidget(FitParamForm):
             self.exppolOrder= self.orderSpin.value()
 
     def __tabChanged(self, wid):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             idx= self.mainTab.currentPageIndex()
         else:
             idx= self.mainTab.indexOf(wid)
@@ -263,7 +262,7 @@ class FitParamWidget(FitParamForm):
                 self.prevTabIdx= idx
             
     def __tabCheck(self, tabIdx):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             label=FitParamHeaders[tabIdx]
         else:
             label= self.tabLabel[tabIdx]
@@ -370,7 +369,7 @@ class FitParamWidget(FitParamForm):
                 attpar= self.__get("attenuators", att, [0, "-", 0., 0.], None)
                 lastrow += 1
                 row = lastrow
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.attTable.item(row, 0).setChecked(int(attpar[0]))
             else:
                 self.attTable.cellWidget(row, 0).setChecked(int(attpar[0]))
@@ -395,7 +394,7 @@ class FitParamWidget(FitParamForm):
             #att= self.attenuators[idx]
             att = str(self.attTable.text(idx,1))
             attpar= []
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 attpar.append(int(self.attTable.item(idx,0).isChecked()))
             else:
                 attpar.append(int(self.attTable.cellWidget(idx,0).isChecked()))
@@ -433,7 +432,7 @@ class FitParamWidget(FitParamForm):
             attpar= self.__get("multilayer", att, [0, "-", 0., 0.], None)
             lastrow += 1
             row = lastrow
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.multilayerTable.item(row, 0).setChecked(int(attpar[0]))
             else:
                 self.multilayerTable.cellWidget(row, 0).setChecked(int(attpar[0]))
@@ -450,7 +449,7 @@ class FitParamWidget(FitParamForm):
 
     def __getMultilayerPar(self):
         pars= {}
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             for idx in range(self.multilayerTable.numRows()):
                 #att= self.attenuators[idx]
                 att = str(self.multilayerTable.text(idx,1))
@@ -555,7 +554,7 @@ class FitParamWidget(FitParamForm):
         self.linpolOrder= self.__get("fit", "linpolorder", 1, int)
         self.exppolOrder= self.__get("fit", "exppolorder", 1, int)
         continuum= self.__get("fit", "continuum", 0, int)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.contCombo.setCurrentItem(continuum)
         else:
             self.contCombo.setCurrentIndex(continuum)
@@ -655,7 +654,7 @@ class FitParamWidget(FitParamForm):
     def __setDetPar(self):
         elt= self.__get("detector", "detele", "Si")
         for idx in range(self.elementCombo.count()):
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 if str(self.elementCombo.text(idx))==elt:
                     self.elementCombo.setCurrentItem(idx)
                     break
@@ -735,7 +734,7 @@ class FitParamWidget(FitParamForm):
     def __parError(self, tab, message):
         idx= self.tabLabel.index(tab)
         self.prevTabIdx= idx
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mainTab.setCurrentPage(idx)
         else:
             self.mainTab.setCurrentIndex(idx)
@@ -745,7 +744,7 @@ class FitParamWidget(FitParamForm):
 class SectionFileDialog(qt.QFileDialog):
     def __init__(self, parent=None, name="SectionFileDialog", sections=[], labels=None,
                      mode=None,modal =1, initdir=None):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QFileDialog.__init__(self, parent, name, modal)
             self.setCaption(name)
         else:
@@ -753,7 +752,7 @@ class SectionFileDialog(qt.QFileDialog):
             self.setModal(modal)
             self.setWindowTitle(name)
             #layout = qt.QHBoxLayout(self)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.addFilter("Config Files *.cfg")
         else:
             strlist = qt.QStringList()
@@ -764,7 +763,7 @@ class SectionFileDialog(qt.QFileDialog):
             if os.path.exists(initdir):
                 self.setDir(qt.QString(initdir))
                 
-        if qt.qVersion() < '4.0.0':     
+        if QTVERSION < '4.0.0':     
             self.sectionWidget= SectionFileWidget(self,
                                               sections=sections,
                                               labels=labels)
@@ -772,7 +771,7 @@ class SectionFileDialog(qt.QFileDialog):
             if mode is not None:
                 self.setMode(mode)
         else:
-            print "right to add"
+            if DEBUG:print "right to be added"
             if 0:
                 self.sectionWidget= SectionFileWidget(self,
                                                   sections=sections,
@@ -782,7 +781,7 @@ class SectionFileDialog(qt.QFileDialog):
                 self.setFileMode(mode)
 
     def getFilename(self):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             filename= str(self.selectedFile())
         else:
             filename= str(self.selectedFiles()[0])
@@ -798,7 +797,7 @@ class SectionFileDialog(qt.QFileDialog):
 
 class SectionFileWidget(qt.QWidget):
     def __init__(self, parent=None, name="FitParamSectionWidget", sections=[], labels=None, fl=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
         else:
             qt.QWidget.__init__(self, parent)
@@ -811,19 +810,19 @@ class SectionFileWidget(qt.QWidget):
         else:    self.labels= labels
 
         group= qt.QGroupBox("Read sections", self)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             group.setColumnLayout(len(self.sections)+1, qt.Qt.Vertical)
         else:
             group.setAlignment(qt.Qt.Vertical)
             group.layout = qt.QVBoxLayout(group)
         layout.addWidget(group)
         self.allCheck= qt.QCheckBox("ALL", group)
-        if qt.qVersion() > '4.0.0':
+        if QTVERSION > '4.0.0':
             group.layout.addWidget(self.allCheck)
         self.check= {}
         for (sect, txt) in zip(self.sections, self.labels):
             self.check[sect]= qt.QCheckBox(txt, group)
-            if qt.qVersion() > '4.0.0':
+            if QTVERSION > '4.0.0':
                 group.layout.addWidget(self.check[sect])
 
         self.allCheck.setChecked(1)
@@ -851,7 +850,7 @@ class SectionFileWidget(qt.QWidget):
 class FitParamDialog(qt.QDialog):
     def __init__(self, parent=None, name="FitParam",
                  modal=1, fl=0, initdir = None, fitresult=None):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QDialog.__init__(self, parent, name, modal, fl)
             self.setCaption("PyMca - MCA Fit Parameters")
             self.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
@@ -868,7 +867,7 @@ class FitParamDialog(qt.QDialog):
         self.fitparam= FitParamWidget(self)
         layout.addWidget(self.fitparam)
 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             buts= qt.QButtonGroup(5, qt.Qt.Horizontal, self)
             loadfit = qt.QPushButton(buts)
             loadfit.setText("Load From Fit")
@@ -1049,7 +1048,7 @@ class FitParamDialog(qt.QDialog):
                                 text)
     def load(self):
         #diag= SectionFileDialog(self, "Load parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.ExistingFile)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             diag= SectionFileDialog(self, "Load parameters", FitParamSections, None,
                                     qt.QFileDialog.ExistingFile, initdir = self.initDir)
             diag.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
@@ -1095,7 +1094,7 @@ class FitParamDialog(qt.QDialog):
 
     def save(self):
         #diag= SectionFileDialog(self, "Save Parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.AnyFile)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             diag= SectionFileDialog(self, "Save Parameters", FitParamSections,
                                     None, qt.QFileDialog.AnyFile, initdir = self.initDir)
             diag.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
@@ -1157,7 +1156,7 @@ def openDialog():
     app= qt.QApplication(sys.argv)
     app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
     wid= FitParamDialog(modal=1,fl=0)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         ret = wid.exec_loop()
     else:
         ret = wid.exec_()
