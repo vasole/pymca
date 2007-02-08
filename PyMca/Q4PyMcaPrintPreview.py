@@ -239,7 +239,7 @@ class PyMcaPrintPreview(qt.QDialog):
             self.accept()
         except:
             painter.end()
-            qt.QMessageBox.critical(self, sys.exc_info()[1],
+            qt.QMessageBox.critical(self, "ERROR",
                                     'Printing problem:\n %s' % sys.exc_info()[1])
             return
 
@@ -334,7 +334,7 @@ class PyMcaPrintPreview(qt.QDialog):
             if itemlist.index(keep) == 0:
                 self.scene.removeItem(itemlist[1])
             else:
-                self.scene_.removeItem(itemlist[0])
+                self.scene.removeItem(itemlist[0])
             itemlist = self.scene.items()
         
     def __remove(self):
