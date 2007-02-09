@@ -32,6 +32,7 @@ qt = QtBlissGraph.qt
 qwt = QtBlissGraph.qwt
 from Icons import IconDict
 import McaControlGUI
+import ConfigDict
 import Numeric
 import McaAdvancedFit
 import DataObject

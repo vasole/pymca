@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -32,7 +32,7 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
-
+QTVERSION = qt.qVersion()
 import McaROIWidget
 import os
 DEBUG = 0
@@ -263,7 +263,7 @@ class McaControlGUI(qt.QWidget):
         self.lastInputFilter = "Calibration files (*.calib)\n"
         if sys.platform == "win32":
             windir = self.lastInputDir
-            if windir is None:windir = ""
+            if windir is None:windir = os.getcwd()
             if qt.qVersion() < '4.0.0':
                 filename= str(qt.QFileDialog.getOpenFileName(windir,
                              self.lastInputFilter,
@@ -275,17 +275,39 @@ class McaControlGUI(qt.QWidget):
                               windir,
                               self.lastInputFilter))                
         else:
-            filename = qt.QFileDialog(self, "Load existing calibration file", 1)
-            filename.setFilters(self.lastInputFilter)
-            if self.lastInputDir is not None:
-                filename.setDir(self.lastInputDir)
-            filename.setMode(qt.QFileDialog.ExistingFile)
-            if filename.exec_loop() == qt.QDialog.Accepted:
-                #selectedfilter = str(filename.selectedFilter())
-                filename= str(filename.selectedFile())
-                #print selectedfilter
+            if QTVERSION < '4.0.0':
+                filename = qt.QFileDialog(self, "Load existing calibration file", 1)
+                filename.setFilters(self.lastInputFilter)
+                if self.lastInputDir is not None:
+                    filename.setDir(self.lastInputDir)
+                filename.setMode(qt.QFileDialog.ExistingFile)
+                if filename.exec_loop() == qt.QDialog.Accepted:
+                    #selectedfilter = str(filename.selectedFilter())
+                    filename= str(filename.selectedFile())
+                    #print selectedfilter
+                else:
+                    return
             else:
-                return
+                windir = self.lastInputDir
+                if windir is None:windir = os.getcwd()
+                filename = qt.QFileDialog(self)
+                filename.setWindowTitle("Load existing calibration file")
+                filename.setModal(1)
+                strlist = qt.QStringList()
+                tmp = [self.lastInputFilter.replace("\n","")] 
+                for filetype in tmp:
+                    strlist.append(filetype.replace("(","").replace(")",""))
+                filename.setFilters(strlist)
+                filename.setFileMode(qt.QFileDialog.ExistingFile)
+                filename.setDirectory(windir)
+                ret = filename.exec_()
+                if ret:
+                    if len(filename.selectedFiles()):
+                        filename = str(filename.selectedFiles()[0])
+                    else:
+                        return
+                else:
+                    return
         if not len(filename):    return
         if len(filename) < 6:
             filename = filename + ".calib"
@@ -317,17 +339,40 @@ class McaControlGUI(qt.QWidget):
                               windir,
                               self.lastInputFilter))                
         else:
-            filename = qt.QFileDialog(self, "Save a new calibration file", 1)
-            filename.setFilters(self.lastInputFilter)
-            if self.lastInputDir is not None:
-                filename.setDir(self.lastInputDir)
-            filename.setMode(qt.QFileDialog.AnyFile)
-            if filename.exec_loop() == qt.QDialog.Accepted:
-                #selectedfilter = str(filename.selectedFilter())
-                filename= str(filename.selectedFile())
-                #print selectedfilter
+            if QTVERSION < '4.0.0':
+                filename = qt.QFileDialog(self, "Save a new calibration file", 1)
+                filename.setFilters(self.lastInputFilter)
+                if self.lastInputDir is not None:
+                    filename.setDir(self.lastInputDir)
+                filename.setMode(qt.QFileDialog.AnyFile)
+                if filename.exec_loop() == qt.QDialog.Accepted:
+                    #selectedfilter = str(filename.selectedFilter())
+                    filename= str(filename.selectedFile())
+                    #print selectedfilter
+                else:
+                    return
             else:
-                return
+                windir = self.lastInputDir
+                if windir is None:windir = os.getcwd()
+                filename = qt.QFileDialog(self)
+                filename.setWindowTitle("Save a new calibration file")
+                filename.setModal(1)
+                strlist = qt.QStringList()
+                tmp = [self.lastInputFilter.replace("\n","")] 
+                for filetype in tmp:
+                    strlist.append(filetype.replace("(","").replace(")",""))
+                filename.setFilters(strlist)
+                filename.setFileMode(qt.QFileDialog.AnyFile)
+                filename.setDirectory(windir)
+                ret = filename.exec_()
+                if ret:
+                    if len(filename.selectedFiles()):
+                        filename = str(filename.selectedFiles()[0])
+                    else:
+                        return
+                else:
+                    return
+
         if not len(filename):    return
         if len(filename) < 6:
             filename = filename + ".calib"
