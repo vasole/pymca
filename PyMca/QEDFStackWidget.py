@@ -1259,7 +1259,7 @@ if __name__ == "__main__":
     if len(args):
         f = open(args[0])
         line = f.readline()
-        if not len(line):
+        if not len(line.replace("\n","")):
             line = f.readline()
         if line[0] == "{":
             stack = QStack()
