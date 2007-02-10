@@ -33,6 +33,8 @@ import Numeric
 import spslut
 from Icons import IconDict
 import ArraySave
+import EdfFileDataSource
+DataReader = EdfFileDataSource.EdfFileDataSource
 
 qt = RGBCorrelatorSlider.qt
 
@@ -42,6 +44,7 @@ DEBUG = 0
 class RGBCorrelatorWidget(qt.QWidget):
     def __init__(self, parent = None, bgrx = True):
         qt.QWidget.__init__(self, parent)
+        self.setWindowTitle("RGBCorrelatorWidget")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(4)
@@ -53,8 +56,13 @@ class RGBCorrelatorWidget(qt.QWidget):
         hbox = qt.QWidget(self.labelWidget)
         hbox.mainLayout = qt.QHBoxLayout(hbox)
         hbox.mainLayout.setMargin(0)
+        hbox.mainLayout.setSpacing(0)
+        self.loadButton = qt.QToolButton(hbox)
+        self.loadButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["fileopen"])))
+        self.loadButton.setToolTip("Load new images of the same size")
         self.saveButton = qt.QToolButton(hbox)
         self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        self.saveButton.setToolTip("Save the set of images to file")
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1 = MyQLabel(hbox, color = qt.Qt.black)
         label1.setAlignment(alignment)
@@ -70,6 +78,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__imageResizeButton = qt.QPushButton(self.labelWidget)
         self.__imageResizeButton.setText("Resize")
 
+        hbox.mainLayout.addWidget(self.loadButton)
         hbox.mainLayout.addWidget(self.saveButton)
         hbox.mainLayout.addWidget(label1)
         self.labelWidget.mainLayout.addWidget(hbox, 0, 0)
@@ -132,6 +141,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__greenImage = None
         self.__blueImage = None
         self.outputDir   = None
+
+        self.connect(self.loadButton,
+                     qt.SIGNAL("clicked()"),
+                     self.addFileList)
 
         self.connect(self.saveButton,
                      qt.SIGNAL("clicked()"),
@@ -505,7 +518,97 @@ class RGBCorrelatorWidget(qt.QWidget):
         else:
             filename = ""
         return filename
+
+    def getInputFileName(self):
+        initdir = os.getcwd()
+        if self.outputDir is not None:
+            if os.path.exists(self.outputDir):
+                initdir = self.outputDir
+        filedialog = qt.QFileDialog(self)
+        filedialog.setFileMode(filedialog.ExistingFiles)
+        filedialog.setAcceptMode(qt.QFileDialog.AcceptOpen)
+        filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
+        formatlist = ["ASCII Files *.dat",
+                      "EDF Files *.edf"]
+        strlist = qt.QStringList()
+        for f in formatlist:
+                strlist.append(f)
+        filedialog.setFilters(strlist)
+        filedialog.setDirectory(initdir)
+        ret = filedialog.exec_()
+        if not ret: return [""]
+        filename = filedialog.selectedFiles()
+        if len(filename):
+            filename = map(str, filename)
+            self.outputDir = os.path.dirname(filename[0])
+        else:
+            filename = [""]
+        return filename        
+
+    def addFileList(self, filelist = None):
+        if filelist is None:
+            filelist = self.getInputFileName()
+        if not len(filelist[0]):return
+        self.outputDir = os.path.dirname(filelist[0])
+        try:
+            for fname in filelist:
+                if self._isEdf(fname):
+                    source = DataReader(fname)
+                    for key in source.getSourceInfo()['KeyList']:
+                        dataObject = source.getDataObject(key)
+                        self.addImage(dataObject.data,
+                                      os.path.basename(fname)+" "+key)
+                else:
+                    self.addBatchDatFile(fname)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error adding file: %s" % sys.exc_info()[1])
+            msg.exec_()
+
+    def addBatchDatFile(self, filename, ignoresigma=None):
+        f = open(filename)
+        lines = f.readlines()
+        f.close()
+        self.outputDir = os.path.dirname(filename)
+        labels = lines[0].replace("\n","").split("  ")
+        i = 1
+        while (not len( lines[-i].replace("\n",""))):
+               i += 1
+        nlabels = len(labels)
+        nrows = len(lines) - i
+        if ignoresigma is None:
+            step  = 1
+            if len(labels) > 4:
+                if len(labels[2]) == (len(labels[3])-3):
+                    if len(labels[3]) > 5:
+                        if labels[3][2:-1] == labels[2]:
+                            step = 2
+        elif ignoresigma:
+            step = 2
+        else:
+            step = 1
+        totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
+        for i in range(nrows):
+            totalArray[i, :] = map(float, lines[i+1].split())
+
+        nrows = int(max(totalArray[:,0]) + 1)
+        ncols = int(max(totalArray[:,1]) + 1)
+        singleArray = Numeric.zeros((nrows* ncols, 1), Numeric.Float)
+        for i in range(2, nlabels, step):
+            singleArray[:, 0] = totalArray[:,i] * 1
+            self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
         
+    def _isEdf(self, filename):
+        f = open(filename)
+        line = f.readline().replace('\n',"")
+        if not len(line):
+            line = f.readline().replace('\n',"")
+        f.close()
+        if len(line):
+            if line[0] == "{":
+                return True
+        return False
 
     def saveImageList(self, filename = None):
         if not len(self._imageList):

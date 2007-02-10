@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,8 +28,6 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
-import EdfFileDataSource
-DataReader = EdfFileDataSource.EdfFileDataSource
 import RGBCorrelator
 qt = RGBCorrelator.qt
 import Numeric
@@ -40,36 +38,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         text += ": " + str(os.path.basename(filename))
         self.setWindowTitle(text)
 
-        f = open(filename)
-        lines = f.readlines()
-        f.close()
-        labels = lines[0].replace("\n","").split("  ")
-        i = 1
-        while (not len( lines[-i].replace("\n",""))):
-               i += 1
-        nlabels = len(labels)
-        nrows = len(lines) - i
-        if ignoresigma is None:
-            step  = 1
-            if len(labels) > 4:
-                if len(labels[2]) == (len(labels[3])-3):
-                    if len(labels[3]) > 5:
-                        if labels[3][2:-1] == labels[2]:
-                            step = 2
-        elif ignoresigma:
-            step = 2
-        else:
-            step = 1
-        totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
-        for i in range(nrows):
-            totalArray[i, :] = map(float, lines[i+1].split())
-
-        nrows = int(max(totalArray[:,0]) + 1)
-        ncols = int(max(totalArray[:,1]) + 1)
-        singleArray = Numeric.zeros((nrows* ncols, 1), Numeric.Float)
-        for i in range(2, nlabels, step):
-            singleArray[:, 0] = totalArray[:,i] * 1
-            self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
+        self.controller.addBatchDatFile(filename, ignoresigma)
 
     def addFileList(self, filelist):
         """
@@ -83,12 +52,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                     " to " + str(os.path.basename(filelist[-1]))
         self.setWindowTitle(text)
 
-        for fname in filelist:
-            source = DataReader(fname)
-            for key in source.getSourceInfo()['KeyList']:
-                dataObject = source.getDataObject(key)
-                self.controller.addImage(dataObject.data,
-                                         os.path.basename(fname)+" "+key)
+        self.controller.addFileList(filelist)
 
     def _getStackOfFiles(self):
         wdir = os.getcwd()
