@@ -652,8 +652,8 @@ def test():
         if ddict.has_key('image'):
             image_buffer = ddict['image'].tostring()
             size = ddict['size']
-            graph.pixmapPlot(image_buffer,size)
-            graph.replot()
+            graph.graph.pixmapPlot(image_buffer,size)
+            graph.graph.replot()
     app.connect(w, qt.SIGNAL("RGBCorrelatorWidgetSignal"), slot)
     import getopt
     options=''
