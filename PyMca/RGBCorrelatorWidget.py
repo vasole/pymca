@@ -29,6 +29,7 @@ import sys
 import os
 import RGBCorrelatorSlider
 import RGBCorrelatorTable
+import RGBImageCalculator
 import Numeric
 import spslut
 from Icons import IconDict
@@ -40,6 +41,12 @@ qt = RGBCorrelatorSlider.qt
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
+class HorizontalSpacer(qt.QWidget):
+    def __init__(self, *args):
+        qt.QWidget.__init__(self, *args)
+      
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
+                           qt.QSizePolicy.Fixed))
     
 class RGBCorrelatorWidget(qt.QWidget):
     def __init__(self, parent = None, bgrx = True):
@@ -53,7 +60,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.labelWidget.mainLayout.setMargin(0)
         self.labelWidget.mainLayout.setSpacing(0)
         alignment = qt.Qt.AlignVCenter | qt.Qt.AlignCenter
-        hbox = qt.QWidget(self.labelWidget)
+        self.toolBar = qt.QWidget(self)
+        #hbox = qt.QWidget(self.labelWidget)
+        hbox = self.toolBar
         hbox.mainLayout = qt.QHBoxLayout(hbox)
         hbox.mainLayout.setMargin(0)
         hbox.mainLayout.setSpacing(0)
@@ -63,8 +72,15 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.saveButton = qt.QToolButton(hbox)
         self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
         self.saveButton.setToolTip("Save the set of images to file")
+        self.toggleSlidersButton = qt.QToolButton(hbox)
+        #self.toggleSlidersButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        self.toggleSlidersButton.setToolTip("Toggle sliders show On/Off")
+        self.calculationDialog = None
+        self.calculationButton = qt.QToolButton(hbox)
+        #self.calculationButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        self.calculationButton.setToolTip("Operate with the images")
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
-        label1 = MyQLabel(hbox, color = qt.Qt.black)
+        label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1.setAlignment(alignment)
         label1.setText("Image Size")
         self.__sizeLabel = MyQLabel(self.labelWidget,
@@ -80,8 +96,12 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         hbox.mainLayout.addWidget(self.loadButton)
         hbox.mainLayout.addWidget(self.saveButton)
-        hbox.mainLayout.addWidget(label1)
-        self.labelWidget.mainLayout.addWidget(hbox, 0, 0)
+        hbox.mainLayout.addWidget(self.toggleSlidersButton)
+        hbox.mainLayout.addWidget(self.calculationButton)
+        hbox.mainLayout.addWidget(HorizontalSpacer(self.toolBar))
+        
+        #hbox.mainLayout.addWidget(label1)
+        self.labelWidget.mainLayout.addWidget(label1, 0, 0)
         self.labelWidget.mainLayout.addWidget(self.__sizeLabel, 0, 1)
         
         #self.labelWidget.mainLayout.addWidget(self.__rowLineEdit, 1, 0)
@@ -114,6 +134,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                         autoscalelimits=[5.0, 80.0])
         self.tableWidget  = RGBCorrelatorTable.RGBCorrelatorTable(self)
 
+        self.mainLayout.addWidget(self.toolBar)
         self.mainLayout.addWidget(self.labelWidget)
         self.mainLayout.addWidget(self.sliderWidget)
         self.mainLayout.addWidget(self.tableWidget)
@@ -150,6 +171,14 @@ class RGBCorrelatorWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self.saveImageList)
 
+        self.connect(self.toggleSlidersButton,
+                     qt.SIGNAL("clicked()"),
+                     self.toggleSliders)
+
+        self.connect(self.calculationButton,
+                     qt.SIGNAL("clicked()"),
+                     self.showCalculationDialog)
+
         self.connect(self.__imageResizeButton,
                      qt.SIGNAL("clicked()"),
                      self._imageResizeSlot)
@@ -164,6 +193,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.connect(self.buttonGroup,
                      qt.SIGNAL("buttonClicked(int)"),
                      self._colormapTypeChange)
+
+    def toggleSliders(self):
+        if self.sliderWidget.isHidden():
+            self.sliderWidget.show()
+        else:
+            self.sliderWidget.hide()
         
     def _sliderSlot(self, ddict):
         if DEBUG: print "RGBCorrelatorWidget._sliderSlot()"
@@ -406,10 +441,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.__redLabel == label:   self.__redLabel = None
         if self.__greenLabel == label: self.__greenLabel = None
         if self.__blueLabel == label:self.__blueLabel = None 
-
         self.tableWidget.build(self._imageList)
         self.tableWidget._update()
-
+        
     def _imageResizeSlot(self):
         if self.__imageLength is None: return
         dialog = ImageShapeDialog(self, shape = self.__imageShape)
@@ -628,6 +662,23 @@ class RGBCorrelatorWidget(qt.QWidget):
         else:
             ArraySave.save2DArrayListAsASCII(datalist, filename, labels)
         
+    def showCalculationDialog(self):
+        if self.calculationDialog is None:
+            self.calculationDialog = RGBImageCalculator.RGBImageCalculator()
+            self.connect(self.calculationDialog,
+                         qt.SIGNAL("addImageClicked"),
+                         self.addImageSlot)
+            self.connect(self.calculationDialog,
+                         qt.SIGNAL("removeImageClicked"),
+                         self.removeImage)            
+        self.calculationDialog.imageList = self._imageList 
+        self.calculationDialog.imageDict = self._imageDict
+        if self.calculationDialog.isHidden():
+            self.calculationDialog.show()
+        self.calculationDialog.raise_()
+
+    def addImageSlot(self, ddict):
+        self.addImage(ddict['image'], ddict['label'])
 
     """
     #This was for debugging

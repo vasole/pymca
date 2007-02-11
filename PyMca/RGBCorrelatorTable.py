@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -169,10 +169,19 @@ class RGBCorrelatorTable(qt.QTableWidget):
         if n == 0:
             self.rSelection = []
             self.gSelection = []
-            self.bSelection = []            
+            self.bSelection = []
+        if len(self.rSelection):
+            if self.rSelection[0] >= n:
+                self.rSelection = []
+        if len(self.gSelection):
+            if self.gSelection[0] >= n:
+                self.gSelection = []
+        if len(self.bSelection):
+            if self.bSelection[0] >= n:
+                self.bSelection = []
         ddict['r'] = self.rSelection * 1
         ddict['g'] = self.gSelection * 1
-        ddict['b'] = self.bSelection * 1        
+        ddict['b'] = self.bSelection * 1
         return ddict
 
     def setElementSelection(self, ddict):
