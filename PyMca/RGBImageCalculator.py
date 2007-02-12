@@ -154,8 +154,14 @@ class RGBImageCalculator(qt.QWidget):
             ylimits = self.graphWidget.graph.getY1AxisLimits()
         if not self.graphWidget.graph.xAutoScale:
             xlimits = self.graphWidget.graph.getX1AxisLimits()
-        self.graphWidget.graph.pixmapPlot(self.__imagePixmap.tostring(),
-            (self.__imageData.shape[1], self.__imageData.shape[0]),
+        if 0: #this may crash under windows 
+            self.graphWidget.graph.pixmapPlot(self.__imagePixmap.tostring(),
+                    (self.__imageData.shape[1], self.__imageData.shape[0]),
+                                        xmirror = 0,
+                                        ymirror = not self._y1AxisInverted)
+        else:            
+            self.graphWidget.graph.imagePlot(self.__imageData,
+                                        colormap = self.__imageColormap,
                                         xmirror = 0,
                                         ymirror = not self._y1AxisInverted)
         if not self.graphWidget.graph.yAutoScale:
