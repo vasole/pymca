@@ -73,11 +73,13 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
         self.saveButton.setToolTip("Save the set of images to file")
         self.toggleSlidersButton = qt.QToolButton(hbox)
-        #self.toggleSlidersButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        self._slidersOffIcon = qt.QIcon(qt.QPixmap(IconDict["slidersoff"]))
+        self._slidersOnIcon = qt.QIcon(qt.QPixmap(IconDict["sliderson"]))
+        self.toggleSlidersButton.setIcon(self._slidersOffIcon)
         self.toggleSlidersButton.setToolTip("Toggle sliders show On/Off")
         self.calculationDialog = None
         self.calculationButton = qt.QToolButton(hbox)
-        #self.calculationButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        self.calculationButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["sigma"])))
         self.calculationButton.setToolTip("Operate with the images")
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
@@ -197,8 +199,10 @@ class RGBCorrelatorWidget(qt.QWidget):
     def toggleSliders(self):
         if self.sliderWidget.isHidden():
             self.sliderWidget.show()
+            self.toggleSlidersButton.setIcon(self._slidersOffIcon)
         else:
             self.sliderWidget.hide()
+            self.toggleSlidersButton.setIcon(self._slidersOnIcon)
         
     def _sliderSlot(self, ddict):
         if DEBUG: print "RGBCorrelatorWidget._sliderSlot()"
@@ -679,6 +683,11 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def addImageSlot(self, ddict):
         self.addImage(ddict['image'], ddict['label'])
+
+    def closeEvent(self, event):
+        if self.calculationDialog is not None:
+            self.calculationDialog.close()
+        qt.QWidget.closeEvent(self, event)
 
     """
     #This was for debugging

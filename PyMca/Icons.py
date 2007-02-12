@@ -24,6 +24,73 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
+sliderson=[
+"16 16 2 1",
+"  c blue",
+". c None",
+"................",
+"...  .....  ....",
+".  ..     ..  ..",
+"...  .....  ....",
+"................",
+"................",
+"...  .....  ....",
+".  ..     ..  ..",
+"...  .....  ....",
+"................",
+"................",
+"...  .....  ....",
+".  ..     ..  ..",
+"...  .....  ....",
+"................",
+"................"
+]    
+
+slidersoff = [
+"16 16 3 1",
+"  c blue",
+". c red",
+"X c None",
+"XXXXXXXXXXXXXXXX",
+"X..  XXXXX  XX.X",
+"X ..X     XX ..X",
+"XXX..XXXXX  ..XX",
+"XXXX..XXXXX..XXX",
+"XXXXX..XXX..XXXX",
+"XXX  X..X.. XXXX",
+"X  XX  ...XX  XX",
+"XXX  XX...  XXXX",
+"XXXXXX..X..XXXXX",
+"XXXXX..XXX..XXXX",
+"XXX ..XXXX ..XXX",
+"X  ..     XX..XX",
+"XX.. XXXXX  X..X",
+"X..XXXXXXXXXXX.X",
+"XXXXXXXXXXXXXXXX"
+]
+
+sigma=[
+"16 16 2 1",
+"  c blue",
+". c None",
+"................",
+"....          ..",
+"....  ..........",
+".....  .........",
+"......  ........",
+".......  .......",
+"........  ......",
+".......  .......",
+"......  ........",
+".....  .........",
+"....  ..........",
+"...  ...........",
+"..  ............",
+".  .............",
+".             ..",
+"................"
+]    
+
 rgb=[
 "23 23 107 2",
 "   c #0134013ffeec4048",
@@ -2949,7 +3016,10 @@ IconDict= {
     "brush":brush,
     "brushselect":brushselect,
     "rgb16":rgb16,
-    "rgb":rgb
+    "rgb":rgb,
+    "sliderson":sliderson,
+    "slidersoff":slidersoff,
+    "sigma":sigma
 }
 
 def showIcons():

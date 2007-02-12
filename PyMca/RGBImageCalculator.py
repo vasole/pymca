@@ -336,7 +336,10 @@ class RGBImageCalculator(qt.QWidget):
             self.graphWidget.setInfoText("    X = %d Y = %d Z = %.4g" %\
                                                (y, x, z))
 
-
+    def closeEvent(self, event):
+        if self.__imageColormapDialog is not None:
+            self.__imageColormapDialog.close()
+        qt.QWidget.closeEvent(self, event)
 
 def test():
     app = qt.QApplication(sys.argv)

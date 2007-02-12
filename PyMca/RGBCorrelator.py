@@ -118,7 +118,9 @@ class RGBCorrelator(qt.QWidget):
         ddict = {}
         ddict['event'] = "RGBCorrelatorClosed"
         ddict['id']    = id(self)
+        self.controller.close()
         self.emit(qt.SIGNAL("RGBCorrelatorSignal"),ddict)
+        qt.QWidget.closeEvent(self, event)
 
 def test():
     app = qt.QApplication([])
