@@ -1180,7 +1180,7 @@ class PyMca(PyMcaMdi.PyMca):
             if not os.path.exists(fname):
                while len(mpath) > 3:
                  fname = os.path.join(mpath,'changelog.txt')
-                 print "looking for ", fname
+                 #print "looking for ", fname
                  if not os.path.exists(fname):
                      mpath = os.path.dirname(mpath)
                  else:
