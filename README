@@ -60,6 +60,9 @@ I am getting this output:
 
 The version giving me problems had all elements but the first equal to 0.0
 
+UPDATE: In version 4.0.5 from PyMca I implemented a workaround. It should work 
+with any Numeric version (I have only tested Numeric 23.8).
+
 If you want to use the graphical interfaces provided, you will need a running
 python installation with, at least:
 

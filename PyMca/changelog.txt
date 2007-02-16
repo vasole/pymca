@@ -1,3 +1,18 @@
+VERSION 4.0.5
+
+- Improvements in the RGB Correlator/Post Batch tool:
+  Read new images.
+  Perform mathematical operations with the images.
+
+- Solve a file format identification problem.
+  Some EDF files where wrongly identified as specfile.
+
+- Correct a bug reading specfile formatted files. 
+  In case of multiple scans, only the mca(s) of the first scan were read.
+
+- Clear all items from print preview working.
+
+
 VERSION 4.0.4
 
 - Add the possibility to save graphics in vectorial format (svg).
