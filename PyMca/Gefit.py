@@ -25,6 +25,8 @@
 # is a problem to you.
 #############################################################################*/
 from Numeric import *
+from Numeric import __version__ as NUMERICVERSION
+
 from LinearAlgebra import inverse
 import time
 __author__ = "V.A. Sole <sole@esrf.fr>"
@@ -497,7 +499,10 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
                 beta = help1
             else:
                 beta = concatenate ((beta, help1), 1)
-        help1 = innerproduct(deriv,weight*derivi)
+        if NUMERICVERSION > '23.8':
+            help1 = dot(deriv, transpose(weight*derivi))
+        else:
+            help1 = innerproduct(deriv,weight*derivi)
         if i == 0:
             alpha = help1
         else:

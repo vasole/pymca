@@ -1,14 +1,37 @@
-__revision__ = "$Revision: 1.1 $"
+#/*##########################################################################
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
+__revision__ = "$Revision: 1.2$"
 
-
-################################################################################  
 import DataObject
 import specfilewrapper as specfile
 import Numeric
 import string
 import types
 import os
-################################################################################
 
 SOURCE_TYPE = "SpecFile"
 DEBUG = 0
@@ -224,7 +247,7 @@ class SpecFileDataSource:
         ctime= scandata.header("@CTIME")
         if len(ctime):
             if len(ctime) == info["NbMcaDet"]:
-                ctime = [ctime[mcainfo["McaDet"]]]
+                ctime = [ctime[mcainfo["McaDet"]-1]]
             else:
                 if DEBUG:
                     print "Warning","Number of counting times does not match number of MCAs"
@@ -409,10 +432,11 @@ class SpecFileDataSource:
         index = 0        
         key_split= key.split(".")
         scan_key= key_split[0]+"."+key_split[1]
-        scan_obj = self._sourceObjectList[index].select(scan_key)
-        scan_info= self.__getScanInfo(scan_key)
+        scan_info = {}
         scan_info["Key"]= key
         scan_info["FileInfo"] = self.__getFileInfo()
+        scan_obj = self._sourceObjectList[index].select(scan_key)
+        scan_info.update(self.__getScanInfo(scan_key))
         scan_type= scan_info["ScanType"]
         scan_data= None
         mca_range= []        # for each dim., (name, length, values or None)
@@ -454,8 +478,8 @@ class SpecFileDataSource:
                 try:
                     mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                     scan_data= scan_obj.mca(mca_no)
-                except: 
-                    raise self.Error, "SF_SCAN+SF_NMCA read failed"
+                except:
+                    raise self.Error, "SF_MCA or SF_NMCA read failed"
             else:
                 raise self.Error, "Unknown scan type!!!!!!!!!!!!!!!!"
             if scan_data is not None:
