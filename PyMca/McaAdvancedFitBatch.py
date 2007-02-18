@@ -488,6 +488,7 @@ class McaAdvancedFitBatch:
                     self.__images['chisq'][self.__row, self.__col] = result['chisq']
                 except:
                     print "Error on chisq row %d col %d\n" % (self.__row, self.__col)
+                    print "File = %s\n", filename
                     pass
 
         else:
@@ -523,6 +524,7 @@ class McaAdvancedFitBatch:
                             self._ROIimages[group][roi][self.__row, self.__col] = dict[group][roi]
                         except:
                             print "error on (row,col) = ",self.__row, self.__col
+                            print "File = %s\n", filename
                             pass
 
         #update counter
