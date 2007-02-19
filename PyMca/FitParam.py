@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.37 $"
+__revision__ = "$Revision: 1.38 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -723,7 +723,7 @@ class FitParamWidget(FitParamForm):
             err= "Sum Factor value"
             pars["sum"]= float(str(self.sumfacValue.text()))
             err= "Sum Factor error"
-            pars["deltasum"]= float(str(self.sumfacValue.text()))
+            pars["deltasum"]= float(str(self.sumfacError.text()))
             pars["fixedsum"]= int(self.sumfacCheck.isChecked())
             return pars
         #else:

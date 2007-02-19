@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.13 $"
+__revision__ = "$Revision: 1.14 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -118,6 +118,8 @@ class McaCalWidget(qt.QDialog):
         self.layout.addWidget(self.toolbar)
         self.container = qt.QWidget(self)
         self.container.layout = qt.QVBoxLayout(self.container)
+        self.container.layout.setMargin(0)
+        self.container.layout.setSpacing(0)
 
         self.layout.addWidget(self.container)
         #The graph
