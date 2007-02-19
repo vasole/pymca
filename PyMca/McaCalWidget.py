@@ -702,6 +702,8 @@ class PeakSearchParameters(qt.QWidget):
             self.searchbut = qt.QPushButton(parw)   
             self.searchbut.setText('Search')
             grid.addWidget(self.searchbut,3,1)
+            if QTVERSION > '4.0.0':
+                self.searchbut.setAutoDefault(0)
         layout.addWidget(parf)
 
     def setParameters(self, pars):
@@ -844,7 +846,10 @@ class CalibrationParameters(qt.QWidget):
         key = str(qstring)
         if key not in self.caldict.keys():
             self.caldict[key] = {}
-        self.caldict[key]['order'] = self.orderbox.currentItem()+1
+        if QTVERSION < '4.0.0':
+            self.caldict[key]['order'] = self.orderbox.currentItem()+1
+        else:
+            self.caldict[key]['order'] = self.orderbox.currentIndex()+1
         self.caldict[key]['A']     = float(str(self.AText.text()))
         self.caldict[key]['B']     = float(str(self.BText.text()))
         self.caldict[key]['C']     = float(str(self.CText.text()))
@@ -969,6 +974,7 @@ class InputLine(qt.QDialog):
         cancelbutton   = qt.QPushButton(self.bottom)
         cancelbutton.setText('Cancel')
         self.bottom.layout.addWidget(cancelbutton)
+
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         self.bottom.layout.addWidget(HorizontalSpacer(self.bottom))
