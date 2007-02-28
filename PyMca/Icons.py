@@ -24,6 +24,121 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
+# --- scan window icons ---
+derive = [
+"16 16 2 1",
+"   c None",
+".  c blue",
+"                ",
+"  ..   .        ",
+" .  .  .        ",
+" .              ",
+" .              ",
+" .              ",
+" .   .       .  ",
+" .. .  .   .  . ",
+" .  .   . .   . ",
+" .  .    .    . ",
+" .  .   . .   . ",
+" .  .  .   .  . ",
+" .   .       .  ",
+"                ",
+"                ",
+"                "
+]
+
+swapsign = [
+"16 16 3 1",
+"   c None",
+".  c blue",
+"X  c red",
+"                ",
+"                ",
+"             XX ",
+"      XXX   XX  ",
+"    XXX XX XX   ",
+"   XX    XXX    ",
+" XXX            ",
+"                ",
+" .............. ",
+"                ",
+" ...            ",
+"   ..    ...    ",
+"    ... .. ..   ",
+"      ...   ..  ",
+"             .. ",
+"                "
+]
+
+ymintozero = [
+"16 16 3 1",
+"   c None",
+"X  c blue",
+".  c red",
+"                ",
+"                ",
+"                ",
+"                ",
+"             XX ",
+"      XXX   XX  ",
+"    XXX XX XX   ",
+"   XX    XXX    ",
+"  XX            ",
+" XX             ",
+" X............. ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+]
+
+"""
+average16=[
+"16 16 2 1",
+". c blue",
+"  c None",
+"                ",
+" .............. ",
+"                ",
+" ..         ..  ",
+"  ..       ..   ",
+"   ..     ..    ",
+"    ..   ..     ",
+"     .. ..      ",
+"      ...       ",
+"      ..        ",
+"     ..         ",
+"    ..          ",
+"   ..           ",
+"  ..            ",
+" ..             ",
+"                "
+]
+""" 
+average16=[
+"16 16 2 1",
+". c blue",
+"  c None",
+"                ",
+" .............. ",
+"                ",
+"  .          .  ",
+"   .        .   ",
+"    .      .    ",
+"     .    .     ",
+"      .  .      ",
+"       ..       ",
+"       .        ",
+"      .         ",
+"     .          ",
+"    .           ",
+"   .            ",
+"  .             ",
+"                "
+]
+
+# -------------------------
 sliderson=[
 "16 16 2 1",
 "  c blue",
@@ -1865,33 +1980,6 @@ xauto  =[
 "XXX.XXXXXXXX.XXX"
 ]
 
-derive = [	
-"21 21 3 1",
-" c #0000ff",
-". c white",
-"X c None",
-"XXXXXXXXXXXXXXXXXXXXX",
-"XXXXXXXXXXXXXXXXXXXXX",
-"XXXXXX   XXX XXXXXXXX",
-"XXXXX  X  XX XXXXXXXX",
-"XXXXX XXX XXXXXXXXXXX",
-"XXXX  XXXXXXXXXXXXXXX",
-"XXXX XXXXXXXXXXXXXXXX",
-"XXXX XXXX XXXXXXX XXX",
-"XXXX XXX  XXXXXXX  XX",
-"XXX   X  XX  X  XX  X",
-"XXXX XX XXXX   XXXX X",
-"XXXX XX XXXXX XXXXX X",
-"XXXX XX XXXX   XXXX X",
-"XXXX XX XXX  X  XXX X",
-"XXXX XX  XXXXXXXXX  X",
-"XXXX XXX  XXXXXXX  XX",
-"XXXX XXXX XXXXXXX XXX",
-"XXXX XXXXXXXXXXXXXXXX",
-"XXXXXXXXXXXXXXXXXXXXX",
-"XXXXXXXXXXXXXXXXXXXXX",
-"XXXXXXXXXXXXXXXXXXXXX"
-]
 close = [
 "16 16 18 1",
 ". c None",
@@ -3019,7 +3107,10 @@ IconDict= {
     "rgb":rgb,
     "sliderson":sliderson,
     "slidersoff":slidersoff,
-    "sigma":sigma
+    "sigma":sigma,
+    "swapsign":swapsign,
+    "ymintozero":ymintozero,
+    "average16":average16
 }
 
 def showIcons():

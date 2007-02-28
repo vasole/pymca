@@ -5,6 +5,7 @@ if __name__ == "__main__":
 import QtBlissGraph
 from Icons import IconDict
 import Numeric
+import SimpleMath
 import DataObject
 import copy
 
@@ -469,6 +470,7 @@ class ScanWindow(qt.QWidget):
         self._initIcons()
         self._build()
         self.fig = None
+        self.simpleMath = SimpleMath.SimpleMath()
         self.graph.canvas().setMouseTracking(1)
 
         if QTVERSION < '4.0.0':
@@ -500,6 +502,12 @@ class ScanWindow(qt.QWidget):
             self.yAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
             self.fitIcon	= qt.QIconSet(qt.QPixmap(IconDict["fit"]))
             self.searchIcon	= qt.QIconSet(qt.QPixmap(IconDict["peaksearch"]))
+
+            self.averageIcon	= qt.QIconSet(qt.QPixmap(IconDict["average16"]))
+            self.deriveIcon	= qt.QIconSet(qt.QPixmap(IconDict["derive"]))
+            self.swapSignIcon	= qt.QIconSet(qt.QPixmap(IconDict["swapsign"]))
+            self.yMinToZeroIcon	= qt.QIconSet(qt.QPixmap(IconDict["ymintozero"]))
+            
             self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
         else:
@@ -519,6 +527,12 @@ class ScanWindow(qt.QWidget):
             self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
             self.fitIcon	= qt.QIcon(qt.QPixmap(IconDict["fit"]))
             self.searchIcon	= qt.QIcon(qt.QPixmap(IconDict["peaksearch"]))
+
+            self.averageIcon	= qt.QIcon(qt.QPixmap(IconDict["average16"]))
+            self.deriveIcon	= qt.QIcon(qt.QPixmap(IconDict["derive"]))
+            self.swapSignIcon	= qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
+            self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
+            
             self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
 
@@ -574,6 +588,26 @@ class ScanWindow(qt.QWidget):
         tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
                                  'Save Active Curve')
+
+
+        self.newplotIcons = True
+        if self.newplotIcons:
+            tb = self._addToolButton(self.averageIcon,
+                                self._averageIconSignal,
+                                 'Average Plotted Curves')
+
+            tb = self._addToolButton(self.deriveIcon,
+                                self._deriveIconSignal,
+                                 'Take Derivative of Active Curve')
+
+            tb = self._addToolButton(self.swapSignIcon,
+                                self._swapSignIconSignal,
+                                'Multiply Active Curve by -1')
+
+            tb = self._addToolButton(self.yMinToZeroIcon,
+                                self._yMinToZeroIconSignal,
+                                'Force Y Minimum to be Zero')
+
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
         label=qt.QLabel(self.toolBar)
@@ -722,7 +756,10 @@ class ScanWindow(qt.QWidget):
                             newDataObject.info['selection']['m'] = sel['selection']['m']
                             ilabel = newDataObject.info['selection']['y'][0]
                             ylegend = newDataObject.info['LabelNames'][ilabel]
-                newDataObject.info['legend'] = legend + " " + ylegend
+                if dataObject.info.has_key('operations') and len(dataObject.y) == 1:
+                    newDataObject.info['legend'] = legend 
+                else:
+                    newDataObject.info['legend'] = legend + " " + ylegend
                 #here I should check the log or linear status
                 self.graph.newcurve(newDataObject.info['legend'],
                                     x=xdata,
@@ -819,6 +856,13 @@ class ScanWindow(qt.QWidget):
             self.graph.ylabel(ylabel)
             self.graph.xlabel(xlabel)
             return
+        if ddict['event'] == "RemoveCurveEvent":
+            legend = ddict['legend']
+            self.graph.delcurve(legend)
+            if self.dataObjectsDict.has_key(legend):
+                del self.dataObjectsDict[legend]
+                del self.dataObjectsList[self.dataObjectsList.index(legend)]
+            self.graph.replot()
             
     def _zoomReset(self):
         if DEBUG:print "_zoomReset"
@@ -865,6 +909,152 @@ class ScanWindow(qt.QWidget):
         if DEBUG:print "_saveIconSignal"
 
 
+    def _averageIconSignal(self):
+        if DEBUG:print "_averageIconSignal"
+        self.__QSimpleOperation("average")
+        
+    def __QSimpleOperation(self, operation):
+        try:
+            self.__simpleOperation(operation)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+
+    def __simpleOperation(self, operation):
+        if operation != "average":
+            #get active curve
+            legend = self.getActiveCurve()
+            if legend is None:return
+
+            found = False
+            for key in self.dataObjectsList:
+                if key == legend:
+                    found = True
+                    break
+
+            if found:
+                dataObject = self.dataObjectsDict[legend]
+            else:
+                print "I should not be here"
+                print "active curve =",legend
+                print "but legend list = ",self.dataObjectsList
+                return
+            x = dataObject.x[0]
+            y = dataObject.y[0]
+        else:
+            x = []
+            y = []
+            legend = ""
+            i = 0
+            ndata = 0
+            for key in self.graph.curves.keys():
+                if key in self.dataObjectsDict.keys():
+                    x.append(self.dataObjectsDict[key].x[0])
+                    y.append(self.dataObjectsDict[key].y[0])
+                    if i == 0:
+                        legend = key
+                        firstcurve = key
+                        i += 1
+                    else:
+                        legend += " + " + key
+                    ndata += 1
+            if ndata == 0: return #nothing to average
+            dataObject = self.dataObjectsDict[firstcurve]
+
+
+        #create the ourput data object
+        newDataObject = DataObject.DataObject()
+        newDataObject.data = None
+        newDataObject.info.update(dataObject.info)
+        if not newDataObject.info.has_key('operations'):
+            newDataObject.info['operations'] = []
+        #get new x and new y
+        if operation == "derivate":
+            xplot, yplot = self.simpleMath.derivate(x, y)
+            sel = {}
+            sel['SourceName'] = legend
+            sel['Key']    = "'"
+            sel['legend'] = legend + sel['Key']
+            outputlegend  = legend + sel['Key']
+        elif operation == "average":
+            xplot, yplot = self.simpleMath.average(x, y)
+            sel = {}
+            sel['SourceName'] = legend
+            sel['Key']    = ""
+            sel['legend'] = "(%s)/%d" % (legend, ndata)
+            outputlegend  = "(%s)/%d" % (legend, ndata)
+        elif operation == "swapsign":
+            xplot =  x * 1
+            yplot = -y
+            sel = {}
+            sel['SourceName'] = legend
+            sel['Key']    = ""
+            sel['legend'] = "-(%s)" % legend
+            outputlegend  = "-(%s)" % legend
+        elif operation == "forceymintozero":
+            xplot =  x * 1
+            yplot =  y - min(y)
+            sel = {}
+            sel['SourceName'] = legend
+            sel['Key']    = ""
+            sel['legend'] = "(%s) - ymin" % legend
+            outputlegend  = "(%s) - ymin" % legend
+        else:
+            raise "ValueError","Unknown operation %s" % operation
+
+        newDataObject.info['operations'].append(operation)
+        newDataObject.x = [xplot]
+        newDataObject.y = [yplot]
+        newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]
+
+        #and add it to the plot
+        if True:
+            sel['dataobject'] = newDataObject
+            sel['scanselection'] = True
+            sel['selection'] = copy.deepcopy(dataObject.info['selection'])
+            sel['selectiontype'] = "1D"
+            self._addSelection([sel])
+        else:
+            newDataObject.info['legend'] = outputlegend
+            #here I should check the log or linear status
+            self.graph.newcurve(newDataObject.info['legend'],
+                                x=xplot,
+                                y=yplot)
+            if newDataObject.info['legend'] not in self.dataObjectsList:
+                self.dataObjectsList.append(newDataObject.info['legend'])
+            self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+        self.graph.replot()
+
+    def getActiveCurve(self):
+        #get active curve
+        legend = self.graph.getactivecurve(justlegend=1)
+        if legend is None:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Please Select an active curve")
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+        return legend
+
+    def _deriveIconSignal(self):
+        if DEBUG:print "_deriveIconSignal"
+        self.__simpleOperation('derivate')
+
+    def _swapSignIconSignal(self):
+        if DEBUG:print "_swapSignIconSignal"
+        self.__simpleOperation('swapsign')
+
+    def _yMinToZeroIconSignal(self):
+        if DEBUG:print "_yMinToZeroIconSignal"
+        self.__simpleOperation('forceymintozero')
+        
     def printGraph(self):
         if DEBUG:print "printGraphSignal"
 

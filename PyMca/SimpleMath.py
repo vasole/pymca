@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -60,3 +60,117 @@ class SimpleMath:
         xplot[-1]=x[-1]
         xplot[1:(len(i1)+1)]=Numeric.take(x,i1)
         return xplot,result
+
+    def average(self,xdata0,ydata0):
+        #check if all the x axis are identical (no interpolation needed)
+        allthesamex=1
+        x0=xdata0[0]
+        for xaxis in xdata0:
+            if len(x0) == len(xaxis):
+                if (x0==xaxis) == Numeric.ones(len(x0)):
+                    pass
+                else:
+                    allthesamex=0
+                    break
+            else:
+                allthesamex=0
+                break
+
+        if allthesamex:
+            xdata=[]
+            ydata=[]
+            i=0
+            for x0 in xdata0:
+                x=Numeric.array(x0)
+                xdata.append(x)
+                ydata.append(Numeric.array(ydata0[i]))
+                i=i+1
+                
+            finalx=Numeric.array(x0)
+            finalx=xdata0[0]
+            finaly=Numeric.zeros(Numeric.shape(finalx),Numeric.Float)
+            i = 0
+            for x0 in xdata0:
+                finaly += ydata[i]
+                i=i+1
+        else:
+            #sort the data
+            xdata=[]
+            ydata=[]
+            i=0
+            for x0 in xdata0:
+                x=Numeric.array(x0)
+                i1=Numeric.argsort(x)
+                xdata.append(Numeric.take(x,i1))
+                ydata.append(Numeric.take(Numeric.array(ydata0[i]),i1))
+                i=i+1         
+            
+            #get the max and the min x axis
+            xmin=xdata[0][0]
+            xmax=xdata[0][-1]
+            for x in xdata:
+                if xmin < x[0]:
+                    xmin=x[0]
+                if xmax > x[-1]:
+                    xmax=x[-1]
+            #take the data in between
+            x=[]
+            y=[]
+            i=0
+            minimumLength = len(xdata[0])
+            for x0 in xdata:
+                i1=Numeric.nonzero((x0>=xmin) & (x0<=xmax))
+                x.append(Numeric.take(x0,i1))
+                y.append(Numeric.take(Numeric.array(ydata[i]),i1))
+                if len(x0) < minimumLength:
+                    minumLength = len(x0)
+                i=i+1
+
+            if minimumLength < 2:
+                raise "ValueError","Not enough points to take a meaningfull average"
+            #take as x axis the first
+            finalx=x[0]
+            for i in range(len(x)):
+                if x[i][0] > finalx[0]:
+                    finalx = x[i] 
+            finaly=Numeric.zeros(Numeric.shape(finalx),Numeric.Float)
+            j=-1
+            allthesamex=0
+            for p in range(len(finalx)):
+              point=finalx[p] 
+              i=0
+              j=j+1
+              try:            
+                for x0 in x:
+                    if allthesamex:
+                        finaly[p]+=y[i][p]
+                    else:
+                        i1=max(Numeric.nonzero(x0<=point))
+                        i2=min(Numeric.nonzero(x0>=point))
+                        if i1 >= i2:
+                            #take the point as it is
+                            finaly[p]+=y[i][i1]
+                        else:
+                            #interpolation
+                            A=(x0[i2]-point)/(x0[i2]-x0[i1])
+                            B=1.-A
+                            finaly[p]+=A*y[i][i1]+B*y[i][i2]
+                    i=i+1
+              except:
+                break
+        if allthesamex:
+              finalx=finalx[0:]
+              finaly=finaly[0:]/len(xdata0)      
+        else:
+              finalx=finalx[0:j]
+              finaly=finaly[0:j]/len(xdata0)
+     
+        return finalx,finaly
+
+if __name__ == "__main__":
+    x = Numeric.arange(10.)
+    xlist = [x-0.5 , x+0.5]
+    y     = [2 * x, -2*x]
+    a = SimpleMath()
+    print a.average(xlist,y)
+    
