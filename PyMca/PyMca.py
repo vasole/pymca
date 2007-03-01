@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.70 $"
+__revision__ = "$Revision: 1.71 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -247,6 +247,15 @@ class PyMca(PyMcaMdi.PyMca):
                 self.mainTabWidget.showMaximized()
                 self.connectDispatcher(self.mcawindow, self.sourceWidget)
                 self.connectDispatcher(self.scanwindow, self.sourceWidget)             
+
+            if QTVERSION < '4.0.0':
+                self.connect(self.sourceWidget,
+                             qt.PYSIGNAL("otherSignals"),
+                             self.otherDispatcherSignalsSlot)
+            else:
+                self.connect(self.sourceWidget,
+                             qt.SIGNAL("otherSignals"),
+                             self.otherDispatcherSignalsSlot)
             
             if 0:
                 if QTVERSION < '4.0.0':
@@ -303,6 +312,15 @@ class PyMca(PyMcaMdi.PyMca):
                              viewer._removeSelection)
             self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
                              viewer._replaceSelection)
+
+    def otherDispatcherSignalsSlot(self, ddict):
+        if DEBUG:print "self.otherDispatcherSignalsSlot(ddict), ddict = ",ddict
+        if not self.__useTabWidget:return
+        if ddict['event'] == "SelectionTypeChanged":
+            if ddict['SelectionType'] == 'MCA':
+                self.mainTabWidget.setCurrentWidget(self.mcawindow)
+            else:
+                self.mainTabWidget.setCurrentWidget(self.scanwindow)
                 
     def setConfig(self, configDict):
         if configDict.has_key('PyMca'):    self.__configurePyMca(configDict['PyMca'])

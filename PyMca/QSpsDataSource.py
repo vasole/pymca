@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -70,19 +70,19 @@ class QSpsDataSource(QSource.QSource):
             return self.__dataSource.getDataObject(key_list,selection)
 
     def customEvent(self, event):
-        dict = event.dict
-        dict['SourceName'] = self.__dataSource.sourceName
-        dict['SourceType'] = SOURCE_TYPE
-        #dict['Key'] should be already there
-        #dict['event'] should be there
-        #dict['id'] should also be there
+        ddict = event.dict
+        ddict['SourceName'] = self.__dataSource.sourceName
+        ddict['SourceType'] = SOURCE_TYPE
+        #ddict['Key'] should be already there
+        #ddict['event'] should be there
+        #ddict['id'] should also be there
         #print "emitted dict =", dict
         #for objectref in dict['id']:
         #    print "dict[id].info = ",objectref.info
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("updated"), (dict,))
+            self.emit(qt.PYSIGNAL("updated"), (ddict,))
         else:
-            self.emit(qt.SIGNAL("updated"), dict)
+            self.emit(qt.SIGNAL("updated"), ddict)
         
 if __name__ == "__main__":
     import sys

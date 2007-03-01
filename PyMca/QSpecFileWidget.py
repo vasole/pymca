@@ -1,3 +1,29 @@
+###########################################################################
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################
 from QSelectorWidget import qt
 import QSelectorWidget
 import SpecFileDataInfo
@@ -135,6 +161,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                      self._setAutoAdd)
         self.connect(self.autoReplaceBox, qt.SIGNAL("clicked()"),
                      self._setAutoReplace)
+
+        if QTVERSION < '4.0.0':
+            pass
+        else:
+            self.connect(self.mainTab,
+                         qt.SIGNAL('currentChanged(int)'),
+                         self._tabChanged)
 
         self.disableMca    = 0 #(type=="scan")
         self.disableScan   = 0 #(type=="mca")
@@ -511,6 +544,24 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             else:
                 self.emit(qt.SIGNAL("replaceSelection"), sel_list)
 
+    def _tabChanged(self, value):
+        if DEBUG:print "self._tabChanged(value), value =  ",value
+        if QTVERSION < '4.0.0':
+            pass
+        else:
+            text = str(self.mainTab.tabText(value))
+        if self.data is None: return
+
+        ddict = {}
+        ddict['SourceName'] = self.data.sourceName
+        ddict['SourceType'] = self.data.sourceType
+        ddict['event'] = "SelectionTypeChanged"
+        ddict['SelectionType'] = text
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("otherSignals"), ddict)
+            
 def test():
     import DataSource
     a = qt.QApplication(sys.argv)

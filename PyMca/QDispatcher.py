@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -48,7 +48,6 @@ class QDispatcher(qt.QWidget):
         for src_widget in QDataSource.source_widgets.keys():
             self.selectorWidget[src_widget] = QDataSource.source_widgets[src_widget]()
             self.tabWidget.addTab(self.selectorWidget[src_widget], src_widget)
-            
             if QTVERSION < '4.0.0':
                 self.connect(self.selectorWidget[src_widget],
                              qt.PYSIGNAL("addSelection"),
@@ -58,17 +57,25 @@ class QDispatcher(qt.QWidget):
                              self._removeSelectionSlot)
                 self.connect(self.selectorWidget[src_widget],
                              qt.PYSIGNAL("replaceSelection"),
-                             self._replaceSelectionSlot)             
+                             self._replaceSelectionSlot)
+                if src_widget not in ['EdfFile', 'SPS']:
+                    self.connect(self.selectorWidget[src_widget],
+                             qt.PYSIGNAL("otherSignals"),
+                             self._otherSignalsSlot)
             else:
                 self.connect(self.selectorWidget[src_widget],
                              qt.SIGNAL("addSelection"),
                              self._addSelectionSlot)                                                 
                 self.connect(self.selectorWidget[src_widget],
                              qt.SIGNAL("removeSelection"),
-                             self._removeSelectionSlot)                                                 
+                             self._removeSelectionSlot)
                 self.connect(self.selectorWidget[src_widget],
                              qt.SIGNAL("replaceSelection"),
                              self._replaceSelectionSlot)
+                if src_widget not in ['EdfFile', 'SPS']:
+                    self.connect(self.selectorWidget[src_widget],
+                             qt.SIGNAL("otherSignals"),
+                             self._otherSignalsSlot)
         
         self.mainLayout.addWidget(self.sourceSelector)
         self.mainLayout.addWidget(self.tabWidget)
@@ -80,6 +87,9 @@ class QDispatcher(qt.QWidget):
             self.connect(self.sourceSelector, 
                     qt.SIGNAL("SourceSelectorSignal"), 
                     self._sourceSelectorSlot)
+            self.connect(self.tabWidget,
+                         qt.SIGNAL('currentChanged(int)'),
+                         self._tabChanged)
 
     def _addSelectionSlot(self, sel_list, event=None):
         if DEBUG:
@@ -154,7 +164,12 @@ class QDispatcher(qt.QWidget):
         elif len(sel_list) > 1:
             self._addSelectionSlot([sel_list[0]], event = "replaceSelection")
             self._addSelectionSlot(sel_list[1:], event = "addSelection")
-            
+
+    def _otherSignalsSlot(self, ddict):
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("otherSignals"), ddict)
+        else:
+            self.emit(qt.SIGNAL("otherSignals"), ddict)
 
     def _sourceSelectorSlot(self, ddict):
         if DEBUG:
@@ -229,18 +244,38 @@ class QDispatcher(qt.QWidget):
             else:
                 self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
 
-    def _selectionUpdatedSlot(self, dict):
-        if DEBUG: print "_selectionUpdatedSlot(self, dict)",dict
+    def _selectionUpdatedSlot(self, ddict):
+        if DEBUG: print "_selectionUpdatedSlot(self, dict)",ddict
         sel_list = []
-        for objectReference in dict["id"]:
+        for objectReference in ddict["id"]:
             sel = {}
-            sel['SourceName'] = dict['SourceName']
-            sel['SourceType'] = dict['SourceType']
-            sel['Key']        = dict['Key']
+            sel['SourceName'] = ddict['SourceName']
+            sel['SourceType'] = ddict['SourceType']
+            sel['Key']        = ddict['Key']
             sel['selection']  = objectReference.info['selection']
             sel['legend']     = objectReference.info['legend']
             sel_list.append(sel)
         self._addSelectionSlot(sel_list)
+
+    def _tabChanged(self, value):
+        if DEBUG:print "self._tabChanged(value), value =  ",value
+        if QTVERSION < '4.0.0':
+            pass
+        else:
+            text = str(self.tabWidget.tabText(value))
+        ddict = {}
+        ddict['SourceType'] = text
+        if self.selectorWidget[text].data is not None:
+            ddict['SourceType'] = self.selectorWidget[text].data.sourceType
+            ddict['SourceName'] = self.selectorWidget[text].data.sourceName
+        else:
+            ddict['SourceName'] = None
+        ddict['event'] = "SourceTypeChanged"
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("otherSignals"), ddict)
+
 
 def test():
     app = qt.QApplication([])
