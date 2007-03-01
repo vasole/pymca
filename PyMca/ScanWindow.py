@@ -1,3 +1,29 @@
+#/*##########################################################################
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
 import sys
 from QtBlissGraph import qt
 if __name__ == "__main__":
@@ -5,6 +31,7 @@ if __name__ == "__main__":
 import QtBlissGraph
 from Icons import IconDict
 import Numeric
+import ScanFit
 import SimpleMath
 import DataObject
 import copy
@@ -461,7 +488,7 @@ except:
 
 
 class ScanWindow(qt.QWidget):
-    def __init__(self, parent=None, name="Scan Window"):
+    def __init__(self, parent=None, name="Scan Window", specfit=None):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setCaption(name)
@@ -470,6 +497,7 @@ class ScanWindow(qt.QWidget):
         self._initIcons()
         self._build()
         self.fig = None
+        self.scanFit = ScanFit.ScanFit(specfit=specfit)
         self.simpleMath = SimpleMath.SimpleMath()
         self.graph.canvas().setMouseTracking(1)
 
@@ -477,10 +505,16 @@ class ScanWindow(qt.QWidget):
             self.connect(self.graph,
                          qt.PYSIGNAL("QtBlissGraphSignal"),
                          self._graphSignalReceived)
+            self.connect(self.scanFit,
+                         qt.PYSIGNAL('ScanFitSignal') ,
+                         self._scanFitSignalReceived)
         else:
             self.connect(self.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._graphSignalReceived)
+            self.connect(self.scanFit,
+                         qt.SIGNAL('ScanFitSignal') ,
+                         self._scanFitSignalReceived)
         self.dataObjectsDict = {}
         self.dataObjectsList = []
 
@@ -583,11 +617,10 @@ class ScanWindow(qt.QWidget):
         else:
             self.yLogButton.setDown(False)
 
-
-        #save
-        tb = self._addToolButton(self.saveIcon,
-                                 self._saveIconSignal,
-                                 'Save Active Curve')
+        #fit icon
+        tb = self._addToolButton(self.fitIcon,
+                             self._fitIconSignal,
+                             'Simple Fit of Active Curve')
 
 
         self.newplotIcons = True
@@ -607,6 +640,10 @@ class ScanWindow(qt.QWidget):
             tb = self._addToolButton(self.yMinToZeroIcon,
                                 self._yMinToZeroIconSignal,
                                 'Force Y Minimum to be Zero')
+        #save
+        tb = self._addToolButton(self.saveIcon,
+                                 self._saveIconSignal,
+                                 'Save Active Curve')
 
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
@@ -863,6 +900,29 @@ class ScanWindow(qt.QWidget):
                 del self.dataObjectsDict[legend]
                 del self.dataObjectsList[self.dataObjectsList.index(legend)]
             self.graph.replot()
+
+    def _scanFitSignalReceived(self, ddict):
+        if DEBUG:print "_graphSignalReceived", ddict
+        if ddict['event'] == "EstimateFinished":
+            return
+        if ddict['event'] == "FitFinished":
+            newDataObject = self.__fitDataObject
+
+            xplot = self.scanFit.specfit.xdata * 1.0
+            yplot = self.scanFit.specfit.gendata(parameters=ddict['data'])
+            newDataObject.x = [xplot]
+            newDataObject.y = [yplot]
+            newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]            
+
+            #here I should check the log or linear status
+            self.graph.newcurve(newDataObject.info['legend'],
+                                x=xplot,
+                                y=yplot)
+            if newDataObject.info['legend'] not in self.dataObjectsList:
+                self.dataObjectsList.append(newDataObject.info['legend'])
+            self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+        self.graph.replot()
+
             
     def _zoomReset(self):
         if DEBUG:print "_zoomReset"
@@ -905,13 +965,18 @@ class ScanWindow(qt.QWidget):
         self.graph.toggleLogY()
         #self.graph.replot()
 
+    def _fitIconSignal(self):
+        if DEBUG:print "_fitIconSignal"
+        self.__QSimpleOperation("fit")
+
     def _saveIconSignal(self):
         if DEBUG:print "_saveIconSignal"
 
-
     def _averageIconSignal(self):
         if DEBUG:print "_averageIconSignal"
-        self.__QSimpleOperation("average")
+        #get active curve
+        legend = self.getActiveCurve()
+        if legend is None:return
         
     def __QSimpleOperation(self, operation):
         try:
@@ -973,6 +1038,7 @@ class ScanWindow(qt.QWidget):
         newDataObject.info.update(dataObject.info)
         if not newDataObject.info.has_key('operations'):
             newDataObject.info['operations'] = []
+        newDataObject.info['operations'].append(operation)
         #get new x and new y
         if operation == "derivate":
             xplot, yplot = self.simpleMath.derivate(x, y)
@@ -1004,23 +1070,54 @@ class ScanWindow(qt.QWidget):
             sel['Key']    = ""
             sel['legend'] = "(%s) - ymin" % legend
             outputlegend  = "(%s) - ymin" % legend
+        elif operation == "fit":
+            #remove a existing fit if present
+            xmin,xmax=self.graph.getX1AxisLimits()
+            outputlegend = legend + " Fit"
+            for key in self.graph.curves.keys():
+                if key == outputlegend:
+                    self.graph.delcurve(outputlegend)
+                    break
+            if outputlegend in self.dataObjectsDict.keys():
+                del self.dataObjectsDict[key]
+            if outputlegend in self.dataObjectsList:
+                i = self.dataObjectsList.index(key)
+                del self.dataObjectsList[i]
+            self.scanFit.setData(x = x,
+                                 y = y,
+                                 xmin = xmin,
+                                 xmax = xmax,
+                                 legend = legend)
+            if self.scanFit.isHidden():
+                self.scanFit.show()
+            if QTVERSION < '4.0.0':
+                self.scanFit.raiseW()
+            else:
+                self.scanFit.raise_()
         else:
             raise "ValueError","Unknown operation %s" % operation
-
-        newDataObject.info['operations'].append(operation)
-        newDataObject.x = [xplot]
-        newDataObject.y = [yplot]
-        newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]
+        if operation != "fit":
+            newDataObject.x = [xplot]
+            newDataObject.y = [yplot]
+            newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]
 
         #and add it to the plot
-        if True:
+        if True and (operation != 'fit'):
             sel['dataobject'] = newDataObject
             sel['scanselection'] = True
             sel['selection'] = copy.deepcopy(dataObject.info['selection'])
             sel['selectiontype'] = "1D"
-            self._addSelection([sel])
+            if operation != fit:
+                self._addSelection([sel])
+            else:
+                self.__fitDataObject = newDataObject
+                return
         else:
             newDataObject.info['legend'] = outputlegend
+            if operation == 'fit':
+                self.__fitDataObject = newDataObject
+                return
+
             #here I should check the log or linear status
             self.graph.newcurve(newDataObject.info['legend'],
                                 x=xplot,

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,22 +24,29 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-import qt
+import sys
 import SpecfitGUI
+from SpecfitGUI import qt
 import Specfit
 import string
-import sys
+QTVERSION = qt.qVersion()
 
 class ScanFit(qt.QWidget):
     def __init__(self, parent=None, name="ScanFit", specfit=None,fl=0): 
                 #fl=qt.Qt.WDestructiveClose):
-        qt.QWidget.__init__(self, parent, name,fl)
+        qt.QWidget.__init__(self, parent)
+        if QTVERSION < '4.0.0':
+            self.setCaption(name)
+        else:
+            self.setWindowTitle(name)
+            
         if specfit is None:
             self.specfit = Specfit.Specfit()
         else:
             self.specfit = specfit
         layout = qt.QVBoxLayout(self)
-        layout.setAutoAdd(1)
+        layout.setMargin(0)
+        layout.setSpacing(0)
         ##############
         self.headerlabel = qt.QLabel(self)
         self.headerlabel.setAlignment(qt.Qt.AlignHCenter)       
@@ -60,23 +67,42 @@ class ScanFit(qt.QWidget):
         
         self.specfitGUI.guiconfig.MCACheckBox.setEnabled(0)
         palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
-        palette.setDisabled(palette.active())
+        if QTVERSION < '4.0.0':
+            palette.setDisabled(palette.active())
         ##############
-        hbox=qt.QHBox(self)
-        HorizontalSpacer(hbox)
+        hbox=qt.QWidget(self)
+        hboxlayout = qt.QHBoxLayout(hbox)
+        hboxlayout.setMargin(0)
+        hboxlayout.setSpacing(0)
         self.estimatebutton = qt.QPushButton(hbox)
         self.estimatebutton.setText("Estimate")
         self.fitbutton = qt.QPushButton(hbox)
         self.fitbutton.setText("Fit")
+        hboxlayout.addWidget(self.estimatebutton)
+        hboxlayout.addWidget(HorizontalSpacer(hbox))
+        hboxlayout.addWidget(self.fitbutton)
+
         self.dismissbutton = qt.QPushButton(hbox)
-        self.dismissbutton.setText("Dismiss")        
+        self.dismissbutton.setText("Dismiss")
         self.connect(self.estimatebutton,qt.SIGNAL("clicked()"),self.estimate)
         self.connect(self.fitbutton,     qt.SIGNAL("clicked()"),self.fit)
         self.connect(self.dismissbutton, qt.SIGNAL("clicked()"),self.dismiss)
-        self.connect(self.specfitGUI,    qt.PYSIGNAL('SpecfitGUISignal') ,   self.__anasignal)
-        HorizontalSpacer(hbox)
+        if QTVERSION < '4.0.0':
+            self.connect(self.specfitGUI,
+                         qt.PYSIGNAL('SpecfitGUISignal') ,
+                         self._specfitGUISignal)
+        else:
+            self.connect(self.specfitGUI,
+                         qt.SIGNAL('SpecfitGUISignal') ,
+                         self._specfitGUISignal)
+        hboxlayout.addWidget(HorizontalSpacer(hbox))
+        hboxlayout.addWidget(self.dismissbutton)
+        layout.addWidget(self.headerlabel)
+        layout.addWidget(self.specfitGUI)
+        layout.addWidget(hbox)
 
-    def setdata(self,*var,**kw):
+
+    def setData(self,*var,**kw):
         self.info ={}
         if kw.has_key('legend'):
             self.info['legend'] = kw['legend']
@@ -132,25 +158,31 @@ class ScanFit(qt.QWidget):
         self.specfitGUI.estimate() 
     
     
-    def __anasignal(self,dict):
-        if type(dict) != type({}):
+    def _specfitGUISignal(self,ddict):
+        if type(ddict) != type({}):
             return
-        if dict.has_key('event'):
-            if string.upper(dict['event']) == "PRINT":
+        if ddict.has_key('event'):
+            if string.upper(ddict['event']) == "PRINT":
                 h = self.__htmlheader()
                 if __name__ == "__main__":
-                    self.__print(h+dict['text'])
+                    self.__print(h+ddict['text'])
                 else:
                     ndict={}
                     ndict['event'] = "ScanFitPrint"
-                    ndict['text' ] = h+dict['text']
+                    ndict['text' ] = h+ddict['text']
                     ndict['info' ] = {}
                     ndict['info'].update(self.info)
-                    self.emit(qt.PYSIGNAL('ScanFitSignal'),(ndict,))             
+                    if QTVERSION < '4.0.0':
+                        self.emit(qt.PYSIGNAL('ScanFitSignal'),(ndict,))
+                    else:
+                        self.emit(qt.SIGNAL('ScanFitSignal'), ndict)
             else:
-                dict['info'] = {}
-                dict['info'].update(self.info)
-                self.emit(qt.PYSIGNAL('ScanFitSignal'),(dict,))    
+                ddict['info'] = {}
+                ddict['info'].update(self.info)
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL('ScanFitSignal'),(ddict,))
+                else:
+                    self.emit(qt.SIGNAL('ScanFitSignal'), ddict)    
         
     def dismiss(self):
         self.close()
@@ -268,11 +300,17 @@ class HorizontalSpacer(qt.QWidget):
       
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
       
+def test():
+    app = qt.QApplication([])
+    w = ScanFit()
+    qt.QObject.connect(app, qt.SIGNAL("lasWindowClosed()"),
+                       app, qt.SLOT("quit()"))
+    w.show()
+    if QTVERSION < '4.0.0':
+        app.setMainWidget(w)
+        app.exec_loop()
+    else:
+        app.exec_()
 
 if __name__ == "__main__":
-    import sys
-    app = qt.QApplication(sys.argv)
-    demo = ScanFit()
-    app.setMainWidget(demo)
-    demo.show()
-    app.exec_loop()
+    test()
