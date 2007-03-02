@@ -25,6 +25,8 @@
 # is a problem to you.
 #############################################################################*/
 import sys
+import os
+import time
 from QtBlissGraph import qt
 if __name__ == "__main__":
     app = qt.QApplication([])
@@ -500,6 +502,7 @@ class ScanWindow(qt.QWidget):
         self.scanFit = ScanFit.ScanFit(specfit=specfit)
         self.simpleMath = SimpleMath.SimpleMath()
         self.graph.canvas().setMouseTracking(1)
+        self.outputDir = None
 
         if QTVERSION < '4.0.0':
             self.connect(self.graph,
@@ -971,12 +974,83 @@ class ScanWindow(qt.QWidget):
 
     def _saveIconSignal(self):
         if DEBUG:print "_saveIconSignal"
-
+        self.__QSimpleOperation("save")
+        
     def _averageIconSignal(self):
         if DEBUG:print "_averageIconSignal"
-        #get active curve
-        legend = self.getActiveCurve()
-        if legend is None:return
+        self.__QSimpleOperation("average")
+        
+    def _getOutputFileName(self):
+        #get outputfile
+        if self.outputDir is None:
+            self.outputDir = os.getcwd()
+            wdir = os.getcwd()
+        elif os.path.exists(self.outputDir):
+            wdir = self.outputDir
+        else:
+            self.outputDir = os.getcwd()
+            wdir = self.outputDir
+            
+        if QTVERSION < '4.0.0':
+            outfile = qt.QFileDialog(self,"Output File Selection",1)
+            outfile.setFilters('Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt')
+            outfile.setMode(outfile.AnyFile)
+            outfile.setDir(wdir)
+            ret = outfile.exec_loop()
+        else:
+            outfile = qt.QFileDialog(self)
+            outfile.setWindowTitle("Output File Selection")
+            outfile.setModal(1)
+            outfile.setFilters(['Specfile MCA  *.mca',
+                                'Specfile Scan *.dat',
+                                'Raw ASCII  *.txt'])
+            outfile.setFileMode(outfile.AnyFile)
+            outfile.setAcceptMode(outfile.AcceptSave)
+            outfile.setDirectory(wdir)
+            ret = outfile.exec_()
+        if not ret:
+            return None
+        filterused = str(outfile.selectedFilter()).split()
+        filetype  = filterused[1]
+        extension = filterused[2]
+        if QTVERSION < '4.0.0':
+            outdir=str(outfile.selectedFile())
+        else:
+            outdir=str(outfile.selectedFiles()[0])
+        try:            
+            self.outputDir  = os.path.dirname(outdir)
+        except:
+            print "setting output directory to default"
+            self.outputDir  = os.getcwd()
+        try:            
+            outputFile = os.path.basename(outdir)
+        except:
+            outputFile = outdir
+        outfile.close()
+        del outfile
+        if len(outputFile) < 5:
+            outputFile = outputFile + extension[-4:]
+        elif outputFile[-4:] != extension[-4:]:
+            outputFile = outputFile + extension[-4:]
+        return os.path.join(self.outputDir, outputFile), filetype
+
+    def array2SpecMca(self, data):
+        """ Write a python array into a Spec array.
+            Return the string containing the Spec array
+        """
+        tmpstr = "@A "
+        length = len(data)
+        for idx in range(0, length, 16):
+            if idx+15 < length:
+                for i in range(0,16):
+                    tmpstr += "%.4f " % data[idx+i]
+                if idx+16 != length:
+                    tmpstr += "\\"
+            else:
+                for i in range(idx, length):
+                    tmpstr += "%.4f " % data[i]
+            tmpstr += "\n"
+        return tmpstr
         
     def __QSimpleOperation(self, operation):
         try:
@@ -1011,6 +1085,15 @@ class ScanWindow(qt.QWidget):
                 return
             x = dataObject.x[0]
             y = dataObject.y[0]
+            ilabel = dataObject.info['selection']['y'][0]
+            ylabel = dataObject.info['LabelNames'][ilabel]
+            if len(dataObject.info['selection']['x']):
+                ilabel = dataObject.info['selection']['x'][0]
+                xlabel = dataObject.info['LabelNames'][ilabel]
+            else:
+                xlabel = "Point Number"
+            #print "xlabel = ", xlabel
+            #print "ylabel = ", ylabel
         else:
             x = []
             y = []
@@ -1031,6 +1114,56 @@ class ScanWindow(qt.QWidget):
             if ndata == 0: return #nothing to average
             dataObject = self.dataObjectsDict[firstcurve]
 
+        if operation == "save":
+            #getOutputFileName
+            filename = self._getOutputFileName()
+            if filename is None:return
+            filetype = filename[1]
+            filename = filename[0]
+            if os.path.exists(filename):
+                os.remove(filename)
+            systemline = os.linesep
+            os.linesep = '\n'
+            try:
+                ffile=open(filename,'wb')
+            except IOError:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+                msg.exec_loop()
+                return
+            try:
+                if filetype == 'Scan':
+                    ffile.write("#F %s\n" % filename)
+                    ffile.write("#D %s\n"%(time.ctime(time.time())))
+                    ffile.write("\n")
+                    ffile.write("#S 1 %s\n" % legend)
+                    ffile.write("#D %s\n"%(time.ctime(time.time())))
+                    ffile.write("#N 2\n")
+                    ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
+                    for i in range(len(y)):
+                        ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                    ffile.write("\n")
+                elif filetype == 'ASCII':
+                    for i in range(len(y)):
+                        ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                else:
+                    ffile.write("#F %s\n" % filename)
+                    ffile.write("#D %s\n"%(time.ctime(time.time())))
+                    ffile.write("\n")
+                    ffile.write("#S 1 %s\n" % legend)
+                    ffile.write("#D %s\n"%(time.ctime(time.time())))
+                    ffile.write("#@MCA %16C\n")
+                    ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
+                    ffile.write("#@CALIB %.7g %.7g %.7g\n" % (0, 1, 0))
+                    ffile.write(self.array2SpecMca(y))
+                    ffile.write("\n")
+                ffile.close()
+                os.linesep = systemline
+            except:
+                os.linesep = systemline
+                raise
+            return
 
         #create the ourput data object
         newDataObject = DataObject.DataObject()
@@ -1042,6 +1175,9 @@ class ScanWindow(qt.QWidget):
         #get new x and new y
         if operation == "derivate":
             xplot, yplot = self.simpleMath.derivate(x, y)
+            ilabel = dataObject.info['selection']['y'][0]
+            ylabel = dataObject.info['LabelNames'][ilabel]
+            newDataObject.info['LabelNames'][ilabel] = ylabel+"'"
             sel = {}
             sel['SourceName'] = legend
             sel['Key']    = "'"
@@ -1107,7 +1243,7 @@ class ScanWindow(qt.QWidget):
             sel['scanselection'] = True
             sel['selection'] = copy.deepcopy(dataObject.info['selection'])
             sel['selectiontype'] = "1D"
-            if operation != fit:
+            if operation != 'fit':
                 self._addSelection([sel])
             else:
                 self.__fitDataObject = newDataObject
