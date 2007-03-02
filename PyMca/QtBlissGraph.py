@@ -61,6 +61,7 @@ if qwt.QWT_VERSION_STR[0] > '4':
     QWTVERSION4 = False
 else:
     QWTVERSION4 = True
+
 try:
     from Icons import IconDict
 except:
@@ -1232,6 +1233,56 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY2(self.__activelegendname)   
         self.setactivecurve(self.getactivecurve(justlegend=1))
 
+
+    def __legendTogglePoints(self):
+        self.togglePoints(self.__activelegendname)
+        self.setactivecurve(self.getactivecurve(justlegend=1))
+        
+    def __legendToggleLine(self):
+        self.toggleLine(self.__activelegendname)
+        self.setactivecurve(self.getactivecurve(justlegend=1))
+        
+    def togglePoints(self, key):
+        if QWTVERSION4:return
+        if key not in self.curves.keys():
+            if DEBUG:print "curve %s does not exists" % key
+            return
+        curve  = self.curves[key]['curve']
+        symbol = curve.symbol()
+        if symbol.style() == self.symbols['none']:
+            if self.curves[key] ["symbol"] not in [self.symbols['none'], None]:
+                newsymbol = self.curves[key] ["symbol"]
+            else:
+                newsymbol = self.symbols['ellipse']
+                #newsymbol = qwt.QwtSymbol.Ellipse
+                newsymbol = qwt.QwtSymbol.Rect
+        else:
+            newsymbol = self.symbols['none']
+        pen = curve.pen()
+        symbol.setStyle(newsymbol)
+        symbol.setPen(pen)
+        brush = symbol.brush()
+        brush.setColor(pen.color())
+        symbol.setBrush(brush)
+
+    def toggleLine(self, key):
+        if QWTVERSION4:return
+        if key not in self.curves.keys():
+            if DEBUG:print "curve %s does not exists" % key
+            return
+        curve     = self.curves[key]['curve']
+        linetype  = curve.style()
+        pen       = curve.pen()
+        if pen.style() == qt.Qt.NoPen:
+            color    = self.curves[key] ["pen"]
+            linetype = self.curves[key] ["linetype"] 
+            pen.setColor(color)
+            pen.setWidth(self.linewidth)
+            pen.setStyle(linetype)
+        else:
+            pen.setStyle(qt.Qt.NoPen)
+        #curve.setPen(pen)
+
     def __legendremovesignal(self):
         if DEBUG: print  "__legendremovesignal"
         self.__removecurveevent = {}
@@ -1523,6 +1574,11 @@ class QtBlissGraph(qwt.QwtPlot):
                      self.legendmenu.insertItem(qt.QString("Map to y1") ,self.__legendmaptoy1)
                      self.legendmenu.insertItem(qt.QString("Map to y2") ,self.__legendmaptoy2)
                      self.legendmenu.insertSeparator()
+                     self.legendmenu.insertItem(qt.QString("Toggle Points") ,
+                                           self.__legendTogglePoints)
+                     self.legendmenu.insertItem(qt.QString("Toggle Line") ,
+                                           self.__legendToggleLine)
+                     self.legendmenu.insertSeparator()
                      self.legendmenu.insertItem(qt.QString("Remove curve") ,self.__legendremovesignal)
                 else:
                      self.legendmenu = qt.QMenu()
@@ -1530,6 +1586,11 @@ class QtBlissGraph(qwt.QwtPlot):
                      self.legendmenu.addSeparator()
                      self.legendmenu.addAction(qt.QString("Map to y1") ,self.__legendmaptoy1)
                      self.legendmenu.addAction(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                     self.legendmenu.addSeparator()
+                     self.legendmenu.addAction(qt.QString("Toggle Points") ,
+                                           self.__legendTogglePoints)
+                     self.legendmenu.addAction(qt.QString("Toggle Line") ,
+                                           self.__legendToggleLine)
                      self.legendmenu.addSeparator()
                      self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
             if QTVERSION < '4.0.0':
@@ -1841,15 +1902,15 @@ class QtBlissGraph(qwt.QwtPlot):
             del self.__activecurves[self.__activecurves.index(ckey)]
             if ckey in self.curves.keys():
                 color = self.curves[ckey] ["pen"]
-                linetype = self.curves[ckey] ["linetype"] 
+                linetype = self.curves[ckey] ["linetype"]
                 pen = qt.QPen(color,self.linewidth,linetype)
-                self.setCurvePen(self.curves[ckey]['curve'],pen )
+                if QWTVERSION4 or (self.curves[ckey]['curve'].pen().style() != qt.Qt.NoPen):
+                    self.setCurvePen(self.curves[ckey]['curve'],pen )
         linetype = self.curves[key] ["linetype"] 
         pen = qt.QPen(self.__activecolor,self.__activelinewidth,linetype)
-        self.setCurvePen(self.curves[key]['curve'],pen ) 
+        if QWTVERSION4 or (self.curves[key]['curve'].pen().style() != qt.Qt.NoPen):
+            self.setCurvePen(self.curves[key]['curve'],pen )
         self.__activecurves.append(key)
-
-
 
         actualindex = self.curves[key] ["curve"] 
         n = self.legend().itemCount()
@@ -1941,6 +2002,11 @@ class QtBlissGraph(qwt.QwtPlot):
         if QWTVERSION4:
             qwt.QwtPlot.setCurvePen(self, curve, pen)
         else:
+            symbol = curve.symbol()
+            symbol.setPen(pen)
+            brush = symbol.brush()
+            brush.setColor(pen.color())
+            curve.symbol().setBrush(brush)
             curve.setPen(pen)
 
     def setCurveData(self, curve, x, y):
