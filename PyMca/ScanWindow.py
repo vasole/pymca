@@ -542,6 +542,7 @@ class ScanWindow(qt.QWidget):
 
             self.averageIcon	= qt.QIconSet(qt.QPixmap(IconDict["average16"]))
             self.deriveIcon	= qt.QIconSet(qt.QPixmap(IconDict["derive"]))
+            self.smoothIcon     = qt.QIconSet(qt.QPixmap(IconDict["smooth"]))
             self.swapSignIcon	= qt.QIconSet(qt.QPixmap(IconDict["swapsign"]))
             self.yMinToZeroIcon	= qt.QIconSet(qt.QPixmap(IconDict["ymintozero"]))
             
@@ -567,6 +568,7 @@ class ScanWindow(qt.QWidget):
 
             self.averageIcon	= qt.QIcon(qt.QPixmap(IconDict["average16"]))
             self.deriveIcon	= qt.QIcon(qt.QPixmap(IconDict["derive"]))
+            self.smoothIcon     = qt.QIcon(qt.QPixmap(IconDict["smooth"]))
             self.swapSignIcon	= qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
             self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
             
@@ -635,6 +637,10 @@ class ScanWindow(qt.QWidget):
             tb = self._addToolButton(self.deriveIcon,
                                 self._deriveIconSignal,
                                  'Take Derivative of Active Curve')
+
+            tb = self._addToolButton(self.smoothIcon,
+                                 self._smoothIconSignal,
+                                 'Smooth Active Curve')
 
             tb = self._addToolButton(self.swapSignIcon,
                                 self._swapSignIconSignal,
@@ -980,6 +986,10 @@ class ScanWindow(qt.QWidget):
         if DEBUG:print "_averageIconSignal"
         self.__QSimpleOperation("average")
         
+    def _smoothIconSignal(self):
+        if DEBUG:print "_smoothIconSignal"
+        self.__QSimpleOperation("smooth")
+        
     def _getOutputFileName(self):
         #get outputfile
         if self.outputDir is None:
@@ -1198,6 +1208,19 @@ class ScanWindow(qt.QWidget):
             sel['Key']    = ""
             sel['legend'] = "-(%s)" % legend
             outputlegend  = "-(%s)" % legend
+        elif operation == "smooth":
+            xplot =  x * 1
+            yplot = self.simpleMath.smooth(y)
+            sel = {}
+            sel['SourceName'] = legend
+            sel['Key']    = ""
+            sel['legend'] = "%s Smooth" % legend
+            outputlegend  = "%s Smooth" % legend
+            if dataObject.info.has_key('operations'):
+                if len(dataObject.info['operations']):
+                    if dataObject.info['operations'][-1] == "smooth":
+                        sel['legend'] = legend
+                        outputlegend  = legend
         elif operation == "forceymintozero":
             xplot =  x * 1
             yplot =  y - min(y)

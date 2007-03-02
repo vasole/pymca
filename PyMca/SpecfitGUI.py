@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -471,7 +471,7 @@ class SpecfitGUI(qt.QWidget):
             qt.QMessageBox.information(self, "Info", "Function not implemented")
             return
             i=1+self.specfit.bkgdict.keys().index(self.specfit.fitconfig['fitbkg'])
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.guiconfig.BkgComBox.setCurrentItem(i)
             else:
                 self.guiconfig.BkgComBox.setCurrentIndex(i)
@@ -514,7 +514,10 @@ class SpecfitGUI(qt.QWidget):
                     print "Error importing file ",functionsfile
             #print " Funtion not yet implemented"
             i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])
-            self.guiconfig.FunComBox.setCurrentItem(i)
+            if QTVERSION < '4.0.0':
+                self.guiconfig.FunComBox.setCurrentItem(i)
+            else:
+                self.guiconfig.FunComBox.setCurrentIndex(i)
         self.__initialparameters()
         return
     

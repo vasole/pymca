@@ -167,6 +167,27 @@ class SimpleMath:
      
         return finalx,finaly
 
+    def smooth(self, *var, **kw):
+        """
+        smooth(self,*vars,**kw)
+        Usage: self.smooth(y)
+               self.smooth(y=y)
+               self.smooth()
+        """
+        if kw.has_key('y'):
+            ydata=kw['y']
+        elif len(var) > 0:
+            ydata=var[0]
+        else:
+            ydata=self.y
+        f=[0.25,0.5,0.25]
+        result=Numeric.array(ydata)
+        if len(result) > 1:
+            result[1:-1]=Numeric.convolve(result,f,mode=0)
+            result[0]=0.5*(result[0]+result[1])
+            result[-1]=0.5*(result[-1]+result[-2])
+        return result
+        
 if __name__ == "__main__":
     x = Numeric.arange(10.)
     xlist = [x-0.5 , x+0.5]

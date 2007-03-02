@@ -25,6 +25,31 @@
 # is a problem to you.
 #############################################################################*/
 # --- scan window icons ---
+smooth = [
+"16 16 3 1",
+"O c none",
+"* c yellow",
+": c blue",
+"OOOOOOOOOOOOOOOO",
+"OOOO**OOO*:OOOOO",
+"OOOOO**O*::OOOOO",
+"OOOO::***:O:OOOO",
+"OOOO::O**OO:OOOO",
+"OOO:O:****OO:OOO",
+"OOO:OO*:O**O:OOO",
+"OO:OO**OOOOO:OOO",
+"OO:OO*OOOOOO:OOO",
+"O:OOOOOOOOOO::OO",
+"O:OOOOOOOOOOO:OO",
+"O:OOOOOOOOOOO::O",
+"OOOOOOOOOOOOOOOO",
+"OOOOOOOOOOOOOOOO",
+"OOOOOOOOOOOOOOOO",
+"OOOOOOOOOOOOOOOO"
+]
+
+
+
 derive = [
 "16 16 2 1",
 "   c None",
@@ -3110,7 +3135,8 @@ IconDict= {
     "sigma":sigma,
     "swapsign":swapsign,
     "ymintozero":ymintozero,
-    "average16":average16
+    "average16":average16,
+    "smooth":smooth
 }
 
 def showIcons():
