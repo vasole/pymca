@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -2122,7 +2122,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     int debug=0;
     int tails=15;
     int expected_pars;
-    int g_term_flag, st_term_flag, lt_term_flag, step_term_flag;
+    int g_term_flag, st_term_flag, lt_term_flag, step_term_flag, eta_term_flag;
     /*double g_term, st_term, lt_term, step_term;*/
     PyArrayObject   *param, *x;
     PyArrayObject   *ret;
@@ -2143,6 +2143,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
         double  lt_area_r;
         double  lt_slope_r;
         double  step_height_r;
+        double  eta;
     } hypermet;
     hypermet *phyper;
 
@@ -2188,7 +2189,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     }
 
     /* The gaussian terms must always be there */
-    if(tails <= 0){
+    if(tails == 0){
         /* I give back a matrix filled with zeros */
         ret = (PyArrayObject *)
         PyArray_FromDims(nd_x, dim_x, PyArray_DOUBLE);
@@ -2201,18 +2202,27 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
             Py_DECREF(x);
             return PyArray_Return(ret);
         }
-    }else{
+    }
+    if (tails > 0){
         g_term_flag    = tails & 1;
         st_term_flag   = (tails>>1) & 1;
         lt_term_flag   = (tails>>2) & 1;
         step_term_flag = (tails>>3) & 1;
+	eta_term_flag  = 0;
+    }else{
+	tails = -tails;
+        g_term_flag    = tails & 1;
+        st_term_flag   = (tails>>1) & 1;
+        lt_term_flag   = (tails>>2) & 1;
+        step_term_flag = (tails>>3) & 1;
+	eta_term_flag  = 1;
     }
     if (debug){
         printf("flags g = %d st = %d lt = %d step = %d\n",\
                g_term_flag,st_term_flag,lt_term_flag,step_term_flag);
     }
-    expected_pars = 3 + st_term_flag * 2+lt_term_flag * 2+step_term_flag * 1;
-    expected_pars = 8;    
+    expected_pars = 3 + st_term_flag * 2+lt_term_flag * 2+step_term_flag * 1 + eta_term_flag;
+    expected_pars = 8 + eta_term_flag;    
     if (nd_param == 1) {
         npars = dim_param[0];
     }else{
@@ -2284,6 +2294,13 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
                 if (g_term_flag){
                    /* *pret += exp (-z2) * (x1/(x3*sqrt2PI));*/
                    *pret += fastexp (-z2) * (x1/(x3*sqrt2PI));
+		   if (eta_term_flag){
+                         dhelp = z0 / (0.5 * phyper[i].fwhm);
+                         dhelp = 1.0 + (dhelp * dhelp);
+			 *pret *= (1.0 - phyper[i].eta);
+                         *pret +=  phyper[i].eta * \
+                                  (x1 / (0.5 * M_PI * phyper[i].fwhm * dhelp));
+		   }
                 }
             }
             if (st_term_flag){
@@ -2362,6 +2379,13 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
             if (g_term_flag){
                    /* *pret += exp (-z2) * (x1/(x3*sqrt2PI));*/
                     *pret += fastexp (-z2) * (x1/(x3*sqrt2PI));
+		    if (eta_term_flag){
+                         dhelp = z0 / (0.5 * phyper[i].fwhm);
+                         dhelp = 1.0 + (dhelp * dhelp);
+			 *pret *= (1.0 - phyper[i].eta);
+                         *pret +=  phyper[i].eta * \
+                                  (x1 / (0.5 * M_PI * phyper[i].fwhm * dhelp));
+		    }
             }
             }
             /*include the short tail in the test is not a good idea */
