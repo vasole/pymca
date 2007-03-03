@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.11 $"
+__revision__ = "$Revision: 1.12 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -34,6 +34,7 @@ if 'qt' not in sys.modules:
 else:
     import qt
 
+DEBUG = 0
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
     import Myqttable as qttable
@@ -48,7 +49,7 @@ import types
 class MaterialEditor(qt.QWidget):
     def __init__(self, parent=None, name="Material Editor",
                  comments=True, height= 7):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name)
             self.setCaption(name)
         else:
@@ -112,7 +113,9 @@ class MaterialEditor(qt.QWidget):
                 continue
             #I should try to calculate the attenuation at one energy ...
             try:
-                d= Elements.getMaterialMassAttenuationCoefficients(compoundList, compoundFraction, energy = 10.0)
+                d= Elements.getMaterialMassAttenuationCoefficients(compoundList,
+                                                                   compoundFraction,
+                                                                   energy = 10.0)
             except:
                 #no message?
                 error = 1
@@ -136,21 +139,27 @@ class MaterialComboBox(qt.QComboBox):
         self.setDuplicatesEnabled(False)
         self.setEditable(True)
         self._line = self.lineEdit()
-        self.connect(self, qt.SIGNAL("activated(const QString &)"),self._mySignal)
-        self.connect(self._line, qt.SIGNAL("returnPressed()"),self._mySlot)
+        self.connect(self, qt.SIGNAL("activated(const QString &)"),
+                     self._mySignal)
+        if QTVERSION < '4.0.0':
+            self.connect(self._line, qt.SIGNAL("returnPressed()"),
+                         self._mySlot)
+        else:
+            self.connect(self._line, qt.SIGNAL("editingFinished()"),
+                         self._mySlot)
 
     def setCurrentText(self, qstring):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
            self.lineEdit().setText(qstring)
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                qt.QComboBox.setCurrentText(self, qstring)
             else:
                qt.QComboBox.setEditText(self, qstring)
 
     def setOptions(self,options=['1','2','3']):
         self.clear()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.insertStrList(options)
         else:
             for item in options:
@@ -175,22 +184,17 @@ class MaterialComboBox(qt.QComboBox):
                                       (str(qstring), str(qstring)),
                                       qt.QMessageBox.Yes,qt.QMessageBox.No)
             if msg == qt.QMessageBox.No:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.setCurrentItem(0)
                 else:
                     self.setCurrentIndex(0)
                 for i in range(self.count()):
-                    if qt.qVersion() <'4.0.0':
+                    if QTVERSION <'4.0.0':
                         selftext = self.text(i)
                     else:
                         selftext = self.itemText(i)
                     if selftext == qstring0:
-                        try:
-                            self.removeItem(i)
-                        except:
-                            print "PyQt4 removeItem missing in QComboBox"
-                            print "Added by myself"
-                        break                
+                        self.removeItem(i)
                 return
             else:
                 qstring = qstring0
@@ -201,13 +205,13 @@ class MaterialComboBox(qt.QComboBox):
             msg.setText("Invalid Material Name %s\n" % text + \
                         "The material is a valid Formula.\n " \
                         "There is no need to define it.")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
             self.setCurrentItem(0)
             for i in range(self.count()):
-                if qt.qVersion() <'4.0.0':
+                if QTVERSION <'4.0.0':
                     selftext = self.text(i)
                 else:
                     selftext = self.itemText(i)
@@ -225,48 +229,51 @@ class MaterialComboBox(qt.QComboBox):
             self.removeItem(self.count()-1)
         insert = True
         for i in range(self.count()):
-            if qt.qVersion() <'4.0.0':
+            if QTVERSION <'4.0.0':
                 selftext = self.text(i)
             else:
                 selftext = self.itemText(i)
             if qstring == selftext:
                 insert = False
         if insert:
-            self.insertItem(qstring,-1)
-        if qt.qVersion() < '3.0.0':
+            if QTVERSION < '4.0.0':
+                self.insertItem(qstring,-1)
+            else:
+                self.insertItem(self.count(), qstring)
+                
+        if QTVERSION < '3.0.0':
             pass
         else:
             if self.lineEdit() is not None:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
                 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('MaterialComboBoxSignal'), (dict))
 
     def focusInEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass
         else:
             if self.lineEdit() is not None:
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.lineEditBackgroundColor = self.lineEdit().paletteBackgroundColor()
                     self.lineEdit().setPaletteBackgroundColor(qt.QColor('yellow'))
     
-
     def _mySlot(self):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
         self._mySignal(self.currentText())
 
 class MaterialValidator(qt.QValidator):
     def __init__(self, *var):
         qt.QValidator.__init__(self, *var)
-        if qt.qVersion() >= '4.0.0':
+        if QTVERSION >= '4.0.0':
             self.Valid = self.Acceptable
 
         
@@ -291,7 +298,7 @@ class MaterialValidator(qt.QValidator):
 class MaterialGUI(qt.QWidget):
     def __init__(self, parent=None, name="New Material",default={},
                  comments=True, height=10):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name)
             self.setCaption(name)
         else:
@@ -304,6 +311,7 @@ class MaterialGUI(qt.QWidget):
                 self._current[key] = self._default[key]
         self.__lastRow    = None
         self.__lastColumn = None
+        self.__fillingValues = True
         self.build(comments,height)
         
     def _setCurrentDefault(self):
@@ -338,20 +346,20 @@ class MaterialGUI(qt.QWidget):
         numberLabel  = qt.QLabel(hbox)
         hboxLayout.addWidget(numberLabel)
         numberLabel.setText("Number  of  Compounds:")
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             numberLabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
         else:
             numberLabel.setAlignment(qt.Qt.AlignVCenter)
         self.__numberSpin  = qt.QSpinBox(hbox)
         hboxLayout.addWidget(self.__numberSpin)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__numberSpin.setMinValue(1)
             self.__numberSpin.setMaxValue(20)
         else:
             self.__numberSpin.setMinimum(1)
             self.__numberSpin.setMaximum(20)
         self.__numberSpin.setValue(1)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__table = qttable.QTable(tableContainer)
             self.__table.setNumRows(1)
             self.__table.setNumCols(2)
@@ -365,7 +373,7 @@ class MaterialGUI(qt.QWidget):
         self.__table.setMinimumWidth(1*self.__table.sizeHint().width())
         self.__table.setMaximumWidth(1*self.__table.sizeHint().width())
         #self.__table.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Fixed))
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__table.setVScrollBarMode(self.__table.AlwaysOn)
             self.__table.horizontalHeader().setClickEnabled(False)
             qt.QHeader.setLabel(self.__table.horizontalHeader(),0,"Material")
@@ -379,7 +387,7 @@ class MaterialGUI(qt.QWidget):
                 if item is None:
                     item = qt.QTableWidgetItem(labels[i],qt.QTableWidgetItem.Type)
                 self.__table.setHorizontalHeaderItem(i,item)
-        if qt.qVersion() < '4.1.0':
+        if QTVERSION < '4.1.0':
             self.__table.setSelectionMode(qttable.QTable.NoSelection)
         else:
             self.__table.setSelectionMode(qt.QTableWidget.NoSelection)
@@ -392,7 +400,7 @@ class MaterialGUI(qt.QWidget):
             self.__gridVBox = qt.QWidget(vbox)
             grid = self.__gridVBox
             vboxLayout.addWidget(grid)
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 gridLayout = qt.QGridLayout(grid, 2, 2, 11, 4)
             else:
                 gridLayout = qt.QGridLayout(grid)
@@ -402,27 +410,35 @@ class MaterialGUI(qt.QWidget):
             densityLabel  = qt.QLabel(grid)
             gridLayout.addWidget(densityLabel, 0, 0)
             densityLabel.setText("Default Density (g/cm3):")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 densityLabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
+                self.__densityLine  = MyQLineEdit(grid)
             else:
                 densityLabel.setAlignment(qt.Qt.AlignVCenter)
-            self.__densityLine  = MyQLineEdit(grid)
+                self.__densityLine  = qt.QLineEdit(grid)
             self.__densityLine.setReadOnly(False)
             gridLayout.addWidget(self.__densityLine, 0, 1)
 
             thicknessLabel  = qt.QLabel(grid)
             gridLayout.addWidget(thicknessLabel, 1, 0)
             thicknessLabel.setText("Default  Thickness  (cm):")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 thicknessLabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
+                self.__thicknessLine  = MyQLineEdit(grid)
             else:
                 thicknessLabel.setAlignment(qt.Qt.AlignVCenter)
-            self.__thicknessLine  = MyQLineEdit(grid)
+                self.__thicknessLine  = qt.QLineEdit(grid)
             gridLayout.addWidget(self.__thicknessLine, 1, 1)
             self.__thicknessLine.setReadOnly(False)
-            self.connect(self.__densityLine,qt.SIGNAL('returnPressed()'),
-                         self.__densitySlot)      
-            self.connect(self.__thicknessLine,qt.SIGNAL('returnPressed()'),
+            if QTVERSION < '4.0.0':
+                self.connect(self.__densityLine,qt.SIGNAL('returnPressed()'),
+                             self.__densitySlot)      
+                self.connect(self.__thicknessLine,qt.SIGNAL('returnPressed()'),
+                         self.__thicknessSlot)
+            else:
+                self.connect(self.__densityLine,qt.SIGNAL('editingFinished()'),
+                             self.__densitySlot)      
+                self.connect(self.__thicknessLine,qt.SIGNAL('editingFinished()'),
                          self.__thicknessSlot)
             vboxLayout.addWidget(VerticalSpacer(vbox))
             
@@ -433,12 +449,19 @@ class MaterialGUI(qt.QWidget):
             nameLabel      = qt.QLabel(nameHBox)
             nameHBoxLayout.addWidget(nameLabel)
             nameLabel.setText("Material Name/Comment:")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 nameLabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
             else:
                 nameLabel.setAlignment(qt.Qt.AlignVCenter)
             nameHBoxLayout.addWidget(HorizontalSpacer(nameHBox))
-            self.__nameLine  = qt.QLineEdit(nameHBox)
+            if QTVERSION < '4.0.0':
+                self.__nameLine  = MyQLineEdit(nameHBox)
+                self.connect(self.__nameLine,qt.SIGNAL('returnPressed()'),
+                             self.__nameLineSlot)
+            else:
+                self.__nameLine  = qt.QLineEdit(nameHBox)
+                self.connect(self.__nameLine,qt.SIGNAL('editingFinished()'),
+                             self.__nameLineSlot)
             nameHBoxLayout.addWidget(self.__nameLine)
             self.__nameLine.setReadOnly(False)
             longtext="En un lugar de La Mancha, de cuyo nombre no quiero acordarme ..."
@@ -448,10 +471,23 @@ class MaterialGUI(qt.QWidget):
         self.connect(self.__numberSpin,
                      qt.SIGNAL("valueChanged(int)"),
                      self.__numberSpinChanged)
-        self.connect(self.__table,qt.SIGNAL("valueChanged(int,int)"),self.__tableSlot)
-        self.connect(self.__table,qt.SIGNAL("currentChanged(int,int)"),self.__tableSlot2)
+        if QTVERSION < '4.0.0':
+            self.connect(self.__table,
+                         qt.SIGNAL("valueChanged(int,int)"),
+                         self.__tableSlot)
+            self.connect(self.__table,
+                         qt.SIGNAL("currentChanged(int,int)"),
+                         self.__tableSlot2)
+        else:
+            self.connect(self.__table,
+                         qt.SIGNAL("cellChanged(int,int)"),
+                         self.__tableSlot)
+            self.connect(self.__table,
+                         qt.SIGNAL("cellEntered(int,int)"),
+                         self.__tableSlot2)
 
     def setCurrent(self, matkey0):
+        if DEBUG:"setCurrent(self, matkey0) ", matkey0
         matkey = Elements.getMaterialKey(matkey0)
         if matkey is not None:
             self._current = Elements.Material[matkey]
@@ -459,10 +495,15 @@ class MaterialGUI(qt.QWidget):
             self._setCurrentDefault()
             Elements.Material[matkey0] = self._current
         self.__numberSpin.setFocus()
-        self._fillValues()
+        try:
+            self._fillValues()
+        finally:
+            self.__fillingValues = False
                     
         
     def _fillValues(self):
+        if DEBUG: print "fillValues(self)"
+        self.__fillingValues = True
         if self.__comments:
             self.__nameLine.setText("%s" % self._current['Comment'])
             try:
@@ -481,7 +522,7 @@ class MaterialGUI(qt.QWidget):
         self.__numberSpin.setValue(max(len(self._current['CompoundList']),1))
         row = 0
         for compound in  self._current['CompoundList']:
-            if qt.qVersion()  < '4.0.0':
+            if QTVERSION  < '4.0.0':
                 self.__table.setText(row,0, compound)                
                 self.__table.setText(row,1, "%.5g" % self._current['CompoundFraction'][row])
             else:
@@ -499,17 +540,49 @@ class MaterialGUI(qt.QWidget):
                     item.setText("%.5g" % self._current['CompoundFraction'][row])
                 self.__table.setItem(row,1,item)
             row += 1
+        self.__fillingValues = False
 
-    def _updateCurrent(self):
-        self._current['CompoundList']     = []
-        self._current['CompoundFraction'] = []
-        for i in range(self.__table.numRows()):
-            txt0 = str(self.__table.text(i,0))
-            txt1 = str(self.__table.text(i,1))
-            if (len(txt0) > 0) and (len(txt1) > 0):
-                self._current['CompoundList'].append(txt0)
-                self._current['CompoundFraction'].append(float(txt1))
+    if QTVERSION < '4.0.0':
+        def _updateCurrent(self):
+            if DEBUG:
+                print "updateCurrent(self)"
+                print "self._current before = ", self._current
+            self._current['CompoundList']     = []
+            self._current['CompoundFraction'] = []
+            for i in range(self.__table.numRows()):
+                txt0 = str(self.__table.text(i,0))
+                txt1 = str(self.__table.text(i,1))
+                if (len(txt0) > 0) and (len(txt1) > 0):
+                    self._current['CompoundList'].append(txt0)
+                    self._current['CompoundFraction'].append(float(txt1))
+            if self.__comments:
+                self._current['Comment'] = str(self.__nameLine.text())
+            if DEBUG:
+                print "self._current after = ", self._current
+    else:
+        def _updateCurrent(self):
+            if DEBUG:
+                print "updateCurrent(self)"
+                print "self._current before = ", self._current
 
+            self._current['CompoundList']     = []
+            self._current['CompoundFraction'] = []
+            for i in range(self.__table.rowCount()):
+                item = self.__table.item(i, 0)
+                if item is None:
+                    item = qt.QTableWidgetItem("",
+                                               qt.QTableWidgetItem.Type)
+                txt0 = str(item.text())
+                item = self.__table.item(i, 1)
+                if item is None:
+                    item = qt.QTableWidgetItem("",
+                                               qt.QTableWidgetItem.Type)
+                txt1 = str(item.text())
+                if (len(txt0) > 0) and (len(txt1) > 0):
+                    self._current['CompoundList'].append(txt0)
+                    self._current['CompoundFraction'].append(float(txt1))
+            if DEBUG:
+                print "self._current after = ", self._current
 
     def __densitySlot(self):
         qstring = self.__densityLine.text()
@@ -522,7 +595,7 @@ class MaterialGUI(qt.QWidget):
             msg=qt.QMessageBox(self.__densityLine)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -539,30 +612,44 @@ class MaterialGUI(qt.QWidget):
             msg=qt.QMessageBox(self.__thicknessLine)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
             self.__thicknessLine.setFocus()
-        
+
+    def __nameLineSlot(self):
+        if DEBUG:print "__nameLineSlot(self)"
+        qstring = self.__nameLine.text()
+        text = str(qstring)
+        self._current['Comment'] = text
     
     def __numberSpinChanged(self,value):
         #size = self.__table.size()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.__table.setNumRows(value)
         else:
             self.__table.setRowCount(value)
             rheight = self.__table.horizontalHeader().sizeHint().height()
-            for idx in range(self.__table.rowCount()):
+            nrows = self.__table.rowCount()
+            for idx in range(nrows):
                 self.__table.setRowHeight(idx, rheight)
-
-        #self.__table.setFixedSize(size)
-        #self.__table.resizeContents(self.__table.width(), self.__table.height())
-        #self.__table.adjustSize()
-
+        if len(self._current['CompoundList']) > value:
+            self._current['CompoundList'] = self._current['CompoundList'][0:value]
+        if len(self._current['CompoundFraction']) > value:
+            self._current['CompoundFraction'] = self._current['CompoundFraction'][0:value]
 
     def __tableSlot(self,row, col):
-        qstring = self.__table.text(row,col)
+        if self.__fillingValues:return
+        if QTVERSION < '4.0.0':
+            qstring = self.__table.text(row,col)
+        else:
+            item = self.__table.item(row, col)
+            if item is not None:
+                if DEBUG:print "table item is None"
+                qstring = item.text()
+            else:
+                qstring = ""
         if col == 0:
             compound = str(qstring)
             if Elements.isValidFormula(compound):
@@ -578,7 +665,7 @@ class MaterialGUI(qt.QWidget):
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Invalid Formula %s" % compound)
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         msg.exec_loop()
                     else:
                         msg.exec_()
@@ -591,7 +678,7 @@ class MaterialGUI(qt.QWidget):
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -600,6 +687,7 @@ class MaterialGUI(qt.QWidget):
         self._updateCurrent()
 
     def __tableSlot2(self,row, col):
+        if self.__fillingValues:return
         if self.__lastRow is None:
             self.__lastRow = row
         
@@ -622,7 +710,7 @@ class MaterialGUI(qt.QWidget):
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Invalid Formula %s" % compound)
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         msg.exec_loop()
                     else:
                         msg.exec_()
@@ -635,7 +723,7 @@ class MaterialGUI(qt.QWidget):
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     msg.exec_loop()
                 else:
                     msg.exec_()
@@ -648,25 +736,25 @@ class MyQLineEdit(qt.QLineEdit):
         qt.QLineEdit.__init__(self,parent)
 
     def focusInEvent(self,event):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setPaletteBackgroundColor(qt.QColor('yellow'))
 
     def focusOutEvent(self,event):
         if 0:
             self.setPaletteBackgroundColor(qt.QColor('white'))       
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.SIGNAL("returnPressed()"),())
             else:
                 self.emit(qt.SIGNAL("returnPressed()"))
         
     def setPaletteBackgroundColor(self, qcolor):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             palette = self.palette()
             palette.setColor(qt.QColorGroup.Base,qcolor)
             self.setPalette(palette)
             text = self.text()
             self.setText(text)
-        elif qt.qVersion() < '4.0.0':
+        elif QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,qcolor)
         else:
             if 0:
