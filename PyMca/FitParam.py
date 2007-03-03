@@ -386,7 +386,12 @@ class FitParamWidget(FitParamForm):
                 print "ERROR in __setAttPar"                
             self.attTable.setText(row, 3, str(attpar[2]))
             self.attTable.setText(row, 4, str(attpar[3]))
+
+        current = self.tabAttenuators.editor.matCombo.currentText()   
         self.tabAttenuators.editor.matCombo.setOptions(matlist)
+
+        #force update of all the parameters
+        self.tabAttenuators.editor.matCombo._mySignal(current)
 
     def __getAttPar(self):
         pars= {}
