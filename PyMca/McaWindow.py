@@ -72,7 +72,7 @@ class McaWidget(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(name)
-        self.outputdir = None
+        self.outputDir = None
         """ 
         class McaWidget(qt.QSplitter):
             def __init__(self, parent=None, specfit=None,fl=None,**kw):
@@ -464,13 +464,13 @@ class McaWidget(qt.QWidget):
                 msg.exec_()
             return
         #get outputfile
-        if self.outputdir is None:
-            self.outputdir = os.getcwd()
+        if self.outputDir is None:
+            self.outputDir = os.getcwd()
             wdir = os.getcwd()
-        elif os.path.exists(self.outputdir): wdir = self.outputdir
+        elif os.path.exists(self.outputDir): wdir = self.outputDir
         else:
-            self.outputdir = os.getcwd()
-            wdir = self.outputdir
+            self.outputDir = os.getcwd()
+            wdir = self.outputDir
             
         if QTVERSION < '4.0.0':
             outfile = qt.QFileDialog(self,"Output File Selection",1)
@@ -494,17 +494,17 @@ class McaWidget(qt.QWidget):
             filetype  = filterused[1]
             extension = filterused[2]
             if QTVERSION < '4.0.0':
-                self.outdir=str(outfile.selectedFile())
+                outdir=str(outfile.selectedFile())
             else:
-                self.outdir=str(outfile.selectedFiles()[0])
+                outdir=str(outfile.selectedFiles()[0])
             try:            
-                outputDir  = os.path.dirname(self.outdir)
+                self.outputDir  = os.path.dirname(outdir)
             except:
-                outputDir  = "."
+                self.outputDir  = "."
             try:            
-                outputFile = os.path.basename(self.outdir)
+                outputFile = os.path.basename(outdir)
             except:
-                outputFile  = self.outdir
+                outputFile  = outdir
             outfile.close()
             del outfile
         else:
@@ -546,7 +546,7 @@ class McaWidget(qt.QWidget):
             outputFile += extension[1:]
         elif outputFile[-4:] != extension[1:]:
             outputFile += extension[1:]
-        specFile = os.path.join(outputDir, outputFile)
+        specFile = os.path.join(self.outputDir, outputFile)
         try:
             os.remove(specFile)
         except:
