@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,7 +28,7 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.88 $"
+__revision__ = "$Revision: 1.89 $"
 import string
 import Numeric
 import imp
@@ -2240,6 +2240,10 @@ def getxrayenergy(symbol,transition):
     return emax - emin
 
 def isValidFormula(compound):
+    #Avoid Fe 2 or Fe-2 or SRM-1832 being considered as valid formulae
+    for c in [" ", "-", "_"]:
+        if c in compound:
+            return False
     #single element case
     if compound in Element.keys():return True
     try:
