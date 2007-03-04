@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.38 $"
+__revision__ = "$Revision: 1.39 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -765,7 +765,7 @@ class SectionFileDialog(qt.QFileDialog):
             strlist.append("All Files *")
             self.setFilters(strlist)
         if initdir is not None:
-            if os.path.exists(initdir):
+            if os.path.isdir(initdir):
                 self.setDir(qt.QString(initdir))
                 
         if QTVERSION < '4.0.0':     
@@ -934,7 +934,7 @@ class FitParamDialog(qt.QDialog):
             self.initDir = os.path.dirname(filename)
         except:
         #else:
-            self.initDir = None
+            #self.initDir = None
             qt.QMessageBox.critical(self, "Load Parameters",
                 "ERROR while loading parameters from\n%s"%filename, 
                 qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
@@ -972,7 +972,7 @@ class FitParamDialog(qt.QDialog):
             qt.QMessageBox.critical(self, "Save Parameters", 
                 "ERROR while saving parameters to\n%s"%filename,
                 qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
-            self.initDir = None
+            #self.initDir = None
             return 0
 
     def setFitResult(self, result = None):
@@ -1069,7 +1069,7 @@ class FitParamDialog(qt.QDialog):
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
                 initdir = os.path.curdir
                 if self.initDir is not None:
-                    if os.path.exists(self.initDir):
+                    if os.path.isdir(self.initDir):
                         initdir = self.initDir
                 filename = filedialog.getOpenFileName(
                             self,
@@ -1079,13 +1079,14 @@ class FitParamDialog(qt.QDialog):
                 filename = str(filename)
                 if len(filename):
                     self.loadParameters(filename, None)
+                    self.initDir = os.path.dirname(filename)
             else:
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.ExistingFiles)
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
                 initdir = os.path.curdir
                 if self.initDir is not None:
-                    if os.path.exists(self.initDir):
+                    if os.path.isdir(self.initDir):
                         initdir = self.initDir
                 filename = filedialog.getOpenFileName(
                             self,
@@ -1095,6 +1096,8 @@ class FitParamDialog(qt.QDialog):
                 filename = str(filename)
                 if len(filename):
                     self.loadParameters(filename, None)
+                    self.initDir = os.path.dirname(filename)
+        
           
 
     def save(self):
@@ -1114,7 +1117,7 @@ class FitParamDialog(qt.QDialog):
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
                 initdir = os.path.curdir
                 if self.initDir is not None:
-                    if os.path.exists(self.initDir):
+                    if os.path.isdir(self.initDir):
                         initdir = self.initDir
                 filename = filedialog.getSaveFileName(
                             self,
@@ -1128,13 +1131,14 @@ class FitParamDialog(qt.QDialog):
                     elif filename[-4:] != ".cfg":
                         filename = filename+".cfg"
                     self.saveParameters(filename, None)
+                    self.initDir = os.path.dirname(filename)
             else:
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.AnyFile)
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
                 initdir = os.path.curdir
                 if self.initDir is not None:
-                    if os.path.exists(self.initDir):
+                    if os.path.isdir(self.initDir):
                         initdir = self.initDir
                 filename = filedialog.getSaveFileName(
                             self,
@@ -1148,7 +1152,8 @@ class FitParamDialog(qt.QDialog):
                     elif filename[-4:] != ".cfg":
                         filename = filename+".cfg"
                     self.saveParameters(filename, None)
-
+                    self.initDir = os.path.dirname(filename)
+                    
 def openWidget():
     app= qt.QApplication(sys.argv)
     app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
