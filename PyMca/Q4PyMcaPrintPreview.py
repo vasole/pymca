@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,7 +28,7 @@ import sys
 import os
 import PyQt4.Qt as qt
 DEBUG = 0
-__revision__="$Revision: 1.6 $"
+__revision__="$Revision: 1.7 $"
 
 # TODO:
 # - automatic picture centering
@@ -371,7 +371,9 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             color = qt.QColor()
             color.setAlpha(0)
             pen.setColor(color)
+            pen.setStyle(qt.Qt.NoPen)
             self.setPen(pen)
+            self.setBrush(color)            
         self.setFlag(self.ItemIsMovable, True)
         self.show()
 
