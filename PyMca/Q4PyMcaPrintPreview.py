@@ -368,7 +368,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             self.setBrush(qt.QBrush(qt.Qt.white, qt.Qt.SolidPattern))
         else:
             pen = qt.QPen()
-            color = qt.QColor()
+            color = qt.QColor(qt.Qt.white)
             color.setAlpha(0)
             pen.setColor(color)
             pen.setStyle(qt.Qt.NoPen)

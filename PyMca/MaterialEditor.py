@@ -657,10 +657,12 @@ class MaterialGUI(qt.QWidget):
             else:
                 matkey  = Elements.getMaterialKey(compound)
                 if matkey is not None:
-                    self.__table.setText(row,
+                    if QTVERSION < '4.0.0':
+                        self.__table.setText(row,
                                          col,
                                          matkey)
-
+                    else:
+                        item.setText(matkey)
                 else:
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
