@@ -1,3 +1,12 @@
+VERSION 4.0.6
+
+- Recover material editor functionality.
+
+- Solve a printing issue on some systems.
+  A black square was always present at the lower right corner.
+
+- Started to add functionalities to the scan window.
+
 VERSION 4.0.5
 
 - Improvements in the RGB Correlator/Post Batch tool:
