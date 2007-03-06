@@ -37,7 +37,7 @@ import ScanFit
 import SimpleMath
 import DataObject
 import copy
-
+import PyMcaPrintPreview 
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
@@ -500,8 +500,10 @@ class ScanWindow(qt.QWidget):
         self._build()
         self.fig = None
         self.scanFit = ScanFit.ScanFit(specfit=specfit)
+        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
         self.simpleMath = SimpleMath.SimpleMath()
         self.graph.canvas().setMouseTracking(1)
+        self.graph.setCanvasBackground(qt.Qt.white)
         self.outputDir = None
 
         if QTVERSION < '4.0.0':
@@ -656,27 +658,6 @@ class ScanWindow(qt.QWidget):
 
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
-        label=qt.QLabel(self.toolBar)
-        label.setText('<b>X:</b>')
-        self.toolBarLayout.addWidget(label)
-
-        self._xPos = qt.QLineEdit(self.toolBar)
-        self._xPos.setText('------')
-        self._xPos.setReadOnly(1)
-        self._xPos.setFixedWidth(self._xPos.fontMetrics().width('############'))
-        self.toolBarLayout.addWidget(self._xPos)
-
-
-        label=qt.QLabel(self.toolBar)
-        label.setText('<b>Y:</b>')
-        self.toolBarLayout.addWidget(label)
-
-        self._yPos = qt.QLineEdit(self.toolBar)
-        self._yPos.setText('------')
-        self._yPos.setReadOnly(1)
-        self._yPos.setFixedWidth(self._yPos.fontMetrics().width('############'))
-        self.toolBarLayout.addWidget(self._yPos)
-        self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
@@ -705,6 +686,35 @@ class ScanWindow(qt.QWidget):
     def _buildGraph(self):
         self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True)
         self.mainLayout.addWidget(self.graph)
+
+        self.graphBottom = qt.QWidget(self)
+        self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
+        self.graphBottomLayout.setMargin(0)
+        self.graphBottomLayout.setSpacing(0)
+        
+        label=qt.QLabel(self.graphBottom)
+        label.setText('<b>X:</b>')
+        self.graphBottomLayout.addWidget(label)
+
+        self._xPos = qt.QLineEdit(self.graphBottom)
+        self._xPos.setText('------')
+        self._xPos.setReadOnly(1)
+        self._xPos.setFixedWidth(self._xPos.fontMetrics().width('##############'))
+        self.graphBottomLayout.addWidget(self._xPos)
+
+
+        label=qt.QLabel(self.graphBottom)
+        label.setText('<b>Y:</b>')
+        self.graphBottomLayout.addWidget(label)
+
+        self._yPos = qt.QLineEdit(self.graphBottom)
+        self._yPos.setText('------')
+        self._yPos.setReadOnly(1)
+        self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
+        self.graphBottomLayout.addWidget(self._yPos)
+        self.graphBottomLayout.addWidget(HorizontalSpacer(self.graphBottom))
+        self.mainLayout.addWidget(self.graphBottom)
+
 
 
     def setDispatcher(self, w):
@@ -807,12 +817,12 @@ class ScanWindow(qt.QWidget):
                 else:
                     newDataObject.info['legend'] = legend + " " + ylegend
                 #here I should check the log or linear status
-                self.graph.newcurve(newDataObject.info['legend'],
-                                    x=xdata,
-                                    y=ydata)
                 if newDataObject.info['legend'] not in self.dataObjectsList:
                     self.dataObjectsList.append(newDataObject.info['legend'])
                 self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+                self.graph.newcurve(newDataObject.info['legend'],
+                                    x=xdata,
+                                    y=ydata)
         self.graph.replot()
 
             
@@ -877,12 +887,16 @@ class ScanWindow(qt.QWidget):
     def _graphSignalReceived(self, ddict):
         if DEBUG:print "_graphSignalReceived", ddict            
         if ddict['event'] == "MouseAt":
-            self._xPos.setText('%.4e' % ddict['x'])
-            self._yPos.setText('%.4e' % ddict['y'])
+            self._xPos.setText('%.7g' % ddict['x'])
+            self._yPos.setText('%.7g' % ddict['y'])
             return
         if ddict['event'] == "SetActiveCurveEvent":
             legend = ddict["legend"]
-            if legend is None:return
+            if legend is None:
+                if len(self.dataObjectsList):
+                    legend = self.dataObjectsList[0]
+                else:
+                    return
             splitlegend = legend.split()
             sourcename  = splitlegend[0]
             key         = splitlegend[1]
@@ -1310,8 +1324,20 @@ class ScanWindow(qt.QWidget):
     def _yMinToZeroIconSignal(self):
         if DEBUG:print "_yMinToZeroIconSignal"
         self.__simpleOperation('forceymintozero')
-        
+
+
     def printGraph(self):
+        #temporary print
+        pixmap = qt.QPixmap.grabWidget(self.graph)
+        self.printPreview.addPixmap(pixmap)
+        if self.printPreview.isHidden():
+            self.printPreview.show()
+        if QTVERSION < '4.0.0':
+            self.printPreview.raiseW()
+        else:
+            self.printPreview.raise_()
+        
+    def printGraphWork(self):
         if DEBUG:print "printGraphSignal"
 
         #get graph curvelist (not dataObjects list)??
