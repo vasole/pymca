@@ -206,8 +206,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         # and we are in auto add mode, I plot it.
         if len(self.scans) == 1:
             item = self.list.itemAt(qt.QPoint(0,0))
-            item.setSelected(True)
-            self.__selectionChanged()
+            if item is not None:
+                item.setSelected(True)
+                self.__selectionChanged()
     
     #OLD data management
     def setData(self, specfiledata):
