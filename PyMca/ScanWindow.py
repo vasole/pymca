@@ -794,6 +794,8 @@ class ScanWindow(qt.QWidget):
                         xdata = Numeric.take(xdata, index)
                         ydata = Numeric.take(ydata, index)
                         mdata = Numeric.take(dataObject.m[0], index)
+                        #A priori the graph only knows about plots
+                        ydata = ydata/mdata
                     else:
                         raise "ValueError", "Monitor data length different than counter data"
                 else:
@@ -913,6 +915,9 @@ class ScanWindow(qt.QWidget):
                 xlabel = dataObject.info['LabelNames'][ilabel]
             else:
                 xlabel = "Point Number"
+            if len(dataObject.info['selection']['m']):
+                ilabel = dataObject.info['selection']['m'][0]
+                ylabel += "/" + dataObject.info['LabelNames'][ilabel]
             self.graph.ylabel(ylabel)
             self.graph.xlabel(xlabel)
             return

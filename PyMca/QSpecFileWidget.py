@@ -155,6 +155,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.connect(self.list,
                          qt.SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"),
                          self.__doubleClicked)
+            self.connect(self.cntTable,
+                         qt.SIGNAL('SpecCntTableSignal'),
+                         self._cntSignal)
+
         self.connect(self.autoOffBox, qt.SIGNAL("clicked()"),
                      self._setAutoOff)
         self.connect(self.autoAddBox, qt.SIGNAL("clicked()"),
@@ -318,6 +322,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._autoReplace(sel)
 
     else:
+        def _cntSignal(self, ddict):
+            if ddict["event"] == "updated":                
+                itemlist = self.list.selectedItems()
+                sel = [str(item.text(1)) for item in itemlist]
+                self._autoReplace(sel)
+
+        
         def __selectionChanged(self):
             if DEBUG:print "__selectionChanged"
             itemlist = self.list.selectedItems()

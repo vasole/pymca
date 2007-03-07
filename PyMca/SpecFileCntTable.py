@@ -1,3 +1,29 @@
+#/*##########################################################################
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem to you.
+#############################################################################*/
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -302,6 +328,8 @@ else:
                 item.setText(labels[i])
                 self.setHorizontalHeaderItem(i,item)
             """
+            #the cell is not the same as the check box
+            #but I wonder about the checkboxes being destroyed
             qt.QObject.connect(self,
                          qt.SIGNAL("cellClicked(int, int)"),
                          self._mySlot)
@@ -359,6 +387,10 @@ else:
                 if len(self.xSelection) > 2:
                     #that is to support mesh plots
                     self.xSelection = self.xSelection[-2:]
+                if len(self.xSelection) > 1:
+                    self.xSelection = self.xSelection[-1:]
+                    
+
             if col == 2:
                 if ddict["state"]:
                     if row not in self.ySelection:
@@ -403,7 +435,9 @@ else:
                 else:
                     if widget.isChecked():
                         widget.setChecked(False)
-                    
+            ddict = {}
+            ddict["event"] = "updated"
+            self.emit(qt.SIGNAL('SpecCntTableSignal'), ddict)        
             
 
         def getCounterSelection(self):
