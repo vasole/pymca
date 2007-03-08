@@ -602,6 +602,7 @@ class ScanWindow(qt.QWidget):
         if QTVERSION < '4.0.0':
             self.yAutoScaleButton.setState(qt.QButton.On)
         else:
+            self.yAutoScaleButton.setChecked(True)
             self.yAutoScaleButton.setDown(True)
 
         #x Autoscale
@@ -612,6 +613,7 @@ class ScanWindow(qt.QWidget):
         if QTVERSION < '4.0.0':
             self.xAutoScaleButton.setState(qt.QButton.On)
         else:
+            self.xAutoScaleButton.setChecked(True)
             self.xAutoScaleButton.setDown(True)
 
         #y Logarithmic
@@ -622,6 +624,7 @@ class ScanWindow(qt.QWidget):
         if QTVERSION < '4.0.0':
             self.yLogButton.setState(qt.QButton.Off)
         else:
+            self.yLogButton.setChecked(False)
             self.yLogButton.setDown(False)
 
         #fit icon
@@ -777,54 +780,94 @@ class ScanWindow(qt.QWidget):
                     continue
             else:
                 xdata = dataObject.x[0]
-            #we have to loop for all y values
-            ycounter = -1
-            for ydata in dataObject.y:
-                ycounter += 1
-                newDataObject   = DataObject.DataObject()
-                newDataObject.info = copy.deepcopy(dataObject.info)
-                #newDataObject.x = [xdata]
-                #newDataObject.y = [ydata]
-                if dataObject.m is None:
-                    mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
-                elif len(dataObject.m[0]) > 0:
-                    if len(dataObject.m[0]) == len(ydata):
-                        index = Numeric.nonzero(dataObject.m[0])
-                        if not len(index): continue
-                        xdata = Numeric.take(xdata, index)
-                        ydata = Numeric.take(ydata, index)
-                        mdata = Numeric.take(dataObject.m[0], index)
-                        #A priori the graph only knows about plots
-                        ydata = ydata/mdata
+
+            sps_source = False
+            if sel.has_key('SourceType'):
+                if sel['SourceType'] == 'SPS':
+                    sps_source = True
+
+            if sps_source:
+                ycounter = -1
+                dataObject.info['selection'] = copy.deepcopy(sel['selection'])
+                for ydata in dataObject.y:
+                    ycounter += 1
+                    if dataObject.m is None:
+                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                    elif len(dataObject.m[0]) > 0:
+                        if len(dataObject.m[0]) == len(ydata):
+                            index = Numeric.nonzero(dataObject.m[0])
+                            if not len(index): continue
+                            xdata = Numeric.take(xdata, index)
+                            ydata = Numeric.take(ydata, index)
+                            mdata = Numeric.take(dataObject.m[0], index)
+                            #A priori the graph only knows about plots
+                            ydata = ydata/mdata
+                        else:
+                            raise "ValueError", "Monitor data length different than counter data"
                     else:
-                        raise "ValueError", "Monitor data length different than counter data"
-                else:
-                    mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
-                newDataObject.x = [xdata]
-                newDataObject.y = [ydata]
-                newDataObject.m = [mdata]
-                newDataObject.info['selection'] = copy.deepcopy(sel['selection'])
-                ylegend = 'y%d' % ycounter
-                if sel['selection'] is not None:
-                    if type(sel['selection']) == type({}):
-                        if sel['selection'].has_key('x'):
-                            #proper scan selection
-                            newDataObject.info['selection']['x'] = sel['selection']['x'] 
-                            newDataObject.info['selection']['y'] = [sel['selection']['y'][ycounter]]
-                            newDataObject.info['selection']['m'] = sel['selection']['m']
-                            ilabel = newDataObject.info['selection']['y'][0]
-                            ylegend = newDataObject.info['LabelNames'][ilabel]
-                if dataObject.info.has_key('operations') and len(dataObject.y) == 1:
-                    newDataObject.info['legend'] = legend 
-                else:
-                    newDataObject.info['legend'] = legend + " " + ylegend
-                #here I should check the log or linear status
-                if newDataObject.info['legend'] not in self.dataObjectsList:
-                    self.dataObjectsList.append(newDataObject.info['legend'])
-                self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
-                self.graph.newcurve(newDataObject.info['legend'],
-                                    x=xdata,
-                                    y=ydata)
+                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                    ylegend = 'y%d' % ycounter
+                    if sel['selection'] is not None:
+                        if type(sel['selection']) == type({}):
+                            if sel['selection'].has_key('x'):
+                                #proper scan selection
+                                ilabel = dataObject.info['selection']['y'][ycounter]
+                                ylegend = dataObject.info['LabelNames'][ilabel]
+                    newLegend = legend + " " + ylegend
+                    #here I should check the log or linear status
+                    if newLegend not in self.dataObjectsList:
+                        self.dataObjectsList.append(newLegend)
+                    self.dataObjectsDict[newLegend] = dataObject
+                    self.graph.newcurve(newLegend,
+                                        x=xdata,
+                                        y=ydata)
+            else:
+                #we have to loop for all y values
+                ycounter = -1
+                for ydata in dataObject.y:
+                    ycounter += 1
+                    newDataObject   = DataObject.DataObject()
+                    newDataObject.info = copy.deepcopy(dataObject.info)
+                    if dataObject.m is None:
+                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                    elif len(dataObject.m[0]) > 0:
+                        if len(dataObject.m[0]) == len(ydata):
+                            index = Numeric.nonzero(dataObject.m[0])
+                            if not len(index): continue
+                            xdata = Numeric.take(xdata, index)
+                            ydata = Numeric.take(ydata, index)
+                            mdata = Numeric.take(dataObject.m[0], index)
+                            #A priori the graph only knows about plots
+                            ydata = ydata/mdata
+                        else:
+                            raise "ValueError", "Monitor data length different than counter data"
+                    else:
+                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                    newDataObject.x = [xdata]
+                    newDataObject.y = [ydata]
+                    newDataObject.m = [mdata]
+                    newDataObject.info['selection'] = copy.deepcopy(sel['selection'])
+                    ylegend = 'y%d' % ycounter
+                    if sel['selection'] is not None:
+                        if type(sel['selection']) == type({}):
+                            if sel['selection'].has_key('x'):
+                                #proper scan selection
+                                newDataObject.info['selection']['x'] = sel['selection']['x'] 
+                                newDataObject.info['selection']['y'] = [sel['selection']['y'][ycounter]]
+                                newDataObject.info['selection']['m'] = sel['selection']['m']
+                                ilabel = newDataObject.info['selection']['y'][0]
+                                ylegend = newDataObject.info['LabelNames'][ilabel]
+                    if dataObject.info.has_key('operations') and len(dataObject.y) == 1:
+                        newDataObject.info['legend'] = legend 
+                    else:
+                        newDataObject.info['legend'] = legend + " " + ylegend
+                    #here I should check the log or linear status
+                    if newDataObject.info['legend'] not in self.dataObjectsList:
+                        self.dataObjectsList.append(newDataObject.info['legend'])
+                    self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+                    self.graph.newcurve(newDataObject.info['legend'],
+                                        x=xdata,
+                                        y=ydata)
         self.graph.replot()
 
             
@@ -961,10 +1004,11 @@ class ScanWindow(qt.QWidget):
         if DEBUG:print "_yAutoScaleToggle"
         if self.graph.yAutoScale:
             self.graph.yAutoScale = False
+            self.yAutoScaleButton.setDown(False)
             if QTVERSION < '4.0.0':
                 self.yAutoScaleButton.setState(qt.QButton.Off)
             else:
-                self.yAutoScaleButton.setDown(False)
+                self.yAutoScaleButton.setChecked(False)
         else:
             self.graph.yAutoScale = True
             if QTVERSION < '4.0.0':
@@ -976,16 +1020,18 @@ class ScanWindow(qt.QWidget):
         if DEBUG:print "_xAutoScaleToggle"
         if self.graph.xAutoScale:
             self.graph.xAutoScale = False
+            self.xAutoScaleButton.setDown(False)
             if QTVERSION < '4.0.0':
                 self.xAutoScaleButton.setState(qt.QButton.Off)
             else:
-                self.xAutoScaleButton.setDown(False)
+                self.xAutoScaleButton.setChecked(False)
         else:
             self.graph.xAutoScale = True
+            self.xAutoScaleButton.setDown(True)
             if QTVERSION < '4.0.0':
                 self.xAutoScaleButton.setState(qt.QButton.On)
             else:
-                self.xAutoScaleButton.setDown(True)
+                self.xAutoScaleButton.setChecked(True)
                        
                        
     def _toggleLogY(self):
@@ -1121,8 +1167,6 @@ class ScanWindow(qt.QWidget):
                 xlabel = dataObject.info['LabelNames'][ilabel]
             else:
                 xlabel = "Point Number"
-            #print "xlabel = ", xlabel
-            #print "ylabel = ", ylabel
         else:
             x = []
             y = []
@@ -1130,9 +1174,26 @@ class ScanWindow(qt.QWidget):
             i = 0
             ndata = 0
             for key in self.graph.curves.keys():
+                if DEBUG:print "key -> ", key
                 if key in self.dataObjectsDict.keys():
-                    x.append(self.dataObjectsDict[key].x[0])
-                    y.append(self.dataObjectsDict[key].y[0])
+                    x.append(self.dataObjectsDict[key].x[0]) #only the first X
+                    if len(self.dataObjectsDict[key].y) == 1:
+                        y.append(self.dataObjectsDict[key].y[0])
+                    else:
+                        sel_legend = self.dataObjectsDict[key].info['legend']
+                        ilabel = 0
+                        #I have to get the proper y associated to the legend
+                        if sel_legend in key:
+                            if key.index(sel_legend) == 0:
+                                label = key[len(sel_legend):]
+                                while (label.startswith(' ')):
+                                    label = label[1:]
+                                    if not len(label):
+                                        break
+                                if label in self.dataObjectsDict[key].info['LabelNames']:
+                                    ilabel = self.dataObjectsDict[key].info['LabelNames'].index(label)
+                                if DEBUG: print "LABEL = ", label, "ilabel = ", ilabel
+                        y.append(self.dataObjectsDict[key].y[ilabel])
                     if i == 0:
                         legend = key
                         firstcurve = key
@@ -1201,20 +1262,21 @@ class ScanWindow(qt.QWidget):
         if not newDataObject.info.has_key('operations'):
             newDataObject.info['operations'] = []
         newDataObject.info['operations'].append(operation)
+
+        sel = {}
+        sel['SourceType'] = "Operation"
         #get new x and new y
         if operation == "derivate":
             xplot, yplot = self.simpleMath.derivate(x, y)
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             newDataObject.info['LabelNames'][ilabel] = ylabel+"'"
-            sel = {}
             sel['SourceName'] = legend
             sel['Key']    = "'"
             sel['legend'] = legend + sel['Key']
             outputlegend  = legend + sel['Key']
         elif operation == "average":
             xplot, yplot = self.simpleMath.average(x, y)
-            sel = {}
             sel['SourceName'] = legend
             sel['Key']    = ""
             sel['legend'] = "(%s)/%d" % (legend, ndata)
@@ -1222,7 +1284,6 @@ class ScanWindow(qt.QWidget):
         elif operation == "swapsign":
             xplot =  x * 1
             yplot = -y
-            sel = {}
             sel['SourceName'] = legend
             sel['Key']    = ""
             sel['legend'] = "-(%s)" % legend
@@ -1230,7 +1291,6 @@ class ScanWindow(qt.QWidget):
         elif operation == "smooth":
             xplot =  x * 1
             yplot = self.simpleMath.smooth(y)
-            sel = {}
             sel['SourceName'] = legend
             sel['Key']    = ""
             sel['legend'] = "%s Smooth" % legend
@@ -1243,7 +1303,6 @@ class ScanWindow(qt.QWidget):
         elif operation == "forceymintozero":
             xplot =  x * 1
             yplot =  y - min(y)
-            sel = {}
             sel['SourceName'] = legend
             sel['Key']    = ""
             sel['legend'] = "(%s) - ymin" % legend
@@ -1296,13 +1355,13 @@ class ScanWindow(qt.QWidget):
                 self.__fitDataObject = newDataObject
                 return
 
+            if newDataObject.info['legend'] not in self.dataObjectsList:
+                self.dataObjectsList.append(newDataObject.info['legend'])
+            self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             #here I should check the log or linear status
             self.graph.newcurve(newDataObject.info['legend'],
                                 x=xplot,
                                 y=yplot)
-            if newDataObject.info['legend'] not in self.dataObjectsList:
-                self.dataObjectsList.append(newDataObject.info['legend'])
-            self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
         self.graph.replot()
 
     def getActiveCurve(self):

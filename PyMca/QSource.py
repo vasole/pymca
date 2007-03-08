@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -33,7 +33,7 @@ else:
     except:
         import qt
 QTVERSION = qt.qVersion()
-
+DEBUG = 0
 SOURCE_EVENT = qt.QEvent.User
 
 if QTVERSION < '4.0.0':
@@ -84,7 +84,7 @@ class QSource(qt.QObject):
         key        = dataObject.info['Key']
 
         def dataObjectDestroyed(ref, dataObjectKey=key):
-            #print 'data object destroyed, key was %s' % key
+            if DEBUG: print 'data object destroyed, key was %s' % key
             i = self.surveyDict[dataObjectKey].index(ref)
             """
             event = SourceEvent()
@@ -95,9 +95,19 @@ class QSource(qt.QObject):
             qt.QApplication.postEvent(self.sourceObject, event)
             """
             del self.surveyDict[dataObjectKey][i]
-            
+            n = len(self.surveyDict[dataObjectKey])
+            if n > 0:
+                n = range(n)
+                n.reverse()
+                for i in n:
+                    if not len(dir(self.surveyDict[dataObjectKey][i])):
+                        del self.surveyDict[dataObjectKey][i]
+
             if len(self.surveyDict[dataObjectKey]) == 0:
                 del self.surveyDict[dataObjectKey]
+                
+            if DEBUG:print "SURVEY DICT AFTER DELETION = ", self.surveyDict            
+            return
 
         # create a weak reference to the dataObject and we call it dataObjectRef
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
@@ -107,6 +117,9 @@ class QSource(qt.QObject):
                 self.surveyDict[key].append(dataObjectRef)
         except KeyError:
             self.surveyDict[key] = [dataObjectRef]
+        except ReferenceError:
+            if DEBUG: print "NOT ADDED TO THE POLL dataObject = ", dataObject
+        if DEBUG:print "SURVEY DICT AFTER ADDITION = ", self.surveyDict
 
         if self.pollerThreadId is None:
             # start a new polling thread
@@ -120,26 +133,40 @@ class QSource(qt.QObject):
             #for key in self.surveyDict is dangerous
             # runtime error: dictionnary changed during iteration
             # a mutex is needed
-            #print "IN LOOP"
-            for key in self.surveyDict:
-                #print " CUCU"
+            if DEBUG:print "In loop"
+            dummy = self.surveyDict.keys()
+            #for key in self.surveyDict:
+            for key in dummy:
                 if self.isUpdated(self.sourceName, key):
-                    #print self.sourceName,key,"s updated"
-                    if len(self.surveyDict[key]):
-                        #there are still instances of dataObjects
-                        event = SourceEvent()
-                        event.dict['Key']   = key
-                        event.dict['event'] = 'updated'
-                        event.dict['id']    = self.surveyDict[key]
+                    if DEBUG:print self.sourceName,key,"is updated"
+                    try:
+                        n = len(self.surveyDict[key])
+                        if n > 2:
+                            n = range(n)
+                            n.reverse()
+                            for i in n:
+                                if not len(dir(self.surveyDict[key][i])):
+                                    del self.surveyDict[key][i]
 
-                        try:
-                            qt.qApp.processEvents()
-                            if QTVERSION < '4.0.0':qt.qApp.lock()
-                            qt.QApplication.postEvent(self, event)
-                        finally:
-                            if QTVERSION < '4.0.0':qt.qApp.unlock()
-            #print "sleeping"
+                        if len(self.surveyDict[key]):
+                            #there are still instances of dataObjects
+                            event = SourceEvent()
+                            event.dict['Key']   = key
+                            event.dict['event'] = 'updated'
+                            event.dict['id']    = self.surveyDict[key]
+                            event.dict['scanselection'] = True
+                            try:
+                                qt.qApp.processEvents()
+                                if QTVERSION < '4.0.0':qt.qApp.lock()
+                                qt.QApplication.postEvent(self, event)
+                            finally:
+                                if QTVERSION < '4.0.0':qt.qApp.unlock()
+                        else:
+                            del self.surveyDict[key]
+                    except KeyError:
+                        if DEBUG:print "key error in loop"
+                        pass
             time.sleep(self._pollTime)
-            #print " woke up"
+            if DEBUG:print "woke up"
             
         self.pollerThreadId = None

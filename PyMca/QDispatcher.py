@@ -254,6 +254,8 @@ class QDispatcher(qt.QWidget):
             sel['Key']        = ddict['Key']
             sel['selection']  = objectReference.info['selection']
             sel['legend']     = objectReference.info['legend']
+            if 'scanselection' in objectReference.info.keys():
+                sel['scanselection']  = objectReference.info['scanselection']
             sel_list.append(sel)
         self._addSelectionSlot(sel_list)
 

@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,6 +28,8 @@ import DataObject
 import types
 import copy
 import spswrap as sps
+import string
+DEBUG = 0
 
 SOURCE_TYPE = 'SPS'
 
@@ -87,6 +89,39 @@ class SpsDataSource:
                 data.data=sps.getdata (self.name,key)
                 if nolist:
                     if selection is not None:
+                        if (key in ["SCAN_D"]) and selection.has_key('cntlist'):
+                            data.x = None
+                            data.y = None
+                            data.m = None
+                            nopts  = string.atoi(data.info['envdict']['nopts'])
+                            if selection.has_key('x'):
+                                for labelindex in selection['x']:
+                                    label = data.info['LabelNames'][labelindex]
+                                    if label not in data.info['LabelNames']:
+                                        raise "ValueError", "Label %s not in scan labels" % label
+                                    index = data.info['LabelNames'].index(label)
+                                    if data.x is None: data.x = []
+                                    data.x.append(data.data[:nopts, index])
+                            if selection.has_key('y'):
+                                for labelindex in selection['y']:
+                                    label = data.info['LabelNames'][labelindex]
+                                    if label not in data.info['LabelNames']:
+                                        raise "ValueError", "Label %s not in scan labels" % label
+                                    index = data.info['LabelNames'].index(label)
+                                    if data.y is None: data.y = []
+                                    data.y.append(data.data[:nopts, index])
+                            if selection.has_key('m'):
+                                for labelindex in selection['m']:
+                                    label = data.info['LabelNames'][labelindex]
+                                    if label not in data.info['LabelNames']:
+                                        raise "ValueError", "Label %s not in scan labels" % label
+                                    index = data.info['LabelNames'].index(label)
+                                    if data.m is None: data.m = []
+                                    data.m.append(data.data[:nopts, index])
+                            data.info['selectiontype'] = "1D"
+                            data.info['scanselection'] = True
+                            data.data = None 
+                            return data
                         if (key in ["XIA_DATA"]) and selection.has_key("XIA"):
                             if selection["XIA"]:
                                 if data.info.has_key('Detectors'):
@@ -138,6 +173,9 @@ class SpsDataSource:
             val=sps.getenv(self.name,array+"_ENV",i)
             envdict[i]=val
         info["envdict"]=envdict
+        if array in ["SCAN_D"]:
+            if info["envdict"].has_key('axistitles'):
+                info["LabelNames"] = self._buildLabelsList(info['envdict']['axistitles'])
 
         calibarray= array + "_PARAM"
         if calibarray in sps.getarraylist(self.name):
@@ -160,14 +198,57 @@ class SpsDataSource:
                     info["Detectors"]= data.tolist()[0]
                     info["env_updatecounter"]= updc
                 except:
-                    pass
-        
+                    pass        
         return info
+
+    def _buildLabelsList(self, instr):
+       if DEBUG:
+           print 'SpsDataSource : building counter list'
+       state = 0
+       llist  = ['']
+       for letter in instr:
+          if state == 0:
+             if letter == ' ':
+                state = 1
+             elif letter == '{':
+                state = 2
+             else:
+                llist[-1] = llist[-1] + letter
+          
+          elif state == 1:
+             if letter == ' ':
+                 pass
+             elif letter == '{':
+                 state = 2
+                 llist.append('')
+             else:
+                llist.append(letter)
+                state = 0
+
+          elif state == 2:
+             if letter == '}':
+                state = 0
+             else:
+                llist[-1] = llist[-1] + letter
+
+       try:
+            llist.remove('')
+       except ValueError:
+            pass
+
+       return llist
 
     def isUpdated(self, sourceName, key):
         if sps.specrunning(sourceName):
             if sps.isupdated(sourceName, key):
                 return True
+
+            #return True if its environment is updated
+            envkey = key+"_ENV" 
+            if envkey in sps.getarraylist(sourceName):
+                if sps.isupdated(sourceName, envkey):
+                    return True
+                
         return False
 
 source_types = { SOURCE_TYPE: SpsDataSource}

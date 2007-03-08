@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -35,16 +35,60 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
+import SpecFileCntTable
 QTVERSION = qt.qVersion()
 import Icons as icons
 DEBUG = 0
-PYDVT = 0
+
 SOURCE_TYPE = 'SPS'
+SCAN_MODE = True
 
 if QTVERSION > '4.0.0':
     class QGridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
+   
+
+class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
+    def setInfo(self, info):
+        if DEBUG: 
+            print "info = ", info
+        if info.has_key("envdict"):
+            #We have environment information
+            if info["envdict"]["datafile"] != "/dev/null":
+                print "I should send a signal, either from here or from the parent to the dispatcher"
+                if DEBUG:print "SPEC data file = ", datafile
+            #usefull keys = ["datafile", "scantype", "axistitles","plotlist", "xlabel", "ylabel"]
+            #
+            #info = self.data.getKeyInfo(sel[0])
+            #except:
+            #    info, data = self.data.LoadSource(sel[0])
+            cntList = info["LabelNames"]
+            ycntidx = info["envdict"]['plotlist']
+            if len(ycntidx):
+                ycntidx   = ycntidx.split(',')
+            self.build(cntList)
+            #self.cntTable.setCounterSelection(self._oldCntSelection)
+            
+    def getSelection(self):
+        #get selected counter keys
+        cnt_sel = self.getCounterSelection()
+        sel_list = []
+        
+        #build the appropriate selection for mca's
+        if len(cnt_sel['cntlist']):
+            if len(cnt_sel['y']): #if there is something to plot
+                #for index in cnt_sel['y']:
+                    sel = {}
+                    sel['selection'] = {}
+                    sel['plot'] = 'scan'
+                    sel['scanselection']  = True
+                    sel['selection']['x'] = cnt_sel['x'] 
+                    sel['selection']['y'] = cnt_sel['y'] 
+                    sel['selection']['m'] = cnt_sel['m']
+                    sel['selection']['cntlist'] = cnt_sel['cntlist']
+                    sel_list.append(sel)
+        return sel_list
 
 
 class SPSMcaArrayWidget(qt.QWidget):
@@ -73,8 +117,8 @@ class SPSMcaArrayWidget(qt.QWidget):
         self.setTitle(title)
         
     def setInfo(self, info):
-	self.setSize(info["rows"], info["cols"])
-	self.setTitle(info["Key"])
+        self.setSize(info["rows"], info["cols"])
+        self.setTitle(info["Key"])
 
     def setSize(self,rows,cols,selsize=None):
         self.rows= rows
@@ -129,8 +173,8 @@ class SPSXiaArrayWidget(qt.QWidget):
         self.title.setText("%s"%title)
 
     def setInfo(self, info):
-	self.setSize(info["rows"], info["cols"], info.get("Detectors", None))
-	self.setTitle(info["Key"])
+        self.setSize(info["rows"], info["cols"], info.get("Detectors", None))
+        self.setTitle(info["Key"])
 
     def setSize(self, rows, cols, dets=None):
         self.rows= rows
@@ -272,9 +316,11 @@ class SPS_StandardArray(qt.QWidget):
 
 
 class QSpsWidget(qt.QWidget):
-    HiddenArrays= ["SCAN_D", "MCA_DATA_PARAM", "XIA_STAT", "XIA_DET"]
-    WidgetArrays= {"xia": SPSXiaArrayWidget, "mca": SPSMcaArrayWidget, "array": SPS_StandardArray, "empty": qt.QWidget}
-    TypeArrays= {"MCA_DATA": "mca", "XIA_PLOT": "mca", "XIA_DATA": "xia", "XIA_BASELINE":"xia"}
+    HiddenArrays= ["MCA_DATA_PARAM", "XIA_STAT", "XIA_DET"]
+    WidgetArrays= {"scan":SPSScanArrayWidget, "xia": SPSXiaArrayWidget, "mca": SPSMcaArrayWidget, "array": SPS_StandardArray, "empty": qt.QWidget}
+    TypeArrays= {"MCA_DATA": "mca", "XIA_PLOT": "mca",
+                "XIA_DATA": "xia", "XIA_BASELINE":"xia",
+                "SCAN_D": "scan" }
 
     def __init__(self, parent=None, name="SPSSelector", fl=0):
         if QTVERSION < '4.0.0':
@@ -481,6 +527,7 @@ class QSpsWidget(qt.QWidget):
                     cols= info[1]
                     type= info[2]
                     flag= info[3]
+                    if DEBUG: print " array = ", array, " flag = ", flag, " type = ", type
                     if flag in (sps.IS_ARRAY, sps.IS_MCA, sps.IS_IMAGE) and type!=sps.STRING:
                         arraylist[array]= (rows, cols)
             if len(arraylist.keys()):
@@ -607,6 +654,30 @@ class QSpsWidget(qt.QWidget):
                                         " "+selsignal['Key']+\
                                         " #%02d" % int(selection['y'])
 
+                elif selection['plot'] == 'scan':
+                     if SCAN_MODE:
+                         #sel[arrayname]['cols'].append({'x':selection['selection']['x'][0],
+                         #                               'y':selection['selection']['y'][0]})
+                         selsignal["selection"] = selection['selection']
+                         selsignal['legend'] = self.data.sourceName + " " + \
+                                              selsignal['Key']
+                         selsignal['scanselection'] = True
+                         #print "cheeting"
+                         #selsignal['scanselection'] = False
+                     else:
+                         #do it as a col
+                         sel[arrayname]['cols'].append({'x':selection['selection']['x'],
+                                                        'y':selection['selection']['y']})
+                         selsignal["selection"] = {'cols':{}}
+                         print selection['selection']['x']
+                         selsignal["selection"]["cols"]["x"] = selection['selection']['x']
+                         selsignal["selection"]["cols"]["y"] = selection['selection']['y']
+                         selsignal['legend'] = self.data.sourceName + " " + \
+                                               selsignal['Key']
+                         selsignal['scanselection'] = True
+                         #print "cheeting"
+                         #selsignal['scanselection'] = False
+
                 sellistsignal.append(selsignal)
             self.setSelected([sel],reset=1)
             if QTVERSION < '4.0.0':
@@ -685,6 +756,29 @@ class QSpsWidget(qt.QWidget):
                      selsignal["legend"] = sname[0] +\
                                         " "+selsignal['Key']+\
                                         ".r.%d" % int(selection['y'])
+                elif selection['plot'] == 'scan':
+                     if SCAN_MODE:
+                         #sel[arrayname]['cols'].append({'x':selection['selection']['x'][0],
+                         #                               'y':selection['selection']['y'][0]})
+                         selsignal["selection"] = selection['selection']
+                         selsignal['legend'] = self.data.sourceName + " " + \
+                                              selsignal['Key']
+                         selsignal['scanselection'] = True
+                         #print "cheeting"
+                         #selsignal['scanselection'] = False
+                     else:
+                         #do it as a col
+                         sel[arrayname]['cols'].append({'x':selection['selection']['x'],
+                                                        'y':selection['selection']['y']})
+                         selsignal["selection"] = {'cols':{}}
+                         print selection['selection']['x']
+                         selsignal["selection"]["cols"]["x"] = selection['selection']['x']
+                         selsignal["selection"]["cols"]["y"] = selection['selection']['y']
+                         selsignal['legend'] = self.data.sourceName + " " + \
+                                               selsignal['Key']
+                         selsignal['scanselection'] = True
+                         #print "cheeting"
+                         #selsignal['scanselection'] = False
                 sellistsignal.append(selsignal)
             if self.selection is None: 
                 self.setSelected([sel],reset=1)
@@ -773,6 +867,13 @@ class QSpsWidget(qt.QWidget):
                      selsignal["legend"] = sname[0] +\
                                         " "+selsignal['Key']+\
                                         " #%02d" % int(selection['y'])
+                elif selection['plot'] == 'scan':
+                     #sel[arrayname]['cols'].append({'x':selection['selection']['x'][0],
+                     #                               'y':selection['selection']['y'][0]})
+                     selsignal["selection"] = selection['selection']
+                     selsignal['legend'] = self.data.sourceName + " " + \
+                                          selsignal['Key']
+                     selsignal['scanselection'] = True
 
                 sellistsignal.append(selsignal)
                 returnedselection.append(sel)
@@ -958,7 +1059,10 @@ def test():
     if PYDVT:
         import SPSData
     else:
-        import SPSLayer
+        if 0:
+            import SPSLayer
+        else:
+            import QSpsDataSource
     def repSelection(sel): print "repSelection", sel
     def addSelection(sel): print "addSelection", sel
 
@@ -977,8 +1081,8 @@ def test():
         qt.QObject.connect(w,qt.SIGNAL("addSelection"),addSelection)
         qt.QObject.connect(w,qt.SIGNAL("removeSelection"),removeSelection)
         qt.QObject.connect(w,qt.SIGNAL("replaceSelection"),repSelection)
-    d = SPSLayer.SPSLayer()
-    w.setData(d)
+    #d = QSpsDataSource.QSpsDataSource()
+    #w.setData(d)
     """
     w.eh.register("addSelection", addSelection)
     w.eh.register("repSelection", repSelection)
