@@ -108,7 +108,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
             # --- signal handling
             self.connect(self.list, qt.SIGNAL("selectionChanged()"), self.__selectionChanged)
-            if qt.qVersion() > '3.0.0':
+            if QTVERSION > '3.0.0':
                 self.connect(self.list, qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
             else:
                 self.connect(self.list, qt.SIGNAL("rightButtonPressed(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
@@ -271,7 +271,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.scans= []
 
     def markScanSelected(self, scanlist):
-        if qt.qVersion() > '3.0.0':
+        if QTVERSION > '3.0.0':
             for sn in self.scans:
                 item= self.list.findItem(sn, 1)
                 if item is not None:
@@ -301,7 +301,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     if QTVERSION < '4.0.0':
         def __selectionChanged(self):
             if DEBUG:print "__selectionChanged"
-            if qt.qVersion() > '3.0.0':
+            if QTVERSION > '3.0.0':
                 sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
             else:
                 sel = []
@@ -339,11 +339,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             info = self.data.getKeyInfo(sel[0])
             #except:
             #    info, data = self.data.LoadSource(sel[0])
+            self.mcaTable.build(info)
             self.cntTable.build(info['LabelNames'])
             if self._oldCntSelection is not None:
                 if len(self._oldCntSelection['y']):
                     self.cntTable.setCounterSelection(self._oldCntSelection)
-            self.mcaTable.build(info)
             self.emit(qt.SIGNAL("scanSelection"), (sel))
             self._autoReplace(sel)
 
@@ -364,7 +364,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             #for the time being just add
             self._addClicked()
 
-    if qt.qVersion() < '4.0.0':        
+    if QTVERSION < '4.0.0':        
         def __contextMenu(self, item, point, col=None):
             if DEBUG:print "__contextMenu"
             if item is not None:
@@ -384,7 +384,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def __showScanInfo(self, idx = None):
         if idx is None:
-            if qt.qVersion() > '4.0.0': 
+            if QTVERSION > '4.0.0': 
                 idx = self.menu_idx
         if DEBUG:
             print "Scan information:"
@@ -397,7 +397,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
-            if qt.qVersion() > '3.0.0':
+            if QTVERSION > '3.0.0':
                 scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
             else:
                 scan_sel = []
@@ -455,7 +455,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
-            if qt.qVersion() > '3.0.0':
+            if QTVERSION > '3.0.0':
                 scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
             else:
                 scan_sel = []
@@ -513,7 +513,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         #get selected scan keys
         #get selected scan keys
         if QTVERSION < '4.0.0':
-            if qt.qVersion() > '3.0.0':
+            if QTVERSION > '3.0.0':
                 scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
             else:
                 scan_sel = []
