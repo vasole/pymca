@@ -1975,7 +1975,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 
         return 0
 
-    def curveinit(self,key,**kw):
+    def curveinit(self,key, symbol=None, line=None, **kw):
         self.curves[key] =  {}
         #self.curves[key] =  self.insertCurve(key)
         if len(kw.keys()):
@@ -1990,19 +1990,45 @@ class QtBlissGraph(qwt.QwtPlot):
             self.curves[key] ["curve"] = self.insertCurve(key)
         self.curves[key] ["name"] = qt.QString(str(key))
         self.curveslist.append(key)
-        if kw.has_key("symbol"):
-            self.curves[key] ["symbol"] = kw["symbol"] 
-        else:
-            self.curves[key] ["symbol"] = self.getnewsymbol()        
+        self.curves[key] ["symbol"] = self.getnewsymbol()        
+        if symbol is not None:
+            if symbol in self.symbols.keys():
+                self.curves[key] ["symbol"] = self.symbols[symbol]
+            elif symbol == 'o':
+                self.curves[key] ["symbol"] = self.symbols['ellipse']
+            elif symbol == 'x':
+                self.curves[key] ["symbol"] = self.symbols['xcross']
+            elif symbol == '+':
+                self.curves[key] ["symbol"] = self.symbols['cross']
         self.curves[key] ["maptoy2"]  = 0
         color = self.colors[self.colorslist[self.color]]
         linetype = self.linetypes[self.linetypeslist[self.linetype]]
+        self.linetypeslist=['solid','dot','dash','dashdot','dashdotdot']
+
+        if line is not None:
+            if line in self.linetypes.keys():
+                linetype = self.linetypes[line]
+            elif line == '-':
+                linetype = self.linetypes['solid']
+            elif line == '.':
+                linetype = self.linetypes['dot']
+            elif line == '--':
+                linetype = self.linetypes['dash']
+            elif line == '-.':
+                linetype = self.linetypes['dashdot']
+            elif line == '-..':
+                linetype = self.linetypes['dashdotdot']
+                
         self.curves[key] ["pen"]    = color
         pen = qt.QPen(color,self.linewidth,linetype)
         self.curves[key] ["linetype"]  = linetype
         self.curves[key] ["curveinfo"] = {}
         self.getnewpen()
         self.setCurvePen(self.curves[key]['curve'],pen )
+        if symbol is not None:
+            self.togglePoints(key)
+            
+
 
     def insertCurve(self, key):
         if QWTVERSION4:

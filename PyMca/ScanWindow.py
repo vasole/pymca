@@ -818,9 +818,10 @@ class ScanWindow(qt.QWidget):
                     if newLegend not in self.dataObjectsList:
                         self.dataObjectsList.append(newLegend)
                     self.dataObjectsDict[newLegend] = dataObject
-                    self.graph.newcurve(newLegend,
+                    self.graph.newCurve(newLegend,
                                         x=xdata,
-                                        y=ydata)
+                                        y=ydata,
+                                        symbol='o')
             else:
                 #we have to loop for all y values
                 ycounter = -1
@@ -858,16 +859,19 @@ class ScanWindow(qt.QWidget):
                                 ilabel = newDataObject.info['selection']['y'][0]
                                 ylegend = newDataObject.info['LabelNames'][ilabel]
                     if dataObject.info.has_key('operations') and len(dataObject.y) == 1:
-                        newDataObject.info['legend'] = legend 
+                        newDataObject.info['legend'] = legend
+                        symbol = 'x'
                     else:
                         newDataObject.info['legend'] = legend + " " + ylegend
+                        symbol = 'o'
                     #here I should check the log or linear status
                     if newDataObject.info['legend'] not in self.dataObjectsList:
                         self.dataObjectsList.append(newDataObject.info['legend'])
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
-                    self.graph.newcurve(newDataObject.info['legend'],
+                    self.graph.newCurve(newDataObject.info['legend'],
                                         x=xdata,
-                                        y=ydata)
+                                        y=ydata,
+                                        symbol=symbol)
         self.graph.replot()
 
             
