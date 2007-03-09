@@ -1448,7 +1448,7 @@ class HorizontalSpacer(qt.QWidget):
 
 def test():
     w = ScanWindow()
-    qt.QObject.connect(app, qt.SIGNAL("lasWindowClosed()"),
+    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
     w.show()
     if QTVERSION < '4.0.0':
