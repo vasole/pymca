@@ -2139,6 +2139,18 @@ class QtBlissGraph(qwt.QwtPlot):
             ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
         return ymin,ymax
 
+    def getY2AxisLimits(self):
+        if not self.axisEnabled(qwt.QwtPlot.yRight):
+            return self.getY1AxisLimits() 
+        #get the current limits
+        if QWTVERSION4:
+            ymin = self.canvasMap(qwt.QwtPlot.yRight).d1()
+            ymax = self.canvasMap(qwt.QwtPlot.yRight).d2()
+        else:
+            ymin = self.canvasMap(qwt.QwtPlot.yRight).s1()
+            ymax = self.canvasMap(qwt.QwtPlot.yRight).s2()
+        return ymin,ymax
+
     def gety1axislimits(self):
         if DEBUG:print "gety1axislimits deprecated, use getY1AxisLimits instead"
         return self.getY1AxisLimits()
@@ -2198,7 +2210,9 @@ class QtBlissGraph(qwt.QwtPlot):
         if DEBUG:print "Deprecation warning: use setY2AxisLimits instead"
         return self.setY2AxisLimits(*var)
 
-    def setY2AxisLimits(self, ymin, ymax):
+    def setY2AxisLimits(self, ymin, ymax, replot=None):
+        if not self.axisEnabled(qwt.QwtPlot.yRight): return
+        if replot is None: replot = True
         if self.__logy2:
             if ymin <= 0:
                 ymin = 1
@@ -2209,7 +2223,7 @@ class QtBlissGraph(qwt.QwtPlot):
             #else:
             #    ymax = log(ymax)            
         self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
-        self.replot()
+        if replot:self.replot()
 
     def insertx1marker(self,*var,**kw):
         if DEBUG:"print insertx1marker deprecated, use insertX1Marker"

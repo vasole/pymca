@@ -345,6 +345,9 @@ class McaWidget(qt.QWidget):
                 self.ytb.setState(qt.QButton.Off)
             else:
                 self.ytb.setChecked(False)
+            self.graph.setY1AxisLimits(*self.graph.getY1AxisLimits())
+            y2limits = self.graph.getY2AxisLimits()
+            if y2limits is not None:self.graph.setY2AxisLimits(*y2limits)
         else:
             self.graph.yAutoScale = True
             self.ytb.setDown(True)
@@ -352,6 +355,7 @@ class McaWidget(qt.QWidget):
                 self.ytb.setState(qt.QButton.On)
             else:
                 self.ytb.setChecked(True)
+            self.graph.zoomReset()
             
     def _xAutoScaleToggle(self):
         if self.graph.xAutoScale:
@@ -361,6 +365,7 @@ class McaWidget(qt.QWidget):
                 self.xtb.setState(qt.QButton.Off)
             else:
                 self.xtb.setChecked(False)
+            self.graph.setX1AxisLimits(*self.graph.getX1AxisLimits())
         else:
             self.graph.xAutoScale = True
             self.xtb.setDown(True)
@@ -368,7 +373,7 @@ class McaWidget(qt.QWidget):
                 self.xtb.setState(qt.QButton.On)
             else:
                 self.xtb.setChecked(True)
-
+            self.graph.zoomReset()
 
     def setDispatcher(self, w):
         """

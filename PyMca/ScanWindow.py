@@ -928,7 +928,7 @@ class ScanWindow(qt.QWidget):
                     break
         if not doit:return
         self.graph.clearcurves()
-        self.graph.replot()
+        #self.graph.replot()    #the scan addition will do the replot
         self.dataObjectsDict={}
         self.dataObjectsList=[]
         self._addSelection(selectionlist)
@@ -1010,15 +1010,19 @@ class ScanWindow(qt.QWidget):
             self.graph.yAutoScale = False
             self.yAutoScaleButton.setDown(False)
             if QTVERSION < '4.0.0':
-                self.yAutoScaleButton.setState(qt.QButton.Off)
+                self.yButton.setState(qt.QButton.Off)
             else:
                 self.yAutoScaleButton.setChecked(False)
+            self.graph.setY1AxisLimits(*self.graph.getY1AxisLimits())
+            y2limits = self.graph.getY2AxisLimits()
+            if y2limits is not None:self.graph.setY2AxisLimits(*y2limits)
         else:
             self.graph.yAutoScale = True
             if QTVERSION < '4.0.0':
                 self.yAutoScaleButton.setState(qt.QButton.On)
             else:
                 self.yAutoScaleButton.setDown(True)
+            self.graph.zoomReset()
                        
     def _xAutoScaleToggle(self):
         if DEBUG:print "_xAutoScaleToggle"
@@ -1029,6 +1033,7 @@ class ScanWindow(qt.QWidget):
                 self.xAutoScaleButton.setState(qt.QButton.Off)
             else:
                 self.xAutoScaleButton.setChecked(False)
+            self.graph.setX1AxisLimits(*self.graph.getX1AxisLimits())
         else:
             self.graph.xAutoScale = True
             self.xAutoScaleButton.setDown(True)
@@ -1036,7 +1041,7 @@ class ScanWindow(qt.QWidget):
                 self.xAutoScaleButton.setState(qt.QButton.On)
             else:
                 self.xAutoScaleButton.setChecked(True)
-                       
+            self.graph.zoomReset()
                        
     def _toggleLogY(self):
         if DEBUG:print "_toggleLogY"
