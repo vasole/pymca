@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.1 $"
+__revision__ = "$Revision: 1.2 $"
 import sys
 import spswrap as sps
 #from qt import *
@@ -441,6 +441,8 @@ class QSpsWidget(qt.QWidget):
         mainLayout.setMargin(5)
         mainLayout.setSpacing(5)
         mainLayout.addWidget(specWidget)
+        if __name__ != "__main__":
+            specWidget.hide()
         mainLayout.addWidget(self.splitter)
         mainLayout.addWidget(butWidget)
 
@@ -1056,13 +1058,10 @@ class QSpsWidget(qt.QWidget):
 
 def test():
     import sys
-    if PYDVT:
-        import SPSData
+    if 0:
+        import SPSLayer
     else:
-        if 0:
-            import SPSLayer
-        else:
-            import QSpsDataSource
+        import QSpsDataSource
     def repSelection(sel): print "repSelection", sel
     def addSelection(sel): print "addSelection", sel
 
