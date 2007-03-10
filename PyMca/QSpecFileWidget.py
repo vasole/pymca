@@ -334,17 +334,34 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             itemlist = self.list.selectedItems()
             sel = [str(item.text(1)) for item in itemlist]
             if DEBUG: print "selection = ",sel
-            #try:
             if not len(sel):return
             info = self.data.getKeyInfo(sel[0])
-            #except:
-            #    info, data = self.data.LoadSource(sel[0])
             self.mcaTable.build(info)
             self.cntTable.build(info['LabelNames'])
-            if self._oldCntSelection is not None:
-                if len(self._oldCntSelection['y']):
-                    self.cntTable.setCounterSelection(self._oldCntSelection)
+            if (info['Lines'] > 0) and len(info['LabelNames']):
+                if self._oldCntSelection is not None:
+                    if len(self._oldCntSelection['y']):
+                        self.cntTable.setCounterSelection(self._oldCntSelection)
+                    else:
+                        if len(self.cntTable.cntList):
+                            self.cntTable.setCounterSelection({'x':[0],
+                                                               'y':[-1],
+                                                'cntlist':info['LabelNames']*1})
+                else:
+                    if len(self.cntTable.cntList):
+                        self.cntTable.setCounterSelection({'x':[0],
+                                                           'y':[-1],
+                                            'cntlist':info['LabelNames']*1})
+                
             self.emit(qt.SIGNAL("scanSelection"), (sel))
+            if (info['NbMca'] > 0) and (info['Lines'] > 0):
+                pass
+            elif (info['NbMca'] > 0) and (info['Lines'] == 0):
+                self.mainTab.setCurrentWidget(self.mcaTable)
+            elif (info['NbMca'] == 0) and (info['Lines'] > 0):
+                self.mainTab.setCurrentWidget(self.cntTable)
+            else:
+                pass
             self._autoReplace(sel)
 
     def __doubleClicked(self, item):
@@ -412,7 +429,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         #get selected counter keys
         cnt_sel = self.cntTable.getCounterSelection()
-        if len(cnt_sel['y']): self._oldCntSelection = cnt_sel
+        if len(cnt_sel['cntlist']):
+            if len(cnt_sel['y']): self._oldCntSelection = cnt_sel
         mca_sel = self.mcaTable.getCurrentlySelectedMca()
 
         sel_list = []
@@ -509,8 +527,6 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def _replaceClicked(self):
         if DEBUG: print "Overwritten _replaceClicked method"
-
-        #get selected scan keys
         #get selected scan keys
         if QTVERSION < '4.0.0':
             if QTVERSION > '3.0.0':
@@ -528,7 +544,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         #get selected counter keys
         cnt_sel = self.cntTable.getCounterSelection()
-        if len(cnt_sel): self._oldCntSelection = cnt_sel
+        if len(cnt_sel['cntlist']):
+            if len(cnt_sel['y']): self._oldCntSelection = cnt_sel
         mca_sel = self.mcaTable.getCurrentlySelectedMca()
 
         sel_list = []

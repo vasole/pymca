@@ -245,17 +245,29 @@ class PyMca(PyMcaMdi.PyMca):
                 self.mainTabWidget.addTab(self.scanwindow, "SCAN")
                 self.mdi.addWindow(self.mainTabWidget)
                 self.mainTabWidget.showMaximized()
-                self.connectDispatcher(self.mcawindow, self.sourceWidget)
-                self.connectDispatcher(self.scanwindow, self.sourceWidget)             
+                if True:
+                    self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                    self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                else:
+                    self.connect(self.sourceWidget,
+                             qt.SIGNAL("addSelection"),
+                             self.dispatcherAddSelectionSlot)
+                    self.connect(self.sourceWidget,
+                             qt.SIGNAL("removeSelection"),
+                             self.dispatcherRemoveSelectionSlot)
+                    self.connect(self.sourceWidget,
+                             qt.SIGNAL("replaceSelection"),
+                             self.dispatcherReplaceSelectionSlot)
+
 
             if QTVERSION < '4.0.0':
                 self.connect(self.sourceWidget,
                              qt.PYSIGNAL("otherSignals"),
-                             self.otherDispatcherSignalsSlot)
+                             self.dispatcherOtherSignalsSlot)
             else:
                 self.connect(self.sourceWidget,
                              qt.SIGNAL("otherSignals"),
-                             self.otherDispatcherSignalsSlot)
+                             self.dispatcherOtherSignalsSlot)
             
             if 0:
                 if QTVERSION < '4.0.0':
@@ -313,15 +325,38 @@ class PyMca(PyMcaMdi.PyMca):
             self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
                              viewer._replaceSelection)
 
-    def otherDispatcherSignalsSlot(self, ddict):
-        if DEBUG:print "self.otherDispatcherSignalsSlot(ddict), ddict = ",ddict
+    def dispatcherAddSelectionSlot(self, ddict):
+        if DEBUG:
+            print "self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict
+        self.mcawindow._addSelection(ddict)
+        self.scanwindow._addSelection(ddict)
+
+    def dispatcherRemoveSelectionSlot(self, ddict):
+        if DEBUG:
+            print "self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict
+        self.mcawindow._removeSelection(ddict)
+        self.scanwindow._removeSelection(ddict)
+
+    def dispatcherReplaceSelectionSlot(self, ddict):
+        if DEBUG:
+            print "self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict
+        self.mcawindow._replaceSelection(ddict)
+        self.scanwindow._replaceSelection(ddict)
+
+    def dispatcherOtherSignalsSlot(self, ddict):
+        if DEBUG:print "self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict
         if not self.__useTabWidget:return
         if ddict['event'] == "SelectionTypeChanged":
             if ddict['SelectionType'] == 'MCA':
                 self.mainTabWidget.setCurrentWidget(self.mcawindow)
             else:
                 self.mainTabWidget.setCurrentWidget(self.scanwindow)
-                
+            return
+        if ddict['event'] == "SourceTypeChanged":
+            pass
+            return
+        if DEBUG:print "Unhandled dict"
+        
     def setConfig(self, configDict):
         if configDict.has_key('PyMca'):    self.__configurePyMca(configDict['PyMca'])
         if configDict.has_key('ROI'):      self.__configureRoi(configDict['ROI'])
