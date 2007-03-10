@@ -507,12 +507,13 @@ class SpecfitGUI(qt.QWidget):
                           self.guiconfig.FunComBox.removeItem(1)
                         #and fill it again
                         for key in self.specfit.theorylist:
-                            self.guiconfig.FunComBox.insertItem(str(key))
-                        #self.guiconfig.connect(self.guiconfig.FunComBox,
-                        #        qt.SIGNAL("activated(const qt.QString &)"),self.funevent)
+                            if QTVERSION < '4.0.0':
+                                self.guiconfig.FunComBox.insertItem(str(key))
+                            else:
+                                self.guiconfig.FunComBox.addItem(str(key))
                 except:
-                    print "Error importing file ",functionsfile
-            #print " Funtion not yet implemented"
+                    qt.QMessageBox.critical(self, "ERROR",
+                                            "Function not imported")
             i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])
             if QTVERSION < '4.0.0':
                 self.guiconfig.FunComBox.setCurrentItem(i)
