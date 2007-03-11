@@ -260,16 +260,23 @@ class PyMcaPrintPreview(qt.QDialog):
         self._viewScale *= 0.80 
         self.view.scale(0.80, 0.80)
 
-    def addImage(self, image):
+    def addImage(self, image, title = None, comment = None):
         """
         add an image item to the print preview scene
         """
-        self.addPixmap(qt.QPixmap.fromImage(image))
+        self.addPixmap(qt.QPixmap.fromImage(image),
+                       title = title, comment = comment)
 
-    def addPixmap(self, pixmap):
+    def addPixmap(self, pixmap, title = None, comment = None):
         """
         add a pixmap to the print preview scene
         """
+        if title is None:
+            title  = '                                            '
+            title += '                                            '
+        if comment is None:
+            comment  = '                                            '
+            comment += '                                            '
         if self.badNews:
             self.message.exec_()
             return
@@ -295,9 +302,27 @@ class PyMcaPrintPreview(qt.QDialog):
         #I add a pixmap item
         pixmapItem = qt.QGraphicsPixmapItem(rectItem, self.scene)
         pixmapItem.setPixmap(pixmap)
-        pixmapItem.moveBy(1, 1)
+        #pixmapItem.moveBy(0, 0)
         pixmapItem.setZValue(0)
+
+        #I add the title
+        textItem = qt.QGraphicsTextItem(title, rectItem, self.scene)
+        textItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
+        offset = 0.5 * textItem.boundingRect().width()
+        textItem.moveBy(0.5 * pixmap.width() - offset, -20) 
+        textItem.setZValue(2)
+
+        #I add the comment
+        commentItem = qt.QGraphicsTextItem(comment, rectItem, self.scene)
+        commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
+        offset = 0.5 * commentItem.boundingRect().width()
+        commentItem.moveBy(0.5 * pixmap.width() - offset,
+                           pixmap.height()+20) 
+        commentItem.setZValue(2)
+        
         rectItem.scale(scale, scale)
+        rectItem.moveBy(20 , 40)
+
 
     def __setup(self):
         """
@@ -492,8 +517,8 @@ def testPreview():
     w = PyMcaPrintPreview( parent = None, printer = p, name = 'Print Prev',
                       modal = 0, fl = 0)
     w.resize(400,500)
-    w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)))
-    w.addImage(qt.QImage(filename))
+    w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)), title=filename)
+    w.addImage(qt.QImage(filename), comment=filename)
     #w.addImage(qt.QImage(filename))
     w.exec_()
 
