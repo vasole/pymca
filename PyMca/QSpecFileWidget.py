@@ -62,6 +62,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         self.mainTab.addTab(self.cntTable,str("Counters"))
         self.mainTab.addTab(self.mcaTable,str("MCA"))
+        self.mainTab.setCurrentWidget(self.mcaTable)
         autoBox = qt.QWidget(self)
         autoBoxLayout = qt.QHBoxLayout(autoBox)
         autoBoxLayout.setMargin(0)
