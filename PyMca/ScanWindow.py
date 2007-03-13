@@ -37,7 +37,9 @@ import ScanFit
 import SimpleMath
 import DataObject
 import copy
-import PyMcaPrintPreview 
+import PyMcaPrintPreview
+import PyMcaDirs
+
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
@@ -1066,6 +1068,7 @@ class ScanWindow(qt.QWidget):
         
     def _getOutputFileName(self):
         #get outputfile
+        self.outputDir = PyMcaDirs.outputDir
         if self.outputDir is None:
             self.outputDir = os.getcwd()
             wdir = os.getcwd()
@@ -1103,6 +1106,7 @@ class ScanWindow(qt.QWidget):
             outdir=str(outfile.selectedFiles()[0])
         try:            
             self.outputDir  = os.path.dirname(outdir)
+            PyMcaDirs.outputDir = os.path.dirname(outdir)
         except:
             print "setting output directory to default"
             self.outputDir  = os.getcwd()
