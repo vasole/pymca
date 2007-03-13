@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -41,12 +41,22 @@ else:
     from Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
     
 #SINGLETON
-class PyMcaPrintPreview(PrintPreview):
-    _instance = None
-    def __new__(self, *var, **kw):
-        if self._instance is None:
-            self._instance = PrintPreview.__new__(self,*var, **kw)
-        return self._instance    
+if 0:
+    #It seems sip gets confused by the singleton implementation
+    class PyMcaPrintPreview(PrintPreview):
+        _instance = None
+        def __new__(self, *var, **kw):
+            if self._instance is None:
+                self._instance = PrintPreview.__new__(self,*var, **kw)
+            return self._instance    
+else:
+    #I use a simple patch for the time being
+    #because the application behaves properly 
+    _instance = PrintPreview(modal=0)
+    class PyMcaPrintPreview(PrintPreview):
+        def __new__(self, *var, **kw):
+            self._instance = _instance
+            return self._instance
 
 def testPreview():
     """
