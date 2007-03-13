@@ -38,6 +38,7 @@ from Icons import IconDict
 import ColormapDialog
 import PyMcaPrintPreview
 import ArraySave
+import PyMcaDirs
 
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
@@ -268,7 +269,7 @@ class QEdfFileWidget(qt.QWidget):
         self.selection= None
         self.__plotting = "Columns"
         self._edfstack = None
-        self.lastInputDir = os.getcwd()
+        self.lastInputDir = None
         self.colormapDialog = None
         self.colormap  = None
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
@@ -435,8 +436,7 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.zoomReset()
 
     def _saveIconSignal(self):
-        if not os.path.exists(self.lastInputDir):
-            self.lastInputDir = os.getcwd()
+        self.lastInputDir = PyMcaDirs.outputDir
 
         fileTypeList = ["Data *.dat",
                         "Image *.png",
@@ -482,7 +482,8 @@ class QEdfFileWidget(qt.QWidget):
             outputFile  = outstr
         outputDir  = os.path.dirname(outstr)
         self.lastInputDir = outputDir
-
+        PyMcaDirs.outputDir = outputDir
+        
         #always overwrite for the time being
         if len(outputFile) < len(extension[1:]):
             outputFile += extension[1:]
@@ -748,9 +749,7 @@ class QEdfFileWidget(qt.QWidget):
             print "openfile = ",filename
         if justloaded is None:justloaded = 0
         if filename is None:
-            if self.lastInputDir is not None:
-                if not os.path.exists(self.lastInputDir):
-                    self.lastInputDir = None
+            self.lastInputDir = PyMcaDirs.inputDir
             if QT4:
                 fdialog = qt.QFileDialog(self)
                 fdialog.setModal(True)
@@ -790,7 +789,9 @@ class QEdfFileWidget(qt.QWidget):
             for f in filelist:
                 filename.append(str(f))
             if not len(filename):    return
-            if len(filename):self.lastInputDir=os.path.dirname(filename[0])
+            if len(filename):
+                self.lastInputDir  = os.path.dirname(filename[0])
+                PyMcaDirs.inputDir = os.path.dirname(filename[0])
             justloaded = 1
         if justloaded:
             if type(filename) != type([]):
