@@ -43,6 +43,7 @@ import McaSimpleFit
 import Specfit
 import PyMcaPrintPreview
 import os
+import PyMcaDirs
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
@@ -469,6 +470,7 @@ class McaWidget(qt.QWidget):
                 msg.exec_()
             return
         #get outputfile
+        self.outputDir = PyMcaDirs.outputDir
         if self.outputDir is None:
             self.outputDir = os.getcwd()
             wdir = os.getcwd()
@@ -476,6 +478,7 @@ class McaWidget(qt.QWidget):
         else:
             self.outputDir = os.getcwd()
             wdir = self.outputDir
+
             
         if QTVERSION < '4.0.0':
             outfile = qt.QFileDialog(self,"Output File Selection",1)
@@ -504,6 +507,7 @@ class McaWidget(qt.QWidget):
                 outdir=str(outfile.selectedFiles()[0])
             try:            
                 self.outputDir  = os.path.dirname(outdir)
+                PyMcaDirs.outputDir = os.path.dirname(outdir) 
             except:
                 self.outputDir  = "."
             try:            

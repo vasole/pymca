@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.71 $"
+__revision__ = "$Revision: 1.72 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -167,6 +167,7 @@ except:
 if QTVERSION > '4.0.0':
     import PyMcaPostBatch
 import ConfigDict
+import PyMcaDirs
 
 DEBUG = 0
 SOURCESLIST = QDispatcher.QDataSource.source_types.keys()
@@ -386,6 +387,10 @@ class PyMca(PyMcaMdi.PyMca):
             d['PyMca'][source] = {}
             if self.sourceWidget.sourceSelector.lastInputDir is not None:
                 d['PyMca'][source]['lastInputDir'] = self.sourceWidget.sourceSelector.lastInputDir
+                try:
+                    PyMcaDirs.inputDir = self.sourceWidget.sourceSelector.lastInputDir
+                except ValueError:
+                    pass
             else:
                 d['PyMca'][source]['lastInputDir'] = "None"
             if source == "SpecFile":
@@ -468,8 +473,10 @@ class PyMca(PyMcaMdi.PyMca):
                 if dict[source].has_key('lastInputDir'):
                     if dict[source] ['lastInputDir'] != "None":
                         self.sourceWidget.sourceSelector.lastInputDir =  dict[source] ['lastInputDir']
-                    #else:
-                    #    self.sourceWidget.selectorWidget[source].lastInputDir =  None
+                        try:
+                            PyMcaDirs.inputDir = dict[source] ['lastInputDir']
+                        except ValueError:
+                            pass
                 if dict[source].has_key('SourceName'):
                     if type(dict[source]['SourceName']) != type([]):
                         dict[source]['SourceName'] = [dict[source]['SourceName'] * 1]
@@ -851,6 +858,7 @@ class PyMca(PyMcaMdi.PyMca):
         if not(len(filelist)): return
         filelist.sort()
         self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
+        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         self.__correlator.append(PyMcaPostBatch.PyMcaPostBatch())
         for correlator in self.__correlator:
             if correlator.isHidden():

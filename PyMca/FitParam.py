@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.39 $"
+__revision__ = "$Revision: 1.40 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -45,6 +45,8 @@ from FitPeakSelect import FitPeakSelect
 import AttenuatorsTable
 import ConcentrationsWidget
 import EnergyTable
+import PyMcaDirs
+
 DEBUG = 0
 
 if 0:
@@ -1053,6 +1055,8 @@ class FitParamDialog(qt.QDialog):
                                 text)
     def load(self):
         #diag= SectionFileDialog(self, "Load parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.ExistingFile)
+        if self.initDir is None:
+            self.initDir = PyMcaDirs.inputDir
         if QTVERSION < '4.0.0':
             diag= SectionFileDialog(self, "Load parameters", FitParamSections, None,
                                     qt.QFileDialog.ExistingFile, initdir = self.initDir)
@@ -1097,11 +1101,11 @@ class FitParamDialog(qt.QDialog):
                 if len(filename):
                     self.loadParameters(filename, None)
                     self.initDir = os.path.dirname(filename)
-        
-          
 
     def save(self):
         #diag= SectionFileDialog(self, "Save Parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.AnyFile)
+        if self.initDir is None:
+            self.initDir = PyMcaDirs.outputDir
         if QTVERSION < '4.0.0':
             diag= SectionFileDialog(self, "Save Parameters", FitParamSections,
                                     None, qt.QFileDialog.AnyFile, initdir = self.initDir)
@@ -1153,6 +1157,7 @@ class FitParamDialog(qt.QDialog):
                         filename = filename+".cfg"
                     self.saveParameters(filename, None)
                     self.initDir = os.path.dirname(filename)
+                    PyMcaDirs.outputDir = os.path.dirname(filename)
                     
 def openWidget():
     app= qt.QApplication(sys.argv)

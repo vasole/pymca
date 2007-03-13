@@ -35,6 +35,8 @@ else:
 QTVERSION = qt.qVersion()
 import McaROIWidget
 import os
+import PyMcaDirs
+
 DEBUG = 0
 class McaControlGUI(qt.QWidget):
     def __init__(self, parent=None, name="",fl=0):
@@ -257,6 +259,8 @@ class McaControlGUI(qt.QWidget):
                             box=[comboitem,combotext],event='clicked')
                 
     def __loadsignal(self):
+        if self.lastInputDir is None:
+            self.lastInputDir = PyMcaDirs.inputDir            
         if self.lastInputDir is not None:
             if not os.path.exists(self.lastInputDir):
                 self.lastInputDir = None
@@ -321,6 +325,8 @@ class McaControlGUI(qt.QWidget):
                             event='clicked')
                 
     def __savesignal(self):
+        if self.lastInputDir is None:
+            self.lastInputDir = PyMcaDirs.outputDir
         if self.lastInputDir is not None:
             if not os.path.exists(self.lastInputDir):
                 self.lastInputDir = None
@@ -379,6 +385,7 @@ class McaControlGUI(qt.QWidget):
         elif filename[-6:] != ".calib":
             filename = filename + ".calib"        
         self.lastInputDir = os.path.dirname(filename)
+        PyMcaDirs.outputDir = os.path.dirname(filename)
         comboitem,combotext = self.calbox.getcurrent()
         self.__emitpysignal(button="CalibrationSave",
                             box=[comboitem,combotext],

@@ -38,6 +38,7 @@ QTVERSION = qt.qVersion()
 import Icons as icons
 import os
 import spswrap as sps
+import PyMcaDirs
 
 DEBUG = 0
 
@@ -59,7 +60,7 @@ class QSourceSelector(qt.QWidget):
         self.lastFileFilter = qt.QString(self.fileTypeList[0])
 
         # --- file combo/open/close
-        self.lastInputDir = None
+        self.lastInputDir = PyMcaDirs.inputDir
         self.fileWidget= qt.QWidget(self)
         fileWidgetLayout= qt.QHBoxLayout(self.fileWidget)
         fileWidgetLayout.setMargin(0)
@@ -178,7 +179,8 @@ class QSourceSelector(qt.QWidget):
                     filename.append(str(f))
                 if not len(filename):    return
                 if len(filename):
-                    self.lastInputDir=os.path.dirname(filename[0])
+                    self.lastInputDir  = os.path.dirname(filename[0])
+                    PyMcaDirs.inputDir = os.path.dirname(filename[0])
                 justloaded = True
             if justloaded:
                 if type(filename) != type([]):
