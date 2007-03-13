@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -529,22 +529,40 @@ class QtMcaAdvancedFitReport:
         dict=self.fitresult
  
         if MATPLOTLIB:
-            fig = Figure(figsize=(6,3)) # in inches
-            canvas = FigureCanvas(fig)
-            ax = fig.add_axes([.1, .15, .8, .8])
-            ax.set_axisbelow(True)
-            ax.semilogy(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
-            ax.semilogy(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
-            ax.semilogy(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
-            fontproperties = FontProperties(size=8)
-            if dict['result']['config']['fit']['sumflag']:
-                ax.semilogy(dict['result']['energy'],
-                            dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
-                legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
-                                   prop = fontproperties, labelsep=0.02)
-            else:
-                legend = ax.legend(('spectrum', 'continuum', 'fit'),0,
-                                   prop = fontproperties, labelsep=0.02)
+            try:
+                fig = Figure(figsize=(6,3)) # in inches
+                canvas = FigureCanvas(fig)
+                ax = fig.add_axes([.1, .15, .8, .8])
+                ax.set_axisbelow(True)
+                ax.semilogy(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
+                ax.semilogy(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                ax.semilogy(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
+                fontproperties = FontProperties(size=8)
+                if dict['result']['config']['fit']['sumflag']:
+                    ax.semilogy(dict['result']['energy'],
+                                dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
+                    legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
+                                       prop = fontproperties, labelsep=0.02)
+                else:
+                    legend = ax.legend(('spectrum', 'continuum', 'fit'),0,
+                                       prop = fontproperties, labelsep=0.02)
+            except ValueError:
+                fig = Figure(figsize=(6,3)) # in inches
+                canvas = FigureCanvas(fig)
+                ax = fig.add_axes([.1, .15, .8, .8])
+                ax.set_axisbelow(True)
+                ax.plot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
+                ax.plot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                ax.plot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
+                fontproperties = FontProperties(size=8)
+                if dict['result']['config']['fit']['sumflag']:
+                    ax.plot(dict['result']['energy'],
+                                dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
+                    legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
+                                       prop = fontproperties, labelsep=0.02)
+                else:
+                    legend = ax.legend(('spectrum', 'continuum', 'fit'),0,
+                                       prop = fontproperties, labelsep=0.02)
 
             ax.set_xlabel('Energy')
             ax.set_ylabel('Counts')

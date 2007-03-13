@@ -68,6 +68,7 @@ Elements = ElementsInfo.Elements
 #import McaROIWidget
 import Numeric
 import PyMcaPrintPreview
+import PyMcaDirs
 
 DEBUG = 0
 if DEBUG:
@@ -1085,7 +1086,7 @@ class McaAdvancedFit(qt.QWidget):
             return
         oldoutdir = self.outdir
         if self.outdir is None:
-            cwd = os.getcwd()
+            cwd = PyMcaDirs.outputDir
             if QTVERSION < '4.0.0':
                 outfile = qt.QFileDialog(self,"Output Directory Selection",1) 
                 outfile.setMode(outfile.DirectoryOnly)
@@ -1113,7 +1114,7 @@ class McaAdvancedFit(qt.QWidget):
         try:
             report = self.__htmlReport()
         except IOError:
-            self.outdir = os.getcwd()
+            self.outdir = None
             if oldoutdir is not None:
                 if os.path.exists(oldoutdir):
                     self.outdir = oldoutdir
@@ -1124,7 +1125,6 @@ class McaAdvancedFit(qt.QWidget):
                 msg.exec_loop()
             else:
                 msg.exec_()
-
             
                     
     def __htmlReport(self,outfile=None):
@@ -1736,7 +1736,8 @@ class McaAdvancedFit(qt.QWidget):
         #get outputfile
         outfile = qt.QFileDialog(self)
         outfile.setModal(1)
-        if self.lastInputDir is None:self.lastInputDir = os.getcwd()
+        if self.lastInputDir is None:
+            self.lastInputDir = PyMcaDirs.outputDir
         if QTVERSION < '4.0.0':
             outfile.setCaption("Output File Selection")
             filterlist = 'Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt'
@@ -1780,9 +1781,11 @@ class McaAdvancedFit(qt.QWidget):
                 outstr=str(outfile.selectedFiles()[0])
             try:            
                 outputDir  = os.path.dirname(outstr)
+                self.lastInputDir   = outputDir
+                PyMcaDirs.outputDir = outputDir
             except:
                 outputDir  = "."
-            self.outdir = outputDir
+            #self.outdir = outputDir
             try:            
                 outputFile = os.path.basename(outstr)
             except:
@@ -1867,10 +1870,8 @@ class McaAdvancedFit(qt.QWidget):
                     ncs = len(colorlist)
                     #deal with BW graphics
                     if filedescription == "B/WGraphics":
-                        cl[0] = 'k-'
-                        cl[1] = 'k-.'
-                        cl[2] = 'k--'
-                        cl[3] = 'k-..'
+                        cl  = ['k']   #only black
+                        stylelist = ['-', ':', '-.', '--']
                         ncs   = 4
                         nocolor = True
                     else:
@@ -1892,27 +1893,44 @@ class McaAdvancedFit(qt.QWidget):
                         axfunction( x,
                                 Numeric.take(fitresult['result']['ydata'],index),
                                 'k.', lw=1.5, markersize=3)
+                        ci = -1
                     else:
                         axfunction( x,
                                 Numeric.take(fitresult['result']['ydata'],index),
                                 'k-', lw=1.)
                         
                     ci += 1
-                    axfunction( x,
+                    if nocolor:
+                        axfunction( x,
+                                Numeric.take(fitresult['result']['yfit'],index),
+                                color='k', ls=stylelist[ci], lw=1.5)
+                    else:
+                        axfunction( x,
                                 Numeric.take(fitresult['result']['yfit'],index),
                                 color=cl[ci], lw=1.5)
 
                     legendlist = ['data', 'fit']
                     if not self.peaksSpectrumButton.isChecked():
                         ci += 1
-                        axfunction( x,
+                        if nocolor:
+                            axfunction( x,
+                                    Numeric.take(fitresult['result']['continuum'],index),
+                                    color='k', ls=stylelist[ci], lw=1.5)
+                        else:
+                            axfunction( x,
                                     Numeric.take(fitresult['result']['continuum'],index),
                                     color=cl[ci], lw=1.5)
                         legendlist.append('bck')
                     ci += 1
                     if ci == ncs:ci = 2
                     if self.top.sumbox.isChecked():
-                        axfunction( x,
+                        if nocolor:
+                            axfunction( x,
+                                Numeric.take(fitresult['result']['pileup']+\
+                                             fitresult['result']['continuum'],index),
+                                             color='k', ls=stylelist[ci], lw=1.5)
+                        else:
+                            axfunction( x,
                                 Numeric.take(fitresult['result']['pileup']+\
                                              fitresult['result']['continuum'],index),
                                     color=cl[ci], lw=1.5)
@@ -1920,7 +1938,12 @@ class McaAdvancedFit(qt.QWidget):
                         if ci == ncs:ci = 2
                         legendlist.append('pile up')
                     if 'ymatrix' in fitresult['result'].keys():
-                        axfunction( x,
+                        if nocolor:
+                            axfunction( x,
+                                Numeric.take(fitresult['result']['ymatrix'],index),
+                                    color='k', ls=stylelist[ci], lw=1.5)
+                        else:
+                            axfunction( x,
                                 Numeric.take(fitresult['result']['ymatrix'],index),
                                     color=cl[ci], lw=1.5)
                         ci += 1
