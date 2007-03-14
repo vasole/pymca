@@ -51,13 +51,11 @@ if 0:
             return self._instance    
 else:
     #but sip is happy about this one
-    _instance = None
     class PyMcaPrintPreview(PrintPreview):
+        _instance = None
         def __new__(self, *var, **kw):
-            global _instance
-            if _instance is None:
-                 _instance = PrintPreview(*var, **kw)
-            self._instance = _instance
+            if self._instance is None:
+                self._instance = PrintPreview(*var, **kw)
             return self._instance
 
 def testPreview():
