@@ -894,15 +894,29 @@ class QtBlissGraph(qwt.QwtPlot):
                 else:
                     self.canvas().setCursor(qt.QCursor(self.__oldcursor))
         #as default, export the mouse in graph coordenates
-        dict= {'event':'MouseAt',
+        ddict= {'event':'MouseAt',
               'x':x,
               'y':y,
               'xpixel':xpixel,
-              'ypixel':ypixel}
+              'ypixel':ypixel,
+              'xcurve':None,
+              'ycurve':None}
+        if not QWTVERSION4:
+            if self.__activecurves is not None:
+                if len(self.__activecurves):
+                    if self.__activecurves[0] in self.curves.keys():
+                        curve = self.curves[self.__activecurves[0]]["curve"]
+                        p = curve.closestPoint(qt.QPoint(xpixel, ypixel))
+                        ddict['xcurve'] = curve.x(p[0])
+                        ddict['ycurve'] = curve.y(p[0])
+                        ddict['point']    = p[0]
+                        ddict['distance'] = p[1] 
+
+        
         if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL('QtBlissGraphSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('QtBlissGraphSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('QtBlissGraphSignal'),(dict))
+            self.emit(qt.SIGNAL('QtBlissGraphSignal'), (ddict))
         
     def onMousePressed(self,e):
         #method to be overwritten

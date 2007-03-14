@@ -938,8 +938,17 @@ class ScanWindow(qt.QWidget):
     def _graphSignalReceived(self, ddict):
         if DEBUG:print "_graphSignalReceived", ddict            
         if ddict['event'] == "MouseAt":
-            self._xPos.setText('%.7g' % ddict['x'])
-            self._yPos.setText('%.7g' % ddict['y'])
+            if ddict['xcurve'] is not None:
+                if ddict['distance'] < 20:
+                    #print ddict['point'], ddict['distance'] 
+                    self._xPos.setText('%.7g' % ddict['xcurve'])
+                    self._yPos.setText('%.7g' % ddict['ycurve'])
+                else:
+                    self._xPos.setText('----')
+                    self._yPos.setText('----')
+            else:
+                self._xPos.setText('%.7g' % ddict['x'])
+                self._yPos.setText('%.7g' % ddict['y'])
             return
         if ddict['event'] == "SetActiveCurveEvent":
             legend = ddict["legend"]
