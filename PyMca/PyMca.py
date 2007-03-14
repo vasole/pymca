@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.72 $"
+__revision__ = "$Revision: 1.73 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.6"
+__version__ = "4.0.7 RC2"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -483,6 +483,10 @@ class PyMca(PyMcaMdi.PyMca):
                     for SourceName in dict[source]['SourceName']:
                         if len(SourceName):
                             try:
+                                if not os.path.exists(SourceName): continue
+                                self.sourceWidget.sourceSelector.openFile(SourceName, justloaded =1)
+                                continue
+                                #This event is not needed
                                 ndict = {}
                                 ndict["event"] = "NewSourceSelected"
                                 ndict["sourcelist"] = [SourceName]
@@ -798,7 +802,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.addAction("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
             #self.menuTools.addAction("Fit to Specfile",self.__fit2SpecConversion)
-            self.menuTools.addAction("PyMCA Post-batch",self.__rgbCorrelator)
+            self.menuTools.addAction("RGB Correlator",self.__rgbCorrelator)
             if STACK:
                 self.menuTools.addAction("ROI Imaging",self.__roiImaging)
         if DEBUG:"print Fit to Specfile missing"
