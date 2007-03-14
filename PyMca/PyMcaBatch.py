@@ -46,6 +46,8 @@ import McaCustomEvent
 import EdfFileSimpleViewer
 import QtMcaAdvancedFitReport
 import HtmlIndex
+import PyMcaDirs
+
 ROIWIDTH = 100.
 DEBUG = 0
 
@@ -407,6 +409,7 @@ class McaBatchGUI(qt.QWidget):
             self.fileList = filelist
             if len(self.fileList):
                 self.inputDir = os.path.dirname(self.fileList[0])
+                PyMcaDirs.inputDir = os.path.dirname(self.fileList[0])
             if QTVERSION < '4.0.0':
                 self.__listView.setText(text)
             else:
@@ -429,6 +432,7 @@ class McaBatchGUI(qt.QWidget):
         if outputdir is None:return
         if self.__goodOutputDir(outputdir):
             self.outputDir = outputdir
+            PyMcaDirs.outputDir = outputdir
             self.__outLine.setText(outputdir)
         else:
             qt.QMessageBox.critical(self, "ERROR",
@@ -510,7 +514,8 @@ class McaBatchGUI(qt.QWidget):
             return None
 
     def browseList(self):
-        if self.inputDir is None:self.inputDir = os.getcwd()
+        if self.inputDir is None:
+            self.inputDir = PyMcaDirs.inputDir
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
@@ -605,7 +610,7 @@ class McaBatchGUI(qt.QWidget):
             if self.inputDir is not None:
                 self.outputDir = self.inputDir * 1
             else:
-                self.outputDir = os.getcwd()
+                self.outputDir = PyMcaDirs.outputDir
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir

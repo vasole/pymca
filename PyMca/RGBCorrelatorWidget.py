@@ -34,6 +34,7 @@ import Numeric
 import spslut
 from Icons import IconDict
 import ArraySave
+import PyMcaDirs
 import EdfFileDataSource
 DataReader = EdfFileDataSource.EdfFileDataSource
 
@@ -527,7 +528,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__recolor()
 
     def getOutputFileName(self):
-        initdir = os.getcwd()
+        initdir = PyMcaDirs.outputDir
         if self.outputDir is not None:
             if os.path.exists(self.outputDir):
                 initdir = self.outputDir
@@ -549,6 +550,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         if len(filename):
             filename = str(filename)
             self.outputDir = os.path.dirname(filename)
+            PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
                 filename = filename+ filterused
             elif filename[-4:] != filterused :
@@ -558,16 +560,14 @@ class RGBCorrelatorWidget(qt.QWidget):
         return filename
 
     def getInputFileName(self):
-        initdir = os.getcwd()
-        if self.outputDir is not None:
-            if os.path.exists(self.outputDir):
-                initdir = self.outputDir
+        initdir = PyMcaDirs.inputDir
         filedialog = qt.QFileDialog(self)
         filedialog.setFileMode(filedialog.ExistingFiles)
         filedialog.setAcceptMode(qt.QFileDialog.AcceptOpen)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
-        formatlist = ["ASCII Files *.dat",
-                      "EDF Files *.edf"]
+        formatlist = ["ASCII Files *dat",
+                      "EDF Files *edf",
+                      "EDF Files *ccd"]
         strlist = qt.QStringList()
         for f in formatlist:
                 strlist.append(f)
@@ -579,6 +579,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         if len(filename):
             filename = map(str, filename)
             self.outputDir = os.path.dirname(filename[0])
+            PyMcaDirs.inputDir = os.path.dirname(filename[0])
         else:
             filename = [""]
         return filename        

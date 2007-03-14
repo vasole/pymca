@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,6 +31,7 @@ import QtBlissGraph
 qt = QtBlissGraph.qt
 from Icons import IconDict
 import PyMcaPrintPreview
+import PyMcaDirs
 
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
@@ -292,8 +293,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self.xAutoScaleToolButton.setDown(True)
 
     def _saveIconSignal(self):
-        if not os.path.exists(self.saveDirectory):
-            self.saveDirectory = os.getcwd()
+        self.saveDirectory = PyMcaDirs.outputDir
 
         fileTypeList = ["Image *.png",
                         "Image *.jpg",
@@ -338,6 +338,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             outputFile  = outstr
         outputDir  = os.path.dirname(outstr)
         self.saveDirectory = outputDir
+        PyMcaDirs.outputDir = outputDir
 
         #always overwrite for the time being
         if len(outputFile) < len(extension[1:]):

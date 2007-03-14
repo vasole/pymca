@@ -28,12 +28,22 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
+import PyMcaDirs
 import RGBCorrelator
 qt = RGBCorrelator.qt
 import Numeric
 
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
     def addBatchDatFile(self, filename, ignoresigma=None):
+        #test if filename is an EDF ...
+        f = open(filename)
+        line = f.readline()
+        if not len(line.replace("\n","")):
+            line = f.readline()
+        f.close()
+        if line[0] == "{":
+            return self.addFileList([filename])
+        
         text = str(self.windowTitle())
         text += ": " + str(os.path.basename(filename))
         self.setWindowTitle(text)
@@ -55,7 +65,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         self.controller.addFileList(filelist)
 
     def _getStackOfFiles(self):
-        wdir = os.getcwd()
+        wdir = PyMcaDirs.inputDir
         fileTypeList = ["Batch Result Files (*dat)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
@@ -91,6 +101,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                 return []
         filelist = map(str, filelist)
         if not len(filelist):return []
+        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         filelist.sort()
         return filelist
 

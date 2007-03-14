@@ -41,6 +41,8 @@ import Numeric
 import ColormapDialog
 import spslut
 import os
+import PyMcaDirs
+
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
@@ -1184,7 +1186,7 @@ class QEDFStackWidget(qt.QWidget):
                         "Specfile Files (*dat)",
                         "All Files (*)"]
         message = "Open ONE indexed stack or SEVERAL files"
-        wdir = os.getcwd()
+        wdir = PyMcaDirs.inputDir
         if QTVERSION < '4.0.0':
             if sys.platform != 'darwin':
                 filetypes = ""
@@ -1227,6 +1229,7 @@ class QEDFStackWidget(qt.QWidget):
                     return []
         filelist = map(str, filelist)
         if not(len(filelist)): return []
+        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         filelist.sort()
         return filelist
 
