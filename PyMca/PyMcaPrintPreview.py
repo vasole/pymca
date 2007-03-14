@@ -42,7 +42,7 @@ else:
     
 #SINGLETON
 if 0:
-    #It seems sip gets confused by the singleton implementation
+    #It seems sip gets confused by this singleton implementation
     class PyMcaPrintPreview(PrintPreview):
         _instance = None
         def __new__(self, *var, **kw):
@@ -50,11 +50,13 @@ if 0:
                 self._instance = PrintPreview.__new__(self,*var, **kw)
             return self._instance    
 else:
-    #I use a simple patch for the time being
-    #because the application behaves properly 
-    _instance = PrintPreview(modal=0)
+    #but sip is happy about this one
+    _instance = None
     class PyMcaPrintPreview(PrintPreview):
         def __new__(self, *var, **kw):
+            global _instance
+            if _instance is None:
+                 _instance = PrintPreview(*var, **kw)
             self._instance = _instance
             return self._instance
 

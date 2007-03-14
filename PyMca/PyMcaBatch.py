@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.42 $"
+__revision__ = "$Revision: 1.43 $"
 ###########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -1066,6 +1066,10 @@ class McaBatchWindow(qt.QWidget):
                         self.__htmlReport(filename, key, outputdir, useExistingFiles, info, firstmca = False)
             except Exception, err:
                 print "ERROR on REPORT",sys.exc_info(),err
+                print "filename = ", filename, "key = ", key
+                print "If your batch is stopped, please report this"
+                print "error sending the above mentioned file and the"
+                print "associated fit configuration file."
         if QTVERSION < '4.0.0':
             self.mcaBar.setTotalSteps(nmca)
             self.mcaBar.setProgress(mca)
