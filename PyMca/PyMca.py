@@ -1026,6 +1026,7 @@ class PyMca(PyMcaMdi.PyMca):
             outfile = qt.QFileDialog(self)
             outfile.setFilter('PyMca  *.ini')
             outfile.setFileMode(outfile.AnyFile)
+            outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
 
         if os.path.exists(self.configDir):cwd =self.configDir 
         if QTVERSION < '4.0.0': outfile.setDir(cwd)
