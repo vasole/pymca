@@ -1,3 +1,23 @@
+VERSION 4.0.7
+
+- Improved ergonomy.
+  A lot of clicks saved ...
+
+- Improved handling of ini files.
+
+- A lot of work made on the scan window.
+  It is quite close to being fully operational.
+
+- Improved shared memory access.
+  Almost fully operational.
+
+- Solved funny crashes under windows.
+  The program was crashing under some particular situations
+  like using remote desktop, hiding the windows taskbar or 
+  when the screensaver was activated.
+
+- Several minor bugs fixed.
+
 VERSION 4.0.6
 
 - Recover material editor functionality.
