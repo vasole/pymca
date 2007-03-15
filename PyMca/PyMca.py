@@ -887,10 +887,7 @@ class PyMca(PyMcaMdi.PyMca):
                     break
 
     def __getStackOfFiles(self, typelist, message = ""):
-        wdir = os.getcwd()
-        if self.sourceWidget.sourceSelector.lastInputDir is not None:
-            if os.path.exists(self.sourceWidget.sourceSelector.lastInputDir):
-                wdir =  self.sourceWidget.sourceSelector.lastInputDir
+        wdir = PyMcaDirs.inputDir
         fileTypeList = typelist
         if QTVERSION < '4.0.0':
             filetypes = ""
@@ -947,6 +944,7 @@ class PyMca(PyMcaMdi.PyMca):
             if not(len(filelist)): return
             filelist.sort()
             self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
+            PyMcaDirs.inputDir = os.path.dirname(filelist[0])
             """
             if QTVERSION > '4.0.0':
                 rgbWidget = PyMcaPostBatch.RGBCorrelator.RGBCorrelator(self.mdi)

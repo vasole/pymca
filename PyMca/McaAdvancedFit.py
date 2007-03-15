@@ -721,10 +721,14 @@ class McaAdvancedFit(qt.QWidget):
         if QTVERSION < '4.0.0':self.elementsInfo.raiseW()
         else:self.elementsInfo.raise_()
 
-    def __peakIdentifier(self):
+    def __peakIdentifier(self, energy = None):
+        if energy is None:energy = 5.9
         if self.identifier is None:
-            self.identifier=PeakIdentifier.PeakIdentifier(energy=5.9, useviewer=1)
+            self.identifier=PeakIdentifier.PeakIdentifier(energy=energy,
+                                                          threshold=0.040,
+                                                          useviewer=1)
             self.identifier.myslot()
+        self.identifier.setEnergy(energy)
         if self.identifier.isHidden():
             self.identifier.show()
         
@@ -1586,16 +1590,24 @@ class McaAdvancedFit(qt.QWidget):
                 
     def dismiss(self):
         self.close()
+
+    def closeEvent(self, event):
+        if self.identifier is not None:
+            self.identifier.close()
+        qt.QWidget.closeEvent(self, event)
     
-    def _mcaGraphSignalSlot(self, dict):
-        if dict['event'] == "FitClicked":
+    def _mcaGraphSignalSlot(self, ddict):
+        if ddict['event'] == "FitClicked":
             self.fit()
-        elif dict['event'] == "LogClicked":
-            self.toggleLogY(dict)
-        elif dict['event'] == "EnergyClicked":
+        elif ddict['event'] == "LogClicked":
+            self.toggleLogY(ddict)
+        elif ddict['event'] == "EnergyClicked":
             self.toggleEnergyAxis()
-        elif dict['event'] == "SaveClicked":
+        elif ddict['event'] == "SaveClicked":
             self._saveGraph()
+        elif ddict['event'] == 'MouseClick':
+            if self._energyAxis:
+                self.__peakIdentifier(ddict['x'])
         else:
             pass
         return
@@ -2705,6 +2717,11 @@ class McaGraphWindow(qt.QWidget):
         if dict['event'] == 'MouseAt':
             self.xpos.setText('%.4g' % dict['x'])
             self.ypos.setText('%.5g' % dict['y'])
+        elif dict['event'] == 'MouseClick':
+            if QTVERSION < '4.0.0':
+                self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
+            else:
+                self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
         elif dict['event'] == "SetActiveCurveEvent":
             legend = None
             if dict.has_key('legend'):

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__= "$Revision: 1.9 $"
+__revision__= "$Revision: 1.10 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -36,7 +36,10 @@ else:
     import qt
 import Elements
 from QPeriodicTable import QPeriodicTable
+from Icons import IconDict
+QTVERSION = qt.qVersion()
 DEBUG = 0
+
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)      
@@ -45,15 +48,17 @@ class HorizontalSpacer(qt.QWidget):
 class PeakIdentifier(qt.QWidget):
     def __init__(self,parent=None,energy=None,threshold=None,useviewer=None,
                  name="Peak Identifier",fl=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self,parent,name,fl)
             self.setCaption(name)
+            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
         else:
             if fl == 0:
                 qt.QWidget.__init__(self, parent)
             else:
                 qt.QWidget.__init__(self, parent, fl)
             self.setWindowTitle(name)
+            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
 
         if energy    is None: energy    = 5.9
         if threshold is None: threshold = 0.030
@@ -75,7 +80,7 @@ class PeakIdentifier(qt.QWidget):
         hbox.layout.addWidget(l1)
         self.energy=MyQLineEdit(hbox)
         self.energy.setText("%.3f" % energy)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QToolTip.add(self.energy,'Press enter to validate your energy')
         else:
             self.energy.setToolTip('Press enter to validate your energy')
@@ -98,7 +103,7 @@ class PeakIdentifier(qt.QWidget):
         l2=qt.QLabel(hbox2)
         l2.setText('Energy Threshold (eV)')
         self.threshold=qt.QSpinBox(hbox2)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.threshold.setMinValue(0)
             self.threshold.setMaxValue(1000)
         else:
@@ -136,12 +141,20 @@ class PeakIdentifier(qt.QWidget):
         hbox2.layout.addWidget(self.m)
         
         if self.__useviewer:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.__browsertext= qt.QTextView(self)
             else:
                 self.__browsertext = qt.QTextEdit(self)
         layout.addWidget(self.__browsertext)
+        self.setEnergy()
 
+    def setEnergy(self, energy = None):
+        if energy is None: energy = 5.9
+        if type(energy) == type(""):
+            self.energy.setText("%s" % energy)
+        else:
+            self.energy.setText("%.3f" % energy)
+        self._energySlot()
         
     def _energySlot(self):
         qstring = self.energy.text()
@@ -150,17 +163,22 @@ class PeakIdentifier(qt.QWidget):
             self.energyvalue = value
             self.myslot(event='coeff')
             self.energy.setPaletteBackgroundColor(qt.Qt.white)
+            if QTVERSION > '4.0.0':
+                cursor = self.__browsertext.textCursor()
+                cursor.movePosition(qt.QTextCursor.Start)
+                self.__browsertext.setTextCursor(cursor)
             self.threshold.setFocus()
         except:
             msg=qt.QMessageBox(self.energy)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText(" Float")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
             self.energy.setFocus()
-        
+            return
+
     def myslot(self,*var,**kw):
         energy    = float(str(self.energy.text()))
         threshold = float(str(self.threshold.text()))/1000.
@@ -175,27 +193,27 @@ class PeakIdentifier(qt.QWidget):
              lines.append('L3')
         if self.m.isChecked():
              lines.append('M')
-        dict=Elements.getcandidates(energy,threshold,lines)[0]
-        dict['text'] =self.getHtmlText(dict)
-        dict['event']='Candidates'
-        dict['lines']=lines
+        ddict=Elements.getcandidates(energy,threshold,lines)[0]
+        ddict['text'] =self.getHtmlText(ddict)
+        ddict['event']='Candidates'
+        ddict['lines']=lines
         if self.__useviewer:
-            if qt.qVersion() < '4.0.0':
-                self.__browsertext.setText(dict['text'])
+            if QTVERSION < '4.0.0':
+                self.__browsertext.setText(ddict['text'])
             else:
                 self.__browsertext.clear()
                 #self.__browsertext.insertHtml("<CENTER>"+dict['text']+\
                 #                              "</CENTER>")
-                self.__browsertext.insertHtml(dict['text'])
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL('PeakIdentifierSignal'),(dict,))
+                self.__browsertext.insertHtml(ddict['text'])
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('PeakIdentifierSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('PeakIdentifierSignal'),dict)
+            self.emit(qt.SIGNAL('PeakIdentifierSignal'), ddict)
         
         
-    def getHtmlText(self,dict):
+    def getHtmlText(self, ddict):
         text  = ""
-        text += "<br>"
+        if QTVERSION < '4.0.0': text += "<br>"
         labels=['Element','Line','Energy','Rate'] 
         lemmon=("#%x%x%x" % (255,250,205))
         lemmon = lemmon.upper()
@@ -210,9 +228,9 @@ class PeakIdentifier(qt.QWidget):
             text+=l
             text+=("</b></td>")
         text+=("</tr>")
-        for ele in dict['elements']:
+        for ele in ddict['elements']:
             oldline=""
-            for line in dict[ele]:
+            for line in ddict[ele]:
                 if   line[0][0:1] == 'K':
                     group0 = 'K  rays'
                 elif line[0][0:2] == 'L1':
@@ -253,9 +271,9 @@ class MyQLineEdit(qt.QLineEdit):
         qt.QLineEdit.__init__(self,parent)
         
     def setPaletteBackgroundColor(self, color):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass
-        elif qt.qVersion() < '4.0.0':
+        elif QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,color)
         else:
             palette = self.palette()
@@ -265,16 +283,16 @@ class MyQLineEdit(qt.QLineEdit):
             
 
     def focusInEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass        
-        elif qt.qVersion() < '4.0.0 ':
+        elif QTVERSION < '4.0.0 ':
             #self.backgroundcolor = self.paletteBackgroundColor()
             self.setPaletteBackgroundColor(qt.QColor('yellow'))
         else:
             self.setPaletteBackgroundColor(qt.QColor('yellow'))
     
     def focusOutEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass        
         else:
             pass
@@ -292,6 +310,7 @@ def main():
         ene = 5.9
     mw = qt.QWidget()
     l  = qt.QVBoxLayout(mw)
+    l.setSpacing(0)
     if 0:
        w= PeakIdentifier(mw,energy=ene)
        browsertext= qt.QTextView(mw)
@@ -302,7 +321,7 @@ def main():
        w= PeakIdentifier(mw,energy=ene,useviewer=1)
        #######w.myslot()
     l.addWidget(w)
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(mw)
         mw.show()
         app.exec_loop()
