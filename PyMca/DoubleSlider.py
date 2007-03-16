@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -33,30 +33,25 @@ if 'qt' not in sys.modules:
     except:
         import qt
         try:
-            import Qwt4 as qwt 
+            import Qwt5 as qwt
         except:
-            import qwt
+            try:
+                import Qwt4 as qwt 
+            except:
+                import qwt
 else:
     import qt
     try:
-        import Qwt4 as qwt 
+        import Qwt5 as qwt
     except:
-        import qwt
+        try:
+            import Qwt4 as qwt 
+        except:
+            import qwt
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
     
-if QTVERSION < '4.0.0':
-    if qwt.QWT_VERSION_STR[0] > '4':
-        raise "ValueError","Unsupported combination %s and %s" % (QTVERSION, 
-                                                                qwt.QWT_VERSION_STR)
-
-if qwt.QWT_VERSION_STR[0] > '4':
-    Qwt = qwt
-    qwt.QwtPlotMappedItem = Qwt.QwtPlotItem
-    qwt.QwtCurve          = Qwt.QwtPlotCurve
-
-
 class DoubleSlider(qt.QWidget):
     def __init__(self, parent = None, scale = False):
         qt.QWidget.__init__(self, parent)
@@ -100,7 +95,10 @@ class DoubleSlider(qt.QWidget):
     def _sliderChanged(self, value):
         if DEBUG: print "DoubleSlider._sliderChanged()"
         ddict = self.__getDict()
-        self.emit(qt.SIGNAL("doubleSliderValueChanged"),ddict)
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("doubleSliderValueChanged"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("doubleSliderValueChanged"), ddict)
 
     def setMinMax(self, m, M):
         self.minSlider.setValue(m)
@@ -147,11 +145,14 @@ def test():
     qt.QObject.connect(app,
                        qt.SIGNAL("lastWindowClosed()"),
                        app,
-                       qt.SLOT('quit'))
+                       qt.SLOT('quit()'))
     
     w = DoubleSlider()
     w.show()
-    app.exec_()
+    if QTVERSION < '4.0.0':
+        app.exec_loop()
+    else:
+        app.exec_()
 
 if __name__ == "__main__":
     test()

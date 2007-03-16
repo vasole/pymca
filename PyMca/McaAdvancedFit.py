@@ -1395,7 +1395,11 @@ class McaAdvancedFit(qt.QWidget):
                     document.setHtml(text)        
                 document.print_(printer)
 
-    def setdata(self,*var,**kw):
+    def setdata(self, *var, **kw):
+        if DEBUG:print "McaAdvancedFit.setdata deprecated, use setData instead:"
+        return self.setData( *var, **kw)
+
+    def setData(self,*var,**kw):
         self.__fitdone = 0
         self.info ={}
         if kw.has_key('legend'):
@@ -1451,7 +1455,11 @@ class McaAdvancedFit(qt.QWidget):
         self._updateTop()
         self.plot()
 
-    def setheader(self,*var,**kw):
+    def setheader(self, *var, **kw):
+        if DEBUG:print "McaAdvancedFit.setheader deprecated, use setHeader instead:"
+        return self.setHeader( *var, **kw)
+
+    def setHeader(self,*var,**kw):
         if len(var):
             text = var[0]
         elif kw.has_key('text'):

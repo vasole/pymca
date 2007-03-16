@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,8 +28,10 @@ import sys
 import QtBlissGraph
 qt = QtBlissGraph.qt
 qwt = QtBlissGraph.qwt
+import DoubleSlider
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
+
 import os
 #from copy import *
 import Numeric
@@ -61,7 +63,7 @@ class MyQLineEdit(qt.QLineEdit):
 Manage colormap Widget class
 """
 class ColormapDialog(qt.QDialog):
-    def __init__(self, parent=None, name="Colormap Dialog"):
+    def __init__(self, parent=None, name="Colormap Dialog", slider = False):
         if QTVERSION < '4.0.0':
             qt.QDialog.__init__(self, parent, name)
             self.setCaption(name)
@@ -178,14 +180,34 @@ class ColormapDialog(qt.QDialog):
 
         vlayout.addSpacing(20)
 
+        hboxlimits = qt.QWidget(self)
+        hboxlimitslayout = qt.QHBoxLayout(hboxlimits)
+        hboxlimitslayout.setMargin(0)
+        hboxlimitslayout.setSpacing(0)
+
+        if slider:
+            self.slider = DoubleSlider.DoubleSlider(hboxlimits, scale = False)
+            hboxlimitslayout.addWidget(self.slider)
+        else:
+            self.slider = None
+
+        vlayout.addWidget(hboxlimits)
+
+        vboxlimits = qt.QWidget(hboxlimits)
+        vboxlimitslayout = qt.QVBoxLayout(vboxlimits)
+        vboxlimitslayout.setMargin(0)
+        vboxlimitslayout.setSpacing(0)
+        hboxlimitslayout.addWidget(vboxlimits)
+
         # hlayout 2 : - min label
         #             - min texte
-        hbox2    = qt.QWidget(self)
+        hbox2    = qt.QWidget(vboxlimits)
         self.__hbox2 = hbox2
         hlayout2 = qt.QHBoxLayout(hbox2)
         hlayout2.setMargin(0)
         hlayout2.setSpacing(0)
-        vlayout.addWidget(hbox2)
+        #vlayout.addWidget(hbox2)
+        vboxlimitslayout.addWidget(hbox2)
         hlayout2.addStretch(10)
         
         self.minLabel  = qt.QLabel(hbox2)
@@ -204,13 +226,14 @@ class ColormapDialog(qt.QDialog):
         
         # hlayout 3 : - min label
         #             - min text
-        hbox3    = qt.QWidget(self)
+        hbox3    = qt.QWidget(vboxlimits)
         self.__hbox3 = hbox3
         hlayout3 = qt.QHBoxLayout(hbox3)
         hlayout3.setMargin(0)
         hlayout3.setSpacing(0)
-        vlayout.addWidget(hbox3)
-
+        #vlayout.addWidget(hbox3)
+        vboxlimitslayout.addWidget(hbox3)
+        
         hlayout3.addStretch(10)
         self.maxLabel = qt.QLabel(hbox3)
         self.maxLabel.setText("Maximum")
@@ -286,16 +309,47 @@ class ColormapDialog(qt.QDialog):
                           self.chval)
             self.connect (self.c , qt.PYSIGNAL("QtBlissGraphSignal"),
                           self.chmap)
+            if slider:
+                self.connect (self.slider,
+                          qt.PYSIGNAL("doubleSliderValueChanged"),
+                          self._sliderChanged)
         else:
             self.connect (self.c , qt.SIGNAL("QtBlissGraphSignal"),
                           self.chval)
             self.connect (self.c , qt.SIGNAL("QtBlissGraphSignal"),
                           self.chmap)
 
+            if slider:
+                self.connect (self.slider,
+                          qt.SIGNAL("doubleSliderValueChanged"),
+                          self._sliderChanged)
+
         # colormap window can not be resized
         self.setFixedSize(vlayout.minimumSize())
 
+    def _sliderChanged(self, ddict):
+        if not self.__sliderConnected: return
+        delta = (self.dataMax - self.dataMin) * 0.01
+        xmin = self.dataMin + delta * ddict['min']
+        xmax = self.dataMin + delta * ddict['max']
+        self.setDisplayedMinValue(xmin)
+        self.setDisplayedMaxValue(xmax)
+        self.__x[1] = xmin
+        self.__x[2] = xmax
+        self.c.newCurve("ConstrainedCurve", self.__x, self.__y)
+        for i in range(4):
+            self.c.setMarkerXPos(self.c.markersdict[self.markers[i]]['marker'],
+                                 self.__x[i])
+            self.c.setMarkerYPos(self.c.markersdict[self.markers[i]]['marker'],
+                                 self.__y[i])
+
+        self.c.replot()
+        if DEBUG:print "Slider asking to update colormap"
+        #self._update()
+        self.sendColormap()
+
     def _update(self):
+        if DEBUG: print "colormap _update called"
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
         self.maxpd = self.dataMax + self.marge
@@ -315,6 +369,7 @@ class ColormapDialog(qt.QDialog):
 
     def buttonGroupChange(self, val):
         self.colormapType = val
+        if DEBUG: print "buttonGroup asking to update colormap"
         self._update()
 
     def chval(self, ddict):
@@ -386,6 +441,11 @@ class ColormapDialog(qt.QDialog):
                 #self.autoScale90Button.setDown(False)
             self.setMinValue(self.dataMin)
             self.setMaxValue(self.dataMax)
+            if self.slider is not None:
+                self.__sliderConnected = False
+                self.slider.setMinMax(0, 100)
+                self.slider.setEnabled(False)
+                self.__sliderConnected = True
 
             self.maxText.setEnabled(0)
             self.minText.setEnabled(0)
@@ -400,6 +460,7 @@ class ColormapDialog(qt.QDialog):
                 self.autoScale90Button.setChecked(False)
             self.minText.setEnabled(1)
             self.maxText.setEnabled(1)
+            if self.slider:self.slider.setEnabled(True)
             self.c.setEnabled(1)
             self.c.enablemarkermode()
 
@@ -419,6 +480,11 @@ class ColormapDialog(qt.QDialog):
                 self.autoScaleButton.setChecked(False)
             self.setMinValue(self.dataMin)
             self.setMaxValue(self.dataMax - abs(self.dataMax/10))
+            if self.slider is not None:
+                self.__sliderConnected = False
+                self.slider.setMinMax(0, 90)
+                self.slider.setEnabled(0)
+                self.__sliderConnected = True
 
             self.minText.setEnabled(0)
             self.maxText.setEnabled(0)
@@ -431,6 +497,7 @@ class ColormapDialog(qt.QDialog):
                 self.autoScale90Button.setChecked(False)
             self.minText.setEnabled(1)
             self.maxText.setEnabled(1)
+            if self.slider:self.slider.setEnabled(True)
             self.c.setEnabled(1)
             self.c.enablemarkermode()
             self.c.setFocus()
@@ -522,6 +589,7 @@ class ColormapDialog(qt.QDialog):
     send 'ColormapChanged' signal
     """
     def sendColormap(self):
+        if DEBUG:print "sending colormap"
         try:
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("ColormapChanged"),
