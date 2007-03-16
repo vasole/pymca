@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
+__author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import RGBCorrelatorGraph
 import ColormapDialog

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.73 $"
+__revision__ = "$Revision: 1.74 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.7"
+__version__ = "4.0.7 20060316-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -154,6 +154,7 @@ if __name__ == "__main__":
 
 import McaWindow
 import ScanWindow
+import PyMcaImageWindow
 import QDispatcher
 import ElementsInfo
 import PeakIdentifier
@@ -238,15 +239,17 @@ class PyMca(PyMcaMdi.PyMca):
                     #self.scanwindow.showMaximized()
                     #self.mcawindow.showMaximized()
             else:
+                self.imagewindow = PyMcaImageWindow.PyMcaImageWindow()
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcawindow = McaWindow.McaWidget()
                 self.scanwindow = ScanWindow.ScanWindow()
                 self.mainTabWidget.addTab(self.mcawindow, "MCA")
                 self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                self.mainTabWidget.addTab(self.imagewindow, "IMAGE")
                 self.mdi.addWindow(self.mainTabWidget)
                 self.mainTabWidget.showMaximized()
-                if True:
+                if False:
                     self.connectDispatcher(self.mcawindow, self.sourceWidget)
                     self.connectDispatcher(self.scanwindow, self.sourceWidget)
                 else:
@@ -326,23 +329,40 @@ class PyMca(PyMcaMdi.PyMca):
             self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
                              viewer._replaceSelection)
 
+    def _is2DSelection(self, ddict):
+        if ddict.has_key('imageselection'):
+            if ddict['imageselection']:
+                return True
+        return False
+
     def dispatcherAddSelectionSlot(self, ddict):
         if DEBUG:
             print "self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict
-        self.mcawindow._addSelection(ddict)
-        self.scanwindow._addSelection(ddict)
+
+        if self._is2DSelection(ddict):
+            self.imagewindow._addSelection(ddict)
+        else:            
+            self.mcawindow._addSelection(ddict)
+            self.scanwindow._addSelection(ddict)
 
     def dispatcherRemoveSelectionSlot(self, ddict):
         if DEBUG:
             print "self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict
-        self.mcawindow._removeSelection(ddict)
-        self.scanwindow._removeSelection(ddict)
+
+        if self._is2DSelection(ddict):
+            self.imagewindow._removeSelection(ddict)
+        else:
+            self.mcawindow._removeSelection(ddict)
+            self.scanwindow._removeSelection(ddict)
 
     def dispatcherReplaceSelectionSlot(self, ddict):
         if DEBUG:
             print "self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict
-        self.mcawindow._replaceSelection(ddict)
-        self.scanwindow._replaceSelection(ddict)
+        if self._is2DSelection(ddict):
+            self.imagewindow._replaceSelection(ddict)
+        else:            
+            self.mcawindow._replaceSelection(ddict)
+            self.scanwindow._replaceSelection(ddict)
 
     def dispatcherOtherSignalsSlot(self, ddict):
         if DEBUG:print "self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict
