@@ -246,17 +246,26 @@ class QDispatcher(qt.QWidget):
 
     def _selectionUpdatedSlot(self, ddict):
         if DEBUG: print "_selectionUpdatedSlot(self, dict)",ddict
-        sel_list = []
-        for objectReference in ddict["id"]:
-            sel = {}
-            sel['SourceName'] = ddict['SourceName']
-            sel['SourceType'] = ddict['SourceType']
-            sel['Key']        = ddict['Key']
-            sel['selection']  = objectReference.info['selection']
-            sel['legend']     = objectReference.info['legend']
-            if 'scanselection' in objectReference.info.keys():
-                sel['scanselection']  = objectReference.info['scanselection']
-            sel_list.append(sel)
+        if ddict.has_key('selectionlist'):
+            sel_list = ddict['selectionlist']
+        else:
+            sel_list = []
+            for objectReference in ddict["id"]:
+                sel = {}
+                sel['SourceName'] = ddict['SourceName']
+                sel['SourceType'] = ddict['SourceType']
+                sel['Key']        = ddict['Key']
+                if 0:
+                    sel['selection']  = objectReference.info['selection']
+                    sel['legend']     = objectReference.info['legend']
+                    if 'scanselection' in objectReference.info.keys():
+                        sel['scanselection']  = objectReference.info['scanselection']
+                else:
+                    sel['selection']  = ddict['selection']
+                    sel['legend']     = ddict['legend']
+                    sel['scanselection']  = ddict['scanselection']
+                    sel['imageselection']  = ddict['imageselection']
+                sel_list.append(sel)            
         self._addSelectionSlot(sel_list)
 
     def _tabChanged(self, value):

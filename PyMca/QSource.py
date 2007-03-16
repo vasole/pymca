@@ -58,6 +58,7 @@ class QSource(qt.QObject):
         qt.QObject.__init__(self, None) #no parent
 
         self.surveyDict = {}
+        self.selections = {}
         self._pollTime = 0.5 #500 ms
         self.pollerThreadId = None
        
@@ -111,16 +112,18 @@ class QSource(qt.QObject):
 
         # create a weak reference to the dataObject and we call it dataObjectRef
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
-        
         try:
             if dataObjectRef not in self.surveyDict[key]:
                 self.surveyDict[key].append(dataObjectRef)
+                self.selections[key].append((id(dataObjectRef), dataObjectRef.info))
         except KeyError:
             self.surveyDict[key] = [dataObjectRef]
+            self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
         except ReferenceError:
             if DEBUG: print "NOT ADDED TO THE POLL dataObject = ", dataObject
+            return
         if DEBUG:print "SURVEY DICT AFTER ADDITION = ", self.surveyDict
-
+        
         if self.pollerThreadId is None:
             # start a new polling thread
             #print "starting new thread"
@@ -154,7 +157,10 @@ class QSource(qt.QObject):
                             event.dict['Key']   = key
                             event.dict['event'] = 'updated'
                             event.dict['id']    = self.surveyDict[key]
-                            event.dict['scanselection'] = True
+                            if 'key' == 'SCAN_D':
+                                event.dict['scanselection'] = True
+                            else:
+                                event.dict['scanselection'] = False
                             try:
                                 qt.qApp.processEvents()
                                 if QTVERSION < '4.0.0':qt.qApp.lock()
@@ -170,3 +176,5 @@ class QSource(qt.QObject):
             if DEBUG:print "woke up"
             
         self.pollerThreadId = None
+        self.selections = {}
+        

@@ -480,9 +480,9 @@ class QSpsWidget(qt.QWidget):
         replaceButton= qt.QPushButton("Replace", butWidget)
 
         butLayout= qt.QHBoxLayout(butWidget)
+        butLayout.addWidget(addButton)
         butLayout.addWidget(removeButton)
         butLayout.addWidget(replaceButton)
-        butLayout.addWidget(addButton)
         butLayout.setMargin(5)
 
         self.connect(addButton, qt.SIGNAL("clicked()"), self.__addClicked)
@@ -735,7 +735,8 @@ class QSpsWidget(qt.QWidget):
                     selsignal["selection"] = selection['selection']   
                     selsignal['legend'] = self.data.sourceName + " " + \
                                               selsignal['Key']
-                    selsignal['scanselection'] = False
+                    selsignal['scanselection']  = False
+                    selsignal['imageselection'] = True
                 sellistsignal.append(selsignal)
             self.setSelected([sel],reset=1)
             if QTVERSION < '4.0.0':
@@ -840,7 +841,8 @@ class QSpsWidget(qt.QWidget):
                     selsignal["selection"] = selection['selection']   
                     selsignal['legend'] = self.data.sourceName + " " + \
                                               selsignal['Key']
-                    selsignal['scanselection'] = False
+                    selsignal['scanselection']  = False
+                    selsignal['imageselection'] = True
 
                 sellistsignal.append(selsignal)
             if self.selection is None: 
@@ -937,6 +939,13 @@ class QSpsWidget(qt.QWidget):
                      selsignal['legend'] = self.data.sourceName + " " + \
                                           selsignal['Key']
                      selsignal['scanselection'] = True
+
+                elif selection['plot'] == 'image':
+                    selsignal["selection"] = selection['selection']   
+                    selsignal['legend'] = self.data.sourceName + " " + \
+                                              selsignal['Key']
+                    selsignal['scanselection']  = False
+                    selsignal['imageselection'] = True
 
                 sellistsignal.append(selsignal)
                 returnedselection.append(sel)

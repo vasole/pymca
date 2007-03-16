@@ -73,16 +73,40 @@ class QSpsDataSource(QSource.QSource):
         ddict = event.dict
         ddict['SourceName'] = self.__dataSource.sourceName
         ddict['SourceType'] = SOURCE_TYPE
-        #ddict['Key'] should be already there
-        #ddict['event'] should be there
-        #ddict['id'] should also be there
-        #print "emitted dict =", dict
-        #for objectref in dict['id']:
-        #    print "dict[id].info = ",objectref.info
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("updated"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("updated"), ddict)
+        key = ddict['Key']
+
+        idtolook = [] 
+        ddict['selectionlist'] = []
+        for object in self.surveyDict[key]:
+            idtolook.append(id(object))
+                        
+        if key in self.selections.keys():
+            n = len(self.selections[key])
+            if n:
+                a = range(n)
+                a.reverse()
+                for i in a:
+                    objectId, info = self.selections[key][i]
+                    if objectId in idtolook:
+                        sel = {}
+                        sel['SourceName'] = self.__dataSource.sourceName
+                        sel['SourceType'] = SOURCE_TYPE
+                        sel['Key']        = key
+                        sel['selection'] = info['selection']
+                        sel['legend'] = info['legend']
+                        sel['scanselection'] = info.get('scanselection', False) 
+                        sel['imageselection'] = info.get('imageselection', False) 
+                        ddict['selectionlist'].append(sel)
+                    else:
+                        del self.selections[key][i]
+            
+
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL("updated"), (ddict,))
+                else:
+                    self.emit(qt.SIGNAL("updated"), ddict)
+            else:
+                print "No info????"
         
 if __name__ == "__main__":
     import sys
