@@ -2540,23 +2540,24 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             
         else:
             if colormap is None:
-                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
+                (image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0), "BGRX", spslut.TEMP,
                                           1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
             else:
-                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
+                (image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (colormap[6],3.0),
                                          "BGRX", COLORMAPLIST[int(str(colormap[0]))],
                                           colormap[1], (colormap[2],colormap[3]))
             if QTVERSION < '4.0.0':
-                self.image=qt.QImage(self.image_buffer,size[0], size[1],
+                self.image=qt.QImage(image_buffer,size[0], size[1],
                                     32, None,
                                     0, qt.QImage.IgnoreEndian).mirror(xmirror,
                                                                       ymirror)
             else:
-                self.image = qt.QImage(self.image_buffer,size[0], size[1],
+                self.image = qt.QImage(image_buffer,size[0], size[1],
                                        qt.QImage.Format_RGB32).mirrored(xmirror,
                                                                         ymirror)
+            self.image_buffer = image_buffer
 
     def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
                   xmirror = 0, ymirror = 1):
@@ -2620,7 +2621,7 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                                    size[1],
                                    qt.QImage.Format_RGB32).mirrored(xmirror,
                                                                     ymirror)
-
+            self.image_buffer = pixmap
 
 class QwtPlotImage(qwt.QwtPlotMappedItem):
     def __init__(self, parent, palette=None):

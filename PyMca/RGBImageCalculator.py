@@ -49,12 +49,11 @@ class RGBImageCalculator(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self.imageList   = None
         self.imageDict   = None
-        self.__imageData = None
+        self._imageData = None
         self.__imagePixmap   = None
         self.__imageColormap = None
         self.__imageColormapDialog = None
         self._y1AxisInverted = False
-
         self._build()
 
     def _build(self):
@@ -146,7 +145,7 @@ class RGBImageCalculator(qt.QWidget):
 
     def plotImage(self, update = True):
         if DEBUG:print"plotImage", update
-        if self.__imageData is None:
+        if self._imageData is None:
             self.graphWidget.graph.clear()
         if update:
             self.getPixmapFromData()
@@ -154,13 +153,13 @@ class RGBImageCalculator(qt.QWidget):
             ylimits = self.graphWidget.graph.getY1AxisLimits()
         if not self.graphWidget.graph.xAutoScale:
             xlimits = self.graphWidget.graph.getX1AxisLimits()
-        if 0: #this may crash under windows 
+        if 1: #this may crash under windows 
             self.graphWidget.graph.pixmapPlot(self.__imagePixmap.tostring(),
-                    (self.__imageData.shape[1], self.__imageData.shape[0]),
+                    (self._imageData.shape[1], self._imageData.shape[0]),
                                         xmirror = 0,
                                         ymirror = not self._y1AxisInverted)
         else:            
-            self.graphWidget.graph.imagePlot(self.__imageData,
+            self.graphWidget.graph.imagePlot(self._imageData,
                                         colormap = self.__imageColormap,
                                         xmirror = 0,
                                         ymirror = not self._y1AxisInverted)
@@ -174,7 +173,7 @@ class RGBImageCalculator(qt.QWidget):
         colormap = self.__imageColormap
         if colormap is None:
             (self.__imagePixmap,size,minmax)= spslut.transform(\
-                                self.__imageData,
+                                self._imageData,
                                 (1,0),
                                 (spslut.LINEAR,3.0),
                                 "BGRX",
@@ -184,7 +183,7 @@ class RGBImageCalculator(qt.QWidget):
         else:
             if len(colormap) < 7: colormap.append(spslut.LINEAR)
             (self.__imagePixmap,size,minmax)= spslut.transform(\
-                                self.__imageData,
+                                self._imageData,
                                 (1,0),
                                 (colormap[6],3.0),
                                 "BGRX",
@@ -193,8 +192,8 @@ class RGBImageCalculator(qt.QWidget):
                                 (colormap[2],colormap[3]))
         self.__imagePixmap = Numeric.array(self.__imagePixmap).\
                                         astype(Numeric.UInt8)
-        self.__imagePixmap.shape = [self.__imageData.shape[0],
-                                    self.__imageData.shape[1],
+        self.__imagePixmap.shape = [self._imageData.shape[0],
+                                    self._imageData.shape[1],
                                     4]
         
     def _calculateClicked(self):
@@ -215,7 +214,7 @@ class RGBImageCalculator(qt.QWidget):
             name = name.replace(item,label)
             i = i + 1
         try:
-            self.__imageData = 1 * eval(expression)
+            self._imageData = 1 * eval(expression)
         except:
             error = sys.exc_info()
             text = "Failed to evaluate expression:\n"
@@ -227,7 +226,7 @@ class RGBImageCalculator(qt.QWidget):
             
     def _addImageClicked(self):
         if DEBUG: print "Add image clicked"
-        if self.__imageData is None:return
+        if self._imageData is None:return
         text = str(self.name.text())
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
@@ -235,7 +234,7 @@ class RGBImageCalculator(qt.QWidget):
             return
         ddict = {}
         ddict['label'] = text
-        ddict['image']  = self.__imageData
+        ddict['image']  = self._imageData
         self.emit(qt.SIGNAL("addImageClicked"),
                   ddict)
 
@@ -274,7 +273,7 @@ class RGBImageCalculator(qt.QWidget):
         self.plotImage(True)
 
     def selectColormap(self):
-        if self.__imageData is None:return
+        if self._imageData is None:return
         if self.__imageColormapDialog is None:
             self.__initColormapDialog()
         if self.__imageColormapDialog.isHidden():
@@ -283,10 +282,10 @@ class RGBImageCalculator(qt.QWidget):
         self.__imageColormapDialog.show()
 
     def __initColormapDialog(self):
-        a = Numeric.ravel(self.__imageData)
+        a = Numeric.ravel(self._imageData)
         minData = min(a)
         maxData = max(a)
-        self.__imageColormapDialog = ColormapDialog.ColormapDialog()
+        self.__imageColormapDialog = ColormapDialog.ColormapDialog(slider=True)
         self.__imageColormapDialog.colormapIndex  = self.__imageColormapDialog.colormapList.index("Temperature")
         self.__imageColormapDialog.colormapString = "Temperature"
         self.__imageColormapDialog.setWindowTitle("Stack Colormap Dialog")
@@ -335,10 +334,10 @@ class RGBImageCalculator(qt.QWidget):
             if x < 0: x = 0
             y = round(ddict['x'])
             if y < 0: y = 0
-            limits = self.__imageData.shape
+            limits = self._imageData.shape
             x = min(int(x), limits[0]-1)
             y = min(int(y), limits[1]-1)
-            z = self.__imageData[x, y]
+            z = self._imageData[x, y]
             self.graphWidget.setInfoText("    X = %d Y = %d Z = %.4g" %\
                                                (y, x, z))
 
