@@ -144,6 +144,8 @@ class RGBImageCalculator(qt.QWidget):
                  qt.SIGNAL("clicked()"),
                  self._hFlipIconSignal)
 
+        self.graphWidget.graph.canvas().setMouseTracking(1)
+        self.graphWidget.showInfo()
         self.connect(self.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
@@ -355,9 +357,8 @@ class RGBImageCalculator(qt.QWidget):
             x = min(int(x), limits[0]-1)
             y = min(int(y), limits[1]-1)
             z = self._imageData[x, y]
-            self.graphWidget.setInfoText("    X = %d Y = %d Z = %.4g" %\
+            self.graphWidget.setInfoText("    X = %d Y = %d Z = %.7g" %\
                                                (y, x, z))
-
     def closeEvent(self, event):
         if self.__imageColormapDialog is not None:
             self.__imageColormapDialog.close()
