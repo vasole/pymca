@@ -154,8 +154,8 @@ class RGBImageCalculator(qt.QWidget):
             ylimits = self.graphWidget.graph.getY1AxisLimits()
         if not self.graphWidget.graph.xAutoScale:
             xlimits = self.graphWidget.graph.getX1AxisLimits()
-        if 1: #this may crash under windows 
-            self.graphWidget.graph.pixmapPlot(self.__imagePixmap.tostring(),
+        if 1:  
+            self.graphWidget.graph.pixmapPlot(self.__imagePixmap,
                     (self._imageData.shape[1], self._imageData.shape[0]),
                                         xmirror = 0,
                                         ymirror = not self._y1AxisInverted)
@@ -191,11 +191,6 @@ class RGBImageCalculator(qt.QWidget):
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
                                 (colormap[2],colormap[3]))
-        self.__imagePixmap = Numeric.array(self.__imagePixmap).\
-                                        astype(Numeric.UInt8)
-        self.__imagePixmap.shape = [self._imageData.shape[0],
-                                    self._imageData.shape[1],
-                                    4]
         
     def _calculateClicked(self):
         if DEBUG: print "Calculate clicked"
