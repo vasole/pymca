@@ -175,9 +175,11 @@ if __name__ == "__main__":
             if DEBUG: print "dataObject distroyed key = ", key
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
         selection = {}
-        selection['SourceName'] = 'SPS'
+        selection['SourceType'] = 'SPS'
+        selection['SourceName'] = 'spec'
         selection['Key']        = name
-        selection['legend']     = name
+        selection['legend']     = selection['SourceName'] + "  "+ name
+        selection['imageselection'] = True
         selection['dataobject'] = dataObjectRef
         return selection
 
@@ -191,8 +193,16 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                         app,qt.SLOT("quit()"))
-    w = PyMcaImageWindow()
-    w.show()
+    if len(sys.argv) > 1:PYMCA=True
+    else:PYMCA = False
+
+    if PYMCA:
+        import PyMca
+        w = PyMca.PyMca()
+        w.show()
+    else:
+        w = PyMcaImageWindow()
+        w.show()
     counter = 0
     def function(period = period):
         global counter
@@ -203,7 +213,10 @@ if __name__ == "__main__":
             dataObject = buildDataObject(x2)
             selection = buildSelection(dataObject, 'X2')
         counter += 1
-        w._addSelection(selection)
+        if PYMCA:
+            w.dispatcherAddSelectionSlot(selection)
+        else:
+            w._addSelection(selection)
 
     loop = TimerLoop(function = function, period = period)
     if QTVERSION < '4.0.0':
