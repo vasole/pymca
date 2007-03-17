@@ -349,6 +349,9 @@ class RGBImageCalculator(qt.QWidget):
 
     def _graphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
+            if self._imageData is None:
+                self.graphWidget.setInfoText("    X = ???? Y = ???? Z =????")
+                return
             x = round(ddict['y'])
             if x < 0: x = 0
             y = round(ddict['x'])
