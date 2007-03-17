@@ -64,10 +64,12 @@ class RGBCorrelator(qt.QWidget):
         #self.splitter.setStretchFactor(1,1)
         self.mainLayout.addWidget(self.splitter)
         
-        self.addImage = self.controller.addImage
         self.reset    = self.controller.reset
         self.addImage = self.controller.addImage
         self.removeImage = self.controller.removeImage
+        self.addImageSlot = self.controller.addImageSlot
+        self.removeImageSlot = self.controller.removeImageSlot
+        self.replaceImageSlot = self.controller.replaceImageSlot
         self.setImageShape = self.controller.setImageShape
         self.update   = self.controller.update
         self.connect(self.controller,
@@ -121,6 +123,11 @@ class RGBCorrelator(qt.QWidget):
         self.controller.close()
         self.emit(qt.SIGNAL("RGBCorrelatorSignal"),ddict)
         qt.QWidget.closeEvent(self, event)
+
+    def show(self):
+        if self.controller.isHidden():
+            self.controller.show()
+        qt.QWidget.show(self)
 
 def test():
     app = qt.QApplication([])

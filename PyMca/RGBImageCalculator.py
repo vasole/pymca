@@ -40,7 +40,7 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 DEBUG = 0
 
 class RGBImageCalculator(qt.QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, math = True, replace = False):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMCA - RGB Image Calculator")
@@ -55,9 +55,9 @@ class RGBImageCalculator(qt.QWidget):
         self.__imageColormap = None
         self.__imageColormapDialog = None
         self._y1AxisInverted = False
-        self._build()
+        self._build(math = math, replace = replace)
 
-    def _build(self):
+    def _buildMath(self):
         self.mathBox = qt.QWidget(self)
         self.mathBox.mainLayout = qt.QHBoxLayout(self.mathBox)
 
@@ -81,7 +81,12 @@ class RGBImageCalculator(qt.QWidget):
         self.mathBox.mainLayout.addWidget(self.mathLabel)
         self.mathBox.mainLayout.addWidget(self.mathExpression)
         self.mathBox.mainLayout.addWidget(self.mathAction)
+        self.mainLayout.addWidget(self.mathBox)
+        self.connect(self.mathAction, qt.SIGNAL("clicked()"), 
+                    self._calculateClicked)
 
+    def _build(self, math = True, replace = False):
+        if math: self._buildMath()
         
         self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
                                                         colormap=True)
@@ -113,23 +118,24 @@ class RGBImageCalculator(qt.QWidget):
         self.removeImageButton = qt.QPushButton(buttonBox)
         self.removeImageButton.setIcon(icon)
         self.removeImageButton.setText("REMOVE IMAGE")
-        #self.replaceImageButton = qt.QPushButton(buttonBox)
-        #self.replaceImageButton.setIcon(icon)
-        #self.replaceImageButton.setText("REPLACE IMAGE")
         self.imageButtonBoxLayout.addWidget(self.addImageButton)
         self.imageButtonBoxLayout.addWidget(self.removeImageButton)
-        #self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
+        if replace:
+            self.replaceImageButton = qt.QPushButton(buttonBox)
+            self.replaceImageButton.setIcon(icon)
+            self.replaceImageButton.setText("REPLACE IMAGE")
+            self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
         
-        self.mainLayout.addWidget(self.mathBox)
         #self.mainLayout.addWidget(self.nameBox)
         self.mainLayout.addWidget(self.graphWidget)
         self.mainLayout.addWidget(buttonBox)
-        self.connect(self.mathAction, qt.SIGNAL("clicked()"), 
-                    self._calculateClicked)
         self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
                     self._addImageClicked)
         self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
                     self._removeImageClicked)
+        if replace:
+            self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
+                         self._replaceImageClicked)
         self.connect(self.graphWidget.colormapToolButton,
              qt.SIGNAL("clicked()"),
              self.selectColormap)
@@ -198,7 +204,7 @@ class RGBImageCalculator(qt.QWidget):
         if not len(text):
             qt.QMessageBox.critical(self, "Calculation Error",
                                     "Empty expression")
-            return
+            return 1
 
         expression = text * 1
         name       = text * 1
@@ -217,17 +223,19 @@ class RGBImageCalculator(qt.QWidget):
             text += "%s\n" % expression
             text += "%s" % error[1]
             qt.QMessageBox.critical(self,"%s" % error[0], text)
+            return 1
         self.plotImage()
         self.name.setText("(%s)" % name)
             
     def _addImageClicked(self):
         if DEBUG: print "Add image clicked"
         if self._imageData is None:return
+        if self._imageData == []:return
         text = str(self.name.text())
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
                                     "Please give a name to the image")
-            return
+            return 1
         ddict = {}
         ddict['label'] = text
         ddict['image']  = self._imageData
@@ -240,9 +248,22 @@ class RGBImageCalculator(qt.QWidget):
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
                                     "Please enter the image name")
-            return
+            return 1
         self.emit(qt.SIGNAL("removeImageClicked"),
                   text)
+
+    def _replaceImageClicked(self):
+        if DEBUG: print "remove image clicked"
+        text = str(self.name.text())
+        if not len(text):
+            qt.QMessageBox.critical(self, "Name Error",
+                                    "Please enter the image name")
+            return 1
+        ddict = {}
+        ddict['label'] = text
+        ddict['image']  = self._imageData
+        self.emit(qt.SIGNAL("replaceImageClicked"),
+                  ddict)
 
     def _hFlipIconSignal(self):
         if QWTVERSION4:
@@ -253,11 +274,11 @@ class RGBImageCalculator(qt.QWidget):
         if not self.graphWidget.graph.yAutoScale:
             qt.QMessageBox.information(self, "Open",
                     "Please set image Y Axis to AutoScale first")
-            return
+            return 1
         if not self.graphWidget.graph.xAutoScale:
             qt.QMessageBox.information(self, "Open",
                     "Please set image X Axis to AutoScale first")
-            return
+            return 1
 
         if self._y1AxisInverted:
             self._y1AxisInverted = False

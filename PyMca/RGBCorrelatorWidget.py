@@ -50,8 +50,9 @@ class HorizontalSpacer(qt.QWidget):
                            qt.QSizePolicy.Fixed))
     
 class RGBCorrelatorWidget(qt.QWidget):
-    def __init__(self, parent = None, bgrx = True):
+    def __init__(self, parent = None, bgrx = True, replace = False):
         qt.QWidget.__init__(self, parent)
+        self.replaceOption = replace 
         self.setWindowTitle("RGBCorrelatorWidget")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
@@ -437,6 +438,10 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.sliderWidget.autoScaleFromAToB()
             #self.__recolor()
             #self.tableWidget._update()
+        if self.calculationDialog is not None:
+            self.calculationDialog.imageList = self._imageList 
+            self.calculationDialog.imageDict = self._imageDict
+
 
     def removeImage(self, label):
         if label not in self._imageList:return
@@ -448,6 +453,19 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.__blueLabel == label:self.__blueLabel = None 
         self.tableWidget.build(self._imageList)
         self.tableWidget._update()
+        if self.calculationDialog is not None:
+            self.calculationDialog.imageList = self._imageList 
+            self.calculationDialog.imageDict = self._imageDict
+
+    def removeImageSlot(self, ddict):
+        if type(ddict) == type({}):
+            self.removeImage(ddict['label'])
+        else:
+            self.removeImage(ddict)
+
+    def replaceImageSlot(self, ddict):
+        self.reset()
+        self.addImageSlot(ddict)
         
     def _imageResizeSlot(self):
         if self.__imageLength is None: return
@@ -669,13 +687,17 @@ class RGBCorrelatorWidget(qt.QWidget):
         
     def showCalculationDialog(self):
         if self.calculationDialog is None:
-            self.calculationDialog = RGBImageCalculator.RGBImageCalculator()
+            self.calculationDialog = RGBImageCalculator.RGBImageCalculator(replace=self.replaceOption)
             self.connect(self.calculationDialog,
                          qt.SIGNAL("addImageClicked"),
                          self.addImageSlot)
             self.connect(self.calculationDialog,
                          qt.SIGNAL("removeImageClicked"),
-                         self.removeImage)            
+                         self.removeImage)
+            if self.replaceOption:
+                self.connect(self.calculationDialog,
+                         qt.SIGNAL("replaceImageClicked"),
+                         self.replaceImageSlot)
         self.calculationDialog.imageList = self._imageList 
         self.calculationDialog.imageDict = self._imageDict
         if self.calculationDialog.isHidden():

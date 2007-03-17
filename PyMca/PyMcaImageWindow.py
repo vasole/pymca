@@ -29,18 +29,48 @@ import sys
 from Icons import IconDict
 import Numeric
 import time
+import RGBCorrelator
 import RGBImageCalculator
 from RGBImageCalculator import qt
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
-    def __init__(self, parent = None, name = "PyMca Image Window"):
-        RGBImageCalculator.RGBImageCalculator.__init__(self, parent)
+    def __init__(self, parent = None,
+                 name = "PyMca Image Window",
+                 correlator = None):
+        RGBImageCalculator.RGBImageCalculator.__init__(self, parent,
+                                                       math = False,
+                                                       replace = True)
         self.setWindowTitle(name)
-        self.mathBox.hide()
+        self.correlator = correlator
+        self.ownCorrelator = False
+        #self.mathBox.hide()
         self.dataObjectsList = []
         self.dataObjectsDict = {}
+
+    def _connectCorrelator(self):
+        if QTVERSION > '4.0.0':
+            self.ownCorrelator = True
+            self.correlator = RGBCorrelator.RGBCorrelator()
+            self.correlator.setWindowTitle("ImageWindow RGB Correlator")
+            self.connect(self, qt.SIGNAL("addImageClicked"),
+                         self.correlator.addImageSlot)
+            self.connect(self, qt.SIGNAL("removeImageClicked"),
+                         self.correlator.removeImageSlot)
+            self.connect(self, qt.SIGNAL("replaceImageClicked"),
+                         self.correlator.replaceImageSlot)
+
+
+    def _addImageClicked(self):
+        if self.correlator is None: self._connectCorrelator()
+        if self._imageData is None:return
+        if self._imageData == []:return
+
+        if not RGBImageCalculator.RGBImageCalculator._addImageClicked(self):
+            if self.ownCorrelator:
+                if self.correlator.isHidden():
+                    self.correlator.show()
 
     def setDispatcher(self, w):
         if QTVERSION < '4.0.0':
@@ -103,6 +133,12 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def _replaceSelection(self, selectionlist):
         if DEBUG:print "_replaceSelection(self, selectionlist)",selectionlist
         self._addSelection(selectionlist)
+
+    def closeEvent(self, event):
+        if self.ownCorrelator:
+            self.correlator.close()
+        RGBImageCalculator.RGBImageCalculator.closeEvent(self, event)    
+
 
 class TimerLoop:
     def __init__(self, function = None, period = 1000):
