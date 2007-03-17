@@ -144,7 +144,8 @@ class RGBImageCalculator(qt.QWidget):
                  qt.SIGNAL("clicked()"),
                  self._hFlipIconSignal)
 
-        self.graphWidget.graph.canvas().setMouseTracking(1)
+        #it consumes too much CPU, therefore only on click
+        #self.graphWidget.graph.canvas().setMouseTracking(1)
         self.graphWidget.showInfo()
         self.connect(self.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),

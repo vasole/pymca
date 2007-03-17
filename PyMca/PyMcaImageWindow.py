@@ -48,6 +48,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         #self.mathBox.hide()
         self.dataObjectsList = []
         self.dataObjectsDict = {}
+        self._plotEnabled    = True
 
     def _connectCorrelator(self):
         if QTVERSION > '4.0.0':
@@ -68,7 +69,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         if self._imageData == []:return
 
         if not RGBImageCalculator.RGBImageCalculator._addImageClicked(self):
-            if self.ownCorrelator:
+            #if self.ownCorrelator:
                 if self.correlator.isHidden():
                     self.correlator.show()
 
@@ -112,7 +113,17 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             self.dataObjectsDict = {legend:dataObject}
             self._imageData = dataObject.data
             self.name.setText(legend)
-            self.plotImage(True)
+            if self._plotEnabled:
+                self.plotImage(True)
+
+    def setPlotEnabled(self, value=True):
+        self._plotEnabled = value
+        if value:
+            if self._imageData is not None:
+                self.plotImage(True)
+            else:
+                self.graphWidget.graph.clear()
+                pass
             
     def _removeSelection(self, selectionlist):
         if DEBUG:print "_removeSelection(self, selectionlist)",selectionlist
@@ -206,17 +217,62 @@ if __name__ == "__main__":
     counter = 0
     def function(period = period):
         global counter
-        if counter % 2:
+        flag = counter % 6
+        if flag == 0:
+            #add x1
+            print "Adding X1"
             dataObject = buildDataObject(x1)
             selection = buildSelection(dataObject, 'X1')
-        else:
+            if PYMCA:
+                w.dispatcherAddSelectionSlot(selection)
+            else:
+                w._addSelection(selection)
+        elif flag == 1:
+            #add x2
+            print "Adding X2"
             dataObject = buildDataObject(x2)
             selection = buildSelection(dataObject, 'X2')
-        counter += 1
-        if PYMCA:
-            w.dispatcherAddSelectionSlot(selection)
+            if PYMCA:
+                w.dispatcherAddSelectionSlot(selection)
+            else:
+                w._addSelection(selection)
+        elif flag == 2:
+            #add x1
+            print "Changing X1"
+            dataObject = buildDataObject(x2)
+            selection = buildSelection(dataObject, 'X1')
+            if PYMCA:
+                w.dispatcherAddSelectionSlot(selection)
+            else:
+                w._addSelection(selection)
+        elif flag == 1:
+            #add x2
+            print "Changing X2"
+            dataObject = buildDataObject(x2)
+            selection = buildSelection(dataObject, 'X1')
+            if PYMCA:
+                w.dispatcherAddSelectionSlot(selection)
+            else:
+                w._addSelection(selection)
+        elif flag == 4:
+            #replace x1
+            print "Replacing by new X1"
+            dataObject = buildDataObject(x1-x2)
+            selection = buildSelection(dataObject, 'X1')
+            if PYMCA:
+                w.dispatcherReplaceSelectionSlot(selection)
+            else:
+                w._replaceSelection(selection)
         else:
-            w._addSelection(selection)
+            #replace by x2
+            print "Replacing by new X2"
+            dataObject = buildDataObject(x2-x1)
+            selection = buildSelection(dataObject, 'X2')
+            if PYMCA:
+                w.dispatcherReplaceSelectionSlot(selection)
+            else:
+                w._replaceSelection(selection)
+        counter += 1
 
     loop = TimerLoop(function = function, period = period)
     if QTVERSION < '4.0.0':

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.74 $"
+__revision__ = "$Revision: 1.75 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.7 20060316-snapshot"
+__version__ = "4.0.7 20060317-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -167,6 +167,7 @@ except:
 ###########import Fit2Spec
 if QTVERSION > '4.0.0':
     import PyMcaPostBatch
+    import RGBCorrelator
 import ConfigDict
 import PyMcaDirs
 
@@ -239,20 +240,20 @@ class PyMca(PyMcaMdi.PyMca):
                     #self.scanwindow.showMaximized()
                     #self.mcawindow.showMaximized()
             else:
-                self.imagewindow = PyMcaImageWindow.PyMcaImageWindow()
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcawindow = McaWindow.McaWidget()
                 self.scanwindow = ScanWindow.ScanWindow()
                 self.mainTabWidget.addTab(self.mcawindow, "MCA")
                 self.mainTabWidget.addTab(self.scanwindow, "SCAN")
-                self.mainTabWidget.addTab(self.imagewindow, "IMAGE")
                 self.mdi.addWindow(self.mainTabWidget)
                 self.mainTabWidget.showMaximized()
                 if False:
                     self.connectDispatcher(self.mcawindow, self.sourceWidget)
                     self.connectDispatcher(self.scanwindow, self.sourceWidget)
                 else:
+                    self.imageWindowDict = {}
+                    self.imageWindowCorrelator = None
                     self.connect(self.sourceWidget,
                              qt.SIGNAL("addSelection"),
                              self.dispatcherAddSelectionSlot)
@@ -262,6 +263,9 @@ class PyMca(PyMcaMdi.PyMca):
                     self.connect(self.sourceWidget,
                              qt.SIGNAL("replaceSelection"),
                              self.dispatcherReplaceSelectionSlot)
+                    self.connect(self.mainTabWidget,
+                                 qt.SIGNAL("currentChanged(int)"),
+                                 self.currentTabIndexChanged)
 
 
             if QTVERSION < '4.0.0':
@@ -328,6 +332,13 @@ class PyMca(PyMcaMdi.PyMca):
                              viewer._removeSelection)
             self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
                              viewer._replaceSelection)
+            
+    def currentTabIndexChanged(self, index):
+        legend = str(self.mainTabWidget.tabText(index))
+        for key in self.imageWindowDict.keys():
+            if key == legend:value = True
+            else: value = False
+            self.imageWindowDict[key].setPlotEnabled(value)
 
     def _is2DSelection(self, ddict):
         if ddict.has_key('imageselection'):
@@ -339,8 +350,51 @@ class PyMca(PyMcaMdi.PyMca):
         if DEBUG:
             print "self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict
 
+        toadd = False
         if self._is2DSelection(ddict):
-            self.imagewindow._addSelection(ddict)
+            if QTVERSION > '4.0.0':
+                if self.imageWindowCorrelator is None:
+                    self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
+                    #toadd = True
+                title  = "ImageWindow RGB Correlator"
+                self.imageWindowCorrelator.setWindowTitle(title)
+            legend = ddict['legend'] 
+            if  legend not in self.imageWindowDict.keys():
+                imageWindow = PyMcaImageWindow.PyMcaImageWindow(name = legend,
+                                correlator = self.imageWindowCorrelator)
+                self.imageWindowDict[legend] = imageWindow
+                if QTVERSION > '4.0.0':
+                    self.connect(imageWindow, qt.SIGNAL("addImageClicked"),
+                         self.imageWindowCorrelator.addImageSlot)
+                    self.connect(imageWindow, qt.SIGNAL("removeImageClicked"),
+                         self.imageWindowCorrelator.removeImageSlot)
+                    self.connect(imageWindow, qt.SIGNAL("replaceImageClicked"),
+                         self.imageWindowCorrelator.replaceImageSlot)
+                self.mainTabWidget.addTab(imageWindow, legend)
+                if toadd:
+                    self.mainTabWidget.addTab(self.imageWindowCorrelator,
+                        "RGB Correlator")
+                self.imageWindowDict[legend].setPlotEnabled(False)
+                self.imageWindowDict[legend]._addSelection(ddict)
+                if QTVERSION < '4.0.0':
+                    self.mainTabWidget.setCurrentPage(self.mainTab.indexOf(imageWindow))
+                else:
+                    self.mainTabWidget.setCurrentWidget(imageWindow)
+                #self.imageWindowDict[legend].setPlotEnabled(True)
+                return
+            if self.mainTabWidget.indexOf(self.imageWindowDict[legend]) < 0:
+                self.mainTabWidget.addTab(self.imageWindowDict[legend],
+                                          legend)
+                self.imageWindowDict[legend].setPlotEnabled(False)
+                self.imageWindowDict[legend]._addSelection(ddict)
+                if QTVERSION < '4.0.0':
+                    self.mainTabWidget.setCurrentPage(self.mainTab.indexOf\
+                                             (self.imageWindowDict[legend]))
+                else:
+                    self.mainTabWidget.setCurrentWidget(self.imageWindowDict\
+                                                        [legend])
+            else:
+                self.imageWindowDict[legend]._addSelection(ddict)
         else:            
             self.mcawindow._addSelection(ddict)
             self.scanwindow._addSelection(ddict)
@@ -350,7 +404,11 @@ class PyMca(PyMcaMdi.PyMca):
             print "self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict
 
         if self._is2DSelection(ddict):
-            self.imagewindow._removeSelection(ddict)
+            legend = ddict['legend'] 
+            if legend in self.imageWindowDict.keys():
+                index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
+                self.mainTabWidget.removeTab(index)
+                self.imageWindowDict[legend]._removeSelection(ddict)
         else:
             self.mcawindow._removeSelection(ddict)
             self.scanwindow._removeSelection(ddict)
@@ -359,7 +417,21 @@ class PyMca(PyMcaMdi.PyMca):
         if DEBUG:
             print "self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict
         if self._is2DSelection(ddict):
-            self.imagewindow._replaceSelection(ddict)
+            legend = ddict['legend']
+            for key in self.imageWindowDict.keys():
+                index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
+                if key == legend:continue
+                if index >= 0:
+                    self.mainTabWidget.removeTab(index)
+                    self.imageWindowDict[key]._removeSelection(ddict)
+            self.imageWindowDict[key].setPlotEnabled(False)
+            self.dispatcherAddSelectionSlot(ddict)
+            index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
+            if index != self.mainTabWidget.currentIndex():
+                if QTVERSION < '4.0.0':
+                    self.mainTabWidget.setCurrentPage(index)
+                else:
+                    self.mainTabWidget.setCurrentWidget(self.imageWindowDict[legend])
         else:            
             self.mcawindow._replaceSelection(ddict)
             self.scanwindow._replaceSelection(ddict)
