@@ -41,6 +41,10 @@ import PyMcaPrintPreview
 import PyMcaDirs
 
 QTVERSION = qt.qVersion()
+if QTVERSION > '4.0.0':
+    import ScanWindowInfoWidget
+
+
 DEBUG = 0
 
 MATPLOTLIB = 0
@@ -585,6 +589,13 @@ class ScanWindow(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self._buildToolBar()
         self._buildGraph()
+        if QTVERSION < '4.0.0':
+            self.scanWindowInfoWidget = None
+        else:
+            self.scanWindowInfoWidget = ScanWindowInfoWidget.\
+                                            ScanWindowInfoWidget(self)
+            self.mainLayout.addWidget(self.scanWindowInfoWidget)
+
 
     def _buildToolBar(self):
         self.toolBar = qt.QWidget(self)
@@ -753,7 +764,6 @@ class ScanWindow(qt.QWidget):
             if not sel["scanselection"]:continue
             if len(key.split(".")) > 2: continue
             dataObject = sel['dataobject']
-
             #only one-dimensional selections considered
             if dataObject.info["selectiontype"] != "1D": continue
             
@@ -866,6 +876,11 @@ class ScanWindow(qt.QWidget):
                     else:
                         newDataObject.info['legend'] = legend + " " + ylegend
                         symbol = 'o'
+                    maptoy2 = False
+                    if dataObject.info.has_key('operations'):
+                        if dataObject.info['operations'][-1] == 'derivate':
+                            maptoy2 = True
+                        
                     #here I should check the log or linear status
                     if newDataObject.info['legend'] not in self.dataObjectsList:
                         self.dataObjectsList.append(newDataObject.info['legend'])
@@ -873,7 +888,8 @@ class ScanWindow(qt.QWidget):
                     self.graph.newCurve(newDataObject.info['legend'],
                                         x=xdata,
                                         y=ydata,
-                                        symbol=symbol)
+                                        symbol=symbol,
+                                        maptoy2=maptoy2)
         self.graph.replot()
 
             
@@ -978,6 +994,9 @@ class ScanWindow(qt.QWidget):
                 ylabel += "/" + dataObject.info['LabelNames'][ilabel]
             self.graph.ylabel(ylabel)
             self.graph.xlabel(xlabel)
+            if self.scanWindowInfoWidget is not None:
+                self.scanWindowInfoWidget.updateFromDataObject\
+                                                            (dataObject)
             return
         if ddict['event'] == "RemoveCurveEvent":
             legend = ddict['legend']

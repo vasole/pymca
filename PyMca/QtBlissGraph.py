@@ -1633,7 +1633,8 @@ class QtBlissGraph(qwt.QwtPlot):
         if DEBUG: print "newcurve obsolete, use newCurve instead"
         return self.newCurve(*var,**kw)
         
-    def newCurve(self,key,x=None,y=None,logfilter=0,curveinfo=None,**kw):
+    def newCurve(self,key,x=None,y=None,logfilter=0,curveinfo=None,
+                 maptoy2 = False, **kw):
         if key not in self.curves.keys():
             self.curveinit(key,**kw)
             n = self.legend().itemCount()
@@ -1705,11 +1706,12 @@ class QtBlissGraph(qwt.QwtPlot):
                     self.curve(self.curves[key]['curve']).setregions(regions)
                 else:
                     self.curves[key]['curve'].setregions(regions)
+            if maptoy2:
+                self.mapToY2(key)
             if len(self.curves.keys()) == 1:
                 #set the active curve
                 #self.legendclicked(1)
                 self.setactivecurve(self.curves.keys()[0])
-                #This almost work self.maptoy2(self.curves.keys()[0])                
         else:
             self.delcurve(key)
                 
