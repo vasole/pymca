@@ -378,7 +378,10 @@ class ScanInfoWidget(qt.QWidget):
                 self.sourceLabel.setText(source[0])
         scan   = info.get('Header', None)
         if scan is None:
-            self.scanLabel.setText("")
+            scan = ""
+            if info.has_key("envdict"):
+                scan = info.get('title', "")
+            self.scanLabel.setText(scan)
         else:
             self.scanLabel.setText(scan[0])
         hkl    = info.get('hkl', None)
