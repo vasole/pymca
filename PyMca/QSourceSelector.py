@@ -80,30 +80,66 @@ class QSourceSelector(qt.QWidget):
             specButton= qt.QToolButton(self.fileWidget)
             specButton.setIconSet(self.specIcon)
         else:
-            self.openIcon= qt.QIcon(qt.QPixmap(icons.fileopen))
-            self.closeIcon= qt.QIcon(qt.QPixmap(icons.fileclose))
+            self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
+            self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
+            self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload))
             self.specIcon= qt.QIcon(qt.QPixmap(icons.spec))
+
             openButton.setIcon(self.openIcon)
             openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
+            openButton.setToolTip("Open new file data source")
+
             closeButton= qt.QToolButton(self.fileWidget)
             closeButton.setIcon(self.closeIcon)
+            closeButton.setToolTip("Close current data source")
+
+            refreshButton= qt.QToolButton(self.fileWidget)
+            refreshButton.setIcon(self.reloadIcon)
+            refreshButton.setToolTip("Refresh")
+            refreshButton.hide()
+
             specButton= qt.QToolButton(self.fileWidget)
             specButton.setIcon(self.specIcon)
+            closeButton.setToolTip("Open new shared memory source")
+
         closeButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         specButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
 
         self.connect(openButton, qt.SIGNAL("clicked()"), self._openFileSlot)
         self.connect(closeButton, qt.SIGNAL("clicked()"), self.closeFile)
+        if QTVERSION > '4.0.0':
+            self.connect(refreshButton, qt.SIGNAL("clicked()"),
+                         self._reload)
+            
         self.connect(specButton, qt.SIGNAL("clicked()"), self.openSpec)
         self.connect(self.fileCombo, qt.SIGNAL("activated(const QString &)"),
                                                      self._fileSelection)
 
         fileWidgetLayout.addWidget(self.fileCombo)
         fileWidgetLayout.addWidget(openButton)
+        if QTVERSION > '4.0.0':
+            fileWidgetLayout.addWidget(refreshButton)
+            
         fileWidgetLayout.addWidget(closeButton)
         fileWidgetLayout.addWidget(specButton)
         if sys.platform == "win32":specButton.hide()
         self.mainLayout.addWidget(self.fileWidget)
+
+    def _reload(self):
+        if DEBUG:
+            print "_reload called"
+        qstring = self.fileCombo.currentText()
+        if not len(qstring): return
+
+        key = str(qstring)
+        ddict = {}
+        ddict["event"] = "SourceReloaded"
+        ddict["combokey"] = key
+        ddict["sourcelist"] = self.mapCombo[key] * 1
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("SourceSelectorSignal"), (ddict,))    
+        else:
+            self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
 
     def _openFileSlot(self):
         self.openFile(None, None)

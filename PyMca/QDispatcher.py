@@ -243,6 +243,10 @@ class QDispatcher(qt.QWidget):
                 self.tabWidget.setCurrentPage(index)  
             else:
                 self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
+        elif ddict["event"] == "SourceClosed":
+            if DEBUG:
+                print "not implemented yet"
+
 
     def _selectionUpdatedSlot(self, ddict):
         if DEBUG: print "_selectionUpdatedSlot(self, dict)",ddict
