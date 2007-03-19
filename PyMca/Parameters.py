@@ -364,7 +364,7 @@ class Parameters(QTable):
                 print "Change is valid"
             if QTVERSION < '4.0.0':
                     exec("self.configure(name=param,%s=newvalue)" % field)
-            else QTVERSION > '4.0.0':
+            else:
                 self.__configuring = True
                 try:
                     exec("self.configure(name=param,%s=newvalue)" % field)
