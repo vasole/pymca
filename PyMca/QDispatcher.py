@@ -58,7 +58,7 @@ class QDispatcher(qt.QWidget):
                 self.connect(self.selectorWidget[src_widget],
                              qt.PYSIGNAL("replaceSelection"),
                              self._replaceSelectionSlot)
-                if src_widget not in ['EdfFile', 'SPS']:
+                if src_widget not in ['EdfFile']:
                     self.connect(self.selectorWidget[src_widget],
                              qt.PYSIGNAL("otherSignals"),
                              self._otherSignalsSlot)
@@ -72,7 +72,7 @@ class QDispatcher(qt.QWidget):
                 self.connect(self.selectorWidget[src_widget],
                              qt.SIGNAL("replaceSelection"),
                              self._replaceSelectionSlot)
-                if src_widget not in ['EdfFile', 'SPS']:
+                if src_widget not in ['EdfFile']:
                     self.connect(self.selectorWidget[src_widget],
                              qt.SIGNAL("otherSignals"),
                              self._otherSignalsSlot)
