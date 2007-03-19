@@ -641,7 +641,6 @@ class QSpsWidget(qt.QWidget):
         ddict['SourceName'] = self.data.sourceName
         ddict['SourceType'] = self.data.sourceType
         ddict['event'] = "SelectionTypeChanged"
-        print "info = ", info
         if arrayType in ["IMAGE"]:
             ddict['SelectionType'] = self.data.sourceName +" "+self.currentArray
         elif arrayType in ["MCA", "XIA"]:
