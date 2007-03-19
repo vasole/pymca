@@ -372,7 +372,10 @@ class ScanInfoWidget(qt.QWidget):
         if source is None:
             self.sourceLabel.setText("")
         else:
-            self.sourceLabel.setText(source[0])
+            if type(source) == type(""):
+                self.sourceLabel.setText(source)
+            else:
+                self.sourceLabel.setText(source[0])
         scan   = info.get('Header', None)
         if scan is None:
             self.scanLabel.setText("")
