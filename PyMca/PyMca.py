@@ -230,6 +230,7 @@ class PyMca(PyMcaMdi.PyMca):
             if not self.__useTabWidget:
                 self.mcawindow = McaWindow.McaWidget(self.mdi)
                 self.scanwindow = ScanWindow.ScanWindow(self.mdi)
+                self.imageWindowDict = None
                 self.connectDispatcher(self.mcawindow, self.sourceWidget)
                 self.connectDispatcher(self.scanwindow, self.sourceWidget)
                 if QTVERSION < '4.0.0':
@@ -352,12 +353,15 @@ class PyMca(PyMcaMdi.PyMca):
 
         toadd = False
         if self._is2DSelection(ddict):
-            if QTVERSION > '4.0.0':
-                if self.imageWindowCorrelator is None:
-                    self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
-                    #toadd = True
-                title  = "ImageWindow RGB Correlator"
-                self.imageWindowCorrelator.setWindowTitle(title)
+            if QTVERSION < '4.0.0':
+                if DEBUG:
+                    print "For the time being, no Qt3 support"
+                return
+            if self.imageWindowCorrelator is None:
+                self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
+                #toadd = True
+            title  = "ImageWindow RGB Correlator"
+            self.imageWindowCorrelator.setWindowTitle(title)
             legend = ddict['legend'] 
             if  legend not in self.imageWindowDict.keys():
                 imageWindow = PyMcaImageWindow.PyMcaImageWindow(name = legend,
@@ -404,6 +408,10 @@ class PyMca(PyMcaMdi.PyMca):
             print "self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict
 
         if self._is2DSelection(ddict):
+            if QTVERSION < '4.0.0':
+                if DEBUG:
+                    print "For the time being, no Qt3 support"
+                return
             legend = ddict['legend'] 
             if legend in self.imageWindowDict.keys():
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
@@ -417,6 +425,10 @@ class PyMca(PyMcaMdi.PyMca):
         if DEBUG:
             print "self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict
         if self._is2DSelection(ddict):
+            if QTVERSION < '4.0.0':
+                if DEBUG:
+                    print "For the time being, no Qt3 support"
+                return
             legend = ddict['legend']
             for key in self.imageWindowDict.keys():
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[key])

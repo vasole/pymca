@@ -358,7 +358,10 @@ class ScanInfoWidget(qt.QWidget):
 
         self.hkl = HKL(self)
         layout.addWidget(sourceLabel, 0, 0)
-        layout.addWidget(self.sourceLabel, 0, 1, 1, 5)
+        if QTVERSION < '4.0.0':
+            layout.addMultiCellWidget(self.sourceLabel, 0, 0, 1, 5)
+        else:
+            layout.addWidget(self.sourceLabel, 0, 1, 1, 5)
         layout.addWidget(scanLabel,        1, 0)
         layout.addWidget(self.scanLabel,   1, 1)
         layout.addWidget(self.hkl,         1, 2)
@@ -416,7 +419,10 @@ def test():
                         fwhm=0.2154,com=544)
         """
         w.show()
-        app.exec_()
+        if QTVERSION < '4.0.0':
+            app.exec_loop()
+        else:
+            app.exec_()
 
 
 if __name__ == '__main__':

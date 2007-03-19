@@ -39,10 +39,9 @@ import DataObject
 import copy
 import PyMcaPrintPreview
 import PyMcaDirs
+import ScanWindowInfoWidget
 
 QTVERSION = qt.qVersion()
-if QTVERSION > '4.0.0':
-    import ScanWindowInfoWidget
 
 
 DEBUG = 0
@@ -589,12 +588,9 @@ class ScanWindow(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self._buildToolBar()
         self._buildGraph()
-        if QTVERSION < '4.0.0':
-            self.scanWindowInfoWidget = None
-        else:
-            self.scanWindowInfoWidget = ScanWindowInfoWidget.\
-                                            ScanWindowInfoWidget(self)
-            self.mainLayout.addWidget(self.scanWindowInfoWidget)
+        self.scanWindowInfoWidget = ScanWindowInfoWidget.\
+                                        ScanWindowInfoWidget(self)
+        self.mainLayout.addWidget(self.scanWindowInfoWidget)
 
 
     def _buildToolBar(self):
