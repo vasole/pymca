@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -76,6 +76,7 @@ if QTVERSION < '4.0.0':
         
 else:
     QTable = qt.QTableWidget
+    
     class QComboTableItem(qt.QComboBox):
         def __init__(self, parent=None, row = None, col = None):
             self._row = row
@@ -86,7 +87,7 @@ else:
         def _cellChanged(self, idx):
             if DEBUG:
                 print "cell changed",idx
-            self.emit(qt.SIGNAL('cellChanged(int,int)'), self._row, self._col)
+            self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
 
     class QCheckBoxItem(qt.QCheckBox):
         def __init__(self, parent=None, row = None, col = None):
@@ -118,6 +119,7 @@ class Parameters(QTable):
         self.code_options=["FREE","POSITIVE","QUOTED",
                  "FIXED","FACTOR","DELTA","SUM","IGNORE","ADD","SHOW"]
 
+        self.__configuring = False
         self.setColumnCount(len(self.labels))
         i=0
         if kw.has_key('labels'):
@@ -167,7 +169,10 @@ class Parameters(QTable):
         if kw.has_key('paramlist'):
             self.paramlist = kw['paramlist']
         self.build()
-        self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
+        if QTVERSION < '4.0.0':
+            self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
+        else:
+            self.connect(self,qt.SIGNAL("cellChanged(int,int)"),self.myslot)
 
     def build(self):
         line = 1
@@ -183,6 +188,7 @@ class Parameters(QTable):
             nlines=self.numRows()
         else:
             nlines=self.rowCount()
+            self.__configuring = True
         if (line > nlines):
             if QTVERSION < '4.0.0':
                 self.setNumRows(line)
@@ -233,12 +239,20 @@ class Parameters(QTable):
                          self.parameters[param]['fields'].index('code'),
                          self.parameters[param]['code_item'])
         else:
-            self.parameters[param]['code_item']= QComboTableItem(self)
-            self.parameters[param]['code_item'].addItems(a)
-            self.setCellWidget(linew,
-                         self.parameters[param]['fields'].index('code'),
-                         self.parameters[param]['code_item'])            
+            cellWidget = self.cellWidget(linew,
+                         self.parameters[param]['fields'].index('code'))
+            if cellWidget is None:
+                col = self.parameters[param]['fields'].index('code')
+                cellWidget = QComboTableItem(self,
+                                             row = linew,
+                                             col = col)
+                cellWidget.addItems(a)
+                self.setCellWidget(linew, col, cellWidget)
+                self.connect(cellWidget, qt.SIGNAL("cellChanged"),
+                             self.myslot)
+            self.parameters[param]['code_item']= cellWidget
         self.parameters[param]['relatedto_item']=None
+        self.__configuring = False
 
     def fillfromfit(self,fitparameterslist):
         if QTVERSION < '4.0.0':
@@ -319,11 +333,28 @@ class Parameters(QTable):
         
     def myslot(self,row,col):
         if DEBUG:
-            print "Passing by myslot"        
+            print "Passing by myslot", row, col
+            print "current", self.currentRow(), self.currentColumn()
+        if QTVERSION > '4.0.0':
+            if row != self.currentRow():return
+            if col != self.currentColumn():return
+            if self.__configuring:return
         param=self.paramlist[row]
         field=self.parameters[param]['fields'][col]
-        oldvalue=QString(self.parameters[param][field])
-        newvalue=QString(self.text(row,col))
+        oldvalue=qt.QString(self.parameters[param][field])
+        if QTVERSION < '4.0.0':
+            newvalue=qt.QString(self.text(row,col))
+        else:
+            if col != 4:
+                item = self.item(row, col)
+                if item is not None:
+                    newvalue = item.text()
+                else:
+                    newvalue = qt.QString()
+            else:
+                #this is the combobox
+                widget   = self.cellWidget(row, col)
+                newvalue = widget.currentText()  
         if DEBUG:
             print "old value = ",oldvalue
             print "new value = ",newvalue
@@ -331,16 +362,38 @@ class Parameters(QTable):
             #self.parameters[param][field]=newvalue
             if DEBUG:
                 print "Change is valid"
-            exec("self.configure(name=param,%s=newvalue)" % field)
+            if QTVERSION < '4.0.0':
+                    exec("self.configure(name=param,%s=newvalue)" % field)
+            else QTVERSION > '4.0.0':
+                self.__configuring = True
+                try:
+                    exec("self.configure(name=param,%s=newvalue)" % field)
+                finally:
+                    self.__configuring = False
         else:
             if DEBUG:
                 print "Change is not valid"
             if field == 'code':
-                self.parameters[param]['code_item'].setCurrentItem(oldvalue)
+                if QTVERSION < '4.0.0':
+                    self.parameters[param]['code_item'].setCurrentItem(oldvalue)
+                else:
+                    self.__configuring = True
+                    try:
+                        self.parameters[param]['code_item'].setCurrentItem(oldvalue)
+                    finally:
+                        self.__configuring = False
             else:
                 #self.setText(row,col,oldvalue)
-                exec("self.configure(name=param,%s=oldvalue)" % field)
-    
+                if QTVERSION < '4.0.0':
+                    exec("self.configure(name=param,%s=oldvalue)" % field)
+                else:
+                    self.__configuring = True
+                    try:
+                        exec("self.configure(name=param,%s=oldvalue)" % field)
+                    finally:
+                        self.__configuring = False
+        #self.__configuring = False
+        
     def validate(self,param,field,oldvalue,newvalue):
         if field == 'code':
             pass
