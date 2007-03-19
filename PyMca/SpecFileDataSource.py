@@ -198,8 +198,8 @@ class SpecFileDataSource:
         except: info["Header"] = None
         try: info["NbMca"] = scandata.nbmca()
         except: info["NbMca"] = 0
-        try: info["Hkl"] =  scandata.hkl()
-        except: info["Hkl"] =  None
+        try: info["hkl"] =  scandata.hkl()
+        except: info["hkl"] =  None
         if info["NbMca"]:
             if info["Lines"]>0 and info["NbMca"]%info["Lines"]==0:
                 info["NbMcaDet"]= info["NbMca"]/info["Lines"]

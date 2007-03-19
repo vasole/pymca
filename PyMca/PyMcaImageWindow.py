@@ -29,10 +29,13 @@ import sys
 from Icons import IconDict
 import Numeric
 import time
-import RGBCorrelator
 import RGBImageCalculator
 from RGBImageCalculator import qt
 QTVERSION = qt.qVersion()
+if QTVERSION > '4.0.0':
+    import RGBCorrelator
+
+
 DEBUG = 0
 
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
@@ -105,8 +108,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             #if len(key.split(".")) > 2: continue
             dataObject = sel['dataobject']
 
-            #only one-dimensional selections considered
-            if dataObject.info["selectiontype"] != "2D": continue
+            #only two-dimensional selections considered            
+            if dataObject.info.get("selectiontype", "1D") != "2D": continue
             if dataObject.data is None:
                 print "nothing to plot"
             self.dataObjectsList = [legend]

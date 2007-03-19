@@ -131,6 +131,8 @@ class SpsDataSource:
                                     del selection['XIA']
                         return data.select(selection)
                     else:
+                        if data is not None:
+                            data.info['selectiontype'] = "%dD" % len(data.shape)
                         return data
                 else:
                     output.append(data.select(selection))
@@ -176,7 +178,14 @@ class SpsDataSource:
         if array in ["SCAN_D"]:
             if info["envdict"].has_key('axistitles'):
                 info["LabelNames"] = self._buildLabelsList(info['envdict']['axistitles'])
-
+            if info["envdict"].has_key('H'):
+                if info["envdict"].has_key('K'):
+                    if info["envdict"].has_key('L'):
+                        info['hkl'] = [envdict['H'],
+                                       envdict['K'],
+                                       envdict['L']]
+                                       
+                
         calibarray= array + "_PARAM"
         if calibarray in sps.getarraylist(self.name):
             try:

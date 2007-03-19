@@ -378,7 +378,7 @@ class ScanInfoWidget(qt.QWidget):
             self.scanLabel.setText("")
         else:
             self.scanLabel.setText(scan[0])
-        hkl    = info.get('Hkl', None)
+        hkl    = info.get('hkl', None)
         if hkl is None:
             self.hkl.setHKL("----", "----", "----")
         else:
