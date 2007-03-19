@@ -147,8 +147,11 @@ class SpsDataSource:
             arrayinfo= sps.getarrayinfo(sourcename, array)
             arraytype= arrayinfo[2]
             arrayflag= arrayinfo[3]
-            if arrayflag in (sps.IS_ARRAY, sps.IS_MCA, sps.IS_IMAGE) and arraytype!=sps.STRING:
+            if arraytype != sps.STRING:                
+                if (arrayflag & sps.TAG_ARRAY) == sps.TAG_ARRAY:
                     arraylist.append(array)
+                    continue
+            if DEBUG:print "array not added ", array
         source_info={}
         source_info["Size"]=len(arraylist)
         source_info["KeyList"]=arraylist

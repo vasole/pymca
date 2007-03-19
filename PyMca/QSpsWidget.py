@@ -512,8 +512,11 @@ class QSpsWidget(qt.QWidget):
             print "spec data = ",data
         self.data= data
         self.refreshSpecList()
-        self.refreshDataSelection()        
-        self.refreshArrayList(data.sourceName)
+        self.refreshDataSelection()
+        if data is None:
+            self.arrayList.clear()
+        else:
+            self.refreshArrayList(data.sourceName)
 
     def refreshSpecList(self):
         speclist= sps.getspeclist()
@@ -582,8 +585,9 @@ class QSpsWidget(qt.QWidget):
                     type= info[2]
                     flag= info[3]
                     if DEBUG: print " array = ", array, " flag = ", flag, " type = ", type
-                    if flag in (sps.IS_ARRAY, sps.IS_MCA, sps.IS_IMAGE) and type!=sps.STRING:
-                        arraylist[array]= (rows, cols)
+                    if type!=sps.STRING:
+                        if (flag & sps.TAG_ARRAY) == sps.TAG_ARRAY:
+                            arraylist[array]= (rows, cols)
             if len(arraylist.keys()):
                 arrayorder= arraylist.keys()
                 arrayorder.sort()
@@ -626,8 +630,31 @@ class QSpsWidget(qt.QWidget):
                 wid.setInfo(info)
                 break
         if wid is None:
+            arrayType = "ARRAY"
             wid= self.__getParamWidget("array")
             wid.setSize(info["rows"], info["cols"])
+        else:
+            arrayType = atype.upper()
+
+        #emit a selection to inform about the change
+        ddict = {}
+        ddict['SourceName'] = self.data.sourceName
+        ddict['SourceType'] = self.data.sourceType
+        ddict['event'] = "SelectionTypeChanged"
+        print "info = ", info
+        if arrayType in ["IMAGE"]:
+            ddict['SelectionType'] = self.data.sourceName +" "+self.currentArray
+        elif arrayType in ["MCA", "XIA"]:
+            ddict['SelectionType'] = "MCA"
+        elif arrayType in ["ARRAY"]:
+            #take a look at its tag
+            ddict['SelectionType'] = "MCA"
+        else:
+            ddict['SelectionType'] = arrayType
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("otherSignals"), ddict)
 
     def __getParamWidget(self, widtype):
         if QTVERSION < '4.0.0':

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -229,6 +229,15 @@
 #define SPS_IS_MCA      (0x0004|SPS_IS_ARRAY)
 #define SPS_IS_IMAGE    (0x0008|SPS_IS_ARRAY)
 
+/* structure flags */
+#define SPS_TAG_STATUS   0x0001
+#define SPS_TAG_ARRAY    0x0002
+#define SPS_TAG_MASK     0x000F  /* User can't change these bits */
+#define SPS_TAG_MCA      0x0010
+#define SPS_TAG_IMAGE    0x0020
+#define SPS_TAG_SCAN     0x0040
+#define SPS_TAG_INFO     0x0080
+
 /* array data types */
 #define SPS_DOUBLE      0
 #define SPS_FLOAT       1
@@ -239,6 +248,7 @@
 #define SPS_CHAR        6
 #define SPS_UCHAR       7
 #define SPS_STRING      8
+
 
 
 /*

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -669,6 +669,15 @@ void initsps()
   PyDict_SetItemString(d, "IS_ARRAY", PyInt_FromLong(SPS_IS_ARRAY));
   PyDict_SetItemString(d, "IS_MCA",   PyInt_FromLong(SPS_IS_MCA));
   PyDict_SetItemString(d, "IS_IMAGE", PyInt_FromLong(SPS_IS_IMAGE));
+  
+  PyDict_SetItemString(d, "TAG_STATUS", PyInt_FromLong(SPS_TAG_STATUS));
+  PyDict_SetItemString(d, "TAG_ARRAY", PyInt_FromLong(SPS_TAG_ARRAY));
+  PyDict_SetItemString(d, "TAG_MASK", PyInt_FromLong(SPS_TAG_MASK));
+  PyDict_SetItemString(d, "TAG_MCA", PyInt_FromLong(SPS_TAG_MCA));
+  PyDict_SetItemString(d, "TAG_IMAGE", PyInt_FromLong(SPS_TAG_IMAGE));
+  PyDict_SetItemString(d, "TAG_SCAN", PyInt_FromLong(SPS_TAG_SCAN));
+  PyDict_SetItemString(d, "TAG_INFO", PyInt_FromLong(SPS_TAG_INFO));
+
 
   SPSError = PyErr_NewException("sps.error", NULL, NULL);
   PyDict_SetItemString(d, "error", SPSError);

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,6 +27,8 @@
 try:
     import sps
     from sps import CHAR, DOUBLE, FLOAT, LONG, SHORT, UCHAR, ULONG, USHORT
+    from sps import TAG_ARRAY, TAG_MCA, TAG_IMAGE, TAG_SCAN, \
+                    TAG_INFO, TAG_MASK, TAG_STATUS
     from sps import IS_ARRAY, IS_MCA, IS_IMAGE, STRING
     from sps import error
     from sps import updatecounter
@@ -78,7 +80,7 @@ def getarraylist( spec ):
             return spsdefaultarraylist[spec]
         else:
             spsdefaultarraylist[spec]=[]
-            return result        
+            return result
     return result
 
 def isupdated(spec, shmenv):

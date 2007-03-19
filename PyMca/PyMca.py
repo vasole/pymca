@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.7 20060317-snapshot"
+__version__ = "4.0.7 20060319-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -452,10 +452,11 @@ class PyMca(PyMcaMdi.PyMca):
         if DEBUG:print "self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict
         if not self.__useTabWidget:return
         if ddict['event'] == "SelectionTypeChanged":
-            if ddict['SelectionType'] == 'MCA':
-                self.mainTabWidget.setCurrentWidget(self.mcawindow)
-            else:
-                self.mainTabWidget.setCurrentWidget(self.scanwindow)
+            for i in range(self.mainTabWidget.count()):
+                if str(self.mainTabWidget.tabText(i)) == \
+                                   ddict['SelectionType']:                        
+                    self.mainTabWidget.setCurrentIndex(i)
+                    break
             return
         if ddict['event'] == "SourceTypeChanged":
             pass
