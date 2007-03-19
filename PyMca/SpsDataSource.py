@@ -184,7 +184,6 @@ class SpsDataSource:
                         info['hkl'] = [envdict['H'],
                                        envdict['K'],
                                        envdict['L']]
-                                       
                 
         calibarray= array + "_PARAM"
         if calibarray in sps.getarraylist(self.name):

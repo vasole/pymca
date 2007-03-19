@@ -380,7 +380,7 @@ class ScanInfoWidget(qt.QWidget):
         if scan is None:
             scan = ""
             if info.has_key("envdict"):
-                scan = info.get('title', "")
+                scan = info["envdict"].get('title', "")
             self.scanLabel.setText(scan)
         else:
             self.scanLabel.setText(scan[0])

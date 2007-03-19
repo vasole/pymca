@@ -64,8 +64,8 @@ class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
             #info = self.data.getKeyInfo(sel[0])
             #except:
             #    info, data = self.data.LoadSource(sel[0])
-            cntList = info["LabelNames"]
-            ycntidx = info["envdict"]['plotlist']
+            cntList = info.get("LabelNames", [])
+            ycntidx = info["envdict"].get('plotlist', "")
             if len(ycntidx):
                 ycntidx   = ycntidx.split(',')
             self.build(cntList)
