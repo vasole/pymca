@@ -452,11 +452,13 @@ class PyMca(PyMcaMdi.PyMca):
         if DEBUG:print "self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict
         if not self.__useTabWidget:return
         if ddict['event'] == "SelectionTypeChanged":
+            if ddict['SelectionType'].upper() == "COUNTERS":
+                self.mainTabWidget.setCurrentWidget(self.scanwindow)
+                return
             for i in range(self.mainTabWidget.count()):
                 if str(self.mainTabWidget.tabText(i)) == \
                                    ddict['SelectionType']:                        
                     self.mainTabWidget.setCurrentIndex(i)
-                    break
             return
         if ddict['event'] == "SourceTypeChanged":
             pass
