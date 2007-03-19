@@ -131,8 +131,8 @@ class SpsDataSource:
                                     del selection['XIA']
                         return data.select(selection)
                     else:
-                        if data is not None:
-                            data.info['selectiontype'] = "%dD" % len(data.shape)
+                        if data.data is not None:
+                            data.info['selectiontype'] = "%dD" % len(data.data.shape)
                         return data
                 else:
                     output.append(data.select(selection))
