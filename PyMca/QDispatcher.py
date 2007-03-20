@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################
+import sys
 from QSourceSelector import qt
 QTVERSION = qt.qVersion()
 import QSourceSelector
@@ -113,8 +114,17 @@ class QDispatcher(qt.QWidget):
                         #I should create a weakref to it in order to be informed
                         #about its deletion.
                         if source.sourceType != "SPS":
-                            dataObject = source.getDataObject(sel['Key'],
+                            try:
+                                dataObject = source.getDataObject(sel['Key'],
                                                       selection=sel['selection'])
+                            except:
+                                error = sys.exc_info()
+                                text = "Failed to read data source.\n"
+                                text += "Source: %s\n" % source
+                                text += "Key: %s\n"  % sel['Key']
+                                text += "Error: %s" % error[1]
+                                qt.QMessageBox.critical(self,"%s" % error[0], text)
+                                continue
                         else:
                             dataObject = source.getDataObject(sel['Key'],
                                                       selection=sel['selection'], 

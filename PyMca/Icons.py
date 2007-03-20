@@ -25,6 +25,28 @@
 # is a problem to you.
 #############################################################################*/
 # --- scan window icons ---
+subtract =[
+"16 16 2 1",
+"  c none",
+". c blue",
+"                ",
+"  ..........    ",
+"  .         .   ",
+"  .          .  ",
+"  .          .  ",
+"  .          .  ",
+"  .         .   ",
+"  ..........    ",
+"  .         .   ",
+"  .          .  ",
+"  .          .  ",
+"  .          .  ",
+"  .          .  ",
+"  .         .   ",
+"  ..........    ",
+"                "
+]
+
 smooth = [
 "16 16 3 1",
 "O c none",
@@ -3136,7 +3158,8 @@ IconDict= {
     "swapsign":swapsign,
     "ymintozero":ymintozero,
     "average16":average16,
-    "smooth":smooth
+    "smooth":smooth,
+    "subtract":subtract
 }
 
 def showIcons():

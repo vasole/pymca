@@ -552,6 +552,7 @@ class ScanWindow(qt.QWidget):
             self.smoothIcon     = qt.QIconSet(qt.QPixmap(IconDict["smooth"]))
             self.swapSignIcon	= qt.QIconSet(qt.QPixmap(IconDict["swapsign"]))
             self.yMinToZeroIcon	= qt.QIconSet(qt.QPixmap(IconDict["ymintozero"]))
+            self.subtractIcon	= qt.QIconSet(qt.QPixmap(IconDict["subtract"]))
             
             self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
@@ -578,6 +579,7 @@ class ScanWindow(qt.QWidget):
             self.smoothIcon     = qt.QIcon(qt.QPixmap(IconDict["smooth"]))
             self.swapSignIcon	= qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
             self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
+            self.subtractIcon	= qt.QIcon(qt.QPixmap(IconDict["subtract"]))
             
             self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
@@ -663,6 +665,10 @@ class ScanWindow(qt.QWidget):
             tb = self._addToolButton(self.yMinToZeroIcon,
                                 self._yMinToZeroIconSignal,
                                 'Force Y Minimum to be Zero')
+
+            tb = self._addToolButton(self.subtractIcon,
+                                self._subtractIconSignal,
+                                'Subtract Active Curve')
         #save
         tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
@@ -1177,6 +1183,9 @@ class ScanWindow(qt.QWidget):
                 msg.exec_()
 
     def __simpleOperation(self, operation):
+        if operation == 'subtract':
+            self._subtractOperation()
+            return
         if operation != "average":
             #get active curve
             legend = self.getActiveCurve()
@@ -1416,15 +1425,113 @@ class ScanWindow(qt.QWidget):
 
     def _deriveIconSignal(self):
         if DEBUG:print "_deriveIconSignal"
-        self.__simpleOperation('derivate')
+        self.__QSimpleOperation('derivate')
 
     def _swapSignIconSignal(self):
         if DEBUG:print "_swapSignIconSignal"
-        self.__simpleOperation('swapsign')
+        self.__QSimpleOperation('swapsign')
 
     def _yMinToZeroIconSignal(self):
         if DEBUG:print "_yMinToZeroIconSignal"
-        self.__simpleOperation('forceymintozero')
+        self.__QSimpleOperation('forceymintozero')
+
+    def _subtractIconSignal(self):
+        if DEBUG:print "_subtractIconSignal"
+        self.__QSimpleOperation('subtract')
+
+    def _subtractOperation(self):
+        #identical to twice the average with the negative active curve
+        #get active curve
+        legend = self.getActiveCurve()
+        if legend is None:return
+
+        found = False
+        for key in self.dataObjectsList:
+            if key == legend:
+                found = True
+                break
+
+        if found:
+            dataObject = self.dataObjectsDict[legend]
+        else:
+            print "I should not be here"
+            print "active curve =",legend
+            print "but legend list = ",self.dataObjectsList
+            return
+        x = dataObject.x[0]
+        y = dataObject.y[0]
+        ilabel = dataObject.info['selection']['y'][0]
+        ylabel = dataObject.info['LabelNames'][ilabel]
+        if len(dataObject.info['selection']['x']):
+            ilabel = dataObject.info['selection']['x'][0]
+            xlabel = dataObject.info['LabelNames'][ilabel]
+        else:
+            xlabel = "Point Number"
+
+        xActive = x
+        yActive = y
+        yActiveLegend = legend
+        yActiveLabel  = ylabel
+        xActiveLabel  = xlabel
+
+        operation = "subtract"    
+        sel_list = []
+        i = 0
+        ndata = 0
+        for key in self.graph.curves.keys():
+            legend = ""
+            x = [xActive]
+            y = [-yActive]
+            if DEBUG:print "key -> ", key
+            if key in self.dataObjectsDict.keys():
+                x.append(self.dataObjectsDict[key].x[0]) #only the first X
+                if len(self.dataObjectsDict[key].y) == 1:
+                    y.append(self.dataObjectsDict[key].y[0])
+                    ilabel = self.dataObjectsDict[key].info['selection']['y'][0]
+                else:
+                    sel_legend = self.dataObjectsDict[key].info['legend']
+                    ilabel = self.dataObjectsDict[key].info['selection']['y'][0]
+                    #I have to get the proper y associated to the legend
+                    if sel_legend in key:
+                        if key.index(sel_legend) == 0:
+                            label = key[len(sel_legend):]
+                            while (label.startswith(' ')):
+                                label = label[1:]
+                                if not len(label):
+                                    break
+                            if label in self.dataObjectsDict[key].info['LabelNames']:
+                                ilabel = self.dataObjectsDict[key].info['LabelNames'].index(label)
+                            if DEBUG: print "LABEL = ", label, "ilabel = ", ilabel
+                    y.append(self.dataObjectsDict[key].y[ilabel])
+                outputlegend = "(%s - %s)" %  (key, yActiveLegend)
+                ndata += 1
+                xplot, yplot = self.simpleMath.average(x, y)
+                yplot *= 2
+                #create the output data object
+                newDataObject = DataObject.DataObject()
+                newDataObject.data = None
+                newDataObject.info.update(self.dataObjectsDict[key].info)
+                if not newDataObject.info.has_key('operations'):
+                    newDataObject.info['operations'] = []
+                newDataObject.info['operations'].append(operation)
+                newDataObject.info['LabelNames'][ilabel] = "(%s - %s)" %  \
+                                        (newDataObject.info['LabelNames'][ilabel], yActiveLabel)
+                newDataObject.x = [xplot]
+                newDataObject.y = [yplot]
+                newDataObject.m = None
+                sel = {}
+                sel['SourceType'] = "Operation"
+                sel['SourceName'] = key
+                sel['Key']    = ""
+                sel['legend'] = outputlegend
+                sel['dataobject'] = newDataObject
+                sel['scanselection'] = True
+                sel['selection'] = copy.deepcopy(dataObject.info['selection'])
+                #sel['selection']['y'] = [ilabel]
+                sel['selectiontype'] = "1D"
+                sel_list.append(sel)
+        self._replaceSelection(sel_list)
+
 
 
     def printGraph(self):
