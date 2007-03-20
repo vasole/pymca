@@ -116,9 +116,12 @@ class Parameters(QTable):
             self.setColumnCount(1)
         self.labels=['Parameter','Estimation','Fit Value','Sigma',
                      'Constraints','Min/Parame','Max/Factor/Delta/']
-        self.code_options=["FREE","POSITIVE","QUOTED",
+        if DEBUG:
+            self.code_options=["FREE","POSITIVE","QUOTED",
                  "FIXED","FACTOR","DELTA","SUM","IGNORE","ADD","SHOW"]
-
+        else:
+            self.code_options=["FREE","POSITIVE","QUOTED",
+                 "FIXED","FACTOR","DELTA","SUM","IGNORE","ADD"]
         self.__configuring = False
         self.setColumnCount(len(self.labels))
         i=0
@@ -336,8 +339,9 @@ class Parameters(QTable):
             print "Passing by myslot", row, col
             print "current", self.currentRow(), self.currentColumn()
         if QTVERSION > '4.0.0':
-            if row != self.currentRow():return
-            if col != self.currentColumn():return
+            if (col != 4) and (col != -1):
+                if row != self.currentRow():return
+                if col != self.currentColumn():return
             if self.__configuring:return
         param=self.paramlist[row]
         field=self.parameters[param]['fields'][col]
@@ -362,38 +366,24 @@ class Parameters(QTable):
             #self.parameters[param][field]=newvalue
             if DEBUG:
                 print "Change is valid"
-            if QTVERSION < '4.0.0':
-                    exec("self.configure(name=param,%s=newvalue)" % field)
-            else:
-                self.__configuring = True
-                try:
-                    exec("self.configure(name=param,%s=newvalue)" % field)
-                finally:
-                    self.__configuring = False
+            exec("self.configure(name=param,%s=newvalue)" % field)
         else:
             if DEBUG:
                 print "Change is not valid"
+                print "oldvalue ", oldvalue
             if field == 'code':
                 if QTVERSION < '4.0.0':
                     self.parameters[param]['code_item'].setCurrentItem(oldvalue)
                 else:
+                    index = self.code_options.index(oldvalue)
                     self.__configuring = True
                     try:
-                        self.parameters[param]['code_item'].setCurrentItem(oldvalue)
+                        self.parameters[param]['code_item'].setCurrentIndex(index)
                     finally:
                         self.__configuring = False
             else:
-                #self.setText(row,col,oldvalue)
-                if QTVERSION < '4.0.0':
-                    exec("self.configure(name=param,%s=oldvalue)" % field)
-                else:
-                    self.__configuring = True
-                    try:
-                        exec("self.configure(name=param,%s=oldvalue)" % field)
-                    finally:
-                        self.__configuring = False
-        #self.__configuring = False
-        
+                exec("self.configure(name=param,%s=oldvalue)" % field)
+
     def validate(self,param,field,oldvalue,newvalue):
         if field == 'code':
             pass
@@ -655,6 +645,8 @@ class Parameters(QTable):
             fieldlist=fields
         else:
             fieldlist=[fields]
+        _oldvalue = self.__configuring
+        self.__configuring = True
         for param in paramlist:
             if param in self.paramlist:            
                 try:
@@ -674,13 +666,15 @@ class Parameters(QTable):
                             else:
                                 item = self.item(row, col)
                                 if item is None:
-                                    item = qt.QTableWidgetItem(self.parameters[param][field])
+                                    item = qt.QTableWidgetItem()
+                                    item.setText(self.parameters[param][field])
                                     self.setItem(row, col, item)
                                 else:
                                     item.setText(self.parameters[param][field])
                                 self.parameters[param][key] = item
                                 item.setFlags(EditType)
-
+        self.__configuring = _oldvalue
+        
     def configure(self,*vars,**kw):
         if DEBUG:
             print "configure called with **kw = ",kw
@@ -738,7 +732,7 @@ class Parameters(QTable):
                     else:
                         done = 0
                         for i in range(self.parameters[name]['code_item'].count()):
-                            if str(newvalue) == self.parameters[name]['code_item'].itemText(i):
+                            if str(newvalue) == str(self.parameters[name]['code_item'].itemText(i)):
                                 self.parameters[name]['code_item'].setCurrentIndex(i)
                                 done = 1
                                 break
@@ -801,7 +795,7 @@ class Parameters(QTable):
                     self.parameters[name]['val1']=qt.QString()
                     self.parameters[name]['val2']=qt.QString()                   
                     self.parameters[name]['cons1']=0                   
-                    self.parameters[name]['cons2']=0                   
+                    self.parameters[name]['cons2']=0
                     self.setReadWrite(name,'estimation')
                     self.setReadOnly(name,['fitresult','sigma','val1','val2'])
                 elif str(self.parameters[name]['code']) == 'QUOTED':
