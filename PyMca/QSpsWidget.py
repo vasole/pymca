@@ -624,11 +624,23 @@ class QSpsWidget(qt.QWidget):
         #self.data.LoadSource(self.currentArray)
         info= self.data.getKeyInfo(self.currentArray)
         wid= None
-        for (array, atype) in self.TypeArrays.items():
-            if self.currentArray[0:len(array)]==array:
-                wid= self.__getParamWidget(atype)
-                wid.setInfo(info)
-                break
+        atype = None
+        if (info['flag'] & sps.TAG_IMAGE) == sps.TAG_IMAGE:
+            atype = "image"
+        elif (info['flag'] & sps.TAG_MCA)  == sps.TAG_MCA:
+            atype = "mca"
+        elif (info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN:
+            atype = "scan"
+        elif (info['rows'] > 100) and (info['cols'] > 100):
+            atype = "image"
+        if atype is not None:
+            wid= self.__getParamWidget(atype)
+            wid.setInfo(info)
+        else:
+            for (array, atype) in self.TypeArrays.items():
+                if self.currentArray[0:len(array)]==array:
+                    wid= self.__getParamWidget(atype)
+                    break
         if wid is None:
             arrayType = "ARRAY"
             wid= self.__getParamWidget("array")
@@ -646,7 +658,6 @@ class QSpsWidget(qt.QWidget):
         elif arrayType in ["MCA", "XIA"]:
             ddict['SelectionType'] = "MCA"
         elif arrayType in ["ARRAY"]:
-            #take a look at its tag
             ddict['SelectionType'] = "MCA"
         else:
             ddict['SelectionType'] = arrayType
