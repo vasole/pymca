@@ -640,6 +640,7 @@ class QSpsWidget(qt.QWidget):
             for (array, atype) in self.TypeArrays.items():
                 if self.currentArray[0:len(array)]==array:
                     wid= self.__getParamWidget(atype)
+                    wid.setInfo(info)
                     break
         if wid is None:
             arrayType = "ARRAY"
