@@ -40,14 +40,16 @@ class McaAdvancedFitBatch:
     def __init__(self,initdict,filelist=None,outputdir=None,
                     roifit=None,roiwidth=None,
                     overwrite=1, filestep=1, mcastep=1,
-                    concentrations=0, fitfiles=1, fitimages=1):
+                    concentrations=0, fitfiles=1, fitimages=1,
+                    filebeginoffset = 0, fileendoffset=0,
+                    mcaoffset=0, chunk = None):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self.fitFiles = fitfiles
         self._concentrations = concentrations
         if type(initdict) == type([]):
-            self.mcafit = ClassMcaTheory.McaTheory(initdict[0])
+            self.mcafit = ClassMcaTheory.McaTheory(initdict[mcaoffset])
             self.__configList = initdict
         else:
             self.__configList = None
@@ -72,6 +74,10 @@ class McaAdvancedFitBatch:
         self.pleaseBreak = 0
         self.roiFit   = roifit
         self.roiWidth = roiwidth
+        self.fileBeginOffset = filebeginoffset
+        self.fileEndOffset   = fileendoffset
+        self.mcaOffset = mcaoffset
+        self.chunk     = chunk
 
         
     def setFileList(self,filelist=None):
@@ -123,8 +129,10 @@ class McaAdvancedFitBatch:
         
     def processList(self):
         self.counter =  0
-        self.__row   = -1
-        for i in range(0,len(self._filelist),self.fileStep):
+        self.__row   = self.fileBeginOffset - 1
+        for i in range(0+self.fileBeginOffset,
+                       len(self._filelist)-self.fileEndOffset,
+                       self.fileStep):
             if not self.roiFit:
                 if self.__configList is not None:
                     if i != 0:
@@ -202,9 +210,10 @@ class McaAdvancedFitBatch:
                     nrows = int(info['Dim_1'])
                     ncols = int(info['Dim_2'])
                     numberofmca  = min(nrows,ncols)
-                    self.__ncols = len(range(0,numberofmca,self.mcaStep))
+                    self.__ncols = len(range(0+self.mcaOffset,numberofmca,self.mcaStep))
                     self.__col  = -1
-                    for mca in range(0,numberofmca,self.mcaStep):
+                    for mca_index in range(self.__ncols):
+                        mca = 0 + self.mcaOffset + mca_index * self.mcaStep
                         if self.pleaseBreak: break
                         self.__col += 1
                         if int(nrows) > int(ncols):
@@ -239,7 +248,9 @@ class McaAdvancedFitBatch:
                 else:
                     if info['NbMca'] > 0:
                         self.fitImages = True
-                        self.__ncols = info['NbMca'] * 1
+                        numberofmca = info['NbMca'] * 1
+                        self.__ncols = len(range(0+self.mcaOffset,
+                                             numberofmca,self.mcaStep))
                         self.__col   = -1
                         scan_key = "%s.%s" % (scan,order)
                         scan_obj= ffile.Source.select(scan_key)
@@ -254,7 +265,8 @@ class McaAdvancedFitBatch:
                                 for i in range(info['NbMcaDet']):
                                     self.__chann0List[i] = int(chan0list[i].split()[2])
                         #import time
-                        for i in range(info['NbMca']):
+                        for mca_index in range(self.__ncols):
+                            i = 0 + self.mcaOffset + mca_index * self.mcaStep
                             #e0 = time.time()
                             if self.pleaseBreak: break
                             self.__col += 1
@@ -294,8 +306,12 @@ class McaAdvancedFitBatch:
             concentrations = None
             outfile=os.path.join(self._outputdir,filename)
             fitfile = self.__getFitFile(filename,key)
+            if self.chunk is not None:
+                con_extension = "_%06d_partial_concentrations.txt" % self.chunk
+            else:
+                con_extension = "_concentrations.txt"
             self._concentrationsFile = os.path.join(self._outputdir,
-                                    self._rootname+"_concentrations.txt")
+                                    self._rootname+ con_extension)
             #                        self._rootname+"_concentrationsNEW.txt")
             if self.counter == 0:
                 if os.path.exists(self._concentrationsFile):
@@ -544,15 +560,19 @@ class McaAdvancedFitBatch:
                 trailing = ""
             #speclabel = "#L row  column"
             speclabel = "row  column"
+            if self.chunk is None:
+                suffix = ".edf"
+            else:
+                suffix = "_%06d_partial.edf" % self.chunk
             for peak in (self.__peaks+['chisq']):
                 if peak != 'chisq':
                     a,b = peak.split()
                     speclabel +="  %s" % (a+"-"+b)
                     speclabel +="  s(%s)" % (a+"-"+b)
-                    edfname = ffile +"_"+a+"_"+b+trailing+".edf"
+                    edfname = ffile +"_"+a+"_"+b+trailing+suffix
                 else:
                     speclabel +="  %s" % (peak)
-                    edfname = ffile +"_"+peak+trailing+".edf"
+                    edfname = ffile +"_"+peak+trailing+suffix
                 dirname = os.path.dirname(edfname)
                 if not os.path.exists(dirname):
                     try:
@@ -563,7 +583,10 @@ class McaAdvancedFitBatch:
                 edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=0)
                 self.savedImages.append(edfname)
             #save specfile format
-            specname = ffile+trailing+".dat"
+            if self.chunk is None:
+                specname = ffile+trailing+".dat"
+            else:
+                specname = ffile+trailing+"_%06d_partial.dat" % self.chunk
             if os.path.exists(specname):
                 try:
                     os.remove(specname)

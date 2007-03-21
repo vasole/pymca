@@ -137,6 +137,7 @@ def test():
             w.addFileList(filelist)
     else:
         w.addFileList(filelist)
+    PyMcaDirs.inputDir = os.path.dirname(filelist[0])
     w.show()
     app.exec_()
 
