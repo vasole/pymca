@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.43 $"
+__revision__ = "$Revision: 1.44 $"
 ###########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -884,23 +884,75 @@ class McaBatchGUI(qt.QWidget):
             if dirname[-3:] == "exe":
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch") 
+                viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
+                rgb    = os.path.join(dirname, "PyMcaPostBatch")
+                if not os.path.exists(viewer):viewer = None
+                if not os.path.exists(rgb):rgb = None
             else:
                 myself  = sys.executable+" "+ os.path.join(dirname, "PyMcaBatch.py")
+                viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
+                rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
+                if not os.path.exists(viewer):
+                    viewer = None
+                else:
+                    viewer = '%s "%s"' % (sys.executable, viewer)
+                if not os.path.exists(rgb):
+                    rgb    = None
+                else:
+                    rgb = '%s "%s"' % (sys.executable, rgb)
+
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
-                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % (myself,
+                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % \
+                                                    (myself,
                                                     cfglistfile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex, listfile,
                                                     concentrations, table, fitfiles)
             else:
-                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % (myself, self.configFile,
+                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % \
+                                                   (myself, self.configFile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex,
                                                     listfile, concentrations, table, fitfiles)
             if DEBUG:print "cmd = ", cmd
-            os.system(cmd)
+            import time
+            if self.__splitBox.isChecked():
+                nbatches = int(str(self.__splitSpin.text()))
+                filechunk = int(len(self.fileList)/nbatches)
+                processList = []
+                for i in range(nbatches):
+                    beginoffset = filechunk * i
+                    endoffset   = len(self.fileList) - filechunk * (i+1)
+                    if (i+1) == nbatches:endoffset = 0
+                    cmd1 = cmd.replace("&", "") + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
+                                          (beginoffset, endoffset, i)
+                    processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
+                n = len(processList)
+                while n != 0:
+                    n = 0
+                    for process in processList:
+                        if process.poll() is None: n += 1
+                    time.sleep(1)
+                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
+                if DEBUG:a, b, c = work.buildOutput(delete=False)
+                else:a, b, c = work.buildOutput(delete=True)
+                if rgb is not None:
+                    if len(b):
+                        #self.__rgb =
+                        subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
+
+                if len(a):
+                    if self._edfSimpleViewer is None:
+                        self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
+                    self._edfSimpleViewer.setFileList(a)
+                    self._edfSimpleViewer.show()
+                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
+                if DEBUG:work.buildOutput(delete=True)
+                else:work.buildOutput(delete=False)
+            else:
+                os.system(cmd)
             
     def genListFile(self,listfile, config=None):
         try:
@@ -1277,7 +1329,7 @@ class McaBatchWindow(qt.QWidget):
         if self.actions:
             self.pauseButton.hide()
             self.abortButton.setText("OK")
-        if self.chunk is not None:
+        if self.chunk is None:
             if dict.has_key('savedimages'):self.plotImages(dict['savedimages'])
         if self.html:
             if not self.__writingReport:
