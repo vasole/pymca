@@ -40,7 +40,7 @@ class PyMcaBatchBuildOutput:
                 i += 1
             edfname  = filename.replace('_000000_partial.edf',".edf")
             if edfname.endswith('chisq.edf'):
-                data += (data < -1) * (len(edflist) - 1)
+                data += (data < -1) * (len(edflist))
             edfoutname = os.path.join(outputdir, edfname)
             edfout   = EdfFile.EdfFile(edfoutname)
             edfout.WriteImage (header , data, Append=0)
