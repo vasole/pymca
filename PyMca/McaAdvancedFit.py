@@ -731,6 +731,10 @@ class McaAdvancedFit(qt.QWidget):
         self.identifier.setEnergy(energy)
         if self.identifier.isHidden():
             self.identifier.show()
+        if QTVERSION < '4.0.0':
+            self.identifier.raiseW()
+        else:
+            self.identifier.raise_()
         
     def printActiveTab(self):
         if   str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "GRAPH":
