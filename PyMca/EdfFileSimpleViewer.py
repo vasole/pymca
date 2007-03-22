@@ -53,6 +53,7 @@ class EdfFileSimpleViewer(qt.QWidget):
                         "All Files (*)"]
 
         self.sourceSelector = QSourceSelector.QSourceSelector(self, filetypelist = filetypelist)
+        self.sourceSelector.specButton.hide()
         self.selectorWidget = {}
         self.selectorWidget[QEdfFileWidget.SOURCE_TYPE] = QEdfFileWidget.\
                                         QEdfFileWidget(self,justviewer=1)

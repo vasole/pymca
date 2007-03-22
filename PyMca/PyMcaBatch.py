@@ -918,6 +918,9 @@ class McaBatchGUI(qt.QWidget):
                                                     listfile, concentrations, table, fitfiles)
             if DEBUG:print "cmd = ", cmd
             import time
+            import popen2
+            self.hide()
+            qt.qApp.processEvents()
             if self.__splitBox.isChecked():
                 nbatches = int(str(self.__splitSpin.text()))
                 filechunk = int(len(self.fileList)/nbatches)
@@ -926,14 +929,15 @@ class McaBatchGUI(qt.QWidget):
                     beginoffset = filechunk * i
                     endoffset   = len(self.fileList) - filechunk * (i+1)
                     if (i+1) == nbatches:endoffset = 0
-                    cmd1 = cmd.replace("&", "") + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
-                                          (beginoffset, endoffset, i)
-                    processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
+                    cmd1 = cmd.replace("&", "") + \
+                           " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
+                            (beginoffset, endoffset, i)
+                    processList.append(popen2.Popen4(cmd1))
                 n = len(processList)
                 while n != 0:
                     n = 0
                     for process in processList:
-                        if process.poll() is None: n += 1
+                        if process.poll() < 0: n += 1
                     time.sleep(1)
                 work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
                 if DEBUG:a, b, c = work.buildOutput(delete=False)
@@ -941,8 +945,8 @@ class McaBatchGUI(qt.QWidget):
                 if rgb is not None:
                     if len(b):
                         #self.__rgb =
-                        subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
-
+                        popen2.Popen4("%s %s" % (rgb, b[0]))
+                        #subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
                 if len(a):
                     if self._edfSimpleViewer is None:
                         self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
@@ -953,6 +957,7 @@ class McaBatchGUI(qt.QWidget):
                 else:work.buildOutput(delete=False)
             else:
                 os.system(cmd)
+            self.show()
             
     def genListFile(self,listfile, config=None):
         try:

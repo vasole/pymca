@@ -123,6 +123,7 @@ class QSourceSelector(qt.QWidget):
         fileWidgetLayout.addWidget(closeButton)
         fileWidgetLayout.addWidget(specButton)
         if sys.platform == "win32":specButton.hide()
+        self.specButton = specButton
         self.mainLayout.addWidget(self.fileWidget)
 
     def _reload(self):
