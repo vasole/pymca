@@ -796,6 +796,7 @@ class McaBatchGUI(qt.QWidget):
             except:
                 dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
             if dirname[-3:] == "exe":
+                frozen = True
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch.exe")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer.exe")
@@ -803,6 +804,7 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(viewer):viewer = None
                 if not os.path.exists(rgb):rgb = None
             else:
+                frozen = False
                 myself = os.path.join(dirname, "PyMcaBatch.py")
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
@@ -817,7 +819,9 @@ class McaBatchGUI(qt.QWidget):
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
-                cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' %\
+                dirname  = os.path.dirname(dirname)
+                if frozen:
+                    cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' %\
                                                                   (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
@@ -825,9 +829,28 @@ class McaBatchGUI(qt.QWidget):
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
                                                                     table, fitfiles)
+                else:
+                    cmd = '%s "%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' %\
+                                                                  (sys.executable,myself,
+                                                                    cfglistfile,
+                                                                    self.outputDir, overwrite,
+                                                                    filestep, mcastep,
+                                                                    html,htmlindex,
+                                                                    listfile,concentrations,
+                                                                    table, fitfiles)
             else:
-                cmd = '%s "%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % \
+                if not frozen:
+                    cmd = '%s "%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % \
                                                                   (sys.executable, myself,
+                                                                    self.configFile,
+                                                                    self.outputDir, overwrite,
+                                                                    filestep, mcastep,
+                                                                    html,htmlindex,
+                                                                    listfile,concentrations,
+                                                                    table, fitfiles)
+                else:
+                    cmd = '"%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % \
+                                                                  (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
