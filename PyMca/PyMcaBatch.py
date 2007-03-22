@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.44 $"
+__revision__ = "$Revision: 1.45 $"
 ###########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -919,9 +919,9 @@ class McaBatchGUI(qt.QWidget):
             if DEBUG:print "cmd = ", cmd
             import time
             import popen2
-            self.hide()
-            qt.qApp.processEvents()
             if self.__splitBox.isChecked():
+                self.hide()
+                qt.qApp.processEvents()
                 nbatches = int(str(self.__splitSpin.text()))
                 filechunk = int(len(self.fileList)/nbatches)
                 processList = []
@@ -955,9 +955,9 @@ class McaBatchGUI(qt.QWidget):
                 work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
                 if DEBUG:work.buildOutput(delete=True)
                 else:work.buildOutput(delete=False)
+                self.show()
             else:
                 os.system(cmd)
-            self.show()
             
     def genListFile(self,listfile, config=None):
         try:
