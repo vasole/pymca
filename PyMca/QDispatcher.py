@@ -120,7 +120,7 @@ class QDispatcher(qt.QWidget):
                             except:
                                 error = sys.exc_info()
                                 text = "Failed to read data source.\n"
-                                text += "Source: %s\n" % source
+                                text += "Source: %s\n" % source.sourceName
                                 text += "Key: %s\n"  % sel['Key']
                                 text += "Error: %s" % error[1]
                                 qt.QMessageBox.critical(self,"%s" % error[0], text)
