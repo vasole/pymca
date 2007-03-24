@@ -545,8 +545,7 @@ class McaBatchGUI(qt.QWidget):
             return None
 
     def browseList(self):
-        if self.inputDir is None:
-            self.inputDir = PyMcaDirs.inputDir
+        self.inputDir = PyMcaDirs.inputDir
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
@@ -560,13 +559,23 @@ class McaBatchGUI(qt.QWidget):
             filedialog.setDirectory(wdir)
             filedialog.setModal(1)
             filedialog.setFileMode(filedialog.ExistingFiles)
-        if QTVERSION < '4.0.0' and (sys.platform == "win32"):
-                filelist= filedialog.getOpenFileNames(qt.QString("McaFiles (*.mca)\nEdfFiles (*.edf)\nSpecFiles (*.spec)\nAll files (*)"),
+        
+        filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
+        filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
+        if sys.platform == "win32":
+                if QTVERSION < '4.0.0':
+                    filelist= filedialog.getOpenFileNames(qt.QString(filetypes),
                             wdir,
                             self,"openFile", "Open a set of files")
+                else:
+                    filelist = qt.QFileDialog.getOpenFileNames(self,
+                                    "Open a set of files",
+                                    wdir,
+                                    filetypes,
+                                    None)    #This should be the last file filter used
         else:
             if QTVERSION < '4.0.0':
-                filedialog.setFilters("McaFiles (*.mca)\nEdfFiles (*.edf)\nSpecFiles (*.spec)\nAll files (*)")
+                filedialog.setFilters(filetypes)
                 ret = filedialog.exec_loop()
             else:
                 filedialog.setFilters(["McaFiles (*.mca)","EdfFiles (*.edf)",
@@ -590,7 +599,7 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
     def browseConfig(self):
-        if self.inputDir is None:self.inputDir = os.getcwd()
+        self.inputDir = PyMcaDirs.inputDir
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
@@ -604,13 +613,21 @@ class McaBatchGUI(qt.QWidget):
             filename.setModal(1)
             filename.setFileMode(filename.ExistingFiles)
             filename.setDirectory(wdir)
-        if (QTVERSION < '4.0.0') and (sys.platform == "win32"):
-            filenameList= filename.getOpenFileNames(qt.QString("Config Files (*.cfg)\nAll files (*)"),
+        filetypes = "Config Files (*.cfg)\nAll files (*)"
+        if sys.platform == "win32":
+            if QTVERSION < '4.0.0':
+                filenameList= filename.getOpenFileNames(qt.QString(filetypes),
                             wdir,
                             self,"openFile", "Open a new fit config file")
+            else:
+                filenameList = qt.QFileDialog.getOpenFileNames(self,
+                                    "Open a new fit config file",
+                                    wdir,
+                                    filetypes,
+                                    None)    #This should be the filter used
         else:
             if QTVERSION < '4.0.0':
-                filename.setFilters("Config Files (*.cfg)\nAll files (*)")
+                filename.setFilters(filetypes)
                 ret = filename.exec_loop() 
             else:
                 filename.setFilters(["Config Files (*.cfg)", "All files (*)"])
@@ -637,11 +654,7 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
     def browseOutputDir(self):
-        if self.outputDir is None:
-            if self.inputDir is not None:
-                self.outputDir = self.inputDir * 1
-            else:
-                self.outputDir = PyMcaDirs.outputDir
+        self.outputDir = PyMcaDirs.outputDir
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir
@@ -975,12 +988,29 @@ class McaBatchGUI(qt.QWidget):
                         self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
                     self._edfSimpleViewer.setFileList(a)
                     self._edfSimpleViewer.show()
-                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-                if DEBUG:work.buildOutput(delete=True)
-                else:work.buildOutput(delete=False)
                 self.show()
+                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
+                if DEBUG:work.buildOutput(delete=False)
+                else:work.buildOutput(delete=True)
             else:
-                os.system(cmd)
+                #os.system(cmd)
+                try:
+                    process = popen2.Popen4(cmd)
+                except:
+                    os.system(cmd)
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Information)
+                text = "Your batch has been started as an independent process."
+                try:
+                    pid  = process.pid()
+                    text += "\nThe pid of the process is %d" % pid
+                except:
+                    if DEBUG: print "Error getting process id"
+                msg.setText(text)
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
             
     def genListFile(self,listfile, config=None):
         try:
