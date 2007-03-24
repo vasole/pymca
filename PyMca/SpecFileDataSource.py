@@ -355,29 +355,51 @@ class SpecFileDataSource:
                 raise "TypeError", "Only selections of type {x:[],y:[],m:[]} understood"
             else:
                 if selection.has_key('x'):
+                    indexlist = []
                     for labelindex in selection['x']:
-                        label = output.info['LabelNames'][labelindex]
+                        if labelindex != 0:
+                            if selection.has_key('cntlist'):
+                                label = selection['cntlist'][labelindex]
+                            else:
+                                label = output.info['LabelNames'][labelindex]
+                        else:
+                            label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
                             raise "ValueError", "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
                         if output.x is None: output.x = []
                         output.x.append(output.data[:, index])
+                        indexlist.append(index)
+                    output.info['selection']['x'] = indexlist
                 if selection.has_key('y'):
+                    indexlist = []
                     for labelindex in selection['y']:
-                        label = output.info['LabelNames'][labelindex]
+                        if selection.has_key('cntlist'):
+                            label = selection['cntlist'][labelindex]
+                        else:    
+                            label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
                             raise "ValueError", "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
                         if output.y is None: output.y = []
                         output.y.append(output.data[:, index])
+                        indexlist.append(index)
+                    output.info['selection']['y'] = indexlist
                 if selection.has_key('m'):
+                    indexlist = []
                     for labelindex in selection['m']:
-                        label = output.info['LabelNames'][labelindex]
+                        if selection.has_key('cntlist'):
+                            label = selection['cntlist'][labelindex]
+                        else:    
+                            label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
                             raise "ValueError", "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
                         if output.m is None: output.m = []
                         output.m.append(output.data[:, index])
+                        indexlist.append(index)
+                    output.info['selection']['m'] = indexlist
+                output.info['selection']['cntlist'] = output.info['LabelNames']
                 output.info['selectiontype'] = "1D"
                 output.data = None
         elif key_type=="mca":
