@@ -28,6 +28,7 @@ import os.path
 import QtBlissGraph
 qt = QtBlissGraph.qt
 QTVERSION = qt.qVersion()
+QWTVERSION4 = QtBlissGraph.QWTVERSION4
 if QTVERSION > '4.0.0':
     QT4 = True
 else:
@@ -867,8 +868,12 @@ class QEdfFileWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        self.graph.setY1AxisInverted(True)
-        self.graph.imagePlot(self.lastData,
+        if QWTVERSION4:
+            self.graph.imagePlot(self.lastData,
+                             colormap = self.colormap)
+        else:
+            self.graph.setY1AxisInverted(True)
+            self.graph.imagePlot(self.lastData,
                              colormap = self.colormap,
                              xmirror = False,
                              ymirror = False)
@@ -1047,10 +1052,14 @@ class QEdfFileWidget(qt.QWidget):
                              minData, maxData)
             #self.graph.imagePlot(data=data, colormap = self.colormap)
             self.colormapDialog._update()
-            self.graph.setY1AxisInverted(True)
-            self.graph.imagePlot(data=data,
-                                 colormap = self.colormap,
-                                 ymirror = False)
+            if QWTVERSION4:
+                self.graph.imagePlot(data=data,
+                                     colormap = self.colormap)
+            else:
+                self.graph.setY1AxisInverted(True)
+                self.graph.imagePlot(data=data,
+                                     colormap = self.colormap,
+                                     ymirror = False)
             
         self.__refreshSelection()
         self.graph.replot()

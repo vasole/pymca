@@ -68,6 +68,8 @@ class McaBatchGUI(qt.QWidget):
         self._layout.setMargin(0)
         self._layout.setSpacing(0)
         self._edfSimpleViewer = None
+        self._timer = None
+        self._processList = []
         
         self.__build(actions)               
         if filelist is None: filelist = []
@@ -360,7 +362,7 @@ class McaBatchGUI(qt.QWidget):
             label.setText("Number of processes:")
             self.__splitSpin = qt.QSpinBox(box4)
             if QTVERSION < '4.0.0':
-                self.__splitpin.setMinValue(1)
+                self.__splitSpin.setMinValue(1)
                 self.__splitSpin.setMaxValue(1000)
             else:
                 self.__splitSpin.setMinimum(1)
@@ -829,6 +831,7 @@ class McaBatchGUI(qt.QWidget):
                     rgb    = None
                 else:
                     rgb = '%s "%s"' % (sys.executable, rgb)
+            self._rgb = rgb
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
@@ -885,28 +888,17 @@ class McaBatchGUI(qt.QWidget):
                     cmd1        = cmd + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
                                           (beginoffset, endoffset, i)
                     processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
-                n = len(processList)
-                while n != 0:
-                    n = 0
-                    for process in processList:
-                        if process.poll() is None: n += 1
-                    time.sleep(1)
-                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
-                if DEBUG:a, b, c = work.buildOutput(delete=False)
-                else:a, b, c = work.buildOutput(delete=True)
-                if rgb is not None:
-                    if len(b):
-                        #self.__rgb =
-                        subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
-
-                if len(a):
-                    if self._edfSimpleViewer is None:
-                        self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-                    self._edfSimpleViewer.setFileList(a)
-                    self._edfSimpleViewer.show()
-                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-                if DEBUG:work.buildOutput(delete=True)
-                else:work.buildOutput(delete=False)
+                self._processList = processList
+                if self._timer is None:
+                    self._timer = qt.QTimer(self)
+                    qt.QObject.connect(self._timer,
+                                       qt.SIGNAL('timeout()'),
+                                       self._pollProcessList)
+                if not self._timer.isActive():
+                    self._timer.start(1000)
+                else:
+                    print "timer was already active"
+                return
             else:
                 os.system(cmd)
             self.show()
@@ -937,6 +929,7 @@ class McaBatchGUI(qt.QWidget):
                 else:
                     rgb = '%s "%s"' % (sys.executable, rgb)
 
+            self._rgb = rgb
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
@@ -969,43 +962,23 @@ class McaBatchGUI(qt.QWidget):
                            " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
                             (beginoffset, endoffset, i)
                     processList.append(popen2.Popen4(cmd1))
-                n = len(processList)
-                while n != 0:
-                    n = 0
-                    for process in processList:
-                        if process.poll() < 0: n += 1
-                    time.sleep(1)
-                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
-                if DEBUG:a, b, c = work.buildOutput(delete=False)
-                else:a, b, c = work.buildOutput(delete=True)
-                if rgb is not None:
-                    if len(b):
-                        #self.__rgb =
-                        popen2.Popen4("%s %s" % (rgb, b[0]))
-                        #subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
-                if len(a):
-                    if self._edfSimpleViewer is None:
-                        self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-                    self._edfSimpleViewer.setFileList(a)
-                    self._edfSimpleViewer.show()
-                self.show()
-                work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-                if DEBUG:work.buildOutput(delete=False)
-                else:work.buildOutput(delete=True)
+                self._processList = processList
+                self._pollProcessList()
+                if self._timer is None:
+                    self._timer = qt.QTimer(self)
+                    qt.QObject.connect(self._timer,
+                                       qt.SIGNAL('timeout()'),
+                                       self._pollProcessList)
+                if not self._timer.isActive():
+                    self._timer.start(1000)
+                else:
+                    print "timer was already active"
+                return
             else:
-                #os.system(cmd)
-                try:
-                    process = popen2.Popen4(cmd)
-                except:
-                    os.system(cmd)
+                os.system(cmd)
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Information)
                 text = "Your batch has been started as an independent process."
-                try:
-                    pid  = process.pid()
-                    text += "\nThe pid of the process is %d" % pid
-                except:
-                    if DEBUG: print "Error getting process id"
                 msg.setText(text)
                 if QTVERSION < '4.0.0':
                     msg.exec_loop()
@@ -1024,6 +997,37 @@ class McaBatchGUI(qt.QWidget):
         for filename in lst:
             fd.write('%s\n'%filename)
         fd.close()
+
+    def _pollProcessList(self):
+        processList = self._processList
+        rgb         = self._rgb
+        if QTVERSION < '4.0.0':rgb = None
+        n = 0
+        for process in processList:
+            if sys.platform == "win32":
+                if process.poll() is None: n += 1
+            else:
+                if process.poll() < 0: n += 1
+        if n > 0: return
+        self._timer.stop()
+
+        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
+        if DEBUG:a, b, c = work.buildOutput(delete=False)
+        else:a, b, c = work.buildOutput(delete=True)
+        if len(a):
+            if self._edfSimpleViewer is None:
+                self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
+            self._edfSimpleViewer.setFileList(a)
+            self._edfSimpleViewer.show()
+        self.show()
+        if rgb is not None:
+            if len(b):
+                if sys.platform == "win32":subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
+                else:os.system("%s %s &" % (rgb, b[0]))
+        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
+        if DEBUG:work.buildOutput(delete=True)
+        else:work.buildOutput(delete=False)
+
     
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
