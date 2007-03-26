@@ -133,6 +133,8 @@ class SpsDataSource:
                     else:
                         if data.data is not None:
                             data.info['selectiontype'] = "%dD" % len(data.data.shape)
+                            if data.info['selectiontype'] == "2D":
+                                data.info["imageselection"] = True
                         return data
                 else:
                     output.append(data.select(selection))
