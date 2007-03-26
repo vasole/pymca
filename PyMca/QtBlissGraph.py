@@ -1798,8 +1798,12 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.delcurve(key) 
                 
         def removeMarkers(self):
-            for key in self.markersdict.keys():
-                self.markersdict[key]['marker'].detach()
+            keylist = self.markersdict.keys()
+            for key in keylist:
+                try:
+                    self.markersdict[key]['marker'].detach()
+                except:
+                    if DEBUG:print "It had been already destroyed" 
                 del self.markersdict[key]
 
         def closestMarker(self, xpixel, ypixel):

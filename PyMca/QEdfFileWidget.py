@@ -921,13 +921,7 @@ class QEdfFileWidget(qt.QWidget):
 
         if not self.fileCombo.count():
             self.data.sourceName = None
-            self.graph.removeImage()
-            self.oldsource = None
-            self.graph.clearmarkers()
-            self.graph.replot()
-            wid = self.__getParamWidget('array')
-            wid.setImages(1)
-            wid.setSize(0,0)
+            self._reset()
             #self.selectFile()
         else:
             self.selectFile(self.mapComboName.keys()[0])
@@ -938,7 +932,15 @@ class QEdfFileWidget(qt.QWidget):
             if filename==file:
                 self.selectFile(filename)
                 break
- 
+
+    def _reset(self):
+        self.graph.removeImage()
+        self.oldsource = None
+        self.graph.clearmarkers()
+        self.graph.replot()
+        wid = self.__getParamWidget('array')
+        wid.setImages(1)
+        wid.setSize(0,0)
 
 
     def setDataSource(self,data=None):
@@ -952,8 +954,9 @@ class QEdfFileWidget(qt.QWidget):
         if DEBUG:
             print "refresh method called"
         if self.data is None:
-            wid = self.__getParamWidget('array')
-            wid.setImages(1)
+            self._reset()
+            #wid = self.__getParamWidget('array')
+            #wid.setImages(1)
             return
         if self.data.sourceName is None:    return
         self.currentFile = self.data.sourceName
@@ -1432,6 +1435,7 @@ class QEdfFileWidget(qt.QWidget):
             print self.selection
             print "self.data.SourceName = ",self.data.sourceName
         if self.selection is not None:
+            if self.data is None:return
             if self.data.sourceName is None: return
             if type(self.data.sourceName) == type([]):
                 i = 0

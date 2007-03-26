@@ -100,7 +100,7 @@ class QSourceSelector(qt.QWidget):
 
             specButton= qt.QToolButton(self.fileWidget)
             specButton.setIcon(self.specIcon)
-            closeButton.setToolTip("Open new shared memory source")
+            specButton.setToolTip("Open new shared memory source")
 
         closeButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         specButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
