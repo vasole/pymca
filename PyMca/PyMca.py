@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.7 20060319-snapshot"
+__version__ = "4.0.8"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1367,6 +1367,7 @@ class PyMca(PyMcaMdi.PyMca):
     
     def onDebug(self):
         print "Module name = ","PyMca",__revision__.replace("$","")
+        print "Module name = ","PyQt ",qt.PYQT_VERSION_STR
         for module in sys.modules.values():
             try:
                 if 'Revision' in module.__revision__:

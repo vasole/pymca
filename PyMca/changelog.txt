@@ -1,3 +1,15 @@
+VERSION 4.0.8
+
+- Upgraded underlying sip and PyQt libraries.
+
+- Scan window operational.
+
+- Shared memory access operational.
+
+- Batches can profit from multiple processors (windows and linux).
+
+- Batch deadlocks solved by the library upgrade.
+
 VERSION 4.0.7
 
 - Improved ergonomy.
