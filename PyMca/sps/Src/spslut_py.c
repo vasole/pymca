@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -102,10 +102,14 @@ static PyObject *spslut_transform(self, args)
   PyArrayObject *src;
   PyObject *in_src;
   PyObject *res,*aux;
-
-  if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)", &in_src, &reduc, 
+  int array_output=0;
+  unsigned char *as_pointer, *as_r;
+  int as_dim[3];
+  PyArrayObject *as_aux;
+  
+  if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)i", &in_src, &reduc, 
 			&fastreduc, &meth, &gamma, &mode, &palette_code,
-			&autoscale, &min, &max,&mapmin, &mapmax)) 
+			&autoscale, &min, &max,&mapmin, &mapmax, &array_output)) 
 		return NULL;
   
   if (strcmp(mode, "RGB") == 0) {
@@ -189,6 +193,7 @@ static PyObject *spslut_transform(self, args)
     PyErr_SetString(SPSLUTError, "Error while trying to calculate the image");
     return NULL;
   }
+  if (!array_output){
    /*###CHANGED - ALEXANDRE 24/07/2001*/
   aux=new_pyimage(mode, (unsigned) pcols, (unsigned) prows, r);
   res = Py_BuildValue("(O(i,i)(d,d))",aux,pcols, prows, min, max);
@@ -200,14 +205,23 @@ static PyObject *spslut_transform(self, args)
 
 
   return res;
- 
-  /*
-  res = Py_BuildValue("(O(i,i)(d,d))",  new_pyimage(mode, (unsigned) pcols, 
-		(unsigned) prows, r), pcols, prows, min, max);
-		(unsigned) prows, r), pcols, prows, min, max);
-  free(r);  
+  }
+  as_dim[0] = strlen(mode);
+  as_dim[1] = prows * pcols;
+  as_aux = (PyArrayObject*) PyArray_FromDims(2,as_dim, PyArray_UBYTE);
+  if (as_aux == NULL){
+      free(r);
+      Py_DECREF(src);
+      return NULL;  
+  }
+  as_pointer = (char *) as_aux -> data; 
+  as_r = (char *) r;  
+  memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
+  free(r);
+  res = Py_BuildValue("(O(i,i)(d,d))",as_aux,pcols, prows, min, max);
+  Py_DECREF(src);
+  Py_DECREF(as_aux);
   return res;
-  */
 }
 
 

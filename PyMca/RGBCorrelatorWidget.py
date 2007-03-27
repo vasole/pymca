@@ -37,7 +37,7 @@ import ArraySave
 import PyMcaDirs
 import EdfFileDataSource
 DataReader = EdfFileDataSource.EdfFileDataSource
-
+USE_STRING = False
 qt = RGBCorrelatorSlider.qt
 
 QTVERSION = qt.qVersion()
@@ -285,12 +285,21 @@ class RGBCorrelatorWidget(qt.QWidget):
                 delta  = 0.01 * (valmax  - valmin)
                 valmin = valmin + delta * self.__redMin
                 valmax = valmin + delta * self.__redMax
-            red, size, minmax = self.getColorImage(self.__redImageData,
+            if USE_STRING:
+                red, size, minmax = self.getColorImage(self.__redImageData,
                                      spslut.RED,
                                      valmin,
-                                     valmax)
-            self.__redImage = Numeric.array(red).astype(Numeric.UInt8)
-            ddict['red'] = red
+                                     valmax, 0)
+                self.__redImage = Numeric.array(red).astype(Numeric.UInt8)
+                ddict['red'] = red
+            else:
+                red, size, minmax = self.getColorImage(self.__redImageData,
+                                     spslut.RED,
+                                     valmin,
+                                     valmax, 1)
+                self.__redImage = red
+                ddict['red'] = red.tostring()
+            
             ddict['size']= size
         if 'g' in colorlist:
             #get slider
@@ -304,12 +313,20 @@ class RGBCorrelatorWidget(qt.QWidget):
                 delta  = 0.01 * (valmax  - valmin)
                 valmin = valmin + delta * self.__greenMin
                 valmax = valmin + delta * self.__greenMax
-            green, size, minmax = self.getColorImage(self.__greenImageData,
+            if USE_STRING:
+                green, size, minmax = self.getColorImage(self.__greenImageData,
                                      spslut.GREEN,
                                      valmin,
                                      valmax)
-            self.__greenImage = Numeric.array(green).astype(Numeric.UInt8)
-            ddict['green'] = green
+                self.__greenImage = Numeric.array(green).astype(Numeric.UInt8)
+                ddict['green'] = green
+            else:
+                green, size, minmax = self.getColorImage(self.__greenImageData,
+                                     spslut.GREEN,
+                                     valmin,
+                                     valmax,1)
+                self.__greenImage = green
+                ddict['green'] = green.tostring()
             ddict['size']= size
 
         if 'b' in colorlist:
@@ -325,15 +342,22 @@ class RGBCorrelatorWidget(qt.QWidget):
                 delta  = 0.01 * (valmax  - valmin)
                 valmin = valmin + delta * self.__blueMin
                 valmax = valmin + delta * self.__blueMax
-            blue, size, minmax = self.getColorImage(self.__blueImageData,
-                                     spslut.BLUE,
-                                     valmin,
-                                     valmax)
-            self.__blueImage = Numeric.array(blue).astype(Numeric.UInt8)
-            ddict['blue'] = blue
+            if USE_STRING:
+                blue, size, minmax = self.getColorImage(self.__blueImageData,
+                                         spslut.BLUE,
+                                         valmin,
+                                         valmax)
+                self.__blueImage = Numeric.array(blue).astype(Numeric.UInt8)
+                ddict['blue'] = blue
+            else:
+                blue, size, minmax = self.getColorImage(self.__blueImageData,
+                                         spslut.BLUE,
+                                         valmin,
+                                         valmax,1)
+                self.__blueImage = blue
+                ddict['blue'] = blue.tostring()
             ddict['size'] = size
         image = self.__redImage + self.__greenImage + self.__blueImage
-        #ddict['image'] = image.tostring()
         ddict['image'] = image
         self.emit(qt.SIGNAL("RGBCorrelatorWidgetSignal"), ddict)
 
@@ -342,7 +366,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__recolor()
 
 
-    def getColorImage(self, image, colormap, datamin=None, datamax=None):
+    def getColorImage(self, image, colormap, 
+                      datamin=None, datamax=None,
+                      arrayflag = 0):
         COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
         if colormap not in COLORMAPLIST:
@@ -356,7 +382,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                      (self.colormapType,3.0),
                                       self.bgrx, colormap,
                                       1,
-                                      (0,1))
+                                      (0,1), (0,255),arrayflag)
                                      #(min(tmp),max(tmp)))
         else:
             (image_buffer, size, minmax)= spslut.transform(image,
@@ -364,7 +390,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                                      (self.colormapType,3.0),
                                       self.bgrx, colormap,
                                       0,
-                                     (datamin, datamax))
+                                     (datamin, datamax),
+                                     (0,255), arrayflag)
 
         return image_buffer, size, minmax
 
