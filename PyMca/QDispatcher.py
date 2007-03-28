@@ -203,7 +203,8 @@ class QDispatcher(qt.QWidget):
                     self.connect(source, qt.SIGNAL("updated"),
                                         self._selectionUpdatedSlot)
 
-        elif ddict["event"] == "SourceSelected":
+        elif (ddict["event"] == "SourceSelected") or \
+             (ddict["event"] == "SourceReloaded"):
             found = 0
             for source in self.sourceList:
                 if source.sourceName == ddict["sourcelist"]:
@@ -214,6 +215,8 @@ class QDispatcher(qt.QWidget):
                     print "WARNING: source not found"
                 return
             sourceType = source.sourceType
+            if ddict["event"] == "SourceReloaded":
+                source.refresh()
             self.selectorWidget[sourceType].setDataSource(source)
             if QTVERSION < '4.0.0':
                 index = self.tabWidget.indexOf(self.selectorWidget[sourceType])

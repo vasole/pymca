@@ -25,6 +25,9 @@ class EdfFileDataSource:
         #this is to be added
         #self._fastedf = True
         self._fastedf = False
+        self.refresh()
+
+    def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
             self._sourceObjectList.append(EdfFile.EdfFile(name,fastedf=self._fastedf))

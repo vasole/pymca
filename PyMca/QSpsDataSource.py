@@ -49,9 +49,9 @@ class QSpsDataSource(QSource.QSource):
         self.isUpdated  = self.__dataSource.isUpdated
         self.sourceType = self.__dataSource.sourceType 
         self.getKeyInfo = self.__dataSource.getKeyInfo 
+        self.refresh    = self.__dataSource.refresh
 
     def __getattr__(self,attr):
-        print " attr = ",attr
         if not attr.startswith("__"):
             #if not hasattr(qt.QObject, attr):
             if not hasattr(self, attr):

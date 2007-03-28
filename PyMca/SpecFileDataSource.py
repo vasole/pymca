@@ -63,13 +63,16 @@ class SpecFileDataSource:
         self.sourceName   = nameInput
         self.sourceType   = SOURCE_TYPE
         self.__sourceNameList = nameList
+        self.refresh()
+                
+    def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
             if not os.path.exists(name):
                 raise "ValueError","File %s does not exists" % name
         for name in self.__sourceNameList:
             self._sourceObjectList.append(specfile.Specfile(name))
-        self.__lastKeyInfo = {}
+        self.__lastKeyInfo = {}    
 
     def getSourceInfo(self):
         """

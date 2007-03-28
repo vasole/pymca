@@ -41,6 +41,10 @@ class SpsDataSource:
         self.sourceName = name
         self.sourceType=SOURCE_TYPE
 
+
+    def refresh(self):
+        pass
+
     def getSourceInfo(self):
         """
         Returns information about the Spec version in self.name
