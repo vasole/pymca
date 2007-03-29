@@ -73,12 +73,15 @@ class QSourceSelector(qt.QWidget):
             self.openIcon= qt.QIconSet(qt.QPixmap(icons.fileopen))
             self.closeIcon= qt.QIconSet(qt.QPixmap(icons.fileclose))
             self.specIcon= qt.QIconSet(qt.QPixmap(icons.spec))
+            self.reloadIcon = qt.QIconSet(qt.QPixmap(icons.reload))
             openButton.setIconSet(self.openIcon)
             openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
             closeButton= qt.QToolButton(self.fileWidget)
             closeButton.setIconSet(self.closeIcon)
             specButton= qt.QToolButton(self.fileWidget)
             specButton.setIconSet(self.specIcon)
+            refreshButton= qt.QToolButton(self.fileWidget)
+            refreshButton.setIconSet(self.reloadIcon)
         else:
             self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
             self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
@@ -96,7 +99,6 @@ class QSourceSelector(qt.QWidget):
             refreshButton= qt.QToolButton(self.fileWidget)
             refreshButton.setIcon(self.reloadIcon)
             refreshButton.setToolTip("Refresh data source")
-            #refreshButton.hide()
 
             specButton= qt.QToolButton(self.fileWidget)
             specButton.setIcon(self.specIcon)
@@ -108,8 +110,7 @@ class QSourceSelector(qt.QWidget):
 
         self.connect(openButton, qt.SIGNAL("clicked()"), self._openFileSlot)
         self.connect(closeButton, qt.SIGNAL("clicked()"), self.closeFile)
-        if QTVERSION > '4.0.0':
-            self.connect(refreshButton, qt.SIGNAL("clicked()"),
+        self.connect(refreshButton, qt.SIGNAL("clicked()"),
                          self._reload)
             
         self.connect(specButton, qt.SIGNAL("clicked()"), self.openSpec)
@@ -121,8 +122,7 @@ class QSourceSelector(qt.QWidget):
         fileWidgetLayout.addWidget(closeButton)
         fileWidgetLayout.addWidget(specButton)
         if sys.platform == "win32":specButton.hide()
-        if QTVERSION > '4.0.0':
-            fileWidgetLayout.addWidget(refreshButton)
+        fileWidgetLayout.addWidget(refreshButton)
         self.specButton = specButton
         self.mainLayout.addWidget(self.fileWidget)
 
