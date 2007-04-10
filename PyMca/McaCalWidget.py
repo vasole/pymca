@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.14 $"
+__revision__ = "$Revision: 1.15 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -866,7 +866,10 @@ class CalibrationParameters(qt.QWidget):
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             self.AText.setFocus()
         
     def _Bslot(self):
@@ -879,7 +882,10 @@ class CalibrationParameters(qt.QWidget):
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             self.BText.setFocus()
 
     def _Cslot(self):
@@ -892,7 +898,10 @@ class CalibrationParameters(qt.QWidget):
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             self.CText.setFocus()
 
     def myslot(self,*var,**kw):
@@ -1035,9 +1044,16 @@ class McaCalCopy(qt.QDialog):
         if legend is None:
             legend= 'Active Curve'
         name = "Enter Calibration for %s" % legend
-        qt.QDialog.__init__(self, parent, name, modal, fl)
+        if QTVERSION < '4.0.0':
+            qt.QDialog.__init__(self, parent, name, modal, fl)
+            self.setCaption(name)
+        else:
+            qt.QDialog.__init__(self, parent)
+            self.setWindowTitle(name)
+            self.setModal(modal)
         layout0 = qt.QVBoxLayout(self)
-        layout0.setAutoAdd(1)
+        layout0.setMargin(0)
+        layout0.setSpacing(0)
         
         currentcal = legend
         if sourcecal is None:
@@ -1054,12 +1070,24 @@ class McaCalCopy(qt.QDialog):
             currentval = [0.0,1.0,0.0]
 
         # --- source ---
-        sgroup = qt.QHGroupBox(self)
+        if QTVERSION < '4.0.0':
+            sgroup = qt.QHGroupBox(self)
+        else:
+            sgroup = qt.QGroupBox(self)
+            sgrouplayout = qt.QHBoxLayout(sgroup)
+            sgrouplayout.setMargin(0)
+            sgrouplayout.setSpacing(0)
         sgroup.setTitle('Calibration from Source (Read Only)')
         sgroup.setAlignment(qt.Qt.AlignHCenter)
+        layout0.addWidget(sgroup)    
         w      = qt.QWidget(sgroup)
         wlayout= qt.QVBoxLayout(w)
-        wlayout.setAutoAdd(1)
+        wlayout.setMargin(0)
+        wlayout.setSpacing(0)
+        if QTVERSION < '4.0.0':
+            pass
+        else:
+            sgroup.layout().addWidget(w)
         
         """
         l           = qt.QHBox(w)
@@ -1071,13 +1099,18 @@ class McaCalCopy(qt.QDialog):
         sourcelabel.setText('Calibration from Source')
         """
         
-        lines  = qt.QHBox(w)
+        lines  = qt.QWidget(w)
+        lineslayout = qt.QHBoxLayout(lines)
+        lineslayout.setMargin(0)
+        lineslayout.setSpacing(0)
+
         asl=qt.QLabel(lines)
         asl.setText('A:')
         asl.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         as=qt.QLineEdit(lines)
         as.setReadOnly(1)
         as.setText("%.4g" % sourcecal[0])
+        
 
         bsl=qt.QLabel(lines)
         bsl.setText('B:')
@@ -1092,17 +1125,44 @@ class McaCalCopy(qt.QDialog):
         cs=qt.QLineEdit(lines)
         cs.setReadOnly(1)
         cs.setText("%.4g" % sourcecal[2])
-        
+
+        lineslayout.addWidget(asl)
+        lineslayout.addWidget(as)
+        lineslayout.addWidget(bsl)
+        lineslayout.addWidget(bs)
+        lineslayout.addWidget(csl)
+        lineslayout.addWidget(cs)
+        wlayout.addWidget(lines)
+
         # --- PyMca/Current ---
-        cgroup = qt.QHGroupBox(self)
+        if QTVERSION < '4.0.0':
+            cgroup = qt.QHGroupBox(self)
+        else:
+            cgroup = qt.QGroupBox(self)
+            cgrouplayout = qt.QHBoxLayout(cgroup)
+            cgrouplayout.setMargin(0)
+            cgrouplayout.setSpacing(0)
+        layout0.addWidget(cgroup)
         fontc = cgroup.font()
         fontc.setBold(1)
         cgroup.setFont(fontc)
         cgroup.setTitle('Enter New Calibration (PyMca)')
         cgroup.setAlignment(qt.Qt.AlignHCenter)
-        wc     = qt.QVBox(cgroup)
-        wc.layout().setSpacing(3)
-        linec  = qt.QHBox(wc)
+        wc = qt.QWidget(cgroup)
+        wclayout = qt.QVBoxLayout(wc)
+        wclayout.setMargin(0)
+        wclayout.setSpacing(3)
+        if QTVERSION < '4.0.0':
+            pass
+        else:
+            cgrouplayout.addWidget(wc)
+
+        linec  = qt.QWidget(wc)
+        lineclayout = qt.QHBoxLayout(linec)
+        lineclayout.setMargin(0)
+        lineclayout.setSpacing(0)
+        wclayout.addWidget(linec)
+
         acl=qt.QLabel(linec)
         #acl.setFont(font)
         acl.setText('A:')
@@ -1128,10 +1188,17 @@ class McaCalCopy(qt.QDialog):
         self.CText.setReadOnly(0)
         self.CText.setText("%.4g" % currentval[2])
 
+        lineclayout.addWidget(acl)
+        lineclayout.addWidget(self.AText)
+        lineclayout.addWidget(bcl)
+        lineclayout.addWidget(self.BText)
+        lineclayout.addWidget(ccl)
+        lineclayout.addWidget(self.CText)
+
         self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
         self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
         self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
-        
+
         # --- available for copy ---
         if len(caldict.keys()):
             wid = qt.QWidget(wc)
@@ -1139,7 +1206,7 @@ class McaCalCopy(qt.QDialog):
             wfont.setBold(0)
             wid.setFont(wfont)
             layout2=qt.QHBoxLayout(wid)
-            layout2.setAutoAdd(1)
+            layout2.setMargin(0)
             layout2.setSpacing(3)
             
             copybut = qt.QPushButton(wid)
@@ -1149,19 +1216,32 @@ class McaCalCopy(qt.QDialog):
             
             self.combo = SimpleComboBox(wid,options=caldict.keys())
             self.combo.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,qt.QSizePolicy.Fixed))
-            
+            layout2.addWidget(copybut)
+            layout2.addWidget(self.combo)
+            wclayout.addWidget(wid)
 
         # --- dialog buttons ---
-        bottom = qt.QHBox(self)
-        self.setCaption(name)
-        HorizontalSpacer(bottom)
+        bottom = qt.QWidget(self)
+        bottomlayout = qt.QHBoxLayout(bottom)
+        bottomlayout.setMargin(0)
+        bottomlayout.setSpacing(0)
+
+        layout0.addWidget(bottom)
+        bottomlayout.addWidget(HorizontalSpacer(bottom))
+        
         okbutton       = qt.QPushButton(bottom)
         okbutton.setText('OK')
+        bottomlayout.addWidget(okbutton)
+
+        
         cancelbutton   = qt.QPushButton(bottom)
         cancelbutton.setText('Cancel')
+        bottomlayout.addWidget(cancelbutton)
+
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
-        HorizontalSpacer(bottom)
+        bottomlayout.addWidget(HorizontalSpacer(bottom))
+        
         self.connect(cancelbutton, qt.SIGNAL("clicked()"), self.reject)
         self.connect(okbutton,     qt.SIGNAL("clicked()"), self.accept)
 
@@ -1175,7 +1255,10 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             self.AText.setFocus()
         
     def _Bslot(self):
@@ -1186,7 +1269,10 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             self.BText.setFocus()
 
     def _Cslot(self):
@@ -1197,7 +1283,10 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             self.CText.setFocus()
         
     def __copybuttonclicked(self):
@@ -1208,16 +1297,16 @@ class McaCalCopy(qt.QDialog):
             
 
     def getdict(self):
-        dict = {}
-        dict[self.currentcal] = {}
-        dict[self.currentcal]['A'] = float(str(self.AText.text()))
-        dict[self.currentcal]['B'] = float(str(self.BText.text()))
-        dict[self.currentcal]['C'] = float(str(self.CText.text()))
-        if dict[self.currentcal]['C'] != 0.0:
-            dict[self.currentcal]['order'] = 2
+        ddict = {}
+        ddict[self.currentcal] = {}
+        ddict[self.currentcal]['A'] = float(str(self.AText.text()))
+        ddict[self.currentcal]['B'] = float(str(self.BText.text()))
+        ddict[self.currentcal]['C'] = float(str(self.CText.text()))
+        if ddict[self.currentcal]['C'] != 0.0:
+            ddict[self.currentcal]['order'] = 2
         else:
-            dict[self.currentcal]['order'] = 1
-        self.caldict.update(dict)        
+            ddict[self.currentcal]['order'] = 1
+        self.caldict.update(ddict)        
         return copy.deepcopy(self.caldict)
     
                                  
@@ -1235,7 +1324,10 @@ class SimpleComboBox(qt.QComboBox):
                 self.addItem(qt.QString(item))
 
     def getcurrent(self):
-        return   self.currentItem(),str(self.currentText())
+        if QTVERSION < '4.0.0':
+            return   self.currentItem(),str(self.currentText())
+        else:
+            return   self.currentIndex(),str(self.currentText())
              
 def test(x,y,legend):
     app = qt.QApplication(args)

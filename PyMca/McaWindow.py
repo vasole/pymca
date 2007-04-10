@@ -801,7 +801,10 @@ class McaWidget(qt.QWidget):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Please Select an active curve")
-                    msg.exec_loop()
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
                     return
                 else:
                     info,x, y = self.getinfodatafromlegend(legend)
@@ -865,7 +868,10 @@ class McaWidget(qt.QWidget):
                                                         fl=0)
                     #info,x,y = self.getinfodatafromlegend(legend)
                     #caldialog.graph.newcurve("fromlegend",x=x,y=y)
-                    ret = caldialog.exec_loop()
+                    if QTVERSION < '4.0.0':
+                        ret = caldialog.exec_loop()
+                    else:
+                        ret = caldialog.exec_()
                     if ret == qt.QDialog.Accepted:
                         self.caldict.update(caldialog.getdict())
                         item, text = self.control.calbox.getcurrent()
@@ -878,8 +884,11 @@ class McaWidget(qt.QWidget):
                         try:
                             self.control.calbox.setoptions(options)
                         except:
-                            pass 
-                        self.control.calbox.setCurrentItem(item)
+                            pass
+                        if QTVERSION < '4.0.0':
+                            self.control.calbox.setCurrentItem(item)
+                        else:
+                            self.control.calbox.setCurrentIndex(item)
                         self.refresh()
                     del caldialog
             elif dict['button'] == 'CalibrationLoad':
