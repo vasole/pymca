@@ -1057,49 +1057,78 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
     def run(self):
         self.processList()
 
-    def onNewFile(self, file, filelist):
-        self.__lastOnNewFile = file
-        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'file':file,
-                                                                   'filelist':filelist,
-                                                                   'filestep':self.fileStep,
-                                                                   'filebeginoffset':self.fileBeginOffset,
-                                                                   'fileendoffset':self.fileEndOffset,
-                                                                   'event':'onNewFile'}))
+    def onNewFile(self, ffile, filelist):
+        self.__lastOnNewFile = ffile
+        ddict = {'file':ffile,
+                 'filelist':filelist,
+                 'filestep':self.fileStep,
+                 'filebeginoffset':self.fileBeginOffset,
+                 'fileendoffset':self.fileEndOffset,
+                 'event':'onNewFile'}
+        
+        if QTVERSION < '4.0.0':
+            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        else:
+            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+
         if self.pleasePause:self.__pauseMethod()
 
     def onImage(self, key, keylist):
-        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'key':key,
-                                                                   'keylist':keylist,
-                                                                   'event':'onImage'}))
+        ddict = {'key':key, 'keylist':keylist, 'event':'onImage'}
+        if QTVERSION < '4.0.0':
+            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        else:
+            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
 
     def onMca(self, mca, nmca, filename=None, key=None, info=None):
         if DEBUG:print "onMca", "key = ",key
-        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'mca':mca,
-                                                                   'nmca':nmca,
-                                                                   'mcastep':self.mcaStep,
-                                                                   'filename':filename,
-                                                                   'key':key,
-                                                                   'info':info,
-                                                                   'outputdir':self._outputdir,
-                                                   'useExistingFiles':self.useExistingFiles,
-                                                                   'roifit':self.roiFit,
-                                                                   'event':'onMca'}))
+        ddict = {'mca':mca,
+                 'nmca':nmca,
+                 'mcastep':self.mcaStep,
+                 'filename':filename,
+                 'key':key,
+                 'info':info,
+                 'outputdir':self._outputdir,
+                 'useExistingFiles':self.useExistingFiles,
+                 'roifit':self.roiFit,
+                 'event':'onMca'}
+        
+        if QTVERSION < '4.0.0':
+            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        else:
+            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+            
         if self.pleasePause:self.__pauseMethod()
                                                                    
     def onEnd(self):
         if DEBUG: print "onEnd"
-        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'onEnd',
-                                             'filestep':self.fileStep,
-                                             'mcastep':self.mcaStep,
-                                             'chunk':self.chunk,
-                                             'savedimages':self.savedImages}))
+
+        ddict = {'event':'onEnd',
+                 'filestep':self.fileStep,
+                 'mcastep':self.mcaStep,
+                 'chunk':self.chunk,
+                 'savedimages':self.savedImages}
+
+        if QTVERSION < '4.0.0':
+            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        else:
+            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+
         if self.pleasePause:self.__pauseMethod()
         
     def __pauseMethod(self):
-        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
+        if QTVERSION < '4.0.0':
+            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
+        else:
+            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
+
         while(self.pleasePause):
             time.sleep(1)
-        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
+
+        if QTVERSION < '4.0.0':
+            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
+        else:
+            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
             
 
 class McaBatchWindow(qt.QWidget):
@@ -1372,7 +1401,8 @@ class McaBatchWindow(qt.QWidget):
                 f.close()
             """
             self.__writingReport = False
-            qt.QApplication.postEvent(self, McaCustomEvent.McaCustomEvent({'event':'reportWritten'}))
+            #qt.QApplication.postEvent(self, McaCustomEvent.McaCustomEvent({'event':'reportWritten'}))
+            self.onReportWritten()
             
     def onEnd(self,dict):
         self.__ended = True
@@ -1407,8 +1437,6 @@ class McaBatchWindow(qt.QWidget):
             directory = os.path.join(self.outputdir,"HTML")
             a = HtmlIndex.HtmlIndex(directory)
             a.buildRecursiveIndex()
-        
-
 
     def onPause(self):    
         pass

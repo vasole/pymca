@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.8"
+__version__ = "4.0.8 snapshot-20070419"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -227,6 +227,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.__useTabWidget = True
             else:
                 self.__useTabWidget = False
+
             if not self.__useTabWidget:
                 self.mcawindow = McaWindow.McaWidget(self.mdi)
                 self.scanwindow = ScanWindow.ScanWindow(self.mdi)
@@ -241,32 +242,60 @@ class PyMca(PyMcaMdi.PyMca):
                     #self.scanwindow.showMaximized()
                     #self.mcawindow.showMaximized()
             else:
-                self.mainTabWidget = qt.QTabWidget(self.mdi)
-                self.mainTabWidget.setWindowTitle("Main Window")
-                self.mcawindow = McaWindow.McaWidget()
-                self.scanwindow = ScanWindow.ScanWindow()
-                self.mainTabWidget.addTab(self.mcawindow, "MCA")
-                self.mainTabWidget.addTab(self.scanwindow, "SCAN")
-                self.mdi.addWindow(self.mainTabWidget)
-                self.mainTabWidget.showMaximized()
-                if False:
-                    self.connectDispatcher(self.mcawindow, self.sourceWidget)
-                    self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                if QTVERSION < '4.0.0':
+                    self.mainTabWidget = qt.QTabWidget(self.mdi)
+                    self.mainTabWidget.setCaption("Main Window")
+                    self.mcawindow = McaWindow.McaWidget()
+                    self.scanwindow = ScanWindow.ScanWindow()
+                    self.mainTabWidget.addTab(self.mcawindow, "MCA")
+                    self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                    #self.mdi.addWindow(self.mainTabWidget)
+                    self.mainTabWidget.showMaximized()
+                    if False:
+                        self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                        self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                    else:
+                        self.imageWindowDict = {}
+                        self.imageWindowCorrelator = None
+                        self.connect(self.sourceWidget,
+                                 qt.PYSIGNAL("addSelection"),
+                                 self.dispatcherAddSelectionSlot)
+                        self.connect(self.sourceWidget,
+                                 qt.PYSIGNAL("removeSelection"),
+                                 self.dispatcherRemoveSelectionSlot)
+                        self.connect(self.sourceWidget,
+                                 qt.PYSIGNAL("replaceSelection"),
+                                 self.dispatcherReplaceSelectionSlot)
+                        self.connect(self.mainTabWidget,
+                                     qt.SIGNAL("currentChanged(QWidget*)"),
+                                     self.currentTabIndexChanged)
                 else:
-                    self.imageWindowDict = {}
-                    self.imageWindowCorrelator = None
-                    self.connect(self.sourceWidget,
-                             qt.SIGNAL("addSelection"),
-                             self.dispatcherAddSelectionSlot)
-                    self.connect(self.sourceWidget,
-                             qt.SIGNAL("removeSelection"),
-                             self.dispatcherRemoveSelectionSlot)
-                    self.connect(self.sourceWidget,
-                             qt.SIGNAL("replaceSelection"),
-                             self.dispatcherReplaceSelectionSlot)
-                    self.connect(self.mainTabWidget,
-                                 qt.SIGNAL("currentChanged(int)"),
-                                 self.currentTabIndexChanged)
+                    self.mainTabWidget = qt.QTabWidget(self.mdi)
+                    self.mainTabWidget.setWindowTitle("Main Window")
+                    self.mcawindow = McaWindow.McaWidget()
+                    self.scanwindow = ScanWindow.ScanWindow()
+                    self.mainTabWidget.addTab(self.mcawindow, "MCA")
+                    self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                    self.mdi.addWindow(self.mainTabWidget)
+                    self.mainTabWidget.showMaximized()
+                    if False:
+                        self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                        self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                    else:
+                        self.imageWindowDict = {}
+                        self.imageWindowCorrelator = None
+                        self.connect(self.sourceWidget,
+                                 qt.SIGNAL("addSelection"),
+                                 self.dispatcherAddSelectionSlot)
+                        self.connect(self.sourceWidget,
+                                 qt.SIGNAL("removeSelection"),
+                                 self.dispatcherRemoveSelectionSlot)
+                        self.connect(self.sourceWidget,
+                                 qt.SIGNAL("replaceSelection"),
+                                 self.dispatcherReplaceSelectionSlot)
+                        self.connect(self.mainTabWidget,
+                                     qt.SIGNAL("currentChanged(int)"),
+                                     self.currentTabIndexChanged)
 
 
             if QTVERSION < '4.0.0':
@@ -335,11 +364,16 @@ class PyMca(PyMcaMdi.PyMca):
                              viewer._replaceSelection)
             
     def currentTabIndexChanged(self, index):
-        legend = str(self.mainTabWidget.tabText(index))
-        for key in self.imageWindowDict.keys():
-            if key == legend:value = True
-            else: value = False
-            self.imageWindowDict[key].setPlotEnabled(value)
+        if QTVERSION < '4.0.0':
+            #is not an index but a widget
+            index = self.mainTabWidget.indexOf(index)
+            legend = str(self.mainTabWidget.label(index))
+        else:
+            legend = str(self.mainTabWidget.tabText(index))
+            for key in self.imageWindowDict.keys():
+                if key == legend:value = True
+                else: value = False
+                self.imageWindowDict[key].setPlotEnabled(value)
 
     def _is2DSelection(self, ddict):
         if ddict.has_key('imageselection'):
@@ -452,13 +486,23 @@ class PyMca(PyMcaMdi.PyMca):
         if DEBUG:print "self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict
         if not self.__useTabWidget:return
         if ddict['event'] == "SelectionTypeChanged":
-            if ddict['SelectionType'].upper() == "COUNTERS":
-                self.mainTabWidget.setCurrentWidget(self.scanwindow)
-                return
-            for i in range(self.mainTabWidget.count()):
-                if str(self.mainTabWidget.tabText(i)) == \
-                                   ddict['SelectionType']:                        
-                    self.mainTabWidget.setCurrentIndex(i)
+            if QTVERSION < '4.0.0':
+                if ddict['SelectionType'].upper() == "COUNTERS":
+                    index = self.mainTabWidget.indexOf(self.scanwindow)
+                    self.mainTabWidget.setCurrentPage(index)
+                    return
+                for i in range(self.mainTabWidget.count()):
+                    if str(self.mainTabWidget.label(i)) == \
+                                       ddict['SelectionType']:                        
+                        self.mainTabWidget.setCurrentPage(i)
+            else:
+                if ddict['SelectionType'].upper() == "COUNTERS":
+                    self.mainTabWidget.setCurrentWidget(self.scanwindow)
+                    return
+                for i in range(self.mainTabWidget.count()):
+                    if str(self.mainTabWidget.tabText(i)) == \
+                                       ddict['SelectionType']:                        
+                        self.mainTabWidget.setCurrentIndex(i)
             return
         if ddict['event'] == "SourceTypeChanged":
             pass

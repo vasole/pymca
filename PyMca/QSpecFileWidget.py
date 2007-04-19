@@ -117,7 +117,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             else:
                 self.connect(self.list, qt.SIGNAL("rightButtonPressed(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
             self.connect(self.list, qt.SIGNAL("doubleClicked(QListViewItem *)"), self.__doubleClicked)
-
+            """
+            self.connect(self.cntTable,
+                         qt.PYSIGNAL('SpecCntTableSignal'),
+                         self._cntSignal)
+            """
 
             # --- context menu
             self.menu= qt.QPopupMenu(self.list)
@@ -171,7 +175,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                      self._setAutoReplace)
 
         if QTVERSION < '4.0.0':
-            pass
+            self.connect(self.mainTab,
+                         qt.SIGNAL('currentChanged(QWidget*)'),
+                         self._tabChanged)
         else:
             self.connect(self.mainTab,
                          qt.SIGNAL('currentChanged(int)'),
@@ -303,6 +309,21 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     # signal/slot handling
     #
     if QTVERSION < '4.0.0':
+        """
+        def _cntSignal(self, ddict):
+            if ddict["event"] == " updated":
+                if QTVERSION > '3.0.0':
+                    sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
+                else:
+                    sel = []
+                    item = self.list.firstChild()
+                    while item:
+                        if item.isSelected():
+                            sel.append(str(item.text(1)))
+                        item=item.nextSibling()
+                self._autoReplace(sel)
+        """
+
         def __selectionChanged(self):
             if DEBUG:print "__selectionChanged"
             if QTVERSION > '3.0.0':
@@ -589,7 +610,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     def _tabChanged(self, value):
         if DEBUG:print "self._tabChanged(value), value =  ",value
         if QTVERSION < '4.0.0':
-            pass
+            #is not an index but a widget
+            index = self.mainTab.indexOf(value)
+            text = str(self.mainTab.label(index))
         else:
             text = str(self.mainTab.tabText(value))
         if self.data is None: return

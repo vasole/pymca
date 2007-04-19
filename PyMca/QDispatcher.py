@@ -177,7 +177,7 @@ class QDispatcher(qt.QWidget):
 
     def _otherSignalsSlot(self, ddict):
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("otherSignals"), ddict)
+            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
         else:
             self.emit(qt.SIGNAL("otherSignals"), ddict)
 
