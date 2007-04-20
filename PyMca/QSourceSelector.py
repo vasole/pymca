@@ -147,7 +147,10 @@ class QSourceSelector(qt.QWidget):
     
     def openSource(self, sourcename):
         if not os.path.exists(sourcename):specsession=True
-        else:specsession=False
+        elif sourcename in sps.getspeclist():
+             specsession=True 
+        else:
+            specsession=False
         self.openFile(sourcename, specsession=specsession)
 
     def openFile(self, filename=None,justloaded=None, specsession = False):

@@ -59,9 +59,11 @@ if (sys.platform == "win32") or (sys.platform == "darwin"):
 
     source_widgets = { SpecFileDataSource.SOURCE_TYPE: QSpecFileWidget.QSpecFileWidget,
                        EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget}
+    sps = None 
 else:
     #import SpsDataSource
     import QSpsDataSource
+    sps = QSpsDataSource.SpsDataSource.sps
     import QSpsWidget
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource,
@@ -76,6 +78,9 @@ def getSourceType(sourceName0):
         sourceName = sourceName0[0]
     else:
         sourceName = sourceName0
+    if sps is not None:
+        if sourceName in sps.getspeclist():
+            return QSpsDataSource.SOURCE_TYPE
     if os.path.exists(sourceName):
         f = open(sourceName)
         line = f.readline()
