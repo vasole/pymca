@@ -152,8 +152,14 @@ except:
 ################################################################################
 # constants
 HEADER_BLOCK_SIZE = 1024
-STATIC_HEADER_ELEMENTS=("HeaderID","Image","ByteOrder","DataType","Dim_1","Dim_2","Dim_3","Size")
-STATIC_HEADER_ELEMENTS_CAPS=("HEADERID","IMAGE","BYTEORDER","DATATYPE","DIM_1","DIM_2","DIM_3","SIZE")
+STATIC_HEADER_ELEMENTS=("HeaderID","Image","ByteOrder","DataType",
+                        "Dim_1","Dim_2","Dim_3",
+                        "Offset_1","Offset_2","Offset_3",
+                        "Size")
+STATIC_HEADER_ELEMENTS_CAPS=("HEADERID","IMAGE","BYTEORDER","DATATYPE",
+                             "DIM_1","DIM_2","DIM_3",
+                             "OFFSET_1","OFFSET_2","OFFSET_3",
+                             "SIZE")
 
 LOWER_CASE=0
 UPPER_CASE=1
@@ -254,14 +260,20 @@ class  EdfFile:
                     raise "EdfFile: Image doesn't have size information"                
                 if "DIM_1" in StaticPar.keys():
                     self.Images[Index].Dim1 = string.atoi(StaticPar["DIM_1"])
+                    self.Images[Index].Offset1 = string.atoi(\
+                                            StaticPar.get("Offset_1","0"))
                 else:
                     raise "EdfFile: Image doesn't have dimension information"
                 if "DIM_2" in StaticPar.keys():
                     self.Images[Index].NumDim=2
                     self.Images[Index].Dim2 = string.atoi(StaticPar["DIM_2"])
+                    self.Images[Index].Offset2 = string.atoi(\
+                                            StaticPar.get("Offset_2","0"))
                 if "DIM_3" in StaticPar.keys():
                     self.Images[Index].NumDim=3
                     self.Images[Index].Dim3 = string.atoi(StaticPar["DIM_3"])
+                    self.Images[Index].Offset3 = string.atoi(\
+                                            StaticPar.get("Offset_3","0"))
                 if "DATATYPE" in StaticPar.keys():
                     self.Images[Index].DataType=StaticPar["DATATYPE"]
                 else:
@@ -318,11 +330,31 @@ class  EdfFile:
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
             self.File.seek(self.Images[Index].DataPosition,0)
-            Data = Numeric.fromstring(self.File.read(self.Images[Index].Size), self.__GetDefaultNumericType__(self.Images[Index].DataType))
+            datatype = self.__GetDefaultNumericType__(self.Images[Index].DataType)
+            if   datatype in [1, "1", "b"]:         datasize = 1
+            elif datatype in ["s", "w"]:            datasize = 2
+            elif datatype in ["i", "u", "l", "f"]:
+                #I assume 32 bit because longs are 8 bit in 64 bit machines  
+                datasize = 4
+            else:datasize = 8
             if self.Images[Index].NumDim==3:
-                Data = Numeric.reshape(Data, (self.Images[Index].Dim3,self.Images[Index].Dim2, self.Images[Index].Dim1))            
+                sizeToRead = self.Images[Index].Dim1 * \
+                             self.Images[Index].Dim2 * \
+                             self.Images[Index].Dim3 * datasize
+                Data = Numeric.fromstring(self.File.read(sizeToRead),
+                            datatype)
+                Data = Numeric.reshape(Data, (self.Images[Index].Dim3,self.Images[Index].Dim2, self.Images[Index].Dim1))
             elif self.Images[Index].NumDim==2:
-                Data = Numeric.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1)) 
+                sizeToRead = self.Images[Index].Dim1 * \
+                             self.Images[Index].Dim2 * datasize
+                Data = Numeric.fromstring(self.File.read(sizeToRead),
+                            datatype)
+                #print "Data.type = ", Data.typecode()
+                #print "self.Images[Index].DataType ", self.Images[Index].DataType
+                #print Data.shape
+                #print sizeToRead
+                #print len(Data)
+                Data = Numeric.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
         elif fastedf and CAN_USE_FASTEDF:
             type= self.__GetDefaultNumericType__(self.Images[Index].DataType)
             size_pixel=self.__GetSizeNumericType__(type)
