@@ -2151,11 +2151,11 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(input1, PyArray_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(input2, PyArray_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
@@ -3144,7 +3144,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O|d", &input, &dpoints))
         return NULL;
     array = (PyArrayObject *)
-             PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
+             PyArray_ContiguousFromObject(input, PyArray_DOUBLE,1,1);
     if (array == NULL)
         return NULL;
     npoints = (int )  dpoints;
@@ -3160,7 +3160,8 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
 
     if((npoints < MIN_SAVITSKY_GOLAY_WIDTH) ||  (n < npoints)){
         /* do not smooth data */
-        ret = (PyArrayObject *) PyArray_Copy(array);    
+        /* ret = (PyArrayObject *) PyArray_Copy(array); */
+        memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
         Py_DECREF(array);
         return PyArray_Return(ret);
     }

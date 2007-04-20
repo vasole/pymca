@@ -1010,6 +1010,7 @@ class McaBatchGUI(qt.QWidget):
                 if process.poll() < 0: n += 1
         if n > 0: return
         self._timer.stop()
+        self.show()
 
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
         if DEBUG:a, b, c = work.buildOutput(delete=False)
@@ -1019,7 +1020,6 @@ class McaBatchGUI(qt.QWidget):
                 self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
             self._edfSimpleViewer.setFileList(a)
             self._edfSimpleViewer.show()
-        self.show()
         if rgb is not None:
             if len(b):
                 if sys.platform == "win32":subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
