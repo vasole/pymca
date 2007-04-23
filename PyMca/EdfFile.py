@@ -256,6 +256,10 @@ class  EdfFile:
                 StaticPar = SetDictCase(self.Images[Index].StaticHeader,UPPER_CASE,KEYS)
                 if "SIZE" in StaticPar.keys():
                     self.Images[Index].Size = string.atoi(StaticPar["SIZE"])
+                    if self.Images[Index].Size <= 0:
+                        self.NumImages = Index
+                        line = self.File.readline()
+                        continue
                 else:
                     raise "EdfFile: Image doesn't have size information"                
                 if "DIM_1" in StaticPar.keys():
