@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.8 snapshot-20070420"
+__version__ = "4.0.8 snapshot-20070425"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -905,15 +905,17 @@ class PyMca(PyMcaMdi.PyMca):
 
     def _startupSelection(self, source, selection):
         self.sourceWidget.sourceSelector.openSource(source)
-        if selection == "MCA_DATA":
-            ddict= {}
-            ddict['event'] = "addSelection"
-            ddict['SourceName'] = "armando5"
-            ddict['Key'] = selection
-            ddict["selection"] = {'cols': {'y': [1], 'x': [0]}}
-            ddict["legend"] = ddict['SourceName'] + ' MCA_DATA.c.1'
-            ddict["SourceType"] =  'SPS'
-            self.sourceWidget._addSelectionSlot([ddict])
+        
+        if len(selection) >= 8:
+            if selection[0:8] == "MCA_DATA":
+                ddict= {}
+                ddict['event'] = "addSelection"
+                ddict['SourceName'] = source
+                ddict['Key'] = selection
+                ddict["selection"] = {'cols': {'y': [1], 'x': [0]}}
+                ddict["legend"] = ddict['SourceName'] + ' %s.c.1' %selection
+                ddict["SourceType"] =  'SPS'
+                self.sourceWidget._addSelectionSlot([ddict])
         else:
             return
         """ 
