@@ -96,13 +96,17 @@ class McaAdvancedFitBatch:
         name2,ext2 = os.path.splitext(last )
         i0=0
         for i in range(len(name1)):
-            if name1[i] == name2[i]:
+            if i >= len(name2):
+                break
+            elif name1[i] == name2[i]:
                 pass
             else:
                 break
         i0 = i
         for i in range(i0,len(name1)):
-            if name1[i] != name2[i]:
+            if i >= len(name2):
+                break
+            elif name1[i] != name2[i]:
                 pass
             else:
                 break
