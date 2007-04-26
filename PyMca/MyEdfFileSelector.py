@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-import Icons as icons
+import PyMca_Icons as icons
 import os.path
 import QtBlissGraph
 from QtBlissGraph import qt

@@ -29,7 +29,7 @@ import sys
 import os
 import QtBlissGraph
 qt = QtBlissGraph.qt
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import PyMcaPrintPreview
 import PyMcaDirs
 

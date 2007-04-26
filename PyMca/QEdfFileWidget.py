@@ -35,7 +35,7 @@ else:
     QT4 = False
 import Numeric
 import sys
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import ColormapDialog
 import PyMcaPrintPreview
 import ArraySave

@@ -30,7 +30,7 @@ import time
 import QtBlissGraph
 qt = QtBlissGraph.qt
 qwt = QtBlissGraph.qwt
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import McaControlGUI
 import ConfigDict
 import Numeric

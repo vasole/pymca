@@ -29,7 +29,7 @@ __revision__ = "$Revision: 1.4 $"
 import spswrap as sps
 #from qt import *
 import qt
-import Icons as icons
+import PyMca_Icons as icons
 DEBUG = 0
 PYDVT = 0
 SOURCE_TYPE = 'SPS'

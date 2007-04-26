@@ -35,7 +35,7 @@ if 'qt' not in sys.modules:
 else:
     import qt
 QTVERSION = qt.qVersion()
-import Icons as icons
+import PyMca_Icons as icons
 import os
 import spswrap as sps
 import PyMcaDirs

@@ -37,7 +37,7 @@ import Numeric
 from LinearAlgebra import inverse
 import Specfit
 import SpecfitFuns
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import PeakTableWidget
 import copy
 DEBUG = 0

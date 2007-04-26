@@ -32,11 +32,7 @@ else:
     import qttable
 import types, os.path
 import sys
-#if sys.platform == "win32":
-if 1:
-    import Icons as icons
-#else:
-#    import icons
+import PyMca_Icons as icons
 import string
 import SpecFileDataInfo
 

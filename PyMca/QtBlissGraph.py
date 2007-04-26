@@ -63,7 +63,7 @@ else:
     QWTVERSION4 = True
 
 try:
-    from Icons import IconDict
+    from PyMca_Icons import IconDict
 except:
     pass
 import time

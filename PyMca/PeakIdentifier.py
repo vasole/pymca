@@ -36,7 +36,7 @@ else:
     import qt
 import Elements
 from QPeriodicTable import QPeriodicTable
-from Icons import IconDict
+from PyMca_Icons import IconDict
 QTVERSION = qt.qVersion()
 DEBUG = 0
 

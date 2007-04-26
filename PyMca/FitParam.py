@@ -36,7 +36,7 @@ else:
 QTVERSION = qt.qVersion()
 
 import ConfigDict
-import Icons
+import PyMca_Icons as Icons
 import os.path
 import copy
 import Elements

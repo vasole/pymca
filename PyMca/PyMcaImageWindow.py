@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import Numeric
 import time
 import RGBImageCalculator

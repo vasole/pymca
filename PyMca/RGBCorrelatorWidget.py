@@ -32,7 +32,7 @@ import RGBCorrelatorTable
 import RGBImageCalculator
 import Numeric
 import spslut
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import ArraySave
 import PyMcaDirs
 import EdfFileDataSource

@@ -31,7 +31,7 @@ from QtBlissGraph import qt
 if __name__ == "__main__":
     app = qt.QApplication([])
 import QtBlissGraph
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import Numeric
 import ScanFit
 import SimpleMath

@@ -33,7 +33,7 @@ if QTVERSION > '4.0.0':
     import RGBCorrelator
     from RGBCorrelatorWidget import ImageShapeDialog
 import RGBCorrelatorGraph
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import DataObject
 import EDFStack
 import SpecFileStack

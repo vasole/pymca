@@ -37,7 +37,7 @@ else:
     import qt
 import SpecFileCntTable
 QTVERSION = qt.qVersion()
-import Icons as icons
+import PyMca_Icons as icons
 DEBUG = 0
 
 SOURCE_TYPE = 'SPS'

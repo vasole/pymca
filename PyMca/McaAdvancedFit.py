@@ -59,7 +59,7 @@ import types
 import copy
 import os
 import QtBlissGraph
-from Icons import IconDict
+from PyMca_Icons import IconDict
 import time
 import McaCalWidget
 import PeakIdentifier
