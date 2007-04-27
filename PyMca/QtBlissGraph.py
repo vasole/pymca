@@ -44,13 +44,18 @@ if 'qt' not in sys.modules:
                 import qwt
 else:
     import qt
-    try:
-        import Qwt5 as qwt
-    except:
+    if 'Qwt5' in sys.modules:import Qwt5 as qwt
+    elif 'Qwt4' in sys.modules:import Qwt4 as qwt
+    elif 'qwt' in sys.modules:import qwt
+    else:
         try:
-            import Qwt4 as qwt 
+            # import qwt
+            import Qwt5 as qwt
         except:
-            import qwt
+            try:
+                import Qwt4 as qwt 
+            except:
+                import qwt
 
 QTVERSION = qt.qVersion()
     
@@ -1585,6 +1590,23 @@ class QtBlissGraph(qwt.QwtPlot):
                     return 1
             return 0
     else:
+        def setAutoLegend(self, value):
+            print "setAutoLegend: Not available in QWT5, use setDisplayPolicy)"
+            return
+        
+        def enableLegend(self, value):
+            #print "Not available in QWT5, use setDisplayPolicy)"            
+            if value:
+                self.legend().show()
+                return
+                self.legend().setDisplayPolicy(self.legend().AutoIdentifier,
+                                3)            
+            else:
+                self.legend().hide()
+                return
+                self.legend().setDisplayPolicy(self.legend().NoIdentifier,
+                                3)                
+
         def legendItemSlot(self, ddict):
             if ddict['event'] == "leftMousePressed": return self.setactivecurve(ddict['legend'])
             if ddict['event'] != "rightMouseReleased": return
@@ -1646,13 +1668,14 @@ class QtBlissGraph(qwt.QwtPlot):
                     if self.__uselegendmenu:
                         item.installEventFilter(self)
                 else:
-                    item = self.legend().find(self.curves[key]['curve'])
-                    if QTVERSION < '4.0.0':
-                        self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
-                                     self.legendItemSlot)
-                    else:
-                        self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
-                                     self.legendItemSlot)
+                    if self.__uselegendmenu:
+                        item = self.legend().find(self.curves[key]['curve'])
+                        if QTVERSION < '4.0.0':
+                            self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
+                                         self.legendItemSlot)
+                        else:
+                            self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
+                                         self.legendItemSlot)
         else:
             #curve already exists
             pass
