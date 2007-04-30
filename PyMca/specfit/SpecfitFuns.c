@@ -167,7 +167,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     double niter0 = 5000.;
     double deltai0= 1;
     int i, j, k, deltai = 1,niter = 5000;
-    double  t_old[10], t_mean, c = 1.000;
+    double  t_old[40], t_mean, c = 1.000;
     double  *data;
     
     if (!PyArg_ParseTuple(args, "O|ddd", &input, &c, &niter0,&deltai0))
@@ -177,8 +177,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     if (array == NULL)
         return NULL;
     deltai= (int ) deltai0;
-    /* There is no reason to limit deltai to 10 */
-    /* if (deltai > 10) deltai=10; */
+    if (deltai > 40) deltai=40; 
     niter = (int ) niter0;
     n = array->dimensions[0];
     dimensions[0] = array->dimensions[0];
