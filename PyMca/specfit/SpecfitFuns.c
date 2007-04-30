@@ -36,7 +36,7 @@
 #else
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define M_PI 3.1415926535
+#define MY_PI 3.1415926535
 #define erf myerf
 #define erfc myerfc
 #endif
@@ -56,22 +56,9 @@ staticforward PyTypeObject SpecfitFuns_Type;
 /*
  * Function prototypes
  */
-static SpecfitFunsObject *newSpecfitFunsObject (PyObject *arg);
 static void                SpecfitFuns_dealloc  (SpecfitFunsObject *self);
 
 #define SpecfitFunsObject_Check(v)	((v)->ob_type == &SpecfitFuns_Type)
-
-static SpecfitFunsObject *
-newSpecfitFunsObject(arg)
-	PyObject *arg;
-{
-	SpecfitFunsObject *self;
-	self = PyObject_NEW(SpecfitFunsObject, &SpecfitFuns_Type);
-	if (self == NULL)
-		return NULL;
-	self->x_attr = NULL;
-	return self;
-}
 
 /* SpecfitFunso methods */
 
@@ -162,22 +149,25 @@ static PyObject *
 SpecfitFuns_subac(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    PyArrayObject   *array, *ret;
+    PyArrayObject   *array, *ret, *anchors;
     int n, dimensions[1];
     double niter0 = 5000.;
     double deltai0= 1;
-    int i, j, k, deltai = 1,niter = 5000;
-    double  t_old[40], t_mean, c = 1.000;
-    double  *data;
-    
-    if (!PyArg_ParseTuple(args, "O|ddd", &input, &c, &niter0,&deltai0))
+    PyObject *anchors0 = NULL;
+    int i, j, k, l, deltai = 1,niter = 5000;
+    double  t_mean, c = 1.000;
+    double  *data, *retdata;
+    int     *anchordata;
+    int nanchors, notdoit;
+
+    if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
     array = (PyArrayObject *)
              PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
     if (array == NULL)
         return NULL;
     deltai= (int ) deltai0;
-    if (deltai > 40) deltai=40; 
+    if (deltai <=0) deltai = 1;
     niter = (int ) niter0;
     n = array->dimensions[0];
     dimensions[0] = array->dimensions[0];
@@ -187,32 +177,63 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
         Py_DECREF(array);
         return NULL;
     }
+    memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
 
     if (n < (2*deltai+1)){
         /*ret = (PyArrayObject *) PyArray_Copy(array);*/
-        memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
         Py_DECREF(array);
         return PyArray_Return(ret);
     }
     /* do the job */
     data   = (double *) array->data;
-    for (i=0;i<niter;i++){
-        for (k=0;k<deltai;k++){
-            t_old[k] = *(data+k);
-        }
-        for (j=deltai;j<n-deltai;j++) {
-            t_mean = 0.5 * (t_old[0] + *(data+j+deltai));
-            for (k=0;k<deltai-1;k++){
-                t_old[k] = t_old[k+1];
+    retdata   = (double *) ret->data;
+    if (PySequence_Check(anchors0)){
+        anchors = (PyArrayObject *)
+             PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
+        if (anchors == NULL)
+	{
+            Py_DECREF(array);
+            Py_DECREF(ret);
+            return NULL;
+    	}
+	anchordata = (int *) anchors->data;
+        nanchors   = PySequence_Size(anchors0);
+	for (i=0;i<niter;i++){
+            for (j=deltai;j<n-deltai;j++) {
+		notdoit = 0;
+	        for (k=0; k<nanchors; k++)
+		{
+		    l =*(anchordata+k); 
+                    if (j>(l-deltai))
+		    {
+		    	if (j<(l+deltai))
+			{
+				notdoit = 1;
+				break;
+			}
+		    }
+		}
+		if (notdoit)
+			continue;
+		t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
+	        if (*(retdata+j) > (t_mean * c))
+                        *(retdata+j) = t_mean;
             }
-            t_old[deltai-1] = *(data+j);    
-            if (t_old[deltai-1] > (t_mean * c))
-                *(data+j) = t_mean;
-       }
+            memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+        }
+        Py_DECREF(anchors);
     }
-
-    /*ret = (PyArrayObject *) PyArray_Copy(array);*/
-    memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
+    else
+    {
+        for (i=0;i<niter;i++){
+            for (j=deltai;j<n-deltai;j++) {
+                t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
+	        if (*(retdata+j) > (t_mean * c))
+                    *(retdata+j) = t_mean;
+            }
+            memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+        }
+    }
     Py_DECREF(array);
     if (ret == NULL)
         return NULL;
@@ -455,7 +476,7 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*M_PI);
+    sqrt2PI= sqrt(2.0*MY_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -598,7 +619,7 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*M_PI);
+    sqrt2PI= sqrt(2.0*MY_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -756,7 +777,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += ppvoigt[i].eta * \
-                (ppvoigt[i].area / (0.5 * M_PI * ppvoigt[i].fwhm * dhelp));
+                (ppvoigt[i].area / (0.5 * MY_PI * ppvoigt[i].fwhm * dhelp));
         }
     }else{
         k = 1;
@@ -770,7 +791,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += ppvoigt[i].eta * \
-                (ppvoigt[i].area / (0.5 * M_PI * ppvoigt[i].fwhm * dhelp));
+                (ppvoigt[i].area / (0.5 * MY_PI * ppvoigt[i].fwhm * dhelp));
             }
             pret++;
             px++;
@@ -780,7 +801,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     /* The lorentzian term is calculated */
     /* Now it has to calculate the gaussian term */
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*M_PI);
+    sqrt2PI= sqrt(2.0*MY_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -1219,7 +1240,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
         for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
-            *pret += plorentz[i].area /(0.5 * M_PI * plorentz[i].fwhm * dhelp);
+            *pret += plorentz[i].area /(0.5 * MY_PI * plorentz[i].fwhm * dhelp);
         }
     }else{
         k = 1;
@@ -1232,7 +1253,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
             for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
-            *pret += plorentz[i].area /(0.5 * M_PI * plorentz[i].fwhm * dhelp);
+            *pret += plorentz[i].area /(0.5 * MY_PI * plorentz[i].fwhm * dhelp);
             }
             pret++;
             px++;
@@ -1504,6 +1525,7 @@ static PyObject *
 SpecfitFuns_slit(PyObject *self, PyObject *args)
 {
     double erf(double);
+    double erfc(double);
     PyObject *input1, *input2;
     int debug=0;
     PyArrayObject   *param, *x;
@@ -1717,7 +1739,8 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
 static PyObject *
 SpecfitFuns_erf(PyObject *self, PyObject *args)
 {
-    double erfc(double);
+    double myerfc(double);
+    double myerf(double);
     PyObject *input1;
     int debug=0;
     PyArrayObject   *x;
@@ -1920,7 +1943,7 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*M_PI);
+    sqrt2PI= sqrt(2.0*MY_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -2116,7 +2139,7 @@ int i;
 static PyObject *
 SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
 {
-/*    double erfc(double); */
+    double myerfc(double); 
     double fastexp(double);
     PyObject *input1, *input2;
     int debug=0;
@@ -2241,7 +2264,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*M_PI);
+    sqrt2PI= sqrt(2.0*MY_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -2414,7 +2437,7 @@ static PyObject *
 SpecfitFuns_seek(PyObject *self, PyObject *args)
 {    
     long SpecfitFuns_seek2(long , long, long,
-                  double, double, double, long , long,
+                  double, double, double,
                   long,
                   double, double, long,
                   double *, long, long, double *, long *, double *, double *);
@@ -2436,8 +2459,6 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
     double  LowDistance = 5.0;
     double  HighDistance = 3.0;
     long    AddInEmpty  = 0;
-    long    channel1;
-    long    channel2;
     long    npeaks;
     long    Ecal = 0;
     double  E[2];
@@ -2484,7 +2505,7 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
     pvalues = (double *) yspec->data;
 
     seek_result=SpecfitFuns_seek2(BeginChannel, EndChannel, nchannels,
-                    FWHM, Sensitivity, debug_info,channel1, channel2,
+                    FWHM, Sensitivity, debug_info,
                     FixRegion,
                     LowDistance, HighDistance, NMAX_PEAKS,
                     pvalues, AddInEmpty, Ecal,
@@ -2523,7 +2544,7 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
 
 long SpecfitFuns_seek2(long BeginChannel, long EndChannel,
       long nchannels, double FWHM, double Sensitivity,double debug_info,
-      long channel1, long channel2, long FixRegion,
+      long FixRegion,
       double LowDistance, double HighDistance,long max_npeaks,
       double *yspec, long AddInEmpty, long Ecal,double *E,
       long *n_peaks, double *peaks, double *relevances)
@@ -2539,6 +2560,7 @@ long SpecfitFuns_seek2(long BeginChannel, long EndChannel,
     double  nom;
     double  den2;
     long    begincalc, endcalc;
+    long    channel1;
     long    lld;
     long    cch;
     long    cfac, cfac2;
@@ -2723,7 +2745,7 @@ double myerfc(double x)
     double z;
     double t;
     double r;
-    
+   
     z=fabs(x);
     t=1.0/(1.0+0.5*z);
     r=t * exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.3740916 +
@@ -2789,7 +2811,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     /* local variables */
     PyArrayObject    *ydata, *result, **xdata, *xinter;
     long    i, j, k, l, jl, ju, offset, badpoint; 
-    double  value, *nvalue, *x1, *x2, *factors, valueold;
+    double  value, *nvalue, *x1, *x2, *factors;
     double  dhelp, yresult;
     double  dummy = -1.0;
     long    nd_y, nd_x, index1, npoints, *points, *indices;
