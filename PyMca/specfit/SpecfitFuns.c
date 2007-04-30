@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -177,7 +177,8 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     if (array == NULL)
         return NULL;
     deltai= (int ) deltai0;
-    if (deltai > 10) deltai=10;
+    /* There is no reason to limit deltai to 10 */
+    /* if (deltai > 10) deltai=10; */
     niter = (int ) niter0;
     n = array->dimensions[0];
     dimensions[0] = array->dimensions[0];
