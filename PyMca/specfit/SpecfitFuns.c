@@ -36,7 +36,7 @@
 #else
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MY_PI 3.1415926535
+#define M_PI 3.1415926535
 #define erf myerf
 #define erfc myerfc
 #endif
@@ -476,7 +476,7 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*MY_PI);
+    sqrt2PI= sqrt(2.0*M_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -619,7 +619,7 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*MY_PI);
+    sqrt2PI= sqrt(2.0*M_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -777,7 +777,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += ppvoigt[i].eta * \
-                (ppvoigt[i].area / (0.5 * MY_PI * ppvoigt[i].fwhm * dhelp));
+                (ppvoigt[i].area / (0.5 * M_PI * ppvoigt[i].fwhm * dhelp));
         }
     }else{
         k = 1;
@@ -791,7 +791,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += ppvoigt[i].eta * \
-                (ppvoigt[i].area / (0.5 * MY_PI * ppvoigt[i].fwhm * dhelp));
+                (ppvoigt[i].area / (0.5 * M_PI * ppvoigt[i].fwhm * dhelp));
             }
             pret++;
             px++;
@@ -801,7 +801,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     /* The lorentzian term is calculated */
     /* Now it has to calculate the gaussian term */
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*MY_PI);
+    sqrt2PI= sqrt(2.0*M_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -1240,7 +1240,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
         for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
-            *pret += plorentz[i].area /(0.5 * MY_PI * plorentz[i].fwhm * dhelp);
+            *pret += plorentz[i].area /(0.5 * M_PI * plorentz[i].fwhm * dhelp);
         }
     }else{
         k = 1;
@@ -1253,7 +1253,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
             for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
-            *pret += plorentz[i].area /(0.5 * MY_PI * plorentz[i].fwhm * dhelp);
+            *pret += plorentz[i].area /(0.5 * M_PI * plorentz[i].fwhm * dhelp);
             }
             pret++;
             px++;
@@ -1739,8 +1739,8 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
 static PyObject *
 SpecfitFuns_erf(PyObject *self, PyObject *args)
 {
-    double myerfc(double);
-    double myerf(double);
+    double erfc(double);
+    double erf(double);
     PyObject *input1;
     int debug=0;
     PyArrayObject   *x;
@@ -1943,7 +1943,7 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*MY_PI);
+    sqrt2PI= sqrt(2.0*M_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
@@ -2139,7 +2139,7 @@ int i;
 static PyObject *
 SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
 {
-    double myerfc(double); 
+    double erfc(double); 
     double fastexp(double);
     PyObject *input1, *input2;
     int debug=0;
@@ -2264,7 +2264,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     }
 
     log2 = 0.69314718055994529;
-    sqrt2PI= sqrt(2.0*MY_PI);
+    sqrt2PI= sqrt(2.0*M_PI);
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
