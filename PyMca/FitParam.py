@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.40 $"
+__revision__ = "$Revision: 1.41 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -575,6 +575,20 @@ class FitParamWidget(FitParamForm):
 
         self.stripWidthSpin.setValue(self.__get("fit", "stripwidth", 1, int))
         self.stripFilterSpin.setValue(self.__get("fit", "stripfilterwidth", 1, int))
+
+        self.stripAnchorsFlagCheck.setChecked(self.__get("fit",
+                                                         "stripanchorsflag",
+                                                         0, int))
+        anchorslist = self.__get("fit", "stripanchorslist", [0, 0, 0, 0], None)
+        if anchorslist is None:anchorslist = []
+        for spin in self.stripAnchorsList:
+            spin.setValue(0)
+
+        i = 0
+        for value in anchorslist:
+            self.stripAnchorsList[i].setValue(value)
+            i += 1
+
         #self.stripConstValue.setText(self.__get("fit", "stripconstant",1.0))
         #self.stripConstValue.setDisabled(1)
         self.stripIterValue.setText(self.__get("fit", "stripiterations",20000))
@@ -628,6 +642,10 @@ class FitParamWidget(FitParamForm):
             pars["stripiterations"]= int(str(self.stripIterValue.text()))
             pars["stripwidth"]= self.stripWidthSpin.value()
             pars["stripfilterwidth"] = self.stripFilterSpin.value()
+            pars["stripanchorsflag"] = self.stripAnchorsFlagCheck.isChecked()
+            pars["stripanchorslist"] = []
+            for spin in self.stripAnchorsList:
+                pars["stripanchorslist"].append(spin.value())
             pars["maxiter"]= self.iterSpin.value()
             err= "Minimum Chi2 difference"
             pars["deltachi"]= float(str(self.chi2Value.text()))

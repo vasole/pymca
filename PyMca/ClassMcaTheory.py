@@ -76,6 +76,8 @@ class McaTheory:
         self.laststripconstant = None
         self.laststripiterations = None
         self.laststripwidth = None
+        self.laststripanchorsflag = None
+        self.laststripanchorslist = None
         self.disableOptimizedLinearFit()
         self.__configure()
         #incompatible with multiple energies 
@@ -159,7 +161,9 @@ class McaTheory:
         self.config['fit']['stripconstant']= self.config['fit'].get('stripconstant',1.0)
         self.config['fit']['stripwidth']= int(self.config['fit'].get('stripwidth',1))
         self.config['fit']['stripfilterwidth']= int(self.config['fit'].get('stripfilterwidth',5))
-        self.config['fit']['stripiterations']= int(self.config['fit'].get('stripiterations',20000))
+        self.config['fit']['stripiterations'] = int(self.config['fit'].get('stripiterations',20000))
+        self.config['fit']['stripanchorsflag']= int(self.config['fit'].get('stripanchorsflag',0))
+        self.config['fit']['stripanchorslist']= self.config['fit'].get('stripanchorslist',[0,0,0,0])
         deltaonepeak = self.config['fit']['deltaonepeak']
         detele       = self.config['detector']['detele']
         detene       = self.config['detector'].get('detene', 1.7420)
@@ -746,11 +750,15 @@ class McaTheory:
         if (self.STRIP != self.laststrip) or \
            (self.config['fit']['stripiterations'] != self.laststripiterations) or \
            (self.config['fit']['stripwidth'] != self.laststripwidth) or \
+           (self.config['fit']['stripanchorsflag'] != self.lastanchorsflag) or \
+           (self.config['fit']['stripanchorslist'] != self.lastanchorslist) or \
            (self.config['fit']['stripconstant'] != self.laststripconstant): 
             try:
                 if self.STRIP:
                     if (self.config['fit']['stripwidth'] != self.laststripwidth) or \
                        (self.config['fit']['stripiterations'] != self.laststripiterations) or \
+                       (self.config['fit']['stripanchorsflag'] != self.lastanchorsflag) or \
+                       (self.config['fit']['stripanchorslist'] != self.lastanchorslist) or \
                        (self.config['fit']['stripconstant'] != self.laststripconstant):
                         self.__getselfzz()                    
                     self.datatofit = Numeric.concatenate((self.xdata, 
@@ -898,21 +906,36 @@ class McaTheory:
             niter = self.config['fit']['stripiterations']
             if niter > 0:
                 if ('subacold' in dir(SpecfitFuns)) and (niter >= 1000):
+                    anchorslist = []
+                    if self.config['fit']['stripanchorsflag']:
+                        if self.config['fit']['stripanchorslist'] is not None:
+                            ravelled = Numeric.ravel(self.xdata)
+                            for channel in self.config['fit']['stripanchorslist']:
+                                if channel <= ravelled[0]:continue
+                                index = Numeric.nonzero(ravelled >= channel)
+                                if len(index):
+                                    index = min(index)
+                                    if index > 0:
+                                        anchorslist.append(index)
                     if self.config['fit']['stripwidth'] == 1:
                         self.zz=SpecfitFuns.subac(Numeric.ravel(self.__smooth(self.ydata)),
                                               self.config['fit']['stripconstant'],
-                                              niter/20,4)
+                                              niter/20,4, anchorslist)
                         self.zz=SpecfitFuns.subac(self.zz,
                                               self.config['fit']['stripconstant'],
-                                              niter/4,self.config['fit']['stripwidth'])
+                                              niter/4,
+                                              self.config['fit']['stripwidth'],
+                                              anchorslist)
                     else:
                         self.zz=SpecfitFuns.subac(Numeric.ravel(self.__smooth(self.ydata)),
                                               self.config['fit']['stripconstant'],
-                                              niter,self.config['fit']['stripwidth'])                                
+                                              niter,self.config['fit']['stripwidth'],
+                                              anchorslist)                                
                         #make sure to get something smooth
                         self.zz=SpecfitFuns.subac(self.zz,
                                               self.config['fit']['stripconstant'],
-                                              500,1)
+                                              500,1,
+                                              anchorslist)
                 else:
                     self.zz=SpecfitFuns.subac(Numeric.ravel(self.__smooth(self.ydata)),
                                               self.config['fit']['stripconstant'],
@@ -923,6 +946,8 @@ class McaTheory:
             self.laststripwidth      = self.config['fit']['stripwidth']
             self.laststripconstant   = self.config['fit']['stripconstant'] 
             self.laststripiterations = self.config['fit']['stripiterations'] 
+            self.lastanchorsflag     = self.config['fit']['stripanchorsflag']
+            self.lastanchorslist     = self.config['fit']['stripanchorslist']
 
     def getPeakMatrixContribution(self,param0,t0=None,hypermet=None,
                                   continuum=None,summing=None):

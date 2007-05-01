@@ -24,13 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-# Form implementation generated from reading ui file 'FitParamForm.ui'
-#
-# Created: Mon Dec 6 12:18:11 2004
-#      by: The PyQt User Interface Compiler (pyuic)
-#
-# WARNING! All changes made in this file will be lost!
-__revision__ = "$Revision: 1.16 $"
+__revision__ = "$Revision: 1.17 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -179,15 +173,14 @@ class FitParamForm(QWidget):
         self.orderSpin.setMaxValue(10)
         self.orderSpin.setMinValue(1)
 
+        maxnchannel  = 16384*4
 
         self.maxSpin = Q3SpinBox(self.tabFit)
-        self.maxSpin.setMaxValue(16384*4)
+        self.maxSpin.setMaxValue(maxnchannel)
         self.maxSpin.setLineStep(128)
 
-            
-
         self.minSpin = Q3SpinBox(self.tabFit)
-        self.minSpin.setMaxValue(16384*4)
+        self.minSpin.setMaxValue(maxnchannel)
         self.minSpin.setLineStep(128)
 
         self.stripIterLabel = QLabel(self.tabFit)
@@ -199,14 +192,28 @@ class FitParamForm(QWidget):
         self.stripFilterLabel = QLabel(self.tabFit)
         self.stripFilterLabel.setText(str("Strip Background Smoothing Width (Savitsky-Golay)"))
 
-        #######
-
         self.stripFilterSpin = Q3SpinBox(self.tabFit)
         self.stripFilterSpin.setMinValue(1)
         self.stripFilterSpin.setMaxValue(15)
         self.stripFilterSpin.setLineStep(2)
 
         ########
+        self.anchorsContainer = QWidget(self.tabFit)
+        anchorsContainerLayout = QHBoxLayout(self.anchorsContainer)
+        anchorsContainerLayout.setMargin(0)
+        anchorsContainerLayout.setSpacing(2)
+        self.stripAnchorsFlagCheck = QCheckBox(self.anchorsContainer)
+        self.stripAnchorsFlagCheck.setText(str("Strip Background use Anchors"))
+        anchorsContainerLayout.addWidget(self.stripAnchorsFlagCheck)
+
+        self.stripAnchorsList = []
+        for i in range(4):
+            anchorSpin = Q3SpinBox(self.anchorsContainer)
+            anchorSpin.setMinValue(0)
+            anchorSpin.setMaxValue(maxnchannel)
+            anchorsContainerLayout.addWidget(anchorSpin)
+            self.stripAnchorsList.append(anchorSpin)
+        #######
 
         self.firstLabel = QLabel(self.tabFit)
         firstLabel_font = QFont(self.firstLabel.font())
@@ -222,9 +229,13 @@ class FitParamForm(QWidget):
         self.typeLabel = QLabel(self.tabFit)
         self.typeLabel.setText(str("Continuum type"))
 
-
         self.orderLabel = QLabel(self.tabFit)
         self.orderLabel.setText(str("Polynomial order"))
+
+        self.bottomLine = QFrame(self.tabFit)
+        self.bottomLine.setFrameShape(QFrame.HLine)
+        self.bottomLine.setFrameShadow(QFrame.Sunken)
+        self.bottomLine.setFrameShape(QFrame.HLine)
 
         layout5.addMultiCellWidget(self.typeLabel,0,0,0,1)
         layout5.addMultiCellWidget(self.contCombo,0,0,2,4)
@@ -237,62 +248,61 @@ class FitParamForm(QWidget):
 
         layout5.addMultiCellWidget(self.stripIterLabel,3,3,0,1)
         layout5.addMultiCellWidget(self.stripIterValue,3,3,3,4)
-
+        
         layout5.addMultiCellWidget(self.stripFilterLabel,4,4,0,1)
         layout5.addMultiCellWidget(self.stripFilterSpin,4,4,3,4)
 
-        layout5.addWidget(self.weightLabel,5,0)
-        layout5.addMultiCellWidget(self.weightCombo,5,5,3,4)
+        layout5.addMultiCellWidget(self.anchorsContainer,5,5,0,4)
+        
+        layout5.addWidget(self.weightLabel,6,0)
+        layout5.addMultiCellWidget(self.weightCombo,6,6,3,4)
 
-        layout5.addWidget(self.iterLabel,6,0)
+        layout5.addWidget(self.iterLabel,7,0)
         if qVersion() < '4.0.0':
             spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
-            layout5.addMultiCell(spacer,6,6,1,2)
+            layout5.addMultiCell(spacer,7,7,1,2)
         else:
-            layout5.addWidget(HorizontalSpacer(self.tabFit),6,6,1,2)
-        layout5.addMultiCellWidget(self.iterSpin,6,6,3,4)
+            layout5.addWidget(HorizontalSpacer(self.tabFit),7,7,1,2)
+        layout5.addMultiCellWidget(self.iterSpin,7,7,3,4)
 
-        layout5.addWidget(self.chi2Label,7,0)
-        layout5.addMultiCellWidget(self.chi2Value,7,7,3,4)
+        layout5.addWidget(self.chi2Label,8,0)
+        layout5.addMultiCellWidget(self.chi2Value,8,8,3,4)
 
-        layout5.addMultiCellWidget(self.linearFitFlagCheck,8,8,0,4)
+        layout5.addMultiCellWidget(self.linearFitFlagCheck,9,9,0,4)
 
-        layout5.addMultiCellWidget(self.topLine,9,10,0,4)
+        layout5.addMultiCellWidget(self.topLine,10,11,0,4)
 
-        layout5.addMultiCellWidget(self.minSpin,10,11,4,4)
+        layout5.addMultiCellWidget(self.minSpin,11,12,4,4)
 
-        layout5.addWidget(self.regionCheck,11,0)
-        layout5.addMultiCellWidget(self.firstLabel,11, 11,2,3)
+        layout5.addWidget(self.regionCheck,12,0)
+        layout5.addMultiCellWidget(self.firstLabel,12, 12,2,3)
 
-        layout5.addMultiCellWidget(self.lastLabel,12,12,2,3)
-        layout5.addWidget(self.maxSpin,12,4)
+        layout5.addMultiCellWidget(self.lastLabel,13,13,2,3)
+        layout5.addWidget(self.maxSpin,13,4)
+        layout5.addMultiCellWidget(self.bottomLine,14,15,0,4)
 
         tabFitLayout.addLayout(layout5)
 
-        self.bottomLine = QFrame(self.tabFit)
-        self.bottomLine.setFrameShape(QFrame.HLine)
-        self.bottomLine.setFrameShadow(QFrame.Sunken)
-        self.bottomLine.setFrameShape(QFrame.HLine)
-        tabFitLayout.addWidget(self.bottomLine)
-
+        includeWidget = QWidget(self.tabFit)
+        
         if qVersion() < '4.0.0':
-            includeLayout = QGridLayout(None,1,1,0,3,"includeLayout")
+            includeLayout = QGridLayout(includeWidget,1,1,0,3,"includeLayout")
         else:
-            includeLayout = Q3GridLayout(None)
+            includeLayout = Q3GridLayout(includeWidget)
             includeLayout.setMargin(0)
             includeLayout.setSpacing(3)
 
-        self.stepCheck = QCheckBox(self.tabFit)
+        self.stepCheck = QCheckBox(includeWidget)
         self.stepCheck.setText(str("Step tail"))
 
         includeLayout.addWidget(self.stepCheck,2,2)
 
-        self.escapeCheck = QCheckBox(self.tabFit)
+        self.escapeCheck = QCheckBox(includeWidget)
         self.escapeCheck.setText(str("Escape peaks"))
 
         includeLayout.addWidget(self.escapeCheck,1,1)
 
-        self.includeLabel = QLabel(self.tabFit)
+        self.includeLabel = QLabel(includeWidget)
         includeLabel_font = QFont(self.includeLabel.font())
         includeLabel_font.setBold(1)
         self.includeLabel.setFont(includeLabel_font)
@@ -300,31 +310,33 @@ class FitParamForm(QWidget):
 
         includeLayout.addWidget(self.includeLabel,0,0)
 
-        self.sumCheck = QCheckBox(self.tabFit)
+        self.sumCheck = QCheckBox(includeWidget)
         self.sumCheck.setText(str("Pile-up peaks"))
 
         includeLayout.addWidget(self.sumCheck,1,2)
 
-        self.scatterCheck = QCheckBox(self.tabFit)
+        self.scatterCheck = QCheckBox(includeWidget)
         self.scatterCheck.setText(str("Scattering peaks"))
 
         includeLayout.addWidget(self.scatterCheck,1,3)
 
-        self.stripCheck = QCheckBox(self.tabFit)
+        self.stripCheck = QCheckBox(includeWidget)
         self.stripCheck.setText(str("Stripping"))
 
         includeLayout.addWidget(self.stripCheck,1,0)
 
-        self.longCheck = QCheckBox(self.tabFit)
+        self.longCheck = QCheckBox(includeWidget)
         self.longCheck.setText(str("Long tail"))
 
         includeLayout.addWidget(self.longCheck,2,1)
 
-        self.shortCheck = QCheckBox(self.tabFit)
+        self.shortCheck = QCheckBox(includeWidget)
         self.shortCheck.setText(str("Short tail"))
 
         includeLayout.addWidget(self.shortCheck,2,0)
-        tabFitLayout.addLayout(includeLayout)
+        #tabFitLayout.addLayout(includeLayout)
+        layout5.addMultiCellWidget(includeWidget,16,17,0,4)
+
         spacer_2 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
         tabFitLayout.addItem(spacer_2)
 
