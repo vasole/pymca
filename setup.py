@@ -1,5 +1,6 @@
 import sys,os
 import glob
+import platform
 from distutils.core import Extension, setup
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
@@ -65,10 +66,18 @@ def build_specfit(ext_modules):
     ext_modules.append(module)
 
 def build_sps(ext_modules):
+    if platform.system() == 'Linux' :
+        extra_compile_args = ['-pthread']
+    elif platform.system() == 'SunOS' :
+        extra_compile_args = ['-mt']
+    else:
+        extra_compile_args = []
+
     module  = Extension(name = 'PyMca.spslut',
                          sources = ['PyMca/sps/Src/sps_lut.c',
                                     'PyMca/sps/Src/spslut_py.c'],
                          define_macros = define_macros,
+                         extra_compile_args = extra_compile_args,          
                          include_dirs = ['PyMca/sps/Include'])
     ext_modules.append(module)
     if sys.platform != "win32":
@@ -76,6 +85,7 @@ def build_sps(ext_modules):
                                             sources = ['PyMca/sps/Src/sps.c',
                                                        'PyMca/sps/Src/sps_py.c'],
                                             define_macros = define_macros,
+                                 extra_compile_args = extra_compile_args,          
                                             include_dirs = ['PyMca/sps/Include']))
         ext_modules.append(module)
 

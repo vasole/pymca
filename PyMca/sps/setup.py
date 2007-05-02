@@ -3,12 +3,22 @@
 """Setup script for the SPS module distribution."""
 
 import os, sys, glob
+import platform
 from distutils.core import setup
 from distutils.extension import Extension
+
+if platform.system() == 'Linux' :
+    extra_compile_args = ['-pthread']
+elif platform.system() == 'SunOS' :
+    extra_compile_args = ['-mt']
+else:
+    extra_compile_args = []
+    
 ext_modules = [Extension(
                         name = 'spslut',
                         sources=['Src/sps_lut.c',
                                  'Src/spslut_py.c'],
+                        extra_compile_args = extra_compile_args,
                         include_dirs  = ['Include'],
                    )]
 if sys.platform == "win32":
@@ -19,6 +29,7 @@ else:
                             name = 'sps',
                             sources=['Src/sps.c',
                                      'Src/sps_py.c'],
+                            extra_compile_args = extra_compile_args,
                             include_dirs  = ['Include']))
 setup (
         name         = "sps",
