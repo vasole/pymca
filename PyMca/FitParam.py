@@ -148,10 +148,10 @@ class FitParamWidget(FitParamForm):
                 self.mainTab.addTab(self.tabConcentrations,str("COMPOUND FIT"))
             #end compound fit tab
 
-
-
-        
         self.layout().setMargin(0)
+
+        #I had to add this line to prevent a crash. Why?
+        qt.qApp.processEvents()
 
         self.attTable.verticalHeader().hide()
         if QTVERSION < '4.0.0':
@@ -190,8 +190,7 @@ class FitParamWidget(FitParamForm):
                 self.peakTable.energy.setToolTip("Energy is set in the BEAM tab")
             layout.addWidget(self.peakTable, 0, 0)
             #self.peakTable.setMaximumSize(self.tabDetector.sizeHint())
-        self.energyTable = self.peakTable.energyTable
-        
+        self.energyTable = self.peakTable.energyTable        
         
         self.input = None
         self.linpolOrder= None
@@ -201,6 +200,7 @@ class FitParamWidget(FitParamForm):
                                                    'Deadlayer' :[0,"Si1",2.330,0.0020],
                                                    'Window'    :[0,"Be1",1.848,0.0100]},
                                     'concentrations':self.concentrationsWidget.getParameters()})
+        
 
         self.prevTabIdx= None
         self.tabLabel= []
@@ -642,7 +642,7 @@ class FitParamWidget(FitParamForm):
             pars["stripiterations"]= int(str(self.stripIterValue.text()))
             pars["stripwidth"]= self.stripWidthSpin.value()
             pars["stripfilterwidth"] = self.stripFilterSpin.value()
-            pars["stripanchorsflag"] = self.stripAnchorsFlagCheck.isChecked()
+            pars["stripanchorsflag"] = int(self.stripAnchorsFlagCheck.isChecked())
             pars["stripanchorslist"] = []
             for spin in self.stripAnchorsList:
                 pars["stripanchorslist"].append(spin.value())
