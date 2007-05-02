@@ -350,7 +350,7 @@ class FitParamWidget(FitParamForm):
             else:
                 att= self.attenuators[idx]
             if att.upper() == "MATRIX":
-                attpar= self.__get("attenuators", att, [0, "-", 0., 0., 45., 45.], None)
+                attpar= self.__get("attenuators", att, [0, "MULTILAYER", 0., 0., 45., 45.], None)
                 row = self.attTable.rowCount() - 1
                 current={'Material':  attpar[1],
                          'Density':   attpar[2],
@@ -393,7 +393,8 @@ class FitParamWidget(FitParamForm):
         self.tabAttenuators.editor.matCombo.setOptions(matlist)
 
         #force update of all the parameters
-        self.tabAttenuators.editor.matCombo._mySignal(current)
+        if current in matlist:
+            self.tabAttenuators.editor.matCombo._mySignal(current)
 
     def __getAttPar(self):
         pars= {}
