@@ -25,6 +25,7 @@
 # is a problem to you.
 #############################################################################*/
 import sys
+import os
 import PyQt4.Qt as qt
 
 class ChangeLog(qt.QTextDocument):
@@ -34,6 +35,8 @@ class ChangeLog(qt.QTextDocument):
             self.setTextFile(textfile)
 
     def setTextFile(self, textfile):
+        if not os.path.exists(textfile):
+            textfile = os.path.join(os.path.dirname(__file__), textfile)
         f = open(textfile)
         lines = f.readlines()
         f.close()
