@@ -67,7 +67,7 @@ SpecfitFuns_dealloc(self)
 	SpecfitFunsObject *self;
 {
 	Py_XDECREF(self->x_attr);
-	PyMem_DEL(self);
+	PyObject_DEL(self);
 }
 
 

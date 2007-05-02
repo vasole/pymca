@@ -549,7 +549,7 @@ specfile_close(PyObject *self) {
     SfClose(f->sf);
     free(f->name);
 
-    PyMem_DEL(f);
+    PyObject_DEL(f);
 
     return NULL;
 }
@@ -1223,8 +1223,7 @@ scandata_free(PyObject *self) {
     scandataobject *s =(scandataobject *)self; 
     specfileobject *f = s->file; 
     Py_DECREF((PyObject *)f);
-    /* next line was giving a crash ... */
-    PyMem_DEL(self);
+    PyObject_DEL(self);
 
     return NULL;
 }
