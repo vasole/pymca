@@ -25,7 +25,7 @@
 # is a problem to you.
 #############################################################################*/
 #include <Python.h>
-#include <./numpy/oldnumeric.h>
+#include <./numpy/arrayobject.h>
 #include <math.h>
 #define isARRAY(a) ((a) && PyArray_Check((PyArrayObject *)a))
 #define A_SIZE(a) PyArray_Size((PyObject *) a)

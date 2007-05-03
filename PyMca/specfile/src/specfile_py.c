@@ -129,7 +129,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <Python.h>
 #endif
 
-#include <numpy/oldnumeric.h>
+#include <numpy/arrayobject.h>
 #include <SpecFile.h>
 
 /*

@@ -27,7 +27,7 @@
 
 /* FastEdfo objects */
 #include <Python.h>
-#include <./numpy/oldnumeric.h>
+#include <./numpy/arrayobject.h>
 #include <stdio.h>
 
 
@@ -197,7 +197,7 @@ static PyObject *FastEdf_extended_fread(PyObject *self, PyObject *args)
         {
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_CHAR ) sizeofunit=1;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_UBYTE ) sizeofunit=1;
-            if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_SBYTE ) sizeofunit=1;
+            if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_BYTE ) sizeofunit=1;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_SHORT ) sizeofunit=2;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_INT )   sizeofunit=4;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_LONG ) sizeofunit=4;
