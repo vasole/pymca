@@ -25,6 +25,8 @@
 # is a problem to you.
 #############################################################################*/
 import numpy.oldnumeric as Numeric
+import numpy
+
 class SimpleMath:
     def derivate(self,xdata,ydata):
         f=[1,-1]
@@ -37,15 +39,15 @@ class SimpleMath:
         num=Numeric.take(deltay,i1)
         #Still what to do with the first and last point ...
         try:
-            derivfirst=Numeric.array((y[1]-y[0])/(x[1]-x[0]))
+            derivfirst=numpy.array([(y[1]-y[0])/(x[1]-x[0])])
         except:
-            derivfirst=Numeric.array([])            
+            derivfirst=numpy.array([])            
         try:
-            derivlast= Numeric.array((y[-1]-y[-2])/(x[-1]-x[-2]))       
+            derivlast= numpy.array([(y[-1]-y[-2])/(x[-1]-x[-2])])       
         except:
-            derivlast=Numeric.array([])
-        result=Numeric.zeros(len(i1)+1,Numeric.Float)
-        xplot=Numeric.zeros(len(i1)+1,Numeric.Float)
+            derivlast=numpy.array([])
+        result=Numeric.zeros(len(i1)+1, Numeric.Float)
+        xplot=Numeric.zeros(len(i1)+1, Numeric.Float)
         result[1:len(i1)]=0.5*((num[0:-1]/deno[0:-1])+\
                                      (num[1:]/deno[1:]))
         if len(derivfirst):
@@ -67,7 +69,7 @@ class SimpleMath:
         x0=xdata0[0]
         for xaxis in xdata0:
             if len(x0) == len(xaxis):
-                if (x0==xaxis) == Numeric.ones(len(x0)):
+                if numpy.alltrue(x0==xaxis):
                     pass
                 else:
                     allthesamex=0
@@ -194,4 +196,5 @@ if __name__ == "__main__":
     y     = [2 * x, -2*x]
     a = SimpleMath()
     print a.average(xlist,y)
+    print a.derivate(x, 2*x)
     
