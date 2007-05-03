@@ -9,8 +9,10 @@ from distutils.extension import Extension
 
 if platform.system() == 'Linux' :
     extra_compile_args = ['-pthread']
+    #extra_compile_args = []
 elif platform.system() == 'SunOS' :
-    extra_compile_args = ['-pthreads']
+    #extra_compile_args = ['-pthreads']
+    extra_compile_args = []
 else:
     extra_compile_args = []
     
