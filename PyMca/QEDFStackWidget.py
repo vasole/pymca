@@ -38,6 +38,7 @@ import DataObject
 import EDFStack
 import SpecFileStack
 import numpy.oldnumeric as Numeric
+import numpy
 import ColormapDialog
 import spslut
 import os
@@ -784,7 +785,8 @@ class QEDFStackWidget(qt.QWidget):
                                 "BGRX",
                                 spslut.TEMP,
                                 1,
-                                (0,1))
+                                (0,1),
+                                (0, 255), 1)
         else:
             if len(colormap) < 7: colormap.append(spslut.LINEAR)
             (self.__ROIPixmap,size,minmax)= spslut.transform(\
@@ -794,10 +796,11 @@ class QEDFStackWidget(qt.QWidget):
                                 "BGRX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
-                                (colormap[2],colormap[3]))
-        #I hope to find the time to write a new spslut giving back arrays ..
-        self.__ROIPixmap = Numeric.array(self.__ROIPixmap).\
-                                        astype(Numeric.UInt8)
+                                (colormap[2],colormap[3]),
+                                (0,255), 1)
+
+        self.__ROIPixmap = self.__ROIPixmap.astype(numpy.ubyte)
+
         self.__ROIPixmap.shape = [self.__ROIImageData.shape[0],
                                     self.__ROIImageData.shape[1],
                                     4]
@@ -812,7 +815,7 @@ class QEDFStackWidget(qt.QWidget):
                                 "BGRX",
                                 spslut.TEMP,
                                 1,
-                                (0,1))
+                                (0,1),(0, 255),1)
         else:
             if len(colormap) < 7: colormap.append(spslut.LINEAR)
             (self.__stackPixmap,size,minmax)= spslut.transform(\
@@ -822,11 +825,10 @@ class QEDFStackWidget(qt.QWidget):
                                 "BGRX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
-                                (colormap[2],colormap[3]))
+                                (colormap[2],colormap[3]),(0,255),1)
             
-        #I hope to find the time to write a new spslut giving back arrays ..
-        self.__stackPixmap = Numeric.array(self.__stackPixmap).\
-                                        astype(Numeric.UInt8)
+        self.__stackPixmap = self.__stackPixmap.astype(numpy.ubyte)
+
         self.__stackPixmap.shape = [self.__stackImageData.shape[0],
                                     self.__stackImageData.shape[1],
                                     4]
