@@ -86,8 +86,7 @@ colorlist  = [colordict['black'],
 #
 try:
     from matplotlib import rcParams
-    #matplotlib.rcParams['numerix'] = "numeric"
-    rcParams['numerix'] = "numeric"
+    #rcParams['numerix'] = "numeric"
     from matplotlib.font_manager import FontProperties
     #2D stuff
     if QTVERSION < '4.0.0':
