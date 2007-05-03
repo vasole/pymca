@@ -3,6 +3,12 @@
 """Setup script for the SPECFILE module distribution."""
 
 import os, sys, glob
+try:
+    import numpy
+except ImportError:
+    text  = "You must have numpy installed.\n"
+    text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
+    raise ImportError, text
 
 from distutils.core import setup
 from distutils.extension import Extension
@@ -32,7 +38,7 @@ if sys.platform == "win32":
                                 name          = 'specfile',
                                 sources       = sources,
                                 define_macros = [('WIN32',None)],
-                                include_dirs  = ['include'],
+                                include_dirs  = ['include', numpy.get_include()],
                            ),
            ],
     )
@@ -52,7 +58,7 @@ else:
                            Extension(
                                 name          = 'specfile',
                                 sources       = sources,
-                                include_dirs  = ['include'],
+                                include_dirs  = ['include', numpy.get_include()],
                            ),
            ],
     )

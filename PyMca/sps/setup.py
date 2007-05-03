@@ -3,6 +3,14 @@
 """Setup script for the SPS module distribution."""
 
 import os, sys, glob
+
+try:
+    import numpy
+except ImportError:
+    text  = "You must have numpy installed.\n"
+    text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
+    raise ImportError, text
+
 import platform
 from distutils.core import setup
 from distutils.extension import Extension
@@ -21,7 +29,7 @@ ext_modules = [Extension(
                         sources=['Src/sps_lut.c',
                                  'Src/spslut_py.c'],
                         extra_compile_args = extra_compile_args,
-                        include_dirs  = ['Include'],
+                        include_dirs  = ['Include', numpy.get_include()],
                    )]
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]
@@ -32,7 +40,7 @@ else:
                             sources=['Src/sps.c',
                                      'Src/sps_py.c'],
                             extra_compile_args = extra_compile_args,
-                            include_dirs  = ['Include']))
+                            include_dirs  = ['Include', numpy.get_include()]))
 setup (
         name         = "sps",
         version      = "1.0",

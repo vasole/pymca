@@ -28,7 +28,7 @@
 #include <sps.h>
 #include <stdio.h>
 #include <Python.h>
-#include <Numeric/arrayobject.h>
+#include <numpy/oldnumeric.h>
 
 static PyObject *SPSError;
 

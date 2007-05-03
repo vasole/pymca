@@ -2,6 +2,12 @@ import sys,os
 import glob
 import platform
 from distutils.core import Extension, setup
+try:
+    import numpy
+except ImportError:
+    text  = "You must have numpy installed.\n"
+    text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
+    raise ImportError, text
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
@@ -48,21 +54,24 @@ else:
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca.FastEdf',
                                             sources = glob.glob('PyMca/edf/*.c'),
-                                            define_macros = define_macros)
+                                            define_macros = define_macros,
+                                            include_dirs = [numpy.get_include()])
     ext_modules.append(module)
 
 def build_specfile(ext_modules):
     module  = Extension(name = 'PyMca.specfile',
                                             sources = glob.glob('PyMca/specfile/src/*.c'),
                                             define_macros = define_macros,
-                                            include_dirs = ['PyMca/specfile/include'])
+                                            include_dirs = ['PyMca/specfile/include',
+                                                                numpy.get_include()])
     ext_modules.append(module)
 
 def build_specfit(ext_modules):
     module  = Extension(name = 'PyMca.SpecfitFuns',
                                             sources = glob.glob('PyMca/specfit/*.c'),
                                             define_macros = define_macros,
-                                            include_dirs = ['PyMca/specfit'])
+                                            include_dirs = ['PyMca/specfit',
+                                                             numpy.get_include()])
     ext_modules.append(module)
 
 def build_sps(ext_modules):
@@ -80,7 +89,8 @@ def build_sps(ext_modules):
                                     'PyMca/sps/Src/spslut_py.c'],
                          define_macros = define_macros,
                          extra_compile_args = extra_compile_args,          
-                         include_dirs = ['PyMca/sps/Include'])
+                         include_dirs = ['PyMca/sps/Include',
+                                          numpy.get_include()])
     ext_modules.append(module)
     if sys.platform != "win32":
         module = (Extension(name = 'PyMca.sps',
@@ -88,7 +98,8 @@ def build_sps(ext_modules):
                                                        'PyMca/sps/Src/sps_py.c'],
                                             define_macros = define_macros,
                                  extra_compile_args = extra_compile_args,          
-                                            include_dirs = ['PyMca/sps/Include']))
+                                            include_dirs = ['PyMca/sps/Include',
+                                                             numpy.get_include()]))
         ext_modules.append(module)
 
 ext_modules = []
