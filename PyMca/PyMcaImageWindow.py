@@ -27,7 +27,7 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 from PyMca_Icons import IconDict
-import Numeric
+import numpy.oldnumeric as Numeric
 import time
 import RGBImageCalculator
 from RGBImageCalculator import qt

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -29,7 +29,7 @@ __author__="V.A. Sole - ESRF BLISS Group"
 import Elements
 import copy
 import types
-import Numeric
+import numpy.oldnumeric as Numeric
 import string
 
 class ConcentrationsConversion:

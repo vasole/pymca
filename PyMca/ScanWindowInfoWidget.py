@@ -36,7 +36,7 @@ if 'qt' not in sys.modules:
 else:
     import qt
 QTVERSION = qt.qVersion()
-import Numeric
+import numpy.oldnumeric as Numeric
 """This module implements an info widget containing :
        - source name, scan name
        - h,k,l infos

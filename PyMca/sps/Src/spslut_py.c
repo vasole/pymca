@@ -50,8 +50,8 @@
 */
 #include <stdio.h>      
 
-#include <Python.h>         
-#include <Numeric/arrayobject.h>
+#include <Python.h> 
+#include <numpy/oldnumeric.h>
 #include <sps_lut.h>
 
 static PyObject *SPSLUTError;

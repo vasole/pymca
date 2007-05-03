@@ -72,7 +72,7 @@ try:
 except:
     pass
 import time
-from Numeric import *
+from numpy.oldnumeric import *
 DEBUG = 0
 USE_SPS_LUT = 1
 if USE_SPS_LUT:
@@ -1685,7 +1685,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.curves[key]['curveinfo'] = copy.deepcopy(curveinfo)
         if y is not None:
             if len(y):
-                if type(y) == ArrayType:
+                if isinstance(y, ArrayType):
                     if y.shape == (len(y), 1):
                        y.shape =  [len(y),] 
                 if x is None:
@@ -2950,7 +2950,7 @@ def make0():
     nplots=10
     for i in range(nplots):
         # calculate 3 NumPy arrays
-        x = arrayrange(0.0, 10.0, 0.1)
+        x = arange(0.0, 10.0, 0.1)
         y = 10*sin(x+(i/10.0) * 3.14)
         z = cos(x+(i/10.0) * 3.14)
         #build a key

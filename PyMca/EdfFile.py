@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -83,65 +83,15 @@
       the file, the header items HeaderID and Image are not considered for referencing the
       images.
     - The data section contais a number of bytes equal to the value of Size keyword. Data
-      section is going to be translated into an 1D, 2D or 3D Numaric Array, and accessed
+      section is going to be translated into an 1D, 2D or 3D Numpy Array, and accessed
       through GetData method call.      
-
-
-    IMPORTANT - READ THIS
-    ===========================
-    If you are going to use EdfFile, you have to care about the type of your data.
-    The EdfFile class stores data in a Numeric Python array, very efficient
-    way for doing matrix operations.
-
-    However, for an unknow reason (to us), Numeric Python doesn't handle the following
-    types:
-    - unsigned short
-    - unsigned integer
-    - unsigned long
-    Which are supported by Edf file specification.
-    So if you use these formats, pay attention to the type parameters when reading
-    from or writing to a file (when using other Edf types, the convertions are direct,
-    and you don't need to mention the type, unless you really want to change it).
-
-    By default, if no type is mentioned, the EdfFile class stores, when reading a file:
-    - UnsignedShort data into an short array
-    - UnsignedInteger data into an integer array
-    - UnsignedLong data into a long array
-
-    This keeps the size of storage in memory, but can imply in loss of information.
-
-    Taking "unsigned short" as an exemple:
-    1) Supposing you get data with: "array=obj.GetData(0)", this array is going to be
-       created as signed short. If you write it then as: 'obj2.WriteImage({},array)',
-       the edf image created is going to be of signed short type, different from the
-       original. To save in the same way as the former image, you must be explicit
-       about the data type: 'obj2.WriteImage({},array,DataType="UnsignedShort")'
-    2) If you intend to make operations, or even just read properly the values of an
-       image, you should read this image as 'array=obj.GetData(0),DataType="Long")'.
-       This will require two times the storage space but will assure correct values.
-       If you intend to save it again, you should include the correct data type you
-       are saving to.
-    3) When you are saving an unsigned short array into a long, float or double
-       format, you should be explicit to the fact you want this array to be
-       considered a signed or unsigned (through the parameter WriteAsUnsigened).
-       Suppose an hexa value of FFFF in this array. This means -1 if the array
-       comes from signed data, or 65535 if it cames from unsigned data. If you save
-       the array as this: 'obj2.WriteImage({},array,DataType="FloatValue")' it is
-       going to be considered unsigned, and a value of FFFF is going to be
-       translated into a float -1. If you want to consider the array as unsigned
-       you should do:
-       'obj2.WriteImage({},array,DataType="FloatValue", WriteAsUnsigened=1 )'
-       In this way, a FFFF value is going to be translated into a float 65535.
-
-
 """
-
 __author__ =  'Alexandre Gobbo (gobbo@esrf.fr)'
-__version__=  '$Revision: 1.5 $'
+__version__=  '$Revision: 1.6 $'
 
 ################################################################################  
 import sys, string
-import Numeric
+import numpy
 import os.path , tempfile, shutil
 try:
     from FastEdf import extended_fread
@@ -302,23 +252,23 @@ class  EdfFile:
         
     
     def GetData(self,Index, DataType="",Pos=None,Size=None):
-        """ Returns numeric array with image data
+        """ Returns numpy array with image data
             Index:          The zero-based index of the image in the file
             DataType:       The edf type of the array to be returnd
                             If ommited, it is used the default one for the type
                             indicated in the image header
                             Attention to the absence of UnsignedShort,
                             UnsignedInteger and UnsignedLong types in
-                            Numeric Python
+                            Numpy Python
                             Default relation between Edf types and NumPy's typecodes:
-                                SignedByte          1
-                                UnsignedByte        b       
-                                SignedShort         s
-                                UnsignedShort       w
+                                SignedByte          b
+                                UnsignedByte        B       
+                                SignedShort         h
+                                UnsignedShort       H
                                 SignedInteger       i
-                                UnsignedInteger     u
+                                UnsignedInteger     I
                                 SignedLong          l
-                                UnsignedLong        u
+                                UnsignedLong        L
                                 FloatValue          f
                                 DoubleValue         d
             Pos:            Tuple (x) or (x,y) or (x,y,z) that indicates the begining
@@ -334,35 +284,34 @@ class  EdfFile:
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
             self.File.seek(self.Images[Index].DataPosition,0)
-            datatype = self.__GetDefaultNumericType__(self.Images[Index].DataType)
-            if   datatype in [1, "1", "b"]:         datasize = 1
-            elif datatype in ["s", "w"]:            datasize = 2
-            elif datatype in ["i", "u", "l", "f"]:
-                #I assume 32 bit because longs are 8 bit in 64 bit machines  
-                datasize = 4
-            else:datasize = 8
+            datatype = self.__GetDefaultNumpyType__(self.Images[Index].DataType)
+            try:
+                datasize = self.__GetSizeNumpyType__(datatype)
+            except TypeError:
+                print "What is the meaning of this error?"
+                datasize = 8
             if self.Images[Index].NumDim==3:
                 sizeToRead = self.Images[Index].Dim1 * \
                              self.Images[Index].Dim2 * \
                              self.Images[Index].Dim3 * datasize
-                Data = Numeric.fromstring(self.File.read(sizeToRead),
+                Data = numpy.fromstring(self.File.read(sizeToRead),
                             datatype)
-                Data = Numeric.reshape(Data, (self.Images[Index].Dim3,self.Images[Index].Dim2, self.Images[Index].Dim1))
+                Data = numpy.reshape(Data, (self.Images[Index].Dim3,self.Images[Index].Dim2, self.Images[Index].Dim1))
             elif self.Images[Index].NumDim==2:
                 sizeToRead = self.Images[Index].Dim1 * \
                              self.Images[Index].Dim2 * datasize
-                Data = Numeric.fromstring(self.File.read(sizeToRead),
+                Data = numpy.fromstring(self.File.read(sizeToRead),
                             datatype)
                 #print "Data.type = ", Data.typecode()
                 #print "self.Images[Index].DataType ", self.Images[Index].DataType
                 #print Data.shape
                 #print sizeToRead
                 #print len(Data)
-                Data = Numeric.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
+                Data = numpy.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
         elif fastedf and CAN_USE_FASTEDF:
-            type= self.__GetDefaultNumericType__(self.Images[Index].DataType)
-            size_pixel=self.__GetSizeNumericType__(type)
-            Data=Numeric.array([],type)
+            type= self.__GetDefaultNumpyType__(self.Images[Index].DataType)
+            size_pixel=self.__GetSizeNumpyType__(type)
+            Data=Numpy.array([],type)
             if self.Images[Index].NumDim==1:
                 if Pos==None: Pos=(0,)
                 if Size==None: Size=(0,)
@@ -370,7 +319,7 @@ class  EdfFile:
                 Size=list(Size)                
                 if Size[0]==0:Size[0]=sizex-Pos[0]
                 self.File.seek((Pos[0]*size_pixel)+self.Images[Index].DataPosition,0)
-                Data = Numeric.fromstring(self.File.read(Size[0]*size_pixel), type)
+                Data = numpy.fromstring(self.File.read(Size[0]*size_pixel), type)
             elif self.Images[Index].NumDim==2:                
                 if Pos==None: Pos=(0,0)
                 if Size==None: Size=(0,0)
@@ -378,9 +327,10 @@ class  EdfFile:
                 sizex,sizey=self.Images[Index].Dim1,self.Images[Index].Dim2
                 if Size[0]==0:Size[0]=sizex-Pos[0]
                 if Size[1]==0:Size[1]=sizey-Pos[1]
-                Data=Numeric.zeros([Size[1],Size[0]],type)
+                Data=numpy.zeros([Size[1],Size[0]],type)
                 self.File.seek((((Pos[1]*sizex)+Pos[0])*size_pixel)+self.Images[Index].DataPosition,0)
-                extended_fread(Data, Size[0]*size_pixel , Numeric.array([Size[1]]), Numeric.array([sizex*size_pixel]) ,self.File)
+                extended_fread(Data, Size[0]*size_pixel , numpy.array([Size[1]]),
+                               numpy.array([sizex*size_pixel]) ,self.File)
 
             elif self.Images[Index].NumDim==3:
                 if Pos==None: Pos=(0,0,0)
@@ -390,16 +340,16 @@ class  EdfFile:
                 if Size[0]==0:Size[0]=sizex-Pos[0]
                 if Size[1]==0:Size[1]=sizey-Pos[1]
                 if Size[2]==0:Size[2]=sizez-Pos[2]
-                Data=Numeric.zeros([Size[2],Size[1],Size[0]],type)
+                Data=numpy.zeros([Size[2],Size[1],Size[0]],type)
                 self.File.seek(((((Pos[2]*sizey+Pos[1])*sizex)+Pos[0])*size_pixel)+self.Images[Index].DataPosition,0)
-                extended_fread(Data, Size[0]*size_pixel , Numeric.array([Size[2],Size[1]]),
-                        Numeric.array([ sizey*sizex*size_pixel , sizex*size_pixel]) ,self.File)
+                extended_fread(Data, Size[0]*size_pixel , numpy.array([Size[2],Size[1]]),
+                        numpy.array([ sizey*sizex*size_pixel , sizex*size_pixel]) ,self.File)
 
         else:
             if fastedf:print "I could not use fast routines"
-            type= self.__GetDefaultNumericType__(self.Images[Index].DataType)
-            size_pixel=self.__GetSizeNumericType__(type)
-            Data=Numeric.array([],type)
+            type= self.__GetDefaultNumpyType__(self.Images[Index].DataType)
+            size_pixel=self.__GetSizeNumpyType__(type)
+            Data=numpy.array([],type)
             if self.Images[Index].NumDim==1:
                 if Pos==None: Pos=(0,)
                 if Size==None: Size=(0,)
@@ -407,7 +357,7 @@ class  EdfFile:
                 Size=list(Size)                
                 if Size[0]==0:Size[0]=sizex-Pos[0]
                 self.File.seek((Pos[0]*size_pixel)+self.Images[Index].DataPosition,0)
-                Data = Numeric.fromstring(self.File.read(Size[0]*size_pixel), type)
+                Data = numpy.fromstring(self.File.read(Size[0]*size_pixel), type)
             elif self.Images[Index].NumDim==2:                
                 if Pos==None: Pos=(0,0)
                 if Size==None: Size=(0,0)
@@ -417,17 +367,17 @@ class  EdfFile:
                 if Size[1]==0:Size[1]=sizey-Pos[1]
                 #print len(range(Pos[1],Pos[1]+Size[1])), "LECTURES OF ", Size[0], "POINTS"
                 #print "sizex = ", sizex, "sizey = ", sizey
-                Data = Numeric.zeros((Size[1],Size[0]), type)
+                Data = numpy.zeros((Size[1],Size[0]), type)
                 dataindex =0
                 for y in range(Pos[1],Pos[1]+Size[1]):
                     self.File.seek((((y*sizex)+Pos[0])*size_pixel)+self.Images[Index].DataPosition,0)
-                    line = Numeric.fromstring(self.File.read(Size[0]*size_pixel), type)
+                    line = numpy.fromstring(self.File.read(Size[0]*size_pixel), type)
                     Data[dataindex,:] =  line[:]
-                    #Data=Numeric.concatenate((Data,line))
+                    #Data=numpy.concatenate((Data,line))
                     dataindex += 1
                 #print "DataSize = ",Data.shape
                 #print "Requested reshape = ",Size[1],'x',Size[0]
-                #Data = Numeric.reshape(Data, (Size[1],Size[0]))                            
+                #Data = numpy.reshape(Data, (Size[1],Size[0]))                            
             elif self.Images[Index].NumDim==3:
                 if Pos==None: Pos=(0,0,0)
                 if Size==None: Size=(0,0,0)
@@ -439,12 +389,12 @@ class  EdfFile:
                 for z in range(Pos[2],Pos[2]+Size[2]):
                     for y in range(Pos[1],Pos[1]+Size[1]):
                         self.File.seek(((((z*sizey+y)*sizex)+Pos[0])*size_pixel)+self.Images[Index].DataPosition,0)
-                        line = Numeric.fromstring(self.File.read(Size[0]*size_pixel), type)
-                        Data=Numeric.concatenate((Data,line))                
-                Data = Numeric.reshape(Data, (Size[2],Size[1],Size[0]))
+                        line = numpy.fromstring(self.File.read(Size[0]*size_pixel), type)
+                        Data=numpy.concatenate((Data,line))                
+                Data = numpy.reshape(Data, (Size[2],Size[1],Size[0]))
 
         if string.upper(self.SysByteOrder)!=string.upper(self.Images[Index].ByteOrder):
-            Data=Data.byteswapped()
+            Data=Data.byteswap()
         if DataType != "":
             Data=self.__SetDataType__ (Data,DataType)
         return Data
@@ -459,7 +409,7 @@ class  EdfFile:
         if Index < 0 or Index >= self.NumImages: raise "EdfFile: Index out of limit"
         if len(Position)!= self.Images[Index].NumDim: raise "EdfFile: coordinate with wrong dimension "
         
-        size_pixel=self.__GetSizeNumericType__(self.__GetDefaultNumericType__(self.Images[Index].DataType))
+        size_pixel=self.__GetSizeNumpyType__(self.__GetDefaultNumpyType__(self.Images[Index].DataType))
         offset=Position[0]*size_pixel
         if self.Images[Index].NumDim>1:
             size_row=size_pixel * self.Images[Index].Dim1
@@ -468,9 +418,9 @@ class  EdfFile:
                 size_img=size_row * self.Images[Index].Dim2
                 offset=offset+ (Position[2]* size_img)
         self.File.seek(self.Images[Index].DataPosition + offset,0)
-        Data = Numeric.fromstring(self.File.read(size_pixel), self.__GetDefaultNumericType__(self.Images[Index].DataType))
+        Data = Numpy.fromstring(self.File.read(size_pixel), self.__GetDefaultNumpyType__(self.Images[Index].DataType))
         if string.upper(self.SysByteOrder)!=string.upper(self.Images[Index].ByteOrder):
-            Data=Data.byteswapped() 
+            Data=Data.byteswap() 
         Data=self.__SetDataType__ (Data,"DoubleValue")
         return Data[0]
          
@@ -550,13 +500,13 @@ class  EdfFile:
         if len(Data.shape)==1:
             self.Images[Index].Dim1=Data.shape[0]
             self.Images[Index].StaticHeader["Dim_1"] = "%d" % self.Images[Index].Dim1
-            self.Images[Index].Size=(Data.shape[0]*self.__GetSizeNumericType__(Data.typecode()))
+            self.Images[Index].Size=(Data.shape[0]*self.__GetSizeNumpyType__(Data.typecode()))
         elif len(Data.shape)==2:
             self.Images[Index].Dim1=Data.shape[1]
             self.Images[Index].Dim2=Data.shape[0]
             self.Images[Index].StaticHeader["Dim_1"] = "%d" % self.Images[Index].Dim1
             self.Images[Index].StaticHeader["Dim_2"] = "%d" % self.Images[Index].Dim2
-            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*self.__GetSizeNumericType__(Data.typecode()))
+            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*self.__GetSizeNumpyType__(Data.typecode()))
             self.Images[Index].NumDim=2
         elif len(Data.shape)==3:
             self.Images[Index].Dim1=Data.shape[2]
@@ -565,7 +515,7 @@ class  EdfFile:
             self.Images[Index].StaticHeader["Dim_1"] = "%d" % self.Images[Index].Dim1
             self.Images[Index].StaticHeader["Dim_2"] = "%d" % self.Images[Index].Dim2
             self.Images[Index].StaticHeader["Dim_3"] = "%d" % self.Images[Index].Dim3
-            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*Data.shape[2]*self.__GetSizeNumericType__(Data.typecode()))
+            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*Data.shape[2]*self.__GetSizeNumpyType__(Data.typecode()))
             self.Images[Index].NumDim=3
         elif len(Data.shape)>3:
             raise "EdfFile: Data dimension not suported"
@@ -608,7 +558,7 @@ class  EdfFile:
 
         #if self.Images[Index].StaticHeader["ByteOrder"] != self.SysByteOrder:
         if string.upper(self.Images[Index].ByteOrder) != string.upper(self.SysByteOrder):
-            self.File.write((Data.byteswapped()).tostring())  
+            self.File.write((Data.byteswap()).tostring())  
         else:
             self.File.write(Data.tostring())
         
@@ -617,48 +567,51 @@ class  EdfFile:
     ############################################################################
     #Internal Methods
         
-    def __GetDefaultNumericType__(self, EdfType):
+    def __GetDefaultNumpyType__(self, EdfType):
         """ Internal method: returns NumPy type according to Edf type
         """
-        return GetDefaultNumericType(EdfType)
+        return GetDefaultNumpyType(EdfType)
 
-    def __GetDefaultEdfType__(self, NumericType):
+    def __GetDefaultEdfType__(self, NumpyType):
         """ Internal method: returns Edf type according Numpy type
         """
-        if  NumericType  == "1":            return "SignedByte"
-        elif NumericType == "b":            return "UnsignedByte"
-        elif NumericType == "s":            return "SignedShort"          
-        elif NumericType == "w":            return "UnsignedShort"          
-        elif NumericType == "i":            return "SignedInteger"  
-        elif NumericType == "l":            return "SignedLong"           
-	elif NumericType == "u":	    return "UnsignedLong"
-        elif NumericType == "f":            return "FloatValue"         
-        elif NumericType == "d":            return "DoubleValue"
-        else: raise "__GetDefaultEdfType__: unknown NumericType"
+        if   NumpyType == "b":            return "SignedByte"
+        elif NumpyType == "B":            return "UnsignedByte"
+        elif NumpyType == "h":            return "SignedShort"          
+        elif NumpyType == "H":            return "UnsignedShort"          
+        elif NumpyType == "i":            return "SignedInteger"  
+        elif NumpyType == "I":            return "UnsignedInteger"  
+        elif NumpyType == "l":            return "SignedLong"           
+	elif NumpyType == "L":	          return "UnsignedLong"
+        elif NumpyType == "f":            return "FloatValue"         
+        elif NumpyType == "d":            return "DoubleValue"
+        else: raise TypeError, "unknown NumpyType %s" % NumpyType
 
 
-    def __GetSizeNumericType__(self, NumericType):
+    def __GetSizeNumpyType__(self, NumpyType):
         """ Internal method: returns size of NumPy's Array Types
         """
-        if  NumericType  == "1":            return 1
-        elif NumericType == "b":            return 1
-        elif NumericType == "s":            return 2         
-	elif NumericType == "w":	    return 2
-        elif NumericType == "i":            return 4  
-        elif NumericType == "l":            return 4           
-        elif NumericType == "u":	    return 4
-        elif NumericType == "f":            return 4         
-        elif NumericType == "d":            return 8
-        else: raise "__GetSizeNumericType__: unknown NumericType"
+        #I assume 32 bit because longs are 8 byte in 64 bit machines  
+        if   NumpyType == "b":            return 1
+        elif NumpyType == "B":            return 1
+        elif NumpyType == "h":            return 2          
+        elif NumpyType == "H":            return 2          
+        elif NumpyType == "i":            return 4  
+        elif NumpyType == "I":            return 4  
+        elif NumpyType == "l":            return 4           
+	elif NumpyType == "L":	          return 4
+        elif NumpyType == "f":            return 4         
+        elif NumpyType == "d":            return 8
+        else: raise TypeError, "unknown NumpyType %s" % NumpyType
 
 
     def __SetDataType__ (self,Array,DataType):
         """ Internal method: array type convertion
         """
         FromEdfType= Array.typecode()
-        ToEdfType= self.__GetDefaultNumericType__(DataType)
+        ToEdfType= self.__GetDefaultNumpyType__(DataType)
         if ToEdfType != FromEdfType:
-            aux=Array.astype(self.__GetDefaultNumericType__(DataType))    
+            aux=Array.astype(self.__GetDefaultNumpyType__(DataType))    
             return aux
         return Array
 
@@ -669,22 +622,22 @@ class  EdfFile:
             pass
         
 
-def GetDefaultNumericType(EdfType):
+def GetDefaultNumpyType(EdfType):
     """ Returns NumPy type according Edf type
     """
     EdfType=string.upper(EdfType)
-    if   EdfType == "SIGNEDBYTE":       return "1"
-    elif EdfType == "UNSIGNEDBYTE":     return "b"       
-    elif EdfType == "SIGNEDSHORT":      return "s"
-    elif EdfType == "UNSIGNEDSHORT":    return "w"
+    if   EdfType == "SIGNEDBYTE":       return "b"
+    elif EdfType == "UNSIGNEDBYTE":     return "B"       
+    elif EdfType == "SIGNEDSHORT":      return "h"
+    elif EdfType == "UNSIGNEDSHORT":    return "H"
     elif EdfType == "SIGNEDINTEGER":    return "i"
-    elif EdfType == "UNSIGNEDINTEGER":  return "u"
+    elif EdfType == "UNSIGNEDINTEGER":  return "I"
     elif EdfType == "SIGNEDLONG":       return "l"
-    elif EdfType == "UNSIGNEDLONG":     return "u"
+    elif EdfType == "UNSIGNEDLONG":     return "L"
     elif EdfType == "FLOATVALUE":       return "f"
     elif EdfType == "FLOAT":            return "f"
     elif EdfType == "DOUBLEVALUE":      return "d"
-    else: raise "__GetDefaultNumericType__: unknown EdfType"
+    else: raise TypeError, "unknown EdfType %s" % EdfType
 
 
 def SetDictCase(Dict, Case, Flag):
@@ -720,14 +673,14 @@ def GetRegion(Arr,Pos,Size):
     if (Dim==1):
         SizeX=Size[0]
         if SizeX==0: SizeX=Arr.shape[0]-Pos[0]
-        ArrRet=Numeric.take(Arr, range(Pos[0],Pos[0]+SizeX))
+        ArrRet=numpy.take(Arr, range(Pos[0],Pos[0]+SizeX))
     elif (Dim==2):
         SizeX=Size[0]
         SizeY=Size[1]
         if SizeX==0: SizeX=Arr.shape[1]-Pos[0]
         if SizeY==0: SizeY=Arr.shape[0]-Pos[1]
-        ArrRet=Numeric.take(Arr, range(Pos[1],Pos[1]+SizeY))
-        ArrRet=Numeric.take(ArrRet, range(Pos[0],Pos[0]+SizeX),1)
+        ArrRet=numpy.take(Arr, range(Pos[1],Pos[1]+SizeY))
+        ArrRet=numpy.take(ArrRet, range(Pos[0],Pos[0]+SizeX),1)
     elif (Dim==3):
         SizeX=Size[0]
         SizeY=Size[1]
@@ -735,9 +688,9 @@ def GetRegion(Arr,Pos,Size):
         if SizeX==0: SizeX=Arr.shape[2]-Pos[0]
         if SizeY==0: SizeX=Arr.shape[1]-Pos[1]
         if SizeZ==0: SizeZ=Arr.shape[0]-Pos[2]
-        ArrRet=Numeric.take(Arr, range(Pos[2],Pos[2]+SizeZ))
-        ArrRet=Numeric.take(ArrRet, range(Pos[1],Pos[1]+SizeY),1)
-        ArrRet=Numeric.take(ArrRet, range(Pos[0],Pos[0]+SizeX),2)
+        ArrRet=numpy.take(Arr, range(Pos[2],Pos[2]+SizeZ))
+        ArrRet=numpy.take(ArrRet, range(Pos[1],Pos[1]+SizeY),1)
+        ArrRet=numpy.take(ArrRet, range(Pos[0],Pos[0]+SizeX),2)
     else:
         ArrRet=None
     return ArrRet
@@ -745,7 +698,7 @@ def GetRegion(Arr,Pos,Size):
 #EXEMPLE CODE:        
 if __name__ == "__main__":
     if 1:
-        a = Numeric.zeros((5, 10))
+        a = numpy.zeros((5, 10))
         for i in range(5):
             for j in range(10):
                  a[i,j] = 10*i + j 
@@ -790,11 +743,11 @@ if __name__ == "__main__":
     exe=EdfFile("images/.edf")
 
     #Creates long array , filled with 0xFFFFFFFF(-1)
-    la=Numeric.zeros((100,100))
+    la=numpy.zeros((100,100))
     la=la-1
     
     #Creates a short array, filled with 0xFFFF
-    sa=Numeric.zeros((100,100))
+    sa=numpy.zeros((100,100))
     sa=sa+0xFFFF
     sa=sa.astype("s")
 

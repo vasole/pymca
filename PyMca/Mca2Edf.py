@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.9 $"
+__revision__ = "$Revision: 1.10 $"
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -39,7 +39,7 @@ else:
 QTVERSION = qt.qVersion()
 import time
 from PyMca_Icons import IconDict
-import Numeric
+import numpy.oldnumeric as Numeric
 import McaCustomEvent
 import EdfFile
 import SpecFileLayer

@@ -914,7 +914,7 @@ def main(args):
     if 1:
         import specfile
         import Specfit
-        from Numeric import sqrt,equal,array,Float,concatenate,arange,take,nonzero
+        from numpy.oldnumeric import sqrt,equal,array,Float,concatenate,arange,take,nonzero
         sf=specfile.Specfile('02021201.dat')
         scan=sf.select('14')
         #sf=specfile.Specfile('02022101.dat')

@@ -24,14 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.70 $"
+___revision__ = "$Revision: 1.71 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
 import os
 import sys
 import Gefit
-import Numeric
+import numpy.oldnumeric as Numeric
 import string
 import copy
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"

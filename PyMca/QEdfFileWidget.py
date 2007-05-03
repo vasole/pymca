@@ -33,7 +33,7 @@ if QTVERSION > '4.0.0':
     QT4 = True
 else:
     QT4 = False
-import Numeric
+import numpy.oldnumeric as Numeric
 import sys
 from PyMca_Icons import IconDict
 import ColormapDialog

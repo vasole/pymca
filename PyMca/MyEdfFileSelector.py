@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -33,7 +33,7 @@ if qt.qVersion() > '4.0.0':
     QT4 = True
 else:
     QT4 = False
-import Numeric
+import numpy.oldnumeric as Numeric
 import sys
 import ColormapDialog
 DEBUG = 0

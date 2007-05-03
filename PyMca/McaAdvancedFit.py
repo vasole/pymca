@@ -41,7 +41,7 @@ QTVERSION = qt.qVersion()
 
 try:
     from matplotlib import rcParams
-    rcParams['numerix'] = "numeric"
+    #rcParams['numerix'] = "numeric"
     from matplotlib.font_manager import FontProperties
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     from matplotlib.figure import Figure
@@ -66,7 +66,7 @@ import PeakIdentifier
 import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-import Numeric
+import numpy.oldnumeric as Numeric
 import PyMcaPrintPreview
 import PyMcaDirs
 
@@ -2788,7 +2788,6 @@ class McaGraphWindow(qt.QWidget):
     
     
 def test(file='03novs060sum.mca'):
-    import Numeric
     import specfilewrapper as specfile
     app = qt.QApplication([])
     sf=specfile.Specfile(file)

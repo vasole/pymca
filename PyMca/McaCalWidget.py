@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.15 $"
+__revision__ = "$Revision: 1.16 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -33,8 +33,8 @@ qt = QtBlissGraph.qt
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 import os
-import Numeric
-from LinearAlgebra import inverse
+import numpy.oldnumeric as Numeric
+from numpy.oldnumeric.linear_algebra import inverse
 import Specfit
 import SpecfitFuns
 from PyMca_Icons import IconDict

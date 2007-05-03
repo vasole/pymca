@@ -24,10 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.12 $"
+__revision__ = "$Revision: 1.13 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
-import Numeric
+import numpy.oldnumeric as Numeric
 import QXTube
 qt = QXTube.qt
 QTVERSION = qt.qVersion()
@@ -227,15 +227,15 @@ class EnergyTable(QTable):
                 self.setText(r, 2+coloffset,"")
 
     def setParameters(self, energylist, weightlist, flaglist, scatterlist=None):
-        if type(energylist) == Numeric.ArrayType:self.energyList=energylist.tolist()
+        if isinstance(energylist, Numeric.ArrayType):self.energyList=energylist.tolist()
         elif type(energylist) != type([]):self.energyList=[energylist]
         else: self.energyList =energylist
 
-        if   type(weightlist) == Numeric.ArrayType:self.weightList=weightlist.tolist()
+        if   isinstance(weightlist, Numeric.ArrayType):self.weightList=weightlist.tolist()
         elif type(weightlist) != type([]):self.energyList=[weightlist]
         else: self.weightList =weightlist
         
-        if   type(flaglist) == Numeric.ArrayType:self.flagList=flaglist.tolist()
+        if   isinstance(flaglist, Numeric.ArrayType):self.flagList=flaglist.tolist()
         elif type(flaglist) != type([]):self.flagList=[flaglist]
         else: self.flagList =flaglist
 
@@ -243,7 +243,7 @@ class EnergyTable(QTable):
         if scatterlist is None:
             scatterlist = Numeric.zeros(len(self.energyList)).tolist()
             scatterlist[0] = 1
-        if type(scatterlist) == Numeric.ArrayType:self.scatterList=scatterlist.tolist()
+        if isinstance(scatterlist, Numeric.ArrayType):self.scatterList=scatterlist.tolist()
         elif type(scatterlist) != type([]):self.scatterList=[scatterlist]
         else: self.scatterList =scatterlist
         self.__fillTable()

@@ -32,7 +32,7 @@ import RGBCorrelatorWidget
 qt = RGBCorrelatorWidget.qt
 import RGBCorrelatorGraph
 QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
-import Numeric
+import numpy.oldnumeric as Numeric
 
 class RGBCorrelator(qt.QWidget):
     def __init__(self, parent = None, graph = None, bgrx = True):

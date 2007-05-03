@@ -27,7 +27,7 @@
 import DataObject
 import EdfFile
 import EdfFileDataSource
-import Numeric
+import numpy.oldnumeric as Numeric
 import sys
 import os
 SOURCE_TYPE = "EdfFileStack"
@@ -78,7 +78,7 @@ class EDFStack(DataObject.DataObject):
                 self.data = Numeric.zeros((arrRet.shape[0],
                                            nImages,
                                            self.nbFiles),
-                                           arrRet.typecode())
+                                           arrRet.dtype.char)
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -97,7 +97,7 @@ class EDFStack(DataObject.DataObject):
                     self.data = Numeric.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                nImages * self.nbFiles),
-                                               arrRet.typecode())
+                                               arrRet.dtype.char)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -112,7 +112,7 @@ class EDFStack(DataObject.DataObject):
                     self.data = Numeric.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                self.nbFiles),
-                                               arrRet.typecode())
+                                               arrRet.dtype.char)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -129,7 +129,7 @@ class EDFStack(DataObject.DataObject):
                 self.data = Numeric.zeros((self.nbFiles,
                                            arrRet.shape[0],
                                            nImages),
-                                           arrRet.typecode())
+                                           arrRet.dtype.char)
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -148,7 +148,7 @@ class EDFStack(DataObject.DataObject):
                     self.data = Numeric.zeros((nImages * self.nbFiles,
                                                arrRet.shape[0],
                                                arrRet.shape[1]),
-                                               arrRet.typecode())
+                                               arrRet.dtype.char)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -163,7 +163,7 @@ class EDFStack(DataObject.DataObject):
                     self.data = Numeric.zeros((self.nbFiles,
                                                arrRet.shape[0],
                                                arrRet.shape[1]),
-                                               arrRet.typecode())
+                                               arrRet.dtype.char)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)

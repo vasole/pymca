@@ -1,12 +1,12 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -19,18 +19,16 @@
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem to you.
 #############################################################################*/
-from Numeric import *
-from Numeric import __version__ as NUMERICVERSION
-
-from LinearAlgebra import inverse
+from numpy.oldnumeric import *
+from numpy.oldnumeric.linear_algebra import inverse
 import time
 __author__ = "V.A. Sole <sole@esrf.fr>"
-__revision__ = "$Revision: 1.17 $"
+__revision__ = "$Revision: 1.18 $"
 # codes understood by the routine
 CFREE       = 0
 CPOSITIVE   = 1
@@ -68,7 +66,7 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=[],
                                         fulloutput=fulloutput,
                                         xdata=xdata,
                                         ydata=ydata,
-                                        sigmadata=sigmadata)   
+                                        sigmadata=sigmadata)
     elif len(constrains) == 0:
         try:
             model(parameters,x)
@@ -119,24 +117,24 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
             if   constrains[0][i] == "FREE":
                  constrains[0][i] = CFREE
             elif constrains[0][i] == "POSITIVE":
-                 constrains[0][i] = CPOSITIVE 
+                 constrains[0][i] = CPOSITIVE
             elif constrains[0][i] == "QUOTED":
                  constrains[0][i] = CQUOTED
             elif constrains[0][i] == "FIXED":
-                 constrains[0][i] = CFIXED 
+                 constrains[0][i] = CFIXED
             elif constrains[0][i] == "FACTOR":
-                 constrains[0][i] = CFACTOR 
-                 constrains[1][i] = int(constrains[1][i]) 
+                 constrains[0][i] = CFACTOR
+                 constrains[1][i] = int(constrains[1][i])
             elif constrains[0][i] == "DELTA":
-                 constrains[0][i] = CDELTA 
-                 constrains[1][i] = int(constrains[1][i]) 
+                 constrains[0][i] = CDELTA
+                 constrains[1][i] = int(constrains[1][i])
             elif constrains[0][i] == "SUM":
-                 constrains[0][i] = CSUM 
-                 constrains[1][i] = int(constrains[1][i]) 
+                 constrains[0][i] = CSUM
+                 constrains[1][i] = int(constrains[1][i])
             elif constrains[0][i] == "IGNORED":
-                 constrains[0][i] = CIGNORED 
+                 constrains[0][i] = CIGNORED
             elif constrains[0][i] == "IGNORE":
-                 constrains[0][i] = CIGNORED 
+                 constrains[0][i] = CIGNORED
             else:
                #I should raise an exception
                 #constrains[0][i] = 0
@@ -167,11 +165,11 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
             if data0 is not None:
                 dummy = abs(array(map(lambda x:x[2],data0)))
             else:
-                dummy = abs(array(sigmadata)) 
+                dummy = abs(array(sigmadata))
             selfweight = 1.0 / (dummy + equal(dummy,0))
             selfweight = selfweight * selfweight
         else:
-            selfweight = 1.0 / (abs(selfy) + equal(abs(selfy),0))            
+            selfweight = 1.0 / (abs(selfy) + equal(abs(selfy),0))
     n_param = len(parameters)
     #linear fit, use at own risk since there is no check for the
     #function being linear on its parameters.
@@ -190,7 +188,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
                                                  x,y,weight,constrains,model_deriv=model_deriv,
                                                  linear=1)
         nr, nc = alpha0.shape
-        fittedpar = matrixmultiply(beta, inverse(alpha0))
+        fittedpar = dot(beta, inverse(alpha0))
         #check respect of constraints (only positive is handled -force parameter to 0 and fix it-)
         error = 0
         for i in range(n_free):
@@ -202,7 +200,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
                     error = 1
         if error:continue
         for i in range(n_free):
-            newpar[free_index[i]] = fittedpar[0,i]  
+            newpar[free_index[i]] = fittedpar[0,i]
         newpar=array(getparameters(newpar,constrains))
         iter=-1
     yfit = model(newpar,x)
@@ -211,7 +209,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
     sigmapar = getsigmaparameters(newpar,sigma0,constrains)
     lastdeltachi = chisq
     if not fulloutput:
-        return newpar.tolist(), chisq/(len(y)-len(sigma0)), sigmapar.tolist()    
+        return newpar.tolist(), chisq/(len(y)-len(sigma0)), sigmapar.tolist()
     else:
         return newpar.tolist(), chisq/(len(y)-len(sigma0)), sigmapar.tolist(),niter,lastdeltachi
 
@@ -235,24 +233,24 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
             if   constrains[0][i] == "FREE":
                  constrains[0][i] = CFREE
             elif constrains[0][i] == "POSITIVE":
-                 constrains[0][i] = CPOSITIVE 
+                 constrains[0][i] = CPOSITIVE
             elif constrains[0][i] == "QUOTED":
-                 constrains[0][i] = CQUOTED 
+                 constrains[0][i] = CQUOTED
             elif constrains[0][i] == "FIXED":
-                 constrains[0][i] = CFIXED 
+                 constrains[0][i] = CFIXED
             elif constrains[0][i] == "FACTOR":
-                 constrains[0][i] = CFACTOR 
-                 constrains[1][i] = int(constrains[1][i]) 
+                 constrains[0][i] = CFACTOR
+                 constrains[1][i] = int(constrains[1][i])
             elif constrains[0][i] == "DELTA":
-                 constrains[0][i] = CDELTA 
-                 constrains[1][i] = int(constrains[1][i]) 
+                 constrains[0][i] = CDELTA
+                 constrains[1][i] = int(constrains[1][i])
             elif constrains[0][i] == "SUM":
-                 constrains[0][i] = CSUM 
-                 constrains[1][i] = int(constrains[1][i]) 
+                 constrains[0][i] = CSUM
+                 constrains[1][i] = int(constrains[1][i])
             elif constrains[0][i] == "IGNORED":
-                 constrains[0][i] = CIGNORED 
+                 constrains[0][i] = CIGNORED
             elif constrains[0][i] == "IGNORE":
-                 constrains[0][i] = CIGNORED 
+                 constrains[0][i] = CIGNORED
             else:
                #I should raise an exception
                 #constrains[0][i] = 0
@@ -269,7 +267,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
     niter = 0
     if ONED:
         selfx = data [:,0]
-        selfy = data [:,1]        
+        selfy = data [:,1]
     else:
         if data0 is not None:
             selfx = array(map(lambda x:x[0],data0))
@@ -289,7 +287,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 nc = 2
             else:
                 nc = 3
-            
+
     if weightflag == 1:
             if nc == 3:
                 #dummy = abs(data[0:nr0:inc,2])
@@ -299,11 +297,11 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     if data0 is not None:
                         dummy = abs(array(map(lambda x:x[2],data0)))
                     else:
-                        dummy = abs(array(sigmadata)) 
+                        dummy = abs(array(sigmadata))
                 selfweight = 1.0 / (dummy + equal(dummy,0))
                 selfweight = selfweight * selfweight
             else:
-                selfweight = 1.0 / (abs(selfy) + equal(abs(selfy),0))            
+                selfweight = 1.0 / (abs(selfy) + equal(abs(selfy),0))
     n_param = len(parameters)
     selfalphazeros = zeros((n_param, n_param),Float)
     selfbetazeros = zeros((1,n_param),Float)
@@ -317,8 +315,8 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
         else:
                 x=selfx
                 y=selfy
-                weight = selfweight       
-                
+                weight = selfweight
+
         chisq0, alpha0, beta,\
         n_free, free_index, noigno, fitparam, derivfactor  =ChisqAlphaBeta(
                                                  model,fittedpar,
@@ -330,7 +328,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
             newpar = parameters.__copy__()
             if(1):
                 alpha = alpha0 + flambda * identity(nr) * alpha0
-                deltapar = matrixmultiply(beta, inverse(alpha))
+                deltapar = dot(beta, inverse(alpha))
             else:
                 #an attempt to increase accuracy
                 #(it was unsuccessful)
@@ -339,12 +337,12 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 narray = zeros((npar,npar),Float)
                 for i in range(npar):
                     for j in range(npar):
-                        narray[i,j] = alpha0[i,j]/(alphadiag[i]*alphadiag[j])                
+                        narray[i,j] = alpha0[i,j]/(alphadiag[i]*alphadiag[j])
                 narray = inverse(narray + flambda * identity(nr))
                 for i in range(npar):
                     for j in range(npar):
-                        narray[i,j] = narray[i,j]/(alphadiag[i]*alphadiag[j])                
-                deltapar = matrixmultiply(beta, narray)
+                        narray[i,j] = narray[i,j]/(alphadiag[i]*alphadiag[j])
+                deltapar = dot(beta, narray)
             pwork = zeros(deltapar.shape, Float)
             for i in range(n_free):
                 if constrains [0] [free_index[i]] == CFREE:
@@ -357,7 +355,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     #                (sqrt(fitparam [i]) + deltapar [0] [i])
                 elif constrains [0] [free_index[i]] == CQUOTED:
                     pmax=max(constrains[1] [free_index[i]],
-                            constrains[2] [free_index[i]])            
+                            constrains[2] [free_index[i]])
                     pmin=min(constrains[1] [free_index[i]],
                             constrains[2] [free_index[i]])
                     A = 0.5 * (pmax + pmin)
@@ -369,7 +367,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     else:
                         print "Error processing constrained fit"
                         print "Parameter limits are",pmin,' and ',pmax
-                        print "A = ",A,"B = ",B                                
+                        print "A = ",A,"B = ",B
                 newpar [free_index[i]] = pwork [0] [i]
             newpar=array(getparameters(newpar,constrains))
             workpar = take(newpar,noigno)
@@ -382,7 +380,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     flag = 1
                     iter = 0
             else:
-                flag = 1 
+                flag = 1
                 fittedpar = newpar.__copy__()
                 lastdeltachi = (chisq0-chisq)/(chisq0+(chisq0==0))
                 if (lastdeltachi) < deltachi:
@@ -394,7 +392,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
     sigma0 = sqrt(abs(diagonal(inverse(alpha0))))
     sigmapar = getsigmaparameters(fittedpar,sigma0,constrains)
     if not fulloutput:
-        return fittedpar.tolist(), chisq/(len(yfit)-len(sigma0)), sigmapar.tolist()    
+        return fittedpar.tolist(), chisq/(len(yfit)-len(sigma0)), sigmapar.tolist()
     else:
         return fittedpar.tolist(), chisq/(len(yfit)-len(sigma0)), sigmapar.tolist(),niter,lastdeltachi
 
@@ -424,7 +422,7 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
             free_index.append(i)
             n_free += 1
         elif constrains[0] [i] == CQUOTED:
-            pmax=max(constrains[1] [i],constrains[2] [i])            
+            pmax=max(constrains[1] [i],constrains[2] [i])
             pmin=min(constrains[1] [i],constrains[2] [i])
             if ((pmax-pmin) > 0) & \
                (parameters[i] <= pmax) & \
@@ -439,7 +437,7 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
                     fitparam.append(help0)
                     derivfactor.append(B*cos(help0))
                 free_index.append(i)
-                n_free += 1                        
+                n_free += 1
     fitparam = array(fitparam, Float)
     alpha = zeros((n_free, n_free),Float)
     beta = zeros((1,n_free),Float)
@@ -452,7 +450,7 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
     for i in range(n_free):
         pwork [free_index[i]] = fitparam [i]
     newpar = getparameters(pwork.tolist(),constrains)
-    newpar = take(newpar,noigno)    
+    newpar = take(newpar,noigno)
     for i in range(n_free):
         if model_deriv is None:
             #pwork = parameters.__copy__()
@@ -465,15 +463,15 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
             newpar=take(newpar,noigno)
             f2 = model(newpar, x)
             help0 = (f1-f2) / (2.0 * delta [i])
-            help0 = help0 * derivfactor[i] 
-            pwork [free_index[i]] = fitparam [i]       
+            help0 = help0 * derivfactor[i]
+            pwork [free_index[i]] = fitparam [i]
             #removed I resize outside the loop:
             #help0 = resize(help0,(1,nr))
         else:
             newpar = getparameters(pwork.tolist(),constrains)
             help0=model_deriv(pwork,free_index[i],x)
-            help0 = help0 * derivfactor[i]        
-        
+            help0 = help0 * derivfactor[i]
+
         if i == 0 :
             deriv = help0
         else:
@@ -492,17 +490,14 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
             if i==0:
                 beta = resize(sum((pseudobetahelp * derivi),1),(1,1))
             else:
-                beta = concatenate((beta, resize(sum((pseudobetahelp * derivi),1),(1,1))), 1)        
+                beta = concatenate((beta, resize(sum((pseudobetahelp * derivi),1),(1,1))), 1)
         else:
             help1 = resize(sum((help0 * derivi),1),(1,1))
             if i == 0:
                 beta = help1
             else:
                 beta = concatenate ((beta, help1), 1)
-        if NUMERICVERSION > '23.8':
-            help1 = dot(deriv, transpose(weight*derivi))
-        else:
-            help1 = innerproduct(deriv,weight*derivi)
+        help1 = innerproduct(deriv,weight*derivi)
         if i == 0:
             alpha = help1
         else:
@@ -531,7 +526,7 @@ def getparameters(parameters,constrains):
             if 1:
                 newparam.append(parameters[i])
             else:
-                pmax=max(constrains[1] [i],constrains[2] [i])            
+                pmax=max(constrains[1] [i],constrains[2] [i])
                 pmin=min(constrains[1] [i],constrains[2] [i])
                 A = 0.5 * (pmax + pmin)
                 B = 0.5 * (pmax - pmin)
@@ -546,7 +541,7 @@ def getparameters(parameters,constrains):
         elif constrains[0][i] == CDELTA:
             newparam[i] = constrains[2][i]+newparam[int(constrains[1][i])]
         elif constrains[0][i] == CIGNORED:
-            newparam[i] = 0            
+            newparam[i] = 0
         elif constrains[0][i] == CSUM:
             newparam[i] = constrains[2][i]-newparam[int(constrains[1][i])]
     return newparam
@@ -593,13 +588,13 @@ def fitpar2par(fitpar,constrains,free_index):
         elif constrains[0][free_index[i]] == CPOSITIVE:
             newparam.append(fitpar[i] * fitpar [i])
         elif abs(constrains[0][free_index[i]]) == CQUOTED:
-            pmax=max(constrains[1] [free_index[i]],constrains[2] [free_index[i]])            
+            pmax=max(constrains[1] [free_index[i]],constrains[2] [free_index[i]])
             pmin=min(constrains[1] [free_index[i]],constrains[2] [free_index[i]])
             A = 0.5 * (pmax + pmin)
             B = 0.5 * (pmax - pmin)
             newparam.append(A + B * sin(fitpar[i]))
     return newparam
-    
+
 def gauss(param0,t0):
     param=array(param0)
     t=array(t0)
@@ -619,7 +614,7 @@ def test(npoints):
     yy = gauss([10.5,2,1000.0,20.,15],xx)
     yy=resize(yy,(npoints,1))
     sy = sqrt(abs(yy))
-    sy=resize(sy,(npoints,1)) 
+    sy=resize(sy,(npoints,1))
     data = concatenate((xx, yy, sy),1)
     parameters = [0.0,1.0,900.0, 25., 10]
     stime = time.time()

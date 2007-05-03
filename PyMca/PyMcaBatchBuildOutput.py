@@ -1,6 +1,6 @@
 import os
 import EdfFile
-import Numeric
+import numpy
 
 class PyMcaBatchBuildOutput:
     def __init__(self, inputdir = None, outputdir = None):
@@ -69,8 +69,8 @@ class PyMcaBatchBuildOutput:
                     nlabels = len(labels)
                     nrows = len(lines) - j
 
-                    data      = Numeric.zeros((nrows, nlabels), Numeric.Float)
-                    inputdata = Numeric.zeros((nrows, nlabels), Numeric.Float)
+                    data      = numpy.zeros((nrows, nlabels), Numeric.Float)
+                    inputdata = numpy.zeros((nrows, nlabels), Numeric.Float)
                 for i in range(nrows):
                     inputdata[i, :] = map(float, lines[i+1].split())
                     data[i, :] = data[i, :] + inputdata[i, :]

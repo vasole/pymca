@@ -29,7 +29,7 @@ import ClassMcaTheory
 import SpecFileLayer
 import EdfFileLayer
 import EdfFile
-import Numeric
+import numpy.oldnumeric as Numeric
 import os
 import sys
 import ConfigDict

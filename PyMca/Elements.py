@@ -30,7 +30,7 @@
 #
 __revision__ = "$Revision: 1.89 $"
 import string
-import Numeric
+import numpy.oldnumeric as Numeric
 import imp
 import os
 import sys

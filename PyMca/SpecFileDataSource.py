@@ -24,11 +24,11 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.2$"
+__revision__ = "$Revision: 1.3$"
 
 import DataObject
 import specfilewrapper as specfile
-import Numeric
+import numpy.oldnumeric as Numeric
 import string
 import types
 import os

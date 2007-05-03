@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -295,7 +295,7 @@ def test():
         import specfile
         import Specfit
         import string
-        from Numeric import sqrt,equal,array,Float,concatenate,arange,take,nonzero
+        from numpy.oldnumeric import sqrt,equal,array,Float,concatenate,arange,take,nonzero
         sf=specfile.Specfile('02021201.dat')
         scan=sf.select('14')
         #sf=specfile.Specfile('02022101.dat')

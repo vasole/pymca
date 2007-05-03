@@ -33,8 +33,7 @@ QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 
 import os
-#from copy import *
-import Numeric
+import numpy.oldnumeric as Numeric
 DEBUG = 0
 
 class MyQLineEdit(qt.QLineEdit):

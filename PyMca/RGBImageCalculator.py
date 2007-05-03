@@ -28,7 +28,7 @@ __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import RGBCorrelatorGraph
 import ColormapDialog
-import Numeric
+import numpy
 import spslut
 qt = RGBCorrelatorGraph.qt
 IconDict = RGBCorrelatorGraph.IconDict
@@ -302,7 +302,7 @@ class RGBImageCalculator(qt.QWidget):
         self.__imageColormapDialog.show()
 
     def __initColormapDialog(self):
-        a = Numeric.ravel(self._imageData)
+        a = numpy.ravel(self._imageData)
         minData = min(a)
         maxData = max(a)
         self.__imageColormapDialog = ColormapDialog.ColormapDialog(slider=True)
@@ -372,8 +372,8 @@ def test():
     app = qt.QApplication(sys.argv)
     w = RGBImageCalculator()
 
-    array1 = Numeric.arange(10000)
-    array2 = Numeric.transpose(array1)
+    array1 = numpy.arange(10000)
+    array2 = numpy.transpose(array1)
     array3 = array1 * 1
     array1.shape = [100,100]
     array2.shape = [100,100]

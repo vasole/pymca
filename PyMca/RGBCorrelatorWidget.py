@@ -30,7 +30,7 @@ import os
 import RGBCorrelatorSlider
 import RGBCorrelatorTable
 import RGBImageCalculator
-import Numeric
+import numpy.oldnumeric as Numeric
 import spslut
 from PyMca_Icons import IconDict
 import ArraySave

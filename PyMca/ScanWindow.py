@@ -32,7 +32,7 @@ if __name__ == "__main__":
     app = qt.QApplication([])
 import QtBlissGraph
 from PyMca_Icons import IconDict
-import Numeric
+import numpy.oldnumeric as Numeric
 import ScanFit
 import SimpleMath
 import DataObject

@@ -37,7 +37,7 @@ from PyMca_Icons import IconDict
 import DataObject
 import EDFStack
 import SpecFileStack
-import Numeric
+import numpy.oldnumeric as Numeric
 import ColormapDialog
 import spslut
 import os

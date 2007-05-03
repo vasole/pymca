@@ -27,7 +27,7 @@
 import DataObject
 import specfilewrapper as specfile
 import SpecFileDataSource
-import Numeric
+import numpy.oldnumeric as Numeric
 import sys
 import os
 SOURCE_TYPE = "SpecFileStack"
@@ -82,7 +82,7 @@ class SpecFileStack(DataObject.DataObject):
         self.data = Numeric.zeros((self.nbFiles,
                                    numberofmca/numberofdetectors,
                                    arrRet.shape[0]),
-                                   arrRet.typecode())
+                                   arrRet.dtype.char)
         self.incrProgressBar= 0
         if info['NbMcaDet'] > 1:
             iterlist = range(info['NbMcaDet'],info['NbMca'],info['NbMcaDet']) 

@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-import Numeric
+import numpy.oldnumeric as Numeric
 class SimpleMath:
     def derivate(self,xdata,ydata):
         f=[1,-1]

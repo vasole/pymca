@@ -578,7 +578,7 @@ class SpecfitGUI(qt.QWidget):
         return
         
 if __name__ == "__main__":
-    import Numeric
+    import numpy.oldnumeric as Numeric
     import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = Numeric.arange(2000).astype(Numeric.Float)

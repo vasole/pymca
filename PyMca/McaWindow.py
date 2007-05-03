@@ -33,7 +33,7 @@ qwt = QtBlissGraph.qwt
 from PyMca_Icons import IconDict
 import McaControlGUI
 import ConfigDict
-import Numeric
+import numpy.oldnumeric as Numeric
 import McaAdvancedFit
 import DataObject
 import copy
