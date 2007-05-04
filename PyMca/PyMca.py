@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.9 snapshot-20070503-numpy-port-alpha"
+__version__ = "4.0.9 snapshot-20070504"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -916,6 +916,12 @@ class PyMca(PyMcaMdi.PyMca):
                 ddict["legend"] = ddict['SourceName'] + ' %s.c.1' %selection
                 ddict["SourceType"] =  'SPS'
                 self.sourceWidget._addSelectionSlot([ddict])
+                if QTVERSION < '4.0.0':
+                    self.mcawindow.control.calbox.setCurrentItem(2)
+                else:
+                    self.mcawindow.control.calbox.setCurrentIndex(2)
+                self.mcawindow.calibration = self.mcawindow.calboxoptions[2]
+                self.mcawindow.control._calboxactivated("Internal")
         else:
             return
         """ 
