@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Setup script for the SPECFILE module distribution."""
+"""Setup script for the SPECFITFUNS module distribution."""
 
 import os, sys, glob
 try:
@@ -27,8 +27,6 @@ setup (
         url          = "http://www.esrf.fr/computing/bliss/",
 
         # Description of the modules and packages in the distribution
-
-        #extra_path   = 'Pybliss',
         ext_modules  = [
                        Extension(
                             name          = 'SpecfitFuns',

@@ -1668,14 +1668,14 @@ class QtBlissGraph(qwt.QwtPlot):
                     if self.__uselegendmenu:
                         item.installEventFilter(self)
                 else:
-                    if self.__uselegendmenu:
-                        item = self.legend().find(self.curves[key]['curve'])
-                        if QTVERSION < '4.0.0':
-                            self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
-                                         self.legendItemSlot)
-                        else:
-                            self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
-                                         self.legendItemSlot)
+                    #if self.__uselegendmenu:
+                    item = self.legend().find(self.curves[key]['curve'])
+                    if QTVERSION < '4.0.0':
+                        self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
+                                     self.legendItemSlot)
+                    else:
+                        self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
+                                     self.legendItemSlot)
         else:
             #curve already exists
             pass
