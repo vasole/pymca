@@ -262,7 +262,7 @@ class FitParamForm(QWidget):
             spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
             layout5.addMultiCell(spacer,7,7,1,2)
         else:
-            layout5.addWidget(HorizontalSpacer(self.tabFit),7,7,1,2)
+            layout5.addMultiCellWidget(HorizontalSpacer(self.tabFit),7,7,1,2)
         layout5.addMultiCellWidget(self.iterSpin,7,7,3,4)
 
         layout5.addWidget(self.chi2Label,8,0)
@@ -526,7 +526,7 @@ class FitParamForm(QWidget):
         errorLabel_font = QFont(self.errorLabel.font())
         errorLabel_font.setItalic(1)
         self.errorLabel.setFont(errorLabel_font)
-        self.errorLabel.setText(str("Error"))
+        self.errorLabel.setText(str("Delta "))
         self.errorLabel.setAlignment(QLabel.AlignCenter)
 
         layout5_2.addWidget(self.errorLabel,0,5)
@@ -535,7 +535,7 @@ class FitParamForm(QWidget):
         fixedLabel_font = QFont(self.fixedLabel.font())
         fixedLabel_font.setItalic(1)
         self.fixedLabel.setFont(fixedLabel_font)
-        self.fixedLabel.setText(str("Fixed"))
+        self.fixedLabel.setText(str("Fixed "))
         if qVersion() < '4.0.0':
             self.fixedLabel.setAlignment(QLabel.AlignVCenter)
         else:
