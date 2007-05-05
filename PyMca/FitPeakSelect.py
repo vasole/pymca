@@ -181,8 +181,9 @@ class FitPeakSelect(qt.QWidget):
     def __init__(self, parent=None, name="FitPeakSelect",peakdict = {}, fl=0, energyTable = None):
         qt.QWidget.__init__(self,parent)
 
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Minimum,
-                                          qt.QSizePolicy.Minimum))
+        if QTVERSION < '4.0.0':
+            self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Minimum,
+                                              qt.QSizePolicy.Minimum))
 
         layout=qt.QVBoxLayout(self)
         layout.setMargin(0)

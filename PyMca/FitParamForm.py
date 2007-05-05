@@ -238,7 +238,7 @@ class FitParamForm(QWidget):
         self.bottomLine.setFrameShape(QFrame.HLine)
 
         layout5.addMultiCellWidget(self.typeLabel,0,0,0,1)
-        layout5.addMultiCellWidget(self.contCombo,0,0,2,4)
+        layout5.addMultiCellWidget(self.contCombo,0,0,3,4)
 
         layout5.addMultiCellWidget(self.orderLabel,1,1,0,1)
         layout5.addMultiCellWidget(self.orderSpin,1,1,3,4)
@@ -262,7 +262,7 @@ class FitParamForm(QWidget):
             spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
             layout5.addMultiCell(spacer,7,7,1,2)
         else:
-            layout5.addMultiCellWidget(HorizontalSpacer(self.tabFit),7,7,1,2)
+            layout5.addWidget(HorizontalSpacer(self.tabFit),7,1)
         layout5.addMultiCellWidget(self.iterSpin,7,7,3,4)
 
         layout5.addWidget(self.chi2Label,8,0)

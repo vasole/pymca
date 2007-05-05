@@ -266,9 +266,9 @@ class ElementButton(QPushButton):
         if QTVERSION < '4.0.0':
             self.emit(PYSIGNAL("elementEnter"), (self.symbol,self.Z,self.name))
         else:
-            self.emit(SIGNAL("elementEnter(QString, int, QString)"),
+            self.emit(SIGNAL("elementEnter"),
                               self.symbol, self.Z,
-                              QString(self.name))
+                              self.name)
             
     def leaveEvent(self, e):
         if QTVERSION < '4.0.0':
@@ -342,7 +342,7 @@ class QPeriodicTable(QWidget):
             QObject.connect(b, PYSIGNAL("elementLeave"), self.elementLeave)
             QObject.connect(b, PYSIGNAL("elementClicked"), self.elementClicked)
         else:
-            QObject.connect(b, SIGNAL(("elementEnter(QString, int, QString)")), self.elementEnter)
+            QObject.connect(b, SIGNAL(("elementEnter")), self.elementEnter)
             QObject.connect(b, SIGNAL("elementLeave"), self.elementLeave)
             QObject.connect(b, SIGNAL("elementClicked"), self.elementClicked)
 

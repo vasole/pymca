@@ -190,7 +190,7 @@ class FitParamWidget(FitParamForm):
                 self.peakTable.energy.setToolTip("Energy is set in the BEAM tab")
             layout.addWidget(self.peakTable, 0, 0)
             #self.peakTable.setMaximumSize(self.tabDetector.sizeHint())
-        self.energyTable = self.peakTable.energyTable        
+        #self.energyTable = self.peakTable.energyTable        
         
         self.input = None
         self.linpolOrder= None
@@ -216,11 +216,6 @@ class FitParamWidget(FitParamForm):
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
         self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
-        if QTVERSION > '4.0.0' :
-            self.setMaximumWidth(700)
-            self.setMaximumHeight(750)
-        else:
-            self.setMaximumWidth(800)
 
     if QTVERSION < '4.0.0' :
         def resizeEvent(self, re):
@@ -930,6 +925,16 @@ class FitParamDialog(qt.QDialog):
             self.loadfit.setEnabled(False)
         else:
             self.loadfit.setEnabled(True)
+
+        if QTVERSION < '4.0.0' :
+            self.setMaximumWidth(800)
+        else:
+            maxheight = qt.QDesktopWidget().height()
+            maxwidth = qt.QDesktopWidget().width()
+            self.setMaximumWidth(maxwidth)
+            self.setMaximumHeight(maxheight)
+            self.resize(qt.QSize(min(800, maxwidth), int(0.8 * maxheight)))
+
         self.connect(self.loadfit, qt.SIGNAL("clicked()"), self.__loadFromFit)            
         self.connect(load, qt.SIGNAL("clicked()"), self.load)
         self.connect(save, qt.SIGNAL("clicked()"), self.save)
