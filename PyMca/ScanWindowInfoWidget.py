@@ -74,10 +74,11 @@ class SpecArithmetic:
         """
         num    = Numeric.sum(xdata*ydata)
         denom  = Numeric.sum(ydata)
-        try:
+        if abs(denom) > 0:
            result = num/denom
-        except ZeroDivisionError:
+        else:
            result = 0
+           
         return result
 
 

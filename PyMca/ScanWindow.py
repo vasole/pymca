@@ -1529,8 +1529,15 @@ class ScanWindow(qt.QWidget):
                 #sel['selection']['y'] = [ilabel]
                 sel['selectiontype'] = "1D"
                 sel_list.append(sel)
-        self._replaceSelection(sel_list)
-
+        if False:
+            #The legend menu was not working with the next line
+            #but if works if I add the list
+            self._replaceSelection(sel_list)
+        else:
+            oldlist = self.dataObjectsDict.keys()
+            self._addSelection(sel_list)
+            self.removeCurves(oldlist)
+        
 
 
     def printGraph(self):
