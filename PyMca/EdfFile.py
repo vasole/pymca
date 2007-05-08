@@ -302,7 +302,7 @@ class  EdfFile:
                              self.Images[Index].Dim2 * datasize
                 Data = numpy.fromstring(self.File.read(sizeToRead),
                             datatype)
-                #print "Data.type = ", Data.typecode()
+                #print "Data.type = ", Data.dtype.char
                 #print "self.Images[Index].DataType ", self.Images[Index].DataType
                 #print Data.shape
                 #print sizeToRead
@@ -500,13 +500,15 @@ class  EdfFile:
         if len(Data.shape)==1:
             self.Images[Index].Dim1=Data.shape[0]
             self.Images[Index].StaticHeader["Dim_1"] = "%d" % self.Images[Index].Dim1
-            self.Images[Index].Size=(Data.shape[0]*self.__GetSizeNumpyType__(Data.typecode()))
+            self.Images[Index].Size=(Data.shape[0]*\
+                                     self.__GetSizeNumpyType__(Data.dtype.char))
         elif len(Data.shape)==2:
             self.Images[Index].Dim1=Data.shape[1]
             self.Images[Index].Dim2=Data.shape[0]
             self.Images[Index].StaticHeader["Dim_1"] = "%d" % self.Images[Index].Dim1
             self.Images[Index].StaticHeader["Dim_2"] = "%d" % self.Images[Index].Dim2
-            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*self.__GetSizeNumpyType__(Data.typecode()))
+            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*\
+                                     self.__GetSizeNumpyType__(Data.dtype.char))
             self.Images[Index].NumDim=2
         elif len(Data.shape)==3:
             self.Images[Index].Dim1=Data.shape[2]
@@ -515,14 +517,15 @@ class  EdfFile:
             self.Images[Index].StaticHeader["Dim_1"] = "%d" % self.Images[Index].Dim1
             self.Images[Index].StaticHeader["Dim_2"] = "%d" % self.Images[Index].Dim2
             self.Images[Index].StaticHeader["Dim_3"] = "%d" % self.Images[Index].Dim3
-            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*Data.shape[2]*self.__GetSizeNumpyType__(Data.typecode()))
+            self.Images[Index].Size=(Data.shape[0]*Data.shape[1]*Data.shape[2]*\
+                                     self.__GetSizeNumpyType__(Data.dtype.char))
             self.Images[Index].NumDim=3
         elif len(Data.shape)>3:
             raise "EdfFile: Data dimension not suported"
         
 
         if DataType=="":
-            self.Images[Index].DataType=self.__GetDefaultEdfType__(Data.typecode())
+            self.Images[Index].DataType=self.__GetDefaultEdfType__(Data.dtype.char)
         else:
             self.Images[Index].DataType=DataType
             Data=self.__SetDataType__ (Data,DataType)
@@ -608,7 +611,7 @@ class  EdfFile:
     def __SetDataType__ (self,Array,DataType):
         """ Internal method: array type convertion
         """
-        FromEdfType= Array.typecode()
+        FromEdfType= Array.dtype.char
         ToEdfType= self.__GetDefaultNumpyType__(DataType)
         if ToEdfType != FromEdfType:
             aux=Array.astype(self.__GetDefaultNumpyType__(DataType))    

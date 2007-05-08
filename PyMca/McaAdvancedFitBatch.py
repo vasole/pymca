@@ -359,7 +359,13 @@ class McaAdvancedFitBatch:
                             fitresult0['fitresult'] = fitresult
                             fitresult0['result'] = self.mcafit.imagingDigestResult()
                             fitresult0['result']['config'] = self.mcafit.config
+                            conf = self.mcafit.configure()
                             tconf = self._tool.configure()
+                            if conf.has_key('concentrations'):
+                                tconf.update(conf['concentrations'])
+                            else:
+                                #what to do?
+                                pass
                             concentrations = self._tool.processFitResult(config=tconf,
                                             fitresult=fitresult0,
                                             elementsfrommatrix=False,
