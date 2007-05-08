@@ -262,7 +262,8 @@ class McaAdvancedFitBatch:
                         #same offset for each detector otherways I would
                         #slow down everything to deal with not very common
                         #situations
-                        if self.__row == 0:
+                        #if self.__row == 0:
+                        if self.counter == 0:
                             self.__chann0List = Numeric.zeros(info['NbMcaDet'])
                             chan0list = scan_obj.header('@CHANN')
                             if len(chan0list):

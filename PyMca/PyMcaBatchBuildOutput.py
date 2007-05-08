@@ -69,8 +69,8 @@ class PyMcaBatchBuildOutput:
                     nlabels = len(labels)
                     nrows = len(lines) - j
 
-                    data      = numpy.zeros((nrows, nlabels), Numeric.Float)
-                    inputdata = numpy.zeros((nrows, nlabels), Numeric.Float)
+                    data      = numpy.zeros((nrows, nlabels), numpy.double)
+                    inputdata = numpy.zeros((nrows, nlabels), numpy.double)
                 for i in range(nrows):
                     inputdata[i, :] = map(float, lines[i+1].split())
                     data[i, :] = data[i, :] + inputdata[i, :]
