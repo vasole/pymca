@@ -1,3 +1,22 @@
+VERSION 4.0.9
+
+- Concentration calculated on batch mode were wrong if the fundamental
+parameter method was employed and no report was generated. This bug was
+introduced in version 4.0.2
+
+- Batches were unable to start if the first file had a name with
+more characters than the last one.
+
+- Solved a random crash when showing the fit configuration dialog.
+
+- Program was unable to start under Python 2.5
+
+- Possibility to set anchors to the strip background. This makes the 
+strip background the ideal choice when the spectra present background 
+pile up artifacts.
+
+- Correct a memory leak appearing when the Savitsky-Golay smoothing was one.
+
 VERSION 4.0.8
 
 - Upgraded underlying sip and PyQt libraries.
