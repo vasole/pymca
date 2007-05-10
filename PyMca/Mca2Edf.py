@@ -43,6 +43,8 @@ import numpy.oldnumeric as Numeric
 import McaCustomEvent
 import EdfFile
 import SpecFileLayer
+import PyMcaDirs
+
 
 class Mca2EdfGUI(qt.QWidget):
     def __init__(self,parent=None,name="Mca to Edf Conversion",fl=qt.Qt.WDestructiveClose,
@@ -119,10 +121,10 @@ class Mca2EdfGUI(qt.QWidget):
         self.__fileSpin = qt.QSpinBox(self.__grid)
         if QTVERSION < '4.0.0':
             self.__fileSpin.setMinValue(1)
-            self.__fileSpin.setMaxValue(999)
+            self.__fileSpin.setMaxValue(999999)
         else:
             self.__fileSpin.setMinimum(1)
-            self.__fileSpin.setMaximum(999)
+            self.__fileSpin.setMaximum(999999)
         self.__fileSpin.setValue(1)
         
         filesteplabel2.setText("mca")
@@ -159,6 +161,8 @@ class Mca2EdfGUI(qt.QWidget):
                 text += "%s\n" % file
             self.fileList = filelist
             self.__listView.setText(text)
+            if len(filelist):
+                PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         
         
     def setOutputDir(self,outputdir=None):
@@ -166,6 +170,7 @@ class Mca2EdfGUI(qt.QWidget):
         if self.__goodOutputDir(outputdir):
             self.outputDir = outputdir
             self.__outLine.setText(outputdir)
+            PyMcaDirs.outputDir = self.outputDir
         else:
             qt.QMessageBox.critical(self, "ERROR",
             "Cannot use output directory:\n%s"% (outputdir))
@@ -184,7 +189,7 @@ class Mca2EdfGUI(qt.QWidget):
         else:return False
 
     def browseList(self):
-        if self.inputDir is None:self.inputDir = os.getcwd()
+        if self.inputDir is None:self.inputDir = PyMcaDirs.inputDir
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
@@ -238,10 +243,7 @@ class Mca2EdfGUI(qt.QWidget):
 
     def browseOutputDir(self):
         if self.outputDir is None:
-            if self.inputDir is not None:
-                self.outputDir = self.inputDir * 1
-            else:
-                self.outputDir = os.getcwd()
+            self.outputDir = PyMcaDirs.outputDir
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir
@@ -334,21 +336,24 @@ class Mca2EdfBatch(qt.QThread):
         self.__ncols = None
         self.__nrows = self.filestep
         counter = 0
-        file   = SpecFileLayer.SpecFileLayer()
+        ffile   = SpecFileLayer.SpecFileLayer()
         for fitfile in self._filelist:
             self.onNewFile(fitfile, self._filelist) 
-            file.SetSource(fitfile)
-            fileinfo = file.GetSourceInfo()
+            ffile.SetSource(fitfile)
+            fileinfo = ffile.GetSourceInfo()
             nscans = len(fileinfo['KeyList'])
             for scankey in  fileinfo['KeyList']:
                 scan,order = scankey.split(".")
-                info,data  = file.LoadSource(scankey)
+                info,data  = ffile.LoadSource(scankey)
+                scan_obj = ffile.Source.select(scankey)
                 if info['NbMca'] > 0:
                     for i in range(info['NbMca']):
                         point = int(i/info['NbMcaDet']) + 1
                         mca   = (i % info['NbMcaDet'])  + 1 
                         key = "%s.%s.%04d.%02d" % (scan,order,point,mca)
-                        mcainfo,mcadata = file.LoadSource(key)
+                        if i == 0:
+                            mcainfo,mcadata = ffile.LoadSource(key)
+                        mcadata = scan_obj.mca(i+1)
                         y0 = Numeric.array(mcadata, Numeric.Float)
                         if counter == 0:
                             key0 = "%s key %s" % (os.path.basename(fitfile), key)
