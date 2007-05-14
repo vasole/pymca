@@ -350,7 +350,7 @@ class Mca2EdfBatch(qt.QThread):
                     for i in range(info['NbMca']):
                         point = int(i/info['NbMcaDet']) + 1
                         mca   = (i % info['NbMcaDet'])  + 1 
-                        key = "%s.%s.%04d.%02d" % (scan,order,point,mca)
+                        key = "%s.%s.%05d.%d" % (scan,order,point,mca)
                         if i == 0:
                             mcainfo,mcadata = ffile.LoadSource(key)
                         mcadata = scan_obj.mca(i+1)

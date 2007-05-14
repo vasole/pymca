@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.0.9"
+__version__ = "4.1.0 20070514 snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -165,6 +165,7 @@ try:
 except:
     STACK = False
 ###########import Fit2Spec
+import Mca2Edf
 if QTVERSION > '4.0.0':
     import PyMcaPostBatch
     import RGBCorrelator
@@ -208,6 +209,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.elementsInfo= None
             self.identifier  = None
             self.__batch     = None
+            self.__mca2Edf   = None
             self.__fit2Spec  = None
             self.__correlator  = None
             self.__imagingTool = None
@@ -949,6 +951,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.insertItem("Elements   Info",self.__elementsInfo)
             self.menuTools.insertItem("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.insertItem("Batch   Fitting",self.__batchFitting)
+            self.menuTools.insertItem("Convert Mca to Edf",self.__mca2EdfConversion)
             #self.menuTools.insertItem("Fit to Specfile",self.__fit2SpecConversion)
             if STACK:
                 self.menuTools.insertItem("ROI Imaging",self.__roiImaging)
@@ -960,6 +963,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.addAction("Elements   Info",self.__elementsInfo)
             self.menuTools.addAction("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
+            self.menuTools.addAction("Convert Mca to Edf",self.__mca2EdfConversion)
             #self.menuTools.addAction("Fit to Specfile",self.__fit2SpecConversion)
             self.menuTools.addAction("RGB Correlator",self.__rgbCorrelator)
             if STACK:
@@ -1003,6 +1007,12 @@ class PyMca(PyMcaMdi.PyMca):
         if self.__batch.isHidden():self.__batch.show()
         if QTVERSION < '4.0.0': self.__batch.raiseW()
         else: self.__batch.raise_()
+
+    def __mca2EdfConversion(self):
+        if self.__mca2Edf is None:self.__mca2Edf = Mca2Edf.Mca2EdfGUI(fl=0,actions=1)
+        if self.__mca2Edf.isHidden():self.__mca2Edf.show()
+        if QTVERSION < '4.0.0': self.__mca2Edf.raiseW()
+        else:self.__mca2Edf.raise_()
 
     def __fit2SpecConversion(self):
         if self.__fit2Spec is None:self.__fit2Spec = Fit2Spec.Fit2SpecGUI(fl=0,actions=1)
