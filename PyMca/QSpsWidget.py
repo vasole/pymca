@@ -79,13 +79,13 @@ class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
         #build the appropriate selection for mca's
         if len(cnt_sel['cntlist']):
             if len(cnt_sel['y']): #if there is something to plot
-                #for index in cnt_sel['y']:
+                for index in cnt_sel['y']:
                     sel = {}
                     sel['selection'] = {}
                     sel['plot'] = 'scan'
                     sel['scanselection']  = True
                     sel['selection']['x'] = cnt_sel['x'] 
-                    sel['selection']['y'] = cnt_sel['y'] 
+                    sel['selection']['y'] = [index] 
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel_list.append(sel)
