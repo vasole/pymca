@@ -285,7 +285,15 @@ class GraphInfoWidget(qt.QWidget):
         self.specArithmetic = SpecArithmetic()
 
     def updateFromDataObject(self, dataObject):
-        self.updateFromXY(dataObject.x[0],
+        ylen = len(dataObject.y[0]) 
+        if ylen:
+            if dataObject.x is None:
+                xdata = Numeric.arange(ylen).astype(Numeric.Float)
+            elif not len(dataObject.x):
+                xdata = Numeric.arange(ylen).astype(Numeric.Float)
+            else:
+                xdata = dataObject.x[0]
+        self.updateFromXY(xdata,
                           dataObject.y[0])
 
 
