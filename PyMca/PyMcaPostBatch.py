@@ -31,7 +31,7 @@ import os
 import PyMcaDirs
 import RGBCorrelator
 qt = RGBCorrelator.qt
-import Numeric
+import numpy.oldnumeric as Numeric
 
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
     def addBatchDatFile(self, filename, ignoresigma=None):
