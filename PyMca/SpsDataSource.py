@@ -93,11 +93,18 @@ class SpsDataSource:
                 data.data=sps.getdata (self.name,key)
                 if nolist:
                     if selection is not None:
-                        if (key in ["SCAN_D"]) and selection.has_key('cntlist'):
+                        scantest = (data.info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
+                        if ((key in ["SCAN_D"]) or scantest) \
+                            and selection.has_key('cntlist'):
                             data.x = None
                             data.y = None
                             data.m = None
-                            nopts  = string.atoi(data.info['envdict']['nopts'])
+                            if data.info['envdict'].has_key('nopts'):
+                                nopts  = string.atoi(data.info['envdict']['nopts'])
+                            else:
+                                nopts  =data.info['rows']
+                            if not data.info.has_key('LabelNames'):
+                                data.info['LabelNames'] = selection['cntlist'] * 1
                             if selection.has_key('x'):
                                 for labelindex in selection['x']:
                                     label = data.info['LabelNames'][labelindex]

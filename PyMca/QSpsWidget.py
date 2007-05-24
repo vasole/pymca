@@ -54,22 +54,31 @@ class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
         if DEBUG: 
             print "info = ", info
         if info.has_key("envdict"):
-            #We have environment information
-            if info["envdict"].has_key("datafile"):
-                if info["envdict"]["datafile"] != "/dev/null":
-                    if DEBUG:print "I should send a signal, either from here or from the parent to the dispatcher"
-                    if DEBUG:print "SPEC data file = ", datafile
-            #usefull keys = ["datafile", "scantype", "axistitles","plotlist", "xlabel", "ylabel"]
-            #
-            #info = self.data.getKeyInfo(sel[0])
-            #except:
-            #    info, data = self.data.LoadSource(sel[0])
-            cntList = info.get("LabelNames", [])
-            ycntidx = info["envdict"].get('plotlist', "")
-            if len(ycntidx):
-                ycntidx   = ycntidx.split(',')
-            self.build(cntList)
-            #self.cntTable.setCounterSelection(self._oldCntSelection)
+            if len(info["envdict"].keys()):
+                #We have environment information
+                if info["envdict"].has_key("datafile"):
+                    if info["envdict"]["datafile"] != "/dev/null":
+                        if DEBUG:print "I should send a signal, either from here or from the parent to the dispatcher"
+                        if DEBUG:print "SPEC data file = ", datafile
+                #usefull keys = ["datafile", "scantype", "axistitles","plotlist", "xlabel", "ylabel"]
+                #
+                #info = self.data.getKeyInfo(sel[0])
+                #except:
+                #    info, data = self.data.LoadSource(sel[0])
+                cntList = info.get("LabelNames", [])
+                ycntidx = info["envdict"].get('plotlist', "")
+                if len(ycntidx):
+                    ycntidx   = ycntidx.split(',')
+                self.build(cntList)
+                #self.cntTable.setCounterSelection(self._oldCntSelection)
+                return
+        if info['cols'] > 0:
+            #arrayname = info['Key']
+            arrayname = 'Column'
+            cntList = []
+            for i in range(info['cols']):
+                cntList.append('%s_%03d' % (arrayname, i))
+        self.build(cntList)
             
     def getSelection(self):
         #get selected counter keys
@@ -356,7 +365,7 @@ class SPS_StandardArray(qt.QWidget):
             ylist= [ idx for idx in range(self.yList.count()) if self.yList.isSelected(idx) ]
         else:
             itemlist = self.yList.selectedItems()
-            ylist = [int(str(item.text()).split()[-1])-1 for item in itemlist]
+            ylist = [int(str(item.text()).split()[-1]) for item in itemlist]
         for y in ylist:
             selection.append({"plot":plot, "x":x, "y":y})
         return selection
