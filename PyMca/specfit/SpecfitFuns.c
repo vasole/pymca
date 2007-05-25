@@ -2960,7 +2960,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                     printf("i = %d, j= %d, oldvalue = %.5f, newvalue = %.5f\n",i,j,valueold, value);
                 }
                 */
-                if (value >= *nvalue){
+                if (value > *nvalue){
                     badpoint = 1;
                 }else{
                     nvalue = (double *) (xdata[j]->data);
