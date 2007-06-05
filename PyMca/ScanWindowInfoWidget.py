@@ -293,6 +293,8 @@ class GraphInfoWidget(qt.QWidget):
                 xdata = Numeric.arange(ylen).astype(Numeric.Float)
             else:
                 xdata = dataObject.x[0]
+        else:
+            xdata = None
         self.updateFromXY(xdata,
                           dataObject.y[0])
 
