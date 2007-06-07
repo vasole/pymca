@@ -401,68 +401,80 @@ class McaAdvancedFit(qt.QWidget):
         if QTVERSION < '4.0.0':self.raiseW()
         else:self.raise_()
         return result
+
+    def refreshWidgets(self):
+        """
+        This method just forces the graphical widgets to get updated.
+        It should be called if somehow you have modified the fit and/
+        or concentrations parameters by other means than the graphical
+        interface.
+        """ 
+        self.__configure(justupdate=True)
+
         
-    def __configure(self):
+    def __configure(self, justupdate=False):
         config = {}
         config.update(self.mcafit.config)
         #config['fit']['use_limit'] = 1
-        if self.configDialog is None:
-            if self.__fitdone:
-                dialog = FitParam.FitParamDialog(modal=1,
-                                                 fl=0,
-                                                 initdir=self.configDir,
-                                                 fitresult=self.dict['result'])  
+        if not justupdate:
+            if self.configDialog is None:
+                if self.__fitdone:
+                    dialog = FitParam.FitParamDialog(modal=1,
+                                                     fl=0,
+                                                     initdir=self.configDir,
+                                                     fitresult=self.dict['result'])  
+                else:
+                    dialog = FitParam.FitParamDialog(modal=1,
+                                                     fl=0,
+                                                     initdir=self.configDir,
+                                                     fitresult=None)
+                if QTVERSION < '4.0.0':
+                    self.connect(dialog.fitparam.peakTable,
+                                 qt.PYSIGNAL("FitPeakSelect"),
+                                 self.__elementclicked)
+                else:
+                    self.connect(dialog.fitparam.peakTable,
+                                 qt.SIGNAL("FitPeakSelect"),
+                                 self.__elementclicked)
+                self.configDialog = dialog
             else:
-                dialog = FitParam.FitParamDialog(modal=1,
-                                                 fl=0,
-                                                 initdir=self.configDir,
-                                                 fitresult=None)
+                dialog = self.configDialog
+                if self.__fitdone: dialog.setFitResult(self.dict['result'])
+                else:dialog.setFitResult(None)
+            dialog.setParameters(config)
+            #dialog.fitparam.regionCheck.setDisabled(True)
+            #dialog.fitparam.minSpin.setDisabled(True)
+            #dialog.fitparam.maxSpin.setDisabled(True)
             if QTVERSION < '4.0.0':
-                self.connect(dialog.fitparam.peakTable,
-                             qt.PYSIGNAL("FitPeakSelect"),
-                             self.__elementclicked)
+                ret = dialog.exec_loop()
             else:
-                self.connect(dialog.fitparam.peakTable,
-                             qt.SIGNAL("FitPeakSelect"),
-                             self.__elementclicked)
-            self.configDialog = dialog
-        else:
-            dialog = self.configDialog
-            if self.__fitdone: dialog.setFitResult(self.dict['result'])
-            else:dialog.setFitResult(None)
-        dialog.setParameters(config)
-        #dialog.fitparam.regionCheck.setDisabled(True)
-        #dialog.fitparam.minSpin.setDisabled(True)
-        #dialog.fitparam.maxSpin.setDisabled(True)
-        if QTVERSION < '4.0.0':
-            ret = dialog.exec_loop()
-        else:
-            ret = dialog.exec_()
-        self.graph.removeMarkers()
-        self.graph.replot()
-        if dialog.initDir is not None: self.configDir = 1 * dialog.initDir
-        else: self.configDir = None
-        if ret != qt.QDialog.Accepted:
+                ret = dialog.exec_()
+            if dialog.initDir is not None: self.configDir = 1 * dialog.initDir
+            else: self.configDir = None
+            if ret != qt.QDialog.Accepted:
+                dialog.close()
+                #del dialog
+                return
+            try:
+                #this may crash in qt 2.3.0
+                npar = dialog.getParameters()
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1])
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                return
+            config.update(npar)
             dialog.close()
             #del dialog
-            return
+
+        self.graph.removeMarkers()
+        self.graph.replot()
         self.__fitdone = False
         self._concentrationsDict = None
-        try:
-            #this may crash in qt 2.3.0
-            npar = dialog.getParameters()
-        except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
-            return
-        config.update(npar)
-        dialog.close()
-        del dialog
         if self.concentrationsWidget is not None:
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
         if self.mcatable is not None:
@@ -503,7 +515,9 @@ class McaAdvancedFit(qt.QWidget):
                 delcurves.append(key)
         for key in delcurves:
             self.graph.delcurve(key)
-        self.plot()
+        
+        if not justupdate:
+            self.plot()
 
         self._updateTop()
         if self.concentrationsWidget is not None:
