@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.56 $"
+__revision__ = "$Revision: 1.57 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -1028,7 +1028,7 @@ class McaAdvancedFit(qt.QWidget):
                 xdata = dict['result']['energy'][:]
             else:
                 xdata = dict['result']['xdata'][:]
-            self.graph.newcurve("Matrix",xdata,dict['result']['ymatrix'],logfilter=logfilter)
+            self.graph.newCurve("Matrix",xdata,dict['result']['ymatrix'],logfilter=logfilter)
         """
         try:
             self.__anasignal(dict)
@@ -1665,7 +1665,9 @@ class McaAdvancedFit(qt.QWidget):
         config = self.mcafit.configure()
         if dict is None: 
             if not self.__fitdone:
-                self.graph.clearcurves()
+                for key in self.graph.curves.keys():
+                    if key not in ["Data"]:
+                        self.graph.delcurve(key)
                 #just the data
                 xdata  = self.mcafit.xdata * 1.0
                 if self._energyAxis:
@@ -1676,8 +1678,9 @@ class McaAdvancedFit(qt.QWidget):
                     ydata  = self.mcafit.ydata * 1.0
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
-                self.graph.newcurve("Data",xdata,
+                self.graph.newCurve("Data",xdata,
                                            ydata,logfilter=logfilter)
+                self.graph.replot()
                 return
             else:
                 dict = self.dict
@@ -1685,15 +1688,15 @@ class McaAdvancedFit(qt.QWidget):
             xdata = dict['result']['energy'][:]
         else:
             xdata = dict['result']['xdata'][:]
-        self.graph.newcurve("Data",xdata,
+        self.graph.newCurve("Data",xdata,
                                    dict['result']['ydata'],logfilter=logfilter)
-        self.graph.newcurve("Fit", xdata,
+        self.graph.newCurve("Fit", xdata,
                                    dict['result']['yfit'],logfilter=logfilter)
-        self.graph.newcurve("Continuum",xdata,
+        self.graph.newCurve("Continuum",xdata,
                                    dict['result']['continuum'],logfilter=logfilter)
                                    
         if config['fit']['sumflag']:
-            self.graph.newcurve("Pile-up", xdata,
+            self.graph.newCurve("Pile-up", xdata,
                                        dict['result']['pileup']+dict['result']['continuum'],
                                        logfilter=logfilter)
         elif "Pile-up" in self.graph.curves.keys():
@@ -1701,7 +1704,7 @@ class McaAdvancedFit(qt.QWidget):
         
         if self.matrixSpectrumButton.isChecked():
             if dict['result'].has_key('ymatrix'):
-                self.graph.newcurve("Matrix",xdata, dict['result']['ymatrix'],
+                self.graph.newCurve("Matrix",xdata, dict['result']['ymatrix'],
                                     logfilter=logfilter)
             else:
                 if "Matrix" in self.graph.curves.keys():
@@ -1720,7 +1723,7 @@ class McaAdvancedFit(qt.QWidget):
             for group in dict['result']['groups']:
                 label = 'y'+group
                 if dict['result'].has_key(label):
-                    self.graph.newcurve(label,xdata, dict['result'][label],
+                    self.graph.newCurve(label,xdata, dict['result'][label],
                                     logfilter=logfilter)
                 else:
                     if group in self.graph.curves.keys():

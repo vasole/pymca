@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.44 $"
+__revision__ = "$Revision: 1.45 $"
 import sys
 import time
 import QtBlissGraph
@@ -769,7 +769,7 @@ class McaWidget(qt.QWidget):
                                                              caldict=ndict,
                                                              fl=0)
                     #info,x,y = self.getinfodatafromlegend(legend)
-                    #caldialog.graph.newcurve("fromlegend",x=x,y=y)
+                    #caldialog.graph.newCurve("fromlegend",x=x,y=y)
                     if QTVERSION < '4.0.0':
                         ret = caldialog.exec_loop()
                     else:
@@ -867,7 +867,7 @@ class McaWidget(qt.QWidget):
                                                         sourcecal=sourcecal,
                                                         fl=0)
                     #info,x,y = self.getinfodatafromlegend(legend)
-                    #caldialog.graph.newcurve("fromlegend",x=x,y=y)
+                    #caldialog.graph.newCurve("fromlegend",x=x,y=y)
                     if QTVERSION < '4.0.0':
                         ret = caldialog.exec_loop()
                     else:
@@ -1032,7 +1032,7 @@ class McaWidget(qt.QWidget):
                 newDataObject.y = [ymatrix]
                 newDataObject.m = None
                 self.dataObjectsDict[legend3] = newDataObject
-                self.graph.newcurve(legend3,x=x,y=ymatrix,logfilter=1)
+                #self.graph.newCurve(legend3,x=x,y=ymatrix,logfilter=1)
             else:
                 legend = dict['info']['legend'] + " Fit"
                 yfit   = dict['result']['yfit'] * 1.0
@@ -1049,8 +1049,9 @@ class McaWidget(qt.QWidget):
                 newDataObject.x = [x]
                 newDataObject.y = [yfit]
                 newDataObject.m = None
+
                 self.dataObjectsDict[legend] = newDataObject
-                self.graph.newcurve(legend,x=x,y=yfit,logfilter=1)
+                #self.graph.newCurve(legend,x=x,y=yfit,logfilter=1)
 
                 #the same for the background
                 legend2 = dict['info']['legend'] + " Bkg"
@@ -1066,7 +1067,7 @@ class McaWidget(qt.QWidget):
                 newDataObject2.y = [yb]
                 newDataObject2.m = None
                 self.dataObjectsDict[legend2] = newDataObject2
-                self.graph.newcurve(legend2,x=x,y=yb,logfilter=1)
+                #self.graph.newCurve(legend2,x=x,y=yb,logfilter=1)
 
             if not self.caldict.has_key(legend):
                 self.caldict[legend] = {}
@@ -1106,8 +1107,8 @@ class McaWidget(qt.QWidget):
                     else:
                         self.graph.setx1axislimits(emax, emin, True)
             except:
-                pass
-            self.graph.replot()
+                self.refresh()
+                #self.graph.replot()
 
         elif dict['event'] == 'McaFitFinished':
             mcaresult = dict['data']
@@ -1130,7 +1131,7 @@ class McaWidget(qt.QWidget):
                      xfinal = xfinal + x.tolist()
                      yfinal = yfinal + y.tolist()
                      ybfinal= ybfinal + yb.tolist()
-                    #self.graph.newcurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
+                    #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
             legend0= dict['info']['legend']
             legend = legend0 + " SFit"            
             #copy the original info from the curve
@@ -1336,7 +1337,7 @@ class McaWidget(qt.QWidget):
         if 0:
             self.graph.clearcurves()
             for key in self.dataObjectsDict.keys():
-                self.graph.newcurve(key,x=self.dataObjectsDict[key].x[0],
+                self.graph.newCurve(key,x=self.dataObjectsDict[key].x[0],
                                     y=self.dataObjectsDict[key].y[0],
                                     logfilter = 1)
         else:
@@ -1348,7 +1349,10 @@ class McaWidget(qt.QWidget):
                 sel['legend'] = key
                 sel['Key'] = self.dataObjectsDict[key].info['Key']
                 sellist.append(sel)
-            self.graph.clearcurves()
+            newkeys = self.dataObjectsDict.keys()
+            for key in self.graph.curves.keys():
+                if key not in newkeys:
+                    self.graph.delcurve(key)
             self._addSelection(sellist)
         self.graph.setactivecurve(activecurve)
         self.graph.show()
@@ -1598,7 +1602,7 @@ class McaWidget(qt.QWidget):
                             if len(calib) == 3:
                                   xdata = xdata + calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
-                            self.graph.newcurve(legend,
+                            self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
                             self.graph.xlabel('Energy')
                     elif self.calibration == 'Fit':
