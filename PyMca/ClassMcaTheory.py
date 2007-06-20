@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.71 $"
+___revision__ = "$Revision: 1.72 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -2108,18 +2108,18 @@ class McaTheory:
         zero   = self.config['detector']['zero']
         gain   = self.config['detector']['gain']
         energy = zero + gain * xw
-        dict={}
+        ddict={}
         for group in self.PARAMETERS[self.NGLOBAL:]:
             ele,shell = group.split()
             if ele not in Elements.Element.keys(): continue
             lines = self.__getlines(ele,shell,width)
-            dict[group] = {}
+            ddict[group] = {}
             for line in lines:
                 emin = Elements.Element[ele][line]['energy'] - 0.5 * width 
                 emax = Elements.Element[ele][line]['energy'] - 0.5 * width 
-                i1 = Numeric.nonzero((energy > emin) and (energy < emax))
-                dict[group][line+" ROI"] = Numeric.sum(Numeric.take(yw,i1))
-        return dict    
+                i1 = Numeric.nonzero((energy > emin) & (energy < emax))
+                ddict[group][line+" ROI"] = Numeric.sum(Numeric.take(yw,i1))
+        return ddict    
             
         
     def __getlines(self, ele, shell, width, threshold = 0.010):
