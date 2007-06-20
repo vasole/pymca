@@ -1924,7 +1924,7 @@ class McaAdvancedFit(qt.QWidget):
                         x = fitresult['result']['xdata']
                     xmin, xmax = self.graph.getx1axislimits()
                     ymin, ymax = self.graph.gety1axislimits()
-                    index = Numeric.nonzero((xmin <= x) and (x <= xmax))
+                    index = Numeric.nonzero((xmin <= x) & (x <= xmax))
                     x = Numeric.take(x, index)
                     if self._logY:
                         axfunction = ax.semilogy
