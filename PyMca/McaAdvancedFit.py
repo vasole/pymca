@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.57 $"
+__revision__ = "$Revision: 1.58 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -40,11 +40,7 @@ else:
 QTVERSION = qt.qVersion()
 
 try:
-    from matplotlib import rcParams
-    #rcParams['numerix'] = "numeric"
-    from matplotlib.font_manager import FontProperties
-    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-    from matplotlib.figure import Figure
+    import PyMcaMatplotlibSave
     MATPLOTLIB = True
 except:
     MATPLOTLIB = False
@@ -1852,191 +1848,74 @@ class McaAdvancedFit(qt.QWidget):
         try:
             if MATPLOTLIB:
                 if filetype in ['EPS', 'PNG', 'SVG']:
-                    fig = Figure(figsize=(6,3)) # in inches
-                    canvas = FigureCanvas(fig)
-                    #decide if we are going to write the legends or not
+                    size = (6, 3) #in inches
+                    logy = self._logY
+                    if filedescription == "B/WGraphics":
+                        bw = True
+                    else:
+                        bw = False
                     if self.peaksSpectrumButton.isChecked():  legends = True
                     elif 'ymatrix' in fitresult['result'].keys(): legends = False
-                    else:
-                        legends = False
-                    if not legends:
-                        if self._logY:
-                            ax = fig.add_axes([.1, .15, .75, .8])
-                        else:
-                            ax = fig.add_axes([.15, .15, .75, .75])
-                    else:
-                        if self._logY:
-                            ax = fig.add_axes([.1, .15, .7, .8])
-                        else:
-                            ax = fig.add_axes([.15, .15, .7, .8])
-                    ax.set_axisbelow(True)
-                    keys = fitresult['result'].keys()
-                    #print dir(ax)
-                    colordict = {}
-                    colordict['blue']  = '#0000ff'
-                    colordict['red']   = '#ff0000'
-                    colordict['green'] = '#00ff00'
-                    colordict['black'] = '#000000'
-                    colordict['white'] = '#ffffff'
-                    colordict['pink'] = '#ff66ff'
-                    colordict['brown'] = '#a52a2a'
-                    colordict['orange'] = '#ff9900'
-                    colordict['violet'] = '#6600ff'
-                    colordict['grey']   = '#808080'
-                    colordict['yellow'] = '#ffff00'
-                    colordict['darkgreen']  = 'g'
-                    colordict['darkbrown'] = '#660000' 
-                    colordict['magenta'] = 'm' 
-                    colordict['cyan']  = 'c'
-                    colordict['bluegreen']  = '#33ffff'
-                    colorlist  = [colordict['black'],
-                                  colordict['red'],
-                                  colordict['blue'],
-                                  colordict['green'],
-                                  colordict['pink'],
-                                  colordict['brown'],
-                                  colordict['cyan'],
-                                  colordict['orange'],
-                                  colordict['violet'],
-                                  colordict['bluegreen'],
-                                  colordict['grey'],
-                                  colordict['magenta'],
-                                  colordict['darkgreen'],
-                                  colordict['darkbrown'],
-                                  colordict['yellow']]                    
-                    #colorlist  = ['r', 'g', 'b', 'y','c']
-                    #stylelist  = ['-', '--', '-.', ':']
-                    stylelist  = ['-', '-.']
-                    cl = colorlist
-                    ncs = len(colorlist)
-                    #deal with BW graphics
-                    if filedescription == "B/WGraphics":
-                        cl  = ['k']   #only black
-                        stylelist = ['-', ':', '-.', '--']
-                        ncs   = 4
-                        nocolor = True
-                    else:
-                        nocolor = False
-                    ci = 0
+                    else: legends = False
+                    mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
+                                                                    logy=logy,
+                                                                    legends=legends,
+                                                                    bw = bw)
+                                                                    
                     if self._energyAxis:
                         x = fitresult['result']['energy']
                     else:
                         x = fitresult['result']['xdata']
                     xmin, xmax = self.graph.getx1axislimits()
                     ymin, ymax = self.graph.gety1axislimits()
+                    mtplt.setLimits(xmin, xmax, ymin, ymax)
                     index = Numeric.nonzero((xmin <= x) & (x <= xmax))
                     x = Numeric.take(x, index)
-                    if self._logY:
-                        axfunction = ax.semilogy
-                    else:
-                        axfunction = ax.plot
-                    if nocolor:
-                        axfunction( x,
+                    if bw:
+                        mtplt.addDataToPlot( x,
                                 Numeric.take(fitresult['result']['ydata'],index),
-                                'k.', lw=1.5, markersize=3)
-                        ci = -1
+                                legend='data',
+                                color='k',linestyle=':', linewidth=1.5, markersize=3)
                     else:
-                        axfunction( x,
+                        mtplt.addDataToPlot( x,
                                 Numeric.take(fitresult['result']['ydata'],index),
-                                'k-', lw=1.)
-                        
-                    ci += 1
-                    if nocolor:
-                        axfunction( x,
-                                Numeric.take(fitresult['result']['yfit'],index),
-                                color='k', ls=stylelist[ci], lw=1.5)
-                    else:
-                        axfunction( x,
-                                Numeric.take(fitresult['result']['yfit'],index),
-                                color=cl[ci], lw=1.5)
+                                legend='data',
+                                linewidth=1)
 
-                    legendlist = ['data', 'fit']
+                    mtplt.addDataToPlot( x,
+                                Numeric.take(fitresult['result']['yfit'],index),
+                                legend='fit',
+                                linewidth=1.5)
                     if not self.peaksSpectrumButton.isChecked():
-                        ci += 1
-                        if nocolor:
-                            axfunction( x,
+                        mtplt.addDataToPlot( x,
                                     Numeric.take(fitresult['result']['continuum'],index),
-                                    color='k', ls=stylelist[ci], lw=1.5)
-                        else:
-                            axfunction( x,
-                                    Numeric.take(fitresult['result']['continuum'],index),
-                                    color=cl[ci], lw=1.5)
-                        legendlist.append('bck')
-                    ci += 1
-                    if ci == ncs:ci = 2
+                                    legend='bck', linewidth=1.5)
                     if self.top.sumbox.isChecked():
-                        if nocolor:
-                            axfunction( x,
+                        mtplt.addDataToPlot( x,
                                 Numeric.take(fitresult['result']['pileup']+\
                                              fitresult['result']['continuum'],index),
-                                             color='k', ls=stylelist[ci], lw=1.5)
-                        else:
-                            axfunction( x,
-                                Numeric.take(fitresult['result']['pileup']+\
-                                             fitresult['result']['continuum'],index),
-                                    color=cl[ci], lw=1.5)
-                        ci += 1
-                        if ci == ncs:ci = 2
-                        legendlist.append('pile up')
+                                             legend="pile up",
+                                             linewidth=1.5)
                     if 'ymatrix' in fitresult['result'].keys():
-                        if nocolor:
-                            axfunction( x,
+                        mtplt.addDataToPlot( x,
                                 Numeric.take(fitresult['result']['ymatrix'],index),
-                                    color='k', ls=stylelist[ci], lw=1.5)
-                        else:
-                            axfunction( x,
-                                Numeric.take(fitresult['result']['ymatrix'],index),
-                                    color=cl[ci], lw=1.5)
-                        ci += 1
-                        if ci == ncs:ci = 2
-                        legendlist.append('matrix')
-                    loc = (1.01, 0.0)
-                    labelsep = 0.015
-                    drawframe = True
+                                legend='matrix',
+                                linewidth=1.5)
                     if self.peaksSpectrumButton.isChecked():
-                        loc = (1.01, 0.01)
-                        lsindex = 0
                         for group in fitresult['result']['groups']:
                             label = 'y'+group
-                            if label in keys:
-                                axfunction( x,
+                            if label in fitresult['result'].keys():
+                                mtplt.addDataToPlot( x,
                                     Numeric.take(fitresult['result'][label],index),
-                                    ls=stylelist[lsindex], color=cl[ci], lw=1.5)
-                                ci += 1
-                                if ci == ncs:
-                                    ci = 2
-                                    ls = 1
-                            legendlist.append(group)
-                        if len(legendlist) > 19:
-                            legends = False
-                        elif len(legendlist) > 14:
-                            drawframe = False
-                            loc = (1.05, -0.2)
-                            fontproperties = FontProperties(size=8)
-                        else:
-                            fontproperties = FontProperties(size=10)
-                    else:
-                        fontproperties = FontProperties(size=10)
-                    if legends:
-                        labelsep = labelsep
-                        legend = ax.legend(legendlist,
-                                   loc = loc,
-                                   prop = fontproperties,
-                                   labelsep = labelsep,
-                                   pad = 0.15)
-                        legend.draw_frame(drawframe)
-                    ax.set_ylim(ymin, ymax)
-                    ax.set_xlim(xmin, xmax)
+                                                legend=group,
+                                                linewidth=1.5)
+                    mtplt.plotLegends()
                     if self._energyAxis:
-                        ax.set_xlabel('Energy (keV)')
+                        mtplt.setXLabel('Energy (keV)')
                     else:
-                        ax.set_xlabel('Channel')
-                    ax.set_ylabel('Counts')
-                    try:
-                        os.remove(specFile)
-                    except:
-                        pass
-                    canvas.print_figure(specFile)
+                        mtplt.setXLabel('Channel')
+                    mtplt.setYLabel('Counts')
+                    mtplt.saveFile(specFile)
                     return
         except:
             msg = qt.QMessageBox(self)
