@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.45 $"
+__revision__ = "$Revision: 1.46 $"
 import sys
 import time
 import QtBlissGraph
@@ -44,6 +44,11 @@ import Specfit
 import PyMcaPrintPreview
 import os
 import PyMcaDirs
+try:
+    import PyMcaMatplotlibSave
+    MATPLOTLIB = True
+except:
+    MATPLOTLIB = False
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
@@ -253,16 +258,20 @@ class McaWidget(qt.QWidget):
         tb = self._addToolButton(self.logyIcon,
                             self.graph.ToggleLogY,
                             'Toggle Logarithmic Y Axis (On/Off)',
-                            toggle = True)       
+                            toggle = True)
+        self.logytb = tb
         # Fit
         tb = self._addToolButton(self.fitIcon,
                                  self.__fitsignal,
                                  'Fit Active Curve')
         
         #save
+        infotext = 'Save Active Curve\nSave Widget'
+        if MATPLOTLIB:
+            infotext += "\nExport Plot"
         tb = self._addToolButton(self.saveIcon,
                                  self.__saveIconSignal,
-                                 'Save Active Curve')
+                                 infotext)
          
         toolbar.layout.addWidget(HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
@@ -490,9 +499,17 @@ class McaWidget(qt.QWidget):
             outfile = qt.QFileDialog(self)
             outfile.setWindowTitle("Output File Selection")
             outfile.setModal(1)
-            outfile.setFilters(['Specfile MCA  *.mca',
-                                'Specfile Scan *.dat',
-                                'Raw ASCII  *.txt'])
+            format_list = ['Specfile MCA  *.mca',
+                           'Specfile Scan *.dat',
+                           'Raw ASCII  *.txt',
+                           'Widget PNG *.png',
+                           'Widget JPG *.jpg']
+            if MATPLOTLIB:
+                format_list.append('Graphics PNG *.png')
+                format_list.append('Graphics EPS *.eps')
+                format_list.append('Graphics SVG *.svg')
+                
+            outfile.setFilters(format_list)
             outfile.setFileMode(outfile.AnyFile)
             outfile.setAcceptMode(outfile.AcceptSave)
             outfile.setDirectory(wdir)
@@ -522,7 +539,7 @@ class McaWidget(qt.QWidget):
             return
 
         #get active curve
-        info,x, y = self.getinfodatafromlegend(legend)
+        info, x, y = self.getinfodatafromlegend(legend)
         if info is None: return
         ndict = {}
         ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
@@ -562,13 +579,37 @@ class McaWidget(qt.QWidget):
             pass
         systemline = os.linesep
         os.linesep = '\n'
+        if filterused[0].upper() == "WIDGET":
+            format = specFile[-3:].upper()
+            pixmap = qt.QPixmap.grabWidget(self.graph)
+            if not pixmap.save(specFile, format):
+                qt.QMessageBox.critical(self,
+                                        "Save Error",
+                                        "%s" % sys.exc_info()[1])
+            return
+
+        if MATPLOTLIB:
+            try:
+                if specFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+                    self.graphicsSave(specFile)
+                    return
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
+
         try:
             file=open(specFile,'wb')
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
             return
         systemline = os.linesep
         os.linesep = '\n'
@@ -610,7 +651,95 @@ class McaWidget(qt.QWidget):
             os.linesep = systemline
             raise
         return
-            
+
+    def graphicsSave(self, filename):
+        legend = self.graph.getactivecurve(justlegend=1)
+        size = (6, 3) #in inches
+        logy = self.logytb.isChecked()
+        bw = False
+        legends = True
+        mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
+                                                        logy=logy,
+                                                        legends=legends,
+                                                        bw = bw)        
+        xmin, xmax = self.graph.getx1axislimits()
+        ymin, ymax = self.graph.gety1axislimits()
+        mtplt.setLimits(xmin, xmax, ymin, ymax)
+
+        key = legend
+        xdata = self.dataObjectsDict[key].x[0] * 1
+        info  = self.dataObjectsDict[key].info
+        xdata = self.getEnergyFromChannels(xdata, info)
+        ydata = self.dataObjectsDict[key].y[0] * 1
+        mtplt.addDataToPlot( xdata, ydata)
+
+        objectKeys = self.dataObjectsDict.keys()
+        for key in self.graph.curves.keys():
+            if key in objectKeys:
+                if key != legend:
+                    xdata = self.dataObjectsDict[key].x[0] * 1
+                    info  = self.dataObjectsDict[key].info
+                    xdata = self.getEnergyFromChannels(xdata, info)
+                    ydata = self.dataObjectsDict[key].y[0] * 1
+                    mtplt.addDataToPlot(xdata, ydata)
+                    
+        mtplt.plotLegends()
+        mtplt.setXLabel(str(self.graph.x1Label()))
+        mtplt.setYLabel(str(self.graph.y1Label()))
+        mtplt.saveFile(filename)
+        return
+        
+
+    def getEnergyFromChannels(self, xhelp, info):
+        calib = [0.0,1.0,0.0]
+        curveinfo = {}
+        curveinfo['McaCalib'] = calib
+        if info.has_key('McaCalib'):
+            if type(info['McaCalib'][0]) == type([]):
+                calib0 = info['McaCalib'][info['McaDet']-1]
+            else:
+                calib0 = info['McaCalib']
+            curveinfo['McaCalibSource'] = calib0
+        if self.calibration == self.calboxoptions[1]:
+            if info.has_key('McaCalib'):
+                if type(info['McaCalib'][0]) == type([]):
+                    calib = info['McaCalib'][info['McaDet']-1]
+                else:
+                    calib = info['McaCalib']
+            if len(calib) > 1:
+                xdata=calib[0]+ \
+                      calib[1]* xhelp
+                if len(calib) == 3:
+                      xdata = xdata + calib[2]* xhelp * xhelp
+                return xdata
+        elif self.calibration == self.calboxoptions[2]:
+            if self.caldict.has_key(legend):
+                A = self.caldict[legend]['A']
+                B = self.caldict[legend]['B']
+                C = self.caldict[legend]['C']
+                calib = [A,B,C]
+            elif info.has_key('McaCalib'):
+                if type(info['McaCalib'][0]) == type([]):
+                    calib = info['McaCalib'][info['McaDet']-1]
+                else:
+                    calib = info['McaCalib']
+            if len(calib) > 1:
+                xdata=calib[0]+ \
+                      calib[1]* xhelp
+                if len(calib) == 3:
+                      xdata = xdata + calib[2]* xhelp * xhelp
+                return xdata
+        elif self.calibration in  self.caldict.keys():
+                A = self.caldict[self.calibration]['A']
+                B = self.caldict[self.calibration]['B']
+                C = self.caldict[self.calibration]['C']
+                calib = [A,B,C]
+                xdata=calib[0]+ \
+                      calib[1]* xhelp + \
+                      calib[2]* xhelp * xhelp
+                return xdata
+        else:
+            return xhelp
         
     def array2SpecMca(self, data):
         """ Write a python array into a Spec array.
@@ -1556,6 +1685,9 @@ class McaWidget(qt.QWidget):
                     xhelp = None
                 else:
                     xhelp = dataObject.x[0]
+                if xhelp is None:
+                    xhelp =info['Channel0'] + Numeric.arange(len(data)).astype(Numeric.Float)
+                    dataObject.x = [xhelp * 1]
                 data  = dataObject.y[0]
                 info = dataObject.info
                 self.dataObjectsDict[legend] = dataObject
@@ -1568,8 +1700,6 @@ class McaWidget(qt.QWidget):
                         else:
                             calib0 = info['McaCalib']
                         curveinfo['McaCalibSource'] = calib0
-                    if xhelp is None:
-                        xhelp =info['Channel0'] + Numeric.arange(len(data)).astype(Numeric.Float)
                     if self.calibration == self.calboxoptions[1]:
                         if info.has_key('McaCalib'):
                             if type(info['McaCalib'][0]) == type([]):
