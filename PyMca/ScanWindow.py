@@ -669,9 +669,10 @@ class ScanWindow(qt.QWidget):
                                 self._subtractIconSignal,
                                 'Subtract Active Curve')
         #save
+        infotext = 'Save Active Curve or Widget'
         tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
-                                 'Save Active Curve')
+                                 infotext)
 
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
@@ -1119,7 +1120,9 @@ class ScanWindow(qt.QWidget):
             outfile.setModal(1)
             outfile.setFilters(['Specfile MCA  *.mca',
                                 'Specfile Scan *.dat',
-                                'Raw ASCII  *.txt'])
+                                'Raw ASCII  *.txt',
+                                'Widget PNG *.png',
+                                'Widget JPG *.jpg'])
             outfile.setFileMode(outfile.AnyFile)
             outfile.setAcceptMode(outfile.AcceptSave)
             outfile.setDirectory(wdir)
@@ -1149,7 +1152,7 @@ class ScanWindow(qt.QWidget):
             outputFile = outputFile + extension[-4:]
         elif outputFile[-4:] != extension[-4:]:
             outputFile = outputFile + extension[-4:]
-        return os.path.join(self.outputDir, outputFile), filetype
+        return os.path.join(self.outputDir, outputFile), filetype, filterused
 
     def array2SpecMca(self, data):
         """ Write a python array into a Spec array.
@@ -1253,10 +1256,19 @@ class ScanWindow(qt.QWidget):
             #getOutputFileName
             filename = self._getOutputFileName()
             if filename is None:return
+            filterused = filename[2]
             filetype = filename[1]
             filename = filename[0]
             if os.path.exists(filename):
                 os.remove(filename)
+            if filterused[0].upper() == "WIDGET":
+                format = filename[-3:].upper()
+                pixmap = qt.QPixmap.grabWidget(self.graph)
+                if not pixmap.save(filename, format):
+                    qt.QMessageBox.critical(self,
+                                        "Save Error",
+                                        "%s" % sys.exc_info()[1])
+                return
             systemline = os.linesep
             os.linesep = '\n'
             try:
