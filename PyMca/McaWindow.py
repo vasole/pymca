@@ -657,7 +657,10 @@ class McaWidget(qt.QWidget):
         size = (6, 3) #in inches
         logy = self.logytb.isChecked()
         bw = False
-        legends = True
+        if len(self.graph.curves.keys()) > 1:
+            legends = True
+        else:
+            legends = False
         mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
                                                         logy=logy,
                                                         legends=legends,
