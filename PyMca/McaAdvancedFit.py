@@ -524,10 +524,13 @@ class McaAdvancedFit(qt.QWidget):
                 if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
                     self.mainTab.setCurrentIndex(0)   
 
-    def __configureFromConcentrations(self,dummy):
+    def __configureFromConcentrations(self,ddict):
         config = self.concentrationsWidget.getParameters()
         self.mcafit.config['concentrations'].update(config)
-
+        if ddict['event'] == 'updated':
+            if ddict.has_key('concentrations'):
+                self._concentrationsDict = ddict['concentrations']
+        
     def __elementclicked(self,ddict):
         ddict['event'] = 'McaAdvancedFitElementClicked'
         self.__showElementMarker(ddict)

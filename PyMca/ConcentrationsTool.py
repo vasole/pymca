@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.24 $"
+__revision__ = "$Revision: 1.25 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import Elements
 import copy
@@ -36,73 +36,92 @@ class ConcentrationsConversion:
     def getConcentrationsAsHtml(self, concentrations = None):
         text = ""
         if concentrations is None:return text
-        text+="\n"
-        text+= "<H2><a NAME=""%s""></a><FONT color=#009999>" % 'Concentrations'
-        text+= "%s:" % 'Concentrations'
-        text+= "</FONT></H2>"
-        text+="<br>"
+
         result = concentrations
         #the header
-        
-        #the table
-        labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
-        if result.has_key('layerlist'):
-            if type(result['layerlist']) != type([]):
-                result['layerlist'] = [result['layerlist']]
-            for label in result['layerlist']:
-                labels += [label]
-        lemmon=string.upper("#%x%x%x" % (255,250,205))
-        white ='#FFFFFF' 
-        hcolor = string.upper("#%x%x%x" % (230,240,249))       
-        text+="<CENTER>"
-        text+= "<nobr>"
-        text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
-        text+= "<tr>"
-        for l in range(len(labels)):
-            if l < 2:
-                text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
-            elif l == 2:
-                text+= '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+        if result.has_key('mmolar'):
+            mmolarflaglist = [False, True]
+        else:
+            mmolarflaglist = [False]
+
+        for mmolarflag in mmolarflaglist:
+            text+="\n"
+            text+= "<H2><a NAME=""%s""></a><FONT color=#009999>" % 'Concentrations'
+            if mmolarflag:
+                text+= "%s:" % 'mM Concentrations'
             else:
-                text+= '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
-        text+= "</tr>"
-        line = 0
-        for group in result['groups']:
-            text+=("<tr>")
-            element,group0 = string.split(group)
-            fitarea    = "%.6e" % result['fitarea'][group]
-            sigmaarea  = "%.2e" % result['sigmaarea'][group]
-            area       = "%.6e" % result['area'][group]
-            fraction   = "%.4g" % result['mass fraction'][group]
-            if 'Expected Area' in labels:
-                fields = [element,group0,fitarea,sigmaarea,area,fraction]
+                text+= "%s:" % 'Concentrations'
+            text+= "</FONT></H2>"
+            text+="<br>"
+            if mmolarflag:
+                labels = ['Element','Group','Fit Area','Sigma Area', 'mM concentration']
             else:
-                fields = [element,group0,fitarea,sigmaarea,fraction]
+                labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
+            
+            #the table
             if result.has_key('layerlist'):
-                for layer in result['layerlist']:
-                    if result[layer]['mass fraction'][group] < 0.0:
-                        fraction   = "Unknown"
-                    else:
-                        fraction   = "%.4g" % result[layer]['mass fraction'][group]
-                    fields += [fraction]
-            if line % 2:
-                color = lemmon
-            else:
-                color = white
-            i = 0 
-            for field in fields:
-                if (i<2):
-                    #text += '<td align="left"  bgcolor="%s"><b>%s</b></td>' % (color, field)
-                    text += '<td align="left"  bgcolor=%s>%s</td>' % (color, field)
+                if type(result['layerlist']) != type([]):
+                    result['layerlist'] = [result['layerlist']]
+                for label in result['layerlist']:
+                    labels += [label]
+            lemmon=string.upper("#%x%x%x" % (255,250,205))
+            white ='#FFFFFF' 
+            hcolor = string.upper("#%x%x%x" % (230,240,249))       
+            text+="<CENTER>"
+            text+= "<nobr>"
+            text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
+            text+= "<tr>"
+            for l in range(len(labels)):
+                if l < 2:
+                    text+= '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+                elif l == 2:
+                    text+= '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
                 else:
-                    #text += '<td align="right" bgcolor="%s"><b>%s</b></td>' % (color, field)
-                    text += '<td align="right" bgcolor=%s>%s</td>' % (color, field)
-                i+=1
-            text += '</tr>'
-            line +=1           
-        text+=("</table>")
-        text+=("</nobr>")
-        text+="</CENTER>"
+                    text+= '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor, labels[l])
+            text+= "</tr>"
+            line = 0
+            for group in result['groups']:
+                text+=("<tr>")
+                element,group0 = string.split(group)
+                fitarea    = "%.6e" % result['fitarea'][group]
+                sigmaarea  = "%.2e" % result['sigmaarea'][group]
+                area       = "%.6e" % result['area'][group]
+                if mmolarflag:
+                    fraction   = "%.4g" % result['mmolar'][group]
+                else:
+                    fraction   = "%.4g" % result['mass fraction'][group]
+                if 'Expected Area' in labels:
+                    fields = [element,group0,fitarea,sigmaarea,area,fraction]
+                else:
+                    fields = [element,group0,fitarea,sigmaarea,fraction]
+                if result.has_key('layerlist'):
+                    for layer in result['layerlist']:
+                        if result[layer]['mass fraction'][group] < 0.0:
+                            fraction   = "Unknown"
+                        else:
+                            if mmolarflag:
+                                fraction   = "%.4g" % result[layer]['mmolar'][group]
+                            else:
+                                fraction   = "%.4g" % result[layer]['mass fraction'][group]
+                        fields += [fraction]
+                if line % 2:
+                    color = lemmon
+                else:
+                    color = white
+                i = 0 
+                for field in fields:
+                    if (i<2):
+                        #text += '<td align="left"  bgcolor="%s"><b>%s</b></td>' % (color, field)
+                        text += '<td align="left"  bgcolor=%s>%s</td>' % (color, field)
+                    else:
+                        #text += '<td align="right" bgcolor="%s"><b>%s</b></td>' % (color, field)
+                        text += '<td align="right" bgcolor=%s>%s</td>' % (color, field)
+                    i+=1
+                text += '</tr>'
+                line +=1           
+            text+=("</table>")
+            text+=("</nobr>")
+            text+="</CENTER>"
         return text        
 
     def getConcentrationsAsAscii(self, concentrations=None):
@@ -110,39 +129,53 @@ class ConcentrationsConversion:
         if concentrations is None:return text
         result =concentrations       
         #the table
-        labels = ['Element','Group','Fit_Area','Sigma_Area', 'Mass_fraction']
-        if result.has_key('layerlist'):
-            if type(result['layerlist']) != type([]):
-                result['layerlist'] = [result['layerlist']]
-            for label in result['layerlist']:
-                labels += [label.replace(' ','')]
-        for l in labels:
-            text+="%s  " % l
-        text+=("\n")
-        line = 0
-        for group in result['groups']:
-            element,group0 = string.split(group)
-            fitarea    = "%.6e" % result['fitarea'][group]
-            sigmaarea  = "%.2e" % result['sigmaarea'][group]
-            area       = "%.6e" % result['area'][group]
-            fraction   = "%.4g" % result['mass fraction'][group]
-            if 'Expected Area' in labels:
-                fields = [element,group0,fitarea,sigmaarea,area,fraction]
+        if result.has_key('mmolar'):
+            mmolarflaglist = [False, True]
+        else:
+            mmolarflaglist = [False]
+        for mmolarflag in mmolarflaglist:
+            if mmolarflag:
+                labels = ['Element','Group','Fit_Area','Sigma_Area', 'mM_Concentration']
             else:
-                fields = [element,group0,fitarea,sigmaarea,fraction]
+                labels = ['Element','Group','Fit_Area','Sigma_Area', 'Mass_fraction']
             if result.has_key('layerlist'):
-                for layer in result['layerlist']:
-                    if result[layer]['mass fraction'][group] < 0.0:
-                        fraction   = "Unknown"
-                    else:
-                        fraction   = "%.4g" % result[layer]['mass fraction'][group]
-                    fields += [fraction]
-            i = 0 
-            for field in fields:
-                text += '%s  ' % (field)
-                i+=1
-            text += '\n'
-            line +=1
+                if type(result['layerlist']) != type([]):
+                    result['layerlist'] = [result['layerlist']]
+                for label in result['layerlist']:
+                    labels += [label.replace(' ','')]
+            for l in labels:
+                text+="%s  " % l
+            text+=("\n")
+            line = 0
+            for group in result['groups']:
+                element,group0 = string.split(group)
+                fitarea    = "%.6e" % result['fitarea'][group]
+                sigmaarea  = "%.2e" % result['sigmaarea'][group]
+                area       = "%.6e" % result['area'][group]
+                if mmolarflag:
+                    fraction   = "%.4g" % result['mmolar'][group]
+                else:
+                    fraction   = "%.4g" % result['mass fraction'][group]
+                if 'Expected Area' in labels:
+                    fields = [element,group0,fitarea,sigmaarea,area,fraction]
+                else:
+                    fields = [element,group0,fitarea,sigmaarea,fraction]
+                if result.has_key('layerlist'):
+                    for layer in result['layerlist']:
+                        if result[layer]['mass fraction'][group] < 0.0:
+                            fraction   = "Unknown"
+                        else:
+                            if mmolarflag:
+                                fraction   = "%.4g" % result[layer]['mmolar'][group]
+                            else:
+                                fraction   = "%.4g" % result[layer]['mass fraction'][group]
+                        fields += [fraction]
+                i = 0 
+                for field in fields:
+                    text += '%s  ' % (field)
+                    i+=1
+                text += '\n'
+                line +=1
         return text
 
 class ConcentrationsTool:
@@ -156,15 +189,16 @@ class ConcentrationsTool:
         self.config ['area'] = 30.0
         self.config ['distance'] = 10.0
         self.config ['reference'] = "Auto"
+        self.config ['mmolarflag'] = 0
         if config is not None: self.configure(config)
         self.fitresult = fitresult
     
     
-    def configure(self, dict = None):
-        if dict is None: dict ={}
-        for key in dict:
+    def configure(self, ddict = None):
+        if ddict is None: ddict ={}
+        for key in ddict:
             if key in self.config.keys():
-                self.config[key] = dict[key]
+                self.config[key] = ddict[key]
         return copy.deepcopy(self.config)
         
     def processFitResult(self, config = None, fitresult=None,
@@ -438,6 +472,11 @@ class ConcentrationsTool:
         dict['groups'] = groupsList
         dict['elements'] = elements
         dict['mass fraction'] = {}
+        if config.has_key('mmolarflag'):
+            if config['mmolarflag']:
+                dict['mmolar'] = {}
+        else:
+            config['mmolarflag'] = 0
         dict['area'] = {}
         dict['fitarea'] = {}
         dict['sigmaarea'] = {}
@@ -472,6 +511,11 @@ class ConcentrationsTool:
             else:
                 dict['mass fraction'][group] = concentration
                 dict['area'][group]    = theoretical * flux * solidangle
+            if config['mmolarflag']:
+                #mM = (mass_fraction * density)/atomic_weight
+                dict['mmolar'] [group]= 1000000. *\
+                                        (multilayer[0][1] * dict['mass fraction'][group])/Elements.Element[element]['mass']
+
         #I have the globals/average values now I calculate layer per layer
         #if necessary
         dict['layerlist'] = []
@@ -485,6 +529,8 @@ class ConcentrationsTool:
                     dict2['groups'] = groupsList
                     dict2['elements'] = elements
                     dict2['mass fraction'] = {}
+                    if config['mmolarflag']:
+                        dict2['mmolar'] = {}
                     dict2['area'] = {}
                     dict2['fitarea'] = {}
                     fluo =fluolist[ilayer]
@@ -519,6 +565,10 @@ class ConcentrationsTool:
                         else:
                             dict2['mass fraction'][group] = concentration
                             dict2['area'][group]    = theoretical * flux * solidangle
+                        if config['mmolarflag']:
+                            #mM = (mass_fraction * density)/atomic_weight
+                            dict2['mmolar'] [group]= 1000000. * (multilayer[ilayer][1] * \
+                                                      dict2['mass fraction'][group])/Elements.Element[element]['mass']
                         #if group == "Pb L":
                         #    print "layer", ilayer,'area ', dict2['area'][group]
                         #    print "layer", ilayer,'mass fraction =', dict2['mass fraction'][group]
@@ -528,7 +578,8 @@ class ConcentrationsTool:
                     dict['area'][group] = 0.0
                     for layer in dict['layerlist']:
                         if group in dict[layer]['area'].keys():
-                            dict['area'][group] += dict[layer]['area'][group]        
+                            dict['area'][group] += dict[layer]['area'][group]
+
         return dict
     
 

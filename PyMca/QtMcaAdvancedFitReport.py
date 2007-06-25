@@ -50,7 +50,7 @@ else:
     try:
         #this is installation dependent I guess
         from matplotlib import rcParams
-        rcParams['numerix'] = "numeric"
+        #rcParams['numerix'] = "numeric"
         from matplotlib.font_manager import FontProperties
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         from matplotlib.figure import Figure

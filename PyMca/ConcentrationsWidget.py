@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.18 $"
+__revision__ = "$Revision: 1.19 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -111,7 +111,7 @@ class Concentrations(qt.QWidget):
             self.concentrationsTool.configure(ddict)
             if self.__lastKw is not None:
                 try:
-                    self.processFitResult(*self.__lastVar, **self.__lastKw)
+                    ddict['concentrations'] = self.processFitResult(*self.__lastVar, **self.__lastKw)
                 except:
                     self.__lastKw = None
                     raise
@@ -250,6 +250,7 @@ class ConcentrationsWidget(qt.QWidget):
         ddict['area'] = 30.0
         ddict['distance'] = 10.0
         ddict['reference'] = "Auto"
+        ddict['mmolarflag'] = 0 
         self.setParameters(ddict)
         
     def build(self):
@@ -327,7 +328,12 @@ class ConcentrationsWidget(qt.QWidget):
         self.secondaryCheckBox = qt.QCheckBox(self)
         self.secondaryCheckBox.setText("Consider secondary excitation from deeper matrix layers (non intralayer nor above layers)")
         layout.addWidget(self.attenuatorsCheckBox)
-        layout.addWidget( self.secondaryCheckBox)      
+        layout.addWidget( self.secondaryCheckBox)
+        #mM checkbox
+        self.mMolarCheckBox = qt.QCheckBox(self)
+        self.mMolarCheckBox.setText("Elemental mM concentrations (assuming 1 l of solution is 1000 * matrix_density grams)")
+        layout.addWidget( self.mMolarCheckBox)
+
         layout.addWidget(VerticalSpacer(self))
         buttonGroup.show()
         if QTVERSION < '4.0.0':
@@ -338,6 +344,8 @@ class ConcentrationsWidget(qt.QWidget):
             self.connect(self.matrixCheckBox, qt.SIGNAL("clicked()"),self.checkBoxSlot)
         self.connect(self.attenuatorsCheckBox, qt.SIGNAL("clicked()"),self.checkBoxSlot)
         self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),self.checkBoxSlot)
+        self.connect(self.mMolarCheckBox, qt.SIGNAL("clicked()"),self.checkBoxSlot)
+
         if QTVERSION < '4.0.0':
             self.connect(self.fundamentalWidget.flux,
                          qt.PYSIGNAL('MyQLineEditSignal'), self._mySignal)
@@ -437,6 +445,10 @@ class ConcentrationsWidget(qt.QWidget):
             ddict['usemultilayersecondary'] = 1
         else:
             ddict['usemultilayersecondary'] = 0
+        if self.mMolarCheckBox.isChecked():  
+            ddict['mmolarflag'] = 1
+        else:
+            ddict['mmolarflag'] = 0
         ddict['flux'] = float(str(self.fundamentalWidget.flux.text()))
         ddict['time'] = float(str(self.fundamentalWidget.time.text()))
         ddict['area'] = float(str(self.fundamentalWidget.area.text()))
@@ -455,9 +467,19 @@ class ConcentrationsWidget(qt.QWidget):
         else:
             self.secondaryCheckBox.setChecked(False)
 
+        if ddict.has_key('mmolarflag'):
+            if ddict['mmolarflag']:
+                self.mMolarCheckBox.setChecked(True)
+            else:
+                self.mMolarCheckBox.setChecked(False)
+        else:
+            self.mMolarCheckBox.setChecked(False)
+
         if ddict['usematrix']:
-            self.matrixCheckBox.setChecked(True)            
+            self.fluxCheckBox.setChecked(False)
+            self.matrixCheckBox.setChecked(True)
         else:    
+            self.fluxCheckBox.setChecked(True)
             self.matrixCheckBox.setChecked(False)
         ddict['useattenuators'] = 1
         if ddict['useattenuators']:
@@ -677,11 +699,18 @@ class ConcentrationsTable(QTable):
                 self.resizeColumnToContents(i)
                 
     def fillFromResult(self,result):
+        if result.has_key('mmolar'):
+            mmolarflag = True
+        else:
+            mmolarflag = False
         groupsList = result['groups']
         nrows = len(groupsList)
         if nrows != self.rowCount():
             self.setRowCount(nrows)
-        self.labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
+        if mmolarflag:
+            self.labels = ['Element','Group','Fit Area','Sigma Area', 'mM concentration']
+        else:
+            self.labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
         if result.has_key('layerlist'):
             for label in result['layerlist']:
                 self.labels += [label]
@@ -711,7 +740,10 @@ class ConcentrationsTable(QTable):
             if result['mass fraction'][group] < 0.0:
                 fraction   = qt.QString("Unknown")
             else:
-                fraction   = qt.QString("%.4g" % (result['mass fraction'][group]))
+                if mmolarflag:
+                    fraction   = qt.QString("%.4g" % (result['mmolar'][group]))
+                else:
+                    fraction   = qt.QString("%.4g" % (result['mass fraction'][group]))
             if line % 2:
                 color = qt.QColor(255,250,205)
             else:
@@ -727,7 +759,10 @@ class ConcentrationsTable(QTable):
                     if result[layer]['mass fraction'][group] < 0.0:
                         fraction   = qt.QString("Unknown")
                     else:
-                        fraction   = qt.QString("%.4g" % (result[layer]['mass fraction'][group]))
+                        if mmolarflag:
+                            fraction   = qt.QString("%.4g" % (result[layer]['mmolar'][group]))
+                        else:
+                            fraction   = qt.QString("%.4g" % (result[layer]['mass fraction'][group]))
                     fields += [fraction]
             col = 0
             for field in fields:
