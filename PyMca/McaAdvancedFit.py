@@ -1664,9 +1664,18 @@ class McaAdvancedFit(qt.QWidget):
         config = self.mcafit.configure()
         if dict is None: 
             if not self.__fitdone:
+                #color counter
+                self.graph.color   = 0
+                #symbol counter
+                self.graph.symbol  = 0
+                #line type
+                self.graph.linetype= 0
                 for key in self.graph.curves.keys():
                     if key not in ["Data"]:
                         self.graph.delcurve(key)
+                    else:
+                        self.graph.color   = 1
+
                 #just the data
                 xdata  = self.mcafit.xdata * 1.0
                 if self._energyAxis:
