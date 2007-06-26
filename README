@@ -38,37 +38,12 @@ In any case you need write privileges to the final directories.
 You will need:
 
 - Python (at least 2.3.x) I use mostly 2.4.x except for MacOS.
-  I have never used the code under python 2.5.x.
-- Numeric (I'm using version 23.8 because I had a problem with the
-innerproduct function of the latest 24.x versions under windows and MacOS).
-That could already be corrected by the time you read this. To test:
 
-import Numeric
-x=Numeric.arange(100.)
-x.shape=[5,20]
-a=Numeric.arange(20)
-a.shape = [1,20]
-print Numeric.innerproduct(x,a)
-
-I am getting this output:
-
-[[  2470.]
- [  6270.]
- [ 10070.]
- [ 13870.]
- [ 17670.]]
-
-The version giving me problems had all elements but the first equal to 0.0
-
-UPDATE: In version 4.0.5 from PyMca I implemented a workaround. It should work 
-with any Numeric version (I have only tested Numeric 23.8).
+- Numpy
 
 If you want to use the graphical interfaces provided, you will need a running
-python installation with, at least:
+python installation with:
 
-- PyQt + PyQwt4     NOT GPL UNDER WINDOWS. MAIN PLATFORM TILL 3.9.4
-
-OR
 
 - PyQt + PyQwt5     NOT GPL UNDER WINDOWS
 
@@ -98,15 +73,6 @@ There are still some tasks left:
 - Compound fitting.
 
 - Fit configuration speed up to allow compound and multilayers fitting.
-
-- Improve the doc ...
-
-- Try to replace Numeric by a more recent package.
-
-The first two are closely related. The documentation will arrive.
-
-My priority is to publish the code in a scientific journal.
-It is currently (December 2006) under review.
 
 If you have any questions or comments (or contributions!), please feel free to
 contact me.

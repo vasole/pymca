@@ -1,3 +1,22 @@
+VERSION 4.1.0
+
+- Changed numerical library from Numeric to Numpy.
+
+- Added a tool to convert spectra to ESRF data format.
+
+- Improved shared memory access.
+
+- Possibility to calculate concentrations in mM.
+
+- Possibility to export the main MCA window in graphical format.
+
+- MCA window inactive legends after a fit problem corrected.
+
+- Corrected a problem in which HTML reports generated interactively
+after changing the concentration parameters without passing thru the
+fit configuration window could be different from those shown on the 
+screen.
+
 VERSION 4.0.9
 
 - Concentration calculated on batch mode were wrong if the fundamental
