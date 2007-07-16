@@ -100,7 +100,7 @@ class SpsDataSource:
                             data.y = None
                             data.m = None
                             if data.info['envdict'].has_key('nopts'):
-                                nopts  = string.atoi(data.info['envdict']['nopts'])
+                                nopts  = string.atoi(data.info['envdict']['nopts']) + 1
                             else:
                                 nopts  =data.info['rows']
                             if not data.info.has_key('LabelNames'):
