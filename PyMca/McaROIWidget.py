@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,6 +25,10 @@
 # is a problem to you.
 #############################################################################*/
 import sys
+import os
+import PyMcaDirs
+import ConfigDict
+
 if 'qt' not in sys.modules:
     try:
         import PyQt4.Qt as qt
@@ -81,6 +85,7 @@ class McaROIWidget(qt.QWidget):
         self.addroi          = self.mcaROITable.addroi
         self.getroilistanddict=self.mcaROITable.getroilistanddict
         layout.addWidget(self.mcaROITable)
+        self.roiDir = None
         #################
 
 
@@ -104,14 +109,25 @@ class McaROIWidget(qt.QWidget):
         hboxlayout.addWidget(self.resetbutton)
         hboxlayout.addWidget(HorizontalSpacer(hbox))
 
+        if QTVERSION > '4.0.0':
+            self.loadButton = qt.QPushButton(hbox)
+            self.loadButton.setText("Load")
+            self.saveButton = qt.QPushButton(hbox)
+            self.saveButton.setText("Save")
+            hboxlayout.addWidget(self.loadButton)
+            hboxlayout.addWidget(self.saveButton)
+
         layout.addWidget(hbox)
 
         self.connect(self.addbutton,  qt.SIGNAL("clicked()"), self.__add)
         self.connect(self.delbutton,  qt.SIGNAL("clicked()"), self.__del)
         self.connect(self.resetbutton,qt.SIGNAL("clicked()"), self.__reset)
+
         if QTVERSION < '4.0.0':
             self.connect(self.mcaROITable,  qt.PYSIGNAL('McaROITableSignal') ,self.__forward)
         else:
+            self.connect(self.loadButton,qt.SIGNAL("clicked()"), self._load)
+            self.connect(self.saveButton,qt.SIGNAL("clicked()"), self._save)
             self.connect(self.mcaROITable,  qt.SIGNAL('McaROITableSignal') ,self.__forward)
 
     def __add(self):
@@ -189,6 +205,90 @@ class McaROIWidget(qt.QWidget):
             self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,))
         else:
             self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict)
+
+
+    def _load(self):        
+        if self.roiDir is None:
+            self.roiDir = PyMcaDirs.inputDir
+        elif not os.path.isdir(self.roiDir):
+            self.roiDir = PyMcaDirs.inputDir
+        outfile = qt.QFileDialog(self)
+        outfile.setFilter('PyMca  *.ini')
+        outfile.setFileMode(outfile.ExistingFile)
+        outfile.setDirectory(self.roiDir)
+        ret = outfile.exec_()
+        if not ret:
+            outfile.close()
+            del outfile
+            return
+        outputFile = str(outfile.selectedFiles()[0])
+        outfile.close()
+        del outfile
+        self.roiDir = os.path.dirname(outputFile)
+        self.load(outputFile)
+
+    def load(self, filename):
+        d = ConfigDict.ConfigDict()
+        d.read(filename)
+        current = ""
+        if self.mcaROITable.rowCount():
+            row = self.mcaROITable.currentRow()
+            item = self.mcaROITable.item(row, 0)
+            if item is not None:
+                current = str(item.text())
+        self.fillfromroidict(roilist=d['ROI']['roilist'],
+                             roidict=d['ROI']['roidict'])
+        if current in d['ROI']['roidict'].keys():
+            if current in d['ROI']['roilist']:
+                row = d['ROI']['roilist'].index(current, 0)
+                self.mcaROITable.setCurrentCell(row, 0)
+                self.mcaROITable._cellChangedSlot(row, 2)
+                return            
+        self.mcaROITable.setCurrentCell(0, 0)
+        self.mcaROITable._cellChangedSlot(0, 2)
+
+    def _save(self):
+        if self.roiDir is None:
+            self.roiDir = PyMcaDirs.outputDir
+        elif not os.path.isdir(self.roiDir):
+            self.roiDir = PyMcaDirs.outputDir
+        outfile = qt.QFileDialog(self)
+        outfile.setFilter('PyMca  *.ini')
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
+        outfile.setDirectory(self.roiDir)
+        ret = outfile.exec_()
+        if not ret:
+            outfile.close()
+            del outfile
+            return
+        outputFile = str(outfile.selectedFiles()[0])
+        extension = ".ini"
+        outfile.close()
+        del outfile
+        if len(outputFile) < len(extension[:]):
+            outputFile += extension[:]
+        elif outputFile[-4:] != extension[:]:
+            outputFile += extension[:]
+        if os.path.exists(outputFile):
+            try:
+                os.remove(filename)
+            except IOError:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
+        self.roiDir = os.path.dirname(outputFile)
+        self.save(outputFile)
+        
+    def save(self, filename):
+        d= ConfigDict.ConfigDict()
+        d['ROI'] = {}
+        d['ROI'] = {'roilist': self.mcaROITable.roilist * 1,
+                    'roidict':{}}
+        d['ROI']['roidict'].update(self.mcaROITable.roidict)
+        d.write(filename)
         
     def setdata(self,*var,**kw):
         self.info ={}
@@ -261,6 +361,7 @@ class McaROITable(QTable):
             self.roilist = kw['roilist']
         if kw.has_key('roidict'):
             self.roidict.update(kw['roilist'])
+        self.building = False
         self.build()
         #self.connect(self,qt.SIGNAL("currentChanged(int,int)"),self.myslot)
         if QTVERSION < '4.0.0':
@@ -268,7 +369,7 @@ class McaROITable(QTable):
             self.connect(self,qt.SIGNAL("selectionChanged()"),self._myslot)
         else:
             self.connect(self,qt.SIGNAL("cellClicked(int, int)"),self._myslot)
-            self.connect(self,qt.SIGNAL("cellChanged(int, int)"),self.nameSlot)
+            self.connect(self,qt.SIGNAL("cellChanged(int, int)"),self._cellChangedSlot)
             #self.connect(self,qt.SIGNAL("itemSelectionChanged()"),self._myslot)
         #self.connect(self,qt.SIGNAL("pressed(int,int,QPoint())"),self.myslot)
         if qt.qVersion() > '2.3.0':
@@ -284,6 +385,7 @@ class McaROITable(QTable):
         self.fillfromroidict(roilist=self.roilist,roidict=self.roidict)
     
     def fillfromroidict(self,roilist=[],roidict={},currentroi=None):
+        self.building = True
         line0  = 0
         self.roilist = []
         self.roidict = {}
@@ -333,7 +435,7 @@ class McaROITable(QTable):
                                 key2.setFlags(qt.Qt.ItemIsSelectable|
                                               qt.Qt.ItemIsEnabled) 
                         else:
-                            if col == 0:
+                            if col in [0, 2, 3]:
                                 key2.setFlags(qt.Qt.ItemIsSelectable|
                                               qt.Qt.ItemIsEnabled|
                                               qt.Qt.ItemIsEditable)                        
@@ -377,7 +479,7 @@ class McaROITable(QTable):
                 else:
                     if DEBUG:
                         print "Qt4 ensureCellVisible to be implemented"
-                
+        self.building = False                
 
     def addroi(self,roi,key=None):
         nlines=self.numRows()
@@ -460,6 +562,53 @@ class McaROITable(QTable):
                 self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
             else:
                 self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
+
+    def _cellChangedSlot(self, row, col):
+        if DEBUG:print "_cellChangedSlot(%d, %d)" % (row, col)
+        if  self.building:return
+        if col == 0:
+            self.nameSlot(row, col)
+        else:
+            self._valueChanged(row, col)
+
+    def _valueChanged(self, row, col):
+        if col not in [2, 3]: return
+        item = self.item(row, col)
+        if item is None:return
+        text = str(item.text())
+        try:
+            value = float(text)
+        except:
+            return
+        if row >= len(self.roilist):
+            if DEBUG:
+                print "deleting???"
+            return
+        if QTVERSION < '4.0.0':
+            text = str(self.text(row, 0))
+        else:
+            item = self.item(row, 0)
+            if item is None:text=""
+            else:text = str(item.text())
+        if not len(text):return
+        if col == 2:
+            self.roidict[text]['from'] = value
+        elif col ==3:              
+            self.roidict[text]['to'] = value
+        ddict = {}
+        ddict['event'] = "selectionChanged"
+        ddict['row'  ] = row
+        ddict['col'  ] = col
+        ddict['roi'  ] = self.roidict[self.roilist[row]]
+        ddict['key']   = self.roilist[row]
+        ddict['colheader'] = self.labels[col]
+        ddict['rowheader'] = "%d" % row
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
+        else:
+            self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
+
+
 
     def nameSlot(self, row, col):
         if col != 0: return

@@ -1443,21 +1443,17 @@ class McaWidget(qt.QWidget):
                 self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
                 self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
                 self.graph.enablemarkermode()
-            self.emitCurrentROISignal()
-            if dict['colheader'] == 'From':
-                #I should put the table in RW mode
-                pass
-            elif dict['colheader'] == 'To':    
-                #I should put the table in RW mode
-                pass
+            if dict['colheader'] in ['From', 'To']:
+                dict ={}
+                dict['event']  = "SetActiveCurveEvent"
+                dict['legend'] = self.graph.getactivecurve(justlegend=1)
+                self.__graphsignal(dict)
             elif dict['colheader'] == 'Raw Counts':    
-                #I should put the table in RW mode
                 pass
             elif dict['colheader'] == 'Net Counts':    
-                #I should put the table in RW mode
                 pass
             else:
-                pass
+                self.emitCurrentROISignal()
             self.graph.replot()
         else:
             if DEBUG:
