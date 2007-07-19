@@ -715,6 +715,12 @@ class QtBlissGraph(qwt.QwtPlot):
         self.__zoomEnabled = flag
         if flag:self._selecting = False
 
+    def isZoomEnabled(self):
+        if self.__zoomEnabled:
+            return True
+        else:
+            return False
+
     def enableSelection(self, flag=True):
         self._selecting    = flag
         if flag: self.__zoomEnabled = False

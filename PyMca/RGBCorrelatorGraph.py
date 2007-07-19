@@ -235,7 +235,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.brushSelectionToolButton.show()
         self.brushToolButton.show()
 
-    def _addToolButton(self, icon, action, tip, toggle=None, state=None):
+    def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
         tb      = qt.QToolButton(self.toolBar)            
         if QTVERSION < '4.0.0':
             tb.setIconSet(icon)
@@ -257,7 +257,10 @@ class RGBCorrelatorGraph(qt.QWidget):
                             tb.setChecked(state)
                     else:
                         tb.setChecked(False)
-        self.toolBarLayout.addWidget(tb)
+        if position is not None:
+            self.toolBarLayout.insertWidget(position, tb)
+        else:
+            self.toolBarLayout.addWidget(tb)
         if action is not None:
             self.connect(tb,qt.SIGNAL('clicked()'), action)
         return tb

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.80 $"
+__revision__ = "$Revision: 1.81 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.1.1 20070716 snapshot"
+__version__ = "4.1.1 20070719 snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1126,7 +1126,8 @@ class PyMca(PyMcaMdi.PyMca):
             rgbWidget = None
             try:
                 self.__imagingTool = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
-                                                                     rgbwidget=rgbWidget)
+                                                                     rgbwidget=rgbWidget,
+                                                                     master=True)
                 if QTVERSION < '4.0.0':
                     self.connect(self.__imagingTool,
                                  qt.PYSIGNAL("StackWidgetSignal"),

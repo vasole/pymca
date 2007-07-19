@@ -125,7 +125,8 @@ class QEDFStackWidget(qt.QWidget):
     def __init__(self, parent = None,
                  mcawidget = None,
                  rgbwidget = None,
-                 vertical = False):
+                 vertical = False,
+                 master = False):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -153,6 +154,9 @@ class QEDFStackWidget(qt.QWidget):
         self.__ROIColormapDialog = None
         self.mcaWidget = mcawidget
         self.rgbWidget = rgbwidget
+        if QTVERSION < '4.0.0':master = False
+        self.master = master
+        self.slave  = None
         self.tab = None
 
         self._build(vertical)
@@ -180,6 +184,13 @@ class QEDFStackWidget(qt.QWidget):
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
                                                             colormap=True)
 
+        if self.master:
+            self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
+            self.loadStackButton = self.stackGraphWidget._addToolButton(\
+                                        self.loadIcon,
+                                        self.loadSlaveStack,
+                                        'Load another stack of same size',
+                                        position = 6)
         
         self.roiWindow = qt.QWidget(box)
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
@@ -203,6 +214,28 @@ class QEDFStackWidget(qt.QWidget):
             box.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
 
+    def loadSlaveStack(self):
+        if self.slave is None:
+            filelist = self._getStackOfFiles()
+            if not(len(filelist)): return
+            filelist.sort()
+            
+            PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+            
+            self.slave = QEDFStackWidget(rgbwidget=self.rgbWidget,
+                                         master=False)
+            try:
+                self.slave.setStack(QStack(filelist))
+            except:
+                self.slave.setStack(QSpecFileStack(filelist))
+            self._buildConnections(self.slave)
+            self.slave._buildConnections(self)
+
+        if self.slave is not None:
+            self.loadStackButton.hide()
+            self.slave.show()
+            return
+    
     def _buildBottom(self):
         n = 0
         if self.mcaWidget is None: n += 1
@@ -246,6 +279,7 @@ class QEDFStackWidget(qt.QWidget):
     def setROISelectionMode(self, mode = None):
         if mode:
             self.roiGraphWidget.graph.enableSelection(True)
+            self.__ROIBrushMode  = False
             self.roiGraphWidget.graph.enableZoom(False)
             if QTVERSION < '4.0.0':
                 self.roiGraphWidget.selectionToolButton.setState(qt.QButton.On)
@@ -323,57 +357,98 @@ class QEDFStackWidget(qt.QWidget):
             self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
                         self._replaceImageClicked)
 
-    def _buildConnections(self):
-        self._buildAndConnectButtonBox()
+    def _buildConnections(self, widget = None):
+        if widget is None:
+            self._buildAndConnectButtonBox()
         self.connect(self.stackGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectStackColormap)
 
-        self.connect(self.stackGraphWidget.hFlipToolButton,
+        if widget is None:
+            self.connect(self.stackGraphWidget.hFlipToolButton,
                  qt.SIGNAL("clicked()"),
                  self._hFlipIconSignal)
-
-        #ROI Image
-        self.connect(self.roiGraphWidget.hFlipToolButton,
+        else:
+            self.connect(self.stackGraphWidget.hFlipToolButton,
                  qt.SIGNAL("clicked()"),
-                 self._hFlipIconSignal)
+                 widget._hFlipIconSignal)
 
-        self.connect(self.roiGraphWidget.colormapToolButton,
+        if widget is None:
+            #ROI Image
+            self.connect(self.roiGraphWidget.hFlipToolButton,
                      qt.SIGNAL("clicked()"),
-                     self.selectROIColormap)
+                     self._hFlipIconSignal)
 
-        self.connect(self.roiGraphWidget.selectionToolButton,
+            self.connect(self.roiGraphWidget.colormapToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self.selectROIColormap)
+
+            self.connect(self.roiGraphWidget.selectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._toggleROISelectionMode)
+        else:
+            #ROI Image
+            self.connect(self.roiGraphWidget.hFlipToolButton,
                      qt.SIGNAL("clicked()"),
-                     self._toggleROISelectionMode)
+                     widget._hFlipIconSignal)
+
+            self.connect(self.roiGraphWidget.colormapToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget.selectROIColormap)
+
+            self.connect(self.roiGraphWidget.selectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget._toggleROISelectionMode)
         text = "Toggle between Selection\nand Zoom modes"
         if QTVERSION > '4.0.0':
             self.roiGraphWidget.selectionToolButton.setToolTip(text)
-        
-        self.connect(self.roiGraphWidget.imageToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._resetSelection)
 
-        self.connect(self.roiGraphWidget.eraseSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setROIEraseSelectionMode)
+        if widget is None:
+            self.connect(self.roiGraphWidget.imageToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._resetSelection)
 
-        self.connect(self.roiGraphWidget.rectSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setROIRectSelectionMode)
+            self.connect(self.roiGraphWidget.eraseSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._setROIEraseSelectionMode)
 
-        self.connect(self.roiGraphWidget.brushSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setROIBrushSelectionMode)
+            self.connect(self.roiGraphWidget.rectSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._setROIRectSelectionMode)
 
-        self.connect(self.roiGraphWidget.brushToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setROIBrush)
+            self.connect(self.roiGraphWidget.brushSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._setROIBrushSelectionMode)
 
+            self.connect(self.roiGraphWidget.brushToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._setROIBrush)
+        else:
+            self.connect(self.roiGraphWidget.imageToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget._resetSelection)
 
-        self.stackGraphWidget.graph.canvas().setMouseTracking(1)
-        #self.roiGraphWidget.graph.canvas().setMouseTracking(1)
-        self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
-        self.stackGraphWidget.showInfo()
+            self.connect(self.roiGraphWidget.eraseSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget._setROIEraseSelectionMode)
+
+            self.connect(self.roiGraphWidget.rectSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget._setROIRectSelectionMode)
+
+            self.connect(self.roiGraphWidget.brushSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget._setROIBrushSelectionMode)
+
+            self.connect(self.roiGraphWidget.brushToolButton,
+                         qt.SIGNAL("clicked()"),
+                         widget._setROIBrush)
+
+        if widget is None:
+            self.stackGraphWidget.graph.canvas().setMouseTracking(1)
+            #self.roiGraphWidget.graph.canvas().setMouseTracking(1)
+            self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
+            self.stackGraphWidget.showInfo()
         
         if QTVERSION < "4.0.0":
             self.connect(self.stackGraphWidget.graph,
@@ -386,15 +461,23 @@ class QEDFStackWidget(qt.QWidget):
                          qt.PYSIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
         else:
-            self.connect(self.stackGraphWidget.graph,
+            if widget is None:
+                self.connect(self.stackGraphWidget.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._stackGraphSignal)
-            self.connect(self.roiGraphWidget.graph,
+                self.connect(self.roiGraphWidget.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._roiGraphSignal)
-            self.connect(self.mcaWidget,
+                self.connect(self.mcaWidget,
                          qt.SIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
+            else:
+                self.connect(self.stackGraphWidget.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         widget._stackGraphSignal)
+                self.connect(self.roiGraphWidget.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         widget._roiGraphSignal)
 
     def _stackGraphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
@@ -470,7 +553,8 @@ class QEDFStackWidget(qt.QWidget):
         elif ddict['event'] == "MouseAt":
             self._stackGraphSignal(ddict)
             if self.__ROIBrushMode:
-                #return
+                if self.roiGraphWidget.graph.isZoomEnabled():
+                    return
                 #if follow mouse is not activated
                 #it only enters here when the mouse is pressed.
                 #Therefore is perfect for "brush" selections.
@@ -1260,7 +1344,7 @@ if __name__ == "__main__":
         elif opt in '--fileindex':
             fileindex = int(arg)
     app = qt.QApplication([])
-    w = QEDFStackWidget()
+    w = QEDFStackWidget(master=True)
     if len(args):
         f = open(args[0])
         line = f.readline()
@@ -1273,12 +1357,15 @@ if __name__ == "__main__":
         f.close()
     if len(args) > 1:
         stack.loadFileList(args, fileindex =fileindex)
+        PyMcaDirs.inputDir = os.path.dirname(args[0])
     elif len(args) == 1:
         stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
+        PyMcaDirs.inputDir = os.path.dirname(args[0])
     else:
         if 1:
             filelist = w._getStackOfFiles()
             if len(filelist):
+                PyMcaDirs.inputDir = os.path.dirname(filelist[0])
                 f = open(filelist[0])
                 line = f.readline()
                 if not len(line):
