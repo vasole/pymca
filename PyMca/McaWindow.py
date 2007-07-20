@@ -1270,8 +1270,10 @@ class McaWidget(qt.QWidget):
                      y=self.specfit.gendata(x=x,parameters=result['paramlist'])
                      nparb= len(self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1])
                      yb   = self.specfit.gendata(x=x,parameters=result['paramlist'][0:nparb])
-                     regions.append([result['xbegin'],result['xend']])
-                     xfinal = xfinal + Numeric.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
+                     xtoadd = Numeric.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
+                     if not len(xtoadd): continue
+                     xfinal = xfinal + xtoadd
+                     regions.append([xtoadd[0],xtoadd[-1]])
                      yfinal = yfinal + y.tolist()
                      ybfinal= ybfinal + yb.tolist()
                     #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
@@ -1719,11 +1721,19 @@ class McaWidget(qt.QWidget):
                                   xdata = xdata + calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
                             if simplefitplot:
+                                inforegions = []
+                                for region in info['regions']:
+                                    inforegions.append([calib[0] + \
+                                                        calib[1] * region[0] +\
+                                                        calib[1] * region[0] * region[0],
+                                                        calib[0] + \
+                                                        calib[1] * region[1] +\
+                                                        calib[1] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1,
                                                 curveinfo=curveinfo,
                                                 baseline = info['baseline'],
-                                                regions = info['regions'])
+                                                regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
@@ -1746,11 +1756,19 @@ class McaWidget(qt.QWidget):
                                   xdata = xdata + calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
                             if simplefitplot:
+                                inforegions = []
+                                for region in info['regions']:
+                                    inforegions.append([calib[0] + \
+                                                        calib[1] * region[0] +\
+                                                        calib[1] * region[0] * region[0],
+                                                        calib[0] + \
+                                                        calib[1] * region[1] +\
+                                                        calib[1] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1,
                                                 curveinfo=curveinfo,
                                                 baseline = info['baseline'],
-                                                regions = info['regions'])
+                                                regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
@@ -1768,11 +1786,19 @@ class McaWidget(qt.QWidget):
                                   calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
                             if simplefitplot:
+                                inforegions = []
+                                for region in info['regions']:
+                                    inforegions.append([calib[0] + \
+                                                        calib[1] * region[0] +\
+                                                        calib[1] * region[0] * region[0],
+                                                        calib[0] + \
+                                                        calib[1] * region[1] +\
+                                                        calib[1] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1,
                                                 curveinfo=curveinfo,
                                                 baseline = info['baseline'],
-                                                regions = info['regions'])
+                                                regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
