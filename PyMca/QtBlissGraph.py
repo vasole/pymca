@@ -72,6 +72,7 @@ try:
 except:
     pass
 import time
+import numpy
 from numpy.oldnumeric import *
 DEBUG = 0
 USE_SPS_LUT = 1
@@ -1726,8 +1727,8 @@ class QtBlissGraph(qwt.QwtPlot):
                 for region in kw['regions']:
                     #print region[0]
                     #print region[1]
-                    i1 = min(nonzero(x>=region[0]),0)
-                    i2 = max(nonzero(x<=region[1]))
+                    i1 = min(numpy.nonzero(x>=region[0]),0)
+                    i2 = max(numpy.ravel(numpy.nonzero(x<=region[1])))
                     #print "i1,i2 ",i1,i2
                     #print len(x)
                     regions.append([int(i1),int(i2)])

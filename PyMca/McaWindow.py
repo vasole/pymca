@@ -783,6 +783,16 @@ class McaWidget(qt.QWidget):
         if info is not None:
             xmin,xmax=self.graph.getx1axislimits()
             self.__simplefitcalmode = self.calibration
+            curveinfo = self.graph.getcurveinfo(legend)
+            if self.calibration == 'None':
+                calib = [0.0,1.0,0.0]
+            else:
+                if curveinfo.has_key('McaCalib'):
+                    calib = curveinfo['McaCalib']
+                else:
+                    calib = [0.0, 1.0, 0.0]
+            self.__simplefitcalibration = calib
+            x = calib[0] + calib[1] * x + calib[2] * x * x
             self.simplefit.setdata(x=x,y=y,
                                     xmin=xmin,
                                     xmax=xmax,
@@ -1250,6 +1260,7 @@ class McaWidget(qt.QWidget):
             yfinal = []
             ybfinal= []
             regions = []
+            legend0= dict['info']['legend']
             for result in mcaresult:
                 i += 1
                 if result['chisq'] is not None:
@@ -1260,11 +1271,10 @@ class McaWidget(qt.QWidget):
                      nparb= len(self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1])
                      yb   = self.specfit.gendata(x=x,parameters=result['paramlist'][0:nparb])
                      regions.append([result['xbegin'],result['xend']])
-                     xfinal = xfinal + x.tolist()
+                     xfinal = xfinal + Numeric.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
                      yfinal = yfinal + y.tolist()
                      ybfinal= ybfinal + yb.tolist()
                     #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
-            legend0= dict['info']['legend']
             legend = legend0 + " SFit"            
             #copy the original info from the curve
             newDataObject = DataObject.DataObject()
@@ -1273,7 +1283,7 @@ class McaWidget(qt.QWidget):
             newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
             newDataObject.info['legend']    = legend
             newDataObject.info['Key']       = legend
-            newDataObject.info['Regions']   = regions
+            newDataObject.info['regions']   = regions
             newDataObject.info['CalMode']   = self.__simplefitcalmode
             x    = Numeric.array(xfinal)
             yfit = Numeric.array(yfinal)
@@ -1281,20 +1291,10 @@ class McaWidget(qt.QWidget):
             newDataObject.x = [x]
             newDataObject.y = [yfit]
             newDataObject.m = None
-            newDataObject.baseline = [yb]
+            newDataObject.info['baseline'] = yb
             self.dataObjectsDict[legend] = newDataObject
-            if 1 or QTVERSION < '4.0.0':
-                self.graph.newCurve(legend,x=x,
-                                    y=yfit,
-                                    logfilter=1,
-                                    regions=regions,
-                                    baseline=yb)
-            else:
-                self.graph.newCurve(legend,x=x,
-                                    y=yfit,
-                                    logfilter=1)
-            #self.graph.setxofy(legend)
-            self.graph.replot()
+            self.refresh()
+            return
         elif dict['event'] == 'McaTableFilled':
             if self.peakmarker is not None:
                 self.graph.removeMarker(self.peakmarker)
@@ -1690,8 +1690,15 @@ class McaWidget(qt.QWidget):
                 data  = dataObject.y[0]
                 info = dataObject.info
                 self.dataObjectsDict[legend] = dataObject
+                if info.has_key('baseline') and info.has_key('regions'):
+                    simplefitplot = True
+                else:
+                    simplefitplot = False
                 try:
                     calib = [0.0,1.0,0.0]
+                    for inputkey in ['baseline', 'regions']: 
+                        if info.has_key(inputkey):
+                            curveinfo[inputkey] = info[inputkey]
                     curveinfo['McaCalib'] = calib
                     if info.has_key('McaCalib'):
                         if type(info['McaCalib'][0]) == type([]):
@@ -1711,7 +1718,14 @@ class McaWidget(qt.QWidget):
                             if len(calib) == 3:
                                   xdata = xdata + calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
-                            self.graph.newCurve(legend,
+                            if simplefitplot:
+                                self.graph.newCurve(legend,
+                                                x=xdata,y=data,logfilter=1,
+                                                curveinfo=curveinfo,
+                                                baseline = info['baseline'],
+                                                regions = info['regions'])
+                            else:
+                                self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
                             self.graph.xlabel('Energy')
                     elif self.calibration == self.calboxoptions[2]:
@@ -1731,7 +1745,14 @@ class McaWidget(qt.QWidget):
                             if len(calib) == 3:
                                   xdata = xdata + calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
-                            self.graph.newCurve(legend,
+                            if simplefitplot:
+                                self.graph.newCurve(legend,
+                                                x=xdata,y=data,logfilter=1,
+                                                curveinfo=curveinfo,
+                                                baseline = info['baseline'],
+                                                regions = info['regions'])
+                            else:
+                                self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
                             self.graph.xlabel('Energy')
                     elif self.calibration == 'Fit':
@@ -1746,11 +1767,25 @@ class McaWidget(qt.QWidget):
                                   calib[1]* xhelp + \
                                   calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
-                            self.graph.newCurve(legend,
+                            if simplefitplot:
+                                self.graph.newCurve(legend,
+                                                x=xdata,y=data,logfilter=1,
+                                                curveinfo=curveinfo,
+                                                baseline = info['baseline'],
+                                                regions = info['regions'])
+                            else:
+                                self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
                             self.graph.xlabel('Energy')
                     else:
-                        self.graph.newCurve(legend,x=xhelp,y=data,
+                        if simplefitplot:
+                            self.graph.newCurve(legend,
+                                            x=xhelp,y=data,logfilter=1,
+                                            curveinfo=curveinfo,
+                                            baseline = info['baseline'],
+                                            regions = info['regions'])
+                        else:
+                            self.graph.newCurve(legend,x=xhelp,y=data,
                                             logfilter=1, curveinfo=curveinfo)
                         self.graph.xlabel('Channel')
                 except:
