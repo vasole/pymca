@@ -138,7 +138,7 @@ class SpsDataSource:
                                 if data.info.has_key('Detectors'):
                                     for i in range(len(selection['rows']['y'])):
                                         selection['rows']['y'][i] = \
-                                            data.info['Detectors'][selection['rows']['y'][i]]
+                                            data.info['Detectors'][selection['rows']['y'][i]] + 1
                                     del selection['XIA']
                         return data.select(selection)
                     else:
