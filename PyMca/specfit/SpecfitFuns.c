@@ -241,6 +241,101 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
 
 }
 
+static PyObject *
+SpecfitFuns_subacfast(PyObject *self, PyObject *args)
+{
+    PyObject *input;
+    PyArrayObject   *array, *ret, *anchors;
+    int n, dimensions[1];
+    double niter0 = 5000.;
+    double deltai0= 1;
+    PyObject *anchors0 = NULL;
+    int i, j, k, l, deltai = 1,niter = 5000;
+    double  t_mean, c = 1.000;
+    double  *data, *retdata;
+    int     *anchordata;
+    int nanchors, notdoit;
+
+    if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
+        return NULL;
+    array = (PyArrayObject *)
+             PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
+    if (array == NULL)
+        return NULL;
+    deltai= (int ) deltai0;
+    if (deltai <=0) deltai = 1;
+    niter = (int ) niter0;
+    n = array->dimensions[0];
+    dimensions[0] = array->dimensions[0];
+    ret = (PyArrayObject *)
+        PyArray_FromDims(1, dimensions, PyArray_DOUBLE);
+    if (ret == NULL){
+        Py_DECREF(array);
+        return NULL;
+    }
+    memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
+
+    if (n < (2*deltai+1)){
+        /*ret = (PyArrayObject *) PyArray_Copy(array);*/
+        Py_DECREF(array);
+        return PyArray_Return(ret);
+    }
+    /* do the job */
+    data   = (double *) array->data;
+    retdata   = (double *) ret->data;
+    if (PySequence_Check(anchors0)){
+        anchors = (PyArrayObject *)
+             PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
+        if (anchors == NULL)
+	{
+            Py_DECREF(array);
+            Py_DECREF(ret);
+            return NULL;
+    	}
+	anchordata = (int *) anchors->data;
+        nanchors   = PySequence_Size(anchors0);
+        memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+	for (i=0;i<niter;i++){
+            for (j=deltai;j<n-deltai;j++) {
+		notdoit = 0;
+	        for (k=0; k<nanchors; k++)
+		{
+		    l =*(anchordata+k); 
+                    if (j>(l-deltai))
+		    {
+		    	if (j<(l+deltai))
+			{
+				notdoit = 1;
+				break;
+			}
+		    }
+		}
+		if (notdoit)
+			continue;
+		t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
+	        if (*(retdata+j) > (t_mean * c))
+                        *(retdata+j) = t_mean;
+            }
+        }
+        Py_DECREF(anchors);
+    }
+    else
+    {
+        memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+        for (i=0;i<niter;i++){
+            for (j=deltai;j<n-deltai;j++) {
+                t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
+	        if (*(retdata+j) > (t_mean * c))
+                    *(retdata+j) = t_mean;
+            }
+        }
+    }
+    Py_DECREF(array);
+    if (ret == NULL)
+        return NULL;
+    return PyArray_Return(ret);  
+
+}
 
 static PyObject *
 SpecfitFuns_gauss(PyObject *self, PyObject *args)
@@ -3512,6 +3607,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
 static PyMethodDef SpecfitFuns_methods[] = {
 	{"subacold",	SpecfitFuns_subacold,	METH_VARARGS},
 	{"subac",	    SpecfitFuns_subac,		METH_VARARGS},
+	{"subacfast",	    SpecfitFuns_subacfast,		METH_VARARGS},
     {"gauss",       SpecfitFuns_gauss,      METH_VARARGS},
     {"agauss",      SpecfitFuns_agauss,     METH_VARARGS},
     {"fastagauss",  SpecfitFuns_fastagauss, METH_VARARGS},
