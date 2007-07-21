@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,8 +28,6 @@ import sys
 if 'qt' not in sys.modules:
     try:
         from PyQt4.Qt import *
-        if qVersion() < '4.0.0':
-            print "WARNING: Using Qt %s version" % qt.QTVERSION
     except:
         from qt import *
 else:
