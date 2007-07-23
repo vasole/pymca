@@ -43,6 +43,8 @@ import ColormapDialog
 import spslut
 import os
 import PyMcaDirs
+import SpecfitFuns
+import time
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -52,6 +54,24 @@ if QWTVERSION4:
     raise "ImportError","QEDFStackWidget needs Qwt5"
 
 DEBUG = 0
+
+class SimpleThread(qt.QThread):
+    def __init__(self, function, *var, **kw):
+        if kw is None:kw={}
+        qt.QThread.__init__(self)
+        self._function = function
+        self._var      = var
+        self._kw       = kw
+        self._result   = None
+    
+    def run(self):
+        if DEBUG:
+            self._result = self._function(*self._var, **self._kw )
+        else:
+            try:
+                self._result = self._function(*self._var, **self._kw )
+            except:
+                self._result = ("Exception",) + sys.exc_info()
 
 class QSpecFileStack(SpecFileStack.SpecFileStack):
     def onBegin(self, nfiles):
@@ -184,13 +204,23 @@ class QEDFStackWidget(qt.QWidget):
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
                                                             colormap=True)
 
+        infotext  = 'Remove background from current stack\n'
+        infotext += 'WARNING: Very slow. Not recommended  unless\n'
+        infotext += '         applied to powder diffraction data.'
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+        self.backgroundButton = self.stackGraphWidget._addToolButton(\
+                                        self.backgroundIcon,
+                                        self.submitThread,
+                                        #self.subtractBackground,
+                                        infotext,
+                                        position = 6)
         if self.master:
             self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
             self.loadStackButton = self.stackGraphWidget._addToolButton(\
                                         self.loadIcon,
                                         self.loadSlaveStack,
                                         'Load another stack of same size',
-                                        position = 6)
+                                        position = 7)
         
         self.roiWindow = qt.QWidget(box)
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
@@ -213,6 +243,179 @@ class QEDFStackWidget(qt.QWidget):
             box.addWidget(self.stackWindow)
             box.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
+
+    def submitThread(self):
+        try:
+            threadResult = self._submitThread()
+            if type(threadResult) == type((1,)):
+                if len(threadResult):
+                    if threadResult[0] == "Exception":
+                        raise threadResult[1],threadResult[2]
+            self.originalPlot()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+
+            
+    def _submitThread(self, *var, **kw):
+        message = "Please Wait: Calculating background"
+        sthread = SimpleThread(self.subtractBackground,
+                                *var, **kw)        
+        sthread.start()
+        if QTVERSION < '3.0.0':
+            msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
+        elif QTVERSION < '4.0.0':
+            msg = qt.QDialog(self, "Please Wait", 1,qt.Qt.WStyle_NoBorder)
+        else:
+            if 0:
+                msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
+                msg.setModal(0)
+            else:
+                msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
+                msg.setModal(1)
+            msg.setWindowTitle("Please Wait")
+        layout = qt.QHBoxLayout(msg)
+        layout.setMargin(0)
+        layout.setSpacing(0)
+        l1 = qt.QLabel(msg)
+        l1.setFixedWidth(l1.fontMetrics().width('##'))
+        l2 = qt.QLabel(msg)
+        l2.setText("%s" % message)
+        l3 = qt.QLabel(msg)
+        l3.setFixedWidth(l3.fontMetrics().width('##'))
+        layout.addWidget(l1)
+        layout.addWidget(l2)
+        layout.addWidget(l3)
+        msg.show()
+        qt.qApp.processEvents()
+        t0 = time.time()
+        i = 0
+        ticks = ['-','\\', "|", "/","-","\\",'|','/']
+        if QTVERSION < '4.0.0':
+            while (sthread.running()):
+                i = (i+1) % 8
+                l1.setText(ticks[i])
+                l3.setText(" "+ticks[i])
+                qt.qApp.processEvents()
+                time.sleep(2)
+            msg.close(True)
+        else:
+            while (sthread.isRunning()):
+                i = (i+1) % 8
+                l1.setText(ticks[i])
+                l3.setText(" "+ticks[i])
+                qt.qApp.processEvents()
+                time.sleep(2)
+            msg.close()
+        result = sthread._result
+        del sthread
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
+        return result
+
+    def subtractBackground(self):
+        if 0:
+            fitconfig   = self.mcaWidget.advancedfit.mcafit.config
+            constant    = fitconfig['fit'].get('stripconstant', 1.0)
+            iterations  = int(fitconfig['fit'].get('stripiterations',4000)/2)
+            width       = fitconfig['fit'].get('stripwidth', 4)
+            filterwidth = fitconfig['fit'].get('stripfilterwidth', 10)
+            anchorsflag = fitconfig['fit'].get('stripanchorsflag', 0)
+        constant    = 1.0
+        iterations  = 800
+        width       = 6
+        anchorsflag = 0
+        if anchorsflag:
+            anchorslist = fitconfig['fit'].get('stripanchorslist', [0, 0, 0, 0])
+        else:
+            anchorslist = []
+        shape = self.stack.data.shape
+
+        a=Numeric.nonzero(self.__mcaData0.y[0]>0.0)
+        if len(a):
+            i0 = a[0]
+            i1 = a[-1] + 1
+        else:
+            i0 = 0
+            i1 = len(self.__mcaData0.y[0])
+
+        if DEBUG:t0 = time.time()
+        if self.fileIndex == 0:
+            if self.mcaIndex == 1:
+                for i in range(shape[0]):
+                    for j in range(shape[2]):
+                        data = self.stack.data[i, i0:i1, j]
+                        #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     iterations,
+                                                     width,
+                                                     anchorslist)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     250,
+                                                     1,
+                                                     anchorslist)
+                        self.stack.data[i, i0:i1, j] -= data
+            else:
+                for i in range(shape[0]):
+                    for j in range(shape[1]):
+                        data = self.stack.data[i, j, i0:i1]
+                        #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     iterations,
+                                                     width,
+                                                     anchorslist)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     250,
+                                                     1,
+                                                     anchorslist)                        
+                        self.stack.data[i, j, i0:i1] -= data
+        else:
+            #self.fileIndex = 2
+            if self.mcaIndex == 0:
+                for i in range(shape[1]):
+                    for j in range(shape[2]):
+                        data = self.stack.data[i0:i1, i, j]
+                        #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     iterations,
+                                                     width,
+                                                     anchorslist)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     250,
+                                                     1,
+                                                     anchorslist)                        
+                        self.stack.data[i0:i1, i, j] -= data
+            else:
+                for i in range(shape[0]):
+                    for j in range(shape[2]):
+                        data = self.stack.data[i, i0:i1, j]
+                        #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     iterations,
+                                                     width,
+                                                     anchorslist)
+                        data = SpecfitFuns.subacfast(data,
+                                                     constant,
+                                                     250,
+                                                     1,
+                                                     anchorslist)
+                        self.stack.data[i, i0:i1, j] -= data
+        if DEBUG:print "elapsed = ", time.time() - t0
+        #self.originalPlot()
 
     def loadSlaveStack(self):
         if self.slave is None:
@@ -661,14 +864,16 @@ class QEDFStackWidget(qt.QWidget):
                     self.otherIndex = 0
                 
         self.fileIndex = fileindex
-        
+        self.originalPlot()
+
+    def originalPlot(self):        
         #original image
-        self.__stackImageData = Numeric.sum(stack.data, self.mcaIndex)
+        self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
 
         #original ICR mca
         i = max(self.otherIndex, self.fileIndex)
         j = min(self.otherIndex, self.fileIndex)                
-        mcaData0 = Numeric.sum(Numeric.sum(stack.data, i), j)
+        mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j)
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -1100,7 +1305,8 @@ class QEDFStackWidget(qt.QWidget):
         self.rgbWidget.addImage(self.__ROIImageData,
                                 str(self.roiGraphWidget.graph.title().text()))
 
-        if self.rgbWidget.isHidden():
+        #if self.rgbWidget.isHidden():
+        if 1:
             if self.tab is None:
                 self.rgbWidget.show()
                 self.rgbWidget.raise_()
