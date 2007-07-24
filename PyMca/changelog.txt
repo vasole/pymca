@@ -17,7 +17,7 @@ VERSION 4.1.1
 
 - Corrected: Scan monitoring. Last scan point was not shown.
 
-- ROI markers patch applied to linux version.
+- CorrectedL Old ROI were not erased.
 
 VERSION 4.1.0
 
