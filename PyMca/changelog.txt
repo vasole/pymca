@@ -1,3 +1,22 @@
+VERSION 4.1.1
+
+- ROI Tool: Possibility to handle two stacks of same size simultaneously.
+  The interest is to combine fluorescence and diffraction maps.
+
+- Possibility to save ROI configuration directly from the table.
+
+- ROI Tool: Stack background removal implemented.
+  It may be of interest on diffraction maps. It is very slow and not worth
+  for fluorescence maps. The advanced fit is much better in this later case.
+
+- Linux: Add pymcaroitool to the binary package.
+  The ROI Tool can be started as an independent application and not only from
+  within PyMca.
+
+- Corrected: Simple fit combined with an energy calibration works.
+
+- Corrected: Scan monitoring. Last scan point was not shown.
+
 VERSION 4.1.0
 
 - Changed numerical library from Numeric to Numpy.

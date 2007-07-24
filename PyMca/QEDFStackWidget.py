@@ -146,7 +146,7 @@ class QEDFStackWidget(qt.QWidget):
                  mcawidget = None,
                  rgbwidget = None,
                  vertical = False,
-                 master = False):
+                 master = True):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -1304,12 +1304,11 @@ class QEDFStackWidget(qt.QWidget):
     def _addImageClicked(self):
         self.rgbWidget.addImage(self.__ROIImageData,
                                 str(self.roiGraphWidget.graph.title().text()))
-
         #if self.rgbWidget.isHidden():
         if 1:
             if self.tab is None:
-                self.rgbWidget.show()
-                self.rgbWidget.raise_()
+                if self.master:
+                    self.rgbWidget.show()
             else:
                 self.tab.setCurrentWidget(self.rgbWidget)
 
