@@ -1420,10 +1420,10 @@ class McaWidget(qt.QWidget):
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             fromdata = dict['roi']['from']
             todata   = dict['roi']['to']
-            if self.roimarkers[0] < 0:
+            if self.roimarkers[0] == -1:
                 self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
                                         label = 'ROI min')
-            if self.roimarkers[1] < 0:
+            if self.roimarkers[1] == -1:
                 self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
                                         label = 'ROI max')
             self.graph.setx1markerpos(self.roimarkers[0],fromdata)
