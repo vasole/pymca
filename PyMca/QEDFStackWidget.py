@@ -53,7 +53,35 @@ QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 if QWTVERSION4:
     raise "ImportError","QEDFStackWidget needs Qwt5"
 
+if QTVERSION > '4.0.0':
+    import PyQt4.Qwt5 as Qwt
+else:
+    import Qwt5 as Qwt
+
+
 DEBUG = 0
+
+class MyPicker(Qwt.QwtPlotPicker):
+    def __init__(self, *var):
+        Qwt.QwtPlotPicker.__init__(self, *var)
+        self.__text = Qwt.QwtText()
+        self.data = None
+
+    def trackerText(self, var):
+        d=self.invTransform(var)
+        if self.data is None:
+            self.__text.setText("%g, %g" % (d.x(), d.y()))
+        else:
+            limits = self.data.shape
+            x = round(d.x())
+            y = round(d.y())
+            if x < 0: x = 0
+            if y < 0: y = 0
+            x = min(int(x), limits[0]-1)
+            y = min(int(y), limits[1]-1)
+            z = self.data[x, y]
+            self.__text.setText("%d, %d, %.4g" % (x, y, z))
+        return self.__text
 
 class SimpleThread(qt.QThread):
     def __init__(self, function, *var, **kw):
@@ -230,6 +258,13 @@ class QEDFStackWidget(qt.QWidget):
                                                                 selection = True,
                                                                 colormap=True,
                                                                 imageicons=True)
+        self.roiGraphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
+                               Qwt.QwtPlot.yLeft,
+                               Qwt.QwtPicker.NoSelection,
+                               Qwt.QwtPlotPicker.CrossRubberBand,
+                               Qwt.QwtPicker.AlwaysOn,
+                               self.roiGraphWidget.graph.canvas())
+        self.roiGraphWidget.picker.setTrackerPen(qt.Qt.black)
         self.roiGraphWidget.graph.enableSelection(False)
         self.roiGraphWidget.graph.enableZoom(True)
         self.setROISelectionMode(False)
@@ -1045,10 +1080,18 @@ class QEDFStackWidget(qt.QWidget):
     def plotROIImage(self, update = True):
         if self.__ROIImageData is None:
             self.roiGraphWidget.graph.clear()
+            self.roiGraphWidget.picker.data = None
             return
         if update:
             self.getROIPixmapFromData()
             self.__ROIPixmap0 = self.__ROIPixmap.copy()
+            self.roiGraphWidget.picker.data = self.__ROIImageData
+            if self.__ROIColormap is None:
+                self.roiGraphWidget.picker.setTrackerPen(qt.Qt.black)
+            elif int(str(self.__ROIColormap[0])) > 1:     #color
+                self.roiGraphWidget.picker.setTrackerPen(qt.Qt.black)
+            else:
+                self.roiGraphWidget.picker.setTrackerPen(qt.Qt.green)
         if not self.roiGraphWidget.graph.yAutoScale:
             ylimits = self.roiGraphWidget.graph.getY1AxisLimits()
         if not self.roiGraphWidget.graph.xAutoScale:
