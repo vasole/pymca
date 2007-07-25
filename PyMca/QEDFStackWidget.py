@@ -598,7 +598,8 @@ class QEDFStackWidget(qt.QWidget):
     def _buildConnections(self, widget = None):
         if widget is None:
             self._buildAndConnectButtonBox()
-        self.connect(self.stackGraphWidget.colormapToolButton,
+        else:
+            self.connect(self.stackGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectStackColormap)
 
@@ -629,10 +630,6 @@ class QEDFStackWidget(qt.QWidget):
             self.connect(self.roiGraphWidget.hFlipToolButton,
                      qt.SIGNAL("clicked()"),
                      widget._hFlipIconSignal)
-
-            self.connect(self.roiGraphWidget.colormapToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget.selectROIColormap)
 
             self.connect(self.roiGraphWidget.selectionToolButton,
                          qt.SIGNAL("clicked()"),
