@@ -73,8 +73,8 @@ class MyPicker(Qwt.QwtPlotPicker):
             self.__text.setText("%g, %g" % (d.x(), d.y()))
         else:
             limits = self.data.shape
-            x = round(d.x())
-            y = round(d.y())
+            x = round(d.y())
+            y = round(d.x())
             if x < 0: x = 0
             if y < 0: y = 0
             x = min(int(x), limits[0]-1)
@@ -712,7 +712,7 @@ class QEDFStackWidget(qt.QWidget):
                          widget._stackGraphSignal)
                 self.connect(self.roiGraphWidget.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
-                         widget._roiGraphSignal)
+                         widget._otherWidgetRoiGraphSignal)
 
     def _stackGraphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
@@ -727,8 +727,11 @@ class QEDFStackWidget(qt.QWidget):
             self.stackGraphWidget.setInfoText("    X = %d Y = %d Z = %.4g" %\
                                                (y, x, z))
 
+    def _otherWidgetRoiGraphSignal(self, ddict):
+        self._roiGraphSignal(ddict, ownsignal = False)
 
-    def _roiGraphSignal(self, ddict):
+    def _roiGraphSignal(self, ddict, ownsignal = None):
+        if ownsignal is None:ownsignal = True
         if ddict['event'] == "MouseSelection":
             if ddict['xmin'] < ddict['xmax']:
                 xmin = ddict['xmin']
@@ -786,7 +789,7 @@ class QEDFStackWidget(qt.QWidget):
             return
 
         elif ddict['event'] == "MouseAt":
-            self._stackGraphSignal(ddict)
+            if ownsignal:self._stackGraphSignal(ddict)
             if self.__ROIBrushMode:
                 if self.roiGraphWidget.graph.isZoomEnabled():
                     return
