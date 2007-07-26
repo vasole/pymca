@@ -518,6 +518,7 @@ class QEDFStackWidget(qt.QWidget):
         if mode:
             self.roiGraphWidget.graph.enableSelection(True)
             self.__ROIBrushMode  = False
+            self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
             self.roiGraphWidget.graph.enableZoom(False)
             if QTVERSION < '4.0.0':
                 self.roiGraphWidget.selectionToolButton.setState(qt.QButton.On)
@@ -1457,18 +1458,21 @@ class QEDFStackWidget(qt.QWidget):
         if DEBUG:print "_setROIEraseSelectionMode"
         self.__ROIEraseMode = True
         self.__ROIBrushMode = True
+        self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
         self.roiGraphWidget.graph.enableSelection(False)
 
     def _setROIRectSelectionMode(self):
         if DEBUG:print "_setROIRectSelectionMode"
         self.__ROIEraseMode = False
         self.__ROIBrushMode = False
+        self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
         self.roiGraphWidget.graph.enableSelection(True)
         
     def _setROIBrushSelectionMode(self):
         if DEBUG:print "_setROIBrushSelectionMode"
         self.__ROIEraseMode = False
         self.__ROIBrushMode = True
+        self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
         self.roiGraphWidget.graph.enableSelection(False)
         
     def _setROIBrush(self):
