@@ -196,6 +196,7 @@ class QEDFStackWidget(qt.QWidget):
         self._y1AxisInverted = False
         self.__stackImageData = None
         self.__ROIImageData  = None
+        self.__ROIImageBackground  = None
         self.__stackColormap = None
         self.__stackColormapDialog = None
         self.__ROIColormap       = None
@@ -234,7 +235,7 @@ class QEDFStackWidget(qt.QWidget):
 
         infotext  = 'Remove background from current stack\n'
         infotext += 'WARNING: Very slow. Not recommended  unless\n'
-        infotext += '         applied to powder diffraction data.'
+        infotext += '         you really need a better contrast.'
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
         self.backgroundButton = self.stackGraphWidget._addToolButton(\
                                         self.backgroundIcon,
@@ -258,6 +259,17 @@ class QEDFStackWidget(qt.QWidget):
                                                                 selection = True,
                                                                 colormap=True,
                                                                 imageicons=True)
+        if QTVERSION > '4.0.0':
+            infotext  = 'Toggle background subtraction from current image\n'
+            infotext += 'subtracting a straight line between the ROI limits.'
+            self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+            self.roiBackgroundButton = self.roiGraphWidget._addToolButton(\
+                                        self.roiBackgroundIcon,
+                                        self.roiSubtractBackground,
+                                        infotext,
+                                        toggle = True,
+                                        state = False,
+                                        position = 6)
         self.roiGraphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
                                Qwt.QwtPlot.yLeft,
                                Qwt.QwtPicker.NoSelection,
@@ -364,8 +376,8 @@ class QEDFStackWidget(qt.QWidget):
             filterwidth = fitconfig['fit'].get('stripfilterwidth', 10)
             anchorsflag = fitconfig['fit'].get('stripanchorsflag', 0)
         constant    = 1.0
-        iterations  = 800
-        width       = 6
+        iterations  = 1000
+        width       = 8
         anchorsflag = 0
         if anchorsflag:
             anchorslist = fitconfig['fit'].get('stripanchorslist', [0, 0, 0, 0])
@@ -452,6 +464,17 @@ class QEDFStackWidget(qt.QWidget):
         if DEBUG:print "elapsed = ", time.time() - t0
         #self.originalPlot()
 
+    def roiSubtractBackground(self):
+        if self.__ROIImageData is None: return
+        if self.__ROIImageBackground is None: return
+        if self.roiBackgroundButton.isChecked():
+            self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
+            self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title + " Net")
+        else:
+            self.__ROIImageData =  self.__ROIImageData + self.__ROIImageBackground
+            self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title)
+        self.plotROIImage(update = True)
+
     def loadSlaveStack(self):
         if self.slave is None:
             filelist = self._getStackOfFiles()
@@ -499,6 +522,7 @@ class QEDFStackWidget(qt.QWidget):
             if QTVERSION > '4.0.0':
                 self.mcaWidget.graphBox.setMinimumWidth(0.5 * qt.QWidget.sizeHint(self).width())
                 self.tab.setMaximumHeight(1.3 * qt.QWidget.sizeHint(self).height())
+                self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
             self.tab.addTab(self.mcaWidget, "MCA")
             if QTVERSION > '4.0.0':
                 #I have not implemented it for Qt3
@@ -1016,7 +1040,9 @@ class QEDFStackWidget(qt.QWidget):
     def _mcaWidgetSignal(self, ddict):
         if not self.__ROIConnected:return
         if ddict['event'] == "ROISignal":
-            self.roiGraphWidget.graph.setTitle("%s" % ddict["name"])
+            title = "%s" % ddict["name"]
+            self.roiGraphWidget.graph.setTitle(title)
+            self.roiGraphWidget.__title = title
             if (ddict["name"] == "ICR"):                
                 i1 = 0
                 i2 = self.stack.data.shape[self.mcaIndex]
@@ -1052,16 +1078,25 @@ class QEDFStackWidget(qt.QWidget):
                 i2 = min(i2+1, self.stack.data.shape[self.mcaIndex])
             if self.fileIndex == 0:
                 if self.mcaIndex == 1:
+                    background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
                 else:
+                    background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
             else:
                 #self.fileIndex = 2
                 if self.mcaIndex == 0:
+                    background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,:,:],0)
                 else:
+                    background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
-
+            self.__ROIImageBackground = background
+            if self.roiBackgroundButton.isChecked():
+                self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
+                self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title + " Net")
+            else:
+                self.__ROIImageData =  self.__ROIImageData + self.__ROIImageBackground
             if self.__ROIColormapDialog is not None:
                 a = Numeric.ravel(self.__ROIImageData)
                 minData = min(a)
