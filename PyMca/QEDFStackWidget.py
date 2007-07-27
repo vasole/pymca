@@ -197,6 +197,8 @@ class QEDFStackWidget(qt.QWidget):
         self.__stackImageData = None
         self.__ROIImageData  = None
         self.__ROIImageBackground  = None
+        self.__stackBackgroundCounter = 0
+        self.__stackBackgroundAnchors = None
         self.__stackColormap = None
         self.__stackColormapDialog = None
         self.__ROIColormap       = None
@@ -233,9 +235,13 @@ class QEDFStackWidget(qt.QWidget):
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
                                                             colormap=True)
 
-        infotext  = 'Remove background from current stack\n'
-        infotext += 'WARNING: Very slow. Not recommended  unless\n'
-        infotext += '         you really need a better contrast.'
+        infotext  = 'Remove background from current stack using current\n'
+        infotext += 'ROI markers as anchors.\n'
+        infotext += 'WARNING: Very slow. 0.01 to 0.02 seconds per pixel.\n'
+        infotext += 'Not recommended  unless you really need a  better\n'
+        infotext += 'contrast to place your ROIs and you know what you\n'
+        infotext += 'are doing.\n'
+        infotext += 'The ROI background subtraction is more efficient.\n'
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
         self.backgroundButton = self.stackGraphWidget._addToolButton(\
                                         self.backgroundIcon,
@@ -377,10 +383,15 @@ class QEDFStackWidget(qt.QWidget):
             anchorsflag = fitconfig['fit'].get('stripanchorsflag', 0)
         constant    = 1.0
         iterations  = 1000
-        width       = 8
-        anchorsflag = 0
-        if anchorsflag:
-            anchorslist = fitconfig['fit'].get('stripanchorslist', [0, 0, 0, 0])
+        if self.__stackBackgroundCounter == 0:
+            width       = 8
+        elif self.__stackBackgroundCounter == 1:
+            width       = 4
+        else:
+            width       = 2
+        self.__stackBackgroundCounter += 1
+        if self.__stackBackgroundAnchors is not None:
+            anchorslist = self.__stackBackgroundAnchors
         else:
             anchorslist = []
         shape = self.stack.data.shape
@@ -407,7 +418,7 @@ class QEDFStackWidget(qt.QWidget):
                                                      anchorslist)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
-                                                     250,
+                                                     500,
                                                      1,
                                                      anchorslist)
                         self.stack.data[i, i0:i1, j] -= data
@@ -423,7 +434,7 @@ class QEDFStackWidget(qt.QWidget):
                                                      anchorslist)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
-                                                     250,
+                                                     500,
                                                      1,
                                                      anchorslist)                        
                         self.stack.data[i, j, i0:i1] -= data
@@ -441,7 +452,7 @@ class QEDFStackWidget(qt.QWidget):
                                                      anchorslist)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
-                                                     250,
+                                                     500,
                                                      1,
                                                      anchorslist)                        
                         self.stack.data[i0:i1, i, j] -= data
@@ -457,7 +468,7 @@ class QEDFStackWidget(qt.QWidget):
                                                      anchorslist)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
-                                                     250,
+                                                     500,
                                                      1,
                                                      anchorslist)
                         self.stack.data[i, i0:i1, j] -= data
@@ -1040,6 +1051,7 @@ class QEDFStackWidget(qt.QWidget):
     def _mcaWidgetSignal(self, ddict):
         if not self.__ROIConnected:return
         if ddict['event'] == "ROISignal":
+            self.__stackBackgroundAnchors = None
             title = "%s" % ddict["name"]
             self.roiGraphWidget.graph.setTitle(title)
             self.roiGraphWidget.__title = title
@@ -1092,6 +1104,7 @@ class QEDFStackWidget(qt.QWidget):
                     background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
             self.__ROIImageBackground = background
+            self.__stackBackgroundAnchors = [i1, i2-1]
             if self.roiBackgroundButton.isChecked():
                 self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
                 self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title + " Net")
