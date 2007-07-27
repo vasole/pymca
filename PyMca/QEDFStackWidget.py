@@ -80,7 +80,7 @@ class MyPicker(Qwt.QwtPlotPicker):
             x = min(int(x), limits[0]-1)
             y = min(int(y), limits[1]-1)
             z = self.data[x, y]
-            self.__text.setText("%d, %d, %.4g" % (x, y, z))
+            self.__text.setText("%d, %d, %.4g" % (y, x, z))
         return self.__text
 
 class SimpleThread(qt.QThread):
@@ -748,7 +748,8 @@ class QEDFStackWidget(qt.QWidget):
                          widget._stackGraphSignal)
                 self.connect(self.roiGraphWidget.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
-                         widget._otherWidgetRoiGraphSignal)
+                         widget._roiGraphSignal)
+                         #widget._otherWidgetRoiGraphSignal)
 
     def _stackGraphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
