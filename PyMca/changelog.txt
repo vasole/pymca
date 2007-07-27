@@ -1,3 +1,13 @@
+VERSION 4.2.0
+
+- ROI Imaging Tool: Possibility to calculate net ROI images.
+
+- ROI Imaging Tool: Minimum width was a problem on dual screen displays.
+
+- ROI Imaging Tool: When using two stacks, the colormaps where coupled.
+
+- Main MCA Window old ROI markers were not erased under some conditions.
+
 VERSION 4.1.1
 
 - ROI Tool: Possibility to handle two stacks of same size simultaneously.
@@ -16,8 +26,6 @@ VERSION 4.1.1
 - Corrected: Simple fit combined with an energy calibration works.
 
 - Corrected: Scan monitoring. Last scan point was not shown.
-
-- CorrectedL Old ROI were not erased.
 
 VERSION 4.1.0
 

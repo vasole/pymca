@@ -305,6 +305,8 @@ class QEDFStackWidget(qt.QWidget):
                     if threadResult[0] == "Exception":
                         raise threadResult[1],threadResult[2]
             self.originalPlot()
+            #self.mcaWidget.graph.newcurve("background", Numeric.arange(len(self.b)), self.b)
+            #self.mcaWidget.graph.replot()
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -396,20 +398,12 @@ class QEDFStackWidget(qt.QWidget):
             anchorslist = []
         shape = self.stack.data.shape
 
-        a=Numeric.nonzero(self.__mcaData0.y[0]>0.0)
-        if len(a):
-            i0 = a[0]
-            i1 = a[-1] + 1
-        else:
-            i0 = 0
-            i1 = len(self.__mcaData0.y[0])
-
         if DEBUG:t0 = time.time()
         if self.fileIndex == 0:
             if self.mcaIndex == 1:
                 for i in range(shape[0]):
                     for j in range(shape[2]):
-                        data = self.stack.data[i, i0:i1, j]
+                        data = self.stack.data[i, :, j]
                         #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
@@ -421,11 +415,12 @@ class QEDFStackWidget(qt.QWidget):
                                                      500,
                                                      1,
                                                      anchorslist)
-                        self.stack.data[i, i0:i1, j] -= data
+                        self.stack.data[i, :, j] -= data
             else:
+                #self.b = 0 *  self.stack.data[0, 0, :]
                 for i in range(shape[0]):
                     for j in range(shape[1]):
-                        data = self.stack.data[i, j, i0:i1]
+                        data = self.stack.data[i, j, :]
                         #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
@@ -437,13 +432,14 @@ class QEDFStackWidget(qt.QWidget):
                                                      500,
                                                      1,
                                                      anchorslist)                        
-                        self.stack.data[i, j, i0:i1] -= data
+                        self.stack.data[i, j, :] -= data
+                        #self.b += data
         else:
             #self.fileIndex = 2
             if self.mcaIndex == 0:
                 for i in range(shape[1]):
                     for j in range(shape[2]):
-                        data = self.stack.data[i0:i1, i, j]
+                        data = self.stack.data[:, i, j]
                         #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
@@ -455,11 +451,11 @@ class QEDFStackWidget(qt.QWidget):
                                                      500,
                                                      1,
                                                      anchorslist)                        
-                        self.stack.data[i0:i1, i, j] -= data
+                        self.stack.data[:, i, j] -= data
             else:
                 for i in range(shape[0]):
                     for j in range(shape[2]):
-                        data = self.stack.data[i, i0:i1, j]
+                        data = self.stack.data[i, :, j]
                         #data = SpecfitFuns.SavitskyGolay(data, filterwidth)
                         data = SpecfitFuns.subacfast(data,
                                                      constant,
@@ -471,7 +467,7 @@ class QEDFStackWidget(qt.QWidget):
                                                      500,
                                                      1,
                                                      anchorslist)
-                        self.stack.data[i, i0:i1, j] -= data
+                        self.stack.data[i, :, j] -= data
         if DEBUG:print "elapsed = ", time.time() - t0
         #self.originalPlot()
 
