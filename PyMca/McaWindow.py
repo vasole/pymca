@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.46 $"
+__revision__ = "$Revision: 1.47 $"
 import sys
 import time
 import QtBlissGraph
@@ -882,7 +882,10 @@ class McaWidget(qt.QWidget):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Please Select an active curve")
-                    msg.exec_loop()
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
                     return
                 else:
                     info,x, y = self.getinfodatafromlegend(legend)
