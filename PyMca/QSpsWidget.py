@@ -190,16 +190,16 @@ class SPSXiaArrayWidget(qt.QWidget):
         self.rows= rows
         self.cols= cols
 
-        if dets is None or len(dets)!=rows:
+        if dets is None or (len(dets)!=(rows-1)):
             dets= range(self.rows)
 
         self.detList.clear()
         if QTVERSION < '4.0.0':
             for idx in range(1, self.rows):
-                self.detList.insertItem("Detector %d"%dets[idx])
+                self.detList.insertItem("Detector %d"%dets[idx-1])
         else:
             for idx in range(1, self.rows):
-                self.detList.addItem("Detector %d"%dets[idx])
+                self.detList.addItem("Detector %d"%dets[idx-1])
 
     def getSelection(self):
         selection= []
