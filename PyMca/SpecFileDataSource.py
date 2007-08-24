@@ -63,6 +63,7 @@ class SpecFileDataSource:
         self.sourceName   = nameInput
         self.sourceType   = SOURCE_TYPE
         self.__sourceNameList = nameList
+        self.__source_info_cached = None
         self.refresh()
                 
     def refresh(self):
@@ -111,6 +112,7 @@ class SpecFileDataSource:
         source_info["NumPts"]=num_pts
         source_info["Commands"]= commands
         source_info["ScanType"]= map(self.__getScanType, num_pts, num_mca, commands)
+        self.__source_info_cached = source_info
         return source_info
 
     def __getScanList(self):
@@ -340,7 +342,12 @@ class SpecFileDataSource:
         if key_type=="scan": scan_key= key
         elif key_type=="mca": (scan_key, mca_no)=self.__getMcaPars(key)
 
-        sourcekeys = self.getSourceInfo()['KeyList']
+        if self.__source_info_cached is None:
+            sourcekeys = self.getSourceInfo()['KeyList']
+        else:
+            sourcekeys = self.__source_info_cached['KeyList']
+            if scan_key not in sourcekeys:
+                sourcekeys = self.getSourceInfo()['KeyList']
         if scan_key not in sourcekeys:
             raise KeyError,"Key %s not in source keys" % key
 
