@@ -1806,12 +1806,18 @@ class QtBlissGraph(qwt.QwtPlot):
             self.replot()
 
     if QWTVERSION4:
+        def hideGrid(self):
+            self.removeGrid()
+
         def removeGrid(self):
             pass
 
         def showGrid(self):
             pass
     else:
+        def hideGrid(self):
+            self.removeGrid()
+
         def removeGrid(self):
             if self.grid is not None:
                 self.grid.detach()
@@ -2933,16 +2939,31 @@ class TimeScaleDraw(qwt.QwtScaleDraw):
             m = (value % 3600) / 60
             s = value - 3600*h - 60*m
 
-
             if h == 0 and m == 0:
-                return '%ds' % s
+                r='%ds' % s
+                if QWTVERSION4:
+                  return r
+                else:
+                  return qwt.QwtText(r)
             else:
                 if h == 0:
-                    return '%dm%02ds' % (m, s)
+                    r='%dm%02ds' % (m, s)
+                    if QWTVERSION4:
+                      return r
+                    else:
+                      return qwt.QwtText(r)
                 else:
-                    return '%dh%02dm%02ds' % (h, m, s)
+                    r = '%dh%02dm%02ds' % (h, m, s)
+                    if QWTVERSION4:
+                      return r
+                    else:
+                      return qwt.QwtText(r)
         else:
-            return ''
+            if QWTVERSION4:
+              return ''
+            else:
+              return qwt.QwtText('')
+
 
 def make0():
     demo = QtBlissGraphContainer(uselegendmenu=1)
