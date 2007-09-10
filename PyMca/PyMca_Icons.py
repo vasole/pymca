@@ -253,6 +253,30 @@ sigma=[
 "................"
 ]    
 
+
+normalize16=[
+"16 16 2 1",
+"  c none",
+". c blue",
+"                ",
+" ...            ",
+"  .    .     .  ",
+"  .   .  . .  . ",
+"  .   .   .   . ",
+"  .   .  . .  . ",
+" ...   .     .  ",
+"                ",
+" .............. ",
+"                ",
+"     .   .      ",
+"     ..  .      ",
+"     . . .      ",
+"     .  ..      ",
+"     .   .      ",
+"                "
+]
+
+
 rgb=[
 "23 23 107 2",
 "   c #0134013ffeec4048",
@@ -2439,7 +2463,7 @@ peaksearch = [
 " ++++  ++  + + +"
 ]
 	
-reload = [
+reload16 = [
 "16 16 51 1",
 "  c #000000",
 ". c #040d00",
@@ -3121,7 +3145,8 @@ IconDict= {
 	"fileprint": 	fileprint,
 	"spec":		spec,
 	"normal":	normal,
-	"reload":	reload,
+	"normalize16":	normalize16,
+	"reload":	reload16,
 	"window_fullscreen":	window_fullscreen,
 	"window_new":	window_new,
 	"window_nofullscreen":	window_nofullscreen,

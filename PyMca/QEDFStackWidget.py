@@ -235,6 +235,18 @@ class QEDFStackWidget(qt.QWidget):
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
                                                             colormap=True)
 
+        infotext  = 'If checked, spectra will be added normalized to the number\n'
+        infotext += 'of pixels. Be carefull if you are preparing a batch and you\n'
+        infotext += 'fit the normalized spectra because the data in the batch will\n'
+        infotext += 'have a different weight because they are not normalized.'
+        self.normalizeIcon = qt.QIcon(qt.QPixmap(IconDict["normalize16"]))  
+        self.normalizeButton = self.stackGraphWidget._addToolButton(\
+                                        self.normalizeIcon,
+                                        self.normalizeIconChecked,
+                                        infotext,
+                                        toggle = True,
+                                        state = False,
+                                        position = 6)
         infotext  = 'Remove background from current stack using current\n'
         infotext += 'ROI markers as anchors.\n'
         infotext += 'WARNING: Very slow. 0.01 to 0.02 seconds per pixel.\n'
@@ -248,14 +260,14 @@ class QEDFStackWidget(qt.QWidget):
                                         self.submitThread,
                                         #self.subtractBackground,
                                         infotext,
-                                        position = 6)
+                                        position = 7)
         if self.master:
             self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
             self.loadStackButton = self.stackGraphWidget._addToolButton(\
                                         self.loadIcon,
                                         self.loadSlaveStack,
                                         'Load another stack of same size',
-                                        position = 7)
+                                        position = 8)
         
         self.roiWindow = qt.QWidget(box)
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
@@ -296,6 +308,9 @@ class QEDFStackWidget(qt.QWidget):
             box.addWidget(self.stackWindow)
             box.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
+
+    def normalizeIconChecked(self):
+        pass
 
     def submitThread(self):
         try:
@@ -1025,7 +1040,11 @@ class QEDFStackWidget(qt.QWidget):
     def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
         if action is None:action = "ADD"
         if key is None: key = "SUM"
-        if legend is None: legend = "EDF Stack SUM"
+        if legend is None:
+            legend = "EDF Stack SUM"
+            if self.normalizeButton.isChecked():
+                npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]
+                legend += "/%d" % npixels
         sel = {}
         sel['SourceName'] = "EDF Stack"
         sel['Key']        =  key
@@ -1133,6 +1152,7 @@ class QEDFStackWidget(qt.QWidget):
             self.roiGraphWidget.picker.data = None
             return
         if update:
+            self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
             self.getROIPixmapFromData()
             self.__ROIPixmap0 = self.__ROIPixmap.copy()
             self.roiGraphWidget.picker.data = self.__ROIImageData
@@ -1425,17 +1445,32 @@ class QEDFStackWidget(qt.QWidget):
         if action is None:action = "ADD"
         #original ICR mca
         if self.__stackImageData is None: return
+        mcaData = None
         if self.__selectionMask is None:
-            dataObject = self.__mcaData0
+            if self.normalizeButton.isChecked():
+                npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]
+                dataObject = DataObject.DataObject()
+                dataObject.info.update(self.__mcaData0.info)
+                dataObject.x  = [self.__mcaData0.x[0]]
+                dataObject.y =  [self.__mcaData0.y[0] / npixels];
+            else:
+                dataObject = self.__mcaData0
             self.sendMcaSelection(dataObject, action = action)
             return
-        if len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) == 0:
-            dataObject = self.__mcaData0
+        npixels = len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) 
+        if npixels == 0:
+            if self.normalizeButton.isChecked():
+                npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]
+                dataObject = DataObject.DataObject()
+                dataObject.info.update(self.__mcaData0.info)
+                dataObject.x  = [self.__mcaData0.x[0]]
+                dataObject.y =  [self.__mcaData0.y[0] / npixels];
+            else:
+                dataObject = self.__mcaData0
             self.sendMcaSelection(dataObject, action = action)
             return
 
         mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
-
         if self.fileIndex == 2:
             if self.mcaIndex == 0:
                 for i in range(len(mcaData)):
@@ -1450,6 +1485,8 @@ class QEDFStackWidget(qt.QWidget):
             else:
                 for i in range(len(mcaData)):
                    mcaData[i] = sum(sum(self.stack.data[:,:,i] * self.__selectionMask[:,:]))
+        if self.normalizeButton.isChecked():
+            mcaData = mcaData/npixels
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -1462,6 +1499,8 @@ class QEDFStackWidget(qt.QWidget):
         dataObject.y = [mcaData]
 
         legend = self.__getLegend()
+        if self.normalizeButton.isChecked():
+            legend += "/%d" % npixels
         self.sendMcaSelection(dataObject,
                           key = "Selection",
                           legend =legend,
@@ -1477,6 +1516,13 @@ class QEDFStackWidget(qt.QWidget):
         #send a dummy object
         dataObject = DataObject.DataObject()
         legend = self.__getLegend()
+        if self.normalizeButton.isChecked():
+            legend += "/"
+            curves = self.mcaWidget.graph.curves.keys()
+            for curve in curves:
+                if curve.startswith(legend):
+                    legend = curve
+                    break
         self.sendMcaSelection(dataObject, legend = legend, action = "REMOVE")
     
     def _replaceMcaClicked(self):
