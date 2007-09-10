@@ -480,6 +480,10 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self.__ROIImageData =  self.__ROIImageData + self.__ROIImageBackground
             self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title)
+        if self.__ROIColormapDialog is not None:
+            minData = self.__ROIImageData.min()
+            maxData = self.__ROIImageData.max()
+            self.__ROIColormapDialog.setDataMinMax(minData, maxData)
         self.plotROIImage(update = True)
 
     def loadSlaveStack(self):
@@ -937,7 +941,7 @@ class QEDFStackWidget(qt.QWidget):
     def originalPlot(self):        
         #original image
         self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
-
+        
         #original ICR mca
         i = max(self.otherIndex, self.fileIndex)
         j = min(self.otherIndex, self.fileIndex)                
@@ -1106,11 +1110,11 @@ class QEDFStackWidget(qt.QWidget):
                 self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
                 self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title + " Net")
             else:
-                self.__ROIImageData =  self.__ROIImageData + self.__ROIImageBackground
+                pass
+                #self.__ROIImageData =  self.__ROIImageData
             if self.__ROIColormapDialog is not None:
-                a = Numeric.ravel(self.__ROIImageData)
-                minData = min(a)
-                maxData = max(a)
+                minData = self.__ROIImageData.min()
+                maxData = self.__ROIImageData.max()
                 self.__ROIColormapDialog.setDataMinMax(minData, maxData)
     
             self._resetSelection()
