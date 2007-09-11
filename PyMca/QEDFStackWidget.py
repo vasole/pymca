@@ -960,7 +960,7 @@ class QEDFStackWidget(qt.QWidget):
         #original ICR mca
         i = max(self.otherIndex, self.fileIndex)
         j = min(self.otherIndex, self.fileIndex)                
-        mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j)
+        mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j) * 1.0
 
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -1446,7 +1446,7 @@ class QEDFStackWidget(qt.QWidget):
         mcaData = None
         if self.__selectionMask is None:
             if self.normalizeButton.isChecked():
-                npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]
+                npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self.__mcaData0.info)
                 dataObject.x  = [self.__mcaData0.x[0]]
@@ -1455,7 +1455,7 @@ class QEDFStackWidget(qt.QWidget):
                 dataObject = self.__mcaData0
             self.sendMcaSelection(dataObject, action = action)
             return
-        npixels = len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) 
+        npixels = len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) * 1.0
         if npixels == 0:
             if self.normalizeButton.isChecked():
                 npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]

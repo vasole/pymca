@@ -160,10 +160,22 @@ class EDFStack(DataObject.DataObject):
                         self.incrProgressBar += 1
                 else:
                     #this is the common case
-                    self.data = Numeric.zeros((self.nbFiles,
+                    try:
+                        self.data = Numeric.zeros((self.nbFiles,
                                                arrRet.shape[0],
                                                arrRet.shape[1]),
                                                arrRet.dtype.char)
+                    except:
+                        try:
+                            self.data = Numeric.zeros((self.nbFiles,
+                                               arrRet.shape[0],
+                                               arrRet.shape[1]),
+                                               Numeric.Float32)
+                        except:
+                            self.data = Numeric.zeros((self.nbFiles,
+                                               arrRet.shape[0],
+                                               arrRet.shape[1]),
+                                               Numeric.Int16)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
