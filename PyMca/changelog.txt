@@ -1,3 +1,13 @@
+VERSION 4.2.1
+
+- ROI image: Possibility to normalize spectra to number of pixels.
+
+- Speed up access to specfiles containing many scans.
+
+- Correct a bug that was making the calculation of net ROI images useless.
+
+- Correct ESRF specific data acquisition monitoring problems.
+
 VERSION 4.2.0
 
 - ROI Imaging Tool: Possibility to calculate net ROI images.

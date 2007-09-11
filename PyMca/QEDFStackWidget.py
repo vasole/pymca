@@ -1300,9 +1300,8 @@ class QEDFStackWidget(qt.QWidget):
 
 
     def __initStackColormapDialog(self):
-        a = Numeric.ravel(self.__stackImageData)
-        minData = min(a)
-        maxData = max(a)
+        minData = self.__stackImageData.min()
+        maxData = self.__stackImageData.max()
         self.__stackColormapDialog = ColormapDialog.ColormapDialog()
         self.__stackColormapDialog.colormapIndex  = self.__stackColormapDialog.colormapList.index("Temperature")
         self.__stackColormapDialog.colormapString = "Temperature"
@@ -1363,9 +1362,8 @@ class QEDFStackWidget(qt.QWidget):
 
 
     def __initROIColormapDialog(self):
-        a = Numeric.ravel(self.__ROIImageData)
-        minData = min(a)
-        maxData = max(a)
+        minData = self.__ROIImageData.min()
+        maxData = self.__ROIImageData.max()
         self.__ROIColormapDialog = ColormapDialog.ColormapDialog()
         self.__ROIColormapDialog.colormapIndex  = self.__ROIColormapDialog.colormapList.index("Temperature")
         self.__ROIColormapDialog.colormapString = "Temperature"

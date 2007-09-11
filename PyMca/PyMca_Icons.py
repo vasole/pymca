@@ -2463,7 +2463,7 @@ peaksearch = [
 " ++++  ++  + + +"
 ]
 	
-reload16 = [
+reload = [
 "16 16 51 1",
 "  c #000000",
 ". c #040d00",
@@ -3146,7 +3146,7 @@ IconDict= {
 	"spec":		spec,
 	"normal":	normal,
 	"normalize16":	normalize16,
-	"reload":	reload16,
+	"reload":	reload,
 	"window_fullscreen":	window_fullscreen,
 	"window_new":	window_new,
 	"window_nofullscreen":	window_nofullscreen,
