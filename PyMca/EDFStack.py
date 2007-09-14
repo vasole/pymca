@@ -28,6 +28,7 @@ import DataObject
 import EdfFile
 import EdfFileDataSource
 import numpy.oldnumeric as Numeric
+import numpy
 import sys
 import os
 SOURCE_TYPE = "EdfFileStack"
@@ -160,22 +161,48 @@ class EDFStack(DataObject.DataObject):
                         self.incrProgressBar += 1
                 else:
                     #this is the common case
-                    try:
-                        self.data = Numeric.zeros((self.nbFiles,
-                                               arrRet.shape[0],
-                                               arrRet.shape[1]),
-                                               arrRet.dtype.char)
-                    except:
-                        try:
-                            self.data = Numeric.zeros((self.nbFiles,
-                                               arrRet.shape[0],
-                                               arrRet.shape[1]),
-                                               Numeric.Float32)
-                        except:
-                            self.data = Numeric.zeros((self.nbFiles,
-                                               arrRet.shape[0],
-                                               arrRet.shape[1]),
-                                               Numeric.Int16)
+                    if arrRet.dtype.char == 'd':
+                        bytefactor = 8
+                    else:
+                        bytefactor = 4
+                        
+                    needed_ = self.nbFiles * \
+                                   arrRet.shape[0] *\
+                                   arrRet.shape[1] * bytefactor/(1024*1024)
+                    if (needed_ > 2000) and (sys.platform == 'linux2'):
+                        swapfile = '/tmp/pymcaroitool.dat'
+                        swapdir = '/buffer/%s1' %  os.getenv('HOSTNAME')
+                        if os.path.isdir(swapdir):
+                            swapfile = '/buffer/%s1/pymcaroitool.dat' %\
+                                            os.getenv('HOSTNAME')
+                        print "needed megabytes= ", needed_
+                        print "using a buffer: %s" % swapfile
+                        if os.path.exists(swapfile):
+                            os.remove(swapfile)
+
+                        self.data = numpy.memmap(swapfile,
+                                    shape= (self.nbFiles, arrRet.shape[0],
+                                            arrRet.shape[1]),
+                                    dtype= arrRet.dtype.char,
+                                    mode='w+')
+                        os.system(('chmod 777 %s' % swapfile))
+                    else:
+                            try:
+                                self.data = Numeric.zeros((self.nbFiles,
+                                                       arrRet.shape[0],
+                                                       arrRet.shape[1]),
+                                                       arrRet.dtype.char)
+                            except:
+                                try:
+                                    self.data = Numeric.zeros((self.nbFiles,
+                                                       arrRet.shape[0],
+                                                       arrRet.shape[1]),
+                                                       Numeric.Float32)
+                                except:
+                                    self.data = Numeric.zeros((self.nbFiles,
+                                                       arrRet.shape[0],
+                                                       arrRet.shape[1]),
+                                                       Numeric.Int16)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
