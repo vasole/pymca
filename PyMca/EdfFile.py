@@ -284,7 +284,7 @@ class  EdfFile:
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
             self.File.seek(self.Images[Index].DataPosition,0)
-            datatype = self.__GetDefaultNumpyType__(self.Images[Index].DataType)
+            datatype = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
             try:
                 datasize = self.__GetSizeNumpyType__(datatype)
             except TypeError:
@@ -302,14 +302,16 @@ class  EdfFile:
                              self.Images[Index].Dim2 * datasize
                 Data = numpy.fromstring(self.File.read(sizeToRead),
                             datatype)
+                #print "datatype = ",datatype
                 #print "Data.type = ", Data.dtype.char
                 #print "self.Images[Index].DataType ", self.Images[Index].DataType
-                #print Data.shape
-                #print sizeToRead
-                #print len(Data)
+                #print "Data.shape",Data.shape
+                #print "datasize = ",datasize
+                #print "sizeToRead ",sizeToRead 
+                #print "lenData = ", len(Data)
                 Data = numpy.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
         elif fastedf and CAN_USE_FASTEDF:
-            type= self.__GetDefaultNumpyType__(self.Images[Index].DataType)
+            type= self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
             size_pixel=self.__GetSizeNumpyType__(type)
             Data=Numpy.array([],type)
             if self.Images[Index].NumDim==1:
@@ -347,7 +349,7 @@ class  EdfFile:
 
         else:
             if fastedf:print "I could not use fast routines"
-            type= self.__GetDefaultNumpyType__(self.Images[Index].DataType)
+            type= self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
             size_pixel=self.__GetSizeNumpyType__(type)
             Data=numpy.array([],type)
             if self.Images[Index].NumDim==1:
@@ -409,7 +411,7 @@ class  EdfFile:
         if Index < 0 or Index >= self.NumImages: raise "EdfFile: Index out of limit"
         if len(Position)!= self.Images[Index].NumDim: raise "EdfFile: coordinate with wrong dimension "
         
-        size_pixel=self.__GetSizeNumpyType__(self.__GetDefaultNumpyType__(self.Images[Index].DataType))
+        size_pixel=self.__GetSizeNumpyType__(self.__GetDefaultNumpyType__(self.Images[Index].DataType), index= Index)
         offset=Position[0]*size_pixel
         if self.Images[Index].NumDim>1:
             size_row=size_pixel * self.Images[Index].Dim1
@@ -418,7 +420,7 @@ class  EdfFile:
                 size_img=size_row * self.Images[Index].Dim2
                 offset=offset+ (Position[2]* size_img)
         self.File.seek(self.Images[Index].DataPosition + offset,0)
-        Data = Numpy.fromstring(self.File.read(size_pixel), self.__GetDefaultNumpyType__(self.Images[Index].DataType))
+        Data = Numpy.fromstring(self.File.read(size_pixel), self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index))
         if string.upper(self.SysByteOrder)!=string.upper(self.Images[Index].ByteOrder):
             Data=Data.byteswap() 
         Data=self.__SetDataType__ (Data,"DoubleValue")
@@ -570,10 +572,10 @@ class  EdfFile:
     ############################################################################
     #Internal Methods
         
-    def __GetDefaultNumpyType__(self, EdfType):
+    def __GetDefaultNumpyType__(self, EdfType, index=None):
         """ Internal method: returns NumPy type according to Edf type
         """
-        return GetDefaultNumpyType(EdfType)
+        return self.GetDefaultNumpyType(EdfType, index)
 
     def __GetDefaultEdfType__(self, NumpyType):
         """ Internal method: returns Edf type according Numpy type
@@ -585,7 +587,7 @@ class  EdfFile:
         elif NumpyType == "i":            return "SignedInteger"  
         elif NumpyType == "I":            return "UnsignedInteger"  
         elif NumpyType == "l":            return "SignedLong"           
-	elif NumpyType == "L":	          return "UnsignedLong"
+        elif NumpyType == "L":	          return "UnsignedLong"
         elif NumpyType == "f":            return "FloatValue"         
         elif NumpyType == "d":            return "DoubleValue"
         else: raise TypeError, "unknown NumpyType %s" % NumpyType
@@ -594,15 +596,22 @@ class  EdfFile:
     def __GetSizeNumpyType__(self, NumpyType):
         """ Internal method: returns size of NumPy's Array Types
         """
-        #I assume 32 bit because longs are 8 byte in 64 bit machines  
         if   NumpyType == "b":            return 1
         elif NumpyType == "B":            return 1
         elif NumpyType == "h":            return 2          
         elif NumpyType == "H":            return 2          
         elif NumpyType == "i":            return 4  
         elif NumpyType == "I":            return 4  
-        elif NumpyType == "l":            return 4           
-	elif NumpyType == "L":	          return 4
+        elif NumpyType == "l":            
+            if sys.platform == 'linux2':
+                return 8    #64 bit
+            else:
+                return 4    #32 bit
+        elif NumpyType == "L":
+            if sys.platform == 'linux2':
+                return 8    #64 bit
+            else:
+                return 4    #32 bit
         elif NumpyType == "f":            return 4         
         elif NumpyType == "d":            return 8
         else: raise TypeError, "unknown NumpyType %s" % NumpyType
@@ -623,6 +632,37 @@ class  EdfFile:
             self.File.close()
         except:
             pass
+
+    def GetDefaultNumpyType(self, EdfType, index=None):
+        """ Returns NumPy type according Edf type
+        """
+        if index is None:return GetDefaultNumpyType(EdfType)
+        EdfType=string.upper(EdfType)
+        if EdfType in ["SIGNEDLONG", "UNSIGNEDLONG"]:
+            dim1 = 1
+            dim2 = 1
+            dim3 = 1 
+            if hasattr(self.Images[index],"Dim1"):
+                dim1 = self.Images[index].Dim1
+                if hasattr(self.Images[index],"Dim2"):
+                    dim2 = self.Images[index].Dim2
+                    if dim2 <= 0: dim2 = 1
+                    if hasattr(self.Images[index],"Dim3"):
+                        dim3 = self.Images[index].Dim3
+                        if dim3 <= 0: dim3 = 1
+                if hasattr(self.Images[index],"Size"):
+                    size = self.Images[index].Size
+                    if size/(dim1*dim2*dim3) == 4:
+                        if EdfType == "UNSIGNEDLONG":
+                            return "I"
+                        else:
+                            return "i"
+            if EdfType == "UNSIGNEDLONG":
+                return "L"
+            else:
+                return "l"
+            
+        return GetDefaultNumpyType(EdfType)
         
 
 def GetDefaultNumpyType(EdfType):
@@ -635,8 +675,8 @@ def GetDefaultNumpyType(EdfType):
     elif EdfType == "UNSIGNEDSHORT":    return "H"
     elif EdfType == "SIGNEDINTEGER":    return "i"
     elif EdfType == "UNSIGNEDINTEGER":  return "I"
-    elif EdfType == "SIGNEDLONG":       return "l"
-    elif EdfType == "UNSIGNEDLONG":     return "L"
+    elif EdfType == "SIGNEDLONG":       return "i" #ESRF acquisition is made in 32bit
+    elif EdfType == "UNSIGNEDLONG":     return "I" #ESRF acquisition is made in 32bit
     elif EdfType == "FLOATVALUE":       return "f"
     elif EdfType == "FLOAT":            return "f"
     elif EdfType == "DOUBLEVALUE":      return "d"
