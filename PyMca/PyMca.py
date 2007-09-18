@@ -907,6 +907,7 @@ class PyMca(PyMcaMdi.PyMca):
 
     def _startupSelection(self, source, selection):
         self.sourceWidget.sourceSelector.openSource(source)
+        if selection is None:return
         
         if len(selection) >= 8:
             if selection[0:8] == "MCA_DATA":
