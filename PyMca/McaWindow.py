@@ -282,7 +282,7 @@ class McaWidget(qt.QWidget):
         self.xpos = qt.QLineEdit(toolbar)
         self.xpos.setText('------')
         self.xpos.setReadOnly(1)
-        self.xpos.setFixedWidth(self.xpos.fontMetrics().width('########'))
+        self.xpos.setFixedWidth(self.xpos.fontMetrics().width('###########'))
         toolbar.layout.addWidget(self.xpos)
 
 
@@ -293,7 +293,7 @@ class McaWidget(qt.QWidget):
         self.ypos = qt.QLineEdit(toolbar)
         self.ypos.setText('------')
         self.ypos.setReadOnly(1)
-        self.ypos.setFixedWidth(self.ypos.fontMetrics().width('#########'))
+        self.ypos.setFixedWidth(self.ypos.fontMetrics().width('############'))
         toolbar.layout.addWidget(self.ypos)
         """
         label=qt.QLabel(toolbar)

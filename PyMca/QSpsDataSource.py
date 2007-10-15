@@ -85,8 +85,12 @@ class QSpsDataSource(QSource.QSource):
             if n:
                 a = range(n)
                 a.reverse()
+                legendlist = []
                 for i in a:
                     objectId, info = self.selections[key][i]
+                    if info['legend'] in legendlist:
+                        del self.selections[key][i]
+                        continue
                     if objectId in idtolook:
                         sel = {}
                         sel['SourceName'] = self.__dataSource.sourceName
@@ -94,6 +98,7 @@ class QSpsDataSource(QSource.QSource):
                         sel['Key']        = key
                         sel['selection'] = info['selection']
                         sel['legend'] = info['legend']
+                        legendlist.append(info['legend'])
                         sel['scanselection'] = info.get('scanselection', False) 
                         sel['imageselection'] = info.get('imageselection', False) 
                         ddict['selectionlist'].append(sel)
