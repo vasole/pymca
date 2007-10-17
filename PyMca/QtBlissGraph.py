@@ -33,6 +33,11 @@ if 'qt' not in sys.modules:
     try:
         import PyQt4.Qt as qt
         from PyQt4 import Qwt5 as qwt
+        # Simplify freezing with cx_freeze
+        try:
+            import PyQt4.QtSvg
+        except:
+            pass
     except:
         import qt
         try:

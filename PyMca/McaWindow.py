@@ -47,6 +47,13 @@ import PyMcaDirs
 try:
     import PyMcaMatplotlibSave
     MATPLOTLIB = True
+    #force understanding of utf-8 encoding
+    #otherways it cannot generate svg output
+    try:
+        import encodings.utf_8
+    except:
+        #not a big problem
+        pass
 except:
     MATPLOTLIB = False
 
