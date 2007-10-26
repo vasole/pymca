@@ -196,6 +196,10 @@ class ElementButton(QPushButton):
 
         self.connect(self, SIGNAL("clicked()"), self.clickedSlot)
 
+    if QTVERSION > '4.3.0':
+        def sizeHint(self):
+            return QSize(40, 40)
+
     def setCurrent(self, b):
         self.current= b
         self.__setBrush()
