@@ -191,7 +191,8 @@ class SpsDataSource:
             val=sps.getenv(self.name,array+"_ENV",i)
             envdict[i]=val
         info["envdict"]=envdict
-        if array in ["SCAN_D"]:
+        scantest = (info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
+        if (array in ["SCAN_D"]) or scantest :
             if info["envdict"].has_key('axistitles'):
                 info["LabelNames"] = self._buildLabelsList(info['envdict']['axistitles'])
             if info["envdict"].has_key('H'):
