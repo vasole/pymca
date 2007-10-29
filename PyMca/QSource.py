@@ -146,7 +146,10 @@ class QSource(qt.QObject):
                             event.dict['Key']   = key
                             event.dict['event'] = 'updated'
                             event.dict['id']    = self.surveyDict[key]
-                            if 'key' == 'SCAN_D':
+                            scanselection = False
+                            if self.surveyDict[key][0].info.has_key('scanselection'):
+                                scanselection = self.surveyDict[key][0].info['scanselection']
+                            if ('key' == 'SCAN_D') or scanselection:
                                 event.dict['scanselection'] = True
                             else:
                                 event.dict['scanselection'] = False

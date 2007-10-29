@@ -88,9 +88,12 @@ class QSpsDataSource(QSource.QSource):
                 legendlist = []
                 for i in a:
                     objectId, info = self.selections[key][i]
+                    if info.has_key('scanselection'):
+                        scanselection = info['scanselection']
                     if info['legend'] in legendlist:
-                        del self.selections[key][i]
-                        continue
+                        if not scanselection:
+                            del self.selections[key][i]
+                            continue
                     if objectId in idtolook:
                         sel = {}
                         sel['SourceName'] = self.__dataSource.sourceName
@@ -105,7 +108,6 @@ class QSpsDataSource(QSource.QSource):
                     else:
                         del self.selections[key][i]
             
-
                 if QTVERSION < '4.0.0':
                     self.emit(qt.PYSIGNAL("updated"), (ddict,))
                 else:
