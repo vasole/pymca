@@ -1431,6 +1431,7 @@ class ScanWindow(qt.QWidget):
             if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
+                msg.setWindowTitle('Scan window')
                 msg.exec_()
         return legend
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.84 $"
+__revision__ = "$Revision: 1.85 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -308,7 +308,6 @@ class PyMca(PyMcaMdi.PyMca):
                 self.connect(self.sourceWidget,
                              qt.SIGNAL("otherSignals"),
                              self.dispatcherOtherSignalsSlot)
-            
             if 0:
                 if QTVERSION < '4.0.0':
                     self.connect(self.mcawindow,qt.PYSIGNAL('McaWindowSignal'),
@@ -745,7 +744,7 @@ class PyMca(PyMcaMdi.PyMca):
 
                 #filesave
                 self.actionSave = qt.QAction(self)
-                self.actionSave.setText(qt.QString("Save &Defaults"))
+                self.actionSave.setText(qt.QString("Save &Default Settings"))
                 #self.actionSave.setIcon(self.Icons["filesave"])
                 #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
                 self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
@@ -1186,6 +1185,24 @@ class PyMca(PyMcaMdi.PyMca):
         self._saveAs()
 
     def onSaveAs(self):
+        if QTVERSION < '4.0.0':
+            return self._onSaveAs()
+        index = self.mainTabWidget.currentIndex()
+        text  = str(self.mainTabWidget.tabText(index))
+        self.saveMenu = qt.QMenu()
+        self.saveMenu.addAction("PyMca Configuration", self._onSaveAs)
+        if text.upper() == 'MCA':
+            self.saveMenu.addAction("Active Mca",
+                             self.mcawindow._saveIconSignal)
+        elif text.upper() == 'SCAN':
+            self.saveMenu.addAction("Active Scan",
+                             self.scanwindow._saveIconSignal)
+        elif text in self.imageWindowDict.keys():
+            self.saveMenu.addAction("Active Image",
+                  self.imageWindowDict[text].graphWidget._saveIconSignal)
+        self.saveMenu.exec_(self.cursor().pos())
+
+    def _onSaveAs(self):
         cwd = os.getcwd()
         if QTVERSION < '4.0.0':
             outfile = qt.QFileDialog(self,"Output File Selection",1)

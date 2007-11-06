@@ -277,7 +277,7 @@ class McaWidget(qt.QWidget):
         if MATPLOTLIB:
             infotext += "\nExport Plot"
         tb = self._addToolButton(self.saveIcon,
-                                 self.__saveIconSignal,
+                                 self._saveIconSignal,
                                  infotext)
          
         toolbar.layout.addWidget(HorizontalSpacer(toolbar))
@@ -474,7 +474,7 @@ class McaWidget(qt.QWidget):
         else:
             self.fitmenu.exec_(self.cursor().pos())
 
-    def __saveIconSignal(self):
+    def _saveIconSignal(self):
         legend = self.graph.getactivecurve(justlegend=1)
         if legend is None:
             msg = qt.QMessageBox(self)
@@ -483,6 +483,7 @@ class McaWidget(qt.QWidget):
             if qt.qVersion() < '4.0.0':
                 msg.exec_loop()
             else:
+                msg.setWindowTitle('MCA window')
                 msg.exec_()
             return
         #get outputfile
