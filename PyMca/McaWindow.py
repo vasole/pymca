@@ -157,6 +157,7 @@ class McaWidget(qt.QWidget):
         self.graph.ylabel('Counts')
         self.graph.canvas().setMouseTracking(1)
         self.graph.setCanvasBackground(qt.Qt.white)
+        self.gridLevel = 1
         self.graph.showGrid()
         self.graphBoxlayout.addWidget(self.graph)
             
@@ -227,6 +228,7 @@ class McaWidget(qt.QWidget):
         self.logyIcon	= qt.QIconSet(qt.QPixmap(IconDict["logy"]))
         self.xAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
         self.yAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
+        self.gridIcon	= qt.QIconSet(qt.QPixmap(IconDict["grid16"]))
         self.fitIcon	= qt.QIconSet(qt.QPixmap(IconDict["fit"]))
         self.searchIcon	= qt.QIconSet(qt.QPixmap(IconDict["peaksearch"]))
         self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
@@ -267,6 +269,15 @@ class McaWidget(qt.QWidget):
                             'Toggle Logarithmic Y Axis (On/Off)',
                             toggle = True)
         self.logytb = tb
+
+        if QTVERSION > '4.0.0':
+            # Grid
+            tb = self._addToolButton(self.gridIcon,
+                                self.changeGridLevel,
+                                'Change Grid',
+                                toggle = False)
+            self.gridTb = tb
+
         # Fit
         tb = self._addToolButton(self.fitIcon,
                                  self.__fitsignal,
@@ -334,6 +345,19 @@ class McaWidget(qt.QWidget):
             self.printPreview.raiseW()
         else:
             self.printPreview.raise_()
+
+    def changeGridLevel(self):
+        self.gridLevel += 1
+        self.gridLevel = self.gridLevel % 3
+        if self.gridLevel == 0:
+            self.graph.hideGrid()
+        elif self.gridLevel == 1:
+            self.graph.grid.enableYMin(False)
+            self.graph.showGrid()
+        elif self.gridLevel == 2:
+            self.graph.grid.enableYMin(True)
+            self.graph.showGrid()
+        self.graph.replot()
             
     def _addToolButton(self, icon, action, tip, toggle=None):
             toolbar = self.toolbar

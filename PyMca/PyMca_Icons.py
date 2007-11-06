@@ -276,7 +276,28 @@ normalize16=[
 "                "
 ]
 
-
+#grid
+grid16 = [
+"16 16 2 1",
+"   c none",
+".  c blue",
+"                ",
+"  .    .    .   ",
+" .............  ",
+"  .    .    .   ",
+"  .    .    .   ",
+"  .    .    .   ",
+"  .    .    .   ",
+" .............  ",
+"  .    .    .   ",
+"  .    .    .   ",
+"  .    .    .   ",
+"  .    .    .   ",
+" .............  ",
+"  .    .    .   ",
+"                ",
+"                "
+]
 rgb=[
 "23 23 107 2",
 "   c #0134013ffeec4048",
@@ -3171,6 +3192,7 @@ IconDict= {
     "colormap16": colormap16,
     "gioconda16": gioconda16,
     "gioconda16mirror": gioconda16mirror,
+    "grid16":grid16,
     "image":image,
     "eraseselect":eraseselect,
     "boxselect":boxselect,

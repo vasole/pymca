@@ -1830,8 +1830,13 @@ class QtBlissGraph(qwt.QwtPlot):
         def showGrid(self):
             if self.grid is None:
                 self.grid = qwt.QwtPlotGrid()
-                self.grid.setPen(qt.QPen(self.colors['black'],
-                                0,self.linetypes['dot']))
+                self.grid.enableYMin(False)
+                self.grid.setMajPen(qt.QPen(qt.Qt.black,
+                                    0,
+                                    self.linetypes['dot']))
+                self.grid.setMinPen(qt.QPen(qt.Qt.gray,
+                                    0,
+                                    self.linetypes['dot']))
             self.grid.attach(self)
         
         def removeCurves(self):
