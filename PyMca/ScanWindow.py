@@ -836,6 +836,12 @@ class ScanWindow(qt.QWidget):
                                         x=xdata,
                                         y=ydata,
                                         symbol='o')
+                    if self.scanWindowInfoWidget is not None:
+                        activeLegend = self.getActiveCurve()
+                        if activeLegend is not None:
+                            if activeLegend == newLegend:
+                                self.scanWindowInfoWidget.updateFromDataObject\
+                                                            (dataObject)
             else:
                 #we have to loop for all y values
                 ycounter = -1
