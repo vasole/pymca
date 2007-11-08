@@ -1126,6 +1126,7 @@ class ScanWindow(qt.QWidget):
             outfile.setModal(1)
             outfile.setFilters(['Specfile MCA  *.mca',
                                 'Specfile Scan *.dat',
+                                'Specfile MultiScan *.dat',
                                 'Raw ASCII  *.txt',
                                 'Widget PNG *.png',
                                 'Widget JPG *.jpg'])
@@ -1212,8 +1213,11 @@ class ScanWindow(qt.QWidget):
                 print "active curve =",legend
                 print "but legend list = ",self.dataObjectsList
                 return
-            x = dataObject.x[0]
             y = dataObject.y[0]
+            if dataObject.x is not None:
+                x = dataObject.x[0]
+            else:
+                x = Numeric.arange(len(y)).astype(Numeric.Float)
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             if len(dataObject.info['selection']['x']):
@@ -1286,17 +1290,45 @@ class ScanWindow(qt.QWidget):
                 msg.exec_loop()
                 return
             try:
-                if filetype == 'Scan':
+                if filetype in ['Scan', 'MultiScan']:
                     ffile.write("#F %s\n" % filename)
-                    ffile.write("#D %s\n"%(time.ctime(time.time())))
+                    savingDate = "#D %s\n"%(time.ctime(time.time()))                    
+                    ffile.write(savingDate)
                     ffile.write("\n")
                     ffile.write("#S 1 %s\n" % legend)
-                    ffile.write("#D %s\n"%(time.ctime(time.time())))
+                    ffile.write(savingDate)
                     ffile.write("#N 2\n")
                     ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
                     for i in range(len(y)):
                         ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
                     ffile.write("\n")
+                    if filetype == 'MultiScan':
+                        scan_n  = 1
+                        for key in self.graph.curves.keys():
+                            if key not in self.dataObjectsDict.keys():
+                                continue
+                            if key == legend: continue
+                            dataObject = self.dataObjectsDict[key]
+                            y = dataObject.y[0]
+                            if dataObject.x is not None:
+                                x = dataObject.x[0]
+                            else:
+                                x = Numeric.arange(len(y)).astype(Numeric.Float)
+                            ilabel = dataObject.info['selection']['y'][0]
+                            ylabel = dataObject.info['LabelNames'][ilabel]
+                            if len(dataObject.info['selection']['x']):
+                                ilabel = dataObject.info['selection']['x'][0]
+                                xlabel = dataObject.info['LabelNames'][ilabel]
+                            else:
+                                xlabel = "Point Number"
+                            scan_n += 1
+                            ffile.write("#S %d %s\n" % (scan_n, key))
+                            ffile.write(savingDate)
+                            ffile.write("#N 2\n")
+                            ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
+                            for i in range(len(y)):
+                                ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                            ffile.write("\n")
                 elif filetype == 'ASCII':
                     for i in range(len(y)):
                         ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
