@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-__revision__ = "$Revision: 1.12 $"
+__revision__ = "$Revision: 1.13 $"
 from numpy.oldnumeric import *
 import SpecfitFuns
 import string
@@ -171,6 +171,18 @@ class SpecfitFunctions:
        A fit function.
        """
        return 0.5*SpecfitFuns.slit(pars,x)
+
+    def periodic_gauss(self, pars, x):
+        """
+        Fit function periodic_gauss(pars, x)
+        pars = [npeaks, delta, height, position, fwhm]
+        """
+        newpars = zeros((pars[0], 3), Float)
+        for i in range(int(pars[0])):
+            newpars[i, 0] = pars[2]
+            newpars[i, 1] = pars[3] + i * pars[1]
+            newpars[:, 2] = pars[4]
+        return SpecfitFuns.gauss(newpars,x)
     
     def gauss2(self,param0,t0):
         param=array(param0)
@@ -884,6 +896,109 @@ class SpecfitFunctions:
                         
         return largest,cons
 
+    def estimate_periodic_gauss(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
+        if yscaling == None:
+            try:
+                yscaling=self.config['Yscaling']
+            except:
+                yscaling=1.0
+        if yscaling == 0:
+            yscaling=1.0
+        fittedpar=[]
+        zz=SpecfitFuns.subac(yy,1.000,10000)
+       
+        npoints = len(zz)
+        if self.config['AutoFwhm']:
+            search_fwhm=self.guess_fwhm(x=xx,y=yy)
+        else: 
+            search_fwhm=int(string.atof(self.config['FwhmPoints']))
+        search_sens=string.atof(self.config['Sensitivity'])
+        search_mca=int(string.atof(self.config['McaMode']))
+       
+        if search_fwhm < 3:
+            search_fwhm = 3
+            self.config['FwhmPoints']=3
+       
+        if search_sens < 1:
+            search_sens = 1
+            self.config['Sensitivity']=1
+            
+        if npoints > 1.5*search_fwhm:
+            peaks=self.seek(yy,fwhm=search_fwhm,
+                               sensitivity=search_sens,
+                               yscaling=yscaling,
+                               mca=search_mca)
+        else:
+             peaks = []
+        npeaks = len(peaks)
+        if not npeaks:
+            fittedpar = []
+            cons = zeros((3,len(fittedpar)), Float)
+            return fittedpar, cons
+
+        fittedpar = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        #The number of peaks
+        fittedpar[0] = npeaks
+
+        #The separation between peaks in x units
+        delta  = 0.0
+        height = 0.0
+        for i in range(npeaks):
+            height += yy[int(peaks[i])] - zz [int(peaks[i])]
+            if i != ((npeaks)-1):
+                delta += (xx[int(peaks[i+1])] - xx[int(peaks[i])])
+
+        #delta between peaks
+        if npeaks > 1:
+            fittedpar[1] = delta/(npeaks-1)
+
+        #starting height
+        fittedpar[2] = height/npeaks
+
+        #position of the first peak
+        fittedpar[3] = xx[int(peaks[0])]
+
+        #Estimate the fwhm
+        fittedpar[4] = search_fwhm
+
+        #setup constraints
+        cons = zeros((3, 5), Float)
+        cons [0] [0] = CFIXED     #the number of gaussians
+        if npeaks == 1:
+            cons[0][1] = CFIXED  #the delta between peaks
+        else: 
+            cons[0][1] = CFREE   #the delta between peaks
+        j = 2
+        #Setup height area constrains
+        if self.config['NoConstrainsFlag'] == 0:
+            if self.config['HeightAreaFlag']:
+                #POSITIVE = 1
+                cons[0] [j] = 1
+                cons[1] [j] = 0
+                cons[2] [j] = 0
+        j=j+1
+                
+        #Setup position constrains
+        if self.config['NoConstrainsFlag'] == 0:
+            if self.config['PositionFlag']:
+                        #QUOTED = 2
+                        cons[0][j]=2
+                        cons[1][j]=min(xx)
+                        cons[2][j]=max(xx) 
+        j=j+1
+        
+        #Setup positive FWHM constrains
+        if self.config['NoConstrainsFlag'] == 0:
+            if self.config['PosFwhmFlag']:
+                        #POSITIVE=1
+                        cons[0][j]=1
+                        cons[1][j]=0
+                        cons[2][j]=0
+        j=j+1
+        return fittedpar,cons 
+
+
     def configure(self,*vars,**kw):
         if kw.keys() == []:
             return self.config
@@ -909,7 +1024,8 @@ FUNCTION=[fitfuns.gauss,
           fitfuns.stepdown,
           fitfuns.stepup,
           fitfuns.slit,
-          fitfuns.hypermet]
+          fitfuns.hypermet,
+          fitfuns.periodic_gauss]
           
 PARAMETERS=[['Height','Position','FWHM'],
             ['Height','Position','Fwhm'],
@@ -921,7 +1037,8 @@ PARAMETERS=[['Height','Position','FWHM'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM','BeamFWHM'],
             ['G_Area','Position','FWHM',
-             'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H']]
+             'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H'],
+            ['N', 'Delta', 'Height', 'Position', 'FWHM']]
 
 THEORY=['Gaussians',
         'Lorentz',
@@ -932,7 +1049,8 @@ THEORY=['Gaussians',
         'Step Down',
         'Step Up',
         'Slit',
-        'Hypermet']
+        'Hypermet',
+        'Periodic Gaussians']
 
 ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_lorentz,
@@ -943,9 +1061,11 @@ ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_stepdown,
           fitfuns.estimate_stepup,
           fitfuns.estimate_slit,
-          fitfuns.estimate_hypermet]
+          fitfuns.estimate_hypermet,
+          fitfuns.estimate_periodic_gauss]
 
 CONFIGURE=[fitfuns.configure,
+           fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
