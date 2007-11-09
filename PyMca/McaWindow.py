@@ -802,7 +802,11 @@ class McaWidget(qt.QWidget):
            msg = qt.QMessageBox(self)
            msg.setIcon(qt.QMessageBox.Critical)
            msg.setText("Please Select an active curve")
-           msg.exec_loop()
+           if QTVERSION < '4.0.0':
+               msg.exec_loop()
+           else:
+               msg.setWindowTitle('MCA Window')
+               msg.exec_()
            return
         info,x,y = self.getinfodatafromlegend(legend)
         self.advancedfit.hide()
