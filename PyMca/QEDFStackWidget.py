@@ -1469,20 +1469,25 @@ class QEDFStackWidget(qt.QWidget):
             return
 
         mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
-        if self.fileIndex == 2:
-            if self.mcaIndex == 0:
-                for i in range(len(mcaData)):
-                   mcaData[i] = sum(sum(self.stack.data[i,:,:] * self.__selectionMask))
-            else:
-                for i in range(len(mcaData)):
-                   mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask[:,:]))
-        else:    
-            if self.mcaIndex == 1:
-                for i in range(len(mcaData)):
-                   mcaData[i] = sum(sum(self.stack.data[:,i,:] * self.__selectionMask))
-            else:
-                for i in range(len(mcaData)):
-                   mcaData[i] = sum(sum(self.stack.data[:,:,i] * self.__selectionMask[:,:]))
+
+        cleanMask = numpy.nonzero(self.__selectionMask > 0)
+        if len(cleanMask[0]) and len(cleanMask[1]):
+            cleanMask = numpy.array(cleanMask).transpose()
+            if self.fileIndex == 2:
+                if self.mcaIndex == 0:
+                    for r, c in cleanMask:
+                        mcaData += self.stack.data[:,r,c]
+                else:
+                    for r, c in cleanMask:
+                        mcaData += self.stack.data[r,:,c]
+            else:    
+                if self.mcaIndex == 1:
+                    for r, c in cleanMask:
+                        mcaData += self.stack.data[r,:,c]
+                else:
+                    for r, c in cleanMask:
+                        mcaData += self.stack.data[r,c,:]
+
         if self.normalizeButton.isChecked():
             mcaData = mcaData/npixels
 
