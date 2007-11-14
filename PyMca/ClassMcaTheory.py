@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-___revision__ = "$Revision: 1.72 $"
+___revision__ = "$Revision: 1.73 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -37,6 +37,7 @@ import copy
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
 CONTINUUM_LIST = [None,'Constant','Linear','Parabolic','Linear Polynomial','Exp. Polynomial']
 OLDESCAPE = 0
+MAX_ATTENUATION = 1.0E-300
 class McaTheory:
     def __init__(self,initdict=None,filelist=None,**kw):
         self.ydata0  = None
@@ -462,6 +463,8 @@ class McaTheory:
                                         #if ele == 'Pb':
                                         #    print "energy = %.3f ratio=%.5f transmission = %.5g final=%.5g" % (newpeaks[i][1], newpeaks[i][0],trans[i],trans[i] * newpeaks[i][0])
                                         newpeaks[i][0] *=  trans[i]
+                                        if newpeaks[i][0] < MAX_ATTENUATION:
+                                            newpeaks[i][0] = 0.0
                                 else:
                                     #add the excitation energy
                                     #excitation  energy =  self.config['fit']['energy'] or be registered to
@@ -505,6 +508,8 @@ class McaTheory:
                                             #    oldRatio.append(newpeaks[i][0])
                                             #    print "energy = %.3f ratio=%.5f transmission = %.5g final=%.5g" % (newpeaks[i][1], newpeaks[i][0],trans,trans * newpeaks[i][0])
                                             newpeaks[i][0] *=  trans
+                                            if newpeaks[i][0] < MAX_ATTENUATION:
+                                                newpeaks[i][0] = 0.0
                                         del transmissionenergies[-1]
                                     else:
                                         raise "ValueError","Invalid excitation energy"
