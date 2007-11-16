@@ -184,6 +184,7 @@ def getspeclist():
     spslock.acquire()
     try:
        result = sps.getspeclist()
+       if len(result):result.sort()
     except:
        pass
     spslock.release()
