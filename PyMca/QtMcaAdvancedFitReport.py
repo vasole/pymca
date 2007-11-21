@@ -96,6 +96,7 @@ class QtMcaAdvancedFitReport:
                 if sourcename is not None:
                     self.outfile = os.path.basename(sourcename)
         self.outfile = string.replace(self.outfile," ","_")
+        self.outfile = string.replace(self.outfile,"/","_over_")
         self.graph = None            
         if htmltext is None:
             htmltext={}

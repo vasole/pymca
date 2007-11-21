@@ -1737,9 +1737,48 @@ class McaTheory:
                                            maxiter=self.MAXITER,
                                     model_deriv=self.linearMcaTheoryDerivative,
                                            deltachi=self.config['fit']['deltachi'],
-                                           fulloutput=1, linear=linear)    
+                                           fulloutput=1, linear=linear)
+            if self.__SUM:
+                #This is a patch but the alternative is
+                #to forbid linear fits with pile-up.
+                self.parameters = fitresult[0]
+                zero = self.parameters[0]
+                gain = self.parameters[1]
+                xw = self.datatofit[:,0]
+                yfitw = self.mcatheory(fitresult[0], xw,summing=0)
+                pileup= self.parameters[4]*SpecfitFuns.pileup(yfitw,int(xw[0]), zero, gain)
+                self.datatofit[:,1] -= pileup
+                fitresult =  Gefit.LeastSquaresFit(self.linearMcaTheory,
+                                           self.parameters,
+                                           self.datatofit,
+                                           constrains=self.codes,
+                                           weightflag=self.config['fit']['fitweight'],
+                                           maxiter=self.MAXITER,
+                                    model_deriv=self.linearMcaTheoryDerivative,
+                                           deltachi=self.config['fit']['deltachi'],
+                                           fulloutput=1, linear=linear)
+
         else:
             fitresult =  Gefit.LeastSquaresFit(self.mcatheory,
+                                           self.parameters,
+                                           self.datatofit,
+                                           constrains=self.codes,
+                                           weightflag=self.config['fit']['fitweight'],
+                                           maxiter=self.MAXITER,
+                                           model_deriv=self.anal_deriv,
+                                           deltachi=self.config['fit']['deltachi'],
+                                           fulloutput=1, linear=linear)
+            if self.__SUM and linear:
+                #This is a patch but the alternative is
+                #to forbid linear fits with pile-up.
+                self.parameters = fitresult[0]
+                zero = self.parameters[0]
+                gain = self.parameters[1]
+                xw = self.datatofit[:,0]
+                yfitw = self.mcatheory(fitresult[0], xw,summing=0)
+                pileup= self.parameters[4]*SpecfitFuns.pileup(yfitw,int(xw[0]), zero, gain)
+                self.datatofit[:,1] -= pileup
+                fitresult =  Gefit.LeastSquaresFit(self.mcatheory,
                                            self.parameters,
                                            self.datatofit,
                                            constrains=self.codes,
