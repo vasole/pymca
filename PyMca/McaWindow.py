@@ -152,7 +152,7 @@ class McaWidget(qt.QWidget):
         self.toolbar.layout.setSpacing(0)
         self.graphBoxlayout.addWidget(self.toolbar)
         
-        self.graph    = QtBlissGraph.QtBlissGraph(self.graphBox,uselegendmenu=1)
+        self.graph    = QtBlissGraph.QtBlissGraph(self.graphBox,uselegendmenu=1, legendrename=True)
         self.graph.xlabel('Channel')
         self.graph.ylabel('Counts')
         self.graph.canvas().setMouseTracking(1)
@@ -1650,7 +1650,6 @@ class McaWidget(qt.QWidget):
                 
         elif dict['event'] == "RemoveCurveEvent":
             #WARNING this is to be called just from the graph!"
-            #get selection from legend
             legend = dict['legend']
             self.graph.delcurve(legend)
             if self.dataObjectsDict.has_key(legend):
@@ -1658,6 +1657,20 @@ class McaWidget(qt.QWidget):
             self.graph.replot()
             #I should generate an event to allow the controller
             #to eventually inform other widgets
+        elif dict['event'] == "RenameCurveEvent":
+            legend = dict['legend']
+            newlegend = dict['newlegend']
+            if self.dataObjectsDict.has_key(legend):
+                self.dataObjectsDict[newlegend]= copy.deepcopy(self.dataObjectsDict[legend])
+                self.dataObjectsDict[newlegend].info['legend'] = newlegend
+                self.graph.delcurve(legend)
+                self.graph.newCurve(self.dataObjectsDict[newlegend].info['legend'],
+                                    self.dataObjectsDict[newlegend].x[0],
+                                    self.dataObjectsDict[newlegend].y[0])
+                if self.caldict.has_key(legend):
+                    self.caldict[newlegend] = copy.deepcopy(self.caldict[legend])
+                del self.dataObjectsDict[legend]
+            self.graph.replot()
         else:
             if DEBUG:
                 print "Unhandled event ",   dict['event']   
