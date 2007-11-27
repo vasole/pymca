@@ -159,6 +159,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     double  *data, *retdata;
     int     *anchordata;
     int nanchors, notdoit;
+	int	notdone=1;
 
     if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
@@ -187,43 +188,48 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     /* do the job */
     data   = (double *) array->data;
     retdata   = (double *) ret->data;
-    if (PySequence_Check(anchors0)){
-        anchors = (PyArrayObject *)
-             PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
-        if (anchors == NULL)
+
+	if (anchors0 != NULL)
 	{
-            Py_DECREF(array);
-            Py_DECREF(ret);
-            return NULL;
-    	}
-	anchordata = (int *) anchors->data;
-        nanchors   = PySequence_Size(anchors0);
-	for (i=0;i<niter;i++){
-            for (j=deltai;j<n-deltai;j++) {
-		notdoit = 0;
-	        for (k=0; k<nanchors; k++)
-		{
-		    l =*(anchordata+k); 
-                    if (j>(l-deltai))
-		    {
-		    	if (j<(l+deltai))
+		if (PySequence_Check(anchors0)){
+			anchors = (PyArrayObject *)
+				 PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
+			if (anchors == NULL)
 			{
-				notdoit = 1;
-				break;
+				Py_DECREF(array);
+				Py_DECREF(ret);
+				return NULL;
+    		}
+			anchordata = (int *) anchors->data;
+			nanchors   = PySequence_Size(anchors0);
+			for (i=0;i<niter;i++){
+				for (j=deltai;j<n-deltai;j++) {
+					notdoit = 0;
+					for (k=0; k<nanchors; k++)
+					{
+						l =*(anchordata+k); 
+						if (j>(l-deltai))
+						{
+		    				if (j<(l+deltai))
+							{
+								notdoit = 1;
+								break;
+							}
+						}
+					}
+					if (notdoit)
+						continue;
+					t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
+					if (*(retdata+j) > (t_mean * c))
+								*(retdata+j) = t_mean;
+				}
+				memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
 			}
-		    }
+			Py_DECREF(anchors);
+			notdone = 0;
 		}
-		if (notdoit)
-			continue;
-		t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
-	        if (*(retdata+j) > (t_mean * c))
-                        *(retdata+j) = t_mean;
-            }
-            memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
-        }
-        Py_DECREF(anchors);
-    }
-    else
+	}
+	if (notdone)
     {
         for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
