@@ -47,8 +47,8 @@
 static PyObject *ErrorObject;
 
 typedef struct {
-	PyObject_HEAD
-	PyObject	*x_attr;	/* Attributes dictionary */
+    PyObject_HEAD
+    PyObject    *x_attr;    /* Attributes dictionary */
 } SpecfitFunsObject;
 
 staticforward PyTypeObject SpecfitFuns_Type;
@@ -58,37 +58,37 @@ staticforward PyTypeObject SpecfitFuns_Type;
  */
 static void                SpecfitFuns_dealloc  (SpecfitFunsObject *self);
 
-#define SpecfitFunsObject_Check(v)	((v)->ob_type == &SpecfitFuns_Type)
+#define SpecfitFunsObject_Check(v)    ((v)->ob_type == &SpecfitFuns_Type)
 
 /* SpecfitFunso methods */
 
 static void
 SpecfitFuns_dealloc(self)
-	SpecfitFunsObject *self;
+    SpecfitFunsObject *self;
 {
-	Py_XDECREF(self->x_attr);
-	PyObject_DEL(self);
+    Py_XDECREF(self->x_attr);
+    PyObject_DEL(self);
 }
 
 
 static int
 SpecfitFuns_setattr(SpecfitFunsObject *self, char *name,
-	PyObject *v)
+    PyObject *v)
 {
-	if (self->x_attr == NULL) {
-		self->x_attr = PyDict_New();
-		if (self->x_attr == NULL)
-			return -1;
-	}
-	if (v == NULL) {
-		int rv = PyDict_DelItemString(self->x_attr, name);
-		if (rv < 0)
-			PyErr_SetString(PyExc_AttributeError,
-			        "delete non-existing SpecfitFuns attribute");
-		return rv;
-	}
-	else
-		return PyDict_SetItemString(self->x_attr, name, v);
+    if (self->x_attr == NULL) {
+        self->x_attr = PyDict_New();
+        if (self->x_attr == NULL)
+            return -1;
+    }
+    if (v == NULL) {
+        int rv = PyDict_DelItemString(self->x_attr, name);
+        if (rv < 0)
+            PyErr_SetString(PyExc_AttributeError,
+                    "delete non-existing SpecfitFuns attribute");
+        return rv;
+    }
+    else
+        return PyDict_SetItemString(self->x_attr, name, v);
 }
 
 /* --------------------------------------------------------------------- */
@@ -159,7 +159,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     double  *data, *retdata;
     int     *anchordata;
     int nanchors, notdoit;
-	int	notdone=1;
+    int    notdone=1;
 
     if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
@@ -189,52 +189,52 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     data   = (double *) array->data;
     retdata   = (double *) ret->data;
 
-	if (anchors0 != NULL)
-	{
-		if (PySequence_Check(anchors0)){
-			anchors = (PyArrayObject *)
-				 PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
-			if (anchors == NULL)
-			{
-				Py_DECREF(array);
-				Py_DECREF(ret);
-				return NULL;
-    		}
-			anchordata = (int *) anchors->data;
-			nanchors   = PySequence_Size(anchors0);
-			for (i=0;i<niter;i++){
-				for (j=deltai;j<n-deltai;j++) {
-					notdoit = 0;
-					for (k=0; k<nanchors; k++)
-					{
-						l =*(anchordata+k); 
-						if (j>(l-deltai))
-						{
-		    				if (j<(l+deltai))
-							{
-								notdoit = 1;
-								break;
-							}
-						}
-					}
-					if (notdoit)
-						continue;
-					t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
-					if (*(retdata+j) > (t_mean * c))
-								*(retdata+j) = t_mean;
-				}
-				memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
-			}
-			Py_DECREF(anchors);
-			notdone = 0;
-		}
-	}
-	if (notdone)
+    if (anchors0 != NULL)
+    {
+        if (PySequence_Check(anchors0)){
+            anchors = (PyArrayObject *)
+                 PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
+            if (anchors == NULL)
+            {
+                Py_DECREF(array);
+                Py_DECREF(ret);
+                return NULL;
+            }
+            anchordata = (int *) anchors->data;
+            nanchors   = PySequence_Size(anchors0);
+            for (i=0;i<niter;i++){
+                for (j=deltai;j<n-deltai;j++) {
+                    notdoit = 0;
+                    for (k=0; k<nanchors; k++)
+                    {
+                        l =*(anchordata+k); 
+                        if (j>(l-deltai))
+                        {
+                            if (j<(l+deltai))
+                            {
+                                notdoit = 1;
+                                break;
+                            }
+                        }
+                    }
+                    if (notdoit)
+                        continue;
+                    t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
+                    if (*(retdata+j) > (t_mean * c))
+                                *(retdata+j) = t_mean;
+                }
+                memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+            }
+            Py_DECREF(anchors);
+            notdone = 0;
+        }
+    }
+    if (notdone)
     {
         for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
                 t_mean = 0.5 * (*(data+j-deltai) + *(data+j+deltai));
-	        if (*(retdata+j) > (t_mean * c))
+            if (*(retdata+j) > (t_mean * c))
                     *(retdata+j) = t_mean;
             }
             memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
@@ -293,33 +293,33 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
         anchors = (PyArrayObject *)
              PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
         if (anchors == NULL)
-	{
+    {
             Py_DECREF(array);
             Py_DECREF(ret);
             return NULL;
-    	}
-	anchordata = (int *) anchors->data;
+        }
+    anchordata = (int *) anchors->data;
         nanchors   = PySequence_Size(anchors0);
         memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
-	for (i=0;i<niter;i++){
+    for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
-		notdoit = 0;
-	        for (k=0; k<nanchors; k++)
-		{
-		    l =*(anchordata+k); 
+        notdoit = 0;
+            for (k=0; k<nanchors; k++)
+        {
+            l =*(anchordata+k); 
                     if (j>(l-deltai))
-		    {
-		    	if (j<(l+deltai))
-			{
-				notdoit = 1;
-				break;
-			}
-		    }
-		}
-		if (notdoit)
-			continue;
-		t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
-	        if (*(retdata+j) > (t_mean * c))
+            {
+                if (j<(l+deltai))
+            {
+                notdoit = 1;
+                break;
+            }
+            }
+        }
+        if (notdoit)
+            continue;
+        t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
+            if (*(retdata+j) > (t_mean * c))
                         *(retdata+j) = t_mean;
             }
         }
@@ -331,7 +331,7 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
         for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
                 t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
-	        if (*(retdata+j) > (t_mean * c))
+            if (*(retdata+j) > (t_mean * c))
                     *(retdata+j) = t_mean;
             }
         }
@@ -3342,8 +3342,8 @@ SpecfitFuns_spline(PyObject *self, PyObject *args)
     /* local variables */    
     PyArrayObject    *xdata, *ydata, *result, *uarray;
     int dim_x[2], nd_x, nd_y;
-	int n,i,k;
-	double p, qn, sig, un, *u, *y2, *x, *y;
+    int n,i,k;
+    double p, qn, sig, un, *u, *y2, *x, *y;
     
     /* statements */        
     if (!PyArg_ParseTuple(args, "OO|O", &xinput, &yinput,&xinter0)){
@@ -3410,19 +3410,19 @@ SpecfitFuns_spline(PyObject *self, PyObject *args)
 
     y2[0] = u[0] = 0.0;
     n = xdata->dimensions[0];
-  	for (i=1;i<=(n-2);i++) {
+      for (i=1;i<=(n-2);i++) {
         /*printf("i = [%d] x = %f, y = %f\n",i,x[i],y[i]);*/
-		sig=(x[i] - x[i-1])/( x[i+1] - x[i-1]);
-		p=sig * y2[i-1]+2.0;
-		y2[i]=(sig-1.0)/p;
-		u[i]=(y[i+1]-y[i])/( x[i+1] - x[i]) - (y[i]-y[i-1])/( x[i] - x[i-1]);
-		u[i]=(6.0*u[i]/(x[i+1] - x[i-1])-sig*u[i-1])/p;
-	}
+        sig=(x[i] - x[i-1])/( x[i+1] - x[i-1]);
+        p=sig * y2[i-1]+2.0;
+        y2[i]=(sig-1.0)/p;
+        u[i]=(y[i+1]-y[i])/( x[i+1] - x[i]) - (y[i]-y[i-1])/( x[i] - x[i-1]);
+        u[i]=(6.0*u[i]/(x[i+1] - x[i-1])-sig*u[i-1])/p;
+    }
     
     qn=un=0.0;
-	y2[n-1]=(un-qn*u[n-2])/(qn*y2[n-2]+1.0);    
-	for (k=n-2;k>=0;k--)
-		y2[k]=y2[k]*y2[k+1]+u[k];
+    y2[n-1]=(un-qn*u[n-2])/(qn*y2[n-2]+1.0);    
+    for (k=n-2;k>=0;k--)
+        y2[k]=y2[k]*y2[k+1]+u[k];
     
     Py_DECREF(xdata);
     Py_DECREF(ydata);
@@ -3443,7 +3443,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
     /* local variables */    
     PyArrayObject    *xdata, *ydata,  *y2data, *xinter, *result;
     int dim_x[2], nd_x, nd_y;
-	int n;
+    int n;
     double *xa, *ya, *y2a, *x, *y;
     int klo, khi, k, i, j;
     double h, b, a;
@@ -3550,17 +3550,17 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
     /*printf("xdata ->dimensions[0] = %d\n",n);
     printf("xinter->nd = %d\n",xinter->nd);*/
     if (xinter->nd == 0){
-	    klo=0;
-	    khi=n-1;
-	    while (khi-klo > 1) {
-		    k=(khi+klo) >> 1;
-		    if (xa[k] > x[0]) khi=k;
-		    else klo=k;
-	    }
-	    h=xa[khi]-xa[klo];
+        klo=0;
+        khi=n-1;
+        while (khi-klo > 1) {
+            k=(khi+klo) >> 1;
+            if (xa[k] > x[0]) khi=k;
+            else klo=k;
+        }
+        h=xa[khi]-xa[klo];
         /*printf("xinter = %f\n, xlow= %f , xhigh = %f \n",x[0],xa[klo],xa[khi]);
         printf("interpolation between %d and % d, h = % f\n",klo,khi,h);*/
-	    if (h == 0.0) {
+        if (h == 0.0) {
             printf("Bad table input, repeated values\n");
             Py_DECREF(xdata);
             Py_DECREF(ydata);
@@ -3569,23 +3569,23 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
             Py_DECREF(result);           
         }
         a=(xa[khi]-x[0])/h;
-	    b=(x[0]-xa[klo])/h;
-	    *y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
+        b=(x[0]-xa[klo])/h;
+        *y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
     }else{
         j = 1;
         for (i=0;i<(xinter->nd);i++){
             j = j * xinter->dimensions[i];
         }
         for (i=0; i<j;i++){
-	        klo=0;
-	        khi=n-1;
-	        while (khi-klo > 1) {
-		        k=(khi+klo) >> 1;
-		        if (xa[k] > x[i]) khi=k;
-		        else klo=k;
-	        }
-	        h=xa[khi]-xa[klo];
-	        if (h == 0.0) {
+            klo=0;
+            khi=n-1;
+            while (khi-klo > 1) {
+                k=(khi+klo) >> 1;
+                if (xa[k] > x[i]) khi=k;
+                else klo=k;
+            }
+            h=xa[khi]-xa[klo];
+            if (h == 0.0) {
                 printf("Bad table input, repeated values\n");
                 Py_DECREF(xdata);
                 Py_DECREF(ydata);
@@ -3594,8 +3594,8 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
                 Py_DECREF(result);           
             }
             a=(xa[khi]-x[i])/h;
-	        b=(x[i]-xa[klo])/h;
-	        *y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
+            b=(x[i]-xa[klo])/h;
+            *y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
             y++;
         }    
     }
@@ -3611,9 +3611,9 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
 /* List of functions defined in the module */
 
 static PyMethodDef SpecfitFuns_methods[] = {
-	{"subacold",	SpecfitFuns_subacold,	METH_VARARGS},
-	{"subac",	    SpecfitFuns_subac,		METH_VARARGS},
-	{"subacfast",	    SpecfitFuns_subacfast,		METH_VARARGS},
+    {"subacold",    SpecfitFuns_subacold,    METH_VARARGS},
+    {"subac",        SpecfitFuns_subac,        METH_VARARGS},
+    {"subacfast",        SpecfitFuns_subacfast,        METH_VARARGS},
     {"gauss",       SpecfitFuns_gauss,      METH_VARARGS},
     {"agauss",      SpecfitFuns_agauss,     METH_VARARGS},
     {"fastagauss",  SpecfitFuns_fastagauss, METH_VARARGS},
@@ -3634,44 +3634,44 @@ static PyMethodDef SpecfitFuns_methods[] = {
     {"SavitskyGolay",      SpecfitFuns_SavitskyGolay,   METH_VARARGS},
     {"spline",      SpecfitFuns_spline,   METH_VARARGS},
     {"_splint",     SpecfitFuns_splint,   METH_VARARGS},
-	{NULL,		NULL}		/* sentinel */
+    {NULL,        NULL}        /* sentinel */
 };
 
 
 static PyObject *
 SpecfitFuns_getattr(SpecfitFunsObject *self,
-	char *name)
+    char *name)
 {
-	if (self->x_attr != NULL) {
-		PyObject *v = PyDict_GetItemString(self->x_attr, name);
-		if (v != NULL) {
-			Py_INCREF(v);
-			return v;
-		}
-	}
-	return Py_FindMethod(SpecfitFuns_methods, (PyObject *)self, name);
+    if (self->x_attr != NULL) {
+        PyObject *v = PyDict_GetItemString(self->x_attr, name);
+        if (v != NULL) {
+            Py_INCREF(v);
+            return v;
+        }
+    }
+    return Py_FindMethod(SpecfitFuns_methods, (PyObject *)self, name);
 }
 
 
 statichere PyTypeObject SpecfitFuns_Type = {
-	/* The ob_type field must be initialized in the module init function
-	 * to be portable to Windows without using C++. */
-	PyObject_HEAD_INIT(NULL)
-	0,			/*ob_size*/
-	"SpecfitFuns",			    /*tp_name*/
-	sizeof(SpecfitFunsObject),	/*tp_basicsize*/
-	0,			/*tp_itemsize*/
-	/* methods */
-	(destructor)SpecfitFuns_dealloc, /*tp_dealloc*/
-	0,			/*tp_print*/
-	(getattrfunc)SpecfitFuns_getattr, /*tp_getattr*/
-	(setattrfunc)SpecfitFuns_setattr, /*tp_setattr*/
-	0,			/*tp_compare*/
-	0,			/*tp_repr*/
-	0,			/*tp_as_number*/
-	0,			/*tp_as_sequence*/
-	0,			/*tp_as_mapping*/
-	0,			/*tp_hash*/
+    /* The ob_type field must be initialized in the module init function
+     * to be portable to Windows without using C++. */
+    PyObject_HEAD_INIT(NULL)
+    0,            /*ob_size*/
+    "SpecfitFuns",                /*tp_name*/
+    sizeof(SpecfitFunsObject),    /*tp_basicsize*/
+    0,            /*tp_itemsize*/
+    /* methods */
+    (destructor)SpecfitFuns_dealloc, /*tp_dealloc*/
+    0,            /*tp_print*/
+    (getattrfunc)SpecfitFuns_getattr, /*tp_getattr*/
+    (setattrfunc)SpecfitFuns_setattr, /*tp_setattr*/
+    0,            /*tp_compare*/
+    0,            /*tp_repr*/
+    0,            /*tp_as_number*/
+    0,            /*tp_as_sequence*/
+    0,            /*tp_as_mapping*/
+    0,            /*tp_hash*/
 };
 
 
@@ -3680,18 +3680,18 @@ statichere PyTypeObject SpecfitFuns_Type = {
 DL_EXPORT(void)
 initSpecfitFuns(void)
 {
-	PyObject *m, *d;
+    PyObject *m, *d;
 
-	/* Initialize the type of the new type object here; doing it here
-	 * is required for portability to Windows without requiring C++. */
-	SpecfitFuns_Type.ob_type = &PyType_Type;
+    /* Initialize the type of the new type object here; doing it here
+     * is required for portability to Windows without requiring C++. */
+    SpecfitFuns_Type.ob_type = &PyType_Type;
 
-	/* Create the module and add the functions */
-	m = Py_InitModule("SpecfitFuns", SpecfitFuns_methods);
+    /* Create the module and add the functions */
+    m = Py_InitModule("SpecfitFuns", SpecfitFuns_methods);
     import_array();
 
-	/* Add some symbolic constants to the module */
-	d = PyModule_GetDict(m);
-	ErrorObject = PyErr_NewException("SpecfitFuns.error", NULL, NULL);
-	PyDict_SetItemString(d, "error", ErrorObject);
+    /* Add some symbolic constants to the module */
+    d = PyModule_GetDict(m);
+    ErrorObject = PyErr_NewException("SpecfitFuns.error", NULL, NULL);
+    PyDict_SetItemString(d, "error", ErrorObject);
 }
