@@ -70,7 +70,7 @@ class SpecFileDataSource:
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
             if not os.path.exists(name):
-                raise "ValueError","File %s does not exists" % name
+                raise ValueError,"File %s does not exists" % name
         for name in self.__sourceNameList:
             self._sourceObjectList.append(specfile.Specfile(name))
         self.__lastKeyInfo = {}    
@@ -168,7 +168,7 @@ class SpecFileDataSource:
         count= string.count(key, '.')
         if (count==1): return "scan"
         elif (count==2) or (count==3): return "mca"
-        else: raise "SpecFileDataSource: Invalid key"
+        else: raise self.Error, "SpecFileDataSource: Invalid key"
 
     def __getScanInfo(self, scankey):
         index = 0
@@ -302,7 +302,7 @@ class SpecFileDataSource:
             except: lines=0
             if nums[3]==0: mca_no=int(nums[2])
             else:          mca_no=((int(nums[3])-1)*lines)+int(nums[2])
-        else: raise "SpecFileData: Invalid key"
+        else: raise self.Error, "SpecFileData: Invalid key"
         return (sel_key,mca_no)
 
     def getDataObject(self,key,selection=None):
@@ -349,7 +349,7 @@ class SpecFileDataSource:
             if scan_key not in sourcekeys:
                 sourcekeys = self.getSourceInfo()['KeyList']
         if scan_key not in sourcekeys:
-            raise KeyError,"Key %s not in source keys" % key
+            raise KeyError, "Key %s not in source keys" % key
 
         if key_type=="scan":
             output = self._getScanData(key, raw = True)
@@ -362,7 +362,7 @@ class SpecFileDataSource:
                 return output
             elif type(selection) != type({}):
                 #I only understand index selections
-                raise "TypeError", "Only selections of type {x:[],y:[],m:[]} understood"
+                raise TypeError, "Only selections of type {x:[],y:[],m:[]} understood"
             else:
                 if selection.has_key('x'):
                     indexlist = []
@@ -375,7 +375,7 @@ class SpecFileDataSource:
                         else:
                             label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
-                            raise "ValueError", "Label %s not in scan labels" % label
+                            raise ValueError, "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
                         if output.x is None: output.x = []
                         output.x.append(output.data[:, index])
@@ -389,7 +389,7 @@ class SpecFileDataSource:
                         else:    
                             label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
-                            raise "ValueError", "Label %s not in scan labels" % label
+                            raise ValueError, "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
                         if output.y is None: output.y = []
                         output.y.append(output.data[:, index])
@@ -403,7 +403,7 @@ class SpecFileDataSource:
                         else:    
                             label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
-                            raise "ValueError", "Label %s not in scan labels" % label
+                            raise ValueError, "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
                         if output.m is None: output.m = []
                         output.m.append(output.data[:, index])
