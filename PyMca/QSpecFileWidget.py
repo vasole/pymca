@@ -52,10 +52,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if QTVERSION < '4.0.0':
             self.list= qt.QListView(self, "ScanList")
             self.list.setSelectionMode(qt.QListView.Extended)
+            self.mainTab = qt.QTabWidget(self)
         else:
-            self.list  = qt.QTreeWidget(self)
+            self.splitter = qt.QSplitter(self)
+            self.splitter.setOrientation(qt.Qt.Vertical)
+            self.list  = qt.QTreeWidget(self.splitter)
             self.list.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
-        self.mainTab = qt.QTabWidget(self)
+            self.mainTab = qt.QTabWidget(self.splitter)
 
         self.cntTable = SpecFileCntTable.SpecFileCntTable()
         self.mcaTable = SpecFileMcaTable.SpecFileMcaTable()
@@ -87,8 +90,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         autoBoxLayout.addWidget(self.autoAddBox)
         autoBoxLayout.addWidget(self.autoReplaceBox)
 
-        self.mainLayout.addWidget(self.list)
-        self.mainLayout.addWidget(self.mainTab)
+        if QTVERSION < '4.0.0':
+            self.mainLayout.addWidget(self.list)
+            self.mainLayout.addWidget(self.mainTab)
+        else:
+            self.mainLayout.addWidget(self.splitter)
         self.mainLayout.addWidget(autoBox)
 
 

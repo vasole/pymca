@@ -32,12 +32,13 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
-    
+
+QTVERSION = qt.qVersion()    
 if 0 and qt.qVersion() < '3.0.0':
     import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
     import qttable
-if qt.qVersion() < '4.0.0':
+if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -80,7 +81,7 @@ class SpecFileDataInfo(qt.QTabWidget):
     ]
 
     def __init__(self, info, parent=None, name="DataSpecFileInfo", fl=0):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QTabWidget.__init__(self, parent, name, fl)
             self.setMargin(5)
         else:
@@ -91,6 +92,11 @@ class SpecFileDataInfo(qt.QTabWidget):
         self.__createMotorTable()
         self.__createCounterTable()
         self.__createHeaderText()
+
+    if QTVERSION > '4.0.0':
+        def sizeHint(self):
+            return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
+                            3 * qt.QTabWidget.sizeHint(self).height())                            
 
     def __createInfoTable(self):
         pars= [ par for par in self.InfoTableItems if par[0] in self.info.keys() ]
