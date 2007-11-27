@@ -380,10 +380,14 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.insertLegend(legend, kw['LegendPos'])
             else:
                 self.insertLegend(legend, Qwt.QwtPlot.BottomLegend)            
-        self.__uselegendmenu = 0
+        self.__uselegendmenu    = 0
+        self.__legendrename     = False
         if kw.has_key('uselegendmenu'):
             if kw['uselegendmenu']:
                 self.__uselegendmenu = 1
+                if kw.has_key('legendrename'):
+                    if kw['legendrename']:
+                        self.__legendrename = True
 
         if kw.has_key('keepimageratio'):
             self.__keepimageratio = 1
@@ -1332,6 +1336,20 @@ class QtBlissGraph(qwt.QwtPlot):
         self.__removecurveevent['event'] = "RemoveCurveEvent"
         self.__removecurveevent['legend'] = self.__activelegendname
  
+    def __legendrenamesignal(self):
+        if DEBUG: print  "__legendrenamesignal"
+        import RenameCurveDialog
+        dialog = RenameCurveDialog.RenameCurveDialog(self,
+                                                     self.__activelegendname,
+                                                     self.curveslist)
+        ret = dialog.exec_()
+        if ret:
+            newlegend = dialog.getText()
+            self.__renamecurveevent = {}
+            self.__renamecurveevent['event'] = "RenameCurveEvent"
+            self.__renamecurveevent['legend'] = self.__activelegendname
+            self.__renamecurveevent['newlegend'] = newlegend
+ 
     def customEvent(self, event):
         if event.dict.has_key('legend'):
             if qt.qVersion() < '4.0.0':
@@ -1626,6 +1644,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.__activelegendname = ddict['legend']
             self.__event = None
             self.__removecurveevent = None
+            self.__renamecurveevent = None
             if self.legendmenu is None:
                 if QTVERSION < '4.0.0':
                      self.legendmenu = qt.QPopupMenu()
@@ -1653,14 +1672,25 @@ class QtBlissGraph(qwt.QwtPlot):
                                            self.__legendToggleLine)
                      self.legendmenu.addSeparator()
                      self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
+                     if self.__legendrename:
+                         self.legendmenu.addAction(qt.QString("Rename curve") ,
+                                                   self.__legendrenamesignal)
             if QTVERSION < '4.0.0':
                 self.legendmenu.exec_loop(self.cursor().pos())
             else:
                 self.legendmenu.exec_(self.cursor().pos())
+
             if self.__removecurveevent is not None:
                 event = GraphCustomEvent()
                 event.dict['event' ]  = "RemoveCurveEvent"
                 event.dict['legend']  = self.__removecurveevent['legend']
+                qt.QApplication.postEvent(self, event)
+
+            if self.__renamecurveevent is not None:
+                event = GraphCustomEvent()
+                event.dict['event' ]  = "RenameCurveEvent"
+                event.dict['legend']  = self.__renamecurveevent['legend']
+                event.dict['newlegend']  = self.__renamecurveevent['newlegend']
                 qt.QApplication.postEvent(self, event)
     
     def newcurve(self,*var,**kw):

@@ -702,7 +702,7 @@ class ScanWindow(qt.QWidget):
         
 
     def _buildGraph(self):
-        self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True)
+        self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True, legendrename=True)
         self.mainLayout.addWidget(self.graph)
 
         self.graphBottom = qt.QWidget(self)
@@ -981,13 +981,10 @@ class ScanWindow(qt.QWidget):
                     legend = self.dataObjectsList[0]
                 else:
                     return
-            splitlegend = legend.split()
-            sourcename  = splitlegend[0]
-            key         = splitlegend[1]
-            ylabel      = splitlegend[2]
             if legend not in self.dataObjectsList:
                 if DEBUG:print "unknown legend %s" % legend
                 return
+            
             #force the current x label to the appropriate value
             dataObject = self.dataObjectsDict[legend]
             ilabel = dataObject.info['selection']['y'][0]
@@ -1006,6 +1003,7 @@ class ScanWindow(qt.QWidget):
                 self.scanWindowInfoWidget.updateFromDataObject\
                                                             (dataObject)
             return
+
         if ddict['event'] == "RemoveCurveEvent":
             legend = ddict['legend']
             self.graph.delcurve(legend)
@@ -1013,6 +1011,23 @@ class ScanWindow(qt.QWidget):
                 del self.dataObjectsDict[legend]
                 del self.dataObjectsList[self.dataObjectsList.index(legend)]
             self.graph.replot()
+            return
+        
+        if ddict['event'] == "RenameCurveEvent":
+            legend = ddict['legend']
+            newlegend = ddict['newlegend']
+            if self.dataObjectsDict.has_key(legend):
+                self.dataObjectsDict[newlegend]= copy.deepcopy(self.dataObjectsDict[legend])
+                self.dataObjectsDict[newlegend].info['legend'] = newlegend
+                self.dataObjectsList.append(newlegend)
+                self.graph.delcurve(legend)
+                self.graph.newCurve(self.dataObjectsDict[newlegend].info['legend'],
+                                    self.dataObjectsDict[newlegend].x[0],
+                                    self.dataObjectsDict[newlegend].y[0])
+                del self.dataObjectsDict[legend]
+                del self.dataObjectsList[self.dataObjectsList.index(legend)]
+            self.graph.replot()
+            return
 
     def _scanFitSignalReceived(self, ddict):
         if DEBUG:print "_graphSignalReceived", ddict
