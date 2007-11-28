@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program.
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 if 'qt' not in sys.modules:
@@ -57,7 +57,7 @@ class QSourceSelector(qt.QWidget):
                                 "All Files (*)"]
         else:
             self.fileTypeList = filetypelist
-        self.lastFileFilter = qt.QString(self.fileTypeList[0])
+        self.lastFileFilter = self.fileTypeList[0]
 
         # --- file combo/open/close
         self.lastInputDir = PyMcaDirs.inputDir
@@ -156,6 +156,7 @@ class QSourceSelector(qt.QWidget):
     def openFile(self, filename=None,justloaded=None, specsession = False):
         if DEBUG:
             print "openfile = ",filename
+        staticDialog = False
         if not specsession:
             if justloaded is None: justloaded = True
             if filename is None:
@@ -192,6 +193,7 @@ class QSourceSelector(qt.QWidget):
                                     "Open a new source file",          wdir,
                                     filetypes,
                                     self.lastFileFilter)
+                        staticDialog = True
                     else:
                         fdialog = qt.QFileDialog(self)
                         fdialog.setModal(True)
@@ -217,10 +219,20 @@ class QSourceSelector(qt.QWidget):
                 filename=[]
                 for f in filelist:
                     filename.append(str(f))
-                if not len(filename):    return
+                if not len(filename):
+                    return
                 if len(filename):
                     self.lastInputDir  = os.path.dirname(filename[0])
                     PyMcaDirs.inputDir = os.path.dirname(filename[0])
+                    if staticDialog:
+                        if len(filename[0]) > 3:
+                            #figure out the selected filter
+                            extension = filename[0][-3:]
+                            self.lastFileFilter = self.fileTypeList[-1]
+                            for fileFilter in self.fileTypeList:
+                                if extension == fileFilter[-4:-1]:
+                                    self.lastFileFilter = fileFilter
+                                    break
                 justloaded = True
             if justloaded:
                 if type(filename) != type([]):

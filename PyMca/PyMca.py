@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.85 $"
+__revision__ = "$Revision: 1.86 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -24,7 +24,7 @@ __revision__ = "$Revision: 1.85 $"
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys, getopt, string
 if __name__ == '__main__':
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.1"
+__version__ = "4.2.2 20071128-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -535,6 +535,7 @@ class PyMca(PyMcaMdi.PyMca):
         d['PyMca']['Geometry']['McaGraph'] = [r.x(), r.y(), r.width(), r.height()]
         #sources
         d['PyMca']['Sources'] = {}
+        d['PyMca']['Sources']['lastFileFilter'] = self.sourceWidget.sourceSelector.lastFileFilter
         for source in SOURCESLIST:
             d['PyMca'][source] = {}
             if self.sourceWidget.sourceSelector.lastInputDir is not None:
@@ -620,6 +621,9 @@ class PyMca(PyMcaMdi.PyMca):
                                                  qt.QSize(dict['Geometry']['MainWindow'][2],
                                                           dict['Geometry']['MainWindow'][3])))
             self.mcawindow.showMaximized()
+        if dict.has_key('Sources'):
+            if dict['Sources'].has_key('lastFileFilter'):
+                self.sourceWidget.sourceSelector.lastFileFilter = dict['Sources']['lastFileFilter']
         for source in SOURCESLIST:
             if dict.has_key(source):
                 if dict[source].has_key('lastInputDir'):
