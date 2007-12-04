@@ -271,7 +271,7 @@ class PyMcaMatplotlibSaveImage:
 	if self.imageData is None:
 	    return
 	# The axes
-        self.axes = self.figure.add_axes([.1, .15, .75, .8])
+        self.axes = self.figure.add_axes([.15, .15, .75, .8])
         if self.config['xaxis'] == 'off':
             self.axes.xaxis.set_visible(False)
         else:
@@ -291,6 +291,14 @@ class PyMcaMatplotlibSaveImage:
 	    ccmap = cm.jet
 	elif self.config['colormap']=='hot':
 	    cmap = cm.hot
+	elif self.config['colormap']=='cool':
+	    cmap = cm.cool
+	elif self.config['colormap']=='copper':
+	    cmap = cm.copper
+	elif self.config['colormap']=='spectral':
+            cmap = cm.spectral
+	elif self.config['colormap']=='hsv':
+            cmap = cm.hsv
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape

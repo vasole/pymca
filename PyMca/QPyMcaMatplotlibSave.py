@@ -185,7 +185,7 @@ class SaveImageSetup(qt.QWidget):
                 print "Cannot delete output file"
                 pass
         config = self.imageWidget.getParameters()
-        s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.image)
+        s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
         s.setParameters(config)
         s.saveImage(finalFile)
 
@@ -264,7 +264,8 @@ class RightWidget(qt.QWidget):
 	    if self.labelList[i] in ['X Axis', 'Y Axis']:
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
-		options = ['Default', 'Gray', 'Hot']
+		options = ['Default', 'Gray', 'Spectral',\
+                           'Hot', 'Cool', 'Hsv', 'Copper']
 	    elif self.labelList[i] in ['Colorbar']:
 		options = ['None', 'Vertical', 'Horizontal']
 	    elif self.labelList[i] in ['Origin']:
@@ -362,7 +363,15 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	    ccmap = cm.jet
 	elif self.config['colormap']=='hot':
 	    cmap = cm.hot
-
+	elif self.config['colormap']=='cool':
+	    cmap = cm.cool
+	elif self.config['colormap']=='copper':
+	    cmap = cm.copper
+	elif self.config['colormap']=='spectral':
+            cmap = cm.spectral
+	elif self.config['colormap']=='hsv':
+            cmap = cm.hsv
+        
         if self.config['extent'] is None:
             h, w = self.imageData.shape
 	    extent = (0,w,0,h)
