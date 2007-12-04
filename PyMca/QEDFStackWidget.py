@@ -23,7 +23,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import McaWindow
@@ -45,6 +45,11 @@ import os
 import PyMcaDirs
 import SpecfitFuns
 import time
+try:
+    import QPyMcaMatplotlibSave
+    MATPLOTLIB = True
+except ImportError:
+    MATPLOTLIB = False
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -220,6 +225,8 @@ class QEDFStackWidget(qt.QWidget):
         self.__setROIBrush2()
         self._buildConnections()
 
+        self._matplotlibSaveImage = None
+        
     def _build(self, vertical = False):
         box = qt.QSplitter(self)
         if vertical:
@@ -273,10 +280,23 @@ class QEDFStackWidget(qt.QWidget):
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
         self.roiWindow.mainLayout.setMargin(0)
         self.roiWindow.mainLayout.setSpacing(0)
+        standaloneSaving = True
+        if QTVERSION > '4.0.0':
+            if MATPLOTLIB:
+                standaloneSaving = False
         self.roiGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.roiWindow,
                                                                 selection = True,
                                                                 colormap=True,
-                                                                imageicons=True)
+                                                                imageicons=True,
+                                                                standalonesave=standaloneSaving)
+        if not standaloneSaving:
+            self.connect(self.roiGraphWidget.saveToolButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._roiSaveToolButtonSignal)
+            self._roiSaveMenu = qt.QMenu()
+            self._roiSaveMenu.addAction(qt.QString("Standard"),    self.roiGraphWidget._saveIconSignal)
+            self._roiSaveMenu.addAction(qt.QString("Matplotlib") , self._roiSaveMatplotlibImage)
+
         if QTVERSION > '4.0.0':
             infotext  = 'Toggle background subtraction from current image\n'
             infotext += 'subtracting a straight line between the ROI limits.'
@@ -288,6 +308,7 @@ class QEDFStackWidget(qt.QWidget):
                                         toggle = True,
                                         state = False,
                                         position = 6)
+        
         self.roiGraphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
                                Qwt.QwtPlot.yLeft,
                                Qwt.QwtPicker.NoSelection,
@@ -389,6 +410,17 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self.raise_()
         return result
+
+    def _roiSaveToolButtonSignal(self):
+        self._roiSaveMenu.exec_(self.cursor().pos())
+
+    def _roiSaveMatplotlibImage(self):
+        if self._matplotlibSaveImage is None:
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, self.__ROIImageData)
+        else:
+            self._matplotlibSaveImage.setImage(self.__ROIImageData)
+        self._matplotlibSaveImage.show()
+        self._matplotlibSaveImage.raise_()    
 
     def subtractBackground(self):
         if 0:
@@ -1717,14 +1749,15 @@ if __name__ == "__main__":
             if len(filelist):
                 PyMcaDirs.inputDir = os.path.dirname(filelist[0])
                 f = open(filelist[0])
-                line = f.readline()
-                if not len(line):
-                    line = f.readline()
+                #read 100 characters
+                line = f.read(10)
+                f.close()
+                if line[0] == "\n":
+                    line = line[1:]
                 if line[0] == "{":
                     stack = QStack()
                 else:
                     stack = QSpecFileStack()
-                f.close()
             if len(filelist) == 1:
                 stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
             elif len(filelist):

@@ -1,5 +1,33 @@
+#!/usr/bin/env python
+#/*##########################################################################
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem for you.
+#############################################################################*/
 import os
 import numpy
+from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -198,8 +226,135 @@ class PyMcaMatplotlibSave:
 
         self.canvas.print_figure(filename)
         return
+
+class PyMcaMatplotlibSaveImage:
+    def __init__(self, imageData=None, fileName=None,
+		     dpi=300,
+                     size=(4, 4),
+                     xaxis='off',
+                     yaxis='off',
+                     xlabel='',
+                     ylabel='',
+                     colorbar=None,
+                     title='',
+                     interpolation='nearest',
+		     colormap=None,
+                     origin='lower',
+		     contour='off',
+                     extent=None):
+
+        self.figure = Figure(figsize=size) #in inches
+        self.canvas = FigureCanvas(self.figure)
+	self.imageData = imageData
+	self.config={'xaxis':xaxis,
+		     'yaxis':yaxis,
+		     'title':title,
+		     'xlabel':xlabel,
+		     'ylabel':ylabel,
+		     'colorbar':colorbar,
+		     'colormap':colormap,
+		     'interpolation':interpolation,
+		     'origin':origin,
+		     'contour':contour,
+                     'extent':extent}
+        if fileName is not None:
+            self.saveImage(fileName)
+
+    def setImage(self, image=None):
+        self.imageData = image
+
+    def setParameters(self, ddict):
+        self.config.update(ddict)
+
+    def saveImage(self, fileName):
+        self.figure.clear()
+	if self.imageData is None:
+	    return
+	# The axes
+        self.axes = self.figure.add_axes([.1, .15, .75, .8])
+        if self.config['xaxis'] == 'off':
+            self.axes.xaxis.set_visible(False)
+        else:
+            self.axes.xaxis.set_visible(True)
+        if self.config['yaxis'] == 'off':
+            self.axes.yaxis.set_visible(False)
+        else:
+            self.axes.yaxis.set_visible(True)
+
+	interpolation = self.config['interpolation']
+	origin = self.config['origin']
+
+	cmap = cm.jet
+	ccmap = cm.gray
+	if self.config['colormap']=='gray':
+	    cmap  = cm.gray
+	    ccmap = cm.jet
+	elif self.config['colormap']=='hot':
+	    cmap = cm.hot
+
+        if self.config['extent'] is None:
+            h, w = self.imageData.shape
+	    extent = (0,w,0,h)
+            if origin == 'upper':
+                extent = (0, w, h, 0)
+	else:
+            extent = self.config['extent'] 
+
+            
+        self._image  = self.axes.imshow(self.imageData,
+                                        interpolation=interpolation,
+                                        origin=origin,
+					cmap=cmap,
+                                        extent=extent)
+        ylim = self.axes.get_ylim()
+
+        self.axes.set_title(self.config['title'])
+        self.axes.set_xlabel(self.config['xlabel'])
+        self.axes.set_ylabel(self.config['ylabel'])
+        
+        if self.config['colorbar'] is not None:
+	    barorientation = self.config['colorbar']
+	    self._colorbar = self.figure.colorbar(self._image,
+	                                orientation=barorientation)
+
+	#contour plot
+	if self.config['contour'] != 'off':
+	    dataMin = self.imageData.min()
+	    dataMax = self.imageData.max()
+	    levels = (numpy.arange(10)) * (dataMax - dataMin)/10.
+	    if self.config['contour'] == 'filled':
+		self._contour = self.axes.contourf(self.imageData, levels,
+	             origin=origin,
+                     cmap=ccmap,
+                     extent=extent)
+	    else:
+		self._contour = self.axes.contour(self.imageData, levels,
+	             origin=origin,
+                     cmap=ccmap,
+	             linewidths=2,
+                     extent=extent)
+	    self.axes.clabel(self._contour, fontsize=9, inline=1)
+            if 0 and  self.config['colorbar'] is not None:
+                if barorientation == 'horizontal':
+                    barorientation = 'vertical'
+                else:
+                    barorientation = 'horizontal'
+        	self._ccolorbar=self.figure.colorbar(self._contour,
+                                                     orientation=barorientation,
+                                                     extend='both')
+
+        self.axes.set_ylim(ylim[0],ylim[1])
+
+        self.canvas.print_figure(fileName)
+        
         
 if __name__ == "__main__":
+    import sys
+    a=numpy.arange(1200.)
+    a.shape = 20, 60
+    PyMcaMatplotlibSaveImage(a, "filename.png")
+    sys.exit(0)
+
     DEBUG = 1
     x = numpy.arange(1000.)
     y0 = x * 100 + 10.
