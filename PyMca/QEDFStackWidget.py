@@ -50,6 +50,8 @@ try:
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False
+import OmnicMap
+
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -1652,6 +1654,7 @@ class QEDFStackWidget(qt.QWidget):
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
+                        "OMNIC Files (*map)",
                         "All Files (*)"]
         message = "Open ONE indexed stack or SEVERAL files"
         wdir = PyMcaDirs.inputDir
@@ -1729,11 +1732,17 @@ if __name__ == "__main__":
     w = QEDFStackWidget(master=True)
     if len(args):
         f = open(args[0])
-        line = f.readline()
-        if not len(line.replace("\n","")):
-            line = f.readline()
+        #read 10 characters
+        line = f.read(10)
+        f.close()
+        omnicfile = False
+        if line[0] == "\n":
+            line = line[1:]
         if line[0] == "{":
             stack = QStack()
+        elif line.startswith('Spectral'):
+            stack = OmnicMap.OmnicMap(args[0])
+            omnicfile = True
         else:
             stack = QSpecFileStack()
         f.close()
@@ -1741,7 +1750,8 @@ if __name__ == "__main__":
         stack.loadFileList(args, fileindex =fileindex)
         PyMcaDirs.inputDir = os.path.dirname(args[0])
     elif len(args) == 1:
-        stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
+        if not omnicfile:
+            stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
         PyMcaDirs.inputDir = os.path.dirname(args[0])
     else:
         if 1:
@@ -1749,17 +1759,22 @@ if __name__ == "__main__":
             if len(filelist):
                 PyMcaDirs.inputDir = os.path.dirname(filelist[0])
                 f = open(filelist[0])
-                #read 100 characters
+                #read 10 characters
                 line = f.read(10)
                 f.close()
+                omnicfile = False
                 if line[0] == "\n":
                     line = line[1:]
                 if line[0] == "{":
                     stack = QStack()
+                elif line.startswith('Spectral'):
+                    stack = OmnicMap.OmnicMap(filelist[0])
+                    omnicfile = True
                 else:
                     stack = QSpecFileStack()
             if len(filelist) == 1:
-                stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
+                if not omnicfile:
+                    stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
             elif len(filelist):
                 stack.loadFileList(filelist, fileindex=fileindex)
             else:

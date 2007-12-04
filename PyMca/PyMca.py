@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.86 $"
+__revision__ = "$Revision: 1.87 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.2 20071128-snapshot"
+__version__ = "4.2.2 20071204-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1111,6 +1111,7 @@ class PyMca(PyMcaMdi.PyMca):
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
+                        "OMNIC Files (*map)",
                         "All Files (*)"]
             message = "Open ONE indexed stack or SEVERAL files"
             filelist = self.__getStackOfFiles(fileTypeList, message)
@@ -1140,8 +1141,21 @@ class PyMca(PyMcaMdi.PyMca):
                     self.connect(self.__imagingTool,
                                  qt.SIGNAL("StackWidgetSignal"),
                                  self._deleteImagingTool)
+
+                omnicfile = False
+                if len(filelist) == 1:
+                    f = open(filelist[0])
+                    line = f.read(10)
+                    f.close()
+                    if line[0]=="\n":
+                        line = line[1:]
+                    if line.startswith('Spectral'):
+                        omnicfile = True
                 try:
-                    self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
+                    if omnicfile:
+                        self.__imagingTool.setStack(QEDFStackWidget.OmnicMap.OmnicMap(filelist[0]))
+                    else:
+                        self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
                 except:
                     self.__imagingTool.setStack(QEDFStackWidget.QSpecFileStack(filelist))
                 self.__imagingTool.show()
