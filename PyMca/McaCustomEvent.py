@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 if 'qt' not in sys.modules:
@@ -41,12 +41,11 @@ if QT4:
     #MCAEVENT = 12345
 
     class McaCustomEvent(QtCore.QEvent):
-        def __init__(self,dict={}):
-            self.dict = dict
-            QtCore.QEvent.__init__(self,MCAEVENT)
+        def __init__(self, ddict={}):
+            self.dict = ddict
+            QtCore.QEvent.__init__(self, MCAEVENT)
 
         def type(self):
-            print "called"
             return MCAEVENT
 else:
     #MCAEVENT = qt.QUserEvent + 1

@@ -24,13 +24,12 @@ __revision__ = "$Revision: 1.45 $"
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################
 import sys
 if 'qt' not in sys.modules:
     try:
         import PyQt4.Qt as qt
-        qt.Qt.WDestructiveClose = "TO BE DONE"
     except:
         import qt
 else:
@@ -54,9 +53,11 @@ ROIWIDTH = 100.
 DEBUG = 0
 
 class McaBatchGUI(qt.QWidget):
-    def __init__(self,parent=None,name="PyMca batch fitting",fl=qt.Qt.WDestructiveClose,
+    def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
                 filelist=None,config=None,outputdir=None, actions=0):
         if QTVERSION < '4.0.0':
+            if fl is None:
+                fl = qt.Qt.WDestructiveClose
             qt.QWidget.__init__(self,parent,name,fl)
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
             self.setCaption(name)
