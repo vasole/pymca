@@ -264,8 +264,10 @@ class RightWidget(qt.QWidget):
 	    if self.labelList[i] in ['X Axis', 'Y Axis']:
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
-		options = ['Default', 'Gray', 'Spectral',\
+		options = ['Default', 'Gray',\
                            'Hot', 'Cool', 'Hsv', 'Copper']
+                if hasattr(cm, 'spectral'):
+                    options.append('Spectral')
 	    elif self.labelList[i] in ['Colorbar']:
 		options = ['None', 'Vertical', 'Horizontal']
 	    elif self.labelList[i] in ['Origin']:
