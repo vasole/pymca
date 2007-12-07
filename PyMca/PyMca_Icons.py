@@ -22,9 +22,31 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 # --- scan window icons ---
+togglepoints =[ 
+"16 16 2 1",
+"   c none",
+".  c blue",
+"                ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"  .   ...   ... ",
+"  .   . .   ... ",
+"  .   ...   ... ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"  .    .        ",
+"                "
+]
+
 subtract =[
 "16 16 2 1",
 "  c none",
@@ -3207,7 +3229,8 @@ IconDict= {
     "ymintozero":ymintozero,
     "average16":average16,
     "smooth":smooth,
-    "subtract":subtract
+    "subtract":subtract,
+    "togglepoints":togglepoints
 }
 
 def showIcons():

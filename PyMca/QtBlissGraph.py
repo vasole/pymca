@@ -22,10 +22,8 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-# The Python version of qwt-*/examples/simple_plot/simple.cpp
-#from QMdiApp.mdi_icons import IconDict
 import copy
 import sys
 import string
@@ -397,6 +395,8 @@ class QtBlissGraph(qwt.QwtPlot):
         if qwt.QWT_VERSION_STR[0] < '5':
             self.setLegendFrameStyle(qt.QFrame.Box | qt.QFrame.Sunken)
         self.enableZoom(True)
+        self.__defaultPlotPoints = False
+        self.__defaultPlotLines = True
         self._zooming = 0
         self._selecting = 0
         self.__zoomback   = 1
@@ -1276,6 +1276,44 @@ class QtBlissGraph(qwt.QwtPlot):
     def __legendToggleLine(self):
         self.toggleLine(self.__activelegendname)
         self.setactivecurve(self.getactivecurve(justlegend=1))
+
+    def setDefaultPlotPoints(self, value):
+        if value:
+            self.__defaultPlotPoints = True
+            for key in self.curves.keys():
+                curve  = self.curves[key]['curve']
+                symbol = curve.symbol()
+                if symbol.style() == self.symbols['none']:
+                    self.togglePoints(key)
+        else:
+            self.__defaultPlotPoints = False
+            for key in self.curves.keys():
+                curve  = self.curves[key]['curve']
+                symbol = curve.symbol()
+                if symbol.style() != self.symbols['none']:
+                    self.togglePoints(key)
+            if self.__defaultPlotLines == False:
+                self.setDefaultPlotLines(True)
+
+    def setDefaultPlotLines(self, value):
+        if value:                     
+            self.__defaultPlotLines = True
+            for key in self.curves.keys():
+                curve     = self.curves[key]['curve']
+                linetype  = curve.style()
+                pen       = curve.pen()
+                if curve.style() == qwt.QwtPlotCurve.NoCurve:
+                    self.toggleLine(key)
+        else:
+            self.__defaultPlotLines = False
+            for key in self.curves.keys():
+                curve     = self.curves[key]['curve']
+                linetype  = curve.style()
+                pen       = curve.pen()
+                if curve.style() != qwt.QwtPlotCurve.NoCurve:
+                    self.toggleLine(key)
+            if self.__defaultPlotPoints == False:
+                self.setDefaultPlotPoints(True)
         
     def togglePoints(self, key):
         if QWTVERSION4:return
@@ -1955,8 +1993,12 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             self.replot()
 
-
     def getactivecurve(self,justlegend=0):
+        if DEBUG: print "Deprecation warning: QtBlissGraph getactivecurve"
+        return self.getActiveCurve(justlegend)
+
+
+    def getActiveCurve(self,justlegend=0):
         #check the number of curves
         if len(self.curves.keys()) > 1:
             if not len(self.__activecurves):
@@ -1991,9 +2033,11 @@ class QtBlissGraph(qwt.QwtPlot):
         if legend in self.curves.keys():dict=copy.deepcopy(self.curves[legend]['curveinfo'].copy())
         return dict
         
-
-            
     def setactivecurve(self,keyorindex):
+        if DEBUG: print "Deprecation warning: QtBlissGraph setactivecurve"
+        return self.setActiveCurve(keyorindex)
+            
+    def setActiveCurve(self,keyorindex):
         if type(keyorindex) == type(" "):
             if keyorindex in self.curves.keys():
                 #index = self.curveslist.index(keyorindex) + 1
@@ -2083,7 +2127,8 @@ class QtBlissGraph(qwt.QwtPlot):
                 curve.attach(self)
                 self.curves[key] ["curve"] = curve
         else:
-            self.curves[key] ["curve"] = self.insertCurve(key)
+            curve = self.insertCurve(key)
+            self.curves[key] ["curve"] = curve
         self.curves[key] ["name"] = qt.QString(str(key))
         self.curveslist.append(key)
         self.curves[key] ["symbol"] = self.getnewsymbol()        
@@ -2096,6 +2141,10 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.curves[key] ["symbol"] = self.symbols['xcross']
             elif symbol == '+':
                 self.curves[key] ["symbol"] = self.symbols['cross']
+        elif self.__defaultPlotPoints:
+            self.curves[key] ["symbol"] = self.symbols['ellipse']
+
+                
         self.curves[key] ["maptoy2"]  = 0
         color = self.colors[self.colorslist[self.color]]
         linetype = self.linetypes[self.linetypeslist[self.linetype]]
@@ -2114,16 +2163,23 @@ class QtBlissGraph(qwt.QwtPlot):
                 linetype = self.linetypes['dashdot']
             elif line == '-..':
                 linetype = self.linetypes['dashdotdot']
-                
+
         self.curves[key] ["pen"]    = color
         pen = qt.QPen(color,self.linewidth,linetype)
         self.curves[key] ["linetype"]  = linetype
         self.curves[key] ["curveinfo"] = {}
         self.getnewpen()
         self.setCurvePen(self.curves[key]['curve'],pen )
+
         if symbol is not None:
             self.togglePoints(key)
             
+        if not QWTVERSION4:
+            if line is None:
+                if self.__defaultPlotLines:
+                    curve.setStyle(qwt.QwtPlotCurve.Lines)
+                else:
+                    curve.setStyle(qwt.QwtPlotCurve.NoCurve)
 
 
     def insertCurve(self, key):

@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import os
@@ -509,7 +509,7 @@ class ScanWindow(qt.QWidget):
         self.graph.canvas().setMouseTracking(1)
         self.graph.setCanvasBackground(qt.Qt.white)
         self.outputDir = None
-
+        self.__toggleCounter = 0
         if QTVERSION < '4.0.0':
             self.connect(self.graph,
                          qt.PYSIGNAL("QtBlissGraphSignal"),
@@ -543,6 +543,7 @@ class ScanWindow(qt.QWidget):
             self.logyIcon	= qt.QIconSet(qt.QPixmap(IconDict["logy"]))
             self.xAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
             self.yAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
+            self.togglePointsIcon = qt.QIconSet(qt.QPixmap(IconDict["togglepoints"]))
             self.fitIcon	= qt.QIconSet(qt.QPixmap(IconDict["fit"]))
             self.searchIcon	= qt.QIconSet(qt.QPixmap(IconDict["peaksearch"]))
 
@@ -570,6 +571,8 @@ class ScanWindow(qt.QWidget):
             self.logyIcon	= qt.QIcon(qt.QPixmap(IconDict["logy"]))
             self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
             self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
+            self.togglePointsIcon = qt.QIcon(qt.QPixmap(IconDict["togglepoints"]))
+
             self.fitIcon	= qt.QIcon(qt.QPixmap(IconDict["fit"]))
             self.searchIcon	= qt.QIcon(qt.QPixmap(IconDict["peaksearch"]))
 
@@ -615,6 +618,7 @@ class ScanWindow(qt.QWidget):
             self.yAutoScaleButton.setChecked(True)
             self.yAutoScaleButton.setDown(True)
 
+
         #x Autoscale
         self.xAutoScaleButton = self._addToolButton(self.xAutoIcon,
                             self._xAutoScaleToggle,
@@ -636,6 +640,12 @@ class ScanWindow(qt.QWidget):
         else:
             self.yLogButton.setChecked(False)
             self.yLogButton.setDown(False)
+
+        #toggle Points/Lines
+        tb = self._addToolButton(self.togglePointsIcon,
+                             self._togglePointsSignal,
+                             'Toggle Points/Lines')
+
 
         #fit icon
         tb = self._addToolButton(self.fitIcon,
@@ -817,7 +827,7 @@ class ScanWindow(qt.QWidget):
                             #A priori the graph only knows about plots
                             ydata = ydata/mdata
                         else:
-                            raise "ValueError", "Monitor data length different than counter data"
+                            raise ValueError, "Monitor data length different than counter data"
                     else:
                         mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
                     ylegend = 'y%d' % ycounter
@@ -835,7 +845,8 @@ class ScanWindow(qt.QWidget):
                     self.graph.newCurve(newLegend,
                                         x=xdata,
                                         y=ydata,
-                                        symbol='o')
+                                        symbol=None)
+                                        # symbol='o')
                     if self.scanWindowInfoWidget is not None:
                         activeLegend = self.getActiveCurve()
                         if activeLegend is not None:
@@ -861,7 +872,7 @@ class ScanWindow(qt.QWidget):
                             #A priori the graph only knows about plots
                             ydata = ydata/mdata
                         else:
-                            raise "ValueError", "Monitor data length different than counter data"
+                            raise ValueError, "Monitor data length different than counter data"
                     else:
                         mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
                     newDataObject.x = [xdata]
@@ -883,7 +894,7 @@ class ScanWindow(qt.QWidget):
                         symbol = 'x'
                     else:
                         newDataObject.info['legend'] = legend + " " + ylegend
-                        symbol = 'o'
+                        symbol = None
                     maptoy2 = False
                     if dataObject.info.has_key('operations'):
                         if dataObject.info['operations'][-1] == 'derivate':
@@ -1100,6 +1111,20 @@ class ScanWindow(qt.QWidget):
         if DEBUG:print "_toggleLogY"
         self.graph.toggleLogY()
         #self.graph.replot()
+
+    def _togglePointsSignal(self):
+        self.__toggleCounter = (self.__toggleCounter + 1) % 3
+        if self.__toggleCounter == 1:
+            self.graph.setDefaultPlotLines(True)
+            self.graph.setDefaultPlotPoints(True)
+        elif self.__toggleCounter == 2:
+            self.graph.setDefaultPlotPoints(True)
+            self.graph.setDefaultPlotLines(False)
+        else:
+            self.graph.setDefaultPlotLines(True)
+            self.graph.setDefaultPlotPoints(False)
+        self.graph.setActiveCurve(self.graph.getActiveCurve(justlegend=1))
+        self.graph.replot()
 
     def _fitIconSignal(self):
         if DEBUG:print "_fitIconSignal"
