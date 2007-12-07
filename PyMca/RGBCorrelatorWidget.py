@@ -582,6 +582,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *.dat",
+                      "ASCII Files *.csv",
                       "EDF Files *.edf"]
         strlist = qt.QStringList()
         for f in formatlist:
@@ -611,6 +612,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setAcceptMode(qt.QFileDialog.AcceptOpen)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *dat",
+                      "CSV Files *csv",
                       "EDF Files *edf",
                       "EDF Files *ccd"]
         strlist = qt.QStringList()
@@ -643,19 +645,34 @@ class RGBCorrelatorWidget(qt.QWidget):
                         self.addImage(dataObject.data,
                                       os.path.basename(fname)+" "+key)
                 else:
-                    self.addBatchDatFile(fname)
+                    if len(fname) < 5:
+                        self.addBatchDatFile(fname, csv=False)
+                    elif fname[-4:].lower() == ".csv":
+                        self.addBatchDatFile(fname, csv=True)
+                    else:
+                        self.addBatchDatFile(fname, csv=False)            
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error adding file: %s" % sys.exc_info()[1])
             msg.exec_()
 
-    def addBatchDatFile(self, filename, ignoresigma=None):
-        f = open(filename)
-        lines = f.readlines()
-        f.close()
+    def addBatchDatFile(self, filename, ignoresigma=None, csv=False):
         self.outputDir = os.path.dirname(filename)
-        labels = lines[0].replace("\n","").split("  ")
+        if csv:
+            f = open(filename)
+            lines = f.readlines()
+            f.close()
+            for i in range(len(lines)):
+                lines[i] = lines[i].replace('"','')
+                lines[i] = lines[i].replace(",","  ")
+                lines[i] = lines[i].replace(";","  ")
+            labels = lines[0].replace("\n","").split("  ")
+        else:
+            f = open(filename)
+            lines = f.readlines()
+            f.close()
+            labels = lines[0].replace("\n","").split("  ")
         i = 1
         while (not len( lines[-i].replace("\n",""))):
                i += 1
@@ -707,10 +724,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         for label in self._imageList:
             datalist.append(self._imageDict[label]['image'])
             labels.append(label.replace(" ","_"))
-        if filename[-4:] == ".edf":
+        if filename[-4:].lower() == ".edf":
             ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
+        if filename[-4:].lower() == ".csv":
+            ArraySave.save2DArrayListAsASCII(datalist, filename, labels, csv=True)
         else:
-            ArraySave.save2DArrayListAsASCII(datalist, filename, labels)
+            ArraySave.save2DArrayListAsASCII(datalist, filename, labels, csv=False)
         
     def showCalculationDialog(self):
         if self.calculationDialog is None:

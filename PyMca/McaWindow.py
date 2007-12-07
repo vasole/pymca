@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.47 $"
+__revision__ = "$Revision: 1.48 $"
 import sys
 import time
 import QtBlissGraph
@@ -534,6 +534,7 @@ class McaWidget(qt.QWidget):
             format_list = ['Specfile MCA  *.mca',
                            'Specfile Scan *.dat',
                            'Raw ASCII  *.txt',
+                           'Raw CSV  *.csv',
                            'Widget PNG *.png',
                            'Widget JPG *.jpg']
             if MATPLOTLIB:
@@ -665,6 +666,10 @@ class McaWidget(qt.QWidget):
                 energy = ndict[legend]['A'] + ndict[legend]['B'] * x + ndict[legend]['C'] * x * x
                 for i in range(len(y)):
                     file.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
+            elif filetype == 'CSV':
+                energy = ndict[legend]['A'] + ndict[legend]['B'] * x + ndict[legend]['C'] * x * x
+                for i in range(len(y)):
+                    file.write("%.7E;%.7E;%.7E\n" % (x[i], y[i], energy[i]))
             else:
                 file.write("#F %s\n" % specFile)
                 file.write("#D %s\n"%(time.ctime(time.time())))

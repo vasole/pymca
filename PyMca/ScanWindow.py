@@ -1171,6 +1171,7 @@ class ScanWindow(qt.QWidget):
                                 'Specfile Scan *.dat',
                                 'Specfile MultiScan *.dat',
                                 'Raw ASCII  *.txt',
+                                'Raw CSV  *.csv',
                                 'Widget PNG *.png',
                                 'Widget JPG *.jpg'])
             outfile.setFileMode(outfile.AnyFile)
@@ -1375,6 +1376,9 @@ class ScanWindow(qt.QWidget):
                 elif filetype == 'ASCII':
                     for i in range(len(y)):
                         ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                elif filetype == 'CSV':
+                    for i in range(len(y)):
+                        ffile.write("%.7E;%.7E\n" % (x[i], y[i]))
                 else:
                     ffile.write("#F %s\n" % filename)
                     ffile.write("#D %s\n"%(time.ctime(time.time())))
