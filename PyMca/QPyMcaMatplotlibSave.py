@@ -32,6 +32,7 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.colors import LinearSegmentedColormap
 import PyMcaMatplotlibSave
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
@@ -265,7 +266,8 @@ class RightWidget(qt.QWidget):
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
 		options = ['Default', 'Gray',\
-                           'Hot', 'Cool', 'Hsv', 'Copper']
+                           'Red', 'Green', 'Blue',\
+                           'Rainbow', 'Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
                     options.append('Spectral')
 	    elif self.labelList[i] in ['Colorbar']:
@@ -336,6 +338,31 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     'origin':origin,
 		     'contour':contour,
                      'extent':extent}
+
+        #generate own colormaps
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (1.0, 1.0, 1.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (1.0, 0.0, 0.0)),
+                 'blue': ((0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        self.__redCmap = LinearSegmentedColormap('red',cdict,256)
+
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (1.0, 1.0, 1.0)),
+                 'blue': ((0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        self.__greenCmap = LinearSegmentedColormap('green',cdict,256)
+
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (1.0, 0.0, 0.0)),
+                 'blue': ((0.0, 0.0, 0.0),
+                          (1.0, 1.0, 1.0))}
+        self.__blueCmap = LinearSegmentedColormap('blue',cdict,256)
 		     
 	self.updateFigure()
 
@@ -371,9 +398,15 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	    cmap = cm.copper
 	elif self.config['colormap']=='spectral':
             cmap = cm.spectral
-	elif self.config['colormap']=='hsv':
-            cmap = cm.hsv
-        
+	elif self.config['colormap']=='rainbow':
+            cmap = cm.gist_rainbow
+	elif self.config['colormap']=='red':
+            cmap = self.__redCmap
+	elif self.config['colormap']=='green':
+            cmap = self.__greenCmap
+	elif self.config['colormap']=='blue':
+            cmap = self.__blueCmap
+
         if self.config['extent'] is None:
             h, w = self.imageData.shape
 	    extent = (0,w,0,h)
