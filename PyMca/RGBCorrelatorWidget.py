@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
@@ -660,14 +660,31 @@ class RGBCorrelatorWidget(qt.QWidget):
     def addBatchDatFile(self, filename, ignoresigma=None, csv=False):
         self.outputDir = os.path.dirname(filename)
         if csv:
-            f = open(filename)
-            lines = f.readlines()
-            f.close()
-            for i in range(len(lines)):
-                lines[i] = lines[i].replace('"','')
-                lines[i] = lines[i].replace(",","  ")
-                lines[i] = lines[i].replace(";","  ")
-            labels = lines[0].replace("\n","").split("  ")
+            if 0:
+                #This works but is potentially slow
+                f = open("filename")
+                lines = f.readlines()
+                f.close()
+                for i in range(len(lines)):
+                    lines[i] = lines[i].replace('"','')
+                    lines[i] = lines[i].replace(",","  ")
+                    lines[i] = lines[i].replace(";","  ")
+                labels = lines[0].replace("\n","").split("  ")
+            else:
+                if sys.platform == "win32":
+                    f = open(filename, "rb")
+                else:
+                    f = open(filename, "r")
+                lines =f.read()
+                f.close()
+                lines = lines.replace("\r","\n")
+                lines = lines.replace("\n\n","\n")
+                lines = lines.replace(",","  ")
+                lines = lines.replace("\t","  ")
+                lines = lines.replace(";","  ")
+                lines = lines.replace('"','')
+                lines = lines.split("\n")
+                labels = lines[0].replace("\n","").split("  ")
         else:
             f = open(filename)
             lines = f.readlines()

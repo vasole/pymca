@@ -27,7 +27,7 @@
 import os
 import EdfFile
 
-def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False):
+def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvseparator=";"):
     if type(datalist) != type([]):
         datalist = [datalist]
     r, c = datalist[0].shape
@@ -40,16 +40,13 @@ def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False):
     if labels is None:
         labels = []
         for i in range(len(datalist)):
-            if csv:
-                labels.append("Array_%d" % i)
-            else:
-                labels.append('"Array_%d"' % i)
+            labels.append("Array_%d" % i)
     if len(labels) != len(datalist):
         raise ValueError, "Incorrect number of labels"
     if csv:
-        header = '"row","column"'
+        header = '"row"%s"column"' % csvseparator
         for label in labels:
-            header +=';"%s"' % label
+            header +='%s"%s"' % (csvseparator,label)
     else:
         header = "row  column"
         for label in labels:
@@ -61,9 +58,9 @@ def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False):
         for row in range(r):
             for col in range(c):
                 fileline += "%d" % row
-                fileline += ";%d" % col
+                fileline += "%s%d" % (csvseparator,col)
                 for i in range(ndata):
-                    fileline +=";%g" % datalist[i][row, col]
+                    fileline +="%s%g" % (csvseparator, datalist[i][row, col])
                 fileline += "\n"
                 filehandle.write("%s" % fileline)
                 fileline =""
