@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import specfile
 import os
@@ -110,7 +110,12 @@ class specfilewrapper:
             f.close()
             self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,1))
         else:
+            line = line.replace(","," ")
+            line = line.replace(";"," ")
             line = line.replace("\t"," ")
+            line = line.replace("\r","\n")
+            line = line.replace('"',"")
+            line = line.replace('\n\n',"\n")
             while(len(line)):
                 values = string.split(line)
                 if len(values):
@@ -125,7 +130,13 @@ class specfilewrapper:
                         self.header.append(line.replace("\n",""))
                 else:
                     self.header.append(line.replace("\n",""))
-                line = f.readline().replace("\t"," ")
+                line = f.readline()
+                line = line.replace(","," ")
+                line = line.replace(";"," ")
+                line = line.replace("\t"," ")
+                line = line.replace("\r","\n")
+                line = line.replace('"',"")
+                line = line.replace('\n\n',"\n")
             f.close()
             self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,ncol0))
         if self.amptek:

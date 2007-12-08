@@ -86,6 +86,7 @@ class McaWidget(qt.QWidget):
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(name)
         self.outputDir = None
+        self.outputFilter = None
         """ 
         class McaWidget(qt.QSplitter):
             def __init__(self, parent=None, specfit=None,fl=None,**kw):
@@ -534,21 +535,27 @@ class McaWidget(qt.QWidget):
             format_list = ['Specfile MCA  *.mca',
                            'Specfile Scan *.dat',
                            'Raw ASCII  *.txt',
-                           'Raw CSV  *.csv',
+                           '","-separated CSV *.csv',
+                           '";"-separated CSV *.csv',
+                           '"tab"-separated CSV *.csv',
                            'Widget PNG *.png',
                            'Widget JPG *.jpg']
+            if self.outputFilter is None:
+                self.outputFilter = format_list[0]
             if MATPLOTLIB:
                 format_list.append('Graphics PNG *.png')
                 format_list.append('Graphics EPS *.eps')
                 format_list.append('Graphics SVG *.svg')
                 
             outfile.setFilters(format_list)
+            outfile.selectFilter(self.outputFilter)
             outfile.setFileMode(outfile.AnyFile)
             outfile.setAcceptMode(outfile.AcceptSave)
             outfile.setDirectory(wdir)
             ret = outfile.exec_()
         if ret:
-            filterused = str(outfile.selectedFilter()).split()
+            self.outputFilter = str(outfile.selectedFilter())
+            filterused = self.outputFilter.split()
             filetype  = filterused[1]
             extension = filterused[2]
             if QTVERSION < '4.0.0':
@@ -667,9 +674,19 @@ class McaWidget(qt.QWidget):
                 for i in range(len(y)):
                     file.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
             elif filetype == 'CSV':
-                energy = ndict[legend]['A'] + ndict[legend]['B'] * x + ndict[legend]['C'] * x * x
+                if "," in filterused[0]:
+                    csv = ","
+                elif ";" in filterused[0]:
+                    csv = ";"
+                else:
+                    csv = "\t"                
+                energy = ndict[legend]['A'] + \
+                         ndict[legend]['B'] * x + \
+                         ndict[legend]['C'] * x * x
+                file.write('"channel"%s"counts"%s"energy"\n' % (csv, csv))
                 for i in range(len(y)):
-                    file.write("%.7E;%.7E;%.7E\n" % (x[i], y[i], energy[i]))
+                    file.write("%.7E%s%.7E%s%.7E\n" % \
+                               (x[i], csv, y[i], csv, energy[i]))
             else:
                 file.write("#F %s\n" % specFile)
                 file.write("#D %s\n"%(time.ctime(time.time())))

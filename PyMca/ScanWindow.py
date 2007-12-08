@@ -509,6 +509,7 @@ class ScanWindow(qt.QWidget):
         self.graph.canvas().setMouseTracking(1)
         self.graph.setCanvasBackground(qt.Qt.white)
         self.outputDir = None
+        self.outputFilter = None
         self.__toggleCounter = 0
         if QTVERSION < '4.0.0':
             self.connect(self.graph,
@@ -1167,20 +1168,27 @@ class ScanWindow(qt.QWidget):
             outfile = qt.QFileDialog(self)
             outfile.setWindowTitle("Output File Selection")
             outfile.setModal(1)
-            outfile.setFilters(['Specfile MCA  *.mca',
-                                'Specfile Scan *.dat',
-                                'Specfile MultiScan *.dat',
-                                'Raw ASCII  *.txt',
-                                'Raw CSV  *.csv',
-                                'Widget PNG *.png',
-                                'Widget JPG *.jpg'])
+            filterlist = ['Specfile MCA  *.mca',
+                          'Specfile Scan *.dat',
+                          'Specfile MultiScan *.dat',
+                          'Raw ASCII *.txt',
+                          '","-separated CSV *.csv',
+                          '";"-separated CSV *.csv',
+                          '"tab"-separated CSV *.csv',
+                          'Widget PNG *.png',
+                          'Widget JPG *.jpg']
+            if self.outputFilter is None:
+                self.outputFilter = filterlist[0]
+            outfile.setFilters(filterlist)
+            outfile.selectFilter(self.outputFilter)
             outfile.setFileMode(outfile.AnyFile)
             outfile.setAcceptMode(outfile.AcceptSave)
             outfile.setDirectory(wdir)
             ret = outfile.exec_()
         if not ret:
             return None
-        filterused = str(outfile.selectedFilter()).split()
+        self.outputFilter = str(outfile.selectedFilter())
+        filterused = self.outputFilter.split()
         filetype  = filterused[1]
         extension = filterused[2]
         if QTVERSION < '4.0.0':
@@ -1377,8 +1385,15 @@ class ScanWindow(qt.QWidget):
                     for i in range(len(y)):
                         ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
                 elif filetype == 'CSV':
+                    if "," in filterused[0]:
+                        csvseparator = ","
+                    elif ";" in filterused[0]:
+                        csvseparator = ";"
+                    else:
+                        csvseparator = "\t"
+                    ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel)) 
                     for i in range(len(y)):
-                        ffile.write("%.7E;%.7E\n" % (x[i], y[i]))
+                        ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
                 else:
                     ffile.write("#F %s\n" % filename)
                     ffile.write("#D %s\n"%(time.ctime(time.time())))
