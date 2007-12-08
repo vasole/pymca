@@ -23,7 +23,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
@@ -165,6 +165,8 @@ def test():
                 dataObject = source.getDataObject(key)
                 w.addImage(dataObject.data, os.path.basename(fname)+" "+key)
     else:
+        print "This is a just test method using 100 x 100 matrices."
+        print "Run PyMcaPostBatch to have file loading capabilities." 
         array1 = Numeric.arange(10000)
         array2 = Numeric.resize(Numeric.arange(10000), (100, 100))
         array2 = Numeric.transpose(array2)

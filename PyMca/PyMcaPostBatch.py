@@ -23,7 +23,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
@@ -46,9 +46,15 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         
         text = str(self.windowTitle())
         text += ": " + str(os.path.basename(filename))
+
         self.setWindowTitle(text)
 
-        self.controller.addBatchDatFile(filename, ignoresigma)
+        if len(filename) > 4:
+            if filename[-4:] == ".csv":
+                csv = True
+            else:
+                csv = False
+        self.controller.addBatchDatFile(filename, ignoresigma, csv=csv)
 
     def addFileList(self, filelist):
         """
@@ -137,7 +143,6 @@ def test():
             w.addFileList(filelist)
     else:
         w.addFileList(filelist)
-    PyMcaDirs.inputDir = os.path.dirname(filelist[0])
     w.show()
     app.exec_()
 

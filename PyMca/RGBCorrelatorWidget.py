@@ -74,6 +74,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.saveButton = qt.QToolButton(hbox)
         self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
         self.saveButton.setToolTip("Save the set of images to file")
+        self._saveFilter = None
         self.toggleSlidersButton = qt.QToolButton(hbox)
         self._slidersOffIcon = qt.QIcon(qt.QPixmap(IconDict["slidersoff"]))
         self._slidersOnIcon = qt.QIcon(qt.QPixmap(IconDict["sliderson"]))
@@ -582,20 +583,26 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *.dat",
-                      "ASCII Files *.csv",
-                      "EDF Files *.edf"]
+                      "EDF Files *.edf",
+                      'CSV(, separated) Files *.csv',
+                      'CSV(; separated) Files *.csv',
+                      'CSV(tab separated) Files *.csv']
         strlist = qt.QStringList()
         for f in formatlist:
                 strlist.append(f)
+        if self._saveFilter is None:
+            self._saveFilter =formatlist[0]
         filedialog.setFilters(strlist)
+        filedialog.selectFilter(self._saveFilter)
         filedialog.setDirectory(initdir)
         ret = filedialog.exec_()
         if not ret: return ""
-        filterused = "."+str(filedialog.selectedFilter()).split()[2][-3:]
         filename = filedialog.selectedFiles()[0]
         if len(filename):
             filename = str(filename)
             self.outputDir = os.path.dirname(filename)
+            self._saveFilter = str(filedialog.selectedFilter())
+            filterused = "."+self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
                 filename = filename+ filterused
@@ -612,9 +619,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setAcceptMode(qt.QFileDialog.AcceptOpen)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *dat",
-                      "CSV Files *csv",
                       "EDF Files *edf",
-                      "EDF Files *ccd"]
+                      "EDF Files *ccd",
+                      "CSV Files *csv"]
         strlist = qt.QStringList()
         for f in formatlist:
                 strlist.append(f)
@@ -744,9 +751,18 @@ class RGBCorrelatorWidget(qt.QWidget):
         if filename[-4:].lower() == ".edf":
             ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
         if filename[-4:].lower() == ".csv":
-            ArraySave.save2DArrayListAsASCII(datalist, filename, labels, csv=True)
+            if "," in self._saveFilter:
+                csvseparator = ","
+            elif ";" in self._saveFilter:
+                csvseparator = ";"
+            else:
+                csvseparator = "\t"
+            ArraySave.save2DArrayListAsASCII(datalist, filename, labels,
+                                             csv=True,
+                                             csvseparator=csvseparator)
         else:
-            ArraySave.save2DArrayListAsASCII(datalist, filename, labels, csv=False)
+            ArraySave.save2DArrayListAsASCII(datalist, filename, labels,
+                                             csv=False)
         
     def showCalculationDialog(self):
         if self.calculationDialog is None:
