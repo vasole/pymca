@@ -22,13 +22,13 @@
 # and cannot be used as a free plugin for a non-free program.
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 from numpy.oldnumeric import *
 from numpy.oldnumeric.linear_algebra import inverse
 import time
 __author__ = "V.A. Sole <sole@esrf.fr>"
-__revision__ = "$Revision: 1.18 $"
+__revision__ = "$Revision: 1.19 $"
 # codes understood by the routine
 CFREE       = 0
 CPOSITIVE   = 1
@@ -106,11 +106,17 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
     # 0 = Free       1 = Positive     2 = Quoted
     # 3 = Fixed      4 = Factor       5 = Delta
     # 6 = Sum        7 = ignored
-    constrains=[[],[],[]]
-    for i in range(len(parameters0)):
-        constrains[0].append(constrains0[0][i])
-        constrains[1].append(constrains0[1][i])
-        constrains[2].append(constrains0[2][i])
+    constrains = [[],[],[]]
+    if len(constrains0) == 0:
+        for i in range(len(parameters0)):
+            constrains[0].append(0)
+            constrains[1].append(0)
+            constrains[2].append(0)
+    else:
+        for i in range(len(parameters0)):
+            constrains[0].append(constrains0[0][i])
+            constrains[1].append(constrains0[1][i])
+            constrains[2].append(constrains0[2][i])
     for i in range(len(parameters0)):
         if type(constrains[0][i]) == type('string'):
             #get the number
