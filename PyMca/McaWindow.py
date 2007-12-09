@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.48 $"
+__revision__ = "$Revision: 1.49 $"
 import sys
 import time
 import QtBlissGraph
@@ -581,23 +581,33 @@ class McaWidget(qt.QWidget):
         #get active curve
         info, x, y = self.getinfodatafromlegend(legend)
         if info is None: return
+
         ndict = {}
         ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
-        if self.caldict.has_key(legend):
-            ndict[legend].update(self.caldict[legend])
-            if abs(ndict[legend]['C']) > 0.0:
-                ndict[legend]['order']  = 2    
-        elif info.has_key('McaCalib'):
-            if type(info['McaCalib'][0]) == type([]):
-                calib = info['McaCalib'][0]
-            else:
-                calib = info['McaCalib']
-            if len(calib) > 1:
-                ndict[legend]['A'] = calib[0]
-                ndict[legend]['B'] = calib[1]
-                if len(calib) >2:
-                    ndict[legend]['order']  = 2
-                    ndict[legend]['C']      = calib[2]
+        if str(self.graph.xlabel()).upper() == "CHANNEL":
+            if self.caldict.has_key(legend):
+                ndict[legend].update(self.caldict[legend])
+                if abs(ndict[legend]['C']) > 0.0:
+                    ndict[legend]['order']  = 2    
+            elif info.has_key('McaCalib'):
+                if type(info['McaCalib'][0]) == type([]):
+                    calib = info['McaCalib'][0]
+                else:
+                    calib = info['McaCalib']
+                if len(calib) > 1:
+                    ndict[legend]['A'] = calib[0]
+                    ndict[legend]['B'] = calib[1]
+                    if len(calib) >2:
+                        ndict[legend]['order']  = 2
+                        ndict[legend]['C']      = calib[2]
+        else:
+            #I have to get current plot energy
+            A = self.control.calinfo.caldict['']['A']
+            B = self.control.calinfo.caldict['']['B']
+            C = self.control.calinfo.caldict['']['C']
+            order = self.control.calinfo.caldict['']['order']
+            ndict[legend] = {'order':order,'A':A,'B':B,'C':C}
+
         #I should have x, y, caldict
         """ 
         caldialog = McaCalWidget.McaCalWidget(legend=legend,
