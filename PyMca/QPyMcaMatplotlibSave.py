@@ -372,7 +372,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	    return
 
 	# The axes
-        self.axes = self.figure.add_axes([.1, .15, .75, .8])
+        self.axes = self.figure.add_axes([.15, .15, .75, .8])
         if self.config['xaxis'] == 'off':
             self.axes.xaxis.set_visible(False)
         else:
@@ -398,6 +398,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	    cmap = cm.copper
 	elif self.config['colormap']=='spectral':
             cmap = cm.spectral
+	elif self.config['colormap']=='hsv':
+            cmap = cm.hsv
 	elif self.config['colormap']=='rainbow':
             cmap = cm.gist_rainbow
 	elif self.config['colormap']=='red':

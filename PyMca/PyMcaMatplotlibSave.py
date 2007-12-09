@@ -31,6 +31,7 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.colors import LinearSegmentedColormap
 
 DEBUG = 0
 
@@ -257,6 +258,30 @@ class PyMcaMatplotlibSaveImage:
 		     'origin':origin,
 		     'contour':contour,
                      'extent':extent}
+        #generate own colormaps
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (1.0, 1.0, 1.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (1.0, 0.0, 0.0)),
+                 'blue': ((0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        self.__redCmap = LinearSegmentedColormap('red',cdict,256)
+
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (1.0, 1.0, 1.0)),
+                 'blue': ((0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        self.__greenCmap = LinearSegmentedColormap('green',cdict,256)
+
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (1.0, 0.0, 0.0)),
+                 'blue': ((0.0, 0.0, 0.0),
+                          (1.0, 1.0, 1.0))}
+        self.__blueCmap = LinearSegmentedColormap('blue',cdict,256)
         if fileName is not None:
             self.saveImage(fileName)
 
@@ -299,6 +324,14 @@ class PyMcaMatplotlibSaveImage:
             cmap = cm.spectral
 	elif self.config['colormap']=='hsv':
             cmap = cm.hsv
+	elif self.config['colormap']=='rainbow':
+            cmap = cm.gist_rainbow
+	elif self.config['colormap']=='red':
+            cmap = self.__redCmap
+	elif self.config['colormap']=='green':
+            cmap = self.__greenCmap
+	elif self.config['colormap']=='blue':
+            cmap = self.__blueCmap
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
@@ -308,12 +341,13 @@ class PyMcaMatplotlibSaveImage:
 	else:
             extent = self.config['extent'] 
 
-            
+
         self._image  = self.axes.imshow(self.imageData,
                                         interpolation=interpolation,
                                         origin=origin,
 					cmap=cmap,
                                         extent=extent)
+
         ylim = self.axes.get_ylim()
 
         self.axes.set_title(self.config['title'])
@@ -360,22 +394,7 @@ if __name__ == "__main__":
     import sys
     a=numpy.arange(1200.)
     a.shape = 20, 60
-    PyMcaMatplotlibSaveImage(a, "filename.png")
+    PyMcaMatplotlibSaveImage(a, "filename.png", colormap="rainbow")
+    print "Image filename.png saved"
     sys.exit(0)
-
-    DEBUG = 1
-    x = numpy.arange(1000.)
-    y0 = x * 100 + 10.
-    y1 = x * 110 + 20.
-    y2 = x * 120 + 20.
-    plot = PyMcaMatplotlibSave(logy=True)
-    plot.setLimits(100, 900, 100*100, 700*100)
-    plot.addDataToPlot(x, y0)
-    plot.addDataToPlot(x, y1)
-    plot.addDataToPlot(x, y2)
-    plot.setXLabel('X Label')
-    plot.setYLabel('Y Label')
-    plot.plotLegends()
-    plot.saveFile("myfile.png")
-
     
