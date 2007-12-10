@@ -560,6 +560,17 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
                 self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
                 self.picker.setEnabled(1)
+
+                self.crossPicker = Qwt.QwtPlotPicker(
+                            Qwt.QwtPlot.xBottom,
+                            Qwt.QwtPlot.yLeft,
+                            Qwt.QwtPicker.PointSelection,
+                            Qwt.QwtPlotPicker.CrossRubberBand,
+                            Qwt.QwtPicker.AlwaysOff,
+                            self.canvas())
+                self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
+                #self.crossPicker.setTrackerPen(qt.QPen(qt.Qt.red))
+                self.crossPicker.setEnabled(1)
             else:
                 if 0:
                     self.picker = Qwt.QwtPicker(self.canvas())
