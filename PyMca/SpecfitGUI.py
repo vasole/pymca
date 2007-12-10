@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import EventHandler
 import Specfit
@@ -67,6 +67,7 @@ class SpecfitGUI(qt.QWidget):
             self.specfit.importfun("SpecfitFunctions.py")
         else:
             self.specfit = specfit
+        
         #copy specfit configure method for direct access
         self.configure=self.specfit.configure
         self.fitconfig=self.specfit.fitconfig
@@ -296,7 +297,21 @@ class SpecfitGUI(qt.QWidget):
             #self.guiparameters.removeallviews(keep='Region 1')
         else:
             try:
-                self.specfit.estimate()
+                if self.specfit.theorydict[self.specfit.fitconfig['fittheory']][2] is not None:
+                    self.specfit.estimate()
+                else:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Information)
+                    text  = "Function does not define a way to estimate\n"
+                    text += "the initial parameters. Please, fill them\n"
+                    text += "yourself in the table and press Start Fit\n"
+                    msg.setText(text)
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.setWindowTitle('SpecfitGUI Message')
+                        msg.exec_()
+                    return
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
