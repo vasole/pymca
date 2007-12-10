@@ -110,9 +110,9 @@ class specfilewrapper:
             f.close()
             self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,1))
         else:
-            line = line.replace(","," ")
-            line = line.replace(";"," ")
-            line = line.replace("\t"," ")
+            line = line.replace(",","  ")
+            line = line.replace(";","  ")
+            line = line.replace("\t","  ")
             line = line.replace("\r","\n")
             line = line.replace('"',"")
             line = line.replace('\n\n',"\n")
@@ -127,13 +127,15 @@ class specfilewrapper:
                             outdata.append(reals)
                             nlines += 1                    
                     except:
-                        self.header.append(line.replace("\n",""))
+                        if len(line) > 1:
+                            self.header.append(line.replace("\n",""))
                 else:
-                    self.header.append(line.replace("\n",""))
+                    if len(line) > 1:
+                        self.header.append(line.replace("\n",""))
                 line = f.readline()
-                line = line.replace(","," ")
-                line = line.replace(";"," ")
-                line = line.replace("\t"," ")
+                line = line.replace(",","  ")
+                line = line.replace(";","  ")
+                line = line.replace("\t","  ")
                 line = line.replace("\r","\n")
                 line = line.replace('"',"")
                 line = line.replace('\n\n',"\n")
@@ -144,7 +146,13 @@ class specfilewrapper:
         elif self.qxas:
             self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header, qxas=self._qxasHeader)]
         else:
-            self.scandata=[myscandata(self.data,'SCAN','1.1'),myscandata(self.data,'MCA','2.1')]
+            labels = None
+            if len(self.header) > 0:
+                if len(self.header[0]) > 0:
+                    labels = self.header[0].split("  ")
+                    if len(labels) != ncol0:
+                        labels = None
+            self.scandata=[myscandata(self.data,'SCAN','1.1', labels=labels),myscandata(self.data,'MCA','2.1')]
 
     def list(self):
         if self.amptek or self.qxas:
@@ -166,7 +174,7 @@ class specfilewrapper:
             return 2
 
 class myscandata:
-    def __init__(self,data,scantype=None,identification=None, scanheader=None, qxas=None):
+    def __init__(self,data,scantype=None,identification=None, scanheader=None, qxas=None, labels=None):
         if identification is None:identification='1.1'
         if scantype is None:scantype='SCAN'
         self.qxas = qxas
@@ -184,9 +192,13 @@ class myscandata:
             self.__cols = cols
             self.labels = []
         self.scantype = scantype
-        self.rows = rows 
-        for i in range(cols):
-            self.labels.append('Column %d'  % i)
+        self.rows = rows
+        if labels is None:
+            for i in range(cols):
+                self.labels.append('Column %d'  % i)
+        else:
+            for label in labels:
+                self.labels.append('%s' % label)
         n = string.split(identification,".")
         self.__number = int(n[0])
         self.__order  = int(n[1])

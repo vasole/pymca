@@ -54,6 +54,7 @@ class QSourceSelector(qt.QWidget):
                                 "Spec Files (*spec)",
                                 "EDF Files (*edf)",
                                 "EDF Files (*ccd)",
+                                "CSV Files (*csv)",
                                 "All Files (*)"]
         else:
             self.fileTypeList = filetypelist
