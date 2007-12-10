@@ -666,7 +666,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def addBatchDatFile(self, filename, ignoresigma=None, csv=False):
         self.outputDir = os.path.dirname(filename)
-        if csv:
+        if 1 or csv:
             if 0:
                 #This works but is potentially slow
                 f = open("filename")
@@ -693,6 +693,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 lines = lines.split("\n")
                 labels = lines[0].replace("\n","").split("  ")
         else:
+            # This does not work when opening under linux
+            # .dat files generated under windows (\r problem)
             f = open(filename)
             lines = f.readlines()
             f.close()
@@ -750,7 +752,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             labels.append(label.replace(" ","_"))
         if filename[-4:].lower() == ".edf":
             ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
-        if filename[-4:].lower() == ".csv":
+        elif filename[-4:].lower() == ".csv":
             if "," in self._saveFilter:
                 csvseparator = ","
             elif ";" in self._saveFilter:

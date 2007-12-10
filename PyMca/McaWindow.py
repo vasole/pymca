@@ -538,6 +538,7 @@ class McaWidget(qt.QWidget):
                            '","-separated CSV *.csv',
                            '";"-separated CSV *.csv',
                            '"tab"-separated CSV *.csv',
+                           'OMNIC CSV *csv',
                            'Widget PNG *.png',
                            'Widget JPG *.jpg']
             if self.outputFilter is None:
@@ -688,14 +689,21 @@ class McaWidget(qt.QWidget):
                     csv = ","
                 elif ";" in filterused[0]:
                     csv = ";"
+                elif "OMNIC" in filterused[0]:
+                    csv = ","
                 else:
                     csv = "\t"                
                 energy = ndict[legend]['A'] + \
                          ndict[legend]['B'] * x + \
                          ndict[legend]['C'] * x * x
-                file.write('"channel"%s"counts"%s"energy"\n' % (csv, csv))
-                for i in range(len(y)):
-                    file.write("%.7E%s%.7E%s%.7E\n" % \
+                if "OMNIC" in filterused[0]:
+                    for i in range(len(y)):
+                        file.write("%.7E%s%.7E\n" % \
+                               (energy[i], csv, y[i]))
+                else:
+                    file.write('"channel"%s"counts"%s"energy"\n' % (csv, csv))
+                    for i in range(len(y)):
+                        file.write("%.7E%s%.7E%s%.7E\n" % \
                                (x[i], csv, y[i], csv, energy[i]))
             else:
                 file.write("#F %s\n" % specFile)

@@ -2126,8 +2126,10 @@ class QtBlissGraph(qwt.QwtPlot):
                 curve = BlissCurve(key,**kw)
                 curve.attach(self)
                 self.curves[key] ["curve"] = curve
+            blissCurve = True
         else:
             curve = self.insertCurve(key)
+            blissCurve = False
             self.curves[key] ["curve"] = curve
         self.curves[key] ["name"] = qt.QString(str(key))
         self.curveslist.append(key)
@@ -2143,7 +2145,6 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.curves[key] ["symbol"] = self.symbols['cross']
         elif self.__defaultPlotPoints:
             self.curves[key] ["symbol"] = self.symbols['ellipse']
-
                 
         self.curves[key] ["maptoy2"]  = 0
         color = self.colors[self.colorslist[self.color]]
@@ -2173,7 +2174,9 @@ class QtBlissGraph(qwt.QwtPlot):
 
         if symbol is not None:
             self.togglePoints(key)
-            
+
+        if blissCurve:
+            return
         if not QWTVERSION4:
             if line is None:
                 if self.__defaultPlotLines:
