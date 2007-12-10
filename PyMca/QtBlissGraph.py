@@ -377,7 +377,8 @@ class QtBlissGraph(qwt.QwtPlot):
             if kw.has_key('LegendPos'):
                 self.insertLegend(legend, kw['LegendPos'])
             else:
-                self.insertLegend(legend, Qwt.QwtPlot.BottomLegend)            
+                self.insertLegend(legend, Qwt.QwtPlot.BottomLegend)
+        usecrosscursor = kw.get('usecrosscursor', False)
         self.__uselegendmenu    = 0
         self.__legendrename     = False
         if kw.has_key('uselegendmenu'):
@@ -561,16 +562,17 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
                 self.picker.setEnabled(1)
 
-                self.crossPicker = Qwt.QwtPlotPicker(
+                if usecrosscursor:
+                    self.crossPicker = Qwt.QwtPlotPicker(
                             Qwt.QwtPlot.xBottom,
                             Qwt.QwtPlot.yLeft,
                             Qwt.QwtPicker.PointSelection,
                             Qwt.QwtPlotPicker.CrossRubberBand,
                             Qwt.QwtPicker.AlwaysOff,
                             self.canvas())
-                self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
-                #self.crossPicker.setTrackerPen(qt.QPen(qt.Qt.red))
-                self.crossPicker.setEnabled(1)
+                    self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
+                    #self.crossPicker.setTrackerPen(qt.QPen(qt.Qt.red))
+                    self.crossPicker.setEnabled(1)
             else:
                 if 0:
                     self.picker = Qwt.QwtPicker(self.canvas())

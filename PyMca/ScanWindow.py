@@ -713,7 +713,9 @@ class ScanWindow(qt.QWidget):
         
 
     def _buildGraph(self):
-        self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True, legendrename=True)
+        self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True,
+                                               legendrename=True,
+                                               usecrosscursor=True)
         self.mainLayout.addWidget(self.graph)
 
         self.graphBottom = qt.QWidget(self)
