@@ -538,7 +538,7 @@ class McaWidget(qt.QWidget):
                            '","-separated CSV *.csv',
                            '";"-separated CSV *.csv',
                            '"tab"-separated CSV *.csv',
-                           'OMNIC CSV *csv',
+                           'OMNIC CSV *.csv',
                            'Widget PNG *.png',
                            'Widget JPG *.jpg']
             if self.outputFilter is None:
