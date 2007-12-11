@@ -32,11 +32,6 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap
-try:
-    import spslut
-    SPSLUT=True
-except:
-    SPSLUT=False
 
 DEBUG = 0
 
@@ -236,7 +231,7 @@ class PyMcaMatplotlibSave:
 class PyMcaMatplotlibSaveImage:
     def __init__(self, imageData=None, fileName=None,
 		     dpi=300,
-                     size=(4, 4),
+                     size=(5, 5),
                      xaxis='off',
                      yaxis='off',
                      xlabel='',
@@ -287,6 +282,24 @@ class PyMcaMatplotlibSaveImage:
                  'blue': ((0.0, 0.0, 0.0),
                           (1.0, 1.0, 1.0))}
         self.__blueCmap = LinearSegmentedColormap('blue',cdict,256)
+
+        # Temperature as defined in spslut
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (0.5, 0.0, 0.0),
+                         (0.75, 1.0, 1.0),
+                         (1.0, 1.0, 1.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (0.25, 1.0, 1.0),
+                           (0.75, 1.0, 1.0),
+                           (1.0, 0.0, 0.0)),
+                 'blue': ((0.0, 1.0, 1.0),
+                          (0.25, 1.0, 1.0),
+                          (0.5, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        
+        #Do I really need as many colors?
+        self.__temperatureCmap = LinearSegmentedColormap('temperature',
+                                                         cdict, 65536)
         if fileName is not None:
             self.saveImage(fileName)
 
@@ -314,12 +327,13 @@ class PyMcaMatplotlibSaveImage:
 	interpolation = self.config['interpolation']
 	origin = self.config['origin']
 
-	cmap = cm.jet
+	cmap = self.__temperatureCmap
 	ccmap = cm.gray
-        matplotlibCmap = False
 	if self.config['colormap']=='gray':
 	    cmap  = cm.gray
-	    ccmap = cm.jet
+	    ccmap = self.__temperatureCmap
+	elif self.config['colormap']=='jet':
+	    cmap = cm.jet
 	elif self.config['colormap']=='hot':
 	    cmap = cm.hot
 	elif self.config['colormap']=='cool':
@@ -338,20 +352,8 @@ class PyMcaMatplotlibSaveImage:
             cmap = self.__greenCmap
 	elif self.config['colormap']=='blue':
             cmap = self.__blueCmap
-	elif SPSLUT and (self.config['colormap']=='temperature'):
-            matplotlibCmap = False
-            dummy = numpy.zeros((1,1), numpy.float)
-            tmp,size,minmax = spslut.transform(self.imageData, (1,0),
-                                (spslut.LINEAR,3.0), "RGBX", spslut.MANY,
-                                1, (0,1),(0,255),1)
-            image_buffer,size,minmax = spslut.transform(self.imageData, (1,0),
-                                (spslut.LINEAR,3.0), "RGBX", spslut.TEMP,
-                                1, (0,1),(0,255),1)
-            image_buffer.shape = [size[1],  size[0], 4]
-            image_buffer[:, :, 3] = 255
-            tmp,size,minmax = spslut.transform(self.imageData, (1,0),
-                                (spslut.LINEAR,3.0), "RGBX", spslut.MANY,
-                                1, (0,1),(0,255),1)
+	elif self.config['colormap']=='temperature':
+            cmap = self.__temperatureCmap
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
@@ -361,16 +363,11 @@ class PyMcaMatplotlibSaveImage:
 	else:
             extent = self.config['extent'] 
 
-        if matplotlibCmap:
-            self._image  = self.axes.imshow(self.imageData,
+        self._image  = self.axes.imshow(self.imageData,
                                         interpolation=interpolation,
                                         origin=origin,
 					cmap=cmap,
                                         extent=extent)
-        else:
-            self._image  = self.axes.imshow(image_buffer,
-                                            interpolation=interpolation,
-                                            origin=origin)
 
         ylim = self.axes.get_ylim()
 

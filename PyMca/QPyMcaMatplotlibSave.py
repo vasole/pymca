@@ -37,11 +37,6 @@ import PyMcaMatplotlibSave
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
 import PyMcaDirs
-try:
-    import spslut
-    SPSLUT=True
-except ImportError:
-    SPSLUT=False
 DEBUG = 0
 
 class HorizontalSpacer(qt.QWidget):
@@ -270,9 +265,9 @@ class RightWidget(qt.QWidget):
 	    if self.labelList[i] in ['X Axis', 'Y Axis']:
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
-		options = ['Default', 'Temperature','Gray',\
+		options = ['Temperature','Gray',\
                            'Red', 'Green', 'Blue',\
-                           'Rainbow', 'Hot', 'Cool', 'Copper']
+                           'Rainbow', 'Jet','Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
                     options.append('Spectral')
 	    elif self.labelList[i] in ['Colorbar']:
@@ -313,7 +308,7 @@ class RightWidget(qt.QWidget):
 class QPyMcaMatplotlibImage(FigureCanvas):
     def __init__(self, parent, imageData,
 		     dpi=100,
-                     size=(4, 4),
+                     size=(5, 5),
                      xaxis='off',
                      yaxis='off',
                      xlabel='',
@@ -326,6 +321,10 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     contour='off',
                      extent=None):
 	self.figure = Figure(figsize=size, dpi=dpi) #in inches
+
+	#How to set this color equal to the other widgets color?
+	#self.figure.set_facecolor('1.0')
+
         FigureCanvas.__init__(self, self.figure)
         FigureCanvas.setSizePolicy(self,
                                    qt.QSizePolicy.Expanding,
@@ -368,7 +367,24 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                  'blue': ((0.0, 0.0, 0.0),
                           (1.0, 1.0, 1.0))}
         self.__blueCmap = LinearSegmentedColormap('blue',cdict,256)
-		     
+
+        # Temperature as defined in spslut
+        cdict = {'red': ((0.0, 0.0, 0.0),
+                         (0.5, 0.0, 0.0),
+                         (0.75, 1.0, 1.0),
+                         (1.0, 1.0, 1.0)),
+                 'green': ((0.0, 0.0, 0.0),
+                           (0.25, 1.0, 1.0),
+                           (0.75, 1.0, 1.0),
+                           (1.0, 0.0, 0.0)),
+                 'blue': ((0.0, 1.0, 1.0),
+                          (0.25, 1.0, 1.0),
+                          (0.5, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        #but limited to 256 colors for a faster display (of the colorbar)
+        self.__temperatureCmap = LinearSegmentedColormap('temperature',
+                                                         cdict, 256)
+
 	self.updateFigure()
 
     def updateFigure(self):
@@ -390,12 +406,13 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	interpolation = self.config['interpolation']
 	origin = self.config['origin']
 
-	cmap = cm.jet
+	cmap = self.__temperatureCmap
 	ccmap = cm.gray
-	matplotlibCmap = True
 	if self.config['colormap']=='gray':
 	    cmap  = cm.gray
-	    ccmap = cm.jet
+	    ccmap = self.__temperatureCmap
+	elif self.config['colormap']=='jet':
+	    cmap = cm.jet
 	elif self.config['colormap']=='hot':
 	    cmap = cm.hot
 	elif self.config['colormap']=='cool':
@@ -414,21 +431,9 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             cmap = self.__greenCmap
 	elif self.config['colormap']=='blue':
             cmap = self.__blueCmap
-        elif SPSLUT and (self.config['colormap']=='temperature'):
-            matplotlibCmap = False
-            dummy = numpy.zeros((1,1), numpy.float)
-            tmp,size,minmax = spslut.transform(self.imageData, (1,0),
-                                (spslut.LINEAR,3.0), "RGBX", spslut.MANY,
-                                1, (0,1),(0,255),1)
-            image_buffer,size,minmax = spslut.transform(self.imageData, (1,0),
-                                (spslut.LINEAR,3.0), "RGBX", spslut.TEMP,
-                                1, (0,1),(0,255),1)
-            image_buffer.shape = [size[1],  size[0], 4]
-            image_buffer[:, :, 3] = 255
-            tmp,size,minmax = spslut.transform(self.imageData, (1,0),
-                                (spslut.LINEAR,3.0), "RGBX", spslut.MANY,
-                                1, (0,1),(0,255),1)
-            
+        elif self.config['colormap']=='temperature':
+            cmap = self.__temperatureCmap
+
         if self.config['extent'] is None:
             h, w = self.imageData.shape
 	    extent = (0,w,0,h)
@@ -437,16 +442,11 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	else:
             extent = self.config['extent'] 
 
-        if matplotlibCmap:
-            self._image  = self.axes.imshow(self.imageData,
+        self._image  = self.axes.imshow(self.imageData,
                                         interpolation=interpolation,
                                         origin=origin,
 					cmap=cmap,
                                         extent=extent)
-        else:
-            self._image  = self.axes.imshow(image_buffer,
-                                            interpolation=interpolation,
-                                            origin=origin)
 
         ylim = self.axes.get_ylim()
 
@@ -498,8 +498,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
 if __name__ == "__main__":
     app = qt.QApplication([])
-    a=numpy.arange(1200.)
-    a.shape = 20, 60
+    a=numpy.arange(256.)
+    a.shape = 16, 16
     w = SaveImageSetup(None, a)
     w.show()
     app.exec_()
