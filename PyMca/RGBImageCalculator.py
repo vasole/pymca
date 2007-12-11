@@ -30,12 +30,19 @@ import RGBCorrelatorGraph
 import ColormapDialog
 import numpy
 import spslut
+try:
+    import QPyMcaMatplotlibSave
+    MATPLOTLIB = True
+except ImportError:
+    MATPLOTLIB = False
+
 qt = RGBCorrelatorGraph.qt
 IconDict = RGBCorrelatorGraph.IconDict
 QTVERSION   = qt.qVersion()
 QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
+
 
 DEBUG = 0
 
@@ -55,7 +62,9 @@ class RGBImageCalculator(qt.QWidget):
         self.__imageColormap = None
         self.__imageColormapDialog = None
         self._y1AxisInverted = False
+        self._matplotlibSaveImage = None
         self._build(math = math, replace = replace)
+        
 
     def _buildMath(self):
         self.mathBox = qt.QWidget(self)
@@ -87,10 +96,21 @@ class RGBImageCalculator(qt.QWidget):
 
     def _build(self, math = True, replace = False):
         if math: self._buildMath()
-        
-        self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                        colormap=True)
 
+        standaloneSaving = True
+        if MATPLOTLIB:
+            standaloneSaving = False
+        self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                                                colormap=True,
+                                                                standalonesave=standaloneSaving)
+        if not standaloneSaving:
+            self.connect(self.graphWidget.saveToolButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._saveToolButtonSignal)
+            self._saveMenu = qt.QMenu()
+            self._saveMenu.addAction(qt.QString("Standard"),    self.graphWidget._saveIconSignal)
+            self._saveMenu.addAction(qt.QString("Matplotlib") , self._saveMatplotlibImage)
+        
         self.nameBox = qt.QWidget(self)
         self.nameBox.mainLayout = qt.QHBoxLayout(self.nameBox)
 
@@ -151,7 +171,16 @@ class RGBImageCalculator(qt.QWidget):
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
 
+    def _saveToolButtonSignal(self):
+        self._saveMenu.exec_(self.cursor().pos())
 
+    def _saveMatplotlibImage(self):
+        if self._matplotlibSaveImage is None:
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, self._imageData)
+        else:
+            self._matplotlibSaveImage.setImage(self._imageData)
+        self._matplotlibSaveImage.show()
+        self._matplotlibSaveImage.raise_()
 
     def plotImage(self, update = True):
         if DEBUG:print"plotImage", update
@@ -366,6 +395,8 @@ class RGBImageCalculator(qt.QWidget):
     def closeEvent(self, event):
         if self.__imageColormapDialog is not None:
             self.__imageColormapDialog.close()
+        if self._matplotlibSaveImage is not None:
+            self._matplotlibSaveImage.close()
         qt.QWidget.closeEvent(self, event)
 
 def test():

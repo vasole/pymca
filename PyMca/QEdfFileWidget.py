@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import os.path
 import QtBlissGraph
@@ -31,8 +31,14 @@ QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 if QTVERSION > '4.0.0':
     QT4 = True
+    try:
+        import QPyMcaMatplotlibSave
+        MATPLOTLIB = True
+    except ImportError:
+        MATPLOTLIB = False
 else:
     QT4 = False
+    MATPLOTLIB = False
 import numpy.oldnumeric as Numeric
 import sys
 from PyMca_Icons import IconDict
@@ -267,6 +273,7 @@ class QEdfFileWidget(qt.QWidget):
         self.data= None
         self.currentFile= None
         self.currentArray= 0
+        self._matplotlibSaveImage = None
         self.selection= None
         self.__plotting = "Columns"
         self._edfstack = None
@@ -398,7 +405,15 @@ class QEdfFileWidget(qt.QWidget):
         
 
         #save
-        tb = self._addToolButton(self.saveIcon,
+        if MATPLOTLIB:
+            tb = self._addToolButton(self.saveIcon,
+                                 self.__saveIconSignal,
+                                 'Export Graph')
+            self._saveMenu = qt.QMenu()
+            self._saveMenu.addAction(qt.QString("Standard"),    self._saveIconSignal)
+            self._saveMenu.addAction(qt.QString("Matplotlib") , self._saveMatplotlibImage)            
+        else:
+            tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
                                  'Export Graph')
 
@@ -435,6 +450,23 @@ class QEdfFileWidget(qt.QWidget):
     def _zoomReset(self):
         if DEBUG:print "_zoomReset"
         self.graph.zoomReset()
+
+    def _saveMatplotlibImage(self):
+        if self._matplotlibSaveImage is None:
+            if (self.currentArray is None) or \
+                (self.data is None):
+                self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
+                                                                                None)
+            else:
+                self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
+                                                                                self.lastData)
+        else:
+            self._matplotlibSaveImage.setImage(self.lastData)
+        self._matplotlibSaveImage.show()
+        self._matplotlibSaveImage.raise_()
+
+    def __saveIconSignal(self):
+        self._saveMenu.exec_(self.cursor().pos())        
 
     def _saveIconSignal(self):
         self.lastInputDir = PyMcaDirs.outputDir
@@ -1496,6 +1528,14 @@ class QEdfFileWidget(qt.QWidget):
                 self.graph.setmarkercolor(marker,"white")
             self.graph.replot()
             return
+
+    def closeEvent(self, event):
+        if self.colormapDialog is not None:
+            self.colormapDialog.close()
+        if self._matplotlibSaveImage is not None:
+            self._matplotlibSaveImage.close()
+        qt.QWidget.closeEvent(self, event)
+
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
