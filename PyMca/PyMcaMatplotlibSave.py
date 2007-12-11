@@ -87,12 +87,12 @@ class PyMcaMatplotlibSave:
 
         if not legends:
             if self._logY:
-                ax = self.fig.add_axes([.1, .15, .75, .8])
+                ax = self.fig.add_axes([.15, .15, .75, .8])
             else:
                 ax = self.fig.add_axes([.15, .15, .75, .75])
         else:
             if self._logY:
-                ax = self.fig.add_axes([.1, .15, .7, .8])
+                ax = self.fig.add_axes([.15, .15, .7, .8])
             else:
                 ax = self.fig.add_axes([.15, .15, .7, .8])
 
