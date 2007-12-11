@@ -1,3 +1,31 @@
+VERSION 4.2.2
+
+- Input/Output: Support CSV format.
+  This should simplify data exchange with spreadsheets.
+
+- Input/Output: Support 64-bit handling of EDF files.
+
+- ScanWindow: Possibility to save all curves in a single specfile.
+
+- McaWindow: Spectra are saved with the active calibration instead of its own.
+  In other words: what you see is what you get.
+
+- Possibility to rename graph curves.
+
+- Possibility to save single images thru matplotlib.
+  This allows user customization (axes, colorbar, colormap, contours, ...)
+
+- ROI imaging: Use file-mapped arrays for stacks of more than 2 Gbytes.
+  This feature is implemented for 64-bit linux systems.
+
+- McaAdvancedFit: The combination of linear fit and fixed pile-up was buggy.
+
+- Calibration: Correct a crash under python 2.5 using the Auto FWHM option. 
+
+- RGB Correlator: ASCII images saved under windows can be read under linux.
+
+- Some other minor bugs corrected and some other minor features added.
+
 VERSION 4.2.1
 
 - ROI image: Possibility to normalize spectra to number of pixels.
