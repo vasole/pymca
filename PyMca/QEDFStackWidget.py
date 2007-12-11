@@ -1576,6 +1576,12 @@ class QEDFStackWidget(qt.QWidget):
             self.emit(qt.PYSIGNAL("StackWidgetSignal"), (ddict,))
         else:
             self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
+        if self.__stackColormapDialog is not None:
+            self.__stackColormapDialog.close()
+        if self.__ROIColormapDialog is not None:
+            self.__ROIColormapDialog.close()
+        if self._matplotlibSaveImage is not None:
+            self._matplotlibSaveImage.close()
         qt.QWidget.closeEvent(self, event)
 
     def _resetSelection(self):
