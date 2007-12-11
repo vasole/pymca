@@ -635,8 +635,8 @@ class McaWidget(qt.QWidget):
             pixmap = qt.QPixmap.grabWidget(self.graph)
             if not pixmap.save(specFile, format):
                 qt.QMessageBox.critical(self,
-                                        "Save Error",
-                                        "%s" % sys.exc_info()[1])
+                        "Save Error",
+                        "%s" % "I could not save the file\nwith the desired format")
             return
 
         if MATPLOTLIB:
