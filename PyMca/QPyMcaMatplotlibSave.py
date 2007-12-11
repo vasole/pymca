@@ -37,6 +37,11 @@ import PyMcaMatplotlibSave
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
 import PyMcaDirs
+try:
+    import spslut
+    SPSLUT=True
+except ImportError:
+    SPSLUT=False
 DEBUG = 0
 
 class HorizontalSpacer(qt.QWidget):
@@ -265,7 +270,7 @@ class RightWidget(qt.QWidget):
 	    if self.labelList[i] in ['X Axis', 'Y Axis']:
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
-		options = ['Default', 'Gray',\
+		options = ['Default', 'Temperature','Gray',\
                            'Red', 'Green', 'Blue',\
                            'Rainbow', 'Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
@@ -387,6 +392,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
 	cmap = cm.jet
 	ccmap = cm.gray
+	matplotlibCmap = True
 	if self.config['colormap']=='gray':
 	    cmap  = cm.gray
 	    ccmap = cm.jet
@@ -408,7 +414,21 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             cmap = self.__greenCmap
 	elif self.config['colormap']=='blue':
             cmap = self.__blueCmap
-
+        elif SPSLUT and (self.config['colormap']=='temperature'):
+            matplotlibCmap = False
+            dummy = numpy.zeros((1,1), numpy.float)
+            tmp,size,minmax = spslut.transform(self.imageData, (1,0),
+                                (spslut.LINEAR,3.0), "RGBX", spslut.MANY,
+                                1, (0,1),(0,255),1)
+            image_buffer,size,minmax = spslut.transform(self.imageData, (1,0),
+                                (spslut.LINEAR,3.0), "RGBX", spslut.TEMP,
+                                1, (0,1),(0,255),1)
+            image_buffer.shape = [size[1],  size[0], 4]
+            image_buffer[:, :, 3] = 255
+            tmp,size,minmax = spslut.transform(self.imageData, (1,0),
+                                (spslut.LINEAR,3.0), "RGBX", spslut.MANY,
+                                1, (0,1),(0,255),1)
+            
         if self.config['extent'] is None:
             h, w = self.imageData.shape
 	    extent = (0,w,0,h)
@@ -417,12 +437,17 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	else:
             extent = self.config['extent'] 
 
-            
-        self._image  = self.axes.imshow(self.imageData,
+        if matplotlibCmap:
+            self._image  = self.axes.imshow(self.imageData,
                                         interpolation=interpolation,
                                         origin=origin,
 					cmap=cmap,
                                         extent=extent)
+        else:
+            self._image  = self.axes.imshow(image_buffer,
+                                            interpolation=interpolation,
+                                            origin=origin)
+
         ylim = self.axes.get_ylim()
 
         self.axes.set_title(self.config['title'])
