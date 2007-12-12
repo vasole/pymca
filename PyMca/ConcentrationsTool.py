@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.25 $"
+__revision__ = "$Revision: 1.26 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import Elements
 import copy
@@ -232,7 +232,7 @@ class ConcentrationsTool:
                 attenuators.append(fitresult['result']['config']['attenuators']\
                                                                 [attenuator][1:])
         if matrix is None:
-            raise "ValueError", "Invalid or undefined sample matrix"
+            raise ValueError, "Invalid or undefined sample matrix"
         
         if matrix[0].upper() == "MULTILAYER":
             layerlist = fitresult['result']['config']['multilayer'].keys()
@@ -242,16 +242,16 @@ class ConcentrationsTool:
                     if multilayer is None:multilayer=[]
                     multilayer.append(fitresult['result']['config']['multilayer'][layer][1:])
                     if not Elements.isValidMaterial(multilayer[-1][0]):
-                        raise "ValueError","Material %s is not defined" % multilayer[-1][0]    
+                        raise ValueError,"Material %s is not defined" % multilayer[-1][0]    
         
         else:
             layerlist = ["Layer0"]
             multilayer= [matrix]
             if not Elements.isValidMaterial(matrix[0]):
-                raise "ValueError","Material %s is not defined" % matrix[0]
+                raise ValueError,"Material %s is not defined" % matrix[0]
         energyList = fitresult['result']['config']['fit']['energy']
         if energyList is None:
-            raise "ValueError", "Invalid energy"
+            raise ValueError, "Invalid energy"
         if type(energyList) != types.ListType:
             energyList    = [energyList]
             flagList   = [1]
@@ -267,24 +267,24 @@ class ConcentrationsTool:
             if flagList[idx]:
                 energy = energyList[idx]
                 if energy is None:
-                    raise "ValueError",\
+                    raise ValueError,\
                           "Energy %d isn't a valid energy" % idx
                 if energy <= 0.001:
-                    raise "ValueError",\
+                    raise ValueError,\
                           "Energy %d with value %f isn't a valid energy" % (idx,
                                                                         energy)
                 if weightList[idx] is None:
-                    raise "ValueError",\
+                    raise ValueError,\
                           "Weight %d isn't a valid weight" % idx
                 if weightList [idx] < 0.0:
-                    raise "ValueError",\
+                    raise ValueError,\
                           "Weight %d with value %f isn't a valid weight" % (idx,
                                                                 weightList[idx])
                 finalEnergy.append(energy)
                 finalWeight.append(weightList[idx])
                 finalFlag.append(1)
         totalWeight = sum(weightList)
-        if totalWeight == 0.0:raise "ValueError","Sum of energy weights is 0.0"
+        if totalWeight == 0.0:raise ValueError,"Sum of energy weights is 0.0"
         weightList = [x/totalWeight for x in finalWeight]
         energyList = finalEnergy
         flagList   = finalFlag
@@ -327,7 +327,7 @@ class ConcentrationsTool:
                 pseudomatrix = multilayer[ilayer]
                 eleDict = Elements.getMaterialMassFractions([pseudomatrix[0]], [1.0])
                 if eleDict == {}:
-                    raise "ValueError", "Invalid layer material %s" % pseudomatrix[0]
+                    raise ValueError, "Invalid layer material %s" % pseudomatrix[0]
                 keys = eleDict.keys()
                 for ele in keys:
                     for group in newelements:
@@ -396,7 +396,7 @@ class ConcentrationsTool:
             if len(present) == 0:
                 text  = "Matrix must contain at least one fitted element\n"
                 text += "in order to estimate flux and efficiency from it."
-                raise "ValueError",text
+                raise ValueError,text
             referenceElement = config['reference'].replace(' ',"")
             if len(referenceElement) and (referenceElement.upper() != 'AUTO'):
                 if Elements.isValidFormula(referenceElement):
@@ -407,14 +407,14 @@ class ConcentrationsTool:
                         referenceElement = referenceElement.upper()[0]
                     if not (referenceElement in elements):
                         text = "Element %s not among fitted elements" % referenceElement
-                        raise "ValueError",text
+                        raise ValueError,text
                     elif not (referenceElement in present):
                         text = "Element %s not among matrix elements" % referenceElement
-                        raise "ValueError",text
+                        raise ValueError,text
                     referenceLayers  = referenceLayerDict[referenceElement]
                 else:
                     text = "Element %s not a valid element" % referenceElement
-                    raise "ValueError",text
+                    raise ValueError,text
             elif len(present) == 1:
                 referenceElement = present[0]
                 referenceLayers  = referenceLayerDict[referenceElement]
@@ -447,7 +447,7 @@ class ConcentrationsTool:
                     theoretical  += materialComposition[ilayer][referenceElement] * \
                                     fluolist[ilayer][referenceElement]['rates'][transitions]
             if theoretical <= 0.0:
-                raise "ValueError","Theoretical rate is almost 0.0 Impossible to determine flux"
+                raise ValueError,"Theoretical rate is almost 0.0 Impossible to determine flux"
             else:
                 flux = fitresult['result'][group]['fitarea'] / theoretical
         else:

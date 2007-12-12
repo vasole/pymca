@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.58 $"
+__revision__ = "$Revision: 1.59 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -1808,7 +1808,12 @@ class McaAdvancedFit(qt.QWidget):
         else:
             outfile.setWindowTitle("Output File Selection")
             strlist = qt.QStringList()
-            format_list = ['Specfile MCA  *.mca','Specfile Scan *.dat','Raw ASCII  *.txt']
+            format_list = ['Specfile MCA  *.mca',
+                           'Specfile Scan *.dat',
+                           'Raw ASCII  *.txt',
+                           '","-separated CSV *.csv',
+                           '";"-separated CSV *.csv',
+                           '"tab"-separated CSV *.csv']
             if MATPLOTLIB:
                 format_list.append('Graphics PNG *.png')
                 format_list.append('Graphics EPS *.eps')
@@ -1972,6 +1977,46 @@ class McaAdvancedFit(qt.QWidget):
                         label = 'y'+group
                         if label in keys:
                             file.write("  %.7g" %  fitresult['result'][label][i])
+                    file.write("\n")            
+                file.close()
+                return
+            if filetype == 'CSV':
+                if "," in filterused[0]:
+                    csv = ","
+                elif ";" in filterused[0]:
+                    csv = ";"
+                else:
+                    csv = "\t"
+                keys = fitresult['result'].keys()
+
+                headerLine = "channel%sEnergy%scounts%sfit%scontinuum%spileup" % (csv, csv, csv, csv, csv)
+                if 'ymatrix' in keys:
+                    labelline += "%symatrix" % csv
+
+                for group in fitresult['result']['groups']:
+                    label = 'y'+group
+                    if label in keys:
+                        headerLine += csv+group
+                file.write(headerLine)
+                file.write('\n')
+                for i in range(len(fitresult['result']['ydata'])):
+                    file.write("%.7g%s%.7g%s%.7g%s%.7g%s%.7g%s%.7g" % (fitresult['result']['xdata'][i],
+                                       csv,
+                                       fitresult['result']['energy'][i],
+                                       csv,
+                                       fitresult['result']['ydata'][i],
+                                       csv,
+                                       fitresult['result']['yfit'][i],
+                                       csv,
+                                       fitresult['result']['continuum'][i],
+                                       csv,
+                                       fitresult['result']['pileup'][i]))
+                    if 'ymatrix' in fitresult['result'].keys():
+                        file.write("%s%.7g" %  (csv,fitresult['result']['ymatrix'][i]))
+                    for group in fitresult['result']['groups']:
+                        label = 'y'+group
+                        if label in keys:
+                            file.write("%s%.7g" %  (csv,fitresult['result'][label][i]))
                     file.write("\n")            
                 file.close()
                 return
