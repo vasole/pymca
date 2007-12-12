@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-___revision__ = "$Revision: 1.73 $"
+___revision__ = "$Revision: 1.74 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -1914,13 +1914,20 @@ class McaTheory:
             else:
                 result[group]['fitarea']  = self.fittedpar[n+i]
             result[group]['sigmaarea'] = sigmaarea
+            result[group]['statistics'] = 0
             j = 0
+            p =  PEAKSW[i][:,:]
+            if self.__HYPERMET:
+                contrib = SpecfitFuns.fastahypermet(p, energyw,self.__HYPERMET)
+            else:
+                contrib = SpecfitFuns.fastagauss(p, energyw)
             index = []
             for peak in result[group]['peaks']:
                 result[group][peak] = {}
                 result[group][peak]['ratio']     = self.PEAKS0[i][j,0]
                 result[group][peak]['energy']    = PEAKSW[i][j,1]
                 result[group][peak]['fwhm']      = PEAKSW[i][j,2]
+                result[group][peak]['statistics']= 0
                 
                 #detailed parameters                
                 peakpos = result[group][peak]['energy']
@@ -1944,7 +1951,13 @@ class McaTheory:
                 else:
                     result[group][peak]['fitarea']   = PEAKSW[i][j,0] / gain
                     result[group][peak]['sigmaarea'] = result[group][peak]['fitarea'] * abs(sigmaarea/fitarea)
-                           
+
+                if len(index0):
+                    if result[group][peak]['fitarea'] > 0:
+                        result[group][peak]['statistics'] = Numeric.take(self.ydata, index0).sum()
+                        pseudoArea = Numeric.take(contrib, index0).sum()
+                        result[group]['statistics'] += result[group][peak]['ratio']*\
+                                                   (result[group][peak]['statistics']-pseudoArea)                           
                 j += 1
             result[group]['escapepeaks'] = []
             if self.ESCAPE:
@@ -1962,9 +1975,9 @@ class McaTheory:
                         if result[group][peak]['ratio'] > 0: 
                             peakpos = result[group][peak]['energy']
                             sigma   = result[group][peak]['fwhm']/2.3548
-                            index0   = Numeric.nonzero(((peakpos-3*sigma)<energyw) & (energyw<(peakpos+3*sigma)))
+                            index0   = Numeric.nonzero(((peakpos-4*sigma)<energyw) & (energyw<(peakpos+4*sigma)))
                             if len(index0):
-                                chisq = Numeric.sum(Numeric.take(prechisq,index0))*len(yw)/len(index0) 
+                                chisq = Numeric.sum(Numeric.take(prechisq,index0))*len(yw)/len(index0)
                             else:
                                 #chisq = -1
                                 chisq = 0.000
@@ -2003,6 +2016,7 @@ class McaTheory:
                             result[group][peak]['energy']    = PEAKSW[i][j+r,1]
                             result[group][peak]['fwhm']      = PEAKSW[i][j+r,2]
                             result[group][peak]['ratio']     = esc_line[1]
+                            result[group][peak]['statistics']= 0
                             #if group == 'Fe K':print "peak =",peak," energy = ",PEAKSW[i][j+r,1]
                             chisq     = 0.0
                             if result[group][peak]['ratio'] > 0: 
@@ -2029,6 +2043,12 @@ class McaTheory:
                                 else:
                                    result[group][peak]['fitarea']   = 0.0
                                    result[group][peak]['sigmaarea'] = 0.0
+                                if len(index0):
+                                    if result[group][peak]['fitarea'] > 0:
+                                        result[group][peak]['statistics'] = Numeric.take(self.ydata, index0).sum()
+                                        pseudoArea = Numeric.take(contrib, index0).sum()
+                                        result[group]['statistics'] += result[group][peak]['ratio']*\
+                                                            (result[group][peak]['statistics']-pseudoArea)                           
                             j = j + 1
                         ii=ii+1
             #areaenergies.sort()
@@ -2047,16 +2067,20 @@ class McaTheory:
             else:
                 #(r,c) = Numeric.shape(self.PEAKS0[i])
                 #p =  PEAKSW[i][0:r,:]
-                p =  PEAKSW[i][:,:]
-                if self.__HYPERMET:
-                    contrib = SpecfitFuns.fastahypermet(p,energy,self.__HYPERMET)
+                if 0:
+                    p =  PEAKSW[i][:,:]
+                    if self.__HYPERMET:
+                        contrib = SpecfitFuns.fastahypermet(p,energy,self.__HYPERMET)
+                    else:
+                        contrib = SpecfitFuns.fastagauss(p,energy)
                 else:
-                    contrib = SpecfitFuns.fastagauss(p,energy)
+                    contrib = Numeric.take(contrib     ,index)
                 ycon = yfit - contrib
             y   = Numeric.take(yw     ,index)
             #pmcaarea      = Numeric.sum(y-(yfit-contrib))
             pmcaarea      = Numeric.sum(y-ycon)
-            result[group]['mcaarea']   = pmcaarea
+            result[group]['mcaarea']    = pmcaarea
+            result[group]['statistics'] = max(pmcaarea, result[group]['fitarea']) + result[group]['statistics']
             #pmcasigmaarea = Numeric.sqrt(Numeric.sum(Numeric.where(y<0, -y, y)))
             #result[group]['mcasigmaarea'] = pmcasigmaarea
             i+=1
