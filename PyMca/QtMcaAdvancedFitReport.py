@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import os
 import sys
@@ -533,7 +533,7 @@ class QtMcaAdvancedFitReport:
             try:
                 fig = Figure(figsize=(6,3)) # in inches
                 canvas = FigureCanvas(fig)
-                ax = fig.add_axes([.1, .15, .8, .8])
+                ax = fig.add_axes([.15, .15, .8, .8])
                 ax.set_axisbelow(True)
                 ax.semilogy(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
                 ax.semilogy(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
@@ -550,7 +550,7 @@ class QtMcaAdvancedFitReport:
             except ValueError:
                 fig = Figure(figsize=(6,3)) # in inches
                 canvas = FigureCanvas(fig)
-                ax = fig.add_axes([.1, .15, .8, .8])
+                ax = fig.add_axes([.15, .15, .8, .8])
                 ax.set_axisbelow(True)
                 ax.plot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
                 ax.plot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)

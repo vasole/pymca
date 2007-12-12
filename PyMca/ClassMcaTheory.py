@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-___revision__ = "$Revision: 1.74 $"
+___revision__ = "$Revision: 1.75 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -1957,7 +1957,7 @@ class McaTheory:
                         result[group][peak]['statistics'] = Numeric.take(self.ydata, index0).sum()
                         pseudoArea = Numeric.take(contrib, index0).sum()
                         result[group]['statistics'] += result[group][peak]['ratio']*\
-                                                   (result[group][peak]['statistics']-pseudoArea)                           
+                                                   abs(result[group][peak]['statistics']-pseudoArea)
                 j += 1
             result[group]['escapepeaks'] = []
             if self.ESCAPE:
@@ -2048,7 +2048,7 @@ class McaTheory:
                                         result[group][peak]['statistics'] = Numeric.take(self.ydata, index0).sum()
                                         pseudoArea = Numeric.take(contrib, index0).sum()
                                         result[group]['statistics'] += result[group][peak]['ratio']*\
-                                                            (result[group][peak]['statistics']-pseudoArea)                           
+                                                            abs(result[group][peak]['statistics']-pseudoArea)                           
                             j = j + 1
                         ii=ii+1
             #areaenergies.sort()
@@ -2080,7 +2080,8 @@ class McaTheory:
             #pmcaarea      = Numeric.sum(y-(yfit-contrib))
             pmcaarea      = Numeric.sum(y-ycon)
             result[group]['mcaarea']    = pmcaarea
-            result[group]['statistics'] = max(pmcaarea, result[group]['fitarea']) + result[group]['statistics']
+            result[group]['statistics'] = max(pmcaarea, result[group]['fitarea']) +\
+                                          result[group]['statistics']
             #pmcasigmaarea = Numeric.sqrt(Numeric.sum(Numeric.where(y<0, -y, y)))
             #result[group]['mcasigmaarea'] = pmcasigmaarea
             i+=1
