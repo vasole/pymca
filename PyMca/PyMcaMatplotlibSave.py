@@ -311,7 +311,8 @@ class PyMcaMatplotlibSaveImage:
 
     def saveImage(self, fileName):
         self.figure.clear()
-	if self.imageData is None:
+	if (self.imageData is None) and\
+           (self.pixmapImage is None):
 	    return
 	# The axes
         self.axes = self.figure.add_axes([.15, .15, .75, .8])
@@ -324,12 +325,16 @@ class PyMcaMatplotlibSaveImage:
         else:
             self.axes.yaxis.set_visible(True)
 
+        if self.pixmapImage is not None:
+            self._savePixmapFigure(fileName)
+            return
+
 	interpolation = self.config['interpolation']
 	origin = self.config['origin']
 
 	cmap = self.__temperatureCmap
 	ccmap = cm.gray
-	if self.config['colormap']=='gray':
+        if self.config['colormap'] in ['grey','gray']:
 	    cmap  = cm.gray
 	    ccmap = self.__temperatureCmap
 	elif self.config['colormap']=='jet':
@@ -410,6 +415,42 @@ class PyMcaMatplotlibSaveImage:
 
         self.canvas.print_figure(fileName)
         
+
+    def setPixmapImage(self, image=None, bgr=False):
+        if bgr:
+            self.pixmapImage = image * 1
+            self.pixmapImage[:,:,0] = image[:,:,2]
+            self.pixmapImage[:,:,2] = image[:,:,0]
+        else:
+            self.pixmapImage = image
+
+    def _savePixmapFigure(self, fileName):
+	interpolation = self.config['interpolation']
+	origin = self.config['origin']
+        if self.config['extent'] is None:
+            h= self.pixmapImage.shape[0]
+            w= self.pixmapImage.shape[1]
+            
+            extent = (0,w,0,h)
+            if origin == 'upper':
+                extent = (0, w, h, 0)
+        else:
+            extent = self.config['extent']
+        self._image = self.axes.imshow(self.pixmapImage,
+                                       interpolation=interpolation,
+                                       origin=origin,
+                                       extent=extent)
+
+        ylim = self.axes.get_ylim()
+
+        self.axes.set_title(self.config['title'])
+        self.axes.set_xlabel(self.config['xlabel'])
+        self.axes.set_ylabel(self.config['ylabel'])
+
+        self.axes.set_ylim(ylim[0],ylim[1])
+
+        self.canvas.print_figure(fileName)
+
         
 if __name__ == "__main__":
     import sys

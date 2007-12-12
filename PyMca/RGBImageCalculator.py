@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
@@ -176,7 +176,9 @@ class RGBImageCalculator(qt.QWidget):
 
     def _saveMatplotlibImage(self):
         if self._matplotlibSaveImage is None:
-            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, self._imageData)
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
+                                                                            self._imageData)
+            self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBImage")            
         else:
             self._matplotlibSaveImage.setImage(self._imageData)
         self._matplotlibSaveImage.show()

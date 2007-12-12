@@ -104,8 +104,16 @@ class SaveImageSetup(qt.QWidget):
 	return qt.QSize(3 * qt.QWidget.sizeHint(self).width(),
 			3 * qt.QWidget.sizeHint(self).height())
 
-    def setImage(self, image=None):
+    def setImageData(self, image=None):
         self.imageWidget.imageData = image
+        self.updateClicked()
+
+    def setPixmapImage(self, image=None, bgr=False):
+        self.imageWidget.setPixmapImage(image, bgr)
+        if image is None:
+            self.right.setPixmapMode(False)
+        else:
+            self.right.setPixmapMode(True)
         self.updateClicked()
 
     def getParameters(self):
@@ -187,6 +195,8 @@ class SaveImageSetup(qt.QWidget):
                 pass
         config = self.imageWidget.getParameters()
         s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
+        if self.imageWidget.pixmapImage is not None:
+            s.setPixmapImage(self.imageWidget.pixmapImage)
         s.setParameters(config)
         s.saveImage(finalFile)
 
@@ -251,10 +261,12 @@ class RightWidget(qt.QWidget):
 	self.gridLayout.setMargin(0)
 	self.gridLayout.setSpacing(2)
 	self.labelList = ['X Axis', 'Y Axis',
-			  'Origin', 'Colormap',
-			  'Colorbar',
+			  'Origin',
 			  'Interpolation',
-			  'Contour']
+                          'Colormap',
+			  'Colorbar',
+			  'Contour',
+                          'Image Background']
 	self.keyList = []
 	for label in self.labelList:
 	    self.keyList.append(label.lower().replace(' ',''))
@@ -265,7 +277,7 @@ class RightWidget(qt.QWidget):
 	    if self.labelList[i] in ['X Axis', 'Y Axis']:
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
-		options = ['Temperature','Gray',\
+		options = ['Temperature','Grey',\
                            'Red', 'Green', 'Blue',\
                            'Rainbow', 'Jet','Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
@@ -278,6 +290,8 @@ class RightWidget(qt.QWidget):
 		options = ['Nearest', 'Bilinear']
 	    elif self.labelList[i] in ['Contour']:
 		options = ['Off', 'Line']
+	    elif self.labelList[i] in ['Image Background']:
+		options = ['Black', 'White', 'Grey']
 	    line = SimpleComboBox(self, options)
 	    self.gridLayout.addWidget(label, i, 0)
 	    self.gridLayout.addWidget(line, i, 1)
@@ -285,7 +299,20 @@ class RightWidget(qt.QWidget):
 
 	self.mainLayout.addWidget(self.gridWidget)
 	self.mainLayout.addWidget(VerticalSpacer(self))
+	self.setPixmapMode(False)
 
+    def setPixmapMode(self, flag):
+        if flag:
+            disable = ['Colormap','Contour', 'Colorbar']
+        else:
+            disable = ['Image Background']
+
+        for label in self.labelList:
+            index = self.labelList.index(label)
+            if label in disable:
+                self.comboBoxList[index].setEnabled(False)
+            else:
+                self.comboBoxList[index].setEnabled(True)
 
     def getParameters(self):
 	ddict = {}
@@ -306,7 +333,7 @@ class RightWidget(qt.QWidget):
 	
 
 class QPyMcaMatplotlibImage(FigureCanvas):
-    def __init__(self, parent, imageData,
+    def __init__(self, parent, imageData=None,
 		     dpi=100,
                      size=(5, 5),
                      xaxis='off',
@@ -331,6 +358,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                                    qt.QSizePolicy.Expanding)
 
 	self.imageData = imageData
+	self.pixmapImage = None
 	self.config={'xaxis':xaxis,
 		     'yaxis':yaxis,
 		     'title':title,
@@ -341,7 +369,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
-                     'extent':extent}
+                     'extent':extent,
+                     'imagebackground':'black'}
 
         #generate own colormaps
         cdict = {'red': ((0.0, 0.0, 0.0),
@@ -389,7 +418,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
     def updateFigure(self):
 	self.figure.clear()
-	if self.imageData is None:
+	if (self.imageData is None) and \
+           (self.pixmapImage is None):
 	    return
 
 	# The axes
@@ -403,49 +433,53 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         else:
             self.axes.yaxis.set_visible(True)
 
+        if self.pixmapImage is not None:
+            self._updatePixmapFigure()
+            return
+
 	interpolation = self.config['interpolation']
 	origin = self.config['origin']
 
-	cmap = self.__temperatureCmap
-	ccmap = cm.gray
-	if self.config['colormap']=='gray':
-	    cmap  = cm.gray
-	    ccmap = self.__temperatureCmap
-	elif self.config['colormap']=='jet':
-	    cmap = cm.jet
-	elif self.config['colormap']=='hot':
-	    cmap = cm.hot
-	elif self.config['colormap']=='cool':
-	    cmap = cm.cool
-	elif self.config['colormap']=='copper':
-	    cmap = cm.copper
-	elif self.config['colormap']=='spectral':
+        cmap = self.__temperatureCmap
+        ccmap = cm.gray
+        if self.config['colormap'] in ['grey','gray']:
+            cmap  = cm.gray
+            ccmap = self.__temperatureCmap
+        elif self.config['colormap']=='jet':
+            cmap = cm.jet
+        elif self.config['colormap']=='hot':
+            cmap = cm.hot
+        elif self.config['colormap']=='cool':
+            cmap = cm.cool
+        elif self.config['colormap']=='copper':
+            cmap = cm.copper
+        elif self.config['colormap']=='spectral':
             cmap = cm.spectral
-	elif self.config['colormap']=='hsv':
+        elif self.config['colormap']=='hsv':
             cmap = cm.hsv
-	elif self.config['colormap']=='rainbow':
+        elif self.config['colormap']=='rainbow':
             cmap = cm.gist_rainbow
-	elif self.config['colormap']=='red':
+        elif self.config['colormap']=='red':
             cmap = self.__redCmap
-	elif self.config['colormap']=='green':
+        elif self.config['colormap']=='green':
             cmap = self.__greenCmap
-	elif self.config['colormap']=='blue':
+        elif self.config['colormap']=='blue':
             cmap = self.__blueCmap
         elif self.config['colormap']=='temperature':
             cmap = self.__temperatureCmap
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
-	    extent = (0,w,0,h)
+            extent = (0,w,0,h)
             if origin == 'upper':
                 extent = (0, w, h, 0)
-	else:
+        else:
             extent = self.config['extent'] 
 
         self._image  = self.axes.imshow(self.imageData,
                                         interpolation=interpolation,
                                         origin=origin,
-					cmap=cmap,
+                                        cmap=cmap,
                                         extent=extent)
 
         ylim = self.axes.get_ylim()
@@ -495,6 +529,68 @@ class QPyMcaMatplotlibImage(FigureCanvas):
     def setParameters(self, ddict):
 	self.config.update(ddict)
 	self.updateFigure()
+
+    def setPixmapImage(self, image=None, bgr=False):
+        if image is None:
+            self.pixmapImage = None
+            self.updateFigure()
+            return
+        
+        if bgr:
+            self.pixmapImage = image * 1
+            self.pixmapImage[:,:,0] = image[:,:,2]
+            self.pixmapImage[:,:,2] = image[:,:,0]
+        else:
+            self.pixmapImage = image
+
+        # This is slow, but I do not expect huge images
+        shape = self.pixmapImage.shape
+        self.pixmapMask = numpy.ones(shape, numpy.uint8)
+        shape = self.pixmapImage.shape
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                if (self.pixmapImage[i,j,0] == 0):
+                    if (self.pixmapImage[i,j,1] == 0):
+                        if (self.pixmapImage[i,j,2] == 0):
+                            self.pixmapMask[i,j,0:3] = [0, 0, 0]
+                                
+        self.updateFigure()
+
+    def _updatePixmapFigure(self):
+	interpolation = self.config['interpolation']
+	origin = self.config['origin']
+        if self.config['extent'] is None:
+            h= self.pixmapImage.shape[0]
+            w= self.pixmapImage.shape[1]
+            
+            extent = (0,w,0,h)
+            if origin == 'upper':
+                extent = (0, w, h, 0)
+        else:
+            extent = self.config['extent']
+        if self.config['imagebackground'].lower() == 'white':
+            self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask) +\
+                               (self.pixmapMask == 0) * 255
+        elif self.config['imagebackground'].lower() == 'grey':
+            self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask) +\
+                               (self.pixmapMask == 0) * 128
+        else:
+            self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask)
+
+        self._image = self.axes.imshow(self.pixmapImage,
+                                       interpolation=interpolation,
+                                       origin=origin,
+                                       extent=extent)
+        
+        ylim = self.axes.get_ylim()
+
+        self.axes.set_title(self.config['title'])
+        self.axes.set_xlabel(self.config['xlabel'])
+        self.axes.set_ylabel(self.config['ylabel'])
+
+        self.axes.set_ylim(ylim[0],ylim[1])
+
+	self.draw()
 
 if __name__ == "__main__":
     app = qt.QApplication([])

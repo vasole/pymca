@@ -33,6 +33,12 @@ qt = RGBCorrelatorWidget.qt
 import RGBCorrelatorGraph
 QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
 import numpy.oldnumeric as Numeric
+try:
+    import QPyMcaMatplotlibSave
+    MATPLOTLIB = True
+except ImportError:
+    MATPLOTLIB = False
+
 
 class RGBCorrelator(qt.QWidget):
     def __init__(self, parent = None, graph = None, bgrx = True):
@@ -46,8 +52,21 @@ class RGBCorrelator(qt.QWidget):
         self.splitter.setOrientation(qt.Qt.Horizontal)
         self.controller = RGBCorrelatorWidget.RGBCorrelatorWidget(self.splitter)
         self._y1AxisInverted = False
+        self._imageBuffer = None
+        self._matplotlibSaveImage = None
+        standaloneSaving = True
         if graph is None:
-            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter)
+            if MATPLOTLIB:
+                standaloneSaving = False
+            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter,
+                                            standalonesave=standaloneSaving)
+            if not standaloneSaving:
+                self.connect(self.graphWidget.saveToolButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._saveToolButtonSignal)
+                self._saveMenu = qt.QMenu()
+                self._saveMenu.addAction(qt.QString("Standard"),    self.graphWidget._saveIconSignal)
+                self._saveMenu.addAction(qt.QString("Matplotlib") , self._saveMatplotlibImage)
             self.graph = self.graphWidget.graph
             if not QWTVERSION4:
                 #add flip Icon
@@ -98,29 +117,48 @@ class RGBCorrelator(qt.QWidget):
 
     def correlatorSignalSlot(self, ddict):
         if ddict.has_key('image'):
-            self.image_buffer = ddict['image'].tostring()
+            # keep the image buffer as an array
+            self._imageBuffer = ddict['image'] #.tostring()
             size = ddict['size']
             if not self.graph.yAutoScale:
                 ylimits = self.graph.getY1AxisLimits()
             if not self.graph.xAutoScale:
                 xlimits = self.graph.getX1AxisLimits()
             if self._handleGraph:
-                self.graph.pixmapPlot(self.image_buffer,size, xmirror = 0,
+                self.graph.pixmapPlot(self._imageBuffer.tostring(),size, xmirror = 0,
                                   ymirror = not self._y1AxisInverted)
             else:
-                self.graph.pixmapPlot(self.image_buffer,size)
+                self.graph.pixmapPlot(self._imageBuffer.tostring(),size)
             if not self.graph.yAutoScale:
                 self.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
             if not self.graph.xAutoScale:
                 self.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)
-            
+            self._imageBuffer.shape = size[1],size[0],4
+            self._imageBuffer[:,:,3] = 255
             self.graph.replot()
+
+    def _saveToolButtonSignal(self):
+        self._saveMenu.exec_(self.cursor().pos())
+
+    def _saveMatplotlibImage(self):
+        if self._matplotlibSaveImage is None:
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
+                                                                            None)
+            self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBCorrelator")
+
+        #Qt is BGR while the others are RGB ...
+        self._matplotlibSaveImage.setPixmapImage(self._imageBuffer, bgr=True)
+        self._matplotlibSaveImage.show()
+        self._matplotlibSaveImage.raise_()
+
 
     def closeEvent(self, event):
         ddict = {}
         ddict['event'] = "RGBCorrelatorClosed"
         ddict['id']    = id(self)
         self.controller.close()
+        if self._matplotlibSaveImage is not None:
+            self._matplotlibSaveImage.close()
         self.emit(qt.SIGNAL("RGBCorrelatorSignal"),ddict)
         qt.QWidget.closeEvent(self, event)
 
