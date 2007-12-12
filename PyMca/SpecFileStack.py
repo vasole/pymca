@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import DataObject
 import specfilewrapper as specfile
@@ -152,7 +152,7 @@ class SpecFileStack(DataObject.DataObject):
             pass
 
         else:
-            raise "ValueError", "Unhandled scan type = %s" % scantype
+            raise ValueError, "Unhandled scan type = %s" % scantype
 
         """
 
@@ -182,7 +182,7 @@ class SpecFileStack(DataObject.DataObject):
         if type(filename) == type([]):
             filename = filename[0]
         if not os.path.exists(filename):
-            raise "IOError","File %s does not exists" % filename
+            raise IOError, "File %s does not exists" % filename
         name = os.path.basename(filename)
         n = len(name)
         i = 1
@@ -239,7 +239,7 @@ class SpecFileStack(DataObject.DataObject):
             else:
                 i = begin
             if not os.path.exists(prefix+format % i+suffix):
-                raise "ValueError","Invalid start index file = %s" % \
+                raise ValueError, "Invalid start index file = %s" % \
                       prefix+format % i+suffix
             f = prefix+format % i+suffix
             filelist = []

@@ -373,7 +373,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
         if colormap not in COLORMAPLIST:
-            raise "ValueError", "Unknown color scheme %s" % colormap
+            raise ValueError, "Unknown color scheme %s" % colormap
 
         if (datamin is None) or (datamax is None):
             #spslut already calculates min and max
@@ -425,7 +425,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 image = Numeric.resize(image,
                          (self.__imageShape[0], self.__imageShape[1]))
             else:
-                raise "ValueError", "Image cannot be reshaped to %d x %d" % \
+                raise ValueError, "Image cannot be reshaped to %d x %d" % \
                           (self.__imageShape[0], self.__imageShape[1])  
 
         if label not in self._imageList:
@@ -522,7 +522,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         for value in shape:
             length *= value
         if length != self.__imageLength:
-            raise "ValueError","New length %d different of old length %d" % \
+            raise ValueError, "New length %d different of old length %d" % \
                     (length, self.__imageLength)
         self.__imageShape = shape
         self._updateSizeLabel()

@@ -59,7 +59,7 @@ class McaTheory:
             if os.path.exists(initdict):
                 self.config = ConfigDict.ConfigDict(filelist   =initdict)
             else:
-                raise "IOError","file %s does not exist" % initdict
+                raise IOError, "file %s does not exist" % initdict
                 self.config = {}
                 self.config['fit'] = {}
                 self.config['attenuators'] = {}
@@ -254,7 +254,7 @@ class McaTheory:
                   text  = "Your matrix is not properly defined.\n"
                   text += "If you used the graphical interface,\n"
                   text += "Please check the MATRIX tab" 
-                  raise "ValueError",text
+                  raise ValueError, text
           if 0:
               dict=Elements.getMultilayerFluorescence(multilayer,
                                      energylist,
@@ -323,7 +323,7 @@ class McaTheory:
             except ZeroDivisionError:
                 text  = "Intensity of %s %s is zero\n"% (ele, rays)
                 text += "Too high attenuation?"
-                raise "ZeroDivisionError", text
+                raise ZeroDivisionError, text
 
             #--- sort ---            
             div=[[newpeaks[i][1],newpeaks[i][0],newpeaksnames[i]] for i in range(len(newpeaks))]
@@ -341,7 +341,7 @@ class McaTheory:
             if not len(newpeaks):
                 text  = "No %s for element %s" % (rays, ele)
                 text += "\nToo high attenuation?"
-                raise "ValueError",text
+                raise ValueError, text
             (r,c)=Numeric.shape(Numeric.array(newpeaks))
             PEAKS0ESCAPE.append([])                
             _nescape_ = 0
@@ -380,7 +380,7 @@ class McaTheory:
             if usematrix and (maxenergy is None):
                 text  = "Invalid energy for matrix configuration.\n"
                 text += "Please check your BEAM parameters."
-                raise "ValueError", text
+                raise ValueError, text
             elif ((not usematrix) and (self.config['fit']['energy'] is None)) or \
                  ((not usematrix) and (self.config['fit']['energy'] == [None])) or\
                  ((not usematrix) and (self.config['fit']['energy'] == ["None"])) or\
@@ -453,7 +453,7 @@ class McaTheory:
                                             trans = (1.0 - Numeric.exp(-coeffs))
                                     except OverflowError:
                                         if coeffs < 0:
-                                            raise "ValueError","Positive exponent on transmission term"
+                                            raise ValueError,"Positive exponent on transmission term"
                                         else:
                                             if attenuator.upper() == "DETECTOR":
                                                 trans = 1.0
@@ -496,7 +496,7 @@ class McaTheory:
                                                 if abs(sinAlphaIn) > 0.0:
                                                     expterm = -((coeffs[-1]/sinAlphaIn) +(coeffs[i]/sinAlphaOut)) * thickness
                                                     if expterm > 0.0:
-                                                        raise "ValueError","Positive exponent on transmission term"
+                                                        raise ValueError, "Positive exponent on transmission term"
                                                     if expterm < 30:
                                                         #avoid overflow error in frozen versions
                                                         try:
@@ -512,7 +512,7 @@ class McaTheory:
                                                 newpeaks[i][0] = 0.0
                                         del transmissionenergies[-1]
                                     else:
-                                        raise "ValueError","Invalid excitation energy"
+                                        raise ValueError, "Invalid excitation energy"
                     #--- renormalize
                     div = sum([x[0] for x in newpeaks])
                     try:
@@ -521,7 +521,7 @@ class McaTheory:
                     except ZeroDivisionError:
                         text  = "Intensity of %s %s is zero\n"% (ele, rays)
                         text += "Too high attenuation?"
-                        raise "ZeroDivisionError", text
+                        raise ZeroDivisionError, text
                     """
                     if ele == 'Pb':
                         dummyNew = [[newpeaks[i][1],oldRatio[i],newpeaks[i][0],newpeaks[i][0]/ oldRatio[i] ] for i in range(len(newpeaks))]
@@ -632,12 +632,12 @@ class McaTheory:
                         else:
                             PEAKSW.append(Numeric.ones((r,3+5),Numeric.Float))
             elif (not usematrix) and (len(energylist) > 1):
-                raise "ValueError","Multiple energies require a matrix definition"
+                raise ValueError, "Multiple energies require a matrix definition"
             else:
                 print "Unknown case"
                 print "usematrix = ",usematrix
                 print "self.config['fit']['energy'] =",self.config['fit']['energy']
-                raise "ValueError","Unhandled Sample Matrix and Energy combination"
+                raise ValueError, "Unhandled Sample Matrix and Energy combination"
 ###############            
         #add scatter peak
         if energylist is not None:
@@ -1309,7 +1309,7 @@ class McaTheory:
             PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
             text  = "Linear Least-Squares Fit incompatible\n"
             text += "with Exponential Background"
-            raise "ValueError",text
+            raise ValueError, text
         else:
             #I guess I will not arrive here
             #numerical derivative
@@ -1509,7 +1509,7 @@ class McaTheory:
                 if 1:
                     text  = "Linear fit is incompatible with current implementation\n"
                     text += "of the Exponential Polynomial background"
-                    raise "ValueError", text
+                    raise ValueError, text
                 else:
                     #no need to estimate background
                     backpar = []

@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import os
@@ -122,7 +122,7 @@ class PyMcaPrintPreview(qt.QDialog):
         if self.printer is not None:
             self.printer.setOutputFileName(name)
         else:
-            raise "IOError", "setOutputFileName : a printer must be defined before"
+            raise IOError, "setOutputFileName : a printer must be defined before"
 
     def _buildToolbar(self):
         # --- command buttons

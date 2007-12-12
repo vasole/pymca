@@ -75,7 +75,7 @@ class EDFStack(DataObject.DataObject):
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
-                raise "IOError", "Not implemented yet"
+                raise IOError, "Not implemented yet"
                 self.data = Numeric.zeros((arrRet.shape[0],
                                            nImages,
                                            self.nbFiles),
@@ -94,7 +94,7 @@ class EDFStack(DataObject.DataObject):
                     #this is not the common case
                     #should I try to convert it to a standard one
                     #using a 3D matrix or kepp as 4D matrix?
-                    raise "IOError", "Not implemented yet"
+                    raise IOError, "Not implemented yet"
                     self.data = Numeric.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                nImages * self.nbFiles),
@@ -126,7 +126,7 @@ class EDFStack(DataObject.DataObject):
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
-                raise "IOError", "Not implemented yet"
+                raise IOError, "Not implemented yet"
                 self.data = Numeric.zeros((self.nbFiles,
                                            arrRet.shape[0],
                                            nImages),
@@ -145,7 +145,7 @@ class EDFStack(DataObject.DataObject):
                     #this is not the common case
                     #should I try to convert it to a standard one
                     #using a 3D matrix or kepp as 4D matrix?
-                    raise "IOError", "Not implemented yet"
+                    raise IOError, "Not implemented yet"
                     self.data = Numeric.zeros((nImages * self.nbFiles,
                                                arrRet.shape[0],
                                                arrRet.shape[1]),
@@ -238,7 +238,7 @@ class EDFStack(DataObject.DataObject):
         if type(filename) == type([]):
             filename = filename[0]
         if not os.path.exists(filename):
-            raise "IOError","File %s does not exists" % filename
+            raise IOError,"File %s does not exists" % filename
         name = os.path.basename(filename)
         n = len(name)
         i = 1
@@ -295,7 +295,7 @@ class EDFStack(DataObject.DataObject):
             else:
                 i = begin
             if not os.path.exists(prefix+format % i+suffix):
-                raise "ValueError","Invalid start index file = %s" % \
+                raise ValueError,"Invalid start index file = %s" % \
                       prefix+format % i+suffix
             f = prefix+format % i+suffix
             filelist = []

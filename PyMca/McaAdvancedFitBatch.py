@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.31 $"
 import ClassMcaTheory
@@ -166,7 +166,7 @@ class McaAdvancedFitBatch:
                 ffile.SetSource(inputfile)
             return ffile
         except:
-            raise "IOerror","I do not know what to do with file %s" % inputfile        
+            raise IOerror, "I do not know what to do with file %s" % inputfile        
     
     
     def onNewFile(self,ffile, filelist):

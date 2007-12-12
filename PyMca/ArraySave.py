@@ -91,7 +91,7 @@ def save2DArrayListAsEDF(datalist, filename, labels = None):
         for i in range(ndata):
             labels.append("Array_%d" % i) 
     if len(labels) != ndata:
-        raise "ValueError", "Incorrect number of labels"
+        raise ValueError, "Incorrect number of labels"
     edfout   = EdfFile.EdfFile(filename)
     for i in range(ndata):
         edfout.WriteImage ({'Title':labels[i]} , datalist[i], Append=1)

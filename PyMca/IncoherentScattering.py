@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import ConfigDict
 import os
@@ -48,7 +48,7 @@ if not os.path.exists(file):
     file = os.path.join(file,"incoh.dict")
     if not os.path.exists(file):
         print "Cannot find file ",file
-        raise "IOError","Cannot find file %s" % file
+        raise IOError,"Cannot find file %s" % file
 
 COEFFICIENTS = ConfigDict.ConfigDict()
 COEFFICIENTS.read(file)    
