@@ -12,7 +12,7 @@ VERSION 4.2.2
 
 - Possibility to rename graph curves.
 
-- Possibility to save single images thru matplotlib.
+- Possibility to save images thru matplotlib.
   This allows user customization (axes, colorbar, colormap, contours, ...)
 
 - ROI imaging: Use file-mapped arrays for stacks of more than 2 Gbytes.
@@ -23,6 +23,8 @@ VERSION 4.2.2
 - Calibration: Correct a crash under python 2.5 using the Auto FWHM option. 
 
 - RGB Correlator: ASCII images saved under windows can be read under linux.
+
+- Add peak statistics information to fit reports.
 
 - Some other minor bugs corrected and some other minor features added.
 

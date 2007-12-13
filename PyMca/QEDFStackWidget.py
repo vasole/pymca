@@ -420,7 +420,7 @@ class QEDFStackWidget(qt.QWidget):
         if self._matplotlibSaveImage is None:
             self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, self.__ROIImageData)
         else:
-            self._matplotlibSaveImage.setImage(self.__ROIImageData)
+            self._matplotlibSaveImage.setImageData(self.__ROIImageData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()    
 

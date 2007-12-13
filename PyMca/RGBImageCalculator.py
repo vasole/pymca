@@ -180,7 +180,7 @@ class RGBImageCalculator(qt.QWidget):
                                                                             self._imageData)
             self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBImage")            
         else:
-            self._matplotlibSaveImage.setImage(self._imageData)
+            self._matplotlibSaveImage.setImageData(self._imageData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
 

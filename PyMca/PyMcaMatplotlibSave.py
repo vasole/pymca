@@ -247,6 +247,7 @@ class PyMcaMatplotlibSaveImage:
         self.figure = Figure(figsize=size) #in inches
         self.canvas = FigureCanvas(self.figure)
 	self.imageData = imageData
+	self.pixmapImage = None
 	self.config={'xaxis':xaxis,
 		     'yaxis':yaxis,
 		     'title':title,

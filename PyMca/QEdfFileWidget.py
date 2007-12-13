@@ -461,7 +461,7 @@ class QEdfFileWidget(qt.QWidget):
                 self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
                                                                                 self.lastData)
         else:
-            self._matplotlibSaveImage.setImage(self.lastData)
+            self._matplotlibSaveImage.setImageData(self.lastData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
 
