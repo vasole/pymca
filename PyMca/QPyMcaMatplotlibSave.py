@@ -26,6 +26,7 @@
 # is a problem for you.
 #############################################################################*/
 import PyQt4.Qt as qt
+import sys
 import os
 import numpy
 from matplotlib import cm
@@ -55,6 +56,8 @@ class SaveImageSetup(qt.QWidget):
     def __init__(self, parent=None, image=None):
 	qt.QWidget.__init__(self, parent)
 	self.mainLayout = qt.QGridLayout(self)
+	self.mainLayout.setColumnStretch(0, 1)
+	self.mainLayout.setColumnStretch(1, 0)
         self.setWindowTitle("PyMca - Matplotlib save image")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastOutputDir = None
@@ -128,15 +131,30 @@ class SaveImageSetup(qt.QWidget):
 	self.right.setParameters(ddict)
 
     def updateClicked(self):
-	ddict = self.getParameters()
-	self.imageWidget.setParameters(ddict)
+        try:
+            ddict = self.getParameters()
+            self.imageWidget.setParameters(ddict)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error updating image: %s" % sys.exc_info()[1])
+            msg.setWindowTitle('Matplotlib Save Image')
+            msg.exec_()
+            
 
     def printClicked(self):
-        pixmap = qt.QPixmap.grabWidget(self.imageWidget)
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        self.printPreview.raise_()
+        try:
+            pixmap = qt.QPixmap.grabWidget(self.imageWidget)
+            self.printPreview.addPixmap(pixmap)
+            if self.printPreview.isHidden():
+                self.printPreview.show()
+            self.printPreview.raise_()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error printing image: %s" % sys.exc_info()[1])
+            msg.setWindowTitle('Matplotlib Save Image')
+            msg.exec_()
         
     def saveClicked(self):
         outfile = qt.QFileDialog(self)
@@ -191,14 +209,25 @@ class SaveImageSetup(qt.QWidget):
             try:
                 os.remove(finalFile)
             except:
-                print "Cannot delete output file"
-                pass
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Cannot overwrite file: %s" % sys.exc_info()[1])
+                msg.setWindowTitle('Matplotlib Save Image')
+                msg.exec_()
+                return
         config = self.imageWidget.getParameters()
-        s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
-        if self.imageWidget.pixmapImage is not None:
-            s.setPixmapImage(self.imageWidget.pixmapImage)
-        s.setParameters(config)
-        s.saveImage(finalFile)
+        try:
+            s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
+            if self.imageWidget.pixmapImage is not None:
+                s.setPixmapImage(self.imageWidget.pixmapImage)
+            s.setParameters(config)
+            s.saveImage(finalFile)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error saving file: %s" % sys.exc_info()[1])
+            msg.setWindowTitle('Matplotlib Save Image')
+            msg.exec_()
 
 
 class TopWidget(qt.QWidget):
@@ -260,13 +289,22 @@ class RightWidget(qt.QWidget):
 	self.gridLayout = qt.QGridLayout(self.gridWidget)
 	self.gridLayout.setMargin(0)
 	self.gridLayout.setSpacing(2)
-	self.labelList = ['X Axis', 'Y Axis',
+	self.labelList = ['X Axis',
+                          'Y Axis',
 			  'Origin',
 			  'Interpolation',
                           'Colormap',
 			  'Colorbar',
 			  'Contour',
-                          'Image Background']
+                          'Image Background',
+                          'X Pixel Size',
+                          'Y Pixel Size',
+                          'X Origin',
+                          'Y Origin',
+                          'Zoom X Min',
+                          'Zoom X Max',
+                          'Zoom Y Min',
+                          'Zoom Y Max']
 	self.keyList = []
 	for label in self.labelList:
 	    self.keyList.append(label.lower().replace(' ',''))
@@ -292,7 +330,26 @@ class RightWidget(qt.QWidget):
 		options = ['Off', 'Line']
 	    elif self.labelList[i] in ['Image Background']:
 		options = ['Black', 'White', 'Grey']
-	    line = SimpleComboBox(self, options)
+	    if i <= self.labelList.index('Image Background'):
+                line = SimpleComboBox(self, options)
+            else:
+                line = MyLineEdit(self)
+                validator = qt.QDoubleValidator(line)
+                line.setValidator(validator)
+                if 'Zoom' in self.labelList[i]:
+                    tip  = "This zoom is in physical units.\n"
+                    tip += "This means pixel size corrected.\n"
+                    tip += "To disable zoom, just set both\n"
+                    tip += "limits to the same value."
+                    line.setToolTip(tip)
+                    line.setText('0.0')
+                elif 'Origin' in self.labelList[i]:
+                    tip  = "First pixel coordinates in physical units.\n"
+                    tip += "This means pixel size corrected.\n"
+                    line.setToolTip(tip)
+                    line.setText('0.0')
+                else:
+                    line.setText('1.0')
 	    self.gridLayout.addWidget(label, i, 0)
 	    self.gridLayout.addWidget(line, i, 1)
 	    self.comboBoxList.append(line)
@@ -318,7 +375,14 @@ class RightWidget(qt.QWidget):
 	ddict = {}
 	i = 0
 	for label in self.keyList:
-	    ddict[label] = str(self.comboBoxList[i].currentText()).lower()
+            if i > self.labelList.index('Image Background'):
+                text = str(self.comboBoxList[i].text())
+                if len(text):
+                    ddict[label] = float(text)
+                else:
+                    ddict[label] = None
+            else:
+                ddict[label] = str(self.comboBoxList[i].currentText()).lower()
 	    if (ddict[label] == 'none') or (ddict[label] == 'default'):
 		ddict[label] = None
 	    i = i + 1
@@ -328,9 +392,18 @@ class RightWidget(qt.QWidget):
 	for label in ddict.keys():
 	    if label.lower() in self.keyList:
 		i = self.keyList.index(label)
-		self.lineEditList[i].setCurrentText(ddict[label])
+		if i > self.labelList.index('Image Background'):
+                    if ddict[label] is not None:
+                        self.comboBoxList[i].setText("%f" % ddict[label])
+                else:
+                    self.comboBoxList[i].setCurrentText(ddict[label])
 	return
 	
+class MyLineEdit(qt.QLineEdit):
+    def sizeHint(self):
+        return qt.QSize(0.6 * qt.QLineEdit.sizeHint(self).width(),
+                        qt.QLineEdit.sizeHint(self).height())
+
 
 class QPyMcaMatplotlibImage(FigureCanvas):
     def __init__(self, parent, imageData=None,
@@ -346,7 +419,13 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     colormap=None,
                      origin='lower',
 		     contour='off',
-                     extent=None):
+                     extent=None,
+                     xpixelsize=1.0,
+                     ypixelsize=1.0,
+                     xorigin=0.0,
+                     yorigin=0.0,
+                     xlimits=None,
+                     ylimits=None):
 	self.figure = Figure(figsize=size, dpi=dpi) #in inches
 
 	#How to set this color equal to the other widgets color?
@@ -370,7 +449,17 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     'origin':origin,
 		     'contour':contour,
                      'extent':extent,
-                     'imagebackground':'black'}
+                     'imagebackground':'black',
+                     'xorigin':xorigin,
+                     'yorigin':yorigin,
+                     'xpixelsize':xpixelsize,
+                     'ypixelsize':ypixelsize,
+                     'zoomxmin':None,
+                     'zoomxmax':None,
+                     'zoomymin':None,
+                     'zoomymax':None,
+                     'xlimits':xlimits,
+                     'ylimits':ylimits}
 
         #generate own colormaps
         cdict = {'red': ((0.0, 0.0, 0.0),
@@ -470,9 +559,16 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
-            extent = (0,w,0,h)
+            x0 = self.config['xorigin']
+            y0 = self.config['yorigin']
+            w = w * self.config['xpixelsize']
+            h = h * self.config['ypixelsize']
             if origin == 'upper':
-                extent = (0, w, h, 0)
+                extent = (x0, w+x0,
+                          h+y0, y0)
+            else:
+                extent = (x0, w+x0,
+                          y0, h+y0)
         else:
             extent = self.config['extent'] 
 
@@ -483,10 +579,6 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                                         extent=extent)
 
         ylim = self.axes.get_ylim()
-
-        self.axes.set_title(self.config['title'])
-        self.axes.set_xlabel(self.config['xlabel'])
-        self.axes.set_ylabel(self.config['ylabel'])
         
         if self.config['colorbar'] is not None:
 	    barorientation = self.config['colorbar']
@@ -519,9 +611,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                                                      orientation=barorientation,
                                                      extend='both')
 
-        self.axes.set_ylim(ylim[0],ylim[1])
-
-	self.draw()
+        self.__postImage(ylim)
 
     def getParameters(self):
 	return self.config
@@ -562,10 +652,16 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         if self.config['extent'] is None:
             h= self.pixmapImage.shape[0]
             w= self.pixmapImage.shape[1]
-            
-            extent = (0,w,0,h)
+            x0 = self.config['xorigin']
+            y0 = self.config['yorigin']
+            w = w * self.config['xpixelsize']
+            h = h * self.config['ypixelsize']
             if origin == 'upper':
-                extent = (0, w, h, 0)
+                extent = (x0, w+x0,
+                          h+y0, y0)
+            else:
+                extent = (x0, w+x0,
+                          y0, h+y0)
         else:
             extent = self.config['extent']
         if self.config['imagebackground'].lower() == 'white':
@@ -581,14 +677,50 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                                        interpolation=interpolation,
                                        origin=origin,
                                        extent=extent)
-        
-        ylim = self.axes.get_ylim()
 
+        ylim = self.axes.get_ylim()
+        self.__postImage(ylim)
+
+    def __postImage(self, ylim):
         self.axes.set_title(self.config['title'])
         self.axes.set_xlabel(self.config['xlabel'])
         self.axes.set_ylabel(self.config['ylabel'])
 
-        self.axes.set_ylim(ylim[0],ylim[1])
+        origin = self.config['origin']
+        if (self.config['zoomxmin'] is not None) and\
+           (self.config['zoomxmax'] is not None)and\
+           (self.config['zoomxmax'] != self.config['zoomxmin']):
+            xlimits = (self.config['zoomxmin'],
+                           self.config['zoomxmax'])
+        elif self.config['xlimits'] is not None:
+            xlimits = self.config['xlimits']
+        else:
+            xlimits = None
+
+        if (self.config['zoomymin'] is not None) and\
+           (self.config['zoomymax'] is not None) and\
+           (self.config['zoomymax'] != self.config['zoomymin']):
+            ylimits = (self.config['zoomymin'],
+                           self.config['zoomymax'])
+        elif self.config['ylimits'] is not None:
+            ylimits = self.config['ylimits']
+        else:
+            ylimits = None
+        
+        if ylimits is None:
+            self.axes.set_ylim(ylim[0],ylim[1])
+        else:
+            ymin = min(ylimits)
+            ymax = max(ylimits)
+            if origin == "lower":
+                self.axes.set_ylim(ymin, ymax)
+            else:
+                self.axes.set_ylim(ymax, ymin)
+                
+        if xlimits is not None:
+            xmin = min(xlimits)
+            xmax = max(xlimits)
+            self.axes.set_xlim(xmin, xmax)
 
 	self.draw()
 

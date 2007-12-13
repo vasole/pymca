@@ -418,7 +418,9 @@ class QEDFStackWidget(qt.QWidget):
 
     def _roiSaveMatplotlibImage(self):
         if self._matplotlibSaveImage is None:
-            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, self.__ROIImageData)
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
+                                                            self.__ROIImageData)
+            self._matplotlibSaveImage.setWindowTitle("Matplotlib ROI Image")
         else:
             self._matplotlibSaveImage.setImageData(self.__ROIImageData)
         self._matplotlibSaveImage.show()

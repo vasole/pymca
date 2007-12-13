@@ -242,6 +242,12 @@ class PyMcaMatplotlibSaveImage:
 		     colormap=None,
                      origin='lower',
 		     contour='off',
+                     xorigin=0.0,
+                     yorigin=0.0,
+                     xpixelsize=1.0,
+                     ypixelsize=1.0,
+                     xlimits=None,
+                     ylimits=None,
                      extent=None):
 
         self.figure = Figure(figsize=size) #in inches
@@ -258,7 +264,18 @@ class PyMcaMatplotlibSaveImage:
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
+                     'xpixelsize':xpixelsize,
+                     'ypixelsize':ypixelsize,
+                     'xorigin':xorigin,
+                     'yorigin':yorigin,
+                     'zoomxmin':None,
+                     'zoomxmax':None,
+                     'zoomymin':None,
+                     'zoomymax':None,
+                     'xlimits':xlimits,
+                     'ylimits':ylimits,
                      'extent':extent}
+
         #generate own colormaps
         cdict = {'red': ((0.0, 0.0, 0.0),
                          (1.0, 1.0, 1.0)),
@@ -310,7 +327,7 @@ class PyMcaMatplotlibSaveImage:
     def setParameters(self, ddict):
         self.config.update(ddict)
 
-    def saveImage(self, fileName):
+    def saveImage(self, filename):
         self.figure.clear()
 	if (self.imageData is None) and\
            (self.pixmapImage is None):
@@ -327,7 +344,7 @@ class PyMcaMatplotlibSaveImage:
             self.axes.yaxis.set_visible(True)
 
         if self.pixmapImage is not None:
-            self._savePixmapFigure(fileName)
+            self._savePixmapFigure(filename)
             return
 
 	interpolation = self.config['interpolation']
@@ -363,10 +380,17 @@ class PyMcaMatplotlibSaveImage:
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
-	    extent = (0,w,0,h)
+            x0 = self.config['xorigin']
+            y0 = self.config['yorigin']
+            w = w * self.config['xpixelsize']
+            h = h * self.config['ypixelsize']
             if origin == 'upper':
-                extent = (0, w, h, 0)
-	else:
+                extent = (x0, w+x0,
+                          h+y0, y0)
+            else:
+                extent = (x0, w+x0,
+                          y0, h+y0)
+        else:
             extent = self.config['extent'] 
 
         self._image  = self.axes.imshow(self.imageData,
@@ -377,10 +401,6 @@ class PyMcaMatplotlibSaveImage:
 
         ylim = self.axes.get_ylim()
 
-        self.axes.set_title(self.config['title'])
-        self.axes.set_xlabel(self.config['xlabel'])
-        self.axes.set_ylabel(self.config['ylabel'])
-        
         if self.config['colorbar'] is not None:
 	    barorientation = self.config['colorbar']
 	    self._colorbar = self.figure.colorbar(self._image,
@@ -412,9 +432,7 @@ class PyMcaMatplotlibSaveImage:
                                                      orientation=barorientation,
                                                      extend='both')
 
-        self.axes.set_ylim(ylim[0],ylim[1])
-
-        self.canvas.print_figure(fileName)
+        self.__postImage(ylim, filename)
         
 
     def setPixmapImage(self, image=None, bgr=False):
@@ -425,16 +443,22 @@ class PyMcaMatplotlibSaveImage:
         else:
             self.pixmapImage = image
 
-    def _savePixmapFigure(self, fileName):
+    def _savePixmapFigure(self, filename):
 	interpolation = self.config['interpolation']
 	origin = self.config['origin']
         if self.config['extent'] is None:
             h= self.pixmapImage.shape[0]
             w= self.pixmapImage.shape[1]
-            
-            extent = (0,w,0,h)
+            x0 = self.config['xorigin']
+            y0 = self.config['yorigin']
+            w = w * self.config['xpixelsize']
+            h = h * self.config['ypixelsize']
             if origin == 'upper':
-                extent = (0, w, h, 0)
+                extent = (x0, w+x0,
+                          h+y0, y0)
+            else:
+                extent = (x0, w+x0,
+                          y0, h+y0)
         else:
             extent = self.config['extent']
         self._image = self.axes.imshow(self.pixmapImage,
@@ -443,14 +467,50 @@ class PyMcaMatplotlibSaveImage:
                                        extent=extent)
 
         ylim = self.axes.get_ylim()
+        self.__postImage(ylim, filename)
 
+    def __postImage(self, ylim, filename):
         self.axes.set_title(self.config['title'])
         self.axes.set_xlabel(self.config['xlabel'])
         self.axes.set_ylabel(self.config['ylabel'])
 
-        self.axes.set_ylim(ylim[0],ylim[1])
+        origin = self.config['origin']
+        if (self.config['zoomxmin'] is not None) and\
+           (self.config['zoomxmax'] is not None)and\
+           (self.config['zoomxmax'] != self.config['zoomxmin']):
+            xlimits = (self.config['zoomxmin'],
+                           self.config['zoomxmax'])
+        elif self.config['xlimits'] is not None:
+            xlimits = self.config['xlimits']
+        else:
+            xlimits = None
 
-        self.canvas.print_figure(fileName)
+        if (self.config['zoomymin'] is not None) and\
+           (self.config['zoomymax'] is not None) and\
+           (self.config['zoomymax'] != self.config['zoomymin']):
+            ylimits = (self.config['zoomymin'],
+                           self.config['zoomymax'])
+        elif self.config['ylimits'] is not None:
+            ylimits = self.config['ylimits']
+        else:
+            ylimits = None
+        
+        if ylimits is None:
+            self.axes.set_ylim(ylim[0],ylim[1])
+        else:
+            ymin = min(ylimits)
+            ymax = max(ylimits)
+            if origin == "lower":
+                self.axes.set_ylim(ymin, ymax)
+            else:
+                self.axes.set_ylim(ymax, ymin)
+                
+        if xlimits is not None:
+            xmin = min(xlimits)
+            xmax = max(xlimits)
+            self.axes.set_xlim(xmin, xmax)
+
+        self.canvas.print_figure(filename)
 
         
 if __name__ == "__main__":
