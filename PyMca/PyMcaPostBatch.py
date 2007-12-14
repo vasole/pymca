@@ -32,6 +32,7 @@ import PyMcaDirs
 import RGBCorrelator
 qt = RGBCorrelator.qt
 import numpy.oldnumeric as Numeric
+QTVERSION = qt.qVersion()
 
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
     def addBatchDatFile(self, filename, ignoresigma=None):
@@ -77,7 +78,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                         "EDF Files (*ccd)",
                         "All Files (*)"]
         message = "Open ONE Batch result file or SEVERAL EDF files"
-        if sys.platform != 'darwin':
+        if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
             filetypes = ""
             for filetype in fileTypeList:
                 filetypes += filetype+"\n"

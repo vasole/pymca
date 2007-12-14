@@ -565,7 +565,7 @@ class McaBatchGUI(qt.QWidget):
         
         filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
-        if sys.platform == "win32":
+        if (QTVERSION < '4.3.0') and sys.platform == "win32":
                 if QTVERSION < '4.0.0':
                     filelist= filedialog.getOpenFileNames(qt.QString(filetypes),
                             wdir,
@@ -617,7 +617,7 @@ class McaBatchGUI(qt.QWidget):
             filename.setFileMode(filename.ExistingFiles)
             filename.setDirectory(wdir)
         filetypes = "Config Files (*.cfg)\nAll files (*)"
-        if sys.platform == "win32":
+        if (QTVERSION < '4.3.0') and sys.platform == "win32":
             if QTVERSION < '4.0.0':
                 filenameList= filename.getOpenFileNames(qt.QString(filetypes),
                             wdir,

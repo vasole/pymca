@@ -186,7 +186,7 @@ class QSourceSelector(qt.QWidget):
                             return              
                 else:
                     #if sys.platform == 'win32':
-                    if sys.platform != 'darwin':
+                    if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
                         filetypes = ""
                         for filetype in self.fileTypeList:
                             filetypes += filetype+"\n"
