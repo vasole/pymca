@@ -25,6 +25,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
+__author__ = "V.A. Sole - ESRF BLISS Group"
 import os
 import numpy
 from matplotlib import cm
