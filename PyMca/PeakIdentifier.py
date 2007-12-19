@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__= "$Revision: 1.10 $"
+__revision__= "$Revision: 1.11 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -83,10 +83,17 @@ class PeakIdentifier(qt.QWidget):
         if QTVERSION < '4.0.0':
             qt.QToolTip.add(self.energy,'Press enter to validate your energy')
         else:
+            self.energy._validator = qt.QDoubleValidator(self.energy)
+            self.energy.setValidator(self.energy._validator)
             self.energy.setToolTip('Press enter to validate your energy')
         hbox.layout.addWidget(self.energy)
         hbox.layout.addWidget(HorizontalSpacer(hbox))
-        self.connect(self.energy,qt.SIGNAL('returnPressed()'),self._energySlot)
+        if QTVERSION < '4.0.0':
+            self.connect(self.energy,qt.SIGNAL('returnPressed()'),
+                         self._energySlot)
+        else:
+            self.connect(self.energy,qt.SIGNAL('editingFinished()'),
+                         self._energySlot)
         #parameters
         self.__hbox2 = qt.QWidget(self)
         hbox2 = self.__hbox2
@@ -171,16 +178,30 @@ class PeakIdentifier(qt.QWidget):
         except:
             msg=qt.QMessageBox(self.energy)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText(" Float")
+            msg.setText("Invalid Float")
             if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
+                msg.setWindowTitle("Invalid entry")
                 msg.exec_()
             self.energy.setFocus()
             return
 
     def myslot(self,*var,**kw):
-        energy    = float(str(self.energy.text()))
+        try:
+            energy    = float(str(self.energy.text()))
+        except ValueError:
+            msg=qt.QMessageBox(self.energy)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Invalid Energy Value")
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.setWindowTitle("Invalid energy")
+                msg.exec_()
+            self.energy.setFocus()
+            return
+            
         threshold = float(str(self.threshold.text()))/1000.
         lines=[]
         if self.k.isChecked():
@@ -269,6 +290,8 @@ class PeakIdentifier(qt.QWidget):
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
+        if QTVERSION > '4.0.0':
+            self.setAutoFillBackground(True)
         
     def setPaletteBackgroundColor(self, color):
         if QTVERSION < '3.0.0':
@@ -276,7 +299,7 @@ class MyQLineEdit(qt.QLineEdit):
         elif QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,color)
         else:
-            palette = self.palette()
+            palette = qt.QPalette()
             role = self.backgroundRole()
             palette.setColor(role,color)
             self.setPalette(palette)
@@ -297,6 +320,8 @@ class MyQLineEdit(qt.QLineEdit):
         else:
             pass
             self.setPaletteBackgroundColor(qt.QColor('white'))
+            if QTVERSION > '4.0.0':
+                qt.QLineEdit.focusOutEvent(self, event)
         #self.emit(qt.SIGNAL("returnPressed()"),())
 
 def main():
@@ -326,6 +351,7 @@ def main():
         mw.show()
         app.exec_loop()
     else:
+        mw.setWindowTitle("Peak Identifier")
         mw.show()
         app.exec_()
         

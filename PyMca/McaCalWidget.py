@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.16 $"
+__revision__ = "$Revision: 1.17 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -686,11 +686,11 @@ class PeakSearchParameters(qt.QWidget):
         grid.addWidget(lab, 1, 0, qt.Qt.AlignLeft)
         lab= qt.QLabel("Yscaling", parw)
         grid.addWidget(lab, 2, 0, qt.Qt.AlignLeft)
-        self.SensitivityText= qt.QLineEdit(parw)
+        self.SensitivityText= MyQLineEdit(parw)
         grid.addWidget(self.SensitivityText, 0, 1)
-        self.FwhmText= qt.QLineEdit(parw)
+        self.FwhmText= MyQLineEdit(parw)
         grid.addWidget(self.FwhmText, 1, 1)
-        self.YscalingText= qt.QLineEdit(parw)
+        self.YscalingText= MyQLineEdit(parw)
         grid.addWidget(self.YscalingText, 2, 1)
         self.FwhmAuto= qt.QCheckBox("Auto", parw)
         self.connect(self.FwhmAuto, qt.SIGNAL("toggled(bool)"), self.__fwhmToggled)
@@ -705,6 +705,19 @@ class PeakSearchParameters(qt.QWidget):
             if QTVERSION > '4.0.0':
                 self.searchbut.setAutoDefault(0)
         layout.addWidget(parf)
+        if QTVERSION > '4.0.0':
+            text  = "Enter a positive number above 2.0\n"
+            text += "A higher number means a lower sensitivity."
+            self.SensitivityText.setToolTip(text)
+            text  = "Enter a positive integer."
+            self.FwhmText.setToolTip(text)
+            text  = "If your data are averaged or normalized,\n"
+            text += "enter the scaling factor for your data to\n"
+            text += "follow a normal distribution."
+            self.YscalingText.setToolTip(text)
+            for w in [self.SensitivityText, self.FwhmText, self.YscalingText]:
+                validator = qt.QDoubleValidator(w)
+                w.setValidator(validator)
 
     def setParameters(self, pars):
         self.SensitivityText.setText(str(pars["Sensitivity"]))
@@ -791,9 +804,15 @@ class CalibrationParameters(qt.QWidget):
         self.savebox.setDuplicatesEnabled(0)
     
     def connections(self):
-        self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
-        self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
-        self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
+        if QTVERSION < '4.0.0':
+            self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
+            self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
+            self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
+        else:
+            self.connect(self.AText,qt.SIGNAL('editingFinished()'),self._Aslot)
+            self.connect(self.BText,qt.SIGNAL('editingFinished()'),self._Bslot)
+            self.connect(self.CText,qt.SIGNAL('editingFinished()'),self._Cslot)
+            
         self.connect(self.orderbox,qt.SIGNAL('activated(const QString &)'),self.__orderbox)
         #self.connect(self.savebut,qt.SIGNAL('clicked()')    ,self.myslot)
         self.connect(self.savebox,qt.SIGNAL('activated(const QString &)'),self.__savebox)
@@ -933,22 +952,32 @@ class CalibrationParameters(qt.QWidget):
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
-        
-    def focusInEvent(self,event):
+        if QTVERSION > '4.0.0':
+            self.setAutoFillBackground(True)
+
+    def setPaletteBackgroundColor(self, color):
         if QTVERSION < '3.0.0':
-            pass        
+            pass
+        elif QTVERSION < '4.0.0':
+            qt.QLineEdit.setPaletteBackgroundColor(self,color)
         else:
-            if QTVERSION < '4.0.0':
-                self.backgroundcolor = self.paletteBackgroundColor()
-                self.setPaletteBackgroundColor(qt.QColor('yellow'))
+            palette = qt.QPalette()
+            role = self.backgroundRole()
+            palette.setColor(role,color)
+            self.setPalette(palette)
+            
+    def focusInEvent(self,event):
+        if QTVERSION < '4.0.0':
+            self.backgroundcolor = self.paletteBackgroundColor()
+        self.setPaletteBackgroundColor(qt.QColor('yellow'))
+        qt.QLineEdit.focusInEvent(self, event)
     
     def focusOutEvent(self,event):
-        if QTVERSION < '3.0.0':
-            pass        
+        self.setPaletteBackgroundColor(qt.QColor('white'))
+        if QTVERSION < '4.0.0':
+            self.emit(qt.SIGNAL("returnPressed()"),())
         else:
-            if QTVERSION < '4.0.0':
-                self.setPaletteBackgroundColor(qt.QColor('white'))
-        self.emit(qt.SIGNAL("returnPressed()"),())
+            qt.QLineEdit.focusOutEvent(self, event)
 
 
 #class Popup(qt.QDialog):
@@ -1195,9 +1224,14 @@ class McaCalCopy(qt.QDialog):
         lineclayout.addWidget(ccl)
         lineclayout.addWidget(self.CText)
 
-        self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
-        self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
-        self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
+        if QTVERSION < '4.0.0':
+            self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
+            self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
+            self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
+        else:
+            self.connect(self.AText,qt.SIGNAL('editingFinished()'),self._Aslot)
+            self.connect(self.BText,qt.SIGNAL('editingFinished()'),self._Bslot)
+            self.connect(self.CText,qt.SIGNAL('editingFinished()'),self._Cslot)
 
         # --- available for copy ---
         if len(caldict.keys()):

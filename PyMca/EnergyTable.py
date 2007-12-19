@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.13 $"
+__revision__ = "$Revision: 1.14 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import numpy.oldnumeric as Numeric
@@ -465,14 +465,15 @@ else:
                 self.color = color
                 self.bold  = bold
                 self.setText(text)
-                #this is the critical line
+                #this is one critical line
                 self.setAutoFillBackground(1)
 
              def setColor(self, color):
                  self.color = color
 
              def paintEvent(self, painter):
-                palette = self.palette()
+                #this is the other (self.palette() is not appropriate)
+                palette = qt.QPalette()
                 role = self.backgroundRole()
                 palette.setColor(role, self.color)
                 self.setPalette(palette)
