@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.87 $"
+__revision__ = "$Revision: 1.88 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -154,7 +154,8 @@ if __name__ == "__main__":
 
 import McaWindow
 import ScanWindow
-import PyMcaImageWindow
+if QTVERSION > '4.0.0':
+    import PyMcaImageWindow
 import QDispatcher
 import ElementsInfo
 import PeakIdentifier
