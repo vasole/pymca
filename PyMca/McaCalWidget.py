@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.17 $"
+__revision__ = "$Revision: 1.18 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -411,33 +411,13 @@ class McaCalWidget(qt.QDialog):
         elif dict['event'] == 'order':
             current = dict['calname' ]
             self.current  = current
-            self.caldict[current]['order'] = dict['caldict'][current]['order']
+            order = dict['caldict'][current]['order']
+            self.caldict[current]['order'] = order
             self.caldict[current]['A']     = dict['caldict'][current]['A']
             self.caldict[current]['B']     = dict['caldict'][current]['B']
             self.caldict[current]['C']     = dict['caldict'][current]['C']
-            """
-            peakdict = self.peaktable.getdict()
-            usedpeaks = []
-            for peak in peakdict.keys():
-                if peakdict[peak]['use']:
-                    channel     = peakdict[peak]['channel']
-                    setenergy   = peakdict[peak]['setenergy']
-                    usedpeaks.append([channel,setenergy])
-            if len(usedpeaks):
-                newcal = self.calculate(usedpeaks,order=self.dict['current']['order'])
-                self.caldict[current]['A'] = newcal[0]
-                self.caldict[current]['B'] = newcal[1]
-                self.caldict[current]['C'] = newcal[2]
-                self.calcalpar.setPars(self.caldict[current])
-                for peak in peakdict.keys():
-                    channel = peakdict[peak]['channel']
-                    calenergy  = self.caldict[current]['A'] + \
-                                 self.caldict[current]['B'] * channel +\
-                                 self.caldict[current]['C'] * channel * channel  
-                    self.peaktable.configure(name=peak,
-                                            calenergy=calenergy)
-            """
             self.__peaktablesignal({'event':'use'})
+
         elif dict['event'] == 'savebox':
             current = dict['calname' ]
             if current not in self.caldict.keys():
@@ -510,6 +490,8 @@ class McaCalWidget(qt.QDialog):
                                               peakdict[peak]['setenergy']])
                     if len(usedpeaks):
                         newcal = self.calculate(usedpeaks,order=self.caldict[current]['order'])
+                        if newcal is None:
+                            return
                         self.caldict[current]['A'] = newcal[0]
                         self.caldict[current]['B'] = newcal[1]
                         self.caldict[current]['C'] = newcal[2]
@@ -524,7 +506,10 @@ class McaCalWidget(qt.QDialog):
             self.xpos.setText('%.1f' % ddict['x'])
             self.ypos.setText('%.1f' % ddict['y'])
             current = self.current
-            calenergy = self.caldict[current]['A']+ \
+            if self.caldict[current]['order'] == 'TOF':
+                calenergy = self.getTOFEnergy(ddict['x'])
+            else:
+                calenergy = self.caldict[current]['A']+ \
                         self.caldict[current]['B'] * ddict['x']+ \
                         self.caldict[current]['C'] * ddict['x'] * ddict['x']
             self.epos.setText('%.3f' % calenergy)
@@ -562,23 +547,76 @@ class McaCalWidget(qt.QDialog):
             if len(usedpeaks):
               if usedpeaks != [[0.0,0.0]]:
                 current = self.current
-                newcal = self.calculate(usedpeaks,order=self.caldict[current]['order'])                
+                newcal = self.calculate(usedpeaks,order=self.caldict[current]['order'])
+                if newcal is None:
+                    return
                 self.caldict[current]['A'] = newcal[0]
                 self.caldict[current]['B'] = newcal[1]
                 self.caldict[current]['C'] = newcal[2]
                 self.calpar.setParameters(self.caldict[current])
                 for peak in peakdict.keys():
                     channel = peakdict[peak]['channel']
-                    calenergy  = self.caldict[current]['A'] + \
+                    if self.caldict[current]['order'] == 'TOF':
+                        calenergy = self.getTOFEnergy(channel)
+                    else:
+                        calenergy  = self.caldict[current]['A'] + \
                                  self.caldict[current]['B'] * channel +\
                                  self.caldict[current]['C'] * channel * channel  
                     self.peaktable.configure(name=peak,
                                             calenergy=calenergy)
 
+
+    def getTOFEnergy(self, x, calibration = None):
+        if calibration is None:
+            current = self.current
+            A = self.caldict[current]['A']
+            B = self.caldict[current]['B']
+            C = self.caldict[current]['C']
+        else:
+            A = calibration[0]
+            B = calibration[1]
+            C = calibration[2]
+            
+        return C + A / ((x - B) * (x - B))
+
+    def calculateTOF(self, usedpeaks):
+        """
+        The calibration has the form:
+                           A
+            E = Vret + ---------
+                       (x - B)^2
+
+        and Vret is given as input by the user.
+        """
+        if len(usedpeaks) < 2:
+            return
+
+        ch0, e0 = usedpeaks[0]
+        ch1, e1 = usedpeaks[1]
+        Vret    = float(self.caldict[self.current]['C'])
+
+        #calculate B
+        Eterm = (e0 - Vret)/(e1 - Vret)
+
+        a = Eterm - 1.0
+        b = -2 * (Eterm * ch0 - ch1)
+        c = Eterm * ch0 * ch0 - ch1 * ch1
+
+        # I should check if b^2 - 4ac is less than zero
+        # and I have to choose the appropriate sign
+        B = 0.5 * (-b + Numeric.sqrt(b * b - 4.0 * a * c))/a
+
+        #calculate A
+        A = (e0 - Vret) * (ch0 - B) * (ch0 - B)
+        
+        return (A, B, Vret)
+
     def calculate(self,usedpeaks,order=1):
         """
         used peaks has the form [[x0,e0],[x1,e1],...]
         """
+        if order == "TOF":
+            return self.calculateTOF(usedpeaks)
         if len(usedpeaks) == 1:
             if (usedpeaks[0][0] - 0.0) > 1.0E-20:
                 return [0.0,usedpeaks[0][1]/usedpeaks[0][0],0.0]
@@ -615,9 +653,9 @@ class McaCalWidget(qt.QDialog):
 
 
     def getdict(self):
-        dict = {}
-        dict.update(self.caldict)
-        return dict
+        ddict = {}
+        ddict.update(self.caldict)
+        return ddict
             
 class PeakSearchParameters(qt.QWidget):
     def __init__(self, parent=None, name="", specfit=None, config=None,
@@ -772,8 +810,12 @@ class CalibrationParameters(qt.QWidget):
         
         lab= qt.QLabel("Order:", parw)
 
-        self.orderbox = SimpleComboBox(parw,
+        if QTVERSION <  '4.0.0':
+            self.orderbox = SimpleComboBox(parw,
                                        options=['1st','2nd'])
+        else:
+            self.orderbox = SimpleComboBox(parw,
+                                       options=['1st','2nd','TOF'])
         layout.addWidget(lab)
         layout.addWidget(self.orderbox)
         lab= qt.QLabel("A:", parw)
@@ -785,8 +827,8 @@ class CalibrationParameters(qt.QWidget):
         self.BText= MyQLineEdit(parw)
         layout.addWidget(lab)
         layout.addWidget(self.BText)
-        lab= qt.QLabel("C:", parw)
-        layout.addWidget(lab)
+        self.CLabel= qt.QLabel("C:", parw)
+        layout.addWidget(self.CLabel)
         self.CText= MyQLineEdit(parw)
         layout.addWidget(self.CText)
 
@@ -821,11 +863,14 @@ class CalibrationParameters(qt.QWidget):
         self.AText.setText("%.4g" % pars["A"])
         self.BText.setText("%.4g" % pars["B"])
         self.CText.setText("%.4g" % pars["C"])
-        if pars['order'] > 1:
+        if pars['order'] != 1:
             if QTVERSION < '4.0.0':
                 self.orderbox.setCurrentItem(1)
             else:
-                self.orderbox.setCurrentIndex(1)
+                if pars['order'] == 'TOF':
+                    self.orderbox.setCurrentIndex(2)
+                else:
+                    self.orderbox.setCurrentIndex(1)
             self.CText.setReadOnly(0)
         else:
             if QTVERSION < '4.0.0':
@@ -855,9 +900,15 @@ class CalibrationParameters(qt.QWidget):
             self.caldict[self.currentcal]['order'] = 1
             self.CText.setText("0.0")
             self.CText.setReadOnly(1)
+            self.CLabel.setText("C:")
             self.caldict[self.currentcal]['C'] = 0.0        
+        elif qstring == "TOF":
+            self.caldict[self.currentcal]['order'] = 'TOF'
+            self.CLabel.setText("Vr:")
+            self.CText.setReadOnly(0)
         else:
             self.caldict[self.currentcal]['order'] = 2
+            self.CLabel.setText("C:")
             self.CText.setReadOnly(0)
         self.myslot(event='order')
 
@@ -869,6 +920,8 @@ class CalibrationParameters(qt.QWidget):
             self.caldict[key]['order'] = self.orderbox.currentItem()+1
         else:
             self.caldict[key]['order'] = self.orderbox.currentIndex()+1
+            if self.caldict[key]['order'] == 3:
+                self.caldict[key]['order'] = "TOF"
         self.caldict[key]['A']     = float(str(self.AText.text()))
         self.caldict[key]['B']     = float(str(self.BText.text()))
         self.caldict[key]['C']     = float(str(self.CText.text()))
@@ -928,26 +981,26 @@ class CalibrationParameters(qt.QWidget):
             print "Cal Parameters Slot ",var,kw
             print self.caldict[self.currentcal]
         if kw.has_key('event'):
-            dict={}
+            ddict={}
             if (kw['event'] == 'order'):
-                dict={}
-                dict['event']         = "order"
-                dict['calname' ]      = self.currentcal
-                dict['caldict']       = self.caldict          
+                ddict={}
+                ddict['event']         = "order"
+                ddict['calname']       = self.currentcal
+                ddict['caldict']       = self.caldict
             if (kw['event'] == 'coeff'):
-                dict={}
-                dict['event']         = "coeff"
-                dict['calname' ]      = self.currentcal
-                dict['caldict']       = self.caldict          
+                ddict={}
+                ddict['event']         = "coeff"
+                ddict['calname' ]      = self.currentcal
+                ddict['caldict']       = self.caldict          
             if (kw['event'] == 'savebox'):
-                dict={}
-                dict['event']         = "savebox"
-                dict['calname' ]      = self.currentcal
-                dict['caldict']       = self.caldict
+                ddict={}
+                ddict['event']         = "savebox"
+                ddict['calname' ]      = self.currentcal
+                ddict['caldict']       = self.caldict
             if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('CalibrationParametersSignal'),(dict,))
+                self.emit(qt.PYSIGNAL('CalibrationParametersSignal'),(ddict,))
             else:
-                self.emit(qt.SIGNAL('CalibrationParametersSignal'), dict)
+                self.emit(qt.SIGNAL('CalibrationParametersSignal'), ddict)
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):

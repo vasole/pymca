@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.49 $"
+__revision__ = "$Revision: 1.50 $"
 import sys
 import time
 import QtBlissGraph
@@ -782,10 +782,14 @@ class McaWidget(qt.QWidget):
                 else:
                     calib = info['McaCalib']
             if len(calib) > 1:
-                xdata=calib[0]+ \
-                      calib[1]* xhelp
-                if len(calib) == 3:
-                      xdata = xdata + calib[2]* xhelp * xhelp
+                calibrationOrder = info.get('McaCalibOrder', 2)
+                if calibrationOrder == 'TOF':
+                    xdata = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                else:
+                    xdata=calib[0]+ \
+                          calib[1]* xhelp
+                    if len(calib) == 3:
+                          xdata = xdata + calib[2]* xhelp * xhelp
                 return xdata
         elif self.calibration == self.calboxoptions[2]:
             if self.caldict.has_key(legend):
@@ -793,25 +797,34 @@ class McaWidget(qt.QWidget):
                 B = self.caldict[legend]['B']
                 C = self.caldict[legend]['C']
                 calib = [A,B,C]
+                calibrationOrder = self.caldict[legend]['order']
             elif info.has_key('McaCalib'):
+                calibrationOrder = info.get('McaCalibOrder', 2)
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][info['McaDet']-1]
                 else:
                     calib = info['McaCalib']
             if len(calib) > 1:
-                xdata=calib[0]+ \
-                      calib[1]* xhelp
-                if len(calib) == 3:
-                      xdata = xdata + calib[2]* xhelp * xhelp
+                if calibrationOrder == 'TOF':
+                    xdata = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                else:
+                    xdata=calib[0]+ \
+                          calib[1]* xhelp
+                    if len(calib) == 3:
+                          xdata = xdata + calib[2]* xhelp * xhelp
                 return xdata
         elif self.calibration in  self.caldict.keys():
                 A = self.caldict[self.calibration]['A']
                 B = self.caldict[self.calibration]['B']
                 C = self.caldict[self.calibration]['C']
+                calibrationOrder = self.caldict[self.calibration]['order']
                 calib = [A,B,C]
-                xdata=calib[0]+ \
-                      calib[1]* xhelp + \
-                      calib[2]* xhelp * xhelp
+                if calibrationOrder == 'TOF':
+                    xdata = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                else:
+                    xdata=calib[0]+ \
+                          calib[1]* xhelp + \
+                          calib[2]* xhelp * xhelp
                 return xdata
         else:
             return xhelp
@@ -868,7 +881,11 @@ class McaWidget(qt.QWidget):
                 else:
                     calib = [0.0, 1.0, 0.0]
             self.__simplefitcalibration = calib
-            x = calib[0] + calib[1] * x + calib[2] * x * x
+            calibrationOrder = curveinfo.get('McaCalibOrder',2)
+            if calibrationOrder == 'TOF':
+                x = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+            else:
+                x = calib[0] + calib[1] * x + calib[2] * x * x
             self.simplefit.setdata(x=x,y=y,
                                     xmin=xmin,
                                     xmax=xmax,
@@ -971,17 +988,18 @@ class McaWidget(qt.QWidget):
                     if self.caldict.has_key(legend):
                         ndict[legend].update(self.caldict[legend])
                         if abs(ndict[legend]['C']) > 0.0:
-                            ndict[legend]['order']  = 2    
+                            ndict[legend]['order']  = self.caldict[legend].get('order', 2)
                     elif info.has_key('McaCalib'):
                         if type(info['McaCalib'][0]) == type([]):
                             calib = info['McaCalib'][0]
                         else:
                             calib = info['McaCalib']
+                        calibrationOrder = info.get('McaCalibOrder', 2)
                         if len(calib) > 1:
                             ndict[legend]['A'] = calib[0]
                             ndict[legend]['B'] = calib[1]
                             if len(calib) >2:
-                                ndict[legend]['order']  = 2
+                                ndict[legend]['order']  = calibrationOrder
                                 ndict[legend]['C']      = calib[2]
                     caldialog = McaCalWidget.McaCalWidget(legend=legend,
                                                              x=x,
@@ -1621,9 +1639,12 @@ class McaWidget(qt.QWidget):
                         C = 0.0
                         order = 1
                     calib = [A,B,C]
-                    x = calib[0]+ \
-                        calib[1]* x0 + \
-                        calib[2]* x0 * x0
+                    if order == "TOF":
+                        x = calib[2] + calib[0] / pow(x0-calib[1],2)
+                    else:
+                        x = calib[0]+ \
+                            calib[1]* x0 + \
+                            calib[2]* x0 * x0
                 else:
                     print "Should not be here"
                     return
@@ -1831,10 +1852,12 @@ class McaWidget(qt.QWidget):
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
                             self.graph.xlabel('Energy')
                     elif self.calibration == self.calboxoptions[2]:
+                        calibrationOrder = None
                         if self.caldict.has_key(legend):
                             A = self.caldict[legend]['A']
                             B = self.caldict[legend]['B']
                             C = self.caldict[legend]['C']
+                            calibrationOrder = self.caldict[legend]['order']  
                             calib = [A,B,C]
                         elif info.has_key('McaCalib'):
                             if type(info['McaCalib'][0]) == type([]):
@@ -1845,12 +1868,20 @@ class McaWidget(qt.QWidget):
                             xdata=calib[0]+ \
                                   calib[1]* xhelp
                             if len(calib) == 3:
-                                  xdata = xdata + calib[2]* xhelp * xhelp
+                                if calibrationOrder == 'TOF':
+                                    xdata = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                                else:
+                                    xdata = xdata + calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
+                            curveinfo['McaCalibOrder'] = calibrationOrder
                             if simplefitplot:
                                 inforegions = []
                                 for region in info['regions']:
-                                    inforegions.append([calib[0] + \
+                                    if calibrationOrder == 'TOF':
+                                        inforegions.append([calib[2] + calib[0] / pow(region[0]-calib[1],2),
+                                                            calib[2] + calib[0] / pow(region[1]-calib[1],2)])
+                                    else:
+                                        inforegions.append([calib[0] + \
                                                         calib[1] * region[0] +\
                                                         calib[1] * region[0] * region[0],
                                                         calib[0] + \
@@ -1872,15 +1903,24 @@ class McaWidget(qt.QWidget):
                             A = self.caldict[self.calibration]['A']
                             B = self.caldict[self.calibration]['B']
                             C = self.caldict[self.calibration]['C']
+                            calibrationOrder = self.caldict[self.calibration]['order'] 
                             calib = [A,B,C]
-                            xdata=calib[0]+ \
+                            if calibrationOrder == 'TOF':
+                                xdata =  C + (A / ((xhelp - B) * (xhelp - B)))
+                            else:
+                                xdata=calib[0]+ \
                                   calib[1]* xhelp + \
                                   calib[2]* xhelp * xhelp
                             curveinfo['McaCalib'] = calib
+                            curveinfo['McaCalibOrder'] = calibrationOrder
                             if simplefitplot:
                                 inforegions = []
                                 for region in info['regions']:
-                                    inforegions.append([calib[0] + \
+                                    if calibrationOrder == 'TOF':
+                                        inforegions.append([calib[2] + calib[0] / pow(region[0]-calib[1],2),
+                                                            calib[2] + calib[0] / pow(region[1]-calib[1],2)])
+                                    else:
+                                        inforegions.append([calib[0] + \
                                                         calib[1] * region[0] +\
                                                         calib[1] * region[0] * region[0],
                                                         calib[0] + \

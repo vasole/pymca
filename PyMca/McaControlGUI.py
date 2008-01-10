@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 if 'qt' not in sys.modules:
@@ -513,9 +513,9 @@ class McaCalInfoLine(qt.QWidget):
             order = 2
         else:
             order = 1            
-        self.AText.setText("%.4g" % pars["A"])
-        self.BText.setText("%.4g" % pars["B"])
-        self.CText.setText("%.4g" % pars["C"])
+        self.AText.setText("%.8g" % pars["A"])
+        self.BText.setText("%.8g" % pars["B"])
+        self.CText.setText("%.8g" % pars["C"])
         """
         if pars['order'] > 1:
             self.orderbox.setCurrentItem(1)
