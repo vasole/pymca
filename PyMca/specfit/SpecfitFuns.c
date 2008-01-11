@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 #include <Python.h>
 #include <./numpy/arrayobject.h>
@@ -911,7 +911,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
 
     if (nd_x == 0){
         ppvoigt = (pvoigtian *) param->data;
-        for (i=0;i<(npars/3);i++){
+        for (i=0;i<(npars/4);i++){
             sigma = ppvoigt[i].fwhm * tosigma;
             dhelp = (*px - ppvoigt[i].centroid)/sigma;
             if (dhelp <= 35) {
@@ -927,7 +927,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             ppvoigt = (pvoigtian *) param->data;
-            for (i=0;i<(npars/3);i++){
+            for (i=0;i<(npars/4);i++){
                 sigma = ppvoigt[i].fwhm * tosigma;
                 dhelp = (*px - ppvoigt[i].centroid)/sigma;
                 if (dhelp <= 35) {
@@ -1081,7 +1081,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
 
     if (nd_x == 0){
         ppvoigt = (pvoigtian *) param->data;
-        for (i=0;i<(npars/3);i++){
+        for (i=0;i<(npars/4);i++){
             dhelp = ppvoigt[i].fwhm/(2.0*sqrt(2.0*log2));
             dhelp = (*px - ppvoigt[i].centroid)/dhelp;
             if (dhelp <= 35) {
@@ -1096,7 +1096,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             ppvoigt = (pvoigtian *) param->data;
-            for (i=0;i<(npars/3);i++){
+            for (i=0;i<(npars/4);i++){
                 dhelp = ppvoigt[i].fwhm/(2.0*sqrt(2.0*log2));
                 dhelp = (*px - ppvoigt[i].centroid)/dhelp;
                 if (dhelp <= 35) {
