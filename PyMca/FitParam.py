@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.41 $"
+__revision__ = "$Revision: 1.42 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -215,6 +215,7 @@ class FitParamWidget(FitParamForm):
                     self.tabLabel.append(str(self.mainTab.tabText(idx)))
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
+        self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
         self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
 
     if QTVERSION < '4.0.0' :
@@ -235,6 +236,14 @@ class FitParamWidget(FitParamForm):
         else:
             self.orderSpin.setEnabled(0)
 
+    def __functionComboActivated(self, idx):
+        if idx==0:
+            #hypermet flag = 1
+            pass
+        else:
+            #hypermet flag = 0
+            pass
+            
     def __orderSpinChanged(self, value):
         if QTVERSION < '4.0.0':
             continuum= int(self.contCombo.currentItem())
@@ -502,6 +511,16 @@ class FitParamWidget(FitParamForm):
         return self.concentrationsWidget.getParameters()
 
     def __setPeakShapePar(self):
+        hypermetflag = (self.__get("fit", "hypermetflag", 1, int))
+        if hypermetflag:
+            index = 0
+        else:
+            index = 1
+        if QTVERSION < '4.0.0':
+            self.functionCombo.setCurrentItem(index)
+        else:
+            self.functionCombo.setCurrentIndex(index)
+            
         self.staCheck.setChecked(self.__get("peakshape", "fixedst_arearatio", 0, int))
         self.staValue.setText(self.__get("peakshape", "st_arearatio"))
         self.staError.setText(self.__get("peakshape","deltast_arearatio"))
@@ -517,11 +536,13 @@ class FitParamWidget(FitParamForm):
         self.shCheck.setChecked(self.__get("peakshape","fixedstep_heightratio", 0, int))
         self.shValue.setText(self.__get("peakshape","step_heightratio"))
         self.shError.setText(self.__get("peakshape","deltastep_heightratio"))
+        self.etaCheck.setChecked(self.__get("peakshape","fixedlorentz_factor", 0, int))
+        self.etaValue.setText(self.__get("peakshape","lorentz_factor", 0.02, str))
+        self.etaError.setText(self.__get("peakshape","deltalorentz_factor", 0.02, str))
 
     def __getPeakShapePar(self):
         pars= {}
         try:
-        #if 1:
             err= "Short Tail Area Value"
             pars["st_arearatio"]= float(str(self.staValue.text()))
             err= "Short Tail Area Error"
@@ -547,6 +568,11 @@ class FitParamWidget(FitParamForm):
             err= "Step Heigth Error"
             pars["deltastep_heightratio"]= float(str(self.shError.text()))
             pars["fixedstep_heightratio"]= int(self.shCheck.isChecked())
+            err= "Lorentz Factor Value"
+            pars["lorentz_factor"]= float(str(self.etaValue.text()))
+            err= "Step Heigth Error"
+            pars["deltalorentz_factor"]= float(str(self.etaError.text()))
+            pars["fixedlorentz_factor"]= int(self.etaCheck.isChecked())
             return pars
         #else:
         except:
@@ -656,7 +682,18 @@ class FitParamWidget(FitParamForm):
             shortflag= int(self.shortCheck.isChecked())
             longflag= int(self.longCheck.isChecked())
             stepflag= int(self.stepCheck.isChecked())
-            pars["hypermetflag"]= 1 + shortflag*2 + longflag*4 + stepflag*8
+            if QTVERSION < '4.0.0':
+                index = self.functionCombo.currentItem()
+            else:
+                index = self.functionCombo.currentIndex()
+            if index == 0:
+                hypermetflag = 1 
+            else:
+                hypermetflag = 0
+            if hypermetflag:
+                pars["hypermetflag"]= 1 + shortflag*2 + longflag*4 + stepflag*8
+            else:
+                pars["hypermetflag"]= 0
             pars['energy'],pars['energyweight'],pars['energyflag'], pars['energyscatter']= \
                                 self.energyTable.getParameters()
             return pars
@@ -1036,7 +1073,13 @@ class FitParamDialog(qt.QDialog):
 
         #peak shape
         hypermetflag = self.fitresult['config']['fit']['hypermetflag']
-        if hypermetflag > 1:
+        if hypermetflag == 0:
+            name = 'Lorentz Factor' 
+            if name in self.fitresult['parameters']:
+                value = self.fitresult['fittedpar'] \
+                        [self.fitresult['parameters'].index(name)]
+                self.fitparam.etaValue.setText("%.6g" % value)
+        elif hypermetflag > 1:
             hypermetnames = ['ST AreaR', 'ST SlopeR',
                              'LT AreaR', 'LT SlopeR',
                              'STEP HeightR']

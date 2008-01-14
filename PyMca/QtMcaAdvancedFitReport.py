@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -301,10 +301,15 @@ class QtMcaAdvancedFitReport:
         stdsum  = self.fitresult['result']['sigmapar'][self.fitresult['result']['parameters'].index('Sum')]
 
         hypermetflag = self.fitresult['result']['config']['fit']['hypermetflag']
-        if hypermetflag > 1:
-            hypermetnames = ['ST AreaR', 'ST SlopeR',
-                             'LT AreaR', 'LT SlopeR',
-                             'STEP HeightR']
+        if hypermetflag != 1:
+            #the peaks are not pure gaussians
+            if hypermetflag:
+                hypermetnames = ['ST AreaR', 'ST SlopeR',
+                                 'LT AreaR', 'LT SlopeR',
+                                 'STEP HeightR']
+            else:
+                #peaks are pseudo-voigt functions
+                hypermetnames = ['Lorentz Factor']
             hypermetvalues=[]
             hypermetstd   =[]
             hypermetfinalnames = []
@@ -379,7 +384,7 @@ class QtMcaAdvancedFitReport:
         text+="</TR>"
 
         # --- Peak shape parameters ---
-        if hypermetflag > 1:
+        if hypermetflag != 1:
             text+="<TR>"
             text+="    <TD><TABLE border=1 cellpadding=1 cellspacing=0 width=100%>"
             text+="        <TR align=center>"

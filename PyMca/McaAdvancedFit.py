@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.59 $"
+__revision__ = "$Revision: 1.60 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -100,7 +100,7 @@ class McaAdvancedFit(qt.QWidget):
         font = self.font()
         font.setBold(True)
         self.headerLabel.setFont(font)     
-        self.setheader('Fit of XXXXXXXXXX from Channel XXXXX to XXXX')
+        self.setHeader('Fit of XXXXXXXXXX from Channel XXXXX to XXXX')
         self.top = Top(self)
         self.layout.addWidget(self.top)
         self.sthread = None
@@ -598,7 +598,6 @@ class McaAdvancedFit(qt.QWidget):
                 if key not in ['stripflag','hypermetflag','sumflag','escapeflag','continuum']:
                     print "UNKNOWN key ",key
             config['fit'][key] = ndict[key]
-
         self.__fitdone = False
         #erase table
         if self.mcatable is not None:
@@ -1472,7 +1471,7 @@ class McaAdvancedFit(qt.QWidget):
                           self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
                           self.mcafit.config['detector']['gain']=kw['calibration'][1] * 1
                     
-        self.setheader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
+        self.setHeader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
                                                             self.info['xlabel'],
                                                             self.info['xmin'],
                                                             self.info['xmax']))
@@ -2129,9 +2128,11 @@ class Top(qt.QWidget):
         if QTVERSION < '4.0.0':
             self.FunComBox = qt.QComboBox(0,w,"FunComBox")
             self.FunComBox.insertStrList(["Mca Hypermet"])
+            self.FunComBox.insertStrList(["Mca Pseudo-Voigt"])
         else:
             self.FunComBox = qt.QComboBox(w)
             self.FunComBox.insertItem(0, "Mca Hypermet")
+            self.FunComBox.insertItem(1, "Mca Pseudo-Voigt")
         wlayout.addWidget(FunLabel,0,0)
         wlayout.addWidget(self.FunComBox,0,1)
         #background
@@ -2155,6 +2156,9 @@ class Top(qt.QWidget):
                        'Exp. Polynomial']
             for item in options:
                 self.BkgComBox.insertItem(options.index(item), item)            
+
+        self.connect(self.FunComBox,
+                     qt.SIGNAL("activated(int)"),self.mysignal)
 
         self.connect(self.BkgComBox,
                      qt.SIGNAL("activated(int)"),self.mysignal)
@@ -2227,22 +2231,38 @@ class Top(qt.QWidget):
         if ddict == None: ddict = {}
         if ddict.has_key('hypermetflag'):
             hypermetflag = ddict['hypermetflag']
-            g_term    =  hypermetflag & 1
-            st_term   = (hypermetflag >>1) & 1
-            lt_term   = (hypermetflag >>2) & 1
-            step_term = (hypermetflag >>3) & 1
-            if st_term:
-                self.stbox.setChecked(1)
+            if hypermetflag:
+                if QTVERSION < '4.0.0':
+                    self.FunComBox.setCurrentItem(0)
+                else:
+                    self.FunComBox.setCurrentIndex(0)
+                g_term    =  hypermetflag & 1
+                st_term   = (hypermetflag >>1) & 1
+                lt_term   = (hypermetflag >>2) & 1
+                step_term = (hypermetflag >>3) & 1
+                self.stbox.setEnabled(1)
+                self.ltbox.setEnabled(1)
+                self.stepbox.setEnabled(1)
+                if st_term:
+                    self.stbox.setChecked(1)
+                else:
+                    self.stbox.setChecked(0)
+                if lt_term:
+                    self.ltbox.setChecked(1)
+                else:
+                    self.ltbox.setChecked(0)
+                if step_term:
+                    self.stepbox.setChecked(1)
+                else:
+                    self.stepbox.setChecked(0)
             else:
-                self.stbox.setChecked(0)
-            if lt_term:
-                self.ltbox.setChecked(1)
-            else:
-                self.ltbox.setChecked(0)
-            if step_term:
-                self.stepbox.setChecked(1)
-            else:
-                self.stepbox.setChecked(0)
+                if QTVERSION < '4.0.0':
+                    self.FunComBox.setCurrentItem(1)
+                else:
+                    self.FunComBox.setCurrentIndex(1)
+                self.stbox.setEnabled(0)
+                self.ltbox.setEnabled(0)
+                self.stepbox.setEnabled(0)
         
         if ddict.has_key('sumflag'):
             if ddict['sumflag'] == 1:
@@ -2270,19 +2290,35 @@ class Top(qt.QWidget):
          
     def getParameters(self):
         ddict={}
-        ddict['hypermetflag'] = 1
-        if self.stbox.isChecked():
-            ddict['hypermetflag'] += 2 
-        if self.ltbox.isChecked():
-            ddict['hypermetflag'] += 4 
-        
-        if self.stepbox.isChecked():
-            ddict['hypermetflag'] += 8
-            
-        if self.sumbox.isChecked():
-            ddict['sumflag'] = 1
+        if QTVERSION < '4.0.0':
+            index = self.FunComBox.currentItem()
         else:
-            ddict['sumflag'] = 0
+            index = self.FunComBox.currentIndex()
+
+        if index == 0:
+            ddict['hypermetflag'] = 1
+            self.stbox.setEnabled(1)
+            self.ltbox.setEnabled(1)
+            self.stepbox.setEnabled(1)
+        else:
+            ddict['hypermetflag'] = 0
+            self.stbox.setEnabled(0)
+            self.ltbox.setEnabled(0)
+            self.stepbox.setEnabled(0)
+
+        if ddict['hypermetflag']:
+            if self.stbox.isChecked():
+                ddict['hypermetflag'] += 2 
+            if self.ltbox.isChecked():
+                ddict['hypermetflag'] += 4 
+            
+            if self.stepbox.isChecked():
+                ddict['hypermetflag'] += 8
+                
+            if self.sumbox.isChecked():
+                ddict['sumflag'] = 1
+            else:
+                ddict['sumflag'] = 0
 
         if self.stripbox.isChecked():
             ddict['stripflag'] = 1
@@ -2740,7 +2776,7 @@ class McaGraphWindow(qt.QWidget):
                         self.roidict[key]['to'    ] = todata
                 xlabel = self.graph.xlabel()
                 #self.roiwidget.setheader(text="%s ROIs of %s" % (xlabel,legend))
-                self.roiwidget.setheader(text="ROIs of %s" % (legend))
+                self.roiwidget.setHeader(text="ROIs of %s" % (legend))
                 self.roiwidget.fillfromroidict(roilist=self.roilist,
                                                 roidict=self.roidict)
 
@@ -2750,6 +2786,7 @@ class McaGraphWindow(qt.QWidget):
 def test(file='03novs060sum.mca'):
     import specfilewrapper as specfile
     app = qt.QApplication([])
+    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
     sf=specfile.Specfile(file)
     scan=sf[0]
     mcadata=scan.mca(1)
@@ -2758,7 +2795,7 @@ def test(file='03novs060sum.mca'):
     demo = McaAdvancedFit()
     xmin = demo.mcafit.config['fit']['xmin']
     xmax = demo.mcafit.config['fit']['xmax']
-    demo.setdata(x,y0,xmin=xmin,xmax=xmax,sourcename=file)
+    demo.setData(x,y0,xmin=xmin,xmax=xmax,sourcename=file)
     if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
         demo.show()

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.17 $"
+__revision__ = "$Revision: 1.18 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -605,13 +605,27 @@ class FitParamForm(QWidget):
             tabPeakShapeLayout.setMargin(11)
             tabPeakShapeLayout.setSpacing(2)
             
+
+        if qVersion() < '4.0.0':
+            self.functionCombo = QComboBox(0,self.tabPeakShape)
+        else:
+            self.functionCombo = QComboBox(self.tabPeakShape)
+            self.functionCombo.insertItem = self.functionCombo.addItem
+
+        self.functionLabel = QLabel(self.tabPeakShape)
+        self.functionLabel.setText("Peak Function")
+        self.functionCombo.insertItem(str("Mca Hypermet"))
+        self.functionCombo.insertItem(str("Mca Pseudo-Voigt"))
+        tabPeakShapeLayout.addWidget(self.functionLabel,0,0)
+        tabPeakShapeLayout.addWidget(self.functionCombo,0,1)
+
         spacer_7 = QSpacerItem(20,90,QSizePolicy.Minimum,QSizePolicy.Expanding)
-        tabPeakShapeLayout.addItem(spacer_7,6,0)
+        tabPeakShapeLayout.addItem(spacer_7,8,0)
 
         self.staLabel = QLabel(self.tabPeakShape)
         self.staLabel.setText(str("Short Tail Area"))
 
-        tabPeakShapeLayout.addWidget(self.staLabel,1,0)
+        tabPeakShapeLayout.addWidget(self.staLabel,2,0)
         spacer_8 = QSpacerItem(59,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
         tabPeakShapeLayout.addItem(spacer_8,1,1)
 
@@ -622,12 +636,12 @@ class FitParamForm(QWidget):
         self.fixedLabel_2.setText(str("Fixed"))
         self.fixedLabel_2.setAlignment(QLabel.AlignVCenter)
 
-        tabPeakShapeLayout.addWidget(self.fixedLabel_2,0,2)
+        tabPeakShapeLayout.addWidget(self.fixedLabel_2, 1, 2)
 
         self.staCheck = QCheckBox(self.tabPeakShape)
         self.staCheck.setText(str(""))
 
-        tabPeakShapeLayout.addWidget(self.staCheck,1,2)
+        tabPeakShapeLayout.addWidget(self.staCheck,2,2)
 
         self.valueLabel_2 = QLabel(self.tabPeakShape)
         valueLabel_2_font = QFont(self.valueLabel_2.font())
@@ -636,11 +650,11 @@ class FitParamForm(QWidget):
         self.valueLabel_2.setText(str("Value"))
         self.valueLabel_2.setAlignment(QLabel.AlignCenter)
 
-        tabPeakShapeLayout.addWidget(self.valueLabel_2,0,3)
+        tabPeakShapeLayout.addWidget(self.valueLabel_2,1,3)
 
         self.staValue = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.staValue,1,3)
+        tabPeakShapeLayout.addWidget(self.staValue,2,3)
 
         self.staSep = QLabel(self.tabPeakShape)
         staSep_font = QFont(self.staSep.font())
@@ -648,7 +662,7 @@ class FitParamForm(QWidget):
         self.staSep.setFont(staSep_font)
         self.staSep.setText(str("+/-"))
 
-        tabPeakShapeLayout.addWidget(self.staSep,1,4)
+        tabPeakShapeLayout.addWidget(self.staSep,2,4)
 
         self.errorLabel_2 = QLabel(self.tabPeakShape)
         errorLabel_2_font = QFont(self.errorLabel_2.font())
@@ -657,15 +671,15 @@ class FitParamForm(QWidget):
         self.errorLabel_2.setText(str("Error"))
         self.errorLabel_2.setAlignment(QLabel.AlignCenter)
 
-        tabPeakShapeLayout.addWidget(self.errorLabel_2,0,5)
+        tabPeakShapeLayout.addWidget(self.errorLabel_2,1,5)
 
         self.staError = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.staError,1,5)
+        tabPeakShapeLayout.addWidget(self.staError,2,5)
 
         self.stsError = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.stsError,2,5)
+        tabPeakShapeLayout.addWidget(self.stsError,3,5)
 
         self.stsSep = QLabel(self.tabPeakShape)
         stsSep_font = QFont(self.stsSep.font())
@@ -673,35 +687,35 @@ class FitParamForm(QWidget):
         self.stsSep.setFont(stsSep_font)
         self.stsSep.setText(str("+/-"))
 
-        tabPeakShapeLayout.addWidget(self.stsSep,2,4)
+        tabPeakShapeLayout.addWidget(self.stsSep,3,4)
 
         self.stsValue = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.stsValue,2,3)
+        tabPeakShapeLayout.addWidget(self.stsValue,3,3)
 
         self.stsCheck = QCheckBox(self.tabPeakShape)
         self.stsCheck.setText(str(""))
 
-        tabPeakShapeLayout.addWidget(self.stsCheck,2,2)
+        tabPeakShapeLayout.addWidget(self.stsCheck,3,2)
 
         self.stsLabel = QLabel(self.tabPeakShape)
         self.stsLabel.setText(str("Short Tail Slope"))
 
-        tabPeakShapeLayout.addWidget(self.stsLabel,2,0)
+        tabPeakShapeLayout.addWidget(self.stsLabel,3,0)
 
         self.ltaLabel = QLabel(self.tabPeakShape)
         self.ltaLabel.setText(str("Long Tail Area"))
 
-        tabPeakShapeLayout.addWidget(self.ltaLabel,3,0)
+        tabPeakShapeLayout.addWidget(self.ltaLabel,4,0)
 
         self.ltaCheck = QCheckBox(self.tabPeakShape)
         self.ltaCheck.setText(str(""))
 
-        tabPeakShapeLayout.addWidget(self.ltaCheck,3,2)
+        tabPeakShapeLayout.addWidget(self.ltaCheck,4,2)
 
         self.ltaValue = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.ltaValue,3,3)
+        tabPeakShapeLayout.addWidget(self.ltaValue,4,3)
 
         self.ltaSep = QLabel(self.tabPeakShape)
         ltaSep_font = QFont(self.ltaSep.font())
@@ -709,15 +723,15 @@ class FitParamForm(QWidget):
         self.ltaSep.setFont(ltaSep_font)
         self.ltaSep.setText(str("+/-"))
 
-        tabPeakShapeLayout.addWidget(self.ltaSep,3,4)
+        tabPeakShapeLayout.addWidget(self.ltaSep,4,4)
 
         self.ltaError = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.ltaError,3,5)
+        tabPeakShapeLayout.addWidget(self.ltaError,4,5)
 
         self.ltsError = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.ltsError,4,5)
+        tabPeakShapeLayout.addWidget(self.ltsError,5,5)
 
         self.ltsSep = QLabel(self.tabPeakShape)
         ltsSep_font = QFont(self.ltsSep.font())
@@ -725,35 +739,36 @@ class FitParamForm(QWidget):
         self.ltsSep.setFont(ltsSep_font)
         self.ltsSep.setText(str("+/-"))
 
-        tabPeakShapeLayout.addWidget(self.ltsSep,4,4)
+        tabPeakShapeLayout.addWidget(self.ltsSep,5,4)
 
         self.ltsValue = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.ltsValue,4,3)
+        tabPeakShapeLayout.addWidget(self.ltsValue,5,3)
 
         self.ltsCheck = QCheckBox(self.tabPeakShape)
         self.ltsCheck.setText(str(""))
 
-        tabPeakShapeLayout.addWidget(self.ltsCheck,4,2)
+        tabPeakShapeLayout.addWidget(self.ltsCheck,5,2)
 
         self.ltsLabel = QLabel(self.tabPeakShape)
         self.ltsLabel.setText(str("Long Tail Slope"))
 
-        tabPeakShapeLayout.addWidget(self.ltsLabel,4,0)
+        tabPeakShapeLayout.addWidget(self.ltsLabel,5,0)
 
+        # Step Height
         self.shLabel = QLabel(self.tabPeakShape)
         self.shLabel.setText(str("Step Height"))
 
-        tabPeakShapeLayout.addWidget(self.shLabel,5,0)
+        tabPeakShapeLayout.addWidget(self.shLabel,6,0)
 
         self.shCheck = QCheckBox(self.tabPeakShape)
         self.shCheck.setText(str(""))
 
-        tabPeakShapeLayout.addWidget(self.shCheck,5,2)
+        tabPeakShapeLayout.addWidget(self.shCheck,6,2)
 
         self.shValue = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.shValue,5,3)
+        tabPeakShapeLayout.addWidget(self.shValue,6,3)
 
         self.shSep = QLabel(self.tabPeakShape)
         shSep_font = QFont(self.shSep.font())
@@ -761,11 +776,40 @@ class FitParamForm(QWidget):
         self.shSep.setFont(shSep_font)
         self.shSep.setText(str("+/-"))
 
-        tabPeakShapeLayout.addWidget(self.shSep,5,4)
+        tabPeakShapeLayout.addWidget(self.shSep,6,4)
 
         self.shError = QLineEdit(self.tabPeakShape)
 
-        tabPeakShapeLayout.addWidget(self.shError,5,5)
+        tabPeakShapeLayout.addWidget(self.shError,6,5)
+
+        # Pseudo-Voigt Lorentz Factor
+        self.etaLabel = QLabel(self.tabPeakShape)
+        self.etaLabel.setText(str("Lorentz Factor"))
+
+        tabPeakShapeLayout.addWidget(self.etaLabel,7,0)
+
+        self.etaCheck = QCheckBox(self.tabPeakShape)
+        self.etaCheck.setText(str(""))
+
+        tabPeakShapeLayout.addWidget(self.etaCheck,7,2)
+
+        self.etaValue = QLineEdit(self.tabPeakShape)
+
+        tabPeakShapeLayout.addWidget(self.etaValue,7,3)
+
+        self.etaSep = QLabel(self.tabPeakShape)
+        etaSep_font = QFont(self.etaSep.font())
+        etaSep_font.setBold(1)
+        self.etaSep.setFont(etaSep_font)
+        self.etaSep.setText(str("+/-"))
+
+        tabPeakShapeLayout.addWidget(self.etaSep,7,4)
+
+        self.etaError = QLineEdit(self.tabPeakShape)
+
+        tabPeakShapeLayout.addWidget(self.etaError,7,5)
+
+        
         if qVersion() < '4.0.0':
             self.mainTab.insertTab(self.tabPeakShape,str("PEAK SHAPE"))
         else:
