@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -251,6 +251,29 @@ slidersoff = [
 "XX.. XXXXX  X..X",
 "X..XXXXXXXXXXX.X",
 "XXXXXXXXXXXXXXXX"
+]
+
+remove = [
+"16 16 3 1",
+"O c #ffc0c0",
+"+ c None",
+"X c red",
+"++++++++++++++++",
+"+XX++++++++++XX+",
+"++XX+++++++OXX++",
+"+++XX+++++OXX+++",
+"++++XXO++OXX++++",
+"+++++XX.OXX+++++",
+"++++++XXXX++++++",
+"++++++OXX+++++++",
+"+++++OXXXX++++++",
+"++++OXX+OXX+++++",
+"+++OXX+++OXX++++",
+"+++XX+++++OXX+++",
+"++XX+++++++OXX++",
+"+XX++++++++++XX+",
+"++++++++++++++++",
+"++++++++++++++++"
 ]
 
 sigma=[
@@ -3230,7 +3253,8 @@ IconDict= {
     "average16":average16,
     "smooth":smooth,
     "subtract":subtract,
-    "togglepoints":togglepoints
+    "togglepoints":togglepoints,
+    "remove":remove
 }
 
 def showIcons():

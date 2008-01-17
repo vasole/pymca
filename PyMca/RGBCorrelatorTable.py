@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -79,8 +79,8 @@ class RGBCorrelatorTable(qt.QTableWidget):
             item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
         else:
             item.setText(cntlabel)
-        #item is just enabled (not selectable)
-        item.setFlags(qt.Qt.ItemIsEnabled)
+        #item is enabled and selectable
+        item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
         self.setItem(i, 0, item)
 
         #the checkboxes

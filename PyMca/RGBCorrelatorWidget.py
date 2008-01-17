@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -73,8 +73,11 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.loadButton.setToolTip("Load new images of the same size")
         self.saveButton = qt.QToolButton(hbox)
         self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
-        self.saveButton.setToolTip("Save the set of images to file")
+        self.saveButton.setToolTip("Save image data to file")
         self._saveFilter = None
+        self.removeButton = qt.QToolButton(hbox)
+        self.removeButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["remove"])))
+        self.removeButton.setToolTip("Remove the selected images")
         self.toggleSlidersButton = qt.QToolButton(hbox)
         self._slidersOffIcon = qt.QIcon(qt.QPixmap(IconDict["slidersoff"]))
         self._slidersOnIcon = qt.QIcon(qt.QPixmap(IconDict["sliderson"]))
@@ -101,6 +104,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         hbox.mainLayout.addWidget(self.loadButton)
         hbox.mainLayout.addWidget(self.saveButton)
+        hbox.mainLayout.addWidget(self.removeButton)
         hbox.mainLayout.addWidget(self.toggleSlidersButton)
         hbox.mainLayout.addWidget(self.calculationButton)
         hbox.mainLayout.addWidget(HorizontalSpacer(self.toolBar))
@@ -174,7 +178,17 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         self.connect(self.saveButton,
                      qt.SIGNAL("clicked()"),
-                     self.saveImageList)
+                     self.saveButtonClicked)
+        self._saveButtonMenu = qt.QMenu()
+        self._saveButtonMenu.addAction(qt.QString("Save all"),
+                                    self.saveImageList)
+        self._saveButtonMenu.addAction(qt.QString("Save selected"),
+                                    self.saveSelectedImages)
+
+
+        self.connect(self.removeButton,
+                     qt.SIGNAL("clicked()"),
+                     self.removeButtonClicked)
 
         self.connect(self.toggleSlidersButton,
                      qt.SIGNAL("clicked()"),
@@ -470,7 +484,18 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.calculationDialog.imageList = self._imageList 
             self.calculationDialog.imageDict = self._imageDict
 
+    def removeButtonClicked(self):
+        itemList = self.tableWidget.selectedItems()
+        labelList = []
+        nImages = len(self._imageList)
+        for item in itemList:
+            row = item.row()
+            if row < nImages:
+                labelList.append(self._imageList[row])
 
+        for label in labelList:
+            self.removeImage(label)
+        
     def removeImage(self, label):
         if label not in self._imageList:return
         self._imageDict[label] = {}
@@ -737,19 +762,45 @@ class RGBCorrelatorWidget(qt.QWidget):
                 return True
         return False
 
-    def saveImageList(self, filename = None):
-        if not len(self._imageList):
+    def saveButtonClicked(self):
+        self._saveButtonMenu.exec_(self.cursor().pos())
+
+    def saveSelectedImages(self):
+        itemList = self.tableWidget.selectedItems()
+        saveList = []
+        imageList = []
+        nImages = len(self._imageList)
+        for item in itemList:
+            row = item.row()
+            if row >= nImages:
+                errorText = "Requested to save non existing \nimage number %d." % row
+                qt.QMessageBox.critical(self,"ValueError", errorText)
+                return
+            saveList.append(row)
+        saveList.sort()
+        for index in saveList:
+            imageList.append(self._imageList[index])
+        self.saveImageList(imagelist=imageList)
+
+    def saveImageList(self, filename=None, imagelist=None):
+        if imagelist is None:
+            imageList = self._imageList
+        else:
+            imageList = imagelist
+        if not len(imageList):
             qt.QMessageBox.information(self,"No Data",
                             "Image list is empty.\nNothing to be saved")
             return
         if filename is None:
             filename = self.getOutputFileName()
             if not len(filename):return
+
         datalist = []
         labels = []
-        for label in self._imageList:
+        for label in imageList:
             datalist.append(self._imageDict[label]['image'])
             labels.append(label.replace(" ","_"))
+            
         if filename[-4:].lower() == ".edf":
             ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
         elif filename[-4:].lower() == ".csv":
