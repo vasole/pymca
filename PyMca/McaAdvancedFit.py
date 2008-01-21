@@ -414,7 +414,23 @@ class McaAdvancedFit(qt.QWidget):
         """ 
         self.__configure(justupdate=True)
 
-        
+    def configure(self, ddict=None):
+        """
+        This methods configures the fitting parameters and updates the
+        graphical interface.
+        """
+        if ddict is None:
+            return self.mcafit.configure(ddict)
+
+        #configure and get the new configuration 
+        newConfig = self.mcafit.configure(ddict)
+
+        #refresh the interface
+        self.refreshWidgets()
+
+        #return the current configuration
+        return newConfig
+
     def __configure(self, justupdate=False):
         config = {}
         config.update(self.mcafit.config)
@@ -2801,6 +2817,10 @@ def test(file='03novs060sum.mca'):
         demo.show()
         app.exec_loop()
     else:
+        #This illustrates how to change the configuration
+        #oldConfig = demo.configure()
+        #oldConfig['fit']['xmin'] = 123
+        #demo.configure(oldConfig)
         demo.show()
         app.exec_()
         
