@@ -113,6 +113,12 @@ class McaTheory:
             Elements.Material[material] = copy.deepcopy(self.config['materials'][material])        
         #that was it
 
+        #default peak shape parameters for pseudo-voigt function
+        self.config['peakshape']['lorentz_factor'] = self.config['peakshape'].get('lorentz_factor', 0.02)
+        self.config['peakshape']['fixedlorentz_factor'] = self.config['peakshape'].get('fixedlorentz_factor',
+                                                                                       0)
+        self.config['peakshape']['deltalorentz_factor'] = self.config['peakshape'].get('deltalorentz_factor',
+                                                                                       0.02)            
         #linear fitting option
         self.config['fit']['linearfitflag']   = self.config['fit'].get('linearfitflag', 0)        
         self.config['fit']['fitweight']    = self.config['fit'].get('fitweight', 1)        
@@ -358,12 +364,12 @@ class McaTheory:
             if not HYPERMET:
                 if self.config['fit']['escapeflag']:
                     if OLDESCAPE:
-                        PEAKSW.append(Numeric.ones((2*r,3),Numeric.Float))
+                        PEAKSW.append(Numeric.ones((2*r,3+1),Numeric.Float))
                     else:
-                        PEAKSW.append(Numeric.ones(((r+_nescape_),3),
+                        PEAKSW.append(Numeric.ones(((r+_nescape_),3+1),
                                                     Numeric.Float))
                 else:
-                    PEAKSW.append(Numeric.ones((r,3),Numeric.Float))
+                    PEAKSW.append(Numeric.ones((r,3+1),Numeric.Float))
             else:
                 if self.config['fit']['escapeflag']:
                     if OLDESCAPE:
@@ -616,12 +622,12 @@ class McaTheory:
                     if not HYPERMET:
                         if self.config['fit']['escapeflag']:
                             if OLDESCAPE:
-                                PEAKSW.append(Numeric.ones((2*r,3),Numeric.Float))
+                                PEAKSW.append(Numeric.ones((2*r,3 + 1),Numeric.Float))
                             else:
-                                PEAKSW.append(Numeric.ones(((r+_nescape_),3),
+                                PEAKSW.append(Numeric.ones(((r+_nescape_),3 + 1),
                                                             Numeric.Float))
                         else:
-                            PEAKSW.append(Numeric.ones((r,3),Numeric.Float))
+                            PEAKSW.append(Numeric.ones((r,3 + 1),Numeric.Float))
                     else:
                         if self.config['fit']['escapeflag']:
                             if OLDESCAPE:
@@ -638,7 +644,7 @@ class McaTheory:
                 print "usematrix = ",usematrix
                 print "self.config['fit']['energy'] =",self.config['fit']['energy']
                 raise ValueError, "Unhandled Sample Matrix and Energy combination"
-###############            
+###############
         #add scatter peak
         if energylist is not None:
             if len(energylist) and \
@@ -679,16 +685,16 @@ class McaTheory:
                                 if not HYPERMET:
                                     if self.config['fit']['escapeflag']:
                                         if OLDESCAPE:
-                                            PEAKSW.append(Numeric.ones((2*r,3),Numeric.Float))
+                                            PEAKSW.append(Numeric.ones((2*r, 3 + 1),Numeric.Float))
                                         else:
-                                            PEAKSW.append(Numeric.ones(((r+_nescape_),3),
+                                            PEAKSW.append(Numeric.ones(((r+_nescape_), 3 + 1),
                                                                         Numeric.Float))
                                     else:
-                                        PEAKSW.append(Numeric.ones((r,3),Numeric.Float))
+                                        PEAKSW.append(Numeric.ones((r, 3 + 1),Numeric.Float))
                                 else:
                                     if self.config['fit']['escapeflag']:
                                         if OLDESCAPE:
-                                            PEAKSW.append(Numeric.ones((2*r,3+5),Numeric.Float))
+                                            PEAKSW.append(Numeric.ones((2*r, 3+5),Numeric.Float))
                                         else:
                                             PEAKSW.append(Numeric.ones(((r+_nescape_),3+5),
                                                                         Numeric.Float))
@@ -717,6 +723,8 @@ class McaTheory:
             PARAMETERS.append('LT AreaR')
             PARAMETERS.append('LT SlopeR')
             PARAMETERS.append('STEP HeightR')
+        else:
+            PARAMETERS.append('Lorentz Factor')
         NGLOBAL   = len(PARAMETERS)
         for item in data:
             PARAMETERS.append(item[1]+" "+item[2])
@@ -1044,9 +1052,9 @@ class McaTheory:
                             result += SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)            
                     else:
                         if i == 0:
-                            result = SpecfitFuns.agauss(PEAKSW[i],energy)
+                            result = SpecfitFuns.apvoigt(PEAKSW[i],energy)
                         else:
-                            result += SpecfitFuns.agauss(PEAKSW[i],energy)            
+                            result += SpecfitFuns.apvoigt(PEAKSW[i],energy)            
             else:
                 area = param[self.NGLOBAL+i]
                 PEAKSW[i][:,0] = PEAKS0[i][:,0] * param[self.NGLOBAL+i] * gain
@@ -1058,6 +1066,9 @@ class McaTheory:
                     PEAKSW[i] [:,5] = param[PARAMETERS.index('LT AreaR')]
                     PEAKSW[i] [:,6] = param[PARAMETERS.index('LT SlopeR')]
                     PEAKSW[i] [:,7] = param[PARAMETERS.index('STEP HeightR')]
+                else:
+                    #pseudo voigt
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Lorentz Factor')]
                 if not FASTER:
                     if hypermet:
                         if i == 0:
@@ -1066,9 +1077,9 @@ class McaTheory:
                             result += SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)            
                     else:
                         if i == 0:
-                            result = SpecfitFuns.agauss(PEAKSW[i],energy)
+                            result = SpecfitFuns.apvoigt(PEAKSW[i],energy)
                         else:
-                            result += SpecfitFuns.agauss(PEAKSW[i],energy)
+                            result += SpecfitFuns.apvoigt(PEAKSW[i],energy)
             #print "shape = ",result.shape
             #print "matrix = ",matrix.shape
             matrix[:,i] = result[:,0]
@@ -1169,7 +1180,9 @@ class McaTheory:
                     #neglect tails in escape peaks
                     PEAKSW[i] [r:,3] = 0.0 
                     PEAKSW[i] [r:,5] = 0.0 
-                    PEAKSW[i] [r:,7] = 0.0 
+                    PEAKSW[i] [r:,7] = 0.0
+                else:
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Lorentz Factor')]                    
                 if not FASTER:
                     print "not FASTER"
                     #if HYPERMET:
@@ -1180,9 +1193,9 @@ class McaTheory:
                             result += SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)            
                     else:
                         if i == 0:
-                            result = SpecfitFuns.agauss(PEAKSW[i],energy)
+                            result = SpecfitFuns.apvoigt(PEAKSW[i],energy)
                         else:
-                            result += SpecfitFuns.agauss(PEAKSW[i],energy)            
+                            result += SpecfitFuns.apvoigt(PEAKSW[i],energy)            
             else:
                 area = param[self.NGLOBAL+i]
                 PEAKSW[i][:,0] = PEAKS0[i][:,0] * param[self.NGLOBAL+i] * gain
@@ -1194,6 +1207,8 @@ class McaTheory:
                     PEAKSW[i] [:,5] = param[PARAMETERS.index('LT AreaR')]
                     PEAKSW[i] [:,6] = param[PARAMETERS.index('LT SlopeR')]
                     PEAKSW[i] [:,7] = param[PARAMETERS.index('STEP HeightR')]
+                else:
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Lorentz Factor')]
                 if not FASTER:
                     if hypermet:
                         if i == 0:
@@ -1202,9 +1217,9 @@ class McaTheory:
                             result += SpecfitFuns.ahypermet(PEAKSW[i],energy,hypermet)            
                     else:
                         if i == 0:
-                            result = SpecfitFuns.agauss(PEAKSW[i],energy)
+                            result = SpecfitFuns.apvoigt(PEAKSW[i],energy)
                         else:
-                            result += SpecfitFuns.agauss(PEAKSW[i],energy)
+                            result += SpecfitFuns.apvoigt(PEAKSW[i],energy)
         #print PARAMETERS[self.NGLOBAL+4]
         #print self.PEAKS0NAMES[4]
         #print PEAKSW[4]
@@ -1220,9 +1235,7 @@ class McaTheory:
                 if hypermet:
                     result = SpecfitFuns.fastahypermet(a,energy,hypermet)
                 else:
-                    result = SpecfitFuns.fastagauss(a,energy)
-                    #result = agauss(a,energy)
-                #result=agauss(a,energy)
+                    result = SpecfitFuns.apvoigt(a,energy)
             else:
                 result = 0.0 * x
             #print "eval = ",time.time()-t
@@ -1264,13 +1277,13 @@ class McaTheory:
             if self.__HYPERMET:
                 return self.linpol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL-5],energy) 
             else:
-                return self.linpol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL],energy) 
+                return self.linpol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL-1],energy) 
         elif self.__CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial'):
             energy = param[0] + param[1] * (x - Numeric.sum(x)/len(x))
             if self.__HYPERMET:
                 return self.exppol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL-5],energy) 
             else:
-                return self.exppol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL],energy) 
+                return self.exppol(param[(self.PARAMETERS.index('Sum')+1):self.NGLOBAL-1],energy) 
         else:
             return 0.0 * x
     def num_deriv(self, param0,index,t0):
@@ -1344,7 +1357,10 @@ class McaTheory:
          if ESCAPE:
             (r,c) = Numeric.shape(PEAKS0[i])
             if OLDESCAPE:
-                dummy      = Numeric.ones((2*r,3+5*(HYPERMET > 0)), Numeric.Float)
+                if HYPERMET:
+                    dummy      = Numeric.ones((2*r,3+5*(HYPERMET > 0)), Numeric.Float)
+                else:
+                    dummy      = Numeric.ones((2*r,3+1), Numeric.Float)
                 dummy[0:r,0] = PEAKS0[i][:,0] * gain
                 dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
                 dummy[0:r,2] = Numeric.sqrt(noise+ PEAKS0[i][:,1] * fano)
@@ -1354,7 +1370,10 @@ class McaTheory:
             else:
                 n_escape_lines = self.PEAKSW[i].shape[0] - r
                 #if 1:print "nlines = ",r, "n escape lines =",n_escape_lines
-                dummy    = Numeric.ones((r + n_escape_lines, 3+5*(HYPERMET > 0)), Numeric.Float)
+                if HYPERMET:
+                    dummy    = Numeric.ones((r + n_escape_lines, 3+5*(HYPERMET > 0)), Numeric.Float)
+                else:
+                    dummy    = Numeric.ones((r + n_escape_lines, 3+1), Numeric.Float)
                 dummy[0:r,0] = PEAKS0[i][:,0] * gain
                 dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
                 dummy[0:r,2] = Numeric.sqrt(noise+ PEAKS0[i][:,1] * fano)
@@ -1373,7 +1392,10 @@ class McaTheory:
                 #    print index, dummy[jj, 1], dummy[jj, 0], dummy[jj, 2]                
          else:
             (r,c) = Numeric.shape(PEAKS0[i])
-            dummy      = Numeric.ones((r,3+5*(HYPERMET > 0)),Numeric.Float)
+            if HYPERMET:
+                dummy      = Numeric.ones((r,3+5*(HYPERMET > 0)),Numeric.Float)
+            else:
+                dummy      = Numeric.ones((r,3+1),Numeric.Float)
             dummy[0:r,0] = PEAKS0[i][:,0] * gain
             dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
             dummy[0:r,2] = Numeric.sqrt(noise + PEAKS0[i][:,1] * fano)
@@ -1386,6 +1408,8 @@ class McaTheory:
                 dummy[:,6] = param[PARAMETERS.index('LT SlopeR')]
                 dummy[0:r,7] = param[PARAMETERS.index('STEP HeightR')]
                 dummy[r:,7]  = 0.0
+         else:
+                dummy[0:,3] = param[PARAMETERS.index('Lorentz Factor')]             
          #this was to test the analytical versus the numerical derivative
          #nderiv = self.num_deriv(param0,index,t0)
          #try:
@@ -1402,12 +1426,12 @@ class McaTheory:
             if HYPERMET:
                 return SpecfitFuns.fastahypermet(dummy,energy,HYPERMET)        
             else:
-                return SpecfitFuns.fastagauss(dummy,energy)
+                return SpecfitFuns.apvoigt(dummy,energy)
          else:
             if HYPERMET:
                 return SpecfitFuns.ahypermet(dummy,energy,HYPERMET)        
             else:
-                return SpecfitFuns.agauss(dummy,energy)
+                return SpecfitFuns.apvoigt(dummy,energy)
 
         elif HYPERMET and  (PARAMETERS[index] == 'ST AreaR'):
           param=Numeric.array(param0)
@@ -1524,7 +1548,7 @@ class McaTheory:
                 for i in range(5,NGLOBAL-5):
                     backpar.append(0.0)
             else:
-                for i in range(5,NGLOBAL):
+                for i in range(5,NGLOBAL-1):
                     backpar.append(0.0)
             backcodes=Numeric.zeros((3,len(backpar)),Numeric.Float)
             if CONTINUUM == 0:
@@ -1562,6 +1586,10 @@ class McaTheory:
                 newpar.append(step_height)
             else:
                 newpar.append(0.0)
+        else:
+            lorentz_factor = self.config['peakshape']['lorentz_factor']
+            newpar.append(lorentz_factor)
+            
         if not linearfit:
             for i in range(len(PARAMETERS)-NGLOBAL):
                 newpar.append(10000.0)
@@ -1632,7 +1660,14 @@ class McaTheory:
                 codes[0,i] = Gefit.CQUOTED
                 if self.config['peakshape']['fixedstep_heightratio'] or linearfit:codes[0,i] = Gefit.CFIXED
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltastep_heightratio']
-                codes[2,i] = newpar[i] - self.config['peakshape']['deltastep_heightratio']    
+                codes[2,i] = newpar[i] - self.config['peakshape']['deltastep_heightratio']
+        else:
+            i = PARAMETERS.index('Lorentz Factor')
+            codes[0, i] = Gefit.CQUOTED
+            if self.config['peakshape']['fixedlorentz_factor'] or linearfit:
+                codes[0,i] = Gefit.CFIXED
+            codes[1,i] = max(newpar[i] + self.config['peakshape']['deltalorentz_factor'], 0.0)
+            codes[2,i] = min(newpar[i] - self.config['peakshape']['deltalorentz_factor'], 1.0)
         #"""
         #firstshot=mcatheory(newpar,x)
         #a linear fit does not need an initial estimate of the areas
@@ -1920,7 +1955,7 @@ class McaTheory:
             if self.__HYPERMET:
                 contrib = SpecfitFuns.fastahypermet(p, energyw,self.__HYPERMET)
             else:
-                contrib = SpecfitFuns.fastagauss(p, energyw)
+                contrib = SpecfitFuns.apvoigt(p, energyw)
             index = []
             for peak in result[group]['peaks']:
                 result[group][peak] = {}
@@ -2072,7 +2107,7 @@ class McaTheory:
                     if self.__HYPERMET:
                         contrib = SpecfitFuns.fastahypermet(p,energy,self.__HYPERMET)
                     else:
-                        contrib = SpecfitFuns.fastagauss(p,energy)
+                        contrib = SpecfitFuns.apvoigt(p,energy)
                 else:
                     contrib = Numeric.take(contrib     ,index)
                 ycon = yfit - contrib
