@@ -101,6 +101,17 @@ class FitParamForm(QWidget):
             layout5.setMargin(11)
             layout5.setSpacing(6)
 
+        if qVersion() < '4.0.0':
+            self.functionCombo = QComboBox(0,self.tabFit)
+        else:
+            self.functionCombo = QComboBox(self.tabFit)
+            self.functionCombo.insertItem = self.functionCombo.addItem
+
+        self.functionLabel = QLabel(self.tabFit)
+        self.functionLabel.setText("Fit Function")
+        self.functionCombo.insertItem(str("Mca Hypermet"))
+        self.functionCombo.insertItem(str("Mca Pseudo-Voigt"))
+
         self.stripWidthLabel = QLabel(self.tabFit)
         self.stripWidthLabel.setText(str("Strip Background Width"))
         self.stripIterValue = QLineEdit(self.tabFit)
@@ -237,49 +248,53 @@ class FitParamForm(QWidget):
         self.bottomLine.setFrameShadow(QFrame.Sunken)
         self.bottomLine.setFrameShape(QFrame.HLine)
 
-        layout5.addMultiCellWidget(self.typeLabel,0,0,0,1)
-        layout5.addMultiCellWidget(self.contCombo,0,0,3,4)
+        layout5.addMultiCellWidget(self.functionLabel,0,0,0,1)
+        layout5.addMultiCellWidget(self.functionCombo,0,0,3,4)
 
-        layout5.addMultiCellWidget(self.orderLabel,1,1,0,1)
-        layout5.addMultiCellWidget(self.orderSpin,1,1,3,4)
 
-        layout5.addMultiCellWidget(self.stripWidthLabel,2,2,0,1)
-        layout5.addMultiCellWidget(self.stripWidthSpin,2,2,3,4)
+        layout5.addMultiCellWidget(self.typeLabel,1,1,0,1)
+        layout5.addMultiCellWidget(self.contCombo,1,1,3,4)
 
-        layout5.addMultiCellWidget(self.stripIterLabel,3,3,0,1)
-        layout5.addMultiCellWidget(self.stripIterValue,3,3,3,4)
+        layout5.addMultiCellWidget(self.orderLabel,2,2,0,1)
+        layout5.addMultiCellWidget(self.orderSpin,2,2,3,4)
+
+        layout5.addMultiCellWidget(self.stripWidthLabel,3,3,0,1)
+        layout5.addMultiCellWidget(self.stripWidthSpin,3,3,3,4)
+
+        layout5.addMultiCellWidget(self.stripIterLabel,4,4,0,1)
+        layout5.addMultiCellWidget(self.stripIterValue,4,4,3,4)
         
-        layout5.addMultiCellWidget(self.stripFilterLabel,4,4,0,1)
-        layout5.addMultiCellWidget(self.stripFilterSpin,4,4,3,4)
+        layout5.addMultiCellWidget(self.stripFilterLabel,5,5,0,1)
+        layout5.addMultiCellWidget(self.stripFilterSpin,5,5,3,4)
 
-        layout5.addMultiCellWidget(self.anchorsContainer,5,5,0,4)
+        layout5.addMultiCellWidget(self.anchorsContainer,6,6,0,4)
         
-        layout5.addWidget(self.weightLabel,6,0)
-        layout5.addMultiCellWidget(self.weightCombo,6,6,3,4)
+        layout5.addWidget(self.weightLabel,7,0)
+        layout5.addMultiCellWidget(self.weightCombo,7,7,3,4)
 
-        layout5.addWidget(self.iterLabel,7,0)
+        layout5.addWidget(self.iterLabel,8,0)
         if qVersion() < '4.0.0':
             spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
-            layout5.addMultiCell(spacer,7,7,1,2)
+            layout5.addMultiCell(spacer,8,8,1,2)
         else:
-            layout5.addWidget(HorizontalSpacer(self.tabFit),7,1)
-        layout5.addMultiCellWidget(self.iterSpin,7,7,3,4)
+            layout5.addWidget(HorizontalSpacer(self.tabFit),8,1)
+        layout5.addMultiCellWidget(self.iterSpin,8,8,3,4)
 
-        layout5.addWidget(self.chi2Label,8,0)
-        layout5.addMultiCellWidget(self.chi2Value,8,8,3,4)
+        layout5.addWidget(self.chi2Label,9,0)
+        layout5.addMultiCellWidget(self.chi2Value,9,9,3,4)
 
-        layout5.addMultiCellWidget(self.linearFitFlagCheck,9,9,0,4)
+        layout5.addMultiCellWidget(self.linearFitFlagCheck,10,10,0,4)
 
-        layout5.addMultiCellWidget(self.topLine,10,11,0,4)
+        layout5.addMultiCellWidget(self.topLine,11,12,0,4)
 
-        layout5.addMultiCellWidget(self.minSpin,11,12,4,4)
+        layout5.addMultiCellWidget(self.minSpin,12,13,4,4)
 
-        layout5.addWidget(self.regionCheck,12,0)
-        layout5.addMultiCellWidget(self.firstLabel,12, 12,2,3)
+        layout5.addWidget(self.regionCheck,13,0)
+        layout5.addMultiCellWidget(self.firstLabel,13, 13,2,3)
 
-        layout5.addMultiCellWidget(self.lastLabel,13,13,2,3)
-        layout5.addWidget(self.maxSpin,13,4)
-        layout5.addMultiCellWidget(self.bottomLine,14,15,0,4)
+        layout5.addMultiCellWidget(self.lastLabel,14,14,2,3)
+        layout5.addWidget(self.maxSpin,14,4)
+        layout5.addMultiCellWidget(self.bottomLine,15,16,0,4)
 
         tabFitLayout.addLayout(layout5)
 
@@ -605,20 +620,6 @@ class FitParamForm(QWidget):
             tabPeakShapeLayout.setMargin(11)
             tabPeakShapeLayout.setSpacing(2)
             
-
-        if qVersion() < '4.0.0':
-            self.functionCombo = QComboBox(0,self.tabPeakShape)
-        else:
-            self.functionCombo = QComboBox(self.tabPeakShape)
-            self.functionCombo.insertItem = self.functionCombo.addItem
-
-        self.functionLabel = QLabel(self.tabPeakShape)
-        self.functionLabel.setText("Peak Function")
-        self.functionCombo.insertItem(str("Mca Hypermet"))
-        self.functionCombo.insertItem(str("Mca Pseudo-Voigt"))
-        tabPeakShapeLayout.addWidget(self.functionLabel,0,0)
-        tabPeakShapeLayout.addWidget(self.functionCombo,0,1)
-
         spacer_7 = QSpacerItem(20,90,QSizePolicy.Minimum,QSizePolicy.Expanding)
         tabPeakShapeLayout.addItem(spacer_7,8,0)
 
@@ -782,9 +783,9 @@ class FitParamForm(QWidget):
 
         tabPeakShapeLayout.addWidget(self.shError,6,5)
 
-        # Pseudo-Voigt Lorentz Factor
+        # Pseudo-Voigt Eta Factor
         self.etaLabel = QLabel(self.tabPeakShape)
-        self.etaLabel.setText(str("Lorentz Factor"))
+        self.etaLabel.setText(str("Pseudo-Voigt Eta"))
 
         tabPeakShapeLayout.addWidget(self.etaLabel,7,0)
 

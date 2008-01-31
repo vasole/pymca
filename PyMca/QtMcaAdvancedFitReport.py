@@ -301,15 +301,21 @@ class QtMcaAdvancedFitReport:
         stdsum  = self.fitresult['result']['sigmapar'][self.fitresult['result']['parameters'].index('Sum')]
 
         hypermetflag = self.fitresult['result']['config']['fit']['hypermetflag']
-        if hypermetflag != 1:
-            #the peaks are not pure gaussians
+        if not self.fitresult['result']['config']['fit'].has_key('fitfunction'):
             if hypermetflag:
+                self.fitresult['result']['config']['fit']['fitfunction'] = 0
+            else:
+                self.fitresult['result']['config']['fit']['fitfunction'] = 1
+        if self.fitresult['result']['config']['fit']['fitfunction'] or\
+           (hypermetflag != 1):
+            #the peaks are not pure gaussians
+            if self.fitresult['result']['config']['fit']['fitfunction']:
+                #peaks are pseudo-voigt functions
+                hypermetnames = ['Eta Factor']
+            else:
                 hypermetnames = ['ST AreaR', 'ST SlopeR',
                                  'LT AreaR', 'LT SlopeR',
                                  'STEP HeightR']
-            else:
-                #peaks are pseudo-voigt functions
-                hypermetnames = ['Lorentz Factor']
             hypermetvalues=[]
             hypermetstd   =[]
             hypermetfinalnames = []

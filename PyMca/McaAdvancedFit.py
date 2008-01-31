@@ -601,6 +601,7 @@ class McaAdvancedFit(qt.QWidget):
             config.update(self.mcafit.config['fit'])
         else:
             config['stripflag']    = self.mcafit.config['fit'].get('stripflag',0)
+            config['fitfunction'] = self.mcafit.config['fit'].get('fitfunction',0)
             config['hypermetflag'] = self.mcafit.config['fit'].get('hypermetflag',1)
             config['sumflag']      = self.mcafit.config['fit'].get('sumflag',0)
             config['escapeflag']   = self.mcafit.config['fit'].get('escapeflag',0)
@@ -611,7 +612,9 @@ class McaAdvancedFit(qt.QWidget):
         config = self.mcafit.configure()
         for key in ndict.keys():
             if DEBUG:
-                if key not in ['stripflag','hypermetflag','sumflag','escapeflag','continuum']:
+                keylist = ['stripflag','hypermetflag','sumflag','escapeflag',
+                           'fitfunction', 'continuum']
+                if key not in keylist:
                     print "UNKNOWN key ",key
             config['fit'][key] = ndict[key]
         self.__fitdone = False
@@ -2245,13 +2248,21 @@ class Top(qt.QWidget):
 
     def setParameters(self,ddict=None):
         if ddict == None: ddict = {}
+        hypermetflag = ddict.get('hypermetflag', 1)
+        if not ddict.has_key('fitfunction'):
+            if hypermetflag:
+                ddict['fitfunction'] = 0
+            else:
+                ddict['fitfunction'] = 1
+
+        if QTVERSION < '4.0.0':
+            self.FunComBox.setCurrentItem(ddict['fitfunction'])
+        else:
+            self.FunComBox.setCurrentIndex(ddict['fitfunction'])
+
         if ddict.has_key('hypermetflag'):
             hypermetflag = ddict['hypermetflag']
-            if hypermetflag:
-                if QTVERSION < '4.0.0':
-                    self.FunComBox.setCurrentItem(0)
-                else:
-                    self.FunComBox.setCurrentIndex(0)
+            if ddict['fitfunction'] == 0:
                 g_term    =  hypermetflag & 1
                 st_term   = (hypermetflag >>1) & 1
                 lt_term   = (hypermetflag >>2) & 1
@@ -2272,10 +2283,6 @@ class Top(qt.QWidget):
                 else:
                     self.stepbox.setChecked(0)
             else:
-                if QTVERSION < '4.0.0':
-                    self.FunComBox.setCurrentItem(1)
-                else:
-                    self.FunComBox.setCurrentIndex(1)
                 self.stbox.setEnabled(0)
                 self.ltbox.setEnabled(0)
                 self.stepbox.setEnabled(0)
@@ -2311,8 +2318,9 @@ class Top(qt.QWidget):
         else:
             index = self.FunComBox.currentIndex()
 
+        ddict['fitfunction'] = index
+        ddict['hypermetflag'] = 1
         if index == 0:
-            ddict['hypermetflag'] = 1
             self.stbox.setEnabled(1)
             self.ltbox.setEnabled(1)
             self.stepbox.setEnabled(1)
@@ -2322,19 +2330,18 @@ class Top(qt.QWidget):
             self.ltbox.setEnabled(0)
             self.stepbox.setEnabled(0)
 
-        if ddict['hypermetflag']:
-            if self.stbox.isChecked():
-                ddict['hypermetflag'] += 2 
-            if self.ltbox.isChecked():
-                ddict['hypermetflag'] += 4 
+        if self.stbox.isChecked():
+            ddict['hypermetflag'] += 2 
+        if self.ltbox.isChecked():
+            ddict['hypermetflag'] += 4 
+        
+        if self.stepbox.isChecked():
+            ddict['hypermetflag'] += 8
             
-            if self.stepbox.isChecked():
-                ddict['hypermetflag'] += 8
-                
-            if self.sumbox.isChecked():
-                ddict['sumflag'] = 1
-            else:
-                ddict['sumflag'] = 0
+        if self.sumbox.isChecked():
+            ddict['sumflag'] = 1
+        else:
+            ddict['sumflag'] = 0
 
         if self.stripbox.isChecked():
             ddict['stripflag'] = 1

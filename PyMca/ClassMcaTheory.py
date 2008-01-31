@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -114,11 +114,19 @@ class McaTheory:
         #that was it
 
         #default peak shape parameters for pseudo-voigt function
-        self.config['peakshape']['lorentz_factor'] = self.config['peakshape'].get('lorentz_factor', 0.02)
-        self.config['peakshape']['fixedlorentz_factor'] = self.config['peakshape'].get('fixedlorentz_factor',
+        self.config['peakshape']['eta_factor'] = self.config['peakshape'].get('eta_factor', 0.02)
+        self.config['peakshape']['fixedeta_factor'] = self.config['peakshape'].get('fixedeta_factor',
                                                                                        0)
-        self.config['peakshape']['deltalorentz_factor'] = self.config['peakshape'].get('deltalorentz_factor',
-                                                                                       0.02)            
+        self.config['peakshape']['deltaeta_factor'] = self.config['peakshape'].get('deltaeta_factor',
+                                                    self.config['peakshape']['eta_factor'])
+        #fit function
+        self.config['fit']['fitfunction'] = self.config['fit'].get('fitfunction',
+                                                                   None)
+        if self.config['fit']['fitfunction'] is None:
+            if self.config['fit']['hypermetflag']:
+                self.config['fit']['fitfunction'] = 0
+            else:
+                self.config['fit']['fitfunction'] = 1
         #linear fitting option
         self.config['fit']['linearfitflag']   = self.config['fit'].get('linearfitflag', 0)        
         self.config['fit']['fitweight']    = self.config['fit'].get('fitweight', 1)        
@@ -239,7 +247,10 @@ class McaTheory:
           PEAKS0NAMES  = []
           PEAKS0ESCAPE = []
           PEAKSW=[]
-          HYPERMET =  self.config['fit']['hypermetflag']
+          if self.config['fit']['fitfunction'] == 0:
+              HYPERMET =  self.config['fit']['hypermetflag']
+          else:
+              HYPERMET = 0
           noise =     self.config['detector']['noise']
           fano  =     self.config['detector']['fano']
           elementsList =[]
@@ -414,7 +425,10 @@ class McaTheory:
                 PEAKS0NAMES  = []
                 PEAKS0ESCAPE = []
                 PEAKSW=[]
-                HYPERMET =  self.config['fit']['hypermetflag']
+                if self.config['fit']['fitfunction'] == 0:
+                    HYPERMET =  self.config['fit']['hypermetflag']
+                else:
+                    HYPERMET = 0
                 noise =     self.config['detector']['noise']
                 fano  =     self.config['detector']['fano']
                 for item in data:
@@ -724,7 +738,7 @@ class McaTheory:
             PARAMETERS.append('LT SlopeR')
             PARAMETERS.append('STEP HeightR')
         else:
-            PARAMETERS.append('Lorentz Factor')
+            PARAMETERS.append('Eta Factor')
         NGLOBAL   = len(PARAMETERS)
         for item in data:
             PARAMETERS.append(item[1]+" "+item[2])
@@ -1068,7 +1082,7 @@ class McaTheory:
                     PEAKSW[i] [:,7] = param[PARAMETERS.index('STEP HeightR')]
                 else:
                     #pseudo voigt
-                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Lorentz Factor')]
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Eta Factor')]
                 if not FASTER:
                     if hypermet:
                         if i == 0:
@@ -1182,7 +1196,7 @@ class McaTheory:
                     PEAKSW[i] [r:,5] = 0.0 
                     PEAKSW[i] [r:,7] = 0.0
                 else:
-                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Lorentz Factor')]                    
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Eta Factor')]                    
                 if not FASTER:
                     print "not FASTER"
                     #if HYPERMET:
@@ -1208,7 +1222,7 @@ class McaTheory:
                     PEAKSW[i] [:,6] = param[PARAMETERS.index('LT SlopeR')]
                     PEAKSW[i] [:,7] = param[PARAMETERS.index('STEP HeightR')]
                 else:
-                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Lorentz Factor')]
+                    PEAKSW[i] [:,3] = param[PARAMETERS.index('Eta Factor')]
                 if not FASTER:
                     if hypermet:
                         if i == 0:
@@ -1409,7 +1423,7 @@ class McaTheory:
                 dummy[0:r,7] = param[PARAMETERS.index('STEP HeightR')]
                 dummy[r:,7]  = 0.0
          else:
-                dummy[0:,3] = param[PARAMETERS.index('Lorentz Factor')]             
+                dummy[0:,3] = param[PARAMETERS.index('Eta Factor')]             
          #this was to test the analytical versus the numerical derivative
          #nderiv = self.num_deriv(param0,index,t0)
          #try:
@@ -1587,8 +1601,8 @@ class McaTheory:
             else:
                 newpar.append(0.0)
         else:
-            lorentz_factor = self.config['peakshape']['lorentz_factor']
-            newpar.append(lorentz_factor)
+            eta_factor = self.config['peakshape']['eta_factor']
+            newpar.append(eta_factor)
             
         if not linearfit:
             for i in range(len(PARAMETERS)-NGLOBAL):
@@ -1662,12 +1676,12 @@ class McaTheory:
                 codes[1,i] = newpar[i] + self.config['peakshape']['deltastep_heightratio']
                 codes[2,i] = newpar[i] - self.config['peakshape']['deltastep_heightratio']
         else:
-            i = PARAMETERS.index('Lorentz Factor')
+            i = PARAMETERS.index('Eta Factor')
             codes[0, i] = Gefit.CQUOTED
-            if self.config['peakshape']['fixedlorentz_factor'] or linearfit:
+            if self.config['peakshape']['fixedeta_factor'] or linearfit:
                 codes[0,i] = Gefit.CFIXED
-            codes[1,i] = max(newpar[i] + self.config['peakshape']['deltalorentz_factor'], 0.0)
-            codes[2,i] = min(newpar[i] - self.config['peakshape']['deltalorentz_factor'], 1.0)
+            codes[1,i] = max(newpar[i] + self.config['peakshape']['deltaeta_factor'], 0.0)
+            codes[2,i] = min(newpar[i] - self.config['peakshape']['deltaeta_factor'], 1.0)
         #"""
         #firstshot=mcatheory(newpar,x)
         #a linear fit does not need an initial estimate of the areas

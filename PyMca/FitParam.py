@@ -412,13 +412,11 @@ class FitParamWidget(FitParamForm):
                 attpar.append(int(self.attTable.cellWidget(idx,0).isChecked()))
             attpar.append(str(self.attTable.text(idx,2)))
             try:
-            #if 1:
                 attpar.append(float(str(self.attTable.text(idx, 3))))
                 attpar.append(float(str(self.attTable.text(idx, 4))))
                 if att.upper() == "MATRIX":
                     attpar.append(self.matrixGeometry.getParameters("AlphaIn"))     
                     attpar.append(self.matrixGeometry.getParameters("AlphaOut"))                    
-            #else:
             except:
                 if att.upper() != "MATRIX":
                     attpar= [0, '-', 0., 0.]
@@ -536,9 +534,13 @@ class FitParamWidget(FitParamForm):
         self.shCheck.setChecked(self.__get("peakshape","fixedstep_heightratio", 0, int))
         self.shValue.setText(self.__get("peakshape","step_heightratio"))
         self.shError.setText(self.__get("peakshape","deltastep_heightratio"))
-        self.etaCheck.setChecked(self.__get("peakshape","fixedlorentz_factor", 0, int))
-        self.etaValue.setText(self.__get("peakshape","lorentz_factor", 0.02, str))
-        self.etaError.setText(self.__get("peakshape","deltalorentz_factor", 0.02, str))
+        self.etaCheck.setChecked(self.__get("peakshape","fixedeta_factor", 0, int))
+        eta = self.__get("peakshape","eta_factor", 0.2, str)
+        self.etaValue.setText(eta)
+        deltaeta = self.__get("peakshape","deltaeta_factor", 0.2, str)
+        if float(deltaeta) > float(eta):
+            deltaeta = eta
+        self.etaError.setText(deltaeta)
 
     def __getPeakShapePar(self):
         pars= {}
@@ -568,13 +570,12 @@ class FitParamWidget(FitParamForm):
             err= "Step Heigth Error"
             pars["deltastep_heightratio"]= float(str(self.shError.text()))
             pars["fixedstep_heightratio"]= int(self.shCheck.isChecked())
-            err= "Lorentz Factor Value"
-            pars["lorentz_factor"]= float(str(self.etaValue.text()))
+            err= "Eta Factor Value"
+            pars["eta_factor"]= float(str(self.etaValue.text()))
             err= "Step Heigth Error"
-            pars["deltalorentz_factor"]= float(str(self.etaError.text()))
-            pars["fixedlorentz_factor"]= int(self.etaCheck.isChecked())
+            pars["deltaeta_factor"]= float(str(self.etaError.text()))
+            pars["fixedeta_factor"]= int(self.etaCheck.isChecked())
             return pars
-        #else:
         except:
             self.__parError("PEAK SHAPE", "Peak Shape Parameter error on:\n%s"%err)
             return None
@@ -652,9 +653,11 @@ class FitParamWidget(FitParamForm):
         #if 1:
         try:
             if QTVERSION < '4.0.0':
+                pars["fitfunction"]= int(self.functionCombo.currentItem())
                 pars["continuum"]= int(self.contCombo.currentItem())
                 pars["fitweight"]= int(self.weightCombo.currentItem())
             else:
+                pars["fitfunction"]= int(self.functionCombo.currentIndex())
                 pars["continuum"]= int(self.contCombo.currentIndex())
                 pars["fitweight"]= int(self.weightCombo.currentIndex())
             pars["linpolorder"]= self.linpolOrder or 1
@@ -682,10 +685,7 @@ class FitParamWidget(FitParamForm):
             shortflag= int(self.shortCheck.isChecked())
             longflag= int(self.longCheck.isChecked())
             stepflag= int(self.stepCheck.isChecked())
-            if QTVERSION < '4.0.0':
-                index = self.functionCombo.currentItem()
-            else:
-                index = self.functionCombo.currentIndex()
+            index = pars['fitfunction']
             if index == 0:
                 hypermetflag = 1 
             else:
@@ -1073,12 +1073,17 @@ class FitParamDialog(qt.QDialog):
 
         #peak shape
         hypermetflag = self.fitresult['config']['fit']['hypermetflag']
-        if hypermetflag == 0:
-            name = 'Lorentz Factor' 
+        fitfunction = self.fitresult['config']['fit'].get('fitfunction', 0)
+        if (fitfunction == 0) and (hypermetflag == 0):
+            fitfunction = 1
+        if fitfunction == 1:
+            name = 'Eta Factor' 
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.etaValue.setText("%.6g" % value)
+                deltaeta = min(value, float(self.fitparam.etaError.text()))
+                self.fitparam.etaError.setText("%.6g" % deltaeta)
         elif hypermetflag > 1:
             hypermetnames = ['ST AreaR', 'ST SlopeR',
                              'LT AreaR', 'LT SlopeR',
