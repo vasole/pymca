@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-___revision__ = "$Revision: 1.75 $"
+___revision__ = "$Revision: 1.76 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -1518,9 +1518,18 @@ class McaTheory:
         SUM        = self.__SUM
         NGLOBAL    = self.NGLOBAL
         CONTINUUM     = self.__CONTINUUM
+        #linear fit flag
+        linearfit = self.config['fit'].get("linearfitflag", 0)
+
         newpar=[]
         #default parameters from config
         zero      = self.config['detector']['zero']
+        if self.config['detector']['fixedzero'] or linearfit:
+            pass
+        elif abs(zero) < 1.0E-10:
+            #try to avoid a zero derivative because
+            #the initial zero is too small
+            zero = 0.0            
         gain      = self.config['detector']['gain']
         sumfactor = self.config['detector']['sum']
         newpar.append(zero)
@@ -1528,9 +1537,6 @@ class McaTheory:
         newpar.append(self.config['detector']['noise'])
         newpar.append(self.config['detector']['fano'])
         newpar.append(sumfactor)
-
-        #linear fit flag
-        linearfit = self.config['fit'].get("linearfitflag", 0)
         
         #####################
         if CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial'):
