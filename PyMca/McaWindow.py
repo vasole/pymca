@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.50 $"
+__revision__ = "$Revision: 1.51 $"
 import sys
 import time
 import QtBlissGraph
@@ -1895,7 +1895,10 @@ class McaWidget(qt.QWidget):
                             else:
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
-                            self.graph.xlabel('Energy')
+                            if calibrationOrder == 'ID18':
+                                self.graph.x1Label('Time')
+                            else:
+                                self.graph.x1Label('Energy')
                     elif self.calibration == 'Fit':
                         print "Not yet implemented"
                         continue
@@ -1933,8 +1936,12 @@ class McaWidget(qt.QWidget):
                                                 regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
-                            self.graph.xlabel('Energy')
+                                                x=xdata,y=data,logfilter=1,
+                                                    curveinfo=curveinfo)
+                            if calibrationOrder == 'ID18':
+                                self.graph.x1Label('Time')
+                            else:
+                                self.graph.x1Label('Energy')
                     else:
                         if simplefitplot:
                             self.graph.newCurve(legend,

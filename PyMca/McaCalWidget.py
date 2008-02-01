@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.18 $"
+__revision__ = "$Revision: 1.19 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -39,6 +39,8 @@ import Specfit
 import SpecfitFuns
 from PyMca_Icons import IconDict
 import PeakTableWidget
+if 0:
+    import XRDPeakTableWidget
 import copy
 DEBUG = 0
 
@@ -52,7 +54,7 @@ class HorizontalSpacer(qt.QWidget):
 class McaCalWidget(qt.QDialog):
     def __init__(self, parent=None, name="MCA Calibration Widget", 
                 x = None,y=None,current=None,peaks=None,caldict=None,
-                specfit=None,legend="",modal=0,fl=0):
+                specfit=None,legend="", xrd=False, lambda_="-", modal=0,fl=0):
                 #fl=qt.Qt.WDestructiveClose):
         self.name= name
         if QTVERSION < '4.0.0':
@@ -63,8 +65,10 @@ class McaCalWidget(qt.QDialog):
             self.setModal(modal)
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(self.name)
-        #qt.QMainWindow.__init__(self, parent, name,qt.Qt.WType_Popup)
-
+        self.__xrdMode = xrd
+        self.__xrdLambda = lambda_
+        self.__xrdEnergy = ""
+        self.__xrdParticle = "Photon"
         self.__manualsearch=0
         self.foundpeaks    =[]
         if caldict is None:
@@ -146,8 +150,11 @@ class McaCalWidget(qt.QDialog):
             self.bottomPanel.layout.addWidget(HorizontalSpacer(self.bottomPanel))
         #self.cal.setSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding)
         self.peakpar.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                                                  qt.QSizePolicy.Fixed))       
-        self.peaktable      = PeakTableWidget.PeakTableWidget(self.bottomPanel)
+                                                  qt.QSizePolicy.Fixed))
+        if self.__xrdMode:
+            self.peaktable      = XRDPeakTableWidget.XRDPeakTableWidget(self.bottomPanel)
+        else:
+            self.peaktable      = PeakTableWidget.PeakTableWidget(self.bottomPanel)
         self.bottomPanel.layout.addWidget(self.peaktable)
         self.peaktable.verticalHeader().hide()
         if QTVERSION < '4.0.0':
@@ -217,7 +224,10 @@ class McaCalWidget(qt.QDialog):
         self.ypos.setFixedWidth(self.ypos.fontMetrics().width('#########'))
         self.toolbar.layout.addWidget(self.ypos)
         label=qt.QLabel(toolbar)
-        label.setText('<b>Energy:</b>')
+        if self.__xrdMode:
+            label.setText('<b>2Theta:</b>')
+        else:
+            label.setText('<b>Energy:</b>')
         self.toolbar.layout.addWidget(label)
         self.epos = qt.QLineEdit(toolbar)
         self.epos.setText('------')
@@ -233,7 +243,8 @@ class McaCalWidget(qt.QDialog):
         toolbar2.layout.setMargin(0)
         toolbar2.layout.setSpacing(0)
         self.calpar         = CalibrationParameters(toolbar2,
-                                calname=self.current,caldict=self.caldict)
+                                calname=self.current,caldict=self.caldict,
+                                xrd=self.__xrdMode)
         self.calpar. setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         self.okButton       = qt.QPushButton(toolbar2)
         self.okButton.setText('OK')
@@ -324,14 +335,14 @@ class McaCalWidget(qt.QDialog):
                                     fwhm,
                                     sensitivity)
         self.foundpeaks = []
-        self.graph.clearmarkers()
+        self.graph.clearMarkers()
         self.__destroylinewidgets()
         self.peaktable.setRowCount(0)
         i = 0
         for idx in peaksidx:
             self.foundpeaks.append(self.specfit.xdata[int(idx)])            
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-            self.graph.insertx1marker(self.specfit.xdata[int(idx)],1.1)
+            self.graph.insertX1Marker(self.specfit.xdata[int(idx)],1.1)
             i += 1
         self.graph.replot()
         #make sure marker mode is on
@@ -341,7 +352,7 @@ class McaCalWidget(qt.QDialog):
 
     def clearpeaks(self):
         self.foundpeaks = []
-        self.graph.clearmarkers()
+        self.graph.clearMarkers()
         self.__destroylinewidgets()
         self.peaktable.setRowCount(0)
         self.graph.replot()
@@ -413,11 +424,44 @@ class McaCalWidget(qt.QDialog):
             self.current  = current
             order = dict['caldict'][current]['order']
             self.caldict[current]['order'] = order
-            self.caldict[current]['A']     = dict['caldict'][current]['A']
-            self.caldict[current]['B']     = dict['caldict'][current]['B']
-            self.caldict[current]['C']     = dict['caldict'][current]['C']
+            if order == "ID18":
+                result = self.timeCalibratorCalibration()
+                if result is None:
+                    return
+                peak0, npeaks, delta, deltat = result[:]
+                self.clearpeaks()
+                self.foundpeaks = []
+                for i in range(int(npeaks)):
+                    channel = peak0 + i * delta
+                    calenergy = deltat * (i + 1)
+                    self.foundpeaks.append(channel)
+                    marker = self.graph.insertX1Marker(channel,1.1)
+                    self.graph.setmarkercolor(marker,'red')
+                    name   = "%d" % i
+                    if name in self.peaktable.peaks.keys():
+                        self.peaktable.configure(number=name,
+                                             channel=channel,
+                                             use=1,
+                                             setenergy=calenergy,
+                                             calenery=calenergy)
+                    else:
+                        nlines=self.peaktable.rowCount()
+                        self.peaktable.newpeakline(name, nlines+1)
+                        self.peaktable.configure(number=name,
+                                             channel=channel,
+                                             use=1,
+                                             setenergy=calenergy,
+                                             calenery=calenergy)
+                #make sure we cannot select the peaks again
+                self.markermode = 1
+                self.__peakmarkermode()
+                self.graph.replot()
+            else:
+                self.caldict[current]['A']     = dict['caldict'][current]['A']
+                self.caldict[current]['B']     = dict['caldict'][current]['B']
+                self.caldict[current]['C']     = dict['caldict'][current]['C']
             self.__peaktablesignal({'event':'use'})
-
+                    
         elif dict['event'] == 'savebox':
             current = dict['calname' ]
             if current not in self.caldict.keys():
@@ -460,7 +504,18 @@ class McaCalWidget(qt.QDialog):
             calenergy = self.caldict[current]['A']+ \
                         self.caldict[current]['B'] * channel+ \
                         self.caldict[current]['C'] * channel * channel
-            linewidget = InputLine(self,name="Enter Selected Peak Parameters",
+            if self.__xrdMode:
+                linewidget = XRDPeakTableWidget.XRDInputLine(self,name="Enter Selected Peak Parameters",
+                                    peakpars={'name':name,
+                                              'number':number,
+                                              'channel':channel,
+                                              'use':1,
+                                              'cal2theta':calenergy,
+                                              'energy':self.__xrdEnergy,
+                                              'lambda_':self.__xrdLambda,
+                                              'particle':self.__xrdParticle})
+            else:
+                linewidget = InputLine(self,name="Enter Selected Peak Parameters",
                                     peakpars={'name':name,
                                     'number':number,
                                     'channel':channel,
@@ -480,13 +535,20 @@ class McaCalWidget(qt.QDialog):
                     else:
                         nlines=self.peaktable.rowCount()
                         ddict['name'] = name
-                        self.peaktable.newpeakline(name,nlines+1)
+                        self.peaktable.newpeakline(name, nlines+1)
                         self.peaktable.configure(**ddict)
                     peakdict = self.peaktable.getdict()
                     usedpeaks = []
                     for peak in peakdict.keys():
                         if peakdict[peak]['use'] == 1:
-                            usedpeaks.append([peakdict[peak]['channel'],
+                            if self.__xrdMode:
+                                self.__xrdLambda = ddict['lambda_']
+                                self.__xrdParticle = ddict['particle']
+                                self.__xrdEnergy = ddict['energy']
+                                usedpeaks.append([peakdict[peak]['channel'],
+                                              peakdict[peak]['set2theta']])
+                            else:
+                                usedpeaks.append([peakdict[peak]['channel'],
                                               peakdict[peak]['setenergy']])
                     if len(usedpeaks):
                         newcal = self.calculate(usedpeaks,order=self.caldict[current]['order'])
@@ -521,7 +583,7 @@ class McaCalWidget(qt.QDialog):
                 # insert the marker
                 self.foundpeaks.append(x)            
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-                self.graph.insertx1marker(x,y)
+                self.graph.insertX1Marker(x,y)
                 self.graph.replot()
                 self.markermode = 0
                 self.__peakmarkermode()
@@ -542,7 +604,11 @@ class McaCalWidget(qt.QDialog):
             usedpeaks = []
             for peak in peakdict.keys():
                 if peakdict[peak]['use'] == 1:
-                    usedpeaks.append([peakdict[peak]['channel'],
+                    if self.__xrdMode:
+                        usedpeaks.append([peakdict[peak]['channel'],
+                                      peakdict[peak]['set2theta']])
+                    else:
+                        usedpeaks.append([peakdict[peak]['channel'],
                                       peakdict[peak]['setenergy']])
             if len(usedpeaks):
               if usedpeaks != [[0.0,0.0]]:
@@ -561,9 +627,80 @@ class McaCalWidget(qt.QDialog):
                     else:
                         calenergy  = self.caldict[current]['A'] + \
                                  self.caldict[current]['B'] * channel +\
-                                 self.caldict[current]['C'] * channel * channel  
-                    self.peaktable.configure(name=peak,
-                                            calenergy=calenergy)
+                                 self.caldict[current]['C'] * channel * channel
+                    if self.__xrdMode:
+                        self.peaktable.configure(name=peak, cal2theta=calenergy)
+                    else:
+                        self.peaktable.configure(name=peak, calenergy=calenergy)
+
+    def timeCalibratorCalibration(self):
+        self.peaksearch()
+        # now we should have a list of peaks and the proper data to fit
+        if 'Periodic Gaussians' not in self.specfit.theorylist:
+            self.specfit.importfun("SpecfitFunctions.py")
+        self.specfit.settheory('Periodic Gaussians')
+        self.specfit.setbackground('Constant')
+        fitconfig = {}
+        fitconfig.update(self.specfit.fitconfig)
+        fitconfig['WeightFlag'] = 1
+        fitconfig['McaMode']    = 0
+        self.specfit.configure(**fitconfig)
+        try:
+            self.specfit.estimate()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error on estimate: %s" % sys.exc_info()[1])
+            msg.exec_()
+            return
+        try:
+            self.specfit.startfit()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error on Fit")
+            msg.exec_()
+            return
+        npeaks = 0
+        delta  = 0.0
+        peak0  = 0.0
+        for i in range(len(self.specfit.paramlist)):
+            name = self.specfit.paramlist[i]['name']
+            if name == "Delta1":
+                delta = self.specfit.paramlist[i]['fitresult']
+            elif name == 'N1':
+                npeaks = self.specfit.paramlist[i]['fitresult']
+            elif name == 'Position1':
+                peak0 = self.specfit.paramlist[i]['fitresult']
+            else:
+                continue
+
+        if (npeaks < 2) or (delta==0):
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Less than two peaks found")
+            msg.exec_()
+            return
+
+
+        d = DoubleDialog(self, text='Enter peak separation in time:')
+        d.setWindowTitle('Time calibration')
+        ret = d.exec_()
+        if ret != qt.QDialog.Accepted:
+            return
+        text = str(d.lineEdit.text())
+        if not len(text):
+            deltat = 0.0
+        else:
+            deltat = float(text)
+        if (deltat == 0):
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Invalid peak separation %g" % deltat)
+            msg.exec_()
+            return
+
+        return peak0, npeaks, delta, deltat
 
 
     def getTOFEnergy(self, x, calibration = None):
@@ -641,10 +778,10 @@ class McaCalWidget(qt.QDialog):
         else:
             X= Numeric.array([Numeric.ones(len(channel)), channel, channel*channel])
         TX = Numeric.transpose(X)
-        XTX= Numeric.matrixmultiply(X, TX)
+        XTX= Numeric.dot(X, TX)
         INV= inverse(XTX)
-        PC = Numeric.matrixmultiply(energy, TX)
-        C  = Numeric.matrixmultiply(PC, INV)
+        PC = Numeric.dot(energy, TX)
+        C  = Numeric.dot(PC, INV)
 
         if order==1:
                 result= tuple(C.tolist())+(0.,)
@@ -786,12 +923,13 @@ class PeakSearchParameters(qt.QWidget):
 
 class CalibrationParameters(qt.QWidget):
     def __init__(self, parent=None, name="", calname="", 
-                 caldict = {},fl=0):
+                 caldict = {},fl=0, xrd=False):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)    
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
+        self.__xrdMode = xrd
         self.caldict=caldict
         if calname not in self.caldict.keys():
             self.caldict[calname] = {}
@@ -814,8 +952,12 @@ class CalibrationParameters(qt.QWidget):
             self.orderbox = SimpleComboBox(parw,
                                        options=['1st','2nd'])
         else:
-            self.orderbox = SimpleComboBox(parw,
-                                       options=['1st','2nd','TOF'])
+            if self.__xrdMode:
+                self.orderbox = SimpleComboBox(parw,
+                                       options=['1st','2nd'])
+            else:
+                self.orderbox = SimpleComboBox(parw,
+                                       options=['1st','2nd','TOF', 'ID18'])
         layout.addWidget(lab)
         layout.addWidget(self.orderbox)
         lab= qt.QLabel("A:", parw)
@@ -906,6 +1048,10 @@ class CalibrationParameters(qt.QWidget):
             self.caldict[self.currentcal]['order'] = 'TOF'
             self.CLabel.setText("Vr:")
             self.CText.setReadOnly(0)
+        elif qstring == "ID18":
+            self.caldict[self.currentcal]['order'] = 'ID18'
+            self.CLabel.setText("C:")
+            self.CText.setReadOnly(1)
         else:
             self.caldict[self.currentcal]['order'] = 2
             self.CLabel.setText("C:")
@@ -1032,17 +1178,42 @@ class MyQLineEdit(qt.QLineEdit):
         else:
             qt.QLineEdit.focusOutEvent(self, event)
 
+class DoubleDialog(qt.QDialog):
+    def __init__(self, parent=None, text=None, value=None):
+        qt.QDialog.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
+        label = qt.QLabel(self)
+        if text is None:
+            text = ""
+        label.setText(text)
+        self.lineEdit = qt.QLineEdit(self)
+        validator = qt.QDoubleValidator(self.lineEdit)
+        self.lineEdit.setValidator(validator)
+        if value is not None:
+            self.lineEdit.setValue('%g' % value)
 
-#class Popup(qt.QDialog):
-class Popup(qt.QWidget):
-    def __init__(self, parent=None, name=None, specfit=None, config=None,fl=0):
-        qt.QWidget.__init__(self, parent, name,qt.Qt.WType_Popup)  
-        #qt.QDialog.__init__(self, parent, name,qt.Qt.WType_Popup)  
-        label = qt.QLabel(self.parent)
-        label.setText("Hello")
+        self.okButton = qt.QPushButton(self)
+        self.okButton.setText('OK')
+
+        self.cancelButton = qt.QPushButton(self)
+        self.cancelButton.setText('Cancel')
+        self.okButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
+                                              qt.QSizePolicy.Fixed))
+        self.cancelButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
+                                                  qt.QSizePolicy.Fixed))
+
+        self.mainLayout.addWidget(label, 0, 0)
+        self.mainLayout.addWidget(self.lineEdit, 0, 1)
+        self.mainLayout.addWidget(self.okButton, 1, 0)
+        self.mainLayout.addWidget(self.cancelButton, 1, 1)
+
+        self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
+        self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
+
 
 class InputLine(qt.QDialog):
-    def __init__(self,parent ,name = "Peak Parameters",modal=1,peakpars={},fl=0):
+    def __init__(self,parent ,name = "Peak Parameters",modal=1,
+                 peakpars={}, fl=0):
         #fl=qt.Qt.WDestructiveClose):
         if QTVERSION < '4.0.0':
             qt.QDialog.__init__(self, parent, name, modal, fl)
@@ -1106,8 +1277,8 @@ class InputLine(qt.QDialog):
             calenergy = ""
         self.table.newpeakline(peakname,1)
         self.peakname = peakname 
-        self.table.configure(name   =peakname,
-                             number =number,
+        self.table.configure(name=peakname,
+                             number=number,
                              channel=channel,
                              element=element,
                              elementline=elementline,
@@ -1116,8 +1287,8 @@ class InputLine(qt.QDialog):
                              calenergy=calenergy)
 
     def getdict(self):
-        dict=self.table.getdict(self.peakname)
-        return dict
+        ddict=self.table.getdict(self.peakname)
+        return ddict
 
 class McaCalCopy(qt.QDialog):
     def __init__(self,parent=None ,name = None,modal=1,fl=0,
