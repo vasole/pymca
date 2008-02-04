@@ -35,6 +35,7 @@ QWTVERSION4 = QtBlissGraph.QWTVERSION4
 import os
 import numpy.oldnumeric as Numeric
 from numpy.oldnumeric.linear_algebra import inverse
+import Gefit
 import Specfit
 import SpecfitFuns
 from PyMca_Icons import IconDict
@@ -725,7 +726,8 @@ class McaCalWidget(qt.QDialog):
 
         and Vret is given as input by the user.
         """
-        if len(usedpeaks) < 2:
+        npeaks = len(usedpeaks)
+        if npeaks < 2:
             return
 
         ch0, e0 = usedpeaks[0]
@@ -745,8 +747,49 @@ class McaCalWidget(qt.QDialog):
 
         #calculate A
         A = (e0 - Vret) * (ch0 - B) * (ch0 - B)
-        
+
+        #refine if more than three peaks
+        if npeaks > 3:
+            parameters = Numeric.array([A, B, Vret])
+            x = Numeric.arange(npeaks * 1.0)
+            y = Numeric.arange(npeaks * 1.0)
+            for i in range(npeaks):
+                x[i] = usedpeaks[i][0]
+                y[i] = usedpeaks[i][1]
+            try:
+                fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF, parameters,
+                                                               xdata=x, ydata=y,
+                                               model_deriv=self.functionTOFDerivative)
+                if chisq != None:
+                    A= fittedpar[0]
+                    B= fittedpar[1]
+                    Vret= fittedpar[2]
+            except:
+                msg=qt.QMessageBox(self.AText)
+                msg.setWindowTitle(sys.exc_info()[0])
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error on fit:\n%s" sys.exc_info()[1])
+                msg.exec_()
+                        
         return (A, B, Vret)
+
+    def functionTOF(self, param, x):
+        A = param[0]
+        B = param[1]
+        C = param[2]
+        return C + A / ((x - B) * (x - B))
+
+    def functionTOFDerivative(self, param, index, x):
+        A = param[0]
+        B = param[1]
+        C = param[2]
+        if index == 0:
+            return self.functionTOF([1.0, B, 0.0], x)
+        if index == 1:
+            return -A * pow((x-B), -3)
+        if index == 2:
+            return Numeric.ones(x.shape, Numeric.Float)
+            
 
     def calculate(self,usedpeaks,order=1):
         """

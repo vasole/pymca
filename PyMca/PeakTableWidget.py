@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.6 $"
+__revision__ = "$Revision: 1.8 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -76,7 +76,7 @@ else:
             self.connect(self, qt.SIGNAL('clicked()'), self._cellChanged)
 
         def _cellChanged(self):
-            self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
+            self.emit(qt.SIGNAL('cellChanged(int, int)'), self._row, self._col)
 
 
 class PeakTableWidget(QTable):
@@ -206,6 +206,8 @@ class PeakTableWidget(QTable):
             self.peaks[peak]['use_item'].setText("")
             self.setCellWidget(linew, col,
                      self.peaks[peak]['use_item'])
+            self.connect(self.peaks[peak]['use_item'],
+                         qt.SIGNAL('cellChanged(int,int)'), self.myslot)
 
         self.peaks[peak]['use_item'].setChecked(self.peaks[peak]['use'])
         #Not supported below 3.0
@@ -221,6 +223,8 @@ class PeakTableWidget(QTable):
         if (field == "element") or (field == "elementline"):
             key = field+"_item"
             newvalue=self.peaks[peak][key].currentText()
+        elif field == "use":
+            pass
         else:
             if qt.qVersion() < '4.0.0':
                 newvalue=qt.QString(self.text(row,col))
