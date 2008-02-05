@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 try:
     import sps
@@ -36,6 +36,7 @@ except:
     #windows does not use it
     pass
 import threading
+import time
 
 spsdefaultoutput ={"axistitles":   '',
                         "xlabel":       '',
@@ -180,10 +181,17 @@ def getdatarow(spec,shm,idx):
 def getspeclist():
 
     result = []
-
+    i = 0
     spslock.acquire()
     try:
        result = sps.getspeclist()
+       # Awful patch because sometimes we miss the
+       # shared memory detection on old machines.
+       # We just try a maximum of three times
+       while (not len(result)) and (i < 2):
+           time.sleep(0.050)
+           result = sps.getspeclist()
+           i = i + 1
        if len(result):result.sort()
     except:
        pass
