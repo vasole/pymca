@@ -768,7 +768,7 @@ class McaCalWidget(qt.QDialog):
                 msg=qt.QMessageBox(self.AText)
                 msg.setWindowTitle(sys.exc_info()[0])
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error on fit:\n%s" sys.exc_info()[1])
+                msg.setText("Error on fit:\n%s" % sys.exc_info()[1])
                 msg.exec_()
                         
         return (A, B, Vret)
