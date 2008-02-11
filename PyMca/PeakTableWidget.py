@@ -312,6 +312,26 @@ class PeakTableWidget(QTable):
             else:
                 self.emit(qt.SIGNAL('PeakTableWidgetSignal'), (ddict))
 
+        if field == "channel":
+            oldvalue = self.peaks[peak]["channel"]
+            try:
+                value = string.atof(str(newvalue))
+            except:
+                print "taking old value"
+                if qt.qVersion() < '4.0.0':
+                    self.setText(row,col,oldvalue)
+                else:
+                    item = self.item(row, col)
+                    item.setText("%s" % oldvalue)
+                value = string.atof(str(oldvalue))
+            self.peaks[peak][field] = value 
+            ddict={}
+            ddict['event'] = 'use'
+            if qt.qVersion() < '4.0.0':
+                self.emit(qt.PYSIGNAL('PeakTableWidgetSignal'),(ddict,))
+            else:
+                self.emit(qt.SIGNAL('PeakTableWidgetSignal'), (ddict))
+
         if field == "use":
             if self.peaks[peak][field+"_item"].isChecked():
                 self.peaks[peak][field] = 1
