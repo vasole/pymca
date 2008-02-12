@@ -461,6 +461,9 @@ class McaCalWidget(qt.QDialog):
                 self.caldict[current]['A']     = dict['caldict'][current]['A']
                 self.caldict[current]['B']     = dict['caldict'][current]['B']
                 self.caldict[current]['C']     = dict['caldict'][current]['C']
+                if self.caldict[current]['order'] == 'TOF':
+                    self.caldict[current]['vfix'] = dict['caldict'][current]['vfix']
+                    
             self.__peaktablesignal({'event':'use'})
                     
         elif dict['event'] == 'savebox':
@@ -733,6 +736,7 @@ class McaCalWidget(qt.QDialog):
         ch0, e0 = usedpeaks[0]
         ch1, e1 = usedpeaks[1]
         Vret    = float(self.caldict[self.current]['C'])
+        fixed = self.caldict[self.current]['vfix']
 
         #calculate B
         Eterm = (e0 - Vret)/(e1 - Vret)
@@ -740,6 +744,7 @@ class McaCalWidget(qt.QDialog):
         a = Eterm - 1.0
         b = -2 * (Eterm * ch0 - ch1)
         c = Eterm * ch0 * ch0 - ch1 * ch1
+
 
         # I should check if b^2 - 4ac is less than zero
         # and I have to choose the appropriate sign
@@ -757,8 +762,13 @@ class McaCalWidget(qt.QDialog):
                 x[i] = usedpeaks[i][0]
                 y[i] = usedpeaks[i][1]
             try:
-                fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF, parameters,
-                                                               xdata=x, ydata=y,
+                codes = Numeric.zeros((3,3), Numeric.Float)
+                if fixed:
+                    codes[0,2] = Gefit.CFIXED
+                fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF, 
+                                               parameters,
+                                               xdata=x, ydata=y,
+                                               constrains=codes,
                                                model_deriv=self.functionTOFDerivative)
                 if chisq != None:
                     A= fittedpar[0]
@@ -770,7 +780,6 @@ class McaCalWidget(qt.QDialog):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on fit:\n%s" % sys.exc_info()[1])
                 msg.exec_()
-                        
         return (A, B, Vret)
 
     def functionTOF(self, param, x):
@@ -1015,8 +1024,14 @@ class CalibrationParameters(qt.QWidget):
         self.CLabel= qt.QLabel("C:", parw)
         layout.addWidget(self.CLabel)
         self.CText= MyQLineEdit(parw)
+        if QTVERSION > '4.0.0':
+            self.CFixed = qt.QCheckBox(self)
+            self.CFixed.setText('Fixed')
+            self.CFixed.setChecked(True)
+            layout.addWidget(self.CFixed)
+            self.CFixed.hide()
         layout.addWidget(self.CText)
-
+    
         if 0:
             self.savebut= qt.QPushButton(parw)
             self.savebut.setText("Add as")
@@ -1039,6 +1054,7 @@ class CalibrationParameters(qt.QWidget):
             self.connect(self.AText,qt.SIGNAL('editingFinished()'),self._Aslot)
             self.connect(self.BText,qt.SIGNAL('editingFinished()'),self._Bslot)
             self.connect(self.CText,qt.SIGNAL('editingFinished()'),self._Cslot)
+            self.connect(self.CFixed,qt.SIGNAL('clicked()'),self._CFixSlot)
             
         self.connect(self.orderbox,qt.SIGNAL('activated(const QString &)'),self.__orderbox)
         #self.connect(self.savebut,qt.SIGNAL('clicked()')    ,self.myslot)
@@ -1078,6 +1094,9 @@ class CalibrationParameters(qt.QWidget):
       
     def getdict(self):
         return self.caldict
+
+    def _CFixSlot(self):
+        self.__orderbox(qt.QString('TOF'))
     
     def __orderbox(self,qstring):
         qstring = str(qstring)
@@ -1086,19 +1105,27 @@ class CalibrationParameters(qt.QWidget):
             self.CText.setText("0.0")
             self.CText.setReadOnly(1)
             self.CLabel.setText("C:")
-            self.caldict[self.currentcal]['C'] = 0.0        
+            self.caldict[self.currentcal]['C'] = 0.0
+            if QTVERSION > '4.0.0':
+                self.CFixed.hide()
         elif qstring == "TOF":
             self.caldict[self.currentcal]['order'] = 'TOF'
+            self.caldict[self.currentcal]['vfix'] = self.CFixed.isChecked()
             self.CLabel.setText("Vr:")
             self.CText.setReadOnly(0)
+            self.CFixed.show()
         elif qstring == "ID18":
             self.caldict[self.currentcal]['order'] = 'ID18'
             self.CLabel.setText("C:")
             self.CText.setReadOnly(1)
+            if QTVERSION > '4.0.0':
+                self.CFixed.hide()
         else:
             self.caldict[self.currentcal]['order'] = 2
             self.CLabel.setText("C:")
             self.CText.setReadOnly(0)
+            if QTVERSION > '4.0.0':
+                self.CFixed.hide()
         self.myslot(event='order')
 
     def __savebox(self,qstring):
@@ -1176,6 +1203,7 @@ class CalibrationParameters(qt.QWidget):
                 ddict['event']         = "order"
                 ddict['calname']       = self.currentcal
                 ddict['caldict']       = self.caldict
+                    
             if (kw['event'] == 'coeff'):
                 ddict={}
                 ddict['event']         = "coeff"
