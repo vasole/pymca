@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -93,8 +93,9 @@ class EDFStack(DataObject.DataObject):
                 if nImages > 1:
                     #this is not the common case
                     #should I try to convert it to a standard one
-                    #using a 3D matrix or kepp as 4D matrix?
-                    raise IOError, "Not implemented yet"
+                    #using a 3D matrix or keep as 4D matrix?
+                    if self.nbFiles > 1:
+                        raise IOError, "Multiple files with multiple images implemented yet"
                     self.data = Numeric.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                nImages * self.nbFiles),
@@ -145,20 +146,53 @@ class EDFStack(DataObject.DataObject):
                     #this is not the common case
                     #should I try to convert it to a standard one
                     #using a 3D matrix or kepp as 4D matrix?
-                    raise IOError, "Not implemented yet"
-                    self.data = Numeric.zeros((nImages * self.nbFiles,
+                    if self.nbFiles > 1:
+                        if (arrRet.shape[0] > 1) and\
+                           (arrRet.shape[1] > 1):
+                                raise IOError, "Multiple files with multiple images not implemented yet"
+                        elif arrRet.shape[0] == 1:
+                            self.data = Numeric.zeros((self.nbFiles,
+                                               arrRet.shape[0] * nImages,
+                                               arrRet.shape[1]),
+                                               arrRet.dtype.char)
+                            self.incrProgressBar=0
+                            for tempEdfFileName in filelist:
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                for i in range(nImages):
+                                    pieceOfStack=tempEdf.GetData(i)
+                                    self.data[self.incrProgressBar,
+                                              i,:] = \
+                                                              pieceOfStack[:,:]
+                                self.incrProgressBar += 1
+                        elif arrRet.shape[1] == 1:
+                            self.data = Numeric.zeros((self.nbFiles,
+                                               arrRet.shape[1] * nImages,
+                                               arrRet.shape[0]),
+                                               arrRet.dtype.char)
+                            self.incrProgressBar=0
+                            for tempEdfFileName in filelist:
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                for i in range(nImages):
+                                    pieceOfStack=tempEdf.GetData(i)
+                                    self.data[self.incrProgressBar,
+                                              i,:] = \
+                                                              pieceOfStack[:,:]
+                                self.incrProgressBar += 1
+                    else:
+                        self.data = Numeric.zeros((nImages * self.nbFiles,
                                                arrRet.shape[0],
                                                arrRet.shape[1]),
                                                arrRet.dtype.char)
-                    self.incrProgressBar=0
-                    for tempEdfFileName in filelist:
-                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                        for i in range(nImages):
-                            pieceOfStack=tempEdf.GetData(i)
-                            self.data[nImages*self.incrProgressBar+i,
-                                      :,:] = \
-                                                      pieceOfStack[:,:]
-                        self.incrProgressBar += 1
+                        self.incrProgressBar=0
+                        for tempEdfFileName in filelist:
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            for i in range(nImages):
+                                pieceOfStack=tempEdf.GetData(i)
+                                self.data[nImages*self.incrProgressBar+i,
+                                          :,:] = \
+                                                          pieceOfStack[:,:]
+                            self.incrProgressBar += 1
+                    self.onEnd()
                 else:
                     #this is the common case
                     if arrRet.dtype.char == 'd':
