@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -51,7 +51,7 @@ try:
 except ImportError:
     MATPLOTLIB = False
 import OmnicMap
-
+import LuciaMap
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -1751,6 +1751,9 @@ if __name__ == "__main__":
         elif line.startswith('Spectral'):
             stack = OmnicMap.OmnicMap(args[0])
             omnicfile = True
+        elif line.startswith('#\tDate:'):
+            stack = LuciaMap.LuciaMap(args[0])
+            omnicfile = True
         else:
             stack = QSpecFileStack()
         f.close()
@@ -1760,7 +1763,10 @@ if __name__ == "__main__":
     elif len(args) == 1:
         if not omnicfile:
             stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
-        PyMcaDirs.inputDir = os.path.dirname(args[0])
+        try:
+            PyMcaDirs.inputDir = os.path.dirname(args[0])
+        except ValueError:
+            PyMcaDirs.inputDir = os.getcwd()
     else:
         if 1:
             filelist = w._getStackOfFiles()
@@ -1777,6 +1783,9 @@ if __name__ == "__main__":
                     stack = QStack()
                 elif line.startswith('Spectral'):
                     stack = OmnicMap.OmnicMap(filelist[0])
+                    omnicfile = True
+                elif line.startswith('#\tDate'):
+                    stack = LuciaMap.LuciaMap(filelist[0])
                     omnicfile = True
                 else:
                     stack = QSpecFileStack()
