@@ -887,10 +887,10 @@ class QEDFStackWidget(qt.QWidget):
                 width = self.__ROIBrushWidth   #in (row, column) units
                 r = self.__stackImageData.shape[0]
                 c = self.__stackImageData.shape[1]
-                xmin = max(abs(ddict['x']-0.5*width), 0)
-                xmax = min(abs(ddict['x']+0.5*width), c)
-                ymin = max(abs(ddict['y']-0.5*width), 0)
-                ymax = min(abs(ddict['y']+0.5*width), r)
+                xmin = max((ddict['x']-0.5*width), 0)
+                xmax = min((ddict['x']+0.5*width), c)
+                ymin = max((ddict['y']-0.5*width), 0)
+                ymax = min((ddict['y']+0.5*width), r)
                 i1 = min(int(round(xmin)), c-1)
                 i2 = min(int(round(xmax)), c)
                 j1 = min(int(round(ymin)),r-1)
