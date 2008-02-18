@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -65,13 +65,17 @@ class SpecFileStack(DataObject.DataObject):
         keylist = tempInstance.getSourceInfo()['KeyList']
         nscans = len(keylist)        #that is the number of scans
         nmca = 0
+        numberofdetectors = 0
         for key in keylist:
             info = tempInstance.getKeyInfo(key)
-            numberofdetectors = info['NbMcaDet']
             numberofmca       = info['NbMca']
+            if numberofmca > 0:
+                numberofdetectors = info['NbMcaDet']
             scantype          = info["ScanType"]
             if numberofmca:
                 nmca += numberofmca
+        if numberofdetectors == 0:
+            raise ValueError, "No MCA found in file %s" % filelist[0]
         #get last mca of first point
         key = "%s.1.%s" % (keylist[-1], numberofmca)
         dataObject = tempInstance._getMcaData(key)
