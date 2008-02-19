@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.51 $"
+__revision__ = "$Revision: 1.52 $"
 import sys
 import time
 import QtBlissGraph
@@ -1384,6 +1384,7 @@ class McaWidget(qt.QWidget):
             newDataObject.info['Key']       = legend
             newDataObject.info['regions']   = regions
             newDataObject.info['CalMode']   = self.__simplefitcalmode
+            newDataObject.info['McaCalib']  = self.__simplefitcalibration
             x    = Numeric.array(xfinal)
             yfit = Numeric.array(yfinal)
             yb = Numeric.array(ybfinal)
@@ -1838,10 +1839,10 @@ class McaWidget(qt.QWidget):
                                 for region in info['regions']:
                                     inforegions.append([calib[0] + \
                                                         calib[1] * region[0] +\
-                                                        calib[1] * region[0] * region[0],
+                                                        calib[2] * region[0] * region[0],
                                                         calib[0] + \
                                                         calib[1] * region[1] +\
-                                                        calib[1] * region[1] * region[1]])
+                                                        calib[2] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1,
                                                 curveinfo=curveinfo,
@@ -1883,10 +1884,10 @@ class McaWidget(qt.QWidget):
                                     else:
                                         inforegions.append([calib[0] + \
                                                         calib[1] * region[0] +\
-                                                        calib[1] * region[0] * region[0],
+                                                        calib[2] * region[0] * region[0],
                                                         calib[0] + \
                                                         calib[1] * region[1] +\
-                                                        calib[1] * region[1] * region[1]])
+                                                        calib[2] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1,
                                                 curveinfo=curveinfo,
@@ -1925,10 +1926,10 @@ class McaWidget(qt.QWidget):
                                     else:
                                         inforegions.append([calib[0] + \
                                                         calib[1] * region[0] +\
-                                                        calib[1] * region[0] * region[0],
+                                                        calib[2] * region[0] * region[0],
                                                         calib[0] + \
                                                         calib[1] * region[1] +\
-                                                        calib[1] * region[1] * region[1]])
+                                                        calib[2] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
                                                 x=xdata,y=data,logfilter=1,
                                                 curveinfo=curveinfo,

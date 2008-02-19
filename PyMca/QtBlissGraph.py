@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1807,16 +1807,12 @@ class QtBlissGraph(qwt.QwtPlot):
                 else:
                     self.curves[key]['curve'].setbaseline(ybase)
             if kw.has_key('regions'):
-                #print "x0 = ",x[0]
-                #print "x-1= ",x[-1]
                 regions = []
                 for region in kw['regions']:
-                    #print region[0]
-                    #print region[1]
-                    i1 = min(numpy.nonzero(x>=region[0]),0)
-                    i2 = max(numpy.ravel(numpy.nonzero(x<=region[1])))
-                    #print "i1,i2 ",i1,i2
-                    #print len(x)
+                    region0 = min(region[0], region[1])
+                    region1 = max(region[0], region[1])
+                    i1 = min(numpy.nonzero(x>=region0),0)
+                    i2 = max(numpy.ravel(numpy.nonzero(x<=region1)))
                     regions.append([int(i1),int(i2)])
                 if QWTVERSION4:
                     self.curve(self.curves[key]['curve']).setregions(regions)
