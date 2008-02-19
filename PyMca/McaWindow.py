@@ -1358,9 +1358,11 @@ class McaWidget(qt.QWidget):
             ybfinal= []
             regions = []
             legend0= dict['info']['legend']
+            mcamode = True
             for result in mcaresult:
                 i += 1
                 if result['chisq'] is not None:
+                     mcamode = result['fitconfig']['McaMode']                         
                      idx=Numeric.nonzero((self.specfit.xdata0>=result['xbegin']) & \
                                          (self.specfit.xdata0<=result['xend']))
                      x=Numeric.take(self.specfit.xdata0,idx)
@@ -1375,6 +1377,14 @@ class McaWidget(qt.QWidget):
                      ybfinal= ybfinal + yb.tolist()
                     #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
             legend = legend0 + " SFit"            
+            if legend in self.dataObjectsDict.keys():
+                if legend in self.graph.curves.keys():                    
+                    if mcamode:
+                        if not self.dataObjectsDict[legend].info.has_key('baseline'):
+                            self.graph.delcurve(legend)
+                    else:
+                        if self.dataObjectsDict[legend].info.has_key('baseline'):
+                            self.graph.delcurve(legend)
             #copy the original info from the curve
             newDataObject = DataObject.DataObject()
             newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
@@ -1382,7 +1392,6 @@ class McaWidget(qt.QWidget):
             newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
             newDataObject.info['legend']    = legend
             newDataObject.info['Key']       = legend
-            newDataObject.info['regions']   = regions
             newDataObject.info['CalMode']   = self.__simplefitcalmode
             newDataObject.info['McaCalib']  = self.__simplefitcalibration
             x    = Numeric.array(xfinal)
@@ -1391,7 +1400,9 @@ class McaWidget(qt.QWidget):
             newDataObject.x = [x]
             newDataObject.y = [yfit]
             newDataObject.m = None
-            newDataObject.info['baseline'] = yb
+            if mcamode:
+                newDataObject.info['regions']   = regions
+                newDataObject.info['baseline'] = yb
             self.dataObjectsDict[legend] = newDataObject
             self.refresh()
             return

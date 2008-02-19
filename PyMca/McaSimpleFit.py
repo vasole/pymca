@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 from SpecfitGUI import qt
@@ -62,21 +62,17 @@ class McaSimpleFit(qt.QWidget):
 
         layout.addWidget(self.headerlabel)
         layout.addWidget(self.specfitGUI)
-        #self.specfitGUI.updateGUI(configuration=fitconfig)
-        #self.setdata = self.specfit.setdata
-        
-        self.specfitGUI.guiconfig.MCACheckBox.setEnabled(0)
-        palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
-        if QTVERSION < '4.0.0':
-            palette.setDisabled(palette.active())
-        ##############
+
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
+        self.estimatebutton = qt.QPushButton(hbox)
+        self.estimatebutton.setText("Estimate")            
         hs1 = HorizontalSpacer(hbox)
         self.fitbutton = qt.QPushButton(hbox)
         self.fitbutton.setText("Fit Again!")
         self.dismissbutton = qt.QPushButton(hbox)
         self.dismissbutton.setText("Dismiss")        
+        self.connect(self.estimatebutton,qt.SIGNAL("clicked()"),self.estimate)
         self.connect(self.fitbutton,    qt.SIGNAL("clicked()"),self.fit)
         self.connect(self.dismissbutton,qt.SIGNAL("clicked()"),self.dismiss)
         if QTVERSION < '4.0.0':
@@ -89,10 +85,12 @@ class McaSimpleFit(qt.QWidget):
                          self.__anasignal)
         hs2 = HorizontalSpacer(hbox)
         hboxLayout.addWidget(hs1)
+        hboxLayout.addWidget(self.estimatebutton)
         hboxLayout.addWidget(self.fitbutton)
         hboxLayout.addWidget(self.dismissbutton)
         hboxLayout.addWidget(hs2)
         layout.addWidget(hbox)
+        self.estimatebutton.hide()
 
     def setdata(self,*var,**kw):
         self.info ={}
@@ -108,11 +106,11 @@ class McaSimpleFit(qt.QWidget):
             self.info['xlabel'] = 'X'
         self.specfit.setdata(var,**kw)
         try:
-            self.info['xmin'] = "%.3f" % self.specfit.xdata[0]
+            self.info['xmin'] = "%.3f" % min(self.specfit.xdata[0], self.specfit.xdata[-1])
         except:
             self.info['xmin'] = 'First'
         try:
-            self.info['xmax'] = "%.3f" % self.specfit.xdata[-1]
+            self.info['xmax'] = "%.3f" % max(self.specfit.xdata[0], self.specfit.xdata[-1])
         except:
             self.info['xmax'] = 'Last'
         self.setheader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
@@ -132,16 +130,21 @@ class McaSimpleFit(qt.QWidget):
         self.headerlabel.setText("<b>%s<\b>" % text)
 
     def fit(self):
-        fitconfig = {}
-        fitconfig.update(self.specfit.fitconfig)
-        self.specfitGUI.updateGUI(configuration=fitconfig)
         if self.specfit.fitconfig['McaMode']:
+            fitconfig = {}
+            fitconfig.update(self.specfit.fitconfig)
+            self.specfitGUI.updateGUI(configuration=fitconfig)
             #the GUI already takes care of mcafit
             self.specfitGUI.estimate()
         else:
-            self.specfitGUI.estimate()
+            #self.specfitGUI.estimate()
             self.specfitGUI.startfit()
     
+    def estimate(self):
+        fitconfig = {}
+        fitconfig.update(self.specfit.fitconfig)
+        self.specfitGUI.updateGUI(configuration=fitconfig)
+        self.specfitGUI.estimate() 
     
     def __anasignal(self,ddict):
         if type(ddict) != type({}):
@@ -161,9 +164,18 @@ class McaSimpleFit(qt.QWidget):
                         self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ndict,))
                     else:
                         self.emit(qt.SIGNAL('McaSimpleFitSignal'), ndict)
+            if ddict['event'] == "McaModeChanged":
+                if ddict['data']:
+                    self.estimatebutton.hide()
+                else:
+                    self.estimatebutton.show()
             else:
                 ddict['info'] = {}
                 ddict['info'].update(self.info)
+                if ddict['event'] == 'FitFinished':
+                    #write the simple fit output in a form acceptable by McaWindow
+                    ddict['event'] = 'McaFitFinished'
+                    ddict['data'] = [self.specfitGUI.specfit.mcagetresult()]
                 if QTVERSION < '4.0.0':
                     self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ddict,))
                 else:

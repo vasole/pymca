@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.25 $"
+__revision__ = "$Revision: 1.26 $"
 import numpy.oldnumeric as Numeric
 import string
 import sys
@@ -1141,9 +1141,11 @@ class Specfit:
         mindelta=3.0*fwhm
         plusdelta=3.0*fwhm
         regions=[]
+        xdata0 = min(self.xdata[0], self.xdata[-1])
+        xdata1 = max(self.xdata[0], self.xdata[-1])
         for peak in peaks:
-            x0=max(peak-mindelta,self.xdata[0])
-            x1=min(peak+plusdelta,self.xdata[-1])
+            x0=max(peak-mindelta, xdata0)
+            x1=min(peak+plusdelta, xdata1)
             if regions == []:
                 regions.append([x0,x1])
             else:
@@ -1157,8 +1159,8 @@ class Specfit:
         
     def mcagetresult(self):
         result={}
-        result['xbegin']    = self.xdata[0]
-        result['xend']      = self.xdata[-1]
+        result['xbegin']    = min(self.xdata[0], self.xdata[-1])
+        result['xend']      = max(self.xdata[0], self.xdata[-1])
         try:
             result['fitstate']  = self.state
         except:

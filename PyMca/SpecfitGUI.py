@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -452,9 +452,18 @@ class SpecfitGUI(qt.QWidget):
     def mcaevent(self,item):
         if int(item):
             self.configure(McaMode=1)
+            mode = 1
         else:
             self.configure(McaMode=0)
+            mode = 0
         self.__initialparameters() 
+        ddict={}
+        ddict['event'] = 'McaModeChanged'
+        ddict['data']  = mode 
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
+        else:
+            self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
         return
 
     def weightevent(self,item):
