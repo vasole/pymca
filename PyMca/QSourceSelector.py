@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -52,7 +52,7 @@ class QSourceSelector(qt.QWidget):
             self.fileTypeList = ["Spec Files (*mca)",
                                 "Spec Files (*dat)",
                                 "Spec Files (*spec)",
-                                "EDF Files (*edf)",
+                                "SPE Files (*SPE)",                                "EDF Files (*edf)",
                                 "EDF Files (*ccd)",
                                 "CSV Files (*csv)",
                                 "All Files (*)"]

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -52,14 +52,15 @@ def Specfile(filename):
     else:
         #print "this does not look as a specfile"
         if len(line0) > 7:
-            if line0[0:8] == '$SPEC_ID':
+            if line0.startswith('$SPEC_ID') or\
+               line0.startswith('$DATE_MEA') or\
+               line0.startswith('$MEAS_TIM'):
                 qxas = True
         if len(line0) >2:
             if line0[0:2] == '<<':
                 amptek = True            
         output=specfilewrapper(filename, amptek=amptek, qxas = qxas)
     return output
-
 
 class specfilewrapper:
     def __init__(self,filename,amptek=None, qxas = None):
@@ -81,6 +82,7 @@ class specfilewrapper:
             line.replace("\n","")
             line.replace("\x00","")
             self._qxasHeader = {}
+            self._qxasHeader['S'] = '#S1 '+ " Unlabelled Spectrum"
             while 1:
                 self.header.append(line)
                 if line.startswith('$SPEC_ID:'):
