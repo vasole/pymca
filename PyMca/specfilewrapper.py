@@ -69,7 +69,10 @@ class specfilewrapper:
         self.amptek = amptek
         self.qxas   = qxas
         self.header = []
-        f = open(filename)
+        if self.qxas:
+            f = open(filename)
+        else:
+            f = BufferedFile(filename)
         line = f.readline()
         outdata = []
         ncol0 = -1
@@ -315,6 +318,27 @@ class myscandata:
         
     def mca(self,number):
         return self.__data[:,number-1]
+
+class BufferedFile:
+    def __init__(self, filename):
+        f = open(filename, 'r')
+        self.__buffer = f.read()
+        f.close()
+        self.__buffer=self.__buffer.replace("\r", "\n")
+        self.__buffer=self.__buffer.replace("\n\n", "\n")
+        self.__buffer = self.__buffer.split("\n")
+        self.__currentLine = 0
+
+    def readline(self):
+        if self.__currentLine >= len(self.__buffer):
+            return ""
+        line = self.__buffer[self.__currentLine] + "\n"
+        self.__currentLine += 1
+        return line
+
+    def close(self):
+        self.__currentLine = 0
+        return
             
 if __name__ == "__main__":
     import sys
