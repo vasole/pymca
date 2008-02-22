@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,11 +24,12 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.31 $"
+__revision__ = "$Revision: 1.32 $"
 import ClassMcaTheory
 import SpecFileLayer
 import EdfFileLayer
 import EdfFile
+import LuciaMap
 import numpy.oldnumeric as Numeric
 import os
 import sys
@@ -134,6 +135,7 @@ class McaAdvancedFitBatch:
     def processList(self):
         self.counter =  0
         self.__row   = self.fileBeginOffset - 1
+        self.__stack = None
         for i in range(0+self.fileBeginOffset,
                        len(self._filelist)-self.fileEndOffset,
                        self.fileStep):
@@ -147,7 +149,16 @@ class McaAdvancedFitBatch:
             self.onNewFile(inputfile, self._filelist)
             self.file = self.getFileHandle(inputfile)
             if self.pleaseBreak: break
-            self.__processOneFile()
+            if self.__stack is None:
+                self.__stack = False
+                if hasattr(self.file, "info"):
+                    if self.file.info.has_key("SourceType"):
+                        if self.file.info["SourceType"] == "EdfFileStack":
+                            self.__stack = True
+            if self.__stack:
+                self.__processStack()
+            else:
+                self.__processOneFile()
         if self.counter:
             if not self.roiFit: 
                 if self.fitFiles:
@@ -160,6 +171,8 @@ class McaAdvancedFitBatch:
     def getFileHandle(self,inputfile):
         try:
             ffile = self.__tryEdf(inputfile)
+            if ffile is None:
+                ffile = self.__tryLucia(inputfile)
             if (ffile is None):
                 del ffile
                 ffile   = SpecFileLayer.SpecFileLayer()
@@ -195,6 +208,56 @@ class McaAdvancedFitBatch:
         except:
             return None
 
+    def __tryLucia(self, inputfile):
+        f = open(inputfile)
+        line = f.readline()
+        f.close()
+        ffile = None
+        if line.startswith('#\tDate:'):
+            ffile = LuciaMap.LuciaMap(inputfile)
+        return ffile
+
+    def __processStack(self):
+        stack = self.file
+        info = stack.info
+        data = stack.data
+        nimages = stack.info['Dim_1']
+        self.__nrows = nimages
+        numberofmca = stack.info['Dim_2']
+        keylist = ["1.1"] * nimages
+        for i in range(nimages):
+            keylist[i] = "1.%04d" % i
+
+        for i in range(nimages):
+            self.onImage(keylist[i], keylist)
+            self.__ncols = len(range(0+self.mcaOffset,
+                                     numberofmca,
+                                     self.mcaStep))
+            self.__row = i
+            self.__col = -1
+            for mca_index in range(self.__ncols):
+                mca = 0 + self.mcaOffset + mca_index * self.mcaStep
+                if self.pleaseBreak: break
+                self.__col += 1
+                mcadata = data[i, mca, :]
+                if info.has_key('MCA start ch'):
+                    xmin = float(info['MCA start ch'])
+                else:
+                    xmin = 0.0
+                #key = "%s.%s.%02d.%02d" % (scan,order,row,col)
+                key = "%s.%04d" % (keylist[i], mca)
+                y0  = Numeric.array(mcadata)
+                x = Numeric.arange(len(y0))*1.0 + xmin
+                #I only process the first file of the stack?
+                filename = os.path.basename(info['SourceName'][0])
+                infoDict = {}
+                infoDict['SourceName'] = info['SourceName']
+                infoDict['Key']        = key
+                self.__processOneMca(x,y0,filename,key,info=infoDict)
+                self.onMca(mca, numberofmca, filename=filename,
+                                            key=key,
+                                            info=infoDict)
+                
     def __processOneFile(self):
         ffile=self.file
         fileinfo = ffile.GetSourceInfo()
@@ -499,7 +562,8 @@ class McaAdvancedFitBatch:
                         self.__peaks  = []
                         self.__images = {}
                         self.__sigmas = {}
-                        self.__nrows   = len(range(0,len(self._filelist),self.fileStep))
+                        if not self.__stack:
+                            self.__nrows   = len(range(0,len(self._filelist),self.fileStep))
                         for group in result['groups']:
                             self.__peaks.append(group)
                             self.__images[group]=Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
@@ -535,7 +599,8 @@ class McaAdvancedFitBatch:
                         self.imgDir = imgdir
                         self.__ROIpeaks  = []
                         self._ROIimages = {}
-                        self.__nrows   = len(self._filelist)
+                        if not self.__stack:
+                            self.__nrows   = len(self._filelist)
                         for group in dict.keys():
                             self.__ROIpeaks.append(group)
                             self._ROIimages[group]={}
