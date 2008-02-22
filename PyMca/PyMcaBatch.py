@@ -697,6 +697,17 @@ class McaBatchGUI(qt.QWidget):
             else:
                 self.raise_()
             return
+        if len(self.fileList) == 1:
+            if sys.platform != 'darwin':
+                if self.__splitBox.isChecked():
+                    text = "Multiple processes can only be used with multiple input files."
+                    qt.QMessageBox.critical(self, "ERROR",text)
+                    if QTVERSION < '4.0.0':
+                        self.raiseW()
+                    else:
+                        self.raise_()
+                    return
+                    
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
             if QTVERSION < '4.0.0':

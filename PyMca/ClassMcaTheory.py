@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-___revision__ = "$Revision: 1.76 $"
+___revision__ = "$Revision: 1.77 $"
 import Elements
 import SpecfitFuns
 import ConfigDict
@@ -2240,9 +2240,9 @@ class McaTheory:
             ddict[group] = {}
             for line in lines:
                 emin = Elements.Element[ele][line]['energy'] - 0.5 * width 
-                emax = Elements.Element[ele][line]['energy'] - 0.5 * width 
-                i1 = Numeric.nonzero((energy > emin) & (energy < emax))
-                ddict[group][line+" ROI"] = Numeric.sum(Numeric.take(yw,i1))
+                emax = Elements.Element[ele][line]['energy'] + 0.5 * width 
+                i1 = Numeric.nonzero((energy >= emin) & (energy <= emax))
+                ddict[group][line + " ROI"] = Numeric.sum(Numeric.take(yw,i1))
         return ddict    
             
         
