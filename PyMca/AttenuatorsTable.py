@@ -814,7 +814,7 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
             if qstring == selftext:
                 insert = False
         if insert:
-            self.insertItem(qstring,-1)
+            self.insertItem(-1, qstring)
         if QTVERSION < '3.0.0':
             pass        
         else:

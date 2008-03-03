@@ -1,3 +1,18 @@
+VERSION 4.2.3
+
+- Possibility to use pseudo-Voigt as advanced fit function.
+
+- Possibility to save as data and to remove selected images from
+RGBCorrelator.
+
+- Support Lucia beamline maps.
+
+- Support Diamond I18 beamline maps.
+
+- Correct ROI fitting option bug.
+
+- Some other minor bugs corrected and some other minor features added.
+
 VERSION 4.2.2
 
 - Input/Output: Support CSV format.
