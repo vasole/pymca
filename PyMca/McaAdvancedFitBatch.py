@@ -30,6 +30,7 @@ import SpecFileLayer
 import EdfFileLayer
 import EdfFile
 import LuciaMap
+import EDFStack
 import numpy.oldnumeric as Numeric
 import os
 import sys
@@ -203,7 +204,17 @@ class McaAdvancedFitBatch:
             ffile   = EdfFileLayer.EdfFileLayer(fastedf=0)
             ffile.SetSource(inputfile)
             fileinfo = ffile.GetSourceInfo()
-            if fileinfo['KeyList'] == []:ffile=None
+            if fileinfo['KeyList'] == []:
+                ffile=None
+            elif len(self._filelist) == 1:
+                #Is it a Diamond stack?
+                if len(fileinfo['KeyList']) > 1:
+                    info, data = ffile.LoadSource(fileinfo['KeyList'][0])
+                    shape = data.shape
+                    if len(shape) == 2:
+                        if min(shape) == 1:
+                            #It is a Diamond Stack
+                            ffile=EDFStack.EDFStack(inputfile)
             return ffile
         except:
             return None
