@@ -4,9 +4,9 @@
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -19,12 +19,12 @@
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.60 $"
+__revision__ = "$Revision: 1.62 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -51,7 +51,7 @@ try:
         pass
 except:
     MATPLOTLIB = False
-    
+
 import ClassMcaTheory
 import FitParam
 import McaAdvancedTable
@@ -76,10 +76,10 @@ import PyMcaDirs
 DEBUG = 0
 if DEBUG:
     print "############################################"
-    print "#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG 
+    print "#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG
     print "############################################"
 class McaAdvancedFit(qt.QWidget):
-    def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,sections=None): 
+    def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,sections=None, top=True):
                 #fl=qt.Qt.WDestructiveClose):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name,fl)
@@ -91,18 +91,20 @@ class McaAdvancedFit(qt.QWidget):
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastInputDir = None
         self.configDialog = None
-        self.layout = qt.QVBoxLayout(self)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(11)
+        self.mainLayout.setSpacing(0)
         if sections is None:sections=["TABLE"]
         self.headerLabel = qt.QLabel(self)
-        self.layout.addWidget(self.headerLabel)
+        self.mainLayout.addWidget(self.headerLabel)
 
-        self.headerLabel.setAlignment(qt.Qt.AlignHCenter) 
+        self.headerLabel.setAlignment(qt.Qt.AlignHCenter)
         font = self.font()
         font.setBold(True)
-        self.headerLabel.setFont(font)     
+        self.headerLabel.setFont(font)
         self.setHeader('Fit of XXXXXXXXXX from Channel XXXXX to XXXX')
         self.top = Top(self)
-        self.layout.addWidget(self.top)
+        self.mainLayout.addWidget(self.top)
         self.sthread = None
         self.elementsInfo = None
         self.identifier   = None
@@ -112,7 +114,7 @@ class McaAdvancedFit(qt.QWidget):
             self.concentrationsWidget = None
         else:
             self.mainTab = qt.QTabWidget(self)
-            self.layout.addWidget(self.mainTab)
+            self.mainLayout.addWidget(self.mainTab)
             if  QTVERSION < '3.0.0':
                 self.mainTab.label = self.__mainTabPatch
                 self.mainTab.tabText = self.mainTab.label
@@ -141,12 +143,12 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.setCanvasBackground(qt.Qt.white)
             if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(self.tabGraph,"GRAPH")
-                qt.QObject.connect(self.graphWindow,    
+                qt.QObject.connect(self.graphWindow,
                                    qt.PYSIGNAL('McaGraphSignal'),
                                    self._mcaGraphSignalSlot)
             else:
                 self.mainTab.addTab(self.tabGraph,"GRAPH")
-                qt.QObject.connect(self.graphWindow,    
+                qt.QObject.connect(self.graphWindow,
                                    qt.SIGNAL('McaGraphSignal'),
                                    self._mcaGraphSignalSlot)
             #table
@@ -171,7 +173,7 @@ class McaAdvancedFit(qt.QWidget):
                 tabMcaLayout.addWidget(self.mcatable)
                 self.mainTab.insertTab(w,"TABLE")
                 self.connect(line,qt.PYSIGNAL("LineDoubleClickEvent"),
-                                self._tabReparent) 
+                                self._tabReparent)
                 self.connect(self.mcatable,qt.PYSIGNAL("closed"),
                                 self._mcatableClose)
             else:
@@ -179,10 +181,10 @@ class McaAdvancedFit(qt.QWidget):
                 tabMcaLayout.addWidget(self.mcatable)
                 self.mainTab.addTab(w,"TABLE")
                 self.connect(line,qt.SIGNAL("LineDoubleClickEvent"),
-                                self._tabReparent) 
+                                self._tabReparent)
                 self.connect(self.mcatable,qt.SIGNAL("closed"),
-                                self._mcatableClose)             
-            
+                                self._mcatableClose)
+
             #concentrations
             if QTVERSION < '4.0.0':
                 self.tabConcentrations  = qt.QWidget(self.mainTab,"tabConcentrations")
@@ -195,7 +197,7 @@ class McaAdvancedFit(qt.QWidget):
             self.concentrationsWidget = ConcentrationsWidget.Concentrations(self.tabConcentrations)
             tabConcentrationsLayout.addWidget(line2)
             tabConcentrationsLayout.addWidget(self.concentrationsWidget)
-            
+
 
             if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(self.tabConcentrations,"CONCENTRATIONS")
@@ -232,7 +234,7 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.diagnosticsWidget = qt.QTextEdit(w)
                 self.diagnosticsWidget.setReadOnly(1)
-                
+
             tabDiagnosticsLayout.addWidget(self.diagnosticsWidget)
             if QTVERSION < '4.0.0':
                 self.mainTab.insertTab(w,"DIAGNOSTICS")
@@ -248,7 +250,7 @@ class McaAdvancedFit(qt.QWidget):
         self._energyAxis = False
         if QTVERSION < '4.0.0' :
             self.__printmenu = qt.QPopupMenu()
-            self.__printmenu.insertItem(qt.QString("Calibrate"),     self._calibrate)        
+            self.__printmenu.insertItem(qt.QString("Calibrate"),     self._calibrate)
             self.__printmenu.insertItem(qt.QString("Identify Peaks"),self.__peakIdentifier)
             self.__printmenu.insertItem(qt.QString("Elements Info"), self.__elementsInfo)
             #self.__printmenu.insertItem(qt.QString("Concentrations"),self.concentrations)
@@ -257,7 +259,7 @@ class McaAdvancedFit(qt.QWidget):
             #self.__printmenu.insertItem(qt.QString("HTML Report"),self.htmlReport)
         else:
             self.__printmenu = qt.QMenu()
-            self.__printmenu.addAction(qt.QString("Calibrate"),     self._calibrate)        
+            self.__printmenu.addAction(qt.QString("Calibrate"),     self._calibrate)
             self.__printmenu.addAction(qt.QString("Identify Peaks"),self.__peakIdentifier)
             self.__printmenu.addAction(qt.QString("Elements Info"), self.__elementsInfo)
         self.outdir      = None
@@ -268,7 +270,7 @@ class McaAdvancedFit(qt.QWidget):
         self.__fitdone   = 0
         self._concentrationsDict = None
         #self.graph.hide()
-        #self.guiconfig = FitParam.Fitparam()      
+        #self.guiconfig = FitParam.Fitparam()
         """
         self.specfitGUI.guiconfig.MCACheckBox.setEnabled(0)
         palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
@@ -276,7 +278,17 @@ class McaAdvancedFit(qt.QWidget):
         """
         ##############
         hbox=qt.QWidget(self)
+        self.bottom = hbox
         hboxLayout = qt.QHBoxLayout(hbox)
+        hboxLayout.setMargin(0)
+        hboxLayout.setSpacing(4)
+        if not top:
+            self.configureButton = qt.QPushButton(hbox)
+            self.configureButton.setText("Configure")
+            self.toolsButton = qt.QPushButton(hbox)
+            self.toolsButton.setText("Tools")
+            hboxLayout.addWidget(self.configureButton)
+            hboxLayout.addWidget(self.toolsButton)
         hboxLayout.addWidget(HorizontalSpacer(hbox))
         self.fitButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.fitButton)
@@ -309,8 +321,8 @@ class McaAdvancedFit(qt.QWidget):
         hboxLayout.addWidget(self.dismissButton)
         self.dismissButton.setText("Dismiss")
         hboxLayout.addWidget(HorizontalSpacer(hbox))
-        
-        self.layout.addWidget(hbox)
+
+        self.mainLayout.addWidget(hbox)
         if QTVERSION < '4.0.0':
             qt.QToolTip.add(self.printButton,'Print Active Tab')
             qt.QToolTip.add(self.htmlReportButton,'Generate Browser Compatible Output\nin Chosen Directory')
@@ -321,7 +333,7 @@ class McaAdvancedFit(qt.QWidget):
             self.htmlReportButton.setToolTip('Generate Browser Compatible Output\nin Chosen Directory')
             self.matrixSpectrumButton.setToolTip('Toggle Matrix Spectrum Calculation On/Off')
             self.peaksSpectrumButton.setToolTip('Toggle Individual Peaks Spectrum Calculation On/Off')
-                
+
         self.mcafit   = ClassMcaTheory.McaTheory()
 
         self.connect(self.fitButton,                qt.SIGNAL("clicked()"),self.fit)
@@ -332,12 +344,17 @@ class McaAdvancedFit(qt.QWidget):
         self.connect(self.dismissButton,            qt.SIGNAL("clicked()"),self.dismiss)
         self.connect(self.top.configureButton,qt.SIGNAL("clicked()") ,   self.__configure)
         self.connect(self.top.printButton,qt.SIGNAL("clicked()") ,self.__printps)
-        if QTVERSION < '4.0.0':
-            self.connect(self.top,qt.PYSIGNAL("TopSignal"), self.__updatefromtop)
+        if top:
+            if QTVERSION < '4.0.0':
+                self.connect(self.top,qt.PYSIGNAL("TopSignal"), self.__updatefromtop)
+            else:
+                self.connect(self.top,qt.SIGNAL("TopSignal"), self.__updatefromtop)
         else:
-            self.connect(self.top,qt.SIGNAL("TopSignal"), self.__updatefromtop)
+            self.top.hide()
+            self.connect(self.configureButton,qt.SIGNAL("clicked()") ,   self.__configure)
+            self.connect(self.toolsButton,qt.SIGNAL("clicked()") ,self.__printps)
         self._updateTop()
-    
+
     def __mainTabPatch(self, index):
         return self.mainTabLabels[index]
 
@@ -349,7 +366,7 @@ class McaAdvancedFit(qt.QWidget):
 
     def _submitThread(self, function, parameters, message="Please wait",
                     expandparametersdict=None):
-        if expandparametersdict is None: expandparametersdict= False          
+        if expandparametersdict is None: expandparametersdict= False
         sthread = SimpleThread()
         sthread._expandParametersDict=expandparametersdict
         sthread._function = function
@@ -359,7 +376,7 @@ class McaAdvancedFit(qt.QWidget):
         #except:
         #    raise "ThreadError",sys.exc_info()
         if QTVERSION < '3.0.0':
-            msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
+            msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)
         elif QTVERSION < '4.0.0':
             msg = qt.QDialog(self, "Please Wait",
                              1,
@@ -367,7 +384,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
             msg.setModal(0)
-            msg.setWindowTitle("Please Wait")                
+            msg.setWindowTitle("Please Wait")
         layout = qt.QHBoxLayout(msg)
         l1 = qt.QLabel(msg)
         layout.addWidget(l1)
@@ -411,7 +428,7 @@ class McaAdvancedFit(qt.QWidget):
         It should be called if somehow you have modified the fit and/
         or concentrations parameters by other means than the graphical
         interface.
-        """ 
+        """
         self.__configure(justupdate=True)
 
     def configure(self, ddict=None):
@@ -422,7 +439,7 @@ class McaAdvancedFit(qt.QWidget):
         if ddict is None:
             return self.mcafit.configure(ddict)
 
-        #configure and get the new configuration 
+        #configure and get the new configuration
         newConfig = self.mcafit.configure(ddict)
 
         #refresh the interface
@@ -441,7 +458,7 @@ class McaAdvancedFit(qt.QWidget):
                     dialog = FitParam.FitParamDialog(modal=1,
                                                      fl=0,
                                                      initdir=self.configDir,
-                                                     fitresult=self.dict['result'])  
+                                                     fitresult=self.dict['result'])
                 else:
                     dialog = FitParam.FitParamDialog(modal=1,
                                                      fl=0,
@@ -498,7 +515,7 @@ class McaAdvancedFit(qt.QWidget):
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
         if self.mcatable is not None:
             self.mcatable.setRowCount(0)
-            
+
         if DEBUG:
             self.mcafit.configure(config)
         elif (QTVERSION < '3.0.0'):
@@ -507,7 +524,7 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("%s" % sys.exc_info()[1]) 
+                msg.setText("%s" % sys.exc_info()[1])
                 msg.exec_loop()
         else:
             try:
@@ -534,7 +551,7 @@ class McaAdvancedFit(qt.QWidget):
                 delcurves.append(key)
         for key in delcurves:
             self.graph.delcurve(key)
-        
+
         if not justupdate:
             self.plot()
 
@@ -545,7 +562,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.concentrationsWidget.setParameters(config['concentrations'], signal=False)
             except:
                 if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
-                    self.mainTab.setCurrentIndex(0)   
+                    self.mainTab.setCurrentIndex(0)
 
     def __configureFromConcentrations(self,ddict):
         config = self.concentrationsWidget.getParameters()
@@ -553,7 +570,7 @@ class McaAdvancedFit(qt.QWidget):
         if ddict['event'] == 'updated':
             if ddict.has_key('concentrations'):
                 self._concentrationsDict = ddict['concentrations']
-        
+
     def __elementclicked(self,ddict):
         ddict['event'] = 'McaAdvancedFitElementClicked'
         self.__showElementMarker(ddict)
@@ -587,7 +604,7 @@ class McaAdvancedFit(qt.QWidget):
                     marker=self.graph.insertX1Marker(x,
                                                      ymax*rate,
                                                      label=transition)
-            else: 
+            else:
                 marker=self.graph.insertX1Marker(energy,
                                                  ymax*rate,
                                                  label=transition)
@@ -712,7 +729,7 @@ class McaAdvancedFit(qt.QWidget):
                 parent.layout().removeWidget(w)
                 w.setParent(None)
                 w.show()
-        else: 
+        else:
             if QTVERSION < '4.0.0':
                 w.reparent(parent,qt.QPoint(),1)
             else:
@@ -773,7 +790,7 @@ class McaAdvancedFit(qt.QWidget):
             self.identifier.raiseW()
         else:
             self.identifier.raise_()
-        
+
     def printActiveTab(self):
         if   str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "GRAPH":
             self.graph.printps()
@@ -835,7 +852,7 @@ class McaAdvancedFit(qt.QWidget):
                 text+="</td>"
                 text+='<td align="right" bgcolor="%s">' % finalcolor
                 text+="<b><font size=3>%.3f </font></b>"  % energy[int(peak)]
-                text+="</td>"        
+                text+="</td>"
             text+="</tr>"
             text+="</table>"
         missed =  self.mcafit.detectMissingPeaks(yfit, y, meanfwhm)
@@ -857,7 +874,7 @@ class McaAdvancedFit(qt.QWidget):
                 text+="</td>"
                 text+='<td align="right" bgcolor="%s">' % finalcolor
                 text+="<b><font size=3>%.3f </font></b>"  % energy[int(peak)]
-                text+="</td>"        
+                text+="</td>"
             text+="</tr>"
             text+="</table>"
         if QTVERSION < '4.0.0':
@@ -865,7 +882,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.diagnosticsWidget.clear()
             self.diagnosticsWidget.insertHtml(text)
-        
+
     def concentrations(self):
         self._concentrationsDict = None
         if not self.__fitdone:
@@ -896,7 +913,7 @@ class McaAdvancedFit(qt.QWidget):
            else:
                self.connect(self.concentrationsWidget,qt.SIGNAL("ConcentrationsSignal"),
                                     self.__configureFromConcentrations)
-        tool = self.concentrationsWidget 
+        tool = self.concentrationsWidget
         toolconfig = tool.getParameters()
         dict = {}
         dict.update(config['concentrations'])
@@ -909,7 +926,7 @@ class McaAdvancedFit(qt.QWidget):
             try:
                 dict = tool.processFitResult(config=dict,fitresult=fitresult,
                     elementsfrommatrix=False,
-                    fluorates = self.mcafit._fluoRates)        
+                    fluorates = self.mcafit._fluoRates)
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1022,14 +1039,14 @@ class McaAdvancedFit(qt.QWidget):
                 transitions = item[1] + " xrays"
                 areas.append(dict['area'][group])
 
-        nglobal    = len(fitresult['result']['parameters']) - len(groupsList) 
+        nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
         parameters = []
         for i in range(len(fitresult['result']['parameters'])):
             if i < nglobal:
                 parameters.append(fitresult['result']['fittedpar'][i])
             else:
                 parameters.append(areas[i-nglobal])
-        
+
         xmatrix = fitresult['result']['xdata']
         ymatrix = self.mcafit.mcatheory(parameters,xmatrix)
         ymatrix.shape =  [len(ymatrix),1]
@@ -1084,7 +1101,7 @@ class McaAdvancedFit(qt.QWidget):
         if type(groupsList) != types.ListType:
             groupsList = [groupsList]
 
-        nglobal    = len(fitresult['result']['parameters']) - len(groupsList) 
+        nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
         dict=copy.deepcopy(self.dict)
         dict['event'] = "McaAdvancedFitPeaksFinished"
         newparameters = fitresult['result']['fittedpar'] * 1
@@ -1093,7 +1110,7 @@ class McaAdvancedFit(qt.QWidget):
         for i in range(nglobal,len(fitresult['result']['parameters'])):
             group = fitresult['result']['parameters'][i]
             parameters    = newparameters * 1
-            parameters[i] = fitresult['result']['fittedpar'][i] 
+            parameters[i] = fitresult['result']['fittedpar'][i]
             xmatrix = fitresult['result']['xdata']
             ymatrix = self.mcafit.mcatheory(parameters,xmatrix)
             ymatrix.shape =  [len(ymatrix),1]
@@ -1113,13 +1130,13 @@ class McaAdvancedFit(qt.QWidget):
             print "ymatrix shape = ", dict['result'][group].shape
             print "xmatrix shape = ", xmatrix.shape
             print "zz      shape = ", self.mcafit.zz.shape
-    
+
     def __printps(self):
         if QTVERSION < '4.0.0':
             self.__printmenu.exec_loop(self.cursor().pos())
         else:
-            self.__printmenu.exec_(self.cursor().pos())    
-    
+            self.__printmenu.exec_(self.cursor().pos())
+
     def htmlReport(self,index=None):
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
@@ -1134,14 +1151,14 @@ class McaAdvancedFit(qt.QWidget):
         if self.outdir is None:
             cwd = PyMcaDirs.outputDir
             if QTVERSION < '4.0.0':
-                outfile = qt.QFileDialog(self,"Output Directory Selection",1) 
+                outfile = qt.QFileDialog(self,"Output Directory Selection",1)
                 outfile.setMode(outfile.DirectoryOnly)
                 outfile.setDir(cwd)
                 ret = outfile.exec_loop()
             else:
                 outfile = qt.QFileDialog(self)
                 outfile.setWindowTitle("Output Directory Selection")
-                outfile.setModal(1) 
+                outfile.setModal(1)
                 outfile.setFileMode(outfile.DirectoryOnly)
                 outfile.setDirectory(cwd)
                 ret = outfile.exec_()
@@ -1171,8 +1188,8 @@ class McaAdvancedFit(qt.QWidget):
                 msg.exec_loop()
             else:
                 msg.exec_()
-            
-                    
+
+
     def __htmlReport(self,outfile=None):
         report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(None,
                     outfile,self.outdir,self.info['sourcename'],
@@ -1199,7 +1216,7 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.__printmenu.addSeparator()
                 self.__printmenu.addAction(qt.QString("Last Report"),self.showLastReport)
-                
+
             if QTVERSION < '4.0.0':
                 self.browsertext= qt.QTextView(self.browser)
             else:
@@ -1262,7 +1279,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
-    
+
     def printps(self,doit=0):
         h = self.__htmlheader()
         text = "<CENTER>"+self.mcatable.gettext()+"</CENTER>"
@@ -1287,12 +1304,12 @@ class McaAdvancedFit(qt.QWidget):
             sumflag = "Y"
         else:
             sumflag = "N"
-                 
+
         if self.mcafit.config['fit']['escapeflag']:
             escapeflag =  "Y"
         else:
             escapeflag = "N"
-        
+
         if self.mcafit.config['fit']['stripflag']:
             stripflag = "Y"
         else:
@@ -1319,7 +1336,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             step_term = "N"
 
-        
+
         h=""
         h+="    <CENTER>"
         h+="<B>%s</B>" % header
@@ -1333,17 +1350,17 @@ class McaAdvancedFit(qt.QWidget):
         h+="    <TD><B>:</B></TD>"
         h+="    <TD NOWRAP ALIGN=LEFT>%s</TD>" % theory
         h+="    <TD><SPACER TYPE=BLOCK WIDTH=15></TD>"
-        
+
         h+="    <TD ALIGN=LEFT><B>ShortTail</B></TD>"
         h+="    <TD><B>:</B></TD>"
         h+="    <TD>%s</TD>" % st_term
         h+="    <TD><SPACER TYPE=BLOCK WIDTH=5></B></TD>"
-        
+
         h+="    <TD ALIGN=LEFT><B>LongTail</B></TD>"
         h+="    <TD><B>:</B></TD>"
         h+="    <TD>%s</TD>" % lt_term
         h+="    <TD><SPACER TYPE=BLOCK WIDTH=5></B></TD>"
-        
+
         h+="    <TD ALIGN=LEFT><B>StepTail</B></TD>"
         h+="    <TD><B>:</B></TD>"
         h+="    <TD>%s</TD>" % step_term
@@ -1396,7 +1413,7 @@ class McaAdvancedFit(qt.QWidget):
                                                     body.height())
                 view = qt.QRect(body)
                 richtext.setWidth(painter,view.width())
-                page = 1                
+                page = 1
                 while(1):
                     if QTVERSION < '3.0.0':
                         richtext.draw(painter,body.left(),body.top(),
@@ -1434,7 +1451,7 @@ class McaAdvancedFit(qt.QWidget):
                     document = editor.document()
                 else:
                     document = qt.QTextDocument()
-                    document.setHtml(text)        
+                    document.setHtml(text)
                 document.print_(printer)
 
     def setdata(self, *var, **kw):
@@ -1455,16 +1472,16 @@ class McaAdvancedFit(qt.QWidget):
         if kw.has_key('xmin'):
             self.info['xmin'] = "%.3f" % kw['xmin']
         else:
-            self.info['xmin'] = "????"  
+            self.info['xmin'] = "????"
 
         if kw.has_key('xmax'):
             self.info['xmax'] = "%.3f" % kw['xmax']
         else:
-            self.info['xmax'] = "????"  
+            self.info['xmax'] = "????"
         if kw.has_key('sourcename'):
             self.info['sourcename'] = "%s" % kw['sourcename']
         else:
-            self.info['sourcename'] = "Unknown Source"  
+            self.info['sourcename'] = "Unknown Source"
         self.__var = var
         self.__kw  = kw
         self.mcafit.setdata(*var,**kw)
@@ -1479,7 +1496,7 @@ class McaAdvancedFit(qt.QWidget):
                           dict['detector']['gain']=kw['calibration'][1]/1000.
                         else:
                           dict['detector']['zero']=kw['calibration'][0]
-                          dict['detector']['gain']=kw['calibration'][1]                        
+                          dict['detector']['gain']=kw['calibration'][1]
                         self.mcafit.configure(dict)
                     else:
                         #this is faster
@@ -1489,7 +1506,7 @@ class McaAdvancedFit(qt.QWidget):
                         else:
                           self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
                           self.mcafit.config['detector']['gain']=kw['calibration'][1] * 1
-                    
+
         self.setHeader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
                                                             self.info['xlabel'],
                                                             self.info['xmin'],
@@ -1516,7 +1533,7 @@ class McaAdvancedFit(qt.QWidget):
         self.__fitdone = 0
         self.mcatable.setRowCount(0)
         if self.concentrationsWidget is not None:
-            self.concentrationsWidget.concentrationsTable.setRowCount(0)            
+            self.concentrationsWidget.concentrationsTable.setRowCount(0)
         fitconfig = {}
         fitconfig.update(self.mcafit.configure())
         if fitconfig['peaks'] == {}:
@@ -1623,10 +1640,10 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     msg.exec_()
                 return
-                
+
         self.__anasignal(dict)
-        
-    
+
+
     def __anasignal(self,dict):
         if type(dict) != type({}):
             return
@@ -1637,7 +1654,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
-                
+
     def dismiss(self):
         self.close()
 
@@ -1645,7 +1662,7 @@ class McaAdvancedFit(qt.QWidget):
         if self.identifier is not None:
             self.identifier.close()
         qt.QWidget.closeEvent(self, event)
-    
+
     def _mcaGraphSignalSlot(self, ddict):
         if ddict['event'] == "FitClicked":
             self.fit()
@@ -1670,7 +1687,7 @@ class McaAdvancedFit(qt.QWidget):
             self._energyAxis = True
             self.graph.xlabel('Energy')
         self.plot()
-        
+
     def toggleLogY(self, dict=None):
         if self._logY:
             self.graph.ToggleLogY()
@@ -1685,9 +1702,9 @@ class McaAdvancedFit(qt.QWidget):
         if self._logY:
             logfilter = 1
         else:
-            logfilter = 0    
+            logfilter = 0
         config = self.mcafit.configure()
-        if dict is None: 
+        if dict is None:
             if not self.__fitdone:
                 #color counter
                 self.graph.color   = 0
@@ -1727,14 +1744,14 @@ class McaAdvancedFit(qt.QWidget):
                                    dict['result']['yfit'],logfilter=logfilter)
         self.graph.newCurve("Continuum",xdata,
                                    dict['result']['continuum'],logfilter=logfilter)
-                                   
+
         if config['fit']['sumflag']:
             self.graph.newCurve("Pile-up", xdata,
                                        dict['result']['pileup']+dict['result']['continuum'],
                                        logfilter=logfilter)
         elif "Pile-up" in self.graph.curves.keys():
             self.graph.delcurve("Pile-up")
-        
+
         if self.matrixSpectrumButton.isChecked():
             if dict['result'].has_key('ymatrix'):
                 self.graph.newCurve("Matrix",xdata, dict['result']['ymatrix'],
@@ -1763,9 +1780,9 @@ class McaAdvancedFit(qt.QWidget):
                         self.graph.delcurve(label)
         else:
             self.__clearPeaksSpectrum()
-               
+
         self.graph.replot()
-       
+
     def _saveGraph(self, dict=None):
         curves = self.graph.curves.keys()
         if not len(curves):return
@@ -1794,7 +1811,7 @@ class McaAdvancedFit(qt.QWidget):
             #everything
             fitresult = self.dict
         else:
-            fitresult = dict            
+            fitresult = dict
         xdata     = fitresult['result']['xdata']
         energy    = fitresult['result']['energy']
         ydata     = fitresult['result']['ydata']
@@ -1858,14 +1875,14 @@ class McaAdvancedFit(qt.QWidget):
                 outstr=str(outfile.selectedFile())
             else:
                 outstr=str(outfile.selectedFiles()[0])
-            try:            
+            try:
                 outputDir  = os.path.dirname(outstr)
                 self.lastInputDir   = outputDir
                 PyMcaDirs.outputDir = outputDir
             except:
                 outputDir  = "."
             #self.outdir = outputDir
-            try:            
+            try:
                 outputFile = os.path.basename(outstr)
             except:
                 outputFile  = outstr
@@ -1903,7 +1920,7 @@ class McaAdvancedFit(qt.QWidget):
                                                                     logy=logy,
                                                                     legends=legends,
                                                                     bw = bw)
-                                                                    
+
                     if self._energyAxis:
                         x = fitresult['result']['energy']
                     else:
@@ -1995,7 +2012,7 @@ class McaAdvancedFit(qt.QWidget):
                         label = 'y'+group
                         if label in keys:
                             file.write("  %.7g" %  fitresult['result'][label][i])
-                    file.write("\n")            
+                    file.write("\n")
                 file.close()
                 return
             if filetype == 'CSV':
@@ -2035,7 +2052,7 @@ class McaAdvancedFit(qt.QWidget):
                         label = 'y'+group
                         if label in keys:
                             file.write("%s%.7g" %  (csv,fitresult['result'][label][i]))
-                    file.write("\n")            
+                    file.write("\n")
                 file.close()
                 return
             #header is almost common to specfile and mca
@@ -2102,7 +2119,7 @@ class McaAdvancedFit(qt.QWidget):
                 for group in fitresult['result']['groups']:
                     label = 'y'+group
                     if label in keys:
-                        file.write(self.array2SpecMca(fitresult['result'][label]))    
+                        file.write(self.array2SpecMca(fitresult['result'][label]))
             file.write("\n")
             file.close()
         except:
@@ -2132,13 +2149,15 @@ class McaAdvancedFit(qt.QWidget):
 class Top(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
         qt.QWidget.__init__(self,parent)
-        self.layout= qt.QHBoxLayout(self)
+        self.mainLayout= qt.QHBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
         self.build()
-        
+
     def build(self):
         self.__w=qt.QWidget(self)
         w = self.__w
-        self.layout.addWidget(w)
+        self.mainLayout.addWidget(w)
         wlayout = qt.QGridLayout(w)
         wlayout.setSpacing(5)
         #function
@@ -2174,7 +2193,7 @@ class Top(qt.QWidget):
                        'Linear Polynomial',
                        'Exp. Polynomial']
             for item in options:
-                self.BkgComBox.insertItem(options.index(item), item)            
+                self.BkgComBox.insertItem(options.index(item), item)
 
         self.connect(self.FunComBox,
                      qt.SIGNAL("activated(int)"),self.mysignal)
@@ -2186,9 +2205,9 @@ class Top(qt.QWidget):
         wlayout.addWidget(self.BkgComBox,1,1)
         dummy = qt.QWidget(self)
         dummy.setMinimumSize(20,0)
-        self.layout.addWidget(dummy)
-        self.layout.addWidget(HorizontalSpacer(self))
-        
+        self.mainLayout.addWidget(dummy)
+        self.mainLayout.addWidget(HorizontalSpacer(self))
+
         #the checkboxes
         if 0:
              w1 = qt.QVBox(self)
@@ -2199,7 +2218,7 @@ class Top(qt.QWidget):
 
         # Flags
         f       = qt.QWidget(self)
-        self.layout.addWidget(f)
+        self.mainLayout.addWidget(f)
         f.layout= qt.QGridLayout(f)
         f.layout.setSpacing(5)
         flagsoffset = -1
@@ -2209,13 +2228,13 @@ class Top(qt.QWidget):
         self.stbox = qt.QCheckBox(f)
         self.stbox.setText('Short Tail')
         self.ltbox = qt.QCheckBox(f)
-        self.ltbox.setText('Long Tail')        
+        self.ltbox.setText('Long Tail')
         self.stepbox = qt.QCheckBox(f)
-        self.stepbox.setText('Step Tail')        
+        self.stepbox.setText('Step Tail')
         self.escapebox = qt.QCheckBox(f)
-        self.escapebox.setText('Escape')        
+        self.escapebox.setText('Escape')
         self.sumbox = qt.QCheckBox(f)
-        self.sumbox.setText('Pile-up')        
+        self.sumbox.setText('Pile-up')
         self.stripbox = qt.QCheckBox(f)
         self.stripbox.setText('Strip Back.')
         #checkbox connections
@@ -2225,18 +2244,18 @@ class Top(qt.QWidget):
         self.connect(self.escapebox,qt.SIGNAL("clicked()"), self.mysignal)
         self.connect(self.sumbox,qt.SIGNAL("clicked()"),    self.mysignal)
         self.connect(self.stripbox,qt.SIGNAL("clicked()"),  self.mysignal)
-        #f.layout.addWidget(hyplabel,flagsoffset,coffset +1) 
-        f.layout.addWidget(self.stbox,flagsoffset+1,coffset +0)              
-        f.layout.addWidget(self.ltbox,flagsoffset+1,coffset +1)              
-        f.layout.addWidget(self.stepbox,flagsoffset+1,coffset +2)        
-        f.layout.addWidget(self.escapebox,flagsoffset+2,coffset +0)              
-        f.layout.addWidget(self.sumbox,flagsoffset+2,coffset +1)              
+        #f.layout.addWidget(hyplabel,flagsoffset,coffset +1)
+        f.layout.addWidget(self.stbox,flagsoffset+1,coffset +0)
+        f.layout.addWidget(self.ltbox,flagsoffset+1,coffset +1)
+        f.layout.addWidget(self.stepbox,flagsoffset+1,coffset +2)
+        f.layout.addWidget(self.escapebox,flagsoffset+2,coffset +0)
+        f.layout.addWidget(self.sumbox,flagsoffset+2,coffset +1)
         f.layout.addWidget(self.stripbox,flagsoffset+2,coffset +2)
-        self.layout.addWidget(HorizontalSpacer(self))
-        
+        self.mainLayout.addWidget(HorizontalSpacer(self))
+
         #buttons
         g = qt.QWidget(self)
-        self.layout.addWidget(g)
+        self.mainLayout.addWidget(g)
         glayout = qt.QGridLayout(g)
         glayout.setSpacing(5)
         self.configureButton = qt.QPushButton(g)
@@ -2286,7 +2305,7 @@ class Top(qt.QWidget):
                 self.stbox.setEnabled(0)
                 self.ltbox.setEnabled(0)
                 self.stepbox.setEnabled(0)
-        
+
         if ddict.has_key('sumflag'):
             if ddict['sumflag'] == 1:
                 self.sumbox.setChecked(1)
@@ -2304,13 +2323,13 @@ class Top(qt.QWidget):
                 self.escapebox.setChecked(1)
             else:
                 self.escapebox.setChecked(0)
-        
+
         if ddict.has_key('continuum'):
             if QTVERSION < '4.0.0':
                 self.BkgComBox.setCurrentItem(ddict['continuum'])
             else:
                 self.BkgComBox.setCurrentIndex(ddict['continuum'])
-         
+
     def getParameters(self):
         ddict={}
         if QTVERSION < '4.0.0':
@@ -2331,13 +2350,13 @@ class Top(qt.QWidget):
             self.stepbox.setEnabled(0)
 
         if self.stbox.isChecked():
-            ddict['hypermetflag'] += 2 
+            ddict['hypermetflag'] += 2
         if self.ltbox.isChecked():
-            ddict['hypermetflag'] += 4 
-        
+            ddict['hypermetflag'] += 4
+
         if self.stepbox.isChecked():
             ddict['hypermetflag'] += 8
-            
+
         if self.sumbox.isChecked():
             ddict['sumflag'] = 1
         else:
@@ -2364,22 +2383,22 @@ class Top(qt.QWidget):
             self.emit(qt.PYSIGNAL('TopSignal'),(ddict,))
         else:
             self.emit(qt.SIGNAL('TopSignal'),(ddict))
-    
+
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
-      
+
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
 
 class Line(qt.QFrame):
     def __init__(self, parent=None, name="Line", fl=0, info=None):
         qt.QFrame.__init__(self, parent)
-        self.info = info        
+        self.info = info
         self.setFrameShape(qt.QFrame.HLine)
         self.setFrameShadow(qt.QFrame.Sunken)
         self.setFrameShape(qt.QFrame.HLine)
 
-        
+
     def mouseDoubleClickEvent(self,event):
         if DEBUG:
             print "Double Click Event"
@@ -2391,16 +2410,16 @@ class Line(qt.QFrame):
             self.emit(qt.PYSIGNAL("LineDoubleClickEvent"),(dict,))
         else:
             self.emit(qt.SIGNAL("LineDoubleClickEvent"), dict)
-        
+
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
         if kw is None:kw={}
         qt.QThread.__init__(self)
-        self._function = function        
+        self._function = function
         self._kw       = kw
         self._result   = None
         self._expandParametersDict = False
-    
+
     def run(self):
         try:
             if self._expandParametersDict:
@@ -2409,15 +2428,18 @@ class SimpleThread(qt.QThread):
                 self._result = self._function(self._kw)
         except:
             self._result = ("Exception",) + sys.exc_info()
-        
-      
+
+
 class McaGraphWindow(qt.QWidget):
     def __init__(self, parent=None, name="Toolbar",fl=0):
         qt.QWidget.__init__(self,parent)
         layout = qt.QVBoxLayout(self)
-        
+        layout.setMargin(0)
+        layout.setSpacing(0)
         self.toolbar = qt.QWidget(self)
         self.toolbar.layout = qt.QHBoxLayout(self.toolbar)
+        self.toolbar.layout.setMargin(0)
+        self.toolbar.layout.setSpacing(0)
         self.graph   = QtBlissGraph.QtBlissGraph(self)
         layout.addWidget(self.toolbar)
         layout.addWidget(self.graph)
@@ -2433,9 +2455,9 @@ class McaGraphWindow(qt.QWidget):
 
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
         if DEBUG: print "printPreview id = ", id(self.printPreview)
-        
 
-                     
+
+
     def __roiSlot(self,dict=None):
         if dict is None:
             self.roimarkers = [-1, -1]
@@ -2466,7 +2488,7 @@ class McaGraphWindow(qt.QWidget):
                 i += 1
                 newroi = "newroi %d" % i
                 if newroi not in self.roilist:
-                    break  
+                    break
             self.roilist.append(newroi)
             self.roidict[newroi] = {}
             self.roidict[newroi]['type']    = str(self.graph.xlabel())
@@ -2483,7 +2505,7 @@ class McaGraphWindow(qt.QWidget):
             self.roiwidget.fillfromroidict(roilist=self.roilist,
                                            roidict=self.roidict,
                                            currentroi=self.currentroi)
-        
+
         elif dict['event'] == 'ResetROI':
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             self.currentroi = self.roidict.keys()[0]
@@ -2499,29 +2521,29 @@ class McaGraphWindow(qt.QWidget):
         self.__graphSignal(ndict)
 
     def initIcons(self):
-		if QTVERSION > '4.0.0':qt.QIconSet = qt.QIcon
-		self.normalIcon	= qt.QIconSet(qt.QPixmap(IconDict["normal"]))
-		self.zoomIcon	= qt.QIconSet(qt.QPixmap(IconDict["zoom"]))
-		self.roiIcon	= qt.QIconSet(qt.QPixmap(IconDict["roi"]))
-		self.peakIcon	= qt.QIconSet(qt.QPixmap(IconDict["peak"]))
+        if QTVERSION > '4.0.0':qt.QIconSet = qt.QIcon
+        self.normalIcon = qt.QIconSet(qt.QPixmap(IconDict["normal"]))
+        self.zoomIcon   = qt.QIconSet(qt.QPixmap(IconDict["zoom"]))
+        self.roiIcon    = qt.QIconSet(qt.QPixmap(IconDict["roi"]))
+        self.peakIcon   = qt.QIconSet(qt.QPixmap(IconDict["peak"]))
 
-		self.zoomResetIcon	= qt.QIconSet(qt.QPixmap(IconDict["zoomreset"]))
-		self.roiResetIcon	= qt.QIconSet(qt.QPixmap(IconDict["roireset"]))
-		self.peakResetIcon	= qt.QIconSet(qt.QPixmap(IconDict["peakreset"]))
-		self.refreshIcon	= qt.QIconSet(qt.QPixmap(IconDict["reload"]))
+        self.zoomResetIcon  = qt.QIconSet(qt.QPixmap(IconDict["zoomreset"]))
+        self.roiResetIcon   = qt.QIconSet(qt.QPixmap(IconDict["roireset"]))
+        self.peakResetIcon  = qt.QIconSet(qt.QPixmap(IconDict["peakreset"]))
+        self.refreshIcon    = qt.QIconSet(qt.QPixmap(IconDict["reload"]))
 
-		self.logxIcon	= qt.QIconSet(qt.QPixmap(IconDict["logx"]))
-		self.logyIcon	= qt.QIconSet(qt.QPixmap(IconDict["logy"]))
-		self.energyIcon	= qt.QIconSet(qt.QPixmap(IconDict["energy"]))
-		self.xAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
-		self.yAutoIcon	= qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
-		self.fitIcon	= qt.QIconSet(qt.QPixmap(IconDict["fit"]))
-		self.deriveIcon	= qt.QIconSet(qt.QPixmap(IconDict["derive"]))
-		self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
-		self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
-		self.searchIcon	= qt.QIconSet(qt.QPixmap(IconDict["peaksearch"]))
+        self.logxIcon   = qt.QIconSet(qt.QPixmap(IconDict["logx"]))
+        self.logyIcon   = qt.QIconSet(qt.QPixmap(IconDict["logy"]))
+        self.energyIcon = qt.QIconSet(qt.QPixmap(IconDict["energy"]))
+        self.xAutoIcon  = qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
+        self.yAutoIcon  = qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
+        self.fitIcon    = qt.QIconSet(qt.QPixmap(IconDict["fit"]))
+        self.deriveIcon = qt.QIconSet(qt.QPixmap(IconDict["derive"]))
+        self.saveIcon   = qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
+        self.printIcon  = qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
+        self.searchIcon = qt.QIconSet(qt.QPixmap(IconDict["peaksearch"]))
 
-        
+
     def initToolBar(self):
         toolbar = self.toolbar
         self.initIcons()
@@ -2536,7 +2558,7 @@ class McaGraphWindow(qt.QWidget):
                             'Toggle Autoscale Y Axis (On/Off)',
                             toggle=1,
                             state=1)
-        
+
         #x Autoscale
         self._addToolButton(self.xAutoIcon,
                             self._xAutoScaleToggle,
@@ -2558,7 +2580,7 @@ class McaGraphWindow(qt.QWidget):
         self._addToolButton(self.fitIcon,
                             self._fitIconSignal,
                             'Fit Again!')
-        
+
         # ROI
         self.roiwidget = None
         """
@@ -2569,24 +2591,24 @@ class McaGraphWindow(qt.QWidget):
         self.connect(tb,qt.SIGNAL('clicked()'),self._roiIconSignal)
         qt.QToolTip.add(tb,'Show ROI Widget')
         """
-        
+
         #save
         self._addToolButton(self.saveIcon,
                             self._saveIconSignal,
                             'Save Curves')
-         
+
         # Search
         """
         tb      = qt.QToolButton(toolbar)
         tb.setIconSet(self.searchIcon)
         self.connect(tb,qt.SIGNAL('clicked()'),self.peaksearch)
-        qt.QToolTip.add(tb,'Clear Peak Table and Search Peaks') 
+        qt.QToolTip.add(tb,'Clear Peak Table and Search Peaks')
         # Marker
         self.markerButton      = qt.QToolButton(toolbar)
         self.markerButton.setIconSet(self.normalIcon)
         self.markerButton.setToggleButton(1)
         self.connect(self.markerButton,qt.SIGNAL('clicked()'),self.__peakmarkermode)
-        qt.QToolTip.add(self.markerButton,'Allow Right-Click Peak Selection from Graph') 
+        qt.QToolTip.add(self.markerButton,'Allow Right-Click Peak Selection from Graph')
         """
         self.toolbar.layout.addWidget(HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
@@ -2598,7 +2620,7 @@ class McaGraphWindow(qt.QWidget):
         self.xpos.setFixedWidth(self.xpos.fontMetrics().width('#########'))
         self.toolbar.layout.addWidget(label)
         self.toolbar.layout.addWidget(self.xpos)
-        
+
         label=qt.QLabel(toolbar)
         label.setText('<b>Y:</b>')
         self.ypos = qt.QLineEdit(toolbar)
@@ -2607,7 +2629,7 @@ class McaGraphWindow(qt.QWidget):
         self.ypos.setFixedWidth(self.ypos.fontMetrics().width('############'))
         self.toolbar.layout.addWidget(label)
         self.toolbar.layout.addWidget(self.ypos)
-        
+
         """
         label=qt.QLabel(toolbar)
         label.setText('<b>Energy:</b>')
@@ -2627,7 +2649,7 @@ class McaGraphWindow(qt.QWidget):
                     self.printGraph,
                     'Print the graph')
             toolbar.layout.addWidget(tb)
-            
+
     def printGraph(self):
         pixmap = qt.QPixmap.grabWidget(self.graph)
         self.printPreview.addPixmap(pixmap)
@@ -2640,10 +2662,10 @@ class McaGraphWindow(qt.QWidget):
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None):
             toolbar = self.toolbar
-            tb      = qt.QToolButton(toolbar)            
+            tb      = qt.QToolButton(toolbar)
             if QTVERSION < '4.0.0':
                 tb.setIconSet(icon)
-                qt.QToolTip.add(tb,tip) 
+                qt.QToolTip.add(tb,tip)
                 if toggle is not None:
                     if toggle:
                         tb.setToggleButton(1)
@@ -2671,7 +2693,7 @@ class McaGraphWindow(qt.QWidget):
             self.graph.yAutoScale = False
         else:
             self.graph.yAutoScale = True
-            
+
     def _xAutoScaleToggle(self):
         if self.graph.xAutoScale:
             self.graph.xAutoScale = False
@@ -2717,7 +2739,7 @@ class McaGraphWindow(qt.QWidget):
             self.connect(self.roiwidget,qt.SIGNAL("McaROIWidgetSignal"),
                      self.__roiSlot)
         self.__roiSlot()
-    
+
     def _roiIconSignal(self):
         if self.roiwidget is None:self._initRoi()
         if self.roiwidget.isHidden():self.roiwidget.show()
@@ -2769,7 +2791,7 @@ class McaGraphWindow(qt.QWidget):
                         self.roidict[key]['netcounts'] = 0.0
                         #self.roidict[key]['from'  ] = 0.0
                         #self.roidict[key]['to'    ] = 0.0
-                else:    
+                else:
                     for i in range(len(self.roilist)):
                         key = self.roilist[i]
                         if key == self.roilist[0]:
@@ -2803,9 +2825,9 @@ class McaGraphWindow(qt.QWidget):
                 self.roiwidget.fillfromroidict(roilist=self.roilist,
                                                 roidict=self.roidict)
 
-        
-    
-    
+
+
+
 def test(file='03novs060sum.mca'):
     import specfilewrapper as specfile
     app = qt.QApplication([])
@@ -2830,12 +2852,22 @@ def test(file='03novs060sum.mca'):
         #demo.configure(oldConfig)
         demo.show()
         app.exec_()
-        
-    
+
+
+def main():
+    app = qt.QApplication([])
+    form = McaAdvancedFit(top=False)
+    form.show()
+    sys.exit(app.exec_())
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) >1:
-        file = sys.argv[1]
+        ffile = sys.argv[1]
     else:
-        file = '03novs060sum.mca'
-    test(file)
+        ffile = '03novs060sum.mca'
+    if os.path.exists(ffile):
+        test(ffile)
+    else:
+        main()
