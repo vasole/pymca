@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.12 $"
+__revision__ = "$Revision: 1.13 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -696,8 +696,19 @@ class MaterialGUI(qt.QWidget):
         if self.__lastColumn is None:
             self.__lastColumn = col
 
-        qstring = self.__table.text(self.__lastRow, 
+        if QTVERSION < '4.0.0':
+            qstring = self.__table.text(self.__lastRow, 
                                     self.__lastColumn)
+        else:
+            item = self.__table.item(self.__lastRow, 
+                                    self.__lastColumn)
+            if item is None:
+                item = qt.QTableWidgetItem("",qt.QTableWidgetItem.Type)
+                self.__table.setItem(self.__lastRow, 
+                                     self.__lastColumn,
+                                     item)
+            qstring = item.text()
+
         if self.__lastColumn == 0:
             compound     = str(qstring)
             if Elements.isValidFormula(compound):
@@ -705,9 +716,21 @@ class MaterialGUI(qt.QWidget):
             else:
                 matkey  = Elements.getMaterialKey(compound)
                 if matkey is not None:
-                    self.__table.setText(self.__lastRow,
-                                         self.__lastColumn,
-                                         matkey)            
+                    if QTVERSION < '4.0.0':
+                        self.__table.setText(self.__lastRow,
+                                             self.__lastColumn,
+                                             matkey)
+                    else:
+                        item = self.__table.item(self.__lastRow, 
+                                            self.__lastColumn)
+                        if item is None:
+                            item = qt.QTableWidgetItem(matkey,
+                                            qt.QTableWidgetItem.Type)
+                            self.__table.setItem(self.__lastRow, 
+                                             self.__lastColumn,
+                                             item)
+                        else:
+                            item.setText(matkey)                        
                 else:
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
