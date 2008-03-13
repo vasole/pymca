@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.19 $"
+__revision__ = "$Revision: 1.20 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -672,7 +672,7 @@ class FundamentalWidget(qt.QWidget):
 class ConcentrationsTable(QTable):
     def __init__(self, parent=None, **kw):
         QTable.__init__(self, parent)
-
+        
         if kw.has_key('labels'):
             self.labels=[]
             for label in kw['labels']:

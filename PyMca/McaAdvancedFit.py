@@ -192,7 +192,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.tabConcentrations  = qt.QWidget()
             tabConcentrationsLayout = qt.QVBoxLayout(self.tabConcentrations)
             tabConcentrationsLayout.setMargin(11)
-            tabConcentrationsLayout.setSpacing(6)
+            tabConcentrationsLayout.setSpacing(0)
             line2 = Line(self.tabConcentrations, info="CONCENTRATIONS")
             self.concentrationsWidget = ConcentrationsWidget.Concentrations(self.tabConcentrations)
             tabConcentrationsLayout.addWidget(line2)
