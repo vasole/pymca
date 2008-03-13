@@ -72,7 +72,7 @@ Elements = ElementsInfo.Elements
 import numpy.oldnumeric as Numeric
 import PyMcaPrintPreview
 import PyMcaDirs
-
+USE_BOLD_FONT = True
 DEBUG = 0
 if DEBUG:
     print "############################################"
@@ -100,7 +100,7 @@ class McaAdvancedFit(qt.QWidget):
 
         self.headerLabel.setAlignment(qt.Qt.AlignHCenter)
         font = self.font()
-        font.setBold(True)
+        font.setBold(USE_BOLD_FONT)
         self.headerLabel.setFont(font)
         self.setHeader('Fit of XXXXXXXXXX from Channel XXXXX to XXXX')
         self.top = Top(self)
