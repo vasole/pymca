@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.19 $"
+__revision__ = "$Revision: 1.20 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
@@ -561,7 +561,7 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['A'] = newcal[0]
                         self.caldict[current]['B'] = newcal[1]
                         self.caldict[current]['C'] = newcal[2]
-                    self.__peaktablesignal({'event':'use'})
+                    self.__peaktablesignal({'event':'use'}, calculate=False)
             else:
                 if DEBUG:
                     print "Dialog cancelled or closed "
@@ -599,7 +599,7 @@ class McaCalWidget(qt.QDialog):
             if DEBUG:
                 print "Unhandled event ",   ddict['event']
 
-    def __peaktablesignal(self, ddict):
+    def __peaktablesignal(self, ddict, calculate=True):
         if DEBUG:
             print "__peaktablesignal called dict = ",ddict
         if (ddict['event'] == 'use') or (ddict['event'] == 'setenergy'):
@@ -617,12 +617,13 @@ class McaCalWidget(qt.QDialog):
             if len(usedpeaks):
               if usedpeaks != [[0.0,0.0]]:
                 current = self.current
-                newcal = self.calculate(usedpeaks,order=self.caldict[current]['order'])
-                if newcal is None:
-                    return
-                self.caldict[current]['A'] = newcal[0]
-                self.caldict[current]['B'] = newcal[1]
-                self.caldict[current]['C'] = newcal[2]
+                if calculate:
+                    newcal = self.calculate(usedpeaks,order=self.caldict[current]['order'])
+                    if newcal is None:
+                        return
+                    self.caldict[current]['A'] = newcal[0]
+                    self.caldict[current]['B'] = newcal[1]
+                    self.caldict[current]['C'] = newcal[2]
                 self.calpar.setParameters(self.caldict[current])
                 for peak in peakdict.keys():
                     channel = peakdict[peak]['channel']
@@ -795,7 +796,7 @@ class McaCalWidget(qt.QDialog):
         if index == 0:
             return self.functionTOF([1.0, B, 0.0], x)
         if index == 1:
-            return -A * pow((x-B), -3)
+            return A * pow((x-B), -3)
         if index == 2:
             return Numeric.ones(x.shape, Numeric.Float)
             
@@ -1620,9 +1621,9 @@ class McaCalCopy(qt.QDialog):
         
     def __copybuttonclicked(self):
         item, text = self.combo.getcurrent()
-        self.AText.setText("%.4g" % self.caldict[text]['A'])
-        self.BText.setText("%.4g" % self.caldict[text]['B'])
-        self.CText.setText("%.4g" % self.caldict[text]['C'])
+        self.AText.setText("%.7g" % self.caldict[text]['A'])
+        self.BText.setText("%.7g" % self.caldict[text]['B'])
+        self.CText.setText("%.7g" % self.caldict[text]['C'])
             
 
     def getdict(self):
