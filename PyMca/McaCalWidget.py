@@ -251,6 +251,11 @@ class McaCalWidget(qt.QDialog):
         self.okButton.setText('OK')
         self.cancelButton       = qt.QPushButton(toolbar2)
         self.cancelButton.setText('Cancel')
+        if QTVERSION < '4.0.0':
+            pass
+        else:
+            self.okButton.setAutoDefault(False)
+            self.cancelButton.setAutoDefault(False)
         self.okButton. setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         self.cancelButton. setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         toolbar2.layout.addWidget(self.calpar)
@@ -355,7 +360,7 @@ class McaCalWidget(qt.QDialog):
         self.foundpeaks = []
         self.graph.clearMarkers()
         self.__destroylinewidgets()
-        self.peaktable.setRowCount(0)
+        self.peaktable.clearPeaks()
         self.graph.replot()
 
     def manualsearch(self):

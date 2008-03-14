@@ -135,6 +135,11 @@ class PeakTableWidget(QTable):
             #self.resizeColumnToContents(2)
             self.resizeColumnToContents(5)
 
+    def clearPeaks(self):
+        self.peaks = {}
+        self.peaklist = []
+        self.setRowCount(0)
+        
     def newpeakline(self,peak,line):
         #get current number of lines
         nlines=self.rowCount()
