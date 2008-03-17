@@ -245,6 +245,8 @@ class McaBatchGUI(qt.QWidget):
         
         vBox = qt.QWidget(bigbox)
         vBox.l = qt.QVBoxLayout(vBox)
+        vBox.l.setMargin(0)
+        vBox.l.setSpacing(2)
         bigbox.l.addWidget(vBox)
         self.__overwrite = qt.QCheckBox(vBox)
         self.__overwrite.setText('Overwrite Fit Files')
