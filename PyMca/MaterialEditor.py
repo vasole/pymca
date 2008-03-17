@@ -209,7 +209,10 @@ class MaterialComboBox(qt.QComboBox):
                 msg.exec_loop()
             else:
                 msg.exec_()
-            self.setCurrentItem(0)
+            if QTVERSION < '4.0.0':
+                self.setCurrentItem(0)
+            else:
+                self.setCurrentIndex(0)
             for i in range(self.count()):
                 if QTVERSION <'4.0.0':
                     selftext = self.text(i)
@@ -354,10 +357,10 @@ class MaterialGUI(qt.QWidget):
         hboxLayout.addWidget(self.__numberSpin)
         if QTVERSION < '4.0.0':
             self.__numberSpin.setMinValue(1)
-            self.__numberSpin.setMaxValue(20)
+            self.__numberSpin.setMaxValue(30)
         else:
             self.__numberSpin.setMinimum(1)
-            self.__numberSpin.setMaximum(20)
+            self.__numberSpin.setMaximum(30)
         self.__numberSpin.setValue(1)
         if QTVERSION < '4.0.0':
             self.__table = qttable.QTable(tableContainer)

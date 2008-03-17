@@ -516,6 +516,11 @@ class McaAdvancedFit(qt.QWidget):
         if self.mcatable is not None:
             self.mcatable.setRowCount(0)
 
+        #make sure newly or redefined materials are added to the
+        #materials in the fit configuration
+        for material in Elements.Material.keys():
+            self.mcafit.config['materials'][material] =copy.deepcopy(Elements.Material[material])
+
         if DEBUG:
             self.mcafit.configure(config)
         elif (QTVERSION < '3.0.0'):
