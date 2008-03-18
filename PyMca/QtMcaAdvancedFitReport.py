@@ -180,8 +180,9 @@ class QtMcaAdvancedFitReport:
         return text
        
     def getHeader(self,addlink=None):
-        link = [ ['http://www.esrf.fr', 'ESRF home'],
-                 ['http://www.esrf.fr/computing/bliss/', 'BLISS home']]
+        link = [ ['http://pymca.sourceforge.net', 'PyMCA home'],
+                 ['http://www.esrf.fr', 'ESRF home'],
+                 ['http://www.esrf.fr/UsersAndScience/Experiments/TBS/BLISS', 'BLISS home']]
         if self.concentrations is not None:
             link.append(['#Concentrations', 'Concentrations'])
         if self.tableFlag:link.append(['#Fit_Peak_Results', 'Fit Peak Results'])
@@ -418,10 +419,16 @@ class QtMcaAdvancedFitReport:
         if self.fitresult['result']['config']['fit']['stripflag']:
              constant    = 1.0
              iterations = 20000
+             stripwidth = 1
+             stripfilterwidth = 1
              if self.fitresult['result']['config']['fit'].has_key('stripconstant'):
                 constant=self.fitresult['result']['config']['fit']['stripconstant']
              if self.fitresult['result']['config']['fit'].has_key('stripiterations'):
                 iterations=self.fitresult['result']['config']['fit']['stripiterations']
+             if self.fitresult['result']['config']['fit'].has_key('stripwidth'):
+                stripwidth=self.fitresult['result']['config']['fit']['stripwidth']
+             if self.fitresult['result']['config']['fit'].has_key('stripfilterwidth'):
+                stripfilterwidth=self.fitresult['result']['config']['fit']['stripfilterwidth']
              text+="        <TR align=left>"
              text+="            <TD><I>&nbsp;Type</I></TD>"
              text+="            <TD>&nbsp;%s</TD>" % "Strip Background"
@@ -434,7 +441,27 @@ class QtMcaAdvancedFitReport:
              text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Iterations"
              text+="            <TD>&nbsp;%d</TD>" % iterations
              text+="        </TR>"
-
+             text+="        <TR align=left>"
+             text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Width"
+             text+="            <TD>&nbsp;%d</TD>" % stripwidth
+             text+="        </TR>"
+             text+="        <TR align=left>"
+             text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Filter Width"
+             text+="            <TD>&nbsp;%d</TD>" % stripfilterwidth
+             text+="        </TR>"
+             stripanchorslist = []
+             stripanchorsflag = self.fitresult['result']['config']['fit'].get('stripanchorsflag', 0)
+             if stripanchorsflag:
+                 stripanchorslist = self.fitresult['result']['config']['fit'].get('stripanchorslist', [])
+             i = 0
+             for anchor in stripanchorslist:
+                 if anchor != 0:
+                     text+="        <TR align=left>"
+                     text+="            <TD><I>&nbsp;%s%d<I></TD>" % ("Anchor",i)
+                     text+="            <TD>&nbsp;%d</TD>" % anchor
+                     text+="        </TR>"
+                     i += 1
+                 
         # --- Background Function
         if self.fitresult['result']['config']['fit']['continuum']:
              text+="        <TR align=left>"
