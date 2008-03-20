@@ -518,7 +518,7 @@ SfoWrite( SpecFileOut *sfo, char *name, int *error )
      /* 
       * Open file
       */
-     if ( (output = open(name, O_CREAT | O_RDWR | O_APPEND )) == (int)NULL ) {
+     if ( (output = open(name, O_CREAT | O_RDWR | O_APPEND, SF_UMASK )) == (int)NULL ) {
         *error = SF_ERR_FILE_OPEN;
          return( -1 );
      }
