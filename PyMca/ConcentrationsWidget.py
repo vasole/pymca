@@ -88,6 +88,8 @@ class Concentrations(qt.QWidget):
             self.connect(self.concentrationsWidget,
                         qt.PYSIGNAL('ConcentrationsWidgetSignal'),self.mySlot)
         else:
+            layout.setStretchFactor(self.concentrationsWidget, 0)
+            layout.setStretchFactor(self.concentrationsTable, 1)
             self.connect(self.concentrationsWidget,
                         qt.SIGNAL('ConcentrationsWidgetSignal'),self.mySlot)
         self.concentrationsTool.configure(self.concentrationsWidget.getParameters())
