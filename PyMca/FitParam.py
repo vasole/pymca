@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.42 $"
+__revision__ = "$Revision: 1.43 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -360,7 +360,12 @@ class FitParamWidget(FitParamForm):
                          'Density':   attpar[2],
                          'Thickness': attpar[3],
                          'AlphaIn':   attpar[4],
-                         'AlphaOut':  attpar[5]} 
+                         'AlphaOut':  attpar[5]}
+                if len(attpar) == 8:
+                    current['AlphaScatteringFlag'] = attpar[6]
+                    current['AlphaScattering'] = attpar[7]
+                else:
+                    current['AlphaScatteringFlag'] = 0
                 self.matrixGeometry.setParameters(current)
             elif att.upper() == "BEAMFILTER0":
                 attpar= self.__get("attenuators", att, [0, "-", 0., 0.], None)
@@ -415,13 +420,15 @@ class FitParamWidget(FitParamForm):
                 attpar.append(float(str(self.attTable.text(idx, 3))))
                 attpar.append(float(str(self.attTable.text(idx, 4))))
                 if att.upper() == "MATRIX":
-                    attpar.append(self.matrixGeometry.getParameters("AlphaIn"))     
-                    attpar.append(self.matrixGeometry.getParameters("AlphaOut"))                    
+                    attpar.append(self.matrixGeometry.getParameters("AlphaIn"))
+                    attpar.append(self.matrixGeometry.getParameters("AlphaOut"))
+                    attpar.append(self.matrixGeometry.getParameters("AlphaScatteringFlag"))
+                    attpar.append(self.matrixGeometry.getParameters("AlphaScattering"))
             except:
                 if att.upper() != "MATRIX":
                     attpar= [0, '-', 0., 0.]
                 else:
-                    attpar= [0, '-', 0., 0., 45.0, 45.0]
+                    attpar= [0, '-', 0., 0., 45.0, 45.0, 0, 90.0]
                 self.__parError("ATTENUATORS", "Attenuators parameters error on:\n%s\nReset it to zero."%self.attenuators[idx][0])
             pars[att]= attpar
         return pars

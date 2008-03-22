@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,19 +22,20 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.8 $"
+__revision__ = "$Revision: 1.9 $"
 from MaterialEditor import qt
 import MaterialEditor
 import MatrixImage
 
+QTVERSION = qt.qVersion()
 
 class MatrixEditor(qt.QWidget):
     def __init__(self, parent=None, name="Matrix Editor",current=None, 
                     table=True,orientation="vertical",thickness=True,
                    density=True, size=None):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name)
             self.setCaption(name)
         else:
@@ -45,6 +46,8 @@ class MatrixEditor(qt.QWidget):
                        'Thickness':   1.0,
                        'AlphaIn':    45.0,
                        'AlphaOut':   45.0,
+                       'AlphaScatteringFlag':False,
+                       'AlphaScattering': 90,
                        'Material':  "Water"}
         if current is not None: self._current.update(current)
         self.build(table,orientation, thickness, density, size)
@@ -72,8 +75,7 @@ class MatrixEditor(qt.QWidget):
         if orientation == "vertical":
             sampleBoxLayout = qt.QVBoxLayout(sampleBox)
         else:
-            sampleBoxLayout = qt.QHBoxLayout(sampleBox)
-            
+            sampleBoxLayout = qt.QHBoxLayout(sampleBox)            
         
         #the image
         if orientation == "vertical":
@@ -98,7 +100,7 @@ class MatrixEditor(qt.QWidget):
         self.__gridSampleBox = qt.QWidget(sampleBox)
         grid = self.__gridSampleBox
         sampleBoxLayout.addWidget(grid)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             gridLayout=qt.QGridLayout(grid,5,2,11,4)
         else:
             gridLayout = qt.QGridLayout(grid)
@@ -115,26 +117,38 @@ class MatrixEditor(qt.QWidget):
         angle2Label.setText("Outgoing Angle (deg.):")
         self.__angle2Line  = MyQLineEdit(grid)
         self.__angle2Line.setReadOnly(False)
-        if qt.qVersion() < '4.0.0':
+
+        self.__angle3Label  = qt.QCheckBox(grid)
+        self.__angle3Label.setText("Scattering Angle (deg.):")
+        self.__angle3Line  = MyQLineEdit(grid)
+        self.__angle3Line.setReadOnly(False)
+        self.__angle3Line.setDisabled(True)
+        if QTVERSION < '4.0.0':
             angle1Label.setAlignment(qt.QLabel.WordBreak | \
                                      qt.QLabel.AlignVCenter)
             angle2Label.setAlignment(qt.QLabel.WordBreak | \
+                                     qt.QLabel.AlignVCenter)
+            self.__angle3Label.setAlignment(qt.QLabel.WordBreak | \
                                      qt.QLabel.AlignVCenter)
         else:
             angle1Label.setAlignment(qt.Qt.AlignVCenter)
             angle2Label.setAlignment(qt.Qt.AlignVCenter)
 
+        self.__angle3Label.setChecked(0)
+
         gridLayout.addWidget(angle1Label, 0, 0)
         gridLayout.addWidget(self.__angle1Line, 0, 1)
         gridLayout.addWidget(angle2Label, 1, 0)
         gridLayout.addWidget(self.__angle2Line, 1, 1)
+        gridLayout.addWidget(self.__angle3Label, 2, 0)
+        gridLayout.addWidget(self.__angle3Line, 2, 1)
 
-        rowoffset = 2
+        rowoffset = 3
         #thickness and density
         if density:
             densityLabel  = qt.QLabel(grid)
             densityLabel.setText("Sample Density (g/cm3):")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 densityLabel.setAlignment(qt.QLabel.WordBreak | \
                                           qt.QLabel.AlignVCenter)
             else:
@@ -143,14 +157,14 @@ class MatrixEditor(qt.QWidget):
             self.__densityLine.setReadOnly(False)
             gridLayout.addWidget(densityLabel, rowoffset, 0)
             gridLayout.addWidget(self.__densityLine, rowoffset, 1)
-            rowoffset = 3
+            rowoffset = rowoffset + 1
         else:
             self.__densityLine = None
 
         if thickness:
             thicknessLabel  = qt.QLabel(grid)
             thicknessLabel.setText("Sample Thickness   (cm):")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 thicknessLabel.setAlignment(qt.QLabel.WordBreak | \
                                             qt.QLabel.AlignVCenter)
             else:
@@ -159,15 +173,17 @@ class MatrixEditor(qt.QWidget):
             self.__thicknessLine.setReadOnly(False)
             gridLayout.addWidget(thicknessLabel, rowoffset, 0)
             gridLayout.addWidget(self.__thicknessLine, rowoffset, 1)
-            rowoffset=4
+            rowoffset = rowoffset + 1
         else:
             self.__thicknessLine  = None
 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(self.__angle1Line,qt.PYSIGNAL('MyQLineEditSignal'),
                          self.__angle1Slot)
             self.connect(self.__angle2Line, qt.PYSIGNAL('MyQLineEditSignal'),
                          self.__angle2Slot)
+            self.connect(self.__angle3Line, qt.PYSIGNAL('MyQLineEditSignal'),
+                         self.__angle3Slot)
             if self.__densityLine is not None:
                 self.connect(self.__densityLine, qt.PYSIGNAL('MyQLineEditSignal'),
                          self.__densitySlot)
@@ -179,12 +195,16 @@ class MatrixEditor(qt.QWidget):
                          self.__angle1Slot)
             self.connect(self.__angle2Line, qt.SIGNAL('MyQLineEditSignal'),
                          self.__angle2Slot)
+            self.connect(self.__angle3Line, qt.SIGNAL('MyQLineEditSignal'),
+                         self.__angle3Slot)
             if self.__densityLine is not None:
                 self.connect(self.__densityLine, qt.SIGNAL('MyQLineEditSignal'),
                          self.__densitySlot)
             if self.__thicknessLine is not None:
                 self.connect(self.__thicknessLine,qt.SIGNAL('MyQLineEditSignal'),
                          self.__thicknessSlot)
+        self.connect(self.__angle3Label, qt.SIGNAL('clicked()'),
+                       self.__angle3LabelSlot)
 
         if orientation == "vertical":
             sampleBoxLayout.addWidget(VerticalSpacer(sampleBox))
@@ -208,48 +228,101 @@ class MatrixEditor(qt.QWidget):
             self.materialEditor.materialGUI.setCurrent(self._current['Material'])
         self.__angle1Line.setText("%.5g" % self._current['AlphaIn'])
         self.__angle2Line.setText("%.5g" % self._current['AlphaOut'])
+        if self._current['AlphaScatteringFlag']:
+            self.__angle3Label.setChecked(1)
+            self.__angle3Line.setEnabled(True)
+            self.__angle3Line.setText("%.5g" % self._current['AlphaScattering'])
+        else:
+            self.__angle3Label.setChecked(False)
+            self.__angle3LabelSlot()
+            
         if self.__densityLine is not None:
             self.__densityLine.setText("%.5g" % self._current['Density'])
         if self.__thicknessLine is not None:
             self.__thicknessLine.setText("%.5g" % self._current['Thickness'])
     
 
-    def __angle1Slot(self, dict):
-        self._current['AlphaIn'] = dict['value']
+    def __angle1Slot(self, ddict):
+        if (ddict['value'] < -90.) or (ddict['value'] > 90.):
+            msg=qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Incident beam has to be in the range [-90, 90]")
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            self.__angle1Line.setFocus()
+            return
 
-    def __angle2Slot(self, dict):
-        self._current['AlphaOut'] = dict['value']
+        self._current['AlphaIn'] = ddict['value']
+        self.__updateScattering()
+   
+    def __angle2Slot(self, ddict):
+        if (ddict['value'] <= 0.0) or (ddict['value'] > 180.):
+            msg=qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Fluorescent beam has to be in the range ]0, 180]")
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            self.__angle2Line.setFocus()
+            return
+        
+        self._current['AlphaOut'] = ddict['value']
+        self.__updateScattering()
 
-    def __thicknessSlot(self, dict):
-        self._current['Thickness'] = dict['value']
+    def __angle3Slot(self, ddict):
+        self._current['AlphaScattering'] = ddict['value']
 
-    def __densitySlot(self, dict):
-        self._current['Density'] = dict['value']
+    def __angle3LabelSlot(self):
+        if self.__angle3Label.isChecked():
+            self._current['AlphaScatteringFlag'] = 1
+            self.__angle3Line.setEnabled(True)
+        else:
+            self._current['AlphaScatteringFlag'] = 0
+            self.__angle3Line.setEnabled(False)
+            self.__updateScattering()
+
+    def __updateScattering(self):
+        if not self.__angle3Label.isChecked():
+            self._current['AlphaScattering'] = self._current['AlphaIn'] +\
+                                               self._current['AlphaOut']
+            self.__angle3Line.setText("%.5g" % self._current['AlphaScattering'])
+
+    def __thicknessSlot(self, ddict):
+        self._current['Thickness'] = ddict['value']
+
+    def __densitySlot(self, ddict):
+        self._current['Density'] = ddict['value']
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
-        self.connect(self, qt.SIGNAL("returnPressed()"), self.__mySlot)
+        if QTVERSION < '4.0.0':
+            self.connect(self, qt.SIGNAL("returnPressed()"), self.__mySlot)
+        else:
+            self.connect(self, qt.SIGNAL("editingFinished()"), self.__mySlot)
 
     def focusInEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass
         else:
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.backgroundcolor = self.paletteBackgroundColor()
                 self.setPaletteBackgroundColor(qt.QColor('yellow'))
 
     def focusOutEvent(self,event):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass
         else:
             self.setPaletteBackgroundColor(qt.QColor('white'))
         self.__mySlot()
 
     def setPaletteBackgroundColor(self, color):
-        if qt.qVersion() < '3.0.0':
+        if QTVERSION < '3.0.0':
             pass
-        elif qt.qVersion() < '4.0.0':
+        elif QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self, color)
         else:
             pass
@@ -260,20 +333,20 @@ class MyQLineEdit(qt.QLineEdit):
         try:
             if len(text):
                 value = float(str(qstring))
-                dict={}
-                dict['event']   = 'returnPressed'
-                dict['value']   = value
-                dict['text']    = text
-                dict['qstring'] = qstring
-                if qt.qVersion() < '4.0.0':
-                    self.emit(qt.PYSIGNAL('MyQLineEditSignal'),(dict,))
+                ddict={}
+                ddict['event']   = 'returnPressed'
+                ddict['value']   = value
+                ddict['text']    = text
+                ddict['qstring'] = qstring
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL('MyQLineEditSignal'),(ddict,))
                 else:
-                    self.emit(qt.SIGNAL('MyQLineEditSignal'), dict)
+                    self.emit(qt.SIGNAL('MyQLineEditSignal'), ddict)
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
                 msg.exec_()
@@ -295,7 +368,7 @@ if __name__ == "__main__":
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),app,qt.SLOT("quit()"))
     #demo = MatrixEditor(table=False, orientation="horizontal")
     demo = MatrixEditor(table=True, orientation="vertical")
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
         demo.show()
         app.exec_loop()

@@ -675,13 +675,21 @@ class McaTheory:
                                     try:
                                         alphaIn  = self.config['attenuators']['Matrix'][4]
                                     except:
+                                        print "WARNING: Matrix incident angle set to 45 deg."
                                         alphaIn  = 45.0
                                     try:
                                         alphaOut = self.config['attenuators']['Matrix'][5]
                                     except:
+                                        print "WARNING: Matrix outgoing angle set to 45 deg."
                                         alphaOut  = 45.0
-                                    scatAngle = (alphaIn + alphaOut) * Numeric.pi/180.
-                                    ene = ene / (1.0 + (ene/511.0) * (1.0 - Numeric.cos(scatAngle)))
+
+                                    scatteringAngle = (alphaIn + alphaOut)
+                                    if len(self.config['attenuators']['Matrix']) == 8:
+                                        if self.config['attenuators']['Matrix'][6]:
+                                            scatteringAngle = self.config['attenuators']\
+                                                              ['Matrix'][7]
+                                    scatteringAngle = scatteringAngle * Numeric.pi/180.
+                                    ene = ene / (1.0 + (ene/511.0) * (1.0 - Numeric.cos(scatteringAngle)))
                                 fwhm = Numeric.sqrt(noise*noise + \
                                         0.00385 *ene* fano*2.3548*2.3548)
                                 PEAKS0.append(Numeric.array([[1.0, ene, fwhm, 0.0]]))
