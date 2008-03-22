@@ -95,7 +95,8 @@ class MatrixEditor(qt.QWidget):
             label = MatrixImage.MatrixImage(labelHBox,size=size)
             labelHBoxLayout.addWidget(label)
         if orientation != "vertical":
-            labelHBoxLayout.addWidget(VerticalSpacer(labelHBox))   
+            labelHBoxLayout.addWidget(VerticalSpacer(labelHBox))
+        self.imageLabel = label
         #the input fields container
         self.__gridSampleBox = qt.QWidget(sampleBox)
         grid = self.__gridSampleBox
@@ -253,9 +254,25 @@ class MatrixEditor(qt.QWidget):
                 msg.exec_()
             self.__angle1Line.setFocus()
             return
-
+        
+        doit = False
+        if self._current['AlphaIn'] > 0:
+            if ddict['value'] < 0:
+                doit = True
+        elif self._current['AlphaIn'] < 0:
+            if ddict['value'] > 0:
+                doit = True
+         
         self._current['AlphaIn'] = ddict['value']
+        if doit:
+            self.__updateImage()
         self.__updateScattering()
+
+    def __updateImage(self):
+        if self._current['AlphaIn'] < 0:
+            self.imageLabel.setPixmap("image2trans")
+        else:
+            self.imageLabel.setPixmap("image2")
    
     def __angle2Slot(self, ddict):
         if (ddict['value'] <= 0.0) or (ddict['value'] > 180.):

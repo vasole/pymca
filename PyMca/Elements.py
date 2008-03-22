@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,7 +28,7 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.89 $"
+__revision__ = "$Revision: 1.90 $"
 import string
 import numpy.oldnumeric as Numeric
 import imp
@@ -1180,10 +1180,20 @@ def getMultilayerFluorescence(multilayer0,
     if beamfilters is None:beamfilters = []
     if alphain  is None: alphain =  45.0
     if alphaout is None: alphaout = 45.0
-    sinAlphaIn  = Numeric.sin(alphain  * Numeric.pi / 180.)
+    if alphain >= 0:
+        sinAlphaIn  = Numeric.sin(alphain  * Numeric.pi / 180.)
+    else:
+        sinAlphaIn  = Numeric.sin(-alphain  * Numeric.pi / 180.)
     sinAlphaOut = Numeric.sin(alphaout * Numeric.pi / 180.)
     origattenuators = attenuators * 1
     newbeamfilters  = beamfilters * 1
+    if alphain < 0:
+        ilayerindexes = range(len(multilayer))
+        ilayerindexes.reverse()
+        for ilayer in ilayerindexes:
+            newbeamfilters.append(multilayer[ilayer] * 1)
+            newbeamfilters[-1][2] = newbeamfilters[-1][2]/sinAlphaIn
+        del newbeamfilters[-1]
 
     #normalize incoming beam
     i0 = Numeric.nonzero(flagList>0)
@@ -1256,14 +1266,20 @@ def getMultilayerFluorescence(multilayer0,
     elementsListFinal = []
     for ilayer in range(len(multilayer)):
         dictList     = []
-        if ilayer not in layerList:continue
         if ilayer > 0:
             #arrange attenuators
             origattenuators.append(multilayer[ilayer-1] * 1)
             origattenuators[-1][2] = origattenuators[-1][2]/sinAlphaOut
             #arrange beamfilters
-            newbeamfilters.append(multilayer[ilayer-1] * 1)
-            newbeamfilters[-1][2] = newbeamfilters[-1][2]/sinAlphaIn
+            if alphain >= 0:
+                newbeamfilters.append(multilayer[ilayer-1] * 1)
+                newbeamfilters[-1][2] = newbeamfilters[-1][2]/sinAlphaIn
+            else:
+                del newbeamfilters[-1]
+        if 0:
+            print multilayer[ilayer], "beamfilters =", newbeamfilters
+            print multilayer[ilayer], "attenuators =", origattenuators
+        if ilayer not in layerList:continue
         pseudomatrix = multilayer[ilayer] * 1
         newelementsList = []
         eleDict = getMaterialMassFractions([pseudomatrix[0]], [1.0])
@@ -1504,204 +1520,6 @@ def getMultilayerFluorescence(multilayer0,
         else:
             newelementsList = [[getz(x),x] for x in (elementsListFinal + forcedElementsList)]
             return _combineMatrixFluorescenceDict(dictListList, newelementsList)
-
-def getMatrixFluorescence(matrix, energyList0, weightList0=None,flagList0=None,
-                          fulloutput=None, beamfilters=None,
-                          multilayer=None,**kw):
-    """
-    multilayer is an attenuator like list used when matrix is defined as 
-    ['multilayer', density, thickness] This beheaviour is specific to the
-    mca fit routines.
-    Warning this routine normalize the different weights prior to take into account
-    the beam filters and multilayer. After does not do it.
-    """
-    #print "matrix = ",matrix
-    #print "energylist0 = ",energyList0
-    #print "weightlist0 = ",weightList0
-    #print "flaglist0 =",flagList0
-    if beamfilters is None:beamfilters = []
-    if len(beamfilters):
-        if type(beamfilters[0]) != types.ListType:
-            beamfilters=[beamfilters]
-    if multilayer is None:multilayer = []
-    if len(multilayer):
-        if type(multilayer[0]) != types.ListType:
-            multilayer=[multilayer]
-
-    if fulloutput  is None:fulloutput  = 0
-    if type(energyList0) != types.ListType:
-        energyList = [energyList0]
-    else:
-        energyList = energyList0
-    energyList = Numeric.array(energyList)
-    if weightList0 is not None:
-        if type(weightList0) != types.ListType:
-            weightList = [weightList0]
-        else:
-            weightList = weightList0
-        weightList = Numeric.array(weightList)
-    else:
-        weightList = Numeric.ones(len(energyList)).astype(Numeric.Float)
-    if flagList0 is not None:
-        if type(flagList0) != types.ListType:
-            flagList = [flagList0]
-        else:
-            flagList = flagList0
-        flagList   = Numeric.array(flagList)
-    else:
-        flagList = Numeric.ones(len(energyList)).astype(Numeric.Float)
-    #check lengths to be sure
-    #to be done
-    alphain  = kw.get('alphain',None)
-    alphaout = kw.get('alphain',None)
-    if alphain  is None: alphain  = 45.0
-    if alphaout is None: alphaout = 45.0
-    sinAlphaIn   = Numeric.sin(alphain * (Numeric.pi)/180.)
-    sinAlphaOut  = Numeric.sin(alphaout * (Numeric.pi)/180.)
-
-    if kw.has_key('elementsList'):elementsList = kw['elementsList']
-    else:elementsList = None
-    if elementsList is None:
-        #get material elements and concentrations
-        if matrix[0].upper() != "MULTILAYER":
-            eleDict = getMaterialMassFractions([matrix[0]], [1.0])
-            if eleDict == {}: return {}    
-            #sort the elements according to atomic number (not needed because the output will be a dictionnary)
-            keys = eleDict.keys()
-            elementsList = [[getz(x),x] for x in keys]
-            elementsList.sort()
-        else:
-            elementsList = []
-            for pseudomatrix in multilayer:
-                #print "pseudomatrix[0] = ",pseudomatrix[0]
-                eleDict = getMaterialMassFractions([pseudomatrix[0] * 1], [1.0])
-                if eleDict == {}:
-                    raise ValueError, "Invalid layer material %s" % pseudomatrix[0]
-                #sort the elements according to atomic number (not needed because the output will be a dictionnary)
-                keys = eleDict.keys()
-                elementsList0 = [[getz(x),x] for x in keys]
-                elementsList0.sort()
-                for item in elementsList0:
-                    if item not in elementsList:
-                        elementsList.append(item)
-            elementsList.sort()
-    else:
-        if (type(elementsList) != types.ListType) and (type(elementsList) != types.TupleType):
-            elementsList  = [elementsList]
-        #print "elementsList = ",elementsList
-        if len(elementsList):
-            if type(elementsList[0]) != types.ListType:
-                elementsList = [[getz(x),x] for x in elementsList]
-                elementsList.sort()
-                eleDict = {}
-                for z, ele in elementsList:
-                    eleDict[ele] = 1.0
-            else:
-                eleDict = {}
-                for z, ele, peakrays in elementsList:
-                    eleDict[ele] = 1.0
-        else:
-            raise ValueError, "Empty elements list"
-
-    i0 = Numeric.nonzero(flagList>0)
-    weightList = Numeric.take(weightList, i0).astype(Numeric.Float)
-    energyList = Numeric.take(energyList, i0).astype(Numeric.Float)
-    flagList   = Numeric.take(flagList, i0).astype(Numeric.Float)
-
-    #normalize selected weights
-    total = sum(weightList)
-    for beamfilter in beamfilters:
-        formula   = beamfilter[0]
-        thickness = beamfilter[1] * beamfilter[2]
-        coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
-        try:
-            trans = Numeric.exp(-coeffs)
-        except OverflowError:
-            #deal with underflows reported as overflows
-            trans = Numeric.zeros(len(energyList), Numeric.Float)
-            for i in range(len(energyList)):
-                coef = coeffs[i]
-                if coef < 0.0:
-                    raise ValueError,"Positive exponent in attenuators transmission term"
-                else:
-                    try:
-                        trans[i] = Numeric.exp(-coef)
-                    except OverflowError:
-                        #if we are here we know it is not an overflow and trans[i] has the proper value
-                        pass
-        weightList = weightList * trans
-
-    if total <= 0.0:raise ValueError,"Sum of weights lower or equal to 0"
-    dictList =[]
-    if matrix[0].upper() != "MULTILAYER":
-        for i in range(len(energyList)):
-            dict = getFluorescence(matrix, energyList[i],**kw)
-            dict['weight'] = weightList[i]/total
-            dict['energy'] = energyList[i]
-            dictList.append(dict)
-        if fulloutput:
-            return [dictList]
-        else:
-            #this is the way the fit expects it
-            if len(elementsList[0]) == 3:
-               elementsList = [[x[0], x[1]] for x in elementsList]
-            return _combineMatrixFluorescenceDict(dictList, elementsList)
-    else:
-        origkw ={}
-        origkw.update(kw)
-        result = []
-        if origkw.has_key('attenuators'):
-            attenuators = origkw['attenuators'] * 1
-        else:
-            attenuators = []
-        for ilayer in range(len(multilayer)):  
-            dictList = []
-            pseudomatrix = multilayer[ilayer] * 1
-            if ilayer > 0:
-                attenuators.append(multilayer[ilayer-1] * 1)
-                attenuators[-1][2] =attenuators[-1][2]/sinAlphaOut
-                kw['attenuators'] = attenuators
-            weightList0 = weightList * 1.0
-            for beamfilter in multilayer[0:ilayer]:
-                formula   = beamfilter[0]
-                thickness = beamfilter[1] * beamfilter[2]/sinAlphaIn
-                coeffs   =  thickness * \
-                            Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
-                try:
-                    trans = Numeric.exp(-coeffs)
-                except OverflowError:
-                    #deal with underflows reported as overflows
-                    trans = Numeric.zeros(len(energyList), Numeric.Float)
-                    for i in range(len(energyList)):
-                        coef = coeffs[i]
-                        if coef < 0.0:
-                            raise ValueError,"Positive exponent in attenuators transmission term"
-                        else:
-                            try:
-                                trans[i] = Numeric.exp(-coef)
-                            except OverflowError:
-                                #if we are here we know it is not an overflow and trans[i] has the proper value
-                                pass
-                weightList0 = weightList0 * trans
-            for i in range(len(energyList)):
-                dict = getFluorescence(pseudomatrix, 
-                                       energyList[i],
-                                           **kw)
-                filterWeight = 1.0
-                dict['weight'] = (weightList0[i])/total
-                dict['energy'] = energyList[i]
-                dictList.append(dict)
-            if fulloutput:
-                result.append(dictList)
-            else:
-                result += dictList
-        if fulloutput:
-            return result
-        else:
-            #this is the way the fit expects it
-            if len(elementsList[0]) == 3:
-               elementsList = [[x[0], x[1]] for x in elementsList]
-            return _combineMatrixFluorescenceDict(result, elementsList)
 
 def _combineMatrixFluorescenceDict(dictList, elementsList0):
     finalDict = {} 
