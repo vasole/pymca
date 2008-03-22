@@ -247,10 +247,11 @@ class MatrixEditor(qt.QWidget):
         if (ddict['value'] < -90.) or (ddict['value'] > 90.):
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Incident beam has to be in the range [-90, 90]")
+            msg.setText("Incident beam angle has to be in the range [-90, 90]")
             if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
+                msg.setWindowTitle("Angle Error")
                 msg.exec_()
             self.__angle1Line.setFocus()
             return
@@ -278,10 +279,11 @@ class MatrixEditor(qt.QWidget):
         if (ddict['value'] <= 0.0) or (ddict['value'] > 180.):
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Fluorescent beam has to be in the range ]0, 180]")
+            msg.setText("Fluorescent beam angle has to be in the range ]0, 180]")
             if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
+                msg.setWindowTitle("Angle Error")
                 msg.exec_()
             self.__angle2Line.setFocus()
             return
