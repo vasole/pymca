@@ -90,7 +90,7 @@ class MatrixEditor(qt.QWidget):
             labelHBox = qt.QWidget(sampleBox)
             sampleBoxLayout.addWidget(labelHBox)
             labelHBoxLayout = qt.QVBoxLayout(labelHBox)
-            labelHBoxLayout.setMargin(11)
+            labelHBoxLayout.setMargin(0)
             labelHBoxLayout.setSpacing(4)
             label = MatrixImage.MatrixImage(labelHBox,size=size)
             labelHBoxLayout.addWidget(label)
@@ -102,7 +102,7 @@ class MatrixEditor(qt.QWidget):
         grid = self.__gridSampleBox
         sampleBoxLayout.addWidget(grid)
         if QTVERSION < '4.0.0':
-            gridLayout=qt.QGridLayout(grid,5,2,11,4)
+            gridLayout=qt.QGridLayout(grid,6,2,11,4)
         else:
             gridLayout = qt.QGridLayout(grid)
             gridLayout.setMargin(11)
@@ -177,6 +177,9 @@ class MatrixEditor(qt.QWidget):
             rowoffset = rowoffset + 1
         else:
             self.__thicknessLine  = None
+
+        gridLayout.addWidget(VerticalSpacer(grid), rowoffset, 0)
+        gridLayout.addWidget(VerticalSpacer(grid), rowoffset, 1)
 
         if QTVERSION < '4.0.0':
             self.connect(self.__angle1Line,qt.PYSIGNAL('MyQLineEditSignal'),
@@ -279,7 +282,7 @@ class MatrixEditor(qt.QWidget):
         if (ddict['value'] <= 0.0) or (ddict['value'] > 180.):
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Fluorescent beam angle has to be in the range ]0, 180]")
+            msg.setText("Fluorescent beam angle has to be in the range ]0, 180[")
             if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
