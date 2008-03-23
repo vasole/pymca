@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import os
@@ -80,7 +80,7 @@ class McaROIWidget(qt.QWidget):
         else:
             rheight = self.mcaROITable.horizontalHeader().sizeHint().height()
             self.mcaROITable.setMinimumHeight(4*rheight)
-            self.mcaROITable.setMaximumHeight(4*rheight)
+            #self.mcaROITable.setMaximumHeight(4*rheight)
         self.fillfromroidict = self.mcaROITable.fillfromroidict
         self.addroi          = self.mcaROITable.addroi
         self.getroilistanddict=self.mcaROITable.getroilistanddict
@@ -116,6 +116,9 @@ class McaROIWidget(qt.QWidget):
             self.saveButton.setText("Save")
             hboxlayout.addWidget(self.loadButton)
             hboxlayout.addWidget(self.saveButton)
+            layout.setStretchFactor(self.headerlabel, 0)
+            layout.setStretchFactor(self.mcaROITable, 1)
+            layout.setStretchFactor(hbox, 0)
 
         layout.addWidget(hbox)
 

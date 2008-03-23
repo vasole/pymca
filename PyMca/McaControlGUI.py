@@ -124,6 +124,8 @@ class McaControlGUI(qt.QWidget):
 
         roiboxlayout.addWidget(self.roiwidget)
         layout.addWidget(roibox)
+        if qt.qVersion() > '4.0.0':
+            layout.setStretchFactor(roibox, 1)
         
     def connections(self):
         #QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"
