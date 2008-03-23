@@ -129,8 +129,6 @@ class MatrixEditor(qt.QWidget):
                                      qt.QLabel.AlignVCenter)
             angle2Label.setAlignment(qt.QLabel.WordBreak | \
                                      qt.QLabel.AlignVCenter)
-            self.__angle3Label.setAlignment(qt.QLabel.WordBreak | \
-                                     qt.QLabel.AlignVCenter)
         else:
             angle1Label.setAlignment(qt.Qt.AlignVCenter)
             angle2Label.setAlignment(qt.Qt.AlignVCenter)
