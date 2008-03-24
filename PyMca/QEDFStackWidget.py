@@ -544,6 +544,8 @@ class QEDFStackWidget(qt.QWidget):
             filelist.sort()
             
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+            if PyMcaDirs.outputDir is None:
+                PyMcaDirs.outputDir = os.path.dirname(filelist[0])
             
             self.slave = QEDFStackWidget(rgbwidget=self.rgbWidget,
                                          master=False)
@@ -1709,6 +1711,9 @@ class QEDFStackWidget(qt.QWidget):
         filelist = map(str, filelist)
         if not(len(filelist)): return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+        if PyMcaDirs.outputDir is None:
+            PyMcaDirs.outputDir = os.path.dirname(filelist[0])
+            
         filelist.sort()
         return filelist
 
@@ -1760,11 +1765,15 @@ if __name__ == "__main__":
     if len(args) > 1:
         stack.loadFileList(args, fileindex =fileindex)
         PyMcaDirs.inputDir = os.path.dirname(args[0])
+        if PyMcaDirs.outputDir is None:
+            PyMcaDirs.outputDir = os.path.dirname(args[0])
     elif len(args) == 1:
         if not omnicfile:
             stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
         try:
             PyMcaDirs.inputDir = os.path.dirname(args[0])
+            if PyMcaDirs.outputDir is None:
+                PyMcaDirs.outputDir = os.path.dirname(args[0])
         except ValueError:
             PyMcaDirs.inputDir = os.getcwd()
     else:

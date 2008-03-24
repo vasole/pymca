@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.14 $"
+__revision__ = "$Revision: 1.15 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import numpy.oldnumeric as Numeric
@@ -269,7 +269,11 @@ class EnergyTable(QTable):
                 energyflag = int(item.isChecked())
             else:
                 item = self.cellWidget(r,0+coloffset)
-                energyflag = int(item.isChecked())
+                if item is None:
+                    #this should never happen
+                    continue
+                else:
+                    energyflag = int(item.isChecked())
             if item.color == qt.Qt.white:
                 scatterflag = 0
             else:
