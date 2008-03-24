@@ -1808,9 +1808,13 @@ if __name__ == "__main__":
             print "python QEDFStackWidget.py SET_OF_EDF_FILES"
             sys.exit(1)
     shape = stack.data.shape
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
+    def quitSlot():
+        sys.exit()
+    if 1:
+        qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"), quitSlot)
+    else:
+        qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
-
     w.setStack(stack)
     w.show()
     #print "reading elapsed = ", time.time() - t0
@@ -1818,4 +1822,4 @@ if __name__ == "__main__":
         app.setMainWidget(w)
         app.exec_loop()
     else:
-        sys.exit(app.exec_())
+        app.exec_()
