@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.43 $"
+__revision__ = "$Revision: 1.44 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -1130,10 +1130,9 @@ class FitParamDialog(qt.QDialog):
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.shValue.setText("%.6g" % value)
 
-        text  = "If you do not use an exponential background, "
-        text += "you can now ask the program to perform a linear "
-        text += "fit, save the configuration, and you will be ready "
-        text += "for a speedy batch."
+        text =  "You can now ask the program to perform a linear fit. "
+        text += "If you save this configuration, you will be ready for "
+        text += "a speedy batch."
         qt.QMessageBox.information(self,
                                 "Batch tip",
                                 text)
