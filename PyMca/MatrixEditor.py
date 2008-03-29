@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.9 $"
+__revision__ = "$Revision: 1.10 $"
 from MaterialEditor import qt
 import MaterialEditor
 import MatrixImage
@@ -229,6 +229,7 @@ class MatrixEditor(qt.QWidget):
         if self.materialEditor is not None:
             self.materialEditor.materialGUI.setCurrent(self._current['Material'])
         self.__angle1Line.setText("%.5g" % self._current['AlphaIn'])
+        self.__updateImage()
         self.__angle2Line.setText("%.5g" % self._current['AlphaOut'])
         if self._current['AlphaScatteringFlag']:
             self.__angle3Label.setChecked(1)
