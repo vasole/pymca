@@ -318,7 +318,10 @@ class McaCalWidget(qt.QDialog):
             print "Peak search called"
         if self.__manualsearch:
             self.__manualsearch = 0
-            self.__msb.setState(qt.QButton.Off)
+            if QTVERSION < '4.0.0':
+                self.__msb.setState(qt.QButton.Off)
+            else:
+                self.__msb.setChecked(0)
         #get current plot limits
         xmin,xmax=self.graph.getx1axislimits()
         #set the data into specfit
