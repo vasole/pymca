@@ -687,10 +687,14 @@ class QEDFStackWidget(qt.QWidget):
     def _buildConnections(self, widget = None):
         if widget is None:
             self._buildAndConnectButtonBox()
-        else:
             self.connect(self.stackGraphWidget.colormapToolButton,
                      qt.SIGNAL("clicked()"),
                      self.selectStackColormap)
+        else:
+            pass
+            #self.connect(self.stackGraphWidget.colormapToolButton,
+            #         qt.SIGNAL("clicked()"),
+            #         self.selectStackColormap)
 
         if widget is None:
             self.connect(self.stackGraphWidget.hFlipToolButton,
