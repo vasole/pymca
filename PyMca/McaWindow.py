@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.52 $"
+__revision__ = "$Revision: 1.53 $"
 import sys
 import time
 import QtBlissGraph
@@ -2012,6 +2012,7 @@ class McaWidget(qt.QWidget):
         self.graph.clearcurves()
         for key in self.dataObjectsDict.keys():
             del self.dataObjectsDict[key]
+        self.graph.clearMarkers()
         self.roimarkers=[-1,-1]
         self._addSelection(selection)
 
