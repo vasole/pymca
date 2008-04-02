@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,11 +22,11 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /* spslut_py.c VERSION 4.0 */
 /* $Revision: 1.7 $
-/* $Log: spslut_py.c,v $
+ * $Log: spslut_py.c,v $
  * Revision 1.7  2005/02/10 23:37:48  sole
  * minor changes
  *
@@ -87,7 +87,6 @@ static PyObject *spslut_transform(self, args)
      PyObject *self, *args;
      
 {
-  char *key, *value;
   void *data;
   int type, cols, rows, reduc, fastreduc, meth, autoscale, mapmin=0, mapmax=255;
   int palette_code;
@@ -95,8 +94,6 @@ static PyObject *spslut_transform(self, args)
   XServer_Info Xservinfo;
   void *palette;
   int prows, pcols, pal_entries;
-  int byteorder, pixelsize;
-  unsigned long redmask, greenmask, bluemask;
   void *r/*, *res*/;
   char *mode;
   PyArrayObject *src;
@@ -345,7 +342,7 @@ static PyObject *spslut_transformarray(self, args)
   memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
   free(r);
   Py_DECREF(src);
-  PyArray_Return(aux);
+  return PyArray_Return(aux);
 }
 
 
@@ -359,7 +356,6 @@ static PyObject *spslut_palette(self, args)
   XServer_Info Xservinfo;
   void *r;
   char *mode;
-  PyObject *res;
 
   if (!PyArg_ParseTuple(args, "ii", &entries, &palette_code)) 
     return NULL;
