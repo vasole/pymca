@@ -103,11 +103,20 @@ def build_sps(ext_modules):
                                                              numpy.get_include()]))
         ext_modules.append(module)
 
+def build_PyMcaIOHelper(ext_modules):
+    module  = Extension(name = 'PyMca.PyMcaIOHelper',
+                        sources = glob.glob('PyMca/PyMcaIOHelper/*.c'),
+                        define_macros = define_macros,
+                        include_dirs = ['PyMca/PyMcaIOHelper',
+                                        numpy.get_include()])
+    ext_modules.append(module)
+
 ext_modules = []
 build_FastEdf(ext_modules)
 build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
+build_PyMcaIOHelper(ext_modules)
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
 from distutils.command.install_data import install_data

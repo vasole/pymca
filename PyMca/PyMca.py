@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.4 20080323-snapshot"
+__version__ = "4.2.4 20080402-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1060,9 +1060,10 @@ class PyMca(PyMcaMdi.PyMca):
                     del self.__correlator[i]
                     break
 
-    def __getStackOfFiles(self, typelist, message = ""):
+    def __getStackOfFiles(self, typelist, message = "", getfilter=False):
         wdir = PyMcaDirs.inputDir
         fileTypeList = typelist
+        filterused = None
         if QTVERSION < '4.0.0':
             filetypes = ""
             for filetype in fileTypeList:
@@ -1072,7 +1073,11 @@ class PyMca(PyMcaMdi.PyMca):
                         self,
                         message,
                         message)
-            if not len(filelist):return []
+            if not len(filelist):
+                if getfilter:
+                    return [], filterused
+                else:
+                    return []
         else:
             if 0 and (sys.platform != 'darwin'):
                 filetypes = ""
@@ -1082,7 +1087,11 @@ class PyMca(PyMcaMdi.PyMca):
                             message,
                             wdir,
                             filetypes)
-                if not len(filelist):return []
+                if not len(filelist):
+                    if getfilter:
+                        return [], filterused
+                    else:
+                        return []
             else:
                 fdialog = qt.QFileDialog(self)
                 fdialog.setModal(True)
@@ -1093,17 +1102,29 @@ class PyMca(PyMcaMdi.PyMca):
                 fdialog.setFilters(strlist)
                 fdialog.setFileMode(fdialog.ExistingFiles)
                 fdialog.setDirectory(wdir)
+                if QTVERSION > '4.3.0':
+                    history = fdialog.history()
+                    if len(history) > 6:
+                        fdialog.setHistory(history[-6:])
                 ret = fdialog.exec_()
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
+                    if getfilter:
+                        filterused = str(fdialog.selectedFilter())
                     fdialog.close()
                     del fdialog                        
                 else:
                     fdialog.close()
                     del fdialog
-                    return []
+                    if getfilter:
+                        return [], filterused
+                    else:
+                        return []
         filelist = map(str, filelist)
-        return filelist
+        if getfilter:
+            return filelist, filterused
+        else:
+            return filelist
 
 
     def __roiImaging(self):
@@ -1113,9 +1134,12 @@ class PyMca(PyMcaMdi.PyMca):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "SupaVisio Files (*pige *pixe *rbs)",
                         "All Files (*)"]
             message = "Open ONE indexed stack or SEVERAL files"
-            filelist = self.__getStackOfFiles(fileTypeList, message)
+            filelist, filefilter = self.__getStackOfFiles(fileTypeList,
+                                                          message,
+                                                          getfilter=True)
             if not(len(filelist)): return
             filelist.sort()
             self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
@@ -1145,6 +1169,7 @@ class PyMca(PyMcaMdi.PyMca):
 
                 omnicfile = False
                 luciafile = False
+                supavisio = False
                 if len(filelist) == 1:
                     f = open(filelist[0])
                     line = f.read(10)
@@ -1155,11 +1180,19 @@ class PyMca(PyMcaMdi.PyMca):
                         omnicfile = True
                     elif line.startswith('#\tDate:'):
                         luciafile = True
+                    elif "SupaVisio" == filefilter.split()[0]:
+                        supavisio = True
+                    elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
+                        supavisio = True
+                    elif filelist[0][-3:].upper() in ["RBS"]:
+                        supavisio = True
                 try:
                     if omnicfile:
                         self.__imagingTool.setStack(QEDFStackWidget.OmnicMap.OmnicMap(filelist[0]))
                     elif luciafile:
-                        self.__imagingTool.setStack(QEDFStackWidget.LuciaMap.LuciaMap(filelist[0]))                        
+                        self.__imagingTool.setStack(QEDFStackWidget.LuciaMap.LuciaMap(filelist[0]))
+                    elif supavisio:
+                        self.__imagingTool.setStack(QEDFStackWidget.SupaVisioMap.SupaVisioMap(filelist[0]))
                     else:
                         self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
                 except:

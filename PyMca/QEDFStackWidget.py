@@ -52,6 +52,7 @@ except ImportError:
     MATPLOTLIB = False
 import OmnicMap
 import LuciaMap
+import SupaVisioMap
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -1661,15 +1662,19 @@ class QEDFStackWidget(qt.QWidget):
     def __setROIBrush6(self):
         self.__ROIBrushWidth = 20
 
-    def _getStackOfFiles(self):
+    def _getStackOfFiles(self, getfilter=None):
+        if getfilter is None:
+            getfilter = False
         fileTypeList = ["EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "SupaVisio Files (*pige *pixe *rbs)",
                         "All Files (*)"]
         message = "Open ONE indexed stack or SEVERAL files"
         wdir = PyMcaDirs.inputDir
+        filterused = None
         if QTVERSION < '4.0.0':
             if sys.platform != 'darwin':
                 filetypes = ""
@@ -1680,7 +1685,11 @@ class QEDFStackWidget(qt.QWidget):
                             self,
                             message,
                             message)
-                if not len(filelist):return []
+                if not len(filelist):
+                    if getfilter:
+                        return [], filterused
+                    else:
+                        return []
         else:
             if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
                 filetypes = ""
@@ -1690,7 +1699,11 @@ class QEDFStackWidget(qt.QWidget):
                             message,
                             wdir,
                             filetypes)
-                if not len(filelist):return []
+                if not len(filelist):
+                    if getfilter:
+                        return [], filterused
+                    else:
+                        return []
             else:
                 fdialog = qt.QFileDialog(self)
                 fdialog.setModal(True)
@@ -1701,6 +1714,10 @@ class QEDFStackWidget(qt.QWidget):
                 fdialog.setFilters(strlist)
                 fdialog.setFileMode(fdialog.ExistingFiles)
                 fdialog.setDirectory(wdir)
+                if QTVERSION > '4.3.0':
+                    history = fdialog.history()
+                    if len(history) > 6:
+                        fdialog.setHistory(history[-6:])
                 ret = fdialog.exec_()
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
@@ -1709,7 +1726,10 @@ class QEDFStackWidget(qt.QWidget):
                 else:
                     fdialog.close()
                     del fdialog
-                    return []
+                    if getfilter:
+                        return [], filterused
+                    else:
+                        return []
         filelist = map(str, filelist)
         if not(len(filelist)): return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
@@ -1717,7 +1737,10 @@ class QEDFStackWidget(qt.QWidget):
             PyMcaDirs.outputDir = os.path.dirname(filelist[0])
             
         filelist.sort()
-        return filelist
+        if getfilter:
+            return filelist, filterused
+        else:
+            return filelist
 
 if __name__ == "__main__":
     import getopt
@@ -1761,6 +1784,12 @@ if __name__ == "__main__":
         elif line.startswith('#\tDate:'):
             stack = LuciaMap.LuciaMap(args[0])
             omnicfile = True
+        elif args[0][-4:].upper() in ["PIGE", "PIXE"]:
+            stack = SupaVisioMap.SupaVisioMap(args[0])
+            omnicfile = True
+        elif args[0][-3:].upper() in ["RBS"]:
+            stack = SupaVisioMap.SupaVisioMap(args[0])
+            omnicfile = True
         else:
             stack = QSpecFileStack()
         f.close()
@@ -1780,7 +1809,7 @@ if __name__ == "__main__":
             PyMcaDirs.inputDir = os.getcwd()
     else:
         if 1:
-            filelist = w._getStackOfFiles()
+            filelist, filefilter = w._getStackOfFiles(getfilter=True)
             if len(filelist):
                 PyMcaDirs.inputDir = os.path.dirname(filelist[0])
                 f = open(filelist[0])
@@ -1797,6 +1826,15 @@ if __name__ == "__main__":
                     omnicfile = True
                 elif line.startswith('#\tDate'):
                     stack = LuciaMap.LuciaMap(filelist[0])
+                    omnicfile = True
+                elif filefilter == "SupaVisio":
+                    stack = SupaVisioMap.SupaVisioMap(filelist[0])
+                    omnicfile = True
+                elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
+                    stack = SupaVisioMap.SupaVisioMap(filelist[0])
+                    omnicfile = True
+                elif filelist[0][-3:].upper() in ["RBS"]:
+                    stack = SupaVisioMap.SupaVisioMap(filelist[0])
                     omnicfile = True
                 else:
                     stack = QSpecFileStack()
