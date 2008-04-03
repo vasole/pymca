@@ -686,7 +686,8 @@ static int init_ShmIDs (void)
     c_shmdt((void *)shm);
   }
   
-  pclose(pd);
+  if (pd)
+    pclose(pd);
   return 0;
 } 
 
