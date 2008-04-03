@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /****************************************************************************
 *   @(#)spec_shm.h	4.7  06/13/99 CSS
@@ -36,7 +36,7 @@
 *
 ****************************************************************************/
 
-#define SHM_MAGIC       0xCEBEC000
+#define SHM_MAGIC       0xCEBEC000UL
 /*
 *  Difference between SHM_VERSION 3 and 4 is the increase in
 *  header size from 1024 to 4096 to put the data portion
@@ -69,7 +69,7 @@
 #define SHM_HEAD_SIZE   4096    /* Header size puts data on page boundary */
 
 struct  shm_head {
-	long    magic;                  /* magic number (SHM_MAGIC) */
+	unsigned long    magic;                  /* magic number (SHM_MAGIC) */
 	long    type;                   /* one of the array data types */
 	long    version;                /* version number of this struct */
 	long    rows;                   /* number of rows of array data */

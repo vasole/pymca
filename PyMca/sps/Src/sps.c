@@ -42,7 +42,7 @@
 #define IPCS "LC_ALL=C ipcs -m"  /* let the system find the path. */
 #endif
 
-#define SHM_MAX_ENTRIES 8192UL
+#define SHM_MAX_ENTRIES 8192
 #define SHM_MAX_STR_LEN 8192
 
 #define SHM_CLEANUP 1
@@ -57,7 +57,7 @@
 */
 
 static unsigned long id_buffer[SHM_MAX_ENTRIES];
-static unsigned long id_no = 0;
+static long id_no = 0;
 
 /* The data structure for all types of shared memories */
 struct shm_handle {
@@ -226,7 +226,7 @@ ll_addnew_array (char *specversion, char *arrayname, int isstatus,
 static struct shm_created *ll_find_pointer (struct shm_header* shm);
 static struct shm_created *ll_find_array 
                 (char *specversion, char *arrayname, int isstatus);
-static void * id_is_our_creation (unsigned long id);
+static void * id_is_our_creation (long id);
 static void * shm_is_our_creation (void *shm);
 static void ll_delete_array (struct shm_created *todel);
 static struct shm_header * 
@@ -429,7 +429,7 @@ static void delete_SpecIDTab ()
    for every Specversion
 */
  
-static int SearchSpecVersions ()  
+static int SearchSpecVersions (void)
 {
   unsigned long *id_ptr;
   struct shm_header *shm;
@@ -487,7 +487,7 @@ static int SearchSpecVersions ()
 
 static int SearchSpecArrays (char * fullname) 
 {
-  unsigned long id;
+  long id;
   int found;
   int redone = 0;
   int i, si, no, idx;
@@ -706,7 +706,7 @@ static int init_ShmIDs (void)
 static int getShmIDs (unsigned long **id_ptr, char * spec_version, 
 	       char * name, long type)
 {
-  unsigned long id;
+  long id;
   int i, ids_no;
   struct shm_header *shm;
   static unsigned long ids[SHM_MAX_ENTRIES];
@@ -2143,7 +2143,7 @@ SPS_PutEnvStr (char *spec_version, char *array_name,
 */
 int SPS_IsUpdated (char *fullname, char *array) 
 {
-  unsigned long utime;
+  long utime;
   int updated;
   int was_attached;
   SPS_ARRAY private_shm;
@@ -2358,7 +2358,7 @@ ll_find_array (char *specversion, char *arrayname, int isstatus)
 }
 
 static void * 
-id_is_our_creation (unsigned long id) 
+id_is_our_creation (long id) 
 {
   struct shm_created *created;
   

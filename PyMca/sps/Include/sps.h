@@ -658,3 +658,6 @@ SPS_GetArrayInfo (char * spec_version, char * array_name, int *rows,
 int
 SPS_CreateArray (char * spec_version, char *arrayname,
 		 int rows, int cols, int type, int flags) ;
+
+
+void SPS_CleanUpAll(void);

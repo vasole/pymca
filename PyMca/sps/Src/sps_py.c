@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,13 +22,13 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-#include <stdlib.h>
+/* #include <stdlib.h> */
 #include <sps.h>
-#include <stdio.h>
+/* #include <stdio.h> */
 #include <Python.h>
-#include <numpy/oldnumeric.h>
+#include <numpy/arrayobject.h>
 
 static PyObject *SPSError;
 
@@ -38,19 +38,15 @@ static void sps_cleanup(void);
 static int sps_type2py (int t)
 {
   switch (t) {
-#ifdef PyArray_UNSIGNED_TYPES
-  case SPS_USHORT: return(PyArray_USHORT);
-#else
-  case SPS_USHORT: return(PyArray_SHORT);
-#endif
-  case SPS_ULONG:  return(PyArray_LONG);
-  case SPS_UCHAR:  return(PyArray_UBYTE);
-  case SPS_SHORT:  return(PyArray_SHORT);
-  case SPS_LONG:   return(PyArray_LONG);
-  case SPS_CHAR:   return(PyArray_SBYTE);
-  case SPS_STRING: return(PyArray_SBYTE);
-  case SPS_DOUBLE: return(PyArray_DOUBLE);
-  case SPS_FLOAT:  return(PyArray_FLOAT);
+  case SPS_USHORT: return(NPY_USHORT);
+  case SPS_ULONG:  return(NPY_LONG);
+  case SPS_UCHAR:  return(NPY_UBYTE);
+  case SPS_SHORT:  return(NPY_SHORT);
+  case SPS_LONG:   return(NPY_LONG);
+  case SPS_CHAR:   return(NPY_BYTE);
+  case SPS_STRING: return(NPY_BYTE);
+  case SPS_FLOAT:  return(NPY_FLOAT);
+  case SPS_DOUBLE: return(NPY_DOUBLE);
   default:        return(-1);
   }
 }
@@ -60,22 +56,20 @@ static int sps_py2type (int t)
   int type;
 
   switch (t) {
-  case PyArray_LONG: 
-  case PyArray_INT: 
+  case NPY_LONG: 
+  case NPY_INT: 
     type = SPS_LONG; break;
-#ifdef PyArray_UNSIGNED_TYPES
-  case PyArray_USHORT: 
+  case NPY_USHORT: 
     type = SPS_USHORT; break;
-#endif
-  case PyArray_SHORT: 
+  case NPY_SHORT: 
     type = SPS_SHORT; break;
-  case PyArray_UBYTE: 
+  case NPY_UBYTE: 
     type = SPS_UCHAR; break;
-  case PyArray_SBYTE: 
+  case NPY_BYTE: 
     type = SPS_CHAR; break;
-  case PyArray_FLOAT: 
+  case NPY_FLOAT: 
     type = SPS_FLOAT; break;
-  case PyArray_DOUBLE: 
+  case NPY_DOUBLE: 
     type = SPS_DOUBLE; break;
   default:
     type = -1;
@@ -168,17 +162,6 @@ static PyObject *sps_updatecounter(PyObject *self, PyObject *args)
   return PyInt_FromLong(SPS_UpdateCounter(spec_version, array_name));
 }    
 
-static PyObject *sps_getspecstate(PyObject *self, PyObject *args)
-{
-  char *spec_version;
-
-  if (!PyArg_ParseTuple(args, "s", &spec_version)) {
-    return NULL;
-  }
-
-  return PyInt_FromLong(SPS_GetSpecState(spec_version));
-}    
-
 static PyObject *sps_updatedone(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name;
@@ -226,24 +209,6 @@ static PyObject *sps_putenvstr(PyObject *self, PyObject *args)
 }    
 
 static PyObject *sps_getarrayinfo(PyObject *self, PyObject *args)
-{
-  char *spec_version, *array_name;
-  int rows, cols, type, flag;
-
-
-  if (!PyArg_ParseTuple(args, "ss", &spec_version, &array_name)) {
-    return NULL;
-  }
-
-  if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
-    return NULL;
-  }
-  
-  return Py_BuildValue("(iiii)", rows, cols, type, flag);
-}    
-
-static PyObject *sps_getenv(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name;
   int rows, cols, type, flag;
