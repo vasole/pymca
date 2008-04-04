@@ -663,7 +663,7 @@ static int init_ShmIDs (void)
 	== (struct shm_header *) -1)
       continue;
     
-    if (shm->head.head.magic != SHM_MAGIC) {
+    if (shm->head.head.magic != ((long) SHM_MAGIC)) {
       c_shmdt((void *)shm);
       continue;
     }

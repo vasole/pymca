@@ -36,7 +36,7 @@
 *
 ****************************************************************************/
 
-#define SHM_MAGIC       0xCEBEC000UL
+#define SHM_MAGIC       0xCEBEC000
 /*
 *  Difference between SHM_VERSION 3 and 4 is the increase in
 *  header size from 1024 to 4096 to put the data portion
@@ -69,7 +69,7 @@
 #define SHM_HEAD_SIZE   4096    /* Header size puts data on page boundary */
 
 struct  shm_head {
-	unsigned long    magic;                  /* magic number (SHM_MAGIC) */
+	long    magic;                  /* magic number (SHM_MAGIC) */
 	long    type;                   /* one of the array data types */
 	long    version;                /* version number of this struct */
 	long    rows;                   /* number of rows of array data */
