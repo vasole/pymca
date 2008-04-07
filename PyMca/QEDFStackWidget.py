@@ -53,6 +53,7 @@ except ImportError:
 import OmnicMap
 import LuciaMap
 import SupaVisioMap
+import MaskImageWidget
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -68,28 +69,6 @@ else:
 
 
 DEBUG = 0
-
-class MyPicker(Qwt.QwtPlotPicker):
-    def __init__(self, *var):
-        Qwt.QwtPlotPicker.__init__(self, *var)
-        self.__text = Qwt.QwtText()
-        self.data = None
-
-    def trackerText(self, var):
-        d=self.invTransform(var)
-        if self.data is None:
-            self.__text.setText("%g, %g" % (d.x(), d.y()))
-        else:
-            limits = self.data.shape
-            x = round(d.y())
-            y = round(d.x())
-            if x < 0: x = 0
-            if y < 0: y = 0
-            x = min(int(x), limits[0]-1)
-            y = min(int(y), limits[1]-1)
-            z = self.data[x, y]
-            self.__text.setText("%d, %d, %.4g" % (y, x, z))
-        return self.__text
 
 class SimpleThread(qt.QThread):
     def __init__(self, function, *var, **kw):
@@ -204,29 +183,23 @@ class QEDFStackWidget(qt.QWidget):
         self._y1AxisInverted = False
         self.__selectionMask = None
         self.__stackImageData = None
-        self.__ROIImageData  = None
-        self.__ROIImageBackground  = None
+        self.__ROIImageData = None
+        self.__ROIImageBackground = None
+        self.__ROIConnected = True
         self.__stackBackgroundCounter = 0
         self.__stackBackgroundAnchors = None
         self.__stackColormap = None
         self.__stackColormapDialog = None
-        self.__ROIColormap       = None
-        self.__ROIColormapDialog = None
         self.mcaWidget = mcawidget
         self.rgbWidget = rgbwidget
-        if QTVERSION < '4.0.0':master = False
+        if QTVERSION < '4.0.0':
+            master = False
         self.master = master
         self.slave  = None
         self.tab = None
 
         self._build(vertical)
         self._buildBottom()
-        self.__ROIBrushMenu  = None
-        self.__ROIBrushMode  = False
-        self.__ROIEraseMode  = False
-        self.__ROIConnected = True
-
-        self.__setROIBrush2()
         self._buildConnections()
 
         self._matplotlibSaveImage = None
@@ -244,7 +217,12 @@ class QEDFStackWidget(qt.QWidget):
         self.stackWindow.mainLayout.setMargin(0)
         self.stackWindow.mainLayout.setSpacing(0)
         self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
-                                                            colormap=True)
+                                                            colormap=True,
+                                                            standalonezoom=False)
+
+        self.connect(self.stackGraphWidget.zoomResetToolButton,
+                     qt.SIGNAL("clicked()"), 
+                     self._stackZoomResetSignal)
 
         infotext  = 'If checked, spectra will be added normalized to the number\n'
         infotext += 'of pixels. Be carefull if you are preparing a batch and you\n'
@@ -278,34 +256,22 @@ class QEDFStackWidget(qt.QWidget):
                                         self.loadIcon,
                                         self.loadSlaveStack,
                                         'Load another stack of same size',
-                                        position = 8)
-        
-        self.roiWindow = qt.QWidget(box)
-        self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
-        self.roiWindow.mainLayout.setMargin(0)
-        self.roiWindow.mainLayout.setSpacing(0)
+                                        position = 8)        
         standaloneSaving = True
         if QTVERSION > '4.0.0':
             if MATPLOTLIB:
                 standaloneSaving = False
-        self.roiGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.roiWindow,
-                                                                selection = True,
-                                                                colormap=True,
-                                                                imageicons=True,
-                                                                standalonesave=standaloneSaving)
-        if not standaloneSaving:
-            self.connect(self.roiGraphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._roiSaveToolButtonSignal)
-            self._roiSaveMenu = qt.QMenu()
-            self._roiSaveMenu.addAction(qt.QString("Standard"),    self.roiGraphWidget._saveIconSignal)
-            self._roiSaveMenu.addAction(qt.QString("Matplotlib") , self._roiSaveMatplotlibImage)
-
+        self.roiWindow = MaskImageWidget.MaskImageWidget(parent=box,
+                                                         rgbwidget=self.rgbWidget,
+                                                         selection=True,
+                                                         colormap=True,
+                                                         imageicons=True,
+                                          standalonesave=standaloneSaving)
         if QTVERSION > '4.0.0':
             infotext  = 'Toggle background subtraction from current image\n'
             infotext += 'subtracting a straight line between the ROI limits.'
             self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
-            self.roiBackgroundButton = self.roiGraphWidget._addToolButton(\
+            self.roiBackgroundButton = self.roiWindow.graphWidget._addToolButton(\
                                         self.roiBackgroundIcon,
                                         self.roiSubtractBackground,
                                         infotext,
@@ -313,19 +279,7 @@ class QEDFStackWidget(qt.QWidget):
                                         state = False,
                                         position = 6)
         
-        self.roiGraphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
-                               Qwt.QwtPlot.yLeft,
-                               Qwt.QwtPicker.NoSelection,
-                               Qwt.QwtPlotPicker.CrossRubberBand,
-                               Qwt.QwtPicker.AlwaysOn,
-                               self.roiGraphWidget.graph.canvas())
-        self.roiGraphWidget.picker.setTrackerPen(qt.Qt.black)
-        self.roiGraphWidget.graph.enableSelection(False)
-        self.roiGraphWidget.graph.enableZoom(True)
-        self.setROISelectionMode(False)
-        self._toggleROISelectionMode()
         self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
-        self.roiWindow.mainLayout.addWidget(self.roiGraphWidget)
         if QTVERSION < '4.0.0':
             box.moveToLast(self.stackWindow)
             box.moveToLast(self.roiWindow)
@@ -333,6 +287,26 @@ class QEDFStackWidget(qt.QWidget):
             box.addWidget(self.stackWindow)
             box.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
+
+    def _maskImageWidgetSlot(self, ddict):
+        if ddict['event'] == "selectionMaskChanged":
+            self.__selectionMask = ddict['current']
+            self.plotStackImage(update=False)
+            if ddict['id'] != id(self.roiWindow):
+                self.roiWindow.setSelectionMask(ddict['current'], plot=True)
+            return
+        if ddict['event'] == "resetSelection":
+            self.__selectionMask = None
+            self.plotStackImage(update=True)
+            if ddict['id'] != id(self.roiWindow):
+                self.roiWindow._resetSelection(owncall=False)
+            return
+        if ddict['event'] == "hFlipSignal":
+            if ddict['id'] == id(self.roiWindow):
+                self._y1AxisInverted = ddict['current']
+                self.plotStackImage(update=True)
+            return
+
 
     def normalizeIconChecked(self):
         pass
@@ -414,19 +388,6 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self.raise_()
         return result
-
-    def _roiSaveToolButtonSignal(self):
-        self._roiSaveMenu.exec_(self.cursor().pos())
-
-    def _roiSaveMatplotlibImage(self):
-        if self._matplotlibSaveImage is None:
-            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
-                                                            self.__ROIImageData)
-            self._matplotlibSaveImage.setWindowTitle("Matplotlib ROI Image")
-        else:
-            self._matplotlibSaveImage.setImageData(self.__ROIImageData)
-        self._matplotlibSaveImage.show()
-        self._matplotlibSaveImage.raise_()    
 
     def subtractBackground(self):
         if 0:
@@ -529,20 +490,21 @@ class QEDFStackWidget(qt.QWidget):
         if self.__ROIImageBackground is None: return
         if self.roiBackgroundButton.isChecked():
             self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
-            self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title + " Net")
+            self.roiWindow.graphWidget.graph.setTitle(self.roiWindow.graphWidget.__title + " Net")
         else:
             self.__ROIImageData =  self.__ROIImageData + self.__ROIImageBackground
-            self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title)
-        if self.__ROIColormapDialog is not None:
+            self.roiWindow.graphWidget.graph.setTitle(self.roiWindow.graphWidget.__title)
+        if self.roiWindow.colormapDialog is not None:
             minData = self.__ROIImageData.min()
             maxData = self.__ROIImageData.max()
-            self.__ROIColormapDialog.setDataMinMax(minData, maxData)
-        self.plotROIImage(update = True)
+            self.roiWindow.colormapDialog.setDataMinMax(minData, maxData)
+        self.roiWindow.setImageData(self.__ROIImageData)
 
     def loadSlaveStack(self):
         if self.slave is None:
-            filelist = self._getStackOfFiles()
-            if not(len(filelist)): return
+            filelist, filefilter = self._getStackOfFiles(getfilter=True)
+            if not(len(filelist)):
+                return
             filelist.sort()
             
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
@@ -551,18 +513,57 @@ class QEDFStackWidget(qt.QWidget):
             
             self.slave = QEDFStackWidget(rgbwidget=self.rgbWidget,
                                          master=False)
+            omnicfile = False
+            luciafile = False
+            supavisio = False
+            if len(filelist) == 1:
+                f = open(filelist[0])
+                line = f.read(10)
+                f.close()
+                if line[0]=="\n":
+                    line = line[1:]
+                if line.startswith('Spectral'):
+                    omnicfile = True
+                elif line.startswith('#\tDate:'):
+                    luciafile = True
+                elif "SupaVisio" == filefilter.split()[0]:
+                    supavisio = True
+                elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
+                    supavisio = True
+                elif filelist[0][-3:].upper() in ["RBS"]:
+                    supavisio = True
             try:
-                self.slave.setStack(QStack(filelist))
+                if omnicfile:
+                    self.slave.setStack(OmnicMap.OmnicMap(filelist[0]))
+                elif luciafile:
+                    self.slave.setStack(LuciaMap.LuciaMap(filelist[0]))
+                elif supavisio:
+                    self.slave.setStack(SupaVisioMap.SupaVisioMap(filelist[0]))
+                else:
+                    self.slave.setStack(QStack(filelist))
             except:
                 self.slave.setStack(QSpecFileStack(filelist))
-            self._buildConnections(self.slave)
-            self.slave._buildConnections(self)
+
+            self.connectSlave(self.slave)
+            self._resetSelection()
 
         if self.slave is not None:
             self.loadStackButton.hide()
             self.slave.show()
             return
-    
+
+    def connectSlave(self, slave = None):
+        if slave is None:
+            slave = self.slave
+
+        self.connect(slave.roiWindow,
+                     qt.SIGNAL('MaskImageWidgetSignal'),
+                     self._maskImageWidgetSlot)
+
+        self.connect(self.roiWindow,
+                     qt.SIGNAL('MaskImageWidgetSignal'),
+                     slave._maskImageWidgetSlot)                     
+
     def _buildBottom(self):
         n = 0
         if self.mcaWidget is None: n += 1
@@ -686,128 +687,44 @@ class QEDFStackWidget(qt.QWidget):
             self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
                         self._replaceImageClicked)
 
-    def _buildConnections(self, widget = None):
-        if widget is None:
-            self._buildAndConnectButtonBox()
-            self.connect(self.stackGraphWidget.colormapToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self.selectStackColormap)
-        else:
-            self.connect(self.stackGraphWidget.colormapToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self.selectStackColormap)
-
-        if widget is None:
-            self.connect(self.stackGraphWidget.hFlipToolButton,
+    def _buildConnections(self):
+        self._buildAndConnectButtonBox()
+        self.connect(self.stackGraphWidget.colormapToolButton,
                  qt.SIGNAL("clicked()"),
-                 self._hFlipIconSignal)
+                 self.selectStackColormap)
+
+        self.connect(self.stackGraphWidget.hFlipToolButton,
+             qt.SIGNAL("clicked()"),
+             self._hFlipIconSignal)
+
+        #ROI Image
+        if QTVERSION <  "4.0.0":
+            self.connect(self.roiWindow,
+                     qt.PYSIGNAL('MaskImageWidgetSignal'),
+                     self._maskImageWidgetSlot)
         else:
-            self.connect(self.stackGraphWidget.hFlipToolButton,
-                 qt.SIGNAL("clicked()"),
-                 widget._hFlipIconSignal)
+            self.connect(self.roiWindow,
+                     qt.SIGNAL('MaskImageWidgetSignal'),
+                     self._maskImageWidgetSlot)
 
-        if widget is None:
-            #ROI Image
-            self.connect(self.roiGraphWidget.hFlipToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._hFlipIconSignal)
+        self.stackGraphWidget.graph.canvas().setMouseTracking(1)
+        self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
+        self.stackGraphWidget.showInfo()
 
-            self.connect(self.roiGraphWidget.colormapToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self.selectROIColormap)
-
-            self.connect(self.roiGraphWidget.selectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._toggleROISelectionMode)
-        else:
-            #ROI Image
-            self.connect(self.roiGraphWidget.hFlipToolButton,
-                     qt.SIGNAL("clicked()"),
-                     widget._hFlipIconSignal)
-
-            self.connect(self.roiGraphWidget.selectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget._toggleROISelectionMode)
-        text = "Toggle between Selection\nand Zoom modes"
-        if QTVERSION > '4.0.0':
-            self.roiGraphWidget.selectionToolButton.setToolTip(text)
-
-        if widget is None:
-            self.connect(self.roiGraphWidget.imageToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._resetSelection)
-
-            self.connect(self.roiGraphWidget.eraseSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._setROIEraseSelectionMode)
-
-            self.connect(self.roiGraphWidget.rectSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._setROIRectSelectionMode)
-
-            self.connect(self.roiGraphWidget.brushSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._setROIBrushSelectionMode)
-
-            self.connect(self.roiGraphWidget.brushToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._setROIBrush)
-        else:
-            self.connect(self.roiGraphWidget.imageToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget._resetSelection)
-
-            self.connect(self.roiGraphWidget.eraseSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget._setROIEraseSelectionMode)
-
-            self.connect(self.roiGraphWidget.rectSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget._setROIRectSelectionMode)
-
-            self.connect(self.roiGraphWidget.brushSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget._setROIBrushSelectionMode)
-
-            self.connect(self.roiGraphWidget.brushToolButton,
-                         qt.SIGNAL("clicked()"),
-                         widget._setROIBrush)
-
-        if widget is None:
-            self.stackGraphWidget.graph.canvas().setMouseTracking(1)
-            #self.roiGraphWidget.graph.canvas().setMouseTracking(1)
-            self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
-            self.stackGraphWidget.showInfo()
-        
         if QTVERSION < "4.0.0":
             self.connect(self.stackGraphWidget.graph,
                          qt.PYSIGNAL("QtBlissGraphSignal"),
                          self._stackGraphSignal)
-            self.connect(self.roiGraphWidget.graph,
-                         qt.PYSIGNAL("QtBlissGraphSignal"),
-                         self._roiGraphSignal)
             self.connect(self.mcaWidget,
                          qt.PYSIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
         else:
-            if widget is None:
-                self.connect(self.stackGraphWidget.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         self._stackGraphSignal)
-                self.connect(self.roiGraphWidget.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         self._roiGraphSignal)
-                self.connect(self.mcaWidget,
-                         qt.SIGNAL("McaWindowSignal"),
-                         self._mcaWidgetSignal)
-            else:
-                self.connect(self.stackGraphWidget.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         widget._stackGraphSignal)
-                self.connect(self.roiGraphWidget.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         widget._roiGraphSignal)
-                         #widget._otherWidgetRoiGraphSignal)
+            self.connect(self.stackGraphWidget.graph,
+                     qt.SIGNAL("QtBlissGraphSignal"),
+                     self._stackGraphSignal)
+            self.connect(self.mcaWidget,
+                     qt.SIGNAL("McaWindowSignal"),
+                     self._mcaWidgetSignal)
 
     def _stackGraphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
@@ -824,92 +741,6 @@ class QEDFStackWidget(qt.QWidget):
 
     def _otherWidgetRoiGraphSignal(self, ddict):
         self._roiGraphSignal(ddict, ownsignal = False)
-
-    def _roiGraphSignal(self, ddict, ownsignal = None):
-        if ownsignal is None:ownsignal = True
-        if ddict['event'] == "MouseSelection":
-            if ddict['xmin'] < ddict['xmax']:
-                xmin = ddict['xmin']
-                xmax = ddict['xmax']
-            else:
-                xmin = ddict['xmax']
-                xmax = ddict['xmin']
-            if ddict['ymin'] < ddict['ymax']:
-                ymin = ddict['ymin']
-                ymax = ddict['ymax']
-            else:
-                ymin = ddict['ymax']
-                ymax = ddict['ymin']
-            i1 = max(int(round(xmin)), 0)
-            i2 = min(abs(int(round(xmax)))+1, self.__stackImageData.shape[1])
-            j1 = max(int(round(ymin)),0)
-            j2 = min(abs(int(round(ymax)))+1,self.__stackImageData.shape[0])
-            self.__selectionMask[j1:j2, i1:i2] = 1
-            #Stack Image
-            if self.__stackColormap is None:
-                a = Numeric.array(map(int,
-                    0.8* Numeric.ravel(self.__stackPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
-                a.shape = [j2-j1, i2-i1, 4]
-                self.__stackPixmap[j1:j2,i1:i2,:]  = a
-            elif int(str(self.__stackColormap[0])) > 1:     #color
-                a = Numeric.array(map(int,
-                    0.8* Numeric.ravel(self.__stackPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
-                a.shape = [j2-j1, i2-i1, 4]
-                self.__stackPixmap[j1:j2,i1:i2,:]  = a
-            else:
-                #self.__stackPixmap[j1:j2,i1:i2,0:2]  = 0    #that changes grey by red but gives the problem that 0
-                #                                            #remains 0 and appears as not selected in the image
-                self.__stackPixmap[j1:j2,i1:i2,0]    = 0x40
-                self.__stackPixmap[j1:j2,i1:i2,2]    = 0x70
-                self.__stackPixmap[j1:j2,i1:i2,1]    = self.__stackPixmap0[j1:j2,i1:i2,0]
-                self.__stackPixmap[j1:j2,i1:i2,3]    = 0x40
-            #ROI Image
-            if self.__ROIColormap is None:
-                a = Numeric.array(map(int,
-                    0.8* Numeric.ravel(self.__ROIPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
-                a.shape = [j2-j1, i2-i1, 4]
-                self.__ROIPixmap[j1:j2,i1:i2,:]  = a
-            elif int(str(self.__ROIColormap[0])) > 1:     #color
-                a = Numeric.array(map(int,
-                    0.8* Numeric.ravel(self.__ROIPixmap0[j1:j2,i1:i2,:]))).astype(Numeric.UInt8)
-                a.shape = [j2-j1, i2-i1, 4]
-                self.__ROIPixmap[j1:j2,i1:i2,:]  = a
-            else:
-                self.__ROIPixmap[j1:j2,i1:i2,0]    = 0x40
-                self.__ROIPixmap[j1:j2,i1:i2,2]    = 0x70
-                self.__ROIPixmap[j1:j2,i1:i2,1]    = self.__ROIPixmap0[j1:j2,i1:i2,0]
-                self.__ROIPixmap[j1:j2,i1:i2,3]    = 0x40
-            self.plotROIImage(update = False)
-            self.plotStackImage(update = False)
-            return
-
-        elif ddict['event'] == "MouseAt":
-            if ownsignal:self._stackGraphSignal(ddict)
-            if self.__ROIBrushMode:
-                if self.roiGraphWidget.graph.isZoomEnabled():
-                    return
-                #if follow mouse is not activated
-                #it only enters here when the mouse is pressed.
-                #Therefore is perfect for "brush" selections.
-                width = self.__ROIBrushWidth   #in (row, column) units
-                r = self.__stackImageData.shape[0]
-                c = self.__stackImageData.shape[1]
-                xmin = max((ddict['x']-0.5*width), 0)
-                xmax = min((ddict['x']+0.5*width), c)
-                ymin = max((ddict['y']-0.5*width), 0)
-                ymax = min((ddict['y']+0.5*width), r)
-                i1 = min(int(round(xmin)), c-1)
-                i2 = min(int(round(xmax)), c)
-                j1 = min(int(round(ymin)),r-1)
-                j2 = min(int(round(ymax)), r)
-                if i1 == i2: i2 = i1+1
-                if j1 == j2: j2 = j1+1
-                if self.__ROIEraseMode:
-                    self.__selectionMask[j1:j2, i1:i2] = 0 
-                else:
-                    self.__selectionMask[j1:j2, i1:i2] = 1
-                self.plotROIImage(update = False)
-                self.plotStackImage(update = False)
 
     def setStack(self, stack, mcaindex=1, fileindex = None):
         #stack.data is an XYZ array
@@ -1025,10 +856,10 @@ class QEDFStackWidget(qt.QWidget):
         self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
 
         #init the ROI
-        self.roiGraphWidget.graph.setTitle("ICR ROI")
-        self.roiGraphWidget.graph.y1Label(self.stackGraphWidget.graph.y1Label())
-        self.roiGraphWidget.graph.x1Label(self.stackGraphWidget.graph.x1Label())
-        self.roiGraphWidget.graph.setY1AxisInverted(self.stackGraphWidget.graph.isY1AxisInverted())
+        self.roiWindow.graphWidget.graph.setTitle("ICR ROI")
+        self.roiWindow.graphWidget.graph.y1Label(self.stackGraphWidget.graph.y1Label())
+        self.roiWindow.graphWidget.graph.x1Label(self.stackGraphWidget.graph.x1Label())
+        self.roiWindow.graphWidget.graph.setY1AxisInverted(self.stackGraphWidget.graph.isY1AxisInverted())
         if 0:#This is not needed because there are no curves in the graph
             self.roiGraphWidget.graph.setX1AxisLimits(0,
                                             self.__stackImageData.shape[0])
@@ -1036,7 +867,7 @@ class QEDFStackWidget(qt.QWidget):
                                             self.__stackImageData.shape[1])
             self.roiGraphWidget.graph.replot()
         self.__ROIImageData = self.__stackImageData.copy()
-        self.plotROIImage(update = True)
+        self.roiWindow.setImageData(self.__ROIImageData)
 
     def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
         if action is None:
@@ -1076,8 +907,8 @@ class QEDFStackWidget(qt.QWidget):
         if ddict['event'] == "ROISignal":
             self.__stackBackgroundAnchors = None
             title = "%s" % ddict["name"]
-            self.roiGraphWidget.graph.setTitle(title)
-            self.roiGraphWidget.__title = title
+            self.roiWindow.graphWidget.graph.setTitle(title)
+            self.roiWindow.graphWidget.__title = title
             if (ddict["name"] == "ICR"):                
                 i1 = 0
                 i2 = self.stack.data.shape[self.mcaIndex]
@@ -1130,17 +961,14 @@ class QEDFStackWidget(qt.QWidget):
             self.__stackBackgroundAnchors = [i1, i2-1]
             if self.roiBackgroundButton.isChecked():
                 self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
-                self.roiGraphWidget.graph.setTitle(self.roiGraphWidget.__title + " Net")
-            else:
-                pass
-                #self.__ROIImageData =  self.__ROIImageData
-            if self.__ROIColormapDialog is not None:
+                self.roiWindow.graphWidget.graph.setTitle(self.roiWindow.graphWidget.__title + " Net")
+            if self.roiWindow.colormapDialog is not None:
                 minData = self.__ROIImageData.min()
                 maxData = self.__ROIImageData.max()
-                self.__ROIColormapDialog.setDataMinMax(minData, maxData)
+                self.roiWindow.colormapDialog.setDataMinMax(minData, maxData)
             #self._resetSelection()
             #self.plotStackImage(update = True)
-            self.plotROIImage(update = True)
+            self.roiWindow.setImageData(self.__ROIImageData)
             if self.isHidden():
                 self.show()
                 if self.tab is not None:
@@ -1165,87 +993,7 @@ class QEDFStackWidget(qt.QWidget):
             self.__stackPixmap[self.__selectionMask>0,1]    = self.__stackPixmap0[self.__selectionMask>0, 1] 
             self.__stackPixmap[self.__selectionMask>0,3]    = 0x40
         return
-
-    def __applyMaskToROIImage(self):
-        if self.__selectionMask is None:
-            return
-        #ROI Image
-        if self.__ROIColormap is None:
-            for i in range(4):
-                self.__ROIPixmap[:,:,i]  = (self.__ROIPixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
-        elif int(str(self.__ROIColormap[0])) > 1:     #color
-            for i in range(4):
-                self.__ROIPixmap[:,:,i]  = (self.__ROIPixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
-        else:
-            self.__ROIPixmap[self.__selectionMask>0,0]    = 0x40
-            self.__ROIPixmap[self.__selectionMask>0,2]    = 0x70
-            self.__ROIPixmap[self.__selectionMask>0,1]    = self.__ROIPixmap0[self.__selectionMask>0, 1] 
-            self.__ROIPixmap[self.__selectionMask>0,3]    = 0x40
-        return
-
-    def plotROIImage(self, update = True):
-        if self.__ROIImageData is None:
-            self.roiGraphWidget.graph.clear()
-            self.roiGraphWidget.picker.data = None
-            return
-        if update:
-            if self.__selectionMask is None:
-                self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
-            self.getROIPixmapFromData()
-            self.__ROIPixmap0 = self.__ROIPixmap.copy()
-            self.roiGraphWidget.picker.data = self.__ROIImageData
-            if self.__ROIColormap is None:
-                self.roiGraphWidget.picker.setTrackerPen(qt.Qt.black)
-            elif int(str(self.__ROIColormap[0])) > 1:     #color
-                self.roiGraphWidget.picker.setTrackerPen(qt.Qt.black)
-            else:
-                self.roiGraphWidget.picker.setTrackerPen(qt.Qt.green)
-        self.__applyMaskToROIImage()
-        if not self.roiGraphWidget.graph.yAutoScale:
-            ylimits = self.roiGraphWidget.graph.getY1AxisLimits()
-        if not self.roiGraphWidget.graph.xAutoScale:
-            xlimits = self.roiGraphWidget.graph.getX1AxisLimits()
-        self.roiGraphWidget.graph.pixmapPlot(self.__ROIPixmap.tostring(),
-            (self.__ROIImageData.shape[1], self.__ROIImageData.shape[0]),
-                                        xmirror = 0,
-                                        ymirror = not self._y1AxisInverted)
-        if not self.roiGraphWidget.graph.yAutoScale:
-            self.roiGraphWidget.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
-        if not self.roiGraphWidget.graph.xAutoScale:
-            self.roiGraphWidget.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)
-        self.roiGraphWidget.graph.replot()
-
-    def getROIPixmapFromData(self):
-        #It does not look nice, but I avoid copying data
-        colormap = self.__ROIColormap
-        if colormap is None:
-            (self.__ROIPixmap,size,minmax)= spslut.transform(\
-                                self.__ROIImageData,
-                                (1,0),
-                                (spslut.LINEAR,3.0),
-                                "BGRX",
-                                spslut.TEMP,
-                                1,
-                                (0,1),
-                                (0, 255), 1)
-        else:
-            if len(colormap) < 7: colormap.append(spslut.LINEAR)
-            (self.__ROIPixmap,size,minmax)= spslut.transform(\
-                                self.__ROIImageData,
-                                (1,0),
-                                (colormap[6],3.0),
-                                "BGRX",
-                                COLORMAPLIST[int(str(colormap[0]))],
-                                colormap[1],
-                                (colormap[2],colormap[3]),
-                                (0,255), 1)
-
-        self.__ROIPixmap = self.__ROIPixmap.astype(numpy.ubyte)
-
-        self.__ROIPixmap.shape = [self.__ROIImageData.shape[0],
-                                    self.__ROIImageData.shape[1],
-                                    4]
-
+    
     def getStackPixmapFromData(self):
         colormap = self.__stackColormap
         if colormap is None:
@@ -1296,24 +1044,30 @@ class QEDFStackWidget(qt.QWidget):
             self.stackGraphWidget.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)        
         self.stackGraphWidget.graph.replot()
 
+    def _stackZoomResetSignal(self):
+        if DEBUG:
+            print "_stackZoomResetSignal"
+        self.stackGraphWidget._zoomReset(replot=False)
+        self.plotStackImage(True)
+
     def _hFlipIconSignal(self):
         if QWTVERSION4:
             qt.QMessageBox.information(self, "Flip Image", "Not available under PyQwt4")
             return
         if not self.stackGraphWidget.graph.yAutoScale:
-            qt.QMessageBox.information(self, "Open",
+            qt.QMessageBox.information(self, "Flip Image",
                     "Please set stack Y Axis to AutoScale first")
             return
         if not self.stackGraphWidget.graph.xAutoScale:
-            qt.QMessageBox.information(self, "Open",
+            qt.QMessageBox.information(self, "Flip Image",
                     "Please set stack X Axis to AutoScale first")
             return
-        if not self.roiGraphWidget.graph.yAutoScale:
-            qt.QMessageBox.information(self, "Open",
+        if not self.roiWindow.graphWidget.graph.yAutoScale:
+            qt.QMessageBox.information(self, "Flip Image",
                     "Please set ROI image Y Axis to AutoScale first")
             return
-        if not self.roiGraphWidget.graph.xAutoScale:
-            qt.QMessageBox.information(self, "Open",
+        if not self.roiWindow.graphWidget.graph.xAutoScale:
+            qt.QMessageBox.information(self, "Flip Image",
                     "Please set ROI image X Axis to AutoScale first")
             return
 
@@ -1322,11 +1076,11 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self._y1AxisInverted = True
         self.stackGraphWidget.graph.zoomReset()
-        self.roiGraphWidget.graph.zoomReset()
+        self.roiWindow.graphWidget.graph.zoomReset()
         self.stackGraphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
-        self.roiGraphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
-        self.plotStackImage(True)
-        self.plotROIImage(True)
+        self.roiWindow._y1AxisInverted =  self._y1AxisInverted
+        self.plotStackImage(update=True)
+        self.roiWindow.plotImage(update=True)
 
     def selectStackColormap(self):
         if self.__stackImageData is None:return
@@ -1390,87 +1144,25 @@ class QEDFStackWidget(qt.QWidget):
                              var[5]]
         self.plotStackImage(True)
 
-    def selectROIColormap(self):
-        if self.__ROIImageData is None:return
-        if self.__ROIColormapDialog is None:
-            self.__initROIColormapDialog()
-        if self.__ROIColormapDialog.isHidden():
-            self.__ROIColormapDialog.show()
-        if QTVERSION < '4.0.0':self.__ROIColormapDialog.raiseW()
-        else:  self.__ROIColormapDialog.raise_()          
-        self.__ROIColormapDialog.show()
-
-
-    def __initROIColormapDialog(self):
-        minData = self.__ROIImageData.min()
-        maxData = self.__ROIImageData.max()
-        self.__ROIColormapDialog = ColormapDialog.ColormapDialog()
-        self.__ROIColormapDialog.colormapIndex  = self.__ROIColormapDialog.colormapList.index("Temperature")
-        self.__ROIColormapDialog.colormapString = "Temperature"
-        if QTVERSION < '4.0.0':
-            self.__ROIColormapDialog.setCaption("ROI Colormap Dialog")
-            self.connect(self.__ROIColormapDialog,
-                         qt.PYSIGNAL("ColormapChanged"),
-                         self.updateROIColormap)
-        else:
-            self.__ROIColormapDialog.setWindowTitle("ROI Colormap Dialog")
-            self.connect(self.__ROIColormapDialog,
-                         qt.SIGNAL("ColormapChanged"),
-                         self.updateROIColormap)
-        self.__ROIColormapDialog.setDataMinMax(minData, maxData)
-        self.__ROIColormapDialog.setAutoscale(1)
-        self.__ROIColormapDialog.setColormap(self.__ROIColormapDialog.colormapIndex)
-        self.__ROIColormap = (self.__ROIColormapDialog.colormapIndex,
-                              self.__ROIColormapDialog.autoscale,
-                              self.__ROIColormapDialog.minValue, 
-                              self.__ROIColormapDialog.maxValue,
-                              minData, maxData)
-        self.__ROIColormapDialog._update()
-
-    def updateROIColormap(self, *var):
-        if len(var) > 6:
-            self.__ROIColormap = [var[0],
-                             var[1],
-                             var[2],
-                             var[3],
-                             var[4],
-                             var[5],
-                             var[6]]
-        elif len(var) > 5:
-            self.__ROIColormap = [var[0],
-                             var[1],
-                             var[2],
-                             var[3],
-                             var[4],
-                             var[5]]
-        else:
-            self.__ROIColormap = [var[0],
-                             var[1],
-                             var[2],
-                             var[3],
-                             var[4],
-                             var[5]]
-        self.plotROIImage(True)
 
     def _addImageClicked(self):
         self.rgbWidget.addImage(self.__ROIImageData,
-                                str(self.roiGraphWidget.graph.title().text()))
+                                str(self.roiWindow.graphWidget.graph.title().text()))
         #if self.rgbWidget.isHidden():
-        if 1:
-            if self.tab is None:
-                if self.master:
-                    self.rgbWidget.show()
-            else:
-                self.tab.setCurrentWidget(self.rgbWidget)
+        if self.tab is None:
+            if self.master:
+                self.rgbWidget.show()
+        else:
+            self.tab.setCurrentWidget(self.rgbWidget)
 
 
     def _removeImageClicked(self):
-        self.rgbWidget.removeImage(str(self.roiGraphWidget.graph.title().text()))
+        self.rgbWidget.removeImage(str(self.roiWindow.graphWidget.graph.title().text()))
 
     def _replaceImageClicked(self):
         self.rgbWidget.reset()
         self.rgbWidget.addImage(self.__ROIImageData,
-                                str(self.roiGraphWidget.graph.title().text()))
+                                str(self.roiWindow.graphWidget.graph.title().text()))
         if self.rgbWidget.isHidden():
             self.rgbWidget.show()
         if self.tab is None:
@@ -1551,7 +1243,7 @@ class QEDFStackWidget(qt.QWidget):
                           action = action)
 
     def __getLegend(self):
-        title = str(self.roiGraphWidget.graph.title().text())
+        title = str(self.roiWindow.graphWidget.graph.title().text())
         return "Stack " + title + " selection"
     
     def _removeMcaClicked(self):
@@ -1585,10 +1277,10 @@ class QEDFStackWidget(qt.QWidget):
             self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
         if self.__stackColormapDialog is not None:
             self.__stackColormapDialog.close()
-        if self.__ROIColormapDialog is not None:
-            self.__ROIColormapDialog.close()
-        if self._matplotlibSaveImage is not None:
-            self._matplotlibSaveImage.close()
+        if self.roiWindow.colormapDialog is not None:
+            self.roiWindow.colormapDialog.close()
+        if self.roiWindow._matplotlibSaveImage is not None:
+            self.roiWindow._matplotlibSaveImage.close()
         qt.QWidget.closeEvent(self, event)
 
     def _resetSelection(self):
@@ -1597,70 +1289,7 @@ class QEDFStackWidget(qt.QWidget):
             return
         self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
         self.plotStackImage(update = True)
-        self.plotROIImage(update = True)
-
-    def _setROIEraseSelectionMode(self):
-        if DEBUG:print "_setROIEraseSelectionMode"
-        self.__ROIEraseMode = True
-        self.__ROIBrushMode = True
-        self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
-        self.roiGraphWidget.graph.enableSelection(False)
-
-    def _setROIRectSelectionMode(self):
-        if DEBUG:print "_setROIRectSelectionMode"
-        self.__ROIEraseMode = False
-        self.__ROIBrushMode = False
-        self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
-        self.roiGraphWidget.graph.enableSelection(True)
-        
-    def _setROIBrushSelectionMode(self):
-        if DEBUG:print "_setROIBrushSelectionMode"
-        self.__ROIEraseMode = False
-        self.__ROIBrushMode = True
-        self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
-        self.roiGraphWidget.graph.enableSelection(False)
-        
-    def _setROIBrush(self):
-        if DEBUG:print "_setROIBrush"
-        if self.__ROIBrushMenu is None:
-            if QTVERSION < '4.0.0':
-                self.__ROIBrushMenu = qt.QPopupMenu()
-                self.__ROIBrushMenu.insertItem(qt.QString(" 1 Image Pixel Width"),self.__setROIBrush1)
-                self.__ROIBrushMenu.insertItem(qt.QString(" 2 Image Pixel Width"),self.__setROIBrush2)
-                self.__ROIBrushMenu.insertItem(qt.QString(" 3 Image Pixel Width"),self.__setROIBrush3)
-                self.__ROIBrushMenu.insertItem(qt.QString(" 5 Image Pixel Width"),self.__setROIBrush4)
-                self.__ROIBrushMenu.insertItem(qt.QString("10 Image Pixel Width"),self.__setROIBrush5)
-                self.__ROIBrushMenu.insertItem(qt.QString("20 Image Pixel Width"),self.__setROIBrush6)
-            else:
-                self.__ROIBrushMenu = qt.QMenu()
-                self.__ROIBrushMenu.addAction(qt.QString(" 1 Image Pixel Width"),self.__setROIBrush1)
-                self.__ROIBrushMenu.addAction(qt.QString(" 2 Image Pixel Width"),self.__setROIBrush2)
-                self.__ROIBrushMenu.addAction(qt.QString(" 3 Image Pixel Width"),self.__setROIBrush3)
-                self.__ROIBrushMenu.addAction(qt.QString(" 5 Image Pixel Width"),self.__setROIBrush4)
-                self.__ROIBrushMenu.addAction(qt.QString("10 Image Pixel Width"),self.__setROIBrush5)
-                self.__ROIBrushMenu.addAction(qt.QString("20 Image Pixel Width"),self.__setROIBrush6)
-        if QTVERSION < '4.0.0':
-            self.__ROIBrushMenu.exec_loop(self.cursor().pos())
-        else:
-            self.__ROIBrushMenu.exec_(self.cursor().pos())
-
-    def __setROIBrush1(self):
-        self.__ROIBrushWidth = 1
-
-    def __setROIBrush2(self):
-        self.__ROIBrushWidth = 2
-
-    def __setROIBrush3(self):
-        self.__ROIBrushWidth = 3
-
-    def __setROIBrush4(self):
-        self.__ROIBrushWidth = 5
-
-    def __setROIBrush5(self):
-        self.__ROIBrushWidth = 10
-
-    def __setROIBrush6(self):
-        self.__ROIBrushWidth = 20
+        self.roiWindow.setSelectionMask(self.__selectionMask)
 
     def _getStackOfFiles(self, getfilter=None):
         if getfilter is None:
@@ -1721,6 +1350,8 @@ class QEDFStackWidget(qt.QWidget):
                 ret = fdialog.exec_()
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
+                    if getfilter:
+                        filterused = str(fdialog.selectedFilter())                    
                     fdialog.close()
                     del fdialog                        
                 else:

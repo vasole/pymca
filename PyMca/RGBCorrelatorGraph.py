@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
@@ -39,12 +39,14 @@ DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
     def __init__(self, parent = None, selection=False, colormap=False,
-                 imageicons=False, standalonesave=True):
+                 imageicons=False, standalonesave=True, standalonezoom=True):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        self._buildToolBar(selection, colormap, imageicons, standalonesave)
+        self._buildToolBar(selection, colormap, imageicons,
+                           standalonesave,
+                           standalonezoom=standalonezoom)
         self.graph = QtBlissGraph.QtBlissGraph(self)
         self.graph.xlabel("Column")
         self.graph.ylabel("Row")
@@ -60,7 +62,8 @@ class RGBCorrelatorGraph(qt.QWidget):
                         qt.QWidget.sizeHint(self).height())
 
     def _buildToolBar(self, selection=False, colormap=False,
-                      imageicons=False, standalonesave=True):
+                      imageicons=False, standalonesave=True,
+                      standalonezoom=True):
         if QTVERSION < '4.0.0':
             if qt.qVersion() < '3.0':
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
@@ -100,10 +103,15 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.toolBarLayout.setSpacing(0)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
-        self._addToolButton(self.zoomResetIcon,
+        if standalonezoom:
+            tb = self._addToolButton(self.zoomResetIcon,
                             self._zoomReset,
                             'Auto-Scale the Graph')
-
+        else:
+            tb = self._addToolButton(self.zoomResetIcon,
+                            None,
+                            'Auto-Scale the Graph')
+        self.zoomResetToolButton = tb
         #y Autoscale
         tb = self._addToolButton(self.yAutoIcon,
                             self._yAutoScaleToggle,
@@ -265,8 +273,10 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.connect(tb,qt.SIGNAL('clicked()'), action)
         return tb
 
-    def _zoomReset(self):
+    def _zoomReset(self, replot=None):
         if DEBUG:print "_zoomReset"
+        if replot is None:
+            replot = True
         if self.graph is not None:
             self.graph.zoomReset()
             if self.graph.yAutoScale:
@@ -275,7 +285,8 @@ class RGBCorrelatorGraph(qt.QWidget):
             if self.graph.xAutoScale:
                 if hasattr(self, '_x1Limit'):
                     self.graph.setx1axislimits(0, self._x1Limit)
-            self.graph.replot()
+            if replot:
+                self.graph.replot()
 
     def _yAutoScaleToggle(self):
         if self.graph is not None:
