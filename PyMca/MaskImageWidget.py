@@ -26,21 +26,19 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
-import McaWindow
-qt = McaWindow.qt
+import RGBCorrelatorGraph
+qt = RGBCorrelatorGraph.qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     import RGBCorrelator
     from RGBCorrelatorWidget import ImageShapeDialog
-import RGBCorrelatorGraph
 from PyMca_Icons import IconDict
 import numpy
 import ColormapDialog
 import spslut
 import os
 import PyMcaDirs
-import time
-import weakref
+import ArraySave
 try:
     import QPyMcaMatplotlibSave
     MATPLOTLIB = True
@@ -120,7 +118,10 @@ class MaskImageWidget(qt.QWidget):
         self.__connected = True
 
         self.__setBrush2()
-
+        
+        self.outputDir   = None
+        self._saveFilter = None
+        
         self._buildConnections()
         self._matplotlibSaveImage = None
 
@@ -143,13 +144,16 @@ class MaskImageWidget(qt.QWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Standard"),
+            self._saveMenu.addAction(qt.QString("Data"),
+                                     self.saveImageList)
+            self._saveMenu.addAction(qt.QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
             self._saveMenu.addAction(qt.QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
-            self.connect(self.graphWidget.zoomResetToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._zoomResetSignal)
+
+        self.connect(self.graphWidget.zoomResetToolButton,
+                     qt.SIGNAL("clicked()"), 
+                     self._zoomResetSignal)
         
         self.graphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
                                Qwt.QwtPlot.yLeft,
@@ -688,6 +692,86 @@ class MaskImageWidget(qt.QWidget):
         self.graphWidget._zoomReset(replot=False)
         self.plotImage(True)
 
+    def getOutputFileName(self):
+        initdir = PyMcaDirs.outputDir
+        if self.outputDir is not None:
+            if os.path.exists(self.outputDir):
+                initdir = self.outputDir
+        filedialog = qt.QFileDialog(self)
+        filedialog.setFileMode(filedialog.AnyFile)
+        filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
+        filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
+        formatlist = ["ASCII Files *.dat",
+                      "EDF Files *.edf",
+                      'CSV(, separated) Files *.csv',
+                      'CSV(; separated) Files *.csv',
+                      'CSV(tab separated) Files *.csv']
+        strlist = qt.QStringList()
+        for f in formatlist:
+                strlist.append(f)
+        if self._saveFilter is None:
+            self._saveFilter =formatlist[0]
+        filedialog.setFilters(strlist)
+        filedialog.selectFilter(self._saveFilter)
+        filedialog.setDirectory(initdir)
+        ret = filedialog.exec_()
+        if not ret: return ""
+        filename = filedialog.selectedFiles()[0]
+        if len(filename):
+            filename = str(filename)
+            self.outputDir = os.path.dirname(filename)
+            self._saveFilter = str(filedialog.selectedFilter())
+            filterused = "."+self._saveFilter[-3:]
+            PyMcaDirs.outputDir = os.path.dirname(filename)
+            if len(filename) < 4:
+                filename = filename+ filterused
+            elif filename[-4:] != filterused :
+                filename = filename+ filterused
+        else:
+            filename = ""
+        return filename
+
+    def saveImageList(self, filename=None, imagelist=None, labels=None):
+        imageList = []
+        if labels is None:
+            labels = []
+        if imagelist is None:
+            if self.__imageData is not None:
+                imageList.append(self.__imageData)
+                label = str(self.graphWidget.graph.title().text())
+                label.replace(' ', '_')
+                labels.append(label)
+                if self.__selectionMask is not None:
+                    if self.__selectionMask.max() > 0:
+                        imageList.append(self.__selectionMask)
+                        labels.append(label+"_Mask")
+        else:
+            imageList = imagelist
+
+        if not len(imageList):
+            qt.QMessageBox.information(self,"No Data",
+                            "Image list is empty.\nNothing to be saved")
+            return
+        if filename is None:
+            filename = self.getOutputFileName()
+            if not len(filename):return
+
+        if filename[-4:].lower() == ".edf":
+            ArraySave.save2DArrayListAsEDF(imageList, filename, labels)
+        elif filename[-4:].lower() == ".csv":
+            if "," in self._saveFilter:
+                csvseparator = ","
+            elif ";" in self._saveFilter:
+                csvseparator = ";"
+            else:
+                csvseparator = "\t"
+            ArraySave.save2DArrayListAsASCII(imageList, filename, labels,
+                                             csv=True,
+                                             csvseparator=csvseparator)
+        else:
+            ArraySave.save2DArrayListAsASCII(imageList, filename, labels,
+                                             csv=False)
+
 def test():
     app = qt.QApplication([])
     qt.QObject.connect(app,
@@ -700,7 +784,7 @@ def test():
     data.shape = 100, 100
     container.setImageData(data)
     container.show()
-    def thSlot(ddict):
+    def theSlot(ddict):
         print ddict['event']
 
     if QTVERSION < '4.0.0':
