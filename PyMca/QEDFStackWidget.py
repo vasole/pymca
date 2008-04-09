@@ -60,13 +60,22 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 
 if QWTVERSION4:
-    raise "ImportError","QEDFStackWidget needs Qwt5"
+    raise ImportError,"QEDFStackWidget needs Qwt5"
 
+MDP = False
+PCA = False
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
+    import PCAWindow
+    import PCAModule
+    PCA = True
+    try:
+        import mdp
+        MDP=True
+    except ImportError:
+        pass
 else:
     import Qwt5 as Qwt
-
 
 DEBUG = 0
 
@@ -87,7 +96,7 @@ class SimpleThread(qt.QThread):
                 self._result = self._function(*self._var, **self._kw )
             except:
                 self._result = ("Exception",) + sys.exc_info()
-
+                
 class QSpecFileStack(SpecFileStack.SpecFileStack):
     def onBegin(self, nfiles):
         self.bars =qt.QWidget()
@@ -197,6 +206,9 @@ class QEDFStackWidget(qt.QWidget):
         self.master = master
         self.slave  = None
         self.tab = None
+        self.pcaParametersDialog = None
+        self.pcaWindow = None
+        self.pcaWindowInMenu = False
 
         self._build(vertical)
         self._buildBottom()
@@ -250,23 +262,51 @@ class QEDFStackWidget(qt.QWidget):
                                         #self.subtractBackground,
                                         infotext,
                                         position = 7)
+
+        filterOffset = 0
+        if PCA:
+            infotext  = 'Additional selection methods.\n'
+            self.selectFromStackIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))  
+            self.selectFromStackButton = self.stackGraphWidget._addToolButton(\
+                                            self.selectFromStackIcon,
+                                            self.selectFromStackSignal,
+                                            infotext,
+                                            position = 8)
+
+            self.__selectFromStackMenu = qt.QMenu()
+            self.__selectFromStackMenu.addAction(qt.QString("Calculate Principal Components Maps"),
+                                               self.__showPCADialog)
+
+
+            filterOffset = 1
+            self.pcaWindow = PCAWindow.PCAWindow(parent = None,
+                                                rgbwidget=self.rgbWidget,
+                                                selection=True,
+                                                colormap=True,
+                                                imageicons=True,
+                                                standalonesave=True)
+            self.pcaWindow.hide()
+
+            
         if self.master:
             self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
             self.loadStackButton = self.stackGraphWidget._addToolButton(\
                                         self.loadIcon,
                                         self.loadSlaveStack,
                                         'Load another stack of same size',
-                                        position = 8)        
+                                        position = 8 + filterOffset)        
         standaloneSaving = True
         if QTVERSION > '4.0.0':
             if MATPLOTLIB:
                 standaloneSaving = False
+
         self.roiWindow = MaskImageWidget.MaskImageWidget(parent=box,
                                                          rgbwidget=self.rgbWidget,
                                                          selection=True,
                                                          colormap=True,
                                                          imageicons=True,
                                           standalonesave=standaloneSaving)
+
         if QTVERSION > '4.0.0':
             infotext  = 'Toggle background subtraction from current image\n'
             infotext += 'subtracting a straight line between the ROI limits.'
@@ -279,6 +319,7 @@ class QEDFStackWidget(qt.QWidget):
                                         state = False,
                                         position = 6)
         
+
         self.stackWindow.mainLayout.addWidget(self.stackGraphWidget)
         if QTVERSION < '4.0.0':
             box.moveToLast(self.stackWindow)
@@ -294,12 +335,25 @@ class QEDFStackWidget(qt.QWidget):
             self.plotStackImage(update=False)
             if ddict['id'] != id(self.roiWindow):
                 self.roiWindow.setSelectionMask(ddict['current'], plot=True)
+            if ddict['id'] != id(self.pcaWindow):
+                self.pcaWindow.setSelectionMask(ddict['current'], plot=True)
             return
         if ddict['event'] == "resetSelection":
             self.__selectionMask = None
             self.plotStackImage(update=True)
             if ddict['id'] != id(self.roiWindow):
                 self.roiWindow._resetSelection(owncall=False)
+            if ddict['id'] != id(self.pcaWindow):
+                self.pcaWindow._resetSelection(owncall=False)
+            return
+        if ddict['event'] == "addImageClicked":
+            self._addImageClicked(ddict['image'], ddict['title'])
+            return
+        if ddict['event'] == "replaceImageClicked":
+            self._replaceImageClicked(ddict['image'], ddict['title'])
+            return
+        if ddict['event'] == "removeImageClicked":
+            self._removeImageClicked(ddict['title'])
             return
         if ddict['event'] == "hFlipSignal":
             if ddict['id'] == id(self.roiWindow):
@@ -330,11 +384,18 @@ class QEDFStackWidget(qt.QWidget):
             else:
                 msg.exec_()
 
-            
-    def _submitThread(self, *var, **kw):
+    def _submitPCAThread(self, function, *var, **kw):
+        message = "Please Wait: PCA Analysis"
+        sthread = SimpleThread(function, *var, **kw)
+        return self.__startThread(sthread, message)
+
+    def _submitBackgroundThread(self, *var, **kw):
         message = "Please Wait: Calculating background"
         sthread = SimpleThread(self.subtractBackground,
-                                *var, **kw)        
+                                *var, **kw)
+        return self.__startThread(sthread, message)
+
+    def __startThread(self, sthread, message):
         sthread.start()
         if QTVERSION < '3.0.0':
             msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
@@ -388,6 +449,72 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self.raise_()
         return result
+
+    def selectFromStackSignal(self):
+        if QTVERSION < '4.0.0':
+            self.__selectFromStackMenu.exec_loop(self.cursor().pos())
+        else:
+            self.__selectFromStackMenu.exec_(self.cursor().pos())
+
+
+    def __showPCADialog(self):
+        if self.__stackImageData is None:
+            return
+        if self.pcaParametersDialog is None:
+            self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self, mdp=MDP)
+        ret = self.pcaParametersDialog.exec_()
+        if ret:
+            pcaParameters = self.pcaParametersDialog.getParameters()
+            self.pcaParametersDialog.close()
+            method = pcaParameters['method']
+            binning = pcaParameters['binning']
+            npc = pcaParameters['npc']
+            shape = self.stack.data.shape
+            if method == 0:
+                function = PCAModule.lanczosPCA
+            elif method == 1:
+                function = PCAModule.lanczosPCA2
+            elif method == 2:
+                function = PCAModule.mdpPCA
+            try:
+                if 0:
+                    images, eigenvalues, eigenvectors = function(self.stack.data,
+                                                                 npc,
+                                                                 binning=binning)
+                else:
+                    threadResult = self._submitPCAThread(function,
+                                                         self.stack.data,
+                                                         npc,
+                                                         binning=binning)
+                    if type(threadResult) == type((1,)):
+                        if len(threadResult):
+                            if threadResult[0] == "Exception":
+                                raise threadResult[1],threadResult[2]
+                    images, eigenvalues, eigenvectors = threadResult
+                self.pcaWindow.setSelectionMask(self.__selectionMask,
+                                                plot=False)
+                self.pcaWindow.setPCAData(images,
+                                          eigenvalues,
+                                          eigenvectors)
+                if not self.pcaWindowInMenu:
+                    self.__selectFromStackMenu.addAction(qt.QString("Show PCA Maps"),
+                                               self.showPCAWindow)
+                self.pcaWindowInMenu = True
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1])
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+            finally:
+                self.stack.data.shape = shape
+        
+            self.pcaWindow.show()
+
+    def showPCAWindow(self):
+        self.pcaWindow.show()
 
     def subtractBackground(self):
         if 0:
@@ -556,6 +683,7 @@ class QEDFStackWidget(qt.QWidget):
         if slave is None:
             slave = self.slave
 
+        #roi window
         self.connect(slave.roiWindow,
                      qt.SIGNAL('MaskImageWidgetSignal'),
                      self._maskImageWidgetSlot)
@@ -563,6 +691,15 @@ class QEDFStackWidget(qt.QWidget):
         self.connect(self.roiWindow,
                      qt.SIGNAL('MaskImageWidgetSignal'),
                      slave._maskImageWidgetSlot)                     
+
+        if self.pcaWindow is not None:
+            self.connect(slave.pcaWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         self._maskImageWidgetSlot)
+
+            self.connect(self.pcaWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         slave._maskImageWidgetSlot)                     
 
     def _buildBottom(self):
         n = 0
@@ -659,34 +796,11 @@ class QEDFStackWidget(qt.QWidget):
 
         if self.rgbWidget is not None:
             # The IMAGE selection
-            self.imageButtonBox = qt.QWidget(self.roiWindow)
-            buttonBox = self.imageButtonBox
-            self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
-            self.imageButtonBoxLayout.setMargin(0)
-            self.imageButtonBoxLayout.setSpacing(0)
-            self.addImageButton = qt.QPushButton(buttonBox)
-            icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))
-            self.addImageButton.setIcon(icon)
-            self.addImageButton.setText("ADD IMAGE")
-            self.removeImageButton = qt.QPushButton(buttonBox)
-            self.removeImageButton.setIcon(icon)
-            self.removeImageButton.setText("REMOVE IMAGE")
-            self.replaceImageButton = qt.QPushButton(buttonBox)
-            self.replaceImageButton.setIcon(icon)
-            self.replaceImageButton.setText("REPLACE IMAGE")
-            self.imageButtonBoxLayout.addWidget(self.addImageButton)
-            self.imageButtonBoxLayout.addWidget(self.removeImageButton)
-            self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
-            
-            self.roiWindow.mainLayout.addWidget(buttonBox)
-            
-            self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
-                        self._addImageClicked)
-            self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
-                        self._removeImageClicked)
-            self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
-                        self._replaceImageClicked)
-
+            if 1:
+                self.roiWindow.buildAndConnectImageButtonBox()
+                if self.pcaWindow is not None:
+                    self.pcaWindow.buildAndConnectImageButtonBox()
+                
     def _buildConnections(self):
         self._buildAndConnectButtonBox()
         self.connect(self.stackGraphWidget.colormapToolButton,
@@ -702,10 +816,19 @@ class QEDFStackWidget(qt.QWidget):
             self.connect(self.roiWindow,
                      qt.PYSIGNAL('MaskImageWidgetSignal'),
                      self._maskImageWidgetSlot)
+            if self.pcaWindow is not None:
+                self.connect(self.pcaWindow,
+                             qt.PYSIGNAL('MaskImageWidgetSignal'),
+                             self._maskImageWidgetSlot)
         else:
             self.connect(self.roiWindow,
                      qt.SIGNAL('MaskImageWidgetSignal'),
                      self._maskImageWidgetSlot)
+            if self.pcaWindow is not None:
+                self.connect(self.pcaWindow,
+                             qt.SIGNAL('MaskImageWidgetSignal'),
+                             self._maskImageWidgetSlot)
+
 
         self.stackGraphWidget.graph.canvas().setMouseTracking(1)
         self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
@@ -718,6 +841,9 @@ class QEDFStackWidget(qt.QWidget):
             self.connect(self.mcaWidget,
                          qt.PYSIGNAL("McaWindowSignal"),
                          self._mcaWidgetSignal)
+            self.connect(self.roiWindow.graphWidget.graph,
+                     qt.PYSIGNAL("QtBlissGraphSignal"),
+                     self._stackGraphSignal)
         else:
             self.connect(self.stackGraphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
@@ -725,6 +851,9 @@ class QEDFStackWidget(qt.QWidget):
             self.connect(self.mcaWidget,
                      qt.SIGNAL("McaWindowSignal"),
                      self._mcaWidgetSignal)
+            self.connect(self.roiWindow.graphWidget.graph,
+                     qt.SIGNAL("QtBlissGraphSignal"),
+                     self._stackGraphSignal)
 
     def _stackGraphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
@@ -1145,10 +1274,8 @@ class QEDFStackWidget(qt.QWidget):
         self.plotStackImage(True)
 
 
-    def _addImageClicked(self):
-        self.rgbWidget.addImage(self.__ROIImageData,
-                                str(self.roiWindow.graphWidget.graph.title().text()))
-        #if self.rgbWidget.isHidden():
+    def _addImageClicked(self, image, title):
+        self.rgbWidget.addImage(image, title)
         if self.tab is None:
             if self.master:
                 self.rgbWidget.show()
@@ -1156,13 +1283,12 @@ class QEDFStackWidget(qt.QWidget):
             self.tab.setCurrentWidget(self.rgbWidget)
 
 
-    def _removeImageClicked(self):
-        self.rgbWidget.removeImage(str(self.roiWindow.graphWidget.graph.title().text()))
+    def _removeImageClicked(self, title):
+        self.rgbWidget.removeImage(title)
 
-    def _replaceImageClicked(self):
+    def _replaceImageClicked(self, image, title):
         self.rgbWidget.reset()
-        self.rgbWidget.addImage(self.__ROIImageData,
-                                str(self.roiWindow.graphWidget.graph.title().text()))
+        self.rgbWidget.addImage(image, title)
         if self.rgbWidget.isHidden():
             self.rgbWidget.show()
         if self.tab is None:
@@ -1281,6 +1407,11 @@ class QEDFStackWidget(qt.QWidget):
             self.roiWindow.colormapDialog.close()
         if self.roiWindow._matplotlibSaveImage is not None:
             self.roiWindow._matplotlibSaveImage.close()
+        if self.pcaWindow is not None:
+            if self.pcaWindow.colormapDialog is not None:
+                self.pcaWindow.colormapDialog.close()
+            self.pcaWindow.close()
+
         qt.QWidget.closeEvent(self, event)
 
     def _resetSelection(self):
@@ -1473,7 +1604,8 @@ if __name__ == "__main__":
                 if not omnicfile:
                     stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
             elif len(filelist):
-                stack.loadFileList(filelist, fileindex=fileindex)
+                if not omnicfile:
+                    stack.loadFileList(filelist, fileindex=fileindex)
             else:
                 print "Usage: "
                 print "python QEDFStackWidget.py SET_OF_EDF_FILES"

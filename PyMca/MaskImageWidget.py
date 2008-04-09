@@ -110,7 +110,7 @@ class MaskImageWidget(qt.QWidget):
         self.colormapDialog = None
         self.rgbWidget = rgbwidget
 
-        self._build()
+        self._build(standalonesave)
 
         self.__brushMenu  = None
         self.__brushMode  = False
@@ -125,21 +125,17 @@ class MaskImageWidget(qt.QWidget):
         self._buildConnections()
         self._matplotlibSaveImage = None
 
-    def _build(self):        
+    def _build(self, standalonesave):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        standaloneSaving = True
-        if QTVERSION > '4.0.0':
-            if MATPLOTLIB:
-                standaloneSaving = False
         self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
                                                selection = True,
                                                colormap=True,
                                                imageicons=True,
-                                               standalonesave=standaloneSaving,
+                                               standalonesave=False,
                                                standalonezoom=False)
-        if not standaloneSaving:
+        if standalonesave:
             self.connect(self.graphWidget.saveToolButton,
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
@@ -148,7 +144,9 @@ class MaskImageWidget(qt.QWidget):
                                      self.saveImageList)
             self._saveMenu.addAction(qt.QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
-            self._saveMenu.addAction(qt.QString("Matplotlib") ,
+            if QTVERSION > '4.0.0':
+                if MATPLOTLIB:
+                    self._saveMenu.addAction(qt.QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
 
         self.connect(self.graphWidget.zoomResetToolButton,
@@ -239,47 +237,37 @@ class MaskImageWidget(qt.QWidget):
         ddict['event'] = "hFlipSignal"
         ddict['current'] = self._y1AxisInverted * 1
         ddict['id'] = id(self)
-        if QTVERSION < '4.0.0':
-            qt.QObject.emit(self,
-                        qt.PYSIGNAL('MaskImageWidgetSignal'),
-                        ddict)
-        else:
-            qt.QObject.emit(self,
-                        qt.SIGNAL('MaskImageWidgetSignal'),
-                        ddict)
+        self.emitMaskImageSignal(ddict)        
 
+    def buildAndConnectImageButtonBox(self):
+        # The IMAGE selection
+        self.imageButtonBox = qt.QWidget(self)
+        buttonBox = self.imageButtonBox
+        self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
+        self.imageButtonBoxLayout.setMargin(0)
+        self.imageButtonBoxLayout.setSpacing(0)
+        self.addImageButton = qt.QPushButton(buttonBox)
+        icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))
+        self.addImageButton.setIcon(icon)
+        self.addImageButton.setText("ADD IMAGE")
+        self.removeImageButton = qt.QPushButton(buttonBox)
+        self.removeImageButton.setIcon(icon)
+        self.removeImageButton.setText("REMOVE IMAGE")
+        self.replaceImageButton = qt.QPushButton(buttonBox)
+        self.replaceImageButton.setIcon(icon)
+        self.replaceImageButton.setText("REPLACE IMAGE")
+        self.imageButtonBoxLayout.addWidget(self.addImageButton)
+        self.imageButtonBoxLayout.addWidget(self.removeImageButton)
+        self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
         
-
-    def _buildAndConnectButtonBox(self):
-        if self.rgbWidget is not None:
-            # The IMAGE selection
-            self.imageButtonBox = qt.QWidget(self)
-            buttonBox = self.imageButtonBox
-            self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
-            self.imageButtonBoxLayout.setMargin(0)
-            self.imageButtonBoxLayout.setSpacing(0)
-            self.addImageButton = qt.QPushButton(buttonBox)
-            icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))
-            self.addImageButton.setIcon(icon)
-            self.addImageButton.setText("ADD IMAGE")
-            self.removeImageButton = qt.QPushButton(buttonBox)
-            self.removeImageButton.setIcon(icon)
-            self.removeImageButton.setText("REMOVE IMAGE")
-            self.replaceImageButton = qt.QPushButton(buttonBox)
-            self.replaceImageButton.setIcon(icon)
-            self.replaceImageButton.setText("REPLACE IMAGE")
-            self.imageButtonBoxLayout.addWidget(self.addImageButton)
-            self.imageButtonBoxLayout.addWidget(self.removeImageButton)
-            self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
-            
-            self.mainLayout.addWidget(buttonBox)
-            
-            self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
-                        self._addImageClicked)
-            self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
-                        self._removeImageClicked)
-            self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
-                        self._replaceImageClicked)
+        self.mainLayout.addWidget(buttonBox)
+        
+        self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
+                    self._addImageClicked)
+        self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
+                    self._removeImageClicked)
+        self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
+                    self._replaceImageClicked)
 
     def _setEraseSelectionMode(self):
         if DEBUG:print "_setEraseSelectionMode"
@@ -400,15 +388,8 @@ class MaskImageWidget(qt.QWidget):
             ddict = {}
             ddict['event'] = "resetSelection"
             ddict['id'] = id(self)
-            if QTVERSION < '4.0.0':
-                qt.QObject.emit(self,
-                            qt.PYSIGNAL('MaskImageWidgetSignal'),
-                            ddict)
-            else:
-                qt.QObject.emit(self,
-                            qt.SIGNAL('MaskImageWidgetSignal'),
-                            ddict)
-
+            self.emitMaskImageSignal(ddict)
+            
     def setSelectionMask(self, mask, plot=True):
         self.__selectionMask = mask
         if plot:
@@ -566,23 +547,27 @@ class MaskImageWidget(qt.QWidget):
         self.plotImage(True)
 
     def _addImageClicked(self):
-        self.rgbWidget.addImage(self.__imageData,
-                                str(self.graphWidget.graph.title().text()))
-
+        ddict = {}
+        ddict['event'] = "addImageClicked"
+        ddict['image'] = self.__imageData
+        ddict['title'] = str(self.graphWidget.graph.title().text())
+        ddict['id'] = id(self)
+        self.emitMaskImageSignal(ddict)
+            
     def _removeImageClicked(self):
-        self.rgbWidget.removeImage(str(self.graphWidget.graph.title().text()))
+        ddict = {}
+        ddict['event'] = "removeImageClicked"
+        ddict['title'] = str(self.graphWidget.graph.title().text())
+        ddict['id'] = id(self)
+        self.emitMaskImageSignal(ddict)
 
     def _replaceImageClicked(self):
-        self.rgbWidget.reset()
-        self.rgbWidget.addImage(self.__imageData,
-                                str(self.graphWidget.graph.title().text()))
-        if self.rgbWidget.isHidden():
-            self.rgbWidget.show()
-        if self.tab is None:
-            self.rgbWidget.show()
-            self.rgbWidget.raise_()
-        else:
-            self.tab.setCurrentWidget(self.rgbWidget)
+        ddict = {}
+        ddict['event'] = "replaceImageClicked"
+        ddict['image'] = self.__imageData
+        ddict['title'] = str(self.graphWidget.graph.title().text())
+        ddict['id'] = id(self)
+        self.emitMaskImageSignal(ddict)
 
     def _saveToolButtonSignal(self):
         self._saveMenu.exec_(self.cursor().pos())
@@ -662,15 +647,17 @@ class MaskImageWidget(qt.QWidget):
             ddict['event'] = "selectionMaskChanged"
             ddict['current'] = self.__selectionMask * 1
             ddict['id'] = id(self)
-            if QTVERSION < '4.0.0':
-                qt.QObject.emit(self,
-                            qt.PYSIGNAL('MaskImageWidgetSignal'),
-                            ddict)
-            else:
-                qt.QObject.emit(self,
-                            qt.SIGNAL('MaskImageWidgetSignal'),
-                            ddict)
+            self.emitMaskImageSignal(ddict)
                             
+    def emitMaskImageSignal(self, ddict):
+        if QTVERSION < '4.0.0':
+            qt.QObject.emit(self,
+                        qt.PYSIGNAL('MaskImageWidgetSignal'),
+                        ddict)
+        else:
+            qt.QObject.emit(self,
+                        qt.SIGNAL('MaskImageWidgetSignal'),
+                        ddict)
 
     def _saveToolButtonSignal(self):
         self._saveMenu.exec_(self.cursor().pos())
@@ -747,6 +734,9 @@ class MaskImageWidget(qt.QWidget):
                         labels.append(label+"_Mask")
         else:
             imageList = imagelist
+            if len(labels) == 0:
+                for i in range(len(imagelist)):
+                    labels.append("Image%02d" % i)
 
         if not len(imageList):
             qt.QMessageBox.information(self,"No Data",
