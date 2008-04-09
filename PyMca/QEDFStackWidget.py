@@ -507,6 +507,7 @@ class QEDFStackWidget(qt.QWidget):
                     self.__selectFromStackMenu.addAction(qt.QString("Show PCA Maps"),
                                                self.showPCAWindow)
                 self.pcaWindowInMenu = True
+                self.stack.data.shape = shape
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -515,7 +516,6 @@ class QEDFStackWidget(qt.QWidget):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-            finally:
                 self.stack.data.shape = shape
         
             self.pcaWindow.show()
