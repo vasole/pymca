@@ -462,6 +462,13 @@ class QEDFStackWidget(qt.QWidget):
             return
         if self.pcaParametersDialog is None:
             self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self, mdp=MDP)
+            spectrumLength = max(self.__mcaData0.y[0].shape)
+            binningOptions=[1]
+            for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
+                if (spectrumLength % number) == 0:
+                    binningOptions.append(number)
+            ddict = {'options':binningOptions, 'binning': 1}             
+            self.pcaParametersDialog.setParameters(ddict)
         ret = self.pcaParametersDialog.exec_()
         if ret:
             pcaParameters = self.pcaParametersDialog.getParameters()
@@ -515,6 +522,7 @@ class QEDFStackWidget(qt.QWidget):
 
     def showPCAWindow(self):
         self.pcaWindow.show()
+        self.pcaWindow.raise_()
 
     def subtractBackground(self):
         if 0:
