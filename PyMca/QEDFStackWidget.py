@@ -29,9 +29,15 @@ import sys
 import McaWindow
 qt = McaWindow.qt
 QTVERSION = qt.qVersion()
+MATPLOTLIB = False
 if QTVERSION > '4.0.0':
     import RGBCorrelator
     from RGBCorrelatorWidget import ImageShapeDialog
+    try:
+        import QPyMcaMatplotlibSave
+        MATPLOTLIB = True
+    except ImportError:
+        MATPLOTLIB = False
 import RGBCorrelatorGraph
 from PyMca_Icons import IconDict
 import DataObject
@@ -45,11 +51,6 @@ import os
 import PyMcaDirs
 import SpecfitFuns
 import time
-try:
-    import QPyMcaMatplotlibSave
-    MATPLOTLIB = True
-except ImportError:
-    MATPLOTLIB = False
 import OmnicMap
 import LuciaMap
 import SupaVisioMap
@@ -240,7 +241,10 @@ class QEDFStackWidget(qt.QWidget):
         infotext += 'of pixels. Be carefull if you are preparing a batch and you\n'
         infotext += 'fit the normalized spectra because the data in the batch will\n'
         infotext += 'have a different weight because they are not normalized.'
-        self.normalizeIcon = qt.QIcon(qt.QPixmap(IconDict["normalize16"]))  
+        if QTVERSION < '4.0.0':
+            self.normalizeIcon = qt.QIconSet(qt.QPixmap(IconDict["normalize16"]))
+        else:
+            self.normalizeIcon = qt.QIcon(qt.QPixmap(IconDict["normalize16"]))
         self.normalizeButton = self.stackGraphWidget._addToolButton(\
                                         self.normalizeIcon,
                                         self.normalizeIconChecked,

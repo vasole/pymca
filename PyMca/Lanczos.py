@@ -67,7 +67,10 @@ PARALLEL=0
 import numpy
 import numpy.oldnumeric as Numeric
 import numpy.oldnumeric.linear_algebra as LinearAlgebra
-import numpy.core._dotblas as dotblas
+try:
+    import numpy.core._dotblas as dotblas
+except ImportError:
+    dotblas = numpy
 import random
 
 ######################################

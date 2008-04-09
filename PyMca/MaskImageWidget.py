@@ -29,9 +29,17 @@ import sys
 import RGBCorrelatorGraph
 qt = RGBCorrelatorGraph.qt
 QTVERSION = qt.qVersion()
+MATPLOTLIB = False
 if QTVERSION > '4.0.0':
     import RGBCorrelator
     from RGBCorrelatorWidget import ImageShapeDialog
+    try:
+        import QPyMcaMatplotlibSave
+        MATPLOTLIB = True
+    except ImportError:
+        MATPLOTLIB = False
+else:
+    qt.QIcon = qt.QIconSet
 from PyMca_Icons import IconDict
 import numpy
 import ColormapDialog
@@ -39,11 +47,6 @@ import spslut
 import os
 import PyMcaDirs
 import ArraySave
-try:
-    import QPyMcaMatplotlibSave
-    MATPLOTLIB = True
-except ImportError:
-    MATPLOTLIB = False
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -129,7 +132,16 @@ class MaskImageWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+        if QTVERSION < '4.0.0':
+            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                               selection = True,
+                                               colormap=True,
+                                               imageicons=True,
+                                               standalonesave=True,
+                                               standalonezoom=False)
+            standalonesave = False
+        else:
+            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
                                                selection = True,
                                                colormap=True,
                                                imageicons=True,
@@ -159,7 +171,7 @@ class MaskImageWidget(qt.QWidget):
                                Qwt.QwtPlotPicker.CrossRubberBand,
                                Qwt.QwtPicker.AlwaysOn,
                                self.graphWidget.graph.canvas())
-        self.graphWidget.picker.setTrackerPen(qt.Qt.black)
+        self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
         self.graphWidget.graph.enableSelection(False)
         self.graphWidget.graph.enableZoom(True)
         self.setSelectionMode(False)
@@ -414,11 +426,11 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap0 = self.__pixmap.copy()
             self.graphWidget.picker.data = self.__imageData
             if self.colormap is None:
-                self.graphWidget.picker.setTrackerPen(qt.Qt.black)
+                self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
             elif int(str(self.colormap[0])) > 1:     #color
-                self.graphWidget.picker.setTrackerPen(qt.Qt.black)
+                self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
             else:
-                self.graphWidget.picker.setTrackerPen(qt.Qt.green)
+                self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.green))
         self.__applyMaskToImage()
         if not self.graphWidget.graph.yAutoScale:
             ylimits = self.graphWidget.graph.getY1AxisLimits()

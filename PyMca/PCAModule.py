@@ -26,7 +26,12 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group, A. Mirone - ESRF SciSoft Group"
 import numpy
-import numpy.core._dotblas as dotblas
+
+try:
+    import numpy.core._dotblas as dotblas
+except ImportError:
+    dotblas = numpy
+    
 try:
     import mdp
     MDP = True
@@ -74,9 +79,8 @@ def lanczosPCA(stack, ncomponents, binning=None):
 
 
     if wrapmatrix=="single" :
-        SM=dotblas.dot(data.T, data)
-        SM=SM.astype(dtype)
-        SM = Lanczos.LanczosNumericMatrix( [SM.astype(dtype)] )
+        SM=[dotblas.dot(data.T, data).astype(dtype)]
+        SM = Lanczos.LanczosNumericMatrix( SM )
     else:
         SM = Lanczos.LanczosNumericMatrix( [data.T.astype(dtype), data.astype(dtype) ])
     
@@ -157,13 +161,13 @@ def lanczosPCA2(stack, ncomponents, binning=None):
 
 
     if rappmatrix=="singola" :
-        SM=dotblas.dot(  data.T, data        )
-        SM = Lanczos.LanczosNumericMatrix( [SM.astype(tipo)] )
+        SM=[dotblas.dot(data.T, data).astype(tipo)]
+        SM = Lanczos.LanczosNumericMatrix( SM )
     else:
         SM =Lanczos.LanczosNumericMatrix( [data.T.astype(tipo), data.astype(tipo) ])
 
     ev,eve=Lanczos.solveEigenSystem( SM, neig, shift=0.0, tol=1.0e-7)
-
+    SM = None
     rc = rc*BINNING
 
     newmat = numpy.zeros([ r*c, neig ], numpy.float64   )
