@@ -385,7 +385,7 @@ class QEDFStackWidget(qt.QWidget):
                 msg.exec_()
 
     def _submitPCAThread(self, function, *var, **kw):
-        message = "Please Wait: PCA Analysis"
+        message = "Please Wait: PCA Going On"
         sthread = SimpleThread(function, *var, **kw)
         return self.__startThread(sthread, message)
 
