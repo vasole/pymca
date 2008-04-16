@@ -79,7 +79,8 @@ if DEBUG:
     print "#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG
     print "############################################"
 class McaAdvancedFit(qt.QWidget):
-    def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,sections=None, top=True):
+    def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,
+                 sections=None, top=True, margin=11, spacing=6):
                 #fl=qt.Qt.WDestructiveClose):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name,fl)
@@ -92,7 +93,7 @@ class McaAdvancedFit(qt.QWidget):
         self.lastInputDir = None
         self.configDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(11)
+        self.mainLayout.setMargin(margin)
         self.mainLayout.setSpacing(0)
         if sections is None:sections=["TABLE"]
         self.headerLabel = qt.QLabel(self)
@@ -127,12 +128,13 @@ class McaAdvancedFit(qt.QWidget):
                 self.mainTab.currentIndex = self.mainTab.currentPageIndex
                 self.mainTab.setCurrentIndex = self.mainTab.setCurrentPage
                 self.tabGraph  = qt.QWidget(self.mainTab,"tabGraph")
-                tabGraphLayout = qt.QVBoxLayout(self.tabGraph,11,6,"tabGraphLayout")
+                tabGraphLayout = qt.QVBoxLayout(self.tabGraph,margin,
+                                                spacing,"tabGraphLayout")
             else:
                 self.tabGraph  = qt.QWidget()
                 tabGraphLayout = qt.QVBoxLayout(self.tabGraph)
-                tabGraphLayout.setMargin(11)
-                tabGraphLayout.setSpacing(6)
+                tabGraphLayout.setMargin(margin)
+                tabGraphLayout.setSpacing(spacing)
             #self.graphToolbar  = qt.QHBox(self.tabGraph)
             self.graphWindow = McaGraphWindow(self.tabGraph)
             tabGraphLayout.addWidget(self.graphWindow)
@@ -157,8 +159,8 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.tabMca  = qt.QWidget()
             tabMcaLayout = qt.QVBoxLayout(self.tabMca)
-            tabMcaLayout.setMargin(11)
-            tabMcaLayout.setSpacing(6)
+            tabMcaLayout.setMargin(margin)
+            tabMcaLayout.setSpacing(spacing)
             w = self.tabMca
             line = Line(w, info="TABLE")
             tabMcaLayout.addWidget(line)
@@ -191,7 +193,7 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.tabConcentrations  = qt.QWidget()
             tabConcentrationsLayout = qt.QVBoxLayout(self.tabConcentrations)
-            tabConcentrationsLayout.setMargin(11)
+            tabConcentrationsLayout.setMargin(margin)
             tabConcentrationsLayout.setSpacing(0)
             line2 = Line(self.tabConcentrations, info="CONCENTRATIONS")
             self.concentrationsWidget = ConcentrationsWidget.Concentrations(self.tabConcentrations)
@@ -226,8 +228,8 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.tabDiagnostics  = qt.QWidget()
             tabDiagnosticsLayout = qt.QVBoxLayout(self.tabDiagnostics)
-            tabDiagnosticsLayout.setMargin(11)
-            tabDiagnosticsLayout.setSpacing(6)
+            tabDiagnosticsLayout.setMargin(margin)
+            tabDiagnosticsLayout.setSpacing(spacing)
             w = self.tabDiagnostics
             if  QTVERSION < '3.0.0':
                 self.diagnosticsWidget = qt.QTextView(w)
