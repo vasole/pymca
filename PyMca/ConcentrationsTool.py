@@ -633,6 +633,8 @@ if __name__ == "__main__":
         for file in filelist:
             d = ConfigDict.ConfigDict()
             d.read(file)
+            for material in d['result']['config']['materials'].keys():
+                Elements.Material[material] = copy.deepcopy(d['result']['config']['materials'][material])
             print tool.processFitResult(fitresult=d, elementsfrommatrix=True)
     else:
         print "Usage:"

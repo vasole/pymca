@@ -969,6 +969,7 @@ if __name__ == "__main__":
     import ConfigDict
     import getopt
     import ConcentrationsTool
+    import copy
     if len(sys.argv) > 1:
         options = ''
         longoptions = ['flux=','time=','area=','distance=','attenuators=','usematrix=']
@@ -1002,6 +1003,8 @@ if __name__ == "__main__":
         for file in filelist:
             d = ConfigDict.ConfigDict()
             d.read(file)
+            for material in d['result']['config']['materials'].keys():
+                Elements.Material[material] = copy.deepcopy(d['result']['config']['materials'][material])
             demo.processFitResult(fitresult=d,elementsfrommatrix=False)
         demo.show()
         if QTVERSION < '4.0.0': 
