@@ -524,135 +524,71 @@ class FundamentalWidget(qt.QWidget):
         qt.QWidget.__init__(self,parent)
         self.build()
 
-    def build(self):
+    def build(self, spacing=2):
         layout = qt.QHBoxLayout(self)
         layout.setMargin(0)
-        layout.setSpacing(0)
-        
+        layout.setSpacing(spacing)
+
         #column 0
         c0 = qt.QWidget(self)
         c0.layout = qt.QVBoxLayout(c0)
         c0.layout.setMargin(0)
-        c0.layout.setSpacing(0)
+        c0.layout.setSpacing(spacing)
         
+        c0l0 = qt.QLabel(c0)
+        c0l0.setText("Flux (photons/s)")        
+
         c0l1 = qt.QLabel(c0)
-        #c0l1.setText("Integrated Flux")
+        c0l1.setText("Active Area (mm2)")
 
-        c0l2 = qt.QLabel(c0)
-        c0l2.setText("Flux (photons/s)")        
-
-        c0l3 = qt.QLabel(c0)
-        #c0l3.setText("Detector Solid Angle")
-
-        c0l4 = qt.QLabel(c0)
-        c0l4.setText("Active Area (mm2)")
-
-        c0l5 = qt.QLabel(c0)
-        c0l5.setText(" ")
+        c0.layout.addWidget(c0l0)
         c0.layout.addWidget(c0l1)
-        c0.layout.addWidget(c0l2)
-        c0.layout.addWidget(c0l3)
-        c0.layout.addWidget(c0l4)
-        c0.layout.addWidget(c0l5)
-
         
         #column 1
         c1 = qt.QWidget(self)
         c1.layout = qt.QVBoxLayout(c1)
-        c1.layout.setMargin(6)
-        c1.layout.setSpacing(0)
+        c1.layout.setMargin(0)
+        c1.layout.setSpacing(spacing)
 
-        c1l1 = qt.QLabel(c1)
-        c1l1.setText("")
-        
         self.flux = MyQLineEdit(c1)
         self.flux.setValidator(qt.QDoubleValidator(self.flux))
 
-        c1l2 = qt.QLabel(c1)        
-        c1l2.setText("")
-
         self.area = MyQLineEdit(c1)
         self.area.setValidator(qt.QDoubleValidator(self.area))
-        c1l5 = qt.QLabel(c1)
-        c1l5.setText(" ")
 
-        c1.layout.addWidget(c1l1)
         c1.layout.addWidget(self.flux)
-        c1.layout.addWidget(c1l2)
         c1.layout.addWidget(self.area)
-        c1.layout.addWidget(c1l5)
-
             
         #column 2
         c2 = qt.QWidget(self)
         c2.layout = qt.QVBoxLayout(c2)
-        c2.layout.setMargin(6)
-        c2.layout.setSpacing(0)
+        c2.layout.setMargin(0)
+        c2.layout.setSpacing(spacing)
+
+        c2l0 = qt.QLabel(c2)
+        c2l0.setText("x time(seconds)")
 
         c2l1 = qt.QLabel(c2)
-        c2l1.setText("")
+        c2l1.setText("distance (mm)")
 
-        c2l2 = qt.QLabel(c2)
-        c2l2.setText("x time(seconds)")        
-
-        c2l3 = qt.QLabel(c2)
-        c2l3.setText("")
-
-        c2l4 = qt.QLabel(c2)
-        c2l4.setText("distance (mm)")
-        c2l5 = qt.QLabel(c2)
-        c2l5.setText(" ")
-
+        c2.layout.addWidget(c2l0)
         c2.layout.addWidget(c2l1)
-        c2.layout.addWidget(c2l2)
-        c2.layout.addWidget(c2l3)
-        c2.layout.addWidget(c2l4)
-        c2.layout.addWidget(c2l5)
         
         #column 3
         c3 = qt.QWidget(self)
         c3.layout = qt.QVBoxLayout(c3)
-        c3.layout.setMargin(6)
-        c3.layout.setSpacing(0)
-
-        c3l1 = qt.QLabel(c3)
-        c3l1.setText("")
+        c3.layout.setMargin(0)
+        c3.layout.setSpacing(spacing)
         
         self.time = MyQLineEdit(c3)
         self.time.setValidator(qt.QDoubleValidator(self.time))
 
-        c3l2 = qt.QLabel(c3)        
-        c3l2.setText("")
-
         self.distance = MyQLineEdit(c3)
         self.distance.setValidator(qt.QDoubleValidator(self.distance))
-        c3l5 = qt.QLabel(c3)
-        c3l5.setText(" ")
         
-        c3.layout.addWidget(c3l1)
         c3.layout.addWidget(self.time)
-        c3.layout.addWidget(c3l2)
         c3.layout.addWidget(self.distance)
-        c3.layout.addWidget(c3l5)
-        
-        
-        #column 4
-        """
-        c4 = qt.QWidget(self)
-        c4.layout = qt.QVBoxLayout(c4)
-
-        c4l1 = qt.QLabel(c4)
-        c4l1.setText("")
-
-        c4l2 = qt.QLabel(c4)
-        c4l2.setText("seconds")
-
-        c4l3 = qt.QLabel(c4)
-        c4l3.setText("")
-
-        c4l4 = qt.QLabel(c4)
-        c4l4.setText("distance")
-        """
+                
         layout.addWidget(c0)
         layout.addWidget(c1)
         layout.addWidget(c2)
