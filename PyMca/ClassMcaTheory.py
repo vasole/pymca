@@ -759,8 +759,8 @@ class McaTheory:
                         #print "ene = ",ene,"scatterindex = ",scatterindex
                         #print "scatter for first energy" 
                         if ene > 0.2:
-                            PARAMETERS.append("Scatter Peak%03d " % scatterindex)    
-                            PARAMETERS.append("Scatter Compton%03d " % scatterindex)
+                            PARAMETERS.append("Scatter Peak%03d" % scatterindex)    
+                            PARAMETERS.append("Scatter Compton%03d" % scatterindex)
                             #PARAMETERS.append("Scatter Peak")    
                             #PARAMETERS.append("Scatter Compton")
    
