@@ -471,7 +471,7 @@ class QEDFStackWidget(qt.QWidget):
             for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
                 if (spectrumLength % number) == 0:
                     binningOptions.append(number)
-            ddict = {'options':binningOptions, 'binning': 1}             
+            ddict = {'options':binningOptions, 'binning': 1, 'method': 0}
             self.pcaParametersDialog.setParameters(ddict)
         ret = self.pcaParametersDialog.exec_()
         if ret:

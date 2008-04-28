@@ -53,7 +53,7 @@ class PCAParametersDialog(qt.QDialog):
         #
         self.methodOptions = qt.QGroupBox(self)
         self.methodOptions.setTitle('PCA Module to use')
-        self.methods = ['Built-in 1', 'Built-in 2']
+        self.methods = ['Correct', 'Fast']
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
@@ -146,6 +146,10 @@ class PCAParametersDialog(qt.QDialog):
             self.nPC.setValue(ddict['npc'])
         if ddict.has_key('method'):
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
+            if ddict['method'] in [0, 2]:
+                self.binningCombo.setEnabled(True)
+            else:
+                self.binningCombo.setEnabled(False)                
         return
 
     def getParameters(self):
