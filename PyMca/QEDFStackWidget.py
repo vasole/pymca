@@ -54,7 +54,9 @@ import time
 import OmnicMap
 import LuciaMap
 import SupaVisioMap
+import AifiraMap
 import MaskImageWidget
+import copy
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -885,6 +887,8 @@ class QEDFStackWidget(qt.QWidget):
 
     def setStack(self, stack, mcaindex=1, fileindex = None):
         #stack.data is an XYZ array
+        if not hasattr(stack, "sourceName"):
+            stack.sourceName = stack.info['SourceName']
         if QTVERSION < '4.0.0':
             title = str(self.caption())+\
                     ": from %s to %s" % (os.path.basename(stack.sourceName[0]),
@@ -1442,6 +1446,7 @@ class QEDFStackWidget(qt.QWidget):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "All Files (*)"]
         message = "Open ONE indexed stack or SEVERAL files"
@@ -1542,6 +1547,7 @@ if __name__ == "__main__":
             fileindex = int(arg)
     app = qt.QApplication([])
     w = QEDFStackWidget(master=True)
+    aifirafile = False
     if len(args):
         f = open(args[0])
         #read 10 characters
@@ -1591,18 +1597,20 @@ if __name__ == "__main__":
                 line = f.read(10)
                 f.close()
                 omnicfile = False
-                if line[0] == "\n":
-                    line = line[1:]
-                if line[0] == "{":
+                if filefilter[0:6].upper() == "AIFIRA":
+                    stack = AifiraMap.AifiraMap(filelist[0])
+                    omnicfile = True
+                    aifirafile = True
+                elif filefilter[0:9] == "SupaVisio":
+                    stack = SupaVisioMap.SupaVisioMap(filelist[0])
+                    omnicfile = True
+                elif line[0] == "{":
                     stack = QStack()
                 elif line.startswith('Spectral'):
                     stack = OmnicMap.OmnicMap(filelist[0])
                     omnicfile = True
                 elif line.startswith('#\tDate'):
                     stack = LuciaMap.LuciaMap(filelist[0])
-                    omnicfile = True
-                elif filefilter == "SupaVisio":
-                    stack = SupaVisioMap.SupaVisioMap(filelist[0])
                     omnicfile = True
                 elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
                     stack = SupaVisioMap.SupaVisioMap(filelist[0])
@@ -1639,7 +1647,28 @@ if __name__ == "__main__":
     else:
         qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
-    w.setStack(stack)
+
+    if aifirafile:
+        masterStack = DataObject.DataObject()
+        masterStack.info = copy.deepcopy(stack.info)
+        masterStack.data = stack.data[:,:,0:1024]
+        masterStack.info['Dim_2'] = int(masterStack.info['Dim_2'] / 2)
+
+        slaveStack = DataObject.DataObject()
+        slaveStack.info = copy.deepcopy(stack.info)
+        slaveStack.data = stack.data[:,:, 1024:]
+        slaveStack.info['Dim_2'] = int(slaveStack.info['Dim_2'] / 2)
+
+        w.setStack(masterStack)
+        w.slave = QEDFStackWidget(rgbwidget=w.rgbWidget,
+                                  master=False)
+        w.slave.setStack(slaveStack)
+        w.connectSlave(w.slave)
+        w._resetSelection()
+        w.loadStackButton.hide()
+        w.slave.show()
+    else:
+        w.setStack(stack)
     w.show()
     #print "reading elapsed = ", time.time() - t0
     if qt.qVersion() < '4.0.0':

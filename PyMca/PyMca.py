@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.94 $"
+__revision__ = "$Revision: 1.95 $"
 #/*##########################################################################
 # Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
@@ -64,7 +64,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.4 20080409-snapshot"
+__version__ = "4.2.4 20080430-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -170,8 +170,17 @@ import Mca2Edf
 if QTVERSION > '4.0.0':
     import PyMcaPostBatch
     import RGBCorrelator
+
 import ConfigDict
 import PyMcaDirs
+
+XIA_CORRECT = False
+if QTVERSION > '4.3.0':
+    try:
+        import XiaCorrect
+        XIA_CORRECT = True
+    except:
+        pass
 
 DEBUG = 0
 SOURCESLIST = QDispatcher.QDataSource.source_types.keys()
@@ -973,6 +982,9 @@ class PyMca(PyMcaMdi.PyMca):
             self.menuTools.addAction("RGB Correlator",self.__rgbCorrelator)
             if STACK:
                 self.menuTools.addAction("ROI Imaging",self.__roiImaging)
+            if XIA_CORRECT:
+                self.menuTools.addAction("XIA Correct",
+                                         self.__xiaCorrect)
         if DEBUG:"print Fit to Specfile missing"
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
@@ -1134,6 +1146,7 @@ class PyMca(PyMcaMdi.PyMca):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "All Files (*)"]
             message = "Open ONE indexed stack or SEVERAL files"
@@ -1170,6 +1183,7 @@ class PyMca(PyMcaMdi.PyMca):
                 omnicfile = False
                 luciafile = False
                 supavisio = False
+                aifirafile = False
                 if len(filelist) == 1:
                     f = open(filelist[0])
                     line = f.read(10)
@@ -1180,6 +1194,8 @@ class PyMca(PyMcaMdi.PyMca):
                         omnicfile = True
                     elif line.startswith('#\tDate:'):
                         luciafile = True
+                    elif "AIFIRA" == filefilter.split()[0].upper():
+                        aifirafile = True
                     elif "SupaVisio" == filefilter.split()[0]:
                         supavisio = True
                     elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
@@ -1191,6 +1207,25 @@ class PyMca(PyMcaMdi.PyMca):
                         self.__imagingTool.setStack(QEDFStackWidget.OmnicMap.OmnicMap(filelist[0]))
                     elif luciafile:
                         self.__imagingTool.setStack(QEDFStackWidget.LuciaMap.LuciaMap(filelist[0]))
+                    elif aifirafile:
+                        stack = QEDFStackWidget.AifiraMap.AifiraMap(filelist[0])
+                        masterStack = QEDFStackWidget.DataObject.DataObject()
+                        masterStack.info = QEDFStackWidget.copy.deepcopy(stack.info)
+                        masterStack.data = stack.data[:,:,0:1024]
+                        masterStack.info['Dim_2'] = int(masterStack.info['Dim_2'] / 2)
+
+                        slaveStack = QEDFStackWidget.DataObject.DataObject()
+                        slaveStack.info = QEDFStackWidget.copy.deepcopy(stack.info)
+                        slaveStack.data = stack.data[:,:, 1024:]
+                        slaveStack.info['Dim_2'] = int(slaveStack.info['Dim_2'] / 2)
+                        self.__imagingTool.setStack(masterStack)
+                        self.__imagingTool.slave = QEDFStackWidget.QEDFStackWidget(rgbwidget=self.__imagingTool.rgbWidget,
+                                                  master=False)
+                        self.__imagingTool.slave.setStack(slaveStack)
+                        self.__imagingTool.connectSlave(self.__imagingTool.slave)
+                        self.__imagingTool._resetSelection()
+                        self.__imagingTool.loadStackButton.hide()
+                        self.__imagingTool.slave.show()
                     elif supavisio:
                         self.__imagingTool.setStack(QEDFStackWidget.SupaVisioMap.SupaVisioMap(filelist[0]))
                     else:
@@ -1231,6 +1266,9 @@ class PyMca(PyMcaMdi.PyMca):
         if ddict['event'] == "StackWidgetClosed":
             del self.__imagingTool
             self.__imagingTool = None
+
+    def __xiaCorrect(self):
+        XiaCorrect.mainGUI(qt.qApp)
     
     def onOpen(self):
         if QTVERSION < '4.0.0':

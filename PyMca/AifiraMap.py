@@ -9,7 +9,7 @@ DEBUG = 0
 SOURCE_TYPE="EdfFileStack"
 
 import time
-class SupaVisioMap(DataObject.DataObject):
+class AifiraMap(DataObject.DataObject):
     def __init__(self, filename):
         DataObject.DataObject.__init__(self)
         
@@ -18,19 +18,15 @@ class SupaVisioMap(DataObject.DataObject):
             fid = open(filename, 'rb')
         else:
             fid = open(filename, 'r')
-        data=fid.read()
-        fid.close()
-        self.sourceName = [filename]
-        e0 = time.time()
 
-        values = struct.unpack("%dH" % (len(data)/2), data)
-        data = numpy.array(values, numpy.uint16)
-        #print values
-        nrows = values[1]
-        ncols = values[2]
+        self.sourceName = [filename]
+        
+        self.data = PyMcaIOHelper.readAifira(fid).astype(numpy.float);
+
+        nrows, ncols, nChannels = self.data.shape
         self.nSpectra = nrows * ncols
-        data.shape = [len(data)/3, 3]
-        self.nChannels = data[:,2].max() + 1
+
+        fid.close()
 
         #fill the header
         self.header =[]
@@ -41,8 +37,6 @@ class SupaVisioMap(DataObject.DataObject):
         self.__nFiles = (self.nSpectra)/self.nRows
         self.__nImagesPerFile = 1
 
-        e0 = time.time()
-        self.data = PyMcaIOHelper.fillSupaVisio(data).astype(numpy.float);
         shape = self.data.shape
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)
@@ -60,10 +54,10 @@ if __name__ == "__main__":
     filename = None
     if len(sys.argv) > 1:
         filename = sys.argv[1]
-    elif os.path.exists(".\PIGE\010826.pige"):
-        filename = ".\PIGE\010826.pige"
+    elif os.path.exists("./AIFIRA/010737.DAT"):
+        filename = "./AIFIRA/010737.DAT"
     if filename is not None:
         DEBUG = 1   
-        w = SupaVisioMap(filename)
+        w = AifiraMap(filename)
     else:
         print "Please supply input filename"

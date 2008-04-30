@@ -8,6 +8,7 @@ static PyObject *PyMcaIOHelperError;
 /* Function declarations */
 
 static PyObject *PyMcaIOHelper_fillSupaVisio(PyObject *dummy, PyObject *args);
+static PyObject *PyMcaIOHelper_readAifira(PyObject *dummy, PyObject *args);
 
 /* ------------------------------------------------------- */
 static PyObject *
@@ -58,9 +59,75 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
     return PyArray_Return(outputArray);
 }
 
+static PyObject *
+PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
+{
+    PyObject *inputFileDescriptor;
+	FILE *fd;
+    PyArrayObject *outputArray;
+    int nChannels = 2048;
+    unsigned short channel;
+	unsigned char x, y; 
+    int dimensions[3];
+    unsigned int *outputPointer;
+
+    if (!PyArg_ParseTuple(args, "O", &inputFileDescriptor))
+	{
+		PyErr_SetString(PyMcaIOHelperError, "Error parsing input arguments");
+        return NULL;
+	}
+    if (!PyFile_Check(inputFileDescriptor))
+    {
+		PyErr_SetString(PyMcaIOHelperError, "Input is not a python file descriptor object");
+		return NULL;
+    }
+	fd = PyFile_AsFile(inputFileDescriptor);
+
+    dimensions[0] = 129;
+    dimensions[1] = 129;
+    dimensions[2] = nChannels;
+
+	outputArray = (PyArrayObject *)
+	    PyArray_FromDims(3, dimensions, PyArray_UINT);
+
+    /* Do the job */
+    outputPointer = (unsigned int *) outputArray->data;
+	while(fscanf(fd, "%2c%c%c", &channel, &x, &y) == 3)
+	{
+		if (channel >= nChannels)
+		{
+			printf("bad reading %d\n", channel);
+			continue;
+		}
+		if (x > 128)
+		{
+			printf("bad X reading %d\n", x);
+			break;
+			continue;
+		}
+		if (y > 128)
+		{
+			printf("bad Y reading %d\n", y);
+			break;
+			continue;
+		}
+		/* normally pixe data are in the second channel */
+		if (channel > 1023)
+		{
+			channel -= 1024;
+		}
+		else
+			channel += 1024;
+
+		*(outputPointer + (dimensions[1] * x + y) * nChannels + channel) += 1;
+	}
+    return PyArray_Return(outputArray);
+}
+
 /* Module methods */
 static PyMethodDef PyMcaIOHelperMethods[] ={
 	{"fillSupaVisio", PyMcaIOHelper_fillSupaVisio, METH_VARARGS},
+	{"readAifira", PyMcaIOHelper_readAifira, METH_VARARGS},
 	{NULL,NULL, 0, NULL} /* sentinel */
 };
 
