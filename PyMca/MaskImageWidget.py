@@ -152,7 +152,7 @@ class MaskImageWidget(qt.QWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Data"),
+            self._saveMenu.addAction(qt.QString("Image Data"),
                                      self.saveImageList)
             self._saveMenu.addAction(qt.QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)

@@ -302,9 +302,6 @@ class QEDFStackWidget(qt.QWidget):
                                         'Load another stack of same size',
                                         position = 8 + filterOffset)        
         standaloneSaving = True
-        if QTVERSION > '4.0.0':
-            if MATPLOTLIB:
-                standaloneSaving = False
 
         self.roiWindow = MaskImageWidget.MaskImageWidget(parent=box,
                                                          rgbwidget=self.rgbWidget,
@@ -482,6 +479,8 @@ class QEDFStackWidget(qt.QWidget):
             method = pcaParameters['method']
             binning = pcaParameters['binning']
             npc = pcaParameters['npc']
+            if self.stack.data.dtype not in [numpy.float, numpy.float32]:
+                self.stack.data = self.stack.data.astype(numpy.float)
             shape = self.stack.data.shape
             if method == 0:
                 function = PCAModule.lanczosPCA

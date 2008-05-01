@@ -29,7 +29,6 @@ import PyQt4.Qt as qt
 from PyMca_Icons import IconDict
 import MaskImageWidget
 import sys
-import MaskImageWidget
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
 
@@ -185,7 +184,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Data"),
+            self._saveMenu.addAction(qt.QString("Image Data"),
                                      self.saveImageList)
             self._saveMenu.addAction(qt.QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
