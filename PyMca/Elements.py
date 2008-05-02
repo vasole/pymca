@@ -930,9 +930,13 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
 def _getAttFilteredElementDict(elementsList,
                                attenuators= None,
                                detector   = None,
+                               funnyfilters = None,
                                energy = None):
-    if energy is None:      energy = 100.
-    if attenuators is None: attenuators = []
+    if energy is None:         energy = 100.
+    if attenuators is None:
+        attenuators = []
+    if funnyfilters is None:
+        funnyfilters = []
     outputDict = {}
     for group in elementsList:
         ele  = group[1] * 1
@@ -956,6 +960,7 @@ def _getAttFilteredElementDict(elementsList,
                 rates.append(elementDict[transition]['rate'] * 1.0)
                 outputDict[ele][transition]['energy'] = ene
             #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)    
+
             #attenuators
             coeffs = Numeric.zeros(len(energies), Numeric.Float)
             for attenuator in attenuators:
@@ -977,8 +982,44 @@ def _getAttFilteredElementDict(elementsList,
                         except OverflowError:
                             #if we are here we know it is not an overflow and trans[i] has the proper value
                             pass
-            for i in range(len(rates)):
-                rates[i] *= trans[i]
+
+            #funnyfilters (only make sense to have more than one if same opening and aligned)
+            coeffs = Numeric.zeros(len(energies), Numeric.Float)
+            funnyfactor = None
+            for attenuator in funnyfilters:
+                formula   = attenuator[0]
+                thickness = attenuator[1] * attenuator[2]
+                if funnyfactor is None:
+                    funnyfactor = attenuator[3]
+                else:
+                    if abs(attenuator[3]-freefraction) > 0.0001:
+                        raise ValueError, "All funny type filters must have same openning fraction"
+                coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+            if funnyfactor is None:
+                for i in range(len(rates)):
+                    rates[i] *= trans[i]
+            else:
+                try:
+                    transFunny = funnyfactor * Numeric.exp(-coeffs) +\
+                                 (1.0 - funnyfactor)
+                except OverflowError:
+                    #deal with underflows reported as overflows
+                    transFunny = Numeric.zeros(len(energies), Numeric.Float)
+                    for i in range(len(energies)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise ValueError,"Positive exponent in funnyfilters transmission term"
+                        else:
+                            try:
+                                transFunny[i] = Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
+                    transFunny = funnyfactor * transFunny + \
+                                 (1.0 - funnyfactor)                     
+                for i in range(len(rates)):
+                    rates[i] *= (trans[i] * transFunny[i])
+
             #detector term
             if detector is not None:
                 formula   = detector[0]
@@ -1020,6 +1061,7 @@ def getMultilayerFluorescence(multilayer0,
                               alphaout     = None,
                               cascade = None,
                               detector= None,
+                              funnyfilters=None,
                               forcepresent=None,
                               secondary=None):
 
@@ -1214,9 +1256,11 @@ def getMultilayerFluorescence(multilayer0,
             userElementDict = _getAttFilteredElementDict(newelementsList,
                                attenuators= origattenuators,
                                detector   = detector,
+                               funnyfilters = funnyfilters,
                                energy = max(energyList))
             workattenuators = None
             workdetector    = None
+            workfunnyfilters = None
         else:
             userElementDict = None
             workattenuators = origattenuators * 1
@@ -1224,6 +1268,10 @@ def getMultilayerFluorescence(multilayer0,
                 workdetector = detector * 1
             else:
                 workdetector = None
+            if funnyfilters is not None:
+                workfunnyfilters = funnyfilters * 1
+            else:
+                workfunnyfilters = None
 
         newweightlist = Numeric.ones(weightList.shape,Numeric.Float)
         if len(newbeamfilters):
@@ -1286,6 +1334,7 @@ def getMultilayerFluorescence(multilayer0,
                                 elementsList = justoneList,
                                 cascade  = cascade,
                                 detector = workdetector,
+                                funnyfilters = workfunnyfilters,
                                 userElementDict = userElementDict)
                 #print "after origattenuators = ",origattenuators
                 if optimized:
@@ -1379,6 +1428,7 @@ def getMultilayerFluorescence(multilayer0,
                                                 elementsList = newelementsList,
                                                 cascade  = cascade,
                                                 detector = workdetector,
+                                                funnyfilters = workfunnyfilters,
                                                 userElementDict = userElementDict)
                         if optimized:
                             #give back with concentration 1
@@ -1548,6 +1598,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
+                    trans = trans
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             
@@ -1606,6 +1657,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
 def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout = None,
                                                 elementsList = None, cascade=None, 
                                                 detector=None,
+                                                funnyfilters=None,
                                                 userElementDict=None):
     """
     getFluorescence(matrixlist, energy, attenuators = None, alphain = None, alphaout = None,
@@ -1645,10 +1697,16 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
         sinAlphaIn   = Numeric.sin(alphain * (Numeric.pi)/180.)
         sinAlphaOut  = Numeric.sin(alphaout * (Numeric.pi)/180.)
     if cascade is None:cascade=False
-    if attenuators is None: attenuators = []
+    if attenuators is None:
+        attenuators = []
     if len(attenuators):
         if type(attenuators[0]) != types.ListType:
             attenuators=[attenuators]
+    if funnyfilters is None:
+        funnyfilters = []
+    if len(funnyfilters):
+        if type(funnyfilters[0]) != types.ListType:
+            funnyfilters=[funnyfilters]
     if detector is not None:
         if type(detector) != types.ListType:
             raise TypeError, \
@@ -1696,9 +1754,11 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             elementDict = userElementDict[ele]
         else:
             elementDict = _getUnfilteredElementDict(ele, energy)
-        if not outputDict.has_key(ele): outputDict[ele] ={}
+        if not outputDict.has_key(ele):
+            outputDict[ele] ={}
         outputDict[ele]['mass fraction'] = eleDict[ele]
-        if not outputDict[ele].has_key('rates'):outputDict[ele]['rates'] = {}
+        if not outputDict[ele].has_key('rates'):
+            outputDict[ele]['rates'] = {}
         #get the fluorescence term for all shells
         fluoWeights = _getFluorescenceWeights(ele, energy, normalize = False,
                                                              cascade=cascade)
@@ -1745,9 +1805,45 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 for coef in coeffs:
                     if coef < 0.0:
                         raise ValueError,"Positive exponent in attenuators transmission term"    
-                trans = 0.0 * coeffs            
-            for i in range(len(rates)):
-                rates[i] *= trans[i]
+                trans = 0.0 * coeffs
+
+            #funnyfilters
+            coeffs = Numeric.zeros(len(energies), Numeric.Float)
+            funnyfactor = None
+            for attenuator in funnyfilters:
+                formula   = attenuator[0]
+                thickness = attenuator[1] * attenuator[2]
+                if funnyfactor is None:
+                    funnyfactor = attenuator[3]
+                else:
+                    if abs(attenuator[3]-freefraction) > 0.0001:
+                        raise ValueError, "All funny type filters must have same openning fraction"
+                coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+            if funnyfactor is None:
+                for i in range(len(rates)):
+                    rates[i] *= trans[i]
+            else:
+                try:
+                    transFunny = funnyfactor * Numeric.exp(-coeffs) +\
+                                 (1.0 - funnyfactor)
+                except OverflowError:
+                    #deal with underflows reported as overflows
+                    transFunny = Numeric.zeros(len(energies), Numeric.Float)
+                    for i in range(len(energies)):
+                        coef = coeffs[i]
+                        if coef < 0.0:
+                            raise ValueError,"Positive exponent in funnyfilters transmission term"
+                        else:
+                            try:
+                                transFunny[i] = Numeric.exp(-coef)
+                            except OverflowError:
+                                #if we are here we know it is not an overflow and trans[i] has the proper value
+                                pass
+                    transFunny = funnyfactor * transFunny + \
+                                 (1.0 - funnyfactor)                     
+                for i in range(len(rates)):
+                    rates[i] *= (trans[i] * transFunny[i])
+
             #detector term
             if detector is not None:
                 formula   = detector[0]

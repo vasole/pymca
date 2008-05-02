@@ -90,7 +90,7 @@ class AttenuatorsTab(qt.QWidget):
     def __init__(self,parent=None, name="Attenuators Tab",attenuators=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
-        self.table  = AttenuatorsTableWidget(self,name,attenuators)
+        self.table  = AttenuatorsTableWidget(self,name,attenuators, funnyfilters=True)
         layout.addWidget(self.table)
         spacer = MaterialEditor.VerticalSpacer(self)
         layout.addWidget(spacer)
@@ -366,7 +366,7 @@ else:
 class AttenuatorsTableWidget(QTable):
     def __init__(self, parent=None, name="Attenuators Table",
                  attenuators=None, matrixmode=None, compoundmode=None,
-                 layerindex=0):
+                 layerindex=0, funnyfilters=False):
         attenuators0= ["Atmosphere", "Air", "Window", "Contact", "DeadLayer",
                        "Filter5", "Filter6","Filter7","BeamFilter1",
                        "BeamFilter2","Detector", "Matrix"]
@@ -386,10 +386,17 @@ class AttenuatorsTableWidget(QTable):
             self.compoundMode = False
         else:
             self.compoundMode = compoundmode
+        if funnyfilters is None:
+            funnyfilters = False
+        self.funnyFiltersMode = funnyfilters
         if self.compoundMode:
+            self.funnyFiltersMode = False
             labels = ["Compound","Name", "Material","Initial Amount"]        
         else:
-            labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)"]
+            if self.funnyFiltersMode:
+                labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)", "Funny Factor"]
+            else:
+                labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)"]
         self.layerindex = layerindex
         self.matrixMode = matrixmode
         self.attenuators = attenuators
@@ -570,6 +577,8 @@ class AttenuatorsTableWidget(QTable):
                 item.setText("BeamFilter%d" % i)
                 item= qttable.QTableItem(self, qttable.QTableItem.Never,"BeamFilter%d" % i)
                 self.setItem(idx, 1,item)
+                item= qttable.QTableItem(self, qttable.QTableItem.Never,"1.0")
+                self.setItem(idx, 5,item)
             else:
                 item = qt.QCheckBox(self)
                 idx = self.rowCount() - (4-i)
@@ -586,6 +595,17 @@ class AttenuatorsTableWidget(QTable):
                 item.setFlags(qt.Qt.ItemIsSelectable|
                               qt.Qt.ItemIsEnabled)
                 self.setItem(idx, 1, item)
+
+                text = "1.0"
+                item = self.item(idx,5)
+                if item is None:
+                    item = qt.QTableWidgetItem(text,
+                                               qt.QTableWidgetItem.Type)
+                else:
+                    item.setText(text)
+                item.setFlags(qt.Qt.ItemIsSelectable|
+                              qt.Qt.ItemIsEnabled)
+                self.setItem(idx, 5, item)
 
             combo = MyQComboBox(self, options=a, row = idx, col = 2)
             combo.setEditable(True)
@@ -606,6 +626,8 @@ class AttenuatorsTableWidget(QTable):
             item.setText("Detector")
             item= qttable.QTableItem(self, qttable.QTableItem.Never,"Detector")
             self.setItem(idx, 1,item)
+            item= qttable.QTableItem(self, qttable.QTableItem.Never,"1.0")
+            self.setItem(idx, 5,item)
         else:
             item = qt.QCheckBox(self)
             idx = self.rowCount() - 2
@@ -622,6 +644,17 @@ class AttenuatorsTableWidget(QTable):
             item.setFlags(qt.Qt.ItemIsSelectable|
                           qt.Qt.ItemIsEnabled)
             self.setItem(idx, 1, item)
+
+            text = "1.0"
+            item = self.item(idx,5)
+            if item is None:
+                item = qt.QTableWidgetItem(text,
+                                           qt.QTableWidgetItem.Type)
+            else:
+                item.setText(text)
+            item.setFlags(qt.Qt.ItemIsSelectable|
+                          qt.Qt.ItemIsEnabled)
+            self.setItem(idx, 5, item)
             
         combo = MyQComboBox(self, options=a, row = idx, col = 2)
         combo.setEditable(True)
@@ -635,6 +668,8 @@ class AttenuatorsTableWidget(QTable):
             item.setText("Matrix")
             item= qttable.QTableItem(self, qttable.QTableItem.Never,"Matrix")
             self.setItem(idx, 1,item)
+            item= qttable.QTableItem(self, qttable.QTableItem.Never,"1.0")
+            self.setItem(idx, 5,item)
         else:
             item = qt.QCheckBox(self)
             idx = self.rowCount() - 1
@@ -650,6 +685,17 @@ class AttenuatorsTableWidget(QTable):
             item.setFlags(qt.Qt.ItemIsSelectable|
                           qt.Qt.ItemIsEnabled)
             self.setItem(idx, 1, item)
+
+            text = "1.0"
+            item = self.item(idx,5)
+            if item is None:
+                item = qt.QTableWidgetItem(text,
+                                           qt.QTableWidgetItem.Type)
+            else:
+                item.setText(text)
+            item.setFlags(qt.Qt.ItemIsSelectable|
+                          qt.Qt.ItemIsEnabled)
+            self.setItem(idx, 5, item)
 
         if QTVERSION < '4.0.0':
             qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
@@ -699,7 +745,7 @@ class AttenuatorsTableWidget(QTable):
             if QTVERSION < '4.0.0':
                 return qttable.QTable.text(self, row, col)
             else:
-                if col not in [1, 3, 4]:
+                if col not in [1, 3, 4, 5]:
                     print "row, col", row, col
                     print "I should not be here"
                 else:
@@ -713,7 +759,7 @@ class AttenuatorsTableWidget(QTable):
             if col == 0:
                 self.cellWidget(row, 0).setText(text)
                 return
-            if col not in [1, 3, 4]:
+            if col not in [1, 3, 4, 5]:
                 print "only compatible columns 1, 3 and 4"
                 raise ValueError, "method for column > 2"
             item = self.item(row, col)

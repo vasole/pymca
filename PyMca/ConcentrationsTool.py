@@ -214,6 +214,7 @@ class ConcentrationsTool:
         #get attenuators and matrix from fit
         attenuators = []
         beamfilters = []
+        funnyfilters = []
         matrix = None
         detectoratt = None
         multilayer = None
@@ -229,7 +230,14 @@ class ConcentrationsTool:
             elif attenuator.upper() == "DETECTOR":
                 detectoratt = fitresult['result']['config']['attenuators'][attenuator][1:]
             else:
-                attenuators.append(fitresult['result']['config']['attenuators']\
+                if len(fitresult['result']['config']['attenuators'][attenuator][1:]) == 4:
+                   fitresult['result']['config']['attenuators'][attenuator].append(1.0)                
+                if abs(fitresult['result']['config']['attenuators'][attenuator][4]-1.0) > 1.0e-10:
+                    #funny attenuator
+                    funnyfilters.append(fitresult['result']['config']['attenuators']\
+                                                                [attenuator][1:])
+                else:
+                    attenuators.append(fitresult['result']['config']['attenuators']\
                                                                 [attenuator][1:])
         if matrix is None:
             raise ValueError, "Invalid or undefined sample matrix"
@@ -318,7 +326,9 @@ class ConcentrationsTool:
                 elements.append(ele)
         newelements.sort()
         elements.sort()
-        if not config['useattenuators']:attenuators = None
+        if not config['useattenuators']:
+            attenuators  = None
+            funnyfilters = None
         #import time
         #t0=time.time()
         if elementsfrommatrix:
@@ -348,6 +358,7 @@ class ConcentrationsTool:
                          alphaout = alphaout,
                          cascade = True,
                          detector = detectoratt,
+                         funnyfilters = funnyfilters * 1,
                          forcepresent=0,
                          secondary=secondary)
             fluototal = fluo0[0]
@@ -367,7 +378,9 @@ class ConcentrationsTool:
                              elementsList = newelements * 1,
                              alphain = alphain,
                              alphaout = alphaout,
-                             cascade = True, detector=detectoratt,
+                             cascade = True,
+                             detector=detectoratt,
+                             funnyfilters=funnyfilters * 1,
                              forcepresent=1,
                              secondary=secondary)
             else:

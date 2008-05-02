@@ -394,10 +394,15 @@ class FitParamWidget(FitParamForm):
                     combo.setOptions(matlist)
                 combo.lineEdit().setText(str(attpar[1]))
             else:
-                print "ERROR in __setAttPar"                
+                print "ERROR in __setAttPar"
+            if len(attpar) == 4:
+                attpar.append(1.0)
             self.attTable.setText(row, 3, str(attpar[2]))
             self.attTable.setText(row, 4, str(attpar[3]))
-
+            if att.upper() not in ["MATRIX", "DETECTOR", "BEAMFILTER1", "BEAMFILTER2"]:
+                self.attTable.setText(row, 5, str(attpar[4]))
+            else:
+                self.attTable.setText(row, 5, "1.0")
         current = self.tabAttenuators.editor.matCombo.currentText()   
         self.tabAttenuators.editor.matCombo.setOptions(matlist)
 
@@ -424,9 +429,11 @@ class FitParamWidget(FitParamForm):
                     attpar.append(self.matrixGeometry.getParameters("AlphaOut"))
                     attpar.append(self.matrixGeometry.getParameters("AlphaScatteringFlag"))
                     attpar.append(self.matrixGeometry.getParameters("AlphaScattering"))
+                else:
+                    attpar.append(float(str(self.attTable.text(idx, 5))))
             except:
-                if att.upper() != "MATRIX":
-                    attpar= [0, '-', 0., 0.]
+                if att.upper() not in ["MATRIX"]:
+                    attpar= [0, '-', 0., 0., 1.0]
                 else:
                     attpar= [0, '-', 0., 0., 45.0, 45.0, 0, 90.0]
                 self.__parError("ATTENUATORS", "Attenuators parameters error on:\n%s\nReset it to zero."%self.attenuators[idx][0])

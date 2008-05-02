@@ -192,12 +192,16 @@ class McaTheory:
         usematrix = 0
         attenuatorlist =[]
         filterlist = []
+        funnyfilters = []
         detector = None
         multilayerlist = None
         self._fluoRates = None
         if self.attflag:
             for attenuator in self.config['attenuators'].keys():
-                if not self.config['attenuators'][attenuator][0]:continue
+                if not self.config['attenuators'][attenuator][0]:
+                    continue
+                if len(self.config['attenuators'][attenuator]) == 4:
+                    self.config['attenuators'][attenuator].append(1.0)
                 if attenuator.upper() == "MATRIX":
                     if self.config['attenuators'][attenuator][0]:
                         usematrix = 1
@@ -210,11 +214,13 @@ class McaTheory:
                 elif attenuator.upper() == "DETECTOR":
                         detector = self.config['attenuators'][attenuator][1:]
                 elif attenuator.upper()[0:-1] == "BEAMFILTER":
-                    #if filterlist is None:filterlist =[]
                     filterlist.append(self.config['attenuators'][attenuator][1:])
                 else:
-                    #if attenuatorlist is None:attenuatorlist =[]
-                    attenuatorlist.append(self.config['attenuators'][attenuator][1:])
+                    if abs(self.config['attenuators'][attenuator][4]-1.0) > 1.0e-10:
+                        #funny attenuator
+                        funnyfilters.append(self.config['attenuators'][attenuator][1:])
+                    else:
+                        attenuatorlist.append(self.config['attenuators'][attenuator][1:])
             if usematrix:
                 layerkeys = self.config['multilayer'].keys()
                 if len(layerkeys):
@@ -287,6 +293,7 @@ class McaTheory:
                                      cascade = True,
                                      detector=detector,
                                      beamfilters=filterlist,
+                                     funnyfilters=funnyfilters,
                                      forcepresent = 1)
           else:
               self._fluoRates=Elements.getMultilayerFluorescence(multilayer,
@@ -302,6 +309,7 @@ class McaTheory:
                                      elementsList = data,
                                      cascade = True,
                                      detector=detector,
+                                     funnyfilters=funnyfilters,
                                      beamfilters=filterlist,
                                      forcepresent = 1)
               dict = self._fluoRates[0]
@@ -458,17 +466,39 @@ class McaTheory:
                              'rate = ',Elements.Element[ele][transition]['rate'],' fwhm =',fwhm
                     if self.attflag:
                         transmissionenergies = [x[1] for x in newpeaks]
+                        oldfunnyfactor = None
                         for attenuator in self.config['attenuators'].keys():
                             if self.config['attenuators'][attenuator][0]:
                                 formula  = self.config['attenuators'][attenuator][1]
                                 thickness= self.config['attenuators'][attenuator][2] * \
                                                 self.config['attenuators'][attenuator][3]
+                                if len(self.config['attenuators'][attenuator]) == 4:
+                                    funnyfactor = 1.0
+                                else:
+                                    funnyfactor = self.config['attenuators'][attenuator][4]
                                 if attenuator.upper() != "MATRIX": 
                                     #coeffs   = thickness * Numeric.array(Elements.getmassattcoef(formula,transmissionenergies)['total'])
                                     coeffs   =  thickness * Numeric.array(Elements.getMaterialMassAttenuationCoefficients(formula,1.0,transmissionenergies)['total'])
                                     try:
                                         if attenuator.upper() != "DETECTOR":
-                                            trans = Numeric.exp(-coeffs)
+                                            if abs(funnyfactor-1.0) > 1.0e-10:
+                                                #we have a funny attenuator
+                                                if (funnyfactor < 0.0) or (funnyfactor > 1.0):
+                                                    text = "Funny factor should be between 0.0 and 1.0., got %g" % attenuator[4]
+                                                    raise ValueError, text
+                                                if oldfunnyfactor is None:
+                                                    #only has to be multiplied once!!!
+                                                    oldfunnyfactor = funnyfactor 
+                                                    trans = funnyfactor * Numeric.exp(-coeffs) + \
+                                                        (1.0 - funnyfactor)
+                                                else:
+                                                    if abs(oldfunnyfactor-funnyfactor) > 0.0001:
+                                                        text = "All funny type attenuators must have same openning fraction"
+                                                        raise ValueError, text
+                                                    trans = Numeric.exp(-coeffs)
+                                            else:
+                                                #standard
+                                                trans = Numeric.exp(-coeffs)
                                         else:
                                             trans = (1.0 - Numeric.exp(-coeffs))
                                     except OverflowError:

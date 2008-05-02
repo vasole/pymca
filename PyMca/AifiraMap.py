@@ -21,7 +21,8 @@ class AifiraMap(DataObject.DataObject):
 
         self.sourceName = [filename]
         
-        self.data = PyMcaIOHelper.readAifira(fid).astype(numpy.float);
+        #self.data = PyMcaIOHelper.readAifira(fid).astype(numpy.float)
+        self.data = PyMcaIOHelper.readAifira(fid).astype(numpy.float)
 
         nrows, ncols, nChannels = self.data.shape
         self.nSpectra = nrows * ncols

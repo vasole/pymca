@@ -30,6 +30,7 @@ import SpecFileLayer
 import EdfFileLayer
 import EdfFile
 import LuciaMap
+import AifiraMap
 import EDFStack
 import numpy.oldnumeric as Numeric
 import os
@@ -174,6 +175,9 @@ class McaAdvancedFitBatch:
             ffile = self.__tryEdf(inputfile)
             if ffile is None:
                 ffile = self.__tryLucia(inputfile)
+            if ffile is None:
+                if inputfile[-3:] == "DAT":
+                    ffile = self.__tryAifira(inputfile)
             if (ffile is None):
                 del ffile
                 ffile   = SpecFileLayer.SpecFileLayer()
@@ -226,6 +230,23 @@ class McaAdvancedFitBatch:
         ffile = None
         if line.startswith('#\tDate:'):
             ffile = LuciaMap.LuciaMap(inputfile)
+        return ffile
+
+    def __tryAifira(self, inputfile):
+        if sys.platform == "win32":
+            f = open(inputfile,"rb")
+        else:
+            f = open(inputfile,"r")
+        line = f.read(3)
+        f.close()
+        if '#' in line:
+            #specfile
+            return None
+        ffile = None
+        try:
+            ffile = AifiraMap.AifiraMap(inputfile)
+        except:
+            ffile = None
         return ffile
 
     def __processStack(self):
