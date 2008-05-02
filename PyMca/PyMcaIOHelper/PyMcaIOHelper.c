@@ -83,8 +83,8 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
     }
 	fd = PyFile_AsFile(inputFileDescriptor);
 
-    dimensions[0] = 129;
-    dimensions[1] = 129;
+    dimensions[0] = 128;
+    dimensions[1] = 128;
     dimensions[2] = nChannels;
 
 	outputArray = (PyArrayObject *)
@@ -99,6 +99,10 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
 			printf("bad reading %d\n", channel);
 			continue;
 		}
+		if (x < 1)
+			continue;
+		if (y < 1)
+			continue;
 		if (x > 128)
 		{
 			printf("bad X reading %d\n", x);
@@ -111,6 +115,8 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
 			break;
 			continue;
 		}
+		x -= 1;
+		y -= 1;
 		/* normally pixe data are in the second channel */
 		if (channel > 1023)
 		{
