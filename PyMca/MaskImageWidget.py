@@ -488,9 +488,9 @@ class MaskImageWidget(qt.QWidget):
             for i in range(4):
                 self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
         else:
+            self.__pixmap = self.__pixmap0.copy()
             self.__pixmap[self.__selectionMask>0,0]    = 0x40
             self.__pixmap[self.__selectionMask>0,2]    = 0x70
-            self.__pixmap[self.__selectionMask>0,1]    = self.__pixmap0[self.__selectionMask>0, 1] 
             self.__pixmap[self.__selectionMask>0,3]    = 0x40
         return
 

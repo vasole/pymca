@@ -160,14 +160,15 @@ import QDispatcher
 import ElementsInfo
 import PeakIdentifier
 import PyMcaBatch
-try:
-    import QEDFStackWidget
-    STACK = True
-except:
-    STACK = False
 ###########import Fit2Spec
 import Mca2Edf
+STACK = False
 if QTVERSION > '4.0.0':
+    try:
+        import QEDFStackWidget
+        STACK = True
+    except:
+        STACK = False
     import PyMcaPostBatch
     import RGBCorrelator
 
