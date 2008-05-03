@@ -1372,22 +1372,9 @@ class McaTheory:
             return pow(energy,index-PARAMETERS.index('Sum')-1) 
         elif self.__CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial') and \
             PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
-            if 0:
-                text  = "Linear Least-Squares Fit incompatible\n"
-                text += "with Exponential Background"
-                raise ValueError, text
-            else:
-                param=Numeric.array(param0)
-                x=Numeric.array(t0)
-                zero = param[0]
-                gain = param[1] * 1.0
-                energy=zero + gain * x
-                energy -= Numeric.sum(energy)/len(energy)
-                if HYPERMET:
-                    parameters = param[(PARAMETERS.index('Sum')+1):NGLOBAL-5]
-                else:
-                    parameters = param[(PARAMETERS.index('Sum')+1):NGLOBAL]
-                return self.exppol_deriv(parameters,index-PARAMETERS.index('Sum')-1,energy) 
+            text  = "Linear Least-Squares Fit incompatible\n"
+            text += "with Exponential Background"
+            raise ValueError, text
         else:
             #I guess I will not arrive here
             #numerical derivative
@@ -1601,7 +1588,7 @@ class McaTheory:
                 backpar,backcodes=self.estimatelinpol(self.xdata, self.ydata,self.zz)
         elif CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial'):
             if linearfit:
-                if 0:
+                if 1:
                     text  = "Linear fit is incompatible with current implementation\n"
                     text += "of the Exponential Polynomial background"
                     raise ValueError, text

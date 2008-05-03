@@ -1137,9 +1137,11 @@ class FitParamDialog(qt.QDialog):
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.shValue.setText("%.6g" % value)
 
-        text =  "You can now ask the program to perform a linear fit. "
-        text += "If you save this configuration, you will be ready for "
-        text += "a speedy batch."
+
+        text  = "If you do not use an exponential background, "
+        text += "you can now ask the program to perform a linear "
+        text += "fit, save the configuration, and you will be ready "
+        text += "for a speedy batch."
         qt.QMessageBox.information(self,
                                 "Batch tip",
                                 text)
