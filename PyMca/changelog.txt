@@ -5,24 +5,24 @@ VERSION 4.2.4
 - ROI Imaging changes.
   Do not reset ROI image selection on ROI change.
   Add data saving capabilities to the ROI image window.
-  Implement principal component analysis mapping.
+  Implement basic principal component analysis mapping.
   Support AIFIRA and SupaVisio maps.
+
+- Advanced Fit changes.
+  Improved transmission geometry support.
+  User can specify the scattering angle in the fit configuration.
+  Support "funny type" attenuators.
+  Make better use of the available space in the McaAdvancedFit window.
+  Linear fit: fix peaks to 0 area if they are outside the fitting region.
 
 - Simplify access to binding energies by putting them in a separate ASCII file.
 
-- Improved transmission geometry support.
+- Add anchors and smoothing information to the HTML reports.
 
-- User can specify the scattering angle in the fit configuration.
-
-- Support "funny type" attenuators.
-
-- Make better use of the available space in McaAdvancedFit.
-
-- Linear fit: fix peaks to 0 area if they are outside the fitting region.
+- Correct a bug on the reconstruction of the chisq image when using the
+multiple processes batch option.
 
 - Correct a bug preventing the generation of HTML reports in batch mode.
-
-- Add anchors and smoothing information to the HTML reports.
 
 - Correct a specfile compilation issue with some gcc versions.
 

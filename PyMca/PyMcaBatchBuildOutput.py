@@ -58,16 +58,16 @@ class PyMcaBatchBuildOutput:
             i = 0
             for edfname in edflist:
                 edf    = EdfFile.EdfFile(edfname, fastedf = 0)
+                data0   = edf.GetData(0)
+                data0[data0<0] = 0
                 if i == 0:
-                    data   = edf.GetData(0)
                     header = edf.GetHeader(0)
+                    data = data0.copy()
                 else:
-                    data  += edf.GetData(0)
+                    data += data0
                 del edf
                 i += 1
             edfname  = filename.replace('_000000_partial.edf',".edf")
-            if edfname.endswith('chisq.edf'):
-                data += (data < -1) * (len(edflist))
             edfoutname = os.path.join(outputdir, edfname)
             edfout   = EdfFile.EdfFile(edfoutname)
             edfout.WriteImage (header , data, Append=0)
@@ -100,9 +100,9 @@ class PyMcaBatchBuildOutput:
                     inputdata = numpy.zeros((nrows, nlabels), numpy.double)
                 for i in range(nrows):
                     inputdata[i, :] = map(float, lines[i+1].split())
-                    data[i, :] = data[i, :] + inputdata[i, :]
-            #chisq
-            data[:, nlabels-1] += (data[:, nlabels-1] < -1)* (len(edflist))
+                    if inputdata[i, -1] < 0.0:
+                        inputdata[i, -1] = 0.0
+                data += inputdata
             outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
             if os.path.exists(outfilename):
                 os.remove(outfilename)
