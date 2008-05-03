@@ -1813,6 +1813,52 @@ class McaTheory:
                     newpar[i+NGLOBAL] = 0.0
                     codes[0,i+NGLOBAL]= Gefit.CFIXED
         else:
+            #import time
+            #e0 = time.time()
+            if self.linearMatrix is None:
+                for i in range(len(PARAMETERS)-NGLOBAL):
+                    positions = (self.PEAKS0[i][:,1] - zero)/gain
+                    i1 = Numeric.nonzero((positions >= x[0]) & (positions <= x[-1]))
+                    inpeaks = Numeric.take(self.PEAKS0[i],i1)
+                    if len(inpeaks):
+                        continue
+                    elif not self.config['fit']['escapeflag']:
+                        #peaks outside fitting region
+                        #force zero area
+                        newpar[i+NGLOBAL] = 0.0
+                        codes[0,i+NGLOBAL]= Gefit.CFIXED
+                        continue
+                    #peaks outside fitting region
+                    #prior to force them to zero area, let's
+                    #check if their escape peaks fall into the
+                    #fitting region
+                    #get the number of escape lines to get a proper buffer
+                    rates     =  self.PEAKS0[i][:,0]
+                    n_escape_lines = self.PEAKSW[i].shape[0] - len(rates)
+                    peak_buffer    = Numeric.zeros((n_escape_lines, 3)).astype(Numeric.Float)
+                    ii=0
+                    jj=0
+                    for esc_group in self.PEAKS0ESCAPE[i]:
+                        for esc_line in esc_group:
+                            esc_ene  = esc_line[0] * 1.0
+                            esc_rate = esc_line[1]
+                            peak_buffer[jj,0] =  self.PEAKS0[i][ii,0] * esc_rate
+                            peak_buffer[jj,1] =  esc_ene
+                            jj = jj + 1
+                        ii = ii + 1
+                    peak_buffer[:, 2] = Numeric.sqrt(noise + \
+                                        (peak_buffer[:,1]>0) * peak_buffer[:,1] * \
+                                         fano)
+                    rates     =  peak_buffer[:,0]
+                    positions = (peak_buffer[:,1] - zero)/gain
+                    i1 = Numeric.nonzero((positions >= x[0]) & (positions <= x[-1]))
+                    inpeaks = Numeric.take(peak_buffer,i1)
+                    if len(inpeaks):
+                        continue
+                    else:
+                        newpar[i+NGLOBAL] = 0.0
+                        codes[0,i+NGLOBAL]= Gefit.CFIXED
+            #print "Elapsed = ",time.time() - e0
             if self._batchFlag and self.linearMatrix is None:
                     self.linearMatrix = self.getPeakMatrixContribution(newpar)
         return newpar,codes
@@ -2388,9 +2434,9 @@ class McaTheory:
         xw=Numeric.array(x)
         if index == 0:
             p[0]=1.0
-            return self.exppol(p,x)
+            return self.exppol(p,xw)
         else:
-            return self.exppol(p,x)*pow(x,index)
+            return self.exppol(p,xw)*pow(xw,index)
 
     def myexp(self,x):
         # put a (bad) filter to avoid over/underflows
