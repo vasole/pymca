@@ -1,5 +1,34 @@
-VERSION 4.2.3
+VERSION 4.2.4
 
+- Add ESRF Xia Correct to the Tools menu.
+
+- ROI Imaging changes.
+  Do not reset ROI image selection on ROI change.
+  Add data saving capabilities to the ROI image window.
+  Implement principal component analysis mapping.
+  Support AIFIRA and SupaVisio maps.
+
+- Simplify access to binding energies by putting them in a separate ASCII file.
+
+- Improved transmission geometry support.
+
+- User can specify the scattering angle in the fit configuration.
+
+- Support "funny type" attenuators.
+
+- Make better use of the available space in McaAdvancedFit.
+
+- Linear fit: fix peaks to 0 area if they are outside the fitting region.
+
+- Correct a bug preventing the generation of HTML reports in batch mode.
+
+- Add anchors and smoothing information to the HTML reports.
+
+- Correct a specfile compilation issue with some gcc versions.
+
+- Suppress shared memory compilation warnings.
+
+VERSION 4.2.3
 - Possibility to use pseudo-Voigt as advanced fit function.
 
 - Possibility to save as data and to remove selected images from
