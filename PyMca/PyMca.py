@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.95 $"
+__revision__ = "$Revision: 1.96 $"
 #/*##########################################################################
 # Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
@@ -64,8 +64,8 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.4 20080502-snapshot"
-if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (qt.qVersion() < '3.0.0')):
+__version__ = "4.2.4"
+if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
                         fl=qt.Qt.WStyle_Customize  | qt.Qt.WDestructiveClose,
