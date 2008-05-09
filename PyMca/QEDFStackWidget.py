@@ -370,7 +370,7 @@ class QEDFStackWidget(qt.QWidget):
 
     def submitThread(self):
         try:
-            threadResult = self._submitThread()
+            threadResult = self._submitBackgroundThread()
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
