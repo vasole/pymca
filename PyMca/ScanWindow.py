@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1414,7 +1414,7 @@ class ScanWindow(qt.QWidget):
                 raise
             return
 
-        #create the ourput data object
+        #create the output data object
         newDataObject = DataObject.DataObject()
         newDataObject.data = None
         newDataObject.info.update(dataObject.info)
@@ -1654,6 +1654,37 @@ class ScanWindow(qt.QWidget):
             self.removeCurves(oldlist)
         
 
+    def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None, replace=False):
+        if legend is None:
+            legend = "Unnamed curve 1.1"
+        if xlabel is None:
+            xlabel = "X"
+        if ylabel is None:
+            ylabel = "Y"
+        newDataObject = DataObject.DataObject()
+        newDataObject.x = [x]
+        newDataObject.y = [y]
+        newDataObject.m = None
+        newDataObject.info['legend'] = legend
+        newDataObject.info['selectiontype'] = "1D"
+        newDataObject.info['LabelNames'] = [xlabel, ylabel]
+        newDataObject.info['selection'] = {'x':[0], 'y':[1]}
+        sel_list = []
+        sel = {}
+        sel['SourceType'] = "Operation"
+        sel['SourceName'] = legend
+        sel['Key']    = ""
+        sel['legend'] = legend
+        sel['dataobject'] = newDataObject
+        sel['scanselection'] = True
+        sel['selection'] = {'x':[0], 'y':[1], 'm':[], 'cntlist':[xlabel, ylabel]}
+        #sel['selection']['y'] = [ilabel]
+        sel['selectiontype'] = "1D"
+        sel_list.append(sel)
+        if replace:
+            self._replaceSelection(sel_list)
+        else:
+            self._addSelection(sel_list)
 
     def printGraph(self):
         #temporary print

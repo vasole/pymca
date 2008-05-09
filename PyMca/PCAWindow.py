@@ -28,6 +28,7 @@ __author__ = "V.A. Sole - ESRF BLISS Group"
 import PyQt4.Qt as qt
 from PyMca_Icons import IconDict
 import MaskImageWidget
+import ScanWindow
 import sys
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
@@ -163,6 +164,7 @@ class PCAParametersDialog(qt.QDialog):
 class PCAWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
         ddict = {}
+        ddict['usetab'] = True
         ddict.update(kw)
         ddict['standalonesave'] = False
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
@@ -170,6 +172,11 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(0)
+
+        # The 1D graph
+        self.vectorGraph = ScanWindow.ScanWindow(self)
+        self.mainTab.addTab(self.vectorGraph, "VECTORS")
+        
         self.mainLayout.addWidget(self.slider)
         self.connect(self.slider,
                      qt.SIGNAL("valueChanged(int)"),
@@ -201,16 +208,26 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                                         toggle = False,
                                         position = 12)
 
+    def sizeHint(self):
+        return qt.QSize(400, 400)
+
     def _multiplyIconChecked(self):
         if self.imageList is None:
             return
         index = self.slider.value()
         self.imageList[index] *= -1
+        if self.eigenVectors is not None:
+            self.eigenVectors[index] *= -1
+
         self._showImage(index)
 
     def _showImage(self, index):
         if len(self.imageList):
             self.showImage(index, moveslider=False)
+        if self.eigenVectors is not None:
+            legend = "Component %02d" % index
+            y = self.eigenVectors[index]
+            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True) 
             
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
@@ -240,6 +257,14 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             self.showImage(0)
         else:
             self.slider.setMaximum(0)
+
+        if self.eigenVectors is not None:
+            legend = "Component %00"
+            #for i in range(len(self.eigenVectors)):
+            #    legend = "Component %02d" % i
+            y = self.eigenVectors[0]
+            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True) 
+            
         self.slider.setValue(0)
 
 
@@ -289,7 +314,7 @@ def test():
     data = numpy.arange(20000)
     data.shape = 2, 100, 100
     data[1, 0:100,0:50] = 100
-    container.setPCAData(data)
+    container.setPCAData(data, eigenvectors=[numpy.arange(100.), numpy.arange(100.)+10])
     container.show()
     def theSlot(ddict):
         print ddict['event']
