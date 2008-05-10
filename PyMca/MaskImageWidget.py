@@ -88,7 +88,7 @@ class MyPicker(Qwt.QwtPlotPicker):
 
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=False, colormap=False,
-                 imageicons=False, standalonesave=True):
+                 imageicons=False, standalonesave=True, usetab=False):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -112,6 +112,8 @@ class MaskImageWidget(qt.QWidget):
         self.colormap = None
         self.colormapDialog = None
         self.rgbWidget = rgbwidget
+        self.__useTab = usetab
+        self.mainTab = None
 
         self._build(standalonesave)
 
@@ -132,21 +134,35 @@ class MaskImageWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        if QTVERSION < '4.0.0':
+        if self.__useTab:
+            self.mainTab = qt.QTabWidget(self)
+            #self.graphContainer =qt.QWidget()
+            #self.graphContainer.mainLayout = qt.QVBoxLayout(self.graphContainer)
+            #self.graphContainer.mainLayout.setMargin(0)
+            #self.graphContainer.mainLayout.setSpacing(0)
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                               selection = True,
-                                               colormap=True,
-                                               imageicons=True,
-                                               standalonesave=True,
-                                               standalonezoom=False)
-            standalonesave = False
+                                                   selection = True,
+                                                   colormap=True,
+                                                   imageicons=True,
+                                                   standalonesave=False,
+                                                   standalonezoom=False)
+            self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
-            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                               selection = True,
-                                               colormap=True,
-                                               imageicons=True,
-                                               standalonesave=False,
-                                               standalonezoom=False)
+            if QTVERSION < '4.0.0':
+                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                                   selection = True,
+                                                   colormap=True,
+                                                   imageicons=True,
+                                                   standalonesave=True,
+                                                   standalonezoom=False)
+                standalonesave = False
+            else:
+                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                                   selection = True,
+                                                   colormap=True,
+                                                   imageicons=True,
+                                                   standalonesave=False,
+                                                   standalonezoom=False)
         if standalonesave:
             self.connect(self.graphWidget.saveToolButton,
                          qt.SIGNAL("clicked()"), 
@@ -176,7 +192,10 @@ class MaskImageWidget(qt.QWidget):
         self.graphWidget.graph.enableZoom(True)
         self.setSelectionMode(False)
         self._toggleSelectionMode()
-        self.mainLayout.addWidget(self.graphWidget)
+        if self.__useTab:
+            self.mainLayout.addWidget(self.mainTab)
+        else:
+            self.mainLayout.addWidget(self.graphWidget)
 
     def _buildConnections(self, widget = None):
         self.connect(self.graphWidget.hFlipToolButton,
