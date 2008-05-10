@@ -98,10 +98,11 @@ class PyMcaBatchBuildOutput:
 
                     data      = numpy.zeros((nrows, nlabels), numpy.double)
                     inputdata = numpy.zeros((nrows, nlabels), numpy.double)
+                chisqIndex = labels.index('chisq')
                 for i in range(nrows):
                     inputdata[i, :] = map(float, lines[i+1].split())
-                    if inputdata[i, -1] < 0.0:
-                        inputdata[i, -1] = 0.0
+                    if inputdata[i, chisqIndex] < 0.0:
+                        inputdata[i, chisqIndex] = 0.0
                 data += inputdata
             outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
             if os.path.exists(outfilename):
