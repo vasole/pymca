@@ -57,6 +57,7 @@ class McaAdvancedFitBatch:
         else:
             self.__configList = None
             self.mcafit = ClassMcaTheory.McaTheory(initdict)
+        self.__concentrationsKeys = []
         if self._concentrations:
             self._tool = ConcentrationsTool.ConcentrationsTool()
             self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
@@ -601,12 +602,34 @@ class McaAdvancedFitBatch:
                             self.__images[group]=Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
                             self.__sigmas[group]=Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
                         self.__images['chisq']  = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float) - 1.
+                        if self._concentrations:
+                            layerlist = concentrations['layerlist']
+                            for group in concentrations['groups']:
+                                key = group+" mass fraction"
+                                self.__concentrationsKeys.append(key)
+                                self.__images[key] = Numeric.zeros((self.__nrows,self.__ncols),
+                                                                                      Numeric.Float)
+                                if len(layerlist) > 1:
+                                    for layer in layerlist:
+                                        key = group+" "+layer
+                                        self.__concentrationsKeys.append(key)                                        
+                                        self.__images[key] = Numeric.zeros((self.__nrows,self.__ncols),
+                                                                                      Numeric.Float)
                 for peak in self.__peaks:
                     try:
                         self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
                         self.__sigmas[peak][self.__row, self.__col] = result[peak]['sigmaarea']
                     except:
                         pass
+                if self._concentrations:
+                    layerlist = concentrations['layerlist']
+                    for group in concentrations['groups']:
+                        self.__images[group+" mass fraction"][self.__row, self.__col] = \
+                                              concentrations['mass fraction'][group]
+                        if len(layerlist) > 1:
+                            for layer in layerlist:
+                                self.__images[group+" "+layer] [self.__row, self.__col] = \
+                                              concentrations[layer]['mass fraction'][group]
                 try:
                     self.__images['chisq'][self.__row, self.__col] = result['chisq']
                 except:
@@ -672,15 +695,26 @@ class McaAdvancedFitBatch:
                 suffix = ".edf"
             else:
                 suffix = "_%06d_partial.edf" % self.chunk
-            for peak in (self.__peaks+['chisq']):
-                if peak != 'chisq':
+
+            iterationList = self.__peaks * 1
+            iterationList += ['chisq']
+            if self._concentrations:
+                iterationList += self.__concentrationsKeys
+            for peak in iterationList:
+                if peak in self.__peaks:
                     a,b = peak.split()
                     speclabel +="  %s" % (a+"-"+b)
                     speclabel +="  s(%s)" % (a+"-"+b)
                     edfname = ffile +"_"+a+"_"+b+trailing+suffix
-                else:
+                elif peak in self.__concentrationsKeys:
+                    speclabel +="  %s" % peak.replace(" ","-") 
+                    edfname = ffile +"_"+peak.replace(" ","_")+trailing+suffix
+                elif peak == 'chisq':
                     speclabel +="  %s" % (peak)
                     edfname = ffile +"_"+peak+trailing+suffix
+                else:
+                    print "Unhandled peak name: %s. Not saved." % peak
+                    continue
                 dirname = os.path.dirname(edfname)
                 if not os.path.exists(dirname):
                     try:
@@ -717,6 +751,9 @@ class McaAdvancedFitBatch:
                         specline +="  %g" % self.__sigmas[peak][row][col]
                     #write global chisq
                     specline +="  %g" % self.__images['chisq'][row][col]
+                    if self._concentrations:
+                        for peak in self.__concentrationsKeys:
+                            specline +="  %g" % self.__images[peak][row][col]
                     specline += "\n"
                     specfile.write("%s" % specline)
                     specline =""

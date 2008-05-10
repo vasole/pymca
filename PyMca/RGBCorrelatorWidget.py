@@ -730,16 +730,31 @@ class RGBCorrelatorWidget(qt.QWidget):
         nlabels = len(labels)
         nrows = len(lines) - i
         if ignoresigma is None:
-            step  = 1
+            iterationList = [2]
             if len(labels) > 4:
-                if len(labels[2]) == (len(labels[3])-3):
-                    if len(labels[3]) > 5:
-                        if labels[3][2:-1] == labels[2]:
-                            step = 2
+                for i in range(3, len(labels)):
+                    if len(labels[i]) <= 5:
+                        iterationList.append(i)
+                    elif labels[i] == ("s("+labels[i-1]+")"):
+                        continue
+                    else:
+                        iterationList.append(i)
+            else:
+                iterationList = range(2, nlabels)
         elif ignoresigma:
-            step = 2
+            iterationList = [2]
+            if len(labels) > 4:
+                for i in range(3, len(labels)):
+                    if len(labels[i]) <= 5:
+                        iterationList.append(i)
+                    elif labels[i] == ("s("+labels[i-1]+")"):
+                        continue
+                    else:
+                        iterationList.append(i)
+            else:
+                iterationList = range(2, nlabels)
         else:
-            step = 1
+            iterationList = range(2, nlabels)
         totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
         for i in range(nrows):
             totalArray[i, :] = map(float, lines[i+1].split())
@@ -747,7 +762,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         nrows = int(max(totalArray[:,0]) + 1)
         ncols = int(max(totalArray[:,1]) + 1)
         singleArray = Numeric.zeros((nrows* ncols, 1), Numeric.Float)
-        for i in range(2, nlabels, step):
+        for i in iterationList:
             singleArray[:, 0] = totalArray[:,i] * 1
             self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
         

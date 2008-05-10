@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.45 $"
+__revision__ = "$Revision: 1.46 $"
 ###########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1039,8 +1039,8 @@ class McaBatchGUI(qt.QWidget):
                 if sys.platform == "win32":subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
                 else:os.system("%s %s &" % (rgb, b[0]))
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-        if DEBUG:work.buildOutput(delete=True)
-        else:work.buildOutput(delete=False)
+        if DEBUG:work.buildOutput(delete=False)
+        else:work.buildOutput(delete=True)
 
     
 class HorizontalSpacer(qt.QWidget):

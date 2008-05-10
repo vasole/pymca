@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -123,8 +123,7 @@ class PyMcaBatchBuildOutput:
             datoutlist.append(outfilename)
             if delete:
                 for filename in edflist:
-                    pass
-                    #os.remove(filename)
+                    os.remove(filename)
 
 
         #CONCENTRATIONS
