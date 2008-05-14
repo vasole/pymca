@@ -588,27 +588,34 @@ class McaTheory:
                     div.sort()
                     newpeaks     =[div[i][1] for i in range(len(div))]
                     newpeaksnames=[div[i][2] for i in range(len(div))]
-                    #print "length before = ",len(newpeaksnames)
-                    #print newpeaksnames
+                    #print "BEFORE "
+                    #for i in range(len(newpeaksnames)):
+                    #    print newpeaksnames[i], newpeaks[i][1], newpeaks[i][0]
                     tojoint=[]
                     if len(newpeaks) > 1:
+                        if 0: #if ele == "Kr":
+                            print "ELEMENTS FILTERING "
+                            testPeaks =  [[div[i][0], div[i][1][0], div[i][2]] for i in range(len(div))] 
+                            testPeaks = Elements._filterPeaks(testPeaks,
+                                                        ethreshold=deltaonepeak,
+                                                        keeptotalrate=True)
+                            for i in range(len(testPeaks)):
+                                print testPeaks[i][2], testPeaks[i][0], testPeaks[i][1]
+
+                        
                         for i in range(len(newpeaks)):
                             for j in range(i,len(newpeaks)):
                                 if i != j:
                                     if abs(newpeaks[i][1]-newpeaks[j][1]) < deltaonepeak:
                                         if len(tojoint):
-                                            for k in range(len(tojoint)):
-                                                if (i in tojoint[k]) and (j in tojoint[k]):
-                                                    break
-                                                elif (i in tojoint[k]):
-                                                    tojoint[k].append(j)
-                                                    break
-                                                elif (j in tojoint[k]):
-                                                    tojoint[k].append(i)
-                                                    break
-                                                else:
-                                                    tojoint.append([i,j])
-                                                    break
+                                            if (i in tojoint[-1]) and (j in tojoint[-1]):
+                                                pass
+                                            elif (i in tojoint[-1]):
+                                                tojoint[-1].append(j)
+                                            elif (j in tojoint[-1]):
+                                                tojoint[-1].append(i)
+                                            else:
+                                                tojoint.append([i,j])
                                         else:
                                             tojoint.append([i,j])
                         if len(tojoint):
@@ -645,6 +652,7 @@ class McaTheory:
                                 newpeaks.append(peak)
                             for peakname in mixname:
                                 newpeaksnames.append(peakname)
+                            
                     #if ele == "Fe":
                     if 0:
                         for i in range(len(newpeaks)):
