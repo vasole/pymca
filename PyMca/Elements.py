@@ -830,6 +830,8 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
     the escape peak calculation
     """
     if absoluteithreshold is None:absoluteithreshold=False
+    if keeptotalrate == None:
+        keeptotalrate = True
     div = []
     for i in range(len(peaklist)):
         if peaklist[i][1] > 0.0:
@@ -917,12 +919,14 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
             div.reverse()
             div = div[:nthreshold]
             output = [x[1] for x in div]
+            output.sort()
             
     #recover original rates
-    currenttotal = sum([x[1] for x in output])
-    if currenttotal > 0:
-        totalrate = totalrate/currenttotal
-        output = [[x[0],x[1]*totalrate,x[2]] for x in output]
+    if keeptotalrate:
+        currenttotal = sum([x[1] for x in output])
+        if currenttotal > 0:
+            totalrate = totalrate/currenttotal
+            output = [[x[0],x[1]*totalrate,x[2]] for x in output]
 
     return output
 
