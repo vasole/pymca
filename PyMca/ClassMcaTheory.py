@@ -1824,6 +1824,7 @@ class McaTheory:
             #import time
             #e0 = time.time()
             if self.linearMatrix is None:
+                self.__oldLinearFixed = []
                 for i in range(len(PARAMETERS)-NGLOBAL):
                     positions = (self.PEAKS0[i][:,1] - zero)/gain
                     i1 = Numeric.nonzero((positions >= x[0]) & (positions <= x[-1]))
@@ -1835,6 +1836,7 @@ class McaTheory:
                         #force zero area
                         newpar[i+NGLOBAL] = 0.0
                         codes[0,i+NGLOBAL]= Gefit.CFIXED
+                        self.__oldLinearFixed.append(i)
                         continue
                     #peaks outside fitting region
                     #prior to force them to zero area, let's
@@ -1866,6 +1868,11 @@ class McaTheory:
                     else:
                         newpar[i+NGLOBAL] = 0.0
                         codes[0,i+NGLOBAL]= Gefit.CFIXED
+                        self.__oldLinearFixed.append(i)
+            else:
+                for i in self.__oldLinearFixed:
+                    newpar[i+NGLOBAL] = 0.0
+                    codes[0,i+NGLOBAL]= Gefit.CFIXED
             #print "Elapsed = ",time.time() - e0
             if self._batchFlag and self.linearMatrix is None:
                     self.linearMatrix = self.getPeakMatrixContribution(newpar)
