@@ -70,6 +70,8 @@ def lanczosPCA(stack, ncomponents, binning=None):
         data=numpy.sum(data , axis=-1)
         N=N/binning
 
+    if ncomponents > N:
+        raise ValueError, "Number of components too high."
 
     avg = numpy.sum(data, 0)/(1.0*npixels)
     numpy.subtract(data, avg, data)
@@ -219,6 +221,8 @@ def mdpPCA(stack, ncomponents, binning=None):
         data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
         data=numpy.sum(data , axis=-1)
         N=N/binning
+    if ncomponents > N:
+        raise ValueError, "Number of components too high."
     pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype='float64')
     pca.train(data)
 
@@ -233,6 +237,70 @@ def mdpPCA(stack, ncomponents, binning=None):
     images.shape = ncomponents, r, c
 
     return images, eigenvalues, eigenvectors
+
+def mdpICA(stack, ncomponents, binning=None):
+    if binning is None:
+        binning = 1
+
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        data = stack.data
+    else:
+        data = stack
+    if len(data.shape) == 3:
+        r, c, N = data.shape
+        data.shape = r*c, N
+    else:
+        r, N = data.shape
+        c = 1
+
+    if binning > 1:
+        data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
+        data=numpy.sum(data , axis=-1)
+        N=N/binning
+    if ncomponents > N:
+        raise ValueError, "Number of components too high."
+    if 0:
+        pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype='float64')
+        pca.train(data)
+
+        pca.stop_training()
+
+        avg = pca.avg
+        eigenvalues = pca.d
+        eigenvectors = pca.v.T
+        proj = pca.get_projmatrix(transposed=0)
+        images = numpy.dot(proj.astype(data.dtype), data.T)    
+        images.shape = ncomponents, r, c
+    else:
+        ica = mdp.nodes.FastICANode(white_comp=ncomponents, verbose=False, dtype='float64')
+        ica.train(data)
+        output = ica.execute(data)
+
+        proj = ica.get_projmatrix(transposed=0)
+        #print dir(ica)
+        #print ica.filters.shape
+        #print ica.mu
+        #print ica.get_output_dim()
+        #print dir(ica.white)
+        #print output[0]
+        
+        icacomponents = proj
+
+
+        # These are the PCA data
+        eigenvalues = ica.white.d
+        eigenvectors = ica.white.v.T
+        images = numpy.zeros((2*ncomponents, r * c), data.dtype)
+        vectors = numpy.zeros((ncomponents*2, N), data.dtype)
+        vectors[0:ncomponents,:] = proj #ica components?
+        vectors[ncomponents:,:] = eigenvectors
+        images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), data.T)    
+        proj = ica.white.get_projmatrix(transposed=0)
+        images[ncomponents:(2*ncomponents),:] = numpy.dot(proj.astype(data.dtype), data.T)    
+        images.shape = 2 * ncomponents, r, c
+        
+    return images, eigenvalues, vectors
+
 
 if __name__ == "__main__":
     import EDFStack

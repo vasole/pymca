@@ -185,6 +185,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.imageList = None
         self.eigenValues = None
         self.eigenVectors = None
+        self.eigenNames = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
             self.connect(self.graphWidget.saveToolButton,
@@ -225,7 +226,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         if len(self.imageList):
             self.showImage(index, moveslider=False)
         if self.eigenVectors is not None:
-            legend = "Component %02d" % index
+            legend = self.vectorNames[index]
             y = self.eigenVectors[index]
             self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True) 
             
@@ -235,11 +236,12 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         if len(self.imageList) == 0:
             return
         self.setImageData(self.imageList[index])
-        self.graphWidget.graph.setTitle("Eigenimage %02d" % index)
+        self.graphWidget.graph.setTitle(self.imageNames[index])
         if moveslider:
             self.slider.setValue(index)
 
-    def setPCAData(self, images, eigenvalues=None, eigenvectors=None):
+    def setPCAData(self, images, eigenvalues=None, eigenvectors=None,
+                   imagenames = None, vectornames = None):
         self.eigenValues = eigenvalues
         self.eigenVectors = eigenvectors
         if type(images) == type([]):
@@ -251,6 +253,12 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                 self.imageList[i] = images[i,:]
                 if self.imageList[i].max() < 0:
                     self.imageList[i] *= -1
+            if imagenames is None:
+                self.imageNames = []
+                for i in range(nimages):
+                    self.imageNames.append("Eigenimage %02d" % i)
+            else:
+                self.imageNames = imagenames
                 
         if self.imageList is not None:
             self.slider.setMaximum(len(self.imageList)-1)
@@ -259,9 +267,13 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             self.slider.setMaximum(0)
 
         if self.eigenVectors is not None:
-            legend = "Component %00"
-            #for i in range(len(self.eigenVectors)):
-            #    legend = "Component %02d" % i
+            if vectornames is None:
+                self.vectorNames = []
+                for i in range(nimages):
+                    self.vectorNames.append("Component %02d" % i)
+            else:
+                self.vectorNames = vectornames
+            legend = self.vectorNames[0]
             y = self.eigenVectors[0]
             self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True) 
             
@@ -273,7 +285,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             return
         labels = []
         for i in range(len(self.imageList)):
-            labels.append("Eigenimage_%02d" % i)
+            labels.append(self.imageNames[i].replace(" ","_"))
         return MaskImageWidget.MaskImageWidget.saveImageList(self,
                                                              imagelist=self.imageList,
                                                              labels=labels)
@@ -314,7 +326,8 @@ def test():
     data = numpy.arange(20000)
     data.shape = 2, 100, 100
     data[1, 0:100,0:50] = 100
-    container.setPCAData(data, eigenvectors=[numpy.arange(100.), numpy.arange(100.)+10])
+    container.setPCAData(data, eigenvectors=[numpy.arange(100.), numpy.arange(100.)+10],
+                                imagenames=["I1", "I2"], vectornames=["V1", "V2"])
     container.show()
     def theSlot(ddict):
         print ddict['event']

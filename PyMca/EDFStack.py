@@ -39,10 +39,14 @@ Y_AXIS=1
 Z_AXIS=2
 
 class EDFStack(DataObject.DataObject):
-    def __init__(self, filelist = None):
+    def __init__(self, filelist = None, imagestack=None):
         DataObject.DataObject.__init__(self)
         self.incrProgressBar=0
         self.__keyList = []
+        if imagestack is None:
+            self.__imageStack = False
+        else:
+            self.__imageStack = True
         if filelist is not None:
             if type(filelist) != type([]):
                 filelist = [filelist]
@@ -71,7 +75,7 @@ class EDFStack(DataObject.DataObject):
 
         self.onBegin(self.nbFiles)
         singleImageShape = arrRet.shape
-        if fileindex == 2:
+        if (fileindex == 2) or (self.__imageStack):
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?

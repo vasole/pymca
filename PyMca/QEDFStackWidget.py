@@ -466,6 +466,8 @@ class QEDFStackWidget(qt.QWidget):
         if self.pcaParametersDialog is None:
             self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self, mdp=MDP)
             spectrumLength = max(self.__mcaData0.y[0].shape)
+            self.pcaParametersDialog.nPC.setMaximum(spectrumLength)
+            self.pcaParametersDialog.nPC.setValue(min(10,spectrumLength))
             binningOptions=[1]
             for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
                 if (spectrumLength % number) == 0:
@@ -513,6 +515,7 @@ class QEDFStackWidget(qt.QWidget):
                                                self.showPCAWindow)
                 self.pcaWindowInMenu = True
                 self.stack.data.shape = shape
+                self.pcaWindow.show()
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -521,9 +524,7 @@ class QEDFStackWidget(qt.QWidget):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-                self.stack.data.shape = shape
-        
-            self.pcaWindow.show()
+                self.stack.data.shape = shape        
 
     def showPCAWindow(self):
         self.pcaWindow.show()
@@ -1447,6 +1448,7 @@ class QEDFStackWidget(qt.QWidget):
                         "OMNIC Files (*map)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
+                        "Image Files (*edf)",
                         "All Files (*)"]
         message = "Open ONE indexed stack or SEVERAL files"
         wdir = PyMcaDirs.inputDir
@@ -1603,6 +1605,8 @@ if __name__ == "__main__":
                 elif filefilter[0:9] == "SupaVisio":
                     stack = SupaVisioMap.SupaVisioMap(filelist[0])
                     omnicfile = True
+                elif filefilter.upper().startswith("IMAGE"):
+                    stack = QStack(imagestack=True)
                 elif line[0] == "{":
                     stack = QStack()
                 elif line.startswith('Spectral'):
