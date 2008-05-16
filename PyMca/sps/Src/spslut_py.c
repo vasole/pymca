@@ -51,7 +51,7 @@
 #include <stdio.h>      
 
 #include <Python.h> 
-#include <numpy/oldnumeric.h>
+#include <numpy/arrayobject.h>
 #include <sps_lut.h>
 
 static PyObject *SPSLUTError;
@@ -155,22 +155,23 @@ static PyObject *spslut_transform(self, args)
   }
 
   switch (src->descr->type_num) {
-  case PyArray_UINT:
+  case NPY_UINT:
+  case NPY_ULONG:
     type = SPS_ULONG; break;
-  case PyArray_USHORT:
+  case NPY_USHORT:
     type = SPS_USHORT; break;
-  case PyArray_LONG: 
-  case PyArray_INT: 
+  case NPY_LONG: 
+  case NPY_INT: 
     type = SPS_LONG; break;
-  case PyArray_SHORT: 
+  case NPY_SHORT: 
     type = SPS_SHORT; break;
-  case PyArray_UBYTE: 
+  case NPY_UBYTE: 
     type = SPS_UCHAR; break;
-  case PyArray_SBYTE: 
+  case NPY_BYTE: 
     type = SPS_CHAR; break;
-  case PyArray_FLOAT: 
+  case NPY_FLOAT: 
     type = SPS_FLOAT; break;
-  case PyArray_DOUBLE: 
+  case NPY_DOUBLE: 
     type = SPS_DOUBLE; break;
   default:
     PyErr_SetString(SPSLUTError, "Input Array type not supported");
@@ -258,7 +259,7 @@ static PyObject *spslut_transformarray(self, args)
     Xservinfo.blue_mask = 0xff0000;
     Xservinfo.pixel_size = 4;
     Xservinfo.byte_order = natbyteorder();
-  } 
+  }
   
   //###CHANGED - ALEXANDRE 11/03/2002 - Qt uses different order than Tkinter
   else if (strcmp(mode, "BGR") == 0) {
@@ -292,22 +293,23 @@ static PyObject *spslut_transformarray(self, args)
   }
 
   switch (src->descr->type_num) {
-  case PyArray_UINT:
+  case NPY_UINT:
+  case NPY_ULONG:
     type = SPS_ULONG; break;
-  case PyArray_USHORT:
+  case NPY_USHORT:
     type = SPS_USHORT; break;
-  case PyArray_LONG: 
-  case PyArray_INT: 
+  case NPY_LONG: 
+  case NPY_INT: 
     type = SPS_LONG; break;
-  case PyArray_SHORT: 
+  case NPY_SHORT: 
     type = SPS_SHORT; break;
-  case PyArray_UBYTE: 
+  case NPY_UBYTE: 
     type = SPS_UCHAR; break;
-  case PyArray_SBYTE: 
+  case NPY_BYTE: 
     type = SPS_CHAR; break;
-  case PyArray_FLOAT: 
+  case NPY_FLOAT: 
     type = SPS_FLOAT; break;
-  case PyArray_DOUBLE: 
+  case NPY_DOUBLE: 
     type = SPS_DOUBLE; break;
   default:
     PyErr_SetString(SPSLUTError, "Input Array type not supported");
