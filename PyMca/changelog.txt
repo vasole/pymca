@@ -1,5 +1,17 @@
-VERSION 4.2.4
+VERSION 4.2.5
 
+- Batch fitting.
+  Save concentrations as images too.
+
+- Advanced Fit changes.
+  Previous linear fit change was missing in batch mode.
+  Correct a problem showing up when Kr L lines were fitted as a group.
+
+- ROI Imaging.
+  Show the calculated principal components when using PCA.
+  Useless stack background subtraction was not working.
+
+VERSION 4.2.4
 - Add ESRF Xia Correct to the Tools menu.
 
 - ROI Imaging changes.
