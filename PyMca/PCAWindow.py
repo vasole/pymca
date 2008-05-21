@@ -58,7 +58,7 @@ class PCAParametersDialog(qt.QDialog):
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
         if mdp:
-            self.methods.append("MDP")
+            self.methods.append("MDP (PCA + ICA)")
             
         self.buttonGroup = qt.QButtonGroup(self.methodOptions)
         i = 0
@@ -253,6 +253,8 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                 self.imageList[i] = images[i,:]
                 if self.imageList[i].max() < 0:
                     self.imageList[i] *= -1
+                    if self.eigenVectors is not None:
+                        self.eigenVectors [i] *= -1
             if imagenames is None:
                 self.imageNames = []
                 for i in range(nimages):
