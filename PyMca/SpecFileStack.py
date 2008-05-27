@@ -89,7 +89,8 @@ class SpecFileStack(DataObject.DataObject):
                                    arrRet.dtype.char)
         self.incrProgressBar= 0
         if info['NbMcaDet'] > 1:
-            iterlist = range(info['NbMcaDet'],info['NbMca'],info['NbMcaDet']) 
+            #I should generate a map for each mca and not just for the last one
+            iterlist = range(info['NbMcaDet'],info['NbMca']+1,info['NbMcaDet']) 
         else:
             iterlist = [1]
         filecounter         = 0
