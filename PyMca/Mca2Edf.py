@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.10 $"
+__revision__ = "$Revision: 1.11 $"
 #/*##########################################################################
 # Copyright (C) 2004-2007 European Synchrotron Radiation Facility
 #
@@ -24,7 +24,7 @@ __revision__ = "$Revision: 1.10 $"
 # and cannot be used as a free plugin for a non-free program.
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import os
@@ -375,9 +375,9 @@ class Mca2EdfBatch(qt.QThread):
                                     if mcainfo.has_key('Channel0'):
                                         dict['MCA start ch'] = int(mcainfo['Channel0'])
                                     if mcainfo.has_key('McaCalib'):
-                                        dict['Mca a'] = mcainfo['McaCalib'][0]
-                                        dict['Mca b'] = mcainfo['McaCalib'][1]
-                                        dict['Mca c'] = mcainfo['McaCalib'][2]
+                                        dict['MCA a'] = mcainfo['McaCalib'][0]
+                                        dict['MCA b'] = mcainfo['McaCalib'][1]
+                                        dict['MCA c'] = mcainfo['McaCalib'][2]
                                 else:
                                     dict = mcainfo
                                 dict['Title'] = title
