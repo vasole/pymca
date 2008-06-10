@@ -275,7 +275,7 @@ class McaROIWidget(qt.QWidget):
             outputFile += extension[:]
         if os.path.exists(outputFile):
             try:
-                os.remove(filename)
+                os.remove(outputFile)
             except IOError:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
