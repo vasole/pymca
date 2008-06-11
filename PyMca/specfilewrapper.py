@@ -28,7 +28,11 @@ import specfile
 import os
 import string
 import numpy.oldnumeric as Numeric
-
+try:
+    import SPXFileParser
+    SPX = True
+except:
+    SPX = False
 DEBUG = 0
 
 def Specfile(filename):
@@ -49,6 +53,9 @@ def Specfile(filename):
     if len(line):
         #it is a Specfile
         output=specfile.Specfile(filename)
+    elif SPX and filename.upper().endswith("SPX"):
+        #spx file
+        output = SPXFileParser.SPXFileParser(filename)
     else:
         #print "this does not look as a specfile"
         if len(line0) > 7:
