@@ -58,7 +58,8 @@ class PCAParametersDialog(qt.QDialog):
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
         if mdp:
-            self.methods.append("MDP (PCA + ICA)")
+            #self.methods.append("MDP (PCA + ICA)")
+            self.methods.append("MDP")
             
         self.buttonGroup = qt.QButtonGroup(self.methodOptions)
         i = 0
