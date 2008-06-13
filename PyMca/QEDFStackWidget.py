@@ -209,6 +209,8 @@ class QEDFStackWidget(qt.QWidget):
         self.master = master
         self.slave  = None
         self.tab = None
+        self.externalImagesWindow = None
+        self.externalImagesDict   = {}
         self.pcaParametersDialog = None
         self.pcaWindow = None
         self.pcaWindowInMenu = False
@@ -270,16 +272,29 @@ class QEDFStackWidget(qt.QWidget):
                                         position = 7)
 
         filterOffset = 0
-        if PCA:
-            infotext  = 'Additional selection methods.\n'
-            self.selectFromStackIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))  
-            self.selectFromStackButton = self.stackGraphWidget._addToolButton(\
-                                            self.selectFromStackIcon,
-                                            self.selectFromStackSignal,
-                                            infotext,
-                                            position = 8)
+        infotext  = 'Additional selection methods.\n'
+        self.selectFromStackIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))  
+        self.selectFromStackButton = self.stackGraphWidget._addToolButton(\
+                                        self.selectFromStackIcon,
+                                        self.selectFromStackSignal,
+                                        infotext,
+                                        position = 8)
 
-            self.__selectFromStackMenu = qt.QMenu()
+        self.__selectFromStackMenu = qt.QMenu()
+        self.__selectFromStackMenu.addAction(qt.QString("Load external image"),
+                                               self.__selectFromExternalImageDialog)
+        self.__selectFromStackMenu.addAction(qt.QString("Show external image for selection"),
+                                               self.showExternalImagesWindow)
+
+        self.externalImagesWindow = MaskImageWidget.MaskImageWidget(rgbwidget=self.rgbWidget,
+                                                                    selection=True,
+                                                                    colormap=True,
+                                                                    imageicons=True,
+                                                                    standalonesave=True)
+        
+        self.externalImagesWindow.hide()
+        
+        if PCA:
             self.__selectFromStackMenu.addAction(qt.QString("Calculate Principal Components Maps"),
                                                self.__showPCADialog)
 
@@ -340,6 +355,8 @@ class QEDFStackWidget(qt.QWidget):
                 self.roiWindow.setSelectionMask(ddict['current'], plot=True)
             if ddict['id'] != id(self.pcaWindow):
                 self.pcaWindow.setSelectionMask(ddict['current'], plot=True)
+            if ddict['id'] != id(self.externalImagesWindow):
+                self.externalImagesWindow.setSelectionMask(ddict['current'], plot=True)
             return
         if ddict['event'] == "resetSelection":
             self.__selectionMask = None
@@ -348,6 +365,8 @@ class QEDFStackWidget(qt.QWidget):
                 self.roiWindow._resetSelection(owncall=False)
             if ddict['id'] != id(self.pcaWindow):
                 self.pcaWindow._resetSelection(owncall=False)
+            if ddict['id'] != id(self.externalImagesWindow):
+                self.externalImagesWindow._resetSelection(owncall=False)
             return
         if ddict['event'] == "addImageClicked":
             self._addImageClicked(ddict['image'], ddict['title'])
@@ -459,6 +478,84 @@ class QEDFStackWidget(qt.QWidget):
         else:
             self.__selectFromStackMenu.exec_(self.cursor().pos())
 
+    def showExternalImagesWindow(self):
+        if len(self.externalImagesDict.keys()) < 1:
+            self.__selectFromExternalImageDialog()
+            return
+        if len(self.externalImagesDict.keys()) > 0:
+            self.externalImagesWindow.show()
+            self.externalImagesWindow.raise_()
+
+
+    def __selectFromExternalImageDialog(self):
+        if self.__stackImageData is None:
+            return
+        getfilter = True
+        fileTypeList = ["PNG Files (*png)",
+                        "JPEG Files (*jpg *jpeg)",
+                        "EDF Files (*edf)",
+                        "EDF Files (*ccd)"]
+        message = "Open ONE image file"
+        filename, filefilter = self._getFileList(fileTypeList, message=message, getfilter=getfilter)
+        if len(filename) < 1:
+            return
+
+        filename = filename[0]
+
+        if filefilter.split()[0] in ['PNG', 'JPEG']:
+            image = qt.QImage(filename)
+            if image.isNull():
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Cannot read file as an image")
+                msg.exec_()
+                return
+        else:
+            #read the edf file
+            edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
+
+            #the list of images
+            keylist = edf.getSourceInfo()['KeyList']
+            if len(keylist) < 1:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Cannot read an image from the file")
+                msg.exec_()
+                return
+
+            #get the data
+            data = edf.getDataObject(keylist[0]).data
+
+            #generate a grey scale image of the data
+            (pixmapData, size, minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (spslut.LINEAR,3.0),
+                                "BGRX",
+                                spslut.GREYSCALE,
+                                1,
+                                (0,1),(0, 255),1)
+
+            #generate a qimage from it
+            xmirror = 0
+            ymirror = 0
+            image = qt.QImage(pixmapData.tostring(),
+                               size[0],
+                               size[1],
+                               qt.QImage.Format_RGB32).mirrored(xmirror,
+                                                                    ymirror)
+
+        shape = self.__stackImageData.shape
+        self.externalImagesWindow.setQImage(image, shape[1], shape[0],
+                                            clearmask=False,
+                                            data=None)
+                                            #data=self.__stackImageData)
+        self.externalImagesWindow.graphWidget.graph.setTitle(os.path.basename(filename))
+        self.externalImagesWindow.setSelectionMask(self.__selectionMask,
+                                                plot=True)
+        
+        self.externalImagesDict = {os.path.basename(filename):self.externalImagesWindow}
+        self.showExternalImagesWindow()
 
     def __showPCADialog(self):
         if self.__stackImageData is None:
@@ -715,6 +812,15 @@ class QEDFStackWidget(qt.QWidget):
                          qt.SIGNAL('MaskImageWidgetSignal'),
                          slave._maskImageWidgetSlot)                     
 
+        if self.externalImagesWindow is not None:
+            self.connect(slave.externalImagesWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         self._maskImageWidgetSlot)
+
+            self.connect(self.externalImagesWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         slave._maskImageWidgetSlot)                     
+
     def _buildBottom(self):
         n = 0
         if self.mcaWidget is None: n += 1
@@ -814,6 +920,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.roiWindow.buildAndConnectImageButtonBox()
                 if self.pcaWindow is not None:
                     self.pcaWindow.buildAndConnectImageButtonBox()
+                self.externalImagesWindow.buildAndConnectImageButtonBox()
                 
     def _buildConnections(self):
         self._buildAndConnectButtonBox()
@@ -842,6 +949,9 @@ class QEDFStackWidget(qt.QWidget):
                 self.connect(self.pcaWindow,
                              qt.SIGNAL('MaskImageWidgetSignal'),
                              self._maskImageWidgetSlot)
+            self.connect(self.externalImagesWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         self._maskImageWidgetSlot)
 
 
         self.stackGraphWidget.graph.canvas().setMouseTracking(1)
@@ -1427,6 +1537,10 @@ class QEDFStackWidget(qt.QWidget):
             if self.pcaWindow.colormapDialog is not None:
                 self.pcaWindow.colormapDialog.close()
             self.pcaWindow.close()
+        if self.externalImagesWindow is not None:
+            if self.externalImagesWindow.colormapDialog is not None:
+                self.externalImagesWindow.colormapDialog.close()
+            self.externalImagesWindow.close()
 
         qt.QWidget.closeEvent(self, event)
 
@@ -1438,19 +1552,11 @@ class QEDFStackWidget(qt.QWidget):
         self.plotStackImage(update = True)
         self.roiWindow.setSelectionMask(self.__selectionMask)
 
-    def _getStackOfFiles(self, getfilter=None):
+    def _getFileList(self, fileTypeList, message=None,getfilter=None):
+        if message is None:
+            message = "Please select a file"
         if getfilter is None:
             getfilter = False
-        fileTypeList = ["EDF Files (*edf)",
-                        "EDF Files (*ccd)",
-                        "Specfile Files (*mca)",
-                        "Specfile Files (*dat)",
-                        "OMNIC Files (*map)",
-                        "AIFIRA Files (*DAT)",
-                        "SupaVisio Files (*pige *pixe *rbs)",
-                        "Image Files (*edf)",
-                        "All Files (*)"]
-        message = "Open ONE indexed stack or SEVERAL files"
         wdir = PyMcaDirs.inputDir
         filterused = None
         if QTVERSION < '4.0.0':
@@ -1521,6 +1627,22 @@ class QEDFStackWidget(qt.QWidget):
             return filelist, filterused
         else:
             return filelist
+
+    def _getStackOfFiles(self, getfilter=None):
+        if getfilter is None:
+            getfilter = False
+        if filetypelist is None:
+            fileTypeList = ["EDF Files (*edf)",
+                        "EDF Files (*ccd)",
+                        "Specfile Files (*mca)",
+                        "Specfile Files (*dat)",
+                        "OMNIC Files (*map)",
+                        "AIFIRA Files (*DAT)",
+                        "SupaVisio Files (*pige *pixe *rbs)",
+                        "Image Files (*edf)",
+                        "All Files (*)"]
+        message = "Open ONE indexed stack or SEVERAL files"
+        return self._getFileList(fileTypeList, message=message, getfilter=getfilter)
 
 if __name__ == "__main__":
     import getopt

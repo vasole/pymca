@@ -109,6 +109,7 @@ class MaskImageWidget(qt.QWidget):
         self._y1AxisInverted = False
         self.__selectionMask = None
         self.__imageData = None
+        self.__image = None
         self.colormap = None
         self.colormapDialog = None
         self.rgbWidget = rgbwidget
@@ -427,7 +428,41 @@ class MaskImageWidget(qt.QWidget):
             self.plotImage(update=False)
 
     def setImageData(self, data, clearmask=False):
+        self.__image = None
         self.__imageData = data
+        if clearmask:
+            self.__selectionMask = None
+        self.plotImage(update = True)
+
+    def setQImage(self, qimage, width, height, clearmask=False, data=None):
+        #This is just to get it different than None
+        self.__image = qimage.scaled(qt.QSize(width, height),
+                                     qt.Qt.IgnoreAspectRatio,
+                                     qt.Qt.SmoothTransformation)
+
+        if self.__image.format() == qt.QImage.Format_Indexed8:
+            pixmap0 = numpy.fromstring(qimage.bits().asstring(width * height),
+                                 dtype = numpy.uint8)
+            pixmap = numpy.zeros((height * width, 4), numpy.uint8)
+            pixmap[:,0] = pixmap0[:]
+            pixmap[:,1] = pixmap0[:]
+            pixmap[:,2] = pixmap0[:]
+            pixmap[:,3] = 255
+            pixmap.shape = height, width, 4
+        else:
+            self.__image = self.__image.convertToFormat(qt.QImage.Format_ARGB32) 
+            pixmap = numpy.fromstring(self.__image.bits().asstring(width * height * 4),
+                                 dtype = numpy.uint8)
+        pixmap.shape = height, width,-1
+        if data is None:
+            self.__imageData = numpy.zeros((height, width), numpy.float)
+            self.__imageData = pixmap[:,:,0] * 0.114 +\
+                               pixmap[:,:,1] * 0.587 +\
+                               pixmap[:,:,2] * 0.299
+        else:
+            self.__imageData = data
+            self.__imageData.shape = height, width
+        self.__pixmap0 = pixmap
         if clearmask:
             self.__selectionMask = None
         self.plotImage(update = True)
@@ -469,6 +504,10 @@ class MaskImageWidget(qt.QWidget):
 
     def getPixmapFromData(self):
         colormap = self.colormap
+        if self.__image is not None:
+            self.__pixmap = self.__pixmap0.copy()
+            return
+
         if colormap is None:
             (self.__pixmap,size,minmax)= spslut.transform(\
                                 self.__imageData,
@@ -500,12 +539,26 @@ class MaskImageWidget(qt.QWidget):
     def __applyMaskToImage(self):
         if self.__selectionMask is None:
             return
+
         if self.colormap is None:
-            for i in range(4):
-                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+            if self.__image is not None:
+                if self.__image.format() == qt.QImage.Format_ARGB32:
+                    for i in range(4):
+                        self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                                (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+                else:
+                    self.__pixmap = self.__pixmap0.copy()
+                    self.__pixmap[self.__selectionMask>0,0]    = 0x40
+                    self.__pixmap[self.__selectionMask>0,2]    = 0x70
+                    self.__pixmap[self.__selectionMask>0,3]    = 0x40
+            else:
+                for i in range(4):
+                    self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                            (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
         elif int(str(self.colormap[0])) > 1:     #color
             for i in range(4):
-                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                        (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
         else:
             self.__pixmap = self.__pixmap0.copy()
             self.__pixmap[self.__selectionMask>0,0]    = 0x40
@@ -801,9 +854,14 @@ def test():
                        qt.SLOT('quit()'))
 
     container = MaskImageWidget()
-    data = numpy.arange(10000)
-    data.shape = 100, 100
-    container.setImageData(data)
+    if len(sys.argv) > 1:
+        image = qt.QImage(sys.argv[1])
+        #container.setQImage(image, image.width(),image.height())
+        container.setQImage(image, 200, 200)
+    else:
+        data = numpy.arange(10000)
+        data.shape = 100, 100
+        container.setImageData(data)
     container.show()
     def theSlot(ddict):
         print ddict['event']
