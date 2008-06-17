@@ -434,11 +434,24 @@ class MaskImageWidget(qt.QWidget):
             self.__selectionMask = None
         self.plotImage(update = True)
 
+    def getImageData(self):
+        return self.__imageData
+
+    def getQImage(self):
+        return self.__image
+
     def setQImage(self, qimage, width, height, clearmask=False, data=None):
         #This is just to get it different than None
-        self.__image = qimage.scaled(qt.QSize(width, height),
+        if (qimage.width() != width) or (qimage.height() != height):
+            if 1 or (qimage.width() > width) or (qimage.height() > height):
+                transformation = qt.Qt.SmoothTransformation
+            else:
+                transformation = qt.Qt.FastTransformation
+            self.__image = qimage.scaled(qt.QSize(width, height),
                                      qt.Qt.IgnoreAspectRatio,
-                                     qt.Qt.SmoothTransformation)
+                                     transformation)
+        else:
+            self.__image = qimage
 
         if self.__image.format() == qt.QImage.Format_Indexed8:
             pixmap0 = numpy.fromstring(qimage.bits().asstring(width * height),
