@@ -509,13 +509,12 @@ class QEDFStackWidget(qt.QWidget):
                 if image.isNull():
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Cannot read file as an image")
+                    msg.setText("Cannot read file %s as an image" % filename)
                     msg.exec_()
                     return
                 imagelist.append(image)
                 imagenames.append(os.path.basename(filename))
         else:
-            filenamelist = filename
             for filename in filenamelist:
                 #read the edf file
                 edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
@@ -531,7 +530,7 @@ class QEDFStackWidget(qt.QWidget):
 
                 for key in keylist:
                     #get the data
-                    dataObject = edf.getDataObject(keylist[0])
+                    dataObject = edf.getDataObject(key)
                     data = dataObject.data
                     imagename = dataObject.info.get('Title', os.path.basename(filename)+" "+key)
 
@@ -555,7 +554,12 @@ class QEDFStackWidget(qt.QWidget):
                                                                             ymirror)
                     imagelist.append(image)
                     imagenames.append(imagename)
-
+        if len(imagelist) == 0:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Cannot read a valid image from the file")
+            msg.exec_()
+            return
         shape = self.__stackImageData.shape
         self.externalImagesWindow.setQImageList(imagelist, shape[1], shape[0],
                                             clearmask=False,
