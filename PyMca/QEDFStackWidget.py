@@ -56,6 +56,7 @@ import LuciaMap
 import SupaVisioMap
 import AifiraMap
 import MaskImageWidget
+import ExternalImagesWindow
 import copy
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
@@ -286,7 +287,7 @@ class QEDFStackWidget(qt.QWidget):
         self.__selectFromStackMenu.addAction(qt.QString("Show external image for selection"),
                                                self.showExternalImagesWindow)
 
-        self.externalImagesWindow = MaskImageWidget.MaskImageWidget(rgbwidget=self.rgbWidget,
+        self.externalImagesWindow = ExternalImagesWindow.ExternalImagesWindow(rgbwidget=self.rgbWidget,
                                                                     selection=True,
                                                                     colormap=True,
                                                                     imageicons=True,
@@ -479,10 +480,10 @@ class QEDFStackWidget(qt.QWidget):
             self.__selectFromStackMenu.exec_(self.cursor().pos())
 
     def showExternalImagesWindow(self):
-        if len(self.externalImagesDict.keys()) < 1:
+        if self.externalImagesWindow.getQImage() is None:
             self.__selectFromExternalImageDialog()
             return
-        if len(self.externalImagesDict.keys()) > 0:
+        if self.externalImagesWindow.getQImage() is not None:
             self.externalImagesWindow.show()
             self.externalImagesWindow.raise_()
 
@@ -495,66 +496,74 @@ class QEDFStackWidget(qt.QWidget):
                         "JPEG Files (*jpg *jpeg)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)"]
-        message = "Open ONE image file"
-        filename, filefilter = self._getFileList(fileTypeList, message=message, getfilter=getfilter)
-        if len(filename) < 1:
+        message = "Open image file"
+        filenamelist, filefilter = self._getFileList(fileTypeList, message=message, getfilter=getfilter)
+        if len(filenamelist) < 1:
             return
-
-        filename = filename[0]
-
+        
+        imagelist = []
+        imagenames= []
         if filefilter.split()[0] in ['PNG', 'JPEG']:
-            image = qt.QImage(filename)
-            if image.isNull():
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Cannot read file as an image")
-                msg.exec_()
-                return
+            for filename in filenamelist:
+                image = qt.QImage(filename)
+                if image.isNull():
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Cannot read file as an image")
+                    msg.exec_()
+                    return
+                imagelist.append(image)
+                imagenames.append(os.path.basename(filename))
         else:
-            #read the edf file
-            edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
+            filenamelist = filename
+            for filename in filenamelist:
+                #read the edf file
+                edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
 
-            #the list of images
-            keylist = edf.getSourceInfo()['KeyList']
-            if len(keylist) < 1:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Cannot read an image from the file")
-                msg.exec_()
-                return
+                #the list of images
+                keylist = edf.getSourceInfo()['KeyList']
+                if len(keylist) < 1:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Cannot read an image from the file")
+                    msg.exec_()
+                    return
 
-            #get the data
-            data = edf.getDataObject(keylist[0]).data
+                for key in keylist:
+                    #get the data
+                    dataObject = edf.getDataObject(keylist[0])
+                    data = dataObject.data
+                    imagename = dataObject.info.get('Title', os.path.basename(filename)+" "+key)
 
-            #generate a grey scale image of the data
-            (pixmapData, size, minmax)= spslut.transform(\
-                                data,
-                                (1,0),
-                                (spslut.LINEAR,3.0),
-                                "BGRX",
-                                spslut.GREYSCALE,
-                                1,
-                                (0,1),(0, 255),1)
+                    #generate a grey scale image of the data
+                    (pixmapData, size, minmax)= spslut.transform(\
+                                        data,
+                                        (1,0),
+                                        (spslut.LINEAR,3.0),
+                                        "BGRX",
+                                        spslut.GREYSCALE,
+                                        1,
+                                        (0,1),(0, 255),1)
 
-            #generate a qimage from it
-            xmirror = 0
-            ymirror = 0
-            image = qt.QImage(pixmapData.tostring(),
-                               size[0],
-                               size[1],
-                               qt.QImage.Format_RGB32).mirrored(xmirror,
-                                                                    ymirror)
+                    #generate a qimage from it
+                    xmirror = 0
+                    ymirror = 0
+                    image = qt.QImage(pixmapData.tostring(),
+                                       size[0],
+                                       size[1],
+                                       qt.QImage.Format_RGB32).mirrored(xmirror,
+                                                                            ymirror)
+                    imagelist.append(image)
+                    imagenames.append(imagename)
 
         shape = self.__stackImageData.shape
-        self.externalImagesWindow.setQImage(image, shape[1], shape[0],
+        self.externalImagesWindow.setQImageList(imagelist, shape[1], shape[0],
                                             clearmask=False,
-                                            data=None)
+                                            data=None,
+                                            imagenames=imagenames)
                                             #data=self.__stackImageData)
-        self.externalImagesWindow.graphWidget.graph.setTitle(os.path.basename(filename))
         self.externalImagesWindow.setSelectionMask(self.__selectionMask,
                                                 plot=True)
-        
-        self.externalImagesDict = {os.path.basename(filename):self.externalImagesWindow}
         self.showExternalImagesWindow()
 
     def __showPCADialog(self):
@@ -1631,8 +1640,7 @@ class QEDFStackWidget(qt.QWidget):
     def _getStackOfFiles(self, getfilter=None):
         if getfilter is None:
             getfilter = False
-        if filetypelist is None:
-            fileTypeList = ["EDF Files (*edf)",
+        fileTypeList = ["EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
