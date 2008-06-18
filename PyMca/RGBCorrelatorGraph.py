@@ -92,10 +92,11 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
             self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
             self.imageIcon     = qt.QIcon(qt.QPixmap(IconDict["image"]))
-            self.eraseSelectionIcon     = qt.QIcon(qt.QPixmap(IconDict["eraseselect"]))
-            self.rectSelectionIcon      = qt.QIcon(qt.QPixmap(IconDict["boxselect"]))
-            self.brushSelectionIcon     = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))
-            self.brushIcon              = qt.QIcon(qt.QPixmap(IconDict["brush"]))
+            self.eraseSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["eraseselect"]))
+            self.rectSelectionIcon  = qt.QIcon(qt.QPixmap(IconDict["boxselect"]))
+            self.brushSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))
+            self.brushIcon          = qt.QIcon(qt.QPixmap(IconDict["brush"]))
+            self.additionalIcon     = qt.QIcon(qt.QPixmap(IconDict["additionalselect"]))
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
@@ -195,6 +196,11 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      None,
                                      'Select Brush')
             self.brushToolButton = tb
+            if QTVERSION > '4.0.0':
+                tb = self._addToolButton(self.additionalIcon,
+                                     None,
+                                     'Additional Selections Menu')
+                self.additionalSelectionToolButton = tb            
         else:
             self.imageToolButton = None
 

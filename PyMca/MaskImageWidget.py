@@ -239,6 +239,21 @@ class MaskImageWidget(qt.QWidget):
                          qt.PYSIGNAL("QtBlissGraphSignal"),
                          self._graphSignal)
         else:
+            self.connect(self.graphWidget.additionalSelectionToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._additionalSelectionMenuDialog)
+            self._additionalSelectionMenu = qt.QMenu()
+            self._additionalSelectionMenu.addAction(qt.QString("Reset Selection"),
+                                                    self._resetSelection)
+            self._additionalSelectionMenu.addAction(qt.QString("Invert Selection"),
+                                                    self._invertSelection)
+            self._additionalSelectionMenu.addAction(qt.QString("I >= Colormap Max"),
+                                                    self._selectMax)
+            self._additionalSelectionMenu.addAction(qt.QString("Colormap Min < I < Colormap Max"),
+                                                    self._selectMiddle)
+            self._additionalSelectionMenu.addAction(qt.QString("I <= Colormap Min"),
+                                                    self._selectMin)
+
             self.connect(self.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
@@ -406,6 +421,57 @@ class MaskImageWidget(qt.QWidget):
         if self.__imageData is None: return
         #do not reset the selection
         #self.__selectionMask = numpy.zeros(self.__imageData.shape, numpy.UInt8)
+
+    def _additionalSelectionMenuDialog(self):
+        if self.__imageData is None:
+            return
+        self._additionalSelectionMenu.exec_(self.cursor().pos())
+
+    def _getSelectionMinMax(self):
+        if self.colormap is None:
+            maxValue = self.__imageData.max()
+            minValue = self.__imageData.min()
+        else:
+            minValue = self.colormap[2]
+            maxValue = self.colormap[3]
+
+        return minValue, maxValue
+
+    def _selectMax(self):
+        self.__selectionMask = numpy.zeros(self.__imageData.shape,
+                                             numpy.uint8)
+        minValue, maxValue = self._getSelectionMinMax()
+        self.__selectionMask[self.__imageData >= maxValue] = 1
+        self.plotImage(update=False)
+        self._emitMaskChangedSignal()
+        
+    def _selectMiddle(self):
+        self.__selectionMask = numpy.ones(self.__imageData.shape,
+                                             numpy.uint8)
+        minValue, maxValue = self._getSelectionMinMax()
+        self.__selectionMask[self.__imageData >= maxValue] = 0
+        self.__selectionMask[self.__imageData <= minValue] = 0
+        self.plotImage(update=False)
+        self._emitMaskChangedSignal()        
+
+    def _selectMin(self):
+        self.__selectionMask = numpy.zeros(self.__imageData.shape,
+                                             numpy.uint8)
+        minValue, maxValue = self._getSelectionMinMax()
+        self.__selectionMask[self.__imageData <= minValue] = 1
+        self.plotImage(update=False)
+        self._emitMaskChangedSignal()
+        
+    def _invertSelection(self):
+        if self.__imageData is None:
+            return
+        mask = numpy.ones(self.__imageData.shape,
+                                             numpy.uint8)
+        if self.__selectionMask is not None:
+            mask[self.__selectionMask > 0] = 0
+
+        self.setSelectionMask(mask, plot=True)
+        self._emitMaskChangedSignal()
         
     def _resetSelection(self, owncall=True):
         if DEBUG:
@@ -738,13 +804,17 @@ class MaskImageWidget(qt.QWidget):
         if emitsignal:
             #should this be made by the parent?
             self.plotImage(update = False)
-
+            
             #inform the other widgets
-            ddict = {}
-            ddict['event'] = "selectionMaskChanged"
-            ddict['current'] = self.__selectionMask * 1
-            ddict['id'] = id(self)
-            self.emitMaskImageSignal(ddict)
+            self._emitMaskChangedSignal()
+
+    def _emitMaskChangedSignal(self):
+        #inform the other widgets
+        ddict = {}
+        ddict['event'] = "selectionMaskChanged"
+        ddict['current'] = self.__selectionMask * 1
+        ddict['id'] = id(self)
+        self.emitMaskImageSignal(ddict)
                             
     def emitMaskImageSignal(self, ddict):
         if QTVERSION < '4.0.0':
