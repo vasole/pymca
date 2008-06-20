@@ -115,15 +115,19 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         ymax = min(ymax, height)
 
         rect = qt.QRect(xmin, ymin, xmax-xmin, ymax-ymin)
-        image = qimage.copy(rect)
+        newImageList = []
+        for i in range(len(self.imageList)):
+            image = self._imageDict[self.imageNames[i]].copy(rect)
+            newImageList.append(image)
 
         #replace current image by the new one
-        self.setQImage(image, width, height,
+        self.setQImageList(newImageList, width, height,
                        clearmask=False,
-                       data=None)
+                       data=None,
+                       imagenames=self.imageNames*1)
         
-        self._imageDict[label] = self.getQImage()            
-        self.imageList.append(self.getImageData())
+        ###self._imageDict[label] = self.getQImage()            
+        ###self.imageList.append(self.getImageData())
         self._showImage(index)
 
     def _showImage(self, index):
