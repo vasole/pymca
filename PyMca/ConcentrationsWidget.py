@@ -814,14 +814,18 @@ if QTVERSION < '4.0.0':
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
-        qt.QObject.connect(self,qt.SIGNAL("returnPressed()"),self._mySignal)
+        if QTVERSION < '4.0.0':
+            qt.QObject.connect(self,qt.SIGNAL("returnPressed()"),self._mySignal)
+        else:
+            qt.QObject.connect(self,qt.SIGNAL("editingFinished()"),self._mySignal)            
 
-    def focusInEvent(self,event):
-        self.setPaletteBackgroundColor(qt.QColor('yellow'))
+    if QTVERSION < '4.0.0':
+        def focusInEvent(self,event):
+            self.setPaletteBackgroundColor(qt.QColor('yellow'))
 
-    def focusOutEvent(self,event):
-        self.setPaletteBackgroundColor(qt.QColor('white'))
-        self.emit(qt.SIGNAL("returnPressed()"),())
+        def focusOutEvent(self,event):
+            self.setPaletteBackgroundColor(qt.QColor('white'))
+            self.emit(qt.SIGNAL("returnPressed()"),())
         
     def setPaletteBackgroundColor(self, qcolor):
         if QTVERSION < '3.0.0':
