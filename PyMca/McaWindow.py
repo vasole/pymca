@@ -152,7 +152,8 @@ class McaWidget(qt.QWidget):
         self.toolbar.layout.setMargin(0)
         self.toolbar.layout.setSpacing(0)
         self.graphBoxlayout.addWidget(self.toolbar)
-        
+
+        self._logY = False
         self.graph    = QtBlissGraph.QtBlissGraph(self.graphBox,uselegendmenu=1, legendrename=True)
         self.graph.xlabel('Channel')
         self.graph.ylabel('Counts')
@@ -266,7 +267,7 @@ class McaWidget(qt.QWidget):
 
         # Logarithmic
         tb = self._addToolButton(self.logyIcon,
-                            self.graph.ToggleLogY,
+                            self._toggleLogY,
                             'Toggle Logarithmic Y Axis (On/Off)',
                             toggle = True)
         self.logytb = tb
@@ -416,6 +417,16 @@ class McaWidget(qt.QWidget):
             else:
                 self.xtb.setChecked(True)
             self.graph.zoomReset()
+
+    def _toggleLogY(self):
+        if self._logY:
+            self._logY = False
+        else:
+            self._logY = True
+            
+        self.graph.toggleLogY()
+        self.refresh()
+
 
     def setDispatcher(self, w):
         """
@@ -1855,13 +1866,16 @@ class McaWidget(qt.QWidget):
                                                         calib[1] * region[1] +\
                                                         calib[2] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1,
+                                                x=xdata,y=data,
+                                                logfilter=self._logY,
                                                 curveinfo=curveinfo,
                                                 baseline = info['baseline'],
                                                 regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
+                                                x=xdata,y=data,
+                                                logfilter=self._logY,
+                                                curveinfo=curveinfo)
                             self.graph.xlabel('Energy')
                     elif self.calibration == self.calboxoptions[2]:
                         calibrationOrder = None
@@ -1900,13 +1914,16 @@ class McaWidget(qt.QWidget):
                                                         calib[1] * region[1] +\
                                                         calib[2] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1,
+                                                x=xdata,y=data,
+                                                logfilter=self._logY,
                                                 curveinfo=curveinfo,
                                                 baseline = info['baseline'],
                                                 regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1, curveinfo=curveinfo)
+                                                x=xdata,y=data,
+                                                logfilter=self._logY,
+                                                curveinfo=curveinfo)
                             if calibrationOrder == 'ID18':
                                 self.graph.x1Label('Time')
                             else:
@@ -1942,14 +1959,16 @@ class McaWidget(qt.QWidget):
                                                         calib[1] * region[1] +\
                                                         calib[2] * region[1] * region[1]])
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1,
+                                                x=xdata,y=data,
+                                                logfilter=self._logY,
                                                 curveinfo=curveinfo,
                                                 baseline = info['baseline'],
                                                 regions = inforegions)
                             else:
                                 self.graph.newCurve(legend,
-                                                x=xdata,y=data,logfilter=1,
-                                                    curveinfo=curveinfo)
+                                                x=xdata,y=data,
+                                                logfilter=self._logY,
+                                                curveinfo=curveinfo)
                             if calibrationOrder == 'ID18':
                                 self.graph.x1Label('Time')
                             else:
@@ -1963,7 +1982,8 @@ class McaWidget(qt.QWidget):
                                             regions = info['regions'])
                         else:
                             self.graph.newCurve(legend,x=xhelp,y=data,
-                                            logfilter=1, curveinfo=curveinfo)
+                                            logfilter=self._logY,
+                                            curveinfo=curveinfo)
                         self.graph.xlabel('Channel')
                 except:
                     del self.dataObjectsDict[legend]
