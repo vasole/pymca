@@ -11,6 +11,7 @@ except ImportError:
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
+import string
 
 for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
     if line[:11] == '__version__':
@@ -25,8 +26,36 @@ for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
             __version__ += 'dev_r%i' % revision
         break
 
+print "PyMca X-Ray Fluorescence Toolkit %s" % __version__
+print 
+print "Type 'L' to view the license."
+print "Type 'yes' to accept the terms of the license."
+print "Type 'no' to decline the terms of the license."
+print
+
+while 1:
+    try:
+        resp = raw_input("Do you accept the terms of the license? ")
+    except KeyboardInterrupt:
+        raise SystemExit
+    except:
+        resp = ""
+
+    resp = string.lower(string.strip(resp))
+
+    if resp == "yes":
+        break
+
+    if resp == "no":
+        sys.exit(0)
+
+    if resp == "l":
+        os.system("more LICENSE.GPL")
+
+
 # Specify all the required PyMca data
-data_files = [('PyMca', ['PyMca/Scofield1973.dict',
+data_files = [('PyMca', ['LICENSE.GPL',
+                         'PyMca/Scofield1973.dict',
                          'PyMca/changelog.txt',
                          'PyMca/McaTheory.cfg',
                          'PyMca/PyMcaSplashImage.png',
@@ -48,9 +77,11 @@ sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]
     script_files = []
+    script_files.append('scripts/pymca_win_post_install.py')
 else:
     define_macros = []
     script_files = glob.glob('PyMca/scripts/*')
+            
 
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca.FastEdf',
@@ -180,16 +211,16 @@ class smart_install_scripts(install_scripts):
                     log.info("changing mode of %s to %o", file, mode)
                     os.chmod(file, mode)
    
-description = ""
+description = "GPL License - Please read LICENSE.GPL for details"
 long_description = """
 """
 
 distrib = setup(name="PyMca",
-                license = "GPL - Please read LICENSE.GPL for details",
                 version= __version__,
                 description = description,
                 author = "V. Armando Sole",
                 author_email="sole@esrf.fr",
+                license= "GPL - Please read LICENSE.GPL for details",
                 url = "http://sourceforge.net/projects/pymca",
                 long_description = long_description,
                 packages = packages,

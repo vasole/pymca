@@ -20,12 +20,12 @@ setup.py contributed by D. Dale and install PyMCA in a specific directory.
 
 Examples of use:
 
-Install everything in default directories (typical for windows users or system
+1 - Install everything in default directories (typical for windows users or system
 administrators):
 
 python setup.py install
 
-Install to specific destinations (typical for posix systems):
+2 - Install to specific destinations (typical for posix systems):
 
 python setup.py install --install-scripts SCRIPTS_DIRECTORY
 python setup.py install --install-lib DESTINATION_DIRECTORY
@@ -35,9 +35,17 @@ The directories have to be specified with their full path without the last "/".
 
 In any case you need write privileges to the final directories.
 
+3 - Creation of an easy to install windows binary using Visual Studio 2003
+
+python setup.py bdist_wininst --install-script pymca_win_post_install.py 
+
+4 - Creation of an easy to install windows binary using the  MinGW compiler
+python setup.py build -c mingw32
+python setup.py bdist_wininst --skip-build --install-script pymca_win_post_install.py
+
 You will need:
 
-- Python (at least 2.3.x) I use mostly 2.4.x except for MacOS.
+- Python (at least 2.3.x) I use mostly 2.5.x except for linux.
 
 - Numpy
 
