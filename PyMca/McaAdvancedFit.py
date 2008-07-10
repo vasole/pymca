@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.62 $"
+__revision__ = "$Revision: 1.63 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -2031,14 +2031,14 @@ class McaAdvancedFit(qt.QWidget):
                     csv = "\t"
                 keys = fitresult['result'].keys()
 
-                headerLine = "channel%sEnergy%scounts%sfit%scontinuum%spileup" % (csv, csv, csv, csv, csv)
+                headerLine = '"channel"%s"Energy"%s"counts"%s"fit"%s"continuum"%s"pileup"' % (csv, csv, csv, csv, csv)
                 if 'ymatrix' in keys:
-                    labelline += "%symatrix" % csv
+                    headerLine += '%s"ymatrix"' % csv
 
                 for group in fitresult['result']['groups']:
                     label = 'y'+group
                     if label in keys:
-                        headerLine += csv+group
+                        headerLine += csv+ ('"%s"' % group)
                 file.write(headerLine)
                 file.write('\n')
                 for i in range(len(fitresult['result']['ydata'])):
