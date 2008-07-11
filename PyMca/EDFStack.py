@@ -225,6 +225,24 @@ class EDFStack(DataObject.DataObject):
                                     mode='w+')
                         os.system(('chmod 777 %s' % swapfile))
                     else:
+                        if fileindex == 1:
+                            try:
+                                self.data = Numeric.zeros((arrRet.shape[0],
+                                                        self.nbFiles,
+                                                       arrRet.shape[1]),
+                                                       arrRet.dtype.char)
+                            except:
+                                try:
+                                    self.data = Numeric.zeros((arrRet.shape[0],
+                                                        self.nbFiles,
+                                                       arrRet.shape[1]),
+                                                       Numeric.Float32)
+                                except:
+                                    self.data = Numeric.zeros((arrRet.shape[0],
+                                                        self.nbFiles,
+                                                       arrRet.shape[1]),
+                                                       Numeric.Int16)
+                        else:
                             try:
                                 self.data = Numeric.zeros((self.nbFiles,
                                                        arrRet.shape[0],
@@ -242,12 +260,20 @@ class EDFStack(DataObject.DataObject):
                                                        arrRet.shape[1]),
                                                        Numeric.Int16)
                     self.incrProgressBar=0
-                    for tempEdfFileName in filelist:
-                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                        pieceOfStack=tempEdf.GetData(0)    
-                        self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
-                        self.incrProgressBar += 1
-                        self.onProgress(self.incrProgressBar)
+                    if fileindex == 1:
+                        for tempEdfFileName in filelist:
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            pieceOfStack=tempEdf.GetData(0)    
+                            self.data[:,self.incrProgressBar,:] = pieceOfStack[:,:]
+                            self.incrProgressBar += 1
+                            self.onProgress(self.incrProgressBar)
+                    else:
+                        for tempEdfFileName in filelist:
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            pieceOfStack=tempEdf.GetData(0)    
+                            self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
+                            self.incrProgressBar += 1
+                            self.onProgress(self.incrProgressBar)
                     self.onEnd()
 
         self.__nFiles         = self.incrProgressBar

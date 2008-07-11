@@ -1046,6 +1046,9 @@ class QEDFStackWidget(qt.QWidget):
                 if fileindex == 0:
                     self.mcaIndex   = 2
                     self.otherIndex = 1
+                elif fileindex == 1:
+                    self.mcaIndex   = 2
+                    self.otherIndex = 0
                 else:
                     self.mcaIndex = 1
                     self.otherIndex = 0
@@ -1096,6 +1099,12 @@ class QEDFStackWidget(qt.QWidget):
         elif self.stack.info["SourceType"] == "SpecFileStack":
             self.stackGraphWidget.graph.y1Label('Row')
             self.stackGraphWidget.graph.x1Label('Column')
+        elif self.fileIndex == 1:
+            self.stackGraphWidget.graph.x1Label("File")
+            if self.mcaIndex == 1:
+                self.stackGraphWidget.graph.y1Label('Row')
+            else:
+                self.stackGraphWidget.graph.y1Label('Column')
         else:
             self.stackGraphWidget.graph.y1Label("File")
             if self.mcaIndex == 1:
@@ -1213,6 +1222,13 @@ class QEDFStackWidget(qt.QWidget):
             if self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
+                    self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                else:
+                    background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
+                    self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+            elif self.fileIndex == 1:
+                if self.mcaIndex == 0:
+                    background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
                 else:
                     background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
