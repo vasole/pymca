@@ -845,11 +845,14 @@ class ScanWindow(qt.QWidget):
                     if newLegend not in self.dataObjectsList:
                         self.dataObjectsList.append(newLegend)
                     self.dataObjectsDict[newLegend] = dataObject
+                    if self.__toggleCounter in [1, 2]:
+                        symbol = 'o'
+                    else:
+                        symbol = None
                     self.graph.newCurve(newLegend,
                                         x=xdata,
                                         y=ydata,
-                                        symbol=None)
-                                        # symbol='o')
+                                        symbol=symbol)
                     if self.scanWindowInfoWidget is not None:
                         activeLegend = self.getActiveCurve()
                         if activeLegend is not None:
@@ -897,7 +900,10 @@ class ScanWindow(qt.QWidget):
                         symbol = 'x'
                     else:
                         newDataObject.info['legend'] = legend + " " + ylegend
-                        symbol = None
+                        if self.__toggleCounter in [1, 2]:
+                            symbol = 'o'
+                        else:
+                            symbol = None
                     maptoy2 = False
                     if dataObject.info.has_key('operations'):
                         if dataObject.info['operations'][-1] == 'derivate':

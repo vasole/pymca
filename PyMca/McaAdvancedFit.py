@@ -1853,8 +1853,8 @@ class McaAdvancedFit(qt.QWidget):
             format_list = ['Specfile MCA  *.mca',
                            'Specfile Scan *.dat',
                            'Raw ASCII  *.txt',
-                           '","-separated CSV *.csv',
                            '";"-separated CSV *.csv',
+                           '","-separated CSV *.csv',
                            '"tab"-separated CSV *.csv']
             if MATPLOTLIB:
                 format_list.append('Graphics PNG *.png')
