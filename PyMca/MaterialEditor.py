@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.13 $"
+__revision__ = "$Revision: 1.14 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -177,7 +177,20 @@ class MaterialComboBox(qt.QComboBox):
             (result, index) = self.ownValidator.validate(qstring,0)
         if result != self.ownValidator.Valid:
             text = str(qstring)
-            msg=qt.QMessageBox.information( self, "Invalid Material %s" % str(qstring),
+            try:
+                numberTest = float(text)
+                msg =  qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Invalid Material Name %s\n" % text + \
+                            "You cannot use a number as material name.\n" +\
+                            "Hint: You can use _%s_" % text)
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                msg = qt.QMessageBox.No
+            except:
+                msg=qt.QMessageBox.information( self, "Invalid Material %s" % str(qstring),
                                       "The material %s is not a valid Formula " \
                                       "nor a valid Material.\n" \
                                       "Do you want to define the material %s\n" % \
@@ -281,7 +294,8 @@ class MaterialValidator(qt.QValidator):
 
         
     def fixup(self, qstring):
-        if qstring is None: return None
+        if qstring is None:
+            return None
         text = str(qstring)
         key  = Elements.getMaterialKey(text) 
         if key is not None:
@@ -291,6 +305,11 @@ class MaterialValidator(qt.QValidator):
 
     def validate(self, qstring, pos):
         text = str(qstring)
+        try:
+            number = float(text)
+            return (self.Invalid, pos)
+        except:
+            pass
         if Elements.isValidFormula(text):
             return (self.Valid, pos)
         elif Elements.isValidMaterial(text):
