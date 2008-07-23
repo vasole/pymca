@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.46 $"
+__revision__ = "$Revision: 1.47 $"
 ###########################################################################
 # Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
@@ -567,7 +567,8 @@ class McaBatchGUI(qt.QWidget):
         
         filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
-        if (QTVERSION < '4.3.0') and sys.platform == "win32":
+        #if (QTVERSION < '4.3.0') and sys.platform == "win32":
+        if PyMcaDirs.nativeFileDialogs:
                 if QTVERSION < '4.0.0':
                     filelist= filedialog.getOpenFileNames(qt.QString(filetypes),
                             wdir,
@@ -619,7 +620,7 @@ class McaBatchGUI(qt.QWidget):
             filename.setFileMode(filename.ExistingFiles)
             filename.setDirectory(wdir)
         filetypes = "Config Files (*.cfg)\nAll files (*)"
-        if (QTVERSION < '4.3.0') and sys.platform == "win32":
+        if PyMcaDirs.nativeFileDialogs:
             if QTVERSION < '4.0.0':
                 filenameList= filename.getOpenFileNames(qt.QString(filetypes),
                             wdir,
@@ -1507,7 +1508,8 @@ def main():
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
-                   'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=']
+                   'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
+                   'nativefiledialogs=']
     filelist = None
     outdir   = None
     cfg      = None
@@ -1568,6 +1570,11 @@ def main():
             mcaoffset  = int(arg)
         elif opt in ('--chunk'):
             chunk  = int(arg)
+        elif opt in ('--nativefiledialogs'):
+            if int(arg):
+                PyMcaDirs.nativeFileDialogs = True
+            else:
+                PyMcaDirs.nativeFileDialogs = False
     if listfile is None: 
         filelist=[]
         for item in args:

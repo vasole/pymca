@@ -1604,7 +1604,8 @@ class QEDFStackWidget(qt.QWidget):
                     else:
                         return []
         else:
-            if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
+            #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
+            if PyMcaDirs.nativeFileDialogs:
                 filetypes = ""
                 for filetype in fileTypeList:
                     filetypes += filetype+"\n"
@@ -1675,7 +1676,7 @@ class QEDFStackWidget(qt.QWidget):
 if __name__ == "__main__":
     import getopt
     options = ''
-    longoptions = ["fileindex=","begin=", "end="]
+    longoptions = ["fileindex=","begin=", "end=", "nativefiledialogs="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1696,6 +1697,11 @@ if __name__ == "__main__":
             end = int(arg)
         elif opt in '--fileindex':
             fileindex = int(arg)
+        elif opt in '--nativefiledialogs':
+            if int(arg):
+                PyMcaDirs.nativeFileDialogs=True
+            else:
+                PyMcaDirs.nativeFileDialogs=False                
     app = qt.QApplication([])
     w = QEDFStackWidget(master=True)
     aifirafile = False

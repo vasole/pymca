@@ -1159,7 +1159,8 @@ class FitParamDialog(qt.QDialog):
                 sections= diag.getSections()
                 self.loadParameters(filename, sections)
         else:
-            if sys.platform == 'darwin':
+            #if sys.platform == 'darwin':
+            if PyMcaDirs.nativeFileDialogs:
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.ExistingFiles)
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
@@ -1207,7 +1208,8 @@ class FitParamDialog(qt.QDialog):
                 sections= diag.getSections()
                 self.saveParameters(filename, sections)
         else:
-            if sys.platform != 'win32':
+            #if sys.platform != 'win32':
+            if PyMcaDirs.nativeFileDialogs:
                 filedialog = qt.QFileDialog(self)
                 filedialog.setFileMode(filedialog.AnyFile)
                 filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))

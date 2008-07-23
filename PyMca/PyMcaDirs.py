@@ -4,6 +4,7 @@ import os
 DEBUG = 0
 inputDir  = None
 outputDir = None
+nativeFileDialogs = False
 
 class __ModuleWrapper:
   def __init__(self, wrapped):
@@ -44,6 +45,8 @@ class __ModuleWrapper:
             self.__wrapped.__dict__[name]=value
         else:
             raise ValueError, "Non existing directory %s" % value
+    elif name == "nativeFileDialogs":
+        self.__wrapped.__dict__[name]=value
     elif name.startswith("__"):
         self.__dict__[name]=value
     else:

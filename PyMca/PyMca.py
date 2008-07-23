@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.99 $"
+__revision__ = "$Revision: 2.00 $"
 #/*##########################################################################
 # Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
@@ -27,9 +27,10 @@ __revision__ = "$Revision: 1.99 $"
 # is a problem for you.
 #############################################################################*/
 import sys, getopt, string
+nativeFileDialogs = None
 if __name__ == '__main__':
     options     = '-f'
-    longoptions = ['spec=','shm=','debug=', 'qt=']
+    longoptions = ['spec=','shm=','debug=', 'qt=', 'nativefiledialogs=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -53,6 +54,11 @@ if __name__ == '__main__':
             keywords['fresh'] = 1
         elif opt in ('--qt'):
             qtversion = arg
+        elif opt in ('--nativefiledialogs'):
+            if int(arg):
+                nativeFileDialogs = True
+            else:
+                nativeFileDialogs = False
     if qtversion == '3':
         import qt
 
@@ -64,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.6 20080618-snapshot"
+__version__ = "4.2.6 20080723-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -533,6 +539,7 @@ class PyMca(PyMcaMdi.PyMca):
         d['PyMca']    = {}
         d['PyMca']['VERSION']   = __version__
         d['PyMca']['ConfigDir'] = self.configDir
+        d['PyMca']['nativeFileDialogs'] = PyMcaDirs.nativeFileDialogs
         
         #geometry
         d['PyMca']['Geometry']  ={}
@@ -605,11 +612,13 @@ class PyMca(PyMcaMdi.PyMca):
     def saveConfig(self, config, filename = None):
         d = ConfigDict.ConfigDict()
         d.update(config)
-        if filename is None:filename = self.__getDefaultSettingsFile()
+        if filename is None:
+            filename = self.__getDefaultSettingsFile()
         d.write(filename)
 
     def __configurePyMca(self, dict):
-        if dict.has_key('ConfigDir'):self.configDir = dict['ConfigDir']
+        if dict.has_key('ConfigDir'):
+            self.configDir = dict['ConfigDir']
 
         if dict.has_key('Geometry'):
             r = qt.QRect(*dict['Geometry']['MainWindow'])
@@ -632,6 +641,9 @@ class PyMca(PyMcaMdi.PyMca):
                                                  qt.QSize(dict['Geometry']['MainWindow'][2],
                                                           dict['Geometry']['MainWindow'][3])))
             self.mcawindow.showMaximized()
+            
+        PyMcaDirs.nativeFileDialogs = dict.get('nativeFileDialogs', False)
+
         if dict.has_key('Sources'):
             if dict['Sources'].has_key('lastFileFilter'):
                 self.sourceWidget.sourceSelector.lastFileFilter = dict['Sources']['lastFileFilter']
@@ -1092,7 +1104,7 @@ class PyMca(PyMcaMdi.PyMca):
                 else:
                     return []
         else:
-            if 0 and (sys.platform != 'darwin'):
+            if PyMcaDirs.nativeFileDialogs:
                 filetypes = ""
                 for filetype in fileTypeList:
                     filetypes += filetype+"\n"
@@ -1682,6 +1694,8 @@ if __name__ == '__main__':
         import profile
         import pstats
     demo = PyMca(**keywords)
+    if nativeFileDialogs is not None:
+        PyMcaDirs.nativeFileDialogs = nativeFileDialogs
     if debugreport:demo.onDebug()
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                             app,qt.SLOT("quit()"))

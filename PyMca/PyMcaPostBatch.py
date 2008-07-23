@@ -78,7 +78,8 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                         "EDF Files (*ccd)",
                         "All Files (*)"]
         message = "Open ONE Batch result file or SEVERAL EDF files"
-        if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
+        #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
+        if PyMcaDirs.nativeFileDialogs:
             filetypes = ""
             for filetype in fileTypeList:
                 filetypes += filetype+"\n"
@@ -121,13 +122,17 @@ def test():
 
     import getopt
     options=''
-    longoptions=[]
+    longoptions=["nativefiledialogs="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)      
     for opt,arg in opts:
-        pass
+        if opt in '--nativefiledialogs':
+            if int(arg):
+                PyMcaDirs.nativeFileDialogs=True
+            else:
+                PyMcaDirs.nativeFileDialogs=False
     filelist=args
     w = PyMcaPostBatch()
     w.layout().setMargin(11)
