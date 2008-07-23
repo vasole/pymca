@@ -871,6 +871,8 @@ class PyMca(PyMcaMdi.PyMca):
             self.splitter.moveToFirst(self.sourceFrame)
         else:
             self.splitter.insertWidget(0, self.sourceFrame)
+            self.sourceFrame.setWindowTitle("Source Selector")
+            self.sourceFrame.setWindowIcon(self.windowIcon())
         #self.splitter.setResizeMode(self.sourceFrame,qt.QSplitter.KeepSize)
         self.sourceFrameLayout = qt.QVBoxLayout(self.sourceFrame)
         self.sourceFrameLayout.setMargin(0)
@@ -918,15 +920,18 @@ class PyMca(PyMcaMdi.PyMca):
                 self.splitter.moveToFirst(self.sourceFrame)
             else:
                 self.sourceFrame.setParent(None)
+                self.sourceFrame.move(self.cursor().pos())
                 self.sourceFrame.show()
-                #,self.cursor().pos(),1)
         else:
             if QTVERSION < '4.0.0':
                 self.sourceFrame.reparent(self.splitter,qt.QPoint(),1)
                 self.splitter.moveToFirst(self.sourceFrame)
             else:
-                self.sourceFrame.setParent(self.splitter)
-        
+                try:
+                    self.splitter.insertWidget(0, self.sourceFrame)
+                except:
+                    self.sourceFrame.setParent(self.splitter)
+            
     def initSource(self):
         self.sourceWidget = QDispatcher.QDispatcher(self.sourceFrame)
         self.sourceFrameLayout.addWidget(self.sourceWidget)
