@@ -591,6 +591,7 @@ class ScanWindow(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
+        self._logY = False
         self._buildToolBar()
         self._buildGraph()
         self.scanWindowInfoWidget = ScanWindowInfoWidget.\
@@ -764,7 +765,7 @@ class ScanWindow(qt.QWidget):
             self.connect(w, qt.SIGNAL("replaceSelection"),
                              self._replaceSelection)
             
-    def _addSelection(self, selectionlist):
+    def _addSelection(self, selectionlist, replot=True):
         if DEBUG:print "_addSelection(self, selectionlist)",selectionlist
         if type(selectionlist) == type([]):
             sellist = selectionlist
@@ -852,6 +853,7 @@ class ScanWindow(qt.QWidget):
                     self.graph.newCurve(newLegend,
                                         x=xdata,
                                         y=ydata,
+                                        logfilter=self._logY,
                                         symbol=symbol)
                     if self.scanWindowInfoWidget is not None:
                         activeLegend = self.getActiveCurve()
@@ -867,7 +869,7 @@ class ScanWindow(qt.QWidget):
                     newDataObject   = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
                     if dataObject.m is None:
-                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                        mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
                     elif len(dataObject.m[0]) > 0:
                         if len(dataObject.m[0]) == len(ydata):
                             index = Numeric.nonzero(dataObject.m[0])
@@ -880,7 +882,7 @@ class ScanWindow(qt.QWidget):
                         else:
                             raise ValueError, "Monitor data length different than counter data"
                     else:
-                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                        mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
                     newDataObject.x = [xdata]
                     newDataObject.y = [ydata]
                     newDataObject.m = [mdata]
@@ -900,6 +902,7 @@ class ScanWindow(qt.QWidget):
                         symbol = 'x'
                     else:
                         newDataObject.info['legend'] = legend + " " + ylegend
+                        newDataObject.info['selectionlegend'] = legend
                         if self.__toggleCounter in [1, 2]:
                             symbol = 'o'
                         else:
@@ -916,9 +919,11 @@ class ScanWindow(qt.QWidget):
                     self.graph.newCurve(newDataObject.info['legend'],
                                         x=xdata,
                                         y=ydata,
+                                        logfilter=self._logY,
                                         symbol=symbol,
                                         maptoy2=maptoy2)
-        self.graph.replot()
+        if replot:
+            self.graph.replot()
 
             
     def _removeSelection(self, selectionlist):
@@ -1046,7 +1051,8 @@ class ScanWindow(qt.QWidget):
                 self.graph.delcurve(legend)
                 self.graph.newCurve(self.dataObjectsDict[newlegend].info['legend'],
                                     self.dataObjectsDict[newlegend].x[0],
-                                    self.dataObjectsDict[newlegend].y[0])
+                                    self.dataObjectsDict[newlegend].y[0],
+                                    logfilter=self._logY)
                 del self.dataObjectsDict[legend]
                 del self.dataObjectsList[self.dataObjectsList.index(legend)]
             self.graph.replot()
@@ -1068,7 +1074,8 @@ class ScanWindow(qt.QWidget):
             #here I should check the log or linear status
             self.graph.newcurve(newDataObject.info['legend'],
                                 x=xplot,
-                                y=yplot)
+                                y=yplot,
+                                logfilter=self._logY)
             if newDataObject.info['legend'] not in self.dataObjectsList:
                 self.dataObjectsList.append(newDataObject.info['legend'])
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
@@ -1121,8 +1128,33 @@ class ScanWindow(qt.QWidget):
                        
     def _toggleLogY(self):
         if DEBUG:print "_toggleLogY"
+        if self._logY:
+            self._logY = False
+        else:
+            self._logY = True
+        activecurve = self.graph.getactivecurve(justlegend=1)
+
+        self.graph.clearCurves()    
         self.graph.toggleLogY()
-        #self.graph.replot()
+
+        sellist = []
+        i = 0
+        for key in self.dataObjectsList:
+            if key in self.dataObjectsDict.keys():
+                sel ={}
+                sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
+                sel['dataobject'] = self.dataObjectsDict[key]
+                sel['Key'] = self.dataObjectsDict[key].info['Key']
+                if self.dataObjectsDict[key].info.has_key('selectionlegend'):
+                    sel['legend'] = self.dataObjectsDict[key].info['selectionlegend']
+                else:
+                    sel['legend'] = self.dataObjectsDict[key].info['legend']
+                sel['scanselection'] = True
+                sel['selection'] = self.dataObjectsDict[key].info['selection']
+                sellist.append(sel)
+            i += 1
+        self._addSelection(sellist, replot=False)
+        self.graph.setactivecurve(activecurve)
 
     def _togglePointsSignal(self):
         self.__toggleCounter = (self.__toggleCounter + 1) % 3
@@ -1423,7 +1455,9 @@ class ScanWindow(qt.QWidget):
         #create the output data object
         newDataObject = DataObject.DataObject()
         newDataObject.data = None
-        newDataObject.info.update(dataObject.info)
+        newDataObject.info = copy.deepcopy(dataObject.info)
+        if newDataObject.info.has_key('selectionlegend'):
+            del newDataObject.info['selectionlegend']
         if not newDataObject.info.has_key('operations'):
             newDataObject.info['operations'] = []
         newDataObject.info['operations'].append(operation)
@@ -1526,7 +1560,8 @@ class ScanWindow(qt.QWidget):
             #here I should check the log or linear status
             self.graph.newcurve(newDataObject.info['legend'],
                                 x=xplot,
-                                y=yplot)
+                                y=yplot,
+                                logfilter=self._logY)
         self.graph.replot()
 
     def getActiveCurve(self):

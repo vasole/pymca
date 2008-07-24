@@ -1869,8 +1869,13 @@ class QtBlissGraph(qwt.QwtPlot):
                         self.emit(qt.PYSIGNAL('QtBlissGraphSignal'),(dict,))
                     else:
                         self.emit(qt.SIGNAL('QtBlissGraphSignal'),(dict))
-        
+
     def clearcurves(self):
+        if DEBUG:
+            print "Deprecation: Please use clearCurves instead"
+        return self.clearCurves()
+
+    def clearCurves(self):        
         for key in self.curves.keys():
             self.delcurve(key) 
         self.__activecurves=[]
