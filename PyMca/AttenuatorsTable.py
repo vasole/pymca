@@ -90,6 +90,11 @@ class AttenuatorsTab(qt.QWidget):
     def __init__(self,parent=None, name="Attenuators Tab",attenuators=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
+        if QTVERSION > '4.0.0':
+            maxheight = qt.QDesktopWidget().height()
+            if maxheight < 800:
+                layout.setMargin(0)
+                layout.setSpacing(2)
         self.table  = AttenuatorsTableWidget(self,name,attenuators, funnyfilters=True)
         layout.addWidget(self.table)
         spacer = MaterialEditor.VerticalSpacer(self)
@@ -104,7 +109,10 @@ class AttenuatorsTab(qt.QWidget):
         else:
             self.mainTab = qt.QTabWidget(self)
             layout.addWidget(self.mainTab)
-            self.editor = MaterialEditor.MaterialEditor()
+            if maxheight < 800:
+                self.editor = MaterialEditor.MaterialEditor(height=5)
+            else:
+                self.editor = MaterialEditor.MaterialEditor()
             self.mainTab.addTab(self.editor, "Material Editor")
             rheight = self.table.horizontalHeader().sizeHint().height()
             self.table.setMinimumHeight(13*rheight)
