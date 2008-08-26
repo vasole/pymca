@@ -91,6 +91,7 @@ class RGBCorrelator(qt.QWidget):
         self.replaceImageSlot = self.controller.replaceImageSlot
         self.setImageShape = self.controller.setImageShape
         self.update   = self.controller.update
+        self.transposeImages   = self.controller.transposeImages
         self.connect(self.controller,
                      qt.SIGNAL("RGBCorrelatorWidgetSignal"),
                      self.correlatorSignalSlot)

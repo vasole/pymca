@@ -122,17 +122,24 @@ def test():
 
     import getopt
     options=''
-    longoptions=["nativefiledialogs="]
+    longoptions=["nativefiledialogs=","transpose=", "fileindex="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)      
+    transpose=False
     for opt,arg in opts:
         if opt in '--nativefiledialogs':
             if int(arg):
                 PyMcaDirs.nativeFileDialogs=True
             else:
                 PyMcaDirs.nativeFileDialogs=False
+        elif opt in '--transpose':
+            if int(arg):
+                transpose=True
+        elif opt in '--fileindex':
+            if int(arg):
+                transpose=True
     filelist=args
     w = PyMcaPostBatch()
     w.layout().setMargin(11)
@@ -149,6 +156,8 @@ def test():
             w.addFileList(filelist)
     else:
         w.addFileList(filelist)
+    if transpose:
+        w.transposeImages()
     w.show()
     app.exec_()
 

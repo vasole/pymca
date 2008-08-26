@@ -555,6 +555,22 @@ class RGBCorrelatorWidget(qt.QWidget):
             self._imageDict[key]['image'].shape = shape
         self.tableWidget._update()
 
+    def transposeImages(self):
+        if self.__imageLength is None: return
+        shape=[self.__imageShape[0], self.__imageShape[1]]
+        shape.reverse()
+        length = 1
+        for value in shape:
+            length *= value
+        if length != self.__imageLength:
+            raise ValueError, "New length %d different of old length %d" % \
+                    (length, self.__imageLength)
+        self.__imageShape = (shape[0], shape[1])
+        self._updateSizeLabel()
+        for key in self._imageDict.keys():
+            self._imageDict[key]['image'] = self._imageDict[key]['image'].T 
+        self.tableWidget._update()        
+
     def _updateSizeLabel(self):
         if self.__imageLength is None:
             self.__sizeLabel.setText("No image set")
