@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -243,6 +243,7 @@ class PyMcaMatplotlibSaveImage:
 		     colormap=None,
                      origin='lower',
 		     contour='off',
+                     contourlevels=10,
                      xorigin=0.0,
                      yorigin=0.0,
                      xpixelsize=1.0,
@@ -265,6 +266,7 @@ class PyMcaMatplotlibSaveImage:
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
+                     'contourlevels':10,
                      'xpixelsize':xpixelsize,
                      'ypixelsize':ypixelsize,
                      'xorigin':xorigin,
@@ -411,7 +413,9 @@ class PyMcaMatplotlibSaveImage:
 	if self.config['contour'] != 'off':
 	    dataMin = self.imageData.min()
 	    dataMax = self.imageData.max()
-	    levels = (numpy.arange(10)) * (dataMax - dataMin)/10.
+	    ncontours = int(self.config['contourlevels'])
+	    levels = (numpy.arange(ncontours)) *\
+                     (dataMax - dataMin)/float(ncontours)
 	    if self.config['contour'] == 'filled':
 		self._contour = self.axes.contourf(self.imageData, levels,
 	             origin=origin,

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -297,6 +297,7 @@ class RightWidget(qt.QWidget):
                           'Colormap',
 			  'Colorbar',
 			  'Contour',
+                          'Contour Levels',
                           'Image Background',
                           'X Pixel Size',
                           'Y Pixel Size',
@@ -329,6 +330,8 @@ class RightWidget(qt.QWidget):
 		options = ['Nearest', 'Bilinear']
 	    elif self.labelList[i] in ['Contour']:
 		options = ['Off', 'Line']
+	    elif self.labelList[i] in ['Contour Levels']:
+		options = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]
 	    elif self.labelList[i] in ['Image Background']:
 		options = ['Black', 'White', 'Grey']
 	    if i <= self.labelList.index('Image Background'):
@@ -361,7 +364,7 @@ class RightWidget(qt.QWidget):
 
     def setPixmapMode(self, flag):
         if flag:
-            disable = ['Colormap','Contour', 'Colorbar']
+            disable = ['Colormap','Contour', 'Contour Levels', 'Colorbar']
         else:
             disable = ['Image Background']
 
@@ -420,6 +423,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     colormap=None,
                      origin='lower',
 		     contour='off',
+                     contourlevels=2,
                      extent=None,
                      xpixelsize=1.0,
                      ypixelsize=1.0,
@@ -449,6 +453,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
+                     'contourlevels':contourlevels,
                      'extent':extent,
                      'imagebackground':'black',
                      'xorigin':xorigin,
@@ -590,7 +595,9 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 	if self.config['contour'] != 'off':
 	    dataMin = self.imageData.min()
 	    dataMax = self.imageData.max()
-	    levels = (numpy.arange(10)) * (dataMax - dataMin)/10.
+            ncontours = int(self.config['contourlevels'])
+	    levels = (numpy.arange(ncontours)) *\
+                     (dataMax - dataMin)/float(ncontours)	    
 	    if self.config['contour'] == 'filled':
 		self._contour = self.axes.contourf(self.imageData, levels,
 	             origin=origin,
