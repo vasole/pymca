@@ -107,8 +107,25 @@ class specfilewrapper:
                 if line.startswith('$MEAS_TIM'):
                     line = f.readline().replace("\n","")
                     self.header.append(line)
-                    preset, elapsed = [int(i) for i in line.split()]
+                    preset, elapsed = [float(i) for i in line.split()]
                     self._qxasHeader['@CTIME'] = ['#@CTIME %f %f %f' % (preset, preset, elapsed)]                     
+                if line.startswith('$MCA_CAL'):
+                    try:
+                       line = f.readline().replace("\n","")
+                       self.header.append(line)
+                       if line.startswith('$'):
+                           continue
+                       line = f.readline().replace("\n","")
+                       self.header.append(line)
+                       if line.startswith('$'):
+                           continue
+                       coefficients = [float(i) for i in line.split()]
+                       if len(coefficients) == 2:
+                           coefficients.append(0.0)
+                       self._qxasHeader['@CALIB']=  ['#@CALIB %f  %f  %f' %\
+                                            (coefficients[0], coefficients[1], coefficients[2])]           
+                    except:
+                        pass
                 if line.startswith('$DATA:'):
                     line = f.readline().replace("\n","")
                     self.header.append(line)
