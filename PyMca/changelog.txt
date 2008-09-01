@@ -16,7 +16,7 @@ Allow overwriting ROI definition files.
 Two column ASCII files were not read in the ROI Imaging.
 
 Implement the ROI Imaging --fileindex=1 command line option to deal with the case 
-the EDF map was column oriented intead of row oriented.
+the EDF map was column oriented instead of row oriented.
 
 Add the possibility to transpose the resulting images of a batch fitting by
 passing the --fileindex=1 option to PyMcaPostBatch.
@@ -37,7 +37,7 @@ Prevent an endless loop in case of typing a bad matrix element in the concentrat
 
 Add the necessary scripts to build PyMca as a python library under windows.
 
-The calibration was not properly written when coverting to EDF file format.
+The calibration was not properly written when converting to EDF file format.
 
 VERSION 4.2.5
 
