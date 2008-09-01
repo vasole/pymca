@@ -1707,6 +1707,8 @@ class ScanWindow(qt.QWidget):
         newDataObject.y = [y]
         newDataObject.m = None
         newDataObject.info['legend'] = legend
+        newDataObject.info['SourceName'] = legend
+        newDataObject.info['Key'] = ""
         newDataObject.info['selectiontype'] = "1D"
         newDataObject.info['LabelNames'] = [xlabel, ylabel]
         newDataObject.info['selection'] = {'x':[0], 'y':[1]}
