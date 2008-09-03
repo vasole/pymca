@@ -1618,6 +1618,16 @@ class QEDFStackWidget(qt.QWidget):
                         return [], filterused
                     else:
                         return []
+                else:
+                    sample  = str(filelist[0])
+                    for filetype in fileTypeList:
+                        ftype = filetype.replace("(", "")
+                        ftype = ftype.replace(")", "")
+                        extensions = ftype.split()[2:]
+                        for extension in extensions:
+                            if sample.endswith(extension[-3:]):
+                                filterused = filetype
+                                break                                
             else:
                 fdialog = qt.QFileDialog(self)
                 fdialog.setModal(True)
