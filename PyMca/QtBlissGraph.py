@@ -2538,8 +2538,8 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.markersdict[marker]['marker'].detach()
                 del self.markersdict[marker]
         else:
-            for m in self.markerdict.keys():
-                if id(self.markerdict[m]) == id(marker):
+            for m in self.markersdict.keys():
+                if id(self.markersdict[m]) == id(marker):
                     marker.detach()
                     del self.markersdict[m]
                     break

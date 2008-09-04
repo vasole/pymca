@@ -852,8 +852,7 @@ class QEDFStackWidget(qt.QWidget):
                     #self.rgbWidget = RGBCorrelator.RGBCorrelator()
                     self.rgbWidget = RGBCorrelator.RGBCorrelator(self)
                     self.mainLayout.addWidget(self.rgbWidget)
-            return
-        if n == 2:
+        elif n == 2:
             self.tab = qt.QTabWidget(self)
             self.mcaWidget = McaWindow.McaWidget(vertical = False)
             if QTVERSION > '4.0.0':
@@ -867,6 +866,7 @@ class QEDFStackWidget(qt.QWidget):
                 self.rgbWidget = RGBCorrelator.RGBCorrelator()
                 self.tab.addTab(self.rgbWidget, "RGB Correlator")
             self.mainLayout.addWidget(self.tab)
+        self.mcaWidget.setMiddleROIMarkerFlag(True)
         
     def _toggleROISelectionMode(self):
         if self.roiGraphWidget.graph._selecting:

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -48,7 +48,10 @@ class ChangeLog(qt.QTextDocument):
 def test():
     app = qt.QApplication([])
     w = qt.QTextEdit()
-    log = ChangeLog(textfile='changelog.txt')
+    if len(sys.argv) > 1:
+        log = ChangeLog(textfile=sys.argv[-1])
+    else:
+        log = ChangeLog(textfile='changelog.txt')
     w.setDocument(log)
     w.show()
     app.exec_()

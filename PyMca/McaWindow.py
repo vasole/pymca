@@ -111,6 +111,8 @@ class McaWidget(qt.QWidget):
         self.roidict = None
         self.currentroi = None
         self.roimarkers     = [-1,-1]
+        self._middleRoiMarker = -1
+        self._middleRoiMarkerFlag = False
         self.elementmarkers = []
         self.peakmarker     = None
         self.dataObjectsDict = {}
@@ -1230,6 +1232,7 @@ class McaWidget(qt.QWidget):
                 self.calibration = dict['box'][1]
                 self.graph.clearMarkers()
                 self.roimarkers = [-1,-1]
+                self._middleRoiMarker = -1
                 self.refresh()
                 self.graph.zoomReset()
                 
@@ -1470,6 +1473,14 @@ class McaWidget(qt.QWidget):
             fromdata = xmin+ 0.25 * (xmax - xmin)
             todata   = xmin+ 0.75 * (xmax - xmin)
             self.graph.clearMarkers()
+            self._middleRoiMarker = -1
+            if self._middleRoiMarkerFlag:
+                pos = 0.5 * (fromdata + todata)
+                self._middleRoiMarker = self.graph.insertx1marker(pos,\
+                                                        1.1,
+                                                        label = ' ')
+                self.graph.setmarkercolor(self._middleRoiMarker,'yellow' )
+                self.graph.setmarkerfollowmouse(self._middleRoiMarker, 1)
             self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
                                         label = 'ROI min')
             self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
@@ -1478,6 +1489,7 @@ class McaWidget(qt.QWidget):
             self.graph.setmarkercolor(self.roimarkers[1],'blue')
             self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
             self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
+
             self.graph.enablemarkermode()
             self.graph.replot()
             #if self.roilist is None:
@@ -1507,6 +1519,7 @@ class McaWidget(qt.QWidget):
         elif dict['event'] == 'DelROI':
             self.graph.clearMarkers()
             self.roimarkers = [-1, -1]
+            self._middleRoiMarker = -1
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             self.currentroi = self.roidict.keys()[0]
             self.roiwidget.fillfromroidict(roilist=self.roilist,
@@ -1520,6 +1533,7 @@ class McaWidget(qt.QWidget):
         elif dict['event'] == 'ResetROI':
             self.graph.clearMarkers()
             self.roimarkers = [-1, -1]
+            self._middleRoiMarker = -1
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             self.currentroi = self.roidict.keys()[0]
             self.roiwidget.fillfromroidict(roilist=self.roilist,
@@ -1556,14 +1570,34 @@ class McaWidget(qt.QWidget):
                 #set the follow mouse propierty
                 self.graph.setmarkerfollowmouse(self.roimarkers[1],0)
                 self.graph.setmarkerfollowmouse(self.roimarkers[0],0)
+                #deal with the middle marker
+                self.graph.removeMarker(self._middleRoiMarker)
+                self._middleRoiMarker = -1
+                #disable marker mode
                 self.graph.disablemarkermode()
             else:
+                if self._middleRoiMarkerFlag:
+                    pos = 0.5 * (fromdata + todata)                        
+                    if self._middleRoiMarker == -1:
+                        self._middleRoiMarker = self.graph.insertx1marker(pos,\
+                                                            1.1,
+                                                            label = ' ')
+                    else:
+                        self.graph.setx1markerpos(self._middleRoiMarker,
+                                                  pos)
+                else:
+                    if self._middleRoiMarker != -1:
+                        self.graph.removeMarker(self._middleRoiMarker)
                 #select the colors
                 self.graph.setmarkercolor(self.roimarkers[0],'blue' )
                 self.graph.setmarkercolor(self.roimarkers[1],'blue' )
                 #set the follow mouse propierty
                 self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
                 self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
+                #middle marker
+                if self._middleRoiMarker != -1:
+                    self.graph.setmarkercolor(self._middleRoiMarker,'yellow' )
+                    self.graph.setmarkerfollowmouse(self._middleRoiMarker, 1)
                 self.graph.enablemarkermode()
             if dict['colheader'] in ['From', 'To']:
                 dict ={}
@@ -1624,11 +1658,32 @@ class McaWidget(qt.QWidget):
             if dict['marker'] == self.roimarkers[0]:
                 self.roidict[self.currentroi]['from'] = dict['x']
             elif dict['marker'] == self.roimarkers[1]:
-                self.roidict[self.currentroi]['to'] = dict['x']            
+                self.roidict[self.currentroi]['to'] = dict['x']
+            elif dict['marker'] == self._middleRoiMarker:
+                fromdata = self.roidict[self.currentroi]['from']
+                todata = self.roidict[self.currentroi]['to']
+                pos = 0.5 * (fromdata + todata)
+                delta = dict['x'] - pos
+                self.roidict[self.currentroi]['to'] += delta
+                self.roidict[self.currentroi]['from'] += delta
+                self.graph.setx1markerpos(self.roimarkers[0],fromdata)
+                self.graph.setx1markerpos(self.roimarkers[1],todata )
             else:
                 pass
+            
             self.roiwidget.fillfromroidict(roilist=self.roilist,
                                            roidict=self.roidict)
+
+            if self._middleRoiMarker != -1:
+                key = self.currentroi
+                ddict = {}
+                ddict['event'] = 'selectionChanged'
+                ddict['key'] = key
+                ddict['roi'] = {}
+                ddict['roi']['from'] = self.roidict[key]['from' ]
+                ddict['roi']['to'] = self.roidict[key]['to' ]
+                ddict['colheader'] = 'Raw Counts'
+                self.__anasignal(ddict)
             dict ={}
             dict['event']  = "SetActiveCurveEvent"
             dict['legend'] = self.graph.getactivecurve(justlegend=1)
@@ -2034,6 +2089,7 @@ class McaWidget(qt.QWidget):
             del self.dataObjectsDict[key]
         self.graph.clearMarkers()
         self.roimarkers=[-1,-1]
+        self._middleRoiMarker = -1
         self._addSelection(selection)
 
     if QTVERSION < '4.0.0':
@@ -2128,7 +2184,27 @@ class McaWidget(qt.QWidget):
             mcacurrent = info['McaDet']
             header     = info['Header']
             calib      = info['McaCalib']
-            
+
+    def setMiddleROIMarkerFlag(self, flag=None):
+        if flag is None:
+            flag = False
+        if flag != self._middleRoiMarkerFlag:
+            self._middleRoiMarkerFlag = flag
+            if self.currentroi is None:
+                return
+            key = self.currentroi
+            if key not in self.roidict.keys():
+                return
+            ddict = {}
+            ddict['event'] = 'selectionChanged'
+            ddict['key'] = key
+            ddict['roi'] = {}
+            ddict['roi']['from'] = self.roidict[key]['from' ]
+            ddict['roi']['to'] = self.roidict[key]['to' ]
+            ddict['colheader'] = 'Raw Counts'
+            self.__anasignal(ddict)
+
+
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
