@@ -211,8 +211,8 @@ class smart_install_scripts(install_scripts):
                     log.info("changing mode of %s to %o", file, mode)
                     os.chmod(file, mode)
    
-description = "GPL License - Please read LICENSE.GPL for details"
-long_description = """
+description = "GPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
+long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra.Graphical user interface (GUI) and batch processing capabilities provided
 """
 
 distrib = setup(name="PyMca",
@@ -221,7 +221,7 @@ distrib = setup(name="PyMca",
                 author = "V. Armando Sole",
                 author_email="sole@esrf.fr",
                 license= "GPL - Please read LICENSE.GPL for details",
-                url = "http://sourceforge.net/projects/pymca",
+                url = "http://pymca.sourceforge.net",
                 long_description = long_description,
                 packages = packages,
                 platforms='any',
