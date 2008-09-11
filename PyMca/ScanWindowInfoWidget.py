@@ -309,7 +309,7 @@ class GraphInfoWidget(qt.QWidget):
             ymin  = min(ydata)
             ymean = sum(ydata) / len(ydata)
             if len(ydata) > 1:
-                ystd  = Numeric.sqrt(sum((ydata-ymean)*(ydata-ymean))/(len(ydata)-1))
+                ystd  = Numeric.sqrt(sum((ydata-ymean)*(ydata-ymean))/len(ydata))
             else:
                 ystd = 0
             delta   = ymax - ymin
