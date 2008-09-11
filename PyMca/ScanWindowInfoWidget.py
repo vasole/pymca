@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -23,7 +23,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 if 'qt' not in sys.modules:
@@ -309,7 +309,7 @@ class GraphInfoWidget(qt.QWidget):
             ymin  = min(ydata)
             ymean = sum(ydata) / len(ydata)
             if len(ydata) > 1:
-                ystd  = Numeric.sqrt(sum((ydata-ymean)*(ydata-ymean))/len(ydata))
+                ystd  = Numeric.sqrt(sum((ydata-ymean)*(ydata-ymean))/(len(ydata)-1))
             else:
                 ystd = 0
             delta   = ymax - ymin
