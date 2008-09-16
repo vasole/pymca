@@ -2827,7 +2827,7 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=0.3990, minrate=0.00
                     if (xenergy > minenergy) or (n == 0) :
                         dict[transition] = {}
                         dict[rays].append(transition)
-                        dict[transition]['energy'] = getxrayenergy(ele,transition)
+                        dict[transition]['energy'] = xenergy
                         dict[transition]['rate']   = rate
                         cum += rate
                         if rays not in dict['rays']:
