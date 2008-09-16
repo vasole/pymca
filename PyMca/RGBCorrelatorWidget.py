@@ -100,7 +100,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         #self.__rowLineEdit = qt.QLineEdit(self.labelWidget)
         #self.__columnLineEdit = qt.QLineEdit(self.labelWidget)
         self.__imageResizeButton = qt.QPushButton(self.labelWidget)
-        self.__imageResizeButton.setText("Resize")
+        self.__imageResizeButton.setText("Reshape")
 
         hbox.mainLayout.addWidget(self.loadButton)
         hbox.mainLayout.addWidget(self.saveButton)
@@ -910,7 +910,7 @@ class ImageShapeDialog(qt.QDialog):
             if QTVERSION < '4.0.0':
                 self.setCaption("Resize %d x %d image" % (shape[0], shape[1]))
             else:
-                self.setWindowTitle("Resize %d x %d image" % (shape[0], shape[1]))
+                self.setWindowTitle("Reshape %d x %d image" % (shape[0], shape[1]))
         label2 = MyQLabel(self, bold = False, color= qt.Qt.black)
         label2.setText("Number of columns = ")
         self.cancelButton = qt.QPushButton(self)
