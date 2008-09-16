@@ -73,6 +73,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                 if MATPLOTLIB:
                     self._saveMenu.addAction(qt.QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
+                    
         self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
         infotext = "Crop image to the currently zoomed window"
         self.cropButton = self.graphWidget._addToolButton(\
@@ -81,6 +82,18 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                                         infotext,
                                         toggle = False,
                                         position = 12)
+
+        self.flipIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
+
+        infotext = "Flip image and data, not the scale."
+        self.graphWidget.hFlipToolButton.setToolTip('Flip image')
+        self._flipMenu = qt.QMenu()
+        self._flipMenu.addAction(qt.QString("Flip Image and Vertical Scale"),
+                                 self.__hFlipIconSignal)
+        self._flipMenu.addAction(qt.QString("Flip Image Left-Right"),
+                                 self._flipLeftRight)
+        self._flipMenu.addAction(qt.QString("Flip Image Up-Down"),
+                                 self._flipUpDown)        
 
     def sizeHint(self):
         return qt.QSize(400, 400)
@@ -129,6 +142,62 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         ###self._imageDict[label] = self.getQImage()            
         ###self.imageList.append(self.getImageData())
         self._showImage(index)
+
+    def _flipIconChecked(self):
+        if not self.graphWidget.graph.yAutoScale:
+            qt.QMessageBox.information(self, "Open",
+                    "Please set Y Axis to AutoScale first")
+            return
+        if not self.graphWidget.graph.xAutoScale:
+            qt.QMessageBox.information(self, "Open",
+                    "Please set X Axis to AutoScale first")
+            return
+        if self.imageList is None:
+            return
+        if self._imageDict is None:
+            return
+        if self.imageNames is None:
+            return
+        self._flipMenu.exec_(self.cursor().pos())
+
+    def _hFlipIconSignal(self):
+        if not self.graphWidget.graph.yAutoScale:
+            qt.QMessageBox.information(self, "Open",
+                    "Please set Y Axis to AutoScale first")
+            return
+        if not self.graphWidget.graph.xAutoScale:
+            qt.QMessageBox.information(self, "Open",
+                    "Please set X Axis to AutoScale first")
+            return
+        if self.getQImage is None:
+            return
+        if self.imageNames is None:
+            #just setImage data used
+            #I use the default flip
+            self.__hFlipIconSignal()
+            return
+        if self.imageList is None:
+            return
+        if self._imageDict is None:
+            return
+        self._flipMenu.exec_(self.cursor().pos())
+
+    def __hFlipIconSignal(self):
+        MaskImageWidget.MaskImageWidget._hFlipIconSignal(self)
+
+    def _flipUpDown(self):
+        for i in range(len(self.imageList)):
+            label = self.imageNames[i]
+            self._imageDict[label] = self._imageDict[label].mirrored(0, 1)
+            self.imageList[i] = numpy.flipud(self.getImageData())
+        self.showImage(self.slider.value())
+
+    def _flipLeftRight(self):
+        for i in range(len(self.imageList)):
+            label = self.imageNames[i]
+            self._imageDict[label] = self._imageDict[label].mirrored(1, 0)
+            self.imageList[i] = numpy.fliplr(self.getImageData())
+        self.showImage(self.slider.value())
 
     def _showImage(self, index):
         if len(self.imageList):
