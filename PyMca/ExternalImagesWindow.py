@@ -29,6 +29,7 @@ import PyQt4.Qt as qt
 from PyMca_Icons import IconDict
 import MaskImageWidget
 import sys
+import numpy
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
 
