@@ -243,6 +243,8 @@ class PyMcaMatplotlibSaveImage:
 		     colormap=None,
                      origin='lower',
 		     contour='off',
+		     contourlabels='on',
+		     contourlabelformat='%.3f',
                      contourlevels=10,
                      xorigin=0.0,
                      yorigin=0.0,
@@ -266,6 +268,8 @@ class PyMcaMatplotlibSaveImage:
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
+		     'contourlabels':contourlabels,
+		     'contourlabelformat':contourlabelformat,
                      'contourlevels':10,
                      'xpixelsize':xpixelsize,
                      'ypixelsize':ypixelsize,
@@ -427,7 +431,9 @@ class PyMcaMatplotlibSaveImage:
                      cmap=ccmap,
 	             linewidths=2,
                      extent=extent)
-	    self.axes.clabel(self._contour, fontsize=9, inline=1)
+	    if self.config['contourlabels'] != 'off':                
+                self.axes.clabel(self._contour, fontsize=9,
+                         inline=1, fmt=self.config['contourlabelformat'])
             if 0 and  self.config['colorbar'] is not None:
                 if barorientation == 'horizontal':
                     barorientation = 'vertical'

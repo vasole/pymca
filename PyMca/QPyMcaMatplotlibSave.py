@@ -297,6 +297,8 @@ class RightWidget(qt.QWidget):
                           'Colormap',
 			  'Colorbar',
 			  'Contour',
+			  'Contour Labels',
+			  'Contour Label Format',
                           'Contour Levels',
                           'Image Background',
                           'X Pixel Size',
@@ -330,6 +332,10 @@ class RightWidget(qt.QWidget):
 		options = ['Nearest', 'Bilinear']
 	    elif self.labelList[i] in ['Contour']:
 		options = ['Off', 'Line']
+	    elif self.labelList[i] in ['Contour Labels']:
+		options = ['On', 'Off']
+	    elif self.labelList[i] in ['Contour Label Format']:
+		options = ['%.3f', '%.2f', '%.1f', '%.0f', '%.1e', '%.2e', '%.3e']
 	    elif self.labelList[i] in ['Contour Levels']:
 		options = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]
 	    elif self.labelList[i] in ['Image Background']:
@@ -364,7 +370,9 @@ class RightWidget(qt.QWidget):
 
     def setPixmapMode(self, flag):
         if flag:
-            disable = ['Colormap','Contour', 'Contour Levels', 'Colorbar']
+            disable = ['Colormap','Contour', 'Contour Labels',
+                       'Contour Label Format',
+                       'Contour Levels', 'Colorbar']
         else:
             disable = ['Image Background']
 
@@ -423,6 +431,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     colormap=None,
                      origin='lower',
 		     contour='off',
+                     contourlabels='on',
+                     contourlabelformat='%.3f',                 
                      contourlevels=2,
                      extent=None,
                      xpixelsize=1.0,
@@ -453,6 +463,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
+		     'contourlabels':contourlabels,
+                     'contourlabelformat':contourlabelformat,
                      'contourlevels':contourlevels,
                      'extent':extent,
                      'imagebackground':'black',
@@ -609,7 +621,9 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      cmap=ccmap,
 	             linewidths=2,
                      extent=extent)
-	    self.axes.clabel(self._contour, fontsize=9, inline=1)
+	    if self.config['contourlabels'] != 'off':
+                self.axes.clabel(self._contour, fontsize=9,
+                        inline=1, fmt=self.config['contourlabelformat'])
             if 0 and  self.config['colorbar'] is not None:
                 if barorientation == 'horizontal':
                     barorientation = 'vertical'
