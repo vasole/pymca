@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 if 'qt' not in sys.modules:
@@ -189,6 +189,17 @@ class SpecFileDataInfo(qt.QTabWidget):
             else:
                 wid.insertHtml(string.join(text, "<BR>"))
                 self.addTab(wid, "File Header")
+
+    def closeEvent(self, event):
+        ddict = {}
+        ddict['event'] = "SpecFileDataInfoClosed"
+        ddict['id'] = id(self)
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("SpecFileDataInfoSignal"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("SpecFileDataInfoSignal"),ddict)
+        qt.QTabWidget.closeEvent(self, event)
+
 
 def test():
     import SpecFileLayer

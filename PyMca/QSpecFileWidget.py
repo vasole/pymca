@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################
 from QSelectorWidget import qt
 import QSelectorWidget
@@ -46,6 +46,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.autoAdd     = True
         self._oldCntSelection = None
         QSelectorWidget.QSelectorWidget.__init__(self, parent)
+        self.dataInfoWidgetDict = {}
 
     def _build(self):        
         #self.layout= qt.QVBoxLayout(self)
@@ -119,10 +120,15 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             # --- signal handling
             self.connect(self.list, qt.SIGNAL("selectionChanged()"), self.__selectionChanged)
             if QTVERSION > '3.0.0':
-                self.connect(self.list, qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
+                self.connect(self.list,
+                    qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"),
+                    self.__contextMenu)
             else:
-                self.connect(self.list, qt.SIGNAL("rightButtonPressed(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
-            self.connect(self.list, qt.SIGNAL("doubleClicked(QListViewItem *)"), self.__doubleClicked)
+                self.connect(self.list,
+                    qt.SIGNAL("rightButtonPressed(QListViewItem *, const QPoint &, int)"),
+                    self.__contextMenu)
+            self.connect(self.list, qt.SIGNAL("doubleClicked(QListViewItem *)"),
+                    self.__doubleClicked)
             """
             self.connect(self.cntTable,
                          qt.PYSIGNAL('SpecCntTableSignal'),
@@ -131,8 +137,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
             # --- context menu
             self.menu= qt.QPopupMenu(self.list)
-            id= self.menu.insertItem("Show scan header")
-            self.menu.connectItem(id, self.__showScanInfo)
+            idd= self.menu.insertItem("Show scan header")
+            self.menu.connectItem(idd, self.__showScanInfo)
         else:
             labels = ["X", "S#", "Command", "Points", "Nb. Mca"]
             ncols  = len(labels)
@@ -437,8 +443,27 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if DEBUG:
             print "Scan information:"
         info = self.data.getDataObject(self.scans[idx]).info
-        self.dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
-        self.dataInfoWidget.show()
+        dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
+        if info.has_key("Header"):
+            if QTVERSION > '4.0.0':
+                dataInfoWidget.setWindowTitle(info['Header'][0])
+            else:
+                dataInfoWidget.setCaption(info['Header'][0])
+        dataInfoWidget.show()
+        wid = id(dataInfoWidget)
+        self.dataInfoWidgetDict[wid] = dataInfoWidget
+        if QTVERSION < '4.0.0':
+            self.connect(dataInfoWidget,
+                     qt.PYSIGNAL('SpecFileDataInfoSignal'),
+                     self._dataInfoClosed)
+        else:
+            self.connect(dataInfoWidget,
+                     qt.SIGNAL('SpecFileDataInfoSignal'),
+                     self._dataInfoClosed)
+
+    def _dataInfoClosed(self, ddict):
+        if ddict['event'] == "SpecFileDataInfoClosed":
+            del self.dataInfoWidgetDict[ddict['id']]
 
     def _addClicked(self):
         if DEBUG: print "Overwritten _addClicked method"
