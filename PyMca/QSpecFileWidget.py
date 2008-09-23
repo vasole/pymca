@@ -442,7 +442,19 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 idx = self.menu_idx
         if DEBUG:
             print "Scan information:"
-        info = self.data.getDataObject(self.scans[idx]).info
+        try:
+            info = self.data.getDataObject(self.scans[idx]).info
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            text = "Error: %s\n accessing scan information." % (sys.exc_info()[1])
+            msg.setText(text)
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            return
+            
         dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
         if info.has_key("Header"):
             if QTVERSION > '4.0.0':
