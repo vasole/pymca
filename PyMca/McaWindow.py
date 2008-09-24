@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.53 $"
+__revision__ = "$Revision: 1.54 $"
 import sys
 import time
 import QtBlissGraph
@@ -160,6 +160,7 @@ class McaWidget(qt.QWidget):
         self.graph.xlabel('Channel')
         self.graph.ylabel('Counts')
         self.graph.canvas().setMouseTracking(1)
+        self.graph.setPanningMode(True)
         self.graph.setCanvasBackground(qt.Qt.white)
         self.gridLevel = 1
         self.graph.showGrid()

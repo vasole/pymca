@@ -717,6 +717,7 @@ class ScanWindow(qt.QWidget):
         self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True,
                                                legendrename=True,
                                                usecrosscursor=True)
+        self.graph.setPanningMode(True)
         self.mainLayout.addWidget(self.graph)
 
         self.graphBottom = qt.QWidget(self)

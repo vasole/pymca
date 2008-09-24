@@ -495,6 +495,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.onlyoneactive = 1
         self.xAutoScale = True
         self.yAutoScale = True
+        self.panningMode = False
         #connections and functions
         self.zoomStack  = []
         self.zoomStack2 = []
@@ -555,6 +556,9 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.connect(self.picker,
                      qt.SIGNAL('MouseReleased(const QMouseEvent&)'),
                      self.onMouseReleased)
+                self.connect(self.picker,
+                     qt.SIGNAL('PanningSignal'),
+                     self.onPanningSignal)
                 self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
                                               Qwt.QwtPicker.RectSelection)
 
@@ -744,6 +748,12 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             return False
 
+    def setPanningMode(self, flag=False):
+        self.panningMode = flag
+
+    def isPanningModeEnabled(self):
+        return self.panningMode
+
     def enableSelection(self, flag=True):
         self._selecting    = flag
         if flag: self.__zoomEnabled = False
@@ -863,6 +873,53 @@ class QtBlissGraph(qwt.QwtPlot):
         if not QWTVERSION4:
             self.plotImage.detach()
         self.plotImage = None
+
+    def onPanningSignal(self, ddict):
+        if not self.panningMode:
+            return
+        if len(self.zoomStack) == 0:
+            return
+        xmin, xmax = self.getX1AxisLimits()
+        ymin, ymax = self.getY1AxisLimits()
+        deltaX = 0.1 * (xmax - xmin)
+        deltaY = 0.1 * (ymax - ymin)
+        maxX = max(self.zoomStack[0][0], self.zoomStack[0][1]) 
+        minX = min(self.zoomStack[0][0], self.zoomStack[0][1]) 
+        maxY = max(self.zoomStack[0][2], self.zoomStack[0][3]) 
+        minY = min(self.zoomStack[0][2], self.zoomStack[0][3])
+        if ddict['direction'] == 'up':
+            ymin = ymin + deltaY
+            ymax = ymax + deltaY
+            if (ymax > maxY):
+                ymax = maxY
+            if (ymin >= maxY):
+                return
+            self.setY1AxisLimits(ymin, ymax)
+        elif ddict['direction'] == 'down':
+            ymin = ymin - deltaY
+            ymax = ymax - deltaY
+            if (ymin < minY):
+                ymin = minY
+            if (ymax <= minY):
+                return
+            self.setY1AxisLimits(ymin, ymax)
+        elif ddict['direction'] == 'right':
+            xmin = xmin + deltaX
+            xmax = xmax + deltaX
+            if (xmax > maxX):
+                xmax = maxX
+            if (xmin >= maxX):
+                return
+            self.setX1AxisLimits(xmin, xmax)
+        elif ddict['direction'] == 'left':
+            xmin = xmin - deltaX
+            xmax = xmax - deltaX
+            if (xmin < minX):
+                xmin = minX
+            if (xmax <= minX):
+                return
+            self.setX1AxisLimits(xmin, xmax)
+        self.replot()
     
     def onMouseMoved(self,event):
         #method to be overwritten
@@ -1071,6 +1128,7 @@ class QtBlissGraph(qwt.QwtPlot):
         #method to be overwritten
         if DEBUG:
             print "onMouseRealeased, event = ",e
+
         if qt.Qt.LeftButton == e.button():
             #this is to solve a strange problem under darwin platform
             #where the signals were sent twice
@@ -1082,16 +1140,16 @@ class QtBlissGraph(qwt.QwtPlot):
                 ypixel = e.pos().y()
                 x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
                 y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
-                dict = {}
-                dict['event']    = "MouseClick"
-                dict['x']        = x
-                dict['xpixel']   = xpixel
-                dict['y']        = y
-                dict['ypixel']   = ypixel
+                ddict = {}
+                ddict['event']    = "MouseClick"
+                ddict['x']        = x
+                ddict['xpixel']   = xpixel
+                ddict['y']        = y
+                ddict['ypixel']   = ypixel
                 if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(dict,))
+                    self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(ddict,))
                 else:
-                    self.emit(qt.SIGNAL("QtBlissGraphSignal"),(dict))
+                    self.emit(qt.SIGNAL("QtBlissGraphSignal"),(ddict))
             if self._zooming:
                 xmin0 = min(self.xpos, e.pos().x())
                 xmax0 = max(self.xpos, e.pos().x())
@@ -1117,7 +1175,6 @@ class QtBlissGraph(qwt.QwtPlot):
                     xmax = xmin + xsize -1
                     ymin = int(0.5*(ymin+ymax)-0.5*ysize)
                     ymax = ymin + round(ysize) -1
-                    
                 self.zoomStack.append(self.zoomState)
                 self.zoomState = (xmin, xmax, ymin, ymax)
                 self.enableOutline(0)
@@ -1143,21 +1200,21 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.zoomState2 = (xmin, xmax, ymin, ymax)
                 self.setAutoReplot(autoreplot)
                 self.replot()                
-                dict = {}
-                dict['event']    = "MouseZoom"
-                dict['xmin']        = min(xmin,xmax)
-                dict['xpixel_min']   = min(xmin0,xmax0)
-                dict['ymin']        = min(ymin,ymax)
-                dict['ypixel_min']   = min(ymin0,ymax0)
-                dict['xmax']        = max(xmin,xmax)
-                dict['xpixel_max']   = max(xmin0,xmax0)
-                dict['ymax']        = max(ymin,ymax)
-                dict['ypixel_max']   = max(ymin0,ymax0)
+                ddict = {}
+                ddict['event']    = "MouseZoom"
+                ddict['xmin']        = min(xmin,xmax)
+                ddict['xpixel_min']  = min(xmin0,xmax0)
+                ddict['ymin']        = min(ymin,ymax)
+                ddict['ypixel_min']  = min(ymin0,ymax0)
+                ddict['xmax']        = max(xmin,xmax)
+                ddict['xpixel_max']  = max(xmin0,xmax0)
+                ddict['ymax']        = max(ymin,ymax)
+                ddict['ypixel_max']  = max(ymin0,ymax0)
 
                 if qt.qVersion() < '4.0.0':
-                    self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(dict,))
+                    self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(ddict,))
                 else:
-                    self.emit(qt.SIGNAL("QtBlissGraphSignal"),(dict))
+                    self.emit(qt.SIGNAL("QtBlissGraphSignal"),(ddict))
             elif self._selecting:
                 xmin0 = min(self.xpos, e.pos().x())
                 xmax0 = max(self.xpos, e.pos().x())
@@ -1198,29 +1255,29 @@ class QtBlissGraph(qwt.QwtPlot):
                         elif marker not in self.markersdict.keys():
                             print "Wrong Marker selection"
                         else:
-                            dict = {}
+                            ddict = {}
                             if self.markersdict[marker]['followmouse']:
-                                dict['event']    = "markerMoved"
+                                ddict['event']    = "markerMoved"
                             else:
-                                dict['event']    = "markerSelected"
-                            dict['distance'] = distance
-                            dict['marker']   = marker
+                                ddict['event']    = "markerSelected"
+                            ddict['distance'] = distance
+                            ddict['marker']   = marker
                             if QWTVERSION4:
                                 x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
                                 y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
                             else:
                                 x = self.markersdict[marker]['marker'].xValue()
                                 y = self.markersdict[marker]['marker'].yValue()
-                            dict['x']        = x
-                            dict['xpixel']   = xpixel
-                            dict['y']        = y
-                            dict['ypixel']   = ypixel
+                            ddict['x']        = x
+                            ddict['xpixel']   = xpixel
+                            ddict['y']        = y
+                            ddict['ypixel']   = ypixel
                             if qt.qVersion() < '4.0.0':
                                 self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),
-                                          (dict,))
+                                          (ddict,))
                             else:
                                 self.emit(qt.SIGNAL("QtBlissGraphSignal"),
-                                          (dict))
+                                          (ddict))
                     #self.canvas().setCursor(qt.QCursor(qt.QCursor.CrossCursor))
                     #self.canvas().setCursor(qt.QCursor(self.__oldcursor))
                     else:
@@ -2912,8 +2969,14 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
 
 if qwt.QWT_VERSION_STR[0] > '4':
     class MyPicker(Qwt.QwtPicker):
+        def __init__(self, parent):
+            self._keyPressed = None
+            self.__mouseToBeMoved = True
+            Qwt.QwtPicker.__init__(self, parent)
+            
         def widgetMousePressEvent(self, event):
-            if DEBUG:print "mouse press"
+            if DEBUG:
+                print ("mouse press")
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("MousePressed(const QMouseEvent&)"),
                           (event,))
@@ -2922,7 +2985,8 @@ if qwt.QWT_VERSION_STR[0] > '4':
             Qwt.QwtPicker.widgetMousePressEvent(self, event)
 
         def widgetMouseReleaseEvent(self, event):
-            if DEBUG:print "mouse release"
+            if DEBUG:
+                print ("mouse release")
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("MouseReleased(const QMouseEvent&)"),
                           (event,))
@@ -2931,7 +2995,8 @@ if qwt.QWT_VERSION_STR[0] > '4':
             Qwt.QwtPicker.widgetMouseReleaseEvent(self, event)
 
         def widgetMouseDoubleClickEvent(self, event):
-            if DEBUG:print "mouse doubleclick"
+            if DEBUG:
+                print ("mouse doubleclick")
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("MouseDoubleClicked(const QMouseEvent&)"),
                           (event,))
@@ -2940,12 +3005,49 @@ if qwt.QWT_VERSION_STR[0] > '4':
             Qwt.QwtPicker.widgetMouseDoubleClickEvent(self, event)
 
         def widgetMouseMoveEvent(self, event):
-            if DEBUG:print "mouse move"
+            if DEBUG:
+                print ("mouse move")
+            self.__mouseToBeMoved = False
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("MouseMoved(const QMouseEvent&)"), (event,))
             else:
                 self.emit(qt.SIGNAL("MouseMoved(const QMouseEvent&)"), event)
             Qwt.QwtPicker.widgetMouseMoveEvent(self, event)
+
+        def widgetKeyPressEvent(self, event):
+            if DEBUG:
+                print ("Key Pressed")
+            self._keyPressed = event.key()
+            if self._keyPressed in [qt.Qt.Key_Left,
+                                    qt.Qt.Key_Right,
+                                    qt.Qt.Key_Up,
+                                    qt.Qt.Key_Down]:
+                self.__mouseToBeMoved = True
+            Qwt.QwtPicker.widgetKeyPressEvent(self, event)
+            
+        def widgetKeyReleaseEvent(self, event):
+            if DEBUG:
+                print ("Key Released")
+
+            if self.__mouseToBeMoved:
+                if self._keyPressed in [qt.Qt.Key_Left,
+                                        qt.Qt.Key_Right,
+                                        qt.Qt.Key_Up,
+                                        qt.Qt.Key_Down]:
+                    ddict = {}
+                    ddict['event'] = 'PanningSignal'
+                    if self._keyPressed == qt.Qt.Key_Left:
+                        ddict['direction'] = 'left'
+                    elif self._keyPressed == qt.Qt.Key_Right:
+                        ddict['direction'] = 'right'
+                    elif self._keyPressed == qt.Qt.Key_Up:
+                        ddict['direction'] = 'up'
+                    elif self._keyPressed == qt.Qt.Key_Down:
+                        ddict['direction'] = 'down'
+                    self.emit(qt.SIGNAL("PanningSignal"), ddict)
+            self._keyPressed = None
+            self.__mouseToBeMoved = False
+            Qwt.QwtPicker.widgetKeyReleaseEvent(self, event)
 
     class MyQwtPlotCurve(Qwt.QwtPlotCurve):
         def __init__(self, key):
