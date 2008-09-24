@@ -3044,7 +3044,10 @@ if qwt.QWT_VERSION_STR[0] > '4':
                         ddict['direction'] = 'up'
                     elif self._keyPressed == qt.Qt.Key_Down:
                         ddict['direction'] = 'down'
-                    self.emit(qt.SIGNAL("PanningSignal"), ddict)
+                    if QTVERSION < '4.0.0':
+                        self.emit(qt.SIGNAL("PanningSignal"), (ddict,))
+                    else:
+                        self.emit(qt.SIGNAL("PanningSignal"), ddict)
             self._keyPressed = None
             self.__mouseToBeMoved = False
             Qwt.QwtPicker.widgetKeyReleaseEvent(self, event)
