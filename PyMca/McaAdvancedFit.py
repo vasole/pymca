@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.63 $"
+__revision__ = "$Revision: 1.64 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 if 'qt' not in sys.modules:
@@ -2448,6 +2448,7 @@ class McaGraphWindow(qt.QWidget):
         self.toolbar.layout.setMargin(0)
         self.toolbar.layout.setSpacing(0)
         self.graph   = QtBlissGraph.QtBlissGraph(self)
+        self.graph.setPanningMode(True)
         layout.addWidget(self.toolbar)
         layout.addWidget(self.graph)
         self.initToolBar()
