@@ -534,6 +534,9 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.connect(self.picker,
                      qt.PYSIGNAL('MouseReleased(const QMouseEvent&)'),
                      self.onMouseReleased)
+                self.connect(self.picker,
+                     qt.PYSIGNAL('PanningSignal'),
+                     self.onPanningSignal)
                 self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
                                               Qwt.QwtPicker.RectSelection)
 
@@ -3045,7 +3048,7 @@ if qwt.QWT_VERSION_STR[0] > '4':
                     elif self._keyPressed == qt.Qt.Key_Down:
                         ddict['direction'] = 'down'
                     if QTVERSION < '4.0.0':
-                        self.emit(qt.SIGNAL("PanningSignal"), (ddict,))
+                        self.emit(qt.PYSIGNAL("PanningSignal"), (ddict,))
                     else:
                         self.emit(qt.SIGNAL("PanningSignal"), ddict)
             self._keyPressed = None
