@@ -102,6 +102,10 @@ class QXTube(qt.QWidget):
         wele            = d["window"]
         wdensity        = d["windowdensity"]
         wthickness      = d["windowthickness"]
+        fele            = d["filter1"]
+        fdensity        = d["filter1density"]
+        fthickness      = d["filter1thickness"]
+        filterlist      =[[fele, fdensity, fthickness]]
         alphae          = d["alphae"]
         alphax          = d["alphax"]
 
@@ -122,14 +126,16 @@ class QXTube(qt.QWidget):
                                              [wele, wdensity, wthickness],
                                              alphae=alphae, alphax=alphax,
                                              transmission=0,
-                                             targetthickness=anodethickness)
+                                             targetthickness=anodethickness,
+                                             filterlist=filterlist)
 
             continuumT = XRayTubeEbel.continuumEbel([anode, anodedensity, anodethickness],
                                              voltage, e,
                                              [wele, wdensity, wthickness],
                                              alphae=alphae, alphax=alphax,
                                              transmission=1,
-                                             targetthickness=anodethickness)
+                                             targetthickness=anodethickness,
+                                             filterlist=filterlist)
 
 
 
@@ -142,7 +148,8 @@ class QXTube(qt.QWidget):
                                              [wele, wdensity, wthickness],
                                              alphae=alphae, alphax=alphax,
                                              transmission=transmission,
-                                             targetthickness=anodethickness)
+                                             targetthickness=anodethickness,
+                                             filterlist=filterlist)
             self.graph.newcurve("continuum", e, continuum)
 
         self.graph.zoomReset()
@@ -159,6 +166,10 @@ class QXTube(qt.QWidget):
         wele            = d["window"]
         wdensity        = d["windowdensity"]
         wthickness      = d["windowthickness"]
+        fele            = d["filter1"]
+        fdensity        = d["filter1density"]
+        fthickness      = d["filter1thickness"]
+        filterlist      =[[fele, fdensity, fthickness]]
         alphae          = d["alphae"]
         alphax          = d["alphax"]
         delta           = d["deltaplotting"]
@@ -172,7 +183,8 @@ class QXTube(qt.QWidget):
                                              [wele, wdensity, wthickness],
                                              alphae=alphae, alphax=alphax,
                                              transmission=transmission,
-                                             targetthickness=anodethickness)
+                                             targetthickness=anodethickness,
+                                             filterlist=filterlist)
         
 
         fllines = XRayTubeEbel.characteristicEbel([anode, anodedensity, anodethickness],
@@ -180,7 +192,8 @@ class QXTube(qt.QWidget):
                      [wele, wdensity, wthickness],
                      alphae=alphae, alphax=alphax,
                      transmission=transmission,
-                     targetthickness=anodethickness)
+                     targetthickness=anodethickness,
+                     filterlist=filterlist)
 
         d["characteristic"] = fllines
         if DEBUG:
@@ -196,7 +209,8 @@ class QXTube(qt.QWidget):
                                                         window = [wele, wdensity, wthickness],
                                                         alphae = alphae, alphax = alphax,
                                                         transmission = transmission,
-                                                        targetthickness=anodethickness)
+                                                        targetthickness=anodethickness,
+                                                        filterlist=filterlist)
 
         d["energylist"]        = energy
         d["weightlist"]  = energyweight
@@ -221,11 +235,15 @@ class TubeWidget(qt.QWidget):
                          self._anodeSlot)
             self.connect(self.windowCombo, qt.PYSIGNAL("MyQComboBoxSignal"),
                          self._windowSlot)
+            self.connect(self.filter1Combo, qt.PYSIGNAL("MyQComboBoxSignal"),
+                         self._filter1Slot)
         else:            
             self.connect(self.anodeCombo, qt.SIGNAL("MyQComboBoxSignal"),
                          self._anodeSlot)
             self.connect(self.windowCombo, qt.SIGNAL("MyQComboBoxSignal"),
                          self._windowSlot)
+            self.connect(self.filter1Combo, qt.SIGNAL("MyQComboBoxSignal"),
+                         self._filter1Slot)
         self.connect(self.transmissionCheckBox,
                      qt.SIGNAL("clicked()"),
                      self._transmissionSlot)
@@ -242,6 +260,9 @@ class TubeWidget(qt.QWidget):
             d["window"]          = "Be"
             d["windowthickness"] = 0.0125
             d["windowdensity"]   = Elements.Element["Be"]["density"]
+            d["filter1"]         = "He"
+            d["filter1thickness"]= 0.0
+            d["filter1density"]  = Elements.Element["He"]["density"]
             d["alphax"]          = 90.0
             d["alphae"]          = 90.0
             d["deltaplotting"]   = 0.10
@@ -311,6 +332,19 @@ class TubeWidget(qt.QWidget):
         grid.addWidget(self.windowDensity,   3, 2)
         grid.addWidget(self.windowThickness, 3, 3)
 
+        #filter1
+        filter1label = qt.QLabel(gridwidget)
+        filter1label.setText("Filter")
+        self.filter1Combo     = MyQComboBox(gridwidget,  options = Elements.ElementList)
+        self.filter1Density   = qt.QLineEdit(gridwidget)
+        self.filter1Thickness = qt.QLineEdit(gridwidget)
+
+        grid.addWidget(filter1label,          4, 0)
+        grid.addWidget(self.filter1Combo,     4, 1)
+        grid.addWidget(self.filter1Density,   4, 2)
+        grid.addWidget(self.filter1Thickness, 4, 3)
+
+
         #angles
         alphaelabel = qt.QLabel(gridwidget)
         alphaelabel.setText("Alpha electron")
@@ -319,18 +353,18 @@ class TubeWidget(qt.QWidget):
         alphaxlabel.setText("Alpha x-ray")
         self.alphaX = qt.QLineEdit(gridwidget)
 
-        grid.addWidget(alphaelabel, 4, 2)
-        grid.addWidget(self.alphaE, 4, 3)
-        grid.addWidget(alphaxlabel, 5, 2)
-        grid.addWidget(self.alphaX, 5, 3)
+        grid.addWidget(alphaelabel, 5, 2)
+        grid.addWidget(self.alphaE, 5, 3)
+        grid.addWidget(alphaxlabel, 6, 2)
+        grid.addWidget(self.alphaX, 6, 3)
 
         #delta energy
         deltalabel = qt.QLabel(gridwidget)
         deltalabel.setText("Delta energy (keV) just for plotting")
         self.delta = qt.QLineEdit(gridwidget)
 
-        grid.addMultiCellWidget(deltalabel, 6, 6, 0, 3)
-        grid.addWidget(self.delta, 6, 3)
+        grid.addMultiCellWidget(deltalabel, 7, 7, 0, 3)
+        grid.addWidget(self.delta, 7, 3)
 
         layout.addWidget(gridwidget)
         
@@ -353,20 +387,35 @@ class TubeWidget(qt.QWidget):
             else:
                 self.transmissionCheckBox.setChecked(0)
             self._transmissionSlot()                
-        if d.has_key("voltage"): self.voltage.setText("%.1f" % d["voltage"])
+        if d.has_key("voltage"):
+            self.voltage.setText("%.1f" % d["voltage"])
         if d.has_key("anode"):
             self.anodeCombo.setCurrentIndex(Elements.ElementList.index(d["anode"]))
             self.anodeDensity.setText("%f" % Elements.Element[d["anode"]]["density"])
+        if d.has_key("anodethickness"):
+            self.anodeThickness.setText("%f" % d["anodethickness"])
+        if d.has_key("anodedensity"):
+            self.anodeDensity.setText("%f" % d["anodedensity"])
         if d.has_key("window"):
             self.windowCombo.setCurrentIndex(Elements.ElementList.index(d["window"]))
             self.windowDensity.setText("%f" % Elements.Element[d["window"]]["density"])
-        if d.has_key("anodethickness"): self.anodeThickness.setText("%f" % d["anodethickness"])
-        if d.has_key("anodedensity"): self.anodeDensity.setText("%f" % d["anodedensity"])
-        if d.has_key("windowthickness"): self.windowThickness.setText("%f" % d["windowthickness"])
-        if d.has_key("windowdensity"): self.windowDensity.setText("%f" % d["windowdensity"])
-        if d.has_key("alphax"):  self.alphaX.setText("%.1f" % d["alphax"])
-        if d.has_key("alphae"):  self.alphaE.setText("%.1f" % d["alphae"])
-        if d.has_key("deltaplotting"):   self.delta.setText("%.3f" % d["deltaplotting"])
+        if d.has_key("windowthickness"):
+            self.windowThickness.setText("%f" % d["windowthickness"])
+        if d.has_key("windowdensity"):
+            self.windowDensity.setText("%f" % d["windowdensity"])
+        if d.has_key("filter1"):
+            self.filter1Combo.setCurrentIndex(Elements.ElementList.index(d["filter1"]))
+            self.filter1Density.setText("%f" % Elements.Element[d["filter1"]]["density"])
+        if d.has_key("filter1thickness"):
+            self.filter1Thickness.setText("%f" % d["filter1thickness"])
+        if d.has_key("filter1density"):
+            self.filter1Density.setText("%f" % d["filter1density"])
+        if d.has_key("alphax"):
+            self.alphaX.setText("%.1f" % d["alphax"])
+        if d.has_key("alphae"):
+            self.alphaE.setText("%.1f" % d["alphae"])
+        if d.has_key("deltaplotting"):
+            self.delta.setText("%.3f" % d["deltaplotting"])
 
     def getParameters(self):
         d = {}
@@ -381,18 +430,28 @@ class TubeWidget(qt.QWidget):
         d["window"] = self.windowCombo.getCurrent()[1]
         d["windowthickness"]  = float(str(self.windowThickness.text()))
         d["windowdensity"]    = float(str(self.windowDensity.text()))
+        d["filter1"] = self.filter1Combo.getCurrent()[1]
+        d["filter1thickness"]  = float(str(self.filter1Thickness.text()))
+        d["filter1density"]    = float(str(self.filter1Density.text()))
         d["alphax"]          = float(str(self.alphaX.text()))
         d["alphae"]          = float(str(self.alphaE.text()))
         d["deltaplotting"]   = float(str(self.delta.text()))
         return d
 
     def _anodeSlot(self, ddict):
-        if DEBUG:print "_anodeSlot", ddict
+        if DEBUG:
+            print "_anodeSlot", ddict
         self.anodeDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
         
     def _windowSlot(self, ddict):
-        if DEBUG:print "_windowSlot", ddict
+        if DEBUG:
+            print "_windowSlot", ddict
         self.windowDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
+
+    def _filter1Slot(self, ddict):
+        if DEBUG:
+            print "_filter1Slot", ddict
+        self.filter1Density.setText("%f" % Elements.Element[ddict["element"]]["density"])
 
     def _transmissionSlot(self):
         if DEBUG:print "_transmissionSlot"

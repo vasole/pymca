@@ -2202,7 +2202,7 @@ def __materialInCompoundList(lst):
     return False
     
 def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
-                            density=None, thickness=None):
+                            density=None, thickness=None, listoutput=True):
     """
     Usage:
     getMaterialTransmission(compoundList, fractionList, energy = None,
@@ -2228,7 +2228,6 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
                                                  fractionList0, energy0)
     energy = Numeric.array(dict['energy'],Numeric.Float)
     mu     = Numeric.array(dict['total'],Numeric.Float) * density * thickness
-    listoutput = True
     if energy0 is not None:
         if type(energy0) != types.ListType:
             listoutput = False    

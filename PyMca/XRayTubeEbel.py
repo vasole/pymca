@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import Elements
 import numpy.oldnumeric as Numeric
@@ -31,7 +31,8 @@ DEBUG = 0
 
 def continuumEbel(target, e0, e = None, window = None,
                   alphae = None, alphax = None,
-                  transmission = None, targetthickness = None):
+                  transmission = None, targetthickness = None,
+                  filterlist=None):
     """
     H. Ebel, X-Ray Spectrometry 28 (1999) 255-266
     Tube voltage from 5 to 50 kV
@@ -41,7 +42,8 @@ def continuumEbel(target, e0, e = None, window = None,
     target = Tuple [Symbol, density, thickness] 
     e0 = Tube Voltage in kV     
     e  = Energy of interest
-    window = Tube window [Formula, density, thickness] 
+    window = Tube window [Formula, density, thickness]
+    filterlist = Additional filters [[Formula, density, thickness], ...]
     """
     if type(target) == type([]):
         element = target[0]
@@ -113,9 +115,22 @@ def continuumEbel(target, e0, e = None, window = None,
 
         #the term dealing with absorption in tube's window
         if window is not None:
-            w = Elements.getMaterialTransmission(window[0], 1.0, energy,
-                                                 density = window[1], thickness = window[2])['transmission']
-            result = result * w
+            if window[2] != 0:
+                w = Elements.getMaterialTransmission(window[0], 1.0, energy,
+                                                density = window[1],
+                                                thickness = window[2],
+                                                listoutput=False)['transmission']
+                result = result * w
+        if filterlist is not None:
+            w = 1
+            for fwindow in filterlist:
+                if fwindow[2] == 0:
+                    continue
+                w *= Elements.getMaterialTransmission(fwindow[0], 1.0, energy,
+                                                density = fwindow[1],
+                                                thickness = fwindow[2],
+                                                listoutput=False)['transmission']
+            result = result * w                
         return result
     #transmission case
     if targetthickness is None:
@@ -139,14 +154,27 @@ def continuumEbel(target, e0, e = None, window = None,
              (Numeric.exp(-tau *(ttarget-2.0*rhoz)/sinalphax)-Numeric.exp(-tau*ttarget/sinalphax)) / rhelp
     #the term dealing with absorption in tube's window
     if window is not None:
-        w = Elements.getMaterialTransmission(window[0], 1.0, energy,
-                                             density = window[1], thickness = window[2]/sinalphax)['transmission']
-        result = result * w
+        if window[2] != 0.0 :
+            w = Elements.getMaterialTransmission(window[0], 1.0, energy,
+                                            density = window[1],
+                                            thickness = window[2]/sinalphax,
+                                            listoutput=False)['transmission']
+            result = result * w
+    if filterlist is not None:
+        for fwindow in filterlist:
+            if fwindow[2] == 0:
+                continue
+            w = Elements.getMaterialTransmission(fwindow[0], 1.0, energy,
+                                            density = fwindow[1],
+                                            thickness = fwindow[2],
+                                            listoutput=False)['transmission']
+            result = result * w 
     return result
 
 def characteristicEbel(target, e0, window = None,
                        alphae = None, alphax = None,
-                       transmission = None, targetthickness = None):
+                       transmission = None, targetthickness = None,
+                       filterlist=None):
     """
     H. Ebel, X-Ray Spectrometry 28 (1999) 255-266
     Tube voltage from 5 to 50 kV
@@ -261,9 +289,30 @@ def characteristicEbel(target, e0, window = None,
                                                               energylist)['photo'])
     if not transmission:
         rhelp = tau * 2.0 * rhoz * sinfactor
+        w = None
         if window is not None:
-            w = Elements.getMaterialTransmission(window[0], 1.0, energylist,
-                                             density = window[1], thickness = window[2])['transmission']
+            if window[2] != 0.0:
+                w = Elements.getMaterialTransmission(window[0], 1.0,
+                                            energylist,
+                                            density = window[1],
+                                            thickness = window[2],
+                                            listoutput=False)['transmission']
+        if filterlist is not None:
+            for fwindow in filterlist:
+                if fwindow[2] == 0:
+                    continue
+                if w is None:
+                    w = Elements.getMaterialTransmission(fwindow[0], 1.0,
+                                            energylist,
+                                            density = fwindow[1],
+                                            thickness = fwindow[2],
+                                            listoutput=False)['transmission']
+                else:
+                    w *= Elements.getMaterialTransmission(fwindow[0], 1.0,
+                                            energylist,
+                                            density = fwindow[1],
+                                            thickness = fwindow[2],
+                                            listoutput=False)['transmission']
         for i in range(len(fl)):
             if rhelp[i] > 0.0 :
                 rhelp[i] = (1.0 - Numeric.exp(-rhelp[i])) / rhelp[i]
@@ -271,7 +320,7 @@ def characteristicEbel(target, e0, window = None,
                 rhelp[i] = 0.0 
             intensity = const * oneovers * r * Elements.getomegak(element) * rhelp[i]
             #the term dealing with absorption in tube's window
-            if window is not None:
+            if w is not None:
                 intensity = intensity * w[i]
             fl[i][1] = intensity * fl[i][1]
         return fl
@@ -285,25 +334,45 @@ def characteristicEbel(target, e0, window = None,
         ttarget = targetthickness * density
     generationdepth = min(ttarget, 2 * rhozmax)
     rhelp = tau * 2.0 * rhoz * sinfactor
-    if window is not None:
-        w = Elements.getMaterialTransmission(window[0], 1.0, energylist,
-                                         density = window[1],
-                                        thickness = window[2]/sinalphax)['transmission']
+    w = None
+    if (window is not None) or (filterlist is not None):
+        if window is not None:
+            if window[2] != 0.0:
+                w = Elements.getMaterialTransmission(window[0], 1.0,
+                                        energylist,
+                                        density = window[1],
+                                        thickness = window[2]/sinalphax,
+                                        listoutput=False)['transmission']
+        if filterlist is not None:
+            for fwindow in filterlist:
+                if w is None:
+                    w = Elements.getMaterialTransmission(fwindow[0], 1.0,
+                                            energylist,
+                                            density = fwindow[1],
+                                            thickness = fwindow[2],
+                                            listoutput=False)['transmission']
+                else:
+                    w *= Elements.getMaterialTransmission(fwindow[0], 1.0,
+                                            energylist,
+                                            density = fwindow[1],
+                                            thickness = fwindow[2],
+                                            listoutput=False)['transmission']
         for i in range(len(fl)):
             if rhelp[i] > 0.0:
                 rhelp[i] = (Numeric.exp(-tau[i] *(ttarget-2.0*rhoz)/sinalphax)-Numeric.exp(-tau[i]*ttarget/sinalphax)) / rhelp[i]
             else:
                 rhelp[i] = 0.0
             intensity = const * oneovers * r * Elements.getomegak(element) * rhelp[i]
-            if window is not None:
-                    intensity = intensity * w[i]
+            if w is not None:
+                intensity = intensity * w[i]
             fl[i][1] = intensity * fl[i][1]
     return fl
 
 
 def generateLists(target, e0, window = None,
                   alphae = None, alphax = None,
-                  transmission = None, targetthickness=None):
+                  transmission = None, targetthickness=None,
+                  filterlist=None):
     e0w = 1.0 * e0
     x1min =  1.4
     step1 =  0.2
@@ -320,7 +389,8 @@ def generateLists(target, e0, window = None,
     fllines = characteristicEbel(target, e0, window,
                                  alphae=alphae, alphax=alphax,
                                  transmission = transmission,
-                                 targetthickness=targetthickness)
+                                 targetthickness=targetthickness,
+                                 filterlist=filterlist)
     
     energy = Numeric.ones(len(x1) + len(x2)).astype(Numeric.Float)
     energy[0:len(x1)] = energy[0:len(x1)] * x1
@@ -330,7 +400,8 @@ def generateLists(target, e0, window = None,
     energyweight = continuumEbel(target, e0, energy, window,
                                  alphae=alphae, alphax=alphax,
                                  transmission = transmission,
-                                 targetthickness=targetthickness)
+                                 targetthickness=targetthickness,
+                                 filterlist=filterlist)
     energyweight[0:len(x1)] *= step1
     energyweight[len(x1):(len(x1)+len(x2))] *= step2
     energyweight[len(x1)] *= (energy[len(x1)] - energy[len(x1) - 1])/step2 
@@ -365,6 +436,7 @@ if __name__ == "__main__":
     cfgfile = None
     transmission = None
     ttarget = None
+    filterlist = None
     for opt,arg in opts:
         if opt in ('--target'):
             target = arg
@@ -389,11 +461,15 @@ if __name__ == "__main__":
         y= continuumEbel(target, voltage, e,
                         [wele, Elements.Element[wele]['density'], wthickness],
                          alphae=anglee, alphax=anglex,
-                         transmission=transmission, targetthickness=ttarget)
+                         transmission=transmission,
+                         targetthickness=ttarget,
+                         filterlist=filterlist)
         fllines = characteristicEbel(target, voltage,
                         [wele, Elements.Element[wele]['density'], wthickness],
                          alphae=anglee, alphax=anglex,
-                         transmission=transmission, targetthickness=ttarget)
+                         transmission=transmission,
+                         targetthickness=ttarget,
+                         filterlist=filterlist)
         fsum = 0.0
         for l in fllines:
             print "%s %.4f %.3e" % (l[2],l[0],l[1])
@@ -401,7 +477,8 @@ if __name__ == "__main__":
         energy, weight, scatter =  generateLists(target, voltage,
                         [wele, Elements.Element[wele]['density'], wthickness],
                          alphae=anglee, alphax=anglex,
-                         transmission=transmission, targetthickness=ttarget)
+                         transmission=transmission, targetthickness=ttarget,
+                         filterlist=filterlist)
 
         f = open("Tube_%s_%.1f_%s_%.5f_ae%.1f_ax%.1f.txt" % (target,voltage,wele,wthickness,anglee,anglex),"w+")
         text = "energyweight="
