@@ -1305,9 +1305,12 @@ def getMultilayerFluorescence(multilayer0,
 
         #nobody warrants the list ordered
         if optimized:
-            newelementsListWork =  newelementsList * 1            
+            newelementsListWork =  newelementsList * 1
         else:
             newelementsListWork = [newelementsList * 1]
+        matrixmutotalexcitation = getMaterialMassAttenuationCoefficients(pseudomatrix[0],
+                                                        1.0,
+                                                        energyList)['total']
         for justone in newelementsListWork:
             if optimized:
                 if justone[2].upper()[0] == 'K':
@@ -1323,7 +1326,21 @@ def getMultilayerFluorescence(multilayer0,
                 bindingEnergy = Element[justone[1]]['binding'][shellIdent]
                 nrgi = Numeric.nonzero(energyList >= bindingEnergy)
                 if len(nrgi) == 0:nrgi=[0]
-                justoneList = [justone]                
+                justoneList = [justone]
+                matrixmutotalfluorescence = None
+                if len(nrgi) > 1:
+                    #calculate all the matrix mass attenuation coefficients
+                    #for the fluorescent energies outside the energy loop.
+                    #the energy list could also be taken out of this loop.
+                    element_energies = []
+                    for item in userElementDict[justone[1]][justone[2]+ " xrays"]:
+                        element_energies.append(userElementDict[justone[1]]\
+                                                [item]['energy'])
+                    matrixmutotalfluorescence = getMaterialMassAttenuationCoefficients(pseudomatrix[0],
+                                                        1.0,
+                                                        element_energies)['total']
+                else:
+                    matrixmutotalfluorescence = None
             else:
                 justoneList = justone
                 nrgi = range(len(energyList))
@@ -1339,7 +1356,9 @@ def getMultilayerFluorescence(multilayer0,
                                 cascade  = cascade,
                                 detector = workdetector,
                                 funnyfilters = workfunnyfilters,
-                                userElementDict = userElementDict)
+                                userElementDict = userElementDict,
+                                matrixmutotalfluorescence=matrixmutotalfluorescence,
+                                matrixmutotalexcitation=matrixmutotalexcitation[iene]*1.0)
                 #print "after origattenuators = ",origattenuators
                 if optimized:
                     #give back with concentration 1
@@ -1662,7 +1681,9 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                                 elementsList = None, cascade=None, 
                                                 detector=None,
                                                 funnyfilters=None,
-                                                userElementDict=None):
+                                                userElementDict=None,
+                                                matrixmutotalfluorescence=None,
+                                                matrixmutotalexcitation=None):
     """
     getFluorescence(matrixlist, energy, attenuators = None, alphain = None, alphaout = None,
                             elementsList = None, cascade=None, detector=None)
@@ -1874,8 +1895,17 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             formula   = matrix[0]
             thickness = matrix[1] * matrix[2]
             energies += [energy]
-            allcoeffs   =  getMaterialMassAttenuationCoefficients(formula,1.0,energies)
-            mutotal  = allcoeffs['total']
+            if matrixmutotalfluorescence is None:
+                allcoeffs   =  getMaterialMassAttenuationCoefficients(formula,1.0,energies)
+                mutotal  = allcoeffs['total']
+            else:
+                mutotal = matrixmutotalfluorescence * 1
+                if matrixmutotalexcitation is None:
+                    mutotal.append(getMaterialMassAttenuationCoefficients(formula,
+                                                                      1.0,
+                                                                      energy)['total'][0])
+                else:
+                    mutotal.append(matrixmutotalexcitation)
             #muphoto  = allcoeffs['photo']
             muphoto  = getMaterialMassAttenuationCoefficients(ele,1.0,energy)['photo']
             del energies[-1]
