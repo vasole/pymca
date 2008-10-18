@@ -28,7 +28,8 @@
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
 #
-__revision__ = "$Revision: 1.90 $"
+__revision__ = "$Revision: 2.00 $"
+LOGLOG = True
 import string
 import numpy.oldnumeric as Numeric
 import imp
@@ -434,7 +435,10 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
     else:
         elework = ele
         element = ele
-    if totals: totalPhoto = []
+    if totals:
+        totalPhoto = []
+    logf = Numeric.log
+    expf = Numeric.exp
     for key in shelllist:
         wi = 0.0
         totalPhotoi = 0.0
@@ -486,16 +490,16 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
                         #    print Scofield1973.dict[element][key][i]
                         #    print Scofield1973.dict[element][key][i-1]
                         #    print type( Scofield1973.dict[element][key][i-1] ) 
-                        x2 = Numeric.log(Scofield1973.dict[element]['energy'][i])
-                        x1 = Numeric.log(Scofield1973.dict[element]['energy'][i-1])
-                        y2 = Numeric.log(Scofield1973.dict[element][key][i])
-                        y1 = Numeric.log(Scofield1973.dict[element][key][i-1])
+                        x2 = logf(Scofield1973.dict[element]['energy'][i])
+                        x1 = logf(Scofield1973.dict[element]['energy'][i-1])
+                        y2 = logf(Scofield1973.dict[element][key][i])
+                        y1 = logf(Scofield1973.dict[element][key][i-1])
                         slope = (y2 - y1)/(x2 - x1)
-                        wi = Numeric.exp(y1 + slope * (Numeric.log(ework) - x1))
+                        wi = expf(y1 + slope * (logf(ework) - x1))
                         if totals:
-                            y2 = Numeric.log(Scofield1973.dict[element]['total'][i])
-                            y1 = Numeric.log(Scofield1973.dict[element]['total'][i-1])
-                            totalPhotoi = Numeric.exp(y1 + slope * (Numeric.log(ework) - x1))
+                            y2 = logf(Scofield1973.dict[element]['total'][i])
+                            y1 = logf(Scofield1973.dict[element]['total'][i-1])
+                            totalPhotoi = expf(y1 + slope * (logf(ework) - x1))
                         
                         
         w += [wi]
@@ -2188,17 +2192,23 @@ def getmassattcoef(compound,energy=None):
                     photo=xcom_data['photo'][i1]
                     pair=xcom_data['pair'][i1]            
                 else:
-                    A=xcom_data['energy'][i0]
-                    B=xcom_data['energy'][i1]
-                    c2=(ene-A)/(B-A)
-                    c1=(B-ene)/(B-A)
-
-                    cohe= pow(10.0,c2*Numeric.log10(xcom_data['coherent'][i1])+\
-                                            c1*Numeric.log10(xcom_data['coherent'][i0]))
-                    comp= pow(10.0,c2*Numeric.log10(xcom_data['compton'][i1])+\
-                                            c1*Numeric.log10(xcom_data['compton'][i0]))
-                    photo=pow(10.0,c2*Numeric.log10(xcom_data['photo'][i1])+\
-                                            c1*Numeric.log10(xcom_data['photo'][i0]))
+                    if LOGLOG:
+                        A=xcom_data['energylog10'][i0]
+                        B=xcom_data['energylog10'][i1]
+                        logene = Numeric.log10(ene)
+                        c2=(logene-A)/(B-A)
+                        c1=(B-logene)/(B-A)
+                    else:
+                        A=xcom_data['energy'][i0]
+                        B=xcom_data['energy'][i1]
+                        c2=(ene-A)/(B-A)
+                        c1=(B-ene)/(B-A)
+                    cohe= pow(10.0,c2*xcom_data['coherentlog10'][i1]+\
+                                   c1*xcom_data['coherentlog10'][i0])
+                    comp= pow(10.0,c2*xcom_data['comptonlog10'][i1]+\
+                                   c1*xcom_data['comptonlog10'][i0])
+                    photo=pow(10.0,c2*xcom_data['photolog10'][i1]+\
+                                   c1*xcom_data['photolog10'][i0])
                     if xcom_data['pair'][i1] > 0.0:
                         c2 = c2*Numeric.log10(xcom_data['pair'][i1])
                         if xcom_data['pair'][i0] > 0.0:
@@ -2409,10 +2419,17 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                     photo=xcom_data['photo'][i1]
                     pair=xcom_data['pair'][i1]            
                 else:
-                    A=xcom_data['energy'][i0]
-                    B=xcom_data['energy'][i1]
-                    c2=(ene-A)/(B-A)
-                    c1=(B-ene)/(B-A)
+                    if LOGLOG:
+                        A=xcom_data['energylog10'][i0]
+                        B=xcom_data['energylog10'][i1]
+                        logene = Numeric.log10(ene)
+                        c2=(logene-A)/(B-A)
+                        c1=(B-logene)/(B-A)
+                    else:
+                        A=xcom_data['energy'][i0]
+                        B=xcom_data['energy'][i1]
+                        c2=(ene-A)/(B-A)
+                        c1=(B-ene)/(B-A)
                     cohe= pow(10.0,c2*xcom_data['coherentlog10'][i1]+\
                                    c1*xcom_data['coherentlog10'][i0])
                     comp= pow(10.0,c2*xcom_data['comptonlog10'][i1]+\
@@ -2627,6 +2644,7 @@ def getelementmassattcoef(ele,energy=None):
         if Element[ele]['xcom']['coherent'][0] <= 0:
            Element[ele]['xcom']['coherent'][0] = Element[ele]['xcom']['coherent'][1] * 1.0
         try:
+            Element[ele]['xcom']['energylog10']=Numeric.log10(Element[ele]['xcom']['energy'])
             Element[ele]['xcom']['coherentlog10']=Numeric.log10(Element[ele]['xcom']['coherent'])
             Element[ele]['xcom']['comptonlog10']=Numeric.log10(Element[ele]['xcom']['compton'])
             Element[ele]['xcom']['photolog10']=Numeric.log10(Element[ele]['xcom']['photo'])
@@ -2640,13 +2658,13 @@ def getelementmassattcoef(ele,energy=None):
 
     if energy is None:
         return  Element[ele]['xcom']
-    dict={}
-    dict['energy']   = []
-    dict['coherent'] = []
-    dict['compton']  = []
-    dict['photo']    = []
-    dict['pair']     = []
-    dict['total']    = []
+    ddict={}
+    ddict['energy']   = []
+    ddict['coherent'] = []
+    ddict['compton']  = []
+    ddict['photo']    = []
+    ddict['pair']     = []
+    ddict['total']    = []
     if (type(energy) != type([])):
         energy =[energy]
     for ene in energy:
@@ -2658,17 +2676,24 @@ def getelementmassattcoef(ele,energy=None):
                 photo=Element[ele]['xcom']['photo'][i1]
                 pair=Element[ele]['xcom']['pair'][i1]            
             else:
-                A=Element[ele]['xcom']['energy'][i0]
-                B=Element[ele]['xcom']['energy'][i1]
-                c2=(ene-A)/(B-A)
-                c1=(B-ene)/(B-A)
+                if LOGLOG:
+                    A=Element[ele]['xcom']['energylog10'][i0]
+                    B=Element[ele]['xcom']['energylog10'][i1]
+                    logene = Numeric.log10(ene)
+                    c2=(logene-A)/(B-A)
+                    c1=(B-logene)/(B-A)
+                else:
+                    A=Element[ele]['xcom']['energy'][i0]
+                    B=Element[ele]['xcom']['energy'][i1]
+                    c2=(ene-A)/(B-A)
+                    c1=(B-ene)/(B-A)
                 
-                cohe= pow(10.0,c2*Numeric.log10(Element[ele]['xcom']['coherent'][i1])+\
-                                        c1*Numeric.log10(Element[ele]['xcom']['coherent'][i0]))
-                comp= pow(10.0,c2*Numeric.log10(Element[ele]['xcom']['compton'][i1])+\
-                                        c1*Numeric.log10(Element[ele]['xcom']['compton'][i0]))
-                photo=pow(10.0,c2*Numeric.log10(Element[ele]['xcom']['photo'][i1])+\
-                                        c1*Numeric.log10(Element[ele]['xcom']['photo'][i0]))
+                cohe= pow(10.0,c2*Element[ele]['xcom']['coherentlog10'][i1]+\
+                               c1*Element[ele]['xcom']['coherentlog10'][i0])
+                comp= pow(10.0,c2*Element[ele]['xcom']['comptonlog10'][i1]+\
+                               c1*Element[ele]['xcom']['comptonlog10'][i0])
+                photo=pow(10.0,c2*Element[ele]['xcom']['photolog10'][i1]+\
+                               c1*Element[ele]['xcom']['photolog10'][i0])
                 if Element[ele]['xcom']['pair'][i1] > 0.0:
                     c2 = c2*Numeric.log10(Element[ele]['xcom']['pair'][i1])
                     if Element[ele]['xcom']['pair'][i0] > 0.0:
@@ -2678,13 +2703,13 @@ def getelementmassattcoef(ele,energy=None):
                         pair =0.0
                 else:
                     pair =0.0
-            dict['energy'].append(ene)
-            dict['coherent'].append(cohe)
-            dict['compton'].append(comp)
-            dict['photo'].append(photo)
-            dict['pair'].append(pair)
-            dict['total'].append(cohe+comp+photo+pair)    
-    return dict                                                          
+            ddict['energy'].append(ene)
+            ddict['coherent'].append(cohe)
+            ddict['compton'].append(comp)
+            ddict['photo'].append(photo)
+            ddict['pair'].append(pair)
+            ddict['total'].append(cohe+comp+photo+pair)    
+    return ddict                                                          
 
 def getElementLShellRates(symbol,energy=None,photoweights = None):
     """
@@ -3032,6 +3057,11 @@ if __name__ == "__main__":
                                                                         Element[ele][transition]['rate'])
             
         if len(sys.argv) > 2:
+            LOGLOG = False
+            print "OLD VALUES"
+            print getmassattcoef(ele,string.atof(sys.argv[2]))
+            LOGLOG = True
+            print "NEW VALUES"
             print getmassattcoef(ele,string.atof(sys.argv[2]))
             if len(sys.argv) >3:
                 print getcandidates(string.atof(sys.argv[2]),threshold=string.atof(sys.argv[3]))
