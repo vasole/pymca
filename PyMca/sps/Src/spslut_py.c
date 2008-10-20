@@ -4,9 +4,9 @@
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -19,9 +19,9 @@
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
 /* spslut_py.c VERSION 4.0 */
@@ -38,31 +38,31 @@
  **/
 /* CHANGES:
 
-	[05-09-2002] A. Gobbo
-	- Included min and max values to 8 bit colormaps 
-  
-	[11-03-2002] A. Gobbo
-	- Included modes BGR and BGRX 
+    [05-09-2002] A. Gobbo
+    - Included min and max values to 8 bit colormaps
 
-	[12-12-2001] A. Gobbo
-	- Dimentions inverted in the returned array
-	- Corrected memory leak bug     
+    [11-03-2002] A. Gobbo
+    - Included modes BGR and BGRX
+
+    [12-12-2001] A. Gobbo
+    - Dimentions inverted in the returned array
+    - Corrected memory leak bug
 */
-#include <stdio.h>      
+#include <stdio.h>
 
-#include <Python.h> 
+#include <Python.h>
 #include <numpy/arrayobject.h>
 #include <sps_lut.h>
 
 static PyObject *SPSLUTError;
 
-PyObject *new_pyimage(const char *mode, unsigned xsize, unsigned ysize, 
-		      void *data)
+PyObject *new_pyimage(const char *mode, unsigned xsize, unsigned ysize,
+              void *data)
 {
-  return PyString_FromStringAndSize ((const char *)data, 
-				     strlen(mode) * xsize * ysize);
+  return PyString_FromStringAndSize ((const char *)data,
+                     strlen(mode) * xsize * ysize);
 }
-   
+
 static int natbyteorder()
 {
   union {
@@ -85,7 +85,7 @@ static int natbyteorder()
 
 static PyObject *spslut_transform(self, args)
      PyObject *self, *args;
-     
+
 {
   void *data;
   int type, cols, rows, reduc, fastreduc, meth, autoscale, mapmin=0, mapmax=255;
@@ -101,14 +101,14 @@ static PyObject *spslut_transform(self, args)
   PyObject *res,*aux;
   int array_output=0;
   unsigned char *as_pointer, *as_r;
-  int as_dim[3];
+  npy_intp as_dim[3];
   PyArrayObject *as_aux;
-  
-  if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)i", &in_src, &reduc, 
-			&fastreduc, &meth, &gamma, &mode, &palette_code,
-			&autoscale, &min, &max,&mapmin, &mapmax, &array_output)) 
-		return NULL;
-  
+
+  if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)i", &in_src, &reduc,
+            &fastreduc, &meth, &gamma, &mode, &palette_code,
+            &autoscale, &min, &max,&mapmin, &mapmax, &array_output))
+        return NULL;
+
   if (strcmp(mode, "RGB") == 0) {
     Xservinfo.red_mask = 0x0000ff;
     Xservinfo.green_mask = 0x00ff00;
@@ -121,8 +121,8 @@ static PyObject *spslut_transform(self, args)
     Xservinfo.blue_mask = 0xff0000;
     Xservinfo.pixel_size = 4;
     Xservinfo.byte_order = natbyteorder();
-  } 
-  
+  }
+
   //###CHANGED - ALEXANDRE 11/03/2002 - Qt uses different order than Tkinter
   else if (strcmp(mode, "BGR") == 0) {
     Xservinfo.red_mask = 0xff0000;
@@ -136,7 +136,7 @@ static PyObject *spslut_transform(self, args)
     Xservinfo.blue_mask = 0x0000ff;
     Xservinfo.pixel_size = 4;
     Xservinfo.byte_order = natbyteorder();
-  } 
+  }
 
     else if (strcmp(mode, "L") == 0 || strcmp(mode, "P") == 0  ) {
     Xservinfo.pixel_size = 1;
@@ -148,8 +148,8 @@ static PyObject *spslut_transform(self, args)
     return NULL;
   }
 
-  if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src, 
-   			    PyArray_NOTYPE, 2, 2))) {
+  if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
+                PyArray_NOTYPE, 2, 2))) {
     PyErr_SetString(SPSLUTError, "Input Array could is not a 2x2 array");
     return NULL;
   }
@@ -160,33 +160,33 @@ static PyObject *spslut_transform(self, args)
     type = SPS_ULONG; break;
   case NPY_USHORT:
     type = SPS_USHORT; break;
-  case NPY_LONG: 
-  case NPY_INT: 
+  case NPY_LONG:
+  case NPY_INT:
     type = SPS_LONG; break;
-  case NPY_SHORT: 
+  case NPY_SHORT:
     type = SPS_SHORT; break;
-  case NPY_UBYTE: 
+  case NPY_UBYTE:
     type = SPS_UCHAR; break;
-  case NPY_BYTE: 
+  case NPY_BYTE:
     type = SPS_CHAR; break;
-  case NPY_FLOAT: 
+  case NPY_FLOAT:
     type = SPS_FLOAT; break;
-  case NPY_DOUBLE: 
+  case NPY_DOUBLE:
     type = SPS_DOUBLE; break;
   default:
     PyErr_SetString(SPSLUTError, "Input Array type not supported");
     return NULL;
   }
-  
+
   data = src->data;
   cols = src->dimensions[1];  /*FIX THIS cols and rows are turned around */
   rows = src->dimensions[0];  /*###CHANGED - ALEXANDRE 24/07/2001*/
 
 
-  
-  r = SPS_PaletteArray (data, type, cols, rows, reduc, fastreduc, meth, gamma, 
-			autoscale, mapmin, mapmax, Xservinfo, palette_code,
-			&min, &max, &pcols, &prows, &palette, &pal_entries);
+
+  r = SPS_PaletteArray (data, type, cols, rows, reduc, fastreduc, meth, gamma,
+            autoscale, mapmin, mapmax, Xservinfo, palette_code,
+            &min, &max, &pcols, &prows, &palette, &pal_entries);
   if (r == 0) {
     PyErr_SetString(SPSLUTError, "Error while trying to calculate the image");
     return NULL;
@@ -198,7 +198,7 @@ static PyObject *spslut_transform(self, args)
   free(r);
   Py_DECREF(aux);
 
-  /*###CHANGED - ALEXANDRE 28/06/2002*/  
+  /*###CHANGED - ALEXANDRE 28/06/2002*/
   Py_DECREF(src);
 
 
@@ -206,14 +206,14 @@ static PyObject *spslut_transform(self, args)
   }
   as_dim[0] = strlen(mode);
   as_dim[1] = prows * pcols;
-  as_aux = (PyArrayObject*) PyArray_FromDims(2,as_dim, PyArray_UBYTE);
+  as_aux = (PyArrayObject*) PyArray_SimpleNew(2,as_dim, PyArray_UBYTE);
   if (as_aux == NULL){
       free(r);
       Py_DECREF(src);
-      return NULL;  
+      return NULL;
   }
-  as_pointer = (char *) as_aux -> data; 
-  as_r = (char *) r;  
+  as_pointer = (char *) as_aux -> data;
+  as_r = (char *) r;
   memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
   free(r);
   res = Py_BuildValue("(O(i,i)(d,d))",as_aux,pcols, prows, min, max);
@@ -225,7 +225,7 @@ static PyObject *spslut_transform(self, args)
 
 static PyObject *spslut_transformarray(self, args)
      PyObject *self, *args;
-     
+
 {
   void *data;
   int type, cols, rows, reduc, fastreduc, meth, autoscale, mapmin=0, mapmax=255;
@@ -237,16 +237,16 @@ static PyObject *spslut_transformarray(self, args)
   void *r/*, *res*/;
   char *mode;
   unsigned char *as_pointer, *as_r;
-  int as_dim[3];
+  npy_intp as_dim[3];
   PyArrayObject *src;
   PyObject *in_src;
   PyArrayObject *aux;
 
-  if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)", &in_src, &reduc, 
-			&fastreduc, &meth, &gamma, &mode, &palette_code,
-			&autoscale, &min, &max,&mapmin, &mapmax)) 
-		return NULL;
-  
+  if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)", &in_src, &reduc,
+            &fastreduc, &meth, &gamma, &mode, &palette_code,
+            &autoscale, &min, &max,&mapmin, &mapmax))
+        return NULL;
+
   if (strcmp(mode, "RGB") == 0) {
     Xservinfo.red_mask = 0x0000ff;
     Xservinfo.green_mask = 0x00ff00;
@@ -260,7 +260,7 @@ static PyObject *spslut_transformarray(self, args)
     Xservinfo.pixel_size = 4;
     Xservinfo.byte_order = natbyteorder();
   }
-  
+
   //###CHANGED - ALEXANDRE 11/03/2002 - Qt uses different order than Tkinter
   else if (strcmp(mode, "BGR") == 0) {
     Xservinfo.red_mask = 0xff0000;
@@ -274,7 +274,7 @@ static PyObject *spslut_transformarray(self, args)
     Xservinfo.blue_mask = 0x0000ff;
     Xservinfo.pixel_size = 4;
     Xservinfo.byte_order = natbyteorder();
-  } 
+  }
 
     else if (strcmp(mode, "L") == 0 || strcmp(mode, "P") == 0  ) {
     Xservinfo.pixel_size = 1;
@@ -286,8 +286,8 @@ static PyObject *spslut_transformarray(self, args)
     return NULL;
   }
 
-  if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src, 
-   			    PyArray_NOTYPE, 2, 2))) {
+  if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
+                PyArray_NOTYPE, 2, 2))) {
     PyErr_SetString(SPSLUTError, "Input Array could is not a 2x2 array");
     return NULL;
   }
@@ -298,33 +298,31 @@ static PyObject *spslut_transformarray(self, args)
     type = SPS_ULONG; break;
   case NPY_USHORT:
     type = SPS_USHORT; break;
-  case NPY_LONG: 
-  case NPY_INT: 
+  case NPY_LONG:
+  case NPY_INT:
     type = SPS_LONG; break;
-  case NPY_SHORT: 
+  case NPY_SHORT:
     type = SPS_SHORT; break;
-  case NPY_UBYTE: 
+  case NPY_UBYTE:
     type = SPS_UCHAR; break;
-  case NPY_BYTE: 
+  case NPY_BYTE:
     type = SPS_CHAR; break;
-  case NPY_FLOAT: 
+  case NPY_FLOAT:
     type = SPS_FLOAT; break;
-  case NPY_DOUBLE: 
+  case NPY_DOUBLE:
     type = SPS_DOUBLE; break;
   default:
     PyErr_SetString(SPSLUTError, "Input Array type not supported");
     return NULL;
   }
-  
+
   data = src->data;
   cols = src->dimensions[1];  /*FIX THIS cols and rows are turned around */
   rows = src->dimensions[0];  /*###CHANGED - ALEXANDRE 24/07/2001*/
 
-
-  
-  r = SPS_PaletteArray (data, type, cols, rows, reduc, fastreduc, meth, gamma, 
-			autoscale, mapmin, mapmax, Xservinfo, palette_code,
-			&min, &max, &pcols, &prows, &palette, &pal_entries);
+  r = SPS_PaletteArray (data, type, cols, rows, reduc, fastreduc, meth, gamma,
+            autoscale, mapmin, mapmax, Xservinfo, palette_code,
+            &min, &max, &pcols, &prows, &palette, &pal_entries);
   if (r == 0) {
     PyErr_SetString(SPSLUTError, "Error while trying to calculate the image");
     return NULL;
@@ -333,14 +331,14 @@ static PyObject *spslut_transformarray(self, args)
   as_dim[0] = strlen(mode);
   as_dim[1] = prows * pcols;
 /*  printf("dim[0] = %d dim[1] = %d \"%s\" \n",as_dim[0],as_dim[1],mode); */
-  aux = (PyArrayObject*) PyArray_FromDims(2,as_dim, PyArray_CHAR);
+  aux = (PyArrayObject*) PyArray_SimpleNew(2, as_dim, PyArray_CHAR);
   if (aux == NULL){
       free(r);
       Py_DECREF(src);
-      return NULL;  
+      return NULL;
   }
-  as_pointer = (char *) aux -> data; 
-  as_r = (char *) r;  
+  as_pointer = (char *) aux -> data;
+  as_r = (char *) r;
   memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
   free(r);
   Py_DECREF(src);
@@ -352,16 +350,16 @@ static PyObject *spslut_transformarray(self, args)
 /* The simple palette always returns 4 bytes per entry */
 static PyObject *spslut_palette(self, args)
      PyObject *self, *args;
-     
+
 {
   int entries, palette_code;
   XServer_Info Xservinfo;
   void *r;
   char *mode;
 
-  if (!PyArg_ParseTuple(args, "ii", &entries, &palette_code)) 
+  if (!PyArg_ParseTuple(args, "ii", &entries, &palette_code))
     return NULL;
-  
+
   mode = "RGBX";
   Xservinfo.red_mask = 0x0000ff;
   Xservinfo.green_mask = 0x00ff00;
@@ -369,31 +367,31 @@ static PyObject *spslut_palette(self, args)
   Xservinfo.pixel_size = 4;
   Xservinfo.byte_order = natbyteorder();
 
-  r = SPS_SimplePalette ( 0, entries - 1, Xservinfo, palette_code); 
-  
+  r = SPS_SimplePalette ( 0, entries - 1, Xservinfo, palette_code);
+
   if (r == 0) {
     PyErr_SetString(SPSLUTError, "Error calculating the palette");
     return NULL;
   }
-  
+
   return new_pyimage(mode, 1, entries, r);
 }
 
 
-                                                                               
+
 static PyMethodDef SPSLUTMethods[] = {
   { "transform", spslut_transform, METH_VARARGS},
   { "palette", spslut_palette, METH_VARARGS},
   { "transformArray", spslut_transformarray, METH_VARARGS},
   { NULL, NULL}
 };
-  
+
 void initspslut()
 {
   PyObject *d, *m;
   /* Create the module and add the functions */
   m = Py_InitModule ("spslut", SPSLUTMethods);
-  
+
   /* Add some symbolic constants to the module */
   d = PyModule_GetDict(m);
 
