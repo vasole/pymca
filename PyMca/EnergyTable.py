@@ -24,11 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.15 $"
+__revision__ = "$Revision: 1.16 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import numpy.oldnumeric as Numeric
 import QXTube
+import os
+import PyMcaDirs
+import PyMca_Icons as Icons
 qt = QXTube.qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
@@ -53,27 +56,238 @@ class EnergyTab(qt.QWidget):
         self.hbox.addWidget(self.table)
         self.tube.plot()
         self.tube.hide()
-        self.tubeButton = qt.QPushButton(self)
-        self.tubeButton.setText("Open X-Ray Tube Setup")        
-        layout.addWidget(self.tubeButton)
-        layout.addWidget(hbox)
-        self.connect(self.tubeButton,
-                     qt.SIGNAL("clicked()"),
-                     self.tubeButtonClicked)
+        self.outputFilter = None
+        self.inputDir = None
+        self.outputDir = None
 
         self.__calculating = 0
         if QTVERSION < '4.0.0':
+            self.tubeButton = qt.QPushButton(self)
+            self.tubeButton.setText("Open X-Ray Tube Setup")        
+            layout.addWidget(self.tubeButton)
+            layout.addWidget(hbox)
+            self.connect(self.tubeButton,
+                         qt.SIGNAL("clicked()"),
+                         self.tubeButtonClicked)
+
             self.connect(self.tube, qt.PYSIGNAL("QXTubeSignal"), self.__tubeUpdated)
         else:
+            self.tubeActionsBox = qt.QWidget(self)
+            actionsLayout = qt.QHBoxLayout(self.tubeActionsBox)
+            actionsLayout.setMargin(0)
+            actionsLayout.setSpacing(0)
+            #tube setup button
+            self.tubeButton = qt.QPushButton(self.tubeActionsBox)
+            self.tubeButton.setText("Open X-Ray Tube Setup")        
+            actionsLayout.addWidget(self.tubeButton, 1)
+            #load new energy table
+            self.tubeLoadButton = qt.QPushButton(self.tubeActionsBox)
+            self.tubeLoadButton.setText("Load Table")        
+            actionsLayout.addWidget(self.tubeLoadButton, 0)            
+            #save seen energy table
+            self.tubeSaveButton = qt.QPushButton(self.tubeActionsBox)
+            self.tubeSaveButton.setText("Save Table")        
+            actionsLayout.addWidget(self.tubeSaveButton, 0)
+
+            layout.addWidget(self.tubeActionsBox)
+            layout.addWidget(hbox)
+            self.connect(self.tubeButton,
+                         qt.SIGNAL("clicked()"),
+                         self.tubeButtonClicked)
+            self.connect(self.tubeLoadButton,
+                         qt.SIGNAL("clicked()"),
+                         self.loadButtonClicked)            
+            self.connect(self.tubeSaveButton,
+                         qt.SIGNAL("clicked()"),
+                         self.saveButtonClicked)
             self.connect(self.tube, qt.SIGNAL("QXTubeSignal"), self.__tubeUpdated)
 
     def tubeButtonClicked(self):
         if self.tube.isHidden():
             self.tube.show()
             self.tubeButton.setText("Close X-Ray Tube Setup")
+            self.tubeLoadButton.hide()
+            self.tubeSaveButton.hide()
         else:
             self.tube.hide()
+            self.tubeLoadButton.show()
+            self.tubeSaveButton.show()
             self.tubeButton.setText("Open X-Ray Tube Setup")
+
+    def loadButtonClicked(self):
+        if self.inputDir is None:
+            if self.inputDir is not None:
+                self.inputDir = self.outputDir
+            else:
+                self.inputDir = PyMcaDirs.inputDir
+        wdir = self.inputDir
+        if not os.path.exists(wdir):
+            wdir = os.getcwd()
+        if 1 or PyMcaDirs.nativeFileDialogs:
+            filedialog = qt.QFileDialog(self)
+            filedialog.setFileMode(filedialog.ExistingFiles)
+            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+            filename = filedialog.getOpenFileName(
+                        self,
+                        "Choose energy table file",
+                        wdir,
+                        "Energy table files (*.csv)\n")
+            filename = str(filename)
+            if len(filename):
+                try:
+                    self.loadEnergyTableParameters(filename)
+                    self.inputDir = os.path.dirname(filename)
+                    PyMcaDirs.inputDir = self.inputDir
+                except:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Error loading energy table: %s" % (sys.exc_info()[1]))
+                    msg.exec_()
+
+    def loadEnergyTableParameters(self, filename):
+        if sys.platform == "win32":
+            ffile = open(filename, "rb")
+        else:
+            ffile = open(filename)
+        lines = ffile.read()
+        ffile.close()
+        lines = lines.replace("\r","\n")
+        lines = lines.replace('\n\n',"\n")
+        lines = lines.replace(";","  ")
+        lines = lines.replace("\t","  ")
+        lines = lines.replace('"',"")
+        lines = lines.split("\n")
+        labels = lines[0].replace("\n","").split("  ")
+        if (len(lines) == 1) or\
+           ((len(lines) == 2) and (len(lines[1])==0)):
+            #clear table
+            ddict={}
+            ddict['energylist'] = [None]
+            ddict['weightlist'] = [1.0]
+            ddict['flaglist'] = [1]
+            ddict['scatterlist'] = [1]
+        else:
+            ddict={}
+            ddict['energylist'] = []
+            ddict['weightlist'] = []
+            ddict['flaglist'] = []
+            ddict['scatterlist'] = []
+            for i in range(1, len(lines)):
+                line = lines[i]
+                if not len(line):
+                    continue
+                ene, weight, useflag, scatterflag = map(float,
+                                                        line.split("  "))
+                if ene > 0:
+                    ddict['energylist'].append(ene)
+                else:
+                    ddict['energylist'].append(None)
+                ddict['weightlist'].append(weight)
+                ddict['flaglist'].append(int(useflag))
+                ddict['scatterlist'].append(int(scatterflag))
+        energylist, weightlist, flaglist, scatterlist = self.table.getParameters()
+        lold = len(energylist)
+        lnew = len(ddict['energylist'])
+        if lold > lnew:
+            energylist = [None] * lold
+            weightlist = [0.0]  * lold
+            flaglist = [0] * lold
+            scatterlist = [0] * lold
+            energylist[0:lnew] = ddict['energylist'][0:lnew]
+            weightlist[0:lnew] = ddict['weightlist'][0:lnew]
+            flaglist[0:lnew] = ddict['flaglist'][0:lnew]
+            scatterlist[0:lnew] = ddict['scatterlist'][0:lnew]
+            self.table.setParameters(energylist,
+                                     weightlist,
+                                     flaglist,
+                                     scatterlist)
+        else:
+            self.table.setParameters(ddict["energylist"],
+                                 ddict["weightlist"],
+                                 ddict["flaglist"],
+                                 ddict["scatterlist"])
+        
+    def saveButtonClicked(self):
+        energylist, weightlist, flaglist, scatterlist = self.table.getParameters()
+        if self.outputDir is None:
+            if self.inputDir is not None:
+                self.outputDir = self.inputDir
+            else:
+                self.outputDir = PyMcaDirs.outputDir
+        wdir = self.outputDir
+        outfile = qt.QFileDialog(self)
+        outfile.setWindowTitle("Output File Selection")
+        outfile.setModal(1)
+        format_list = ['";"-separated CSV *.csv',
+                       '","-separated CSV *.csv',
+                       '"tab"-separated CSV *.csv']
+        if self.outputFilter is None:
+            self.outputFilter = format_list[0]
+        outfile.setFilters(format_list)
+        outfile.selectFilter(self.outputFilter)
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(outfile.AcceptSave)
+        outfile.setDirectory(wdir)
+        ret = outfile.exec_()
+        if not ret:
+            outfile.close()
+            del outfile
+            return
+        self.outputFilter = str(outfile.selectedFilter())
+        filterused = self.outputFilter.split()
+        filetype  = filterused[1]
+        extension = filterused[2]
+        outputFile=str(outfile.selectedFiles()[0])
+        try:            
+            self.outputDir  = os.path.dirname(outputFile)
+            PyMcaDirs.outputDir = os.path.dirname(outputFile) 
+        except:
+            self.outputDir  = "."
+        outfile.close()
+        del outfile
+        if not outputFile.endswith('.csv'):
+            outputFile += '.csv'
+        #always overwrite
+        if os.path.exists(outputFile):
+            os.remove(outputFile)
+        try:
+            ffile=open(outputFile,'wb')
+        except IOError:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            return
+        if "," in filterused[0]:
+            csv = ","
+        elif ";" in filterused[0]:
+            csv = ";"
+        else:
+            csv = "\t"
+            
+        ffile.write('"energy"%s"weight"%s"flag"%s"scatter"\n' % (csv, csv, csv))
+        #write the scatter lines in first instance
+        alreadysaved = []
+        for i in range(len(energylist)):
+            if (energylist[i] is not None) and \
+               (scatterlist[i] == 1):
+                ffile.write("%f%s%f%s%d%s%d\n" % \
+                   (energylist[i], csv,
+                    weightlist[i], csv,
+                    flaglist[i], csv,
+                    scatterlist[i]))
+                alreadysaved.append(i)
+
+        for i in range(len(energylist)):
+            if energylist[i] is not None:
+                if i not in alreadysaved:
+                    ffile.write("%f%s%f%s%d%s%d\n" % \
+                       (energylist[i], csv,
+                        weightlist[i], csv,
+                        flaglist[i], csv,
+                        scatterlist[i]))
+        ffile.close()
+
 
     def __tubeUpdated(self, d):
         if    self.__calculating:return
@@ -227,25 +441,37 @@ class EnergyTable(QTable):
                 self.setText(r, 2+coloffset,"")
 
     def setParameters(self, energylist, weightlist, flaglist, scatterlist=None):
-        if isinstance(energylist, Numeric.ArrayType):self.energyList=energylist.tolist()
-        elif type(energylist) != type([]):self.energyList=[energylist]
-        else: self.energyList =energylist
+        if isinstance(energylist, Numeric.ArrayType):
+            self.energyList=energylist.tolist()
+        elif type(energylist) != type([]):
+            self.energyList=[energylist]
+        else:
+            self.energyList =energylist
 
-        if   isinstance(weightlist, Numeric.ArrayType):self.weightList=weightlist.tolist()
-        elif type(weightlist) != type([]):self.energyList=[weightlist]
-        else: self.weightList =weightlist
+        if   isinstance(weightlist, Numeric.ArrayType):
+            self.weightList=weightlist.tolist()
+        elif type(weightlist) != type([]):
+            self.energyList=[weightlist]
+        else:
+            self.weightList =weightlist
         
-        if   isinstance(flaglist, Numeric.ArrayType):self.flagList=flaglist.tolist()
-        elif type(flaglist) != type([]):self.flagList=[flaglist]
-        else: self.flagList =flaglist
+        if   isinstance(flaglist, Numeric.ArrayType):
+            self.flagList=flaglist.tolist()
+        elif type(flaglist) != type([]):
+            self.flagList=[flaglist]
+        else:
+            self.flagList =flaglist
 
         
         if scatterlist is None:
             scatterlist = Numeric.zeros(len(self.energyList)).tolist()
             scatterlist[0] = 1
-        if isinstance(scatterlist, Numeric.ArrayType):self.scatterList=scatterlist.tolist()
-        elif type(scatterlist) != type([]):self.scatterList=[scatterlist]
-        else: self.scatterList =scatterlist
+        if isinstance(scatterlist, Numeric.ArrayType):
+            self.scatterList=scatterlist.tolist()
+        elif type(scatterlist) != type([]):
+            self.scatterList=[scatterlist]
+        else:
+            self.scatterList =scatterlist
         self.__fillTable()
 
     def getParameters(self):

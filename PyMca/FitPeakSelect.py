@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import types
 from EnergyTable import qt
@@ -111,7 +111,8 @@ class PeakButton(qt.QPushButton):
 
 class PeakButtonList(qt.QWidget):
     def __init__(self, parent=None, name="PeakButtonList",
-                 peaklist=['K','Ka','Kb','L','L1','L2','L3','M'], fl=0):
+                 peaklist=['K','Ka','Kb','L','L1','L2','L3','M'],
+                 fl=0):
         qt.QWidget.__init__(self,parent)
         self.peaklist = peaklist
 
@@ -138,14 +139,15 @@ class PeakButtonList(qt.QWidget):
 
         layout.addStretch(1)
 
-        self.resetbut = qt.QPushButton(self)
-        self.resetbut.setText("Reset")
-        layout.addWidget(self.resetbut)
-        self.connect(self.resetbut,qt.SIGNAL('clicked()'),self.__resetbut)
+        #Reset 
+        self.resetBut = qt.QPushButton(self)
+        self.resetBut.setText("Reset")
+        layout.addWidget(self.resetBut)
+        self.connect(self.resetBut,qt.SIGNAL('clicked()'),self.__resetBut)
 
         layout.addStretch(2)        
 
-    def __resetbut(self):
+    def __resetBut(self):
         for key in self.peaklist:
                     self.buttondict[key].setSelected(0)
         if qt.qVersion() < '4.0.0':
@@ -247,6 +249,17 @@ class FitPeakSelect(qt.QWidget):
                          self.elementClicked)
             self.connect(self.peaks, qt.SIGNAL("selectionChanged"),
                          self.peakSelectionChanged)
+            #Reset All
+            self.resetAllButton = qt.QPushButton(self.peaks)
+            palette = qt.QPalette(self.resetAllButton.palette())
+            role = self.resetAllButton.foregroundRole()
+            palette.setColor(role, qt.Qt.red)
+            self.resetAllButton.setPalette(palette)
+            self.resetAllButton.setText("Reset All")
+            self.peaks.layout().addWidget(self.resetAllButton)
+
+            self.connect(self.resetAllButton, qt.SIGNAL("clicked()"),
+                         self.__resetAll)
 
         layout.addWidget(self.table)
         layout.addWidget(line)
@@ -256,6 +269,18 @@ class FitPeakSelect(qt.QWidget):
 
         self.current= None 
         self.setSelection(peakdict)
+
+    def __resetAll(self):
+        msg=qt.QMessageBox.warning( self, "Clear selection",
+                      "Do you want to reset the selection for all elements?",
+                      qt.QMessageBox.Yes,qt.QMessageBox.No)
+        if msg == qt.QMessageBox.No:
+            return
+
+        self.peakdict = {}
+        self.table.setSelection(self.peakdict.keys())
+        self.peaks.setSelection([])
+        self.peakSelectionChanged([])
 
     def __getZ(self,element):
         return ElementList.index(element) + 1
@@ -269,11 +294,11 @@ class FitPeakSelect(qt.QWidget):
         self.table.setSelection(self.peakdict.keys())
         
     def getSelection(self):
-        dict={}
+        ddict={}
         for key in self.peakdict.keys():
                 if len(self.peakdict[key]):
-                        dict[key]= self.peakdict[key]
-        return dict 
+                        ddict[key]= self.peakdict[key]
+        return ddict 
 
     def peakSelectionChanged(self,selection):
         if self.current is None: return
@@ -486,7 +511,6 @@ class MyQLabel(qt.QLabel):
 def testwidget():
     import sys
     def change(ddict):
-        if qt.qVersion() > '4.0.0':ddict = ddict.dict
         print "New selection:", ddict
     a = qt.QApplication(sys.argv)
     qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
