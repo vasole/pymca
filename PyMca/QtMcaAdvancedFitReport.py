@@ -69,7 +69,8 @@ class QtMcaAdvancedFitReport:
                     sourcename = None,
                     selection = None,
                     fitresult = None,htmltext=None,
-                    concentrations=None, table = None):
+                    concentrations=None, table = None,
+                    plotdict=None):
         
         self.concentrations = concentrations
         self.concentrationsConversion = ConcentrationsConversion()
@@ -101,6 +102,14 @@ class QtMcaAdvancedFitReport:
         if htmltext is None:
             htmltext={}
         self.otherhtmltext=htmltext
+        if plotdict is None:
+            self.plotDict = {'logy':True,
+                             'xmin':None,
+                             'xmax':None,
+                             'ymin':None,
+                             'ymax':None}
+        else:
+            self.plotDict = plotdict
     
     def writeReport(self,text=None):
         if len(self.outfile) > 5:
@@ -573,13 +582,19 @@ class QtMcaAdvancedFitReport:
                 canvas = FigureCanvas(fig)
                 ax = fig.add_axes([.15, .15, .8, .8])
                 ax.set_axisbelow(True)
-                ax.semilogy(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
-                ax.semilogy(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
-                ax.semilogy(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
+                logplot = self.plotDict.get('logy', True)
+                if logplot:
+                    axplot = ax.semilogy
+                else:
+                    axplot = ax.plot
+                axplot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
+                axplot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                axplot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
                 fontproperties = FontProperties(size=8)
                 if dict['result']['config']['fit']['sumflag']:
-                    ax.semilogy(dict['result']['energy'],
-                                dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
+                    axplot(dict['result']['energy'],
+                           dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
+                    
                     legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
                                        prop = fontproperties, labelsep=0.02)
                 else:

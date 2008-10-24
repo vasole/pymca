@@ -1201,7 +1201,8 @@ class McaAdvancedFit(qt.QWidget):
         report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(None,
                     outfile,self.outdir,self.info['sourcename'],
                     self.info['legend'],self.dict,
-                    concentrations=self._concentrationsDict)
+                    concentrations=self._concentrationsDict,
+                    plotdict={'logy':self._logY})
         if 0:
             #this forces to open and read the file
             self.__lastreport = report.writeReport()
