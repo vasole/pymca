@@ -49,7 +49,6 @@ if QTVERSION > '4.0.0':
     class Q3GridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
-
 import Elements
 import MaterialEditor
 import MatrixEditor
@@ -87,7 +86,7 @@ class MyQLabel(qt.QLabel):
             painter.font().setBold(0)
 
 class AttenuatorsTab(qt.QWidget):
-    def __init__(self,parent=None, name="Attenuators Tab",attenuators=None):
+    def __init__(self,parent=None, name="Attenuators Tab",attenuators=None, graph=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
         if QTVERSION > '4.0.0':
@@ -110,9 +109,10 @@ class AttenuatorsTab(qt.QWidget):
             self.mainTab = qt.QTabWidget(self)
             layout.addWidget(self.mainTab)
             if maxheight < 800:
-                self.editor = MaterialEditor.MaterialEditor(height=5)
+                self.editor = MaterialEditor.MaterialEditor(height=5, graph=graph)
             else:
-                self.editor = MaterialEditor.MaterialEditor()
+                self.editor = MaterialEditor.MaterialEditor(graph=graph)
+
             self.mainTab.addTab(self.editor, "Material Editor")
             rheight = self.table.horizontalHeader().sizeHint().height()
             self.table.setMinimumHeight(13*rheight)

@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.14 $"
+__revision__ = "$Revision: 2.00 $"
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -45,16 +45,20 @@ import Elements
 import ConfigDict
 import os
 import types
+if QTVERSION > '4.0.0':
+    import ScanWindow
+    import numpy
 
 class MaterialEditor(qt.QWidget):
     def __init__(self, parent=None, name="Material Editor",
-                 comments=True, height= 7):
+                 comments=True, height= 7, graph=None):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name)
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
+        self.graph = graph
         self.build(comments, height)
 
     def build(self,comments, height):
@@ -75,7 +79,8 @@ class MaterialEditor(qt.QWidget):
         a.sort()
         self.matCombo = MaterialComboBox(hbox,options=a)
         #self.matCombo.setEditable(True)
-        self.materialGUI = MaterialGUI(self,comments=comments, height=height)
+        self.materialGUI = MaterialGUI(self, comments=comments,
+                                       height=height)
         #HorizontalSpacer(hbox)
         if QTVERSION < '4.0.0':
             self.connect(self.matCombo,qt.PYSIGNAL('MaterialComboBoxSignal'),
@@ -83,6 +88,8 @@ class MaterialEditor(qt.QWidget):
         else:
             self.connect(self.matCombo,qt.SIGNAL('MaterialComboBoxSignal'),
                          self._comboSlot)
+            self.connect(self.materialGUI,qt.SIGNAL('MaterialTransmissionSignal'),
+                         self._transmissionSlot)
         self.materialGUI.setCurrent(a[0])
 
         hboxlayout.addWidget(label)
@@ -123,8 +130,40 @@ class MaterialEditor(qt.QWidget):
                 continue
         return error
 
-    def _comboSlot(self, dict):
-        self.materialGUI.setCurrent(dict['text'])
+    def _comboSlot(self, ddict):
+        self.materialGUI.setCurrent(ddict['text'])
+
+    def _transmissionSlot(self, ddict):
+        try:   
+            compoundList = ddict['CompoundList']
+            fractionList = ddict['CompoundFraction']
+            density = ddict['Density']
+            thickness = ddict['Thickness']
+            energy = numpy.arange(1, 100, 0.1)
+            data=Elements.getMaterialTransmission(compoundList, fractionList, energy,
+                                             density=density, thickness=thickness, listoutput=False)
+            if self.graph is None:
+                self.graph = ScanWindow.ScanWindow()
+            self.graph.show()
+            self.graph.raise_()
+            self.graph.setTitle(ddict['Comment'])
+            legend = str(self.matCombo.currentText()) + " with density = %f g/cm3" % density +\
+                     " and thickness = %f cm" % thickness
+            self.graph.newCurve(energy, data['transmission'],
+                                legend=legend,
+                                xlabel='Energy (keV)',
+                                ylabel='Transmission',
+                                replace=True)
+        except:
+            msg=qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error %s" % sys.exc_info()[0])
+            msg.exec_()
+
+    def closeEvent(self, event):
+        if self.graph is not None:
+            self.graph.close()
+        qt.QWidget.closeEvent(self, event)
 
 class MaterialComboBox(qt.QComboBox):
     def __init__(self,parent = None,name = None,fl = 0,
@@ -459,9 +498,16 @@ class MaterialGUI(qt.QWidget):
                          self.__thicknessSlot)
             else:
                 self.connect(self.__densityLine,qt.SIGNAL('editingFinished()'),
-                             self.__densitySlot)      
+                             self.__densitySlot)
                 self.connect(self.__thicknessLine,qt.SIGNAL('editingFinished()'),
                          self.__thicknessSlot)
+
+            if QTVERSION > '4.0.0':
+                self.__transmissionButton = qt.QPushButton(grid)
+                self.__transmissionButton.setText('Material Transmission')
+                gridLayout.addWidget(self.__transmissionButton, 2, 0)
+                self.connect(self.__transmissionButton, qt.SIGNAL('clicked()'),
+                             self.__transmissionSlot)
             vboxLayout.addWidget(VerticalSpacer(vbox))
             
         if self.__comments:
@@ -519,9 +565,10 @@ class MaterialGUI(qt.QWidget):
         self.__numberSpin.setFocus()
         try:
             self._fillValues()
+            self._updateCurrent()
         finally:
             self.__fillingValues = False
-                    
+
         
     def _fillValues(self):
         if DEBUG: print "fillValues(self)"
@@ -639,6 +686,12 @@ class MaterialGUI(qt.QWidget):
             else:
                 msg.exec_()
             self.__thicknessLine.setFocus()
+
+    def __transmissionSlot(self):
+        ddict = {}
+        ddict.update(self._current)
+        ddict['event'] = 'MaterialTransmission'
+        self.emit(qt.SIGNAL('MaterialTransmissionSignal'), ddict)
 
     def __nameLineSlot(self):
         if DEBUG:print "__nameLineSlot(self)"

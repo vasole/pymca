@@ -46,6 +46,10 @@ import AttenuatorsTable
 import ConcentrationsWidget
 import EnergyTable
 import PyMcaDirs
+if QTVERSION > '4.0.0':
+    import ScanWindow
+    import numpy
+
 
 DEBUG = 0
 
@@ -79,11 +83,24 @@ class FitParamWidget(FitParamForm):
             tabAttLayout = qt.QGridLayout(self.tabAtt)
             tabAttLayout.setMargin(11)
             tabAttLayout.setSpacing(6)
-            self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt)
+            self.graph = ScanWindow.ScanWindow(self)
+            self.graph.setWindowFlags(qt.Qt.Dialog)
+            self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+                                                        graph=self.graph)
             self.attTable = self.tabAttenuators.table
             #self.multilayerTable =self.tabAttenuators.matrixTable
             tabAttLayout.addWidget(self.tabAttenuators,0,0)
             self.mainTab.addTab(self.tabAtt,str("ATTENUATORS"))
+            maxheight = qt.QDesktopWidget().height()
+            #self.graph.hide()
+            if maxheight > 799:
+                self.attPlotButton = qt.QPushButton(self.tabAttenuators)
+                text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
+                self.attPlotButton.setText(text)
+                self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
+                self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
+                             self.__attPlotButtonSlot)
+
         #This was previously into FitParamForm.py: END
         
         if QTVERSION < '4.0.0':
@@ -225,6 +242,88 @@ class FitParamWidget(FitParamForm):
                 self.peakTable.setMaximumSize(re.size())
             except:
                 pass
+
+    def __attPlotButtonSlot(self):
+        #
+        try:
+            self.computeEfficiency()
+        except:
+            msg=qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error %s" % sys.exc_info()[0])
+            msg.exec_()
+
+    def computeEfficiency(self):
+        pars = self.__getAttPar()
+        attenuators = []
+        funnyfilters = []
+        detector = []
+        for key in pars.keys():
+            if pars[key][0]:
+                l = key.lower()
+                if l in ['matrix', 'beamfilter1', 'beamfilter2']:
+                    continue
+                if l.startswith('detector'):
+                    detector.append(pars[key][1:])
+                else:
+                    if abs(pars[key][4] - 1.0) > 1.0e-10:
+                        funnyfilters.append(pars[key][1:])
+                    else:                                           
+                        attenuators.append(pars[key][1:])
+
+        maxenergy = str(self.peakTable.energy.text())
+        if maxenergy=='None':
+            maxenergy = 100.
+            energies = numpy.arange(1, maxenergy, 0.1)
+        else:
+            maxenergy = float(maxenergy)
+            if maxenergy < 50:
+                energies = numpy.arange(1, maxenergy, 0.01)
+            elif maxenergy > 100:
+                energies = numpy.arange(1, maxenergy, 0.1)
+            else:
+                energies = numpy.arange(1, maxenergy, 0.02)
+        efficiency = numpy.ones(len(energies), numpy.float)
+        if (len(attenuators)+len(detector)+len(funnyfilters)) != 0:
+            massatt = Elements.getMaterialMassAttenuationCoefficients
+            if len(attenuators):
+                coeffs = numpy.zeros(len(energies), numpy.float)
+                for attenuator in attenuators:
+                    formula   = attenuator[0]
+                    thickness = attenuator[1] * attenuator[2]
+                    coeffs +=  thickness *\
+                              numpy.array(massatt(formula,1.0,energies)['total'])
+                efficiency *= numpy.exp(-coeffs)
+
+            if len(funnyfilters):
+                coeffs = numpy.zeros(len(energies), numpy.float)
+                funnyfactor = None
+                for attenuator in funnyfilters:
+                    formula   = attenuator[0]
+                    thickness = attenuator[1] * attenuator[2]
+                    if funnyfactor is None:
+                        funnyfactor = attenuator[3]
+                    else:
+                        if abs(attenuator[3]-freefraction) > 0.0001:
+                            raise ValueError, "All funny type filters must have same openning fraction"
+                    coeffs +=  thickness *\
+                              numpy.array(massatt(formula,1.0,energies)['total'])
+                efficiency *= (funnyfactor * numpy.exp(-coeffs)+\
+                               (1.0 - funnyfactor))
+            if len(detector):
+                detector = detector[0]
+                formula   = detector[0]
+                thickness = detector[1] * detector[2]
+                coeffs   =  thickness *\
+                           numpy.array(massatt(formula,1.0,energies)['total'])
+                efficiency *= (1.0 - numpy.exp(-coeffs))
+        self.graph.setTitle('Filter (not beam filter) and detector correction')
+        self.graph.newCurve(energies, efficiency,
+                            legend='Ta * (1.0 - Td)',
+                            xlabel='Energy (keV)',
+                            ylabel='Efficiency Term',
+                            replace=True)
+        self.graph.show()
     
     def __contComboActivated(self, idx):
         if idx==4:

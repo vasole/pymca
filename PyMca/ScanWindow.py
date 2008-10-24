@@ -1694,7 +1694,9 @@ class ScanWindow(qt.QWidget):
             oldlist = self.dataObjectsDict.keys()
             self._addSelection(sel_list)
             self.removeCurves(oldlist)
-        
+
+    def setTitle(self, text=""):
+        self.graph.setTitle(text)
 
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None, replace=False):
         if legend is None:
