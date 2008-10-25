@@ -832,11 +832,11 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
         if result != self.ownValidator.Valid:
             text = str(qstring)
             if text.upper() != "MULTILAYER":
-                qt.QMessageBox.critical(self, "Invalid Material %s" % str(qstring),
-                                          "The material %s is not a valid Formula " \
+                qt.QMessageBox.critical(self, "Invalid Material '%s'" % text,
+                                          "The material '%s' is not a valid Formula " \
                                           "nor a valid Material.\n" \
                                           "Please define the material %s or correct the formula\n" % \
-                                          (str(qstring), str(qstring)))
+                                          (text, text))
                 if QTVERSION < '4.0.0':
                     self.setCurrentItem(0)
                 else:

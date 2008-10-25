@@ -278,25 +278,33 @@ class MaterialComboBox(qt.QComboBox):
             (result, index) = self.ownValidator.validate(qstring,0)
         if result != self.ownValidator.Valid:
             text = str(qstring)
-            try:
-                numberTest = float(text)
+            if text.endswith(" "):
                 msg =  qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Invalid Material Name %s\n" % text + \
-                            "You cannot use a number as material name.\n" +\
-                            "Hint: You can use _%s_" % text)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.setText("Invalid Material Name '%s'\n" % text + \
+                            "It ends with a space character.\n")
+                msg.exec_()
                 msg = qt.QMessageBox.No
-            except:
-                msg=qt.QMessageBox.information( self, "Invalid Material %s" % str(qstring),
-                                      "The material %s is not a valid Formula " \
-                                      "nor a valid Material.\n" \
-                                      "Do you want to define the material %s\n" % \
-                                      (str(qstring), str(qstring)),
-                                      qt.QMessageBox.Yes,qt.QMessageBox.No)
+            else:
+                try:
+                    numberTest = float(text)
+                    msg =  qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Invalid Material Name %s\n" % text + \
+                                "You cannot use a number as material name.\n" +\
+                                "Hint: You can use _%s_" % text)
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
+                    msg = qt.QMessageBox.No
+                except:
+                    msg=qt.QMessageBox.information( self, "Invalid Material %s" % str(qstring),
+                                          "The material %s is not a valid Formula " \
+                                          "nor a valid Material.\n" \
+                                          "Do you want to define the material %s\n" % \
+                                          (str(qstring), str(qstring)),
+                                          qt.QMessageBox.Yes,qt.QMessageBox.No)
             if msg == qt.QMessageBox.No:
                 if QTVERSION < '4.0.0':
                     self.setCurrentItem(0)
@@ -411,6 +419,8 @@ class MaterialValidator(qt.QValidator):
             return (self.Invalid, pos)
         except:
             pass
+        if text.endswith(' '):
+            return (self.Invalid, pos)
         if Elements.isValidFormula(text):
             return (self.Valid, pos)
         elif Elements.isValidMaterial(text):

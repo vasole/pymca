@@ -84,6 +84,8 @@ class FitParamWidget(FitParamForm):
             tabAttLayout.setMargin(11)
             tabAttLayout.setSpacing(6)
             self.graph = ScanWindow.ScanWindow(self)
+            self.graph._togglePointsSignal()
+            self.graph.graph.crossPicker.setEnabled(False)
             self.graph.setWindowFlags(qt.Qt.Dialog)
             self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graph)
