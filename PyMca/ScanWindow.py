@@ -1698,6 +1698,9 @@ class ScanWindow(qt.QWidget):
     def setTitle(self, text=""):
         self.graph.setTitle(text)
 
+    def setActiveCurve(self, legend):
+        self.graph.setActiveCurve(legend)
+
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None, replace=False):
         if legend is None:
             legend = "Unnamed curve 1.1"
