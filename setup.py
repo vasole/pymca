@@ -212,7 +212,7 @@ class smart_install_scripts(install_scripts):
                     os.chmod(file, mode)
    
 description = "GPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
-long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra.Graphical user interface (GUI) and batch processing capabilities provided
+long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
 """
 
 distrib = setup(name="PyMca",

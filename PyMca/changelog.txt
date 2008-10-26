@@ -1,3 +1,32 @@
+VERSION 4.3.0
+
+Speed up fit configuration when using multiple energies.
+
+Import/export the multiple energies beam description as CSV files.
+
+Possibility to calculate transmission curves added to the tools menu.
+
+Offer the possibility to use an additional filter in the x-ray tube setup.
+
+Visualization of the absortion and the detector contribution to the efficiency.
+
+Prevent the use of trailing spaces in the definition of materials.
+
+Implement zoomed window panning (press CTRL key and desired arrow key simultaneously).
+
+Offer contour plot customization when saving images though matplotlib. 
+
+Possibility to flip external images used for selection in the ROI imaging
+tool.
+
+Numpy 1.2 runtime deprecation warnings suppresed.
+
+Interpolated mass attenuation coefficients were between 0 and 3 %
+overestimated.
+
+Correct a bug appearing when trying to fit separate Ka and Kb lines of
+elements above Rb.
+
 VERSION 4.2.6
 
 Add very basic spx file format support.

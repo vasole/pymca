@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.2.6"
+__version__ = "4.3.0-20081026-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -177,6 +177,7 @@ if QTVERSION > '4.0.0':
         STACK = False
     import PyMcaPostBatch
     import RGBCorrelator
+    import MaterialEditor
 
 import ConfigDict
 import PyMcaDirs
@@ -224,6 +225,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.initSource()
 
             self.elementsInfo= None
+            self.attenuationTool =  None
             self.identifier  = None
             self.__batch     = None
             self.__mca2Edf   = None
@@ -993,6 +995,7 @@ class PyMca(PyMcaMdi.PyMca):
             else:
                 self.menuTools.addAction("Hide Source",self.toggleSource)
             self.menuTools.addAction("Elements   Info",self.__elementsInfo)
+            self.menuTools.addAction("Material Transmission",self.__attTool)
             self.menuTools.addAction("Identify  Peaks",self.__peakIdentifier)
             self.menuTools.addAction("Batch   Fitting",self.__batchFitting)
             self.menuTools.addAction("Convert Mca to Edf",self.__mca2EdfConversion)
@@ -1026,6 +1029,13 @@ class PyMca(PyMcaMdi.PyMca):
            self.elementsInfo.show()
         if QTVERSION < '4.0.0': self.elementsInfo.raiseW()
         else:self.elementsInfo.raise_()
+
+    def __attTool(self):
+        if self.attenuationTool is None:
+            self.attenuationTool = MaterialEditor.MaterialEditor(toolmode=True)
+        if self.attenuationTool.isHidden():
+            self.attenuationTool.show()
+        self.attenuationTool.raise_()
 
     def __peakIdentifier(self):
         if self.identifier is None:

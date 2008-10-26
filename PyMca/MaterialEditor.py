@@ -33,6 +33,7 @@ if 'qt' not in sys.modules:
         import qt
 else:
     import qt
+import copy
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
@@ -107,7 +108,7 @@ class MaterialEditor(qt.QWidget):
                          qt.SIGNAL('MaterialMassAttenuationSignal'),
                          self._massAttenuationSlot)
         if self.__toolMode:
-            self.materialGUI.setCurrent(a[4])
+            self.materialGUI.setCurrent(a[0])
             if self.graph is None:
                 self.graph = ScanWindow.ScanWindow(self)
                 self.graph._togglePointsSignal()
@@ -118,7 +119,6 @@ class MaterialEditor(qt.QWidget):
             self.materialGUI.setCurrent(a[0])
             layout.addWidget(self.materialGUI)
 
-    
     def importFile(self, filename):
         if not os.path.exists(filename):
             qt.QMessageBox.critical(self, "ERROR opening file",
@@ -445,6 +445,7 @@ class MaterialGUI(qt.QWidget):
         self.__lastRow    = None
         self.__lastColumn = None
         self.__fillingValues = True
+        self.__toolMode = toolmode
         if toolmode:
             self.buildToolMode(comments,height)
         else:
@@ -552,6 +553,9 @@ class MaterialGUI(qt.QWidget):
             else:
                 densityLabel.setAlignment(qt.Qt.AlignVCenter)
                 self.__densityLine  = qt.QLineEdit(grid)
+                validator = qt.QDoubleValidator(self.__densityLine)
+                self.__densityLine.setValidator(validator)
+
             self.__densityLine.setReadOnly(False)
             gridLayout.addWidget(self.__densityLine, 0, 1)
 
@@ -564,6 +568,9 @@ class MaterialGUI(qt.QWidget):
             else:
                 thicknessLabel.setAlignment(qt.Qt.AlignVCenter)
                 self.__thicknessLine  = qt.QLineEdit(grid)
+                validator = qt.QDoubleValidator(self.__thicknessLine)
+                self.__thicknessLine.setValidator(validator)
+
             gridLayout.addWidget(self.__thicknessLine, 1, 1)
             self.__thicknessLine.setReadOnly(False)
             if QTVERSION < '4.0.0':
@@ -679,6 +686,8 @@ class MaterialGUI(qt.QWidget):
         densityLabel.setAlignment(qt.Qt.AlignVCenter)
         self.__densityLine  = qt.QLineEdit(grid)
         self.__densityLine.setText("1.0")
+        validator = qt.QDoubleValidator(self.__densityLine)
+        self.__densityLine.setValidator(validator)
         self.__densityLine.setReadOnly(False)
 
         thicknessLabel  = qt.QLabel(grid)
@@ -686,6 +695,8 @@ class MaterialGUI(qt.QWidget):
         thicknessLabel.setAlignment(qt.Qt.AlignVCenter)
         self.__thicknessLine  = qt.QLineEdit(grid)
         self.__thicknessLine.setText("0.1")
+        validator = qt.QDoubleValidator(self.__thicknessLine)
+        self.__thicknessLine.setValidator(validator)
         self.__thicknessLine.setReadOnly(False)
 
         self.__transmissionButton = qt.QPushButton(grid)
@@ -702,6 +713,11 @@ class MaterialGUI(qt.QWidget):
         nameLabel.setAlignment(qt.Qt.AlignVCenter)
         self.__nameLine  = qt.QLineEdit(nameHBox)
         self.__nameLine.setReadOnly(False)
+        if self.__toolMode:
+            toolTip  = "Type your material name and press the ENTER key.\n"
+            toolTip += "Fitting materials cannot be defined or redefined here.\n"
+            toolTip += "Use the material editor of the advanced fit for it.\n"
+            self.__nameLine.setToolTip(toolTip)
 
         nameHBoxLayout.addWidget(nameLabel)
         nameHBoxLayout.addWidget(self.__nameLine)
@@ -749,15 +765,24 @@ class MaterialGUI(qt.QWidget):
         if DEBUG:"setCurrent(self, matkey0) ", matkey0
         matkey = Elements.getMaterialKey(matkey0)
         if matkey is not None:
-            self._current = Elements.Material[matkey]
+            if self.__toolMode:
+                #make sure the material CANNOT be modified
+                self._current = copy.deepcopy(Elements.Material[matkey])
+                if self.__table.isEnabled():
+                    self.__disableInput()                    
+            else:
+                self._current = Elements.Material[matkey]
         else:
             self._setCurrentDefault()
-            Elements.Material[matkey0] = self._current
+            if not self.__toolMode:
+                Elements.Material[matkey0] = self._current
         self.__numberSpin.setFocus()
         try:
             self._fillValues()
             self._updateCurrent()
         finally:
+            if self.__toolMode:
+                self.__nameLine.setText("%s" % matkey)
             self.__fillingValues = False
         
     def _fillValues(self):
@@ -900,7 +925,27 @@ class MaterialGUI(qt.QWidget):
         if DEBUG:print "__nameLineSlot(self)"
         qstring = self.__nameLine.text()
         text = str(qstring)
-        self._current['Comment'] = text
+        if self.__toolMode:
+            if len(text):
+                matkey = Elements.getMaterialKey(text)
+            if matkey is not None:
+                self.setCurrent(matkey)
+                #Disable everything
+                self.__disableInput()
+            else:
+                self._current['Comment'] = text
+                self.__numberSpin.setEnabled(True)
+                self.__table.setEnabled(True)
+                self.__densityLine.setEnabled(True)
+                self.__thicknessLine.setEnabled(True)
+        else:
+            self._current['Comment'] = text
+            
+    def __disableInput(self):
+        self.__numberSpin.setEnabled(False)
+        self.__table.setEnabled(False)
+        self.__densityLine.setEnabled(False)
+        self.__thicknessLine.setEnabled(False)
     
     def __numberSpinChanged(self,value):
         #size = self.__table.size()
