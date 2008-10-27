@@ -1440,9 +1440,10 @@ class McaCalCopy(qt.QDialog):
         asl=qt.QLabel(lines)
         asl.setText('A:')
         asl.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
-        as=qt.QLineEdit(lines)
-        as.setReadOnly(1)
-        as.setText("%.4g" % sourcecal[0])
+        
+        as_=qt.QLineEdit(lines)
+        as_.setReadOnly(1)
+        as_.setText("%.4g" % sourcecal[0])
         
 
         bsl=qt.QLabel(lines)
@@ -1460,7 +1461,7 @@ class McaCalCopy(qt.QDialog):
         cs.setText("%.4g" % sourcecal[2])
 
         lineslayout.addWidget(asl)
-        lineslayout.addWidget(as)
+        lineslayout.addWidget(as_)
         lineslayout.addWidget(bsl)
         lineslayout.addWidget(bs)
         lineslayout.addWidget(csl)
