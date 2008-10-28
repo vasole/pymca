@@ -932,6 +932,16 @@ class MaterialGUI(qt.QWidget):
                 self.setCurrent(matkey)
                 #Disable everything
                 self.__disableInput()
+            elif text in Elements.ElementList:
+                self.__disableInput()
+                name = Elements.Element[text]['name']
+                self._current['Comment'] = name[0].upper() + name[1:]
+                self._current['CompoundList'] = [text+"1"]
+                self._current['CompoundFraction'] = [1.0]
+                self._current['Density'] = Elements.Element[text]['density']
+                self._fillValues()
+                self._updateCurrent()
+                self.__nameLine.setText("%s" % text)
             else:
                 self._current['Comment'] = text
                 self.__numberSpin.setEnabled(True)
@@ -945,7 +955,7 @@ class MaterialGUI(qt.QWidget):
         self.__numberSpin.setEnabled(False)
         self.__table.setEnabled(False)
         self.__densityLine.setEnabled(False)
-        self.__thicknessLine.setEnabled(False)
+        self.__thicknessLine.setEnabled(True)
     
     def __numberSpinChanged(self,value):
         #size = self.__table.size()
