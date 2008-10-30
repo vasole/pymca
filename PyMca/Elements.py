@@ -1348,6 +1348,7 @@ def getMultilayerFluorescence(multilayer0,
             else:
                 justoneList = justone
                 nrgi = range(len(energyList))
+                matrixmutotalfluorescence= None
             for iene in nrgi:
                 energy   = energyList[iene]  * 1.0
                 #print "before origattenuators = ",origattenuators
