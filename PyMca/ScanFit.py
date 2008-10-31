@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
+import os
 import SpecfitGUI
 from SpecfitGUI import qt
 import Specfit
@@ -52,7 +53,11 @@ class ScanFit(qt.QWidget):
         self.headerlabel.setAlignment(qt.Qt.AlignHCenter)       
         self.setheader('<b>Fit of XXXXXXXXXX from X XXXXX to XXXX<\b>')
         ##############
-        self.specfit.importfun("SpecfitFunctions.py")
+        funsFile = "SpecfitFunctions.py"
+        if not os.path.exists(funsFile):
+            funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
+                                "SpecfitFunctions.py")
+        self.specfit.importfun(funsFile)
         self.specfit.settheory('Area Gaussians')
         self.specfit.setbackground('Linear')
         fitconfig = {}
