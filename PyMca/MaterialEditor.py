@@ -321,6 +321,7 @@ class MaterialComboBox(qt.QComboBox):
             else:
                 qstring = qstring0
         text = str(qstring)
+
         if Elements.isValidFormula(text): 
             msg =  qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -352,6 +353,7 @@ class MaterialComboBox(qt.QComboBox):
         dict['text']  = text
         if qstring0 != qstring:
             self.removeItem(self.count()-1)
+
         insert = True
         for i in range(self.count()):
             if QTVERSION <'4.0.0':
@@ -813,16 +815,16 @@ class MaterialGUI(qt.QWidget):
                 item = self.__table.item(row,0)
                 if item is None:
                     item = qt.QTableWidgetItem(compound,qt.QTableWidgetItem.Type)
+                    self.__table.setItem(row,0,item)
                 else:
                     item.setText(compound)
-                self.__table.setItem(row,0,item)
                 item = self.__table.item(row,1)
                 if item is None:
                     item = qt.QTableWidgetItem("%.5g" % self._current['CompoundFraction'][row],
                                                qt.QTableWidgetItem.Type)
+                    self.__table.setItem(row,1,item)
                 else:
                     item.setText("%.5g" % self._current['CompoundFraction'][row])
-                self.__table.setItem(row,1,item)
             row += 1
         self.__fillingValues = False
 
