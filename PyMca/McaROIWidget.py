@@ -432,6 +432,7 @@ class McaROITable(QTable):
                         if key2 is None:
                             key2 = qt.QTableWidgetItem(field,
                                                        qt.QTableWidgetItem.Type)
+                            self.setItem(line,col,key2)
                         else:
                             key2.setText(field)
                         if (ROI.upper() == 'ICR') or (ROI.upper() == 'DEFAULT'):
@@ -445,7 +446,6 @@ class McaROITable(QTable):
                             else:
                                 key2.setFlags(qt.Qt.ItemIsSelectable|
                                               qt.Qt.ItemIsEnabled) 
-                    self.setItem(line,col,key2)
                     col=col+1
         self.setRowCount(line0)
         i = 0

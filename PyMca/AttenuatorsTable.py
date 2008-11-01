@@ -516,11 +516,11 @@ class AttenuatorsTableWidget(QTable):
                     if item is None:
                         item = qt.QTableWidgetItem(text,
                                                    qt.QTableWidgetItem.Type)
+                        self.setItem(idx, 1, item)
                     else:
                         item.setText(text)
                     item.setFlags(qt.Qt.ItemIsSelectable|
                                   qt.Qt.ItemIsEnabled)
-                    self.setItem(idx, 1, item)
                     combo = MyQComboBox(self,options=a, row = idx, col = 2)
                     combo.setEditable(True)
                     self.setCellWidget(idx,2,combo)
@@ -554,9 +554,9 @@ class AttenuatorsTableWidget(QTable):
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
+                    self.setItem(idx, 1, item)
                 else:
                     item.setText(text)
-                self.setItem(idx, 1, item)
             
 
             #a = qt.QStringList()
@@ -598,22 +598,22 @@ class AttenuatorsTableWidget(QTable):
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
+                    self.setItem(idx, 1, item)
                 else:
                     item.setText(text)
                 item.setFlags(qt.Qt.ItemIsSelectable|
                               qt.Qt.ItemIsEnabled)
-                self.setItem(idx, 1, item)
 
                 text = "1.0"
                 item = self.item(idx,5)
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
+                    self.setItem(idx, 5, item)
                 else:
                     item.setText(text)
                 item.setFlags(qt.Qt.ItemIsSelectable|
                               qt.Qt.ItemIsEnabled)
-                self.setItem(idx, 5, item)
 
             combo = MyQComboBox(self, options=a, row = idx, col = 2)
             combo.setEditable(True)
@@ -647,22 +647,22 @@ class AttenuatorsTableWidget(QTable):
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
+                self.setItem(idx, 1, item)
             else:
                 item.setText(text)
             item.setFlags(qt.Qt.ItemIsSelectable|
                           qt.Qt.ItemIsEnabled)
-            self.setItem(idx, 1, item)
 
             text = "1.0"
             item = self.item(idx,5)
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
+                self.setItem(idx, 5, item)
             else:
                 item.setText(text)
             item.setFlags(qt.Qt.ItemIsSelectable|
                           qt.Qt.ItemIsEnabled)
-            self.setItem(idx, 5, item)
             
         combo = MyQComboBox(self, options=a, row = idx, col = 2)
         combo.setEditable(True)
@@ -688,22 +688,22 @@ class AttenuatorsTableWidget(QTable):
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
+                self.setItem(idx, 1, item)
             else:
                 item.setText(text)
             item.setFlags(qt.Qt.ItemIsSelectable|
                           qt.Qt.ItemIsEnabled)
-            self.setItem(idx, 1, item)
 
             text = "1.0"
             item = self.item(idx,5)
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
+                self.setItem(idx, 5, item)
             else:
                 item.setText(text)
             item.setFlags(qt.Qt.ItemIsSelectable|
                           qt.Qt.ItemIsEnabled)
-            self.setItem(idx, 5, item)
 
         if QTVERSION < '4.0.0':
             qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
@@ -774,9 +774,9 @@ class AttenuatorsTableWidget(QTable):
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
+                self.setItem(row, col, item)
             else:
                 item.setText(text)
-            self.setItem(row, col, item)
 
 
     def setCellWidget(self, row, col, w):
