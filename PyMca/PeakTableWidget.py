@@ -404,7 +404,7 @@ class PeakTableWidget(QTable):
                                     if item is None:
                                         item = qt.QTableWidgetItem(text,
                                                    qt.QTableWidgetItem.Type)
-                                        self.setItem(row, col)
+                                        self.setItem(row, col, item)
                                     else:                                        
                                         item.setText(str(text))
                                     item.setFlags(EditType)

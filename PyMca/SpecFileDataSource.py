@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.3$"
 
@@ -167,8 +167,10 @@ class SpecFileDataSource:
     def __getKeyType (self,key):
         count= string.count(key, '.')
         if (count==1): return "scan"
-        elif (count==2) or (count==3): return "mca"
-        else: raise self.Error, "SpecFileDataSource: Invalid key"
+        elif (count==2) or (count==3):
+            return "mca"
+        else:
+            raise KeyError, "SpecFileDataSource: Invalid key"
 
     def __getScanInfo(self, scankey):
         index = 0
@@ -239,7 +241,7 @@ class SpecFileDataSource:
                 if len(calib) == 1:
                     pass
                 else:
-                    raise self.Error,"Number of calibrations does not match number of MCAs"        
+                    raise ValueError,"Number of calibrations does not match number of MCAs"        
             ctxt= calib[0].split()
             if len(ctxt)==4:
                 #try:
@@ -259,7 +261,7 @@ class SpecFileDataSource:
                 if len(ctime) == 1:
                     pass
                 else:
-                    raise self.Error,"Number of counting times does not match number of MCAs"        
+                    raise ValueError,"Number of counting times does not match number of MCAs"        
             ctxt= ctime[0].split()
             if len(ctxt)==4:
                 try:
@@ -278,7 +280,7 @@ class SpecFileDataSource:
                 if len(chann) == 1:
                     pass
                 else:
-                    raise self.Error,"Number of @CHANN information does not match number of MCAs"        
+                    raise ValueError,"Number of @CHANN information does not match number of MCAs"        
             ctxt= chann[0].split()
             if len(ctxt)==5:
                 mcainfo['Channel0'] = float(ctxt[2])
@@ -302,7 +304,8 @@ class SpecFileDataSource:
             except: lines=0
             if nums[3]==0: mca_no=int(nums[2])
             else:          mca_no=((int(nums[3])-1)*lines)+int(nums[2])
-        else: raise self.Error, "SpecFileData: Invalid key"
+        else:
+            raise KeyError, "SpecFileData: Invalid key"
         return (sel_key,mca_no)
 
     def getDataObject(self,key,selection=None):
@@ -432,13 +435,17 @@ class SpecFileDataSource:
         scan_data = None
 
         if scan_type&SF_SCAN:
-            try: scan_data= Numeric.transpose(scan_obj.data()).copy()
-            except: raise self.Error, "SF_SCAN read failed"
+            try:
+                scan_data= Numeric.transpose(scan_obj.data()).copy()
+            except:
+                raise IOError, "SF_SCAN read failed"
         elif scan_type&SF_MESH:
             try:
                 if raw:
-                    try: scan_data= Numeric.transpose(scan_obj.data()).copy()
-                    except: raise self.Error, "SF_MESH read failed"
+                    try:
+                        scan_data= Numeric.transpose(scan_obj.data()).copy()
+                    except:
+                        raise IOError, "SF_MESH read failed"
                 else:
                     scan_array= scan_obj.data()
                     (mot1,mot2,cnts)= self.__getMeshSize(scan_array)
@@ -446,10 +453,13 @@ class SpecFileDataSource:
                     for idx in range(mot2):
                         scan_data[:,idx,:]= Numeric.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                     scan_data= Numeric.transpose(scan_data).copy()
-            except: raise self.Error, "SF_MESH read failed"
+            except:
+                raise IOError, "SF_MESH read failed"
         elif scan_type&SF_MCA:
-            try: scan_data= scan_obj.mca(1)
-            except: raise self.Error, "SF_MCA read failed"
+            try:
+                scan_data= scan_obj.mca(1)
+            except:
+                raise IOError, "SF_MCA read failed"
 
         if scan_data is not None:
             #create data object
@@ -458,7 +468,8 @@ class SpecFileDataSource:
             dataObject.info = scan_info
             dataObject.data = scan_data
             return dataObject
-        else:    raise self.Error, "getData unknown type"
+        else:
+            raise TypeError, "getData unknown type"
 
     def _getMcaData(self, key):
         index = 0        
@@ -479,7 +490,7 @@ class SpecFileDataSource:
                     mca_no= int(key_split[2])
                     scan_data= scan_obj.mca(mca_no)
                 except: 
-                    raise self.Error, "Single MCA read failed"
+                    raise IOError, "Single MCA read failed"
             if scan_data is not None:
                 scan_info.update(self.__getMcaInfo(mca_no, scan_obj, scan_info))
                 dataObject = DataObject.DataObject()
@@ -493,7 +504,7 @@ class SpecFileDataSource:
                     mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                     scan_data= scan_obj.mca(mca_no)
                 except: 
-                    raise self.Error, "SF_SCAN+SF_NMCA read failed"
+                    raise IOError, "SF_SCAN+SF_NMCA read failed"
             elif scan_type==SF_MESH+SF_MCA:
                 try:
                     #scan_array= scan_obj.data()
@@ -505,15 +516,15 @@ class SpecFileDataSource:
                         print "total number of mca = ",scan_info["NbMca"]
                     scan_data= scan_obj.mca(mca_no)
                 except: 
-                    raise self.Error, "SF_MESH+SF_MCA read failed"
+                    raise IOError, "SF_MESH+SF_MCA read failed"
             elif scan_type&SF_NMCA or scan_type&SF_MCA:
                 try:
                     mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                     scan_data= scan_obj.mca(mca_no)
                 except:
-                    raise self.Error, "SF_MCA or SF_NMCA read failed"
+                    raise IOError, "SF_MCA or SF_NMCA read failed"
             else:
-                raise self.Error, "Unknown scan type!!!!!!!!!!!!!!!!"
+                raise TypeError, "Unknown scan type!!!!!!!!!!!!!!!!"
             if scan_data is not None:
                 scan_info.update(self.__getMcaInfo(mca_no, scan_obj, scan_info))
                 dataObject = DataObject.DataObject()

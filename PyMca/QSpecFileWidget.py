@@ -442,6 +442,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 idx = self.menu_idx
         if DEBUG:
             print "Scan information:"
+
         try:
             info = self.data.getDataObject(self.scans[idx]).info
         except:
@@ -457,10 +458,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             
         dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
         if info.has_key("Header"):
-            if QTVERSION > '4.0.0':
-                dataInfoWidget.setWindowTitle(info['Header'][0])
-            else:
-                dataInfoWidget.setCaption(info['Header'][0])
+            if info['Header'] is not None:
+                if QTVERSION > '4.0.0':
+                    dataInfoWidget.setWindowTitle(info['Header'][0])
+                else:
+                    dataInfoWidget.setCaption(info['Header'][0])
         dataInfoWidget.show()
         wid = id(dataInfoWidget)
         self.dataInfoWidgetDict[wid] = dataInfoWidget
