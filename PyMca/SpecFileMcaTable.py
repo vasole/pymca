@@ -1,3 +1,28 @@
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem for you.
+#############################################################################*/
 import sys
 if 'qt' not in sys.modules:
     try:
@@ -58,7 +83,7 @@ if QTVERSION < '4.0.0':
             self.reset()
 
         def setScan(self, scankey):
-            if type(scankey)==types.ListType: 
+            if type(scankey)==types.ListType:
                 if len(scankey): scankey= scankey[0]
                 else: scankey=None
             if scankey is None:
@@ -110,7 +135,7 @@ if QTVERSION < '4.0.0':
             mca= self.info["NbMca"] or 0
             pts= self.info["Lines"] or 0
 
-            if mca==0: 
+            if mca==0:
                 self.reset()
             else:
                 # --- try to compute number of detectors
@@ -202,7 +227,7 @@ if QTVERSION < '4.0.0':
         #
         def __getMcaNo(self, row, col):
             return (row*self.det+col+1)
-            
+
         def __getRowCol(self, mcano):
             mcano= mcano-1
             row= int(mcano/self.det)
@@ -223,7 +248,7 @@ else:
             if item is None:
                 item = qt.QTableWidgetItem("No MCA for the selected scan",
                                                qt.QTableWidgetItem.Type)
-            
+
             self.table.setHorizontalHeaderItem(0,item)
             self.table.resizeColumnToContents(0)
             self.table.setEditTriggers(qt.QAbstractItemView.NoEditTriggers)
@@ -294,12 +319,12 @@ else:
             if item is None:
                 item = qt.QTableWidgetItem('',qt.QTableWidgetItem.Type)
                 self.table.setItem(row, col, item)
-                
+
         def _cellDoubleClicked(self, row, col):
             if DEBUG:
                 print "_cellDoubleClicked ", row, col
             #self._toggleCell(row, col)
-            pass   
+            pass
 
         def getCurrentlySelectedMca(self):
             mca = []
@@ -308,7 +333,7 @@ else:
                 col = self.table.column(item)
                 mca.append("%d.%d" % (row+1, col+1))
             return mca
-            
+
         def getSelectedMca(self):
             mca = self.getCurrentlySelectedMca() # They may be not X marked
             for r in range(self.table.rowCount()):
@@ -354,4 +379,3 @@ def test():
 
 if __name__ == "__main__":
     test()
-    

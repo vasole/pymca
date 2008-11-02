@@ -404,6 +404,7 @@ class PeakTableWidget(QTable):
                                     if item is None:
                                         item = qt.QTableWidgetItem(text,
                                                    qt.QTableWidgetItem.Type)
+                                        self.setItem(row, col)
                                     else:                                        
                                         item.setText(str(text))
                                     item.setFlags(EditType)
@@ -484,9 +485,9 @@ class PeakTableWidget(QTable):
                             if item is None:
                                 item = qt.QTableWidgetItem(text,
                                                 qt.QTableWidgetItem.Type)
+                                self.setItem(row, col, item)
                             else:
                                 item.setText(text)
-                            self.setItem(row, col, item)
                     elif key == 'channel':
                         if DEBUG:
                             print "setting channel in configure"
@@ -504,9 +505,9 @@ class PeakTableWidget(QTable):
                             if item is None:
                                 item = qt.QTableWidgetItem(text,
                                                 qt.QTableWidgetItem.Type)
+                                self.setItem(row, col, item)
                             else:
                                 item.setText(text)
-                            self.setItem(row, col, item)
                     elif (key == 'setenergy') or (key == 'calenergy'):
                         if len(str(kw[key])):
                             newvalue=string.atof(str(kw[key]))
@@ -522,9 +523,9 @@ class PeakTableWidget(QTable):
                             if item is None:
                                 item = qt.QTableWidgetItem(text,
                                                 qt.QTableWidgetItem.Type)
+                                self.setItem(row, col, item)
                             else:
                                 item.setText(text)
-                            self.setItem(row, col, item)
                         #self.myslot(row,col)
                     else:
                         if len(str(kw[key])):

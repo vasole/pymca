@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import PyQt4.Qt as qt
@@ -77,11 +77,11 @@ class RGBCorrelatorTable(qt.QTableWidget):
             item = qt.QTableWidgetItem(cntlabel,
                                        qt.QTableWidgetItem.Type)
             item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
+            self.setItem(i, 0, item)
         else:
             item.setText(cntlabel)
         #item is enabled and selectable
         item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
-        self.setItem(i, 0, item)
 
         #the checkboxes
         for j in range(1, 4, 1):

@@ -124,8 +124,8 @@ class XiaCorrectionWidget(qt.QWizardPage):
 	if item is None:
             item = qt.QTableWidgetItem("Detectors",
                                     qt.QTableWidgetItem.Type)
+            	self.sumTable.setItem(num, 0, item)
         item.setText(itemText)
-	self.sumTable.setItem(num, 0, item)
 
     def __add(self):
 	if not self.sumCheck.isChecked() and not self.avgCheck.isChecked():

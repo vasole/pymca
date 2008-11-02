@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 if 'qt' not in sys.modules:
@@ -126,26 +126,28 @@ class McaTable(QTable):
                     if qt.qVersion() < '4.0.0':
                         item=ColorQTableItem(self,qttable.QTableItem.OnTyping,
                                             fields[i],color=color,bold=1)
+                        self.setItem(line, col, item)
                     else:
                         item = self.item(line, col)
                         text = fields[i]
                         if item is None:
                             item = qt.QTableWidgetItem(text,
                                                        qt.QTableWidgetItem.Type)
+                            self.setItem(line, col, item)
                         else:
                             item.setText(text)
                             item.setBackgroundColor(color)
                             item.setFlags(qt.Qt.ItemIsSelectable|
                                           qt.Qt.ItemIsEnabled)                    
-                    self.setItem(line, col, item)
                 else:
                     if qt.qVersion() < '4.0.0':
                         self.clearCell(line,col)
+                        self.setItem(line, col, item)
                     else:
                         item = self.item(line, col)
                         if item is not None:
                             item.setText("")
-                        self.setItem(line, col, item)
+                        #self.setItem(line, col, item)
                 col=col+1
             line += 1
             #Lemon Chiffon = (255,250,205)
@@ -166,18 +168,19 @@ class McaTable(QTable):
                     if qt.qVersion() < '4.0.0':
                         item=ColorQTableItem(self, qttable.QTableItem.Never,
                                             field,color=color)
+                        self.setItem(line, col, item)
                     else:
                         item = self.item(line, col)
                         text = field
                         if item is None:
                             item = qt.QTableWidgetItem(text,
                                                        qt.QTableWidgetItem.Type)
+                            self.setItem(line, col, item)
                         else:
                             item.setText(text)
                         item.setBackgroundColor(color)
                         item.setFlags(qt.Qt.ItemIsSelectable|
                                       qt.Qt.ItemIsEnabled)                    
-                    self.setItem(line, col, item)
                     col=col+1
                 line+=1
             for peak0 in result[group]['escapepeaks']:
@@ -198,17 +201,18 @@ class McaTable(QTable):
                             item=ColorQTableItem(self,
                                                  qttable.QTableItem.Never,
                                                  field,color=color)
+                            self.setItem(line, col, item)
                         else:
                             item = self.item(line, col)
                             if item is None:
                                 item = qt.QTableWidgetItem(field,
                                                            qt.QTableWidgetItem.Type)
+                                self.setItem(line, col, item)
                             else:
                                 item.setText(field)
                             item.setBackgroundColor(color)
                             item.setFlags(qt.Qt.ItemIsSelectable|
                                           qt.Qt.ItemIsEnabled)
-                        self.setItem(line, col, item)
                         col=col+1
                     line+=1
         for i in range(self.columnCount()):

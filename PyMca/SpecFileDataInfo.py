@@ -57,9 +57,9 @@ else:
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
+                    self.setItem(row, col, item)
                 else:
                     item.setText(text)
-                self.setItem(row, col, item)
 
     
 import string
