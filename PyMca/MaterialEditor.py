@@ -593,6 +593,8 @@ class MaterialGUI(qt.QWidget):
                 self.__massAttButton = qt.QPushButton(grid)
                 self.__massAttButton.setText('Mass Att. Coefficients')
                 gridLayout.addWidget(self.__massAttButton, 2, 1)
+                self.__transmissionButton.setAutoDefault(False)
+                self.__massAttButton.setAutoDefault(False)
                 self.connect(self.__transmissionButton, qt.SIGNAL('clicked()'),
                              self.__transmissionSlot)
                 self.connect(self.__massAttButton, qt.SIGNAL('clicked()'),
@@ -705,6 +707,9 @@ class MaterialGUI(qt.QWidget):
         self.__transmissionButton.setText('Material Transmission')
         self.__massAttButton = qt.QPushButton(grid)
         self.__massAttButton.setText('Mass Att. Coefficients')
+        self.__transmissionButton.setAutoDefault(False)
+        self.__massAttButton.setAutoDefault(False)
+
 
         nameHBox       = qt.QWidget(grid)
         nameHBoxLayout = qt.QHBoxLayout(nameHBox)

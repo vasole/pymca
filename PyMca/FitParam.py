@@ -97,6 +97,7 @@ class FitParamWidget(FitParamForm):
             #self.graph.hide()
             if maxheight > 799:
                 self.attPlotButton = qt.QPushButton(self.tabAttenuators)
+                self.attPlotButton.setAutoDefault(False)
                 text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
                 self.attPlotButton.setText(text)
                 self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
@@ -207,6 +208,8 @@ class FitParamWidget(FitParamForm):
                                 "Energy is set in the BEAM tab")
             else:
                 self.peakTable.energy.setToolTip("Energy is set in the BEAM tab")
+                maxWidth = int(min(900, 0.8*qt.QDesktopWidget().width()))
+                self.peakTable.setMaximumWidth(maxWidth)
             layout.addWidget(self.peakTable, 0, 0)
             #self.peakTable.setMaximumSize(self.tabDetector.sizeHint())
         #self.energyTable = self.peakTable.energyTable        
