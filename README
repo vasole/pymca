@@ -35,7 +35,8 @@ The directories have to be specified with their full path without the last "/".
 
 In any case you need write privileges to the final directories.
 
-3 - Creation of an easy to install windows binary using Visual Studio 2003
+3 - Creation of an easy to install windows binary using Visual Studio 2003 (or 
+Visual Studio 2008 if under Python 2.6)
 
 python setup.py bdist_wininst --install-script pymca_win_post_install.py 
 
