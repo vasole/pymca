@@ -604,8 +604,14 @@ class McaAdvancedFitBatch:
                         self.__images['chisq']  = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float) - 1.
                         if self._concentrations:
                             layerlist = concentrations['layerlist']
+                            if concentrations.has_key('mmolar'):
+                                self.__conLabel = " mM"
+                                self.__conKey   = "mmolar"
+                            else:
+                                self.__conLabel = " mass fraction"
+                                self.__conKey   = "mass fraction"
                             for group in concentrations['groups']:
-                                key = group+" mass fraction"
+                                key = group+self.__conLabel
                                 self.__concentrationsKeys.append(key)
                                 self.__images[key] = Numeric.zeros((self.__nrows,self.__ncols),
                                                                                       Numeric.Float)
@@ -624,12 +630,12 @@ class McaAdvancedFitBatch:
                 if self._concentrations:
                     layerlist = concentrations['layerlist']
                     for group in concentrations['groups']:
-                        self.__images[group+" mass fraction"][self.__row, self.__col] = \
-                                              concentrations['mass fraction'][group]
+                        self.__images[group+self.__conLabel][self.__row, self.__col] = \
+                                              concentrations[self.__conKey][group]
                         if len(layerlist) > 1:
                             for layer in layerlist:
                                 self.__images[group+" "+layer] [self.__row, self.__col] = \
-                                              concentrations[layer]['mass fraction'][group]
+                                              concentrations[layer][self.__conKey][group]
                 try:
                     self.__images['chisq'][self.__row, self.__col] = result['chisq']
                 except:
