@@ -1166,6 +1166,22 @@ class QtBlissGraph(qwt.QwtPlot):
                 xmax = self.invTransform(qwt.QwtPlot.xBottom, xmax0)
                 ymin = self.invTransform(qwt.QwtPlot.yLeft, ymin0)
                 ymax = self.invTransform(qwt.QwtPlot.yLeft, ymax0)
+                graphXMin, graphXMax =self.getX1AxisLimits()
+                if xmin < graphXMin:
+                    xmin = graphXMin
+                if xmax > graphXMax:
+                    xmax = graphXMax
+                graphYMin, graphYMax =self.getY1AxisLimits()
+                if ymax < ymin:
+                    if ymax < graphYMin:
+                        ymax = graphYMin
+                    if ymin > graphYMax:
+                        ymin = graphYMax
+                else:
+                    if ymin < graphYMin:
+                        ymin = graphYMin
+                    if ymax > graphYMax:
+                        ymax = graphYMax
                 if xmin == xmax or ymin == ymax:
                     return
                 if self.__keepimageratio:
