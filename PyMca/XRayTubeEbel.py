@@ -378,9 +378,12 @@ def generateLists(target, e0, window = None,
     step1 =  0.2
     #x1min = 8.0
     #step1 =  0.15
-    x2min = min(e0, 20.0)
+    x2min = min(e0-2*step1, 20.0)
     #step2 =  0.3
-    step2 =  0.5
+    if x2min < 20:
+        step2 = step1
+    else:
+        step2 =  0.5
     x3min = e0w
     x1    = Numeric.arange(x1min, x2min+step1, step1)
     x2    = Numeric.arange(x2min+step1, x3min, step2)
