@@ -1171,7 +1171,10 @@ class QtBlissGraph(qwt.QwtPlot):
                     xmin = graphXMin
                 if xmax > graphXMax:
                     xmax = graphXMax
-                graphYMin, graphYMax =self.getY1AxisLimits()
+                if self.isY1AxisInverted():
+                    graphYMax, graphYMin =self.getY1AxisLimits()
+                else:
+                    graphYMin, graphYMax =self.getY1AxisLimits()
                 if ymax < ymin:
                     if ymax < graphYMin:
                         ymax = graphYMin
