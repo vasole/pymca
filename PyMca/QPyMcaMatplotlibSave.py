@@ -319,7 +319,7 @@ class RightWidget(qt.QWidget):
 	    if self.labelList[i] in ['X Axis', 'Y Axis']:
 		options = ['Off', 'On']
 	    elif self.labelList[i] in ['Colormap']:
-		options = ['Temperature','Grey',\
+		options = ['Temperature','Grey', 'Yerg',\
                            'Red', 'Green', 'Blue',\
                            'Rainbow', 'Jet','Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
@@ -521,6 +521,16 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         self.__temperatureCmap = LinearSegmentedColormap('temperature',
                                                          cdict, 256)
 
+        #reversed gray
+        cdict = {'red':     ((0.0, 1.0, 1.0),
+                             (1.0, 0.0, 0.0)),
+                 'green':   ((0.0, 1.0, 1.0),
+                             (1.0, 0.0, 0.0)),
+                 'blue':    ((0.0, 1.0, 1.0),
+                             (1.0, 0.0, 0.0))}
+                         
+        self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
+
 	self.updateFigure()
 
     def updateFigure(self):
@@ -552,6 +562,9 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         if self.config['colormap'] in ['grey','gray']:
             cmap  = cm.gray
             ccmap = self.__temperatureCmap
+        elif self.config['colormap'] in ['yarg','yerg']:
+	    cmap  = self.__reversedGrayCmap
+	    ccmap = self.__temperatureCmap
         elif self.config['colormap']=='jet':
             cmap = cm.jet
         elif self.config['colormap']=='hot':

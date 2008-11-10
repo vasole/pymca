@@ -325,6 +325,17 @@ class PyMcaMatplotlibSaveImage:
         #Do I really need as many colors?
         self.__temperatureCmap = LinearSegmentedColormap('temperature',
                                                          cdict, 65536)
+
+        #reversed gray
+        cdict = {'red':     ((0.0, 1.0, 1.0),
+                             (1.0, 0.0, 0.0)),
+                 'green':   ((0.0, 1.0, 1.0),
+                             (1.0, 0.0, 0.0)),
+                 'blue':    ((0.0, 1.0, 1.0),
+                             (1.0, 0.0, 0.0))}
+                         
+        self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
+
         if fileName is not None:
             self.saveImage(fileName)
 
@@ -361,6 +372,9 @@ class PyMcaMatplotlibSaveImage:
 	ccmap = cm.gray
         if self.config['colormap'] in ['grey','gray']:
 	    cmap  = cm.gray
+	    ccmap = self.__temperatureCmap
+        elif self.config['colormap'] in ['yarg','yerg']:
+	    cmap  = self.__reversedGrayCmap
 	    ccmap = self.__temperatureCmap
 	elif self.config['colormap']=='jet':
 	    cmap = cm.jet
