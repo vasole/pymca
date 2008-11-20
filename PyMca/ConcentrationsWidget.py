@@ -707,18 +707,18 @@ class ConcentrationsTable(QTable):
                 if QTVERSION < '4.0.0':
                     key=ColorQTableItem(self,qttable.QTableItem.Never,
                                         field,color=color)
-                    self.setItem(line, col,key)
+                    self.setItem(line, col, key)
                 else:
                     item = self.item(line, col)
                     if item is None:
                         item = qt.QTableWidgetItem(field,
                                                    qt.QTableWidgetItem.Type)
+                        self.setItem(line, col, item)
                     else:
                         item.setText(field)
                     item.setBackgroundColor(color)
                     item.setFlags(qt.Qt.ItemIsSelectable|
                                   qt.Qt.ItemIsEnabled)
-                    self.setItem(line, col, item)                    
                 col=col+1
             line +=1
         
