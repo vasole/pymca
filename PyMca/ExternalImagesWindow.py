@@ -29,7 +29,13 @@ import PyQt4.Qt as qt
 from PyMca_Icons import IconDict
 import MaskImageWidget
 import sys
+import os
 import numpy
+try:
+    import EdfFile
+    EDF = True
+except ImportError:
+    EDF = False
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
 
@@ -74,6 +80,10 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                 if MATPLOTLIB:
                     self._saveMenu.addAction(qt.QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
+
+        dynamic = kw.get("dynamic", False)
+        self._dynamic = dynamic
+
                     
         self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
         infotext = "Crop image to the currently zoomed window"
@@ -209,14 +219,21 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             return
         if len(self.imageList) == 0:
             return
-        qimage = self._imageDict[self.imageNames[index]]
-        data = self.imageList[index]
-        self.setQImage(qimage,
+        if self._dynamic:
+            #just support edffiles
+            fileName = self.imageList[index]
+            edf = EdfFile.EdfFile(fileName)
+            self.setImageData(edf.GetData(0))
+            self.graphWidget.graph.setTitle(os.path.basename(fileName))
+        else:
+            qimage = self._imageDict[self.imageNames[index]]
+            data = self.imageList[index]
+            self.setQImage(qimage,
                        qimage.width(),
                        qimage.height(),
                        clearmask=False,
                        data=self.imageList[index])
-        self.graphWidget.graph.setTitle(self.imageNames[index])
+            self.graphWidget.graph.setTitle(self.imageNames[index])
         if moveslider:
             self.slider.setValue(index)
 
@@ -252,6 +269,10 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
 
     def saveImageList(self, filename=None, imagelist=None, labels=None):
         if self.imageList is None:
+            return
+        if self._dynamic:
+            #save only one image
+            MaskImageWidget.MaskImageWidget.saveImageList(self)
             return
         labels = []
         for i in range(len(self.imageList)):
@@ -291,9 +312,13 @@ def test():
                        qt.SLOT('quit()'))
     container = ExternalImagesWindow()
     if len(sys.argv) > 1:
-        image = qt.QImage(sys.argv[1])
-        #container.setQImage(image, image.width(),image.height())
-        container.setQImageList([image], 200, 100)
+        if sys.argv[1][-3:].upper() == 'EDF':
+            container._dynamic = True
+            container.setImageList(sys.argv[1:])
+        else:
+            image = qt.QImage(sys.argv[1])
+            #container.setQImage(image, image.width(),image.height())
+            container.setQImageList([image], 200, 100)
     else:
         data = numpy.arange(10000)
         data.shape = 100, 100
