@@ -319,7 +319,7 @@ class  EdfFile:
         elif fastedf and CAN_USE_FASTEDF:
             type= self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
             size_pixel=self.__GetSizeNumpyType__(type)
-            Data=Numpy.array([],type)
+            Data=numpy.array([],type)
             if self.Images[Index].NumDim==1:
                 if Pos==None: Pos=(0,)
                 if Size==None: Size=(0,)
@@ -426,7 +426,7 @@ class  EdfFile:
                 size_img=size_row * self.Images[Index].Dim2
                 offset=offset+ (Position[2]* size_img)
         self.File.seek(self.Images[Index].DataPosition + offset,0)
-        Data = Numpy.fromstring(self.File.read(size_pixel), self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index))
+        Data = numpy.fromstring(self.File.read(size_pixel), self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index))
         if string.upper(self.SysByteOrder)!=string.upper(self.Images[Index].ByteOrder):
             Data=Data.byteswap() 
         Data=self.__SetDataType__ (Data,"DoubleValue")

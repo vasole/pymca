@@ -87,8 +87,8 @@ class MyPicker(Qwt.QwtPlotPicker):
         return self.__text
 
 class MaskImageWidget(qt.QWidget):
-    def __init__(self, parent = None, rgbwidget=None, selection=False, colormap=False,
-                 imageicons=False, standalonesave=True, usetab=False):
+    def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
+                 imageicons=True, standalonesave=True, usetab=False):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -112,7 +112,11 @@ class MaskImageWidget(qt.QWidget):
         self.__image = None
         self.colormap = None
         self.colormapDialog = None
+        self.setDefaultColormap(2, False)
         self.rgbWidget = rgbwidget
+
+        self.__imageIconsFlag = imageicons
+        self.__selectionFlag = selection
         self.__useTab = usetab
         self.mainTab = None
 
@@ -142,26 +146,26 @@ class MaskImageWidget(qt.QWidget):
             #self.graphContainer.mainLayout.setMargin(0)
             #self.graphContainer.mainLayout.setSpacing(0)
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection = True,
+                                                   selection = self.__selectionFlag,
                                                    colormap=True,
-                                                   imageicons=True,
+                                                   imageicons=self.__imageIconsFlag,
                                                    standalonesave=False,
                                                    standalonezoom=False)
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
             if QTVERSION < '4.0.0':
                 self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection = True,
+                                                   selection = self.__selectionFlag,
                                                    colormap=True,
-                                                   imageicons=True,
+                                                   imageicons=self.__imageIconsFlag,
                                                    standalonesave=True,
                                                    standalonezoom=False)
                 standalonesave = False
             else:
                 self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection = True,
+                                                   selection =self.__selectionFlag,
                                                    colormap=True,
-                                                   imageicons=True,
+                                                   imageicons=self.__imageIconsFlag,
                                                    standalonesave=False,
                                                    standalonezoom=False)
         if standalonesave:
@@ -191,8 +195,12 @@ class MaskImageWidget(qt.QWidget):
         self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
         self.graphWidget.graph.enableSelection(False)
         self.graphWidget.graph.enableZoom(True)
-        self.setSelectionMode(False)
-        self._toggleSelectionMode()
+        if self.__selectionFlag:
+            if self.__imageIconsFlag:
+                self.setSelectionMode(False)
+            else:
+                self.setSelectionMode(True)
+            self._toggleSelectionMode()
         if self.__useTab:
             self.mainLayout.addWidget(self.mainTab)
         else:
@@ -207,30 +215,32 @@ class MaskImageWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self.selectColormap)
 
-        self.connect(self.graphWidget.selectionToolButton,
+        if self.__selectionFlag:
+            self.connect(self.graphWidget.selectionToolButton,
                      qt.SIGNAL("clicked()"),
                      self._toggleSelectionMode)
-        text = "Toggle between Selection\nand Zoom modes"
-        if QTVERSION > '4.0.0':
-            self.graphWidget.selectionToolButton.setToolTip(text)
+            text = "Toggle between Selection\nand Zoom modes"
+            if QTVERSION > '4.0.0':
+                self.graphWidget.selectionToolButton.setToolTip(text)
 
-        self.connect(self.graphWidget.imageToolButton,
+        if self.__imageIconsFlag:
+            self.connect(self.graphWidget.imageToolButton,
                      qt.SIGNAL("clicked()"),
                      self._resetSelection)
 
-        self.connect(self.graphWidget.eraseSelectionToolButton,
+            self.connect(self.graphWidget.eraseSelectionToolButton,
                      qt.SIGNAL("clicked()"),
                      self._setEraseSelectionMode)
 
-        self.connect(self.graphWidget.rectSelectionToolButton,
+            self.connect(self.graphWidget.rectSelectionToolButton,
                      qt.SIGNAL("clicked()"),
                      self._setRectSelectionMode)
 
-        self.connect(self.graphWidget.brushSelectionToolButton,
+            self.connect(self.graphWidget.brushSelectionToolButton,
                      qt.SIGNAL("clicked()"),
                      self._setBrushSelectionMode)
 
-        self.connect(self.graphWidget.brushToolButton,
+            self.connect(self.graphWidget.brushToolButton,
                      qt.SIGNAL("clicked()"),
                      self._setBrush)
 
@@ -239,20 +249,21 @@ class MaskImageWidget(qt.QWidget):
                          qt.PYSIGNAL("QtBlissGraphSignal"),
                          self._graphSignal)
         else:
-            self.connect(self.graphWidget.additionalSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._additionalSelectionMenuDialog)
-            self._additionalSelectionMenu = qt.QMenu()
-            self._additionalSelectionMenu.addAction(qt.QString("Reset Selection"),
-                                                    self._resetSelection)
-            self._additionalSelectionMenu.addAction(qt.QString("Invert Selection"),
-                                                    self._invertSelection)
-            self._additionalSelectionMenu.addAction(qt.QString("I >= Colormap Max"),
-                                                    self._selectMax)
-            self._additionalSelectionMenu.addAction(qt.QString("Colormap Min < I < Colormap Max"),
-                                                    self._selectMiddle)
-            self._additionalSelectionMenu.addAction(qt.QString("I <= Colormap Min"),
-                                                    self._selectMin)
+            if self.__imageIconsFlag:
+                self.connect(self.graphWidget.additionalSelectionToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._additionalSelectionMenuDialog)
+                self._additionalSelectionMenu = qt.QMenu()
+                self._additionalSelectionMenu.addAction(qt.QString("Reset Selection"),
+                                                        self._resetSelection)
+                self._additionalSelectionMenu.addAction(qt.QString("Invert Selection"),
+                                                        self._invertSelection)
+                self._additionalSelectionMenu.addAction(qt.QString("I >= Colormap Max"),
+                                                        self._selectMax)
+                self._additionalSelectionMenu.addAction(qt.QString("Colormap Min < I < Colormap Max"),
+                                                        self._selectMiddle)
+                self._additionalSelectionMenu.addAction(qt.QString("I <= Colormap Min"),
+                                                        self._selectMin)
 
             self.connect(self.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
@@ -559,7 +570,10 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap0 = self.__pixmap.copy()
             self.graphWidget.picker.data = self.__imageData
             if self.colormap is None:
-                self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
+                if self.__defaultColormap < 2:
+                    self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.green))
+                else:
+                    self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
             elif int(str(self.colormap[0])) > 1:     #color
                 self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
             else:
@@ -591,9 +605,9 @@ class MaskImageWidget(qt.QWidget):
             (self.__pixmap,size,minmax)= spslut.transform(\
                                 self.__imageData,
                                 (1,0),
-                                (spslut.LINEAR,3.0),
+                                (self.__defaultColormapType,3.0),
                                 "BGRX",
-                                spslut.TEMP,
+                                self.__defaultColormap,
                                 1,
                                 (0,1),
                                 (0, 255), 1)
@@ -631,9 +645,15 @@ class MaskImageWidget(qt.QWidget):
                     self.__pixmap[self.__selectionMask>0,2]    = 0x70
                     self.__pixmap[self.__selectionMask>0,3]    = 0x40
             else:
-                for i in range(4):
-                    self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
-                            (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+                if self.__defaultColormap > 1:
+                    for i in range(4):
+                        self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                                (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+                else:
+                    self.__pixmap = self.__pixmap0.copy()
+                    self.__pixmap[self.__selectionMask>0,0]    = 0x40
+                    self.__pixmap[self.__selectionMask>0,2]    = 0x70
+                    self.__pixmap[self.__selectionMask>0,3]    = 0x40
         elif int(str(self.colormap[0])) > 1:     #color
             for i in range(4):
                 self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
@@ -928,6 +948,14 @@ class MaskImageWidget(qt.QWidget):
         else:
             ArraySave.save2DArrayListAsASCII(imageList, filename, labels,
                                              csv=False)
+
+
+    def setDefaultColormap(self, colormapindex, logflag=False):
+        self.__defaultColormap = COLORMAPLIST[min(colormapindex, len(COLORMAPLIST)-1)]
+        if logflag:
+            self.__defaultColormapType = spslut.LOG
+        else:
+            self.__defaultColormapType = spslut.LINEAR
 
 def test():
     app = qt.QApplication([])

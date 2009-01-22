@@ -52,6 +52,8 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         ddict['usetab'] = False
         ddict.update(kw)
         ddict['standalonesave'] = False
+        if kw.has_key('dynamic'):
+            del ddict['dynamic']
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
@@ -87,12 +89,16 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                     
         self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
         infotext = "Crop image to the currently zoomed window"
+        cropPosition = 12
+        if kw.has_key('imageicons'):
+            if not kw['imageicons']:
+                cropPosition = 6
         self.cropButton = self.graphWidget._addToolButton(\
                                         self.cropIcon,
                                         self._cropIconChecked,
                                         infotext,
                                         toggle = False,
-                                        position = 12)
+                                        position = cropPosition)
 
         self.flipIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
 
@@ -220,11 +226,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         if len(self.imageList) == 0:
             return
         if self._dynamic:
-            #just support edffiles
-            fileName = self.imageList[index]
-            edf = EdfFile.EdfFile(fileName)
-            self.setImageData(edf.GetData(0))
-            self.graphWidget.graph.setTitle(os.path.basename(fileName))
+            self._dynamicAction(index)
         else:
             qimage = self._imageDict[self.imageNames[index]]
             data = self.imageList[index]
@@ -236,6 +238,13 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             self.graphWidget.graph.setTitle(self.imageNames[index])
         if moveslider:
             self.slider.setValue(index)
+
+    def _dynamicAction(self, index):
+        #just support edffiles
+        fileName = self.imageList[index]
+        edf = EdfFile.EdfFile(fileName)
+        self.setImageData(edf.GetData(0))
+        self.graphWidget.graph.setTitle(os.path.basename(fileName))
 
     def setQImageList(self, images, width, height,
                       clearmask = False, data=None, imagenames = None):
@@ -310,16 +319,21 @@ def test():
                        qt.SIGNAL("lastWindowClosed()"),
                        app,
                        qt.SLOT('quit()'))
-    container = ExternalImagesWindow()
     if len(sys.argv) > 1:
         if sys.argv[1][-3:].upper() == 'EDF':
-            container._dynamic = True
+            container = ExternalImagesWindow(selection=False,
+                                             colormap=True,
+                                             imageicons=False,
+                                             standalonesave=True,
+                                             dynamic=True)
             container.setImageList(sys.argv[1:])
         else:
+            container = ExternalImagesWindow()
             image = qt.QImage(sys.argv[1])
             #container.setQImage(image, image.width(),image.height())
             container.setQImageList([image], 200, 100)
     else:
+        container = ExternalImagesWindow()
         data = numpy.arange(10000)
         data.shape = 100, 100
         container.setImageData(data)
@@ -334,7 +348,8 @@ def test():
         app.setMainWidget(container)
         app.exec_loop()
     else:
-        qt.QObject.connect(container,
+        if not container._dynamic:
+            qt.QObject.connect(container,
                            qt.SIGNAL("MaskImageWidgetSignal"),
                            theSlot)
         app.exec_()
