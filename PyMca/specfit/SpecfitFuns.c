@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -3170,6 +3170,214 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
 
 
 static PyObject *
+SpecfitFuns_voxelize(PyObject *self, PyObject *args)
+{
+    /* required input parameters */
+    PyObject *grid_input;       /* The float array containing the float grid */
+    PyObject *hits_input;       /* The int   array containing the number of hits */
+	PyObject *xinput;     /* The tuple containing the double xdata arrays */
+    PyObject *yinput;     /* The array containing the double ydata values */
+	PyObject *limits_input;     /* The tuple containing the double xdata min and max values */
+	int		 use_datathreshold = 0;
+	double   data_threshold = 0.0;
+
+    /* local variables */
+    PyArrayObject    *grid, *hits, *ydata, **xdata, *limits;
+
+	npy_intp index;
+	npy_intp *delta_index;
+    npy_intp i, j, goodpoint, grid_position;
+
+	double  value, limit0, limit1;
+    npy_intp    nd_grid;
+    npy_intp npoints;
+    double  *data_pointer, *double_pointer;
+    float   *grid_pointerf;
+    double  *grid_pointerd;
+	int     *hits_pointer;
+	int		double_flag;
+
+    /* statements */
+    if (!PyArg_ParseTuple(args, "OOOOO|id", &grid_input, &hits_input, &xinput, &yinput, &limits_input,&use_datathreshold, &data_threshold)){
+        printf("Parsing error\n");
+        return NULL;
+    }
+
+	grid = (PyArrayObject *)
+             PyArray_ContiguousFromObject(grid_input, PyArray_NOTYPE,0,0);
+	switch (grid->descr->type_num){
+		case NPY_DOUBLE:
+			double_flag = 1;
+			break;
+		default:
+			double_flag = 0;
+	}
+	Py_DECREF(grid);
+	if (double_flag){
+		grid = (PyArrayObject *)
+             PyArray_ContiguousFromObject(grid_input, PyArray_DOUBLE,0,0);
+	} else {
+		grid = (PyArrayObject *)
+             PyArray_ContiguousFromObject(grid_input, PyArray_FLOAT,0,0);
+	}
+    nd_grid = grid->nd;
+    if (nd_grid == 0) {
+        printf("Grid should be at least a vector!\n");
+        Py_DECREF(grid);
+        return NULL;
+	}
+
+	hits = (PyArrayObject *)
+             PyArray_ContiguousFromObject(hits_input, PyArray_INT,0,0);
+    if (hits == NULL) {
+        Py_DECREF(grid);
+        return NULL;
+	}
+
+
+    if (PySequence_Size(xinput) != nd_grid){
+        printf("xdata sequence of wrong length\n");
+        Py_DECREF(grid);
+        Py_DECREF(hits);
+        return NULL;
+	}
+
+    if (PySequence_Size(limits_input) != (2*nd_grid)){
+        printf("limits sequence of wrong length\n");
+        Py_DECREF(grid);
+        Py_DECREF(hits);
+        return NULL;
+	}
+
+    ydata = (PyArrayObject *)
+             PyArray_ContiguousFromObject(yinput, PyArray_DOUBLE,0,0);
+    if (ydata == NULL){
+        printf("Contiguous from object error!\n");
+        Py_DECREF(grid);
+        Py_DECREF(hits);
+        return NULL;
+    }
+
+    limits = (PyArrayObject *)
+             PyArray_ContiguousFromObject(limits_input, PyArray_DOUBLE,0,0);
+    if (limits == NULL){
+        printf("Limits. Contiguous from object error!\n");
+        Py_DECREF(grid);
+        Py_DECREF(ydata);
+        Py_DECREF(hits);
+        return NULL;
+    }
+
+    /* xdata parsing */
+    xdata = (PyArrayObject **) malloc(nd_grid * sizeof(PyArrayObject *));
+    if (xdata == NULL){
+        printf("Error in memory allocation\n");
+        Py_DECREF(grid);
+        Py_DECREF(ydata);
+		Py_DECREF(limits);
+        Py_DECREF(hits);
+		return NULL;
+    }
+
+    for (i=0;i<nd_grid;i++){
+        xdata[i] = (PyArrayObject *)
+                    PyArray_ContiguousFromObject((PyObject *)
+                    (PySequence_Fast_GET_ITEM(xinput,i)), PyArray_DOUBLE,0,0);
+        if (xdata[i] == NULL){
+            printf("x Copy from Object error!\n");
+            for (j=0;j<i;j++){
+                Py_DECREF(xdata[j]);
+            }
+            free(xdata);
+	        Py_DECREF(grid);
+		    Py_DECREF(ydata);
+			Py_DECREF(limits);
+			Py_DECREF(hits);
+            return NULL;
+        }
+    }
+
+
+
+	delta_index = (npy_intp *) malloc(nd_grid * sizeof(npy_intp));
+	if (delta_index == NULL){
+        printf("Error in memory allocation\n");
+        Py_DECREF(grid);
+        Py_DECREF(ydata);
+		Py_DECREF(limits);
+		free(xdata);
+        Py_DECREF(hits);
+		return NULL;
+	}
+
+	delta_index[nd_grid-1] = 1;
+	for (i=0; i < nd_grid; i++){
+		if (i==0){
+			delta_index[nd_grid-1] = 1;
+		}else{
+			delta_index[nd_grid-1-i] = delta_index[nd_grid-i] * grid->dimensions[nd_grid-i];
+		}
+	}
+
+	/* get the number of points in each of the arrays */
+	npoints = 0;
+	for (i=0; i<ydata->nd;i++){
+		if (i==0)
+			npoints = ydata->dimensions[0];
+		else
+			npoints *= ydata->dimensions[i];
+	}
+
+	/* do the work */
+	data_pointer = (double *) ydata->data;
+	grid_pointerf = (float *) grid->data; 
+	grid_pointerd = (double *) grid->data; 
+	hits_pointer = (int *) hits->data;
+
+	for (i=0;i<npoints;i++){
+		if (use_datathreshold){
+			if ((double) (*(data_pointer+i)) <= data_threshold)
+				continue;
+		}
+        goodpoint = 1;
+		grid_position = 0;
+		for (j=0; j< nd_grid; j++){
+			double_pointer = (double *) xdata[j]->data;
+			value = *(double_pointer+i);
+			double_pointer = (double *) limits->data;
+			limit0 = *(double_pointer+j);
+			limit1 = *(double_pointer+j+nd_grid);
+			index = (int)(grid->dimensions[j]*(value - limit0)/(limit1-limit0));
+			if ((index < 0) || (index >= grid->dimensions[j]))
+			{
+				/* this point is not going to contribute */
+				goodpoint = 0;
+				break;
+			}
+			grid_position += index * delta_index[j];
+		}
+		if (goodpoint){
+			if (double_flag)
+				*(grid_pointerd+grid_position) += (double) (*(data_pointer+i));
+			else
+				*(grid_pointerf+grid_position) += (float) (*(data_pointer+i));
+			*(hits_pointer+grid_position) += 1;
+		}
+	}
+    Py_DECREF(grid);
+    Py_DECREF(hits);
+    Py_DECREF(ydata);
+    Py_DECREF(limits);
+	for (i=0;i<nd_grid;i++){
+		Py_DECREF(xdata[i]);
+    }        
+	free(xdata);
+	free(delta_index);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *
 SpecfitFuns_pileup(PyObject *self, PyObject *args)
 {
     PyObject *input1;
@@ -3630,8 +3838,9 @@ static PyMethodDef SpecfitFuns_methods[] = {
     {"erf",         SpecfitFuns_erf,        METH_VARARGS},
     {"seek",        SpecfitFuns_seek,       METH_VARARGS},
     {"interpol",    SpecfitFuns_interpol,   METH_VARARGS},
-    {"pileup",      SpecfitFuns_pileup,   METH_VARARGS},
-    {"SavitskyGolay",      SpecfitFuns_SavitskyGolay,   METH_VARARGS},
+    {"voxelize",    SpecfitFuns_voxelize,   METH_VARARGS},
+	{"pileup",      SpecfitFuns_pileup,   METH_VARARGS},
+    {"SavitskyGolay",   SpecfitFuns_SavitskyGolay,   METH_VARARGS},
     {"spline",      SpecfitFuns_spline,   METH_VARARGS},
     {"_splint",     SpecfitFuns_splint,   METH_VARARGS},
     {NULL,        NULL}        /* sentinel */
