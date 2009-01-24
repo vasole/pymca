@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,13 +27,7 @@
 __revision__= "$Revision: 1.11 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
-if 'qt' not in sys.modules:
-    try:
-        import PyQt4.Qt as qt
-    except:
-        import qt
-else:
-    import qt
+import PyMcaQt as qt
 import Elements
 from QPeriodicTable import QPeriodicTable
 from PyMca_Icons import IconDict

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,15 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-if 'qt' not in sys.modules:
-    try:
-        import PyQt4.Qt as qt
-        if qt.qVersion() < '4.0.0':
-            print "WARNING: Using Qt %s version" % qt.qVersion()
-    except:
-        import qt
-else:
-    import qt
+import PyMcaQt as qt
 import ElementHtml
 image2=["312 177 16 1",
 "  c black",

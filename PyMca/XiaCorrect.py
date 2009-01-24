@@ -362,7 +362,7 @@ def mainCommandLine():
                  options["output"], options["name"], options["force"], options["verbose"])
 
 def mainGUI(app=None):
-    import PyQt4.Qt as qt
+    import PyMcaQt as qt
     import XiaCorrectWizard
 
     if app is None:

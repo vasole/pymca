@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,29 +27,17 @@
 import copy
 import sys
 import string
-if 'qt' not in sys.modules:
-    try:
-        import PyQt4.Qt as qt
-        from PyQt4 import Qwt5 as qwt
-        # Simplify freezing with cx_freeze
-        try:
-            import PyQt4.QtSvg
-        except:
-            pass
-    except:
-        import qt
-        try:
-            import Qwt5 as qwt
-        except:
-            try:
-                import Qwt4 as qwt 
-            except:
-                import qwt
+import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+if QTVERSION >= '4.0.0':
+    from PyQt4 import Qwt5 as qwt
 else:
-    import qt
-    if 'Qwt5' in sys.modules:import Qwt5 as qwt
-    elif 'Qwt4' in sys.modules:import Qwt4 as qwt
-    elif 'qwt' in sys.modules:import qwt
+    if 'Qwt5' in sys.modules:
+        import Qwt5 as qwt
+    elif 'Qwt4' in sys.modules:
+        import Qwt4 as qwt
+    elif 'qwt' in sys.modules:
+        import qwt
     else:
         try:
             # import qwt

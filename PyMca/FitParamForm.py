@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,17 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.18 $"
 import sys
-if 'qt' not in sys.modules:
-    try:
-        from PyQt4.Qt import *
-        if qVersion() < '4.0.0':
-            print "WARNING: Using Qt %s version" % qt.qVersion()
-    except:
-        from qt import *
-else:
-    from qt import *
-#from qttable import QTable
-#import AttenuatorsTable
+from PyMcaQt import *
 
 if qVersion() < '4.0.0':
     Q3SpinBox = QSpinBox

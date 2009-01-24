@@ -3320,14 +3320,7 @@ IconDict= {
 
 def showIcons():
 	import sys
-	if 'qt'not in sys.modules:
-            try:
-                import PyQt4.Qt as qt
-            except:
-                import qt
-        else:
-        	import qt
-
+	import PyMcaQt as qt
 	a= qt.QApplication(sys.argv)
 	a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
 	w= qt.QWidget()

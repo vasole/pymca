@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.11 $"
+__revision__ = "$Revision: 1.12 $"
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,15 +28,10 @@ __revision__ = "$Revision: 1.11 $"
 #############################################################################*/
 import sys
 import os
-if 'qt' not in sys.modules:
-    try:
-        import PyQt4.Qt as qt
-        qt.Qt.WDestructiveClose = "TO BE DONE"
-    except:
-        import qt
-else:
-    import qt
+import PyMcaQt as qt
 QTVERSION = qt.qVersion()
+if QTVERSION >= '4.0.0':
+    qt.Qt.WDestructiveClose = "TO BE DONE"
 import time
 from PyMca_Icons import IconDict
 import numpy.oldnumeric as Numeric

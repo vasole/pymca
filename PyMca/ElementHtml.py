@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.8 $"
+__revision__ = "$Revision: 1.9 $"
 import Elements
 
 class ElementHtml:
@@ -291,10 +291,7 @@ class ElementHtml:
         
 if __name__ == "__main__":
     import sys
-    try:
-        import PyQt4.Qt as qt
-    except:
-        import qt
+    import PyMcaQt as qt
     app  = qt.QApplication(sys.argv)
     if len(sys.argv) > 1:
         ele = sys.argv[1]

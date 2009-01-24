@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -413,10 +413,7 @@ if __name__ == "__main__":
     print "getZSelectionArray  shape = ", stack.getZSelectionArray().shape
     print "getXYSelectionArray shape = ", stack.getXYSelectionArray().shape
 
-    try:
-        import PyQt4.Qt as qt
-    except:
-        import qt
+    import PyMcaQt as qt
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

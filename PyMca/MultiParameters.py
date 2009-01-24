@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,16 +22,8 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-# Form implementation generated from reading ui file 'Notebook.ui'
-#
-# Created: Tue Jul 16 12:28:10 2002
-#      by: The PyQt User Interface Compiler (pyuic)
-#
-# WARNING! All changes made in this file will be lost!
-
-
 import sys
 from Parameters import qt
 import Parameters

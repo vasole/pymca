@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,21 +26,11 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
-if 'qt' not in sys.modules:
-    try:
-        import PyQt4.Qt as qt
-        from PyQt4 import Qwt5 as qwt
-    except:
-        import qt
-        try:
-            import Qwt5 as qwt
-        except:
-            try:
-                import Qwt4 as qwt 
-            except:
-                import qwt
-else:
-    import qt
+
+import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+
+if QTVERSION < '4.0.0':
     try:
         import Qwt5 as qwt
     except:
@@ -48,8 +38,9 @@ else:
             import Qwt4 as qwt 
         except:
             import qwt
+else:
+    from PyQt4 import Qwt5 as qwt
 
-QTVERSION = qt.qVersion()
 DEBUG = 0
     
 class DoubleSlider(qt.QWidget):
