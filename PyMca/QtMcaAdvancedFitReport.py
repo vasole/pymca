@@ -4,32 +4,6 @@
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
-# any later version.
-#
-# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
-#
-# You should have received a copy of the GNU General Public License along with
-# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA 02111-1307, USA.
-#
-# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem for you.
-#############################################################################*/
-#/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
-#
-# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
-# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
-#
 # This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
 # Software Foundation; either version 2 of the License, or (at your option)
@@ -185,7 +159,7 @@ class QtMcaAdvancedFitReport:
         text+=self.getParam()
         text+=self.getConcentrations()
         self._concentrationsTextASCII = self.getConcentrationsASCII()
-        text+=self.getResult()            
+        text+=self.getResult()
         for key in self.otherhtmltext.keys():
              text+="\n"
              text+= "<H2><a NAME=""%s""></a><FONT color=#009999>" % key
@@ -583,7 +557,6 @@ class QtMcaAdvancedFitReport:
        
     def getImage(self):
         dict=self.fitresult
- 
         if MATPLOTLIB:
             try:
                 fig = Figure(figsize=(6,3)) # in inches
@@ -597,16 +570,14 @@ class QtMcaAdvancedFitReport:
                     axplot = ax.plot
                 axplot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
                 axplot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                legendlist = ['spectrum', 'continuum', 'fit']
                 axplot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
                 fontproperties = FontProperties(size=8)
                 if dict['result']['config']['fit']['sumflag']:
                     axplot(dict['result']['energy'],
                            dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
-                    
-                    legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
-                                       prop = fontproperties, labelsep=0.02)
-                else:
-                    legend = ax.legend(('spectrum', 'continuum', 'fit'),0,
+                    legendlist.append('pileup')
+                legend = ax.legend(legendlist,0,
                                        prop = fontproperties, labelsep=0.02)
             except ValueError:
                 fig = Figure(figsize=(6,3)) # in inches
@@ -614,17 +585,16 @@ class QtMcaAdvancedFitReport:
                 ax = fig.add_axes([.15, .15, .8, .8])
                 ax.set_axisbelow(True)
                 ax.plot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
-                ax.plot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                axplot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                legendlist = ['spectrum', 'continuum', 'fit']
                 ax.plot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
                 fontproperties = FontProperties(size=8)
                 if dict['result']['config']['fit']['sumflag']:
                     ax.plot(dict['result']['energy'],
                                 dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
-                    legend = ax.legend(('spectrum', 'continuum', 'fit', 'pileup'),0,
-                                       prop = fontproperties, labelsep=0.02)
-                else:
-                    legend = ax.legend(('spectrum', 'continuum', 'fit'),0,
-                                       prop = fontproperties, labelsep=0.02)
+                    legendlist.append('pileup')
+                legend = ax.legend(legendlist,0,
+                                   prop = fontproperties, labelsep=0.02)
 
             ax.set_xlabel('Energy')
             ax.set_ylabel('Counts')
@@ -699,7 +669,8 @@ class QtMcaAdvancedFitReport:
 
     def getResult(self):
         text = ""
-        if self.tableFlag == 0:return text
+        if self.tableFlag == 0:
+            return text
         text+="\n"
         text+= "<H2><a NAME=""%s""></a><FONT color=#009999>" % 'Fit_Peak_Results'
         text+= "%s:" % 'Fit Peak Results'
@@ -782,7 +753,6 @@ class QtMcaAdvancedFitReport:
         text+=("</nobr>")
         text+="</CENTER>"
         return text
-
 
 def generateoutput(fitfile,outfile=None):
     report = QtMcaAdvancedFitReport(fitfile, outfile)
