@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -101,7 +101,7 @@ static PyObject *spslut_transform(self, args)
   PyObject *res,*aux;
   int array_output=0;
   unsigned char *as_pointer, *as_r;
-  npy_intp as_dim[3];
+  npy_intp as_dim[2];
   PyArrayObject *as_aux;
 
   if (!PyArg_ParseTuple(args, "O(ii)(id)sii(dd)|(ii)i", &in_src, &reduc,
@@ -206,7 +206,7 @@ static PyObject *spslut_transform(self, args)
   }
   as_dim[0] = strlen(mode);
   as_dim[1] = prows * pcols;
-  as_aux = (PyArrayObject*) PyArray_SimpleNew(2,as_dim, PyArray_UBYTE);
+  as_aux = (PyArrayObject*) PyArray_SimpleNew(2, as_dim, NPY_UBYTE);
   if (as_aux == NULL){
       free(r);
       Py_DECREF(src);
@@ -214,6 +214,7 @@ static PyObject *spslut_transform(self, args)
   }
   as_pointer = (char *) as_aux -> data;
   as_r = (char *) r;
+
   memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
   free(r);
   res = Py_BuildValue("(O(i,i)(d,d))",as_aux,pcols, prows, min, max);
