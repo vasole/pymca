@@ -260,14 +260,15 @@ class PyMcaPrintPreview(qt.QDialog):
         self._viewScale *= 0.80 
         self.view.scale(0.80, 0.80)
 
-    def addImage(self, image, title = None, comment = None):
+    def addImage(self, image, title = None, comment = None, commentposition=None):
         """
         add an image item to the print preview scene
         """
         self.addPixmap(qt.QPixmap.fromImage(image),
-                       title = title, comment = comment)
+                       title = title, comment = comment,
+                       commentposition=commentposition)
 
-    def addPixmap(self, pixmap, title = None, comment = None):
+    def addPixmap(self, pixmap, title = None, comment = None, commentposition=None):
         """
         add a pixmap to the print preview scene
         """
@@ -277,6 +278,8 @@ class PyMcaPrintPreview(qt.QDialog):
         if comment is None:
             comment  = '                                            '
             comment += '                                            '
+        if commentposition is None:
+            commentposition = "CENTER"
         if self.badNews:
             self.message.exec_()
             return
@@ -316,8 +319,11 @@ class PyMcaPrintPreview(qt.QDialog):
         commentItem = qt.QGraphicsTextItem(comment, rectItem, self.scene)
         commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * commentItem.boundingRect().width()
-        commentItem.moveBy(0.5 * pixmap.width() - offset,
-                           pixmap.height()+20) 
+        if commentposition.upper() == "LEFT":
+            x = 1
+        else:
+            x = 0.5 * pixmap.width() - offset
+        commentItem.moveBy(x, pixmap.height()+20) 
         commentItem.setZValue(2)
         
         rectItem.scale(scale, scale)
@@ -517,8 +523,14 @@ def testPreview():
     w = PyMcaPrintPreview( parent = None, printer = p, name = 'Print Prev',
                       modal = 0, fl = 0)
     w.resize(400,500)
-    w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)), title=filename)
-    w.addImage(qt.QImage(filename), comment=filename)
+    comment = ""
+    for i in range(20):
+        comment += "Line number %d: En un lugar de La Mancha de cuyo nombre ...\n"    
+    w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)),
+                title=filename,
+                comment=comment,
+                commentposition="CENTER")
+    w.addImage(qt.QImage(filename), comment=comment, commentposition="LEFT")
     #w.addImage(qt.QImage(filename))
     w.exec_()
 
