@@ -1738,13 +1738,53 @@ class ScanWindow(qt.QWidget):
     def printGraph(self):
         #temporary print
         pixmap = qt.QPixmap.grabWidget(self.graph)
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
         if QTVERSION < '4.0.0':
+            self.printPreview.addPixmap(pixmap)
+            if self.printPreview.isHidden():
+                self.printPreview.show()
             self.printPreview.raiseW()
+            return
+
+        if self.scanWindowInfoWidget is not None:
+            info = self.scanWindowInfoWidget.getInfo()
+            title = info['scan'].get('source', None)
+            comment = info['scan'].get('scan', None)+"\n"
+            h, k, l = info['scan'].get('hkl')
+            if h != "----":
+                comment += "H = %s  K = %s  L = %s\n" % (k, k, l)
+            peak   = info['graph']['peak']
+            peakAt = info['graph']['peakat']
+            fwhm   = info['graph']['fwhm']
+            fwhmAt = info['graph']['fwhmat']
+            com    = info['graph']['com']
+            mean   = info['graph']['mean']
+            std    = info['graph']['std']
+            minimum = info['graph']['min']
+            maximum = info['graph']['max']
+            delta   = info['graph']['delta']
+            xLabel = self.graph.x1Label()
+            comment += "Peak %s at %s = %s\n" % (peak, xLabel, peakAt)
+            comment += "FWHM %s at %s = %s\n" % (fwhm, xLabel, fwhmAt)
+            comment += "COM = %s  Mean = %s  STD = %s\n" % (com, mean, std)
+            comment += "Min = %s  Max = %s  Delta = %s\n" % (minimum,
+                                                            maximum,
+                                                            delta)           
         else:
-            self.printPreview.raise_()
+            title = None
+            comment = None
+        if not self.scanFit.isHidden():
+            if comment is None:
+                comment = ""
+            comment += "\n"
+            comment += self.scanFit.getText()
+            
+        self.printPreview.addPixmap(pixmap,
+                                    title=title,
+                                    comment=comment,
+                                    commentposition="LEFT")
+        if self.printPreview.isHidden():
+            self.printPreview.show()        
+        self.printPreview.raise_()
         
     def printGraphWork(self):
         if DEBUG:print "printGraphSignal"

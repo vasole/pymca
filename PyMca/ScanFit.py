@@ -298,6 +298,37 @@ class ScanFit(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
                 msg.exec_loop()
+
+    def getText(self):
+        try:
+            header="Fit of %s from %s %s to %s" % (self.info['legend'],
+                                            self.info['xlabel'],
+                                            self.info['xmin'],
+                                            self.info['xmax'])
+        except:
+            header = 'Fit of XXXXXXXXXX from Channel XXXXX to XXXX'
+        text = header + "\n"
+        if self.specfit.fitconfig['WeightFlag']:
+            weight = "YES"
+        else:
+            weight = "NO"
+        if self.specfit.fitconfig['McaMode']:
+            mode = "YES"
+        else:
+            mode = "NO"
+        theory   = self.specfit.fitconfig['fittheory']
+        bkg      = self.specfit.fitconfig['fitbkg']
+        fwhm     = self.specfit.fitconfig['FwhmPoints']
+        scaling  = self.specfit.fitconfig['Yscaling']
+        text += "Fit Function: %s\n" % theory
+        text += "Background: %s\n" % bkg
+        text += "Weight: %s  McaMode: %s  FWHM: %d  Yscaling: %f\n" % (weight[0],
+                                                                     mode[0],
+                                                                     fwhm,
+                                                                     scaling)
+        text += self.specfitGUI.guiparameters.getText()
+        return  text
+
        
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
