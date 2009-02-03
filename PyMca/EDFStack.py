@@ -39,7 +39,7 @@ Y_AXIS=1
 Z_AXIS=2
 
 class EDFStack(DataObject.DataObject):
-    def __init__(self, filelist = None, imagestack=None):
+    def __init__(self, filelist = None, imagestack=None, dtype=None):
         DataObject.DataObject.__init__(self)
         self.incrProgressBar=0
         self.__keyList = []
@@ -47,6 +47,7 @@ class EDFStack(DataObject.DataObject):
             self.__imageStack = False
         else:
             self.__imageStack = True
+        self.__dtype = dtype
         if filelist is not None:
             if type(filelist) != type([]):
                 filelist = [filelist]
@@ -72,6 +73,8 @@ class EDFStack(DataObject.DataObject):
         dataObject = tempEdf.getDataObject(keylist[0])
         self.info.update(dataObject.info)
         arrRet = dataObject.data
+        if self.__dtype is None:
+            self.__dtype = arrRet.dtype
 
         self.onBegin(self.nbFiles)
         singleImageShape = arrRet.shape
@@ -80,10 +83,10 @@ class EDFStack(DataObject.DataObject):
                 #single line
                 #be ready for specfile stack?
                 raise IOError, "Not implemented yet"
-                self.data = Numeric.zeros((arrRet.shape[0],
+                self.data = numpy.zeros((arrRet.shape[0],
                                            nImages,
                                            self.nbFiles),
-                                           arrRet.dtype.char)
+                                           self.__dtype)
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -100,10 +103,10 @@ class EDFStack(DataObject.DataObject):
                     #using a 3D matrix or keep as 4D matrix?
                     if self.nbFiles > 1:
                         raise IOError, "Multiple files with multiple images implemented yet"
-                    self.data = Numeric.zeros((arrRet.shape[0],
+                    self.data = numpy.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                nImages * self.nbFiles),
-                                               arrRet.dtype.char)
+                                               self.__dtype)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -115,10 +118,10 @@ class EDFStack(DataObject.DataObject):
                         self.incrProgressBar += 1
                 else:
                     #this is the common case
-                    self.data = Numeric.zeros((arrRet.shape[0],
+                    self.data = numpy.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                self.nbFiles),
-                                               arrRet.dtype.char)
+                                               self.__dtype)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
                         tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -132,10 +135,10 @@ class EDFStack(DataObject.DataObject):
                 #single line
                 #be ready for specfile stack?
                 raise IOError, "Not implemented yet"
-                self.data = Numeric.zeros((self.nbFiles,
+                self.data = numpy.zeros((self.nbFiles,
                                            arrRet.shape[0],
                                            nImages),
-                                           arrRet.dtype.char)
+                                           self.__dtype)
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -155,10 +158,10 @@ class EDFStack(DataObject.DataObject):
                            (arrRet.shape[1] > 1):
                                 raise IOError, "Multiple files with multiple images not implemented yet"
                         elif arrRet.shape[0] == 1:
-                            self.data = Numeric.zeros((self.nbFiles,
+                            self.data = numpy.zeros((self.nbFiles,
                                                arrRet.shape[0] * nImages,
                                                arrRet.shape[1]),
-                                               arrRet.dtype.char)
+                                               self.__dtype)
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
                                 tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -169,10 +172,10 @@ class EDFStack(DataObject.DataObject):
                                                               pieceOfStack[:,:]
                                 self.incrProgressBar += 1
                         elif arrRet.shape[1] == 1:
-                            self.data = Numeric.zeros((self.nbFiles,
+                            self.data = numpy.zeros((self.nbFiles,
                                                arrRet.shape[1] * nImages,
                                                arrRet.shape[0]),
-                                               arrRet.dtype.char)
+                                               self.__dtype)
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
                                 tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -183,10 +186,10 @@ class EDFStack(DataObject.DataObject):
                                                               pieceOfStack[:,:]
                                 self.incrProgressBar += 1
                     else:
-                        self.data = Numeric.zeros((nImages * self.nbFiles,
+                        self.data = numpy.zeros((nImages * self.nbFiles,
                                                arrRet.shape[0],
                                                arrRet.shape[1]),
-                                               arrRet.dtype.char)
+                                               self.__dtype)
                         self.incrProgressBar=0
                         for tempEdfFileName in filelist:
                             tempEdf=EdfFile.EdfFile(tempEdfFileName)
@@ -199,7 +202,7 @@ class EDFStack(DataObject.DataObject):
                     self.onEnd()
                 else:
                     #this is the common case
-                    if arrRet.dtype.char == 'd':
+                    if self.__dtype == numpy.float:
                         bytefactor = 8
                     else:
                         bytefactor = 4
@@ -221,44 +224,44 @@ class EDFStack(DataObject.DataObject):
                         self.data = numpy.memmap(swapfile,
                                     shape= (self.nbFiles, arrRet.shape[0],
                                             arrRet.shape[1]),
-                                    dtype= arrRet.dtype.char,
+                                    dtype= self.__dtype,
                                     mode='w+')
                         os.system(('chmod 777 %s' % swapfile))
                     else:
                         if fileindex == 1:
                             try:
-                                self.data = Numeric.zeros((arrRet.shape[0],
+                                self.data = numpy.zeros((arrRet.shape[0],
                                                         self.nbFiles,
                                                        arrRet.shape[1]),
-                                                       arrRet.dtype.char)
+                                                       self.__dtype)
                             except:
                                 try:
-                                    self.data = Numeric.zeros((arrRet.shape[0],
+                                    self.data = numpy.zeros((arrRet.shape[0],
                                                         self.nbFiles,
                                                        arrRet.shape[1]),
-                                                       Numeric.Float32)
+                                                       numpy.float32)
                                 except:
-                                    self.data = Numeric.zeros((arrRet.shape[0],
+                                    self.data = numpy.zeros((arrRet.shape[0],
                                                         self.nbFiles,
                                                        arrRet.shape[1]),
-                                                       Numeric.Int16)
+                                                       numpy.int16)
                         else:
                             try:
-                                self.data = Numeric.zeros((self.nbFiles,
+                                self.data = numpy.zeros((self.nbFiles,
                                                        arrRet.shape[0],
                                                        arrRet.shape[1]),
-                                                       arrRet.dtype.char)
+                                                       self.__dtype)
                             except:
                                 try:
-                                    self.data = Numeric.zeros((self.nbFiles,
+                                    self.data = numpy.zeros((self.nbFiles,
                                                        arrRet.shape[0],
                                                        arrRet.shape[1]),
-                                                       Numeric.Float32)
+                                                       numpy.float32)
                                 except:
-                                    self.data = Numeric.zeros((self.nbFiles,
+                                    self.data = numpy.zeros((self.nbFiles,
                                                        arrRet.shape[0],
                                                        arrRet.shape[1]),
-                                                       Numeric.Int16)
+                                                       numpy.int16)
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
@@ -389,11 +392,11 @@ class EDFStack(DataObject.DataObject):
         return self.__indexedStack
     
     def getZSelectionArray(self,z=0):
-        return (self.data[:,:,z]).astype(Numeric.Float)
+        return (self.data[:,:,z]).astype(numpy.float)
         
     def getXYSelectionArray(self,coord=(0,0)):
         x,y=coord    
-        return (self.data[y,x,:]).astype(Numeric.Float)
+        return (self.data[y,x,:]).astype(numpy.float)
 
 if __name__ == "__main__":
     import time
@@ -461,7 +464,7 @@ if __name__ == "__main__":
                     "selectiontype":"1D",
                     "SourceName":"EDF Stack",
                     "Key":"SUM"}
-    mcaData.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)]
+    mcaData.x = [numpy.arange(len(mcaData0)).astype(numpy.float)]
     mcaData.y = [mcaData0]
     sel['dataobject'] = mcaData
     mca.show()
@@ -487,7 +490,7 @@ if __name__ == "__main__":
                                 "selectiontype":"1D",
                                 "SourceName":"EDF Stack Selection",
                                 "Key":"Selection"}
-            selDataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)]
+            selDataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)]
             selDataObject.y = [selectedData]
             sel['dataobject'] = selDataObject
             mca._addSelection([sel])
