@@ -340,6 +340,21 @@ class GraphInfoWidget(qt.QWidget):
         self.maximum.setText(ymax)
         self.delta.setText(delta)
 
+    def getInfo(self):
+        ddict={}        
+        ddict['peak']   = self.peak.text()
+        ddict['peakat'] = self.peakAt.text()
+        ddict['fwhm']   = self.fwhm.text()
+        ddict['fwhmat'] = self.fwhmAt.text()
+        ddict['com']    = self.com.text()
+        ddict['mean']   = self.mean.text()
+        ddict['std']    = self.std.text()
+        ddict['min']    = self.minimum.text()
+        ddict['max']    = self.maximum.text()
+        ddict['delta']  = self.delta.text()
+        return ddict
+
+
 
 class ScanInfoWidget(qt.QWidget):
     def __init__(self, parent = None):
@@ -393,6 +408,15 @@ class ScanInfoWidget(qt.QWidget):
         else:
             self.hkl.setHKL(*hkl)
 
+    def getInfo(self):
+        ddict = {}
+        ddict['source'] = self.sourceLabel.text()
+        ddict['scan'] = self.scanLabel.text()
+        ddict['hkl'] = ["%s" % self.hkl.h.text(),
+                        "%s" % self.hkl.k.text(),
+                        "%s" % self.hkl.l.text()]
+        return ddict
+
 class ScanWindowInfoWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
@@ -411,6 +435,12 @@ class ScanWindowInfoWidget(qt.QWidget):
     def updateFromDataObject(self, dataObject):
         self.scanInfo.updateFromDataObject(dataObject)
         self.graphInfo.updateFromDataObject(dataObject)
+        
+    def getInfo(self):
+        ddict = {}
+        ddict['scan']  = self.scanInfo.getInfo() 
+        ddict['graph'] = self.graphInfo.getInfo()
+        return ddict
 
 def test():
         app = qt.QApplication([])
