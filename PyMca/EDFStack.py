@@ -72,6 +72,21 @@ class EDFStack(DataObject.DataObject):
         nImages = len(keylist)
         dataObject = tempEdf.getDataObject(keylist[0])
         self.info.update(dataObject.info)
+        if len(dataObject.data.shape) == 3:
+            #this is already a stack
+            self.data = dataObject.data
+            self.__nFiles         = 1
+            self.__nImagesPerFile = nImages
+            shape = self.data.shape
+            for i in range(len(shape)):
+                key = 'Dim_%d' % (i+1,)
+                self.info[key] = shape[i]
+            self.info["SourceType"] = SOURCE_TYPE
+            self.info["SourceName"] = filelist[0]
+            self.info["Size"]       = 1
+            self.info["NumberOfFiles"] = 1
+            self.info["FileIndex"] = fileindex
+            return
         arrRet = dataObject.data
         if self.__dtype is None:
             self.__dtype = arrRet.dtype

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.5 $"
+__revision__ = "$Revision: 1.6 $"
 import DataObject
 import types
 import copy
@@ -203,7 +203,7 @@ class EdfFileDataSource:
         if data.info["DataType"]=="UnsignedShort": data.data=sourceObject.GetData(image,"SignedLong", Pos=pos,Size=size)
         elif data.info["DataType"]=="UnsignedLong":data.data=sourceObject.GetData(image,"DoubleValue",Pos=pos,Size=size)
         else: data.data=sourceObject.GetData(image,Pos=pos,Size=size)
-        data.info['rows'], data.info['cols'] = data.data.shape
+        data.info['rows'], data.info['cols'] = data.data.shape[0:2]
         if data.info['selectiontype'] == "1D":
             if MCAIMP:
                 data.y = [Numeric.ravel(data.data[:]).astype(Numeric.Float)]
