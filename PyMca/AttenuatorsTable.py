@@ -101,15 +101,16 @@ class AttenuatorsTab(qt.QWidget):
         else:
             self.mainTab = qt.QTabWidget(self)
             layout.addWidget(self.mainTab)
+            rheight = self.table.horizontalHeader().sizeHint().height()
             if maxheight < 800:
                 self.editor = MaterialEditor.MaterialEditor(height=5, graph=graph)
+                self.table.setMinimumHeight(7*rheight)
+                self.table.setMaximumHeight(13*rheight)
             else:
                 self.editor = MaterialEditor.MaterialEditor(graph=graph)
-
+                self.table.setMinimumHeight(13*rheight)
+                self.table.setMaximumHeight(13*rheight)
             self.mainTab.addTab(self.editor, "Material Editor")
-            rheight = self.table.horizontalHeader().sizeHint().height()
-            self.table.setMinimumHeight(13*rheight)
-            self.table.setMaximumHeight(13*rheight)
         
 class MultilayerTab(qt.QWidget):
     def __init__(self,parent=None, name="Multilayer Tab",matrixlayers=None):

@@ -89,14 +89,16 @@ class FitParamWidget(FitParamForm):
             self.mainTab.addTab(self.tabAtt,str("ATTENUATORS"))
             maxheight = qt.QDesktopWidget().height()
             #self.graph.hide()
-            if maxheight > 799:
-                self.attPlotButton = qt.QPushButton(self.tabAttenuators)
-                self.attPlotButton.setAutoDefault(False)
-                text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
-                self.attPlotButton.setText(text)
-                self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
-                self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
-                             self.__attPlotButtonSlot)
+            self.attPlotButton = qt.QPushButton(self.tabAttenuators)
+            self.attPlotButton.setAutoDefault(False)
+            text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
+            self.attPlotButton.setText(text)
+            self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
+            self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
+                         self.__attPlotButtonSlot)
+            if maxheight < 800:
+                self.setMaximumHeight(int(0.8*maxheight))
+                self.setMinimumHeight(int(0.8*maxheight))
 
         #This was previously into FitParamForm.py: END
         

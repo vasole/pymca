@@ -66,6 +66,11 @@ class McaCalWidget(qt.QDialog):
             self.setModal(modal)
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(self.name)
+            maxheight = qt.QDesktopWidget().height()
+            maxwidth  = qt.QDesktopWidget().width()
+            if maxheight < 768:
+                self.setMinimumHeight(int(0.9*(maxheight)))
+                self.setMaximumHeight(int(1.0*(maxheight)))
         self.__xrdMode = xrd
         self.__xrdLambda = lambda_
         self.__xrdEnergy = ""

@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1 20090202-snapshot"
+__version__ = "4.3.1 20090208-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -217,6 +217,10 @@ class PyMca(PyMcaMdi.PyMca):
             else:
                 if fl is None: fl = qt.Qt.WA_DeleteOnClose
                 PyMcaMdi.PyMca.__init__(self, parent, name, fl)
+                maxheight = qt.QDesktopWidget().height()
+                if maxheight < 799:
+                    self.setMinimumHeight(int(0.8*maxheight))
+                    self.setMaximumHeight(int(0.9*maxheight))
                 self.setWindowTitle(name)
                 self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
                 self.changeLog = None
