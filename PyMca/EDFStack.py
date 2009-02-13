@@ -46,7 +46,7 @@ class EDFStack(DataObject.DataObject):
         if imagestack is None:
             self.__imageStack = False
         else:
-            self.__imageStack = True
+            self.__imageStack = imagestack
         self.__dtype = dtype
         if filelist is not None:
             if type(filelist) != type([]):
