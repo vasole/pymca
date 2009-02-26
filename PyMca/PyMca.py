@@ -305,9 +305,12 @@ class PyMca(PyMcaMdi.PyMca):
                     self.mainTabWidget.setWindowTitle("Main Window")
                     self.mcawindow = McaWindow.McaWidget()
                     self.scanwindow = ScanWindow.ScanWindow()
-                    self.glWindow = None
+                    if OBJECT3D:
+                        self.glWindow = SceneGLWindow.SceneGLWindow()
                     self.mainTabWidget.addTab(self.mcawindow, "MCA")
                     self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                    if OBJECT3D:
+                        self.mainTabWidget.addTab(self.glWindow, "OpenGL")
                     self.mdi.addWindow(self.mainTabWidget)
                     self.mainTabWidget.showMaximized()
                     if False:
@@ -470,10 +473,6 @@ class PyMca(PyMcaMdi.PyMca):
                     self.mcawindow._addSelection(ddict)
                     self.scanwindow._addSelection(ddict)
                 else:
-                    if self.glWindow is None:
-                        self.glWindow = SceneGLWindow.SceneGLWindow()
-                        self.mainTabWidget.addTab(self.glWindow, "OpenGL")
-                        self.glWindow.show()
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
                     self.glWindow._addSelection(ddict)            
             else:            
