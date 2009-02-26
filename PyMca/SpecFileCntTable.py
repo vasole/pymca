@@ -29,8 +29,13 @@ import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
+if 'Object3D' in sys.modules:
+    OBJECT3D = True
+else:
+    OBJECT3D = False
+
 if QTVERSION < '4.0.0':
-    if qt.qVersion() < '3.0.0':
+    if QTVERSION < '3.0.0':
         import Myqttable as qttable
     else:
         import qttable
@@ -311,6 +316,7 @@ else:
             self.xSelection   = []
             self.ySelection   = []
             self.monSelection = []
+            self.__is3DEnabled = False
             labels = ['Counter', 'X    ', 'Y    ', 'Mon']
             self.setColumnCount(len(labels))
             for i in range(len(labels)):
@@ -328,15 +334,44 @@ else:
                          self._mySlot)
             """
 
-        def build(self, cntlist):
+        def build(self, cntlist, nmca=None):
+            if not OBJECT3D:
+                nmca = 0
+            if nmca is None:
+                nmca = 0 
             self.cntList = cntlist
+            self.mcaList = []
             n = len(cntlist)
             self.setRowCount(n)
             if n > 0:
+                self.setRowCount(n + nmca)
                 rheight = self.horizontalHeader().sizeHint().height()
                 for i in range(n):
                     self.setRowHeight(i, rheight)
                     self.__addLine(i, cntlist[i])
+                    for j in range(1, 4, 1):
+                        widget = self.cellWidget(i, j)
+                        widget.setEnabled(True)
+                for j in range(nmca):
+                    row = n+j
+                    self.setRowHeight(n+j, rheight)
+                    mca = "Mca %d" % (j+1)
+                    self.mcaList.append(mca)
+                    self.__addLine(n+j, self.mcaList[j])
+                    #the x checkbox
+                    widget = self.cellWidget(row, 1)
+                    widget.setChecked(False)
+                    widget.setEnabled(False)
+                    #the y checkbox
+                    widget = self.cellWidget(row, 2)
+                    widget.setChecked(False)
+                    widget.setEnabled(True)
+                    #the Monitor checkbox
+                    widget = self.cellWidget(row, 3)
+                    widget.setChecked(False)
+                    widget.setEnabled(False)
+            else:
+                self.setRowCount(0)
 
             self.resizeColumnToContents(1)
             self.resizeColumnToContents(2)
@@ -367,6 +402,14 @@ else:
                 else:
                     pass
 
+        def set3DEnabled(self, value):
+            if value:
+                self.__is3DEnabled = True
+            else:
+                if len(self.xSelection) > 1:
+                    self.xSelection = [1 * self.xSelection[0]]
+            self._update()
+
         def _mySlot(self, ddict):
             row = ddict["row"]
             col = ddict["col"]
@@ -377,12 +420,12 @@ else:
                 else:
                     if row in self.xSelection:
                         del self.xSelection[self.xSelection.index(row)]
-                if len(self.xSelection) > 2:
-                    #that is to support mesh plots
-                    self.xSelection = self.xSelection[-2:]
-                if len(self.xSelection) > 1:
-                    self.xSelection = self.xSelection[-1:]
-                    
+                if (not OBJECT3D) or (not self.__is3DEnabled):
+                    if len(self.xSelection) > 2:
+                        #that is to support mesh plots
+                        self.xSelection = self.xSelection[-2:]
+                    if len(self.xSelection) > 1:
+                        self.xSelection = self.xSelection[-1:]                    
 
             if col == 2:
                 if ddict["state"]:
@@ -436,6 +479,7 @@ else:
         def getCounterSelection(self):
             ddict = {}
             ddict['cntlist'] = self.cntList * 1
+            ddict['mcalist'] = self.mcaList * 1
             ddict['x']       = self.xSelection * 1
             ddict['y']       = self.ySelection * 1
             ddict['m'] = self.monSelection * 1        

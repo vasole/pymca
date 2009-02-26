@@ -28,6 +28,7 @@ from QSelectorWidget import qt
 import QSelectorWidget
 import SpecFileDataInfo
 import SpecFileCntTable
+OBJECT3D = SpecFileCntTable.OBJECT3D
 import SpecFileMcaTable
 import sys
 import os
@@ -86,6 +87,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         else:
             self.autoAddBox.setChecked(True)
             self.autoReplaceBox.setChecked(False)
+
+        if OBJECT3D:
+            self.object3DBox = qt.QCheckBox(autoBox)
+            self.object3DBox.setText("3D On")
+            autoBoxLayout.addWidget(self.object3DBox)
 
         autoBoxLayout.addWidget(self.autoOffBox)
         autoBoxLayout.addWidget(self.autoAddBox)
@@ -178,7 +184,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.connect(self.cntTable,
                          qt.SIGNAL('SpecCntTableSignal'),
                          self._cntSignal)
-
+        if OBJECT3D:
+            self.connect(self.object3DBox, qt.SIGNAL("clicked()"),
+                     self._setObject3DBox)            
         self.connect(self.autoOffBox, qt.SIGNAL("clicked()"),
                      self._setAutoOff)
         self.connect(self.autoAddBox, qt.SIGNAL("clicked()"),
@@ -203,17 +211,33 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.scans= []
 
 
+    def _setObject3DBox(self):
+        self.autoAddBox.setChecked(False)
+        self.autoReplaceBox.setChecked(False)
+        self.autoOffBox.setChecked(False)
+        self.cntTable.set3DEnabled(True)
+        self.object3DBox.setChecked(True)
+
     def _setAutoOff(self):
+        if OBJECT3D:
+            self.cntTable.set3DEnabled(False)
+            self.object3DBox.setChecked(False)
         self.autoAddBox.setChecked(False)
         self.autoReplaceBox.setChecked(False)
         self.autoOffBox.setChecked(True)
 
     def _setAutoAdd(self):
+        if OBJECT3D:
+            self.cntTable.set3DEnabled(False)
+            self.object3DBox.setChecked(False)
         self.autoOffBox.setChecked(False)
         self.autoReplaceBox.setChecked(False)
         self.autoAddBox.setChecked(True)
 
     def _setAutoReplace(self):
+        if OBJECT3D:
+            self.cntTable.set3DEnabled(False)
+            self.object3DBox.setChecked(False)
         self.autoOffBox.setChecked(False)
         self.autoAddBox.setChecked(False)
         self.autoReplaceBox.setChecked(True)
@@ -227,7 +251,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.refresh()
         if QTVERSION < '4.0.0':return
 
-        if not self.autoAddBox.isChecked(): return
+        if not self.autoAddBox.isChecked():
+            return
         #If there is only one mca containing scan
         # and we are in auto add mode, I plot it.
         if len(self.scans) == 1:
@@ -311,7 +336,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     item = item.nextSibling()
 
     def _autoReplace(self, scanlist):
-        if DEBUG:print "autoreplace called with ",scanlist
+        if DEBUG:
+            print "autoreplace called with ",scanlist
         if self.autoReplaceBox.isChecked():
             self._replaceClicked()
         elif self.autoAddBox.isChecked():
@@ -374,7 +400,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if not len(sel):return
             info = self.data.getKeyInfo(sel[0])
             self.mcaTable.build(info)
-            self.cntTable.build(info['LabelNames'])
+            if 0:
+                #This does not work properly yet
+                NbMca = info.get('NbMcaDet', 0)
+                self.cntTable.build(info['LabelNames'], nmca=NbMca)
+            else:
+                self.cntTable.build(info['LabelNames'], nmca=0)
             if (info['Lines'] > 0) and len(info['LabelNames']):
                 if self._oldCntSelection is not None:
                     if len(self._oldCntSelection['y']):
@@ -529,6 +560,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
+                    if cnt_sel['y'][0] >= len(cnt_sel['cntlist']):
+                        if cnt_sel.has_key('mcalist'):
+                            sel['selection']['mcalist'] = cnt_sel['mcalist']
+                        else:
+                            # I could rise the exception here
+                            # but I let the data source to rise it.
+                            pass
                     sel_list.append(sel)
 
         if QTVERSION < '4.0.0':
@@ -615,7 +653,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         #get selected counter keys
         cnt_sel = self.cntTable.getCounterSelection()
         if len(cnt_sel['cntlist']):
-            if len(cnt_sel['y']): self._oldCntSelection = cnt_sel
+            if len(cnt_sel['y']):
+                self._oldCntSelection = cnt_sel
         mca_sel = self.mcaTable.getCurrentlySelectedMca()
 
         sel_list = []
@@ -644,8 +683,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
+                    if cnt_sel['y'][0] >= len(cnt_sel['cntlist']):
+                        if cnt_sel.has_key('mcalist'):
+                            sel['selection']['mcalist'] = cnt_sel['mcalist']
+                        else:
+                            # I could rise the exception here
+                            # but I let the data source to rise it.
+                            pass
                     sel_list.append(sel)
-
         if len(sel_list): 
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("replaceSelection"), (sel_list,))            

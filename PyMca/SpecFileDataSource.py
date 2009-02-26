@@ -28,6 +28,7 @@ __revision__ = "$Revision: 1.3$"
 
 import DataObject
 import specfilewrapper as specfile
+import numpy
 import numpy.oldnumeric as Numeric
 import string
 import types
@@ -354,7 +355,15 @@ class SpecFileDataSource:
         if scan_key not in sourcekeys:
             raise KeyError, "Key %s not in source keys" % key
 
-        if key_type=="scan":
+        mca3D = False
+        if DEBUG:
+            print "SELECTION = ", selection
+        if key_type == "scan":
+            if selection  is not None:
+                if selection.has_key('mcalist'):
+                    mca3D = True
+
+        if (key_type=="scan") and (not mca3D):
             output = self._getScanData(key, raw = True)
             output.x = None
             output.y = None
@@ -394,7 +403,8 @@ class SpecFileDataSource:
                         if label not in output.info['LabelNames']:
                             raise ValueError, "Label %s not in scan labels" % label
                         index = output.info['LabelNames'].index(label)
-                        if output.y is None: output.y = []
+                        if output.y is None:
+                            output.y = []
                         output.y.append(output.data[:, index])
                         indexlist.append(index)
                     output.info['selection']['y'] = indexlist
@@ -414,6 +424,8 @@ class SpecFileDataSource:
                     output.info['selection']['m'] = indexlist
                 output.info['selection']['cntlist'] = output.info['LabelNames']
                 output.info['selectiontype'] = "1D"
+                if output.x is not None:
+                    output.info['selectiontype'] = "%dD" % len(output.x)
                 output.data = None
         elif key_type=="mca":
             output = self._getMcaData(key)
@@ -422,6 +434,87 @@ class SpecFileDataSource:
             output.y = [output.data[:].astype(Numeric.Float)]
             output.m = None
             output.info['selectiontype'] = "1D"
+            output.data = None
+        elif (key_type=="scan") and mca3D:
+            output = self._getScanData(key, raw = True)
+            output.x = None
+            output.y = None
+            output.m = None
+            #get the number of counters in the scan
+            if selection.has_key('cntlist'):
+                ncounters = len(selection['cntlist'])
+            else:
+                ncounters = output.info['LabelNames']
+                
+            # For the time being assume only one mca can be selected
+            detectorNumber = selection['y'][0] - ncounters
+                                         
+            #read the first mca data of the first point
+            mca_key = '%s.%d.%d' % (key, 1+detectorNumber, 1)
+            mcaData = self._getMcaData(mca_key)
+            ch0 = int(mcaData.info['Channel0'])
+            calib = mcaData.info['McaCalib']
+            nChannels = float(mcaData.data.shape[0])
+            channels = numpy.arange(nChannels) + ch0
+
+            #apply the calibration
+            channels = calib[0] + calib[1] * channels +\
+                       calib[2] * channels * channels
+
+            ones =numpy.ones(nChannels)
+            #get the different x components
+            xselection = selection.get('x', [])
+            if len(xselection) != 2:
+                raise ValueError, "You have to select two X axes"
+            indexlist = []
+            for labelindex in xselection:
+                if labelindex != 0:
+                    if selection.has_key('cntlist'):
+                        label = selection['cntlist'][labelindex]
+                    else:
+                        label = output.info['LabelNames'][labelindex]
+                else:
+                    label = output.info['LabelNames'][labelindex]
+                if label not in output.info['LabelNames']:
+                    raise ValueError, "Label %s not in scan labels" % label
+                index = output.info['LabelNames'].index(label)
+                if output.x is None:
+                    output.x = []
+                output.x.append(output.data[:, index])
+                indexlist.append(index)
+            npoints = output.x[0].shape[0]
+            output.info['selection'] = selection
+            output.info['selection']['x'] = indexlist
+            for i in range(len(output.x)):
+                output.x[i] = numpy.outer(output.x[i], ones).flatten()
+            tmp = numpy.outer(channels, numpy.ones(float(npoints))).flatten()
+            output.x.append(tmp)
+            output.y = [numpy.zeros(nChannels * npoints,numpy.float)]
+            for i in range(npoints):
+                mca_key = '%s.%d.%d' % (key, 1+detectorNumber, 1)
+                mcaData = self._getMcaData(mca_key)
+                output.y[0][(i*nChannels):((i+1)*nChannels)] = mcaData.data[:]
+            if selection.has_key('m'):
+                indexlist = []
+                for labelindex in selection['m']:
+                    if selection.has_key('cntlist'):
+                        label = selection['cntlist'][labelindex]
+                    else:    
+                        label = output.info['LabelNames'][labelindex]
+                    if label not in output.info['LabelNames']:
+                        raise ValueError, "Label %s not in scan labels" % label
+                    index = output.info['LabelNames'].index(label)
+                    if output.m is None:
+                            output.m = []
+                    output.m.append(output.data[:, index])
+                    indexlist.append(index)
+                output.info['selection']['m'] = indexlist
+                if output.m is not None:
+                    output.m[0] = numpy.outer(output.m[0], ones).flatten()
+            output.info['selection']['cntlist'] = output.info['LabelNames']
+            output.info['selectiontype'] = "3D"
+            output.info['LabelNames'] = selection['cntlist'] + selection['mcalist']
+
             output.data = None
         return output
 

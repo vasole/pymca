@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1 20090208-snapshot"
+__version__ = "4.3.1 20090226-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -160,8 +160,14 @@ if __name__ == "__main__":
 
 import McaWindow
 import ScanWindow
+OBJECT3D = False
 if QTVERSION > '4.0.0':
     import PyMcaImageWindow
+    try:
+        import Object3D.SceneGLWindow as SceneGLWindow
+        OBJECT3D = True
+    except:
+        OBJECT3D = False
 import QDispatcher
 import ElementsInfo
 import PeakIdentifier
@@ -299,6 +305,7 @@ class PyMca(PyMcaMdi.PyMca):
                     self.mainTabWidget.setWindowTitle("Main Window")
                     self.mcawindow = McaWindow.McaWidget()
                     self.scanwindow = ScanWindow.ScanWindow()
+                    self.glWindow = None
                     self.mainTabWidget.addTab(self.mcawindow, "MCA")
                     self.mainTabWidget.addTab(self.scanwindow, "SCAN")
                     self.mdi.addWindow(self.mainTabWidget)
@@ -457,9 +464,21 @@ class PyMca(PyMcaMdi.PyMca):
                                                         [legend])
             else:
                 self.imageWindowDict[legend]._addSelection(ddict)
-        else:            
-            self.mcawindow._addSelection(ddict)
-            self.scanwindow._addSelection(ddict)
+        else:
+            if OBJECT3D:
+                if ddict['dataobject'].info['selectiontype'] == "1D":
+                    self.mcawindow._addSelection(ddict)
+                    self.scanwindow._addSelection(ddict)
+                else:
+                    if self.glWindow is None:
+                        self.glWindow = SceneGLWindow.SceneGLWindow()
+                        self.mainTabWidget.addTab(self.glWindow, "OpenGL")
+                        self.glWindow.show()
+                    self.mainTabWidget.setCurrentWidget(self.glWindow)
+                    self.glWindow._addSelection(ddict)            
+            else:            
+                self.mcawindow._addSelection(ddict)
+                self.scanwindow._addSelection(ddict)
 
     def dispatcherRemoveSelectionSlot(self, ddict):
         if DEBUG:
