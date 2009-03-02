@@ -184,6 +184,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.connect(self.cntTable,
                          qt.SIGNAL('SpecCntTableSignal'),
                          self._cntSignal)
+
+            if QTVERSION > '4.2.0':
+                self.list.setSortingEnabled(True)
+                #self.connect(self.list.header(),
+                #             qt.SIGNAL("sectionDoubleClicked(int)"),
+                #             self.__headerSectionDoubleClicked)
         if OBJECT3D:
             self.connect(self.object3DBox, qt.SIGNAL("clicked()"),
                      self._setObject3DBox)            
@@ -431,6 +437,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             else:
                 pass
             self._autoReplace(sel)
+
+    def __headerSectionDoubleClicked(self, index):
+            print "index = ", index
+
 
     def __doubleClicked(self, item):
         if DEBUG:print "__doubleClicked"
