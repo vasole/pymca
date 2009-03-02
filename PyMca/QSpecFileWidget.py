@@ -36,6 +36,18 @@ import os
 QTVERSION = qt.qVersion()
 
 DEBUG = 0
+if QTVERSION > '4.0.0':
+    if QTVERSION > '4.2.0':
+        class MyQTreeWidgetItem(qt.QTreeWidgetItem):
+            def __lt__(self, other):
+                c = self.treeWidget().sortColumn() 
+                if  c == 0:
+                    return (self.text(c) < other.text(c))
+                if c !=  2:
+                    return (float(self.text(c)) <  float(other.text(c)))
+                return (self.text(c) < other.text(c))
+    else:
+        MyQTreeWidgetItem = qt.QTreeWidgetItem
 
 #class QSpecFileWidget(qt.QWidget):
 class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
@@ -308,9 +320,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 if after is not None:
                     #print "after is not none"
                     #item= qt.QTreeWidgetItem(self.list, [after, "", sn, cmd, str(pts), str(mca)])
-                    item= qt.QTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
+                    item= MyQTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
                 else:
-                    item= qt.QTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
+                    item= MyQTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
                 if (self.disableMca and not mca) or (self.disableScan and not pts):
                     item.setSelectable(0)
                     #XXX: not possible to put in italic: other solutions ??
@@ -439,7 +451,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._autoReplace(sel)
 
     def __headerSectionDoubleClicked(self, index):
-            print "index = ", index
+        if index == 0:
+            self.list.setSortingEnabled(False)
+        else:
+            self.list.setSortingEnabled(True)
+            #print "index = ", index
 
 
     def __doubleClicked(self, item):
