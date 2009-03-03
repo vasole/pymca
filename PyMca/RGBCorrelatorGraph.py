@@ -382,7 +382,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.saveGraphWidget(outputFile)
 
     def saveGraphImage(self, filename, original = False):
-        format = filename[-3:].upper()
+        format_ = filename[-3:].upper()
         if original:
             #This is the whole image, not the zoomed one ...
             if QTVERSION < '4.0.0':
@@ -391,7 +391,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
         else:
             pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
-        if pixmap.save(filename, format):
+        if pixmap.save(filename, format_):
             return
         else:
             qt.QMessageBox.critical(self, "Save Error",
@@ -399,9 +399,9 @@ class RGBCorrelatorGraph(qt.QWidget):
             return
 
     def saveGraphWidget(self, filename):
-        format = filename[-3:].upper()
+        format_ = filename[-3:].upper()
         pixmap = qt.QPixmap.grabWidget(self.graph)
-        if pixmap.save(filename, format):
+        if pixmap.save(filename, format_):
             return
         else:
             qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])

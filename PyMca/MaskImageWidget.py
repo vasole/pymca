@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -503,6 +503,9 @@ class MaskImageWidget(qt.QWidget):
         self.__selectionMask = mask
         if plot:
             self.plotImage(update=False)
+
+    def getSelectionMask(self, mask):
+        return self.__selectionMask
 
     def setImageData(self, data, clearmask=False):
         self.__image = None

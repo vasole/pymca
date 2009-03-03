@@ -2792,12 +2792,12 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
        #     if len(shape) == 1:
        #         shape = (shape[0], 1)
         if xScale is None:
-            xRange = (0, shape[0])
+            xRange = (0, int(max(shape[0]-1, 1)))
         else:
             xRange = xScale * 1
 
         if yScale is None:
-            yRange = (0, shape[1])
+            yRange = (0, int(max(shape[0]-1, 1)))
         else:
             yRange = yScale * 1
 
@@ -2843,7 +2843,7 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                                    size[1],
                                    qt.QImage.Format_RGB32).mirrored(xmirror,
                                                                     ymirror)
-            self.image_buffer = pixmap
+        self.image_buffer = pixmap
 
 class QwtPlotImage(qwt.QwtPlotMappedItem):
     def __init__(self, parent, palette=None):
