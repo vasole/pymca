@@ -2792,12 +2792,12 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
        #     if len(shape) == 1:
        #         shape = (shape[0], 1)
         if xScale is None:
-            xRange = (0, int(max(shape[0]-1, 1)))
+            xRange = (0, shape[0])
         else:
             xRange = xScale * 1
 
         if yScale is None:
-            yRange = (0, int(max(shape[0]-1, 1)))
+            yRange = (0, shape[1])
         else:
             yRange = yScale * 1
 
