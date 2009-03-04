@@ -42,7 +42,7 @@ if QTVERSION > '4.0.0':
             def __lt__(self, other):
                 c = self.treeWidget().sortColumn() 
                 if  c == 0:
-                    return (self.text(c) < other.text(c))
+                    return False
                 if c !=  2:
                     return (float(self.text(c)) <  float(other.text(c)))
                 return (self.text(c) < other.text(c))
@@ -198,10 +198,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                          self._cntSignal)
 
             if QTVERSION > '4.2.0':
-                self.list.setSortingEnabled(True)
-                #self.connect(self.list.header(),
-                #             qt.SIGNAL("sectionDoubleClicked(int)"),
-                #             self.__headerSectionDoubleClicked)
+                self.list.setSortingEnabled(False)
+                self.connect(self.list.header(),
+                             qt.SIGNAL("sectionDoubleClicked(int)"),
+                             self.__headerSectionDoubleClicked)
         if OBJECT3D:
             self.connect(self.object3DBox, qt.SIGNAL("clicked()"),
                      self._setObject3DBox)            
@@ -452,9 +452,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def __headerSectionDoubleClicked(self, index):
         if index == 0:
-            self.list.setSortingEnabled(False)
+            return
         else:
-            self.list.setSortingEnabled(True)
+            self.list.sortItems(index, qt.Qt.AscendingOrder)
             #print "index = ", index
 
 
