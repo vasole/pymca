@@ -53,10 +53,10 @@
       SPS_GetDataCopy (spec version, array, data format, &rows, &cols)
       
    You can get a copy of the array data in the format you want. Possible 
-   choices for the format are: SPS_DOUBLE SPS_FLOAT SPS_LONG SPS_ULONG
+   choices for the format are: SPS_DOUBLE SPS_FLOAT SPS_INT SPS_UINT
    SPS_SHORT SPS_USHORT SPS_CHAR SPS_UCHAR where DOUBLE and FLOAT are 
    foating point numbers and the other integer values. The U is a short
-   cut for unsigned. LONG is stored in 4 byte, SHORT in 2 byte and CHAR in
+   cut for unsigned. INT is stored in 4 byte, SHORT in 2 byte and CHAR in
    on byte. 
    Only one private buffer per shared memory array is possible with this
    function. This buffer is reused at the next call to SPS_GetDataCopy.
@@ -241,8 +241,8 @@
 /* array data types */
 #define SPS_DOUBLE      0
 #define SPS_FLOAT       1
-#define SPS_LONG        2
-#define SPS_ULONG       3
+#define SPS_INT         2
+#define SPS_UINT        3
 #define SPS_SHORT       4
 #define SPS_USHORT      5
 #define SPS_CHAR        6
@@ -253,7 +253,7 @@
 
 /*
   Input: Type code
-  Returns: Size of this type i.e. SPS_LONG returns 4
+  Returns: Size of this type i.e. SPS_INT returns 4
 */
 int SPS_Size(int type);
 
@@ -281,7 +281,7 @@ char * SPS_GetNextArray (char * fullname, int flag);
    Returns: State
 */
 
-long int SPS_GetSpecState (char *version);
+int SPS_GetSpecState (char *version);
 
 /* 
    Attaches to a SPEC array. 
@@ -659,5 +659,6 @@ int
 SPS_CreateArray (char * spec_version, char *arrayname,
 		 int rows, int cols, int type, int flags) ;
 
-
-void SPS_CleanUpAll(void);
+/* Deletes everything which there is */
+/* Should be called before you quit the program */
+void SPS_CleanUpAll (void);

@@ -39,12 +39,12 @@ static int sps_type2py (int t)
 {
   switch (t) {
   case SPS_USHORT: return(NPY_USHORT);
-  case SPS_ULONG:  return(NPY_LONG);
+  case SPS_UINT:   return(NPY_UINT32);
   case SPS_UCHAR:  return(NPY_UBYTE);
   case SPS_SHORT:  return(NPY_SHORT);
-  case SPS_LONG:   return(NPY_LONG);
+  case SPS_INT:    return(NPY_INT32);
   case SPS_CHAR:   return(NPY_BYTE);
-  case SPS_STRING: return(NPY_BYTE);
+  case SPS_STRING: return(NPY_STRING);
   case SPS_FLOAT:  return(NPY_FLOAT);
   case SPS_DOUBLE: return(NPY_DOUBLE);
   default:        return(-1);
@@ -56,9 +56,10 @@ static int sps_py2type (int t)
   int type;
 
   switch (t) {
-  case NPY_LONG:
-  case NPY_INT:
-    type = SPS_LONG; break;
+  case NPY_INT32:
+    type = SPS_INT; break;
+  case NPY_UINT32:
+    type = SPS_UINT; break;
   case NPY_USHORT:
     type = SPS_USHORT; break;
   case NPY_SHORT:
@@ -71,6 +72,8 @@ static int sps_py2type (int t)
     type = SPS_FLOAT; break;
   case NPY_DOUBLE:
     type = SPS_DOUBLE; break;
+  case NPY_STRING:
+    type = SPS_STRING; break;
   default:
     type = -1;
   }
@@ -623,8 +626,8 @@ void initsps()
 
   PyDict_SetItemString(d, "DOUBLE",   PyInt_FromLong(SPS_DOUBLE));
   PyDict_SetItemString(d, "FLOAT",    PyInt_FromLong(SPS_FLOAT));
-  PyDict_SetItemString(d, "LONG",     PyInt_FromLong(SPS_LONG));
-  PyDict_SetItemString(d, "ULONG",    PyInt_FromLong(SPS_ULONG));
+  PyDict_SetItemString(d, "INT",      PyInt_FromLong(SPS_INT));
+  PyDict_SetItemString(d, "UINT",     PyInt_FromLong(SPS_UINT));
   PyDict_SetItemString(d, "SHORT",    PyInt_FromLong(SPS_SHORT));
   PyDict_SetItemString(d, "USHORT",   PyInt_FromLong(SPS_USHORT));
   PyDict_SetItemString(d, "CHAR",     PyInt_FromLong(SPS_CHAR));

@@ -5,18 +5,24 @@
 #
 #############################################################################*/
 /****************************************************************************
-*   @(#)spec_shm.h	4.7  06/13/99 CSS
+*   @(#)spec_shm.h	5.3  05/27/02 CSS
 *
-*   "Spec" Release 4
+*   "Spec" Release 5
 *
-*   Copyright (c) 1995,1996,1997,1999
+*   Copyright (c) 1995,1996,1997,1999,2002
 *   by Certified Scientific Software.
 *   All rights reserved.
 *   Copyrighted as an unpublished work.
 *
 ****************************************************************************/
+#ifdef __sun  /* SUN */
+ #include <sys/types.h>
+#else         /* LINUX */
+ #include <stdint.h>
+#endif
 
 #define SHM_MAGIC       0xCEBEC000
+
 /*
 *  Difference between SHM_VERSION 3 and 4 is the increase in
 *  header size from 1024 to 4096 to put the data portion
@@ -36,8 +42,8 @@
 /* array data types */
 #define SHM_DOUBLE      0
 #define SHM_FLOAT       1
-#define SHM_LONG        2
-#define SHM_ULONG       3
+#define SHM_INT         2
+#define SHM_UINT        3
 #define SHM_SHORT       4
 #define SHM_USHORT      5
 #define SHM_CHAR        6
@@ -49,25 +55,25 @@
 #define SHM_HEAD_SIZE   4096    /* Header size puts data on page boundary */
 
 struct  shm_head {
-	long    magic;                  /* magic number (SHM_MAGIC) */
-	long    type;                   /* one of the array data types */
-	long    version;                /* version number of this struct */
-	long    rows;                   /* number of rows of array data */
-	long    cols;                   /* number of cols of array data */
-	long    utime;                  /* last-updated counter */
-	char    name[NAME_LENGTH];      /* name of spec variable */
-	char    spec_version[NAME_LENGTH];      /* name of spec process */
-	long    shmid;                  /* shared mem ID */
-	long    flags;                  /* more type info */
-	long    pid;                    /* process id of spec process */
+	int32_t    magic;                  /* magic number (SHM_MAGIC) */
+	int32_t    type;                   /* one of the array data types */
+	int32_t    version;                /* version number of this struct */
+	uint32_t   rows;           /* number of rows of array data */
+	uint32_t   cols;           /* number of cols of array data */
+        int32_t    utime;                  /* last-updated counter */
+	char       name[NAME_LENGTH];      /* name of spec variable */
+	char       spec_version[NAME_LENGTH];      /* name of spec process */
+	int32_t    shmid;                  /* shared mem ID */
+	int32_t    flags;                  /* more type info */
+	int32_t    pid;                    /* process id of spec process */
 };
 
 #define SHM_MAX_IDS     128
 
 struct  shm_status {
-	unsigned long   spec_state;
-	long     utime;                 /* updated when ids[] changes */
-	int      ids[SHM_MAX_IDS];      /* shm ids for shared arrays */
+	uint32_t     spec_state;
+	int32_t      utime;                 /* updated when ids[] changes */
+	int32_t      ids[SHM_MAX_IDS];      /* shm ids for shared arrays */
 	/* more later */
 };
 

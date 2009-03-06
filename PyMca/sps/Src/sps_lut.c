@@ -122,9 +122,9 @@ int SPS_Size_VLUT (int t)
 {
   switch (t) {
   case SPS_USHORT: return(sizeof(unsigned short));
-  case SPS_ULONG:  return(sizeof(unsigned int));
+  case SPS_UINT:   return(sizeof(unsigned int));
   case SPS_SHORT:  return(sizeof(short));
-  case SPS_LONG:   return(sizeof(int));
+  case SPS_INT:    return(sizeof(int));
   case SPS_UCHAR:  return(sizeof(unsigned char));
   case SPS_CHAR:   return(sizeof(char));
   case SPS_STRING: return(sizeof(char));
@@ -288,10 +288,10 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
    case SPS_FLOAT :
      FINDMINMAX(float, FLT_MAX);
      break;
-   case SPS_LONG :
+   case SPS_INT :
      FINDMINMAX(int, LONG_MAX);
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      FINDMINMAX(unsigned int, ULONG_MAX);
      break;
    case SPS_SHORT :
@@ -688,7 +688,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
        CALCDATA(float, float, unsigned int, log10f, powf);
      }
      break;
-   case SPS_LONG :
+   case SPS_INT :
      if (mapbytes == 1) {
        if (meth == SPS_LOG) {
          FASTLOG(int, unsigned char);
@@ -701,7 +701,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
        CALCDATA(int, float, unsigned int, log10f, powf);
      } 
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      if (mapbytes == 1) {
        if (meth == SPS_LOG) {
          FASTLOG(unsigned int, unsigned char);
@@ -859,10 +859,10 @@ void *SPS_ReduceData (void *data, int type,
    case SPS_FLOAT :
      CALCREDUCFAST(float);
      break;
-   case SPS_LONG :
+   case SPS_INT :
      CALCREDUCFAST(int);
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      CALCREDUCFAST(unsigned int);
      break;
    case SPS_SHORT :
@@ -886,10 +886,10 @@ void *SPS_ReduceData (void *data, int type,
    case SPS_FLOAT :
      CALCREDUC(float,double);
      break;
-   case SPS_LONG :
+   case SPS_INT :
      CALCREDUC(int,int);
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      CALCREDUC(unsigned int,unsigned int);
      break;
    case SPS_SHORT :
@@ -1135,7 +1135,6 @@ FillPalette (XServer_Info Xservinfo,
   double A, B, round_min;
   double lmin, lmax;
   unsigned int *full_palette;
-  int idx;
   
   /*
    SPS_LINEAR:   mapdata = A * data + B
@@ -1250,8 +1249,8 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
   /* The palette of 3 byte results is 4 byte long */
   palbytes = (Xservinfo.pixel_size == 3) ? 4 : Xservinfo.pixel_size;
   
-  if ( type == SPS_FLOAT || type == SPS_DOUBLE || type == SPS_LONG ||
-       type == SPS_ULONG ) {
+  if ( type == SPS_FLOAT || type == SPS_DOUBLE || type == SPS_INT ||
+       type == SPS_UINT ) {
     /* In this case we map first to mapmin and mapmax and use these as an 
        index in the palette */
     fmin = pmin = 0 ; fmax = pmax = mapmax - mapmin;
@@ -1366,10 +1365,10 @@ double SPS_GetZdata(void *data, int type, int cols, int rows, int x, int y)
    case SPS_FLOAT :
      return((double)(*((float *)data + ind)));
      break;
-   case SPS_LONG :
+   case SPS_INT :
      return((double)(*((int *)data + ind)));
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      return((double)(*((unsigned int *)data + ind)));
      break;
    case SPS_SHORT :
@@ -1402,10 +1401,10 @@ void SPS_PutZdata(void *data, int type, int cols, int rows, int x, int y,
   case SPS_FLOAT :
     *((float *)data + ind) = z;
     break;
-  case SPS_LONG :
+  case SPS_INT :
     *((int *)data + ind) = z;
     break;
-  case SPS_ULONG :
+  case SPS_UINT :
     *((unsigned int *)data + ind) = z;
     break;
   case SPS_SHORT :
@@ -1457,10 +1456,10 @@ void SPS_CalcStat(void *data, int type, int cols, int rows,
    case SPS_FLOAT :
      CALCSTAT(float,double);
      break;
-   case SPS_LONG :
+   case SPS_INT :
      CALCSTAT(int,double);
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      CALCSTAT(unsigned int,double);
      break;
    case SPS_SHORT :
@@ -1553,10 +1552,10 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
    case SPS_FLOAT :
      DATADIST(float);
      break;
-   case SPS_LONG :
+   case SPS_INT :
      DATADIST(int);
      break;
-   case SPS_ULONG :
+   case SPS_UINT :
      DATADIST(unsigned int);
      break;
    case SPS_SHORT :

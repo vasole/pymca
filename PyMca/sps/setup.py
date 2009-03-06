@@ -50,6 +50,4 @@ setup (
         url          = "http://www.esrf.fr/computing/bliss/",
 
         # Description of the modules and packages in the distribution
-
-        extra_path   = 'Pybliss',
         ext_modules  = ext_modules)
