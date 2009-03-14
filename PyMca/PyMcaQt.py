@@ -1,4 +1,5 @@
 import sys
+import sip
 if 'qt' not in sys.modules:
     try:
         from PyQt4.QtCore import *
