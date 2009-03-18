@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 """
     SpecFileLayer.py
@@ -210,8 +210,10 @@ class SpecFileLayer:
         scan_data= None
 
         if scan_type&SF_SCAN:
-            try: scan_data= Numeric.transpose(scan_obj.data()).copy()
-            except: raise self.Error, "SF_SCAN read failed"
+            try:
+                scan_data= Numeric.transpose(scan_obj.data()).copy()
+            except:
+                raise IOError, "SF_SCAN read failed"
         elif scan_type&SF_MESH:
             try:
                 scan_array= scan_obj.data()
@@ -220,7 +222,8 @@ class SpecFileLayer:
                 for idx in range(mot2):
                     scan_data[:,idx,:]= Numeric.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                 scan_data= Numeric.transpose(scan_data).copy()
-            except: raise self.Error, "SF_MESH read failed"
+            except:
+                raise IOError, "SF_MESH read failed"
         elif scan_type&SF_MCA:
             return self.AppendPage(scan_info, scan_data)
         elif scan_type&SF_NMCA:
@@ -228,7 +231,8 @@ class SpecFileLayer:
 
         if scan_data is not None:
             return self.AppendPage(scan_info, scan_data)
-        else:    raise self.Error, "LoadScanData unknown type"
+        else:
+            raise IOError, "LoadScanData unknown type"
 
     def __GetMeshSize(self, scan_array):
         """ Given the scandata array, return the size tuple of the mesh
@@ -276,7 +280,7 @@ class SpecFileLayer:
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
                 except: 
-                    raise self.Error, "SF_SCAN+SF_MCA read failed"
+                    raise IOError, "SF_SCAN+SF_MCA read failed"
             elif scan_type==SF_NMCA:
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
@@ -289,7 +293,7 @@ class SpecFileLayer:
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
                 except: 
-                    raise self.Error, "SF_NMCA read failed"
+                    raise IOError, "SF_NMCA read failed"
             elif scan_type==SF_MESH+SF_MCA:
                 try:
                     scan_array= scan_obj.data()
@@ -302,7 +306,7 @@ class SpecFileLayer:
                             scan_data[idx1,idx2,:]= scan_obj.mca(mca_no)
                         return  self.AppendPage(scan_info, scan_data)
                 except: 
-                    raise self.Error, "SF_MESH+SF_MCA read failed"
+                    raise IOError, "SF_MESH+SF_MCA read failed"
             elif scan_type==SF_SCAN+SF_NMCA:
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
@@ -319,9 +323,9 @@ class SpecFileLayer:
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
                 except:
-                    raise self.Error, "SF_SCAN+SF_NMCA read failed"
+                    raise IOError, "SF_SCAN+SF_NMCA read failed"
             elif scan_type==SF_MESH+SF_NMCA:
-                    raise self.Error, "SF_MESH+SF_NMCA not yet implemented"
+                    raise IOError, "SF_MESH+SF_NMCA not yet implemented"
                     scan_data= None
 
         elif len(key_split)==3:
@@ -333,14 +337,14 @@ class SpecFileLayer:
                                 mca_no= int(key_split[2])
                                 scan_data= scan_obj.mca(mca_no)
                         except: 
-                                raise self.Error, "Single MCA read failed"
+                                raise IOError, "Single MCA read failed"
                 if scan_data is not None:
                         scan_info.update(self.__GetMcaInfo(mca_no, scan_obj, scan_info))
                         return self.AppendPage(scan_info, scan_data)
 
         elif len(key_split)==4:
                 if int(key_split[3]) > scan_info["NbMcaDet"]:
-                    raise  self.Error, \
+                    raise  IOError, \
                            "Asked to read Mca %d having % d mca " % \
                            (int(key_split[3]), scan_info["NbMcaDet"])
 
@@ -349,7 +353,7 @@ class SpecFileLayer:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
                     except: 
-                        raise self.Error, "SF_SCAN+SF_NMCA read failed"
+                        raise IOError, "SF_SCAN+SF_NMCA read failed"
                 elif scan_type==SF_MESH+SF_MCA:
                     try:
                         scan_array= scan_obj.data()
@@ -358,16 +362,16 @@ class SpecFileLayer:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
                     except: 
-                        raise self.Error, "SF_MESH+SF_MCA read failed"
+                        raise IOError, "SF_MESH+SF_MCA read failed"
                 elif scan_type&SF_NMCA or scan_type&SF_MCA:
                     try:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
                     except: 
-                        raise self.Error, "SF_SCAN+SF_NMCA read failed"
+                        raise IOError, "SF_SCAN+SF_NMCA read failed"
                 else:
                     print "Unknown scan!!!!!!!!!!!!!!!!"
-                    raise self.Error,"Unknown scan!!!!!!!!!!!!!!!!"
+                    raise IOError,"Unknown scan!!!!!!!!!!!!!!!!"
                 if scan_data is not None:
                         scan_info.update(self.__GetMcaInfo(mca_no, scan_obj, scan_info))
                         return self.AppendPage(scan_info, scan_data)
