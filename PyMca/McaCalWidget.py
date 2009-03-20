@@ -514,7 +514,13 @@ class McaCalWidget(qt.QDialog):
             if QWTVERSION4:
                 channel=self.foundpeaks[marker-1]
             else:
-                channel=ddict['x']                
+                #The marker does not correspond to the peak number
+                channel=ddict['x']
+                number = 0
+                for m in self.graph.markersdict.keys():
+                    if self.graph.markersdict[m]['marker'].xValue() < channel:
+                        number += 1
+                name = "Peak %d" % number
             self.graph.setmarkercolor(marker,'red')
             self.graph.replot()
             current = self.current
@@ -1360,7 +1366,7 @@ class InputLine(qt.QDialog):
             calenergy = peakpars['calenergy']
         else:
             calenergy = ""
-        self.table.newpeakline(peakname,1)
+        self.table.newpeakline(peakname, 1)
         self.peakname = peakname 
         self.table.configure(name=peakname,
                              number=number,
