@@ -47,7 +47,7 @@ while 1:
         break
 
     if resp == "no":
-        sys.exit(0)
+        sys.exit(1)
 
     if resp == "l":
         os.system("more LICENSE.GPL")
