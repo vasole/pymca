@@ -117,8 +117,10 @@ except:
     OBJECT3D = False
 
 if OBJECT3D:
-    excludes = ["OpenGL", "Tkinter"]
-    for f in [os.path.dirname(ctypes.__file__), os.path.dirname(OpenGL.__file__)]:
+    excludes = ["OpenGL", "Tkinter", "Object3D"]
+    for f in [os.path.dirname(ctypes.__file__),
+              os.path.dirname(OpenGL.__file__),
+              os.path.dirname(Object3D.__file__)]:
         include_files.append((f,os.path.basename(f)))
 else:
     excludes = ["Tkinter"]
