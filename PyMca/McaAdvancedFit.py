@@ -1702,16 +1702,16 @@ class McaAdvancedFit(qt.QWidget):
 
         return self.__anasignal(dict)
 
-    def __anasignal(self,dict):
-        if type(dict) != type({}):
+    def __anasignal(self, ddict):
+        if type(ddict) != type({}):
             return
-        if dict.has_key('event'):
-            dict['info'] = {}
-            dict['info'].update(self.info)
+        if ddict.has_key('event'):
+            ddict['info'] = {}
+            ddict['info'].update(self.info)
             if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
+                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
             else:
-                self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
+                self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
             #Simplify interactive usage of the module
             return ddict
