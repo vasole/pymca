@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+
 __revision__ = "$Revision: 1.65 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
@@ -70,7 +71,28 @@ if DEBUG:
     print "############################################"
     print "#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG
     print "############################################"
+    
 class McaAdvancedFit(qt.QWidget):
+    """
+    This class inherits QWidget.
+
+    It provides all the functionality required to perform an interactive fit
+    and to generate a configuration file.
+
+    It is the simplest way to embed PyMca's fitting functionality into other
+    PyQt application.
+
+    It can be used from the interactive prompt of ipython provided ipython is
+    started with the -q4thread flag.
+
+    **Usage**
+
+    >>> from PyMca import McaAdvancedFit
+    >>> w = McaAdvancedFit.McaAdvancedFit()
+    >>> w.setData(x=x, y=y) # x is your channel array and y the counts array
+    >>> w.show()
+    
+    """
     def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,
                  sections=None, top=True, margin=11, spacing=6):
                 #fl=qt.Qt.WDestructiveClose):
@@ -429,6 +451,8 @@ class McaAdvancedFit(qt.QWidget):
         """
         This methods configures the fitting parameters and updates the
         graphical interface.
+
+        It returns the current configuration.
         """
         if ddict is None:
             return self.mcafit.configure(ddict)
@@ -1459,6 +1483,25 @@ class McaAdvancedFit(qt.QWidget):
         return self.setData( *var, **kw)
 
     def setData(self,*var,**kw):
+        """
+        The simplest way to use it is to pass at least the y keyword containing
+        the channel counts. The other items are not mandatory.
+        
+        :keywords:
+            x
+                channels
+            y
+                counts in each channel
+            sigmay
+                uncertainties to be applied if different than sqrt(y)
+            xmin
+                minimum channel of the fit
+            xmax
+                maximum channel of the fit
+            calibration
+                list of the form [a, b, c] containing the mca calibration 
+        """
+        
         self.__fitdone = 0
         self.info ={}
         if kw.has_key('legend'):
@@ -1530,6 +1573,22 @@ class McaAdvancedFit(qt.QWidget):
         self.headerLabel.setText("%s" % text)
 
     def fit(self):
+        """
+        Function called to start the fit process.
+        
+        Interactive use
+                
+        It returns a dictionnary containing the fit results or None in case of 
+        unsuccessfull fit.
+        
+        Embedded use
+        
+        In case of successfull fit emits a signal of the form:
+            
+        self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
+        
+        where ddict['event'] = 'McaAdvancedFitFinished'
+        """    
         self.__fitdone = 0
         self.mcatable.setRowCount(0)
         if self.concentrationsWidget is not None:
@@ -1641,8 +1700,7 @@ class McaAdvancedFit(qt.QWidget):
                     msg.exec_()
                 return
 
-        self.__anasignal(dict)
-
+        return self.__anasignal(dict)
 
     def __anasignal(self,dict):
         if type(dict) != type({}):
@@ -1654,6 +1712,9 @@ class McaAdvancedFit(qt.QWidget):
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
+
+            #Simplify interactive usage of the module
+            return ddict
 
     def dismiss(self):
         self.close()
