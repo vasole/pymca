@@ -1686,7 +1686,7 @@ class QEDFStackWidget(qt.QWidget):
 if __name__ == "__main__":
     import getopt
     options = ''
-    longoptions = ["fileindex=","begin=", "end=", "nativefiledialogs="]
+    longoptions = ["fileindex=","begin=", "end=", "nativefiledialogs=", "imagestack="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1700,6 +1700,7 @@ if __name__ == "__main__":
     fileindex = 0   #it is faster with fileindex=0
     begin = None
     end = None
+    imagestack=False
     for opt, arg in opts:
         if opt in '--begin':
             begin = int(arg)
@@ -1707,6 +1708,8 @@ if __name__ == "__main__":
             end = int(arg)
         elif opt in '--fileindex':
             fileindex = int(arg)
+        elif opt in '--imagestack':
+            imagestack = int(arg)
         elif opt in '--nativefiledialogs':
             if int(arg):
                 PyMcaDirs.nativeFileDialogs=True
@@ -1724,7 +1727,10 @@ if __name__ == "__main__":
         if line[0] == "\n":
             line = line[1:]
         if line[0] == "{":
-            stack = QStack()
+            if imagestack:
+                #prevent any modification
+                fileindex = 0
+            stack = QStack(imagestack=imagestack)
         elif line.startswith('Spectral'):
             stack = OmnicMap.OmnicMap(args[0])
             omnicfile = True
@@ -1741,7 +1747,7 @@ if __name__ == "__main__":
             stack = QSpecFileStack()
         f.close()
     if len(args) > 1:
-        stack.loadFileList(args, fileindex =fileindex)
+        stack.loadFileList(args, fileindex=fileindex)
         PyMcaDirs.inputDir = os.path.dirname(args[0])
         if PyMcaDirs.outputDir is None:
             PyMcaDirs.outputDir = os.path.dirname(args[0])
@@ -1772,9 +1778,13 @@ if __name__ == "__main__":
                     stack = SupaVisioMap.SupaVisioMap(filelist[0])
                     omnicfile = True
                 elif filefilter.upper().startswith("IMAGE"):
+                    imagestack = True
+                    fileindex  = 0
                     stack = QStack(imagestack=True)
                 elif line[0] == "{":
-                    stack = QStack()
+                    stack = QStack(imagestack=imagestack)
+                    if imagestack:
+                        fileindex = 0
                 elif line.startswith('Spectral'):
                     stack = OmnicMap.OmnicMap(filelist[0])
                     omnicfile = True

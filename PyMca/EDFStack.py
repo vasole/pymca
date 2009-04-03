@@ -47,7 +47,11 @@ class EDFStack(DataObject.DataObject):
             self.__imageStack = False
         else:
             self.__imageStack = imagestack
-        self.__dtype = dtype
+        if sys.platform == 'linux2':
+            # I have problems calculating colormaps under 64-bit
+            self.__dtype = numpy.float32
+        else:
+            self.__dtype = dtype
         if filelist is not None:
             if type(filelist) != type([]):
                 filelist = [filelist]
