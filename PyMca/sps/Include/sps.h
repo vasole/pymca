@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /* Small documentation for the library:
    Your program might get a list of available arrays with the two functions
@@ -248,6 +248,8 @@
 #define SPS_CHAR        6
 #define SPS_UCHAR       7
 #define SPS_STRING      8
+#define SPS_LONG        9
+#define SPS_ULONG       10
 
 
 

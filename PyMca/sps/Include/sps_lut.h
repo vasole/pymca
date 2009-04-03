@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,19 +22,21 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /* FIXTHIS - double the type defines to make sps_lut independent */
 #ifndef SPS_DOUBLE 
 #define SPS_DOUBLE      0
 #define SPS_FLOAT       1
-#define SPS_LONG        2
-#define SPS_ULONG       3
+#define SPS_INT         2
+#define SPS_UINT        3
 #define SPS_SHORT       4
 #define SPS_USHORT      5
 #define SPS_CHAR        6
 #define SPS_UCHAR       7
 #define SPS_STRING      8
+#define SPS_LONG        9
+#define SPS_ULONG       10
 #endif
 
 /* contian description of how the colors are represented for the Xserver */
@@ -67,7 +69,7 @@ Normally you will have to get this information from the XServer
 
 /*
   High level function to transform data of a certain type (SPS_FLOAT,
-  SPS_DOUBLE, SPS_LONG, SPS_ULONG, SPS_SHORT, SPS_USHORT, SPS_CHAR, SPS_UCHAR)
+  SPS_DOUBLE, SPS_INT, SPS_UINT, SPS_SHORT, SPS_USHORT, SPS_CHAR, SPS_UCHAR)
   into a representation suitable for display on a screen. 
 
   The size of the input array is given in cols and rows. 
@@ -218,7 +220,7 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
            there are 5 bits and the last bit is ignored. The mapping is 
 	   different depending on the type of the input data.
 	   
-           SPS_LONG, SPS_ULONG, SPS_DOUBLE, SPS_FLOAT : The mapping is done
+           SPS_INT, SPS_UINT, SPS_DOUBLE, SPS_FLOAT : The mapping is done
 	   according to the above formula. The color palette is supposed
 	   to contain the coresponding RGB values for each of the values 
 	   between mapmin and mapmax.
@@ -248,7 +250,7 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
    other values and use these calculated values as an index into the
    palette if we can use the data directly as an index in the color 
    table. Therefore there is a distinction between types which contain
-   data with many different values (SPS_LONG SPS_ULONG SPS_FLOAT SPS_DOUBLE)
+   data with many different values (SPS_INT SPS_UINT SPS_FLOAT SPS_DOUBLE)
    and data with a restricted number of different values (SPS_SHORT SPS_USHORT
    SPS_CHAR SPS_UCHAR). This distinction complicates of course the calculation
    of the palette which has to be provided. 

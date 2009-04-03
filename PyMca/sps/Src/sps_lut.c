@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 #include <stdio.h>
 /* AS + AM */
@@ -130,6 +130,8 @@ int SPS_Size_VLUT (int t)
   case SPS_STRING: return(sizeof(char));
   case SPS_DOUBLE: return(sizeof(double));
   case SPS_FLOAT:  return(sizeof(float));
+  case SPS_ULONG:  return(sizeof(unsigned long));
+  case SPS_LONG:   return(sizeof(long));
   default:        return(0);
   }
 }
@@ -305,6 +307,12 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
      break;
    case SPS_UCHAR :
      FINDMINMAX(unsigned char, UCHAR_MAX);
+     break;
+   case SPS_LONG :
+     FINDMINMAX(long, LONG_MAX);
+     break;
+   case SPS_ULONG :
+     FINDMINMAX(unsigned long, ULONG_MAX);
      break;
  }
 
@@ -658,7 +666,6 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
    A = 1.0;
    B = 0.0;
  }
-
  switch (type) {
    case SPS_DOUBLE :
      if (mapbytes == 1) {
@@ -756,6 +763,34 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
        CALCDATA_NOMAP(unsigned char, unsigned short);
      } else if (mapbytes == 4 || mapbytes == 3){
        CALCDATA_NOMAP(unsigned char, unsigned int);
+     }
+     break;
+   case SPS_LONG :
+     if (mapbytes == 1) {
+		/*###CHANGED - ALEXANDRE 11/09/2002*/
+       //if (meth == SPS_LOG) {
+       //  FASTLOG(long, unsigned char);
+       //} else {
+         CALCDATA(long, double, unsigned char, log10, pow);
+       //}
+     } else if (mapbytes == 2) {
+       CALCDATA(long, double, unsigned short, log10, pow);
+     } else if (mapbytes == 4 || mapbytes == 3) {
+       CALCDATA(long, double, unsigned int, log10, pow);
+     }
+     break;
+   case SPS_ULONG :
+     if (mapbytes == 1) {
+		/*###CHANGED - ALEXANDRE 11/09/2002*/
+       //if (meth == SPS_LOG) {
+       //  FASTLOG(unsigned long, unsigned char);
+       //} else {
+         CALCDATA(unsigned long, double, unsigned char, log10, pow);
+       //}
+     } else if (mapbytes == 2) {
+       CALCDATA(unsigned long, double, unsigned short, log10, pow);
+     } else if (mapbytes == 4 || mapbytes == 3) {
+       CALCDATA(unsigned long, double, unsigned int, log10, pow);
      }
      break;
  }
@@ -877,6 +912,12 @@ void *SPS_ReduceData (void *data, int type,
    case SPS_UCHAR :
      CALCREDUCFAST(unsigned char);
      break;
+   case SPS_LONG :
+     CALCREDUCFAST(long);
+     break;
+   case SPS_ULONG :
+     CALCREDUCFAST(unsigned long);
+     break;
    } 
  } else {
    switch (type) {
@@ -903,6 +944,12 @@ void *SPS_ReduceData (void *data, int type,
      break;
    case SPS_UCHAR :
      CALCREDUC(unsigned char,unsigned short);
+     break;
+   case SPS_LONG :
+     CALCREDUC(long, long);
+     break;
+   case SPS_ULONG :
+     CALCREDUC(unsigned long, unsigned long);
      break;
    }
  }
@@ -1242,7 +1289,7 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
   int memcorr = 2;
   void *old_palette, *palend;
   int palbytes;
-
+    
   if (Xservinfo.pixel_size == 1) 
     return NULL;   /* Hardware Palette */
 
@@ -1250,7 +1297,7 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
   palbytes = (Xservinfo.pixel_size == 3) ? 4 : Xservinfo.pixel_size;
   
   if ( type == SPS_FLOAT || type == SPS_DOUBLE || type == SPS_INT ||
-       type == SPS_UINT ) {
+       type == SPS_UINT || type == SPS_LONG || type == SPS_ULONG) {
     /* In this case we map first to mapmin and mapmax and use these as an 
        index in the palette */
     fmin = pmin = 0 ; fmax = pmax = mapmax - mapmin;
@@ -1347,7 +1394,6 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
     palend = (void *) ((char *) palette + newsize / 3 * 2);
     memcpy (palette, palend, newsize / 3);
   }
-
   return palette;
 }
 
@@ -1382,6 +1428,12 @@ double SPS_GetZdata(void *data, int type, int cols, int rows, int x, int y)
      break;
    case SPS_UCHAR :
      return((double)(*((unsigned char *)data + ind)));
+     break;
+   case SPS_LONG :
+     return((double)(*((long *)data + ind)));
+     break;
+   case SPS_ULONG :
+     return((double)(*((unsigned long *)data + ind)));
      break;
  }
 }
@@ -1418,6 +1470,12 @@ void SPS_PutZdata(void *data, int type, int cols, int rows, int x, int y,
     break;
   case SPS_UCHAR :
     *((unsigned char *)data + ind) = z;
+    break;
+  case SPS_LONG :
+    *((long *)data + ind) = z;
+    break;
+  case SPS_ULONG :
+    *((unsigned long *)data + ind) = z;
     break;
   }
   return;
@@ -1473,6 +1531,12 @@ void SPS_CalcStat(void *data, int type, int cols, int rows,
      break;
    case SPS_UCHAR :
      CALCSTAT(unsigned char, unsigned int);
+     break;
+   case SPS_LONG :
+     CALCSTAT(long,double);
+     break;
+   case SPS_ULONG :
+     CALCSTAT(unsigned long,double);
      break;
  }
 
@@ -1569,6 +1633,12 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
      break;
    case SPS_UCHAR :
      DATADIST(unsigned char);
+     break;
+   case SPS_LONG :
+     DATADIST(long);
+     break;
+   case SPS_ULONG :
+     DATADIST(unsigned long);
      break;
  }
 

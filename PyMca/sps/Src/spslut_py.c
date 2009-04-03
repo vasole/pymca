@@ -156,13 +156,15 @@ static PyObject *spslut_transform(self, args)
 
   switch (src->descr->type_num) {
   case NPY_UINT:
+    type = SPS_UINT; break;
   case NPY_ULONG:
     type = SPS_ULONG; break;
   case NPY_USHORT:
     type = SPS_USHORT; break;
   case NPY_LONG:
-  case NPY_INT:
     type = SPS_LONG; break;
+  case NPY_INT:
+    type = SPS_INT; break;
   case NPY_SHORT:
     type = SPS_SHORT; break;
   case NPY_UBYTE:
@@ -294,14 +296,16 @@ static PyObject *spslut_transformarray(self, args)
   }
 
   switch (src->descr->type_num) {
-  case NPY_UINT:
   case NPY_ULONG:
     type = SPS_ULONG; break;
+  case NPY_UINT:
+    type = SPS_UINT; break;
   case NPY_USHORT:
     type = SPS_USHORT; break;
   case NPY_LONG:
-  case NPY_INT:
     type = SPS_LONG; break;
+  case NPY_INT:
+    type = SPS_INT; break;
   case NPY_SHORT:
     type = SPS_SHORT; break;
   case NPY_UBYTE:
