@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,15 +26,29 @@
 #############################################################################*/
 try:
     import sps
-    from sps import CHAR, DOUBLE, FLOAT, LONG, SHORT, UCHAR, ULONG, USHORT
-    from sps import TAG_ARRAY, TAG_MCA, TAG_IMAGE, TAG_SCAN, \
-                    TAG_INFO, TAG_MASK, TAG_STATUS
-    from sps import IS_ARRAY, IS_MCA, IS_IMAGE, STRING
-    from sps import error
-    from sps import updatecounter
+    STRING=sps.STRING
+    CHAR=sps.CHAR
+    DOUBLE=sps.DOUBLE
+    FLOAT=sps.FLOAT
+    SHORT=sps.SHORT
+    UCHAR=sps.UCHAR
+    USHORT=sps.USHORT
+    TAG_ARRAY=sps.TAG_ARRAY
+    TAG_MCA=sps.TAG_MCA
+    TAG_IMAGE=sps.TAG_IMAGE
+    TAG_SCAN=sps.TAG_SCAN
+    TAG_INFO=sps.TAG_INFO
+    TAG_MASK=sps.TAG_MASK
+    TAG_STATUS=sps.TAG_STATUS
+    IS_ARRAY=sps.IS_ARRAY
+    IS_MCA=sps.IS_MCA
+    IS_IMAGE=sps.IS_IMAGE
+    error=sps.error
+    updatecounter=sps.updatecounter
 except:
     #windows does not use it
     pass
+
 import threading
 import time
 
