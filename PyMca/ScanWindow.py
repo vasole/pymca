@@ -1467,7 +1467,9 @@ class ScanWindow(qt.QWidget):
         sel['SourceType'] = "Operation"
         #get new x and new y
         if operation == "derivate":
-            xplot, yplot = self.simpleMath.derivate(x, y)
+            #xmin and xmax
+            xlimits=self.graph.getX1AxisLimits()
+            xplot, yplot = self.simpleMath.derivate(x, y, xlimits=xlimits)
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             newDataObject.info['LabelNames'][ilabel] = ylabel+"'"

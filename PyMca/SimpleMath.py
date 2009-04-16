@@ -28,10 +28,16 @@ import numpy.oldnumeric as Numeric
 import numpy
 
 class SimpleMath:
-    def derivate(self,xdata,ydata):
+    def derivate(self,xdata,ydata, xlimits=None):
+        if xlimits is None:
+            x=Numeric.array(xdata)
+            y=Numeric.array(ydata)
+        else:
+            i1=Numeric.nonzero((xdata>=xlimits[0])&\
+                               (xdata<=xlimits[1])) 
+            x=Numeric.take(xdata,i1)
+            y=Numeric.take(ydata,i1)
         f=[1,-1]
-        x=Numeric.array(xdata)
-        y=Numeric.array(ydata)
         deltax=Numeric.convolve(x,f,mode=0)
         i1=Numeric.nonzero(abs(deltax)>0.0000001)
         deltay=Numeric.convolve(y,f,mode=0)
