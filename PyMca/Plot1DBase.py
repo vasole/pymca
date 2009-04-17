@@ -17,8 +17,23 @@ and stores them into the attributes pluginList and pluginInstanceDict
 import os
 import sys
 import glob
-import Plugins1D
-DEBUG = 1
+PLUGINS_DIR = None
+try:
+    if os.path.exists(os.path.join(os.path.dirname(__file__),"Plugins1D")):
+        import Plugins1D
+        PLUGINS_DIR = os.path.dirname(Plugins1D.__file__)
+    else:
+        directory = os.path.dirname(__file__)
+        while True:
+            if os.path.exists(os.path.join(directory,"Plugins1D")):
+                PLUGINS_DIR = os.path.join(directory,"Plugins1D")
+                break
+            directory = os.path.dirname(directory)
+            if len(directory) < 5:
+                break
+except:
+    pass
+DEBUG = 0
 
 class Plot1DBase:
     def __init__(self):
@@ -31,7 +46,9 @@ class Plot1DBase:
         Import or reloads all the available plugins.
         It returns the number of plugins loaded.
         """
-        directory = os.path.dirname(Plugins1D.__file__)
+        if PLUGINS_DIR is None:
+            return 0
+        directory = PLUGINS_DIR
         if not os.path.exists(directory):
             raise IOError, "Directory:\n%s\ndoes not exist." % directory
 
@@ -39,7 +56,7 @@ class Plot1DBase:
         fileList = glob.glob(os.path.join(directory, "*.py"))
         targetMethod = 'getPlugin1DInstance'
         for module in fileList:
-            if 1:
+            try:
                 pluginName = os.path.basename(module)[:-3]
                 plugin = "Plugins1D." + pluginName
                 if pluginName in self.pluginList:
@@ -55,7 +72,7 @@ class Plot1DBase:
                 if hasattr(sys.modules[plugin], targetMethod):
                     self.pluginInstanceDict[plugin] = sys.modules[plugin].getPlugin1DInstance(self)
                     self.pluginList.append(plugin)
-            else:
+            except:
                 if DEBUG:
                     print "Problem importing module %s" % plugin
         return len(self.pluginList)

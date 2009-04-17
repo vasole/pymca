@@ -30,12 +30,12 @@ def install():
         directory_created(ip_dir)
 
     # Create program shortcuts ...
-    name = 'PyMca'
+    name = 'PyMcaMain'
     script = '"'+lib_dir+r'\%s.py"'%name
-    f = ip_dir + r'\%s.lnk'%name
+    f = ip_dir + r'\%s.lnk' % PyMca
     mkshortcut(python_console,name,f,script)
 
-    name = 'PyMca'
+    name = 'PyMcaMain'
     script = '"'+lib_dir+r'\%s.py" -f'%name
     fname = 'PyMca Fresh Start'
     f = ip_dir + r'\%s.lnk'%fname

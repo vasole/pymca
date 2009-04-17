@@ -496,10 +496,10 @@ except:
 class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def __init__(self, parent=None, name="Scan Window", specfit=None):
         qt.QWidget.__init__(self, parent)
-        Plot1DBase.Plot1DBase.__init__(self)
         if QTVERSION < '4.0.0':
             self.setCaption(name)
         else:
+            Plot1DBase.Plot1DBase.__init__(self)
             self.setWindowTitle(name)
         self._initIcons()
         self._build()

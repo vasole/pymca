@@ -13,7 +13,7 @@ global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
 import string
 
-for line in file(os.path.join('PyMca', 'PyMca.py')).readlines():
+for line in file(os.path.join('PyMca', 'PyMcaMain.py')).readlines():
     if line[:11] == '__version__':
         exec(line)
         # Append cvs tag if working from cvs tree
@@ -160,6 +160,14 @@ class smart_install_data(install_data):
         self.install_dir = getattr(install_cmd, 'install_lib')
         PYMCA_INSTALL_DIR = self.install_dir
         print "PyMCA to be installed in %s" %  self.install_dir
+        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "PyMca.py")
+        if os.path.exists(pymcaOld):
+            print "Removing previously installed file %s" % pymcaOld
+            os.remove(pymcaOld)
+        pymcaOld += "c"
+        if os.path.exists(pymcaOld):
+            print "Removing previously installed file %s" % pymcaOld
+            os.remove(pymcaOld)
         return install_data.run(self)
 
 from distutils.command.install_scripts import install_scripts

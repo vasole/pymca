@@ -4,7 +4,7 @@ try:
     import PyMca.PyMca_Icons as PyMca_Icons
     import PyMca.SimpleMath as SimpleMath
 except ImportError:
-    #This can be needed
+    #This happens in frozen versions
     import PyMca_Icons
     import SimpleMath
 

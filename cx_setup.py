@@ -88,6 +88,7 @@ for f in flist:
     include_files.append((f, os.path.basename(f)))
 
 include_files.append(("qtconffile", "qt.conf"))
+include_files.append((os.path.join("PyMca", "Plugins1D"), "Plugins1D"))
 
 # Add the qt plugins directory
 import PyQt4.Qt as qt
@@ -116,19 +117,21 @@ try:
 except:
     OBJECT3D = False
 
+#I should use somehow absolute import ...
+sys.path = [PyMcaDir] + sys.path
+import PyMcaMain
+import Plugins1D
+
 if OBJECT3D:
-    excludes = ["OpenGL", "Tkinter", "Object3D"]
+    excludes = ["OpenGL", "Tkinter", "Object3D", "Plugins1D"]
     for f in [os.path.dirname(ctypes.__file__),
               os.path.dirname(OpenGL.__file__),
               os.path.dirname(Object3D.__file__)]:
         include_files.append((f,os.path.basename(f)))
 else:
-    excludes = ["Tkinter"]
+    excludes = ["Tkinter", "Plugins1D"]
 
 
-#I should use somehow absolute import ...
-sys.path = [PyMcaDir] + sys.path
-import PyMca
 
 buildOptions = dict(
         compressed = True,
@@ -140,16 +143,45 @@ buildOptions = dict(
         #includes = ["Object3D"],
         #path = [PyMcaDir] + sys.path
         )
-install_dir = PyMcaDir + " " + PyMca.__version__
+install_dir = PyMcaDir + " " + PyMcaMain.__version__
 if os.path.exists(install_dir):
-    os.rmdir(install_dir)
+    try:
+        for f in glob.glob(os.path.join(install_dir, '*')):
+            if os.path.isfile(f):
+                os.remove(f)
+            if os.path.isdir(f):
+                for f2 in glob.glob(os.path.join(f, '*')):
+                    if os.path.isfile(f2):
+                        os.remove(f2)
+                    if os.path.isdir(f2):
+                        for f3 in glob.glob(os.path.join(f2, '*')):
+                            if os.path.isfile(f3):
+                                os.remove(f3)
+                            if os.path.isdir(f3):
+                                try:
+                                    os.rmdir(f3)
+                                except:
+                                    print f3, "not deleted"
+                                    pass
+                    try:
+                        os.rmdir(f2)
+                    except:
+                        print f2, "not deleted"
+                        pass
+                try:
+                    os.rmdir(f)
+                except:
+                    print f, "not deleted"
+                    pass
+        os.rmdir(install_dir)
+    except:
+        pass
 installOptions = dict(
     install_dir= install_dir,
 )
 
-
 executables = [
-        Executable(os.path.join(PyMcaDir, "PyMca.py")),
+        Executable(os.path.join(PyMcaDir, "PyMcaMain.py")),
         Executable(os.path.join(PyMcaDir, "PyMcaBatch.py")),
         Executable(os.path.join(PyMcaDir, "QEDFStackWidget.py")),
         Executable(os.path.join(PyMcaDir, "PeakIdentifier.py")),
@@ -161,9 +193,12 @@ executables = [
 
 setup(
         name = "PyMca",
-        version = PyMca.__version__,
-        description = "PyMca %s" % PyMca.__version__,
+        version = PyMcaMain.__version__,
+        description = "PyMca %s" % PyMcaMain.__version__,
         options = dict(build_exe = buildOptions,
                        install_exe = installOptions
                        ),
         executables = executables)
+#cleanup
+for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca", "*.pyc")):
+    os.remove(f)
