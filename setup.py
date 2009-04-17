@@ -65,6 +65,7 @@ data_files = [('PyMca', ['LICENSE.GPL',
                          'PyMca/LShellRatesCampbell.dat','PyMca/LShellRatesScofieldHS.dat',
                          'PyMca/MShellRates.dat','PyMca/MShellConstants.dat']),
               ('PyMca/attdata', glob.glob('PyMca/attdata/*')),
+              ('PyMca/Plugins1D', glob.glob('PyMca/Plugins1D/*')),
               ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
               ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]

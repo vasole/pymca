@@ -40,6 +40,8 @@ import copy
 import PyMcaPrintPreview
 import PyMcaDirs
 import ScanWindowInfoWidget
+#implement the plugins interface
+import Plot1DBase
 
 QTVERSION = qt.qVersion()
 
@@ -356,8 +358,6 @@ try:
 
             self.dataObject = dataObject
             
-
-
             i = 0
             lshape = "-"
             for y in dataObject.y:
@@ -493,9 +493,10 @@ except:
 
 
 
-class ScanWindow(qt.QWidget):
+class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def __init__(self, parent=None, name="Scan Window", specfit=None):
         qt.QWidget.__init__(self, parent)
+        Plot1DBase.Plot1DBase.__init__(self)
         if QTVERSION < '4.0.0':
             self.setCaption(name)
         else:
@@ -686,6 +687,12 @@ class ScanWindow(qt.QWidget):
                                  self._saveIconSignal,
                                  infotext)
 
+        if QTVERSION > '4.0.0':
+            button = qt.QPushButton(self.toolBar)
+            button.setText("Plugins")
+            button.setToolTip("Call/Load 1D Plugins")
+            self.toolBarLayout.addWidget(button)
+            self.connect(button,qt.SIGNAL('clicked()'), self._pluginClicked)
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
@@ -712,6 +719,85 @@ class ScanWindow(qt.QWidget):
         self.connect(tb,qt.SIGNAL('clicked()'), action)
         return tb
         
+    def _pluginClicked(self):
+        actionList = []
+        menu = qt.QMenu(self)
+        text = qt.QString("Reload")
+        menu.addAction(text)
+        actionList.append(text)
+        menu.addSeparator()
+        callableKeys = ["Dummy"]
+        for m in self.pluginList:
+            if m == "Plugins1D.Plugin1DBase":
+                continue
+            module = sys.modules[m]
+            if hasattr(module, 'MENU_TEXT'):
+                text = qt.QString(module.MENU_TEXT)
+            else:
+                text = os.path.basename(module.__file__)
+                if text.endswith('.pyc'):
+                    text = text[:-4]
+                elif text.endswith('.py'):
+                    text = text[:-3]
+                text = qt.QString(text)
+            methods = self.pluginInstanceDict[m].getMethods(plottype="SCAN") 
+            if not len(methods):
+                continue
+            menu.addAction(text)
+            actionList.append(text)
+            callableKeys.append(m)
+        a = menu.exec_(qt.QCursor.pos())
+        if a is None:
+            return None
+        idx = actionList.index(a.text())
+        if idx == 0:
+            n = self.getPlugins()
+            if n < 1:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Information)
+                msg.setText("Problem loading plugins")
+                msg.exec_()
+            return        
+        key = callableKeys[idx]
+        methods = self.pluginInstanceDict[key].getMethods(plottype="SCAN")
+        if len(methods) == 1:
+            idx = 0
+        else:
+            actionList = []
+            methods.sort()
+            menu = qt.QMenu(self)
+            for method in methods:
+                text = qt.QString(method)
+                pixmap = self.pluginInstanceDict[key].getMethodPixmap(method)
+                tip = qt.QString(self.pluginInstanceDict[key].getMethodToolTip(method))
+                if pixmap is not None:
+                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
+                else:
+                    action = qt.QAction(text, self)
+                if tip is not None:
+                    action.setToolTip(tip)
+                menu.addAction(action)
+                actionList.append((text, pixmap, tip, action))
+            qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
+            a = menu.exec_(qt.QCursor.pos())
+            if a is None:
+                return None
+            idx = -1
+            for action in actionList:
+                if a.text() == action[0]:
+                    idx = actionList.index(action)
+        try:
+            self.pluginInstanceDict[key].applyMethod(methods[idx])    
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s" % sys.exc_info()[1])
+            msg.exec_()
+
+    def _actionHovered(self, action):
+        tip = action.toolTip()
+        if str(tip) != str(action.text()):
+            qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     def _buildGraph(self):
         self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True,
@@ -747,8 +833,6 @@ class ScanWindow(qt.QWidget):
         self.graphBottomLayout.addWidget(self._yPos)
         self.graphBottomLayout.addWidget(HorizontalSpacer(self.graphBottom))
         self.mainLayout.addWidget(self.graphBottom)
-
-
 
     def setDispatcher(self, w):
         if QTVERSION < '4.0.0':
@@ -857,7 +941,7 @@ class ScanWindow(qt.QWidget):
                                         logfilter=self._logY,
                                         symbol=symbol)
                     if self.scanWindowInfoWidget is not None:
-                        activeLegend = self.getActiveCurve()
+                        activeLegend = self.getActiveCurveLegend()
                         if activeLegend is not None:
                             if activeLegend == newLegend:
                                 self.scanWindowInfoWidget.updateFromDataObject\
@@ -1133,7 +1217,7 @@ class ScanWindow(qt.QWidget):
             self._logY = False
         else:
             self._logY = True
-        activecurve = self.graph.getactivecurve(justlegend=1)
+        activecurve = self.graph.getActiveCurve(justlegend=1)
 
         self.graph.clearCurves()    
         self.graph.toggleLogY()
@@ -1283,14 +1367,14 @@ class ScanWindow(qt.QWidget):
                 msg.exec_loop()
             else:
                 msg.exec_()
-
+    
     def __simpleOperation(self, operation):
         if operation == 'subtract':
             self._subtractOperation()
             return
         if operation != "average":
             #get active curve
-            legend = self.getActiveCurve()
+            legend = self.getActiveCurveLegend()
             if legend is None:return
 
             found = False
@@ -1567,9 +1651,9 @@ class ScanWindow(qt.QWidget):
                                 logfilter=self._logY)
         self.graph.replot()
 
-    def getActiveCurve(self):
+    def getActiveCurveLegend(self):
         #get active curve
-        legend = self.graph.getactivecurve(justlegend=1)
+        legend = self.graph.getActiveCurve(justlegend=1)
         if legend is None:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -1600,7 +1684,7 @@ class ScanWindow(qt.QWidget):
     def _subtractOperation(self):
         #identical to twice the average with the negative active curve
         #get active curve
-        legend = self.getActiveCurve()
+        legend = self.getActiveCurveLegend()
         if legend is None:return
 
         found = False
@@ -1700,20 +1784,116 @@ class ScanWindow(qt.QWidget):
     def setTitle(self, text=""):
         self.graph.setTitle(text)
 
+    #The plugins interface
+    def getActiveCurve(self):
+        #get active curve
+        legend = self.getActiveCurveLegend()
+        if legend is None:
+            return None
+
+        found = False
+        for key in self.dataObjectsList:
+            if key == legend:
+                found = True
+                break
+
+        if found:
+            dataObject = self.dataObjectsDict[legend]
+        else:
+            print "I should not be here"
+            print "active curve =",legend
+            print "but legend list = ",self.dataObjectsList
+            return
+
+        y = dataObject.y[0]
+        if dataObject.x is not None:
+            x = dataObject.x[0]
+        else:
+            x = Numeric.arange(len(y)).astype(Numeric.Float)
+
+        ilabel = dataObject.info['selection']['y'][0]
+        ylabel = dataObject.info['LabelNames'][ilabel]
+        if len(dataObject.info['selection']['x']):
+            ilabel = dataObject.info['selection']['x'][0]
+            xlabel = dataObject.info['LabelNames'][ilabel]
+        else:
+            xlabel = "Point Number"
+        info = copy.deepcopy(dataObject.info)
+        info['xlabel'] = xlabel
+        info['ylabel'] = ylabel
+        return x, y, legend, info
+
+    def getAllCurves(self):
+        output = []
+        i = 0
+        ndata = 0
+        for key in self.graph.curves.keys():
+            if key not in self.dataObjectsDict.keys():
+                continue
+            dataObject = self.dataObjectsDict[key]
+            y = dataObject.y[0]
+            if dataObject.x is not None:
+                x = dataObject.x[0]
+            else:
+                x = Numeric.arange(len(y)).astype(Numeric.Float)
+            ilabel = dataObject.info['selection']['y'][0]
+            ylabel = dataObject.info['LabelNames'][ilabel]
+            if len(dataObject.info['selection']['x']):
+                ilabel = dataObject.info['selection']['x'][0]
+                xlabel = dataObject.info['LabelNames'][ilabel]
+            else:
+                xlabel = "Point Number"
+            info = copy.deepcopy(dataObject.info)
+            info['xlabel'] = xlabel
+            info['ylabel'] = ylabel
+            output.append([x, y, label, info])
+            ndata += 1
+        return output
+
+    def getGraphXLimits(self):
+        return self.graph.getX1AxisLimits()
+
+    def getGraphYLimits(self):
+        #if the active curve is mapped to second axis
+        #I should give the second axis limits
+        if 1:
+            return self.graph.getY1AxisLimits()
+        else:
+            return self.graph.getY2AxisLimits()
+
     def setActiveCurve(self, legend):
         self.graph.setActiveCurve(legend)
 
-    def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None, replace=False):
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
+        if legend is None:
+            key = "Unnamed curve 1.1"
+        else:
+            key = str(legend)
+        if info is None:
+            info = {}
+        xlabel = info.get('xlabel', 'X')
+        ylabel = info.get('ylabel', 'Y')
+        info['xlabel'] = str(xlabel)
+        info['ylabel'] = str(ylabel)
+        self.newCurve(x, y, legend, xlabel=xlabel, ylabel=ylabel,
+                              replace=replace, replot=replot, info=info, **kw)
+
+    #end of plugins interface
+    def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
+                 replace=False, replot=True, info=None, **kw):
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
             xlabel = "X"
         if ylabel is None:
             ylabel = "Y"
+        if info is None:
+            info = {}
         newDataObject = DataObject.DataObject()
         newDataObject.x = [x]
         newDataObject.y = [y]
         newDataObject.m = None
+        newDataObject.info = copy.deepcopy(info)
         newDataObject.info['legend'] = legend
         newDataObject.info['SourceName'] = legend
         newDataObject.info['Key'] = ""
@@ -1735,7 +1915,7 @@ class ScanWindow(qt.QWidget):
         if replace:
             self._replaceSelection(sel_list)
         else:
-            self._addSelection(sel_list)
+            self._addSelection(sel_list, replot=replot)
 
     def printGraph(self):
         #temporary print
