@@ -588,6 +588,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
 
+            self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"])) 
+
     def _build(self):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
@@ -688,11 +690,10 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                                  infotext)
 
         if QTVERSION > '4.0.0':
-            button = qt.QPushButton(self.toolBar)
-            button.setText("Plugins")
-            button.setToolTip("Call/Load 1D Plugins")
-            self.toolBarLayout.addWidget(button)
-            self.connect(button,qt.SIGNAL('clicked()'), self._pluginClicked)
+            infotext = "Call/Load 1D Plugins"
+            tb = self._addToolButton(self.pluginIcon,
+                                 self._pluginClicked,
+                                 infotext)
 
         self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
 
@@ -1036,14 +1037,15 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         if not len(removelist):return
         self.removeCurves(removelist)
 
-    def removeCurves(self, removelist):
+    def removeCurves(self, removelist, replot=True):
         for legend in removelist:
             if legend in self.dataObjectsList:
                 del self.dataObjectsList[self.dataObjectsList.index(legend)]
             if legend in self.dataObjectsDict.keys():
                 del self.dataObjectsDict[legend]
             self.graph.delcurve(legend)
-        self.graph.replot()
+        if replot:
+            self.graph.replot()
 
     def _replaceSelection(self, selectionlist):
         if DEBUG:print "_replaceSelection(self, selectionlist)",selectionlist
@@ -1877,6 +1879,9 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         info['ylabel'] = str(ylabel)
         self.newCurve(x, y, legend, xlabel=xlabel, ylabel=ylabel,
                               replace=replace, replot=replot, info=info, **kw)
+
+    def removeCurve(self, legend, replot=True):
+        return self.removeCurves([legend], replot=replot)
 
     #end of plugins interface
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,

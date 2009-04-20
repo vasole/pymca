@@ -1,6 +1,16 @@
 """
-This module is basically for plugin testing purposes but it can be used to do
+This module can be used for plugin testing purposes as well as for doing
 the bookkeeping of actual plot windows.
+
+It implements the Plot1D interface:
+
+    addCurve(self, x, y, legend=None, info=None, replace=False, replot=True)
+    getActiveCurve(self, just_legend=False)
+    getAllCurves(self, just_legend=False)
+    getGraphXLimits(self)
+    getGraphYLimits(self)
+    removeCurve(self, legend, replot=True)
+    setActiveCurve(self)
 """
 import Plot1DBase
 
@@ -12,6 +22,9 @@ class Plot1D(Plot1DBase.Plot1DBase):
         self.activeCurve = None
         
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+        """
+        Add the 1D curve given by x an y to the graph.
+        """
         if legend is None:
             key = "Unnamed curve 1.1"
         else:
@@ -36,33 +49,57 @@ class Plot1D(Plot1DBase.Plot1DBase):
         if len(self.curveList) == 1:
             self.activeCurve = key        
         return
+
+    def removeCurve(self, legend, replot=True):
+        """
+        Remove the curve associated to the supplied legend from the graph.
+        The graph will be updated if replot is true.
+        """
+        if legend is None:
+            return        
+        if legend in self.curveList:
+            idx = self.curveList.index(legend)
+            del self.curveList[idx]
+        if legend in self.curveDict.keys(): 
+            del self.curveDict[legend]
+        return
     
-    def getActiveCurve(self):
+    def getActiveCurve(self, just_legend=False):
         """
         Function to access the currently active curve.
         It returns None in case of not having an active curve.
 
-        Output has the form:
+        Default output has the form:
             xvalues, yvalues, legend, dict
             where dict is a dictionnary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
+
+        If just_legend is True:
+            The legend of the active curve (or None) is returned.
         """
         if self.activeCurve not in self.curveDict.keys():
             self.activeCurve = None
+        if just_legend:
+            return self.activeCurve
         if self.activeCurve is None:
             return None
         else:
             return self.curveDict[self.activeCurve]
 
-    def getAllCurves(self):
+    def getAllCurves(self, just_legend=False):
         """
-        It returns a list of the form:
-            [[xvalues0, xvalues1, ..., xvaluesn],
-             [yvalues0, yvalues1, ..., yvaluesn],
-             [legend0,  legend1,  ..., legendn ],
-             [dict0,    dict1,    ..., dictn]]
-        or just an empty list.
+        If just_legend is False:
+            It returns a list of the form:
+                [[xvalues0, yvalues0, legend0, dict0],
+                 [xvalues1, yvalues1, legend1, dict1],
+                 [...],
+                 [xvaluesn, yvaluesn, legendn, dictn]]
+            or just an empty list.
+        If just_legend is True:
+            It returns a list of the form:
+                [legend0, legend1, ..., legendn]
+            or just an empty list.
         """
         output = []
         keys = self.curveDict.keys()
@@ -119,7 +156,7 @@ class Plot1D(Plot1DBase.Plot1DBase):
         """
         Funtion to request the plot window to set the curve with the specified
         legend as the active curve.
-        It returns the active curve.
+        It returns the active curve legend.
         """
         key = str(legend)
         if key in self.curveDict.keys():
@@ -136,6 +173,8 @@ if __name__ == "__main__":
     print "Active curve = ", plot.getActiveCurve()
     print "X Limits = ",     plot.getGraphXLimits()
     print "Y Limits = ",     plot.getGraphYLimits()
+    print "All curves = ",   plot.getAllCurves()
+    plot.removeCurve("dummy")
     print "All curves = ",   plot.getAllCurves()
 
     

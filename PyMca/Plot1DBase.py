@@ -5,6 +5,7 @@ in this class.
 
 The plugins will be compatible with any 1D-plot window that provides the methods:
     addCurve
+    removeCurve
     getActiveCurve
     getAllCurves
     getGraphXLimits
@@ -78,7 +79,18 @@ class Plot1DBase:
         return len(self.pluginList)
     
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+        """
+        Add the 1D curve given by x an y to the graph.
+        """
         print "addCurve not implemented"
+        return None
+
+    def removeCurve(self, legend, replot=True):
+        """
+        Remove the curve associated to the supplied legend from the graph.
+        The graph will be updated if replot is true.
+        """
+        print "removeCurve not implemented"
         return None
     
     def getActiveCurve(self):
@@ -86,23 +98,31 @@ class Plot1DBase:
         Function to access the currently active curve.
         It returns None in case of not having an active curve.
 
-        Output has the form:
+        Default output has the form:
             xvalues, yvalues, legend, dict
             where dict is a dictionnary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
+
+        If just_legend is True:
+            The legend of the active curve (or None) is returned.
         """
         print "getActiveCurve not implemented"
         return None
 
     def getAllCurves(self):
         """
-        It returns a list of the form:
-            [[xvalues0, xvalues1, ..., xvaluesn],
-             [yvalues0, yvalues1, ..., yvaluesn],
-             [legend0,  legend1,  ..., legendn ],
-             [dict0,    dict1,    ..., dictn]]
-        or just an empty list.
+        If just_legend is False:
+            It returns a list of the form:
+                [[xvalues0, yvalues0, legend0, dict0],
+                 [xvalues1, yvalues1, legend1, dict1],
+                 [...],
+                 [xvaluesn, yvaluesn, legendn, dictn]]
+            or just an empty list.
+        If just_legend is True:
+            It returns a list of the form:
+                [legend0, legend1, ..., legendn]
+            or just an empty list.
         """
         print "getAllCurves not implemented"
         return []
