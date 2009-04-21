@@ -1787,11 +1787,13 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         self.graph.setTitle(text)
 
     #The plugins interface
-    def getActiveCurve(self):
+    def getActiveCurve(self, just_legend=False):
         #get active curve
         legend = self.getActiveCurveLegend()
         if legend is None:
             return None
+        if just_legend:
+            return legend
 
         found = False
         for key in self.dataObjectsList:
@@ -1825,12 +1827,15 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         info['ylabel'] = ylabel
         return x, y, legend, info
 
-    def getAllCurves(self):
+    def getAllCurves(self, just_legend=False):
         output = []
         i = 0
         ndata = 0
         for key in self.graph.curves.keys():
             if key not in self.dataObjectsDict.keys():
+                continue
+            if just_legend:
+                output.append(key)
                 continue
             dataObject = self.dataObjectsDict[key]
             y = dataObject.y[0]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -74,9 +74,11 @@ class SpecFileAbstractScan:
         if identification is None:identification='1.1'
         if scantype is None:scantype='SCAN'
         self.scanheader = scanheader
+        if len(data.shape) == 1:
+            data.shape = -1, 1
         (rows, cols) = data.shape
         if scantype == 'SCAN':
-            self.__data = numpy.zeros((rows, cols +1 ), numpy.float)
+            self.__data = numpy.zeros((rows, cols +1 ), numpy.float32)
             self.__data[:,0] = numpy.arange(rows) * 1.0
             self.__data[:,1:] = data * 1
             self.__cols = cols + 1
@@ -189,8 +191,6 @@ class SpecFileAbstractScan:
     def mca(self,number):
         return self.__data[:,number-1]
     
-
-
 def test():
     pass
 
