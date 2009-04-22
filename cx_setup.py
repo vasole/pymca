@@ -1,6 +1,6 @@
 # A cx_freeze setup script to create PyMca executables
 #
-# Use either "python cx_setup.py build" or "python cx_setup.py install"
+# Use "python cx_setup.py install"
 #
 # It expects a properly configured compiler.
 #
@@ -16,6 +16,7 @@ import glob
 import cx_Freeze.hooks as _hooks
 
 MINGW = False
+DEBUG = False
 
 def load_PyQt4_Qt(finder, module):
     """the PyQt4.Qt module is an extension module which imports a number of
@@ -117,27 +118,39 @@ try:
 except:
     OBJECT3D = False
 
+try:
+    import scipy
+    SCIPY = True
+    if DEBUG:
+        print "ADDING SciPy DOUBLES THE SIZE OF THE DOWNLOADABLE PACKAGE..."
+except:
+    SCIPY = False
+
 #I should use somehow absolute import ...
 sys.path = [PyMcaDir] + sys.path
 import PyMcaMain
 import Plugins1D
 
 if OBJECT3D:
-    excludes = ["OpenGL", "Tkinter", "Object3D", "Plugins1D"]
-    for f in [os.path.dirname(ctypes.__file__),
-              os.path.dirname(OpenGL.__file__),
-              os.path.dirname(Object3D.__file__)]:
-        include_files.append((f,os.path.basename(f)))
+    excludes = ["OpenGL", "Tkinter", "Object3D", "Plugins1D", "scipy"]
+    special_modules =[os.path.dirname(ctypes.__file__),
+                      os.path.dirname(OpenGL.__file__),
+                      os.path.dirname(Object3D.__file__)]
+    if SCIPY:
+        special_modules.append(os.path.dirname(scipy.__file__))
+    for f in special_modules:
+            include_files.append((f,os.path.basename(f)))
 else:
-    excludes = ["Tkinter", "Plugins1D"]
+    excludes = ["Tkinter", "Plugins1D", "scipy"]
 
-
+#Next line was for the plugins in frozen but now is in shared zip library
+#include_files.append((PyMcaDir, "PyMca"))
 
 buildOptions = dict(
         compressed = True,
         include_files = include_files,
         excludes = excludes,
-        #includes = ["ctypes", "OpenGL"]
+        #includes = ["scipy.interpolate", "scipy.linalg"]
         #optimize=2,
         #packages = packages,
         #includes = ["Object3D"],
@@ -145,36 +158,22 @@ buildOptions = dict(
         )
 install_dir = PyMcaDir + " " + PyMcaMain.__version__
 if os.path.exists(install_dir):
-    try:
-        for f in glob.glob(os.path.join(install_dir, '*')):
-            if os.path.isfile(f):
-                os.remove(f)
-            if os.path.isdir(f):
-                for f2 in glob.glob(os.path.join(f, '*')):
-                    if os.path.isfile(f2):
-                        os.remove(f2)
-                    if os.path.isdir(f2):
-                        for f3 in glob.glob(os.path.join(f2, '*')):
-                            if os.path.isfile(f3):
-                                os.remove(f3)
-                            if os.path.isdir(f3):
-                                try:
-                                    os.rmdir(f3)
-                                except:
-                                    print f3, "not deleted"
-                                    pass
+    if 1:#try:
+        def dir_cleaner(directory):
+            for f in glob.glob(os.path.join(directory,'*')):
+                if os.path.isfile(f):
                     try:
-                        os.rmdir(f2)
+                        os.remove(f)
                     except:
-                        print f2, "not deleted"
-                        pass
-                try:
-                    os.rmdir(f)
-                except:
-                    print f, "not deleted"
-                    pass
-        os.rmdir(install_dir)
-    except:
+                        print "file ", f,  "not deleted"
+                if os.path.isdir(f):
+                    dir_cleaner(f)
+            try:
+                os.rmdir(directory)
+            except:
+                print "directory ", directory, "not deleted"
+        dir_cleaner(install_dir)        
+    else:#except:
         pass
 installOptions = dict(
     install_dir= install_dir,
@@ -199,6 +198,64 @@ setup(
                        install_exe = installOptions
                        ),
         executables = executables)
+
 #cleanup
 for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca", "*.pyc")):
     os.remove(f)
+
+library = os.path.join(install_dir,"library.zip")
+if not os.path.exists(library):
+    print "PROBLEM"
+    print "Cannot find zipped library: "
+    print library
+    print "Please use python cx_setup.py install"
+else:
+    if DEBUG:
+        print "NO PROBLEM"
+
+#Add modules to library.zip for easy access from Plugins directory
+import zipfile
+zf = zipfile.ZipFile(library, mode='a')
+PY_COUNTER = 0
+PYC_COUNTER = 0
+SKIP_PYC = False
+SKIP_PY = True
+def addToZip(zf, path, zippath, full=False):
+    global PY_COUNTER
+    global PYC_COUNTER
+    if os.path.basename(path).upper().endswith("HTML"):
+        if DEBUG:
+            print "NOT ADDING", path
+        if not full:
+            return
+    if path.upper().endswith(".PYC"):
+        PYC_COUNTER += 1
+        if SKIP_PYC:
+            if not full:
+                if DEBUG:
+                    print "NOT ADDING", path
+                return
+    if path.upper().endswith(".PY"):
+        PY_COUNTER += 1
+        if SKIP_PY:
+            if not full:
+                if DEBUG:
+                    print "NOT ADDING", path
+                return
+    if os.path.isfile(path):
+        zf.write(path, zippath, zipfile.ZIP_DEFLATED)
+    elif os.path.isdir(path):
+        if not os.path.basename(path).upper().startswith("PLUGIN"):
+            for nm in os.listdir(path):
+                addToZip(zf,
+                    os.path.join(path, nm), os.path.join(zippath, nm))
+        else:
+            if DEBUG:
+                print "NOT ADDING", path
+
+addToZip(zf, PyMcaDir, os.path.basename(PyMcaDir), full=False)
+    
+if PY_COUNTER > PYC_COUNTER:
+    print "WARNING: More .py files than  .pyc files. Check cx_setup.py"
+if PY_COUNTER < PYC_COUNTER:
+    print "WARNING: More .pyc files than  .py files. Check cx_setup.py"
