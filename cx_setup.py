@@ -65,7 +65,10 @@ if 0:
 
 
 PyMcaInstallationDir = "build"
-PyMcaDir =os.path.join(PyMcaInstallationDir, "PyMca")
+if sys.platform != "windows":
+    PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca").replace(" ","_")
+else:
+    PyMcaDir =os.path.join(PyMcaInstallationDir, "PyMca")
 #make sure PyMca is freshly built
 if sys.platform == 'win32':
     if MINGW:
@@ -157,8 +160,10 @@ buildOptions = dict(
         #path = [PyMcaDir] + sys.path
         )
 install_dir = PyMcaDir + " " + PyMcaMain.__version__
+if sys.platform != "win32":
+    install_dir = install_dir.replace(" ","_")
 if os.path.exists(install_dir):
-    if 1:#try:
+    try:
         def dir_cleaner(directory):
             for f in glob.glob(os.path.join(directory,'*')):
                 if os.path.isfile(f):
@@ -173,7 +178,8 @@ if os.path.exists(install_dir):
             except:
                 print "directory ", directory, "not deleted"
         dir_cleaner(install_dir)        
-    else:#except:
+    except:
+        print "Unexpected error:", sys.exc_info()
         pass
 installOptions = dict(
     install_dir= install_dir,
