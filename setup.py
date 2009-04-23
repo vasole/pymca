@@ -65,7 +65,7 @@ data_files = [('PyMca', ['LICENSE.GPL',
                          'PyMca/LShellRatesCampbell.dat','PyMca/LShellRatesScofieldHS.dat',
                          'PyMca/MShellRates.dat','PyMca/MShellConstants.dat']),
               ('PyMca/attdata', glob.glob('PyMca/attdata/*')),
-              ('PyMca/Plugins1D', glob.glob('PyMca/Plugins1D/*')),
+              ('PyMca/PyMcaPlugins', glob.glob('PyMca/PyMcaPlugins/*')),
               ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
               ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
@@ -159,7 +159,17 @@ class smart_install_data(install_data):
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
         PYMCA_INSTALL_DIR = self.install_dir
-        print "PyMCA to be installed in %s" %  self.install_dir
+        print "PyMca to be installed in %s" %  self.install_dir
+        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "Plugins1D")
+        if os.path.exists(pymcaOld):
+            for f in glob.glob(os.path.join(pymcaOld,"*.py")):
+                print "Removing previously installed file %s" % f
+                os.remove(f)
+            for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
+                print "Removing previously installed file %s" % f
+                os.remove(f)
+            print "Removing previously installed directory %s" % pymcaOld
+            os.rmdir(pymcaOld)
         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "PyMca.py")
         if os.path.exists(pymcaOld):
             print "Removing previously installed file %s" % pymcaOld

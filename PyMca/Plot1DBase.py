@@ -12,22 +12,23 @@ The plugins will be compatible with any 1D-plot window that provides the methods
     getGraphYLimits
     setActiveCurve
 
-On instantiation, this clase imports all the plugins found in the Plugins1D directory
-and stores them into the attributes pluginList and pluginInstanceDict
+On instantiation, this clase imports all the plugins found in the PyMcaPlugins
+directory and stores them into the attributes pluginList and pluginInstanceDict
+
 """
 import os
 import sys
 import glob
 PLUGINS_DIR = None
 try:
-    if os.path.exists(os.path.join(os.path.dirname(__file__),"Plugins1D")):
-        import Plugins1D
-        PLUGINS_DIR = os.path.dirname(Plugins1D.__file__)
+    if os.path.exists(os.path.join(os.path.dirname(__file__),"PyMcaPlugins")):
+        import PyMcaPlugins
+        PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
     else:
         directory = os.path.dirname(__file__)
         while True:
-            if os.path.exists(os.path.join(directory,"Plugins1D")):
-                PLUGINS_DIR = os.path.join(directory,"Plugins1D")
+            if os.path.exists(os.path.join(directory, "PyMcaPlugins")):
+                PLUGINS_DIR = os.path.join(directory, "PyMcaPlugins")
                 break
             directory = os.path.dirname(directory)
             if len(directory) < 5:
@@ -59,7 +60,7 @@ class Plot1DBase:
         for module in fileList:
             try:
                 pluginName = os.path.basename(module)[:-3]
-                plugin = "Plugins1D." + pluginName
+                plugin = "PyMcaPlugins." + pluginName
                 if pluginName in self.pluginList:
                     idx = self.pluginList.index(pluginName)
                     del self.pluginList[idx]

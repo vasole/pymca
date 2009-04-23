@@ -729,7 +729,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         menu.addSeparator()
         callableKeys = ["Dummy"]
         for m in self.pluginList:
-            if m == "Plugins1D.Plugin1DBase":
+            if m == "PyMcaPlugins.Plugin1DBase":
                 continue
             module = sys.modules[m]
             if hasattr(module, 'MENU_TEXT'):

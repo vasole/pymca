@@ -92,7 +92,7 @@ for f in flist:
     include_files.append((f, os.path.basename(f)))
 
 include_files.append(("qtconffile", "qt.conf"))
-include_files.append((os.path.join("PyMca", "Plugins1D"), "Plugins1D"))
+include_files.append((os.path.join("PyMca", "PyMcaPlugins"), "PyMcaPlugins"))
 
 # Add the qt plugins directory
 import PyQt4.Qt as qt
@@ -132,10 +132,10 @@ except:
 #I should use somehow absolute import ...
 sys.path = [PyMcaDir] + sys.path
 import PyMcaMain
-import Plugins1D
+import PyMcaPlugins
 
 if OBJECT3D:
-    excludes = ["OpenGL", "Tkinter", "Object3D", "Plugins1D", "scipy"]
+    excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins", "scipy"]
     special_modules =[os.path.dirname(ctypes.__file__),
                       os.path.dirname(OpenGL.__file__),
                       os.path.dirname(Object3D.__file__)]
@@ -144,7 +144,7 @@ if OBJECT3D:
     for f in special_modules:
             include_files.append((f,os.path.basename(f)))
 else:
-    excludes = ["Tkinter", "Plugins1D", "scipy"]
+    excludes = ["Tkinter", "PyMcaPlugins", "scipy"]
 
 #Next line was for the plugins in frozen but now is in shared zip library
 #include_files.append((PyMcaDir, "PyMca"))
@@ -261,7 +261,7 @@ def addToZip(zf, path, zippath, full=False):
 
 addToZip(zf, PyMcaDir, os.path.basename(PyMcaDir), full=False)
     
-if PY_COUNTER > PYC_COUNTER:
-    print "WARNING: More .py files than  .pyc files. Check cx_setup.py"
+#if PY_COUNTER > PYC_COUNTER:
+#    print "WARNING: More .py files than  .pyc files. Check cx_setup.py"
 if PY_COUNTER < PYC_COUNTER:
     print "WARNING: More .pyc files than  .py files. Check cx_setup.py"
