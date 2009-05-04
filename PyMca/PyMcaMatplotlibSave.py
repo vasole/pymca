@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -252,6 +252,7 @@ class PyMcaMatplotlibSaveImage:
                      ypixelsize=1.0,
                      xlimits=None,
                      ylimits=None,
+                     vlimits=None,
                      extent=None):
 
         self.figure = Figure(figsize=size) #in inches
@@ -279,8 +280,11 @@ class PyMcaMatplotlibSaveImage:
                      'zoomxmax':None,
                      'zoomymin':None,
                      'zoomymax':None,
+                     'valuemin':None,
+                     'valuemax':None,
                      'xlimits':xlimits,
                      'ylimits':ylimits,
+                     'vlimits':vlimits,
                      'extent':extent}
 
         #generate own colormaps
@@ -414,12 +418,19 @@ class PyMcaMatplotlibSaveImage:
         else:
             extent = self.config['extent'] 
 
-        self._image  = self.axes.imshow(self.imageData,
+        vlimits = self.__getValueLimits()
+        if vlimits is None:
+            imageData = self.imageData
+        else:
+            vmin = min(vlimits[0], vlimits[1])
+            vmax = max(vlimits[0], vlimits[1])
+            imageData = self.imageData.clip(vmin,vmax)
+        self._image  = self.axes.imshow(imageData,
                                         interpolation=interpolation,
                                         origin=origin,
 					cmap=cmap,
                                         extent=extent)
-
+        
         ylim = self.axes.get_ylim()
 
         if self.config['colorbar'] is not None:
@@ -429,18 +440,18 @@ class PyMcaMatplotlibSaveImage:
 
 	#contour plot
 	if self.config['contour'] != 'off':
-	    dataMin = self.imageData.min()
-	    dataMax = self.imageData.max()
+	    dataMin = imageData.min()
+	    dataMax = imageData.max()
 	    ncontours = int(self.config['contourlevels'])
 	    levels = (numpy.arange(ncontours)) *\
                      (dataMax - dataMin)/float(ncontours)
 	    if self.config['contour'] == 'filled':
-		self._contour = self.axes.contourf(self.imageData, levels,
+		self._contour = self.axes.contourf(imageData, levels,
 	             origin=origin,
                      cmap=ccmap,
                      extent=extent)
 	    else:
-		self._contour = self.axes.contour(self.imageData, levels,
+		self._contour = self.axes.contour(imageData, levels,
 	             origin=origin,
                      cmap=ccmap,
 	             linewidths=2,
@@ -493,6 +504,18 @@ class PyMcaMatplotlibSaveImage:
 
         ylim = self.axes.get_ylim()
         self.__postImage(ylim, filename)
+
+    def __getValueLimits(self):
+        if (self.config['valuemin'] is not None) and\
+           (self.config['valuemax'] is not None) and\
+           (self.config['valuemin'] != self.config['valuemax']):
+            vlimits = (self.config['valuemin'],
+                           self.config['valuemax'])
+        elif self.config['vlimits'] is not None:
+            vlimits = self.config['vlimits']
+        else:
+            vlimits = None
+        return vlimits
 
     def __postImage(self, ylim, filename):
         self.axes.set_title(self.config['title'])

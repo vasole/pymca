@@ -308,7 +308,9 @@ class RightWidget(qt.QWidget):
                           'Zoom X Min',
                           'Zoom X Max',
                           'Zoom Y Min',
-                          'Zoom Y Max']
+                          'Zoom Y Max',
+                          'Value Min',
+                          'Value Max']
 	self.keyList = []
 	for label in self.labelList:
 	    self.keyList.append(label.lower().replace(' ',''))
@@ -358,6 +360,12 @@ class RightWidget(qt.QWidget):
                     tip += "This means pixel size corrected.\n"
                     line.setToolTip(tip)
                     line.setText('0.0')
+                elif 'Value' in self.labelList[i]:
+                    tip  = "Clipping values of the data.\n"
+                    tip += "To disable clipping, just set both\n"
+                    tip += "limits to the same value."
+                    line.setToolTip(tip)
+                    line.setText('0.0')
                 else:
                     line.setText('1.0')
 	    self.gridLayout.addWidget(label, i, 0)
@@ -372,7 +380,7 @@ class RightWidget(qt.QWidget):
         if flag:
             disable = ['Colormap','Contour', 'Contour Labels',
                        'Contour Label Format',
-                       'Contour Levels', 'Colorbar']
+                       'Contour Levels', 'Colorbar', 'Value Min','Value Max']
         else:
             disable = ['Image Background']
 
@@ -440,7 +448,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      xorigin=0.0,
                      yorigin=0.0,
                      xlimits=None,
-                     ylimits=None):
+                     ylimits=None,
+                     vlimits=None):
 	self.figure = Figure(figsize=size, dpi=dpi) #in inches
 
 	#How to set this color equal to the other widgets color?
@@ -476,8 +485,11 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      'zoomxmax':None,
                      'zoomymin':None,
                      'zoomymax':None,
+                     'valuemin':None,
+                     'valuemax':None,
                      'xlimits':xlimits,
-                     'ylimits':ylimits}
+                     'ylimits':ylimits,
+                     'vlimits':vlimits}
 
         #generate own colormaps
         cdict = {'red': ((0.0, 0.0, 0.0),
@@ -601,14 +613,22 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                 extent = (x0, w+x0,
                           y0, h+y0)
         else:
-            extent = self.config['extent'] 
+            extent = self.config['extent']
 
-        self._image  = self.axes.imshow(self.imageData,
+    
+        vlimits = self.__getValueLimits()
+        if vlimits is None:
+            imageData = self.imageData
+        else:
+            vmin = min(vlimits[0], vlimits[1])
+            vmax = max(vlimits[0], vlimits[1])
+            imageData = self.imageData.clip(vmin,vmax)
+        self._image  = self.axes.imshow(imageData,
                                         interpolation=interpolation,
                                         origin=origin,
                                         cmap=cmap,
                                         extent=extent)
-
+        
         ylim = self.axes.get_ylim()
         
         if self.config['colorbar'] is not None:
@@ -618,18 +638,18 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
 	#contour plot
 	if self.config['contour'] != 'off':
-	    dataMin = self.imageData.min()
-	    dataMax = self.imageData.max()
+	    dataMin = imageData.min()
+	    dataMax = imageData.max()
             ncontours = int(self.config['contourlevels'])
 	    levels = (numpy.arange(ncontours)) *\
                      (dataMax - dataMin)/float(ncontours)	    
 	    if self.config['contour'] == 'filled':
-		self._contour = self.axes.contourf(self.imageData, levels,
+		self._contour = self.axes.contourf(imageData, levels,
 	             origin=origin,
                      cmap=ccmap,
                      extent=extent)
 	    else:
-		self._contour = self.axes.contour(self.imageData, levels,
+		self._contour = self.axes.contour(imageData, levels,
 	             origin=origin,
                      cmap=ccmap,
 	             linewidths=2,
@@ -715,6 +735,18 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
         ylim = self.axes.get_ylim()
         self.__postImage(ylim)
+
+    def __getValueLimits(self):
+        if (self.config['valuemin'] is not None) and\
+           (self.config['valuemax'] is not None) and\
+           (self.config['valuemin'] != self.config['valuemax']):
+            vlimits = (self.config['valuemin'],
+                           self.config['valuemax'])
+        elif self.config['vlimits'] is not None:
+            vlimits = self.config['vlimits']
+        else:
+            vlimits = None
+        return vlimits
 
     def __postImage(self, ylim):
         self.axes.set_title(self.config['title'])
