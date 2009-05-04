@@ -27,8 +27,13 @@
 import Elements
 import XRayTubeEbel
 import numpy.oldnumeric as Numeric
-import QtBlissGraph
-qt = QtBlissGraph.qt
+try:
+    import QtBlissGraph
+    qt = QtBlissGraph.qt
+    HAS_QWT = True
+except ImportError:
+    import PyMcaQt as qt
+    HAS_QWT = False
 
 DEBUG = 0
 
@@ -82,16 +87,33 @@ class QXTube(qt.QWidget):
         
         self.l.addWidget(hbox)
         self.graph = None
-        
-        self.connect(self.plotButton,
+
+        if HAS_QWT:
+            self.connect(self.plotButton,
                      qt.SIGNAL("clicked()"),
                      self.plot)
+        else:
+            self.connect(self.plotButton,
+                     qt.SIGNAL("clicked()"),
+                     self.noQwtError)
 
         self.connect(self.exportButton,
                      qt.SIGNAL("clicked()"),
                      self._export)
 
+    def noQwtError(self):
+        msg = qt.QMessageBox(self)
+        msg.setIcon(qt.QMessageBox.Critical)
+        msg.setText("This function needs PyQwt5 installed")
+        if qt.qVersion() < '4.0.0':
+            msg.exec_loop()
+        else:
+            msg.exec_()
+        return
+
     def plot(self):
+        if not HAS_QWT:
+            return
         d = self.tubeWidget.getParameters()
         transmission    = d["transmission"]
         anode           = d["anode"]
