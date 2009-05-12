@@ -291,10 +291,10 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
      FINDMINMAX(float, FLT_MAX);
      break;
    case SPS_INT :
-     FINDMINMAX(int, LONG_MAX);
+     FINDMINMAX(int, INT_MAX);
      break;
    case SPS_UINT :
-     FINDMINMAX(unsigned int, ULONG_MAX);
+     FINDMINMAX(unsigned int, UINT_MAX);
      break;
    case SPS_SHORT :
      FINDMINMAX(short, SHRT_MAX);

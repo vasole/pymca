@@ -969,12 +969,18 @@ def test():
 
     container = MaskImageWidget()
     if len(sys.argv) > 1:
-        image = qt.QImage(sys.argv[1])
-        #container.setQImage(image, image.width(),image.height())
-        container.setQImage(image, 200, 200)
+        if sys.argv[1].endswith('edf'):
+            import EdfFile
+            edf = EdfFile.EdfFile(sys.argv[1])
+            data = edf.GetData(0)
+            container.setImageData(data)
+        else:
+            image = qt.QImage(sys.argv[1])
+            #container.setQImage(image, image.width(),image.height())
+            container.setQImage(image, 200, 200)
     else:
-        data = numpy.arange(10000)
-        data.shape = 100, 100
+        data = numpy.arange(40000).astype(numpy.int32)
+        data.shape = 200, 200
         container.setImageData(data)
     container.show()
     def theSlot(ddict):
