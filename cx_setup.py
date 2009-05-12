@@ -118,6 +118,14 @@ try:
     import OpenGL
     import Object3D
     OBJECT3D = True
+    try:
+        #ESRF very special distribution ...
+        import Object3DCTools
+        import Object3DQhull
+        OBJECT3DCTOOLS = True
+    except:
+        #fine, it is inside Object3D
+        OBJECT3DCTOOLS = False
 except:
     OBJECT3D = False
 
@@ -129,22 +137,46 @@ try:
 except:
     SCIPY = False
 
+#For the time being I leave it out
+SCIPY = False
+
 #I should use somehow absolute import ...
 sys.path = [PyMcaDir] + sys.path
 import PyMcaMain
 import PyMcaPlugins
-
+import matplotlib
+includes = []
 if OBJECT3D:
-    excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins", "scipy"]
-    special_modules =[os.path.dirname(ctypes.__file__),
+    includes.append("logging")
+    excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins", "scipy"] 
+    if 0:
+        #This requieres the use of the environmental variable MATPLOTLIBDATA
+        #pointing to mpl-data directory
+        special_modules =[os.path.dirname(ctypes.__file__),
                       os.path.dirname(OpenGL.__file__),
                       os.path.dirname(Object3D.__file__)]
+    else:
+        special_modules =[os.path.dirname(ctypes.__file__),
+                      os.path.dirname(OpenGL.__file__),
+                      os.path.dirname(Object3D.__file__),
+                      os.path.dirname(matplotlib.__file__)]
     if SCIPY:
         special_modules.append(os.path.dirname(scipy.__file__))
     for f in special_modules:
             include_files.append((f,os.path.basename(f)))
+    if OBJECT3DCTOOLS:
+        excludes.append("Object3DCTools")
+        excludes.append("Object3DQhull")
+        for f in [Object3DCTools.__file__,Object3DQhull.__file__]: 
+            o3ddir = os.path.dirname(Object3D.__file__)
+            include_files.append((f, 
+                            os.path.join(os.path.basename(o3ddir), os.path.basename(f))))
 else:
     excludes = ["Tkinter", "PyMcaPlugins", "scipy"]
+    
+for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
+    excludes.append(f)
+    
 
 #Next line was for the plugins in frozen but now is in shared zip library
 #include_files.append((PyMcaDir, "PyMca"))
@@ -153,6 +185,7 @@ buildOptions = dict(
         compressed = True,
         include_files = include_files,
         excludes = excludes,
+        includes = includes,
         #includes = ["scipy.interpolate", "scipy.linalg"]
         #optimize=2,
         #packages = packages,
@@ -181,6 +214,11 @@ if os.path.exists(install_dir):
     except:
         print "Unexpected error:", sys.exc_info()
         pass
+        
+if os.path.exists('bin'):
+    for f in glob.glob(os.path.join('bin','*')):
+        os.remove(f)
+    os.rmdir('bin')
 installOptions = dict(
     install_dir= install_dir,
 )
@@ -265,3 +303,8 @@ addToZip(zf, PyMcaDir, os.path.basename(PyMcaDir), full=False)
 #    print "WARNING: More .py files than  .pyc files. Check cx_setup.py"
 if PY_COUNTER < PYC_COUNTER:
     print "WARNING: More .pyc files than  .py files. Check cx_setup.py"
+
+if os.path.exists('bin'):
+    for f in glob.glob(os.path.join('bin','*')):
+        os.remove(f)
+    os.rmdir('bin')
