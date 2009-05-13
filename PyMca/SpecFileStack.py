@@ -50,8 +50,9 @@ class SpecFileStack(DataObject.DataObject):
             else:
                 self.loadFileList(filelist)
 
-    def loadFileList(self, filelist, fileindex=0):
-        if type(filelist) == type(''):filelist = [filelist]
+    def loadFileList(self, filelist, fileindex=0, shape=None):
+        if type(filelist) == type(''):
+            filelist = [filelist]
         self.__keyList = []
         self.sourceName = filelist
         self.__indexedStack = True
@@ -82,29 +83,56 @@ class SpecFileStack(DataObject.DataObject):
         self.info.update(dataObject.info)
         arrRet = dataObject.data
         self.onBegin(self.nbFiles*numberofmca/numberofdetectors)
-        
-        self.data = Numeric.zeros((self.nbFiles,
+
+        if shape is None:
+            self.data = Numeric.zeros((self.nbFiles,
                                    numberofmca/numberofdetectors,
                                    arrRet.shape[0]),
                                    arrRet.dtype.char)
+        else:
+            self.data = Numeric.zeros((shape[0],
+                                   shape[1],
+                                   arrRet.shape[0]),
+                                   arrRet.dtype.char)            
         self.incrProgressBar= 0
         if info['NbMcaDet'] > 1:
-            #I should generate a map for each mca and not just for the last one
-            iterlist = range(info['NbMcaDet'],info['NbMca']+1,info['NbMcaDet']) 
+            #Should I generate a map for each mca and not just for the last one as I am doing?
+            iterlist = range(info['NbMcaDet'],info['NbMca']+1,info['NbMcaDet'])
         else:
             iterlist = [1]
-        filecounter         = 0
-        for tempFileName in filelist:
-            tempInstance=specfile.Specfile(tempFileName)
-            scan = tempInstance.select(keylist[-1])
-            for i in iterlist:
-                #mcadata = scan_obj.mca(i)
-                self.data[filecounter,
-                          0,
-                          :] = scan.mca(i)[:]
-                self.incrProgressBar += 1
-                self.onProgress(self.incrProgressBar)
-            filecounter += 1
+        if shape is None:
+            filecounter         = 0
+            for tempFileName in filelist:
+                print tempFileName
+                tempInstance=specfile.Specfile(tempFileName)
+                scan = tempInstance.select(keylist[-1])
+                for i in iterlist:
+                    #mcadata = scan_obj.mca(i)
+                    self.data[filecounter,
+                              0,
+                              :] = scan.mca(i)[:]
+                    self.incrProgressBar += 1
+                    self.onProgress(self.incrProgressBar)
+                filecounter += 1
+        else:
+            filecounter         = 0
+            for j in range(shape[0]):
+                for k in range(shape[1]):
+                    tempFileName = filelist[filecounter]
+                    tempInstance=specfile.Specfile(tempFileName)
+                    if tempInstance is None:
+                        if not os.path.exists(tempFileName):
+                            print "File %s does not exists"  % tempFileName
+                            raise IOError, "File %s does not exists"  % tempFileName
+                    scan = tempInstance.select(keylist[-1])
+                    for i in iterlist:
+                        #sum the present mcas
+                        self.data[j,
+                                  k,
+                                  :] += scan.mca(i)[:]
+                        self.incrProgressBar += 1
+                        self.onProgress(self.incrProgressBar)
+                    filecounter += 1
         self.onEnd()
 
         """

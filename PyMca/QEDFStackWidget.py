@@ -1683,10 +1683,44 @@ class QEDFStackWidget(qt.QWidget):
         message = "Open ONE indexed stack or SEVERAL files"
         return self._getFileList(fileTypeList, message=message, getfilter=getfilter)
 
+    def getFileListFromPattern(self, pattern, begin, end):
+        if type(begin) == type(1):
+            begin = [begin]
+        if type(end) == type(1):
+            end = [end]
+        if len(begin) != len(end):
+            raise ValueError, "Begin list and end list do not have same length"
+        nFiles = 1
+        for i in range(len(begin)):
+            nFiles *= (end[i] - begin[i] + 1)
+        fileList = [None] * nFiles
+        if len(begin) == 1:
+            for i in range(begin, end+1, 1):
+                fileList[i] = pattern % (i)
+        elif len(begin) == 2:
+            i = 0
+            for j in range(begin[0], end[0]+1, 1):
+                for k in range(begin[1], end[1]+1, 1):
+                    fileList[i] = pattern % (j, k)
+                    i += 1
+        elif len(begin) == 3:
+            raise ValueError, "Cannot handle three indices yet."
+            i = 0
+            for j in range(begin[0], end[0]+1, 1):
+                for k in range(begin[1], end[1]+1, 1):
+                    for l in range(begin[2], end[2]+1, 1):
+                        fileList[i] = pattern % (j, k, l)
+                        i += 1
+        else:
+            raise ValueError, "Cannot handle more than three indices."
+        return fileList
+
 if __name__ == "__main__":
     import getopt
     options = ''
-    longoptions = ["fileindex=","begin=", "end=", "nativefiledialogs=", "imagestack="]
+    longoptions = ["fileindex=",
+                   "filepattern=", "begin=", "end=",
+                   "nativefiledialogs=", "imagestack="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1698,14 +1732,24 @@ if __name__ == "__main__":
     #import time
     #t0= time.time()
     fileindex = 0   #it is faster with fileindex=0
+    filepattern=None
     begin = None
     end = None
     imagestack=False
     for opt, arg in opts:
         if opt in '--begin':
-            begin = int(arg)
+            if "," in arg:
+                begin = map(int,arg.split(","))
+            else:
+                begin = int(arg)
         elif opt in '--end':
-            end = int(arg)
+            if "," in arg:
+                end = map(int,arg.split(","))
+            else:
+                end = int(arg)
+        elif opt in '--filepattern':
+            filepattern = arg.replace('"','')
+            filepattern = filepattern.replace("'","")
         elif opt in '--fileindex':
             fileindex = int(arg)
         elif opt in '--imagestack':
@@ -1715,8 +1759,18 @@ if __name__ == "__main__":
                 PyMcaDirs.nativeFileDialogs=True
             else:
                 PyMcaDirs.nativeFileDialogs=False                
+    if filepattern is not None:
+        if (begin is None) or (end is None):
+            raise ValueError, "A file pattern needs a set of begin and end indices"
     app = qt.QApplication([])
     w = QEDFStackWidget(master=True)
+    if filepattern is not None:
+        #get the first filename
+        filename =  filepattern % tuple(begin)
+        if not os.path.exists(filename):
+            raise IOError, "Filename %d does not exist." % filename
+        #ignore the args even if present
+        args = w.getFileListFromPattern(filepattern, begin, end)
     aifirafile = False
     if len(args):
         f = open(args[0])
@@ -1730,6 +1784,9 @@ if __name__ == "__main__":
             if imagestack:
                 #prevent any modification
                 fileindex = 0
+            if filepattern is not None:
+                if len(begin) != 1:
+                    raise IOError, "EDF stack redimensioning not supported yet"
             stack = QStack(imagestack=imagestack)
         elif line.startswith('Spectral'):
             stack = OmnicMap.OmnicMap(args[0])
@@ -1747,10 +1804,18 @@ if __name__ == "__main__":
             stack = QSpecFileStack()
         f.close()
     if len(args) > 1:
-        stack.loadFileList(args, fileindex=fileindex)
-        PyMcaDirs.inputDir = os.path.dirname(args[0])
+        shape = None
+        if filepattern is not None:
+            if len(begin) == 2:
+                shape = (end[0]-begin[0]+1, end[1]-begin[1]+1)
+            stack.loadFileList(args, fileindex=fileindex, shape=shape)
+        else:
+            stack.loadFileList(args, fileindex=fileindex)
+        if os.path.basename(args[0]) == args[0]:
+            filename = os.path.join(os.getcwd(), args[0])
+        PyMcaDirs.inputDir = os.path.dirname(filename)
         if PyMcaDirs.outputDir is None:
-            PyMcaDirs.outputDir = os.path.dirname(args[0])
+            PyMcaDirs.outputDir = os.path.dirname(filename)
     elif len(args) == 1:
         if not omnicfile:
             stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
@@ -1809,6 +1874,7 @@ if __name__ == "__main__":
                 print "Usage: "
                 print "python QEDFStackWidget.py SET_OF_EDF_FILES"
                 print "python QEDFStackWidget.py -begin=0 --end=XX INDEXED_EDF_FILE"
+                print "python QEDFStackWidget.py -begin=0,0 --end=x,y --filepattern='mca_%03d%03d.fio'"
                 sys.exit(1)
         elif os.path.exists(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
