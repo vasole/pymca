@@ -49,7 +49,8 @@ class OmnicMap(DataObject.DataObject):
             spectrumIndex, nSpectra, xPosition, yPosition = exp.findall(s)[0:4]
             xPosition = float(xPosition)
             yPosition = float(yPosition)
-            if yPosition != oldYPosition:
+            if (abs(yPosition-oldYPosition)>1.0e-6) and\
+               (abs(xPosition-oldXPosition)<1.0e-6):
                 break
             self.nRows = self.nRows + 1
         if DEBUG:
