@@ -144,18 +144,21 @@ SCIPY = False
 sys.path = [PyMcaDir] + sys.path
 import PyMcaMain
 import PyMcaPlugins
-import matplotlib
+try:
+    import matplotlib
+    MATPLOTLIB = True
+except ImportError:
+    MATPLOTLIB = False
 includes = []
 if OBJECT3D:
     includes.append("logging")
     excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins", "scipy"] 
-    if 0:
-        #This requieres the use of the environmental variable MATPLOTLIBDATA
-        #pointing to mpl-data directory
-        special_modules =[os.path.dirname(ctypes.__file__),
-                      os.path.dirname(OpenGL.__file__),
-                      os.path.dirname(Object3D.__file__)]
-    else:
+    #This requieres the use of the environmental variable MATPLOTLIBDATA
+    #pointing to mpl-data directory to work
+    special_modules =[os.path.dirname(ctypes.__file__),
+                  os.path.dirname(OpenGL.__file__),
+                  os.path.dirname(Object3D.__file__)]
+    if MATPLOTLIB:
         special_modules =[os.path.dirname(ctypes.__file__),
                       os.path.dirname(OpenGL.__file__),
                       os.path.dirname(Object3D.__file__),

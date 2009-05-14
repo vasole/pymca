@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.49 $"
+__revision__ = "$Revision: 1.50$"
 ###########################################################################
 # Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
@@ -819,7 +819,9 @@ class McaBatchGUI(qt.QWidget):
                 dirname = os.path.dirname(__file__)
             except:
                 dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
-            if dirname[-3:] == "exe":
+
+            if (dirname[-3:] == "exe") or\
+               (dirname.lower().endswith("library.zip")):
                 frozen = True
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch.exe")
