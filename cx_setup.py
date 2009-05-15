@@ -152,7 +152,8 @@ except ImportError:
 includes = []
 if OBJECT3D:
     includes.append("logging")
-    excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins", "scipy"] 
+    excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins",
+                "scipy", "Numeric", "numarray"] 
     #This requieres the use of the environmental variable MATPLOTLIBDATA
     #pointing to mpl-data directory to work
     special_modules =[os.path.dirname(ctypes.__file__),
@@ -175,7 +176,7 @@ if OBJECT3D:
             include_files.append((f, 
                             os.path.join(os.path.basename(o3ddir), os.path.basename(f))))
 else:
-    excludes = ["Tkinter", "PyMcaPlugins", "scipy"]
+    excludes = ["Tkinter", "PyMcaPlugins", "scipy", "Numeric","numarray"]
     
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
@@ -196,8 +197,8 @@ buildOptions = dict(
         #path = [PyMcaDir] + sys.path
         )
 install_dir = PyMcaDir + " " + PyMcaMain.__version__
-if sys.platform != "win32":
-    install_dir = install_dir.replace(" ","_")
+if not sys.platform.startswith('win'):
+    install_dir = install_dir.replace(" ","")
 if os.path.exists(install_dir):
     try:
         def dir_cleaner(directory):
@@ -226,16 +227,25 @@ installOptions = dict(
     install_dir= install_dir,
 )
 
-executables = [
-        Executable(os.path.join(PyMcaDir, "PyMcaMain.py")),
-        Executable(os.path.join(PyMcaDir, "PyMcaBatch.py")),
-        Executable(os.path.join(PyMcaDir, "QEDFStackWidget.py")),
-        Executable(os.path.join(PyMcaDir, "PeakIdentifier.py")),
-        Executable(os.path.join(PyMcaDir, "EdfFileSimpleViewer.py")),
-        Executable(os.path.join(PyMcaDir, "PyMcaPostBatch.py")),
-        Executable(os.path.join(PyMcaDir, "Mca2Edf.py")),
-        Executable(os.path.join(PyMcaDir, "ElementsInfo.py")),
-]
+exec_list = ["PyMcaMain",
+             "PyMcaBatch",
+             "QEDFStackWidget",
+             "PeakIdentifier",
+             "EdfFileSimpleViewer",
+             "PyMcaPostBatch",
+             "Mca2Edf",
+             "ElementsInfo"]
+
+for f in exec_list:
+    executable = os.path.join(install_dir, f)
+    if os.path.exists(executable):
+        os.remove(executable)
+
+         
+executables = []
+for python_module in exec_list:
+    executables.append(Executable(os.path.join(PyMcaDir, python_module+".py")))
+
 
 setup(
         name = "PyMca",
@@ -246,10 +256,76 @@ setup(
                        ),
         executables = executables)
 
+if not sys.platform.startswith('win'):
+    #rename the executables to .exe for easier handling by the start scripts
+    for f in exec_list:
+        executable = os.path.join(install_dir, f)
+        if os.path.exists(executable):
+            os.rename(executable, executable+".exe")
+        #create the start script
+        text  = "#!/bin/bash\n"
+        text += 'if test -e "./%s.exe"; then\n' % f
+        text += '    export LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH}\n'
+        text += '    exec ./%s.exe $*\n' % f
+        text += 'else\n'
+        text += '    if test -z "${PYMCAHOME}" ; then\n'
+        text += '        thisdir=`dirname $0` \n'
+        text += '        export PYMCAHOME=${thisdir}\n'
+        text += '    fi\n'
+        text += '    export LD_LIBRARY_PATH=${PYMCAHOME}:${LD_LIBRARY_PATH}\n'
+        text += '    exec ${PYMCAHOME}/%s.exe $*\n' % f
+        text += 'fi\n'
+        nfile = open(executable,'w')
+        nfile.write(text)
+        nfile.close()
+        os.system("chmod 775 %s"  % executable)
+        #generate the lowercase commands
+        if f == "PyMcaMain":
+            os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'pymca')))
+        elif f == "QEDFStackWidget":
+            os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'pymcaroitool')))
+        elif f == "EdfFileSimpleViewer":
+            os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'edfviewer')))
+        else:
+            os.system("cp -f %s %s" % (executable,
+                                       os.path.join(install_dir, f.lower())))
+            if f == "PyMcaPostBatch":
+                os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'rgbcorrelator')))
+            
+
 #cleanup
 for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca", "*.pyc")):
     os.remove(f)
 
+if not sys.platform.startswith('win'):
+    #Unix binary ...
+    readline = 'libreadline.so.4'
+    for dirname in ['/lib','/usr/lib']:
+        fname = os.path.join(dirname, readline)
+        if os.path.exists(fname):
+            cmd =  "cp -f %s %s" % (fname, os.path.join(install_dir, readline))
+            os.system(cmd)
+            if dirname == '/lib':
+                #readline is from suse82 systems at ESRF
+                #and at a certain point I had to add these two libraries
+                fname = '/usr/lib/libg2c.so.0'
+                cmd = "cp -f %s %s" % (fname,
+                                       os.path.join(install_dir, 'libg2c.so.0'))
+                os.system(cmd)
+                fname = '/usr/lib/libpng.so.3'
+                cmd = "cp -f %s %s" % (fname,
+                                       os.path.join(install_dir, 'libpng.so.3'))
+                os.system(cmd)
+
+    #remove libX of the packaging system to use that of the target system
+    for fname in glob.glob(os.path.join(install_dir,"libX*")):
+        os.remove(fname)
+
+    #remove libfontconfig.so of the package in order to use the one in the target system
+    for fname in glob.glob(os.path.join(install_dir,"libfontconf*")):
+        os.remove(fname)
+
+    #end linux binary
 library = os.path.join(install_dir,"library.zip")
 if not os.path.exists(library):
     print "PROBLEM"
