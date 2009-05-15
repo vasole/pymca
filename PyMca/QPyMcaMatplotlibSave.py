@@ -34,7 +34,7 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import PyMcaMatplotlibSave
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
@@ -295,6 +295,7 @@ class RightWidget(qt.QWidget):
 			  'Origin',
 			  'Interpolation',
                           'Colormap',
+                          'Lin/Log Colormap',
 			  'Colorbar',
 			  'Contour',
 			  'Contour Labels',
@@ -313,7 +314,7 @@ class RightWidget(qt.QWidget):
                           'Value Max']
 	self.keyList = []
 	for label in self.labelList:
-	    self.keyList.append(label.lower().replace(' ',''))
+	    self.keyList.append(label.lower().replace(' ','').replace('/',""))
 	self.comboBoxList = []
 	for i in range(len(self.labelList)):
 	    label = qt.QLabel(self)
@@ -326,6 +327,8 @@ class RightWidget(qt.QWidget):
                            'Rainbow', 'Jet','Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
                     options.append('Spectral')
+	    elif self.labelList[i] in ['Lin/Log Colormap']:
+		options = ['Linear','Logarithmic']
 	    elif self.labelList[i] in ['Colorbar']:
 		options = ['None', 'Vertical', 'Horizontal']
 	    elif self.labelList[i] in ['Origin']:
@@ -378,7 +381,7 @@ class RightWidget(qt.QWidget):
 
     def setPixmapMode(self, flag):
         if flag:
-            disable = ['Colormap','Contour', 'Contour Labels',
+            disable = ['Colormap', 'Lin/Log Colormap', 'Contour', 'Contour Labels',
                        'Contour Label Format',
                        'Contour Levels', 'Colorbar', 'Value Min','Value Max']
         else:
@@ -437,6 +440,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      title='',
                      interpolation='nearest',
 		     colormap=None,
+                     linlogcolormap='linear',
                      origin='lower',
 		     contour='off',
                      contourlabels='on',
@@ -469,6 +473,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 		     'ylabel':ylabel,
 		     'colorbar':colorbar,
 		     'colormap':colormap,
+		     'linlogcolormap':linlogcolormap,
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
@@ -619,15 +624,32 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         vlimits = self.__getValueLimits()
         if vlimits is None:
             imageData = self.imageData
+            vmin = self.imageData.min()
+            vmax = self.imageData.max()
         else:
             vmin = min(vlimits[0], vlimits[1])
             vmax = max(vlimits[0], vlimits[1])
             imageData = self.imageData.clip(vmin,vmax)
-        self._image  = self.axes.imshow(imageData,
+        if self.config['linlogcolormap'] != 'linear':
+            if vmin <= 0:
+                if vmax > 0:                   
+                    vmin = min(imageData[imageData>0])
+                else:
+                    vmin = 0.0
+                    vmax = 1.0                
+            self._image  = self.axes.imshow(imageData.clip(vmin,vmax),
                                         interpolation=interpolation,
                                         origin=origin,
                                         cmap=cmap,
-                                        extent=extent)
+                                        extent=extent,
+                                        norm=LogNorm(vmin, vmax))
+        else:
+            self._image  = self.axes.imshow(imageData,
+                                        interpolation=interpolation,
+                                        origin=origin,
+                                        cmap=cmap,
+                                        extent=extent,
+                                        norm=Normalize(vmin, vmax))
         
         ylim = self.axes.get_ylim()
         

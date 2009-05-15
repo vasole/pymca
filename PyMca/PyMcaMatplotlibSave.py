@@ -32,7 +32,7 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 
 DEBUG = 0
 
@@ -241,6 +241,7 @@ class PyMcaMatplotlibSaveImage:
                      title='',
                      interpolation='nearest',
 		     colormap=None,
+                     linlogcolormap='linear',                 
                      origin='lower',
 		     contour='off',
 		     contourlabels='on',
@@ -266,6 +267,7 @@ class PyMcaMatplotlibSaveImage:
 		     'ylabel':ylabel,
 		     'colorbar':colorbar,
 		     'colormap':colormap,
+                     'linlogcolormap':linlogcolormap,                     
 		     'interpolation':interpolation,
 		     'origin':origin,
 		     'contour':contour,
@@ -421,15 +423,33 @@ class PyMcaMatplotlibSaveImage:
         vlimits = self.__getValueLimits()
         if vlimits is None:
             imageData = self.imageData
+            vmin = self.imageData.min()
+            vmax = self.imageData.max()
         else:
             vmin = min(vlimits[0], vlimits[1])
             vmax = max(vlimits[0], vlimits[1])
             imageData = self.imageData.clip(vmin,vmax)
-        self._image  = self.axes.imshow(imageData,
+
+        if self.config['linlogcolormap'] != 'linear':
+            if vmin <= 0:
+                if vmax > 0:                   
+                    vmin = min(imageData[imageData>0])
+                else:
+                    vmin = 0.0
+                    vmax = 1.0                
+            self._image  = self.axes.imshow(imageData.clip(vmin,vmax),
                                         interpolation=interpolation,
                                         origin=origin,
-					cmap=cmap,
-                                        extent=extent)
+                                        cmap=cmap,
+                                        extent=extent,
+                                        norm=LogNorm(vmin, vmax))
+        else:
+            self._image  = self.axes.imshow(imageData,
+                                        interpolation=interpolation,
+                                        origin=origin,
+                                        cmap=cmap,
+                                        extent=extent,
+                                        norm=Normalize(vmin, vmax))
         
         ylim = self.axes.get_ylim()
 
