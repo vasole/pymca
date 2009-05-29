@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1-20090515-snapshot"
+__version__ = "4.3.1-20090529-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -420,6 +420,18 @@ class PyMca(PyMcaMdi.PyMca):
         return False
 
     def dispatcherAddSelectionSlot(self, ddict):
+        try:
+            return self._dispatcherAddSelectionSlot(ddict)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error: %s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+
+    def _dispatcherAddSelectionSlot(self, ddict):
         if DEBUG:
             print "self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict
 
@@ -484,6 +496,19 @@ class PyMca(PyMcaMdi.PyMca):
                 self.scanwindow._addSelection(ddict)
 
     def dispatcherRemoveSelectionSlot(self, ddict):
+        try:
+            return self._dispatcherRemoveSelectionSlot(ddict)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error: %s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+
+
+    def _dispatcherRemoveSelectionSlot(self, ddict):
         if DEBUG:
             print "self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict
 
@@ -502,6 +527,18 @@ class PyMca(PyMcaMdi.PyMca):
             self.scanwindow._removeSelection(ddict)
 
     def dispatcherReplaceSelectionSlot(self, ddict):
+        try:
+            return self._dispatcherReplaceSelectionSlot(ddict)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error: %s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+
+    def _dispatcherReplaceSelectionSlot(self, ddict):
         if DEBUG:
             print "self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict
         if self._is2DSelection(ddict):

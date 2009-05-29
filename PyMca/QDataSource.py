@@ -65,6 +65,18 @@ else:
                        EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget,
                        QSpsDataSource.SOURCE_TYPE: QSpsWidget.QSpsWidget}
 
+NEXUS = True
+try:
+    import NexusDataSource
+    import QNexusWidget
+except ImportError:
+    NEXUS = False
+
+
+if NEXUS:
+    source_types[NexusDataSource.SOURCE_TYPE] = NexusDataSource.NexusDataSource
+    source_widgets[NexusDataSource.SOURCE_TYPE] = QNexusWidget.QNexusWidget
+
 def getSourceType(sourceName0):
     if type(sourceName0) == type([]):
         sourceName = sourceName0[0]
@@ -80,6 +92,8 @@ def getSourceType(sourceName0):
             line = f.readline()
         if line[0] == "{":
             return EdfFileDataSource.SOURCE_TYPE
+        elif os.path.basename(sourceName).split(".")[-1].upper() in ["H5", "HDF", "NXS"]:
+            return NexusDataSource.SOURCE_TYPE
         else:
             return SpecFileDataSource.SOURCE_TYPE
     else:

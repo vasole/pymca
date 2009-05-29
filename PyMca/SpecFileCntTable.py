@@ -313,6 +313,7 @@ else:
         def __init__(self, parent=None):
             qt.QTableWidget.__init__(self, parent)
             self.cntList      = []
+            self.mcaList      = []
             self.xSelection   = []
             self.ySelection   = []
             self.monSelection = []
