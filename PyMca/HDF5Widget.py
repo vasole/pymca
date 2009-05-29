@@ -7,20 +7,21 @@ import os
 import shutil
 
 try:
-    import PyMcaQt as qt
-except ImportError:
     import PyMca.PyMcaQt as qt
+except ImportError:
+    import PyMcaQt as qt
 
 if qt.qVersion() < '4.0.0':
     raise ImportError, "PyQt4 not found"
 
 try:
-    from xpaxs.io import phynx
-except ImportError:
+    import PyMca.phynx as phynx
+except:
+    #I should never reach here
     try:
-        import phynx
+        from xpaxs.io import phynx
     except ImportError:
-        import PyMca.phynx as phynx
+        import phynx
 
 import weakref
 

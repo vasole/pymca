@@ -41,7 +41,20 @@ class QDispatcher(qt.QWidget):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         self.sourceList = []
-        self.sourceSelector = QSourceSelector.QSourceSelector(self)
+        fileTypeList = ["Spec Files (*mca)",
+                        "Spec Files (*dat)",
+                        "Spec Files (*spec)",
+                        "SPE Files (*SPE)",
+                        "EDF Files (*edf)",
+                        "EDF Files (*ccd)",
+                        "CSV Files (*csv)"]
+        if QDataSource.NEXUS:
+            fileTypeList.append("HDF5 Files (*nxs)")
+            fileTypeList.append("HDF5 Files (*h5)")
+            fileTypeList.append("HDF5 Files (*hdf)")
+        fileTypeList.append("All Files (*)")
+        
+        self.sourceSelector = QSourceSelector.QSourceSelector(self, filetypelist=fileTypeList)
         self.selectorWidget = {}
         self.tabWidget = qt.QTabWidget(self)
         

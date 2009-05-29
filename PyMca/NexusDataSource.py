@@ -28,13 +28,15 @@ __revision__ = "$Revision: 1.1 $"
 import DataObject
 import os
 import types
+
 try:
-    from xpaxs.io import phynx
-except ImportError:
+    import PyMca.phynx as phynx
+except:
+    #I should never reach here
     try:
-        import phynx
+        from xpaxs.io import phynx
     except ImportError:
-        import PyMca.phynx as phynx
+        import phynx
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
