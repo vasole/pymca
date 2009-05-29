@@ -66,11 +66,16 @@ data_files = [('PyMca', ['LICENSE.GPL',
                          'PyMca/MShellRates.dat','PyMca/MShellConstants.dat']),
               ('PyMca/attdata', glob.glob('PyMca/attdata/*')),
               ('PyMca/PyMcaPlugins', glob.glob('PyMca/PyMcaPlugins/*')),
-              ('PyMca/phynx', glob.glob('PyMca/phynx/*.py')),
-              ('PyMca/phynx/utils', glob.glob('PyMca/phynx/utils/*.py')),
               ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
               ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
+
+LOCAL_PHYNX =False
+if os.path.exists(os.path.join("PyMca", "phynx")):
+    LOCAL_PHYNX = True
+    data_files.append(('PyMca/phynx', glob.glob('PyMca/phynx/*.py')))
+    data_files.append(('PyMca/phynx/utils', glob.glob('PyMca/phynx/utils/*.py')))
+
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
