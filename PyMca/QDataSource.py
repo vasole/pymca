@@ -69,6 +69,7 @@ NEXUS = True
 try:
     import NexusDataSource
     import QNexusWidget
+    import h5py
 except ImportError:
     NEXUS = False
 
@@ -90,11 +91,18 @@ def getSourceType(sourceName0):
         line = f.readline()
         if not len(line.replace("\n","")):
             line = f.readline()
+        f.close()
         if line[0] == "{":
             return EdfFileDataSource.SOURCE_TYPE
-        elif os.path.basename(sourceName).split(".")[-1].upper() in ["H5", "HDF", "NXS"]:
-            return NexusDataSource.SOURCE_TYPE
         else:
+            if NEXUS:
+                try:
+                    f = h5py.File(sourceName, 'r')
+                    f.close()
+                    f = None
+                    return NexusDataSource.SOURCE_TYPE
+                except:
+                    pass                
             return SpecFileDataSource.SOURCE_TYPE
     else:
         return QSpsDataSource.SOURCE_TYPE

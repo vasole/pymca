@@ -31,7 +31,10 @@ import types
 try:
     from xpaxs.io import phynx
 except ImportError:
-    import phynx
+    try:
+        import phynx
+    except ImportError:
+        import PyMca.phynx as phynx
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
@@ -157,7 +160,7 @@ class NexusDataSource:
 
     def isUpdated(self, sourceName, key):
         #sourceName is redundant?
-        index,image = key.split(".")
+        index, entry = key.split(".")
         index = int(index)-1
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
         if lastmodified != self.__lastKeyInfo[key]:

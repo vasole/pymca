@@ -17,7 +17,10 @@ if qt.qVersion() < '4.0.0':
 try:
     from xpaxs.io import phynx
 except ImportError:
-    import phynx
+    try:
+        import phynx
+    except ImportError:
+        import PyMca.phynx as phynx
 
 import weakref
 
