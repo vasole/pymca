@@ -49,9 +49,7 @@ class QDispatcher(qt.QWidget):
                         "EDF Files (*ccd)",
                         "CSV Files (*csv)"]
         if QDataSource.NEXUS:
-            fileTypeList.append("HDF5 Files (*nxs)")
-            fileTypeList.append("HDF5 Files (*h5)")
-            fileTypeList.append("HDF5 Files (*hdf)")
+            fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5)")
         fileTypeList.append("All Files (*)")
         
         self.sourceSelector = QSourceSelector.QSourceSelector(self, filetypelist=fileTypeList)
