@@ -102,14 +102,16 @@ class QNexusWidget(qt.QWidget):
     def hdf5Slot(self, ddict):
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
+                fileIndex = self.data.sourceName.index(ddict['file'])
+                phynxFile  = self.data._sourceObjectList[fileIndex]
+                self.getInfo(phynxFile, ddict['path'])
                 if ddict['type'] == 'Dataset':
                     if ddict['dtype'].startswith('|S'):
                         #print "string"
                         pass
                     else:
                         #print "dataset"
-                        pass
-                
+                        pass                
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'] == 'Dataset':
                 if ddict['dtype'].startswith('|S'):
@@ -178,8 +180,29 @@ class QNexusWidget(qt.QWidget):
 
     def getEntryList(self):
         return self.hdf5Widget.getSelectedEntries()
-                
 
+
+    def getInfo(self, hdf5File, path):
+        data = hdf5File[path]
+        ddict = {}
+        ddict['general'] = {}
+        ddict['attributes'] = {}
+        ddict['general']['Name'] = data.name
+        ddict['general']['Path'] = data.path
+        ddict['general']['Type'] = str(data.path)
+        if hasattr(data, "listnames"):
+            ddict['general']['members'] = data.listnames()
+        else:
+            ddict['general']['members'] = []
+        for member in ddict['general']['members']:
+            ddict['general'][member] = {}
+            ddict['general'][member]['Name'] = str(member)
+            ddict['general'][member]['Type'] = str(hdf5File[path+"/"+member])
+        for att in data.attrs:
+            ddict['attributes'][att] = data.attrs[att]
+        return ddict
+        
+    
 if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
