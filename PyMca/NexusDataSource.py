@@ -58,7 +58,9 @@ class NexusDataSource:
     def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
-            self._sourceObjectList.append(phynx.File(name, 'r', lock=None))
+            phynxInstance = phynx.File(name, 'r', lock=None)
+            phynxInstance._sourceName = name
+            self._sourceObjectList.append(phynxInstance)
         self.__lastKeyInfo = {}
 
     def getSourceInfo(self):

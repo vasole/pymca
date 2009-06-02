@@ -150,7 +150,10 @@ class H5NodeProxy(object):
     def __init__(self, ffile, node, parent=None):
         with ffile.plock:
             self._file = ffile
-            self._name = node.name
+            if hasattr(node, "_sourceName"):
+                self._name = node._sourceName
+            else:
+                self._name = node.name
             self._parent = parent
             self._path = node.path
             self._type = type(node).__name__
@@ -330,7 +333,10 @@ class FileModel(qt.QAbstractItemModel):
         I create a weak reference to a phynx file instance, get informed when
         the instance disappears, and delete the entry from the view
         """
-        name = phynxFile.name
+        if hasattr(phynxFile, "_sourceName"):
+            name = phynxFile._sourceName
+        else:
+            name = phynxFile.name
         present = False
         for child in self.rootItem:
             if child.name == name:
