@@ -1,7 +1,6 @@
 """
 """
 from __future__ import with_statement
-
 import operator
 import os
 import shutil
@@ -262,12 +261,16 @@ class FileModel(qt.QAbstractItemModel):
             return self.getProxyFromIndex(index).getNode()
         except AttributeError:
             return None
-
+        
     def getProxyFromIndex(self, index):
         try:
-            return self._idMap[index.internalId()]
+            return self._idMap[index.internalId()]        
         except KeyError:
-            return self.rootItem
+            try:
+                #Linux 32-bit problem
+                return self._idMap[index.internalId() & 0xFFFFFFFF]
+            except KeyError:
+                return self.rootItem
 
     def hasChildren(self, index):
         return self.getProxyFromIndex(index).hasChildren
@@ -290,7 +293,8 @@ class FileModel(qt.QAbstractItemModel):
         if row >= len(parentItem.children):
             return qt.QModelIndex()
         child = parentItem.children[row]
-        index = self.createIndex(row, column, id(child))
+        #force a pointer to child and not use id(child)
+        index = self.createIndex(row, column, child)
         self._idMap.setdefault(index.internalId(), child)
         return index
 
@@ -304,12 +308,13 @@ class FileModel(qt.QAbstractItemModel):
         if parent.row is None:
             return qt.QModelIndex()
         else:
-            return self.createIndex(parent.row, 0, id(parent))
+            return self.createIndex(parent.row, 0, parent)
 
     def rowCount(self, index):
         return len(self.getProxyFromIndex(index))
 
     def openFile(self, filename, weakreference=False):
+        gc.collect()
         for item in self.rootItem:
             if item.name == filename:
                 ddict = {}
@@ -320,22 +325,16 @@ class FileModel(qt.QAbstractItemModel):
         #phynxFile = phynx.File(filename, 'a', lock=QRLock())
         phynxFile = phynx.File(filename, 'r', lock=QRLock())
         if weakreference:
-            reference = id(phynxFile)
-            proxyReference = id(reference)
-            def phynxFileDistroyed(ref, name=filename, phynxFileReference=reference, proxyReference=proxyReference):
-                i = 0
-                for child in self.rootItem:
-                    if child.name == name:
-                        child.clearChildren()
-                        for key in self._idMap.keys():
-                            if key == id(child):
-                                del self._idMap[key]
-                        del self.rootItem._children[i]
-                        if not self.rootItem.hasChildren:
-                            self.clear()
-                        break
-                    i += 1
-            refProxy = weakref.proxy(phynxFile, phynxFileDistroyed)
+            def phynxFileInstanceDistroyed(weakrefObject):
+                idx = self.rootItem._identifiers.index(id(weakrefObject))
+                child = self.rootItem._children[idx]
+                child.clearChildren()
+                del self._idMap[id(child)]
+                self.rootItem.deleteChild(child)
+                if not self.rootItem.hasChildren:
+                    self.clear()
+                return
+            refProxy = weakref.proxy(phynxFile, phynxFileInstanceDistroyed)
             self.rootItem.appendChild(refProxy)
         else:
             self.rootItem.appendChild(phynxFile)
@@ -542,7 +541,7 @@ if __name__ == "__main__":
     def mySlot(ddict):
         print ddict
         if ddict['type'].lower() in ['dataset']:
-            print phynxFile[ddict['path']].dtype, phynxFile[ddict['path']].shape
+            print phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape
     qt.QObject.connect(fileView, qt.SIGNAL("HDF5WidgetSignal"), mySlot)
     fileView.show()
     sys.exit(app.exec_())
