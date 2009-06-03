@@ -5,6 +5,8 @@ from __future__ import with_statement
 import operator
 import os
 import shutil
+import posixpath
+import gc
 
 try:
     import PyMca.PyMcaQt as qt
@@ -65,6 +67,7 @@ class RootItem(object):
     def __init__(self, header):
         self._header = header
         self._children = []
+        self._identifiers = []
 
     def __iter__(self):
         def iter_files(files):
@@ -77,6 +80,12 @@ class RootItem(object):
 
     def appendChild(self, item):
         self.children.append(H5FileProxy(item, self))
+        self._identifiers.append(id(item))
+
+    def deleteChild(self, child):
+        idx = self._children.index(child)
+        del self._children[idx]
+        del self._identifiers[idx]
 
 
 class H5NodeProxy(object):
@@ -92,7 +101,7 @@ class H5NodeProxy(object):
                 self._children = [
                     H5NodeProxy(self.file, i, self)
                     for i in sorted(
-                        self.getNode(self.path).listobjects(),
+                        self.getNode(self.name).listobjects(),
                         key=operator.attrgetter('name')
                     )
                 ]
@@ -109,14 +118,6 @@ class H5NodeProxy(object):
     @property
     def name(self):
         return self._name
-
-    @property
-    def parent(self):
-        return self._parent
-
-    @property
-    def path(self):
-        return self._path
 
     @property
     def row(self):
@@ -147,15 +148,22 @@ class H5NodeProxy(object):
     def dtype(self):
         return self._dtype
 
+    @property
+    def parent(self):
+        return self._parent
+
+
     def __init__(self, ffile, node, parent=None):
         with ffile.plock:
             self._file = ffile
+            self._parent = parent
+            self._name = node.name
+            """
             if hasattr(node, "_sourceName"):
                 self._name = node._sourceName
             else:
-                self._name = node.name
-            self._parent = parent
-            self._path = node.path
+                self._name = posixpath.basename(node.name)
+            """
             self._type = type(node).__name__
             self._hasChildren = isinstance(node, phynx.Group)
             self._children = []
@@ -175,10 +183,10 @@ class H5NodeProxy(object):
         self._children = []
         self._hasChildren = False
 
-    def getNode(self, path=None):
-        if not path:
-            path = self.path
-        return self.file[path]
+    def getNode(self, name=None):
+        if not name:
+            name = self.name
+        return self.file[name]
 
     def __len__(self):
         return len(self.children)
@@ -187,11 +195,17 @@ class H5NodeProxy(object):
 class H5FileProxy(H5NodeProxy):
 
     @property
-    def path(self):
+    def name(self):
         return '/'
+
+    @property
+    def filename(self):
+        return self._filename
 
     def __init__(self, ffile, parent=None):
         super(H5FileProxy, self).__init__(ffile, ffile, parent)
+        self._name = ffile.name
+        self._filename = self.file.name
 
     def close(self):
         with self.file.plock:
@@ -231,7 +245,10 @@ class FileModel(qt.QAbstractItemModel):
         item = self.getProxyFromIndex(index)
         column = index.column()
         if column == 0:
-            return qt.QVariant(item.name)
+            if isinstance(item, H5FileProxy):
+                return qt.QVariant(item.filename)
+            else:
+                return qt.QVariant(posixpath.basename(item.name))
         if column == 1:
             return qt.QVariant(item.type)
         if column == 2:
@@ -337,12 +354,14 @@ class FileModel(qt.QAbstractItemModel):
             name = phynxFile._sourceName
         else:
             name = phynxFile.name
+        gc.collect()
         present = False
         for child in self.rootItem:
-            if child.name == name:
+            if child.filename == name:
                 #already present
                 present = True
                 break
+
         if present:
             ddict = {}
             ddict['event'] = "fileUpdated"
@@ -351,22 +370,14 @@ class FileModel(qt.QAbstractItemModel):
             return
             
         if weakreference:
-            reference = id(phynxFile)
-            proxyReference = id(reference)
-            def phynxFileInstanceDistroyed(ref, name=name, phynxFileReference=reference, proxyReference=proxyReference):
-                i = 0
-                for child in self.rootItem:
-                    if child.name == name:
-                        child.clearChildren()
-                        for key in self._idMap.keys():
-                            if key == id(child):
-                                del self._idMap[key]
-                        del self.rootItem._children[i]
-                        if not self.rootItem.hasChildren:
-                            self.clear()
-                        break
-                    i += 1
-                # Should I generate a reference distroyed signal?
+            def phynxFileInstanceDistroyed(weakrefObject):
+                idx = self.rootItem._identifiers.index(id(weakrefObject))
+                child = self.rootItem._children[idx]
+                child.clearChildren()
+                del self._idMap[id(child)]
+                self.rootItem.deleteChild(child)
+                if not self.rootItem.hasChildren:
+                    self.clear()
                 return
             phynxFileProxy = weakref.proxy(phynxFile, phynxFileInstanceDistroyed)
             self.rootItem.appendChild(phynxFileProxy)
@@ -491,10 +502,10 @@ class HDF5Widget(FileView):
         if self.model() is None:
             return
         ddict = {}
-        item  = self.model().getProxyFromIndex(modelIndex)
+        item  = self.model().getProxyFromIndex(modelIndex)        
         ddict['event'] = event
         ddict['file']  = item.file.name
-        ddict['path']  = item.path
+        ####ddict['path']  = item.path
         ddict['name']  = item.name
         ddict['type']  = item.type
         ddict['dtype'] = item.dtype
@@ -505,14 +516,14 @@ class HDF5Widget(FileView):
     def getSelectedEntries(self):
         modelIndexList = self.selectedIndexes()
         entryList = []
-        analysedPaths = []
+        analyzedPaths = []
         for modelIndex in modelIndexList:
             item = self.model().getProxyFromIndex(modelIndex)
-            path = item.path * 1
-            if path in analysedPaths:
+            path = item.name * 1
+            if path in analyzedPaths:
                 continue
             else:
-                analysedPaths.append(path)
+                analyzedPaths.append(path)
             if item.type in ["weakproxy", "File"]:
                 continue
             entry = "/" + path.split("/")[1]

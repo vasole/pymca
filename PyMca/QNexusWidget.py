@@ -28,6 +28,8 @@ import os
 import HDF5Widget
 qt = HDF5Widget.qt
 import SpecFileCntTable
+import posixpath
+import weakref
 
 class Buttons(qt.QWidget):
     def __init__(self, parent=None):
@@ -67,6 +69,8 @@ class QNexusWidget(qt.QWidget):
         self._dataSourceList = []
         self._oldCntSelection = None
         self._cntList = []
+        self._defaultModel = HDF5Widget.FileModel()
+        self._modelDict = {}
         self._widgetList = []
         self.build()
 
@@ -74,8 +78,8 @@ class QNexusWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Vertical)
-        self._model = HDF5Widget.FileModel()
-        self.hdf5Widget = HDF5Widget.HDF5Widget(self._model, self.splitter)
+        self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
+                                                self.splitter)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.cntTable = SpecFileCntTable.SpecFileCntTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
@@ -92,9 +96,20 @@ class QNexusWidget(qt.QWidget):
         self.data = dataSource
         if self.data is None:
             self.hdf5Widget.collapseAll()
+            self.hdf5Widget.setModel(self._defaultModel)
             return
+        def dataSourceDistroyed(weakrefReference):
+            idx = self._dataSourceList.index(weakrefReference)
+            del self._dataSourceList[idx]
+            del self._modelDict[weakrefReference]
+        ref = weakref.ref(dataSource, dataSourceDistroyed)
+        if ref not in self._dataSourceList:
+            self._dataSourceList.append(ref)
+            self._modelDict[ref] = HDF5Widget.FileModel()
+        model = self._modelDict[ref]
+        self.hdf5Widget.setModel(model)
         for source in self.data._sourceObjectList:
-            self.hdf5Widget.model().appendPhynxFile(source, weakreference=True)  
+            self.hdf5Widget.model().appendPhynxFile(source, weakreference=True)
 
     def setFile(self, filename):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
@@ -104,7 +119,7 @@ class QNexusWidget(qt.QWidget):
             if ddict['mouse'] == "right":
                 fileIndex = self.data.sourceName.index(ddict['file'])
                 phynxFile  = self.data._sourceObjectList[fileIndex]
-                self.getInfo(phynxFile, ddict['path'])
+                self.getInfo(phynxFile, ddict['name'])
                 if ddict['type'] == 'Dataset':
                     if ddict['dtype'].startswith('|S'):
                         #print "string"
@@ -117,9 +132,9 @@ class QNexusWidget(qt.QWidget):
                 if ddict['dtype'].startswith('|S'):
                     print "string"
                 else:
-                    root = ddict['path'].split('/')
+                    root = ddict['name'].split('/')
                     root = "/" + root[1]
-                    cnt  = ddict['path'].split(root)[-1]
+                    cnt  = ddict['name'].split(root)[-1]
                     if cnt not in self._cntList:
                         self._cntList.append(cnt)
                         self.cntTable.build(self._cntList)
@@ -182,14 +197,14 @@ class QNexusWidget(qt.QWidget):
         return self.hdf5Widget.getSelectedEntries()
 
 
-    def getInfo(self, hdf5File, path):
-        data = hdf5File[path]
+    def getInfo(self, hdf5File, node):
+        data = hdf5File[node]
         ddict = {}
         ddict['general'] = {}
         ddict['attributes'] = {}
-        ddict['general']['Name'] = data.name
-        ddict['general']['Path'] = data.path
-        ddict['general']['Type'] = str(data.path)
+        ddict['general']['Name'] = posixpath.basename(data.name)
+        ddict['general']['Path'] = data.name
+        ddict['general']['Type'] = str(data)
         if hasattr(data, "listnames"):
             ddict['general']['members'] = data.listnames()
         else:
@@ -197,7 +212,7 @@ class QNexusWidget(qt.QWidget):
         for member in ddict['general']['members']:
             ddict['general'][member] = {}
             ddict['general'][member]['Name'] = str(member)
-            ddict['general'][member]['Type'] = str(hdf5File[path+"/"+member])
+            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
         for att in data.attrs:
             ddict['attributes'][att] = data.attrs[att]
         return ddict
