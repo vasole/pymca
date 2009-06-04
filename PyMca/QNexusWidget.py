@@ -27,6 +27,7 @@
 import os
 import HDF5Widget
 qt = HDF5Widget.qt
+import HDF5Info
 import SpecFileCntTable
 import posixpath
 import weakref
@@ -70,6 +71,7 @@ class QNexusWidget(qt.QWidget):
         self._oldCntSelection = None
         self._cntList = []
         self._defaultModel = HDF5Widget.FileModel()
+        self.getInfo = HDF5Info.getInfo
         self._modelDict = {}
         self._widgetList = []
         self.build()
@@ -119,7 +121,11 @@ class QNexusWidget(qt.QWidget):
             if ddict['mouse'] == "right":
                 fileIndex = self.data.sourceName.index(ddict['file'])
                 phynxFile  = self.data._sourceObjectList[fileIndex]
-                self.getInfo(phynxFile, ddict['name'])
+                info = self.getInfo(phynxFile, ddict['name'])
+                if len(self._widgetList) == 0:
+                    self._widgetList.append(HDF5Info.HDF5GeneralInfoWidget())
+                self._widgetList[0].setInfoDict(info)
+                self._widgetList[0].show()
                 if ddict['type'] == 'Dataset':
                     if ddict['dtype'].startswith('|S'):
                         #print "string"
@@ -196,7 +202,7 @@ class QNexusWidget(qt.QWidget):
     def getEntryList(self):
         return self.hdf5Widget.getSelectedEntries()
 
-
+    """
     def getInfo(self, hdf5File, node):
         data = hdf5File[node]
         ddict = {}
@@ -216,7 +222,7 @@ class QNexusWidget(qt.QWidget):
         for att in data.attrs:
             ddict['attributes'][att] = data.attrs[att]
         return ddict
-        
+    """ 
     
 if __name__ == "__main__":
     import sys
