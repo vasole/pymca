@@ -31,6 +31,7 @@ import HDF5Info
 import SpecFileCntTable
 import posixpath
 import weakref
+import gc
 
 class Buttons(qt.QWidget):
     def __init__(self, parent=None):
@@ -73,7 +74,7 @@ class QNexusWidget(qt.QWidget):
         self._defaultModel = HDF5Widget.FileModel()
         self.getInfo = HDF5Info.getInfo
         self._modelDict = {}
-        self._widgetList = []
+        self._widgetDict = {}
         self.build()
 
     def build(self):
@@ -119,13 +120,16 @@ class QNexusWidget(qt.QWidget):
     def hdf5Slot(self, ddict):
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
+                self._checkWidgetDict()
                 fileIndex = self.data.sourceName.index(ddict['file'])
                 phynxFile  = self.data._sourceObjectList[fileIndex]
                 info = self.getInfo(phynxFile, ddict['name'])
-                if len(self._widgetList) == 0:
-                    self._widgetList.append(HDF5Info.HDF5GeneralInfoWidget())
-                self._widgetList[0].setInfoDict(info)
-                self._widgetList[0].show()
+                widget = HDF5Info.HDF5GeneralInfoWidget()
+                widget.setWindowTitle(ddict['file'])
+                wid = id(widget)
+                self._widgetDict[wid] = widget
+                widget.setInfoDict(info)
+                widget.show()
                 if ddict['type'] == 'Dataset':
                     if ddict['dtype'].startswith('|S'):
                         #print "string"
@@ -202,27 +206,19 @@ class QNexusWidget(qt.QWidget):
     def getEntryList(self):
         return self.hdf5Widget.getSelectedEntries()
 
-    """
-    def getInfo(self, hdf5File, node):
-        data = hdf5File[node]
-        ddict = {}
-        ddict['general'] = {}
-        ddict['attributes'] = {}
-        ddict['general']['Name'] = posixpath.basename(data.name)
-        ddict['general']['Path'] = data.name
-        ddict['general']['Type'] = str(data)
-        if hasattr(data, "listnames"):
-            ddict['general']['members'] = data.listnames()
-        else:
-            ddict['general']['members'] = []
-        for member in ddict['general']['members']:
-            ddict['general'][member] = {}
-            ddict['general'][member]['Name'] = str(member)
-            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
-        for att in data.attrs:
-            ddict['attributes'][att] = data.attrs[att]
-        return ddict
-    """ 
+    def closeEvent(self, event):
+        keyList = self._widgetDict.keys()
+        for key in keyList:
+            self._widgetDict[key].close()
+            del self._widgetDict[key]
+        return qt.QWidget.closeEvent(self, event)
+
+    def _checkWidgetDict(self):
+        keyList = self._widgetDict.keys()
+        for key in keyList:
+            if self._widgetDict[key].isHidden():
+                del self._widgetDict[key]
+
     
 if __name__ == "__main__":
     import sys

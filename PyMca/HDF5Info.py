@@ -205,7 +205,8 @@ class HDF5GeneralInfoWidget(qt.QWidget):
                 #it is a datagroup
                 self.dimensionWidget.hide()  
         self.dimensionWidget.hide()
-
+        
+        
 """
 class HDF5InfoWidget(qt.QTabWidget):
     def __init__(self, parent=None, info=None):
