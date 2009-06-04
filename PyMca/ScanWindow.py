@@ -886,15 +886,16 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                     #nothing to be plot
                     continue                    
             elif len(dataObject.x) > 1:
-                if DEBUG:print "Mesh plots"
-                if not MATPLOTLIB:continue
+                if DEBUG:
+                    print "Mesh plots"
+                if not MATPLOTLIB:
+                    continue
                 else:
                     dataObject.info['legend'] = legend
                     FigureCanvas(dataobject=dataObject,toolbar=True)
                     continue
             else:
                 xdata = dataObject.x[0]
-
             sps_source = False
             if sel.has_key('SourceType'):
                 if sel['SourceType'] == 'SPS':
@@ -951,6 +952,12 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 #we have to loop for all y values
                 ycounter = -1
                 for ydata in dataObject.y:
+                    ylen = len(ydata)
+                    if ylen == 1:
+                        if len(xdata) > 1:
+                            ydata = ydata[0] * Numeric.ones(len(xdata)).astype(Numeric.Float)
+                    elif len(xdata) == 1:
+                        xdata = xdata[0] * Numeric.ones(ylen).astype(Numeric.Float)
                     ycounter += 1
                     newDataObject   = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
@@ -958,6 +965,16 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                         mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
                     elif len(dataObject.m[0]) > 0:
                         if len(dataObject.m[0]) == len(ydata):
+                            index = Numeric.nonzero(dataObject.m[0])
+                            if not len(index): continue
+                            xdata = Numeric.take(xdata, index)
+                            ydata = Numeric.take(ydata, index)
+                            mdata = Numeric.take(dataObject.m[0], index)
+                            #A priori the graph only knows about plots
+                            ydata = ydata/mdata
+                        elif len(dataObject.m[0]) == 1:
+                            mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
+                            mdata *= dataObject.m[0][0]
                             index = Numeric.nonzero(dataObject.m[0])
                             if not len(index): continue
                             xdata = Numeric.take(xdata, index)
