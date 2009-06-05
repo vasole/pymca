@@ -487,10 +487,10 @@ class MaterialGUI(qt.QWidget):
         hboxLayout.addWidget(self.__numberSpin)
         if QTVERSION < '4.0.0':
             self.__numberSpin.setMinValue(1)
-            self.__numberSpin.setMaxValue(30)
+            self.__numberSpin.setMaxValue(100)
         else:
             self.__numberSpin.setMinimum(1)
-            self.__numberSpin.setMaximum(30)
+            self.__numberSpin.setMaximum(100)
         self.__numberSpin.setValue(1)
         if QTVERSION < '4.0.0':
             self.__table = qttable.QTable(tableContainer)
