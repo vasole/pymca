@@ -35,6 +35,13 @@ if qt.qVersion() < '4.0.0':
 import copy
 import posixpath
 
+class HDFInfoCustomEvent(qt.QEvent):
+    def __init__(self, ddict):
+        if ddict is None:
+            ddict = {}
+        self.dict = ddict
+        qt.QEvent.__init__(self, qt.QEvent.User)
+
 class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
@@ -186,6 +193,7 @@ class HDF5GeneralInfoWidget(qt.QWidget):
         self.mainLayout.addWidget(self.membersWidget)
         self.mainLayout.addWidget(VerticalSpacer(self))
         self.mainLayout.addWidget(self.dimensionWidget)
+        self._notifyCloseEventToWidget = None
         
         if ddict is not None:
             self.setInfoDict(ddict)
@@ -205,8 +213,21 @@ class HDF5GeneralInfoWidget(qt.QWidget):
                 #it is a datagroup
                 self.dimensionWidget.hide()  
         self.dimensionWidget.hide()
-        
-        
+
+    def notifyCloseEventToWidget(self, widget):
+        self._notifyCloseEventToWidget = widget
+
+    def closeEvent(self, event):
+        if self._notifyCloseEventToWidget is not None:
+            ddict={}
+            ddict['event'] = 'closeEventSignal'
+            ddict['id']    = id(self)
+            newEvent = HDFInfoCustomEvent(ddict)
+            qt.QApplication.postEvent(self._notifyCloseEventToWidget,
+                                      newEvent)
+            self._notifyCloseEventToWidget = None
+        return qt.QWidget.closeEvent(self, event)
+
 """
 class HDF5InfoWidget(qt.QTabWidget):
     def __init__(self, parent=None, info=None):

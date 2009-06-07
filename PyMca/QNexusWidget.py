@@ -125,7 +125,8 @@ class QNexusWidget(qt.QWidget):
                 phynxFile  = self.data._sourceObjectList[fileIndex]
                 info = self.getInfo(phynxFile, ddict['name'])
                 widget = HDF5Info.HDF5GeneralInfoWidget()
-                widget.setWindowTitle(ddict['file'])
+                widget.notifyCloseEventToWidget(self)
+                widget.setWindowTitle(os.path.basename(ddict['file']))
                 wid = id(widget)
                 self._widgetDict[wid] = widget
                 widget.setInfoDict(info)
@@ -219,6 +220,13 @@ class QNexusWidget(qt.QWidget):
             if self._widgetDict[key].isHidden():
                 del self._widgetDict[key]
 
+    def customEvent(self, event):
+        if hasattr(event, 'dict'):
+            ddict = event.dict
+            if ddict.has_key('event'):
+                if ddict['event'] == "closeEventSignal":
+                    if self._widgetDict.has_key(ddict['id']):
+                        del self._widgetDict[ddict['id']]
     
 if __name__ == "__main__":
     import sys
