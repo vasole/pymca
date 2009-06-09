@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1-20090529-snapshot"
+__version__ = "4.3.1-20090609-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -643,7 +643,15 @@ class PyMca(PyMcaMdi.PyMca):
                     #    d['PyMca'][source]['SourceName'].append(self.sourceWidget.selectorWidget[source]._edfstack)
                     #else:
                     #    d['PyMca'][source]['SourceName'].append(self.sourceWidget.selectorWidget[source].mapComboName[key])
-            
+            elif source == "HDF5":
+                d['PyMca'][source]['SourceName'] = []
+                for key in self.sourceWidget.sourceList:
+                    if key.sourceType == source:
+                        d['PyMca'][source]['SourceName'].append(key.sourceName)
+            selectorWidget = self.sourceWidget.selectorWidget[source]
+            if hasattr(selectorWidget,'setWidgetConfiguration'):
+                d['PyMca'][source]['WidgetConfiguration'] = selectorWidget.getWidgetConfiguration()                        
+
             #d['PyMca'][source]['Selection'] = self.sourceWidget[source].getSelection()
         #ROIs
         d['ROI']={}
@@ -748,6 +756,20 @@ class PyMca(PyMcaMdi.PyMca):
                                     msg.exec_loop()
                                 else:
                                     msg.exec_()
+
+                if dict[source].has_key('WidgetConfiguration'):
+                    selectorWidget = self.sourceWidget.selectorWidget[source]
+                    if hasattr(selectorWidget,'setWidgetConfiguration'):
+                        try:
+                            selectorWidget.setWidgetConfiguration(dict['PyMca'][source]['WidgetConfiguration'])
+                        except:
+                            msg = qt.QMessageBox(self)
+                            msg.setIcon(qt.QMessageBox.Critical)
+                            msg.setText("Error: %s\n configuring %s widget" % (sys.exc_info()[1], source ))
+                            if QTVERSION < '4.0.0':
+                                msg.exec_loop()
+                            else:
+                                msg.exec_()
                 """
                 if dict[source].has_key('Selection'):
                     if type(dict[source]['Selection']) != type([]):

@@ -151,7 +151,10 @@ class NexusDataSource:
         output.info['selection'] = selection
         if selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             output.info['selectiontype'] = "1D"
-            output.info['LabelNames'] = selection['cntlist']
+            if selection.has_key('aliaslist'):
+                output.info['LabelNames'] = selection['aliaslist']
+            else:
+                output.info['LabelNames'] = selection['cntlist']
             output.x = None
             output.y = None
             output.m = None

@@ -28,7 +28,7 @@ import os
 import HDF5Widget
 qt = HDF5Widget.qt
 import HDF5Info
-import SpecFileCntTable
+import HDF5CounterTable
 import posixpath
 import weakref
 import gc
@@ -71,6 +71,7 @@ class QNexusWidget(qt.QWidget):
         self._dataSourceList = []
         self._oldCntSelection = None
         self._cntList = []
+        self._aliasList = []
         self._defaultModel = HDF5Widget.FileModel()
         self.getInfo = HDF5Info.getInfo
         self._modelDict = {}
@@ -84,7 +85,7 @@ class QNexusWidget(qt.QWidget):
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
                                                 self.splitter)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
-        self.cntTable = SpecFileCntTable.SpecFileCntTable(self.splitter)
+        self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
         self.buttons = Buttons(self)
         self.mainLayout.addWidget(self.buttons)
@@ -94,6 +95,26 @@ class QNexusWidget(qt.QWidget):
         self.connect(self.buttons,
                      qt.SIGNAL('ButtonsSignal'),
                      self.buttonsSlot)
+
+    def getWidgetConfiguration(self):
+        cntSelection = self.cntTable.getCounterSelection()
+        ddict = {}
+        ddict['counters'] = cntSelection['cntlist']
+        ddict['aliases'] = cntSelection['aliaslist']
+        return ddict
+
+    def setWidgetConfiguration(self, ddict=None):
+        if ddict is None:
+            self._cntList = []
+            self._aliasList = []
+        else:
+            self._cntList = ddict['counters']
+            self._aliasList = ddict['aliases']
+            if type(self._cntList) == type(""):
+                self._cntList = [ddict['counters']]
+            if type(self._aliasList) == type(""):
+                self._aliasList = [ddict['aliases']]
+        self.cntTable.build(self._cntList, self._aliasList)
 
     def setDataSource(self, dataSource):
         self.data = dataSource
@@ -148,7 +169,12 @@ class QNexusWidget(qt.QWidget):
                     cnt  = ddict['name'].split(root)[-1]
                     if cnt not in self._cntList:
                         self._cntList.append(cnt)
-                        self.cntTable.build(self._cntList)
+                        basename = posixpath.basename(cnt)
+                        if basename not in self._aliasList:
+                            self._aliasList.append(basename)
+                        else:
+                            self._aliasList.append(cnt)
+                        self.cntTable.build(self._cntList, self._aliasList)
             if ddict['type'] == 'Entry':
                 print "I should apply latest selection"
 
@@ -160,6 +186,7 @@ class QNexusWidget(qt.QWidget):
         if not len(entryList):
             return
         cntSelection = self.cntTable.getCounterSelection()
+        self._aliasList = cntSelection['aliaslist']
         selectionList = []
         for entry, filename in entryList:
             if not len(cntSelection['cntlist']):
@@ -185,6 +212,7 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['y'] = [yCnt]
                 sel['selection']['m'] = cntSelection['m']
                 sel['selection']['cntlist'] = cntSelection['cntlist']
+                sel['selection']['aliaslist'] = cntSelection['aliaslist']
                 sel['selection']['selectiontype'] = selectionType
                 if selectionType.upper() == "SCAN":
                     sel['scanselection'] = True
