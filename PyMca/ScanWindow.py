@@ -1047,9 +1047,11 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             legend = sel['legend'] #expected form sourcename + scan key
             if type(sel['selection']) == type({}):
                 if sel['selection'].has_key('y'):
-                    if sel['selection'].has_key('cntlist'):
-                        for index in sel['selection']['y']:
-                            removelist.append(legend +" "+sel['selection']['cntlist'][index])
+                    for lName in ['cntlist', 'aliaslist', 'LabelNames']:
+                        if sel['selection'].has_key(lName):
+                            for index in sel['selection']['y']:
+                                removelist.append(legend +" "+\
+                                                  sel['selection'][lName][index])
 
         if not len(removelist):return
         self.removeCurves(removelist)

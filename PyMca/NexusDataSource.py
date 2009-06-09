@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.1 $"
+import numpy
 import DataObject
 import os
 import types
@@ -150,6 +151,7 @@ class NexusDataSource:
         output.info = self.__getKeyInfo(actual_key)
         output.info['selection'] = selection
         if selection['selectiontype'].upper() in ["SCAN", "MCA"]:
+            #I force output to be of dim 1
             output.info['selectiontype'] = "1D"
             if selection.has_key('aliaslist'):
                 output.info['LabelNames'] = selection['aliaslist']
@@ -160,15 +162,15 @@ class NexusDataSource:
             output.m = None
             output.data = None
             path =  entry + selection['cntlist'][selection['y'][0]]
-            output.y = [phynxFile[path].value]
+            output.y = [numpy.ravel(phynxFile[path].value)]
             if selection.has_key('x'):
                 if len(selection['x']):
                     path = entry + selection['cntlist'][selection['x'][0]]
-                    output.x = [phynxFile[path].value]
+                    output.x = [numpy.ravel(phynxFile[path].value)]
             if selection.has_key('m'):
                 if len(selection['m']):
                     path = entry + selection['cntlist'][selection['m'][0]]
-                    output.m = [phynxFile[path].value]
+                    output.m = [numpy.ravel(phynxFile[path].value)]
         return output
 
     def isUpdated(self, sourceName, key):
