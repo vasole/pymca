@@ -7,6 +7,7 @@ import posixpath
 
 import h5py
 import numpy as np
+import re
 
 from .base import _PhynxProperties
 from .dataset import Axis, Dataset, Signal
@@ -14,8 +15,83 @@ from .exceptions import H5Error
 from .registry import registry
 from .utils import sync
 
+class h5Group(h5py.Group):
+    # This class is actually not needed and its methods
+    # could be inside the Group class
+    # It is just to make evident the changes made.
 
-class Group(h5py.Group, _PhynxProperties):
+    
+    #What is the use of sync?
+    @sync
+    def listobjects(self):
+        #how to pproperly pass this list to Group?
+        object_list = h5py.Group.listobjects(self)
+        if self.name != "/":
+            return object_list
+        if (self._sorting_list is None) or\
+           (len(object_list) < 2):
+            return object_list
+
+        #look for members
+        sorting_key = None
+
+        #assume all entries have the same structure
+        names = object_list[0].listnames()
+        for key in self._sorting_list:
+            if key in names:
+                sorting_key = key
+                break
+            
+        if sorting_key is None:
+            if 'name' not in self._sorting_list:
+                # I could check entry attributes too.
+                # ALBA was using an 'epoch' attribute at
+                # at a certain point
+                # Perhaps in the future ...
+                return object_list
+            else:
+                sorting_key = 'name'
+
+        try:
+            if sorting_key != 'name':
+                sorting_list = [(o[sortingKey].value, o)
+                               for o in objectList]
+                sorting_list.sort()
+                return [x[1] for x in sorting_list]
+
+            if sorting_key == 'name':
+                sorting_list = [(self._get_number_list(o.name),o)
+                               for o in object_list]
+                sorting_list.sort()
+                return [x[1] for x in sorting_list]
+        except:
+            #The only way to reach this point is to have different
+            #structures among the different entries. In that case
+            #defaults to the unfiltered case
+            print("WARNING: Default ordering")
+            return object_list
+
+    def _get_number_list(self, txt):
+        rexpr = '[/a-zA-Z:-]'
+        nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
+        return nbs
+
+    #What is the use of sync?
+    @sync
+    def listnames(self):
+        if self.name != "/":
+            return h5py.Group.listnames(self)
+        object_list = self.listobjects()
+        return [o.name[1:] for o in object_list]
+
+    #What is the use of sync?
+    @sync
+    def iterobjects(self):
+        if self.name != "/":
+            return h5py.Group.listobjects(self)
+        return self.listobjects()
+
+class Group(h5Group, _PhynxProperties):
 
     """
     """
@@ -70,8 +146,13 @@ class Group(h5py.Group, _PhynxProperties):
         attributes of the group.
 
         """
+        if hasattr(parent_object, "_sorting_list"):
+            self._sorting_list = parent_object._sorting_list
+        else:
+            self._sorting_list = None
+
         with parent_object.plock:
-            h5py.Group.__init__(self, parent_object, name, create=create)
+            h5Group.__init__(self, parent_object, name, create=create)
             if create:
                 self.attrs['class'] = self.__class__.__name__
                 try:

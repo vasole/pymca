@@ -9,7 +9,6 @@ import os
 import sys
 import threading
 import time
-
 import h5py
 
 from .exceptions import H5Error
@@ -51,7 +50,7 @@ class File(Group, h5py.File):
     def path(self):
         return '/'
 
-    def __init__(self, name, mode='a', lock=None):
+    def __init__(self, name, mode='a', lock=None, sorting_list=None):
         """
         Create a new file object.
 
@@ -65,6 +64,8 @@ class File(Group, h5py.File):
         parent is used for used for GUI interfaces
         """
 
+        self._sorting_list = sorting_list
+
         h5py.File.__init__(self, name, mode)
         if lock is None:
             lock = threading.RLock()
@@ -77,6 +78,7 @@ class File(Group, h5py.File):
                     'lock must be a context manager, providing __enter__ and '
                     '__exit__ methods'
                 )
+            
         self._plock = lock
 
         if self.mode != 'r' and len(self) == 0:
@@ -116,5 +118,5 @@ class File(Group, h5py.File):
     @sync
     def list_sorted_entries(self):
         return sorted(
-            self.listobjects(), key=operator.attrgetter('acquisition_id')
-        )
+            h5py.File.listobjects(self), key=operator.attrgetter('acquisition_id')
+            )

@@ -28,15 +28,15 @@ __revision__ = "$Revision: 1.1 $"
 import DataObject
 import os
 import types
+import h5py
 
 try:
     import PyMca.phynx as phynx
-except:
-    #I should never reach here
+except ImportError:
     try:
-        from xpaxs.io import phynx
-    except ImportError:
         import phynx
+    except ImportError:
+        from xpaxs.io import phynx
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
@@ -58,7 +58,13 @@ class NexusDataSource:
     def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
-            phynxInstance = phynx.File(name, 'r', lock=None)
+            try:
+                phynxInstance = phynx.File(name, 'r', lock=None,
+                                       sorting_list=['start_time',
+                                                     'end_time',
+                                                     'name'])
+            except TypeError:
+                phynxInstance = phynx.File(name, 'r', lock=None)
             phynxInstance._sourceName = name
             self._sourceObjectList.append(phynxInstance)
         self.__lastKeyInfo = {}

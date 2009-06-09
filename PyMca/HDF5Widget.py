@@ -86,7 +86,6 @@ class RootItem(object):
         del self._children[idx]
         del self._identifiers[idx]
 
-
 class H5NodeProxy(object):
     @property
     def children(self):
@@ -97,13 +96,17 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             with self.file.plock:
-                self._children = [
-                    H5NodeProxy(self.file, i, self)
-                    for i in sorted(
-                        self.getNode(self.name).listobjects(),
-                        key=operator.attrgetter('name')
-                    )
-                ]
+                if (self.name == "/") and hasattr(self.file, '_sorting_list'):
+                    self._children = [H5NodeProxy(self.file, i, self)
+                                  for i in self.getNode(self.name).listobjects()]
+                else:
+                    self._children = [
+                        H5NodeProxy(self.file, i, self)
+                        for i in sorted(
+                            self.getNode(self.name).listobjects(),
+                            key=operator.attrgetter('name')
+                        )
+                    ]
         return self._children
 
     @property
