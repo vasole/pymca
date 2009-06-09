@@ -585,7 +585,7 @@ class QtMcaAdvancedFitReport:
                 ax = fig.add_axes([.15, .15, .8, .8])
                 ax.set_axisbelow(True)
                 ax.plot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
-                axplot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
+                ax.plot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
                 legendlist = ['spectrum', 'continuum', 'fit']
                 ax.plot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
                 fontproperties = FontProperties(size=8)
