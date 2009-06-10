@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1-20090609-snapshot"
+__version__ = "4.3.1-20090610-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -761,7 +761,7 @@ class PyMca(PyMcaMdi.PyMca):
                     selectorWidget = self.sourceWidget.selectorWidget[source]
                     if hasattr(selectorWidget,'setWidgetConfiguration'):
                         try:
-                            selectorWidget.setWidgetConfiguration(dict['PyMca'][source]['WidgetConfiguration'])
+                            selectorWidget.setWidgetConfiguration(dict[source]['WidgetConfiguration'])
                         except:
                             msg = qt.QMessageBox(self)
                             msg.setIcon(qt.QMessageBox.Critical)

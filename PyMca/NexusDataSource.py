@@ -153,7 +153,9 @@ class NexusDataSource:
         if selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             #I force output to be of dim 1
             output.info['selectiontype'] = "1D"
-            if selection.has_key('aliaslist'):
+            if selection.has_key('LabelNames'):
+                output.info['LabelNames'] = selection['LabelNames']
+            elif selection.has_key('aliaslist'):
                 output.info['LabelNames'] = selection['aliaslist']
             else:
                 output.info['LabelNames'] = selection['cntlist']

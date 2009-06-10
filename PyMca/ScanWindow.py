@@ -1047,7 +1047,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             legend = sel['legend'] #expected form sourcename + scan key
             if type(sel['selection']) == type({}):
                 if sel['selection'].has_key('y'):
-                    for lName in ['cntlist', 'aliaslist', 'LabelNames']:
+                    for lName in ['cntlist', 'LabelNames']:
                         if sel['selection'].has_key(lName):
                             for index in sel['selection']['y']:
                                 removelist.append(legend +" "+\

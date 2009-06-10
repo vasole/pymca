@@ -212,7 +212,8 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['y'] = [yCnt]
                 sel['selection']['m'] = cntSelection['m']
                 sel['selection']['cntlist'] = cntSelection['cntlist']
-                sel['selection']['aliaslist'] = cntSelection['aliaslist']
+                sel['selection']['LabelNames'] = cntSelection['aliaslist']
+                #sel['selection']['aliaslist'] = cntSelection['aliaslist']
                 sel['selection']['selectiontype'] = selectionType
                 if selectionType.upper() == "SCAN":
                     sel['scanselection'] = True
