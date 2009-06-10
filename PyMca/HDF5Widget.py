@@ -247,6 +247,18 @@ class FileModel(qt.QAbstractItemModel):
         item = self.getProxyFromIndex(index)
         column = index.column()
         if column == 0:
+            """
+            #I would expect the title to be the proper
+            #thing to show ...
+            if hasattr(item, 'type'):
+                if item.type == "Entry":
+                    children = item.children
+                    names = [posixpath.basename(o.name) for o in children]
+                    if "title" in names:
+                        idx = names.index("title")
+                        children[idx].getNode().value[0]
+                        return qt.QVariant(children[idx].getNode().value[0])
+            """
             if isinstance(item, H5FileProxy):
                 return qt.QVariant(item.filename)
             else:
