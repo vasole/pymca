@@ -221,6 +221,20 @@ class QNexusWidget(qt.QWidget):
                 elif selectionType.upper() == "MCA":
                     sel['scanselection'] = False
                     sel['mcaselection']  = True
+                    aliases = cntSelection['aliaslist'] 
+                    if len(cntSelection['x']) and len(cntSelection['m']):
+                        addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
+                                                       aliases[cntSelection['m'][0]],
+                                                       aliases[cntSelection['x'][0]])
+                    elif len(cntSelection['x']):
+                        addLegend = " %s vs %s" % (aliases[yCnt],
+                                                   aliases[cntSelection['x'][0]])
+                    elif len(cntSelection['m']):
+                        addLegend = " (%s/%s)" % (aliases[yCnt],
+                                                aliases[cntSelection['m'][0]])
+                    else:
+                        addLegend = " %s" % aliases[yCnt]
+                    sel['legend'] += addLegend
                 else:
                     sel['scanselection'] = False
                     sel['mcaselection']  = False

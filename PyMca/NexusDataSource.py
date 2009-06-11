@@ -173,6 +173,11 @@ class NexusDataSource:
                 if len(selection['m']):
                     path = entry + selection['cntlist'][selection['m'][0]]
                     output.m = [numpy.ravel(phynxFile[path].value)]
+            # MCA specific
+            if selection['selectiontype'].upper() == "MCA":
+                if not output.info.has_key('Channel0'):
+                    output.info['Channel0'] = 0
+
         return output
 
     def isUpdated(self, sourceName, key):

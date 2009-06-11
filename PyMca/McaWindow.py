@@ -1872,17 +1872,47 @@ class McaWidget(qt.QWidget):
                 curvesel={}
                 legend = sel['legend']
                 dataObject = sel['dataobject']
+                info = dataObject.info
+                data  = dataObject.y[0]
                 if dataObject.info.has_key("selectiontype"):
                     if dataObject.info["selectiontype"] != "1D": continue
                 if dataObject.x is None:
                     xhelp = None
                 else:
                     xhelp = dataObject.x[0]
+
                 if xhelp is None:
                     xhelp =info['Channel0'] + Numeric.arange(len(data)).astype(Numeric.Float)
-                    dataObject.x = [xhelp * 1]
-                data  = dataObject.y[0]
-                info = dataObject.info
+                    dataObject.x = [xhelp]
+
+                ylen = len(data)
+                if ylen == 1:
+                    if len(xhelp) > 1:
+                        data = data[0] * Numeric.ones(len(xhelp)).astype(Numeric.Float)
+                        dataObject.y = [data]
+                elif len(xhelp) == 1:
+                    xhelp = xhelp[0] * Numeric.ones(ylen).astype(Numeric.Float)
+                    dataObject.x = [xhelp]
+
+                if dataObject.m is not None:
+                    if len(dataObject.m[0]) > 0:
+                        mdata = dataObject.m[0]
+                        if len(mdata) == len(data):
+                            index = Numeric.nonzero(mdata)
+                            if not len(index): continue
+                            xhelp = Numeric.take(xhelp, index)
+                            data = Numeric.take(data, index)
+                            mdata = Numeric.take(mdata, index)
+                            data = data/mdata
+                            dataObject.x = [xhelp * 1]
+                        elif (len(mdata) == 1) or (ylen == 1):
+                            if mdata[0] == 0.0:
+                                continue
+                            data = data/mdata
+                        else:
+                            raise ValueError, "Cannot normalize data"
+                        dataObject.y = [data]
+                        
                 self.dataObjectsDict[legend] = dataObject
                 if info.has_key('baseline') and info.has_key('regions'):
                     simplefitplot = True
