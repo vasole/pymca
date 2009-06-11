@@ -163,21 +163,30 @@ class NexusDataSource:
             output.y = None
             output.m = None
             output.data = None
-            path =  entry + selection['cntlist'][selection['y'][0]]
-            output.y = [numpy.ravel(phynxFile[path].value)]
-            if selection.has_key('x'):
-                if len(selection['x']):
-                    path = entry + selection['cntlist'][selection['x'][0]]
-                    output.x = [numpy.ravel(phynxFile[path].value)]
-            if selection.has_key('m'):
-                if len(selection['m']):
-                    path = entry + selection['cntlist'][selection['m'][0]]
-                    output.m = [numpy.ravel(phynxFile[path].value)]
+            for cnt in ['y', 'x', 'm']:
+                if not selection.has_key(cnt):
+                    continue
+                if not len(selection[cnt]):
+                    continue
+                path =  entry + selection['cntlist'][selection[cnt][0]]
+                data = phynxFile[path].value
+                if len(data.shape) == 2:
+                    if min(data.shape) == 1:
+                        data = numpy.ravel(data)
+                    else:
+                        raise TypeError, "%s selection is not 1D" % cnt.upper()
+                elif len(data.shape) > 2:
+                    raise TypeError, "%s selection is not 1D" % cnt.upper()                
+                if cnt == 'y':
+                    output.y = [data]
+                elif cnt == 'x':
+                    output.x = [data]
+                elif cnt == 'm':
+                    output.m = [data]
             # MCA specific
             if selection['selectiontype'].upper() == "MCA":
                 if not output.info.has_key('Channel0'):
                     output.info['Channel0'] = 0
-
         return output
 
     def isUpdated(self, sourceName, key):

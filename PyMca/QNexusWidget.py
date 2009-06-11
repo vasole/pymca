@@ -240,6 +240,11 @@ class QNexusWidget(qt.QWidget):
                     sel['mcaselection']  = False
                 selectionList.append(sel)
         if len(selectionList):
+            if selectionType.upper() in ["SCAN", "MCA"]:
+                ddict = {}
+                ddict['event'] = "SelectionTypeChanged"
+                ddict['SelectionType'] = selectionType.upper()
+                self.emit(qt.SIGNAL('otherSignals'), ddict)
             if action.upper() == "ADD":
                 self.emit(qt.SIGNAL("addSelection"), selectionList)
             if action.upper() == "REMOVE":

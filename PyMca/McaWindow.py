@@ -121,6 +121,8 @@ class McaWidget(qt.QWidget):
         else:
             self.specfit = specfit
         self.simplefit   = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
+        self.specfit.fitconfig['McaMode'] = 1
+
         self.advancedfit = McaAdvancedFit.McaAdvancedFit()
 
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
@@ -904,7 +906,6 @@ class McaWidget(qt.QWidget):
                                     xmin=xmin,
                                     xmax=xmax,
                                     legend=legend)
-            self.specfit.fitconfig['McaMode'] = 1
             """
             if self.specfit.fitconfig['McaMode']:
                 self.specfitGUI.guiparameters.fillfromfit(self.specfit.paramlist,
@@ -915,7 +916,8 @@ class McaWidget(qt.QWidget):
                                         current='Fit')
                 self.specfitGUI.guiparameters.removeallviews(keep='Fit')
             """
-            self.simplefit.fit()
+            if self.specfit.fitconfig['McaMode']:
+                self.simplefit.fit()
         else:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1414,7 +1416,7 @@ class McaWidget(qt.QWidget):
             yb = Numeric.array(ybfinal)
             newDataObject.x = [x]
             newDataObject.y = [yfit]
-            newDataObject.m = None
+            newDataObject.m = [Numeric.ones(len(yfit)).astype(Numeric.Float)]
             if mcamode:
                 newDataObject.info['regions']   = regions
                 newDataObject.info['baseline'] = yb
@@ -1898,6 +1900,7 @@ class McaWidget(qt.QWidget):
                     if len(dataObject.m[0]) > 0:
                         mdata = dataObject.m[0]
                         if len(mdata) == len(data):
+                            mdata[data == 0] += 0.00000001
                             index = Numeric.nonzero(mdata)
                             if not len(index): continue
                             xhelp = Numeric.take(xhelp, index)
@@ -1905,6 +1908,7 @@ class McaWidget(qt.QWidget):
                             mdata = Numeric.take(mdata, index)
                             data = data/mdata
                             dataObject.x = [xhelp * 1]
+                            dataObject.m = [Numeric.ones(len(data)).astype(Numeric.Float)]
                         elif (len(mdata) == 1) or (ylen == 1):
                             if mdata[0] == 0.0:
                                 continue
@@ -1912,7 +1916,6 @@ class McaWidget(qt.QWidget):
                         else:
                             raise ValueError, "Cannot normalize data"
                         dataObject.y = [data]
-                        
                 self.dataObjectsDict[legend] = dataObject
                 if info.has_key('baseline') and info.has_key('regions'):
                     simplefitplot = True
