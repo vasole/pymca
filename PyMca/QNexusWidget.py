@@ -77,6 +77,7 @@ class QNexusWidget(QtGui.QWidget):
         self.getInfo = HDF5Info.getInfo
         self._modelDict = {}
         self._widgetDict = {}
+        self._lastWidgetId = None
         self.build()
 
     def build(self):
@@ -152,6 +153,14 @@ class QNexusWidget(QtGui.QWidget):
                 title += " %s" % ddict['name']
                 widget.setWindowTitle(title)
                 wid = id(widget)
+                if self._lastWidgetId is not None:
+                    try:
+                        width = self._widgetDict[self._lastWidgetId].width()
+                        height = self._widgetDict[self._lastWidgetId].height()
+                        widget.resize(max(150, width), max(150, height))
+                    except:
+                        pass
+                self._lastWidgetId = wid
                 self._widgetDict[wid] = widget
                 widget.setInfoDict(info)
                 widget.show()
