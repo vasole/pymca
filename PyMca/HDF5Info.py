@@ -178,7 +178,7 @@ class MembersGroupBox(qt.QGroupBox):
             row += 1
         #self.table.resizeColumnToContents(0)
         self.table.resizeColumnToContents(1)
-        self.show()
+        #self.show()
         
 class HDF5GeneralInfoWidget(qt.QWidget):
     def __init__(self, parent=None, ddict=None):
@@ -214,6 +214,92 @@ class HDF5GeneralInfoWidget(qt.QWidget):
                 self.dimensionWidget.hide()  
         self.dimensionWidget.hide()
 
+
+class HDF5AttributesInfoWidget(qt.QWidget):
+    def __init__(self, parent):
+        qt.QGroupBox.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+        self.label = qt.QLabel(self)
+        self.label.setText("Number of members: 0")
+        self.table = qt.QTableWidget(self)
+        labels = ["Name", "Value", "Type", "Size"]
+        self.table.setColumnCount(len(labels))
+        for i in range(len(labels)):
+            item = self.table.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(labels[i],
+                                           qt.QTableWidgetItem.Type)
+            item.setText(labels[i])
+            self.table.setHorizontalHeaderItem(i, item)
+        self._tableLabels = labels
+        self.mainLayout.addWidget(self.label)
+        self.mainLayout.addWidget(self.table)
+
+    def setInfoDict(self, ddict):
+        if ddict.has_key('attributes'):
+            self._setInfoDict(ddict['attributes'])
+        else:
+            self._setInfoDict(ddict)
+
+
+    def _setInfoDict(self, ddict):
+        keylist = ddict['names']
+        self.label.setText("Number of attributes: %d" % len(keylist))
+        nrows = len(keylist)
+        if not nrows:
+            self.table.setRowCount(nrows)
+            self.hide()
+            return
+        self.table.setRowCount(nrows)        
+        keylist.sort()
+        row = 0
+        for key in keylist:
+            for label in self._tableLabels:
+                if not ddict[key].has_key(label):
+                    continue
+                else:
+                    text = ddict[key][label]
+                col = self._tableLabels.index(label)
+                item = self.table.item(row, col)
+                if item is None:
+                    item = qt.QTableWidgetItem(text, qt.QTableWidgetItem.Type)
+                    item.setFlags(qt.Qt.ItemIsSelectable|
+                                      qt.Qt.ItemIsEnabled)
+                    self.table.setItem(row, col, item)
+                else:
+                    item.setText(text)
+            row += 1
+
+        #self.table.resizeColumnToContents(0)
+        #self.table.resizeColumnToContents(1)
+        #self.table.resizeColumnToContents(2)
+        #self.table.resizeColumnToContents(3)
+        #self.show()
+
+class HDF5InfoWidget(qt.QTabWidget):
+    def __init__(self, parent=None, info=None):
+        qt.QTabWidget.__init__(self, parent)
+        self._notifyCloseEventToWidget = None
+        self._build()
+        if info is not None:
+            self.setInfoDict(info)
+
+    def sizeHint(self):
+        return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
+                        qt.QTabWidget.sizeHint(self).height())
+                        
+    def _build(self):
+        self.generalInfoWidget = HDF5GeneralInfoWidget(self)
+        self.attributesInfoWidget = HDF5AttributesInfoWidget(self)
+        self.addTab(self.generalInfoWidget, 'General')
+        self.addTab(self.attributesInfoWidget, 'Attributes')
+
+    def setInfoDict(self, ddict):
+        self.generalInfoWidget.setInfoDict(ddict)
+        self.attributesInfoWidget.setInfoDict(ddict)
+
     def notifyCloseEventToWidget(self, widget):
         self._notifyCloseEventToWidget = widget
 
@@ -227,24 +313,6 @@ class HDF5GeneralInfoWidget(qt.QWidget):
                                       newEvent)
             self._notifyCloseEventToWidget = None
         return qt.QWidget.closeEvent(self, event)
-
-"""
-class HDF5InfoWidget(qt.QTabWidget):
-    def __init__(self, parent=None, info=None):
-        qt.QTabWidget.__init__(self, parent)
-        self.info = {"general":{},
-                    "attributes":{}}
-        self._build()
-        if info is not None:
-            self.setInfoDict(info)
-
-    def _build(self):
-        pass
-
-    def setInfoDict(self, info):
-        print info
-
-"""
 
 def getInfo(hdf5File, node):
     data = hdf5File[node]
@@ -262,8 +330,21 @@ def getInfo(hdf5File, node):
         ddict['general'][member] = {}
         ddict['general'][member]['Name'] = str(member)
         ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
-    for att in data.attrs:
-        ddict['attributes'][att] = data.attrs[att]
+    ddict['attributes']['names'] = data.attrs.listnames()
+    ddict['attributes']['names'].sort()
+    for key in ddict['attributes']['names']:
+        ddict['attributes'][key] = {}
+        Name = key
+        Value = data.attrs[key]
+        Type =  str(type(Value))
+        if type(Value) == type(""):
+            Size = "%d" % len(Value)
+        else:
+            Size = "Unknown"
+        ddict['attributes'][key]['Name']  = Name
+        ddict['attributes'][key]['Value'] = Value
+        ddict['attributes'][key]['Type']  = Type
+        ddict['attributes'][key]['Size']  = Size
     return ddict
         
 if __name__ == "__main__":
@@ -281,7 +362,7 @@ if __name__ == "__main__":
     node = sys.argv[2]
     info = getInfo(h, node)
     app = qt.QApplication([])
-    w = HDF5GeneralInfoWidget()
+    w = HDF5InfoWidget()
     w.setInfoDict(info)
     w.show()
     sys.exit(app.exec_())
