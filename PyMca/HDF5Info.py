@@ -24,34 +24,29 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-try:
-    from PyMca.PyMcaQt import qt
-except ImportError:
-    import PyMcaQt as qt
-
-if qt.qVersion() < '4.0.0':
-    raise ImportError, "This module requires PyQt4"
+import PyQt4.QtCore as QtCore
+import PyQt4.QtGui as QtGui
 
 import copy
 import posixpath
 
-class HDFInfoCustomEvent(qt.QEvent):
+class HDFInfoCustomEvent(QtCore.QEvent):
     def __init__(self, ddict):
         if ddict is None:
             ddict = {}
         self.dict = ddict
-        qt.QEvent.__init__(self, qt.QEvent.User)
+        QtCore.QEvent.__init__(self, QtCore.QEvent.User)
 
-class VerticalSpacer(qt.QWidget):
+class VerticalSpacer(QtGui.QWidget):
     def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                                          qt.QSizePolicy.Expanding))
+        QtGui.QWidget.__init__(self, *args)
+        self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
+                                          QtGui.QSizePolicy.Expanding))
 
-class SimpleInfoGroupBox(qt.QGroupBox):
+class SimpleInfoGroupBox(QtGui.QGroupBox):
     def __init__(self, parent, title=None, keys=None):
-        qt.QGroupBox.__init__(self, parent)
-        self.mainLayout = qt.QGridLayout(self)
+        QtGui.QGroupBox.__init__(self, parent)
+        self.mainLayout = QtGui.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         if title is not None:
@@ -66,9 +61,9 @@ class SimpleInfoGroupBox(qt.QGroupBox):
     def _build(self):
         i = 0
         for key in self.keyList:
-            label = qt.QLabel(self)
+            label = QtGui.QLabel(self)
             label.setText(key)
-            line = qt.QLineEdit(self)
+            line = QtGui.QLineEdit(self)
             line.setReadOnly(True)
             self.mainLayout.addWidget(label, i, 0)
             self.mainLayout.addWidget(line, i, 1)
@@ -120,23 +115,23 @@ class DimensionGroupBox(SimpleInfoGroupBox):
     def _getMappedDict(self, ddict):
         return copy.deepcopy(ddict)
 
-class MembersGroupBox(qt.QGroupBox):
+class MembersGroupBox(QtGui.QGroupBox):
     def __init__(self, parent):
-        qt.QGroupBox.__init__(self, parent)
-        self.mainLayout = qt.QVBoxLayout(self)
+        QtGui.QGroupBox.__init__(self, parent)
+        self.mainLayout = QtGui.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.setTitle("Group Members")
-        self.label = qt.QLabel(self)
+        self.label = QtGui.QLabel(self)
         self.label.setText("Number of members: 0")
-        self.table = qt.QTableWidget(self)
+        self.table = QtGui.QTableWidget(self)
         self.table.setColumnCount(2)
         labels = ["Name", "Type"]
         for i in [0, 1]:
             item = self.table.horizontalHeaderItem(i)
             if item is None:
-                item = qt.QTableWidgetItem(labels[i],
-                                           qt.QTableWidgetItem.Type)
+                item = QtGui.QTableWidgetItem(labels[i],
+                                           QtGui.QTableWidgetItem.Type)
             item.setText(labels[i])
             self.table.setHorizontalHeaderItem(i, item)        
         self.mainLayout.addWidget(self.label)
@@ -160,18 +155,18 @@ class MembersGroupBox(qt.QGroupBox):
         for key in keylist:
             item = self.table.item(row, 0)
             if item is None:
-                item = qt.QTableWidgetItem(key, qt.QTableWidgetItem.Type)
-                item.setFlags(qt.Qt.ItemIsSelectable|
-                                  qt.Qt.ItemIsEnabled)
+                item = QtGui.QTableWidgetItem(key, QtGui.QTableWidgetItem.Type)
+                item.setFlags(QtCore.Qt.ItemIsSelectable|
+                                  QtCore.Qt.ItemIsEnabled)
                 self.table.setItem(row, 0, item)
             else:
                 item.setText(key)
             info = ddict[key]['Type']
             item = self.table.item(row, 1)
             if item is None:
-                item = qt.QTableWidgetItem(info, qt.QTableWidgetItem.Type)
-                item.setFlags(qt.Qt.ItemIsSelectable|
-                                  qt.Qt.ItemIsEnabled)
+                item = QtGui.QTableWidgetItem(info, QtGui.QTableWidgetItem.Type)
+                item.setFlags(QtCore.Qt.ItemIsSelectable|
+                                  QtCore.Qt.ItemIsEnabled)
                 self.table.setItem(row, 1, item)
             else:
                 item.setText(info)
@@ -180,10 +175,10 @@ class MembersGroupBox(qt.QGroupBox):
         self.table.resizeColumnToContents(1)
         #self.show()
         
-class HDF5GeneralInfoWidget(qt.QWidget):
+class HDF5GeneralInfoWidget(QtGui.QWidget):
     def __init__(self, parent=None, ddict=None):
-        qt.QWidget.__init__(self, parent)
-        self.mainLayout = qt.QVBoxLayout(self)
+        QtGui.QWidget.__init__(self, parent)
+        self.mainLayout = QtGui.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.nameWidget = NameGroupBox(self)
@@ -215,22 +210,22 @@ class HDF5GeneralInfoWidget(qt.QWidget):
         self.dimensionWidget.hide()
 
 
-class HDF5AttributesInfoWidget(qt.QWidget):
+class HDF5AttributesInfoWidget(QtGui.QWidget):
     def __init__(self, parent):
-        qt.QGroupBox.__init__(self, parent)
-        self.mainLayout = qt.QVBoxLayout(self)
+        QtGui.QGroupBox.__init__(self, parent)
+        self.mainLayout = QtGui.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        self.label = qt.QLabel(self)
+        self.label = QtGui.QLabel(self)
         self.label.setText("Number of members: 0")
-        self.table = qt.QTableWidget(self)
+        self.table = QtGui.QTableWidget(self)
         labels = ["Name", "Value", "Type", "Size"]
         self.table.setColumnCount(len(labels))
         for i in range(len(labels)):
             item = self.table.horizontalHeaderItem(i)
             if item is None:
-                item = qt.QTableWidgetItem(labels[i],
-                                           qt.QTableWidgetItem.Type)
+                item = QtGui.QTableWidgetItem(labels[i],
+                                           QtGui.QTableWidgetItem.Type)
             item.setText(labels[i])
             self.table.setHorizontalHeaderItem(i, item)
         self._tableLabels = labels
@@ -264,9 +259,9 @@ class HDF5AttributesInfoWidget(qt.QWidget):
                 col = self._tableLabels.index(label)
                 item = self.table.item(row, col)
                 if item is None:
-                    item = qt.QTableWidgetItem(text, qt.QTableWidgetItem.Type)
-                    item.setFlags(qt.Qt.ItemIsSelectable|
-                                      qt.Qt.ItemIsEnabled)
+                    item = QtGui.QTableWidgetItem(text, QtGui.QTableWidgetItem.Type)
+                    item.setFlags(QtCore.Qt.ItemIsSelectable|
+                                      QtCore.Qt.ItemIsEnabled)
                     self.table.setItem(row, col, item)
                 else:
                     item.setText(text)
@@ -278,17 +273,17 @@ class HDF5AttributesInfoWidget(qt.QWidget):
         #self.table.resizeColumnToContents(3)
         #self.show()
 
-class HDF5InfoWidget(qt.QTabWidget):
+class HDF5InfoWidget(QtGui.QTabWidget):
     def __init__(self, parent=None, info=None):
-        qt.QTabWidget.__init__(self, parent)
+        QtGui.QTabWidget.__init__(self, parent)
         self._notifyCloseEventToWidget = None
         self._build()
         if info is not None:
             self.setInfoDict(info)
 
     def sizeHint(self):
-        return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
-                        qt.QTabWidget.sizeHint(self).height())
+        return QtCore.QSize(2 * QtGui.QTabWidget.sizeHint(self).width(),
+                        QtGui.QTabWidget.sizeHint(self).height())
                         
     def _build(self):
         self.generalInfoWidget = HDF5GeneralInfoWidget(self)
@@ -309,10 +304,10 @@ class HDF5InfoWidget(qt.QTabWidget):
             ddict['event'] = 'closeEventSignal'
             ddict['id']    = id(self)
             newEvent = HDFInfoCustomEvent(ddict)
-            qt.QApplication.postEvent(self._notifyCloseEventToWidget,
+            QtGui.QApplication.postEvent(self._notifyCloseEventToWidget,
                                       newEvent)
             self._notifyCloseEventToWidget = None
-        return qt.QWidget.closeEvent(self, event)
+        return QtGui.QWidget.closeEvent(self, event)
 
 def getInfo(hdf5File, node):
     data = hdf5File[node]
@@ -339,7 +334,11 @@ def getInfo(hdf5File, node):
         Type =  str(type(Value))
         if type(Value) == type(""):
             Size = "%d" % len(Value)
+        elif type(Value) in [type(1), type(0.0)]:
+            Value = str(Value)
+            Size = "1"
         else:
+            Value = str(Value)
             Size = "Unknown"
         ddict['attributes'][key]['Name']  = Name
         ddict['attributes'][key]['Value'] = Value
@@ -361,7 +360,7 @@ if __name__ == "__main__":
         h = phynx.File(sys.argv[1])
     node = sys.argv[2]
     info = getInfo(h, node)
-    app = qt.QApplication([])
+    app = QtGui.QApplication([])
     w = HDF5InfoWidget()
     w.setInfoDict(info)
     w.show()

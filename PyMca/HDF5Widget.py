@@ -7,13 +7,8 @@ import shutil
 import posixpath
 import gc
 
-try:
-    import PyMca.PyMcaQt as qt
-except ImportError:
-    import PyMcaQt as qt
-
-if qt.qVersion() < '4.0.0':
-    raise ImportError, "PyQt4 not found"
+import PyQt4.QtCore as QtCore
+import PyQt4.QtGui as QtGui
 
 try:
     import PyMca.phynx as phynx
@@ -26,13 +21,13 @@ except:
 
 import weakref
 
-class QRLock(qt.QMutex):
+class QRLock(QtCore.QMutex):
 
     """
     """
 
     def __init__(self):
-        qt.QMutex.__init__(self, qt.QMutex.Recursive)
+        QtCore.QMutex.__init__(self, QtCore.QMutex.Recursive)
 
     def __enter__(self):
         self.lock()
@@ -220,15 +215,15 @@ class H5FileProxy(H5NodeProxy):
             return H5NodeProxy(self.file, self.file[path], self)
 
 
-class FileModel(qt.QAbstractItemModel):
+class FileModel(QtCore.QAbstractItemModel):
 
     """
     """
 
     def __init__(self, parent=None):
-        qt.QAbstractItemModel.__init__(self, parent)
+        QtCore.QAbstractItemModel.__init__(self, parent)
         self.rootItem = RootItem(['File/Group/Dataset', 'Description', 'Shape', 'DType'])
-        self._idMap = {qt.QModelIndex().internalId(): self.rootItem}
+        self._idMap = {QtCore.QModelIndex().internalId(): self.rootItem}
 
     def clearRows(self, index):
         self.getProxyFromIndex(index).clearChildren()
@@ -242,8 +237,8 @@ class FileModel(qt.QAbstractItemModel):
         return 4
 
     def data(self, index, role):
-        if role != qt.Qt.DisplayRole:
-            return qt.QVariant()
+        if role != QtCore.Qt.DisplayRole:
+            return QtCore.QVariant()
         item = self.getProxyFromIndex(index)
         column = index.column()
         if column == 0:
@@ -257,19 +252,19 @@ class FileModel(qt.QAbstractItemModel):
                     if "title" in names:
                         idx = names.index("title")
                         children[idx].getNode().value[0]
-                        return qt.QVariant(children[idx].getNode().value[0])
+                        return QtCore.QVariant(children[idx].getNode().value[0])
             """
             if isinstance(item, H5FileProxy):
-                return qt.QVariant(item.filename)
+                return QtCore.QVariant(item.filename)
             else:
-                return qt.QVariant(posixpath.basename(item.name))
+                return QtCore.QVariant(posixpath.basename(item.name))
         if column == 1:
-            return qt.QVariant(item.type)
+            return QtCore.QVariant(item.type)
         if column == 2:
-            return qt.QVariant(item.shape)
+            return QtCore.QVariant(item.shape)
         if column == 3:
-            return qt.QVariant(item.dtype)
-        return qt.QVariant()
+            return QtCore.QVariant(item.dtype)
+        return QtCore.QVariant()
 
     def getNodeFromIndex(self, index):
         try:
@@ -291,11 +286,11 @@ class FileModel(qt.QAbstractItemModel):
         return self.getProxyFromIndex(index).hasChildren
 
     def headerData(self, section, orientation, role):
-        if orientation == qt.Qt.Horizontal and \
-                role == qt.Qt.DisplayRole:
-            return qt.QVariant(self.rootItem.header[section])
+        if orientation == QtCore.Qt.Horizontal and \
+                role == QtCore.Qt.DisplayRole:
+            return QtCore.QVariant(self.rootItem.header[section])
 
-        return qt.QVariant()
+        return QtCore.QVariant()
 
     def hasIndex(self, row, column, parent):
         parentItem = self.getProxyFromIndex(parent)
@@ -306,7 +301,7 @@ class FileModel(qt.QAbstractItemModel):
     def index(self, row, column, parent):
         parentItem = self.getProxyFromIndex(parent)
         if row >= len(parentItem.children):
-            return qt.QModelIndex()
+            return QtCore.QModelIndex()
         child = parentItem.children[row]
         #force a pointer to child and not use id(child)
         index = self.createIndex(row, column, child)
@@ -317,11 +312,11 @@ class FileModel(qt.QAbstractItemModel):
         child = self.getProxyFromIndex(index)
         parent = child.parent
         if parent == self.rootItem:
-            return qt.QModelIndex()
+            return QtCore.QModelIndex()
         if parent is None:
-            return qt.QModelIndex()
+            return QtCore.QModelIndex()
         if parent.row is None:
-            return qt.QModelIndex()
+            return QtCore.QModelIndex()
         else:
             return self.createIndex(parent.row, 0, parent)
 
@@ -335,7 +330,7 @@ class FileModel(qt.QAbstractItemModel):
                 ddict = {}
                 ddict['event'] = "fileUpdated"
                 ddict['filename'] = filename
-                self.emit(qt.SIGNAL('fileUpdated'), ddict)
+                self.emit(QtCore.SIGNAL('fileUpdated'), ddict)
                 return item.file
         #phynxFile = phynx.File(filename, 'a', lock=QRLock())
         phynxFile = phynx.File(filename, 'r', lock=QRLock())
@@ -356,7 +351,7 @@ class FileModel(qt.QAbstractItemModel):
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = filename
-        self.emit(qt.SIGNAL('fileAppended'), ddict)
+        self.emit(QtCore.SIGNAL('fileAppended'), ddict)
         return phynxFile
 
     def appendPhynxFile(self, phynxFile, weakreference=True):
@@ -380,7 +375,7 @@ class FileModel(qt.QAbstractItemModel):
             ddict = {}
             ddict['event'] = "fileUpdated"
             ddict['filename'] = name
-            self.emit(qt.SIGNAL('fileUpdated'), ddict)
+            self.emit(QtCore.SIGNAL('fileUpdated'), ddict)
             return
             
         if weakreference:
@@ -400,33 +395,33 @@ class FileModel(qt.QAbstractItemModel):
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = name
-        self.emit(qt.SIGNAL('fileAppended'), ddict)
+        self.emit(QtCore.SIGNAL('fileAppended'), ddict)
 
     def clear(self):
         self.reset()
 
 
-class FileView(qt.QTreeView):
+class FileView(QtGui.QTreeView):
     def __init__(self, fileModel, parent=None):
-        qt.QTreeView.__init__(self, parent)
+        QtGui.QTreeView.__init__(self, parent)
         self.setModel(fileModel)
         self.setColumnWidth(0, 250)
         #This removes the children after a double click
         #with no possibility to recover them
         #self.connect(
         #    self,
-        #    qt.SIGNAL('collapsed(QModelIndex)'),
+        #    QtCore.SIGNAL('collapsed(QModelIndex)'),
         #    fileModel.clearRows
         #)
         self.connect(
             fileModel,
-            qt.SIGNAL('fileAppended'),
+            QtCore.SIGNAL('fileAppended'),
             self.fileAppended
         )
 
         self.connect(
             fileModel,
-            qt.SIGNAL('fileUpdated'),
+            QtCore.SIGNAL('fileUpdated'),
             self.fileUpdated
         )
 
@@ -447,38 +442,38 @@ class FileView(qt.QTreeView):
                     item = self.model().getProxyFromIndex(modelIndex)
                     if item.name == ddict['filename']:            
                         self.selectionModel().setCurrentIndex(modelIndex,
-                                              qt.QItemSelectionModel.NoUpdate)
+                                              QtGui.QItemSelectionModel.NoUpdate)
                         self.scrollTo(modelIndex,
-                                      qt.QAbstractItemView.PositionAtTop)
+                                      QtGui.QAbstractItemView.PositionAtTop)
                         break
         self.doItemsLayout()
                     
 class HDF5Widget(FileView):
     def __init__(self, model, parent=None):
         FileView.__init__(self, model, parent)
-        self.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self._adjust()
         if 0:
-            qt.QObject.connect(self,
-                     qt.SIGNAL('activated(QModelIndex)'),
+            QtCore.QObject.connect(self,
+                     QtCore.SIGNAL('activated(QModelIndex)'),
                      self.itemActivated)
 
-        qt.QObject.connect(self,
-                     qt.SIGNAL('clicked(QModelIndex)'),
+        QtCore.QObject.connect(self,
+                     QtCore.SIGNAL('clicked(QModelIndex)'),
                      self.itemClicked)
 
-        qt.QObject.connect(self,
-                     qt.SIGNAL('doubleClicked(QModelIndex)'),
+        QtCore.QObject.connect(self,
+                     QtCore.SIGNAL('doubleClicked(QModelIndex)'),
                      self.itemDoubleClicked)
 
-        qt.QObject.connect(
+        QtCore.QObject.connect(
             self,
-            qt.SIGNAL('collapsed(QModelIndex)'),
+            QtCore.SIGNAL('collapsed(QModelIndex)'),
             self._adjust)
 
-        qt.QObject.connect(
+        QtCore.QObject.connect(
             self,
-            qt.SIGNAL('expanded(QModelIndex)'),
+            QtCore.SIGNAL('expanded(QModelIndex)'),
             self._adjust)
 
     def _adjust(self, modelIndex=None):
@@ -489,16 +484,16 @@ class HDF5Widget(FileView):
         
     def mousePressEvent(self, e):
         button = e.button()
-        if button == qt.Qt.LeftButton:
+        if button == QtCore.Qt.LeftButton:
             self._lastMouse = "left"
-        elif button == qt.Qt.RightButton:
+        elif button == QtCore.Qt.RightButton:
             self._lastMouse = "right"
-        elif button == qt.Qt.MidButton:
+        elif button == QtCore.Qt.MidButton:
             self._lastMouse = "middle"
         else:
             #Should I set it to no button?
             self._lastMouse = "left"
-        qt.QTreeView.mousePressEvent(self, e)
+        QtGui.QTreeView.mousePressEvent(self, e)
 
     def itemActivated(self, modelIndex):
         event ="itemActivated"
@@ -525,7 +520,7 @@ class HDF5Widget(FileView):
         ddict['dtype'] = item.dtype
         ddict['shape'] = item.shape
         ddict['mouse'] = self._lastMouse * 1
-        self.emit(qt.SIGNAL("HDF5WidgetSignal"), ddict)
+        self.emit(QtCore.SIGNAL("HDF5WidgetSignal"), ddict)
 
     def getSelectedEntries(self):
         modelIndexList = self.selectedIndexes()
@@ -548,7 +543,7 @@ class HDF5Widget(FileView):
 
 if __name__ == "__main__":
     import sys
-    app = qt.QApplication(sys.argv)
+    app = QtGui.QApplication(sys.argv)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
     #fileModel.openFile('/home/darren/temp/PSI.hdf')
@@ -557,6 +552,6 @@ if __name__ == "__main__":
         print ddict
         if ddict['type'].lower() in ['dataset']:
             print phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape
-    qt.QObject.connect(fileView, qt.SIGNAL("HDF5WidgetSignal"), mySlot)
+    QtCore.QObject.connect(fileView, QtCore.SIGNAL("HDF5WidgetSignal"), mySlot)
     fileView.show()
     sys.exit(app.exec_())

@@ -25,21 +25,22 @@
 # is a problem for you.
 #############################################################################*/
 import os
+import PyQt4.QtCore as QtCore
+import PyQt4.QtGui as QtGui
 import HDF5Widget
-qt = HDF5Widget.qt
 import HDF5Info
 import HDF5CounterTable
 import posixpath
 import weakref
 import gc
 
-class Buttons(qt.QWidget):
+class Buttons(QtGui.QWidget):
     def __init__(self, parent=None):
-        qt.QWidget.__init__(self, parent)
-        self.mainLayout = qt.QGridLayout(self)
+        QtGui.QWidget.__init__(self, parent)
+        self.mainLayout = QtGui.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        self.buttonGroup = qt.QButtonGroup(self)
+        self.buttonGroup = QtGui.QButtonGroup(self)
         self.buttonList = []
         i = 0
         optionList = ['SCAN', 'MCA', 'IMAGE']
@@ -49,24 +50,24 @@ class Buttons(qt.QWidget):
             row = optionList.index(option)
             for action in actionList:
                 col = actionList.index(action)
-                button = qt.QPushButton(self)
+                button = QtGui.QPushButton(self)
                 button.setText(action + " " + option)
                 self.mainLayout.addWidget(button, row, col)
                 self.buttonGroup.addButton(button)
                 self.buttonList.append(button)
         self.connect(self.buttonGroup,
-                     qt.SIGNAL('buttonClicked(QAbstractButton *)'),
+                     QtCore.SIGNAL('buttonClicked(QAbstractButton *)'),
                      self.emitSignal)
 
     def emitSignal(self, button):
         ddict={}
         ddict['event'] = 'buttonClicked'
         ddict['action'] = str(button.text())
-        self.emit(qt.SIGNAL('ButtonsSignal'), ddict)
+        self.emit(QtCore.SIGNAL('ButtonsSignal'), ddict)
 
-class QNexusWidget(qt.QWidget):
+class QNexusWidget(QtGui.QWidget):
     def __init__(self, parent=None):
-        qt.QWidget.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
         self.data = None
         self._dataSourceList = []
         self._oldCntSelection = None
@@ -79,21 +80,21 @@ class QNexusWidget(qt.QWidget):
         self.build()
 
     def build(self):
-        self.mainLayout = qt.QVBoxLayout(self)
-        self.splitter = qt.QSplitter(self)
-        self.splitter.setOrientation(qt.Qt.Vertical)
+        self.mainLayout = QtGui.QVBoxLayout(self)
+        self.splitter = QtGui.QSplitter(self)
+        self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
                                                 self.splitter)
-        self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
+        self.hdf5Widget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
         self.buttons = Buttons(self)
         self.mainLayout.addWidget(self.buttons)
         self.connect(self.hdf5Widget,
-                     qt.SIGNAL('HDF5WidgetSignal'),
+                     QtCore.SIGNAL('HDF5WidgetSignal'),
                      self.hdf5Slot)
         self.connect(self.buttons,
-                     qt.SIGNAL('ButtonsSignal'),
+                     QtCore.SIGNAL('ButtonsSignal'),
                      self.buttonsSlot)
 
     def getWidgetConfiguration(self):
@@ -246,13 +247,13 @@ class QNexusWidget(qt.QWidget):
                 ddict = {}
                 ddict['event'] = "SelectionTypeChanged"
                 ddict['SelectionType'] = selectionType.upper()
-                self.emit(qt.SIGNAL('otherSignals'), ddict)
+                self.emit(QtCore.SIGNAL('otherSignals'), ddict)
             if action.upper() == "ADD":
-                self.emit(qt.SIGNAL("addSelection"), selectionList)
+                self.emit(QtCore.SIGNAL("addSelection"), selectionList)
             if action.upper() == "REMOVE":
-                self.emit(qt.SIGNAL("removeSelection"), selectionList)
+                self.emit(QtCore.SIGNAL("removeSelection"), selectionList)
             if action.upper() == "REPLACE":
-                self.emit(qt.SIGNAL("replaceSelection"), selectionList)
+                self.emit(QtCore.SIGNAL("replaceSelection"), selectionList)
 
     def getEntryList(self):
         return self.hdf5Widget.getSelectedEntries()
@@ -262,7 +263,7 @@ class QNexusWidget(qt.QWidget):
         for key in keyList:
             self._widgetDict[key].close()
             del self._widgetDict[key]
-        return qt.QWidget.closeEvent(self, event)
+        return QtGui.QWidget.closeEvent(self, event)
 
     def _checkWidgetDict(self):
         keyList = self._widgetDict.keys()
@@ -280,7 +281,7 @@ class QNexusWidget(qt.QWidget):
     
 if __name__ == "__main__":
     import sys
-    app = qt.QApplication(sys.argv)
+    app = QtGui.QApplication(sys.argv)
     w = QNexusWidget()
     if 0:
         w.setFile(sys.argv[1])
@@ -295,7 +296,7 @@ if __name__ == "__main__":
     def replaceSelection(sel):
         print sel
     w.show()
-    qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
-    qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
-    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)
+    QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
+    QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)
+    QtCore.QObject.connect(w, QtCore.SIGNAL("replaceSelection"), replaceSelection)
     sys.exit(app.exec_())
