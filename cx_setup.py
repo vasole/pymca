@@ -149,7 +149,12 @@ try:
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False
-includes = []
+
+try:
+    import h5py
+    includes = ['h5py._extras']
+except:
+    includes = []
 if OBJECT3D:
     includes.append("logging")
     excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins",
