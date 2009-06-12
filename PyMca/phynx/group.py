@@ -54,8 +54,8 @@ class h5Group(h5py.Group):
 
         try:
             if sorting_key != 'name':
-                sorting_list = [(o[sortingKey].value, o)
-                               for o in objectList]
+                sorting_list = [(o[sorting_key].value, o)
+                               for o in object_list]
                 sorting_list.sort()
                 return [x[1] for x in sorting_list]
 
