@@ -147,7 +147,9 @@ class QNexusWidget(qt.QWidget):
                 info = self.getInfo(phynxFile, ddict['name'])
                 widget = HDF5Info.HDF5InfoWidget()
                 widget.notifyCloseEventToWidget(self)
-                widget.setWindowTitle(os.path.basename(ddict['file']))
+                title = os.path.basename(ddict['file'])
+                title += " %s" % ddict['name']
+                widget.setWindowTitle(title)
                 wid = id(widget)
                 self._widgetDict[wid] = widget
                 widget.setInfoDict(info)
