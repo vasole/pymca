@@ -38,6 +38,7 @@ class HDF5CounterTable(QtGui.QTableWidget):
     def __init__(self, parent=None):
         QtGui.QTableWidget.__init__(self, parent)
         self.cntList      = []
+        self.aliasList    = []
         self.mcaList      = []
         self.xSelection   = []
         self.ySelection   = []

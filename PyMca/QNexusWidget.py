@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import os
+import sys
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 import HDF5Widget
@@ -33,6 +34,9 @@ import HDF5CounterTable
 import posixpath
 import weakref
 import gc
+import ConfigDict
+if "PyMcaDirs" in sys.modules:
+    import PyMcaDirs
 
 class Buttons(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -78,6 +82,7 @@ class QNexusWidget(QtGui.QWidget):
         self._modelDict = {}
         self._widgetDict = {}
         self._lastWidgetId = None
+        self._dir = None
         self.build()
 
     def build(self):
@@ -94,9 +99,190 @@ class QNexusWidget(QtGui.QWidget):
         self.connect(self.hdf5Widget,
                      QtCore.SIGNAL('HDF5WidgetSignal'),
                      self.hdf5Slot)
+        self.connect(self.cntTable,
+                     QtCore.SIGNAL('customContextMenuRequested(QPoint)'),
+                     self._counterTableCustomMenuSlot)
         self.connect(self.buttons,
                      QtCore.SIGNAL('ButtonsSignal'),
                      self.buttonsSlot)
+
+        # Some convenience functions to customize the table
+        # They could have been included in other class inheriting
+        # this one.
+        self.cntTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        self._cntTableMenu = QtGui.QMenu(self)
+        self._cntTableMenu.addAction(QtCore.QString("Load"),
+                                    self._loadCounterTableConfiguration)
+        self._cntTableMenu.addAction(QtCore.QString("Merge"),
+                                    self._mergeCounterTableConfiguration)
+        self._cntTableMenu.addAction(QtCore.QString("Save"),
+                                    self._saveCounterTableConfiguration)
+        self._cntTableMenu.addSeparator()
+        self._cntTableMenu.addAction(QtCore.QString("Delete All"),
+                                    self._deleteAllCountersFromTable)
+        self._cntTableMenu.addAction(QtCore.QString("Delete Selected"),
+                                    self._deleteSelectedCountersFromTable)
+
+    def _counterTableCustomMenuSlot(self, qpoint):
+        self.getWidgetConfiguration()
+        self._cntTableMenu.exec_(QtGui.QCursor.pos())
+
+    def _getConfigurationFromFile(self, fname):
+        ddict = ConfigDict.ConfigDict()
+        ddict.read(fname)
+
+        keys = ddict.keys
+        if 'PyMca' in keys():
+            ddict = ddict['PyMca']
+        
+        if 'HDF5' not in ddict.keys():
+            msg = QtGui.QMessageBox(self)
+            msg.setIcon(QtGui.QMessageBox.Information)
+            msg.setText("File does not contain HDF5 configuration")
+            msg.exec_()
+            return None
+
+        if 'WidgetConfiguration' not in ddict['HDF5'].keys():
+            msg = QtGui.QMessageBox(self)
+            msg.setIcon(QtGui.QMessageBox.Information)
+            msg.setText("File does not contain HDF5 WidgetConfiguration")
+            msg.exec_()
+            return None
+
+        ddict =ddict['HDF5']['WidgetConfiguration'] 
+        keys = ddict.keys()
+
+        if ('counters' not in keys) or\
+           ('aliases' not in keys):
+            msg = QtGui.QMessageBox(self)
+            msg.setIcon(QtGui.QMessageBox.Information)
+            msg.setText("File does not contain HDF5 counters information")
+            msg.exec_()
+            return None
+
+        if len(ddict['counters']) != len(ddict['aliases']):
+            msg = QtGui.QMessageBox(self)
+            msg.setIcon(QtGui.QMessageBox.Critical)
+            msg.setText("Number of counters does not match number of aliases")
+            msg.exec_()
+            return None
+        
+        return ddict
+
+
+    def _loadCounterTableConfiguration(self):
+        fname = self.getInputFilename()
+        if not len(fname):
+            return
+
+        ddict = self._getConfigurationFromFile(fname)
+        if ddict is not None:
+            self.setWidgetConfiguration(ddict)
+
+    def _mergeCounterTableConfiguration(self):
+        fname = self.getInputFilename()
+        if not len(fname):
+            return
+
+        ddict = self._getConfigurationFromFile(fname)
+        if ddict is None:
+            return
+
+        current = self.getWidgetConfiguration()
+        cntList = ddict['counters']
+        aliasList = ddict['aliases']
+        for i in range(len(cntList)):
+            cnt = cntList[i]
+            if cnt not in current['counters']:
+                current['counters'].append(cnt)
+                current['aliases'].append(aliasList[i])
+
+        self.setWidgetConfiguration(current)
+
+    def _saveCounterTableConfiguration(self):
+        fname = self.getOutputFilename()
+        if not len(fname):
+            return
+        if not fname.endswith('.ini'):
+            fname += '.ini'
+
+        ddict = ConfigDict.ConfigDict()
+        if "PyMcaDirs" in sys.modules:
+            ddict['PyMca'] = {}
+            ddict['PyMca']['HDF5'] = {'WidgetConfiguration':\
+                                      self.getWidgetConfiguration()}
+        else:
+            ddict['HDF5'] ={'WidgetConfiguration':\
+                             self.getWidgetConfiguration()}
+        ddict.write(fname)
+
+    def _deleteAllCountersFromTable(self):
+        self.setWidgetConfiguration(None)
+
+    def _deleteSelectedCountersFromTable(self):
+        itemList = self.cntTable.selectedItems()
+        rowList = []
+        for item in itemList:
+            row = item.row()
+            if row not in rowList:
+                rowList.append(row)
+
+        ddict = {}
+        ddict['counters'] = []
+        ddict['aliases'] = []
+        for i in range(self.cntTable.rowCount()):
+            if i not in rowList:
+                name = str(self.cntTable.item(i, 0).text())
+                alias = str(self.cntTable.item(i, 4).text())
+                ddict['counters'].append(name)
+                ddict['aliases'].append(alias)
+
+        self.setWidgetConfiguration(ddict)
+
+    def getInputFilename(self):
+        if self._dir is None:
+            if "PyMcaDirs" in sys.modules:
+                inidir = PyMcaDirs.inputDir
+            else:
+                inidir = os.getcwd()
+        else:
+            inidir = self._dir
+
+        if not os.path.exists(inidir):
+            inidir = os.getcwd()
+
+        ret = str(QtGui.QFileDialog.getOpenFileName(self,
+                                         "Select a .ini file",
+                                         inidir,
+                                         "*.ini"))
+        if len(ret):
+            self._dir = os.path.dirname(ret)
+            if "PyMcaDirs" in sys.modules:
+                PyMcaDirs.inputDir = os.path.dirname(ret)                
+        return ret
+
+    def getOutputFilename(self):
+        if self._dir is None:
+            if "PyMcaDirs" in sys.modules:
+                inidir = PyMcaDirs.outputDir
+            else:
+                inidir = os.getcwd()
+        else:
+            inidir = self._dir
+
+        if not os.path.exists(inidir):
+            inidir = os.getcwd()
+
+        ret = str(QtGui.QFileDialog.getSaveFileName(self,
+                                         "Select a .ini file",
+                                         inidir,
+                                         "*.ini"))
+        if len(ret):
+            self._dir = os.path.dirname(ret)
+            if "PyMcaDirs" in sys.modules:
+                PyMcaDirs.outputDir = os.path.dirname(ret)                
+        return ret
 
     def getWidgetConfiguration(self):
         cntSelection = self.cntTable.getCounterSelection()
