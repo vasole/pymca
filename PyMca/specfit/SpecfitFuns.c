@@ -45,6 +45,10 @@
 
 
 static PyObject *ErrorObject;
+void lls(double *input, int size, double *output);
+void lls_inv(double *input, int size, double *output);
+void snip1d(double *input, int size, int niter, double *output);
+
 
 typedef struct {
     PyObject_HEAD
@@ -92,6 +96,58 @@ SpecfitFuns_setattr(SpecfitFunsObject *self, char *name,
 }
 
 /* --------------------------------------------------------------------- */
+
+static PyObject *
+SpecfitFuns_snip1d(PyObject *self, PyObject *args)
+{
+    PyObject *input;
+    double niter0 = 50.;
+    int llsflag = 0;
+	PyArrayObject   *input_array;
+	PyArrayObject   *ret;
+	int i, size, niter;
+    npy_intp dimensions[1];
+
+    if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
+        return NULL;
+ 
+	input_array = (PyArrayObject *)
+             PyArray_ContiguousFromObject(input, PyArray_DOUBLE,0,0);
+	size = 1;
+	for (i=0; i<input_array->nd; i++)
+	{
+		size *= input_array->dimensions[i];
+	}
+
+	niter = (int )niter0;
+
+	/* allocate output array */
+	dimensions[0] = size;
+    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
+    if (ret == NULL){
+        Py_DECREF(input_array);
+        return NULL;
+    }
+
+	if (llsflag)
+	{
+		printf("llsflag\n");
+		lls((double *) input_array->data, size, (double *) ret->data);
+	}
+
+	snip1d((double *) input_array->data, size, niter, (double *)ret->data);
+
+	if (llsflag)
+	{
+		printf("llsflag\n");
+		lls_inv((double *) input_array->data, size, (double *) ret->data);
+	}
+
+	Py_DECREF(input_array);
+    return PyArray_Return(ret);
+}
+
+/* end SNIP algorithm */
 
 /* Function SUBAC returning smoothed array */
 
@@ -754,13 +810,13 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
                 if (dhelp <= 15){
                     dhelp = 0.5 * dhelp * dhelp;
                     if (dhelp < 50){
-                        expindex = dhelp * 100;
+                        expindex = (int) (dhelp * 100);
                         *pret += dhelp0 * EXP[expindex]*(1.0 - (dhelp - 0.01 * expindex)) ;
                     }else if (dhelp < 100) {
-                        expindex = dhelp * 10;
+                        expindex = (int) (dhelp * 10);
               *pret += dhelp0 * pow(EXP[expindex]*(1.0 - (dhelp - 0.1 * expindex)),10) ;
                     }else if (dhelp < 1000){
-                        expindex = dhelp;
+                        expindex = (int) (dhelp);
              *pret += dhelp0 * pow(EXP[expindex]*(1.0 - (dhelp - expindex)),20) ;
                     }
                 }
@@ -2208,26 +2264,26 @@ int i;
     if (x < 0){
         x = -x;
         if (x < 50){
-            expindex = x * 100;
+            expindex = (int) (x * 100);
             return EXP[expindex]*(1.0 - (x - 0.01 * expindex)) ;
         }else if (x < 100) {
-            expindex = x * 10;
+            expindex = (int) (x * 10);
             return pow(EXP[expindex]*(1.0 - (x - 0.1 * expindex)),10) ;
         }else if (x < 1000){
-            expindex = x;
+            expindex = (int) x;
             return pow(EXP[expindex]*(1.0 - (x - expindex)),20) ;
         }else if (x < 10000){
-            expindex = x * 0.1;
+            expindex = (int) (x * 0.1);
             return pow(EXP[expindex]*(1.0 - (x - 10.0 * expindex)),30) ;
         }else{
             return 0;
         }
     }else{
         if (x < 50){
-            expindex = x * 100;
+            expindex = (int) (x * 100);
             return 1.0/EXP[expindex]*(1.0 - (x - 0.01 * expindex)) ;
         }else if (x < 100) {
-            expindex = x * 10;
+            expindex = (int) (x * 10);
             return pow(EXP[expindex]*(1.0 - (x - 0.1 * expindex)),-10) ;
         }else{
             return exp(x);
@@ -2706,7 +2762,7 @@ long SpecfitFuns_seek2(long BeginChannel, long EndChannel,
     while (yspec [lld] == 0) {
         lld++;
     }
-    lld = lld + 0.5 * FWHM;
+    lld = lld + (int) (0.5 * FWHM);
 
     channel1 = BeginChannel - nr_factor - 1;
     channel1 = MAX (channel1, lld);
@@ -3819,9 +3875,10 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
 /* List of functions defined in the module */
 
 static PyMethodDef SpecfitFuns_methods[] = {
-    {"subacold",    SpecfitFuns_subacold,    METH_VARARGS},
-    {"subac",        SpecfitFuns_subac,        METH_VARARGS},
-    {"subacfast",        SpecfitFuns_subacfast,        METH_VARARGS},
+    {"snip1d",      SpecfitFuns_snip1d,     METH_VARARGS},
+    {"subacold",    SpecfitFuns_subacold,   METH_VARARGS},
+    {"subac",       SpecfitFuns_subac,      METH_VARARGS},
+    {"subacfast",   SpecfitFuns_subacfast,  METH_VARARGS},
     {"gauss",       SpecfitFuns_gauss,      METH_VARARGS},
     {"agauss",      SpecfitFuns_agauss,     METH_VARARGS},
     {"fastagauss",  SpecfitFuns_fastagauss, METH_VARARGS},
