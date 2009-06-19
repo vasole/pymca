@@ -9,6 +9,7 @@ import os
 import sys
 import threading
 import time
+
 import h5py
 
 from .exceptions import H5Error
@@ -38,19 +39,32 @@ class File(Group, h5py.File):
     def file(self):
         return self
 
+    # maintain forward compatibility with h5py-1.2:
+    @property
+    def filename(self):
+        return self._filename
+
     @property
     def format(self):
         return self.attrs.get('format_version', None)
+
+    # maintain forward compatibility with h5py-1.2:
+    @property
+    def name(self):
+        return '/'
 
     @property
     def parent(self):
         return None
 
-    @property
-    def path(self):
-        return '/'
+    def _get_sorted(self):
+        return self._sorted
+    def _set_sorted(self, val):
+        assert val is None or callable(val)
+        self._sorted = val
+    sorted = property(_get_sorted, _set_sorted)
 
-    def __init__(self, name, mode='a', lock=None, sorting_list=None):
+    def __init__(self, name, mode='a', lock=None, sorted=None):
         """
         Create a new file object.
 
@@ -61,10 +75,8 @@ class File(Group, h5py.File):
         - w-  Create file, fail if exists
         - a   Read/write if exists, create otherwise (default)
 
-        parent is used for used for GUI interfaces
+        sorted is a callable function like python's builtin sorted, or None
         """
-
-        self._sorting_list = sorting_list
 
         h5py.File.__init__(self, name, mode)
         if lock is None:
@@ -78,8 +90,10 @@ class File(Group, h5py.File):
                     'lock must be a context manager, providing __enter__ and '
                     '__exit__ methods'
                 )
-            
         self._plock = lock
+        self._filename = name
+
+        self.sorted = sorted
 
         if self.mode != 'r' and len(self) == 0:
             if 'file_name' not in self.attrs:
@@ -118,5 +132,5 @@ class File(Group, h5py.File):
     @sync
     def list_sorted_entries(self):
         return sorted(
-            h5py.File.listobjects(self), key=operator.attrgetter('acquisition_id')
-            )
+            self.listobjects(), key=operator.attrgetter('acquisition_id')
+        )

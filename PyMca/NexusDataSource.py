@@ -30,6 +30,8 @@ import DataObject
 import os
 import types
 import h5py
+import re
+import posixpath
 
 try:
     import PyMca.phynx as phynx
@@ -41,6 +43,54 @@ except ImportError:
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
+
+def h5py_sorting(object_list):
+    sorting_list = ['start_time', 'end_time', 'name']
+    n = len(object_list)
+    if n < 2:
+        return object_list
+
+    # This implementation only sorts entries
+    if posixpath.dirname(object_list[0].name) != "/":
+        return object_list
+
+    names = object_list[0].keys()
+
+    sorting_key = None
+    for key in sorting_list:
+        if key in names:
+            sorting_key = key
+            break
+        
+    if sorting_key is None:
+        if 'name' in sorting_list:
+            sorting_key = 'name'
+        else:
+            return object_list
+        
+    try:
+        if sorting_key != 'name':
+            sorting_list = [(o[sorting_key].value, o)
+                           for o in object_list]
+            sorting_list.sort()
+            return [x[1] for x in sorting_list]
+
+        if sorting_key == 'name':
+            sorting_list = [(_get_number_list(o.name),o)
+                           for o in object_list]
+            sorting_list.sort()
+            return [x[1] for x in sorting_list]
+    except:
+        #The only way to reach this point is to have different
+        #structures among the different entries. In that case
+        #defaults to the unfiltered case
+        print("WARNING: Default ordering")
+        return object_list
+
+def _get_number_list(txt):
+    rexpr = '[/a-zA-Z:-]'
+    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
+    return nbs
 
 class NexusDataSource:
     def __init__(self,nameInput):
@@ -59,12 +109,13 @@ class NexusDataSource:
     def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
-            try:
+            if 1:#try:
                 phynxInstance = phynx.File(name, 'r', lock=None,
-                                       sorting_list=['start_time',
-                                                     'end_time',
-                                                     'name'])
-            except TypeError:
+                                           sorted=h5py_sorting)
+                                       #sorting_list=['start_time',
+                                       #              'end_time',
+                                       #              'name'])
+            else:#except TypeError:
                 phynxInstance = phynx.File(name, 'r', lock=None)
             phynxInstance._sourceName = name
             self._sourceObjectList.append(phynxInstance)

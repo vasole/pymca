@@ -91,17 +91,8 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             with self.file.plock:
-                if (self.name == "/") and hasattr(self.file, '_sorting_list'):
-                    self._children = [H5NodeProxy(self.file, i, self)
-                                  for i in self.getNode(self.name).listobjects()]
-                else:
-                    self._children = [
-                        H5NodeProxy(self.file, i, self)
-                        for i in sorted(
-                            self.getNode(self.name).listobjects(),
-                            key=operator.attrgetter('name')
-                        )
-                    ]
+                self._children = [H5NodeProxy(self.file, i, self)
+                                  for i in self.getNode(self.name).values()]
         return self._children
 
     @property
@@ -243,8 +234,8 @@ class FileModel(QtCore.QAbstractItemModel):
         column = index.column()
         if column == 0:
             """
-            #I would expect the title to be the proper
-            #thing to show ...
+            # I would expect the title to be the proper
+            # thing to show ...
             if hasattr(item, 'type'):
                 if item.type == "Entry":
                     children = item.children
@@ -255,7 +246,7 @@ class FileModel(QtCore.QAbstractItemModel):
                         return QtCore.QVariant(children[idx].getNode().value[0])
             """
             if isinstance(item, H5FileProxy):
-                return QtCore.QVariant(item.filename)
+                return QtCore.QVariant(item.file.filename)
             else:
                 return QtCore.QVariant(posixpath.basename(item.name))
         if column == 1:
@@ -513,8 +504,7 @@ class HDF5Widget(FileView):
         ddict = {}
         item  = self.model().getProxyFromIndex(modelIndex)        
         ddict['event'] = event
-        ddict['file']  = item.file.name
-        ####ddict['path']  = item.path
+        ddict['file']  = item.file.filename
         ddict['name']  = item.name
         ddict['type']  = item.type
         ddict['dtype'] = item.dtype
@@ -537,7 +527,7 @@ class HDF5Widget(FileView):
                 continue
             entry = "/" + path.split("/")[1]
             if entry not in entryList:
-                entryList.append((entry, item.file.name))
+                entryList.append((entry, item.file.filename))
         return entryList
 
 
