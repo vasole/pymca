@@ -317,7 +317,9 @@ def getInfo(hdf5File, node):
     ddict['general']['Name'] = posixpath.basename(data.name)
     ddict['general']['Path'] = data.name
     ddict['general']['Type'] = str(data)
-    if hasattr(data, "listnames"):
+    if hasattr(data, "keys"):
+        ddict['general']['members'] = data.keys()
+    elif hasattr(data, "listnames"):
         ddict['general']['members'] = data.listnames()
     else:
         ddict['general']['members'] = []
@@ -325,7 +327,12 @@ def getInfo(hdf5File, node):
         ddict['general'][member] = {}
         ddict['general'][member]['Name'] = str(member)
         ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
-    ddict['attributes']['names'] = data.attrs.listnames()
+    if hasattr(data.attrs, "keys"):
+        ddict['attributes']['names'] = data.attrs.keys()
+    elif hasattr(data.attrs, "listnames"):
+        ddict['attributes']['names'] = data.attrs.listnames()
+    else:
+        ddict['attributes']['names'] = []
     ddict['attributes']['names'].sort()
     for key in ddict['attributes']['names']:
         ddict['attributes'][key] = {}

@@ -415,7 +415,7 @@ class QNexusWidget(QtGui.QWidget):
                 sel['SourceType'] = "HDF5"
                 fileIndex = self.data.sourceName.index(filename)
                 phynxFile  = self.data._sourceObjectList[fileIndex]
-                entryIndex = phynxFile["/"].listnames().index(entry[1:])
+                entryIndex = phynxFile["/"].keys().index(entry[1:])
                 sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['legend']     = os.path.basename(sel['SourceName'][0])+\
                                     " " + sel['Key']

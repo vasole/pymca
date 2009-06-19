@@ -140,7 +140,7 @@ class NexusDataSource:
         i = 0
         for sourceObject in self._sourceObjectList:
             i+=1
-            nEntries = len(sourceObject["/"].listnames())
+            nEntries = len(sourceObject["/"].keys())
             for n in range(nEntries):
                 SourceInfo["KeyList"].append("%d.%d" % (i,n+1))   
         SourceInfo["Size"]=len(SourceInfo["KeyList"])
@@ -187,7 +187,7 @@ class NexusDataSource:
             entry     = selection['entry']
             fileIndex  = self.__sourceNameList.index(filename)
             phynxFile =  self._sourceObjectList[fileIndex]
-            entryIndex = phynxFile["/"].listnames().index(entry[1:])
+            entryIndex = phynxFile["/"].keys().index(entry[1:])
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
         else:
             sourcekeys = self.getSourceInfo()['KeyList']
