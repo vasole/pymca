@@ -6,9 +6,6 @@ from __future__ import absolute_import, with_statement
 import posixpath
 
 import h5py
-if h5py.version.version < '1.2.0':
-    print "Please update h5py to version >= 1.2.0"
-
 import numpy as np
 
 from .base import _PhynxProperties
@@ -123,17 +120,11 @@ class Group(h5py.Group, _PhynxProperties):
 
     @sync
     def get_sorted_axes_list(self, direction=1):
-        try:
-            return sorted([a for a in self.axes.values() if a.axis==direction])
-        except AttributeError:
-            return sorted([a for a in self.axes.listobjects() if a.axis==direction])            
+        return sorted([a for a in self.axes.values() if a.axis==direction])
 
     @sync
     def get_sorted_signals_list(self, direction=1):
-        try:
-            return sorted([s for s in self.signals.values()])
-        except AttributeError:
-            return sorted([s for s in self.signals.objects()])
+        return sorted([s for s in self.signals.values()])
 
     def create_dataset(self, name, *args, **kwargs):
         type = kwargs.pop('type', 'Dataset')
@@ -179,14 +170,16 @@ class Group(h5py.Group, _PhynxProperties):
         try:
             values = super(Group, self).values()
         except AttributeError:
+            print "Please update to h5py-1.2"
             values = super(Group, self).listobjects()
         try:
-            return self.file.sorted(values)
+            return self.file._sorted(values)
         except TypeError:
             return values
 
     @sync
     def listnames(self):
+        print "listnames is deprecated, use keys"
         return self.keys()
 
     @sync
@@ -201,5 +194,6 @@ class Group(h5py.Group, _PhynxProperties):
     @sync
     def items(self):
         return [(posixpath.split(i.name)[-1], i) for i in self.values()]
+
 
 registry.register(Group)

@@ -111,7 +111,7 @@ class NexusDataSource:
         for name in self.__sourceNameList:
             if 1:#try:
                 phynxInstance = phynx.File(name, 'r', lock=None,
-                                           sorted=h5py_sorting)
+                                           sorted_with=h5py_sorting)
                                        #sorting_list=['start_time',
                                        #              'end_time',
                                        #              'name'])

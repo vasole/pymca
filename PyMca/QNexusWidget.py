@@ -83,6 +83,7 @@ class QNexusWidget(QtGui.QWidget):
         self._widgetDict = {}
         self._lastWidgetId = None
         self._dir = None
+        self._lastAction = None
         self.build()
 
     def build(self):
@@ -326,37 +327,47 @@ class QNexusWidget(QtGui.QWidget):
     def setFile(self, filename):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
 
+    def showInfoWidget(self, filename, name):
+        self._checkWidgetDict()
+        fileIndex = self.data.sourceName.index(filename)
+        phynxFile  = self.data._sourceObjectList[fileIndex]
+        info = self.getInfo(phynxFile, name)
+        widget = HDF5Info.HDF5InfoWidget()
+        widget.notifyCloseEventToWidget(self)
+        title = os.path.basename(filename)
+        title += " %s" % name
+        widget.setWindowTitle(title)
+        wid = id(widget)
+        if self._lastWidgetId is not None:
+            try:
+                width = self._widgetDict[self._lastWidgetId].width()
+                height = self._widgetDict[self._lastWidgetId].height()
+                widget.resize(max(150, width), max(150, height))
+            except:
+                pass
+        self._lastWidgetId = wid
+        self._widgetDict[wid] = widget
+        widget.setInfoDict(info)
+        widget.show()
+
+    def itemRightClickedSlot(self, ddict):
+        filename = ddict['file']
+        name = ddict['name']
+        """
+        if ddict['type'] == 'Dataset':
+            if ddict['dtype'].startswith('|S'):
+                #print "string"
+                pass
+            else:
+                #print "dataset"
+                pass                
+        """
+        return self.showInfoWidget(filename, name)
+        
     def hdf5Slot(self, ddict):
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
-                self._checkWidgetDict()
-                fileIndex = self.data.sourceName.index(ddict['file'])
-                phynxFile  = self.data._sourceObjectList[fileIndex]
-                info = self.getInfo(phynxFile, ddict['name'])
-                widget = HDF5Info.HDF5InfoWidget()
-                widget.notifyCloseEventToWidget(self)
-                title = os.path.basename(ddict['file'])
-                title += " %s" % ddict['name']
-                widget.setWindowTitle(title)
-                wid = id(widget)
-                if self._lastWidgetId is not None:
-                    try:
-                        width = self._widgetDict[self._lastWidgetId].width()
-                        height = self._widgetDict[self._lastWidgetId].height()
-                        widget.resize(max(150, width), max(150, height))
-                    except:
-                        pass
-                self._lastWidgetId = wid
-                self._widgetDict[wid] = widget
-                widget.setInfoDict(info)
-                widget.show()
-                if ddict['type'] == 'Dataset':
-                    if ddict['dtype'].startswith('|S'):
-                        #print "string"
-                        pass
-                    else:
-                        #print "dataset"
-                        pass                
+                return self.itemRightClickedSlot(ddict)
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'] == 'Dataset':
                 if ddict['dtype'].startswith('|S'):
@@ -374,7 +385,13 @@ class QNexusWidget(QtGui.QWidget):
                             self._aliasList.append(cnt)
                         self.cntTable.build(self._cntList, self._aliasList)
             if ddict['type'] == 'Entry':
-                print "I should apply latest selection"
+                if self._lastAction is None:
+                    return
+                action, selectionType = self._lastAction.split()
+                if action == 'REMOVE':
+                    action = 'ADD'
+                ddict['action'] = "%s %s" % (action, selectionType)
+                self.buttonsSlot(ddict)
 
     def buttonsSlot(self, ddict):
         if self.data is None:
@@ -437,6 +454,7 @@ class QNexusWidget(QtGui.QWidget):
                     sel['scanselection'] = False
                     sel['mcaselection']  = False
                 selectionList.append(sel)
+        self._lastAction = "%s" % ddict['action']
         if len(selectionList):
             if selectionType.upper() in ["SCAN", "MCA"]:
                 ddict = {}
