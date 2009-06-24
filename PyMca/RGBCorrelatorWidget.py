@@ -625,6 +625,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *.dat",
                       "EDF Files *.edf",
+                      "EDF(Float32) Files *.edf",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
@@ -833,7 +834,11 @@ class RGBCorrelatorWidget(qt.QWidget):
             labels.append(label.replace(" ","_"))
             
         if filename[-4:].lower() == ".edf":
-            ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
+            if 'Float32'in self._saveFilter:
+                dtype = Numeric.Float32
+                ArraySave.save2DArrayListAsEDF(datalist, filename, labels, dtype)
+            else:
+                ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
         elif filename[-4:].lower() == ".csv":
             if "," in self._saveFilter:
                 csvseparator = ","

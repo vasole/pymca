@@ -77,7 +77,7 @@ def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvsepa
     filehandle.write("\n") 
     filehandle.close()
 
-def save2DArrayListAsEDF(datalist, filename, labels = None):
+def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
     if type(datalist) != type([]):
         datalist = [datalist]
     ndata = len(datalist)
@@ -94,5 +94,10 @@ def save2DArrayListAsEDF(datalist, filename, labels = None):
         raise ValueError, "Incorrect number of labels"
     edfout   = EdfFile.EdfFile(filename)
     for i in range(ndata):
-        edfout.WriteImage ({'Title':labels[i]} , datalist[i], Append=1)
+        if dtype is None:
+            edfout.WriteImage ({'Title':labels[i]} , datalist[i], Append=1)
+        else:
+            edfout.WriteImage ({'Title':labels[i]} ,
+                               datalist[i].astype(dtype),
+                               Append=1)
     del edfout #force file close
