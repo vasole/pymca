@@ -92,7 +92,7 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
 
     /* Do the job */
     outputPointer = (unsigned int *) outputArray->data;
-    while(fscanf(fd, "%2c%c%c", &channel, &x, &y) == 3)
+    while(fscanf(fd, "%2c%c%c", (char *)&channel, &x, &y) == 3)
     {
         if (channel >= nChannels)
         {

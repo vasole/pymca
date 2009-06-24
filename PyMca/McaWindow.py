@@ -1896,6 +1896,9 @@ class McaWidget(qt.QWidget):
                     xhelp = xhelp[0] * Numeric.ones(ylen).astype(Numeric.Float)
                     dataObject.x = [xhelp]
 
+                if not hasattr(dataObject, 'm'):
+                    dataObject.m = None
+
                 if dataObject.m is not None:
                     if len(dataObject.m[0]) > 0:
                         mdata = dataObject.m[0]
