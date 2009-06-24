@@ -1575,14 +1575,14 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
  if (step == 0.0) {
    *xdata = (double *)malloc(sizeof(double));
    if (*xdata == (double *)NULL) {
-     fprintf(stderr, "Malloc Error in GetDataDistribution 1 (size=%d), Exit\n",
+     fprintf(stderr, "Malloc Error in GetDataDistribution 1 (size=%lud), Exit\n",
                      sizeof(double));
      exit(2);
    }
 
    *ydata = (double *)malloc(sizeof(double)*2); /* on a honte */
    if (*ydata == (double *)NULL) {
-     fprintf(stderr, "Malloc Error in GetDataDistribution 2 (size=%d), Exit\n",
+     fprintf(stderr, "Malloc Error in GetDataDistribution 2 (size=%lud), Exit\n",
                      sizeof(double)*2);
      exit(2);
    }
@@ -1595,14 +1595,14 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
 
  *xdata = (double *)malloc(sizeof(double)*nbar);
  if (*xdata == (double *)NULL) {
-   fprintf(stderr, "Malloc Error in GetDataDistribution 3 (size=%d), Exit\n",
+   fprintf(stderr, "Malloc Error in GetDataDistribution 3 (size=%lud), Exit\n",
                    sizeof(double)*nbar);
    exit(2);
  }
 
  *ydata = (double *)malloc(sizeof(double)*(nbar+1)); /* on a honte */
  if (*ydata == (double *)NULL) {
-   fprintf(stderr, "Malloc Error in GetDataDistribution 4 (size=%d), Exit\n",
+   fprintf(stderr, "Malloc Error in GetDataDistribution 4 (size=%lud), Exit\n",
                    sizeof(double)*(nbar+1));
    exit(2);
  }
