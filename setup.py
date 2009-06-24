@@ -83,7 +83,7 @@ packages = ['PyMca']
 
 sources = glob.glob('*.c')
 if sys.platform == "win32":
-    define_macros = [('WIN32',None)]
+    define_macros = [('WIN32',None), ('_WINDOWS', None)]
     script_files = []
     script_files.append('scripts/pymca_win_post_install.py')
 else:

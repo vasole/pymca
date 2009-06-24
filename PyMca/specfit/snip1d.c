@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #ifndef WIN32
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))

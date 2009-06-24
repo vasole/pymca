@@ -26,6 +26,7 @@
 #############################################################################*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 /* AS + AM */
 //#ifdef __linux__
 #if 0

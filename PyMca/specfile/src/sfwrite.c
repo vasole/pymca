@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /*char RcsId[] = "$Header: /segfs/bliss/source/python/specfile/specfile-3.1/src/RCS/sfwrite.c,v 1.1 2003/09/12 13:20:35 rey Exp $"; */
 /************************************************************************
@@ -234,7 +234,7 @@ SfoSelectOne( SpecFileOut *sfo, long index, int *error )
       }
      }     
      sfo->list[sfo->list_size-1] = index;
-     printf("Adding scan %d\n",index);
+     printf("Adding scan %ld\n",index);
 
      return( sfo->list_size );
 }
@@ -577,7 +577,7 @@ sfoWriteOne(SpecFileOut *sfo,int output,long index,int *error)
    file_header = ((SpecScan *)sf->current->contents)->size;
 
    if (file_header != -1  && file_header != sfo->file_header ) {
-        printf("Writing %d bytes\n",sf->filebuffersize);
+        printf("Writing %ld bytes\n",sf->filebuffersize);
         write(output, (void *) sf->filebuffer, sf->filebuffersize);
         sfo->file_header = file_header;
    }
