@@ -488,9 +488,9 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -617,9 +617,9 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -760,9 +760,9 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -908,9 +908,9 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1082,9 +1082,9 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1247,9 +1247,9 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1372,9 +1372,9 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1498,9 +1498,9 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1627,9 +1627,9 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1756,9 +1756,9 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1857,7 +1857,7 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -1937,7 +1937,7 @@ SpecfitFuns_erf(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -2084,9 +2084,9 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -2405,9 +2405,9 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     }
 
     if(debug !=0) {
-        printf("parameters %d raws and %d cols\n",dim_param[0],dim_param[1]);
+        printf("parameters %d raws and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
         printf("nparameters = %d\n",npars);
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */
@@ -3475,7 +3475,7 @@ SpecfitFuns_pileup(PyObject *self, PyObject *args)
         }
     }
     if(debug !=0) {
-        printf("x %d raws and %d cols\n",dim_x[0],dim_x[1]);
+        printf("x %d raws and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
     }
 
     /* Create the output array */

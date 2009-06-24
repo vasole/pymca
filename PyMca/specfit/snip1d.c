@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+#include <stdlib.h>
 #include <math.h>
 #ifndef WIN32
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
