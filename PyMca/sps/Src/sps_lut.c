@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
+#include <stdlib.h>
 #include <stdio.h>
 /* AS + AM */
 //#ifdef __linux__
@@ -83,8 +84,11 @@
 #include <sps_lut.h>
 #include <blissmalloc.h>
 
-#ifndef HPUX
+#ifndef log10f
 #define log10f log10
+#endif
+
+#ifndef powf
 #define powf pow
 #endif
 
