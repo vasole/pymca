@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /*char RcsId[] = "$Header: /segfs/bliss/source/python/specfile/specfile-3.1/src/RCS/sflists.c,v 1.1 2003/03/06 17:00:42 sole Exp $"; */
 /************************************************************************
@@ -53,6 +53,7 @@
  * New version of the library. Complete rewrite
  * Adds support for MCA
  */
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <Lists.h>
