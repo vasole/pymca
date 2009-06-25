@@ -57,13 +57,6 @@ class File(Group, h5py.File):
     def parent(self):
         return None
 
-    def _get_sorted(self):
-        return self._sorted
-    def _set_sorted(self, val):
-        assert val is None or callable(val)
-        self._sorted = val
-    sorted = property(_get_sorted, _set_sorted)
-
     def __init__(self, name, mode='a', lock=None, sorted_with=None):
         """
         Create a new file object.
