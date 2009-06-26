@@ -109,13 +109,13 @@ class NexusDataSource:
     def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
-            if 1:#try:
+            try:
                 phynxInstance = phynx.File(name, 'r', lock=None,
                                            sorted_with=h5py_sorting)
                                        #sorting_list=['start_time',
                                        #              'end_time',
                                        #              'name'])
-            else:#except TypeError:
+            except TypeError:
                 phynxInstance = phynx.File(name, 'r', lock=None)
             phynxInstance._sourceName = name
             self._sourceObjectList.append(phynxInstance)

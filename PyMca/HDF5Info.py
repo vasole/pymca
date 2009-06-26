@@ -102,8 +102,27 @@ class SimpleInfoGroupBox(QtGui.QGroupBox):
             self.keyDict[key][1].setText(str(value))
 
 class NameGroupBox(SimpleInfoGroupBox):
-    def __init__(self, parent, title=None, keys=["Name", "Path", "Type"]):
-        SimpleInfoGroupBox.__init__(self, parent, title=title, keys=keys)
+    def __init__(self, parent, title=None, keys=[]):
+        SimpleInfoGroupBox.__init__(self, parent, title=title, keys=["Name", "Path", "Type"])
+
+    def setInfoDict(self, ddict):
+        key = "Value"
+        if key in ddict.keys():
+            if key not in self.keyList:
+                self.keyList.append(key)
+                label = QtGui.QLabel(self)
+                label.setText(key)
+                line = QtGui.QLineEdit(self)
+                line.setReadOnly(True)
+                i = self.keyList.index(key)
+                self.mainLayout.addWidget(label, i, 0)
+                self.mainLayout.addWidget(line, i, 1)
+                self.keyDict[key] = (label, line)
+        if ddict.has_key('Path'):
+            if ddict['Path'] == "/":
+                if ddict.has_key('Name'):
+                    self.keyDict['Name'][0].setText("File")
+        SimpleInfoGroupBox.setInfoDict(self, ddict)
 
 class DimensionGroupBox(SimpleInfoGroupBox):
     def __init__(self, parent, title=None, keys=None):
@@ -125,15 +144,21 @@ class MembersGroupBox(QtGui.QGroupBox):
         self.label = QtGui.QLabel(self)
         self.label.setText("Number of members: 0")
         self.table = QtGui.QTableWidget(self)
-        self.table.setColumnCount(2)
-        labels = ["Name", "Type"]
-        for i in [0, 1]:
+        #labels = ["Name", "Type", "Shape", "Value"]
+        labels = ["Name", "Value", "Type"]
+        nlabels = len(labels)
+        self.table.setColumnCount(nlabels)
+        rheight = self.table.horizontalHeader().sizeHint().height()
+        self.table.setMinimumHeight(12*rheight)
+        self.table.setMaximumHeight(20*rheight)
+        for i in range(nlabels):
             item = self.table.horizontalHeaderItem(i)
             if item is None:
                 item = QtGui.QTableWidgetItem(labels[i],
                                            QtGui.QTableWidgetItem.Type)
             item.setText(labels[i])
-            self.table.setHorizontalHeaderItem(i, item)        
+            self.table.setHorizontalHeaderItem(i, item)
+        self._tableLabels = labels
         self.mainLayout.addWidget(self.label)
         self.mainLayout.addWidget(self.table)
 
@@ -149,8 +174,10 @@ class MembersGroupBox(QtGui.QGroupBox):
             self.table.setRowCount(nrows)
             self.hide()
             return
-        self.table.setRowCount(nrows)        
-        keylist.sort()
+        self.table.setRowCount(nrows)
+        if ddict['Path'] != '/':
+            #this could distroy ordering ...
+            keylist.sort()
         row = 0
         for key in keylist:
             item = self.table.item(row, 0)
@@ -161,19 +188,22 @@ class MembersGroupBox(QtGui.QGroupBox):
                 self.table.setItem(row, 0, item)
             else:
                 item.setText(key)
-            info = ddict[key]['Type']
-            item = self.table.item(row, 1)
-            if item is None:
-                item = QtGui.QTableWidgetItem(info, QtGui.QTableWidgetItem.Type)
-                item.setFlags(QtCore.Qt.ItemIsSelectable|
-                                  QtCore.Qt.ItemIsEnabled)
-                self.table.setItem(row, 1, item)
-            else:
-                item.setText(info)
+            for label in self._tableLabels[1:]:
+                if not ddict[key].has_key(label):
+                    continue
+                col = self._tableLabels.index(label)
+                info = ddict[key][label]
+                item = self.table.item(row, col)    
+                if item is None:
+                    item = QtGui.QTableWidgetItem(info, QtGui.QTableWidgetItem.Type)
+                    item.setFlags(QtCore.Qt.ItemIsSelectable|
+                                      QtCore.Qt.ItemIsEnabled)
+                    self.table.setItem(row, col, item)
+                else:
+                    item.setText(info)                    
             row += 1
-        #self.table.resizeColumnToContents(0)
-        self.table.resizeColumnToContents(1)
-        #self.show()
+        for i in range(self.table.columnCount()):
+            self.table.resizeColumnToContents(i)
         
 class HDF5GeneralInfoWidget(QtGui.QWidget):
     def __init__(self, parent=None, ddict=None):
@@ -267,12 +297,10 @@ class HDF5AttributesInfoWidget(QtGui.QWidget):
                     item.setText(text)
             row += 1
 
-        #self.table.resizeColumnToContents(0)
-        #self.table.resizeColumnToContents(1)
-        #self.table.resizeColumnToContents(2)
-        #self.table.resizeColumnToContents(3)
-        #self.show()
-
+        #for i in range(self.table.columnCount()):
+        self.table.resizeColumnToContents(1)
+        self.table.resizeColumnToContents(3)
+        
 class HDF5InfoWidget(QtGui.QTabWidget):
     def __init__(self, parent=None, info=None):
         QtGui.QTabWidget.__init__(self, parent)
@@ -314,9 +342,20 @@ def getInfo(hdf5File, node):
     ddict = {}
     ddict['general'] = {}
     ddict['attributes'] = {}
-    ddict['general']['Name'] = posixpath.basename(data.name)
     ddict['general']['Path'] = data.name
+    if ddict['general']['Path'] != "/":
+        ddict['general']['Name'] = posixpath.basename(data.name)
+    else:
+        ddict['general']['Name'] = data.file.filename
     ddict['general']['Type'] = str(data)
+    if hasattr(data, 'dtype'):
+        if ("%s" % data.dtype).startswith("|S"):
+            ddict['general']['Value'] = "%s" % data.value[0]
+        elif hasattr(data, 'shape'):
+            shape = data.shape
+            if len(shape) == 1:
+                if shape[0] == 1:
+                    ddict['general']['Value'] = "%s" % data.value[0]
     if hasattr(data, "keys"):
         ddict['general']['members'] = data.keys()
     elif hasattr(data, "listnames"):
@@ -326,7 +365,40 @@ def getInfo(hdf5File, node):
     for member in ddict['general']['members']:
         ddict['general'][member] = {}
         ddict['general'][member]['Name'] = str(member)
-        ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+        if ddict['general']['Path'] == "/":
+            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+            continue
+        memberObject = hdf5File[node][member]            
+        if hasattr(memberObject, 'shape'):
+            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+            dtype = memberObject.dtype
+            if hasattr(memberObject, 'shape'):
+                shape = memberObject.shape
+                if ("%s" % dtype).startswith("|S"):
+                    if not len(shape):
+                        ddict['general'][member]['Shape'] = ""
+                        ddict['general'][member]['Value'] = "%s" % memberObject.value
+                    else:
+                        ddict['general'][member]['Shape'] = shape[0]
+                        ddict['general'][member]['Value'] = "%s" % memberObject.value[0]
+                    continue
+                ddict['general'][member]['Shape'] = "%d" % shape[0]
+                for i in range(1, len(shape)):
+                    ddict['general'][member]['Shape'] += " x %d" % shape[i]
+                if len(shape) == 1:
+                    if shape[0] == 1:
+                        ddict['general'][member]['Value'] = "%s" % memberObject.value[0]
+                    else:
+                        ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject.value[0],
+                                                                             memberObject.value[-1])
+                elif len(shape) == 2:
+                    ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject.value[0],
+                                                                         memberObject.value[-1])                                                                         
+                else:
+                    pass
+        else:
+            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+
     if hasattr(data.attrs, "keys"):
         ddict['attributes']['names'] = data.attrs.keys()
     elif hasattr(data.attrs, "listnames"):
@@ -362,6 +434,11 @@ if __name__ == "__main__":
     if 1:
         import h5py
         h=h5py.File(sys.argv[1])
+    elif 0:
+        from PyMca import phynx
+        import NexusDataSource
+        h = phynx.File(sys.argv[1], 'r', lock=None,
+                                   sorted_with=NexusDataSource.h5py_sorting)        
     else:
         from PyMca import phynx
         h = phynx.File(sys.argv[1])
