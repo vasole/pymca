@@ -246,7 +246,7 @@ class FileModel(QtCore.QAbstractItemModel):
                         return QtCore.QVariant(children[idx].getNode().value[0])
             """
             if isinstance(item, H5FileProxy):
-                return QtCore.QVariant(item.file.filename)
+                return QtCore.QVariant(os.path.basename(item.file.filename))
             else:
                 return QtCore.QVariant(posixpath.basename(item.name))
         if column == 1:

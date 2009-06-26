@@ -219,6 +219,11 @@ class QNexusWidget(QtGui.QWidget):
         ddict.write(fname)
 
     def _deleteAllCountersFromTable(self):
+        current = self.cntTable.getCounterSelection()
+        current['x'] = []
+        current['y'] = []
+        current['m'] = []
+        self.cntTable.setCounterSelection(current)
         self.setWidgetConfiguration(None)
 
     def _deleteSelectedCountersFromTable(self):
@@ -228,6 +233,15 @@ class QNexusWidget(QtGui.QWidget):
             row = item.row()
             if row not in rowList:
                 rowList.append(row)
+                
+        rowList.sort()
+        rowList.reverse()
+        current = self.cntTable.getCounterSelection()
+        for row in rowList:
+            for key in ['x', 'y', 'm']:
+                if row in current[key]:
+                    idx = current[key].index(row)
+                    del current[key][idx]
 
         ddict = {}
         ddict['counters'] = []
@@ -240,6 +254,7 @@ class QNexusWidget(QtGui.QWidget):
                 ddict['aliases'].append(alias)
 
         self.setWidgetConfiguration(ddict)
+        self.cntTable.setCounterSelection(current)
 
     def getInputFilename(self):
         if self._dir is None:
