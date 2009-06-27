@@ -147,7 +147,7 @@ class FrameBrowser(QtGui.QWidget):
         self.previousButton = QtGui.QPushButton(self)
         self.previousButton.setIcon(QtGui.QIcon(QtGui.QPixmap(icon_previous)))
         self.lineEdit = QtGui.QLineEdit(self)
-        self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().width('  %d  ' % n))        
+        self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().width('%05d' % n))        
         validator = QtGui.QIntValidator(1, n, self.lineEdit)
         self.lineEdit.setText("1")
         self._oldIndex = 0

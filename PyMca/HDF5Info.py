@@ -304,7 +304,7 @@ class HDF5AttributesInfoWidget(QtGui.QWidget):
 class HDF5InfoWidget(QtGui.QTabWidget):
     def __init__(self, parent=None, info=None):
         QtGui.QTabWidget.__init__(self, parent)
-        self._notifyCloseEventToWidget = None
+        self._notifyCloseEventToWidget = []
         self._build()
         if info is not None:
             self.setInfoDict(info)
@@ -324,17 +324,21 @@ class HDF5InfoWidget(QtGui.QTabWidget):
         self.attributesInfoWidget.setInfoDict(ddict)
 
     def notifyCloseEventToWidget(self, widget):
-        self._notifyCloseEventToWidget = widget
+        if widget not in self._notifyCloseEventToWidget:
+            self._notifyCloseEventToWidget.append(widget)
 
     def closeEvent(self, event):
-        if self._notifyCloseEventToWidget is not None:
-            ddict={}
-            ddict['event'] = 'closeEventSignal'
-            ddict['id']    = id(self)
-            newEvent = HDFInfoCustomEvent(ddict)
-            QtGui.QApplication.postEvent(self._notifyCloseEventToWidget,
-                                      newEvent)
-            self._notifyCloseEventToWidget = None
+        if len(self._notifyCloseEventToWidget):
+            for widget in self._notifyCloseEventToWidget:
+                ddict={}
+                ddict['event'] = 'closeEventSignal'
+                ddict['id']    = id(self)
+                newEvent = HDFInfoCustomEvent(ddict)
+                try:
+                    QtGui.QApplication.postEvent(widget, newEvent)
+                except:
+                    print "Error notifying close event to widget", widget
+            self._notifyCloseEventToWidget = []
         return QtGui.QWidget.closeEvent(self, event)
 
 def getInfo(hdf5File, node):

@@ -31,6 +31,7 @@ import PyQt4.QtGui as QtGui
 import HDF5Widget
 import HDF5Info
 import HDF5CounterTable
+import HDF5DatasetTable
 import posixpath
 import weakref
 import gc
@@ -106,6 +107,12 @@ class QNexusWidget(QtGui.QWidget):
         self.connect(self.buttons,
                      QtCore.SIGNAL('ButtonsSignal'),
                      self.buttonsSlot)
+
+        self._hdf5WidgetDatasetMenu = QtGui.QMenu(self)
+        self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Open"),
+                                    self._openDataset)
+        self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Properties"),
+                                    self._showDatasetProperties)
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
@@ -342,7 +349,7 @@ class QNexusWidget(QtGui.QWidget):
     def setFile(self, filename):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
 
-    def showInfoWidget(self, filename, name):
+    def showInfoWidget(self, filename, name, dset=False):
         self._checkWidgetDict()
         fileIndex = self.data.sourceName.index(filename)
         phynxFile  = self.data._sourceObjectList[fileIndex]
@@ -363,22 +370,77 @@ class QNexusWidget(QtGui.QWidget):
         self._lastWidgetId = wid
         self._widgetDict[wid] = widget
         widget.setInfoDict(info)
+        if dset:
+            widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
+            try:
+                widget.w.setDataset(phynxFile[name])
+            except:
+                print "Error filling table"
+            widget.addTab(widget.w, 'TableView')
         widget.show()
 
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
         name = ddict['name']
-        """
         if ddict['type'] == 'Dataset':
             if ddict['dtype'].startswith('|S'):
                 #print "string"
                 pass
+            elif 1:
+                #should I show the option menu?
+                self.showInfoWidget(filename, name, True)
+                return
             else:
-                #print "dataset"
-                pass                
-        """
+                self.__lastDatasetDict= ddict
+                self._hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
+                self.__lastDatasetDict= None
+                return
         return self.showInfoWidget(filename, name)
-        
+
+    def _openDataset(self, ddict=None):
+        if ddict is None:
+            ddict = self.__lastDatasetDict
+        filename = ddict['file']
+        name = ddict['name']
+        self._checkWidgetDict()
+        fileIndex = self.data.sourceName.index(filename)
+        phynxFile  = self.data._sourceObjectList[fileIndex]        
+        dataset = phynxFile[name]
+        widget = HDF5DatasetTable.HDF5DatasetTable()
+        title = os.path.basename(filename)
+        title += " %s" % name
+        widget.setWindowTitle(title)
+        widget.setDataset(dataset)
+        if self._lastWidgetId is not None:
+            ids = self._widgetDict.keys()
+            if len(ids):
+                if self._lastWidgetId in ids:
+                    try:
+                        width = self._widgetDict[self._lastWidgetId].width()
+                        height = self._widgetDict[self._lastWidgetId].height()
+                        widget.resize(max(150, width), max(300, height))
+                    except:
+                        pass
+                else:
+                    try:
+                        width = self._widgetDict[ids[-1]].width()
+                        height = self._widgetDict[ids[-1]].height()
+                        widget.resize(max(150, width), max(300, height))
+                    except:
+                        pass
+        widget.notifyCloseEventToWidget(self)
+        wid = id(widget)
+        self._lastWidgetId = wid
+        self._widgetDict[wid] = widget
+        widget.show()
+
+    def _showDatasetProperties(self, ddict=None):
+        if ddict is None:
+            ddict = self.__lastDatasetDict
+        filename = ddict['file']
+        name = ddict['name']
+        return self.showInfoWidget(filename, name)
+                
     def hdf5Slot(self, ddict):
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
