@@ -123,12 +123,9 @@ class NexusDataSource:
 
     def getSourceInfo(self):
         """
-        Returns information about the EdfFile object created by
-        SetSource, to give application possibility to know about
-        it before loading.
         Returns a dictionary with the key "KeyList" (list of all available keys
         in this source). Each element in "KeyList" has the form 'n1.n2' where
-        n1 is the source number and n2 entry number in file starting at 1.
+        n1 is the source number and n2 entry number in file both starting at 1.
         """        
         return self.__getSourceInfo()
         

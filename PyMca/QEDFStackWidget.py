@@ -55,6 +55,7 @@ import OmnicMap
 import LuciaMap
 import SupaVisioMap
 import AifiraMap
+import QHDF5Stack1D
 import MaskImageWidget
 import ExternalImagesWindow
 import copy
@@ -1023,7 +1024,8 @@ class QEDFStackWidget(qt.QWidget):
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setWindowTitle(title)
         
-        if stack.info["SourceType"] == "SpecFileStack" and (QTVERSION > '4.0.0'):
+        if stack.info["SourceType"] in ["SpecFileStack", "HDF5Stack1D"]\
+           and (QTVERSION > '4.0.0'):
             oldshape = stack.data.shape
             dialog = ImageShapeDialog(self, shape = oldshape[0:2])
             dialog.setModal(True)
@@ -1581,7 +1583,7 @@ class QEDFStackWidget(qt.QWidget):
         self.plotStackImage(update = True)
         self.roiWindow.setSelectionMask(self.__selectionMask)
 
-    def _getFileList(self, fileTypeList, message=None,getfilter=None):
+    def _getFileList(self, fileTypeList, message=None, getfilter=None):
         if message is None:
             message = "Please select a file"
         if getfilter is None:
@@ -1676,6 +1678,7 @@ class QEDFStackWidget(qt.QWidget):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "HDF5 Files (*.nxs *.hdf *.h5)", 
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "Image Files (*edf)",
@@ -1800,6 +1803,9 @@ if __name__ == "__main__":
         elif args[0][-3:].upper() in ["RBS"]:
             stack = SupaVisioMap.SupaVisioMap(args[0])
             omnicfile = True
+        elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
+            stack = QHDF5Stack1D.QHDF5Stack1D(args)
+            omnicfile = True
         else:
             stack = QSpecFileStack()
         f.close()
@@ -1835,7 +1841,10 @@ if __name__ == "__main__":
                 line = f.read(10)
                 f.close()
                 omnicfile = False
-                if filefilter[0:6].upper() == "AIFIRA":
+                if filefilter.upper().startswith('HDF5'):
+                    stack = QHDF5Stack1D.QHDF5Stack1D(filelist)
+                    omnicfile = True
+                elif filefilter[0:6].upper() == "AIFIRA":
                     stack = AifiraMap.AifiraMap(filelist[0])
                     omnicfile = True
                     aifirafile = True
