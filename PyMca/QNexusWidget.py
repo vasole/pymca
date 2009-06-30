@@ -488,7 +488,7 @@ class QNexusWidget(QtGui.QWidget):
                 continue
             for yCnt in cntSelection['y']:
                 sel = {}
-                sel['SourceName'] = [filename]
+                sel['SourceName'] = self.data.sourceName * 1
                 sel['SourceType'] = "HDF5"
                 fileIndex = self.data.sourceName.index(filename)
                 phynxFile  = self.data._sourceObjectList[fileIndex]

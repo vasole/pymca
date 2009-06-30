@@ -186,6 +186,8 @@ class NexusDataSource:
             phynxFile =  self._sourceObjectList[fileIndex]
             entryIndex = phynxFile["/"].keys().index(entry[1:])
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
+            if actual_key != key:
+                print "Warning selection keys do not match"
         else:
             sourcekeys = self.getSourceInfo()['KeyList']
             #a key corresponds to an image        
