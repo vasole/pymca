@@ -59,6 +59,7 @@ import QHDF5Stack1D
 import MaskImageWidget
 import ExternalImagesWindow
 import copy
+import CloseEventNotifyingWidget
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -170,13 +171,13 @@ class QStack(EDFStack.EDFStack):
         self.bars.hide()
         del self.bars
 
-class QEDFStackWidget(qt.QWidget):
+class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent = None,
                  mcawidget = None,
                  rgbwidget = None,
                  vertical = False,
                  master = True):
-        qt.QWidget.__init__(self, parent)
+        CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
             self.setCaption("PyMCA - ROI Imaging Tool")
@@ -1551,13 +1552,6 @@ class QEDFStackWidget(qt.QWidget):
         self.__ROIConnected = True
         
     def closeEvent(self, event):
-        ddict = {}
-        ddict['event'] = "StackWidgetClosed"
-        ddict['id']    = id(self)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("StackWidgetSignal"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("StackWidgetSignal"),ddict)
         if self.__stackColormapDialog is not None:
             self.__stackColormapDialog.close()
         if self.roiWindow.colormapDialog is not None:
@@ -1572,8 +1566,7 @@ class QEDFStackWidget(qt.QWidget):
             if self.externalImagesWindow.colormapDialog is not None:
                 self.externalImagesWindow.colormapDialog.close()
             self.externalImagesWindow.close()
-
-        qt.QWidget.closeEvent(self, event)
+        CloseEventNotifyingWidget.CloseEventNotifyingWidget.closeEvent(self, event)
 
     def _resetSelection(self):
         if DEBUG:print "_resetSelection"

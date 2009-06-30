@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1-20090619-snapshot"
+__version__ = "4.3.1-20090630-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -235,6 +235,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
                 self.changeLog = None
 
+            self._widgetDict = {}
             self.initSourceBrowser()
             self.initSource()
 
@@ -1268,6 +1269,7 @@ class PyMca(PyMcaMdi.PyMca):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "HDF5 Files (*.nxs *.hdf *.h5)", 
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "All Files (*)"]
@@ -1290,22 +1292,17 @@ class PyMca(PyMcaMdi.PyMca):
             """
             rgbWidget = None
             try:
-                self.__imagingTool = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
+                widget = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
                                                                      rgbwidget=rgbWidget,
                                                                      master=True)
-                if QTVERSION < '4.0.0':
-                    self.connect(self.__imagingTool,
-                                 qt.PYSIGNAL("StackWidgetSignal"),
-                                 self._deleteImagingTool)
-                else:
-                    self.connect(self.__imagingTool,
-                                 qt.SIGNAL("StackWidgetSignal"),
-                                 self._deleteImagingTool)
-
+                widget.notifyCloseEventToWidget(self)
+                self.__imagingTool = id(widget)                
+                self._widgetDict[self.__imagingTool] = widget
                 omnicfile = False
                 luciafile = False
                 supavisio = False
                 aifirafile = False
+                hdf5file = False
                 if len(filelist) == 1:
                     f = open(filelist[0])
                     line = f.read(10)
@@ -1318,6 +1315,8 @@ class PyMca(PyMcaMdi.PyMca):
                         luciafile = True
                     elif "AIFIRA" == filefilter.split()[0].upper():
                         aifirafile = True
+                    elif "HDF5" == filefilter.split()[0].upper():
+                        hdf5file = True
                     elif "SupaVisio" == filefilter.split()[0]:
                         supavisio = True
                     elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
@@ -1326,9 +1325,9 @@ class PyMca(PyMcaMdi.PyMca):
                         supavisio = True
                 try:
                     if omnicfile:
-                        self.__imagingTool.setStack(QEDFStackWidget.OmnicMap.OmnicMap(filelist[0]))
+                        widget.setStack(QEDFStackWidget.OmnicMap.OmnicMap(filelist[0]))
                     elif luciafile:
-                        self.__imagingTool.setStack(QEDFStackWidget.LuciaMap.LuciaMap(filelist[0]))
+                        widget.setStack(QEDFStackWidget.LuciaMap.LuciaMap(filelist[0]))
                     elif aifirafile:
                         stack = QEDFStackWidget.AifiraMap.AifiraMap(filelist[0])
                         masterStack = QEDFStackWidget.DataObject.DataObject()
@@ -1340,22 +1339,26 @@ class PyMca(PyMcaMdi.PyMca):
                         slaveStack.info = QEDFStackWidget.copy.deepcopy(stack.info)
                         slaveStack.data = stack.data[:,:, 1024:]
                         slaveStack.info['Dim_2'] = int(slaveStack.info['Dim_2'] / 2)
-                        self.__imagingTool.setStack(masterStack)
-                        self.__imagingTool.slave = QEDFStackWidget.QEDFStackWidget(rgbwidget=self.__imagingTool.rgbWidget,
+                        widget.setStack(masterStack)
+                        widget.slave = QEDFStackWidget.QEDFStackWidget(rgbwidget=widget.rgbWidget,
                                                   master=False)
-                        self.__imagingTool.slave.setStack(slaveStack)
-                        self.__imagingTool.connectSlave(self.__imagingTool.slave)
-                        self.__imagingTool._resetSelection()
-                        self.__imagingTool.loadStackButton.hide()
-                        self.__imagingTool.slave.show()
+                        widget.slave.setStack(slaveStack)
+                        widget.connectSlave(widget.slave)
+                        widget._resetSelection()
+                        widget.loadStackButton.hide()
+                        widget.slave.show()
                     elif supavisio:
-                        self.__imagingTool.setStack(QEDFStackWidget.SupaVisioMap.SupaVisioMap(filelist[0]))
+                        widget.setStack(QEDFStackWidget.SupaVisioMap.SupaVisioMap(filelist[0]))
+                    elif hdf5file:
+                        widget.setStack(QEDFStackWidget.QHDF5Stack1D.QHDF5Stack1D(filelist))
                     else:
-                        self.__imagingTool.setStack(QEDFStackWidget.QStack(filelist))
+                        widget.setStack(QEDFStackWidget.QStack(filelist))
                 except:
-                    self.__imagingTool.setStack(QEDFStackWidget.QSpecFileStack(filelist))
-                self.__imagingTool.show()
+                    widget.setStack(QEDFStackWidget.QSpecFileStack(filelist))
+                widget.show()
             except IOError:
+                widget = None
+                del self._widgetDict[self.__imagingTool]
                 self.__imagingTool = None
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1366,6 +1369,8 @@ class PyMca(PyMcaMdi.PyMca):
                     msg.exec_()
                 return
             except:
+                widget = None
+                del self._widgetDict[self.__imagingTool]
                 self.__imagingTool = None
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1375,19 +1380,23 @@ class PyMca(PyMcaMdi.PyMca):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-                return                
+                return
         else:
-            if self.__imagingTool.isHidden():
-                self.__imagingTool.show()
-            if QTVERSION < '4.0.0':
-                self.__imagingTool.raiseW()
-            else:
-                self.__imagingTool.raise_()
+            widget = self._widgetDict[self.__imagingTool]
+            if widget.isHidden():
+                widget.show()
+            widget.raise_()
 
-    def _deleteImagingTool(self, ddict):
-        if ddict['event'] == "StackWidgetClosed":
-            del self.__imagingTool
-            self.__imagingTool = None
+
+    def customEvent(self, event):
+        if hasattr(event, 'dict'):
+            ddict = event.dict
+            if ddict.has_key('event'):
+                if ddict['event'] == "closeEventSignal":
+                    if self._widgetDict.has_key(ddict['id']):
+                        if ddict['id'] == self.__imagingTool:
+                            self.__imagingTool = None
+                        del self._widgetDict[ddict['id']]
 
     def __xiaCorrect(self):
         XiaCorrect.mainGUI(qt.qApp)
