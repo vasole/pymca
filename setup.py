@@ -358,7 +358,7 @@ if SIP:
                     s = os.path.basename(script)
                     if s.upper() == "PYMCA":continue
                     if s.upper() == "MCA2EDF":continue
-                    print script
+                    print s
         except NameError:
             pass
     elif QT3 and QWT4:
