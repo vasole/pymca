@@ -356,8 +356,8 @@ if SIP:
                 print "and try the scripts:"
                 for script in script_files:
                     s = os.path.basename(script)
-                    if s.upper() == "PYMCA":continue
-                    if s.upper() == "MCA2EDF":continue
+                    #if s.upper() == "PYMCA":continue
+                    #if s.upper() == "MCA2EDF":continue
                     print s
         except NameError:
             pass
