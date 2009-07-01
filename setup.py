@@ -207,7 +207,7 @@ class smart_install_scripts(install_scripts):
             self.install_dir = getattr(install_cmd, 'install_scripts')
         PYMCA_SCRIPTS_DIR = self.install_dir        
         if sys.platform != "win32":
-            print "PyMCA scripts to be installed in %s" %  self.install_dir
+            print "PyMca scripts to be installed in %s" %  self.install_dir
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
         self.outfiles = []
         for filein in glob.glob('PyMca/scripts/*'):
@@ -273,10 +273,10 @@ except ImportError:
 badtext  = "No valid PyQt  with PyQwt4 or PyQwt5 installation found.\n"
 badtext += "No valid PyQt4 with PyQwt5 installation found.\n"
 badtext += "You will only be able to develop applications using  a very \n"
-badtext += "small subset of PyMCA."
+badtext += "small subset of PyMca."
 
 try:
-    print "PyMCA is installed in %s " % PYMCA_INSTALL_DIR
+    print "PyMca is installed in %s " % PYMCA_INSTALL_DIR
 except NameError:
     #I really do not see how this may happen but ...
     pass
@@ -330,25 +330,25 @@ if SIP:
                     QWT4 = False
 
     if QT4 and QT3:
-        #print "PyMCA does not work in a mixed Qt4 and qt installation (yet)"
+        #print "PyMca does not work in a mixed Qt4 and qt installation (yet)"
         if QWT5:
             print "You have PyQt4 and PyQwt5 installed."
-            print "PyMCA is fully functional under PyQt4 with PyQwt5."
-            print "You can easily embed PyMCA fitting in your Qt4 graphical "
+            print "PyMca is fully functional under PyQt4 with PyQwt5."
+            print "You can easily embed PyMca fitting in your Qt4 graphical "
             print "applications using McaAdvancedFit.py"
         else:
             print badtext
     elif QT3 and QWT5:
-        print "PyMCA PyQt installations tested with PyQwt4"
+        print "PyMca PyQt installations tested with PyQwt4"
         print "You have PyQwt5 installed. It should also work."
-        print "PyMCA installation successfully completed."
+        print "PyMca installation successfully completed."
     elif QT3 and not QWT4:
-        print "PyMCA PyQt installations need PyQwt5 or PyQwt4"
+        print "PyMca PyQt installations need PyQwt5 or PyQwt4"
         print badtext
     elif QT4 and QWT5:
         print "You have PyQt4 and PyQwt5 installed."
-        print "PyMCA is fully functional under PyQt4 with PyQwt5."
-        print "You can easily embed PyMCA fitting in your Qt4 graphical "
+        print "PyMca is fully functional under PyQt4 with PyQwt5."
+        print "You can easily embed PyMca fitting in your Qt4 graphical "
         print "applications using McaAdvancedFit.py"
         try:
             if sys.platform != 'win32':
@@ -362,7 +362,7 @@ if SIP:
         except NameError:
             pass
     elif QT3 and QWT4:
-        print "PyMCA installation successfully completed."
+        print "PyMca installation successfully completed."
         try:
             if sys.platform != 'win32':
                 print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
@@ -376,4 +376,4 @@ if SIP:
 else:
     print "No valid PyQt with qwt or PyQt4 with PyQwt5 installation found."
     print "You will only be able to develop applications using  a very "
-    print "small subset of PyMCA."
+    print "small subset of PyMca."
