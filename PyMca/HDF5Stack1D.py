@@ -98,20 +98,42 @@ class HDF5Stack1D(DataObject.DataObject):
             #the scans containing the selection, not that all the scans
             #contain the selection.
             scanlist = []
-            for entry in entryNames:
-                path = "/"+entry + ySelection
-                dirname = posixpath.dirname(path)
-                base = posixpath.basename(path)
-                try:
-                    if base in tmpHdf[dirname].keys():                        
-                        scanlist.append(entry)
-                except:
-                    pass
-                
+            if 0:
+                JUST_KEYS = False
+                #expect same entry names in the files
+                for entry in entryNames:
+                    path = "/"+entry + ySelection
+                    dirname = posixpath.dirname(path)
+                    base = posixpath.basename(path)
+                    try:
+                        if base in tmpHdf[dirname].keys():                        
+                            scanlist.append(entry)
+                    except:
+                        pass
+            else:
+                JUST_KEYS = True
+                #expect same structure in the files
+                i = 0
+                for entry in entryNames:
+                    i += 1
+                    path = "/"+entry + ySelection
+                    dirname = posixpath.dirname(path)
+                    base = posixpath.basename(path)
+                    try:
+                        if base in tmpHdf[dirname].keys():                        
+                            scanlist.append("1.%d" % i)
+                    except:
+                        pass
         else:
-            for scan in scanlist:
-                if scan not in entryNames:
-                    raise ValueError, "Entry %s not in file"
+            try:
+                number, order = map(int, scanlist[0].split("."))
+                JUST_KEYS = True
+            except:
+                JUST_KEYS = False
+            if not JUST_KEYS:
+                for scan in scanlist:
+                    if scan not in entryNames:
+                        raise ValueError, "Entry %s not in file"
 
         nFiles = len(filelist)
         nScans = len(scanlist)
@@ -120,7 +142,10 @@ class HDF5Stack1D(DataObject.DataObject):
 
         #Now is to decide the number of mca ...
         #I assume all the scans contain the same number of mca
-        path = "/" + scanlist[0] + ySelection
+        if JUST_KEYS:
+            path = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + ySelection
+        else:
+            path = "/" + scanlist[0] + ySelection
         yDataset = tmpHdf[path] 
         if self.__dtype is None:
             self.__dtype = yDataset.dtype
@@ -140,8 +165,13 @@ class HDF5Stack1D(DataObject.DataObject):
             self.onBegin(dim0)
         self.incrProgressBar=0
         for hdf in hdfStack._sourceObjectList:
+            entryNames = hdf["/"].keys()
             for scan in scanlist:
-                path = scan + ySelection
+                if JUST_KEYS:
+                    entryName = entryNames[int(scan.split(".")[-1])-1]
+                    path = entryName + ySelection
+                else:
+                    path = scan + ySelection
                 yDataset = hdf[path].value
                 yDataset.shape = -1, mcaDim
                 for mca in range(yDataset.shape[0]):
@@ -162,6 +192,10 @@ class HDF5Stack1D(DataObject.DataObject):
         self.info["FileIndex"] = 0
         self.info['McaCalib'] = [ 0.0, 1.0, 0.0]
         self.info['Channel0'] = 0
+        shape = self.data.shape
+        for i in range(len(shape)):
+            key = 'Dim_%d' % (i+1,)
+            self.info[key] = shape[i]
 
 
     def getDimensions(self, nFiles, nScans, shape):
@@ -256,7 +290,7 @@ class HDF5Stack1D(DataObject.DataObject):
     def onProgress(self, n):
         pass
 
-    def onEnd(self, n):
+    def onEnd(self):
         pass
 
 if __name__ == "__main__":

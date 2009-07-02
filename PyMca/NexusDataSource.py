@@ -180,11 +180,18 @@ class NexusDataSource:
         selection: a dictionnary generated via QNexusWidget
         """
         if selection is not None:
-            filename  = selection['sourcename']
-            entry     = selection['entry']
-            fileIndex  = self.__sourceNameList.index(filename)
-            phynxFile =  self._sourceObjectList[fileIndex]
-            entryIndex = phynxFile["/"].keys().index(entry[1:])
+            if selection.has_key('sourcename'):
+                filename  = selection['sourcename']
+                entry     = selection['entry']
+                fileIndex  = self.__sourceNameList.index(filename)
+                phynxFile =  self._sourceObjectList[fileIndex]
+                entryIndex = phynxFile["/"].keys().index(entry[1:])
+            else:
+                key_split = key.split(".")
+                fileIndex = int(key_split[0])-1
+                phynxFile =  self._sourceObjectList[fileIndex]
+                entryIndex = int(key_split[1])-1
+                entry = phynxFile["/"].keys()[entryIndex] 
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
             if actual_key != key:
                 print "Warning selection keys do not match"
@@ -237,6 +244,47 @@ class NexusDataSource:
             if selection['selectiontype'].upper() == "MCA":
                 if not output.info.has_key('Channel0'):
                     output.info['Channel0'] = 0
+        else:
+            print "UNSUPPORTED SELECTION", selection
+        """"
+        elif selection['selectiontype'].upper() in ["BATCH"]:
+            #assume already digested
+            output.x = None
+            output.y = None
+            output.m = None
+            output.data = None
+            entryGroup = phynxFile[entry]
+            output.info['Channel0'] = 0
+            for key in ['y', 'x', 'm', 'data']:
+                if not selection.has_key(key):
+                    continue
+                if type(selection[key]) != type([]):
+                    selection[key] = [selection[key]]
+                if not len(selection[key]):
+                    continue
+                for cnt in selection[key]:
+                    dataset = entryGroup[cnt]
+                    if cnt == 'y':
+                        if output.y is None:
+                            output.y = [dataset]
+                        else:
+                            output.y.append(dataset)
+                    elif cnt == 'x':
+                        if output.x is None:
+                            output.x = [dataset]
+                        else:
+                            output.x.append(dataset)
+                    elif cnt == 'm':
+                        if output.m is None:
+                            output.m = [dataset]
+                        else:
+                            output.m.append(dataset)            
+                    elif cnt == 'data':
+                        if output.data is None:
+                            output.data = [dataset]
+                        else:
+                            output.data.append(dataset)
+        """
         return output
 
     def isUpdated(self, sourceName, key):

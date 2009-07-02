@@ -29,6 +29,18 @@ __revision__ = "$Revision: 1.50$"
 import sys
 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
+if QTVERSION > '4.0.0':
+    try:
+        import h5py
+        import NexusDataSource
+        import QNexusWidget
+        import HDF5Selection
+        HDF5SUPPORT = True
+    except ImportError:
+        HDF5SUPPORT = False
+else:
+    HDF5SUPPORT = False
+import ConfigDict
 import os
 import McaAdvancedFitBatch
 import EdfFileLayer
@@ -65,7 +77,7 @@ class McaBatchGUI(qt.QWidget):
         self._edfSimpleViewer = None
         self._timer = None
         self._processList = []
-        
+        self._selection = None
         self.__build(actions)               
         if filelist is None: filelist = []
         self.inputDir   = None
@@ -112,9 +124,16 @@ class McaBatchGUI(qt.QWidget):
         grid.addWidget(listlabel,        listrow, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,  listrow, 1)
         grid.addWidget(self.__listButton,listrow, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
-        
+
+        if HDF5SUPPORT:
+            self._hdf5Widget = HDF5Selection.HDF5Selection(self)
+            grid.addWidget(self._hdf5Widget, listrow+1, 0, 1, 3)
+            row_offset = 1
+            self._hdf5Widget.hide()
+        else:
+            row_offset = 0        
         #config file
-        configrow = 1
+        configrow = 1 + row_offset
         configlabel = qt.QLabel(self.__grid)
         configlabel.setText("Fit Configuration File:")
         if QTVERSION < '4.0.0':
@@ -130,7 +149,7 @@ class McaBatchGUI(qt.QWidget):
 
 
         #output dir
-        outrow    = 2
+        outrow    = 2 + row_offset
         outlabel   = qt.QLabel(self.__grid)
         outlabel.setText("Output dir:")
         if QTVERSION < '4.0.0':
@@ -436,6 +455,56 @@ class McaBatchGUI(qt.QWidget):
                         "Type %s does not match type %s on\n%s"% (filetype,oldtype,file))
                     return           
                 text += "%s\n" % file
+
+            if len(filelist):
+                if HDF5SUPPORT:
+                    if not h5py.is_hdf5(filelist[0]):
+                        self._hdf5Widget.hide()
+                        self._selection=None
+                    else:
+                        dialog = qt.QDialog()
+                        dialog.setWindowTitle('Select your data set')
+                        dialog.mainLayout = qt.QVBoxLayout(dialog)
+                        dialog.mainLayout.setMargin(0)
+                        dialog.mainLayout.setSpacing(0)
+                        datasource = NexusDataSource.NexusDataSource(filelist[0])                        
+                        nexusWidget = QNexusWidget.QNexusWidget(dialog)
+                        nexusWidget.buttons.hide()
+                        nexusWidget.setDataSource(datasource)
+                        dialog.mainLayout.addWidget(nexusWidget)
+                        ret = dialog.exec_()
+                        cntSelection = nexusWidget.cntTable.getCounterSelection()
+                        cntlist = cntSelection['cntlist']
+                        if not len(cntlist):
+                            text = "No dataset selection"
+                            self.showMessage(text)
+                            self.__listView.clear()
+                            return
+                        if not len(cntSelection['y']):
+                            text = "No dataset selected as y"
+                            self.showMessage(text)
+                            self.__listView.clear()
+                            return
+                        datasource = None
+                        selection = {}
+                        selection['x'] = []
+                        selection['y'] = []
+                        selection['m'] = []
+                        for key in ['x', 'y', 'm']:
+                            if len(cntSelection[key]):
+                                for idx in cntSelection[key]:
+                                    selection[key].append(cntlist[idx])
+                        self._selection = selection
+                        self._hdf5Widget.setSelection(selection)
+                        #they are not used yet
+                        self._hdf5Widget.selectionWidgetsDict['x'].hide()
+                        self._hdf5Widget.selectionWidgetsDict['m'].hide()
+                        if self._hdf5Widget.isHidden():
+                            self._hdf5Widget.show()
+                elif filelist[0][-3:].lower() in ['.h5', 'nxs', 'hdf']:
+                            text = "Warning, this looks as an HDF5 file "
+                            text += "but you do not have HDF5 support."
+                            self.showMessage(text)
             self.fileList = filelist
             if len(self.fileList):
                 self.inputDir = os.path.dirname(self.fileList[0])
@@ -445,6 +514,13 @@ class McaBatchGUI(qt.QWidget):
             else:
                 self.__listView.clear()
                 self.__listView.insertPlainText(text)
+
+    def showMessage(self, text):
+        msg = qt.QMessageBox(self)
+        msg.setWindowTitle("PyMcaBatch Message")
+        msg.setIcon(qt.QMessageBox.Information)
+        msg.setText(text)
+        msg.exec_()
         
     def setConfigFile(self,configfile=None):
         if configfile is None:return
@@ -560,6 +636,8 @@ class McaBatchGUI(qt.QWidget):
             filedialog.setFileMode(filedialog.ExistingFiles)
         
         filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
+        if HDF5SUPPORT:
+            filetypes += "HDF5 (*.nxs *.h5 *.hdf)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
         #if (QTVERSION < '4.3.0') and sys.platform == "win32":
         if PyMcaDirs.nativeFileDialogs:
@@ -578,9 +656,7 @@ class McaBatchGUI(qt.QWidget):
                 filedialog.setFilters(filetypes)
                 ret = filedialog.exec_loop()
             else:
-                filedialog.setFilters(["McaFiles (*.mca)","EdfFiles (*.edf)",
-                                       "SpecFiles (*.spec)","SpecFiles (*.dat)",
-                                       "All files (*)"])
+                filedialog.setFilters(filetypes.split("\n"))
                 ret = filedialog.exec_()
             if  ret == qt.QDialog.Accepted:
                 filelist=filedialog.selectedFiles()
@@ -757,13 +833,17 @@ class McaBatchGUI(qt.QWidget):
         filestep = int(str(self.__fileSpin.text()))
         mcastep  = int(str(self.__mcaSpin.text()))
         fitfiles = self.__fitBox.isChecked()
-
+        selection = self._selection
+        if selection is None:
+            selectionFlag = False
+        else:
+            selectionFlag = True
         if roifit:
             window =  McaBatchWindow(name="ROI"+name,actions=1, outputdir=self.outputDir,
                                      html=html, htmlindex=htmlindex, table = 0)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
                          roiwidth=roiwidth,overwrite=overwrite,filestep=1,mcastep=1,
-                         concentrations=0, fitfiles=fitfiles)
+                         concentrations=0, fitfiles=fitfiles, selection=selection)
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
@@ -790,7 +870,7 @@ class McaBatchGUI(qt.QWidget):
                                      html=html,htmlindex=htmlindex, table = table)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
                          roiwidth=roiwidth,overwrite=overwrite,filestep=filestep,
-                         mcastep=mcastep, concentrations=concentrations, fitfiles=fitfiles)
+                         mcastep=mcastep, concentrations=concentrations, fitfiles=fitfiles, selection=selection)
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
@@ -848,42 +928,42 @@ class McaBatchGUI(qt.QWidget):
                 self.genListFile(cfglistfile, config=True)
                 dirname  = os.path.dirname(dirname)
                 if frozen:
-                    cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' %\
+                    cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
                                                                   (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles)
+                                                                    table, fitfiles, selectionFlag)
                 else:
-                    cmd = '%s "%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' %\
+                    cmd = '%s "%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
                                                                   (sys.executable,myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles)
+                                                                    table, fitfiles, selectionFlag)
             else:
                 if not frozen:
-                    cmd = '%s "%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % \
+                    cmd = '%s "%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
                                                                   (sys.executable, myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles)
+                                                                    table, fitfiles, selectionFlag)
                 else:
-                    cmd = '"%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d' % \
+                    cmd = '"%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
                                                                   (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles)
+                                                                    table, fitfiles, selectionFlag)
             self.hide()
             qt.qApp.processEvents()
             if DEBUG:print "cmd = ", cmd
@@ -945,18 +1025,18 @@ class McaBatchGUI(qt.QWidget):
             if type(self.configFile) == type([]):
                 cfglistfile = "tmpfile.cfg"
                 self.genListFile(cfglistfile, config=True)
-                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % \
+                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d --selection=%d &" % \
                                                     (myself,
                                                     cfglistfile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex, listfile,
-                                                    concentrations, table, fitfiles)
+                                                    concentrations, table, fitfiles, selectionFlag)
             else:
-                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d &" % \
+                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d  --selection=%d &" % \
                                                    (myself, self.configFile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex,
-                                                    listfile, concentrations, table, fitfiles)
+                                                    listfile, concentrations, table, fitfiles, selectionFlag)
             if DEBUG:print "cmd = ", cmd
             import time
             import popen2
@@ -1002,10 +1082,22 @@ class McaBatchGUI(qt.QWidget):
             os.remove(listfile)
         except:
             pass
+        if config is None:
+            lst = self.fileList
+        elif config:
+            lst = self.configFile
+        else:
+            lst = self.fileList
+
+        if lst == self.fileList:
+            if self._selection is not None:
+                ddict = ConfigDict.ConfigDict()
+                ddict['PyMcaBatch'] = {}
+                ddict['PyMcaBatch']['filelist'] = lst
+                ddict['PyMcaBatch']['selection'] = self._selection
+                ddict.write(listfile)
+                return
         fd=open(listfile,'w')
-        if config is None:lst = self.fileList
-        elif config:      lst = self.configFile
-        else:             lst = self.fileList
         for filename in lst:
             fd.write('%s\n'%filename)
         fd.close()
@@ -1051,7 +1143,7 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,
                      roifit = None, roiwidth=None, overwrite=1,
                      filestep=1, mcastep=1, concentrations=0,
-                     fitfiles=0, filebeginoffset=0, fileendoffset=0, mcaoffset=0, chunk=None):
+                     fitfiles=0, filebeginoffset=0, fileendoffset=0, mcaoffset=0, chunk=None, selection=None):
         McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile, filelist, outputdir,
                                                          roifit=roifit, roiwidth=roiwidth,
                                                          overwrite=overwrite, filestep=filestep,
@@ -1061,7 +1153,8 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
                                                          filebeginoffset = filebeginoffset,
                                                          fileendoffset = fileendoffset,
                                                          mcaoffset  = mcaoffset,
-                                                         chunk=chunk) 
+                                                         chunk=chunk,
+                                                         selection=selection) 
         qt.QThread.__init__(self)        
         self.parent = parent
         self.pleasePause = 0
@@ -1508,12 +1601,13 @@ def main():
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
-                   'nativefiledialogs=']
+                   'nativefiledialogs=','selection=']
     filelist = None
     outdir   = None
     cfg      = None
     listfile = None
-    cfglistfile = None    
+    cfglistfile = None
+    selection = False
     roifit   = 0
     roiwidth = ROIWIDTH
     overwrite= 1
@@ -1569,6 +1663,12 @@ def main():
             mcaoffset  = int(arg)
         elif opt in ('--chunk'):
             chunk  = int(arg)
+        elif opt in ('--selection'):
+            selection  = int(arg)
+            if selection:
+                selection = True
+            else:
+                selection = False
         elif opt in ('--nativefiledialogs'):
             if int(arg):
                 PyMcaDirs.nativeFileDialogs = True
@@ -1578,12 +1678,23 @@ def main():
         filelist=[]
         for item in args:
             filelist.append(item)
+        selection = None
     else:
-        fd = open(listfile)
-        filelist = fd.readlines()
-        fd.close()
-        for i in range(len(filelist)):
-            filelist[i]=filelist[i].replace('\n','')
+        if selection:
+            tmpDict = ConfigDict.ConfigDict()
+            tmpDict.read(listfile)
+            tmpDict = tmpDict['PyMcaBatch']
+            filelist = tmpDict['filelist']
+            if type(filelist) == type(""):
+                filelist = [filelist]
+            selection = tmpDict['selection']
+        else:
+            fd = open(listfile)
+            filelist = fd.readlines()
+            fd.close()
+            for i in range(len(filelist)):
+                filelist[i]=filelist[i].replace('\n','')
+            selection = None
     if cfglistfile is not None:
         fd = open(cfglistfile)
         cfg = fd.readlines()
@@ -1616,7 +1727,7 @@ def main():
                      overwrite = overwrite, filestep=filestep, mcastep=mcastep,
                       concentrations=concentrations, fitfiles=fitfiles,
                       filebeginoffset=filebeginoffset,fileendoffset=fileendoffset,
-                      mcaoffset=mcaoffset, chunk=chunk)
+                      mcaoffset=mcaoffset, chunk=chunk, selection=selection)
         except:
             msg = qt.QMessageBox()
             msg.setIcon(qt.QMessageBox.Critical)

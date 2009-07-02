@@ -32,6 +32,13 @@ import EdfFile
 import LuciaMap
 import AifiraMap
 import EDFStack
+try:
+    import h5py
+    import HDF5Stack1D
+    HDF5SUPPORT = True
+except ImportError:
+    HDF5SUPPORT = False
+import numpy
 import numpy.oldnumeric as Numeric
 import os
 import sys
@@ -45,7 +52,7 @@ class McaAdvancedFitBatch:
                     overwrite=1, filestep=1, mcastep=1,
                     concentrations=0, fitfiles=1, fitimages=1,
                     filebeginoffset = 0, fileendoffset=0,
-                    mcaoffset=0, chunk = None):
+                    mcaoffset=0, chunk = None, selection=None):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
@@ -82,6 +89,7 @@ class McaAdvancedFitBatch:
         self.fileEndOffset   = fileendoffset
         self.mcaOffset = mcaoffset
         self.chunk     = chunk
+        self.selection = selection
 
         
     def setFileList(self,filelist=None):
@@ -156,7 +164,7 @@ class McaAdvancedFitBatch:
                 self.__stack = False
                 if hasattr(self.file, "info"):
                     if self.file.info.has_key("SourceType"):
-                        if self.file.info["SourceType"] == "EdfFileStack":
+                        if self.file.info["SourceType"] in ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
             if self.__stack:
                 self.__processStack()
@@ -173,6 +181,11 @@ class McaAdvancedFitBatch:
 
     def getFileHandle(self,inputfile):
         try:
+            self._HDF5 = False
+            if HDF5SUPPORT:
+                if h5py.is_hdf5(inputfile):
+                    self._HDF5 = True
+                    return HDF5Stack1D.HDF5Stack1D(inputfile, self.selection)
             ffile = self.__tryEdf(inputfile)
             if ffile is None:
                 ffile = self.__tryLucia(inputfile)
@@ -185,7 +198,7 @@ class McaAdvancedFitBatch:
                 ffile.SetSource(inputfile)
             return ffile
         except:
-            raise IOerror, "I do not know what to do with file %s" % inputfile        
+            raise IOError, "I do not know what to do with file %s" % inputfile        
     
     
     def onNewFile(self,ffile, filelist):
@@ -392,11 +405,11 @@ class McaAdvancedFitBatch:
                             #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
 
     def __getFitFile(self, filename, key):
-           fitdir = os.path.join(self._outputdir,"FIT")
-           fitdir = os.path.join(fitdir,filename+"_FITDIR")
-           outfile = filename +"_"+key+".fit" 
-           outfile = os.path.join(fitdir,  outfile)           
-           return outfile
+        fitdir = os.path.join(self._outputdir,"FIT")
+        fitdir = os.path.join(fitdir,filename+"_FITDIR")
+        outfile = filename +"_"+key+".fit" 
+        outfile = os.path.join(fitdir,  outfile)           
+        return outfile
 
                 
     def __processOneMca(self,x,y,filename,key,info=None):
