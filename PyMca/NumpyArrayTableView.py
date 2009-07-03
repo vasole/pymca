@@ -63,7 +63,9 @@ class NumpyArrayTableView(QtGui.QTableView):
 
     def setArrayData(self, data):
         self._model.setArrayData(data)
-
+        #some linux distributions need this call
+        self.setModel(self._model)
+        
     def setCurrentArrayIndex(self, index):
         return self._model.setCurrentArrayIndex(index)
 
