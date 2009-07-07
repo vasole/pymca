@@ -382,7 +382,7 @@ class QNexusWidget(QtGui.QWidget):
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
         name = ddict['name']
-        if ddict['type'] == 'Dataset':
+        if ddict['type'] in ['Dataset', 'Spectrum']:
             if ddict['dtype'].startswith('|S'):
                 #print "string"
                 pass
