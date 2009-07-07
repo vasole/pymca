@@ -47,10 +47,10 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
         return self._data(index, role)
 
     def _rowCount1D(self, parent=None):
-        return self._array.shape[0]
+        return 1
 
     def _columnCount1D(self, parent=None):
-        return 1
+        return self._array.shape[0]
 
     def _data1D(self, index, role=QtCore.Qt.DisplayRole):
         if index.isValid():
