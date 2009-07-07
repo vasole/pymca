@@ -28,6 +28,7 @@ import os
 import sys
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
+import h5py
 import HDF5Widget
 import HDF5Info
 import HDF5CounterTable
@@ -371,20 +372,23 @@ class QNexusWidget(QtGui.QWidget):
         self._widgetDict[wid] = widget
         widget.setInfoDict(info)
         if dset:
-            widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
-            try:
-                widget.w.setDataset(phynxFile[name])
-            except:
-                print "Error filling table"
-            widget.addTab(widget.w, 'TableView')
+            dataset = phynxFile[name]
+            if isinstance(dataset, h5py.Dataset):
+                widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
+                try:
+                    widget.w.setDataset(dataset)
+                except:
+                    print "Error filling table"
+                widget.addTab(widget.w, 'TableView')
         widget.show()
 
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
         name = ddict['name']
-        if ddict['type'] in ['Dataset', 'Spectrum']:
+        if True:
             if ddict['dtype'].startswith('|S'):
                 #print "string"
+                return self.showInfoWidget(filename, name, False)
                 pass
             elif 1:
                 #should I show the option menu?
