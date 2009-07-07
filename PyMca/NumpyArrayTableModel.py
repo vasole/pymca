@@ -55,9 +55,9 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def _data1D(self, index, role=QtCore.Qt.DisplayRole):
         if index.isValid():
             if role == QtCore.Qt.DisplayRole:
-                row = index.row()
-                col = 0
-                return QtCore.QVariant(self._format % self._array[row])
+                row = 0
+                col = index.column()
+                return QtCore.QVariant(self._format % self._array[col])
         return QtCore.QVariant()
 
     def _rowCount2D(self, parent=None):
