@@ -109,10 +109,10 @@ class SpecArithmetic:
             while ydata[idx] >= hm:
                 idx = idx+1
         
-            x0 = xdata[idx]
-            x1 = xdata[idx+1]
-            y0 = ydata[idx]
-            y1 = ydata[idx+1]
+            x0 = xdata[idx-1]
+            x1 = xdata[idx]
+            y0 = ydata[idx-1]
+            y1 = ydata[idx]
         
             uhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
         except ZeroDivisionError:
