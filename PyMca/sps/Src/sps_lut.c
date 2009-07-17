@@ -204,10 +204,14 @@ void *SPS_PaletteArray (void *data, int type, int cols, int rows,
     if (minplus == 0) {
       use_min = use_max = 1; /* No value above 0 */
     } else {
-      use_min = minplus ; /* Same as min if min > 0 */
-      use_max = ( *max > minplus ) ? *max : minplus;
+	  use_min = (*min > 0) ? *min : minplus ; /* Same as min if min > 0 */
+      use_max = ( *max > minplus ) ? *max : use_min;
     }
   }
+  /*
+  printf("use_min=%f minplus=%f min=%f\n", use_min, minplus, *min);
+  printf("use_max=%f\n", use_max);
+  */
 
   /* Create the palette if we do not have a hardware palette */
   palette = CreatePalette( type, meth, use_min, use_max, gamma,
