@@ -152,9 +152,13 @@ except ImportError:
 
 try:
     import h5py
-    includes = ['h5py._extras']
+    if h5py.version.version < '1.2.0':
+        includes = ['h5py._extras']
+    else:
+        includes = ['h5py._stub', 'h5py._sync', 'h5py.utils']
 except:
     includes = []
+    
 if OBJECT3D:
     includes.append("logging")
     excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins",
