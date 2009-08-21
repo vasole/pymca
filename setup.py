@@ -220,7 +220,12 @@ class smart_install_scripts(install_scripts):
             f.close()
             text  = "#!/bin/bash\n"
             text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
-            text += "exec python %s $*\n" %  os.path.join(moddir, modfile)
+            #deal with sys.executables not named python
+            text += "exec %s %s $*\n" %  (
+                sys.executable,
+                os.path.join(moddir, modfile)
+                )
+            
             f=open(filedest, 'w')
             f.write(text)
             f.close()
