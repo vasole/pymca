@@ -30,6 +30,8 @@ from PyMca_Icons import IconDict
 import MaskImageWidget
 import ScanWindow
 import sys
+import PCAModule
+MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
 
@@ -40,7 +42,7 @@ class HorizontalSpacer(qt.QWidget):
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
 class PCAParametersDialog(qt.QDialog):
-    def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10], mdp = False):
+    def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10]):
         qt.QDialog.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setCaption("PCA Configuration Dialog")
@@ -52,15 +54,19 @@ class PCAParametersDialog(qt.QDialog):
 
         #
         self.methodOptions = qt.QGroupBox(self)
-        self.methodOptions.setTitle('PCA Module to use')
-        self.methods = ['Correct', 'Fast']
+        self.methodOptions.setTitle('PCA Method to use')
+        self.methods = ['Covariance', 'Expectation Max.']
+        self.functions = [PCAModule.lanczosPCA,
+                          PCAModule.expectationMaximizationPCA]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
-        if mdp:
+        if MDP:
             #self.methods.append("MDP (PCA + ICA)")
-            self.methods.append("MDP")
-            
+            self.methods.append("MDP (SVD float32)")
+            self.methods.append("MDP (SVD float64)")
+            self.functions.append(PCAModule.mdpPCASVDFloat32)
+            self.functions.append(PCAModule.mdpPCASVDFloat64)
         self.buttonGroup = qt.QButtonGroup(self.methodOptions)
         i = 0
         for item in self.methods:
@@ -124,14 +130,9 @@ class PCAParametersDialog(qt.QDialog):
     def _slot(self, button):
         button.setChecked(True)
         index = self.buttonGroup.checkedId()
-        if index == 0:
-            self.binningLabel.setText("Spectral Binning:")
-            self.binningCombo.setEnabled(True)
-        elif index == 2:
-            self.binningLabel.setText("Spectral Binning:")
-            self.binningCombo.setEnabled(True)
-        else:
-            self.binningCombo.setEnabled(False)
+        self.binningLabel.setText("Spectral Binning:")
+        self.binningCombo.setEnabled(True)
+        return
 
     def setParameters(self, ddict):
         if ddict.has_key('options'):
@@ -147,10 +148,7 @@ class PCAParametersDialog(qt.QDialog):
             self.nPC.setValue(ddict['npc'])
         if ddict.has_key('method'):
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
-            if ddict['method'] in [0, 2]:
-                self.binningCombo.setEnabled(True)
-            else:
-                self.binningCombo.setEnabled(False)                
+            self.binningCombo.setEnabled(True)
         return
 
     def getParameters(self):
@@ -160,6 +158,7 @@ class PCAParametersDialog(qt.QDialog):
         i = self.buttonGroup.checkedId()
         ddict['method'] = i
         ddict['methodlabel'] = self.methods[i]
+        ddict['function'] = self.functions[i]
         return ddict
 
 class PCAWindow(MaskImageWidget.MaskImageWidget):

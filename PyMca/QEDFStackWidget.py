@@ -68,18 +68,10 @@ QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 if QWTVERSION4:
     raise ImportError,"QEDFStackWidget needs Qwt5"
 
-MDP = False
 PCA = False
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
     import PCAWindow
-    import PCAModule
-    PCA = True
-    try:
-        import mdp
-        MDP=True
-    except ImportError:
-        pass
 else:
     import Qwt5 as Qwt
 
@@ -576,7 +568,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if self.__stackImageData is None:
             return
         if self.pcaParametersDialog is None:
-            self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self, mdp=MDP)
+            self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self)
             spectrumLength = max(self.__mcaData0.y[0].shape)
             self.pcaParametersDialog.nPC.setMaximum(spectrumLength)
             self.pcaParametersDialog.nPC.setValue(min(10,spectrumLength))
@@ -591,23 +583,21 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             pcaParameters = self.pcaParametersDialog.getParameters()
             self.pcaParametersDialog.close()
             method = pcaParameters['method']
+            function = pcaParameters['function']
             binning = pcaParameters['binning']
             npc = pcaParameters['npc']
             if self.stack.data.dtype not in [numpy.float, numpy.float32]:
                 self.stack.data = self.stack.data.astype(numpy.float)
             shape = self.stack.data.shape
-            if method == 0:
-                function = PCAModule.lanczosPCA
-            elif method == 1:
-                function = PCAModule.lanczosPCA2
-            elif method == 2:
-                function = PCAModule.mdpPCA
             try:
                 if 0:
                     images, eigenvalues, eigenvectors = function(self.stack.data,
                                                                  npc,
                                                                  binning=binning)
                 else:
+                    if DEBUG:
+                        import time
+                        e0 = time.time()
                     threadResult = self._submitPCAThread(function,
                                                          self.stack.data,
                                                          npc,
@@ -617,6 +607,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             if threadResult[0] == "Exception":
                                 raise threadResult[1],threadResult[2]
                     images, eigenvalues, eigenvectors = threadResult
+                    if DEBUG:
+                        print pcaParameters['methodlabel'], \
+                              "Elapsed = ", time.time() - e0
                 self.pcaWindow.setSelectionMask(self.__selectionMask,
                                                 plot=False)
                 self.pcaWindow.setPCAData(images,

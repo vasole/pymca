@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group, A. Mirone - ESRF SciSoft Group"
 import numpy
-
+import numpy.linalg
 try:
     import numpy.core._dotblas as dotblas
 except ImportError:
@@ -39,8 +39,11 @@ except ImportError:
     MDP = False
 import Lanczos
 import os
+DEBUG = 0
 
 def lanczosPCA(stack, ncomponents, binning=None):
+    if DEBUG:
+        print "lanczosPCA"
     if binning is None:
         binning = 1
         
@@ -100,7 +103,6 @@ def lanczosPCA(stack, ncomponents, binning=None):
         images[i,:] = dotblas.dot(data, (eigenvectors[i].vr).astype(data.dtype))
     data = None
     images.shape = ncomponents, r, c
-
     return images, eigenvalues, vectors
 
 def lanczosPCA2(stack, ncomponents, binning=None):
@@ -201,8 +203,149 @@ def lanczosPCA2(stack, ncomponents, binning=None):
     images.shape = ncomponents, r, c
     return images, evals,  vectors
 
+def expectationMaximizationPCA(stack, ncomponents, binning=None):
+    """
+    This is a fast method when the number of components is small
+    """
+    if DEBUG:
+        print "expectationMaximizationPCA"
+    #This part is common to all ...
+    if binning is None:
+        binning = 1
+        
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        data = stack.data
+    else:
+        data = stack
+    if len(data.shape) == 3:
+        r, c, N = data.shape
+        data.shape = r*c, N
+    else:
+        r, N = data.shape
+        c = 1
 
-def mdpPCA(stack, ncomponents, binning=None):
+    if binning > 1:
+        data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
+        data=numpy.sum(data , axis=-1)
+        N=N/binning
+    if ncomponents > N:
+        raise ValueError, "Number of components too high."
+    #end of common part
+    avg = numpy.sum(data, 0)/(1.0*r*c)
+    numpy.subtract(data, avg, data)
+    dataw = data * 1
+    images = numpy.zeros((ncomponents, r * c), data.dtype)
+    eigenvalues = numpy.zeros((ncomponents,), data.dtype)
+    eigenvectors = numpy.zeros((ncomponents, N), data.dtype)
+    for i in range(ncomponents):
+        #generate a random vector
+        p = numpy.random.random(N)
+        #10 iterations seems to be fairly accurate, but it is
+        #slow when reaching "noise" components.
+        #A variation threshold of 1 % seems to be acceptable.
+        tmod_old = 0
+        tmod = 0.02
+        j = 0
+        max_iter = 7
+        while ((abs(tmod-tmod_old)/tmod) > 0.01) and (j<max_iter):
+            tmod_old = tmod
+            t = 0.0
+            for k in range(r*c):
+                t += dotblas.dot(dataw[k,:],p.T) * dataw[k,:]
+            tmod = numpy.sqrt(numpy.sum(t*t))
+            p = t/tmod
+            j+=1
+        #print "Iterations = ", j, 'last per cent variation', 100*(abs(tmod-tmod_old)/tmod)
+        eigenvectors[i, :] = p
+        #subtract the found component from the dataset
+        for k in range(r*c):
+            dataw[k,:] -= dotblas.dot(dataw[k,:],p.T) * p
+        #print "One component calculated"
+    # calculate eigenvalues via the Rayleigh Quotients:
+    # eigenvalue = (Eigenvector.T * Covariance * EigenVector)/ (Eigenvector.T * Eigenvector)
+    for i in range(ncomponents):
+        tmp = dotblas.dot(data, eigenvectors[i,:].T)
+        eigenvalues[i] = dotblas.dot(tmp.T, tmp)/dotblas.dot(eigenvectors[i,:].T, eigenvectors[i,:])
+
+    #Generate the eigenimages
+    for i0 in range(ncomponents):
+        images[i0,:] = dotblas.dot(data , eigenvectors[i0,:])
+
+    #restore the original data
+    numpy.add(data, avg, data)
+
+    #reshape the images
+    images.shape = ncomponents, r, c
+    return images, eigenvalues, eigenvectors
+
+def numpyPCA(stack, ncomponents, binning=None):
+    """
+    This is a covariance method using numpy numpy.linalg.eigh
+    """
+    #This part is common to all ...
+    if binning is None:
+        binning = 1
+        
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        data = stack.data
+    else:
+        data = stack
+    if len(data.shape) == 3:
+        r, c, N = data.shape
+        data.shape = r*c, N
+    else:
+        r, N = data.shape
+        c = 1
+
+    if binning > 1:
+        data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
+        data=numpy.sum(data , axis=-1)
+        N=N/binning
+    if ncomponents > N:
+        raise ValueError, "Number of components too high."
+    #end of common part
+
+    #begin the specific coding
+    avg = numpy.sum(data, 0)/(1.0*r*c)
+    numpy.subtract(data, avg, data)
+    cov = numpy.dot(data.T, data)
+    evalues, evectors = numpy.linalg.eigh(cov)
+    cov = None
+    images = numpy.zeros((ncomponents, r * c), data.dtype)
+    eigenvalues = numpy.zeros((ncomponents,), data.dtype)
+    eigenvectors = numpy.zeros((ncomponents, N), data.dtype)
+    #sort eigenvalues
+    a = [(evalues[i], i) for i in range(len(evalues))]
+    a.sort()
+    a.reverse()
+    for i0 in range(ncomponents):
+        i = a[i0][1]
+        eigenvalues[i0] = evalues[i]
+        eigenvectors[i0,:] = evectors[:,i]
+        images[i0,:] = dotblas.dot(data , eigenvectors[i0,:])
+    
+    #restore the original data
+    numpy.add(data, avg, data)
+
+    #reshape the images
+    images.shape = ncomponents, r, c
+    return images, eigenvalues, eigenvectors
+
+def mdpPCASVDFloat32(stack, ncomponents, binning=None):
+    return mdpPCA(stack, ncomponents,
+                  binning=binning, dtype='float32', svd='True')
+
+def mdpPCASVDFloat64(stack, ncomponents, binning=None):
+    return mdpPCA(stack, ncomponents,
+                  binning=binning, dtype='float64', svd='True')
+
+def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
+    if DEBUG:
+        print "MDP Method"
+        print "binning =", binning
+        print "dtype = ", dtype
+        print "svd = ", svd
+    #This part is common to all ...
     if binning is None:
         binning = 1
 
@@ -223,7 +366,10 @@ def mdpPCA(stack, ncomponents, binning=None):
         N=N/binning
     if ncomponents > N:
         raise ValueError, "Number of components too high."
-    pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype='float64')
+    #end of common part
+
+    #begin the specific coding
+    pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype=dtype, svd=svd)
     pca.train(data)
 
     pca.stop_training()
@@ -232,10 +378,10 @@ def mdpPCA(stack, ncomponents, binning=None):
     eigenvalues = pca.d
     eigenvectors = pca.v.T
     proj = pca.get_projmatrix()
-
     images = numpy.dot((proj.T).astype(data.dtype), data.T)
-    images.shape = ncomponents, r, c
 
+    #reshape the images
+    images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
 def mdpICA(stack, ncomponents, binning=None):
