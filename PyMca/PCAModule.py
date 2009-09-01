@@ -37,6 +37,7 @@ try:
     MDP = True
 except ImportError:
     MDP = False
+
 import Lanczos
 import os
 DEBUG = 0
@@ -308,12 +309,12 @@ def numpyPCA(stack, ncomponents, binning=None):
     #begin the specific coding
     avg = numpy.sum(data, 0)/(1.0*r*c)
     numpy.subtract(data, avg, data)
-    cov = numpy.dot(data.T, data)
+    cov = dotblas.dot(data.T, data)
     evalues, evectors = numpy.linalg.eigh(cov)
     cov = None
     images = numpy.zeros((ncomponents, r * c), data.dtype)
-    eigenvalues = numpy.zeros((ncomponents,), data.dtype)
     eigenvectors = numpy.zeros((ncomponents, N), data.dtype)
+    eigenvalues = numpy.zeros((ncomponents,), data.dtype)
     #sort eigenvalues
     a = [(evalues[i], i) for i in range(len(evalues))]
     a.sort()

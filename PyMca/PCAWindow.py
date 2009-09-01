@@ -61,6 +61,10 @@ class PCAParametersDialog(qt.QDialog):
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
+        #this does not seem to bring any advantage
+        if 0:
+            self.methods.append("Covariance Numpy")
+            self.functions.append(PCAModule.numpyPCA)
         if MDP:
             #self.methods.append("MDP (PCA + ICA)")
             self.methods.append("MDP (SVD float32)")

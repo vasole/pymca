@@ -72,6 +72,7 @@ PCA = False
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
     import PCAWindow
+    PCA = True
 else:
     import Qwt5 as Qwt
 
