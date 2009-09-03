@@ -76,6 +76,12 @@ if QTVERSION > '4.0.0':
 else:
     import Qwt5 as Qwt
 
+SNIP = False
+if QTVERSION > '4.0.0':
+    import SNIPWindow
+    SNIP = True
+    
+
 DEBUG = 0
 
 class SimpleThread(qt.QThread):
@@ -259,14 +265,21 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         infotext += 'contrast to place your ROIs and you know what you\n'
         infotext += 'are doing.\n'
         infotext += 'The ROI background subtraction is more efficient.\n'
-        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
-        self.backgroundButton = self.stackGraphWidget._addToolButton(\
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
+        if SNIP:
+            self.backgroundButton = self.stackGraphWidget._addToolButton(\
+                                        self.backgroundIcon,
+                                        #self.submitThread,
+                                        self.subtractBackground2,
+                                        infotext,
+                                        position = 7)
+        else:
+            self.backgroundButton = self.stackGraphWidget._addToolButton(\
                                         self.backgroundIcon,
                                         self.submitThread,
                                         #self.subtractBackground,
                                         infotext,
                                         position = 7)
-
         filterOffset = 0
         infotext  = 'Additional selection methods.\n'
         self.selectFromStackIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))  
@@ -642,6 +655,20 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def showPCAWindow(self):
         self.pcaWindow.show()
         self.pcaWindow.raise_()
+
+    def subtractBackground2(self):
+        spectrum = self.__mcaData0.y[0]
+        snipWindow = SNIPWindow.SNIPDialog(None, spectrum)
+        #snipWindow.setModal(True)
+        snipWindow.show()
+        ret = snipWindow.exec_()
+        if ret:
+            snipParametersDict = snipWindow.getParameters()
+            snipWindow.close()
+            function = snipParametersDict['function']
+            arguments = snipParametersDict['arguments']
+            function(self.stack, *arguments)
+            self.setStack(self.stack)
 
     def subtractBackground(self):
         if 0:
