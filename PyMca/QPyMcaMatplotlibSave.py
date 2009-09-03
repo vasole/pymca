@@ -813,12 +813,13 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
 	self.draw()
 
-if __name__ == "__main__":
+def test():
     app = qt.QApplication([])
     a=numpy.arange(256.)
     a.shape = 16, 16
     w = SaveImageSetup(None, a)
     w.show()
     app.exec_()
-		
-   
+
+if __name__ == "__main__":
+    test()   

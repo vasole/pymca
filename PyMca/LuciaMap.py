@@ -59,15 +59,18 @@ class LuciaMap(DataObject.DataObject):
             sep = sep + '-'
         sep = sep[1:]
         data = data.split(sep)
-
+        if len(data[0]) != len(data[-1]):
+            if len(data[0]) > 1:
+                del data[-1]
+            else:
+                del data[0]
+                
         #get the number of channels
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')
         spectrum = [float(x) for x in exp.findall(data[0])]
         self.nChannels = len(spectrum)
         self.nSpectra = len(data)
         self.nRows = self.nSpectra
-
-
 
         #try to get the information
         if infofile is None:
