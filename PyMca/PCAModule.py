@@ -204,6 +204,97 @@ def lanczosPCA2(stack, ncomponents, binning=None):
     images.shape = ncomponents, r, c
     return images, evals,  vectors
 
+def multipleArrayPCA(stackList, ncomponents, binning=None):
+    """
+    Given a list of arrays, calculate the requested principal components from
+    the matrix resulting from their column concatenation. Therefore, all the
+    input arrays must have the same number of rows.
+    """
+    stack = stackList[0]
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        data = stack.data
+    else:
+        data = stack
+    if len(data.shape) == 3:
+        r, c, N = data.shape
+        npixels = r*c
+    else:
+        c = None
+        r, N = data.shape
+        npixels = r
+
+    #reshape and subtract mean to all the input data
+    shapeList = []
+    avgList = []
+    eigenvectorLength = 0
+    lastIndex = None
+    for i in range(len(stackList)):
+        shape = stackList[i].shape
+        eigenvectorLength += shape[-1]
+        shapeList.append(shape)
+        stackList[i].shape = npixels, -1 
+        avg = numpy.sum(stackList[i], 0)/(1.0*npixels)
+        numpy.subtract(stackList[i], avg, stackList[i])
+        avgList.append(avg)
+        lastIndex = i
+
+    #create the needed storage space for the covariance matrix
+    covMatrix = numpy.zeros((eigenvectorLength, eigenvectorLength), numpy.float32)
+
+    rowOffset = 0
+    indexDict = {}
+    for i in range(len(stackList)):
+        iVectorLength=shapeList[i][-1]
+        colOffset = 0
+        for j in range(len(stackList)):
+            jVectorLength = shapeList[j][-1]
+            if i <= j:
+                covMatrix[rowOffset:(rowOffset+iVectorLength), colOffset:(colOffset+jVectorLength)] =\
+                               dotblas.dot(stackList[i].T, stackList[j])
+                if i < j:
+                    key = "%02d%02d" % (i, j)
+                    indexDict[key]=(rowOffset, rowOffset+iVectorLength, colOffset, colOffset+jVectorLength)
+            else:
+                key = "%02d%02d" % (j, i)
+                rowMin, rowMax, colMin, colMax = indexDict[key]
+                covMatrix[rowOffset:(rowOffset+iVectorLength), colOffset:(colOffset+jVectorLength)]=\
+                        covMatrix[rowMin:rowMax, colMin:colMax].T
+            colOffset += jVectorLength
+        rowOffset += iVectorLength
+    indexDict = None
+
+    #I have the covariance matrix, calculate the eigenvectors and eigenvalues
+    covMatrix = [covMatrix]
+    covMatrix = Lanczos.LanczosNumericMatrix( covMatrix )
+    eigenvalues, evectors = Lanczos.solveEigenSystem( covMatrix,
+                                                  ncomponents,
+                                                  shift=0.0,
+                                                  tol=1.0e-15)
+    covMatrix = None
+
+    images = numpy.zeros((ncomponents, npixels), numpy.float32)
+    eigenvectors = numpy.zeros((ncomponents, eigenvectorLength), numpy.float32)
+    for i in range(ncomponents):
+        eigenvectors[i, :] = evectors[i].vr
+        colOffset = 0
+        for j in range(len(stackList)):
+            jVectorLength = shapeList[j][-1]
+            images[i,:] += \
+                    dotblas.dot(stackList[j], eigenvectors[i,colOffset:(colOffset+jVectorLength)])
+            colOffset += jVectorLength
+
+    #restore shapes and values
+    for i in range(len(stackList)):
+        numpy.add(stackList[i], avgList[i], stackList[i])
+        stackList[i].shape = shapeList[i]
+
+    if c is None:
+        images.shape = ncomponents, r, 1
+    else:
+        images.shape = ncomponents, r, c
+        
+    return images, eigenvalues, eigenvectors
+
 def expectationMaximizationPCA(stack, ncomponents, binning=None):
     """
     This is a fast method when the number of components is small
@@ -456,7 +547,7 @@ if __name__ == "__main__":
     import sys
     import time
     #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"
-    inputfile = ".\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
+    inputfile = "\PYMCATEST\NUMPY\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
         print inputfile

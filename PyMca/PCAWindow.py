@@ -55,9 +55,10 @@ class PCAParametersDialog(qt.QDialog):
         #
         self.methodOptions = qt.QGroupBox(self)
         self.methodOptions.setTitle('PCA Method to use')
-        self.methods = ['Covariance', 'Expectation Max.']
+        self.methods = ['Covariance', 'Expectation Max.', 'Cov. Multiple Arrays']
         self.functions = [PCAModule.lanczosPCA,
-                          PCAModule.expectationMaximizationPCA]
+                          PCAModule.expectationMaximizationPCA,
+                          PCAModule.multipleArrayPCA]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
@@ -135,7 +136,10 @@ class PCAParametersDialog(qt.QDialog):
         button.setChecked(True)
         index = self.buttonGroup.checkedId()
         self.binningLabel.setText("Spectral Binning:")
-        self.binningCombo.setEnabled(True)
+        if index != 2:
+            self.binningCombo.setEnabled(True)
+        else:
+            self.binningCombo.setEnabled(False)
         return
 
     def setParameters(self, ddict):
@@ -152,7 +156,10 @@ class PCAParametersDialog(qt.QDialog):
             self.nPC.setValue(ddict['npc'])
         if ddict.has_key('method'):
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
-            self.binningCombo.setEnabled(True)
+            if ddict['method'] != 2:
+                self.binningCombo.setEnabled(True)
+            else:
+                self.binningCombo.setEnabled(False)
         return
 
     def getParameters(self):

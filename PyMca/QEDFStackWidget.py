@@ -599,8 +599,15 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     if DEBUG:
                         import time
                         e0 = time.time()
+                    if 'MULTIPLE' in pcaParameters['methodlabel'].upper():
+                        if self.slave is None:
+                            data = [self.stack.data]
+                        else:
+                            data = [self.stack.data, self.slave.stack.data]
+                    else:
+                        data = self.stack.data
                     threadResult = self._submitPCAThread(function,
-                                                         self.stack.data,
+                                                         data,
                                                          npc,
                                                          binning=binning)
                     if type(threadResult) == type((1,)):
@@ -1019,7 +1026,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setWindowTitle(title)
         
-        if stack.info["SourceType"] in ["SpecFileStack", "HDF5Stack1D"]\
+        if ((1 in stack.data.shape) or\
+           (stack.info["SourceType"] in ["SpecFileStack", "HDF5Stack1D"]))\
            and (QTVERSION > '4.0.0'):
             oldshape = stack.data.shape
             dialog = ImageShapeDialog(self, shape = oldshape[0:2])
