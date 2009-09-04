@@ -129,10 +129,11 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
         data is a 3D array
         dimension is the array dimension acting as index of images
         """
+        self.reset()
         self._array = data
         self.assignDataFunction(perspective)
         self._index = 0
-
+        
     def assignDataFunction(self, dimension):
         shape = self._array.shape
         if len(shape) == 2:

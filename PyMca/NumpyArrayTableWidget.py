@@ -47,6 +47,8 @@ class NumpyArrayTableWidget(QtGui.QWidget):
         self.view.setArrayData(self._array)
         if len(self._array.shape) > 2:
             self.browser.setNFrames(self._array.shape[0])
+        else:
+            self.browser.setNFrames(1)
 
     def browserSlot(self, ddict):
         if ddict['event'] == "indexChanged":
