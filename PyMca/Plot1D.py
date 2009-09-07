@@ -47,7 +47,7 @@ class Plot1D(Plot1DBase.Plot1DBase):
             self.curveList.append(key)
         self.curveDict[key] = [x, y, key, info]
         if len(self.curveList) == 1:
-            self.activeCurve = key        
+            self.activeCurve = key
         return
 
     def removeCurve(self, legend, replot=True):

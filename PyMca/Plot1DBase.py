@@ -149,4 +149,4 @@ class Plot1DBase:
         """
         print "setActiveCurve not implemented"
         return None
-    
+

@@ -1738,6 +1738,9 @@ class QtBlissGraph(qwt.QwtPlot):
                     return 1
             return 0
     else:
+        def removeCurve(self, key):
+            return self.delcurve(key)
+        
         def setAutoLegend(self, value):
             print "setAutoLegend: Not available in QWT5, use setDisplayPolicy)"
             return
@@ -1897,6 +1900,9 @@ class QtBlissGraph(qwt.QwtPlot):
     def setxofy(self,legend):
         if legend in self.curves.keys():
             self.setCurveOptions(self.curves[legend]['curve'],qwt.QwtCurve.Xfy)
+
+    def clearCurve(self, key):
+        return self.delcurve(key)
 
     def delcurve(self,key):
         index = None
