@@ -37,7 +37,7 @@ if sys.platform == "win32":
                            Extension(
                                 name          = 'specfile',
                                 sources       = sources,
-                                define_macros = [('WIN32',None), ('_WINDOWS',None)],
+                                define_macros = [('WIN32',None)],
                                 include_dirs  = ['include', numpy.get_include()],
                            ),
            ],

@@ -32,13 +32,14 @@ def install():
     # Create program shortcuts ...
     name = 'PyMcaMain'
     script = '"'+lib_dir+r'\%s.py"'%name
-    f = ip_dir + r'\%s.lnk' % PyMca
+    fname = 'PyMca'
+    f = ip_dir + r'\%s.lnk' % fname 
     mkshortcut(python_console,name,f,script)
 
     name = 'PyMcaMain'
     script = '"'+lib_dir+r'\%s.py" -f'%name
     fname = 'PyMca Fresh Start'
-    f = ip_dir + r'\%s.lnk'%fname
+    f = ip_dir + r'\%s.lnk' % fname
     mkshortcut(python_console,name,f,script)
 
     name = 'EdfFileSimpleViewer'
