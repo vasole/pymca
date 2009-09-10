@@ -39,6 +39,7 @@ import gc
 import ConfigDict
 if "PyMcaDirs" in sys.modules:
     import PyMcaDirs
+DEBUG=0
 
 class Buttons(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -450,7 +451,7 @@ class QNexusWidget(QtGui.QWidget):
             if ddict['mouse'] == "right":
                 return self.itemRightClickedSlot(ddict)
         if ddict['event'] == "itemDoubleClicked":
-            if ddict['type'] == 'Dataset':
+            if ddict['type'] in ['Dataset']:
                 if ddict['dtype'].startswith('|S'):
                     print "string"
                 else:
@@ -465,7 +466,7 @@ class QNexusWidget(QtGui.QWidget):
                         else:
                             self._aliasList.append(cnt)
                         self.cntTable.build(self._cntList, self._aliasList)
-            if ddict['type'] == 'Entry':
+            elif ddict['type'] == 'Entry':
                 if self._lastAction is None:
                     return
                 action, selectionType = self._lastAction.split()
@@ -473,6 +474,30 @@ class QNexusWidget(QtGui.QWidget):
                     action = 'ADD'
                 ddict['action'] = "%s %s" % (action, selectionType)
                 self.buttonsSlot(ddict)
+            else:
+                if self.data is not None:
+                    name = ddict['name']
+                    filename = ddict['file']
+                    fileIndex = self.data.sourceName.index(filename)
+                    phynxFile  = self.data._sourceObjectList[fileIndex]
+                    dataset = phynxFile[name]
+                    if isinstance(dataset, h5py.Dataset):
+                        root = ddict['name'].split('/')
+                        root = "/" + root[1]
+                        cnt  = ddict['name'].split(root)[-1]
+                        if cnt not in self._cntList:
+                            if DEBUG:
+                                print "USING SECOND WAY"
+                            self._cntList.append(cnt)
+                            basename = posixpath.basename(cnt)
+                            if basename not in self._aliasList:
+                                self._aliasList.append(basename)
+                            else:
+                                self._aliasList.append(cnt)
+                            self.cntTable.build(self._cntList, self._aliasList)
+                        return
+                if DEBUG:
+                    print "Unhandled item type:", ddict['dtype']
 
     def buttonsSlot(self, ddict):
         if self.data is None:
