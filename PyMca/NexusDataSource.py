@@ -85,6 +85,7 @@ def h5py_sorting(object_list):
         #structures among the different entries. In that case
         #defaults to the unfiltered case
         print("WARNING: Default ordering")
+        print("Probably all entries do not have the key %s" % sorting_key)
         return object_list
 
 def _get_number_list(txt):
