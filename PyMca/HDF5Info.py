@@ -354,7 +354,15 @@ def getInfo(hdf5File, node):
     ddict['general']['Type'] = str(data)
     if hasattr(data, 'dtype'):
         if ("%s" % data.dtype).startswith("|S"):
-            ddict['general']['Value'] = "%s" % data.value[0]
+            if hasattr(data, 'shape'):
+                shape = data.shape
+                if not len(shape):
+                    ddict['general']['Value'] = "%s" % data.value
+                elif shape[0] == 1:
+                    ddict['general']['Value'] = "%s" % data.value[0]
+                else:
+                    print "Warning: Node %s not fully understood" % node
+                    ddict['general']['Value'] = "%s" % data.value
         elif hasattr(data, 'shape'):
             shape = data.shape
             if len(shape) == 1:
