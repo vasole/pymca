@@ -1,0 +1,243 @@
+import Object3DQt as qt
+from HorizontalSpacer import HorizontalSpacer
+from VerticalSpacer import VerticalSpacer
+
+COLORS_LIST = ['white', 'pink', 'red', 'brown', 'orange', 'yellow',
+               'green', 'blue', 'violet', 'black', 'auto']  
+               
+COLORS = {}
+if 0:
+    COLORS['blue']     = qt.QColor(0, 0, 0xFF, 0xFF)
+    COLORS['red']      = qt.QColor(0xFF, 0, 0, 0xFF)
+    COLORS['yellow']   = qt.QColor(0xFF, 0xFF, 0, 0xFF)
+    COLORS['black']    = qt.QColor(0, 0, 0, 0xFF)
+    COLORS['green']    = qt.QColor(0, 0xFF, 0, 0xFF)
+    COLORS['white']    = qt.QColor(0xFF, 0xFF, 0xFF, 0xFF)
+    # added colors #
+    COLORS['pink']     = qt.QColor(255,  20, 147, 0xFF)
+    COLORS['brown']    = qt.QColor(165,  42,  42, 0xFF)
+    COLORS['orange']   = qt.QColor(255, 165,   0, 0xFF)
+    COLORS['violet']   = qt.QColor(148,   0, 211, 0xFF)
+else:
+    COLORS['blue']     = (0, 0, 0xFF, 0xFF)
+    COLORS['red']      = (0xFF, 0, 0, 0xFF)
+    COLORS['yellow']   = (0xFF, 0xFF, 0, 0xFF)
+    COLORS['black']    = (0, 0, 0, 0xFF)
+    COLORS['green']    = (0, 0xFF, 0, 0xFF)
+    COLORS['white']    = (0xFF, 0xFF, 0xFF, 0xFF)
+    # added colors #
+    COLORS['pink']     = (255,  20, 147, 0xFF)
+    COLORS['brown']    = (165,  42,  42, 0xFF)
+    COLORS['orange']   = (255, 165,   0, 0xFF)
+    COLORS['violet']   = (148,   0, 211, 0xFF)
+    COLORS['auto']     = None
+
+class ColorLabel(qt.QLabel):
+    def __init__(self,parent=None, bold=True, color= qt.Qt.red):
+        qt.QLabel.__init__(self,parent)
+        palette = self.palette()
+        role = self.foregroundRole()
+        palette.setColor(role,color)
+        self.setPalette(palette)
+        self.font().setBold(bold)
+
+class InfoLabel(qt.QGroupBox):
+    def __init__(self, parent = None):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Info')
+        self.mainLayout = qt.QHBoxLayout(self)
+        self.mainLayout.addWidget(HorizontalSpacer(self))
+        self.infoLabel = qt.QLabel(self)
+        self.infoLabel.setText("Private widget configuration")
+        self.mainLayout.addWidget(self.infoLabel)
+        self.mainLayout.addWidget(HorizontalSpacer(self))
+
+    def setParameters(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        key = 'infolabel'
+        if ddict.has_key(key):
+            self.infoLabel.setText(ddict[key])
+
+    def getParameters(self):
+        ddict = {}
+        key = 'infolabel'
+        ddict[key] = str(self.infoLabel.text())
+        return ddict
+
+
+class ColorFilter(qt.QGroupBox):
+    def __init__(self, parent = None):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Color Filter')
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.buttonGroup = qt.QButtonGroup(self)
+        self.__options = ['None', 'MinMax'] 
+        for j in range(len(self.__options)):
+            text = self.__options[j]
+            rButton = qt.QRadioButton(self)
+            rButton.setText(text)
+            if j == 0:
+                rButton.setChecked(True)
+            self.mainLayout.addWidget(rButton)
+            #self.mainLayout.setAlignment(rButton, qt.Qt.AlignHCenter)
+            self.buttonGroup.addButton(rButton)
+            self.buttonGroup.setId(rButton, j)
+        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.connect(self.buttonGroup,
+                     qt.SIGNAL('buttonPressed(QAbstractButton *)'),
+                     self._slot)
+        
+    def _slot(self, button):
+        button.setChecked(True)
+        ddict = {}
+        ddict['event']  = 'ColorFilterUpdated'
+        ddict['colorfilter'] = self.__options.index(button.text()) 
+        self.emit(qt.SIGNAL('ColorFilterSignal'), ddict)
+
+    def setParameters(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        key = 'colorfilter'
+        if ddict.has_key(key):
+            idx = int(ddict[key])
+            self.buttonGroup.button(idx).setChecked(True)
+
+    def getParameters(self):
+        ddict = {}
+        key = 'colorfilter'
+        ddict[key] = self.buttonGroup.checkedId()
+        return ddict
+
+class ValueFilter(qt.QGroupBox):
+    def __init__(self, parent = None):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Value Filter')
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(4)
+        self.mainLayout.setSpacing(4)
+        i = 0
+        for text in ["Use", "Min Value", "Max Value"]:
+            label = qt.QLabel(self)
+            label.setText(text)
+            self.mainLayout.addWidget(label, 0, i)
+            i += 1
+
+        self.useCheckBox = qt.QCheckBox(self)
+        self.minLineEdit = qt.QLineEdit(self)
+        w = self.minLineEdit.fontMetrics().width("#####.####")
+        self.minLineEdit.setFixedWidth(w)        
+        self.minLineEdit.setText("0.0")
+        self.minLineEdit.validator  = qt.QDoubleValidator(self.minLineEdit)
+        self.minLineEdit.setValidator(self.minLineEdit.validator)
+        self.maxLineEdit = qt.QLineEdit(self)
+        self.maxLineEdit.setFixedWidth(w)
+        self.maxLineEdit.setText("0.0")
+        self.maxLineEdit.validator  = qt.QDoubleValidator(self.maxLineEdit)
+        self.maxLineEdit.setValidator(self.maxLineEdit.validator)
+        self.mainLayout.addWidget(self.useCheckBox, 1, 0)
+        self.mainLayout.addWidget(self.minLineEdit, 1, 1)
+        self.mainLayout.addWidget(self.maxLineEdit, 1, 2)
+        self.mainLayout.addWidget(VerticalSpacer(self), 2, 0)
+
+    def setParameters(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        key = 'useminmax'
+        if ddict.has_key(key):
+            if ddict[key][0]:
+                self.useCheckBox.setChecked(True)
+            else:
+                self.useCheckBox.setChecked(False)
+            self.minLineEdit.setText("%g" % ddict[key][1])
+            self.maxLineEdit.setText("%g" % ddict[key][2])
+
+    def getParameters(self):
+        ddict = {}
+        key = 'useminmax'
+        if self.useCheckBox.isChecked():
+            cb = 1
+        else:
+            cb = 0
+        minValue = float(str(self.minLineEdit.text()))
+        maxValue = float(str(self.maxLineEdit.text()))
+        ddict[key] = [cb, minValue, maxValue]
+        return ddict
+
+class Isosurfaces(qt.QGroupBox):
+    def __init__(self, parent = None, niso=5):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Isosurfaces')
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(4)
+        self.mainLayout.setSpacing(4)
+        self.__nIsosurfaces = niso
+        i = 0
+        for text in ["Use", "Value", "Color"]:
+            label = qt.QLabel(self)
+            label.setText(text)
+            self.mainLayout.addWidget(label, 0, i)
+            i += 1
+        self.__isosurfaceList = []
+        colorOptions = ["White",
+                        "Red",
+                        "Yellow",
+                        "Green",
+                        "Cyan",
+                        "Blue",
+                        "Black"]
+        for i in range(self.__nIsosurfaces):
+            cb = qt.QCheckBox(self)
+            le = qt.QLineEdit(self)
+            le.setText("0.0")
+            le.validator  = qt.QDoubleValidator(le)
+            le.setValidator(le.validator)
+            color = qt.QComboBox(self)
+            color.insertItems(0, COLORS_LIST)
+            color.setCurrentIndex(i+1)
+            self.mainLayout.addWidget(cb, i+1, 0)
+            self.mainLayout.addWidget(le, i+1, 1)
+            self.mainLayout.addWidget(color, i+1, 2)
+            self.__isosurfaceList.append((cb, le, color))
+
+    def setParameters(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        key = 'isosurfaces'
+        if ddict.has_key(key):
+            for i in range(len(ddict[key])):
+                if i >= self.__nIsosurfaces:
+                    break
+                cb, le, color = ddict[key][i]
+                if cb:
+                    self.__isosurfaceList[i][0].setChecked(True)
+                else:
+                    self.__isosurfaceList[i][0].setChecked(False)
+                self.__isosurfaceList[i][1].setText("%g" % le)
+                for c in COLORS_LIST:
+                    if COLORS[c] == color:
+                        idx = COLORS_LIST.index(c)
+                        self.__isosurfaceList[i][2].setCurrentIndex(idx)
+                        break
+
+    def getParameters(self):
+        ddict = {}
+        key = 'isosurfaces'
+        ddict[key] = []
+        for i in range(self.__nIsosurfaces):
+            cb, le, color = self.__isosurfaceList[i]
+            cb = self.__isosurfaceList[i][0].isChecked()
+            le = float(self.__isosurfaceList[i][1].text())
+            color = COLORS[str(self.__isosurfaceList[i][2].currentText())]
+            ddict[key].append([cb, le, color])
+        return ddict
+
+if __name__ == "__main__":
+    import sys
+    app = qt.QApplication(sys.argv)
+    def mySlot(ddict):
+        print ddict
+    w = Isosurfaces()
+    qt.QObject.connect(w, qt.SIGNAL('ColorFilterSignal'), mySlot)
+    w.show()    
+    app.exec_()

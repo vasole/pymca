@@ -113,6 +113,8 @@ for pluginSet in glob.glob(os.path.join(pluginsDir,'*')):
             include_files.append((f,
                                  os.path.join(destination,os.path.basename(f))))
 
+#I should use somehow absolute import ...
+sys.path = [PyMcaDir] + sys.path
 try:
     import ctypes
     import OpenGL
@@ -140,8 +142,6 @@ except:
 #For the time being I leave it out
 SCIPY = False
 
-#I should use somehow absolute import ...
-sys.path = [PyMcaDir] + sys.path
 import PyMcaMain
 import PyMcaPlugins
 try:
@@ -161,7 +161,7 @@ except:
     
 if OBJECT3D:
     includes.append("logging")
-    excludes = ["OpenGL", "Tkinter", "Object3D", "PyMcaPlugins",
+    excludes = ["OpenGL", "Tkinter", "PyMca.Object3D", "Object3D", "PyMcaPlugins",
                 "scipy", "Numeric", "numarray"] 
     #This requieres the use of the environmental variable MATPLOTLIBDATA
     #pointing to mpl-data directory to work
@@ -169,10 +169,7 @@ if OBJECT3D:
                   os.path.dirname(OpenGL.__file__),
                   os.path.dirname(Object3D.__file__)]
     if MATPLOTLIB:
-        special_modules =[os.path.dirname(ctypes.__file__),
-                      os.path.dirname(OpenGL.__file__),
-                      os.path.dirname(Object3D.__file__),
-                      os.path.dirname(matplotlib.__file__)]
+        special_modules.append(os.path.dirname(matplotlib.__file__))
     if SCIPY:
         special_modules.append(os.path.dirname(scipy.__file__))
     for f in special_modules:
@@ -186,6 +183,13 @@ if OBJECT3D:
                             os.path.join(os.path.basename(o3ddir), os.path.basename(f))))
 else:
     excludes = ["Tkinter", "PyMcaPlugins", "scipy", "Numeric","numarray"]
+    special_modules = [os.path.dirname(ctypes.__file__)]
+    if MATPLOTLIB:
+        special_modules.append(os.path.dirname(matplotlib.__file__))
+    if SCIPY:
+        special_modules.append(os.path.dirname(scipy.__file__))
+    for f in special_modules:
+            include_files.append((f,os.path.basename(f)))
     
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)

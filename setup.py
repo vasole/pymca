@@ -76,6 +76,12 @@ if os.path.exists(os.path.join("PyMca", "phynx")):
     data_files.append(('PyMca/phynx', glob.glob('PyMca/phynx/*.py')))
     data_files.append(('PyMca/phynx/utils', glob.glob('PyMca/phynx/utils/*.py')))
 
+LOCAL_OBJECT3D =False
+if os.path.exists(os.path.join("PyMca", "object3d")):
+    LOCAL_OBJECT3D = True
+    data_files.append(('PyMca/Object3D', glob.glob('PyMca/object3d/Object3D/*.py')))
+    data_files.append(('PyMca/Object3D/Object3DPlugins',
+                       glob.glob('PyMca/object3d/Object3D/Object3DPlugins/*.py')))
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
@@ -150,12 +156,51 @@ def build_PyMcaIOHelper(ext_modules):
                                         numpy.get_include()])
     ext_modules.append(module)
 
+def build_Object3DCTools(ext_modules):
+    includes = [numpy.get_include()]
+    if sys.platform == "win32":
+        libraries = ['opengl32', 'glu32']
+    else:
+        libraries = ['GL', 'GLU']        
+    if sys.platform == 'windows':
+        WindowsSDK = os.getenv('WindowsSdkDir')
+        #if WindowsSDK is not None:
+        #    includes.append(WindowsSDK)
+    module  = Extension(name = 'PyMca.Object3D.Object3DCTools',
+                        sources = glob.glob('PyMca/object3d/Object3D/Object3DCTools/*.c'),
+                        define_macros = define_macros,
+                        libraries  = libraries,
+                        include_dirs = includes)
+    ext_modules.append(module)
+
+def build_Object3DQhull(ext_modules):
+    if sys.platform == "win32":
+        libraries = ['opengl32', 'glu32']
+    else:
+        libraries = ['GL', 'GLU']        
+    module  = Extension(name = 'PyMca.Object3D.Object3DQhull',
+                        sources = glob.glob('PyMca/object3d/Object3D/Object3DQhull/src/*.c'),
+                        define_macros = define_macros,
+                        include_dirs = [numpy.get_include()])
+
+    ext_modules.append(module)
+
+
+
 ext_modules = []
 build_FastEdf(ext_modules)
 build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
+if LOCAL_OBJECT3D:
+    try:
+        build_Object3DCTools(ext_modules)
+        build_Object3DQhull(ext_modules)
+    except:
+        print "Object3D Module could not be built"
+        print sys.exc_info()
+
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
 from distutils.command.install_data import install_data
