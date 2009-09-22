@@ -102,7 +102,7 @@ class QNexusWidget(QtGui.QWidget):
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
-        if 1:
+        if 'Object3D' in sys.modules:
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '3D'])
             self.cntTable.set3DEnabled(True)
         else:
@@ -610,6 +610,10 @@ class QNexusWidget(QtGui.QWidget):
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
+    try:
+        import Object3D
+    except:
+        pass
     w = QNexusWidget()
     if 0:
         w.setFile(sys.argv[1])

@@ -70,7 +70,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.3.1-20090910-snapshot"
+__version__ = "4.3.1-20090922-snapshot"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -163,8 +163,7 @@ import ScanWindow
 OBJECT3D = False
 if QTVERSION > '4.0.0':
     import PyMcaImageWindow
-    #try:
-    if 1:
+    try:
         #This is to make sure it is properly frozen
         #and that Object3D is fully supported
         import OpenGL.GL
@@ -172,8 +171,8 @@ if QTVERSION > '4.0.0':
         #import Object3D.SceneGLWindow as SceneGLWindow
         import PyMcaGLWindow as SceneGLWindow
         OBJECT3D = True
-    #except:
-    #    OBJECT3D = False
+    except:
+        OBJECT3D = False
 import QDispatcher
 import ElementsInfo
 import PeakIdentifier
