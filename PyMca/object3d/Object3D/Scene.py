@@ -215,7 +215,9 @@ class Scene:
         self.tree.delChild(name)
 
     def clearTree(self):
-        del self.tree[1:]
+        #del self.tree[1:]
+        for legend in self.getObjectList():
+            self.removeObject(legend)
 
     def setAutoScale(self, flag=True):
         if flag:

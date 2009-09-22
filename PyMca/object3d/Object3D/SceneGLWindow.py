@@ -598,112 +598,6 @@ class SceneGLWindow(qt.QWidget):
         #self.glWidget.updateGL()
 	self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 	    
-    def addDataObject(self, dataObject):
-        print dataObject.info
-        print dataObject.x
-
-    def _addSelection(self, selectionlist, replot=True):
-        if DEBUG:
-            print "_addSelection(self, selectionlist)",selectionlist
-        if type(selectionlist) == type([]):
-            sellist = selectionlist
-        else:
-            sellist = [selectionlist]
-
-        for sel in sellist:
-            source = sel['SourceName']
-            key    = sel['Key']
-            legend = sel['legend'] #expected form sourcename + scan key
-            if not sel.has_key("scanselection"):
-                continue
-            if not sel["scanselection"]:
-                continue
-            if len(key.split(".")) > 2:
-                continue
-            dataObject = sel['dataobject']
-            #one-dimensional selections not considered
-            if dataObject.info["selectiontype"] == "1D":
-                continue
-            
-            #there must be something to plot
-            if not hasattr(dataObject, 'y'):
-                continue
-            #there must be an x for a scan selection to reach here
-            if not hasattr(dataObject, 'x'):
-                continue
-
-            numberOfXAxes = len(dataObject.x)
-            if numberOfXAxes > 1:
-                if DEBUG:
-		    print "Mesh plots"
-            else:
-                xdata = dataObject.x[0]
-
-            #we have to loop for all y values
-            ycounter = -1
-            for ydata in dataObject.y:
-                ycounter += 1
-                ndata = len(ydata)
-                if (dataObject.m is None) or (dataObject.m == []):                        
-                    mdata = numpy.ones(ndata).astype(numpy.float32)
-                    #A priori the graph only knows about plots
-                    xyzData = numpy.zeros((ndata, 3), numpy.float32)
-                    values  = numpy.zeros((ndata, 1), numpy.float32)
-                    xdataCounter = 0
-                    for xdata in dataObject.x:
-                        xyzData[:,xdataCounter] = xdata * 1
-                        xdataCounter += 1
-                elif len(dataObject.m[0]) > 0:
-                    if len(dataObject.m[0]) == len(ydata):
-                        index = numpy.nonzero(dataObject.m[0])
-                        ndata = len(index)
-                        if not ndata:
-                            continue
-                        ydata   = numpy.take(ydata, index)
-                        xyzData = numpy.zeros((ydata.shape[1], 3), numpy.float32)
-                        xdataCounter = 0
-                        for xdata in dataObject.x:
-			    #print "xyzData.shape = ",xyzData.shape
-	                    #print "taken shape = ", numpy.take(xdata, index).shape
-	                    #print "destination shape = ",xyzData[:,xdataCounter].shape 
-                            xyzData[:,xdataCounter] = 1 *\
-                                                      numpy.take(xdata, index)
-                            xdataCounter += 1
-
-                        values  = numpy.zeros((ydata.shape[1],1), numpy.float32)
-                        ydata = numpy.take(ydata, index)
-                        mdata = numpy.take(dataObject.m[0], index)
-                        #print "values = ", values[0:20,0]
-                    else:
-                        raise ValueError, "Monitor data length different than counter data"
-                values[:,0]  = (ydata/mdata)
-                ylegend = 'y%d' % ycounter
-                if sel['selection'] is not None:
-                    if type(sel['selection']) == type({}):
-                        if sel['selection'].has_key('x'):
-                            ilabel = sel['selection']['y'][ycounter]
-                            ylegend = dataObject.info['LabelNames'][ilabel]
-                object3Dlegend = legend + ylegend
-                if 0:
-		    object3D = Object3D.Object3D(object3Dlegend)
-		    object3D.setXYZArray(xyzData, values)
-		else:
-		    object3D = Object3DMesh.Object3DMesh(object3Dlegend)
-		    #if the number of points is reasonable
-		    #I force a surface plot.
-		    if ndata < 200000:
-			cfg = object3D.setConfiguration({'common':{'mode':3}})
-		    object3D.setData(values, xyz=xyzData)
-                #object3D.setSelected(True)
-                #self.addObject(object3D, object3Dlegend)
-                self.scene.addObject(object3D, object3Dlegend)
-        #width = self.glWidget.width()
-        #height = self.glWidget.height()
-        self.sceneControl.updateView()
-        #qt.QApplication.postEvent(self.glWidget,
-        #    qt.QResizeEvent(qt.QSize(width,height),self.glWidget.size()))
-        self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-
     def addObject(self, ob, legend = None, update_scene=True):
         self.sceneControl.scene.addObject(ob, legend)
         self.sceneControl.scene.getLimits()
@@ -715,6 +609,23 @@ class SceneGLWindow(qt.QWidget):
 	    self.objectSelectedSlot(ndict, update_scene=update_scene)
 	    #self.activeObject = self.scene.name()
 	    self.activeObject = legend
+	if update_scene:
+            self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
+
+    def removeObject(self, legend, update_scene=True):
+        if self.activeObject == legend:
+            self.activeObject = None
+        self.sceneControl.scene.removeObject(legend)
+        self.sceneControl.scene.getLimits()
+        self.sceneControl.updateView()            
+	if update_scene:
+            self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
+        
+    def clear(self, update_scene=True):
+        self.activeObject = None
+        self.sceneControl.scene.clearTree()
+        self.sceneControl.scene.getLimits()
+        self.sceneControl.updateView()            
 	if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 

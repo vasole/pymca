@@ -163,15 +163,17 @@ import ScanWindow
 OBJECT3D = False
 if QTVERSION > '4.0.0':
     import PyMcaImageWindow
-    try:
+    #try:
+    if 1:
         #This is to make sure it is properly frozen
         #and that Object3D is fully supported
         import OpenGL.GL
         import PyQt4.QtOpenGL
-        import Object3D.SceneGLWindow as SceneGLWindow
+        #import Object3D.SceneGLWindow as SceneGLWindow
+        import PyMcaGLWindow as SceneGLWindow
         OBJECT3D = True
-    except:
-        OBJECT3D = False
+    #except:
+    #    OBJECT3D = False
 import QDispatcher
 import ElementsInfo
 import PeakIdentifier
@@ -420,6 +422,21 @@ class PyMca(PyMcaMdi.PyMca):
                 return True
         return False
 
+    def _is3DSelection(self, ddict):
+        if self._is2DSelection(ddict):
+            return False
+
+        if ddict.has_key('selection'):
+            if ddict['selection'].has_key('selectiontype'):
+                if ddict['selection']['selectiontype'] == '3D':
+                    return True
+            
+            if ddict['selection'].has_key('x'):
+                if ddict['selection']['x'] is not None:
+                    if len(ddict['selection']['x']) > 1:
+                        return True           
+        return False
+
     def dispatcherAddSelectionSlot(self, ddict):
         try:
             return self._dispatcherAddSelectionSlot(ddict)
@@ -523,6 +540,8 @@ class PyMca(PyMcaMdi.PyMca):
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
                 self.mainTabWidget.removeTab(index)
                 self.imageWindowDict[legend]._removeSelection(ddict)
+        elif self._is3DSelection(ddict):
+            self.glWindow._removeSelection(ddict)             
         else:
             self.mcawindow._removeSelection(ddict)
             self.scanwindow._removeSelection(ddict)
@@ -562,7 +581,9 @@ class PyMca(PyMcaMdi.PyMca):
                     self.mainTabWidget.setCurrentPage(index)
                 else:
                     self.mainTabWidget.setCurrentWidget(self.imageWindowDict[legend])
-        else:            
+        elif self._is3DSelection(ddict):
+            self.glWindow._replaceSelection(ddict)             
+        else:
             self.mcawindow._replaceSelection(ddict)
             self.scanwindow._replaceSelection(ddict)
 

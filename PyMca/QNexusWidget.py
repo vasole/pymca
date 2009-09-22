@@ -39,10 +39,11 @@ import gc
 import ConfigDict
 if "PyMcaDirs" in sys.modules:
     import PyMcaDirs
+
 DEBUG=0
 
 class Buttons(QtGui.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, options=None):
         QtGui.QWidget.__init__(self, parent)
         self.mainLayout = QtGui.QGridLayout(self)
         self.mainLayout.setMargin(0)
@@ -50,8 +51,10 @@ class Buttons(QtGui.QWidget):
         self.buttonGroup = QtGui.QButtonGroup(self)
         self.buttonList = []
         i = 0
-        optionList = ['SCAN', 'MCA', 'IMAGE']
-        optionList = ['SCAN', 'MCA']
+        if options is None:
+            optionList = ['SCAN', 'MCA']
+        else:
+            optionList = options
         actionList = ['ADD', 'REMOVE', 'REPLACE']
         for option in optionList:
             row = optionList.index(option)
@@ -98,7 +101,13 @@ class QNexusWidget(QtGui.QWidget):
         self.hdf5Widget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
-        self.buttons = Buttons(self)
+        #Enable 3D
+        if 1:
+            self.buttons = Buttons(self, options=['SCAN', 'MCA', '3D'])
+            self.cntTable.set3DEnabled(True)
+        else:
+            self.buttons = Buttons(self, options=['SCAN', 'MCA'])
+            self.cntTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
         self.connect(self.hdf5Widget,
                      QtCore.SIGNAL('HDF5WidgetSignal'),

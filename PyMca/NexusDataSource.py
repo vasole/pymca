@@ -209,25 +209,29 @@ class NexusDataSource:
         output.info = self.__getKeyInfo(actual_key)
         output.info['selection'] = selection
         if selection['selectiontype'].upper() in ["SCAN", "MCA"]:
-            #I force output to be of dim 1
             output.info['selectiontype'] = "1D"
-            if selection.has_key('LabelNames'):
-                output.info['LabelNames'] = selection['LabelNames']
-            elif selection.has_key('aliaslist'):
-                output.info['LabelNames'] = selection['aliaslist']
-            else:
-                output.info['LabelNames'] = selection['cntlist']
-            output.x = None
-            output.y = None
-            output.m = None
-            output.data = None
-            for cnt in ['y', 'x', 'm']:
-                if not selection.has_key(cnt):
-                    continue
-                if not len(selection[cnt]):
-                    continue
-                path =  entry + selection['cntlist'][selection[cnt][0]]
-                data = phynxFile[path].value
+        elif selection['selectiontype'] == "3D":
+            output.info['selectiontype'] = "3D"
+        else:
+            raise TypeError, "Unsupported selection type %s" % selection['selectiontype']
+        if selection.has_key('LabelNames'):
+            output.info['LabelNames'] = selection['LabelNames']
+        elif selection.has_key('aliaslist'):
+            output.info['LabelNames'] = selection['aliaslist']
+        else:
+            output.info['LabelNames'] = selection['cntlist']
+        output.x = None
+        output.y = None
+        output.m = None
+        output.data = None
+        for cnt in ['y', 'x', 'm']:
+            if not selection.has_key(cnt):
+                continue
+            if not len(selection[cnt]):
+                continue
+            path =  entry + selection['cntlist'][selection[cnt][0]]
+            data = phynxFile[path].value
+            if output.info['selectiontype'] == "1D":
                 if len(data.shape) == 2:
                     if min(data.shape) == 1:
                         data = numpy.ravel(data)
@@ -235,18 +239,27 @@ class NexusDataSource:
                         raise TypeError, "%s selection is not 1D" % cnt.upper()
                 elif len(data.shape) > 2:
                     raise TypeError, "%s selection is not 1D" % cnt.upper()                
-                if cnt == 'y':
-                    output.y = [data]
-                elif cnt == 'x':
+            if cnt == 'y':
+                output.y = [data]
+            elif cnt == 'x':
+                #there can be more than one X except for 1D
+                if output.info['selectiontype'] == "1D":
+                    if len(selection[cnt]) > 1:
+                        raise TypeError, "%s selection is not 1D" % cnt.upper()
+                if output.x is None:
                     output.x = [data]
-                elif cnt == 'm':
-                    output.m = [data]
-            # MCA specific
-            if selection['selectiontype'].upper() == "MCA":
-                if not output.info.has_key('Channel0'):
-                    output.info['Channel0'] = 0
-        else:
-            print "UNSUPPORTED SELECTION", selection
+                if len(selection[cnt]) > 1:
+                    for xidx in range(1, len(selection[cnt])):
+                        path =  entry + selection['cntlist'][selection[cnt][xidx]]
+                        data = phynxFile[path].value
+                        output.x.append(data)
+            elif cnt == 'm':
+                #only one monitor
+                output.m = [data]
+        # MCA specific
+        if selection['selectiontype'].upper() == "MCA":
+            if not output.info.has_key('Channel0'):
+                output.info['Channel0'] = 0
         """"
         elif selection['selectiontype'].upper() in ["BATCH"]:
             #assume already digested

@@ -29,11 +29,6 @@ import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 DEBUG = 0
 
-if 'Object3D' in sys.modules:
-    OBJECT3D = True
-else:
-    OBJECT3D = False
-
 class HDF5CounterTable(QtGui.QTableWidget):
     def __init__(self, parent=None):
         QtGui.QTableWidget.__init__(self, parent)
@@ -129,6 +124,7 @@ class HDF5CounterTable(QtGui.QTableWidget):
         if value:
             self.__is3DEnabled = True
         else:
+            self.__is3DEnabled = False
             if len(self.xSelection) > 1:
                 self.xSelection = [1 * self.xSelection[0]]
         self._update()
@@ -151,12 +147,14 @@ class HDF5CounterTable(QtGui.QTableWidget):
             else:
                 if row in self.xSelection:
                     del self.xSelection[self.xSelection.index(row)]
-            if (not OBJECT3D) or (not self.__is3DEnabled):
+            if not self.__is3DEnabled:
                 if len(self.xSelection) > 2:
                     #that is to support mesh plots
                     self.xSelection = self.xSelection[-2:]
                 if len(self.xSelection) > 1:
-                    self.xSelection = self.xSelection[-1:]                    
+                    self.xSelection = self.xSelection[-1:]
+            elif len(self.xSelection) > 3:
+                self.xSelection = self.xSelection[-3:]
 
         if col == 2:
             if ddict["state"]:

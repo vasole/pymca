@@ -1,5 +1,4 @@
 from Object3D import SceneGLWindow
-qt = SceneGLWindow.qt
 
 #This is needed for the mesh plots
 from Object3D.Object3DPlugins import Object3DMesh
@@ -12,7 +11,7 @@ class Object3DScene(SceneGLWindow.SceneGLWindow):
     This class just adds a set of simple commands that can be accessed
     in interactive mode from ipython -q4thread
     """
-    def mesh(self, data, x=None, y=None, z=None, xyz=None, legend=None):
+    def mesh(self, data, x=None, y=None, z=None, xyz=None, legend=None,update_scene=True):
         """
         mesh(self, data, x=None, y=None, z=None, xyz=None, legend=None)
         The legend is optional. It is the name of the generated mesh.
@@ -21,10 +20,10 @@ class Object3DScene(SceneGLWindow.SceneGLWindow):
 
         Generate a mesh plot according to data dimensions
 
-        mesh(self, data, x=x, y=x)
+        mesh(self, data, x=x, y=y)
 
         Generate a REGULAR 2D mesh plot on the x y grid.
-        length_of_x *  length_of_x = length_of_data
+        length_of_x *  length_of_y = length_of_data
         the z coordinate is set to zero
 
         mesh(self, data, x=x, y=y, z=10)
@@ -43,10 +42,10 @@ class Object3DScene(SceneGLWindow.SceneGLWindow):
             legend = "Mesh"
         o3d = Object3DMesh.Object3DMesh(legend)
         o3d.setData(data, x=x, y=y, z=z, xyz=xyz)
-        self.addObject(o3d, legend)
+        self.addObject(o3d, legend, update_scene=update_scene)
+        return o3d
         
-        
-    def stack(self, data, x=None, y=None, z=None, legend=None):
+    def stack(self, data, x=None, y=None, z=None, legend=None, update_scene=True):
         """
         I should find a better name for this method ...
         stack(self, data, x=None, y=None, z=None, legend=None)
@@ -67,12 +66,14 @@ class Object3DScene(SceneGLWindow.SceneGLWindow):
         """
         o3d = Object3DStack.Object3DStack(legend)
         o3d.setData(data, x=x, y=y, z=z)
-        self.addObject(o3d, legend)
+        self.addObject(o3d, legend, update_scene=update_scene)
+        return o3d
 
 
 if __name__ == "__main__":
     import numpy
     import sys
+    qt = SceneGLWindow.qt
     app = qt.QApplication([])
     scene = Object3DScene()
     scene.show()
