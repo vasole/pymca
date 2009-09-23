@@ -368,7 +368,7 @@ class FileModel(QtCore.QAbstractItemModel):
         gc.collect()
         present = False
         for child in self.rootItem:
-            if child.filename == name:
+            if child.file.filename == name:
                 #already present
                 present = True
                 break
