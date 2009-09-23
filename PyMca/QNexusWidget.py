@@ -352,10 +352,13 @@ class QNexusWidget(QtGui.QWidget):
         if ref not in self._dataSourceList:
             self._dataSourceList.append(ref)
             self._modelDict[ref] = HDF5Widget.FileModel()
-        model = self._modelDict[ref]
-        self.hdf5Widget.setModel(model)
-        for source in self.data._sourceObjectList:
-            self.hdf5Widget.model().appendPhynxFile(source, weakreference=True)
+            model = self._modelDict[ref]
+            self.hdf5Widget.setModel(model)
+            for source in self.data._sourceObjectList:
+                self.hdf5Widget.model().appendPhynxFile(source, weakreference=True)
+        else:
+            model = self._modelDict[ref]
+            self.hdf5Widget.setModel(model)
 
     def setFile(self, filename):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
