@@ -328,7 +328,7 @@ class FileModel(QtCore.QAbstractItemModel):
     def openFile(self, filename, weakreference=False):
         gc.collect()
         for item in self.rootItem:
-            if item.name == filename:
+            if item.file.filename == filename:
                 ddict = {}
                 ddict['event'] = "fileUpdated"
                 ddict['filename'] = filename
