@@ -889,6 +889,12 @@ class SceneGLWidget(qt.QGLWidget):
             radius = numpy.sqrt(deltax * deltax + deltay * deltay)
             zmax += radius
             zmin -= radius
+            if (xmin == xmax):
+                xmax += 0.5
+                xmin -= 0.5
+            if (ymin == ymax):
+                ymax += 0.5
+                ymin -= 0.5
             GL.glOrtho(xmin, xmax,
                        ymin, ymax,
                       -zmax, -zmin)

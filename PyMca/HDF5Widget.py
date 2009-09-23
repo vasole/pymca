@@ -248,6 +248,17 @@ class FileModel(QtCore.QAbstractItemModel):
             if isinstance(item, H5FileProxy):
                 return QtCore.QVariant(os.path.basename(item.file.filename))
             else:
+                showtitle = False
+                if showtitle:
+                    if hasattr(item, 'type'):
+                        if item.type == "Entry":
+                            children = item.children
+                            names = [posixpath.basename(o.name) for o in children]
+                            if "title" in names:
+                                idx = names.index("title")
+                                children[idx].getNode().value[0]
+                                return QtCore.QVariant(children[idx].getNode().value[0])
+                    return QtCore.QVariant(posixpath.basename(item.name))
                 return QtCore.QVariant(posixpath.basename(item.name))
         if column == 1:
             return QtCore.QVariant(item.type)
