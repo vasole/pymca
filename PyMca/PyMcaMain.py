@@ -426,6 +426,8 @@ class PyMca(PyMcaMdi.PyMca):
             return False
 
         if ddict.has_key('selection'):
+            if ddict['selection'] is None:
+                return False
             if ddict['selection'].has_key('selectiontype'):
                 if ddict['selection']['selectiontype'] == '3D':
                     return True

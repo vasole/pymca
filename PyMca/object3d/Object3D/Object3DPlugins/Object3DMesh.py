@@ -514,7 +514,9 @@ def getObject3DInstance(config=None):
         import EdfFile
 
     fileTypeList = ['EDF Files (*edf)',
-                    'EDF Files (*ccd)']
+                    'EDF Files (*ccd)',
+                    'ADSC Files (*img)',
+                    'EDF Files (*)']
     old = Object3DFileDialogs.Object3DDirs.nativeFileDialogs * 1
     Object3DFileDialogs.Object3DDirs.nativeFileDialogs = False
     fileList, filterUsed = Object3DFileDialogs.getFileList(None, fileTypeList,

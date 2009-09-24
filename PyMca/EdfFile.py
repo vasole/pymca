@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 """
     EdfFile.py
@@ -178,11 +178,12 @@ class  EdfFile:
         self.File.seek(0, 0)
         
         Index=0
-        line = self.File.readline()        
+        line = self.File.readline()
+        self.ADSC = False
         while line != "":            
             if string.count(line, "{\n") >= 1 or string.count(line, "{\r\n")>=1:
                 Index=self.NumImages
-                self.NumImages = self.NumImages + 1                
+                self.NumImages = self.NumImages + 1
                 self.Images.append(Image())
                 self.Images[Index].HeaderPosition=self.File.tell()    
                 
@@ -191,10 +192,13 @@ class  EdfFile:
                 typeItem = string.strip(listItems[0])
                 listItems = string.split(listItems[1], ";", 1)
                 valueItem = string.strip(listItems[0])
+                if (typeItem == "HEADER_BYTES") and (Index==0):
+                    self.ADSC = True
+                    break
 
                 #if typeItem in self.Images[Index].StaticHeader.keys():          
                 if (string.upper(typeItem)) in STATIC_HEADER_ELEMENTS_CAPS:          
-                    self.Images[Index].StaticHeader[typeItem]=valueItem                    
+                    self.Images[Index].StaticHeader[typeItem]=valueItem
                 else:
                     self.Images[Index].Header[typeItem]=valueItem
             if string.count(line, "}\n") >= 1:
@@ -242,14 +246,72 @@ class  EdfFile:
                 self.File.seek(self.Images[Index].Size, 1)
                 
             line = self.File.readline()
-    
+
+        if self.ADSC:
+            self.File.seek(0, 0)
+            self.NumImages = 1
+            #this is a bad implementation of fabio adscimage
+            #please take a look at the fabio module of fable at sourceforge
+            infile = self.File
+            header_keys = []
+            header = {}
+            try:
+                """ read an adsc header """
+                line = infile.readline()
+                bytesread = len(line)
+                while '}' not in line:
+                    if '=' in line:
+                        (key, val) = line.split('=')
+                        header_keys.append(key.strip())
+                        header[key.strip()] = val.strip(' ;\n')
+                    line = infile.readline()
+                    bytesread = bytesread + len(line)
+            except:
+                raise Exception("Error processing adsc header")
+            # banned by bzip/gzip???
+            try:
+                infile.seek( int(header['HEADER_BYTES'] ), 0)
+            except TypeError:
+                # Gzipped does not allow a seek and read header is not
+                # promising to stop in the right place
+                infile.close()
+                infile = self._open(fname, "rb")
+                infile.read( int(header['HEADER_BYTES'] ) )
+            binary = infile.read()
+            infile.close()
+                                
+            #now read the data into the array
+            self.Images[Index].Dim1 = int(header['SIZE1'])
+            self.Images[Index].Dim2 = int(header['SIZE2'])
+            self.Images[Index].NumDim=2
+            self.Images[Index].DataType= 'UnsignedShort'
+            try:
+                self.__data = numpy.reshape(
+                    numpy.fromstring(binary, numpy.uint16), 
+                    (self.Images[Index].Dim2, self.Images[Index].Dim1) )
+            except ValueError:
+                raise IOError, 'Size spec in ADSC-header does not match '+\
+                    'size of image data field'
+            if 'little' in header['BYTE_ORDER']:
+                self.Images[Index].ByteOrder = 'LowByteFirst'
+            else:
+                self.Images[Index].ByteOrder = 'HighByteFirst'
+            if string.upper(self.SysByteOrder) != string.upper(self.Images[Index].ByteOrder):
+                print "Swapping bytes"
+                self.data = self.data.byteswap()
+                self.Images[Index].ByteOrder = self.SysByteOrder
+
+            self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
+            self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
+            self.Images[Index].StaticHeader['Offset_1'] = 0
+            self.Images[Index].StaticHeader['Offset_2'] = 0
+            self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
+
         
     def GetNumImages(self):
         """ Returns number of images of the object (and associated file)
         """
         return self.NumImages
-
-        
     
     def GetData(self,Index, DataType="",Pos=None,Size=None):
         """ Returns numpy array with image data
@@ -285,37 +347,43 @@ class  EdfFile:
         if Index < 0 or Index >= self.NumImages: raise ValueError, "EdfFile: Index out of limit"
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
-            self.File.seek(self.Images[Index].DataPosition,0)
-            datatype = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
-            try:
-                datasize = self.__GetSizeNumpyType__(datatype)
-            except TypeError:
-                print "What is the meaning of this error?"
-                datasize = 8
-            if self.Images[Index].NumDim==3:
-                sizeToRead = self.Images[Index].Dim1 * \
-                             self.Images[Index].Dim2 * \
-                             self.Images[Index].Dim3 * datasize
-                Data = numpy.fromstring(self.File.read(sizeToRead),
-                            datatype)
-                Data = numpy.reshape(Data, (self.Images[Index].Dim3,self.Images[Index].Dim2, self.Images[Index].Dim1))
-            elif self.Images[Index].NumDim==2:
-                sizeToRead = self.Images[Index].Dim1 * \
-                             self.Images[Index].Dim2 * datasize
-                Data = numpy.fromstring(self.File.read(sizeToRead),
-                            datatype)
-                #print "datatype = ",datatype
-                #print "Data.type = ", Data.dtype.char
-                #print "self.Images[Index].DataType ", self.Images[Index].DataType
-                #print "Data.shape",Data.shape
-                #print "datasize = ",datasize
-                #print "sizeToRead ",sizeToRead 
-                #print "lenData = ", len(Data)
-                Data = numpy.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
-            elif self.Images[Index].NumDim==1:
-                sizeToRead = self.Images[Index].Dim1 * datasize
-                Data = numpy.fromstring(self.File.read(sizeToRead),
-                            datatype)
+            if self.ADSC:
+                return self.__data
+            else:
+                self.File.seek(self.Images[Index].DataPosition,0)
+                datatype = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
+                try:
+                    datasize = self.__GetSizeNumpyType__(datatype)
+                except TypeError:
+                    print "What is the meaning of this error?"
+                    datasize = 8
+                if self.Images[Index].NumDim==3:
+                    sizeToRead = self.Images[Index].Dim1 * \
+                                 self.Images[Index].Dim2 * \
+                                 self.Images[Index].Dim3 * datasize
+                    Data = numpy.fromstring(self.File.read(sizeToRead),
+                                datatype)
+                    Data = numpy.reshape(Data, (self.Images[Index].Dim3,self.Images[Index].Dim2, self.Images[Index].Dim1))
+                elif self.Images[Index].NumDim==2:
+                    sizeToRead = self.Images[Index].Dim1 * \
+                                 self.Images[Index].Dim2 * datasize
+                    Data = numpy.fromstring(self.File.read(sizeToRead),
+                                datatype)
+                    #print "datatype = ",datatype
+                    #print "Data.type = ", Data.dtype.char
+                    #print "self.Images[Index].DataType ", self.Images[Index].DataType
+                    #print "Data.shape",Data.shape
+                    #print "datasize = ",datasize
+                    #print "sizeToRead ",sizeToRead 
+                    #print "lenData = ", len(Data)
+                    Data = numpy.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
+                elif self.Images[Index].NumDim==1:
+                    sizeToRead = self.Images[Index].Dim1 * datasize
+                    Data = numpy.fromstring(self.File.read(sizeToRead),
+                                datatype)
+        elif self.ADSC:
+            return self.__data[Pos[1]:(Pos[1]+Size[1]),
+                               Pos[0]:(Pos[0]+Size[0])]
         elif fastedf and CAN_USE_FASTEDF:
             type= self.__GetDefaultNumpyType__(self.Images[Index].DataType, index= Index)
             size_pixel=self.__GetSizeNumpyType__(type)
