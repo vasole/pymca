@@ -258,15 +258,13 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                         toggle = True,
                                         state = False,
                                         position = 6)
-        infotext  = 'Remove background from current stack using current\n'
-        infotext += 'ROI markers as anchors.\n'
-        infotext += 'WARNING: Very slow. 0.01 to 0.02 seconds per pixel.\n'
-        infotext += 'Not recommended  unless you really need a  better\n'
-        infotext += 'contrast to place your ROIs and you know what you\n'
-        infotext += 'are doing.\n'
-        infotext += 'The ROI background subtraction is more efficient.\n'
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         if SNIP:
+            infotext  = 'Remove background from current stack.\n'
+            infotext += 'Not recommended  unless you really need a  better\n'
+            infotext += 'contrast to place your ROIs and you know what you\n'
+            infotext += 'are doing.\n'
+            infotext += 'The ROI background subtraction is more efficient.\n'
             self.backgroundButton = self.stackGraphWidget._addToolButton(\
                                         self.backgroundIcon,
                                         #self.submitThread,
@@ -274,6 +272,13 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                         infotext,
                                         position = 7)
         else:
+            infotext  = 'Remove background from current stack using current\n'
+            infotext += 'ROI markers as anchors.\n'
+            infotext += 'WARNING: Very slow. 0.01 to 0.02 seconds per pixel.\n'
+            infotext += 'Not recommended  unless you really need a  better\n'
+            infotext += 'contrast to place your ROIs and you know what you\n'
+            infotext += 'are doing.\n'
+            infotext += 'The ROI background subtraction is more efficient.\n'
             self.backgroundButton = self.stackGraphWidget._addToolButton(\
                                         self.backgroundIcon,
                                         self.submitThread,

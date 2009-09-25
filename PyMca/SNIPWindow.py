@@ -42,7 +42,7 @@ class SNIPParametersWidget(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
-        self.mainLayout.setSpacing(0)
+        self.mainLayout.setSpacing(2)
 
         i = 0
         self.parametersDict = {'xmin':0,
@@ -118,19 +118,20 @@ class SNIPDialog(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setMargin(10)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = SNIPWindow(self, spectrum)
         self.mainLayout.addWidget(self.parametersWidget)
+
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
         hboxLayout.setMargin(0)
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
-        self.okButton.setAutoDefault(False)   
         self.okButton.setText("OK")
+        self.okButton.setAutoDefault(False)   
         self.dismissButton = qt.QPushButton(hbox)
-        self.okButton.setText("Cancel")
+        self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
         hboxLayout.addWidget(self.okButton)
         hboxLayout.addWidget(HorizontalSpacer(hbox))
@@ -151,6 +152,6 @@ if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     y=numpy.arange(1000.)
-    w = SNIPDialog(None, 10000)
+    w = SNIPDialog(None, y)
     w.show()
     w.exec_()

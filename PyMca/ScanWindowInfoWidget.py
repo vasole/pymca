@@ -137,7 +137,7 @@ class HKL(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         layout = qt.QHBoxLayout(self)
         layout.setMargin(0)
-        layout.setSpacing(5)
+        layout.setSpacing(2)
         
 
         hlabel = qt.QLabel(self)
@@ -184,7 +184,7 @@ class GraphInfoWidget(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
         layout.setMargin(0)
-        layout.setSpacing(0)
+        layout.setSpacing(2)
 
         #peak
         peak   = qt.QLabel(self)
@@ -361,7 +361,7 @@ class ScanInfoWidget(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
         layout.setMargin(0)
-        layout.setSpacing(0)
+        layout.setSpacing(2)
 
         #scan info
         sourceLabel = qt.QLabel(self)
@@ -421,8 +421,8 @@ class ScanWindowInfoWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
-        layout.setSpacing(0)
+        layout.setMargin(2)
+        layout.setSpacing(2)
         
         self.scanInfo  = ScanInfoWidget(self)
         self.graphInfo = GraphInfoWidget(self)

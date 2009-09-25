@@ -605,6 +605,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def _buildToolBar(self):
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
+        self.toolBarLayout.setMargin(0)
+        self.toolBarLayout.setSpacing(2)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
         self._addToolButton(self.zoomResetIcon,
