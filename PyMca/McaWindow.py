@@ -922,7 +922,11 @@ class McaWidget(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error. Trying to fit fitted data?")
-                msg.exec_loop() 
+                if QTVERSION < '4.0.0':
+                   msg.exec_loop()
+                else:
+                   msg.setWindowTitle('MCA Window')
+                   msg.exec_()
                     
     def mcaadvancedfitsignal(self):
         legend = self.graph.getactivecurve(justlegend=1)
@@ -930,7 +934,11 @@ class McaWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please Select an active curve")
-            msg.exec_loop()
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.setWindowTitle('MCA Window')
+                msg.exec_()
             return
         else:
             info,x,y = self.getinfodatafromlegend(legend)
@@ -2179,7 +2187,11 @@ class McaWidget(qt.QWidget):
                     msg =  qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("%s" % sys.exc_info()[1])
-                    msg.exec_loop()
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.setWindowTitle('MCA Window')
+                        msg.exec_()
     else:
         def printHtml(self,text):
             printer = qt.QPrinter()
