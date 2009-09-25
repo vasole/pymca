@@ -320,7 +320,7 @@ class EnergyTable(QTable):
         self.offset      = offset
         self.scatterList = scatterlist
         self.verticalHeader().hide()
-        self.dataColumns = 10
+        self.dataColumns = 20
         if QTVERSION < '4.0.0':
             self.setLeftMargin(0)
             self.setFrameShape(qttable.QTable.NoFrame)
