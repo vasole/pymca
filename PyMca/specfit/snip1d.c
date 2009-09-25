@@ -27,38 +27,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#ifndef WIN32
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#else
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define M_PI 3.1415926535
-#endif
 
-void lls(double *input, int size, double *output);
-void lls_inv(double *input, int size, double *output);
-void snip1d(double *input, int size, int niter, double *output);
+void lls(double *data, int size);
+void lls_inv(double *data, int size);
+void snip1d(double *data, int size, int niter);
 
-void lls(double *input, int size, double *output)
+void lls(double *data, int size)
 {
 	int i;
 	for (i=0; i< size; i++)
 	{
-		output[i] = log(log(sqrt(input[i]+1.0)+1.0)+1);
+		data[i] = log(log(sqrt(data[i]+1.0)+1.0)+1);
 	}
 }
 
-void lls_inv(double *input, int size, double *output)
+void lls_inv(double *data, int size)
 {
 	int i;
+	double tmp;
 	for (i=0; i< size; i++)
 	{
-		output[i] = log(log(sqrt(input[i]+1.0)+1.0)+1);
+		tmp = exp(exp(data[i]-1.0)-1.0);
+		data[i] = tmp * tmp - 1.0;
 	}
 }
 
-void snip1d(double *input, int size, int niter, double *output)
+void snip1d(double *data, int size, int niter)
 {
 	int i;
 	int p;
@@ -66,17 +62,16 @@ void snip1d(double *input, int size, int niter, double *output)
 
 
 	w = (double *) malloc(size * sizeof(double));
-    memcpy(output, input, size * sizeof(double));
 
 	for (p=niter; p > 0; p--)
 	{
 		for (i=p; i<(size-p); i++)
 		{
-			w[i] = MIN(output[i], 0.5*(output[i-p]+output[i+p]));
+			w[i] = MIN(data[i], 0.5*(data[i-p]+data[i+p]));
 		}
 		for (i=p; i<(size-p); i++)
 		{
-			output[i] = w[i];
+			data[i] = w[i];
 		}
 	}
 	free(w);

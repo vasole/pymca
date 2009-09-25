@@ -45,9 +45,10 @@
 
 
 static PyObject *ErrorObject;
-void lls(double *input, int size, double *output);
-void lls_inv(double *input, int size, double *output);
-void snip1d(double *input, int size, int niter, double *output);
+void lls(double *data, int size);
+void lls_inv(double *data, int size);
+void snip1d(double *data, int size, int niter);
+void snip2d(double *data, int nrows, int ncolumns, int niter);
 
 
 typedef struct {
@@ -103,48 +104,90 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
     PyObject *input;
     double niter0 = 50.;
     int llsflag = 0;
-	PyArrayObject   *input_array;
 	PyArrayObject   *ret;
 	int i, size, niter;
-    npy_intp dimensions[1];
 
     if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
         return NULL;
  
-	input_array = (PyArrayObject *)
-             PyArray_ContiguousFromObject(input, PyArray_DOUBLE,0,0);
+	ret = (PyArrayObject *)
+             PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
+
+	if (ret == NULL){
+		printf("Cannot create 1D array from input\n");
+        return NULL;
+    }
+
 	size = 1;
-	for (i=0; i<input_array->nd; i++)
+	for (i=0; i<ret->nd; i++)
 	{
-		size *= input_array->dimensions[i];
+		size *= ret->dimensions[i];
 	}
 
 	niter = (int )niter0;
 
-	/* allocate output array */
-	dimensions[0] = size;
-    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
-    if (ret == NULL){
-        Py_DECREF(input_array);
+	if (llsflag)
+	{
+		printf("llsflag\n");
+		lls((double *) ret->data, size);
+	}
+
+	snip1d((double *) ret->data, size, niter);
+
+	if (llsflag)
+	{
+		printf("llsflag\n");
+		lls_inv((double *) ret->data, size);
+	}
+
+	return PyArray_Return(ret);
+}
+
+static PyObject *
+SpecfitFuns_snip2d(PyObject *self, PyObject *args)
+{
+    PyObject *input;
+    double niter0 = 50.;
+    int llsflag = 0;
+	PyArrayObject   *ret;
+	int i, nrows, ncolumns, size, niter;
+
+    if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
+        return NULL;
+ 
+	ret = (PyArrayObject *)
+             PyArray_FROMANY(input, PyArray_DOUBLE, 2, 2, NPY_ENSURECOPY);
+
+	if (ret == NULL){
+		printf("Cannot create 2D array from input\n");
         return NULL;
     }
 
+	size = 1;
+	for (i=0; i<ret->nd; i++)
+	{
+		size *= ret->dimensions[i];
+	}
+	nrows = ret->dimensions[0];
+	ncolumns = ret->dimensions[1];
+
+	niter = (int )niter0;
+
 	if (llsflag)
 	{
 		printf("llsflag\n");
-		lls((double *) input_array->data, size, (double *) ret->data);
+		lls((double *) ret->data, size);
 	}
 
-	snip1d((double *) input_array->data, size, niter, (double *)ret->data);
+	snip2d((double *) ret->data, nrows, ncolumns, niter);
 
 	if (llsflag)
 	{
 		printf("llsflag\n");
-		lls_inv((double *) input_array->data, size, (double *) ret->data);
+		lls_inv((double *) ret->data, size);
 	}
 
-	Py_DECREF(input_array);
-    return PyArray_Return(ret);
+	return PyArray_Return(ret);
 }
 
 /* end SNIP algorithm */
@@ -3876,6 +3919,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
 
 static PyMethodDef SpecfitFuns_methods[] = {
     {"snip1d",      SpecfitFuns_snip1d,     METH_VARARGS},
+    {"snip2d",      SpecfitFuns_snip2d,     METH_VARARGS},
     {"subacold",    SpecfitFuns_subacold,   METH_VARARGS},
     {"subac",       SpecfitFuns_subac,      METH_VARARGS},
     {"subacfast",   SpecfitFuns_subacfast,  METH_VARARGS},
