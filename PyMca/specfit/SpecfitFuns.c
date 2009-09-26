@@ -241,7 +241,7 @@ static PyObject *
 SpecfitFuns_subacold(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    PyArrayObject   *array, *ret;
+    PyArrayObject   *iarray, *ret;
     npy_intp n, dimensions[1];
     double niter0 = 5000.;
     int i, j, niter = 5000;
@@ -250,21 +250,21 @@ SpecfitFuns_subacold(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O|dd", &input, &c, &niter0))
         return NULL;
-    array = (PyArrayObject *)
+    iarray = (PyArrayObject *)
              PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
-    if (array == NULL)
+    if (iarray == NULL)
         return NULL;
     niter = (int ) niter0;
-    n = array->dimensions[0];
-    dimensions[0] = array->dimensions[0];
+    n = iarray->dimensions[0];
+    dimensions[0] = iarray->dimensions[0];
     ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
     if (ret == NULL){
-        Py_DECREF(array);
+        Py_DECREF(iarray);
         return NULL;
     }
 
     /* Do the job */
-    data = (double *) array->data;
+    data = (double *) iarray->data;
     for (i=0;i<niter;i++){
         t_old = *(data);
         for (j=1;j<n-1;j++) {
@@ -278,8 +278,8 @@ SpecfitFuns_subacold(PyObject *self, PyObject *args)
        if (t_old > (t_mean * c))
                 *(data+n-1) = t_mean;*/
     }
-    ret = (PyArrayObject *) PyArray_Copy(array);
-    Py_DECREF(array);
+    ret = (PyArrayObject *) PyArray_Copy(iarray);
+    Py_DECREF(iarray);
     if (ret == NULL)
         return NULL;
     return PyArray_Return(ret);
@@ -290,7 +290,7 @@ static PyObject *
 SpecfitFuns_subac(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    PyArrayObject   *array, *ret, *anchors;
+    PyArrayObject   *iarray, *ret, *anchors;
     int n;
     npy_intp dimensions[1];
     double niter0 = 5000.;
@@ -305,30 +305,30 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
-    array = (PyArrayObject *)
+    iarray = (PyArrayObject *)
              PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
-    if (array == NULL)
+    if (iarray == NULL)
         return NULL;
     deltai= (int ) deltai0;
     if (deltai <=0) deltai = 1;
     niter = (int ) niter0;
-    n = array->dimensions[0];
-    dimensions[0] = array->dimensions[0];
+    n = iarray->dimensions[0];
+    dimensions[0] = iarray->dimensions[0];
     ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
     if (ret == NULL){
-        Py_DECREF(array);
+        Py_DECREF(iarray);
         return NULL;
     }
     PyArray_FILLWBYTE(ret, 0);
-    memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
+    memcpy(ret->data, iarray->data, iarray->dimensions[0] * sizeof(double));
 
     if (n < (2*deltai+1)){
         /*ret = (PyArrayObject *) PyArray_Copy(array);*/
-        Py_DECREF(array);
+        Py_DECREF(iarray);
         return PyArray_Return(ret);
     }
     /* do the job */
-    data   = (double *) array->data;
+    data   = (double *) iarray->data;
     retdata   = (double *) ret->data;
 
     if (anchors0 != NULL)
@@ -338,7 +338,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
                  PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
             if (anchors == NULL)
             {
-                Py_DECREF(array);
+                Py_DECREF(iarray);
                 Py_DECREF(ret);
                 return NULL;
             }
@@ -365,7 +365,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
                     if (*(retdata+j) > (t_mean * c))
                                 *(retdata+j) = t_mean;
                 }
-                memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+                memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
             }
             Py_DECREF(anchors);
             notdone = 0;
@@ -379,10 +379,10 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
             if (*(retdata+j) > (t_mean * c))
                     *(retdata+j) = t_mean;
             }
-            memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+            memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
         }
     }
-    Py_DECREF(array);
+    Py_DECREF(iarray);
     if (ret == NULL)
         return NULL;
     return PyArray_Return(ret);
@@ -393,7 +393,7 @@ static PyObject *
 SpecfitFuns_subacfast(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    PyArrayObject   *array, *ret, *anchors;
+    PyArrayObject   *iarray, *ret, *anchors;
     npy_intp n, dimensions[1];
     double niter0 = 5000.;
     double deltai0= 1;
@@ -406,42 +406,42 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
-    array = (PyArrayObject *)
+    iarray = (PyArrayObject *)
              PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
-    if (array == NULL)
+    if (iarray == NULL)
         return NULL;
     deltai= (int ) deltai0;
     if (deltai <=0) deltai = 1;
     niter = (int ) niter0;
-    n = array->dimensions[0];
-    dimensions[0] = array->dimensions[0];
+    n = iarray->dimensions[0];
+    dimensions[0] = iarray->dimensions[0];
     ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
     if (ret == NULL){
-        Py_DECREF(array);
+        Py_DECREF(iarray);
         return NULL;
     }
-    memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
+    memcpy(ret->data, iarray->data, iarray->dimensions[0] * sizeof(double));
 
     if (n < (2*deltai+1)){
         /*ret = (PyArrayObject *) PyArray_Copy(array);*/
-        Py_DECREF(array);
+        Py_DECREF(iarray);
         return PyArray_Return(ret);
     }
     /* do the job */
-    data   = (double *) array->data;
+    data   = (double *) iarray->data;
     retdata   = (double *) ret->data;
     if (PySequence_Check(anchors0)){
         anchors = (PyArrayObject *)
              PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
         if (anchors == NULL)
     {
-            Py_DECREF(array);
+            Py_DECREF(iarray);
             Py_DECREF(ret);
             return NULL;
         }
     anchordata = (int *) anchors->data;
         nanchors   = PySequence_Size(anchors0);
-        memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+        memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
     for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
         notdoit = 0;
@@ -468,7 +468,7 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
     }
     else
     {
-        memcpy(array->data, ret->data, array->dimensions[0] * sizeof(double));
+        memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
         for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
                 t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
@@ -477,7 +477,7 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
             }
         }
     }
-    Py_DECREF(array);
+    Py_DECREF(iarray);
     if (ret == NULL)
         return NULL;
     return PyArray_Return(ret);
