@@ -49,6 +49,7 @@ void lls(double *data, int size);
 void lls_inv(double *data, int size);
 void snip1d(double *data, int size, int niter);
 void snip2d(double *data, int nrows, int ncolumns, int niter);
+void snip3d(double *data, int nx, int ny, int nz, int niter);
 
 
 typedef struct {
@@ -128,7 +129,6 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 
 	if (llsflag)
 	{
-		printf("llsflag\n");
 		lls((double *) ret->data, size);
 	}
 
@@ -136,7 +136,6 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 
 	if (llsflag)
 	{
-		printf("llsflag\n");
 		lls_inv((double *) ret->data, size);
 	}
 
@@ -175,7 +174,6 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 
 	if (llsflag)
 	{
-		printf("llsflag\n");
 		lls((double *) ret->data, size);
 	}
 
@@ -183,7 +181,52 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 
 	if (llsflag)
 	{
-		printf("llsflag\n");
+		lls_inv((double *) ret->data, size);
+	}
+
+	return PyArray_Return(ret);
+}
+
+static PyObject *
+SpecfitFuns_snip3d(PyObject *self, PyObject *args)
+{
+    PyObject *input;
+    double niter0 = 50.;
+    int llsflag = 0;
+	PyArrayObject   *ret;
+	int i, nx, ny, nz, size, niter;
+
+    if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
+        return NULL;
+ 
+	ret = (PyArrayObject *)
+             PyArray_FROMANY(input, PyArray_DOUBLE, 3, 3, NPY_ENSURECOPY);
+
+	if (ret == NULL){
+		printf("Cannot create 3D array from input\n");
+        return NULL;
+    }
+
+	size = 1;
+	for (i=0; i<ret->nd; i++)
+	{
+		size *= ret->dimensions[i];
+	}
+	nx = ret->dimensions[0];
+	ny = ret->dimensions[1];
+	nz = ret->dimensions[2];
+
+	niter = (int )niter0;
+
+	if (llsflag)
+	{
+		lls((double *) ret->data, size);
+	}
+
+	snip3d((double *) ret->data, nx, ny, nz, niter);
+
+	if (llsflag)
+	{
 		lls_inv((double *) ret->data, size);
 	}
 
@@ -3920,6 +3963,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
 static PyMethodDef SpecfitFuns_methods[] = {
     {"snip1d",      SpecfitFuns_snip1d,     METH_VARARGS},
     {"snip2d",      SpecfitFuns_snip2d,     METH_VARARGS},
+    {"snip3d",      SpecfitFuns_snip2d,     METH_VARARGS},
     {"subacold",    SpecfitFuns_subacold,   METH_VARARGS},
     {"subac",       SpecfitFuns_subac,      METH_VARARGS},
     {"subacfast",   SpecfitFuns_subacfast,  METH_VARARGS},

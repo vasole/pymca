@@ -24,16 +24,20 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+/* 
+   Implementation of the algorithm SNIP in 2D described in
+   Miroslav Morhac et al. Nucl. Instruments and Methods in Physics Research A401 (1997) 113-132.
+*/
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-void lls(double *input, int size, double *output);
-void lls_inv(double *input, int size, double *output);
+void lls(double *data, int size);
+void lls_inv(double *data, int size);
 
-void snip2d(double *input, int nrows, int ncolumns, int niter, double *output)
+void snip2d(double *data, int nrows, int ncolumns, int niter)
 {
 	int i, j;
 	int p;
@@ -48,7 +52,6 @@ void snip2d(double *input, int nrows, int ncolumns, int niter, double *output)
 
 	size = nrows * ncolumns;
 	w = (double *) malloc(size * sizeof(double));
-    memcpy(output, input, size * sizeof(double));
 
 	for (p=niter; p > 0; p--)
 	{
@@ -59,14 +62,14 @@ void snip2d(double *input, int nrows, int ncolumns, int niter, double *output)
 			ipluspxncolumns = (i+p) * ncolumns; 
 			for (j=p; j<(ncolumns-p); j++)
 			{
-				P4 = w[ iminuspxncolumns + (j-p)]; /* P4 = w[i-p][j-p] */
-				S4 = w[ iminuspxncolumns + j];     /* S4 = w[i-p][j]   */
-				P2 = w[ iminuspxncolumns + (j+p)]; /* P2 = w[i-p][j+p] */
-				S3 = w[ ixncolumns + (j-p)];       /* S3 = w[i][j-p]   */
-				S2 = w[ ixncolumns + (j+p)];       /* S2 = w[i][j+p]   */
-				P3 = w[ ipluspxncolumns + (j-p)];  /* P3 = w[i+p][j-p] */
-				S1 = w[ ipluspxncolumns + j];      /* S1 = w[i+p][j]   */
-				P1 = w[ ipluspxncolumns + (j+p)];  /* P1 = w[i+p][j+p] */
+				P4 = data[ iminuspxncolumns + (j-p)]; /* P4 = data[i-p][j-p] */
+				S4 = data[ iminuspxncolumns + j];     /* S4 = data[i-p][j]   */
+				P2 = data[ iminuspxncolumns + (j+p)]; /* P2 = data[i-p][j+p] */
+				S3 = data[ ixncolumns + (j-p)];       /* S3 = data[i][j-p]   */
+				S2 = data[ ixncolumns + (j+p)];       /* S2 = data[i][j+p]   */
+				P3 = data[ ipluspxncolumns + (j-p)];  /* P3 = data[i+p][j-p] */
+				S1 = data[ ipluspxncolumns + j];      /* S1 = data[i+p][j]   */
+				P1 = data[ ipluspxncolumns + (j+p)];  /* P1 = data[i+p][j+p] */
 				dhelp = 0.5*(P1+P3);
 				S1 = MAX(S1, dhelp) - dhelp;
 				dhelp = 0.5*(P1+P2);
@@ -75,14 +78,15 @@ void snip2d(double *input, int nrows, int ncolumns, int niter, double *output)
 				S3 = MAX(S3, dhelp) - dhelp;
 				dhelp = 0.5*(P2+P4);
 				S4 = MAX(S4, dhelp) - dhelp;
-				w[ixncolumns + j] = MIN(output[ixncolumns + j], 0.5 * (S1+S2+S3+S4) + 0.25 * (P1+P2+P3+P4));
+				w[ixncolumns + j] = MIN(data[ixncolumns + j], 0.5 * (S1+S2+S3+S4) + 0.25 * (P1+P2+P3+P4));
 			}
 		}
 		for (i=p; i<(nrows-p); i++)
 		{
+			ixncolumns = i * ncolumns;
 			for (j=p; j<(ncolumns-p); j++)
 			{
-				output[ixncolumns + j] = w[ixncolumns + j];
+				data[ixncolumns + j] = w[ixncolumns + j];
 			}
 		}
 	}

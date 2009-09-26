@@ -24,6 +24,13 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+/* 
+   Implementation of the algorithm SNIP in 1D described in
+   Miroslav Morhac et al. Nucl. Instruments and Methods in Physics Research A401 (1997) 113-132.
+
+   The original idea for 1D seems to come from
+   C.G. Ryan et al. Nucl. Instruments and Methods in Physics Research B34 (1988) 396-402.
+*/
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
