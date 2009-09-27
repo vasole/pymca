@@ -46,7 +46,7 @@ void lls(double *data, int size)
 	int i;
 	for (i=0; i< size; i++)
 	{
-		data[i] = log(log(sqrt(data[i]+1.0)+1.0)+1);
+		data[i] = log(log(sqrt(data[i]+1.0)+1.0)+1.0);
 	}
 }
 
@@ -56,7 +56,15 @@ void lls_inv(double *data, int size)
 	double tmp;
 	for (i=0; i< size; i++)
 	{
-		tmp = exp(exp(data[i]-1.0)-1.0);
+		/* slightly different than the published formula because
+		   with the original formula:
+		   
+		   tmp = exp(exp(data[i]-1.0)-1.0);
+		   data[i] = tmp * tmp - 1.0;
+		   
+		   one does not recover the original data */
+
+		tmp = exp(exp(data[i])-1.0)-1.0;
 		data[i] = tmp * tmp - 1.0;
 	}
 }
