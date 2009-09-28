@@ -37,7 +37,7 @@
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
 
-void snip2d(double *data, int nrows, int ncolumns, int niter)
+void snip2d(double *data, int nrows, int ncolumns, int width)
 {
 	int i, j;
 	int p;
@@ -53,7 +53,7 @@ void snip2d(double *data, int nrows, int ncolumns, int niter)
 	size = nrows * ncolumns;
 	w = (double *) malloc(size * sizeof(double));
 
-	for (p=niter; p > 0; p--)
+	for (p=width; p > 0; p--)
 	{
 		for (i=p; i<(nrows-p); i++)
 		{

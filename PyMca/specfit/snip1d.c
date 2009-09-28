@@ -39,7 +39,7 @@
 
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
-void snip1d(double *data, int size, int niter);
+void snip1d(double *data, int size, int width);
 
 void lls(double *data, int size)
 {
@@ -69,7 +69,7 @@ void lls_inv(double *data, int size)
 	}
 }
 
-void snip1d(double *data, int size, int niter)
+void snip1d(double *data, int size, int width)
 {
 	int i;
 	int p;
@@ -78,7 +78,7 @@ void snip1d(double *data, int size, int niter)
 
 	w = (double *) malloc(size * sizeof(double));
 
-	for (p=niter; p > 0; p--)
+	for (p=width; p > 0; p--)
 	{
 		for (i=p; i<(size-p); i++)
 		{

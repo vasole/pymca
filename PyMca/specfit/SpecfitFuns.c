@@ -47,9 +47,9 @@
 static PyObject *ErrorObject;
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
-void snip1d(double *data, int size, int niter);
-void snip2d(double *data, int nrows, int ncolumns, int niter);
-void snip3d(double *data, int nx, int ny, int nz, int niter);
+void snip1d(double *data, int size, int width);
+void snip2d(double *data, int nrows, int ncolumns, int width);
+void snip3d(double *data, int nx, int ny, int nz, int width);
 
 
 typedef struct {
@@ -103,12 +103,12 @@ static PyObject *
 SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    double niter0 = 50.;
+    double width0 = 50.;
     int llsflag = 0;
 	PyArrayObject   *ret;
-	int i, size, niter;
+	int i, size, width;
 
-    if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
+    if (!PyArg_ParseTuple(args, "Od|i", &input, &width0, &llsflag))
         return NULL;
  
 	ret = (PyArrayObject *)
@@ -125,14 +125,14 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 		size *= ret->dimensions[i];
 	}
 
-	niter = (int )niter0;
+	width = (int )width0;
 
 	if (llsflag)
 	{
 		lls((double *) ret->data, size);
 	}
 
-	snip1d((double *) ret->data, size, niter);
+	snip1d((double *) ret->data, size, width);
 
 	if (llsflag)
 	{
@@ -146,12 +146,12 @@ static PyObject *
 SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    double niter0 = 50.;
+    double width0 = 50.;
     int llsflag = 0;
 	PyArrayObject   *ret;
-	int i, nrows, ncolumns, size, niter;
+	int i, nrows, ncolumns, size, width;
 
-    if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
+    if (!PyArg_ParseTuple(args, "Od|i", &input, &width0, &llsflag))
         return NULL;
  
 	ret = (PyArrayObject *)
@@ -170,14 +170,14 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 	nrows = ret->dimensions[0];
 	ncolumns = ret->dimensions[1];
 
-	niter = (int )niter0;
+	width = (int )width0;
 
 	if (llsflag)
 	{
 		lls((double *) ret->data, size);
 	}
 
-	snip2d((double *) ret->data, nrows, ncolumns, niter);
+	snip2d((double *) ret->data, nrows, ncolumns, width);
 
 	if (llsflag)
 	{
@@ -191,12 +191,12 @@ static PyObject *
 SpecfitFuns_snip3d(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    double niter0 = 50.;
+    double width0 = 50.;
     int llsflag = 0;
 	PyArrayObject   *ret;
-	int i, nx, ny, nz, size, niter;
+	int i, nx, ny, nz, size, width;
 
-    if (!PyArg_ParseTuple(args, "Od|i", &input, &niter0, &llsflag))
+    if (!PyArg_ParseTuple(args, "Od|i", &input, &width0, &llsflag))
         return NULL;
  
 	ret = (PyArrayObject *)
@@ -216,14 +216,14 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
 	ny = ret->dimensions[1];
 	nz = ret->dimensions[2];
 
-	niter = (int )niter0;
+	width = (int )width0;
 
 	if (llsflag)
 	{
 		lls((double *) ret->data, size);
 	}
 
-	snip3d((double *) ret->data, nx, ny, nz, niter);
+	snip3d((double *) ret->data, nx, ny, nz, width);
 
 	if (llsflag)
 	{

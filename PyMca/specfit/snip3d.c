@@ -38,7 +38,7 @@
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
 
-void snip3d(double *data, int nx, int ny, int nz, int niter)
+void snip3d(double *data, int nx, int ny, int nz, int width)
 {
 	int i, j, k;
 	int p;
@@ -58,7 +58,7 @@ void snip3d(double *data, int nx, int ny, int nz, int niter)
 	size = nx * ny * nz;
 	w = (double *) malloc(size * sizeof(double));
 
-	for (p=niter; p > 0; p--)
+	for (p=width; p > 0; p--)
 	{
 		for (i=p; i<(nx-p); i++)
 		{
