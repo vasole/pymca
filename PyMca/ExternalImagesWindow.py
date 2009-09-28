@@ -68,6 +68,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         self.imageList = None
         self._imageDict = None
         self.imageNames = None
+        self._stack = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
             self.connect(self.graphWidget.saveToolButton,
@@ -227,6 +228,9 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             return
         if self._dynamic:
             self._dynamicAction(index)
+        elif self._stack:
+            self.setImageData(self.imageList[index])
+            self.graphWidget.graph.setTitle("Image %d" % index)        
         else:
             qimage = self._imageDict[self.imageNames[index]]
             data = self.imageList[index]
@@ -248,6 +252,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
 
     def setQImageList(self, images, width, height,
                       clearmask = False, data=None, imagenames = None):
+        self._dynamic = False
         nimages = len(images)
         if imagenames is None:
             self.imageNames = []
@@ -290,12 +295,45 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                                           imagelist=self.imageList,
                                           labels=labels)
 
-    def setImageList(self, imagelist):
+    def setImageList(self, imagelist, dynamic=False):
+        if hasattr(imagelist, 'shape'):
+            #should I only accept lists?
+            if len(imagelist.shape) == 3:
+                return self.setStack(imagelist, index=0)
+        self._stack = False
+        self._dynamic = dynamic
         self.imageList = imagelist
         if imagelist is not None:
             self.slider.setMaximum(len(self.imageList)-1)
             self.showImage(0)
             
+    def setStack(self, stack, index=None):
+        if index is None:
+            index = 0
+        shape = stack.shape
+        nImages = shape[index]
+        imagelist = [None] * nImages
+        for i in range(nImages):
+            if index == 0:
+                imagelist[i] = stack[i, :, :]
+                imagelist[i].shape = shape[1], shape[2]
+            elif index == 1:
+                imagelist[i] = stack[:, i, :]
+                imagelist[i].shape = shape[0], shape[2]
+            elif index == 2:
+                imagelist[i] = stack[:, :, i]
+                imagelist[i].shape = shape[0], shape[1]
+        self.imageList = imagelist
+        self._dynamic = False
+        self._stack = True
+        mask = self.getSelectionMask()
+        if mask is not None:
+            shape = imagelist[0].shape
+            if mask.shape != shape:
+                mask = numpy.zeros(shape, numpy.uint8)                
+                self.setSelectionMask(mask, plot=False)
+        self.slider.setMaximum(len(self.imageList)-1)
+        self.showImage(0)
 
 def test2():
     app = qt.QApplication([])
@@ -324,9 +362,10 @@ def test():
             container = ExternalImagesWindow(selection=False,
                                              colormap=True,
                                              imageicons=False,
-                                             standalonesave=True,
-                                             dynamic=True)
-            container.setImageList(sys.argv[1:])
+                                             standalonesave=True)
+                                             #,
+                                             #dynamic=True)
+            container.setImageList(sys.argv[1:], dynamic=True)
         else:
             container = ExternalImagesWindow()
             image = qt.QImage(sys.argv[1])
