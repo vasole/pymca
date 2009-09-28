@@ -504,7 +504,7 @@ class MaskImageWidget(qt.QWidget):
         if plot:
             self.plotImage(update=False)
 
-    def getSelectionMask(self, mask):
+    def getSelectionMask(self):
         return self.__selectionMask
 
     def setImageData(self, data, clearmask=False):
