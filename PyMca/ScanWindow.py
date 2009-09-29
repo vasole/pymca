@@ -1891,6 +1891,10 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
     def setActiveCurve(self, legend):
         self.graph.setActiveCurve(legend)
+        ddict = {}
+        ddict['event'] ="SetActiveCurveEvent"
+        ddict['legend'] = legend
+        self._graphSignalReceived(ddict)
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         if legend is None:

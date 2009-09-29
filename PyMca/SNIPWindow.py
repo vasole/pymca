@@ -116,6 +116,11 @@ class SNIPWindow(qt.QWidget):
                                                    smoothing=smoothing)
         self.graph.newCurve(range(len(self.spectrum)),
                             self.background, "Background", replace=False)
+        
+        #Force information update
+        legend = self.graph.getActiveCurve(just_legend=True)
+        if legend.startswith('Background'):
+            self.graph.setActiveCurve(legend)
 
 
 class SNIPDialog(qt.QDialog):
