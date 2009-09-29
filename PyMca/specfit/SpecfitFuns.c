@@ -45,12 +45,17 @@
 
 
 static PyObject *ErrorObject;
+/* SNIP related functions */
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
 void snip1d(double *data, int size, int width);
 void snip2d(double *data, int nrows, int ncolumns, int width);
 void snip3d(double *data, int nx, int ny, int nz, int width);
-
+void lsdf(double *data, int size, int fwhm, double f, double A, double M, double ratio);
+void smooth1d(double *data, int size);
+void smooth2d(double *data, int size0, int size1);
+void smooth3d(double *data, int size0, int size1, int size2);
+/* end of SNIP related functions */
 
 typedef struct {
     PyObject_HEAD
@@ -104,11 +109,12 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 {
     PyObject *input;
     double width0 = 50.;
+	int smooth_iterations = 0;
     int llsflag = 0;
 	PyArrayObject   *ret;
 	int i, size, width;
 
-    if (!PyArg_ParseTuple(args, "Od|i", &input, &width0, &llsflag))
+    if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
  
 	ret = (PyArrayObject *)
@@ -126,6 +132,11 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 	}
 
 	width = (int )width0;
+
+	for (i=0; i<smooth_iterations; i++)
+	{
+		smooth1d((double *) ret->data, size);
+	}
 
 	if (llsflag)
 	{
@@ -147,11 +158,12 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 {
     PyObject *input;
     double width0 = 50.;
-    int llsflag = 0;
+	int smooth_iterations = 0;
+	int llsflag = 0;
 	PyArrayObject   *ret;
 	int i, nrows, ncolumns, size, width;
 
-    if (!PyArg_ParseTuple(args, "Od|i", &input, &width0, &llsflag))
+    if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
  
 	ret = (PyArrayObject *)
@@ -171,6 +183,11 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 	ncolumns = ret->dimensions[1];
 
 	width = (int )width0;
+
+	for (i=0; i<smooth_iterations; i++)
+	{
+		smooth2d((double *) ret->data, nrows, ncolumns);
+	}
 
 	if (llsflag)
 	{
@@ -192,11 +209,12 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
 {
     PyObject *input;
     double width0 = 50.;
+	int smooth_iterations = 0;
     int llsflag = 0;
 	PyArrayObject   *ret;
 	int i, nx, ny, nz, size, width;
 
-    if (!PyArg_ParseTuple(args, "Od|i", &input, &width0, &llsflag))
+    if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
  
 	ret = (PyArrayObject *)
@@ -217,6 +235,11 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
 	nz = ret->dimensions[2];
 
 	width = (int )width0;
+
+	for (i=0; i<smooth_iterations; i++)
+	{
+		smooth3d((double *) ret->data, nx, ny, nz);
+	}
 
 	if (llsflag)
 	{
