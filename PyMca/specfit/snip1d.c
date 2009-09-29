@@ -121,7 +121,7 @@ void snip1d(double *data, int size, int width)
 	double *w;
 
 	i = (int) (0.5*width);
-	lsdf(data, size, i, 1.5, 75., 10., 1.3);
+	/* lsdf(data, size, i, 1.5, 75., 10., 1.3); */
 	
 	w = (double *) malloc(size * sizeof(double));
 
