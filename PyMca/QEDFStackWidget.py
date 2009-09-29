@@ -662,7 +662,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.pcaWindow.raise_()
 
     def subtractBackground2(self):
-        spectrum = self.__mcaData0.y[0]
+        selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")
+        if selection is None:
+            return
+        spectrum = selection['dataobject'].y[0]
         snipWindow = SNIPWindow.SNIPDialog(None, spectrum)
         #snipWindow.setModal(True)
         snipWindow.show()
@@ -1204,6 +1207,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             self.mcaWidget._removeSelection([sel])
         elif action == "REPLACE":
             self.mcaWidget._replaceSelection([sel])
+        elif action == "GET_CURRENT_SELECTION":
+            return sel
         if self.tab is None:
             self.mcaWidget.show()
             if QTVERSION < '4.0.0':
@@ -1504,8 +1509,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 dataObject.y =  [self.__mcaData0.y[0] / npixels];
             else:
                 dataObject = self.__mcaData0
-            self.sendMcaSelection(dataObject, action = action)
-            return
+            return self.sendMcaSelection(dataObject, action = action)
         npixels = len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) * 1.0
         if npixels == 0:
             if self.normalizeButton.isChecked():
@@ -1516,8 +1520,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 dataObject.y =  [self.__mcaData0.y[0] / npixels];
             else:
                 dataObject = self.__mcaData0
-            self.sendMcaSelection(dataObject, action = action)
-            return
+            return self.sendMcaSelection(dataObject, action = action)
 
         mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
 
@@ -1555,7 +1558,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         legend = self.__getLegend()
         if self.normalizeButton.isChecked():
             legend += "/%d" % npixels
-        self.sendMcaSelection(dataObject,
+        return self.sendMcaSelection(dataObject,
                           key = "Selection",
                           legend =legend,
                           action = action)
