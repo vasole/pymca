@@ -34,17 +34,17 @@ except ImportError:
 
 snip1d = SpecfitFuns.snip1d
 
-def getSpectrumBackground(spectrum, width, chmin=None, chmax=None):
+def getSpectrumBackground(spectrum, width, chmin=None, chmax=None, smoothing=1):
     if chmin is None:
         chmin = 0
     if chmax is None:
         chmax = len(spectrum)
     background = spectrum * 1
-    background[chmin:chmax] = snip1d(spectrum[chmin:chmax], width)
+    background[chmin:chmax] = snip1d(spectrum[chmin:chmax], width, smoothing)
     return background
 
 
-def subtractBackgroundFromStack(stack, width, chmin=None, chmax=None):
+def subtractBackgroundFromStack(stack, width, chmin=None, chmax=None,  smoothing=1):
     if chmin is None:
         chmin = 0
     if chmax is None:
@@ -59,9 +59,9 @@ def subtractBackgroundFromStack(stack, width, chmin=None, chmax=None):
         data[:, 0:chmin] = 0
     if chmax < oldShape[-1]:
         data[:, chmax:] = 0
-        
+
     for i in range(data.shape[0]):
-        data[i,chmin:chmax] -= snip1d(data[i,chmin:chmax], width)
+        data[i,chmin:chmax] -= snip1d(data[i,chmin:chmax], width, smoothing)
     data.shape = oldShape
     return
 

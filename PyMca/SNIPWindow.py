@@ -47,10 +47,12 @@ class SNIPParametersWidget(qt.QWidget):
         i = 0
         self.parametersDict = {'xmin':0,
                                'xmax':length,
-                               'width':min(50, length/10)}                           
-        for text in ["SNIP background width:",
+                               'width':min(30, length/10),
+                               'smoothing':1}                           
+        for text in ["SNIP background width (2 to 3 times fwhm) :",
                      "Minimum channel considered:",
-                     "Maximum channel considered:"]:
+                     "Maximum channel considered:",
+                     "Pleliminar smoothing level:"]:
             label = qt.QLabel(self)
             label.setText(text)
             self.mainLayout.addWidget(label, i, 0)        
@@ -59,7 +61,7 @@ class SNIPParametersWidget(qt.QWidget):
 
         i = 0
         self.widgetDict = {}
-        for key in ['width', 'xmin', 'xmax']:
+        for key in ['width', 'xmin', 'xmax', 'smoothing']:
             self.widgetDict[key] = qt.QSpinBox(self)
             self.widgetDict[key].setMinimum(0)
             self.widgetDict[key].setMaximum(self.parametersDict['xmax'])
@@ -69,9 +71,10 @@ class SNIPParametersWidget(qt.QWidget):
                      self._updateParameters)
             self.mainLayout.addWidget(self.widgetDict[key], i, 1)
             i += 1
+        self.widgetDict['smoothing'].setMaximum(100)
 
     def _updateParameters(self, val):
-        for key in ['width', 'xmin', 'xmax']:
+        for key in ['width', 'xmin', 'xmax', 'smoothing']:
             self.parametersDict[key] = self.widgetDict[key].value()
         ddict = {}
         ddict['event']='SNIPParametersChanged'
@@ -106,9 +109,11 @@ class SNIPWindow(qt.QWidget):
         width = ddict['width']
         chmin = ddict['xmin']
         chmax = ddict['xmax']
+        smoothing = ddict['smoothing']
         self.background = SNIPModule.getSpectrumBackground(self.spectrum, width,
                                                    chmin=chmin,
-                                                   chmax=chmax)
+                                                   chmax=chmax,
+                                                   smoothing=smoothing)
         self.graph.newCurve(range(len(self.spectrum)),
                             self.background, "Background", replace=False)
 
@@ -145,13 +150,15 @@ class SNIPDialog(qt.QDialog):
         parametersDict['function'] = SNIPModule.subtractBackgroundFromStack
         parametersDict['arguments'] = (parametersDict['width'],
                                        parametersDict['xmin'],
-                                       parametersDict['xmax'])
+                                       parametersDict['xmax'],
+                                       parametersDict['smoothing'])
         return parametersDict                                       
                  
 if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
+    noise = numpy.random.randn(1000.) 
     y=numpy.arange(1000.)
-    w = SNIPDialog(None, y)
+    w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     w.show()
     w.exec_()
