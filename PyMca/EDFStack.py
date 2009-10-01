@@ -133,17 +133,41 @@ class EDFStack(DataObject.DataObject):
                         self.incrProgressBar += 1
                 else:
                     #this is the common case
-                    self.data = numpy.zeros((arrRet.shape[0],
-                                               arrRet.shape[1],
-                                               self.nbFiles),
-                                               self.__dtype)
-                    self.incrProgressBar=0
-                    for tempEdfFileName in filelist:
-                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                        pieceOfStack=tempEdf.GetData(0)    
-                        self.data[:,:, self.incrProgressBar] = pieceOfStack[:,:]
-                        self.incrProgressBar += 1
-                        self.onProgress(self.incrProgressBar)
+                    try:
+                        self.data = numpy.zeros((arrRet.shape[0],
+                                                 arrRet.shape[1],
+                                                 self.nbFiles),
+                                                 self.__dtype)
+                        self.incrProgressBar=0
+                        for tempEdfFileName in filelist:
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            pieceOfStack=tempEdf.GetData(0)    
+                            self.data[:,:, self.incrProgressBar] = pieceOfStack
+                            self.incrProgressBar += 1
+                            self.onProgress(self.incrProgressBar)
+                    except MemoryError:
+                        for i in range(5):
+                            print "\7"
+                        print "**************************************************"
+                        print " Memory error!, attempting 2x2 sampling reduction"
+                        print "**************************************************"
+                        s1 = int(arrRet.shape[0]/2)
+                        s2 = int(arrRet.shape[1]/2)
+                        if arrRet.shape[0] % 2:
+                            s1 = s1 + 1
+                        if arrRet.shape[1] % 2:
+                            s2 = s2 + 1
+                        self.data = numpy.zeros((s1, s2,
+                                                 self.nbFiles),
+                                                 self.__dtype)
+                        self.incrProgressBar=0
+                        for tempEdfFileName in filelist:
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            pieceOfStack=tempEdf.GetData(0)
+                            self.data[:,:, self.incrProgressBar] = pieceOfStack[
+                                                                    ::2,::2]
+                            self.incrProgressBar += 1
+                            self.onProgress(self.incrProgressBar)
                     self.onEnd()
         else:
             if len(singleImageShape) == 1:
