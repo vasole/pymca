@@ -2,7 +2,7 @@ import sys
 import Object3DQt as qt
 from HorizontalSpacer import HorizontalSpacer
 from VerticalSpacer import VerticalSpacer
-
+import numpy
 DEBUG = 0
 
 class SceneCoordinates(qt.QWidget):
@@ -13,9 +13,12 @@ class SceneCoordinates(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self.limitsWidget = SceneLimitsWidget(self)
         self.observerWidget = ObserverPositionWidget(self)
+        self.viewOrientationWidget = ViewOrientationWidget(self)
         self.mainLayout.addWidget(self.limitsWidget, 0, 0)
         self.mainLayout.addWidget(self.observerWidget, 0, 1)
         self.mainLayout.addWidget(HorizontalSpacer(self), 0, 2, 1, 2)
+        #self.mainLayout.addWidget(self.viewOrientationWidget, 1, 0)
+        #self.mainLayout.addWidget(HorizontalSpacer(self), 0, 1, 1, 3)
         #self.mainLayout.addWidget(VerticalSpacer(self), 1, 0, 1, 3)
         self.mainLayout.setColumnStretch(0, 0)
         self.mainLayout.setColumnStretch(1, 0)
@@ -265,6 +268,84 @@ class SceneLimitsWidget(qt.QGroupBox):
             #This can happen if there is no text.
             pass
 
+class ViewOrientationWidget(qt.QGroupBox):
+    def __init__(self, parent = None):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('View Orientation')
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(4)
+        self.mainLayout.setSpacing(4)
+        self.build()
+        viewMatrix = numpy.zeros((4,4), numpy.float32)
+        for i in [0, 1, 2, 3]:
+            viewMatrix[i, i] = 1.0
+        ddict = {'theta': 0.0,
+                 'phi':0.0,
+                 'view':viewMatrix} 
+        self.setParameters(ddict)
+
+    def build(self):
+        self._entryList = []
+        for i in range(4):
+            for j in range(4):
+                l = qt.QLineEdit(self)
+                l.setReadOnly(True)
+                l._v = qt.QDoubleValidator(l)
+                l.setValidator(l._v)
+                self._entryList.append(l)
+                self.mainLayout.addWidget(l, i, j)
+
+        # Theta
+        i = 4
+        l = qt.QLabel(self)
+        l.setText("Theta:")
+        self.mainLayout.addWidget(l, i, 0)
+        l = qt.QLineEdit(self)
+        l.setReadOnly(True)
+        l._v = qt.QDoubleValidator(l)
+        l.setValidator(l._v)
+        self._theta = l
+        self.mainLayout.addWidget(l, i, 1)
+
+        #Phi
+        l = qt.QLabel(self)
+        l.setText("Phi:")
+        self.mainLayout.addWidget(l, i, 2)
+        l = qt.QLineEdit(self)
+        l.setReadOnly(True)
+        l._v = qt.QDoubleValidator(l)
+        l.setValidator(l._v)
+        self._phi = l
+        self.mainLayout.addWidget(l, i, 3)        
+
+    def setParameters(self, ddict):
+        if ddict.has_key('view'):
+            k = 0
+            for i in range(4):
+                for j in range(4):
+                    self._entryList[k].setText("%g" % float(ddict['view'][i, j]))
+                    k = k + 1
+
+        if ddict.has_key('theta'):
+            self._theta.setText("%.3g" % float(ddict['theta']))
+
+        if ddict.has_key('phi'):
+            self._phi.setText("%.3g" % float(ddict['phi']))
+
+    def getParameters(self):
+        m = numpy.zeros((4,4), numpy.float32)
+        k = 0
+        for i in range(4):
+            for j in range(4):
+                m[i,j] = float(self._entryList[k].text())
+                k = k + 1
+        theta = float(self._theta.text())
+        phi = float(self._phi.text())
+        ddict = {}
+        ddict['view'] = m
+        ddict['theta'] = theta
+        ddict['phi'] = phi
+  
 
 class ObserverPositionWidget(qt.QGroupBox):
     def __init__(self, parent = None):

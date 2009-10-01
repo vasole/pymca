@@ -13,6 +13,7 @@ from HorizontalSpacer import HorizontalSpacer
 QTVERSION = qt.qVersion()
 
 DEBUG = 0
+SCENE_MATRIX = False
 
 class SceneGLWidget(qt.QGLWidget):
     def __init__(self, parent = None, scene=None):
@@ -30,9 +31,13 @@ class SceneGLWidget(qt.QGLWidget):
         self.__ownTree.addChildTree(self.scene.tree)
 
         self._visualVolume = [-100., 100., -100., 100., -100.0, 100.0]
-        self.__currentViewPosition = numpy.zeros((4,4), numpy.float32)
-        for i in [0, 1, 2, 3]:
-            self.__currentViewPosition[i, i] = 1
+        if SCENE_MATRIX:
+            self.__currentViewPosition = self.scene.getCurrentViewMatrix()
+        else:
+            self.__currentViewPosition = numpy.zeros((4,4), numpy.float32)
+            for i in [0, 1, 2, 3]:
+                self.__currentViewPosition[i, i] = 1
+            self.scene.setCurrentViewMatrix(self.__currentViewPosition)
         self.xScale = 1.0 
         self.yScale = 1.0 
         self.zScale = 1.0 
@@ -80,14 +85,20 @@ class SceneGLWidget(qt.QGLWidget):
             self.xRot = 0.0
             self.yRot = 0.0
             self.zRot = 0.0
+            self.scene.setThetaPhi(self.yRot, self.xRot)
         if position.shape == (3, 4):
             self.__currentViewPosition[0:3, :] = position[0:3, :]
         else:
             self.__currentViewPosition[:, :] = position[:, :]
+        if SCENE_MATRIX:
+            self.scene.setCurrentViewMatrix(self.__currentViewPosition)
         self.cacheUpdateGL()
 
     def getCurrentViewPosition(self):
-        return self.__currentViewPosition
+        if SCENE_MATRIX:
+            return self.scene.getCurrentViewMatrix()
+        else:
+            return self.__currentViewPosition
 
     def addObject3D(self, ob, legend = None, plot=True):
         self.scene.addObject(ob, legend)
@@ -183,6 +194,7 @@ class SceneGLWidget(qt.QGLWidget):
         angle = self.normalizeAngle(angle)
         if angle != self.xRot:
             self.xRot = angle
+            self.scene.setThetaPhi(self.yRot, self.xRot)            
             self.emit(qt.SIGNAL("xRotationChanged"), angle)
             self.cacheUpdateGL()
 
@@ -190,6 +202,7 @@ class SceneGLWidget(qt.QGLWidget):
         angle = self.normalizeAngle(angle)
         if angle != self.yRot:
             self.yRot = angle
+            self.scene.setThetaPhi(self.yRot, self.xRot)
             self.emit(qt.SIGNAL("yRotationChanged"), angle)
             self.cacheUpdateGL()
 
@@ -449,34 +462,37 @@ class SceneGLWidget(qt.QGLWidget):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
-
-        #apply the selected face
-        GL.glMultMatrixf(self.__currentViewPosition)
-        
-        # center of the scene
-        xmin, ymin, zmin, xmax, ymax, zmax = self.scene.getLimits()
-        centerX = 0.5 * (xmax + xmin)
-        centerY = 0.5 * (ymax + ymin)
-        centerZ = 0.5 * (zmax + zmin)
-        #zenith angle theta in spherical coordinates z = r * cos(theta)
-        #rotate theta around Y axis
-        theta = self.yRot
-        #azimuthal angle phi in spherical coordinates
-        #rotate phi around Z axis
-        phi   = self.xRot
-        sceneConfig = self.scene.tree.root[0].getConfiguration() 
-        #I have to rotate around the center of the scene
-        #taking into account the scale it will use
-        scale = sceneConfig['common']['scale']
-        anchor = [centerX*scale[0], centerY*scale[1], centerZ*scale[2]]
-        #print "ANCHOR = ", anchor
-        #print "ZENITH = %f, AZIMUTH = %f " % (theta, phi)
-        #M = self.getRotationMatrix(0, theta, phi, anchor)
-        #print "M = ", M
-        GL.glTranslated(anchor[0], anchor[1], anchor[2])
-        GL.glRotated(theta, 0.0, 1.0, 0.0)
-        GL.glRotated(phi, 0.0, 0.0, 1.0)
-        GL.glTranslated(-anchor[0], -anchor[1], -anchor[2])
+        if SCENE_MATRIX:
+            self.scene.setThetaPhi(self.yRot, self.xRot)
+            GL.glMultMatrixf(self.scene.getTransformationMatrix())
+        else:
+            #apply the selected face
+            GL.glMultMatrixf(self.__currentViewPosition)
+            
+            # center of the scene
+            xmin, ymin, zmin, xmax, ymax, zmax = self.scene.getLimits()
+            centerX = 0.5 * (xmax + xmin)
+            centerY = 0.5 * (ymax + ymin)
+            centerZ = 0.5 * (zmax + zmin)
+            #zenith angle theta in spherical coordinates z = r * cos(theta)
+            #rotate theta around Y axis
+            theta = self.yRot
+            #azimuthal angle phi in spherical coordinates
+            #rotate phi around Z axis
+            phi   = self.xRot
+            sceneConfig = self.scene.tree.root[0].getConfiguration() 
+            #I have to rotate around the center of the scene
+            #taking into account the scale it will use
+            scale = sceneConfig['common']['scale']
+            anchor = [centerX*scale[0], centerY*scale[1], centerZ*scale[2]]
+            #print "ANCHOR = ", anchor
+            #print "ZENITH = %f, AZIMUTH = %f " % (theta, phi)
+            #M = self.getRotationMatrix(0, theta, phi, anchor)
+            #print "M = ", M
+            GL.glTranslated(anchor[0], anchor[1], anchor[2])
+            GL.glRotated(theta, 0.0, 1.0, 0.0)
+            GL.glRotated(phi, 0.0, 0.0, 1.0)
+            GL.glTranslated(-anchor[0], -anchor[1], -anchor[2])
 
         self.drawScene()
 
@@ -1304,8 +1320,11 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             if dy != 0:
                 dy = (dy/float(h)) * (self.__orthoLimits[4]-self.__orthoLimits[1])
             #probably the zoom also plays a role
+            if SCENE_MATRIX:
+                self.__currentViewPosition = self.scene.getCurrentViewMatrix()
             self.__currentViewPosition[3,0] += dx
             self.__currentViewPosition[3,1] -= dy
+            self.scene.setCurrentViewMatrix(self.__currentViewPosition)            
             self.cacheUpdateGL()
         elif event.buttons() & qt.Qt.RightButton:
             self.setCacheEnabled(False)
@@ -1318,8 +1337,11 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             scale = self.scene.tree.root[0].getConfiguration()['common']['scale']
             anchor = [centerX*scale[0], centerY*scale[1], centerZ*scale[2]]
             M = self.getRotationMatrix(angleX, 0, angleZ, anchor)
+            if SCENE_MATRIX:
+                self.__currentViewPosition = self.scene.getCurrentViewMatrix()
             self.__currentViewPosition = numpy.dot(M,
                                             self.__currentViewPosition)
+            self.scene.setCurrentViewMatrix(self.__currentViewPosition)
             self.cacheUpdateGL()
         elif event.buttons() & qt.Qt.MidButton:
             #Z translation
@@ -1329,7 +1351,10 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             #but the scene scale plays a big one
             if dy != 0:
                 dy = (dy/float(h)) * (self.__orthoLimits[5]-self.__orthoLimits[2])
+                if SCENE_MATRIX:
+                    self.__currentViewPosition = self.scene.getCurrentViewMatrix()
                 self.__currentViewPosition[3,2] -= dy
+                self.scene.setCurrentViewMatrix(self.__currentViewPosition)            
                 self.cacheUpdateGL()
         self.lastPos = qt.QPoint(event.pos())
 

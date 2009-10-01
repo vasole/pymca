@@ -14,15 +14,20 @@ class Scene:
         ddict = {}
         ddict['common']={'anchor':[2, 2, 2]}
         #the zenith theta [z = r * cos(theta)] and azimuthal angles
+        self.__currentViewMatrix = numpy.zeros((4,4), numpy.float32)
+        for i in [0, 1, 2, 3]:
+            self.__currentViewMatrix[i, i] = 1.0
         ddict['private'] = {'face':'top',
                             'theta': 0.0,
-                            'phi':0.0} 
+                            'phi':0.0,
+                            'view':self.__currentViewMatrix} 
         self.__sceneObject.setConfiguration(ddict)
         self.tree = ObjectTree.ObjectTree(self.__sceneObject, name)
         self.__limits = [-100., -100., -100., 100., 100.0, 100.0]
         self.__observerPosition = [0.0, 0.0, 0.0]
         self.__autoScale = True
         self.__sceneObject.setLimits(-100., -100., -100., 100., 100.0, 100.0)
+        self.__transformationMatrix = self.__currentViewMatrix * 1
         
     def __getitem__(self, name):
         return self.tree.find(name)
@@ -67,6 +72,7 @@ class Scene:
     def setThetaPhi(self, theta, phi):
         self.__sceneObject._configuration['private']['theta'] = theta
         self.__sceneObject._configuration['private']['phi'] = phi
+        self.updateTransformationMatrix()
 
     def getThetaPhi(self):
         return self.__sceneObject._configuration['private']['theta'],\
@@ -116,6 +122,48 @@ class Scene:
                 M = numpy.dot(self.getRotationMatrix(90., 20.0, 45.0, anchor), M)
         #print "MATRIX   = ", M
         return M
+
+    def setCurrentViewMatrix(self, m):
+        if m.shape in [(4,4), [4,4]]:
+            self.__currentViewMatrix = m.astype(numpy.float32)
+            self.__sceneObject._configuration['private']['view'] =\
+                                                self.__currentViewMatrix
+        else:
+            raise ValueError, "Trying to set an invalid transformation matrix"
+        self.updateTransformationMatrix()
+
+    def getCurrentViewMatrix(self):
+        return self.__currentViewMatrix
+
+    def updateTransformationMatrix(self):
+        #this method is called to update the transformation matrix
+        #in order not to have to calculate it each time the scene is drawn
+        theta, phi = self.getThetaPhi()
+        if (theta != 0.0) or (phi != 0.0):
+            xmin, ymin, zmin, xmax, ymax, zmax = self.getLimits()
+            centerX = 0.5 * (xmax + xmin)
+            centerY = 0.5 * (ymax + ymin)
+            centerZ = 0.5 * (zmax + zmin)
+            #zenith angle theta in spherical coordinates z = r * cos(theta)
+            #rotate theta around Y axis
+            # theta
+            #azimuthal angle phi in spherical coordinates
+            #rotate phi around Z axis
+            # phi   = self.xRot
+            sceneConfig = self.tree.root[0].getConfiguration() 
+            #I have to rotate around the center of the scene
+            #taking into account the scale it will use
+            scale = sceneConfig['common']['scale']
+            anchor = [centerX*scale[0], centerY*scale[1], centerZ*scale[2]]
+            tmpM = self.getRotationMatrix(0.0,theta, phi, anchor=anchor)
+            self.__transformationMatrix = numpy.dot(tmpM,
+                                self.__currentViewMatrix).astype(numpy.float32)
+        else:
+            self.__transformationMatrix[:,:] = self.__currentViewMatrix[:,:]
+
+
+    def getTransformationMatrix(self):
+        return self.__transformationMatrix
 
     def gluLookAt(self, eyeX, eyeY, eyeZ,
 			centerX, centerY, centerZ,
