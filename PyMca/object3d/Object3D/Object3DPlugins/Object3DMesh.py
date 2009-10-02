@@ -66,7 +66,7 @@ class Object3DMesh(Object3DBase.Object3D):
                                                Object3DMeshConfig(None, name)
         self._configuration['private']['widget'] = weakref.proxy(self._privateConfigurationWidget)
         self._configuration['private']['colorfilter'] = 0
-        self._configuration['private']['isosurfaces'] = [[1, 10, None]]
+        self._configuration['private']['isosurfaces'] = [[0, 10, 'green', 0, 0xFF, 0, 0xFF]] #green
         self._configuration['private']['useminmax']    = [0, 100, 200]
         self._configuration['private']['infolabel'] = "Object3DMesh %s" % name
   

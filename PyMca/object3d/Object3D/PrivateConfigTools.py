@@ -213,10 +213,8 @@ class Isosurfaces(qt.QGroupBox):
                     break
                 cb, le, label, r, g, b, a = ddict[key][i]
                 color = (r, g, b, a)
-                if cb == 'False':
-                    cb = 0
-                else:
-                    cb = 1
+                if cb in [0, 'False', '0']:
+                    cb = False
                 if cb:
                     self.__isosurfaceList[i][0].setChecked(True)
                 else:

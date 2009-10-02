@@ -21,7 +21,8 @@ class Scene:
         ddict['private'] = {'face':'top',
                             'theta': 0.0,
                             'phi':0.0,
-                            'view':__currentViewMatrix} 
+                            'view':__currentViewMatrix,
+                            'zoom':1.0} 
         self.__sceneObject.setConfiguration(ddict)
         self.tree = ObjectTree.ObjectTree(self.__sceneObject, name)
         self.__limits = [-100., -100., -100., 100., 100.0, 100.0]
@@ -56,10 +57,16 @@ class Scene:
                 del d[name]['private']['widget']
                 self.__sceneObject.setConfiguration(d[name])
                 #there is additional information added by this class
-                theta = d[name]['private']['theta']
-                phi   = d[name]['private']['phi']
+                self.__sceneObject._configuration['private']['phi']=\
+                                        d[name]['private']['phi']
+                self.__sceneObject._configuration['private']['theta']=\
+                                        d[name]['private']['theta']
                 self.__sceneObject._configuration['private']['view'] =\
                                         d[name]['private']['view']
+                zoom = d[name]['private'].get('zoom', None)
+                if zoom is not None:
+                    self.__sceneObject._configuration['private']['zoom'] =\
+                                        zoom
             elif name in nameList:
                 del d[name]['private']['widget']
                 o3d =self.getObject3DProxy(name)
@@ -113,6 +120,13 @@ class Scene:
     def getThetaPhi(self):
         return self.__sceneObject._configuration['private']['theta'],\
                 self.__sceneObject._configuration['private']['phi']
+
+    def setZoomFactor(self, value):
+        self.__sceneObject._configuration['private']['zoom'] = value
+
+    def getZoomFactor(self):
+        return self.__sceneObject._configuration['private']['zoom']
+
 
     def applyCube(self, cubeFace=None):
         if cubeFace is not None:

@@ -93,7 +93,11 @@ class SceneManager(qt.QWidget):
             current = 'Scene'
         self.sceneControl.sceneWidget.setSelectedObject(current)
         self.sceneControl.sceneWidget.treeWidget.emitSignal('objectSelected')
-        #self.sceneControl.updateView()
+        ddict={}
+        ddict['event'] = 'configurationLoaded'
+        ddict['object'] = None
+        ddict['legend'] = None
+        self.emit(qt.SIGNAL('SceneManagerSignal'), ddict)
         
     def saveConfiguration(self):
         wdir = Object3DDirs.outputDir

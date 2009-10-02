@@ -150,7 +150,7 @@ class SceneGLWindow(qt.QWidget):
         self.wheelSlider10.wheel.setTotalAngle(360.)
         self.connect(self.wheelSlider10.wheel,
                      qt.SIGNAL("valueChanged(double)"),
-                     self.setRotY)
+                     self.setTheta)
 
         
         self.glWidget = SceneGLWidget.SceneGLWidget(self)
@@ -183,7 +183,7 @@ class SceneGLWindow(qt.QWidget):
         self.infoLine.setText("Scene is in object selection mode.")
         self.connect(self.wheelSlider21.wheel,
                      qt.SIGNAL("valueChanged(double)"),
-                     self.setRotX)
+                     self.setPhi)
 
         self.mainLayout.addWidget(self.toolBar, 0, 1)
         self.mainLayout.addWidget(self.wheelSlider10, 1, 0)
@@ -407,6 +407,14 @@ class SceneGLWindow(qt.QWidget):
                 self.addObject(ddict['object'], ddict['legend'])
             else:
 		self.addObjectFromFileDialog()
+	elif ddict['event'] == 'configurationLoaded':
+            theta, phi = self.scene.getThetaPhi()
+            self.__applyingCube = True
+            self.wheelSlider10.wheel.setValue(theta)
+            self.wheelSlider21.wheel.setValue(phi)
+            zoomFactor = self.scene.getZoomFactor()
+            self.wheelSlider12.setValue(numpy.log(zoomFactor)/numpy.log(2))
+            self.__applyingCube = False
         else:
             if DEBUG:
                 print "DOING NOTHING"
@@ -569,17 +577,33 @@ class SceneGLWindow(qt.QWidget):
         self.infoLine.setText(ddict['info'])
 
     def setZoomFactor(self, value):
+	if self.__applyingCube:
+            return
         self.glWidget.setZoomFactor(pow(2, value))
 
-    def setRotX(self, value):
-	if self.__applyingCube:
-	    return
-        self.glWidget.setXRotation(value)
+    def normalizeAngle(self, angle):
+        while angle < 0:
+            angle += 360
+        angle = angle % 360
+        return angle
 
-    def setRotY(self, value):
+    def setPhi(self, value):
 	if self.__applyingCube:
 	    return
-        self.glWidget.setYRotation(value)
+	value = self.normalizeAngle(value)
+	theta, phi = self.scene.getThetaPhi()
+	if value != phi:
+            self.scene.setThetaPhi(theta, value)
+            self.glWidget.cacheUpdateGL()
+
+    def setTheta(self, value):
+	if self.__applyingCube:
+	    return
+	value = self.normalizeAngle(value)
+	theta, phi = self.scene.getThetaPhi()
+	if value != theta:
+            self.scene.setThetaPhi(value, phi)
+            self.glWidget.cacheUpdateGL()
 
     def selectObject(self):
         if self.glWidget.objectSelectionMode():

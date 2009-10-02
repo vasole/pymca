@@ -38,20 +38,14 @@ class SceneGLWidget(qt.QGLWidget):
             for i in [0, 1, 2, 3]:
                 self.__currentViewPosition[i, i] = 1
             self.scene.setCurrentViewMatrix(self.__currentViewPosition)
-        self.xScale = 1.0 
-        self.yScale = 1.0 
-        self.zScale = 1.0 
 
-        self.__zoomFactor = 1.0
+        self.__zoomFactor = 1.0/self.scene.getZoomFactor()
 
         self.scale   = 1.0
         self._objectSelectionMode = False
         self._vertexSelectionMode = False
         self.__selectingVertex    = False
         self.setAutoBufferSwap(False)
-        self.xRot = 0
-        self.yRot = 0
-        self.zRot = 0
         self.autoScale = True
         self.coordinates = Object3DCoordinates.Object3DCoordinates(self)
         self.lastPos = qt.QPoint()
@@ -63,29 +57,11 @@ class SceneGLWidget(qt.QGLWidget):
         self.__outOfSelectMode = False
         self.__cacheTexture = GLWidgetCachePixmap.GLWidgetCachePixmap()
 
-
-        return
-        self.__initialWidth = 200
-        self.__initialHeight = 200
-        self.__aspectRatio = 1.0
-        sizePolicy = qt.QSizePolicy(self.sizePolicy())
-        sizePolicy.setHeightForWidth(True)
-        self.setSizePolicy(sizePolicy)
-
-    #def sizeHint(self):
-    #    return qt.QSize(self.__initialWidth, self.__initialHeight)
-
-    def heightForWidth(self, w):
-        return int(w * self.__aspectRatio)
-
     def setCurrentViewPosition(self, position, rotation_reset=None):
         if rotation_reset is None:
             rotation_reset = True
         if rotation_reset:
-            self.xRot = 0.0
-            self.yRot = 0.0
-            self.zRot = 0.0
-            self.scene.setThetaPhi(self.yRot, self.xRot)
+            self.scene.setThetaPhi(0, 0)
         if position.shape == (3, 4):
             self.__currentViewPosition[0:3, :] = position[0:3, :]
         else:
@@ -108,60 +84,6 @@ class SceneGLWidget(qt.QGLWidget):
             self._visualVolume = [xmin, xmax, ymin, ymax, zmin, zmax]
             self.cacheUpdateGL()
         return
-        if legend is None:
-            legend = "Unnamed"
-        if legend not in self.objectsList:
-            self.objectsList.append(legend)
-            self.objectsDict[legend] = {}
-            
-        self.objectsDict[legend]['object3D'] = ob
-        #self.objectsDict[legend]['anchor']   = [0, 0, 0]
-        #self.objectsDict[legend]['translation'] = [0.0, 0.0, 0.0]
-        #self.objectsDict[legend]['rotation'] = [0.0, 0.0, 0.0]
-
-        limits = ob.getLimits()
-        xmin0, ymin0, zmin0 = limits[0,:]
-        xmax0, ymax0, zmax0 = limits[1,:]
-
-        if self.autoScale:
-            for legend in self.objectsList:
-                limits = self.objectsDict[legend]['object3D'].getLimits()
-                xmin, ymin, zmin = limits[0]
-                xmax, ymax, zmax = limits[1]
-                if xmin < xmin0: xmin0 = xmin
-                if ymin < ymin0: ymin0 = ymin
-                if zmin < zmin0: zmin0 = zmin
-                if xmax > xmax0: xmax0 = xmax
-                if ymax > ymax0: ymax0 = ymax
-                if zmax > zmax0: zmax0 = zmax
-
-
-            #make sure everything is visible after rotations
-            #by setting limits between absolute maxima
-            if 0:
-                xmax0 = max(abs(xmin0), abs(xmax0))
-                ymax0 = max(abs(ymin0), abs(ymax0))
-                zmax0 = max(abs(zmin0), abs(zmax0))
-                xmin0 = -xmax0
-                ymin0 = -ymax0
-                zmin0 = -zmax0
-                #zmin0 = -1.0e+6
-                #zmax0 =  1.0e+6
-            if 1:
-                #keep XY plane with same limits
-                xmin0 = min(xmin0, ymin0)
-                xmax0 = max(xmax0, ymax0)
-                ymin0 = xmin0
-                ymax0 = ymax0
-            self.setVisualizationVolume(xmin0, xmax0,
-                                        ymin0, ymax0,
-                                        zmin0, zmax0)
-
-            if ((xmax0-xmin0) != 0) and ((ymax0-ymin0) != 0) and ((zmax0-zmin0) != 0):
-                self.zScale = 1.0/(max(1.0/(xmax0-xmin0), 1.0/(ymax0-ymin0))*(zmax0-zmin0))
-            else:
-                self.zScale = 1.0
-            self.scale = 1.0
             
     def setVisualizationVolume(self, xmin, xmax,
                                      ymin, ymax,
@@ -175,43 +97,11 @@ class SceneGLWidget(qt.QGLWidget):
     def visualizationVolume(self):
         return self._visualVolume * 1
 
-    def xRotation(self):
-        return self.xRot
-
-    def yRotation(self):
-        return self.yRot
-
-    def zRotation(self):
-        return self.zRot
-
     def minimumSizeHint(self):
         return qt.QSize(50, 50)
 
     def sizeHint(self):
         return qt.QSize(400, 400)
-
-    def setXRotation(self, angle):
-        angle = self.normalizeAngle(angle)
-        if angle != self.xRot:
-            self.xRot = angle
-            self.scene.setThetaPhi(self.yRot, self.xRot)            
-            self.emit(qt.SIGNAL("xRotationChanged"), angle)
-            self.cacheUpdateGL()
-
-    def setYRotation(self, angle):
-        angle = self.normalizeAngle(angle)
-        if angle != self.yRot:
-            self.yRot = angle
-            self.scene.setThetaPhi(self.yRot, self.xRot)
-            self.emit(qt.SIGNAL("yRotationChanged"), angle)
-            self.cacheUpdateGL()
-
-    def setZRotation(self, angle):
-        angle = self.normalizeAngle(angle)
-        if angle != self.zRot:
-            self.zRot = angle
-            self.emit(qt.SIGNAL("zRotationChanged"), angle)
-            self.cacheUpdateGL()
 
     def setScale(self, value):
         self.scale = value
@@ -221,10 +111,13 @@ class SceneGLWidget(qt.QGLWidget):
     def setZoomFactor(self, value):
         # I have to update the viewport
         self.__zoomFactor = 1.0/value
+        self.scene.setZoomFactor(value)
         self.cacheUpdateGL()
 
     def getZoomFactor(self):
-        return 1.0/self.__zoomFactor
+        value = self.scene.getZoomFactor()
+        self.__zoomFactor = 1.0/value
+        return value
             
     def getScale(self):
         return self.scale * 1
@@ -463,7 +356,6 @@ class SceneGLWidget(qt.QGLWidget):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
         if SCENE_MATRIX:
-            self.scene.setThetaPhi(self.yRot, self.xRot)
             GL.glMultMatrixf(self.scene.getTransformationMatrix())
         else:
             #apply the selected face
@@ -476,10 +368,9 @@ class SceneGLWidget(qt.QGLWidget):
             centerZ = 0.5 * (zmax + zmin)
             #zenith angle theta in spherical coordinates z = r * cos(theta)
             #rotate theta around Y axis
-            theta = self.yRot
             #azimuthal angle phi in spherical coordinates
             #rotate phi around Z axis
-            phi   = self.xRot
+            theta, phi = self.scene.getThetaPhi()
             sceneConfig = self.scene.tree.root[0].getConfiguration() 
             #I have to rotate around the center of the scene
             #taking into account the scale it will use
@@ -1005,46 +896,6 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             if 0:
                 GL.glRasterPos3d(x, y, z)
                 self.redBookFont.printString(text)
-            elif 0:
-                #try to find out why does not work in qt 4.3.2
-                autoswap = self.autoBufferSwap()
-                width = self.width()
-                height = self.height()
-                engine = self.paintEngine()
-                if engine.isActive():
-                    print "active"
-                    reuse = True
-                    painter = engine.painter()
-                    #qt_save_gl_state
-                else:
-                    print "inactive"
-                    reuse = False
-                    self.setAutoBufferSwap(0)
-                    #disable clear on painter begin
-                    # disable glClear() as a result of QPainter::begin()
-                    #d->glcx->d_func()->clear_on_painter_begin = false
-
-                    #the creation of the painter
-                    #turns PyOpenGL crazy.
-                    painter = qt.QPainter(self)
-                    self.makeCurrent()
-                    color = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
-                    color = [1.0, 1.0, 1.0, 1.0]
-                    col = qt.QColor()
-                    col.setRgbF(color[0], color[1], color[2], color[3])
-                    oldpen = painter.pen()
-                    oldfont = painter.font()
-                    painter.setPen(col)
-                    painter.setFont(font)
-                    painter.drawText(x, y, text)
-                    painter.setPen(oldpen)
-                    painter.setFont(oldfont)
-                if reuse:
-                    #qt_restore_state
-                    pass
-                else:
-                    painter.end()
-                self.setAutoBufferSwap(autoswap)                        
             else:
                 GL.glPushAttrib(GL.GL_ALL_ATTRIB_BITS)
                 GL.glDisable(GL.GL_TEXTURE_1D)
@@ -1362,12 +1213,6 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         qt.QApplication.postEvent(self,
                  qt.QResizeEvent(self.size(),self.size()))
 
-
-    def normalizeAngle(self, angle):
-        while angle < 0:
-            angle += 360
-        angle = angle % 360
-        return angle
     
     def print3D(self):
         """
