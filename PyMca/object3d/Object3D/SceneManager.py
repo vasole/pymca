@@ -1,3 +1,4 @@
+import os
 import GLToolBar
 import SceneControl
 qt = SceneControl.qt
@@ -5,7 +6,24 @@ import SceneGLWindow
 import weakref
 from VerticalSpacer import VerticalSpacer
 from HorizontalSpacer import HorizontalSpacer
+CONFIGDICT = True
+try:
+    from PyMca import ConfigDict    
+except ImportError:
+    try:
+        import ConfigDict
+    except ImportError:
+        CONFIGDICT = False
 
+try:
+    from PyMca import PyMcaDirs as Object3DDirs
+except ImportError:
+    try:
+        import PyMcaDirs as Object3DDirs
+    except ImportError:
+        import Object3DDirs
+
+    
 DEBUG = 0
 
 class ToolBar(GLToolBar.GLToolBar):
@@ -47,7 +65,53 @@ class SceneManager(qt.QWidget):
     def addFileMenu(self):
         self.fileMenu = qt.QMenu("File", self.menuBar)
         self.fileMenu.addAction(qt.QString('Add Object'), self.addObjectSignal)
+        if CONFIGDICT:
+            self.fileMenu.addSeparator()
+            self.fileMenu.addAction(qt.QString('Load Configuration'),
+                                    self.loadConfiguration)
+            self.fileMenu.addAction(qt.QString('Save Configuration'),
+                                    self.saveConfiguration)
         self.menuBar.addMenu(self.fileMenu)
+
+    def loadConfiguration(self):
+        wdir = Object3DDirs.inputDir
+        message = "Enter input scene configuration file name"
+        filename = qt.QFileDialog.getOpenFileName(self,
+                    message,
+                    wdir,
+                    "*.scene")
+        filename = str(filename)
+        if not len(filename):
+            return
+        Object3DDirs.inputDir = os.path.dirname(filename)
+        d = ConfigDict.ConfigDict()
+        d.read(filename)
+        self.glWindow.scene.setConfiguration(d)
+        #This partially works but it is awful
+        current = self.glWindow.scene.getSelectedObject()
+        if current is None:
+            current = 'Scene'
+        self.sceneControl.sceneWidget.setSelectedObject(current)
+        self.sceneControl.sceneWidget.treeWidget.emitSignal('objectSelected')
+        #self.sceneControl.updateView()
+        
+    def saveConfiguration(self):
+        wdir = Object3DDirs.outputDir
+        message = "Enter output scene configuration file name"
+        filename = qt.QFileDialog.getSaveFileName(self,
+                    message,
+                    wdir,
+                    "*.scene")
+        filename = str(filename)
+        if not len(filename):
+            return
+        Object3DDirs.outputDir = os.path.dirname(filename)
+        config =  self.glWindow.scene.getConfiguration()
+        d = ConfigDict.ConfigDict()
+        if os.path.exists(filename):
+            os.remove(filename)
+        d.update(config)
+        d.write(filename)
 
     def addObjectSignal(self):
         ddict={}

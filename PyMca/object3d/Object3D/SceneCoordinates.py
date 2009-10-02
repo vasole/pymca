@@ -13,7 +13,7 @@ class SceneCoordinates(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self.limitsWidget = SceneLimitsWidget(self)
         self.observerWidget = ObserverPositionWidget(self)
-        self.viewOrientationWidget = ViewOrientationWidget(self)
+        #self.viewOrientationWidget = ViewOrientationWidget(self)
         self.mainLayout.addWidget(self.limitsWidget, 0, 0)
         self.mainLayout.addWidget(self.observerWidget, 0, 1)
         self.mainLayout.addWidget(HorizontalSpacer(self), 0, 2, 1, 2)

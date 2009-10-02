@@ -10,28 +10,64 @@ class Scene:
     def __init__(self, name = 'Scene'):
         #self.tree = ObjectTree.ObjectTree('__Scene__', name)
         self.__sceneObject= Object3DBase.Object3D(name=name)
+        self.__name = name
         self.__sceneObject.setSelected(True)
         ddict = {}
         ddict['common']={'anchor':[2, 2, 2]}
         #the zenith theta [z = r * cos(theta)] and azimuthal angles
-        self.__currentViewMatrix = numpy.zeros((4,4), numpy.float32)
+        __currentViewMatrix = numpy.zeros((4,4), numpy.float32)
         for i in [0, 1, 2, 3]:
-            self.__currentViewMatrix[i, i] = 1.0
+            __currentViewMatrix[i, i] = 1.0
         ddict['private'] = {'face':'top',
                             'theta': 0.0,
                             'phi':0.0,
-                            'view':self.__currentViewMatrix} 
+                            'view':__currentViewMatrix} 
         self.__sceneObject.setConfiguration(ddict)
         self.tree = ObjectTree.ObjectTree(self.__sceneObject, name)
         self.__limits = [-100., -100., -100., 100., 100.0, 100.0]
         self.__observerPosition = [0.0, 0.0, 0.0]
         self.__autoScale = True
         self.__sceneObject.setLimits(-100., -100., -100., 100., 100.0, 100.0)
-        self.__transformationMatrix = self.__currentViewMatrix * 1
+        self.__transformationMatrix = __currentViewMatrix * 1
         
     def __getitem__(self, name):
         return self.tree.find(name)
 
+
+    def getConfiguration(self):
+        """
+        WARNING: This does not account for the order in the tree yet
+        """
+        d={}
+        for name in self.getObjectList():
+            if name in[self.__name, "Scene"]:
+                d['Scene']  = self.__sceneObject.getConfiguration()
+            else:
+                d[name] = self.getObject3DProxy(name).getConfiguration()
+        return d
+
+    def setConfiguration(self, d):
+        """
+        WARNING: This does not account for the order in the tree yet
+        """
+        nameList = self.getObjectList()
+        for name in d.keys():
+            if name in [self.__name, "Scene"]:
+                del d[name]['private']['widget']
+                self.__sceneObject.setConfiguration(d[name])
+                #there is additional information added by this class
+                theta = d[name]['private']['theta']
+                phi   = d[name]['private']['phi']
+                self.__sceneObject._configuration['private']['view'] =\
+                                        d[name]['private']['view']
+            elif name in nameList:
+                del d[name]['private']['widget']
+                o3d =self.getObject3DProxy(name)
+                o3d.setConfiguration(d[name])
+            elif DEBUG:
+                print "name %s ignored" % name
+        self.updateTransformationMatrix()
+                
     def name(self):
         return self.__sceneObject.name()
 
@@ -125,20 +161,20 @@ class Scene:
 
     def setCurrentViewMatrix(self, m):
         if m.shape in [(4,4), [4,4]]:
-            self.__currentViewMatrix = m.astype(numpy.float32)
             self.__sceneObject._configuration['private']['view'] =\
-                                                self.__currentViewMatrix
+                                                m.astype(numpy.float32)
         else:
             raise ValueError, "Trying to set an invalid transformation matrix"
         self.updateTransformationMatrix()
 
     def getCurrentViewMatrix(self):
-        return self.__currentViewMatrix
+        return self.__sceneObject._configuration['private']['view']
 
     def updateTransformationMatrix(self):
         #this method is called to update the transformation matrix
         #in order not to have to calculate it each time the scene is drawn
         theta, phi = self.getThetaPhi()
+        __currentViewMatrix = self.getCurrentViewMatrix()
         if (theta != 0.0) or (phi != 0.0):
             xmin, ymin, zmin, xmax, ymax, zmax = self.getLimits()
             centerX = 0.5 * (xmax + xmin)
@@ -157,10 +193,10 @@ class Scene:
             anchor = [centerX*scale[0], centerY*scale[1], centerZ*scale[2]]
             tmpM = self.getRotationMatrix(0.0,theta, phi, anchor=anchor)
             self.__transformationMatrix = numpy.dot(tmpM,
-                                self.__currentViewMatrix).astype(numpy.float32)
+                                    __currentViewMatrix).astype(numpy.float32)
         else:
-            self.__transformationMatrix[:,:] = self.__currentViewMatrix[:,:]
-
+            self.__transformationMatrix[:,:] =\
+                    __currentViewMatrix[:,:]
 
     def getTransformationMatrix(self):
         return self.__transformationMatrix

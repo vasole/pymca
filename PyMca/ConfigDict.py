@@ -115,7 +115,16 @@ class ConfigDict(dict):
                     try:
                         return Numeric.array(map(float,string.split(data[1:-1])))
                     except:
-                        pass
+                        try:
+                            if (data[2] == '[') and (data[-3] == ']'):
+                                nrows = len(data[3:-3].split('] ['))
+                                indata = data[3:-3].replace('] [','')
+                                indata = Numeric.array(map(float,
+                                                           indata.split()))
+                                indata.shape = nrows,-1
+                                return indata
+                        except:
+                            pass
         dataline= [ line for line in data.splitlines() ]
         if len(dataline)==1:
             return self.__parse_line(dataline[0])

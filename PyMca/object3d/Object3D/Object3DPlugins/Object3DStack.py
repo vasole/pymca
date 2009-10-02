@@ -48,8 +48,12 @@ class Object3DStack(Object3DBase.Object3D):
         for i in range(5):
             self.__isosurfacesDict[i] = {}
             self.__isosurfacesDict[i]['list'] = 0
-            self.__isosurfacesDict[i]['value'] = 0
-            self.__isosurfacesDict[i]['color'] = (0xFF, 0, 0, 0xFF)
+            self.__isosurfacesDict[i]['value'] = 0            
+            self.__isosurfacesDict[i]['color'] = 'red'
+            self.__isosurfacesDict[i]['r'] = 0xFF
+            self.__isosurfacesDict[i]['g'] = 0
+            self.__isosurfacesDict[i]['b'] = 0
+            self.__isosurfacesDict[i]['a'] = 0xFF
         self._configuration['common']['supportedmodes'] = [1, 1, 1, 1]
         self._configuration['common']['mode'] = 1
 
@@ -70,8 +74,8 @@ class Object3DStack(Object3DBase.Object3D):
                                                Object3DMeshConfig(None, name)
         self._configuration['private']['widget'] = weakref.proxy(self._privateConfigurationWidget)
         self._configuration['private']['colorfilter'] = 1
-        self._configuration['private']['isosurfaces'] = [[1, 10, (0, 0xFF, 0, 0xFF)]] #green
-        #self._configuration['private']['isosurfaces'] = [[1, 10, None]] #auto
+        self._configuration['private']['isosurfaces'] = [[1, 10, 'green', 0, 0xFF, 0, 0xFF]] #green
+        #self._configuration['private']['isosurfaces'] = [[1, 10, None, 0, 0, 0, 0xFF]] #auto
         self._configuration['private']['useminmax']    = [0, 100, 200]
         self._configuration['private']['infolabel'] = "Object3DStack %s" % name
         
@@ -247,7 +251,8 @@ class Object3DStack(Object3DBase.Object3D):
         elif self.drawMode == "SURFACE":
             flag = 1
             i = 0
-            for use, value, color in self._configuration['private']['isosurfaces']:
+            for use, value, label, cr, cg, cb, ca in self._configuration['private']['isosurfaces']:
+                color = (cr, cg, cb, ca)
                 if use:
                     flag = 0
                     GL.glEnable(GL.GL_LIGHTING)

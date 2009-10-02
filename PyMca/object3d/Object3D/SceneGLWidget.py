@@ -13,7 +13,7 @@ from HorizontalSpacer import HorizontalSpacer
 QTVERSION = qt.qVersion()
 
 DEBUG = 0
-SCENE_MATRIX = False
+SCENE_MATRIX = True
 
 class SceneGLWidget(qt.QGLWidget):
     def __init__(self, parent = None, scene=None):

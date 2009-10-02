@@ -201,19 +201,32 @@ class Isosurfaces(qt.QGroupBox):
             self.__isosurfaceList.append((cb, le, color))
 
     def setParameters(self, ddict=None):
+        global COLORS_LIST
         if ddict is None:
             ddict = {}
         key = 'isosurfaces'
         if ddict.has_key(key):
+            if type(ddict[key][0]) not in [type((1,)), type([])]:
+                ddict[key] = [ddict[key] * 1]
             for i in range(len(ddict[key])):
                 if i >= self.__nIsosurfaces:
                     break
-                cb, le, color = ddict[key][i]
+                cb, le, label, r, g, b, a = ddict[key][i]
+                color = (r, g, b, a)
+                if cb == 'False':
+                    cb = 0
+                else:
+                    cb = 1
                 if cb:
                     self.__isosurfaceList[i][0].setChecked(True)
                 else:
                     self.__isosurfaceList[i][0].setChecked(False)
                 self.__isosurfaceList[i][1].setText("%g" % le)
+                if label not in COLORS_LIST:
+                    COLORS_LIST.append(label)
+                    COLORS[label] = color
+                    self.__isosurfaceList[i][2].addItem(label)
+                    continue
                 for c in COLORS_LIST:
                     if COLORS[c] == color:
                         idx = COLORS_LIST.index(c)
@@ -225,11 +238,14 @@ class Isosurfaces(qt.QGroupBox):
         key = 'isosurfaces'
         ddict[key] = []
         for i in range(self.__nIsosurfaces):
-            cb, le, color = self.__isosurfaceList[i]
-            cb = self.__isosurfaceList[i][0].isChecked()
+            if self.__isosurfaceList[i][0].isChecked():
+                cb = 1
+            else:
+                cb = 0
             le = float(self.__isosurfaceList[i][1].text())
-            color = COLORS[str(self.__isosurfaceList[i][2].currentText())]
-            ddict[key].append([cb, le, color])
+            label = str(self.__isosurfaceList[i][2].currentText())
+            r, g, b, a = COLORS[label]
+            ddict[key].append([cb, le, label, r, g, b, a])
         return ddict
 
 if __name__ == "__main__":
