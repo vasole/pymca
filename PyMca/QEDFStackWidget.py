@@ -55,7 +55,12 @@ import OmnicMap
 import LuciaMap
 import SupaVisioMap
 import AifiraMap
-import QHDF5Stack1D
+try:
+    import QHDF5Stack1D
+    HDF5 = True
+except ImportError:
+    HDF5 = False
+    pass
 import MaskImageWidget
 import ExternalImagesWindow
 import copy
@@ -1713,6 +1718,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "Image Files (*edf)",
                         "All Files (*)"]
+        if not HDF5:
+            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)") 
+            del fileTypeList[idx]           
         message = "Open ONE indexed stack or SEVERAL files"
         return self._getFileList(fileTypeList, message=message, getfilter=getfilter)
 
