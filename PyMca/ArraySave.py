@@ -27,6 +27,31 @@
 import os
 import EdfFile
 
+
+HDF5 = True
+try:
+    import h5py
+    PHYNX=True
+    try:
+        from PyMca import phynx
+    except ImportError:
+        try:
+            import phynx
+        except ImportError:
+            PHYNX = False
+except ImportError:
+    HDF5 = False
+
+"""
+try:
+    from PyMca import phynx
+except ImportError:
+    try:
+        import phynx
+    except ImportError:
+        HDF5 = False
+"""
+
 def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvseparator=";"):
     if type(datalist) != type([]):
         datalist = [datalist]
@@ -101,3 +126,57 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
                                datalist[i].astype(dtype),
                                Append=1)
     del edfout #force file close
+
+
+def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
+    if not HDF5:
+        raise IOError, 'h5py does not seem to be installed in your system'
+    shape = data.shape
+    if dtype is None:
+        dtype =data.dtype
+    if mode.lower() == 'nexus':
+        raise IOError, 'NeXus data saving not implemented yet'
+        hdf = phynx.File(filename, 'a')
+        entryName = "%4d.%d %s" % (1, 1, 'title')
+        nxEntry = hdf.require_group(entryName, type='Entry')
+        #nxEntry.require_dataset('title', data = XXX)
+        #nxEntry['start_time'] = get_date()
+        #nxData = hdf.require_group(entryName, type='Data')
+        #nxData.require_dataset('data', dtype=dtype, data, chunksize=10)
+    elif mode.lower() == 'simplest':
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except:
+                raise IOError, "Cannot overwrite existing file!"
+        hdf = h5py.File(filename, 'a')
+        hdf.require_dataset('data',
+                           shape=shape,
+                           dtype=dtype,
+                           data=data,
+                           chunks=(1, shape[1], shape[2]))
+        hdf.flush()
+    else:
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except:
+                raise IOError, "Cannot overwrite existing file!"
+        shape = data.shape
+        dtype = data.dtype
+        hdf = h5py.File(filename, 'a')
+        dataGroup = hdf.require_group('data')
+        dataGroup.require_dataset('data',
+                           shape=shape,
+                           dtype=dtype,
+                           data=data,
+                           chunks=(1, shape[1], shape[2]))
+        hdf.flush()
+    hdf.close()
+
+
+if __name__ == "__main__":
+    import numpy
+    a=numpy.arange(1000000.)
+    a.shape = 20, 50, 1000
+    save3DArrayAsHDF5(a, '/test.h5', mode='simplest')

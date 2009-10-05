@@ -55,6 +55,7 @@ import OmnicMap
 import LuciaMap
 import SupaVisioMap
 import AifiraMap
+import ArraySave
 try:
     import QHDF5Stack1D
     HDF5 = True
@@ -240,9 +241,29 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.stackWindow.mainLayout = qt.QVBoxLayout(self.stackWindow)
         self.stackWindow.mainLayout.setMargin(0)
         self.stackWindow.mainLayout.setSpacing(0)
-        self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
+        if HDF5:
+            self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
                                                             colormap=True,
-                                                            standalonezoom=False)
+                                                            standalonezoom=False,
+                                                            standalonesave=False)
+            self.connect(self.stackGraphWidget.saveToolButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._stackSaveToolButtonSignal)
+            self._stackSaveMenu = qt.QMenu()
+            self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data/data"),
+                                                 self.saveStackAsSimpleHDF5)
+            self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data"),
+                                                 self.saveStackAsSimplestHDF5)
+            #self._stackSaveMenu.addAction(qt.QString("Stack as NeXus NXdata"),
+            #                                     self.saveStackAsNXdata)
+            self._stackSaveMenu.addAction(qt.QString("Standard Graphics"),
+                                     self.stackGraphWidget._saveIconSignal)
+
+        else:
+            self.stackGraphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.stackWindow,
+                                                            colormap=True,
+                                                            standalonezoom=False,
+                                                            standalonesave=True)
 
         self.connect(self.stackGraphWidget.zoomResetToolButton,
                      qt.SIGNAL("clicked()"), 
@@ -365,6 +386,33 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             box.addWidget(self.stackWindow)
             box.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
+
+    def _stackSaveToolButtonSignal(self):
+        self._stackSaveMenu.exec_(self.cursor().pos())
+
+
+    def _getOutputHDF5Filename(self, nexus=False):
+        fileTypes = "HDF5 Files (*.h5)\nHDF5 Files (*.hdf)"
+        message = "Enter output filename"
+        wdir = PyMcaDirs.outputDir
+        filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
+        if len(filename):
+            return str(filename)
+        else:
+            return ""
+
+    def saveStackAsSimpleHDF5(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='simple')
+
+
+    def saveStackAsSimplestHDF5(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return            
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='simplest')
 
     def _maskImageWidgetSlot(self, ddict):
         if ddict['event'] == "selectionMaskChanged":
@@ -1067,7 +1115,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             self.setWindowTitle(title)
         
         if ((1 in stack.data.shape) or\
-           (stack.info["SourceType"] in ["SpecFileStack", "HDF5Stack1D"]))\
+           (stack.info["SourceType"] in ["SpecFileStack"]))\
            and (QTVERSION > '4.0.0'):
             oldshape = stack.data.shape
             dialog = ImageShapeDialog(self, shape = oldshape[0:2])
@@ -1141,7 +1189,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 self.stackGraphWidget.graph.y1Label('Column')
             else:
                 self.stackGraphWidget.graph.y1Label('Row')
-        elif self.stack.info["SourceType"] == "SpecFileStack":
+        elif self.stack.info["SourceType"] in ["SpecFileStack", "HDF5Stack1D"]:
             self.stackGraphWidget.graph.y1Label('Row')
             self.stackGraphWidget.graph.x1Label('Column')
         elif self.fileIndex == 1:
@@ -1642,14 +1690,14 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         return []
         else:
             #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
-            if PyMcaDirs.nativeFileDialogs:
+            if (PyMcaDirs.nativeFileDialogs):
                 filetypes = ""
                 for filetype in fileTypeList:
                     filetypes += filetype+"\n"
                 filelist = qt.QFileDialog.getOpenFileNames(self,
-                            message,
-                            wdir,
-                            filetypes)
+                        message,
+                        wdir,
+                        filetypes)
                 if not len(filelist):
                     if getfilter:
                         return [], filterused
