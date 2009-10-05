@@ -466,7 +466,10 @@ class QNexusWidget(QtGui.QWidget):
                 else:
                     root = ddict['name'].split('/')
                     root = "/" + root[1]
-                    cnt  = ddict['name'].split(root)[-1]
+                    if len(ddict['name']) == len(root):
+                        cnt = ddict['name']
+                    else:
+                        cnt  = ddict['name'][len(root):]
                     if cnt not in self._cntList:
                         self._cntList.append(cnt)
                         basename = posixpath.basename(cnt)
@@ -536,6 +539,9 @@ class QNexusWidget(QtGui.QWidget):
                                     " " + sel['Key']
                 sel['selection'] = {}
                 sel['selection']['sourcename'] = filename
+                #deal with the case the "entry" is a dataset hunging at root level
+                if isinstance(phynxFile[entry], h5py.Dataset):
+                    entry = "/" 
                 sel['selection']['entry'] = entry
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['x'] = cntSelection['x']

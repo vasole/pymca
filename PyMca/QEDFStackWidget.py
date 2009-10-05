@@ -1089,6 +1089,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             if x < 0: x = 0
             y = round(ddict['x'])
             if y < 0: y = 0
+            if self.__stackImageData is None:
+                return
             limits = self.__stackImageData.shape
             x = min(int(x), limits[0]-1)
             y = min(int(y), limits[1]-1)

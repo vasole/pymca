@@ -186,7 +186,10 @@ class NexusDataSource:
                 entry     = selection['entry']
                 fileIndex  = self.__sourceNameList.index(filename)
                 phynxFile =  self._sourceObjectList[fileIndex]
-                entryIndex = phynxFile["/"].keys().index(entry[1:])
+                if entry == "/":
+                    entryIndex = 0
+                else:
+                    entryIndex = phynxFile["/"].keys().index(entry[1:])
             else:
                 key_split = key.split(".")
                 fileIndex = int(key_split[0])-1
@@ -195,7 +198,8 @@ class NexusDataSource:
                 entry = phynxFile["/"].keys()[entryIndex] 
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
             if actual_key != key:
-                print "Warning selection keys do not match"
+                if entry != "/":
+                    print "Warning selection keys do not match"
         else:
             sourcekeys = self.getSourceInfo()['KeyList']
             #a key corresponds to an image        
