@@ -250,6 +250,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                          qt.SIGNAL("clicked()"), 
                          self._stackSaveToolButtonSignal)
             self._stackSaveMenu = qt.QMenu()
+            self._stackSaveMenu.addAction(qt.QString("Stack as NeXus"),
+                                                 self.saveStackAsNeXus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as NeXus+/data/data"),
+                                                 self.saveStackAsNeXusPlus)
             self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data/data"),
                                                  self.saveStackAsSimpleHDF5)
             self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data"),
@@ -401,12 +405,23 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         else:
             return ""
 
+    def saveStackAsNeXus(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='nexus')
+
+    def saveStackAsNeXusPlus(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='nexus+')
+
     def saveStackAsSimpleHDF5(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
         ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='simple')
-
 
     def saveStackAsSimplestHDF5(self):
         filename = self._getOutputHDF5Filename()
@@ -1859,7 +1874,7 @@ if __name__ == "__main__":
         #get the first filename
         filename =  filepattern % tuple(begin)
         if not os.path.exists(filename):
-            raise IOError, "Filename %d does not exist." % filename
+            raise IOError, "Filename %s does not exist." % filename
         #ignore the args even if present
         args = w.getFileListFromPattern(filepattern, begin, end)
     aifirafile = False
@@ -1970,8 +1985,8 @@ if __name__ == "__main__":
             else:
                 print "Usage: "
                 print "python QEDFStackWidget.py SET_OF_EDF_FILES"
-                print "python QEDFStackWidget.py -begin=0 --end=XX INDEXED_EDF_FILE"
-                print "python QEDFStackWidget.py -begin=0,0 --end=x,y --filepattern='mca_%03d%03d.fio'"
+                print "python QEDFStackWidget.py --begin=0 --end=XX INDEXED_EDF_FILE"
+                print "python QEDFStackWidget.py --begin=0,0 --end=x,y --filepattern='mca_%03d%03d.fio'"
                 sys.exit(1)
         elif os.path.exists(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")

@@ -26,7 +26,8 @@
 #############################################################################*/
 import os
 import EdfFile
-
+import numpy
+import time
 
 HDF5 = True
 try:
@@ -134,15 +135,39 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
     shape = data.shape
     if dtype is None:
         dtype =data.dtype
-    if mode.lower() == 'nexus':
-        raise IOError, 'NeXus data saving not implemented yet'
+    if mode.lower() in ['nexus', 'nexus+']:
+        #raise IOError, 'NeXus data saving not implemented yet'
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except:
+                raise IOError, "Cannot overwrite existing file!"
         hdf = phynx.File(filename, 'a')
-        entryName = "%4d.%d %s" % (1, 1, 'title')
+        entryName = "data"
         nxEntry = hdf.require_group(entryName, type='Entry')
-        #nxEntry.require_dataset('title', data = XXX)
-        #nxEntry['start_time'] = get_date()
-        #nxData = hdf.require_group(entryName, type='Data')
-        #nxData.require_dataset('data', dtype=dtype, data, chunksize=10)
+        nxEntry.require_dataset('title', data = "PyMca saved 3D Array")
+        nxEntry['start_time'] = getDate()
+        nxData = nxEntry.require_group('NXdata', type='Data')
+        dset = nxData.require_dataset('data',
+                               shape=shape,
+                               dtype=dtype,
+                               data=data,
+                               chunks=(1, shape[1], shape[2]))
+        dset.attrs['signal'] = 1
+        for i in range(len(shape)):
+            dim = numpy.arange(shape[i]).astype(numpy.float32)
+            dset = nxData.require_dataset('dim_%d' % i,
+                                   dim.shape,
+                                   dim.dtype,
+                                   dim,
+                                   chunks=dim.shape)
+            dset.attrs['axis'] = i + 1
+        nxEntry['end_time'] = getDate()
+        if mode.lower() == 'nexus+':
+            #create link
+            g = h5py.h5g.open(hdf.fid, '/')
+            g.link('/data/NXdata/data', '/data/data', h5py.h5g.LINK_HARD)
+        
     elif mode.lower() == 'simplest':
         if os.path.exists(filename):
             try:
@@ -174,9 +199,20 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
         hdf.flush()
     hdf.close()
 
+def getDate():
+    localtime = time.localtime()
+    #year, month, day, hour, minute, second,\
+    #      week_day, year_day, delta = time.localtime()
+    year   = localtime[0]
+    month  = localtime[1]
+    day    = localtime[2]
+    hour   = localtime[3]
+    minute = localtime[4]
+    second = localtime[5]
+    return "%4d-%02d-%02d %02d:%02d:%02d" % (year, month, day, hour, minute, second)
+
 
 if __name__ == "__main__":
-    import numpy
     a=numpy.arange(1000000.)
     a.shape = 20, 50, 1000
-    save3DArrayAsHDF5(a, '/test.h5', mode='simplest')
+    save3DArrayAsHDF5(a, '/test.h5', mode='nexus')
