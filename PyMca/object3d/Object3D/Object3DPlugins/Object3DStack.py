@@ -253,6 +253,8 @@ class Object3DStack(Object3DBase.Object3D):
             i = 0
             for use, value, label, cr, cg, cb, ca in self._configuration['private']['isosurfaces']:
                 color = (cr, cg, cb, ca)
+                if None in color:
+                    color = None
                 if use:
                     flag = 0
                     GL.glEnable(GL.GL_LIGHTING)

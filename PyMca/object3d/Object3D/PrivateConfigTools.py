@@ -30,7 +30,7 @@ else:
     COLORS['brown']    = (165,  42,  42, 0xFF)
     COLORS['orange']   = (255, 165,   0, 0xFF)
     COLORS['violet']   = (148,   0, 211, 0xFF)
-    COLORS['auto']     = None
+    COLORS['auto']     = (None, None, None, 0xFF)
 
 class ColorLabel(qt.QLabel):
     def __init__(self,parent=None, bold=True, color= qt.Qt.red):
