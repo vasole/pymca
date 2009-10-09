@@ -3,8 +3,13 @@
 #endif
 #include <Python.h>
 #include <./numpy/arrayobject.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h> /*GL_MAX_ELEMENTS_VERTICES is there*/
+#else
 #include <GL/gl.h>
 #include <GL/glext.h> /*GL_MAX_ELEMENTS_VERTICES is there*/
+#endif
 
 /* Function declarations */
 static PyObject *getGridFacetsFromVertices(PyObject *dummy, PyObject *args);

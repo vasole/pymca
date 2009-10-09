@@ -69,6 +69,8 @@ if sys.platform == "win32":
     script_files.append('scripts/object3d_win_post_install.py')
 else:
     libraries = ['GL', 'GLU']
+    if sys.platform == 'darwin':
+        libraries=[]
     define_macros = []
     script_files = glob.glob('Object3D/scripts/*')
             

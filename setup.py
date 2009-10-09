@@ -79,9 +79,6 @@ if os.path.exists(os.path.join("PyMca", "phynx")):
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca", "object3d")):
     LOCAL_OBJECT3D = True
-    data_files.append(('PyMca/Object3D', glob.glob('PyMca/object3d/Object3D/*.py')))
-    data_files.append(('PyMca/Object3D/Object3DPlugins',
-                       glob.glob('PyMca/object3d/Object3D/Object3DPlugins/*.py')))
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
@@ -160,6 +157,8 @@ def build_Object3DCTools(ext_modules):
     includes = [numpy.get_include()]
     if sys.platform == "win32":
         libraries = ['opengl32', 'glu32']
+    elif sys.platform == "darwin":
+        libraries = []
     else:
         libraries = ['GL', 'GLU']        
     if sys.platform == 'windows':
@@ -197,6 +196,9 @@ if LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)
+        data_files.append(('PyMca/Object3D', glob.glob('PyMca/object3d/Object3D/*.py')))
+        data_files.append(('PyMca/Object3D/Object3DPlugins',
+                       glob.glob('PyMca/object3d/Object3D/Object3DPlugins/*.py')))
     except:
         print "Object3D Module could not be built"
         print sys.exc_info()
