@@ -70,8 +70,12 @@ class PCAParametersDialog(qt.QDialog):
             #self.methods.append("MDP (PCA + ICA)")
             self.methods.append("MDP (SVD float32)")
             self.methods.append("MDP (SVD float64)")
+            self.methods.append("MDP ICA (float32)")
+            self.methods.append("MDP ICA (float64)")
             self.functions.append(PCAModule.mdpPCASVDFloat32)
             self.functions.append(PCAModule.mdpPCASVDFloat64)
+            self.functions.append(PCAModule.mdpICAFloat32)
+            self.functions.append(PCAModule.mdpICAFloat64)
         self.buttonGroup = qt.QButtonGroup(self.methodOptions)
         i = 0
         for item in self.methods:

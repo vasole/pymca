@@ -431,6 +431,14 @@ def mdpPCASVDFloat64(stack, ncomponents, binning=None):
     return mdpPCA(stack, ncomponents,
                   binning=binning, dtype='float64', svd='True')
 
+def mdpICAFloat32(stack, ncomponents, binning=None):
+    return mdpICA(stack, ncomponents,
+                  binning=binning, dtype='float32', svd='True')
+
+def mdpICAFloat64(stack, ncomponents, binning=None):
+    return mdpICA(stack, ncomponents,
+                  binning=binning, dtype='float64', svd='True')
+
 def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
     if DEBUG:
         print "MDP Method"
@@ -476,7 +484,7 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
     images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
-def mdpICA(stack, ncomponents, binning=None):
+def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
     if binning is None:
         binning = 1
 
@@ -498,19 +506,55 @@ def mdpICA(stack, ncomponents, binning=None):
     if ncomponents > N:
         raise ValueError, "Number of components too high."
     if 0:
-        pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype='float64')
+        pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype=dtype)
         pca.train(data)
 
         pca.stop_training()
 
         avg = pca.avg
-        eigenvalues = pca.d
-        eigenvectors = pca.v.T
+        eigenvalues0 = pca.d
+        eigenvectors0 = pca.v.T
         proj = pca.get_projmatrix(transposed=0)
-        images = numpy.dot(proj.astype(data.dtype), data.T)    
-        images.shape = ncomponents, r, c
-    else:
+        images0 = numpy.dot(proj.astype(data.dtype), data.T)    
+        images0.shape = ncomponents, r, c
+        newdata = numpy.zeros((r, c, ncomponents), data.dtype)
+        for i in range(ncomponents):
+            newdata[:, :, i] = images0[i,:,:]
+        images0.shape = ncomponents, r*c
+        newdata.shape = r*c, ncomponents
         ica = mdp.nodes.FastICANode(white_comp=ncomponents, verbose=False, dtype='float64')
+        ica.train(newdata)
+        output = ica.execute(newdata)
+
+        proj = ica.get_projmatrix(transposed=0)
+        #print dir(ica)
+        #print ica.filters.shape
+        #print ica.mu
+        #print ica.get_output_dim()
+        #print dir(ica.white)
+        #print output[0]
+        
+        icacomponents = proj
+        print "proj = ", proj.shape
+
+
+        # These are the PCA data
+        eigenvalues = ica.white.d
+        eigenvectors = ica.white.v.T
+        images = numpy.zeros((2*ncomponents, r * c), data.dtype)
+        vectors = numpy.zeros((ncomponents*2, N), data.dtype)
+        #print "vectors = ", vectors.shape
+        #print "eigenvectors0 = ", eigenvectors0.shape
+        vectors[0:ncomponents,:] = numpy.dot(proj, eigenvectors0) #ica components?
+        vectors[ncomponents:,:] = eigenvectors0
+        images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), newdata.T)    
+        proj = ica.white.get_projmatrix(transposed=0)
+        images[ncomponents:(2*ncomponents),:] = images0 #numpy.dot(proj.astype(data.dtype), data.T)    
+        images.shape = 2 * ncomponents, r, c
+        return images, eigenvalues, vectors
+        
+    else:
+        ica = mdp.nodes.FastICANode(white_comp=ncomponents, verbose=False, dtype=dtype)
         ica.train(data)
         output = ica.execute(data)
 
@@ -526,11 +570,11 @@ def mdpICA(stack, ncomponents, binning=None):
 
 
         # These are the PCA data
-        eigenvalues = ica.white.d
-        eigenvectors = ica.white.v.T
+        eigenvalues = ica.white.d * 1
+        eigenvectors = ica.white.v.T * 1
         images = numpy.zeros((2*ncomponents, r * c), data.dtype)
         vectors = numpy.zeros((ncomponents*2, N), data.dtype)
-        vectors[0:ncomponents,:] = proj #ica components?
+        vectors[0:ncomponents,:] = proj * 1 #ica components?
         vectors[ncomponents:,:] = eigenvectors
         images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), data.T)    
         proj = ica.white.get_projmatrix(transposed=0)
@@ -547,7 +591,7 @@ if __name__ == "__main__":
     import sys
     import time
     #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"
-    inputfile = "\PYMCATEST\NUMPY\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
+    inputfile = "\NUMPY\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
         print inputfile
@@ -560,10 +604,20 @@ if __name__ == "__main__":
     stack = EDFStack.EDFStack(inputfile)
     r0, c0, n0 = stack.data.shape
     ncomponents = 10
-    outfile = os.path.basename(inputfile)+"PCA.edf"
+    outfile = os.path.basename(inputfile)+"ICA.edf"
     e0 = time.time()
-    images, eigenvalues, eigenvectors =  lanczosPCA2(stack.data, ncomponents,
+    images, eigenvalues, eigenvectors =  mdpICA(stack.data, ncomponents,
                                                      binning=1)
+    #images, eigenvalues, eigenvectors =  lanczosPCA2(stack.data, ncomponents,
+    #                                                 binning=1)
+
+    if os.path.exists(outfile):
+        os.remove(outfile)
+    f = EdfFile.EdfFile(outfile)
+    for i in range(ncomponents):
+        f.WriteImage({}, images[i,:])
+    sys.exit(0)
+
     stack.data.shape = r0, c0, n0
     print "PCA Elapsed = ", time.time() - e0
     #print "eigenvalues PCA1 = ", eigenvalues
