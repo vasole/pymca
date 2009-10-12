@@ -28,16 +28,23 @@ __author__ = "V.A. Sole - ESRF BLISS Group"
 import PyMcaQt as qt
 from PyMca_Icons import IconDict
 import MaskImageWidget
+#RGBCorrelatorGraph
 import ScanWindow
 import sys
 import SNIPModule
+OBJECT3D = False
+try:
+    from Object3D import Object3DScene
+    OBJECT3D = True
+except:
+    OBJECT3D = False
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
-class SNIPParametersWidget(qt.QWidget):
+class SNIP1DParametersWidget(qt.QWidget):
     def __init__(self, parent = None, length=2000):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -45,10 +52,10 @@ class SNIPParametersWidget(qt.QWidget):
         self.mainLayout.setSpacing(2)
 
         i = 0
-        self.parametersDict = {'xmin':0,
-                               'xmax':length,
+        self.parametersDict = {'roi_min':0,
+                               'roi_max':length,
                                'width':min(30, length/10),
-                               'smoothing':1}                           
+                               'smoothing':1}
         for text in ["SNIP background width (2 to 3 times fwhm) :",
                      "Minimum channel considered:",
                      "Maximum channel considered:",
@@ -61,10 +68,10 @@ class SNIPParametersWidget(qt.QWidget):
 
         i = 0
         self.widgetDict = {}
-        for key in ['width', 'xmin', 'xmax', 'smoothing']:
+        for key in ['width', 'roi_min', 'roi_max', 'smoothing']:
             self.widgetDict[key] = qt.QSpinBox(self)
             self.widgetDict[key].setMinimum(0)
-            self.widgetDict[key].setMaximum(self.parametersDict['xmax'])
+            self.widgetDict[key].setMaximum(self.parametersDict['roi_max'])
             self.widgetDict[key].setValue(self.parametersDict[key])
             self.connect(self.widgetDict[key],
                      qt.SIGNAL("valueChanged(int)"),
@@ -74,7 +81,7 @@ class SNIPParametersWidget(qt.QWidget):
         self.widgetDict['smoothing'].setMaximum(100)
 
     def _updateParameters(self, val):
-        for key in ['width', 'xmin', 'xmax', 'smoothing']:
+        for key in ['width', 'roi_min', 'roi_max', 'smoothing']:
             self.parametersDict[key] = self.widgetDict[key].value()
         ddict = {}
         ddict['event']='SNIPParametersChanged'
@@ -84,21 +91,142 @@ class SNIPParametersWidget(qt.QWidget):
     def getParameters(self):
         return self.parametersDict
 
+class SNIP2DParametersWidget(qt.QWidget):
+    def __init__(self, parent = None, shape=(4000,4000)):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+
+        i = 0
+        self.parametersDict = {'roi_min':[0,0],
+                               'roi_max':[shape[0], shape[1]],
+                               'width':min(30, int(min(shape)/10)),
+                               'smoothing':1}            
+        for text in ["SNIP background width (2 to 3 times fwhm) :",
+                     "Minimum ROI channels considered:",
+                     "Maximum ROI channels considered:",
+                     "Pleliminar smoothing level:"]:
+            label = qt.QLabel(self)
+            label.setText(text)
+            self.mainLayout.addWidget(label, i, 0)        
+            #self.mainLayout.addWidget(HorizontalSpacer(self), i, 1)
+            i +=1 
+
+        i = 0
+        self.widgetDict = {}
+        for key in ['width', 'roi_min', 'roi_max', 'smoothing']:
+            if key in ['width', 'smoothing']:
+                spinBox = qt.QSpinBox(self)
+                spinBox.setMinimum(0)
+                spinBox.setMaximum(min(self.parametersDict['roi_max']))
+                spinBox.setValue(self.parametersDict[key])
+                self.connect(spinBox,
+                         qt.SIGNAL("valueChanged(int)"),
+                         self._updateParameters)
+                self.mainLayout.addWidget(spinBox, i, 2)
+                self.widgetDict[key] = spinBox
+            elif 1:
+                lineEdit = qt.QLineEdit(self)
+                validator = qt.QIntValidator(lineEdit)
+                lineEdit.setValidator(validator)
+                lineEdit._validator = validator
+                lineEdit.setText("%d" % self.parametersDict[key][0])
+                self.connect(lineEdit,
+                         qt.SIGNAL("editingFinished()"),
+                         self._updateParameters)
+                self.mainLayout.addWidget(lineEdit, i, 1)
+                self.widgetDict[key] = [lineEdit]
+                lineEdit = qt.QLineEdit(self)
+                validator = qt.QIntValidator(lineEdit)
+                lineEdit.setValidator(validator)
+                lineEdit._validator = validator
+                lineEdit.setText("%d" % self.parametersDict[key][1])
+                self.connect(lineEdit,
+                         qt.SIGNAL("editingFinished()"),
+                         self._updateParameters)
+                self.mainLayout.addWidget(lineEdit, i, 2)
+                self.widgetDict[key].append(lineEdit)
+            else:
+                spinBox = qt.QSpinBox(self)
+                spinBox.setMinimum(0)
+                spinBox.setMaximum(self.parametersDict['roi_max'][0])
+                spinBox.setValue(self.parametersDict[key][0])
+                self.connect(spinBox,
+                         qt.SIGNAL("valueChanged(int)"),
+                         self._updateParameters)
+                self.mainLayout.addWidget(spinBox, i, 1)
+                self.widgetDict[key] = [spinBox]
+                spinBox = qt.QSpinBox(self)
+                spinBox.setMinimum(0)
+                spinBox.setMaximum(self.parametersDict['roi_max'][1])
+                spinBox.setValue(self.parametersDict[key][1])
+                self.connect(spinBox,
+                         qt.SIGNAL("valueChanged(int)"),
+                         self._updateParameters)
+                self.mainLayout.addWidget(spinBox, i, 2)
+                self.widgetDict[key].append(spinBox)
+            i += 1
+        self.widgetDict['smoothing'].setMaximum(100)
+
+    def _updateParameters(self, val=None):
+        for key in ['width', 'smoothing']:
+            self.parametersDict[key] = self.widgetDict[key].value()
+        for key in ['roi_min', 'roi_max']:
+            self.parametersDict[key] = [int(self.widgetDict[key][0].text()),
+                                        int(self.widgetDict[key][1].text())]
+        ddict = {}
+        ddict['event']='SNIPParametersChanged'
+        ddict.update(self.parametersDict)
+        self.emit(qt.SIGNAL('SNIPParametersSignal'), ddict)
+                  
+    def getParameters(self):
+        return self.parametersDict
 
 class SNIPWindow(qt.QWidget):
-    def __init__(self, parent, spectrum):
+    def __init__(self, parent, data, image=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        self.parametersWidget = SNIPParametersWidget(self, length=len(spectrum))
-        self.graph = ScanWindow.ScanWindow(self)
-        self.graph.newCurve(range(len(spectrum)),
+        if image is None:
+            image = False
+            if data.shape == 2:
+                if 1 not in data.shape:
+                    image = True
+                else:
+                    spectrum = data.ravel()
+            else:
+                spectrum = data
+        elif not image:
+            spectrum = data
+        self.__image = image
+        if self.__image:
+            self.spectrum = None
+            self.image = data
+            self.graphWidget = MaskImageWidget.MaskImageWidget(self,
+                                                            colormap=True,
+                                                            selection=False,
+                                                            imageicons=False,
+                                                            standalonesave=True)
+            self.parametersWidget = SNIP2DParametersWidget(self, shape=self.image.shape)
+            self.graph = self.graphWidget.graphWidget.graph            
+            self.graphWidget.setImageData(data)
+            self.mainLayout.addWidget(self.parametersWidget)
+            self.mainLayout.addWidget(self.graphWidget)
+            self.o3dScene = None
+        else:
+            self.image = None
+            self.spectrum = spectrum
+            self.parametersWidget = SNIP1DParametersWidget(self, length=len(spectrum))
+            self.graph = ScanWindow.ScanWindow(self)
+            self.graph.newCurve(range(len(spectrum)),
                             spectrum, "Spectrum", replace=True)
-        self.mainLayout.addWidget(self.parametersWidget)
-        self.mainLayout.addWidget(self.graph)
-        self.spectrum = spectrum
+            self.mainLayout.addWidget(self.parametersWidget)
+            self.mainLayout.addWidget(self.graph)
+        self.xMarkers = []
+        self.yMarkers = []
         self.getParameters = self.parametersWidget.getParameters
         self.connect(self.parametersWidget,
                      qt.SIGNAL('SNIPParametersSignal'),
@@ -107,32 +235,78 @@ class SNIPWindow(qt.QWidget):
 
     def updateGraph(self, ddict):
         width = ddict['width']
-        chmin = ddict['xmin']
-        chmax = ddict['xmax']
+        roi_min = ddict['roi_min']
+        roi_max = ddict['roi_max']
         smoothing = ddict['smoothing']
-        self.background = SNIPModule.getSpectrumBackground(self.spectrum, width,
-                                                   chmin=chmin,
-                                                   chmax=chmax,
+        if self.__image:
+            if self.xMarkers == []:
+                xMin, xMax = self.graph.getX1AxisLimits()
+                yMin, yMax = self.graph.getY1AxisLimits()
+                xMean = 0.5 * (xMin + xMax)
+                yMean = 0.5 * (yMin + yMax)
+                self.xMarkers.append(self.graph.insertX1Marker(roi_min[1], yMean, label='C Min'))
+                self.xMarkers.append(self.graph.insertX1Marker(roi_max[1], yMean, label='C Max'))
+                self.yMarkers.append(self.graph.insertY1Marker(xMean, roi_min[0], label='R Min'))
+                self.yMarkers.append(self.graph.insertY1Marker(xMean, roi_max[0], label='R Max'))
+            else:
+                self.graph.markersdict[self.xMarkers[0]]['marker'].setXValue(roi_min[1])
+                self.graph.markersdict[self.xMarkers[1]]['marker'].setXValue(roi_max[1])
+                self.graph.markersdict[self.yMarkers[0]]['marker'].setYValue(roi_min[0])
+                self.graph.markersdict[self.yMarkers[1]]['marker'].setYValue(roi_max[0])
+
+            self.background = SNIPModule.getImageBackground(self.image, width,
+                                                   roi_min=roi_min,
+                                                   roi_max=roi_max,
                                                    smoothing=smoothing)
-        self.graph.newCurve(range(len(self.spectrum)),
+            difference = self.image-self.background
+            self.graphWidget.setImageData(difference)
+            if OBJECT3D:
+                if self.o3dScene is None:
+                    self.o3dScene = Object3DScene.Object3DScene()
+                    self.o3dScene.show()
+                if 0:
+                    imageData =(self.image * 1).astype(numpy.float32)
+                    backgroundData = (self.background * 1).astype(numpy.float32)
+                    self.o3dScene.mesh(imageData,      z=imageData * 1, legend='Data', update_scene=True)
+                    self.o3dScene.mesh(backgroundData, z=backgroundData , legend='Background', update_scene=True)
+                else:
+                    self.o3dScene.mesh(difference, z=difference, legend='Data-Background')                                    
+                self.o3dScene.show()
+        else:
+            self.background = SNIPModule.getSpectrumBackground(self.spectrum, width,
+                                                   roi_min=roi_min,
+                                                   roi_max=roi_max,
+                                                   smoothing=smoothing)
+            self.graph.newCurve(range(len(self.spectrum)),
                             self.background, "Background", replace=False)
         
-        #Force information update
-        legend = self.graph.getActiveCurve(just_legend=True)
-        if legend.startswith('Background'):
-            self.graph.setActiveCurve(legend)
+            #Force information update
+            legend = self.graph.getActiveCurve(just_legend=True)
+            if legend.startswith('Background'):
+                self.graph.setActiveCurve(legend)
 
 
 class SNIPDialog(qt.QDialog):
-    def __init__(self, parent, spectrum):
+    def __init__(self, parent, data):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(10)
         self.mainLayout.setSpacing(2)
-        self.parametersWidget = SNIPWindow(self, spectrum)
+        self.__image = False
+        if len(data.shape) == 2:
+            if 1 not in data.shape:
+                image = data
+                self.__image = True
+            else:
+                spectrum = data.ravel()
+        else:
+            spectrum = data
+        if self.__image:
+            self.parametersWidget = SNIPWindow(self, image, image=True)
+        else:
+            self.parametersWidget = SNIPWindow(self, spectrum, image=False)
         self.mainLayout.addWidget(self.parametersWidget)
-
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
         hboxLayout.setMargin(0)
@@ -152,18 +326,35 @@ class SNIPDialog(qt.QDialog):
 
     def getParameters(self):
         parametersDict = self.parametersWidget.getParameters()
-        parametersDict['function'] = SNIPModule.subtractBackgroundFromStack
-        parametersDict['arguments'] = (parametersDict['width'],
-                                       parametersDict['xmin'],
-                                       parametersDict['xmax'],
-                                       parametersDict['smoothing'])
+        if self.__image:
+            parametersDict['function'] = SNIPModule.subtractSnip2DBackgroundFromStack
+        else:
+            parametersDict['function'] = SNIPModule.subtractSnip1DBackgroundFromStack
+        parametersDict['arguments'] = [parametersDict['width'],
+                                       parametersDict['roi_min'],
+                                       parametersDict['roi_max'],
+                                       parametersDict['smoothing']]
         return parametersDict                                       
                  
 if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
-    noise = numpy.random.randn(1000.) 
-    y=numpy.arange(1000.)
-    w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
+    if 0:
+        noise = numpy.random.randn(1000.) 
+        y=numpy.arange(1000.)
+        w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
+    elif len(sys.argv) > 1:
+        import EdfFile
+        edf = EdfFile.EdfFile(sys.argv[1])
+        data = edf.GetData(0)
+        w = SNIPDialog(None, data)    
+    else:
+        x, y = numpy.ogrid[0:200:200j, 0:200:200j]
+        data =  50 * numpy.exp(-(x-64)*(x-64)/20.) +\
+                50 * numpy.exp(-(y-128)*(y-128)/20.) +\
+               100 * numpy.exp(-(1./20) * ((x-64)*(x-64) + (y-128)*(y-128)))
+        w = SNIPDialog(None, data)    
     w.show()
-    w.exec_()
+    ret=w.exec_()
+    if ret:
+        print w.getParameters()

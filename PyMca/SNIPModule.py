@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group, A. Mirone - ESRF SciSoft Group"
+__author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 try:
     import PyMca.SpecfitFuns as SpecfitFuns
@@ -32,35 +32,110 @@ except ImportError:
     import SpecfitFuns
 
 snip1d = SpecfitFuns.snip1d
+snip2d = SpecfitFuns.snip2d
 
-def getSpectrumBackground(spectrum, width, chmin=None, chmax=None, smoothing=1):
-    if chmin is None:
-        chmin = 0
-    if chmax is None:
-        chmax = len(spectrum)
+
+def getSpectrumBackground(spectrum, width, roi_min=None, roi_max=None, smoothing=1):
+    if roi_min is None:
+        roi_min = 0
+    if roi_max is None:
+        roi_max = len(spectrum)
     background = spectrum * 1
-    background[chmin:chmax] = snip1d(spectrum[chmin:chmax], width, smoothing)
+    background[roi_min:roi_max] = snip1d(spectrum[roi_min:roi_max], width, smoothing)
     return background
 
+getSnip1DBackground = getSpectrumBackground
 
-def subtractBackgroundFromStack(stack, width, chmin=None, chmax=None,  smoothing=1):
-    if chmin is None:
-        chmin = 0
-    if chmax is None:
-        chmax = len(spectrum)
+def subtractSnip1DBackgroundFromStack(stack, width, roi_min=None, roi_max=None,  smoothing=1):
+    if roi_min is None:
+        roi_min = 0
+    if roi_max is None:
+        roi_max = len(spectrum)
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
     else:
         data = stack
     oldShape = data.shape
     data.shape = -1, oldShape[-1]
-    if chmin > 0:
-        data[:, 0:chmin] = 0
-    if chmax < oldShape[-1]:
-        data[:, chmax:] = 0
+    if roi_min > 0:
+        data[:, 0:roi_min] = 0
+    if roi_max < oldShape[-1]:
+        data[:, roi_max:] = 0
 
     for i in range(data.shape[0]):
-        data[i,chmin:chmax] -= snip1d(data[i,chmin:chmax], width, smoothing)
+        data[i,roi_min:roi_max] -= snip1d(data[i,roi_min:roi_max], width, smoothing)
     data.shape = oldShape
     return
 
+def getImageBackground(image, width, roi_min=None, roi_max=None, smoothing=1):
+    if roi_min is None:
+        roi_min = (0, 0)
+    if roi_max is None:
+        roi_max = image.shape
+    background = image * 1
+    background[roi_min[0]:roi_max[0],roi_min[1]:roi_max[1]]=\
+             snip2d(image[roi_min[0]:roi_max[0],roi_min[1]:roi_max[1]],
+                    width,
+                    smoothing)
+    return background
+
+getSnip2DBackground = getImageBackground
+
+def subtractSnip2DBackgroundFromStack(stack, width, roi_min=None, roi_max=None,  smoothing=1, index=0):
+    """
+    index is the dimension used to index the images
+    """
+    if roi_min is None:
+        roi_min = (0, 0)
+    if roi_max is None:
+        roi_max = image.shape
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        data = stack.data
+    else:
+        data = stack
+    shape = data.shape
+    if index == 0:
+        if (roi_min[0] > 0) or (roi_min[1] > 0):
+            data[:, 0:roi_min[0], 0:roi_min[1]] = 0
+        if roi_max[0] < (shape[1]-1):
+            if roi_max[1] < (shape[2]-1):
+                data[:, roi_max[0]:, roi_max[1]:] = 0
+            else:
+                data[:, roi_max[0]:, :] = 0
+        else:
+            if roi_max[1] < (shape[2]-1):
+                data[:, :, roi_max[1]:] = 0
+        for i in range(shape[index]):
+            data[i,roi_min[0]:roi_max[0],roi_min[1]:roi_max[1]] -=\
+                snip2d(data[i,roi_min[0]:roi_max[0],roi_min[1]:roi_max[1]], width, smoothing)
+        return
+    if index == 1:
+        if (roi_min[0] > 0) or (roi_min[1] > 0):
+            data[0:roi_min[0], :, 0:roi_min[1]] = 0
+        if roi_max[0] < (shape[0]-1):
+            if roi_max[1] < (shape[2]-1):
+                data[roi_max[0]:, :, roi_max[1]:] = 0
+            else:
+                data[roi_max[0]:, :, :] = 0
+        else:
+            if roi_max[1] < (shape[2]-1):
+                data[:, :, roi_max[1]:] = 0
+        for i in range(shape[index]):
+            data[roi_min[0]:roi_max[0], i, roi_min[1]:roi_max[1]] -=\
+                snip2d(data[roi_min[0]:roi_max[0], i, roi_min[1]:roi_max[1]], width, smoothing)
+        return
+    if index == 2:
+        if (roi_min[0] > 0) or (roi_min[1] > 0):
+            data[0:roi_min[0], 0:roi_min[1],:] = 0
+        if roi_max[0] < (shape[0]-1):
+            if roi_max[1] < (shape[1]-1):
+                data[roi_max[0]:, roi_max[1]:, :] = 0
+            else:
+                data[roi_max[0]:, :, :] = 0
+        else:
+            if roi_max[1] < (shape[2]-1):
+                data[:, roi_max[1]:, :] = 0
+        for i in range(shape[index]):
+            data[roi_min[0]:roi_max[0],roi_min[1]:roi_max[1], i] -=\
+                snip2d(data[roi_min[0]:roi_max[0],roi_min[1]:roi_max[1], i], width, smoothing)
+        return

@@ -292,13 +292,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if SNIP:
             infotext  = 'Remove background from current stack.\n'
             infotext += 'Not recommended  unless you really need a  better\n'
-            infotext += 'contrast to place your ROIs and you know what you\n'
-            infotext += 'are doing.\n'
-            infotext += 'The ROI background subtraction is more efficient.\n'
+            infotext += 'contrast to place your ROIs or you know what you\n'
+            infotext += 'are doing.'
             self.backgroundButton = self.stackGraphWidget._addToolButton(\
                                         self.backgroundIcon,
                                         #self.submitThread,
-                                        self.subtractBackground2,
+                                        self.subtractSnipBackground,
                                         infotext,
                                         position = 7)
         else:
@@ -729,12 +728,21 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.pcaWindow.show()
         self.pcaWindow.raise_()
 
-    def subtractBackground2(self):
+    def subtractSnipBackground(self):
+        snipMenu = qt.QMenu()
+        snipMenu.addAction("Subtract SNIP 1D Background",
+                           self.subtract1DSnipBackground)
+        snipMenu.addAction("Subtract SNIP 2D Background",
+                           self.subtract2DSnipBackground)
+        snipMenu.exec_(self.cursor().pos())
+
+    def subtract1DSnipBackground(self):
         selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")
         if selection is None:
             return
         spectrum = selection['dataobject'].y[0]
-        snipWindow = SNIPWindow.SNIPDialog(None, spectrum)
+        snipWindow = SNIPWindow.SNIPDialog(None,
+                                           spectrum)
         #snipWindow.setModal(True)
         snipWindow.show()
         ret = snipWindow.exec_()
@@ -744,6 +752,24 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             function = snipParametersDict['function']
             arguments = snipParametersDict['arguments']
             function(self.stack, *arguments)
+            self.setStack(self.stack)
+
+    def subtract2DSnipBackground(self):
+        if self.__ROIImageData is None:
+            return
+        snipWindow = SNIPWindow.SNIPDialog(None,
+                                           self.__ROIImageData*1)
+        #snipWindow.setModal(True)
+        snipWindow.show()
+        ret = snipWindow.exec_()
+        if ret:
+            snipParametersDict = snipWindow.getParameters()
+            snipWindow.close()
+            function = snipParametersDict['function']
+            arguments = snipParametersDict['arguments']
+            # the index!
+            arguments.append(2)
+            function(self.stack,*arguments)
             self.setStack(self.stack)
 
     def subtractBackground(self):
