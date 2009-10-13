@@ -76,6 +76,11 @@ if os.path.exists(os.path.join("PyMca", "phynx")):
     data_files.append(('PyMca/phynx', glob.glob('PyMca/phynx/*.py')))
     data_files.append(('PyMca/phynx/utils', glob.glob('PyMca/phynx/utils/*.py')))
 
+NNMA_PATH = os.path.join("PyMca", "nnma", "py_nnma")
+if os.path.exists(NNMA_PATH):
+    NNMA_PATH = os.path.join(NNMA_PATH, "*.py")
+    data_files.append(('PyMca/py_nnma', glob.glob(NNMA_PATH)))
+
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca", "object3d")):
     LOCAL_OBJECT3D = True

@@ -82,6 +82,14 @@ if QTVERSION > '4.0.0':
 else:
     import Qwt5 as Qwt
 
+NNMA = False
+if QTVERSION > '4.0.0':
+    import PyQt4.Qwt5 as Qwt
+    import NNMAWindow
+    NNMA = True
+else:
+    import Qwt5 as Qwt
+
 SNIP = False
 if QTVERSION > '4.0.0':
     import SNIPWindow
@@ -223,6 +231,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.pcaWindow = None
         self.pcaWindowInMenu = False
 
+        self.nnmaParametersDialog = None
+        self.nnmaWindow = None
+        self.nnmaWindowInMenu = False
+
         self._build(vertical)
         self._buildBottom()
         self._buildConnections()
@@ -350,6 +362,20 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                 imageicons=True,
                                                 standalonesave=True)
             self.pcaWindow.hide()
+
+        if NNMA:
+            self.__selectFromStackMenu.addAction(qt.QString("Calculate NNMA Components Maps"),
+                                               self.__showNNMADialog)
+
+
+            filterOffset = 1
+            self.nnmaWindow = NNMAWindow.NNMAWindow(parent = None,
+                                                rgbwidget=self.rgbWidget,
+                                                selection=True,
+                                                colormap=True,
+                                                imageicons=True,
+                                                standalonesave=True)
+            self.nnmaWindow.hide()
 
             
         if self.master:
@@ -489,6 +515,11 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
     def _submitPCAThread(self, function, *var, **kw):
         message = "Please Wait: PCA Going On"
+        sthread = SimpleThread(function, *var, **kw)
+        return self.__startThread(sthread, message)
+
+    def _submitNNMAThread(self, function, *var, **kw):
+        message = "Please Wait: NNMA Going On"
         sthread = SimpleThread(function, *var, **kw)
         return self.__startThread(sthread, message)
 
@@ -650,6 +681,76 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                 plot=True)
         self.showExternalImagesWindow()
 
+    def __showNNMADialog(self):
+        if self.__stackImageData is None:
+            return
+        if self.nnmaParametersDialog is None:
+            self.nnmaParametersDialog = NNMAWindow.NNMAParametersDialog(self)
+            spectrumLength = max(self.__mcaData0.y[0].shape)
+            self.nnmaParametersDialog.nPC.setMaximum(spectrumLength)
+            self.nnmaParametersDialog.nPC.setValue(min(10,spectrumLength))
+            binningOptions=[1]
+            for number in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19]:
+                if (spectrumLength % number) == 0:
+                    binningOptions.append(number)
+            ddict = {'options':binningOptions, 'binning': 1, 'method': 0}
+            self.nnmaParametersDialog.setParameters(ddict)
+        ret = self.nnmaParametersDialog.exec_()
+        if ret:
+            nnmaParameters = self.nnmaParametersDialog.getParameters()
+            self.nnmaParametersDialog.close()
+            function = nnmaParameters['function']
+            binning = nnmaParameters['binning']
+            npc = nnmaParameters['npc']
+            kw = nnmaParameters['kw']
+            if self.stack.data.dtype not in [numpy.float, numpy.float32]:
+                self.stack.data = self.stack.data.astype(numpy.float)
+            shape = self.stack.data.shape
+            try:
+                if 0:
+                    images, eigenvalues, eigenvectors = function(self.stack.data,
+                                                                 npc,
+                                                                 binning=binning,**kw)
+                else:
+                    if DEBUG:
+                        import time
+                        e0 = time.time()
+                    data = self.stack.data
+                    threadResult = self._submitNNMAThread(function,
+                                                         data,
+                                                         npc,
+                                                         binning=binning,
+                                                         **kw)
+                    if type(threadResult) == type((1,)):
+                        if len(threadResult):
+                            if threadResult[0] == "Exception":
+                                raise threadResult[1],threadResult[2]
+                    images, eigenvalues, eigenvectors = threadResult
+                    if DEBUG:
+                        print nnmaParameters['methodlabel'], \
+                              "Elapsed = ", time.time() - e0
+                self.nnmaWindow.setSelectionMask(self.__selectionMask,
+                                                plot=False)
+                self.nnmaWindow.setPCAData(images,
+                                          eigenvalues,
+                                          eigenvectors)
+                if not self.nnmaWindowInMenu:
+                    self.__selectFromStackMenu.addAction(qt.QString("Show NNMA Maps"),
+                                               self.showNNMAWindow)
+                self.nnmaWindowInMenu = True
+                self.stack.data.shape = shape
+                self.nnmaWindow.show()
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1])
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                self.stack.data.shape = shape        
+
+
     def __showPCADialog(self):
         if self.__stackImageData is None:
             return
@@ -727,6 +828,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def showPCAWindow(self):
         self.pcaWindow.show()
         self.pcaWindow.raise_()
+
+    def showNNMAWindow(self):
+        self.nnmaWindow.show()
+        self.nnmaWindow.raise_()
 
     def subtractSnipBackground(self):
         snipMenu = qt.QMenu()
@@ -1065,6 +1170,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 self.roiWindow.buildAndConnectImageButtonBox()
                 if self.pcaWindow is not None:
                     self.pcaWindow.buildAndConnectImageButtonBox()
+                if self.nnmaWindow is not None:
+                    self.nnmaWindow.buildAndConnectImageButtonBox()
                 self.externalImagesWindow.buildAndConnectImageButtonBox()
                 
     def _buildConnections(self):
@@ -1092,6 +1199,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                      self._maskImageWidgetSlot)
             if self.pcaWindow is not None:
                 self.connect(self.pcaWindow,
+                             qt.SIGNAL('MaskImageWidgetSignal'),
+                             self._maskImageWidgetSlot)
+            if self.nnmaWindow is not None:
+                self.connect(self.nnmaWindow,
                              qt.SIGNAL('MaskImageWidgetSignal'),
                              self._maskImageWidgetSlot)
             self.connect(self.externalImagesWindow,
@@ -1695,6 +1806,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             if self.pcaWindow.colormapDialog is not None:
                 self.pcaWindow.colormapDialog.close()
             self.pcaWindow.close()
+        if self.nnmaWindow is not None:
+            if self.nnmaWindow.colormapDialog is not None:
+                self.nnmaWindow.colormapDialog.close()
+            self.nnmaWindow.close()
         if self.externalImagesWindow is not None:
             if self.externalImagesWindow.colormapDialog is not None:
                 self.externalImagesWindow.colormapDialog.close()
