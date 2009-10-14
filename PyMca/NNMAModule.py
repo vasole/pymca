@@ -208,8 +208,6 @@ def nnma(stack, ncomponents, binning=None,
     start_ncomponents = min(3, ncomponents)
     Astart = None
     Xstart = None
-    start_tol=1.0
-    maxcount = 300
     #for i in range(start_ncomponents, ncomponents):
     converged = False
     while not converged:
@@ -217,7 +215,7 @@ def nnma(stack, ncomponents, binning=None,
                                                     ncomponents,
                                                     Astart,
                                                     Xstart,
-                                                    eps=start_tol,
+                                                    eps=eps,
                                                     maxcount=maxcount,
                                                     verbose=verbose,
                                                     **param)
