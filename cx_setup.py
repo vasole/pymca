@@ -330,6 +330,12 @@ if not sys.platform.startswith('win'):
                                        os.path.join(install_dir, 'libpng.so.3'))
                 os.system(cmd)
 
+        #numpy is now compiled with libgfortran at the ESRF
+        for fname in glob.glob(os.path.join(dirname, "libgfortra*")):
+            cmd = "cp -f %s %s" % (fname,
+                                    os.path.join(install_dir, os.path.basename(fname)))
+            os.system(cmd)
+
     #remove libX of the packaging system to use that of the target system
     for fname in glob.glob(os.path.join(install_dir,"libX*")):
         os.remove(fname)
