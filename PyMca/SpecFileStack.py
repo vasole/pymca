@@ -28,6 +28,7 @@ import DataObject
 import specfilewrapper as specfile
 import SpecFileDataSource
 import numpy.oldnumeric as Numeric
+import numpy
 import sys
 import os
 SOURCE_TYPE = "SpecFileStack"
@@ -84,16 +85,6 @@ class SpecFileStack(DataObject.DataObject):
         arrRet = dataObject.data
         self.onBegin(self.nbFiles*numberofmca/numberofdetectors)
 
-        if shape is None:
-            self.data = Numeric.zeros((self.nbFiles,
-                                   numberofmca/numberofdetectors,
-                                   arrRet.shape[0]),
-                                   arrRet.dtype.char)
-        else:
-            self.data = Numeric.zeros((shape[0],
-                                   shape[1],
-                                   arrRet.shape[0]),
-                                   arrRet.dtype.char)            
         self.incrProgressBar= 0
         if info['NbMcaDet'] > 1:
             #Should I generate a map for each mca and not just for the last one as I am doing?
@@ -101,9 +92,12 @@ class SpecFileStack(DataObject.DataObject):
         else:
             iterlist = [1]
         if shape is None:
+            self.data = Numeric.zeros((self.nbFiles,
+                                   numberofmca/numberofdetectors,
+                                   arrRet.shape[0]),
+                                   arrRet.dtype.char)
             filecounter         = 0
             for tempFileName in filelist:
-                print tempFileName
                 tempInstance=specfile.Specfile(tempFileName)
                 scan = tempInstance.select(keylist[-1])
                 for i in iterlist:
@@ -115,9 +109,48 @@ class SpecFileStack(DataObject.DataObject):
                     self.onProgress(self.incrProgressBar)
                 filecounter += 1
         else:
+            sampling_order = 1
+            s0 = shape[0]
+            s1 = shape[1]
+            MEMORY_ERROR = False
+            try:
+                self.data = Numeric.zeros((shape[0],
+                                   shape[1],
+                                   arrRet.shape[0]),
+                                   arrRet.dtype.char)
+            except MemoryError:
+                try:
+                    self.data = numpy.zeros((shape[0],
+                                   shape[1],
+                                   arrRet.shape[0]),
+                                   numpy.float32)
+                except MemoryError:                    
+                    MEMORY_ERROR = True
+            while MEMORY_ERROR:
+                try:
+                    for i in range(5):
+                        print "\7"
+                    sampling_order += 1
+                    print "**************************************************"
+                    print " Memory error!, attempting %dx%d sub-sampling " % (sampling_order,
+                                                                          sampling_order)
+                    print "**************************************************"
+                    s0 = int(shape[0]/sampling_order)
+                    s1 = int(shape[1]/sampling_order)
+                    #if shape[0] % sampling_order:
+                    #    s0 = s0 + 1
+                    #if shape[1] % sampling_order:
+                    #    s1 = s1 + 1
+                    self.data = numpy.zeros((s0, s1,
+                                             arrRet.shape[0]),
+                                             numpy.float32)
+                    MEMORY_ERROR = False
+                except MemoryError:
+                    pass
             filecounter         = 0
-            for j in range(shape[0]):
-                for k in range(shape[1]):
+            for j in range(s0):
+                filecounter = (j * sampling_order) * shape[1]
+                for k in range(s1):
                     tempFileName = filelist[filecounter]
                     tempInstance=specfile.Specfile(tempFileName)
                     if tempInstance is None:
@@ -132,7 +165,8 @@ class SpecFileStack(DataObject.DataObject):
                                   :] += scan.mca(i)[:]
                         self.incrProgressBar += 1
                         self.onProgress(self.incrProgressBar)
-                    filecounter += 1
+                    filecounter += sampling_order
+            self.nbFiles = s0 * s1
         self.onEnd()
 
         """

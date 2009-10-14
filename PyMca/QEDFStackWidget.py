@@ -1268,9 +1268,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setWindowTitle(title)
         
-        if ((1 in stack.data.shape) or\
-           (stack.info["SourceType"] in ["SpecFileStack"]))\
-           and (QTVERSION > '4.0.0'):
+        if (1 in stack.data.shape) and (QTVERSION > '4.0.0'):
             oldshape = stack.data.shape
             dialog = ImageShapeDialog(self, shape = oldshape[0:2])
             dialog.setModal(True)
