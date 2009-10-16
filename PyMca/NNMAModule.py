@@ -183,7 +183,10 @@ def nnma(stack, ncomponents, binning=None,
         data = stack.data
     else:
         data = stack
-        
+
+    if not isinstance(data, numpy.ndarray):        
+        raise TypeError, "NNMAModule only works on numpy arrays"    
+
     oldShape = data.shape
     if len(data.shape) == 3:
         r, c, N = data.shape

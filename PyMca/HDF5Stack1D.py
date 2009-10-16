@@ -79,8 +79,8 @@ class HDF5Stack1D(DataObject.DataObject):
         entryNames = tmpHdf["/"].keys()
 
         #built the selection in terms of HDF terms
-        #for the time being, the x selection is ignored but not the monitor
-        #and only one y is taken
+        #for the time being, the x selection will be ignored but not the
+        #monitor and only one y is taken
         ySelection = selection['y']
         if type(ySelection) == type([]):
             ySelection = ySelection[0]
@@ -154,36 +154,46 @@ class HDF5Stack1D(DataObject.DataObject):
         shape = yDataset.shape
 
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape)
-        self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
+        try:
+            self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
+            DONE = False
+        except MemoryError:
+            if (nFiles == 1) and (len(shape) == 3):
+                print "Attempting dynamic loading"
+                self.data = yDataset
+                DONE = True
+            else:
+                raise
+        
+        if not DONE:
+            n = 0
+            i_idx = dim0 * dim1
 
-        n = 0
-        i_idx = dim0 * dim1
-
-        if dim0 == 1:
-            self.onBegin(dim1)
-        else:
-            self.onBegin(dim0)
-        self.incrProgressBar=0
-        for hdf in hdfStack._sourceObjectList:
-            entryNames = hdf["/"].keys()
-            for scan in scanlist:
-                if JUST_KEYS:
-                    entryName = entryNames[int(scan.split(".")[-1])-1]
-                    path = entryName + ySelection
-                else:
-                    path = scan + ySelection
-                yDataset = hdf[path].value
-                yDataset.shape = -1, mcaDim
-                for mca in range(yDataset.shape[0]):
-                    i = int(n/dim1)
-                    j = n % dim1
-                    self.data[i, j, :] = yDataset[mca,:]
-                    n += 1
-                if dim0 == 1:
-                    self.onProgress(j)
-            if dim0 != 1:
-                self.onProgress(i)
-        self.onEnd()
+            if dim0 == 1:
+                self.onBegin(dim1)
+            else:
+                self.onBegin(dim0)
+            self.incrProgressBar=0
+            for hdf in hdfStack._sourceObjectList:
+                entryNames = hdf["/"].keys()
+                for scan in scanlist:
+                    if JUST_KEYS:
+                        entryName = entryNames[int(scan.split(".")[-1])-1]
+                        path = entryName + ySelection
+                    else:
+                        path = scan + ySelection
+                    yDataset = hdf[path].value
+                    yDataset.shape = -1, mcaDim
+                    for mca in range(yDataset.shape[0]):
+                        i = int(n/dim1)
+                        j = n % dim1
+                        self.data[i, j, :] = yDataset[mca,:]
+                        n += 1
+                    if dim0 == 1:
+                        self.onProgress(j)
+                if dim0 != 1:
+                    self.onProgress(i)
+            self.onEnd()
 
         self.info["SourceType"] = SOURCE_TYPE
         self.info["SourceName"] = filelist[0]

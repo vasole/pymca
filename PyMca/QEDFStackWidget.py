@@ -813,7 +813,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     self.__selectFromStackMenu.addAction(qt.QString("Show PCA Maps"),
                                                self.showPCAWindow)
                 self.pcaWindowInMenu = True
-                self.stack.data.shape = shape
+                if isinstance(self.stack.data, numpy.ndarray):
+                    self.stack.data.shape = shape
                 self.pcaWindow.show()
             except:
                 msg = qt.QMessageBox(self)
@@ -823,7 +824,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-                self.stack.data.shape = shape        
+                if isinstance(self.stack.data, numpy.ndarray):
+                    self.stack.data.shape = shape
 
     def showPCAWindow(self):
         self.pcaWindow.show()
@@ -1303,13 +1305,31 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
     def originalPlot(self):        
         #original image
-        self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
-        
-        #original ICR mca
-        i = max(self.otherIndex, self.fileIndex)
-        j = min(self.otherIndex, self.fileIndex)                
-        mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j) * 1.0
-
+        if isinstance(self.stack.data, numpy.ndarray):
+            self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
+            #original ICR mca
+            i = max(self.otherIndex, self.fileIndex)
+            j = min(self.otherIndex, self.fileIndex)                
+            mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j) * 1.0
+        else:
+            if DEBUG:
+                t0 = time.time()
+            shape = self.stack.data.shape
+            if self.mcaIndex == 2:
+                self.__stackImageData = numpy.zeros((shape[0], shape[1]),
+                                                self.stack.data.dtype)
+                mcaData0 = numpy.zeros((shape[2],), numpy.float)
+                step = 1
+                for i in range(shape[0]):
+                    tmpData = self.stack.data[i:i+step,:,:]
+                    numpy.add(self.__stackImageData[i:i+step,:],
+                              numpy.sum(tmpData, 2),
+                              self.__stackImageData[i:i+step,:])
+                    tmpData.shape = step*shape[1], shape[2]
+                    numpy.add(mcaData0, numpy.sum(tmpData, 0), mcaData0)
+            if DEBUG:
+                print "Print dynamic loading elapsed = ", time.time() -t0
+                
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
@@ -1471,15 +1491,47 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
                 else:
-                    background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
-                    self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+                    if DEBUG:
+                        t0 = time.time()
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
+                        self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+                    else:
+                        shape = self.stack.data.shape
+                        self.__ROIImageData[:,:] = 0
+                        background = self.__ROIImageData[:,:] * 1
+                        step = 1
+                        for i in range(shape[0]):
+                            tmpData = self.stack.data[i:i+step,:, i1:i2] * 1
+                            numpy.add(self.__ROIImageData[i:i+step,:],
+                                  numpy.sum(tmpData, 2),
+                                  self.__ROIImageData[i:i+step,:])
+                            background[i:i+step, :] += 0.5*(i2-i1)*(tmpData[:,:,0] + tmpData[:,:,-1])
+                    if DEBUG:
+                        print "ROI image calculation elapsed = ", time.time() - t0
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
                     self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
                 else:
-                    background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
-                    self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+                    if DEBUG:
+                        t0 = time.time()
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
+                        self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+                    else:
+                        shape = self.stack.data.shape
+                        self.__ROIImageData[:,:] = 0
+                        background = self.__ROIImageData[:,:] * 1
+                        step = 1
+                        for i in range(shape[0]):
+                            tmpData = self.stack.data[i:i+step,:, i1:i2] * 1
+                            numpy.add(self.__ROIImageData[i:i+step,:],
+                                  numpy.sum(tmpData, 2),
+                                  self.__ROIImageData[i:i+step,:])
+                            background[i:i+step, :] += 0.5*(i2-i1)*(tmpData[:,:,0] + tmpData[:,:,-1])
+                    if DEBUG:
+                        print "ROI image calculation elapsed = ", time.time() - t0
             else:
                 #self.fileIndex = 2
                 if self.mcaIndex == 0:

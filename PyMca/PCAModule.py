@@ -41,6 +41,7 @@ except ImportError:
 import Lanczos
 import os
 DEBUG = 0
+import time
 
 def lanczosPCA(stack, ncomponents, binning=None):
     if DEBUG:
@@ -52,6 +53,9 @@ def lanczosPCA(stack, ncomponents, binning=None):
         data = stack.data
     else:
         data = stack
+
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError, "lanczosPCA is only supported when using numpy arrays"
 
     #wrappmatrix = "double" 
     wrapmatrix = "single" 
@@ -115,6 +119,8 @@ def lanczosPCA2(stack, ncomponents, binning=None):
         data = stack.data
     else:
         data = stack
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError, "lanczosPCA2 is only supported when using numpy arrays"
     r, c, N = data.shape
 
     #data=Numeric.fromstring(data.tostring(),"f")
@@ -215,6 +221,10 @@ def multipleArrayPCA(stackList, ncomponents, binning=None):
         data = stack.data
     else:
         data = stack
+
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError, "multipleArrayPCA is only supported when using numpy arrays"
+        
     if len(data.shape) == 3:
         r, c, N = data.shape
         npixels = r*c
@@ -382,6 +392,10 @@ def numpyPCA(stack, ncomponents, binning=None):
         data = stack.data
     else:
         data = stack
+
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError, "numpyPCA is only supported when using numpy arrays"
+        
     if len(data.shape) == 3:
         r, c, N = data.shape
         data.shape = r*c, N
@@ -453,38 +467,84 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
         data = stack.data
     else:
         data = stack
+        
+    oldShape = data.shape
     if len(data.shape) == 3:
         r, c, N = data.shape
-        data.shape = r*c, N
+        if isinstance(data, numpy.ndarray):    
+            data.shape = r*c, N
     else:
         r, N = data.shape
         c = 1
 
     if binning > 1:
+        if not isinstance(data, numpy.ndarray):
+            raise TypeError, "Binning is only supported when using numpy arrays"
         data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
         data=numpy.sum(data , axis=-1)
         N=N/binning
+
     if ncomponents > N:
+        if binning == 1:
+            if data.shape != oldShape:
+                data.shape = oldShape
         raise ValueError, "Number of components too high."
     #end of common part
 
     #begin the specific coding
     pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype=dtype, svd=svd)
-    pca.train(data)
-
+    
+    if len(data.shape) == 3:
+        step = 10
+        if r > step:
+            last = step * (int(r/step) - 1)
+            for i in range(0, last, step):
+                for j in range(step):
+                    print "Training data %d out of %d" % (i+j+1,r)
+                tmpData = data[i:(i+step),:,:]
+                tmpData.shape = step*shape[1], shape[2] 
+                pca.train(tmpData)
+            tmpData = None
+            last = i + step
+        else:
+            last = 0
+        for i in range(last, r):
+            print "Training data %d out of %d" % (i+1,r)
+            pca.train(data[i,:,:])
+    else:
+        if data.shape[0] > 100:
+            i = int(data.shape[0]/2)
+            pca.train(data[:i,:])
+            if DEBUG:
+                print "Half training"
+            pca.train(data[i:,:])
+            if DEBUG:
+                print "Full training"
+        else:
+            pca.train(data)
     pca.stop_training()
 
     avg = pca.avg
     eigenvalues = pca.d
     eigenvectors = pca.v.T
     proj = pca.get_projmatrix()
-    images = numpy.dot((proj.T).astype(data.dtype), data.T)
+    if len(data.shape) == 3:
+        images = numpy.zeros((ncomponents, r, c), data.dtype)
+        for i in range(r):
+            print "Building images. Projecting data %d out of %d" % (i+1,r)
+            images[:, i, :] = numpy.dot((proj.T).astype(data.dtype), data[i,:,:].T)
+    else:
+        images = numpy.dot((proj.T).astype(data.dtype), data.T)
+        if binning == 1:
+            if data.shape != oldShape:
+                data.shape = oldShape
 
     #reshape the images
     images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
 def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
+    #This part is common to all ...
     if binning is None:
         binning = 1
 
@@ -492,148 +552,121 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
         data = stack.data
     else:
         data = stack
+        
+    oldShape = data.shape
     if len(data.shape) == 3:
         r, c, N = data.shape
-        data.shape = r*c, N
+        if isinstance(data, numpy.ndarray):    
+            data.shape = r*c, N
     else:
         r, N = data.shape
         c = 1
 
+    #if not isinstance(data, numpy.ndarray):  
+    #    raise TypeError, "ICA is only supported when using numpy arrays"
+
     if binning > 1:
+        if not isinstance(data, numpy.ndarray):
+            raise TypeError, "Binning is only supported when using numpy arrays"
         data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
         data=numpy.sum(data , axis=-1)
         N=N/binning
+
     if ncomponents > N:
+        if binning == 1:
+            if data.shape != oldShape:
+                data.shape = oldShape
         raise ValueError, "Number of components too high."
-    if 0:
-        pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype=dtype)
-        pca.train(data)
 
-        pca.stop_training()
-
-        avg = pca.avg
-        eigenvalues0 = pca.d
-        eigenvectors0 = pca.v.T
-        proj = pca.get_projmatrix(transposed=0)
-        images0 = numpy.dot(proj.astype(data.dtype), data.T)    
-        images0.shape = ncomponents, r, c
-        newdata = numpy.zeros((r, c, ncomponents), data.dtype)
-        for i in range(ncomponents):
-            newdata[:, :, i] = images0[i,:,:]
-        images0.shape = ncomponents, r*c
-        newdata.shape = r*c, ncomponents
-        ica = mdp.nodes.FastICANode(white_comp=ncomponents, verbose=False, dtype='float64')
-        ica.train(newdata)
-        output = ica.execute(newdata)
-
-        proj = ica.get_projmatrix(transposed=0)
-        #print dir(ica)
-        #print ica.filters.shape
-        #print ica.mu
-        #print ica.get_output_dim()
-        #print dir(ica.white)
-        #print output[0]
-        
-        icacomponents = proj
-
-
-        # These are the PCA data
-        eigenvalues = ica.white.d
-        eigenvectors = ica.white.v.T
-        images = numpy.zeros((2*ncomponents, r * c), data.dtype)
-        vectors = numpy.zeros((ncomponents*2, N), data.dtype)
-        #print "vectors = ", vectors.shape
-        #print "eigenvectors0 = ", eigenvectors0.shape
-        vectors[0:ncomponents,:] = numpy.dot(proj, eigenvectors0) #ica components?
-        vectors[ncomponents:,:] = eigenvectors0
-        images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), newdata.T)    
-        proj = ica.white.get_projmatrix(transposed=0)
-        images[ncomponents:(2*ncomponents),:] = images0 #numpy.dot(proj.astype(data.dtype), data.T)    
-        images.shape = 2 * ncomponents, r, c
-        return images, eigenvalues, vectors
-
-    elif 0:
-        print "NEW"
-        pca = mdp.nodes.PCANode(output_dim=ncomponents, svd=True)
-        if data.shape[0] % 10:
-            for i in range(0, data.shape[0],10):
-                pca.train(data[i:(i+10), :])
-        else:
-            for i in range(0, data.shape[0],10):
-                pca.train(data[i:(i+10), :])
-            j = 10 * int(data.shape[0]/10)                
-            pca.train(data[j:, :])                
-        out1 = pca.stop_training()
-        print "PCA Finished"
-        ica = mdp.nodes.TDSEPNode(dtype=dtype)
-        ica.train(out1)
-        ica.stop_training()
-        
-        proj = ica.get_projmatrix(transposed=0)
-        #print dir(ica)
-        #print ica.filters.shape
-        #print ica.mu
-        #print ica.get_output_dim()
-        #print dir(ica.white)
-        #print output[0]
-        
-        icacomponents = proj
-
-        # These are the PCA data
-        eigenvalues = ica.white.d * 1
-        eigenvectors = ica.white.v.T * 1
-        images = numpy.zeros((2*ncomponents, r * c), data.dtype)
-        vectors = numpy.zeros((ncomponents*2, N), data.dtype)
-        vectors[0:ncomponents,:] = proj * 1 #ica components?
-        vectors[ncomponents:,:] = eigenvectors
-        images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), data.T)    
-        proj = ica.white.get_projmatrix(transposed=0)
-        images[ncomponents:(2*ncomponents),:] = numpy.dot(proj.astype(data.dtype), data.T)    
-        images.shape = 2 * ncomponents, r, c
-    elif 1:
-        if (mdp.__version__ >= 2.5) and (dtype in ["float64", numpy.float64, numpy.float]):
+    if 1:
+        if (mdp.__version__ >= 2.5) and\
+           ((len(data.shape) == 3 ) or (dtype in ["float64", numpy.float64, numpy.float])):
             if DEBUG:
                 print "TDSEPNone"
-            ica = mdp.nodes.TDSEPNode(white_comp=ncomponents, verbose=False, dtype=dtype)
-            if data.shape[0] > 100:
-                i = int(data.shape[0]/2)
-                ica.train(data[:i,:])
-                if DEBUG:
-                    print "Half training"
-                ica.train(data[i:,:])
-                if DEBUG:
-                    print "Full training"
-            else:
-                ica.train(data)
-            output = ica.execute(data)
-        else:
+            ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
+                                      verbose=False,
+                                      dtype="float64",
+                                      white_parm={'svd':True})
             if DEBUG:
-                print "FastICANode"
-            ica = mdp.nodes.FastICANode(white_comp=ncomponents, verbose=False, dtype=dtype)
+                t0 = time.time()
+            shape = data.shape
+            if len(data.shape) == 3:
+                if r > 10:
+                    step = 10
+                    last = step * (int(r/step) - 1)
+                    for i in range(0, last, step):
+                        for j in range(step):
+                            print "Training data %d out of %d" % (i+j+1,r)
+                        tmpData = data[i:(i+step),:,:]
+                        tmpData.shape = step*shape[1], shape[2] 
+                        ica.train(tmpData)
+                    tmpData = None
+                    print "last = ",last
+                    last = i + step
+                else:
+                    last = 0
+                for i in range(last, r):
+                    print "Training data %d out of %d" % (i+1,r)
+                    ica.train(data[i,:,:])
+            else:
+                if data.shape[0] > 100:
+                    i = int(data.shape[0]/2)
+                    ica.train(data[:i,:])
+                    if DEBUG:
+                        print "Half training"
+                    ica.train(data[i:,:])
+                    if DEBUG:
+                        print "Full training"
+                else:
+                    ica.train(data)
+            ica.stop_training()
+            if DEBUG:
+                print "training elapsed = ", time.time() - t0
+        else:
+            if 0:
+                print "ISFANode (alike)"
+                ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
+                                            verbose=False,
+                                            dtype='float64',
+                                            white_parm={'svd':True})
+            elif 1:
+                if DEBUG:
+                    print "FastICANode"
+                ica = mdp.nodes.FastICANode(white_comp=ncomponents,
+                                            verbose=False,
+                                            dtype=dtype)
+            else:
+                if DEBUG:
+                    print "CuBICANode"
+                ica = mdp.nodes.CuBICANode(white_comp=ncomponents,
+                                            verbose=False,
+                                            dtype=dtype)
             ica.train(data)
-            output = ica.execute(data)
+            ica.stop_training()
+            #output = ica.execute(data)
 
-        proj = ica.get_projmatrix(transposed=0)
-        #print dir(ica)
-        #print ica.filters.shape
-        #print ica.mu
-        #print ica.get_output_dim()
-        #print dir(ica.white)
-        #print output[0]
-        
+        proj = ica.get_projmatrix(transposed=0)        
         icacomponents = proj
-
 
         # These are the PCA data
         eigenvalues = ica.white.d * 1
         eigenvectors = ica.white.v.T * 1
-        images = numpy.zeros((2*ncomponents, r * c), data.dtype)
         vectors = numpy.zeros((ncomponents*2, N), data.dtype)
         vectors[0:ncomponents,:] = proj * 1 #ica components?
         vectors[ncomponents:,:] = eigenvectors
-        images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), data.T)    
-        proj = ica.white.get_projmatrix(transposed=0)
-        images[ncomponents:(2*ncomponents),:] = numpy.dot(proj.astype(data.dtype), data.T)    
+
+        if (len(data.shape) == 3 ):
+            images = numpy.zeros((2*ncomponents, r , c), data.dtype)
+            for i in range(r):
+                print "Building images. Projecting data %d out of %d" % (i+1,r)
+                tmpData = ica.white.execute(data[i,:,:])
+                images[ncomponents:(2*ncomponents), i, :] =tmpData.T[:,:]
+                images[0:ncomponents, i, :] = numpy.dot(tmpData, ica.filters).T[:,:]
+        else:
+            images = numpy.zeros((2*ncomponents, r * c), data.dtype)
+            images[0:ncomponents,:] = numpy.dot(proj.astype(data.dtype), data.T)    
+            proj = ica.white.get_projmatrix(transposed=0)
+            images[ncomponents:(2*ncomponents),:] = numpy.dot(proj.astype(data.dtype), data.T)    
         images.shape = 2 * ncomponents, r, c
     else:
         ica = mdp.nodes.FastICANode(white_comp=ncomponents, verbose=False, dtype=dtype)
@@ -662,7 +695,10 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
         proj = ica.white.get_projmatrix(transposed=0)
         images[ncomponents:(2*ncomponents),:] = numpy.dot(proj.astype(data.dtype), data.T)    
         images.shape = 2 * ncomponents, r, c
-        
+
+    if binning == 1:
+        if data.shape != oldShape:
+            data.shape = oldShape        
     return images, eigenvalues, vectors
 
 
@@ -673,7 +709,7 @@ if __name__ == "__main__":
     import sys
     import time
     #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"
-    inputfile = "\NUMPY\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
+    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
         print inputfile
@@ -685,11 +721,11 @@ if __name__ == "__main__":
         sys.exit(0)
     stack = EDFStack.EDFStack(inputfile)
     r0, c0, n0 = stack.data.shape
-    ncomponents = 10
+    ncomponents = 5
     outfile = os.path.basename(inputfile)+"ICA.edf"
     e0 = time.time()
     images, eigenvalues, eigenvectors =  mdpICA(stack.data, ncomponents,
-                                                     binning=1)
+                                                     binning=1, svd=True, dtype='float64')
     #images, eigenvalues, eigenvectors =  lanczosPCA2(stack.data, ncomponents,
     #                                                 binning=1)
 
