@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group, A. Mirone - ESRF SciSoft Group"
+__author__ = "V.A. Sole & A. Mirone - ESRF Data Analysis"
 import numpy
 import numpy.linalg
 try:
@@ -494,6 +494,7 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
     #begin the specific coding
     pca = mdp.nodes.PCANode(output_dim=ncomponents, dtype=dtype, svd=svd)
     
+    shape = data.shape
     if len(data.shape) == 3:
         step = 10
         if r > step:
@@ -512,7 +513,15 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
             print "Training data %d out of %d" % (i+1,r)
             pca.train(data[i,:,:])
     else:
-        if data.shape[0] > 100:
+        if data.shape[0] > 10000:
+            step = 1000
+            last = step * (int(data.shape[0]/step) - 1)
+            for i in range(0, last, step):
+                print "Training data from %d to %d of %d" % (i+1, i+step, data.shape[0])
+                pca.train(data[i:(i+step),:])
+            print "Training data from %d to end of %d" % (i+step+1, data.shape[0])                        
+            pca.train(data[(i+step):,:])
+        elif data.shape[0] > 1000:
             i = int(data.shape[0]/2)
             pca.train(data[:i,:])
             if DEBUG:
@@ -527,14 +536,14 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
     avg = pca.avg
     eigenvalues = pca.d
     eigenvectors = pca.v.T
-    proj = pca.get_projmatrix()
+    proj = pca.get_projmatrix(transposed=0)
     if len(data.shape) == 3:
         images = numpy.zeros((ncomponents, r, c), data.dtype)
         for i in range(r):
             print "Building images. Projecting data %d out of %d" % (i+1,r)
-            images[:, i, :] = numpy.dot((proj.T).astype(data.dtype), data[i,:,:].T)
+            images[:, i, :] = numpy.dot(proj.astype(data.dtype), data[i,:,:].T)
     else:
-        images = numpy.dot((proj.T).astype(data.dtype), data.T)
+        images = numpy.dot(proj.astype(data.dtype), data.T)
         if binning == 1:
             if data.shape != oldShape:
                 data.shape = oldShape
@@ -579,8 +588,7 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
         raise ValueError, "Number of components too high."
 
     if 1:
-        if (mdp.__version__ >= 2.5) and\
-           ((len(data.shape) == 3 ) or (dtype in ["float64", numpy.float64, numpy.float])):
+        if (mdp.__version__ >= 2.5):
             if DEBUG:
                 print "TDSEPNone"
             ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
@@ -595,8 +603,7 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
                     step = 10
                     last = step * (int(r/step) - 1)
                     for i in range(0, last, step):
-                        for j in range(step):
-                            print "Training data %d out of %d" % (i+j+1,r)
+                        print "Training data from %d to %d out of %d" % (i+1, i+step, r)
                         tmpData = data[i:(i+step),:,:]
                         tmpData.shape = step*shape[1], shape[2] 
                         ica.train(tmpData)
@@ -606,10 +613,18 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
                 else:
                     last = 0
                 for i in range(last, r):
-                    print "Training data %d out of %d" % (i+1,r)
+                    print "Training data %d out of %d" % (i+1, r)
                     ica.train(data[i,:,:])
             else:
-                if data.shape[0] > 100:
+                if data.shape[0] > 10000:
+                    step = 1000
+                    last = step * (int(data.shape[0]/step) - 1)
+                    for i in range(0, last, step):
+                        print "Training data from %d to %d of %d" % (i+1, i+step, data.shape[0])
+                        ica.train(data[i:(i+step),:])
+                    print "Training data from %d to end of %d" % (i+step+1, data.shape[0])                        
+                    ica.train(data[(i+step):,:])
+                elif data.shape[0] > 1000:
                     i = int(data.shape[0]/2)
                     ica.train(data[:i,:])
                     if DEBUG:

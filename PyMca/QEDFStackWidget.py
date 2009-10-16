@@ -1566,10 +1566,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         #Stack Image
         if self.__stackColormap is None:
             for i in range(4):
-                self.__stackPixmap[:,:,i]  = (self.__stackPixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
+                self.__stackPixmap[:,:,i]  = (self.__stackPixmap0[:,:,i] *\
+                      (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
         elif int(str(self.__stackColormap[0])) > 1:     #color
             for i in range(4):
-                self.__stackPixmap[:,:,i]  = (self.__stackPixmap0[:,:,i] * (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
+                self.__stackPixmap[:,:,i]  = (self.__stackPixmap0[:,:,i] *\
+                      (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
         else:
             self.__stackPixmap[self.__selectionMask>0,0]    = 0x40
             self.__stackPixmap[self.__selectionMask>0,2]    = 0x70
@@ -1759,7 +1761,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         mcaData = None
         if self.__selectionMask is None:
             if self.normalizeButton.isChecked():
-                npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1] * 1.0
+                npixels = self.__stackImageData.shape[0] *\
+                          self.__stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self.__mcaData0.info)
                 dataObject.x  = [self.__mcaData0.x[0]]
@@ -1779,9 +1782,14 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 dataObject = self.__mcaData0
             return self.sendMcaSelection(dataObject, action = action)
 
-        mcaData = Numeric.zeros(self.__mcaData0.y[0].shape, Numeric.Float)
+        mcaData = numpy.zeros(self.__mcaData0.y[0].shape, numpy.float)
 
-        cleanMask = numpy.nonzero(self.__selectionMask > 0)
+        n_nonselected = self.__stackImageData.shape[0] *\
+                        self.__stackImageData.shape[1] - npixels
+        if n_nonselected < npixels:
+            cleanMask = numpy.nonzero(self.__selectionMask == 0)
+        else:
+            cleanMask = numpy.nonzero(self.__selectionMask > 0)
         if len(cleanMask[0]) and len(cleanMask[1]):
             cleanMask = numpy.array(cleanMask).transpose()
             if self.fileIndex == 2:
@@ -1798,6 +1806,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 else:
                     for r, c in cleanMask:
                         mcaData += self.stack.data[r,c,:]
+
+        if n_nonselected < npixels:
+            mcaData = self.__mcaData0.y[0] - mcaData
 
         if self.normalizeButton.isChecked():
             mcaData = mcaData/npixels
