@@ -184,21 +184,56 @@ def nnma(stack, ncomponents, binning=None,
     else:
         data = stack
 
-    if not isinstance(data, numpy.ndarray):        
-        raise TypeError, "NNMAModule only works on numpy arrays"    
 
     oldShape = data.shape
+
     if len(data.shape) == 3:
         r, c, N = data.shape
-        data.shape = r*c, N
+        if isinstance(data, numpy.ndarray):
+            data.shape = r*c, N
     else:
         r, N = data.shape
         c = 1
 
-    if binning > 1:
-        data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
-        data=numpy.sum(data , axis=-1)
-        N=N/binning
+    if isinstance(data, numpy.ndarray):
+        if binning > 1:
+            data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
+            data=numpy.sum(data , axis=-1)
+            N=N/binning
+    else:
+        oldData = data
+        N = int(N/binning)
+        try:
+            data = numpy.zeros((r, c, N), oldData.dtype)
+        except MemoryError:
+            try:
+                data = numpy.zeros((r, c, N), numpy.float32)
+            except MemoryError:
+                text  = "NNMAModule only works properly on numpy arrays.\n"
+                text += "Higher binning may help."
+                raise TypeError, text
+        if binning == 1:
+            if len(oldShape) == 3:
+                for i in range(r):
+                    data[i,:,:] = oldData[i,:,:]
+                data.shape = r * c, N
+            else:
+                data.shape = r * c, N
+                for i in range(r*c):
+                    data[i,:] = oldData[i,:]
+        else:
+            if len(oldShape) == 3:
+                for i in range(r):
+                    tmpData = oldData[i,:,:]
+                    tmpData.shape = c, N, binning
+                    data[i,:,:] = numpy.sum(tmpData, axis=-1)
+                data.shape = r * c, N
+            else:
+                data.shape = r * c, N
+                for i in range(r*c):
+                    tmpData = oldData[i,:]
+                    tmpData.shape = N, binning
+                    data[i,:] =  numpy.sum(tmpData, axis=-1)
 
     #mindata = data.min()
     #numpy.add(data, -mindata+1, data)

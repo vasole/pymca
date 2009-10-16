@@ -710,7 +710,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 if 0:
                     images, eigenvalues, eigenvectors = function(self.stack.data,
                                                                  npc,
-                                                                 binning=binning,**kw)
+                                                                 binning=binning,
+                                                                 **kw)
                 else:
                     if DEBUG:
                         import time
@@ -738,7 +739,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     self.__selectFromStackMenu.addAction(qt.QString("Show NNMA Maps"),
                                                self.showNNMAWindow)
                 self.nnmaWindowInMenu = True
-                self.stack.data.shape = shape
+                if isinstance(self.stack.data, numpy.ndarray):
+                    self.stack.data.shape = shape
                 self.nnmaWindow.show()
             except:
                 msg = qt.QMessageBox(self)
@@ -748,7 +750,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-                self.stack.data.shape = shape        
+                if isinstance(self.stack.data, numpy.ndarray):
+                    self.stack.data.shape = shape
 
 
     def __showPCADialog(self):
@@ -1799,14 +1802,26 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 else:
                     for r, c in cleanMask:
                         mcaData += self.stack.data[r,:,c]
-            else:    
+            else:
                 if self.mcaIndex == 1:
                     for r, c in cleanMask:
                         mcaData += self.stack.data[r,:,c]
                 else:
-                    for r, c in cleanMask:
-                        mcaData += self.stack.data[r,c,:]
-
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        for r, c in cleanMask:
+                            mcaData += self.stack.data[r,c,:]
+                    else:
+                        #try to minimize access to the file
+                        row_dict = {}
+                        for r, c in cleanMask:
+                            if r not in row_dict.keys():
+                                key = '%d' % r
+                                row_dict[key] = []
+                            row_dict[key].append(c)
+                        for key in row_dict.keys():
+                            r = int(key)
+                            mcaData += numpy.sum(self.stack.data[r, row_dict[key],:],0)
+                            
         if n_nonselected < npixels:
             mcaData = self.__mcaData0.y[0] - mcaData
 
