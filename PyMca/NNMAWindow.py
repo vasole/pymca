@@ -57,7 +57,8 @@ class NNMAParametersDialog(qt.QDialog):
         #
         self.methodOptions = qt.QGroupBox(self)
         self.methodOptions.setTitle('NNMA Method to use')
-        self.methods = ['FNMAI', 'ALS', 'FastHALS', 'GDCLS']
+        self.methods = ['RRI', 'NNSC', 'NMF', 'SNMF', 'NMFKL',
+                        'FNMAI', 'ALS', 'FastHALS', 'GDCLS']
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setMargin(0)
         self.methodOptions.mainLayout.setSpacing(2)
