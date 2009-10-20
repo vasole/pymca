@@ -281,11 +281,18 @@ class McaAdvancedFitBatch:
                                      self.mcaStep))
             self.__row = i
             self.__col = -1
+            try:
+                cache_data = data[i, :, :]
+            except:
+                print "Error reading dataset row %d" % i
+                print sys.exc_info()
+                print "Batch resumed"
+                continue
             for mca_index in range(self.__ncols):
                 mca = 0 + self.mcaOffset + mca_index * self.mcaStep
                 if self.pleaseBreak: break
                 self.__col += 1
-                mcadata = data[i, mca, :]
+                mcadata = cache_data[mca, :]
                 if info.has_key('MCA start ch'):
                     xmin = float(info['MCA start ch'])
                 else:
