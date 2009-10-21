@@ -40,6 +40,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
             wizard = QHDF5StackWizard.QHDF5StackWizard()
             if filelist is not None:
                 wizard.setFileList(filelist)
+                wizard.setStartId(1)
             ret = wizard.exec_()
             if ret != QtGui.QDialog.Accepted:
                 raise ValueError, "Incomplete selection"
