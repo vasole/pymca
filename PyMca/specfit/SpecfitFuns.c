@@ -3626,9 +3626,8 @@ static PyObject *
 SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
 {
     PyObject *input;
-    PyArrayObject   *array, *ret;
+    PyArrayObject *ret;
     int n, npoints;
-    npy_intp dimensions[1];
     double dpoints = 5.;
     double coeff[MAX_SAVITSKY_GOLAY_WIDTH];
     int i, j, m;
@@ -3638,66 +3637,63 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O|d", &input, &dpoints))
         return NULL;
-    array = (PyArrayObject *)
-             PyArray_ContiguousFromObject(input, PyArray_DOUBLE,1,1);
-    if (array == NULL)
+
+	ret = (PyArrayObject *)
+             PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
+
+	if (ret == NULL){
+		printf("Cannot create 1D array from input\n");
         return NULL;
+    }
     npoints = (int )  dpoints;
     if (!(npoints % 2)) npoints +=1;
-    n = array->dimensions[0];
-    dimensions[0] = array->dimensions[0];
-    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
-    if (ret == NULL){
-        Py_DECREF(array);
-        return NULL;
-    }
-    PyArray_FILLWBYTE(ret, 0);
 
-    if((npoints < MIN_SAVITSKY_GOLAY_WIDTH) ||  (n < npoints)){
+	n = ret->dimensions[0];
+
+    if((npoints < MIN_SAVITSKY_GOLAY_WIDTH) ||  (n < npoints))
+	{
         /* do not smooth data */
-        /* ret = (PyArrayObject *) PyArray_Copy(array); */
-        memcpy(ret->data, array->data, array->dimensions[0] * sizeof(double));
-        Py_DECREF(array);
         return PyArray_Return(ret);
     }
-    /* calculate the coefficients */
+
+	/* calculate the coefficients */
     m     = (int) (npoints/2);
     den = (double) ((2*m-1) * (2*m+1) * (2*m + 3));
     for (i=0; i<= m; i++){
         coeff[m+i] = (double) (3 * (3*m*m + 3*m - 1 - 5*i*i ));
         coeff[m-i] = coeff[m+i];
     }
-    /*
-    for (i=0;i<npoints;i++)
-        printf("m = %d,%d %f\n",m, i, coeff[i]);
-    printf("denominator %f\n",den);
-    */
 
     /* do the job */
-    data   = (double *) array->data;
     output = (double *) ret->data;
 
-    for (i=0; i<m; i++){
-        *(output+i) = *(data+i);
-    }
-    for (i=m; i<(n-m); i++){
+	/* simple smoothing at the beginning */
+	for (j=0; j<=(int)(npoints/3); j++)
+	{
+		smooth1d(output, m);
+	}
+
+	/* simple smoothing at the end */
+	for (j=0; j<=(int)(npoints/3); j++)
+	{
+		smooth1d((output+n-m-1), m);
+	}
+
+	/*one does not need the whole spectrum buffer, but code is clearer */
+	data = (double *) malloc(n * sizeof(double));
+	memcpy(data, output, n * sizeof(double));
+
+	/* the actual SG smoothing in the middle */
+	for (i=m; i<(n-m); i++){
         dhelp = 0;
         for (j=-m;j<=m;j++) {
             dhelp += coeff[m+j] * (*(data+i+j));
         }
         if(dhelp > 0.0){
             *(output+i) = dhelp / den;
-        }else{
-            *(output+i) = *(data+i);
         }
     }
-    for (i=(n-m); i<n; i++){
-        *(output+i) = *(data+i);
-    }
-
-    Py_DECREF(array);
-    if (ret == NULL)
-        return NULL;
+	free(data);
     return PyArray_Return(ret);
 
 }
