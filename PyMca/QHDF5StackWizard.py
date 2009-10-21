@@ -31,6 +31,7 @@ import PyQt4.QtGui as QtGui
 import QNexusWidget
 import NexusDataSource
 import PyMcaDirs
+import posixpath
 
 class IntroductionPage(QtGui.QWizardPage):
     def __init__(self, parent):
@@ -128,6 +129,49 @@ class DatasetSelectionPage(QtGui.QWizardPage):
     def setFileList(self, filelist):
         self.dataSource = NexusDataSource.NexusDataSource(filelist[0])
         self.nexusWidget.setDataSource(self.dataSource)
+        phynxFile = self.dataSource._sourceObjectList[0]
+        keys = phynxFile.keys()
+        if len(keys) != 1:
+            return
+        
+        #check if it is an NXentry
+        entry = phynxFile[keys[0]] 
+        attr = entry.attrs.get('NX_class',None)
+        if attr is None:
+            return
+        if attr != 'NXentry':
+            return
+
+        #check if there is only one NXdata
+        nxDataList = []
+        for key in entry.keys():
+            attr = entry[key].attrs.get('NX_class', None)
+            if attr in ['NXdata']:
+                nxDataList.append(key)
+        if len(nxDataList) != 1:
+            return
+        nxData = entry[nxDataList[0]]
+
+        #try to get the signals
+        signalList = []
+        for key in nxData.keys():
+            if 'signal' in nxData[key].attrs.keys():
+                if int(nxData[key].attrs['signal']) == 1:
+                    signalList.append(key)
+
+        if not len(signalList):
+            return
+
+        ddict = {}
+        ddict['counters'] = []
+        ddict['aliases']  = []
+        
+        for signal in signalList:
+            path = posixpath.join("/",nxDataList[0], signal)
+            ddict['counters'].append(path)
+            ddict['aliases'].append(posixpath.basename(signal))
+        self.nexusWidget.setWidgetConfiguration(ddict)
+        self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
 
     def validatePage(self):
         cntSelection = self.nexusWidget.cntTable.getCounterSelection()
