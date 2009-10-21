@@ -1009,11 +1009,14 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             omnicfile = False
             luciafile = False
             supavisio = False
+            hdffile = False
             if len(filelist) == 1:
                 f = open(filelist[0])
                 line = f.read(10)
                 f.close()
-                if line[0]=="\n":
+                if filefilter.upper().startswith('HDF5'):
+                    hdffile = True
+                elif line[0]=="\n":
                     line = line[1:]
                 if line.startswith('Spectral'):
                     omnicfile = True
@@ -1026,7 +1029,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 elif filelist[0][-3:].upper() in ["RBS"]:
                     supavisio = True
             try:
-                if omnicfile:
+                if hdffile:
+                    self.slave.setStack(QHDF5Stack1D.QHDF5Stack1D(filelist))
+                elif omnicfile:
                     self.slave.setStack(OmnicMap.OmnicMap(filelist[0]))
                 elif luciafile:
                     self.slave.setStack(LuciaMap.LuciaMap(filelist[0]))
