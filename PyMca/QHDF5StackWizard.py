@@ -121,7 +121,7 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         self.selection = None
         self.setSubTitle(text)
         self.mainLayout = QtGui.QVBoxLayout(self)
-        self.nexusWidget = QNexusWidget.QNexusWidget(self)
+        self.nexusWidget = LocalQNexusWidget(self)
         self.nexusWidget.buttons.hide()
         self.mainLayout.addWidget(self.nexusWidget)
 
@@ -163,6 +163,13 @@ class ShapePage(QtGui.QWizardPage):
         self.setTitle("HDF5 Map Shape Selection")
         text  = "Adjust the shape of your map if necessary"
         self.setSubTitle(text)
+
+class LocalQNexusWidget(QNexusWidget.QNexusWidget):
+    def showInfoWidget(self, filename, name, dset=False):
+        w = QNexusWidget.QNexusWidget.showInfoWidget(self, filename, name, dset)
+        w.hide()
+        w.setWindowModality(QtCore.Qt.ApplicationModal)
+        w.show()
 
 class QHDF5StackWizard(QtGui.QWizard):
     def __init__(self, parent=None):

@@ -391,6 +391,7 @@ class QNexusWidget(QtGui.QWidget):
                     print "Error filling table"
                 widget.addTab(widget.w, 'TableView')
         widget.show()
+        return widget
 
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
