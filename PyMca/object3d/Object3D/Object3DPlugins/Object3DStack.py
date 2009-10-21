@@ -193,6 +193,8 @@ class Object3DStack(Object3DBase.Object3D):
         self.values.shape = old_shape
 
     def getColors(self):
+        old_shape = self.values.shape
+        self.values.shape = -1, 1
         self._configuration['common']['colormap'][4]=self.values.min()
         self._configuration['common']['colormap'][5]=self.values.max()
         colormap = self._configuration['common']['colormap']
@@ -204,6 +206,7 @@ class Object3DStack(Object3DBase.Object3D):
                                               colormap[1],
                                               (colormap[2], colormap[3]),
                                               (0, 255),1)
+        self.values.shape = old_shape
         self.vertexColors.shape = self.nVertices, 4
         self.vertexColors[:, 3] = self._alpha
         #selection colors
@@ -308,13 +311,23 @@ class Object3DStack(Object3DBase.Object3D):
             print "Drawing takes ", time.time() - t0
 
     def _getVertexSelectionColors(self):
-        i = numpy.arange(self.nVertices)
         self.vertexSelectionColors = numpy.zeros((self.nVertices,4),
                                                  numpy.uint8)
-        self.vertexSelectionColors[:,0] = (i & 255)
-        self.vertexSelectionColors[:,1] = ((i >> 8) & 255)
-        self.vertexSelectionColors[:,2] = ((i >> 16) & 255)
-        self.vertexSelectionColors[:,3] = 255 - (i >> 24)
+
+        #split the color generation in two blocks
+        #to reduce the amount of memory needed
+        half = int(self.nVertices/2)
+        i = numpy.arange(0, half)
+        self.vertexSelectionColors[:half,0] = (i & 255)
+        self.vertexSelectionColors[:half,1] = ((i >> 8) & 255)
+        self.vertexSelectionColors[:half,2] = ((i >> 16) & 255)
+        self.vertexSelectionColors[:half,3] = 255 - (i >> 24)
+
+        i = numpy.arange(half, self.nVertices)
+        self.vertexSelectionColors[half:,0] = (i & 255)
+        self.vertexSelectionColors[half:,1] = ((i >> 8) & 255)
+        self.vertexSelectionColors[half:,2] = ((i >> 16) & 255)
+        self.vertexSelectionColors[half:,3] = 255 - (i >> 24)
 
     def isVertexSelectionModeSupported(self):
         return True        
