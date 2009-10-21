@@ -139,17 +139,19 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
         ndata = 1
         for dimension in data.shape:
             ndata *= dimension
+
+        ndim = 1
+        xDimList = []
+        for dataset in dataObject.x:
+            xdim = 1
+            for dimension in dataset.shape:
+                xdim *= dimension
+            xDimList.append(xdim)
+            ndim *=xdim
+
         if len(dataObject.x) == len(data.shape):
             #two possibilities, the product is equal to the dimension
             #or not
-            ndim = 1
-            xDimList = []
-            for dataset in dataObject.x:
-                xdim = 1
-                for dimension in dataset.shape:
-                    xdim *= dimension
-                xDimList.append(xdim)
-                ndim *=xdim
             if ndim == ndata:
                 if len(data.shape) == 3:
                     if DEBUG:
@@ -191,6 +193,28 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                          legend=legend,
                                          update_scene=update_scene)
                 return object3D
+        elif (len(data.shape) == 3) and (len(xDimList) == 2):
+            print "WARNING Assuming last dimension"
+            if DEBUG:
+                print "CASE 1.1"
+            if (xDimList[0] != data.shape[0]) or\
+               (xDimList[1] != data.shape[1]):
+                text = "Wrong dimensions:"
+                text += " %dx%d != (%d, %d, %d)" % (xDimList[0],
+                                                    xDimList[1],
+                                                    data.shape[0],
+                                                    data.shape[1],
+                                                    data.shape[2])
+                raise ValueError, text
+            z = numpy.arange(data.shape[2])
+            object3D = self.stack(data,
+                                  x=dataObject.x[0],
+                                  y=dataObject.x[1],
+                                  z=z,
+                                  legend=legend,
+                                  update_scene=update_scene)
+            return object3D
+
 
         #I have to assume all the x are of 1 element or of as many elements as data
         xyzData = numpy.zeros((ndata, 3), numpy.float32)

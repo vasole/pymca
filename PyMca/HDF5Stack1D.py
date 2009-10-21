@@ -144,8 +144,12 @@ class HDF5Stack1D(DataObject.DataObject):
         #I assume all the scans contain the same number of mca
         if JUST_KEYS:
             path = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + ySelection
+            if mSelection is not None:
+                mpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + mSelection
         else:
             path = "/" + scanlist[0] + ySelection
+            if mSelection is not None:
+                mpath = "/" + scanlist[0] + mSelection
         yDataset = tmpHdf[path] 
         if self.__dtype is None:
             self.__dtype = yDataset.dtype
@@ -161,6 +165,8 @@ class HDF5Stack1D(DataObject.DataObject):
             if (nFiles == 1) and (len(shape) == 3):
                 print "Attempting dynamic loading"
                 self.data = yDataset
+                if mSelection is not None:
+                    self.monitor = mDataset
                 DONE = True
             else:
                 raise
@@ -180,14 +186,40 @@ class HDF5Stack1D(DataObject.DataObject):
                     if JUST_KEYS:
                         entryName = entryNames[int(scan.split(".")[-1])-1]
                         path = entryName + ySelection
+                        if mSelection is not None:
+                            mpath = entryName + mSelection
+                            mDataset = hdf[mpath].value
                     else:
                         path = scan + ySelection
+                        if mSelection is not None:
+                            mpath = scan + mSelection
+                            mDataset = hdf[mpath].value
                     yDataset = hdf[path].value
                     yDataset.shape = -1, mcaDim
+                    if mSelection is not None:
+                        case = -1
+                        nMonitorData = 1
+                        for  v in mDataset.shape:
+                            nMonitorData *= v
+                        if nMonitorData == yDataset.shape[0]:
+                            mDataset.shape = yDataset.shape[0]
+                            case = 0
+                        elif nMonitorData == (yDataset.shape[0] * yDataset.shape[1]):
+                            case = 1
+                            mDataset.shape = yDataset.shape[0], yDataset.shape[1]
+                        if case == -1:
+                            raise ValueError, "I do not know how to handle this monitor data"
                     for mca in range(yDataset.shape[0]):
                         i = int(n/dim1)
                         j = n % dim1
-                        self.data[i, j, :] = yDataset[mca,:]
+                        if mSelection is not None:
+                            if case == 0:
+                                self.data[i, j, :] = yDataset[mca,:]/mDataset[mca]
+                                self.data[i, j, :] = 0.0
+                            elif case == 1:
+                                self.data[i, j, :]  = yDataset[mca,:]/mDataset[mca, :]
+                        else:
+                            self.data[i, j, :] = yDataset[mca,:]
                         n += 1
                     if dim0 == 1:
                         self.onProgress(j)
