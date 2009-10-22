@@ -28,7 +28,8 @@ __revision__ = "$Revision: 1.18 $"
 import sys
 from PyMcaQt import *
 
-if qVersion() < '4.0.0':
+QTVERSION = qVersion()
+if QTVERSION < '4.0.0':
     Q3SpinBox = QSpinBox
 else:
     QLabel.AlignRight = Qt.AlignRight
@@ -102,6 +103,10 @@ class FitParamForm(QWidget):
         self.functionCombo.insertItem(str("Mca Hypermet"))
         self.functionCombo.insertItem(str("Mca Pseudo-Voigt"))
 
+
+        self.snipWidthLabel = QLabel(self.tabFit)
+        self.snipWidthLabel.setText(str("SNIP Background Width"))
+
         self.stripWidthLabel = QLabel(self.tabFit)
         self.stripWidthLabel.setText(str("Strip Background Width"))
         self.stripIterValue = QLineEdit(self.tabFit)
@@ -165,8 +170,26 @@ class FitParamForm(QWidget):
         self.contCombo.insertItem(str("Linear Polynomial"))
         self.contCombo.insertItem(str("Exp. Polynomial"))
 
+        if qVersion() < '4.0.0':
+            self.stripCombo = QComboBox(0,self.tabFit)
+        else:
+            self.stripCombo = QComboBox(self.tabFit)
+            self.stripCombo.insertItem = self.stripCombo.addItem
+        
+        self.stripComboLabel = QLabel(self.tabFit)
+        self.stripComboLabel.setText("Non-analytical (or estimation) background algorithm")
+        self.stripCombo.insertItem(str("Strip"))
+        self.stripCombo.insertItem(str("SNIP"))
+        self.connect(self.stripCombo,
+                     SIGNAL("activated(int)"),
+                     self._stripComboActivated)
+
+        self.snipWidthSpin = Q3SpinBox(self.tabFit)
+        self.snipWidthSpin.setMaxValue(300)
+        self.snipWidthSpin.setMinValue(0)
+
         self.stripWidthSpin = Q3SpinBox(self.tabFit)
-        self.stripWidthSpin.setMaxValue(20)
+        self.stripWidthSpin.setMaxValue(100)
         self.stripWidthSpin.setMinValue(1)
 
 
@@ -248,43 +271,57 @@ class FitParamForm(QWidget):
         layout5.addMultiCellWidget(self.orderLabel,2,2,0,1)
         layout5.addMultiCellWidget(self.orderSpin,2,2,3,4)
 
-        layout5.addMultiCellWidget(self.stripWidthLabel,3,3,0,1)
-        layout5.addMultiCellWidget(self.stripWidthSpin,3,3,3,4)
 
-        layout5.addMultiCellWidget(self.stripIterLabel,4,4,0,1)
-        layout5.addMultiCellWidget(self.stripIterValue,4,4,3,4)
+        layout5.addMultiCellWidget(self.stripComboLabel, 3, 3, 0, 1)
+        if QTVERSION > '4.0.0':
+            self.stripSetupButton = QPushButton(self.tabFit)
+            self.stripSetupButton.setText('SHOW')
+            self.stripSetupButton.setAutoDefault(False)
+            layout5.addWidget(self.stripCombo, 3, 3)
+            layout5.addWidget(self.stripSetupButton, 3, 4)
+        else:
+            layout5.addMultiCellWidget(self.stripCombo, 3, 3, 3, 4)
+
+        layout5.addMultiCellWidget(self.snipWidthLabel,4,4,0,1)
+        layout5.addMultiCellWidget(self.snipWidthSpin,4,4,3,4)
+
+        layout5.addMultiCellWidget(self.stripWidthLabel,5,5,0,1)
+        layout5.addMultiCellWidget(self.stripWidthSpin,5,5,3,4)
+
+        layout5.addMultiCellWidget(self.stripIterLabel,6,6,0,1)
+        layout5.addMultiCellWidget(self.stripIterValue,6,6,3,4)
         
-        layout5.addMultiCellWidget(self.stripFilterLabel,5,5,0,1)
-        layout5.addMultiCellWidget(self.stripFilterSpin,5,5,3,4)
+        layout5.addMultiCellWidget(self.stripFilterLabel,7,7,0,1)
+        layout5.addMultiCellWidget(self.stripFilterSpin,7,7,3,4)
 
-        layout5.addMultiCellWidget(self.anchorsContainer,6,6,0,4)
+        layout5.addMultiCellWidget(self.anchorsContainer,8,8,0,4)
         
-        layout5.addWidget(self.weightLabel,7,0)
-        layout5.addMultiCellWidget(self.weightCombo,7,7,3,4)
+        layout5.addWidget(self.weightLabel,9,0)
+        layout5.addMultiCellWidget(self.weightCombo,9,9,3,4)
 
-        layout5.addWidget(self.iterLabel,8,0)
+        layout5.addWidget(self.iterLabel,10,0)
         if qVersion() < '4.0.0':
             spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
-            layout5.addMultiCell(spacer,8,8,1,2)
+            layout5.addMultiCell(spacer,10,10,1,2)
         else:
-            layout5.addWidget(HorizontalSpacer(self.tabFit),8,1)
-        layout5.addMultiCellWidget(self.iterSpin,8,8,3,4)
+            layout5.addWidget(HorizontalSpacer(self.tabFit),10,1)
+        layout5.addMultiCellWidget(self.iterSpin,10,10,3,4)
 
-        layout5.addWidget(self.chi2Label,9,0)
-        layout5.addMultiCellWidget(self.chi2Value,9,9,3,4)
+        layout5.addWidget(self.chi2Label, 11, 0)
+        layout5.addMultiCellWidget(self.chi2Value, 11, 11,3,4)
 
-        layout5.addMultiCellWidget(self.linearFitFlagCheck,10,10,0,4)
+        layout5.addMultiCellWidget(self.linearFitFlagCheck, 12, 12, 0, 4)
 
-        layout5.addMultiCellWidget(self.topLine,11,12,0,4)
+        layout5.addMultiCellWidget(self.topLine, 13, 14,0,4)
 
-        layout5.addMultiCellWidget(self.minSpin,12,13,4,4)
+        layout5.addMultiCellWidget(self.minSpin,14, 15,4,4)
 
-        layout5.addWidget(self.regionCheck,13,0)
-        layout5.addMultiCellWidget(self.firstLabel,13, 13,2,3)
+        layout5.addWidget(self.regionCheck,15,0)
+        layout5.addMultiCellWidget(self.firstLabel,15, 15,2,3)
 
-        layout5.addMultiCellWidget(self.lastLabel,14,14,2,3)
-        layout5.addWidget(self.maxSpin,14,4)
-        layout5.addMultiCellWidget(self.bottomLine,15,16,0,4)
+        layout5.addMultiCellWidget(self.lastLabel,16,16,2,3)
+        layout5.addWidget(self.maxSpin,16,4)
+        layout5.addMultiCellWidget(self.bottomLine,17,18,0,4)
 
         tabFitLayout.addLayout(layout5)
 
@@ -340,7 +377,7 @@ class FitParamForm(QWidget):
 
         includeLayout.addWidget(self.shortCheck,2,0)
         #tabFitLayout.addLayout(includeLayout)
-        layout5.addMultiCellWidget(includeWidget,16,17,0,4)
+        layout5.addMultiCellWidget(includeWidget,18,19,0,4)
 
         spacer_2 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
         tabFitLayout.addItem(spacer_2)
@@ -836,7 +873,8 @@ class FitParamForm(QWidget):
         self.setTabOrder(self.shCheck,self.shValue)
         self.setTabOrder(self.shValue,self.shError)
         self.setTabOrder(self.shError,self.contCombo)
-        self.setTabOrder(self.contCombo,self.iterSpin)
+        self.setTabOrder(self.contCombo,self.stripCombo)
+        self.setTabOrder(self.stripCombo,self.iterSpin)
         self.setTabOrder(self.iterSpin,self.chi2Value)
         self.setTabOrder(self.chi2Value,self.regionCheck)
         self.setTabOrder(self.regionCheck,self.minSpin)
@@ -848,6 +886,33 @@ class FitParamForm(QWidget):
         self.setTabOrder(self.scatterCheck,self.shortCheck)
         self.setTabOrder(self.shortCheck,self.longCheck)
         self.setTabOrder(self.longCheck,self.stepCheck)
+        self._stripComboActivated(0)
+
+    def _stripComboActivated(self, iValue):
+        if iValue == 1:
+            self.setSNIP(True)
+        else:
+            self.setSNIP(False)
+
+    def setSNIP(self, bValue):
+        if bValue:
+            self.snipWidthSpin.setEnabled(True)
+            self.stripWidthSpin.setEnabled(False)
+            #self.stripFilterSpin.setEnabled(False)
+            self.stripIterValue.setEnabled(False)
+            if QTVERSION < '4.0.0':
+                self.stripCombo.setCurrentItem(1)
+            else:
+                self.stripCombo.setCurrentIndex(1)
+        else:
+            self.snipWidthSpin.setEnabled(False)
+            #self.stripFilterSpin.setEnabled(True)
+            self.stripWidthSpin.setEnabled(True)
+            self.stripIterValue.setEnabled(True)
+            if QTVERSION < '4.0.0':
+                self.stripCombo.setCurrentItem(0)
+            else:
+                self.stripCombo.setCurrentIndex(0)
 
 
 if __name__ == "__main__":

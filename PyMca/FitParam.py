@@ -43,6 +43,7 @@ import PyMcaDirs
 if QTVERSION > '4.0.0':
     import ScanWindow
     import numpy
+    import SpecfitFuns
 
 
 DEBUG = 0
@@ -59,6 +60,8 @@ class FitParamWidget(FitParamForm):
                    "Filter 6","Filter 7","BeamFilter0", "BeamFilter1","Detector", "Matrix"]
     def __init__(self, parent=None, name="FitParamWidget", fl=0):
         FitParamForm.__init__(self, parent, name, fl)
+        self._channels = None
+        self._counts   = None
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
         else:
@@ -235,6 +238,10 @@ class FitParamWidget(FitParamForm):
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
         self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
         self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
+        if QTVERSION > '4.0.0':
+            self._backgroundWindow = None
+            self.connect(self.stripSetupButton, qt.SIGNAL('clicked()'),
+                         self.__stripSetupButtonClicked)
 
     if QTVERSION < '4.0.0' :
         def resizeEvent(self, re):
@@ -353,6 +360,85 @@ class FitParamWidget(FitParamForm):
             self.linpolOrder= self.orderSpin.value()
         elif continuum==5:
             self.exppolOrder= self.orderSpin.value()
+
+    def setData(self, x, y):
+        if QTVERSION < '4.0.0':
+            return
+        self._channels = x
+        self._counts = y
+
+    def  __stripSetupButtonClicked(self):
+        if self._counts is None:
+            msg=qt.QMessageBox(self)
+            msg.setWindowTitle("No data supplied")
+            msg.setIcon(qt.QMessageBox.Information)
+            msg.setText("Please enter the values in the fields")
+            msg.exec_()
+            return
+
+        pars = self.__getFitPar()
+        
+        #smoothed data
+        y = numpy.ravel(numpy.array(self._counts)).astype(numpy.float)
+        ysmooth = SpecfitFuns.SavitskyGolay(y, pars['stripfilterwidth'])        
+        f=[0.25,0.5,0.25]
+        ysmooth[1:-1]=numpy.convolve(ysmooth,f,mode=0)
+        ysmooth[0]=0.5*(ysmooth[0]+ysmooth[1])
+        ysmooth[-1]=0.5*(ysmooth[-1]+ysmooth[-2])
+
+        #loop for anchors
+        x = numpy.ravel(numpy.array(self._channels))
+        niter = pars['stripiterations']
+        anchorslist = []
+        if pars['stripanchorsflag']:
+            if pars['stripanchorslist'] is not None:
+                ravelled = x
+                for channel in pars['stripanchorslist']:
+                    if channel <= ravelled[0]:continue
+                    index = numpy.nonzero(ravelled >= channel)[0]
+                    if len(index):
+                        index = min(index)
+                        if index > 0:
+                            anchorslist.append(index)
+        if niter > 1000:
+            stripBackground = SpecfitFuns.subac(ysmooth,
+                                            pars['stripconstant'],
+                                            niter,
+                                            pars['stripwidth'],
+                                            anchorslist)
+            #final smoothing
+            stripBackground = SpecfitFuns.subac(stripBackground,
+                                  pars['stripconstant'],
+                                  500,1,
+                                  anchorslist)
+        elif niter > 0:
+            stripBackground = SpecfitFuns.subac(ysmooth,
+                                            pars['stripconstant'],
+                                            niter,
+                                            pars['stripwidth'],
+                                            anchorslist)
+        else:
+            stripBackground = 0.0 * ysmooth + ysmooth.min()
+
+        if len(anchorslist) == 0:
+            anchorslist = [0, len(ysmooth)-1]
+        snipBackground = 0.0 * ysmooth
+        lastAnchor = 0
+        width = pars['snipwidth']
+        for anchor in anchorslist:
+            snipBackground[lastAnchor:(anchor+1)] =\
+                            SpecfitFuns.snip1d(ysmooth[lastAnchor:(anchor+1)], width, 0)
+            lastAnchor = anchor
+
+        if self._backgroundWindow is None:
+            self._backgroundWindow = ScanWindow.ScanWindow()
+            self._backgroundWindow.setWindowTitle('Current non-analytical backgrounds')
+            self._backgroundWindow.setWindowModality(qt.Qt.ApplicationModal)
+        self._backgroundWindow.newCurve(x, y, 'Input Data')
+        self._backgroundWindow.newCurve(x, stripBackground, 'Strip Background')
+        self._backgroundWindow.newCurve(x, snipBackground, 'SNIP Background')
+        self._backgroundWindow.show()
+        self._backgroundWindow.raise_()
 
     def __tabChanged(self, wid):
         if QTVERSION < '3.0.0':
@@ -710,6 +796,13 @@ class FitParamWidget(FitParamForm):
         else:
             self.weightCombo.setCurrentIndex(self.fitWeight)        
 
+        stripAlgorithm = self.__get("fit", "stripalgorithm", 0, int)
+        if QTVERSION < '4.0.0':
+            self.stripCombo.setCurrentItem(stripAlgorithm)
+        else:
+            self.stripCombo.setCurrentIndex(stripAlgorithm)
+        self.snipWidthSpin.setValue(self.__get("fit", "snipwidth", 20, int))
+
         self.stripWidthSpin.setValue(self.__get("fit", "stripwidth", 1, int))
         self.stripFilterSpin.setValue(self.__get("fit", "stripfilterwidth", 1, int))
 
@@ -770,14 +863,17 @@ class FitParamWidget(FitParamForm):
                 pars["fitfunction"]= int(self.functionCombo.currentItem())
                 pars["continuum"]= int(self.contCombo.currentItem())
                 pars["fitweight"]= int(self.weightCombo.currentItem())
+                pars["stripalgorithm"] = int(self.stripCombo.currentItem())
             else:
                 pars["fitfunction"]= int(self.functionCombo.currentIndex())
                 pars["continuum"]= int(self.contCombo.currentIndex())
                 pars["fitweight"]= int(self.weightCombo.currentIndex())
+                pars["stripalgorithm"] = int(self.stripCombo.currentIndex())
             pars["linpolorder"]= self.linpolOrder or 1
             pars["exppolorder"]= self.exppolOrder or 1
             #pars["stripconstant"]= float(str(self.stripConstValue.text()))
             pars["stripconstant"]= 1.0
+            pars["snipwidth"] = self.snipWidthSpin.value()
             pars["stripiterations"]= int(str(self.stripIterValue.text()))
             pars["stripwidth"]= self.stripWidthSpin.value()
             pars["stripfilterwidth"] = self.stripFilterSpin.value()
@@ -1038,6 +1134,7 @@ class FitParamDialog(qt.QDialog):
 
         self.fitparam= FitParamWidget(self)
         layout.addWidget(self.fitparam)
+        self.setData = self.fitparam.setData
 
         if QTVERSION < '4.0.0':
             buts= qt.QButtonGroup(5, qt.Qt.Horizontal, self)

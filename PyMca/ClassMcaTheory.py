@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -34,6 +34,7 @@ import Gefit
 import numpy.oldnumeric as Numeric
 import string
 import copy
+DEBUG = 0
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
 CONTINUUM_LIST = [None,'Constant','Linear','Parabolic','Linear Polynomial','Exp. Polynomial']
 OLDESCAPE = 0
@@ -73,10 +74,15 @@ class McaTheory:
         self.config['fit']['maxiter']     = kw.get('maxiter',self.config['fit']['maxiter'])
         self.config['fit']['hypermetflag']= kw.get('hypermetflag',self.config['fit']['hypermetflag'])
         self.attflag   = kw.get('attenuatorsflag',1)
+        self.lastxmin = None
+        self.lastxmax = None
         self.laststrip = None
         self.laststripconstant = None
         self.laststripiterations = None
+        self.laststripalgorithm = None
+        self.lastsnipwidth = None
         self.laststripwidth = None
+        self.laststripfilterwidth = None
         self.laststripanchorsflag = None
         self.laststripanchorslist = None
         self.disableOptimizedLinearFit()
@@ -127,6 +133,11 @@ class McaTheory:
                 self.config['fit']['fitfunction'] = 0
             else:
                 self.config['fit']['fitfunction'] = 1
+
+        #default strip function parameters
+        self.config['fit']['stripalgorithm']  = self.config['fit'].get('stripalgorithm',0)
+        self.config['fit']['snipwidth']  = self.config['fit'].get('snipwidth', 30)
+
         #linear fitting option
         self.config['fit']['linearfitflag']   = self.config['fit'].get('linearfitflag', 0)        
         self.config['fit']['fitweight']    = self.config['fit'].get('fitweight', 1)        
@@ -820,38 +831,54 @@ class McaTheory:
         self.STRIP      = self.config['fit']['stripflag']
         #if self.laststrip is not None:
         self.__mycounter = 0
+        calculateStrip = False
         if (self.STRIP != self.laststrip) or \
-           (self.config['fit']['stripiterations'] != self.laststripiterations) or \
-           (self.config['fit']['stripwidth'] != self.laststripwidth) or \
-           (self.config['fit']['stripanchorsflag'] != self.lastanchorsflag) or \
-           (self.config['fit']['stripanchorslist'] != self.lastanchorslist) or \
-           (self.config['fit']['stripconstant'] != self.laststripconstant): 
-            try:
-                if self.STRIP:
-                    if (self.config['fit']['stripwidth'] != self.laststripwidth) or \
-                       (self.config['fit']['stripiterations'] != self.laststripiterations) or \
-                       (self.config['fit']['stripanchorsflag'] != self.lastanchorsflag) or \
-                       (self.config['fit']['stripanchorslist'] != self.lastanchorslist) or \
-                       (self.config['fit']['stripconstant'] != self.laststripconstant):
-                        self.__getselfzz()                    
-                    self.datatofit = Numeric.concatenate((self.xdata, 
-                                    self.ydata-self.zz, self.sigmay),1)
-                    self.laststrip = 1
-                else:
-                    self.datatofit = Numeric.concatenate((self.xdata, 
-                                    self.ydata, self.sigmay),1)
-                    self.laststrip = 0
-            except AttributeError:
-                #this happens at initialization because self.xdata, self.ydata and so on do not exist yet
-                pass
-        if self.ydata0 is not None:
-            self.setdata(x=self.xdata0,
-                         y=self.ydata0,
-                         sigmay=self.sigmay0,
-                         xmin = self.config['fit']['xmin'],
-                         xmax = self.config['fit']['xmax'])
+           (self.config['fit']['stripalgorithm'] != self.laststripalgorithm) or \
+           (self.config['fit']['stripfilterwidth'] != self.laststripfilterwidth) or \
+           (self.config['fit']['stripanchorsflag'] != self.laststripanchorsflag) or \
+           (self.config['fit']['stripanchorslist'] != self.laststripanchorslist):
+            calculateStrip = True
+        if not calculateStrip:
+            if self.config['fit']['stripalgorithm'] == 1:
+                #checking if needed to calculate SNIP
+                if (self.config['fit']['snipwidth'] != self.lastsnipwidth):
+                    calculateStrip = True
+            else:
+                #checking if needed to calculate strip
+                if (self.config['fit']['stripiterations'] != self.laststripiterations) or \
+                   (self.config['fit']['stripwidth'] != self.laststripwidth) or \
+                   (self.config['fit']['stripconstant'] != self.laststripconstant):
+                    calculateStrip = True
+        if (self.lastxmin != self.config['fit']['xmin']) or\
+           (self.lastxmax != self.config['fit']['xmax']):
+            if self.ydata0 is not None:
+                if DEBUG:
+                    print "Limits changed"
+                self.setdata(x=self.xdata0,
+                             y=self.ydata0,
+                             sigmay=self.sigmay0,
+                             xmin = self.config['fit']['xmin'],
+                             xmax = self.config['fit']['xmax'])
+                return
 
-        return
+        if hasattr(self, "xdata"):
+            if self.STRIP:
+                if calculateStrip:
+                    if DEBUG:
+                        print "Calling to calculate non analytical background in config"
+                    self.__getselfzz()
+                else:
+                    if DEBUG:
+                        print "Using previous non analytical background in config"
+                self.datatofit = Numeric.concatenate((self.xdata, 
+                                self.ydata-self.zz, self.sigmay),1)
+                self.laststrip = 1
+            else:
+                if DEBUG:
+                    print "Using previous data"
+                self.datatofit = Numeric.concatenate((self.xdata, 
+                                self.ydata, self.sigmay),1)
+                self.laststrip = 0
                          
 
     def setdata(self,*var,**kw):
@@ -910,6 +937,9 @@ class McaTheory:
                 self.config['fit']['xmax'] = xmax
             elif len(self.xdata):
                     xmax=max(self.xdata)
+
+        self.lastxmin = xmin
+        self.lastxmax = xmax
 
         if len(self.xdata):
             #sort the data
@@ -975,52 +1005,90 @@ class McaTheory:
      
 
     def __getselfzz(self):
-            n=len(self.xdata)
-            niter = self.config['fit']['stripiterations']
-            if niter > 0:
-                if ('subacold' in dir(SpecfitFuns)) and (niter >= 1000):
-                    anchorslist = []
-                    if self.config['fit']['stripanchorsflag']:
-                        if self.config['fit']['stripanchorslist'] is not None:
-                            ravelled = Numeric.ravel(self.xdata)
-                            for channel in self.config['fit']['stripanchorslist']:
-                                if channel <= ravelled[0]:continue
-                                index = Numeric.nonzero(ravelled >= channel)
-                                if len(index):
-                                    index = min(index)
-                                    if index > 0:
-                                        anchorslist.append(index)
-                    if self.config['fit']['stripwidth'] == 1:
-                        self.zz=SpecfitFuns.subac(Numeric.ravel(self.__smooth(self.ydata)),
-                                              self.config['fit']['stripconstant'],
-                                              niter/20,4, anchorslist)
-                        self.zz=SpecfitFuns.subac(self.zz,
-                                              self.config['fit']['stripconstant'],
-                                              niter/4,
-                                              self.config['fit']['stripwidth'],
-                                              anchorslist)
-                    else:
-                        self.zz=SpecfitFuns.subac(Numeric.ravel(self.__smooth(self.ydata)),
-                                              self.config['fit']['stripconstant'],
-                                              niter,self.config['fit']['stripwidth'],
-                                              anchorslist)                                
-                        #make sure to get something smooth
-                        self.zz=SpecfitFuns.subac(self.zz,
-                                              self.config['fit']['stripconstant'],
-                                              500,1,
-                                              anchorslist)
-                else:
-                    self.zz=SpecfitFuns.subac(Numeric.ravel(self.__smooth(self.ydata)),
-                                              self.config['fit']['stripconstant'],
-                                              self.config['fit']['stripiterations'])
-                self.zz     = Numeric.resize(self.zz,(n,1))
+        n=len(self.xdata)
+
+        #loop for anchors
+        anchorslist = []
+        if self.config['fit']['stripanchorsflag']:
+            if self.config['fit']['stripanchorslist'] is not None:
+                ravelled = Numeric.ravel(self.xdata)
+                for channel in self.config['fit']['stripanchorslist']:
+                    if channel <= ravelled[0]:continue
+                    index = Numeric.nonzero(ravelled >= channel)
+                    if len(index):
+                        index = min(index)
+                        if index > 0:
+                            anchorslist.append(index)
+
+        #work with smoothed data
+        ysmooth = Numeric.ravel(self.__smooth(self.ydata))
+
+        #SNIP algorithm
+        if self.config['fit']['stripalgorithm'] == 1:
+            if DEBUG:
+                print "CALCULATING SNIP"
+            if len(anchorslist) == 0:
+                anchorslist = [0, len(ysmooth)-1]
+            self.zz = 0.0 * ysmooth
+            lastAnchor = 0
+            width = self.config['fit']['snipwidth']
+            for anchor in anchorslist:
+                self.zz[lastAnchor:(anchor+1)] =\
+                            SpecfitFuns.snip1d(ysmooth[lastAnchor:(anchor+1)], width, 0)
+                lastAnchor = anchor
+            self.zz.shape = n, 1         
+            self.laststripalgorithm  = self.config['fit']['stripalgorithm']
+            self.lastsnipwidth       = self.config['fit']['snipwidth']
+            self.laststripfilterwidth = self.config['fit']['stripfilterwidth']
+            self.laststripanchorsflag     = self.config['fit']['stripanchorsflag']
+            self.laststripanchorslist     = self.config['fit']['stripanchorslist']
+            return
+        
+        #strip background
+        niter = self.config['fit']['stripiterations']
+        if niter > 0:
+            if DEBUG:
+                print "CALCULATING STRIP"
+            if (niter > 1000) and (self.config['fit']['stripwidth'] == 1):
+                self.zz=SpecfitFuns.subac(ysmooth,
+                                      self.config['fit']['stripconstant'],
+                                      niter/20,4, anchorslist)
+                self.zz=SpecfitFuns.subac(self.zz,
+                                      self.config['fit']['stripconstant'],
+                                      niter/4,
+                                      self.config['fit']['stripwidth'],
+                                      anchorslist)
             else:
-                self.zz     = Numeric.zeros((n,1),Numeric.Float) + min(Numeric.ravel(self.__smooth(self.ydata)))
-            self.laststripwidth      = self.config['fit']['stripwidth']
-            self.laststripconstant   = self.config['fit']['stripconstant'] 
-            self.laststripiterations = self.config['fit']['stripiterations'] 
-            self.lastanchorsflag     = self.config['fit']['stripanchorsflag']
-            self.lastanchorslist     = self.config['fit']['stripanchorslist']
+                self.zz=SpecfitFuns.subac(ysmooth,
+                                      self.config['fit']['stripconstant'],
+                                      niter,
+                                      self.config['fit']['stripwidth'],
+                                      anchorslist)
+                if niter > 1000:
+                    #make sure to get something smooth
+                    self.zz = SpecfitFuns.subac(self.zz,
+                                      self.config['fit']['stripconstant'],
+                                      500,1,
+                                      anchorslist)
+                else:
+                    #make sure to get something smooth but with less than
+                    #500 iterations
+                    self.zz = SpecfitFuns.subac(self.zz,
+                                      self.config['fit']['stripconstant'],
+                                      int(self.config['fit']['stripwidth']*2),
+                                      1,
+                                      anchorslist)
+            self.zz     = Numeric.resize(self.zz,(n,1))
+        else:
+            self.zz     = Numeric.zeros((n,1),Numeric.Float) + min(ysmooth)
+
+        self.laststripalgorithm  = self.config['fit']['stripalgorithm']
+        self.laststripwidth      = self.config['fit']['stripwidth']
+        self.laststripfilterwidth = self.config['fit']['stripfilterwidth']
+        self.laststripconstant   = self.config['fit']['stripconstant'] 
+        self.laststripiterations = self.config['fit']['stripiterations'] 
+        self.laststripanchorsflag     = self.config['fit']['stripanchorsflag']
+        self.laststripanchorslist     = self.config['fit']['stripanchorslist']
 
     def getPeakMatrixContribution(self,param0,t0=None,hypermet=None,
                                   continuum=None,summing=None):

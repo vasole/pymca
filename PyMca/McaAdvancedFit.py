@@ -496,6 +496,10 @@ class McaAdvancedFit(qt.QWidget):
                 if self.__fitdone: dialog.setFitResult(self.dict['result'])
                 else:dialog.setFitResult(None)
             dialog.setParameters(config)
+            dialog.setData(self.mcafit.xdata * 1.0,
+                           self.mcafit.ydata * 1.0)
+
+            
             #dialog.fitparam.regionCheck.setDisabled(True)
             #dialog.fitparam.minSpin.setDisabled(True)
             #dialog.fitparam.maxSpin.setDisabled(True)
@@ -1528,6 +1532,9 @@ class McaAdvancedFit(qt.QWidget):
         self.__var = var
         self.__kw  = kw
         self.mcafit.setdata(*var,**kw)
+        if self.configDialog is not None:
+            self.configDialog.setData(self.mcafit.xdata * 1.0,
+                           self.mcafit.ydata * 1.0)
 
         if kw.has_key('calibration'):
             if kw['calibration'] is not None:
