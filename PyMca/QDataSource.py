@@ -70,7 +70,7 @@ try:
     import NexusDataSource
     import QNexusWidget
     import h5py
-except ImportError:
+except:
     NEXUS = False
 
 
