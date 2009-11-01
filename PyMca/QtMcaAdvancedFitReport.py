@@ -578,7 +578,7 @@ class QtMcaAdvancedFitReport:
                            dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
                     legendlist.append('pileup')
                 legend = ax.legend(legendlist,0,
-                                       prop = fontproperties, labelsep=0.02)
+                                       prop = fontproperties, labelspacing=0.02)
             except ValueError:
                 fig = Figure(figsize=(6,3)) # in inches
                 canvas = FigureCanvas(fig)
@@ -594,7 +594,7 @@ class QtMcaAdvancedFitReport:
                                 dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
                     legendlist.append('pileup')
                 legend = ax.legend(legendlist,0,
-                                   prop = fontproperties, labelsep=0.02)
+                                   prop = fontproperties, labelspacing=0.02)
 
             ax.set_xlabel('Energy')
             ax.set_ylabel('Counts')

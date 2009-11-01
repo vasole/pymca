@@ -245,7 +245,7 @@ try:
                                    loc = loc,
                                    #fontname = "Times",
                                    prop = fontproperties,
-                                   labelsep = labelsep,
+                                   labelspacing = labelsep,
                                    pad = 0.15)
                 legend.draw_frame(drawframe)
             else:
@@ -385,7 +385,7 @@ try:
                                    loc = loc,
                                    fontname = "Times",
                                    prop = fontproperties,
-                                   labelsep = labelsep,
+                                   labelspacing = labelsep,
                                    pad = 0.15)
                 legend.draw_frame(drawframe)
             else:
