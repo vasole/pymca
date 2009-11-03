@@ -412,6 +412,12 @@ class QtMcaAdvancedFitReport:
              iterations = 20000
              stripwidth = 1
              stripfilterwidth = 1
+             stripalgorithm = 0
+             snipwidth = 30
+             if self.fitresult['result']['config']['fit'].has_key('stripalgorithm'):
+                stripalgorithm=self.fitresult['result']['config']['fit']['stripalgorithm']
+             if self.fitresult['result']['config']['fit'].has_key('snipwidth'):
+                snipwidth=self.fitresult['result']['config']['fit']['snipwidth']
              if self.fitresult['result']['config']['fit'].has_key('stripconstant'):
                 constant=self.fitresult['result']['config']['fit']['stripconstant']
              if self.fitresult['result']['config']['fit'].has_key('stripiterations'):
@@ -420,24 +426,34 @@ class QtMcaAdvancedFitReport:
                 stripwidth=self.fitresult['result']['config']['fit']['stripwidth']
              if self.fitresult['result']['config']['fit'].has_key('stripfilterwidth'):
                 stripfilterwidth=self.fitresult['result']['config']['fit']['stripfilterwidth']
+             if stripalgorithm == 1:
+                 text+="        <TR align=left>"
+                 text+="            <TD><I>&nbsp;Type</I></TD>"
+                 text+="            <TD>&nbsp;%s</TD>" % "SNIP Background"
+                 text+="        </TR>"
+                 text+="        <TR align=left>"
+                 text+="            <TD><I>&nbsp;%s<I></TD>" % "SNIP width"
+                 text+="            <TD>&nbsp;%.5f</TD>" % snipwidth
+                 text+="        </TR>"
+             else:
+                 text+="        <TR align=left>"
+                 text+="            <TD><I>&nbsp;Type</I></TD>"
+                 text+="            <TD>&nbsp;%s</TD>" % "Strip Background"
+                 text+="        </TR>"
+                 text+="        <TR align=left>"
+                 text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Constant"
+                 text+="            <TD>&nbsp;%.5f</TD>" % constant
+                 text+="        </TR>"
+                 text+="        <TR align=left>"
+                 text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Iterations"
+                 text+="            <TD>&nbsp;%d</TD>" % iterations
+                 text+="        </TR>"
+                 text+="        <TR align=left>"
+                 text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Width"
+                 text+="            <TD>&nbsp;%d</TD>" % stripwidth
+                 text+="        </TR>"
              text+="        <TR align=left>"
-             text+="            <TD><I>&nbsp;Type</I></TD>"
-             text+="            <TD>&nbsp;%s</TD>" % "Strip Background"
-             text+="        </TR>"
-             text+="        <TR align=left>"
-             text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Constant"
-             text+="            <TD>&nbsp;%.5f</TD>" % constant
-             text+="        </TR>"
-             text+="        <TR align=left>"
-             text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Iterations"
-             text+="            <TD>&nbsp;%d</TD>" % iterations
-             text+="        </TR>"
-             text+="        <TR align=left>"
-             text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Width"
-             text+="            <TD>&nbsp;%d</TD>" % stripwidth
-             text+="        </TR>"
-             text+="        <TR align=left>"
-             text+="            <TD><I>&nbsp;%s<I></TD>" % "Strip Filter Width"
+             text+="            <TD><I>&nbsp;%s<I></TD>" % "Smoothing Filter Width"
              text+="            <TD>&nbsp;%d</TD>" % stripfilterwidth
              text+="        </TR>"
              stripanchorslist = []
