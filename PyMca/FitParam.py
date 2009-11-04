@@ -797,10 +797,7 @@ class FitParamWidget(FitParamForm):
             self.weightCombo.setCurrentIndex(self.fitWeight)        
 
         stripAlgorithm = self.__get("fit", "stripalgorithm", 0, int)
-        if QTVERSION < '4.0.0':
-            self.stripCombo.setCurrentItem(stripAlgorithm)
-        else:
-            self.stripCombo.setCurrentIndex(stripAlgorithm)
+        self.setSNIP(stripAlgorithm)
         self.snipWidthSpin.setValue(self.__get("fit", "snipwidth", 20, int))
 
         self.stripWidthSpin.setValue(self.__get("fit", "stripwidth", 1, int))
