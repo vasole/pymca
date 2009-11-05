@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -118,7 +118,7 @@ class ConfigDict(dict):
                         try:
                             if (data[2] == '[') and (data[-3] == ']'):
                                 nrows = len(data[3:-3].split('] ['))
-                                indata = data[3:-3].replace('] [','')
+                                indata = data[3:-3].replace('] [',' ')
                                 indata = Numeric.array(map(float,
                                                            indata.split()))
                                 indata.shape = nrows,-1
