@@ -1029,13 +1029,18 @@ class McaTheory:
                 print "CALCULATING SNIP"
             if len(anchorslist) == 0:
                 anchorslist = [0, len(ysmooth)-1]
+            anchorslist.sort()
             self.zz = 0.0 * ysmooth
             lastAnchor = 0
             width = self.config['fit']['snipwidth']
             for anchor in anchorslist:
-                self.zz[lastAnchor:(anchor+1)] =\
-                            SpecfitFuns.snip1d(ysmooth[lastAnchor:(anchor+1)], width, 0)
-                lastAnchor = anchor
+                if (anchor > lastAnchor) and (anchor < len(ysmooth)):
+                    self.zz[lastAnchor:anchor] =\
+                            SpecfitFuns.snip1d(ysmooth[lastAnchor:anchor], width, 0)
+                    lastAnchor = anchor
+            if lastAnchor < len(ysmooth):                
+                self.zz[lastAnchor:] =\
+                        SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)            
             self.zz.shape = n, 1         
             self.laststripalgorithm  = self.config['fit']['stripalgorithm']
             self.lastsnipwidth       = self.config['fit']['snipwidth']

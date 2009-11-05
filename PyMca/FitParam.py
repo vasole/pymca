@@ -422,13 +422,18 @@ class FitParamWidget(FitParamForm):
 
         if len(anchorslist) == 0:
             anchorslist = [0, len(ysmooth)-1]
+        anchorslist.sort()
         snipBackground = 0.0 * ysmooth
         lastAnchor = 0
         width = pars['snipwidth']
         for anchor in anchorslist:
-            snipBackground[lastAnchor:(anchor+1)] =\
-                            SpecfitFuns.snip1d(ysmooth[lastAnchor:(anchor+1)], width, 0)
-            lastAnchor = anchor
+            if (anchor > lastAnchor) and (anchor < len(ysmooth)):
+                snipBackground[lastAnchor:anchor] =\
+                            SpecfitFuns.snip1d(ysmooth[lastAnchor:anchor], width, 0)
+                lastAnchor = anchor
+        if lastAnchor < len(ysmooth):
+            snipBackground[lastAnchor:] =\
+                            SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
 
         if self._backgroundWindow is None:
             self._backgroundWindow = ScanWindow.ScanWindow()

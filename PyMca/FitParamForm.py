@@ -218,7 +218,7 @@ class FitParamForm(QWidget):
 
         self.stripFilterSpin = Q3SpinBox(self.tabFit)
         self.stripFilterSpin.setMinValue(1)
-        self.stripFilterSpin.setMaxValue(15)
+        self.stripFilterSpin.setMaxValue(40)
         self.stripFilterSpin.setLineStep(2)
 
         ########
