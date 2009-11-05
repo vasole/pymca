@@ -2129,6 +2129,8 @@ if __name__ == "__main__":
             stack = SupaVisioMap.SupaVisioMap(args[0])
             omnicfile = True
         elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
+            if not HDF5:
+                raise IOError, "No HDF5 support while trying to read an HDF5 file"  
             stack = QHDF5Stack1D.QHDF5Stack1D(args)
             omnicfile = True
         else:
