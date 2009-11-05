@@ -41,9 +41,9 @@ import ConcentrationsWidget
 import EnergyTable
 import PyMcaDirs
 if QTVERSION > '4.0.0':
+    import StripBackgroundWidget
     import ScanWindow
     import numpy
-    import SpecfitFuns
 
 
 DEBUG = 0
@@ -62,6 +62,7 @@ class FitParamWidget(FitParamForm):
         FitParamForm.__init__(self, parent, name, fl)
         self._channels = None
         self._counts   = None
+        self._stripDialog = None
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
         else:
@@ -377,73 +378,54 @@ class FitParamWidget(FitParamForm):
             return
 
         pars = self.__getFitPar()
-        
-        #smoothed data
         y = numpy.ravel(numpy.array(self._counts)).astype(numpy.float)
-        ysmooth = SpecfitFuns.SavitskyGolay(y, pars['stripfilterwidth'])        
-        f=[0.25,0.5,0.25]
-        ysmooth[1:-1]=numpy.convolve(ysmooth,f,mode=0)
-        ysmooth[0]=0.5*(ysmooth[0]+ysmooth[1])
-        ysmooth[-1]=0.5*(ysmooth[-1]+ysmooth[-2])
-
-        #loop for anchors
         x = numpy.ravel(numpy.array(self._channels))
-        niter = pars['stripiterations']
-        anchorslist = []
-        if pars['stripanchorsflag']:
-            if pars['stripanchorslist'] is not None:
-                ravelled = x
-                for channel in pars['stripanchorslist']:
-                    if channel <= ravelled[0]:continue
-                    index = numpy.nonzero(ravelled >= channel)[0]
-                    if len(index):
-                        index = min(index)
-                        if index > 0:
-                            anchorslist.append(index)
-        if niter > 1000:
-            stripBackground = SpecfitFuns.subac(ysmooth,
-                                            pars['stripconstant'],
-                                            niter,
-                                            pars['stripwidth'],
-                                            anchorslist)
-            #final smoothing
-            stripBackground = SpecfitFuns.subac(stripBackground,
-                                  pars['stripconstant'],
-                                  500,1,
-                                  anchorslist)
-        elif niter > 0:
-            stripBackground = SpecfitFuns.subac(ysmooth,
-                                            pars['stripconstant'],
-                                            niter,
-                                            pars['stripwidth'],
-                                            anchorslist)
-        else:
-            stripBackground = 0.0 * ysmooth + ysmooth.min()
+        if self._stripDialog is None:
+            self._stripDialog = StripBackgroundWidget.StripBackgroundDialog()
+        self._stripDialog.setData(x, y)
+        self._stripDialog.setParameters(pars)
+        ret = self._stripDialog.exec_()
+        if not ret:
+            return
+        pars = self._stripDialog.getParameters()
+        key = "stripalgorithm"
+        if pars.has_key(key):
+            stripAlgorithm = int(pars[key])
+            self.setSNIP(stripAlgorithm)
+            
+        key = "snipwidth"            
+        if pars.has_key(key):
+            self.snipWidthSpin.setValue(int(pars[key]))
 
-        if len(anchorslist) == 0:
-            anchorslist = [0, len(ysmooth)-1]
-        anchorslist.sort()
-        snipBackground = 0.0 * ysmooth
-        lastAnchor = 0
-        width = pars['snipwidth']
-        for anchor in anchorslist:
-            if (anchor > lastAnchor) and (anchor < len(ysmooth)):
-                snipBackground[lastAnchor:anchor] =\
-                            SpecfitFuns.snip1d(ysmooth[lastAnchor:anchor], width, 0)
-                lastAnchor = anchor
-        if lastAnchor < len(ysmooth):
-            snipBackground[lastAnchor:] =\
-                            SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
+        key = "stripwidth"            
+        if pars.has_key(key):
+            self.stripWidthSpin.setValue(int(pars[key]))
 
-        if self._backgroundWindow is None:
-            self._backgroundWindow = ScanWindow.ScanWindow()
-            self._backgroundWindow.setWindowTitle('Current non-analytical backgrounds')
-            self._backgroundWindow.setWindowModality(qt.Qt.ApplicationModal)
-        self._backgroundWindow.newCurve(x, y, 'Input Data')
-        self._backgroundWindow.newCurve(x, stripBackground, 'Strip Background')
-        self._backgroundWindow.newCurve(x, snipBackground, 'SNIP Background')
-        self._backgroundWindow.show()
-        self._backgroundWindow.raise_()
+        key = "stripiterations"
+        if pars.has_key(key):
+            self.stripIterValue.setText("%d" % int(pars[key]))
+
+        key = "stripfilterwidth"
+        if pars.has_key(key):
+            self.stripFilterSpin.setValue(int(pars[key]))
+
+        key = "stripanchorsflag"
+        if pars.has_key(key):
+            self.stripAnchorsFlagCheck.setChecked(int(pars[key]))
+
+        key = "stripanchorslist"
+        if pars.has_key(key):
+            anchorslist = pars[key]
+            if anchorslist in [None, 'None']:
+                anchorslist = []
+            for spin in self.stripAnchorsList:
+                spin.setValue(0)
+
+            i = 0
+            for value in anchorslist:
+                self.stripAnchorsList[i].setValue(int(value))
+                i += 1
+            
 
     def __tabChanged(self, wid):
         if QTVERSION < '3.0.0':

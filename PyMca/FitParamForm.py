@@ -275,7 +275,7 @@ class FitParamForm(QWidget):
         layout5.addMultiCellWidget(self.stripComboLabel, 3, 3, 0, 1)
         if QTVERSION > '4.0.0':
             self.stripSetupButton = QPushButton(self.tabFit)
-            self.stripSetupButton.setText('SHOW')
+            self.stripSetupButton.setText('SETUP')
             self.stripSetupButton.setAutoDefault(False)
             layout5.addWidget(self.stripCombo, 3, 3)
             layout5.addWidget(self.stripSetupButton, 3, 4)
