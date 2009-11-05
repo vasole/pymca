@@ -382,8 +382,11 @@ class FitParamWidget(FitParamForm):
         x = numpy.ravel(numpy.array(self._channels))
         if self._stripDialog is None:
             self._stripDialog = StripBackgroundWidget.StripBackgroundDialog()
-        self._stripDialog.setData(x, y)
+            self._stripDialog.setWindowIcon(qt.QIcon(\
+                                qt.QPixmap(Icons.IconDict["gioconda16"])))
+
         self._stripDialog.setParameters(pars)
+        self._stripDialog.setData(x, y)
         ret = self._stripDialog.exec_()
         if not ret:
             return
