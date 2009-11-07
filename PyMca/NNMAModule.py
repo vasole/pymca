@@ -210,7 +210,7 @@ def nnma(stack, ncomponents, binning=None,
                 data = numpy.zeros((r, c, N), numpy.float32)
             except MemoryError:
                 text  = "NNMAModule only works properly on numpy arrays.\n"
-                text += "Higher binning may help."
+                text += "Memory Error: Higher binning may help."
                 raise TypeError, text
         if binning == 1:
             if len(oldShape) == 3:
@@ -263,8 +263,41 @@ def nnma(stack, ncomponents, binning=None,
     #    numpy.add(data, mindata-1, data)
     #data.shape = oldShape
     images = A.T
-    images.shape = ncomponents, r, c
-    return images, numpy.ones((ncomponents), numpy.float32),X
+    if 0:
+        images.shape = ncomponents, r, c
+        return images, numpy.ones((ncomponents), numpy.float32),X
+
+    #order and scale images according to Gerd Wellenreuthers' recipe
+    #normalize all maps to be in the range [0, 1]
+    for i in range(ncomponents):
+        norm_factor = numpy.max(images[i, :])
+        if norm_factor > 0:
+            images[i, :] *= 1.0/norm_factor
+            X[i, :] *= norm_factor
+
+    #sort NNMA-spectra and maps
+    total_nnma_intensity = []
+    for i in range(ncomponents):
+        total_nnma_intensity += [[numpy.sum(images[i,:])*\
+                                  numpy.sum(X[i,:]), i]]
+
+    sorted_idx = [item[1] for item in sorted(total_nnma_intensity)]
+    sorted_idx.reverse()
+
+    #original data intensity
+    original_intensity = numpy.sum(data)
+
+    #final values
+    new_images  = numpy.zeros((ncomponents, r*c), numpy.float32)
+    new_vectors = numpy.zeros(X.shape, numpy.float32)
+    values      = numpy.zeros((ncomponents,), numpy.float32)
+    for i in range(ncomponents):
+        idx = sorted_idx[i]
+        new_images[i,:]  = images[idx, :]
+        new_vectors[i,:] = X[idx,:]
+        values[i] = 100.*total_nnma_intensity[idx][0]/original_intensity
+    new_images.shape = ncomponents, r, c
+    return new_images, values, new_vectors
 
 if __name__ == "__main__":
     import EDFStack
