@@ -244,7 +244,14 @@ class NNMAWindow(PCAWindow.PCAWindow):
                 self.vectorNames = vectornames
             legend = self.vectorNames[0]
             y = self.eigenVectors[0]
-            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)             
+            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)
+            if self.eigenValues is not None:
+                self.vectorGraphTitles = []
+                for i in range(nimages):
+                    self.vectorGraphTitles.append("%g %% explained intensity" %\
+                                                   self.eigenValues[i])
+                self.vectorGraph.graph.setTitle(self.vectorGraphTitles[0])
+                
         self.slider.setValue(0)
             
 def test2():

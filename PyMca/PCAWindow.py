@@ -201,6 +201,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.eigenValues = None
         self.eigenVectors = None
         self.eigenNames = None
+        self.vectorGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
             self.connect(self.graphWidget.saveToolButton,
@@ -243,7 +244,10 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         if self.eigenVectors is not None:
             legend = self.vectorNames[index]
             y = self.eigenVectors[index]
-            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True) 
+            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)
+            if self.vectorGraphTitles is not None:
+                self.vectorGraph.graph.setTitle(self.vectorGraphTitles[index])
+                
             
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
