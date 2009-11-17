@@ -1,10 +1,4 @@
 from __future__ import absolute_import
-try:
-    import PyMca.Object3D
-    __package__ = "PyMca.Object3D.Object3DPlugins"
-except ImportError:
-    import Object3D
-    __package__ = "Object3D.Object3DPlugins"
 from .. import Object3DQt as qt
 from .. import Object3DPrivateConfig
 from .. import PrivateConfigTools
