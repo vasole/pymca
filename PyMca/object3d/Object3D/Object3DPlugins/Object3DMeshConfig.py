@@ -1,8 +1,15 @@
-from Object3D import Object3DQt as qt
-from Object3D import Object3DPrivateConfig
-from Object3D import PrivateConfigTools
-from Object3D.HorizontalSpacer import HorizontalSpacer
-from Object3D.VerticalSpacer import VerticalSpacer
+try:
+    from PyMca.Object3D import Object3DQt as qt
+    from PyMca.Object3D import Object3DPrivateConfig
+    from PyMca.Object3D import PrivateConfigTools
+    from PyMca.Object3D.HorizontalSpacer import HorizontalSpacer
+    from PyMca.Object3D.VerticalSpacer import VerticalSpacer
+except ImportError:
+    from Object3D import Object3DQt as qt
+    from Object3D import Object3DPrivateConfig
+    from Object3D import PrivateConfigTools
+    from Object3D.HorizontalSpacer import HorizontalSpacer
+    from Object3D.VerticalSpacer import VerticalSpacer
 import weakref
 DEBUG = 0
 

@@ -10,14 +10,23 @@ try:
     from PyMca import spslut
 except:
     import spslut
-from Object3D import Object3DFileDialogs
-from Object3D import Object3DBase
 try:
-    from Object3D import Object3DCTools
-    from Object3D import Object3DQhull
+    from PyMca.Object3D import Object3DFileDialogs
+    from PyMca.Object3D import Object3DBase
 except ImportError:
-    import Object3DCTools
-    import Object3DQhull
+    from Object3D import Object3DFileDialogs
+    from Object3D import Object3DBase
+
+try:
+    from PyMca.Object3D import Object3DCTools
+    from PyMca.Object3D import Object3DQhull
+except ImportError:
+    try:
+        from Object3D import Object3DCTools
+        from Object3D import Object3DQhull
+    except ImportError:
+        import Object3DCTools
+        import Object3DQhull
 import Object3DMeshConfig
 qt = Object3DMeshConfig.qt
 import weakref

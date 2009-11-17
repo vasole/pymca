@@ -1,7 +1,10 @@
 import os
 import h5py
 import Object3DStack
-from Object3D import Object3DFileDialogs
+try:
+    from PyMca.Object3D import Object3DFileDialogs
+except ImportError:
+    from Object3D import Object3DFileDialogs
 qt = Object3DFileDialogs.qt
 
 class ChimeraStack(Object3DStack.Object3DStack):
