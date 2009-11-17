@@ -1,10 +1,15 @@
-import SceneGLWindow
-
-#This is needed for the mesh plots
-from Object3DPlugins import Object3DMesh
-
-#This is needed for the stack plots
-from Object3DPlugins import Object3DStack
+try:
+    from PyMca.Object3D import SceneGLWindow
+    #This is needed for the mesh plots
+    from PyMca.Object3D.Object3DPlugins import Object3DMesh
+    #This is needed for the stack plots
+    from PyMca.Object3D.Object3DPlugins import Object3DStack
+except:
+    from Object3D import SceneGLWindow
+    #This is needed for the mesh plots
+    from Object3D.Object3DPlugins import Object3DMesh
+    #This is needed for the stack plots
+    from Object3D.Object3DPlugins import Object3DStack
 
 class Object3DScene(SceneGLWindow.SceneGLWindow):
     """

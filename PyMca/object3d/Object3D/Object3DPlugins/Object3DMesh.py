@@ -1,4 +1,11 @@
-from __future__ import absolute_import    
+from __future__ import absolute_import
+try:
+    import PyMca.Object3D
+    __package__ = "PyMca.Object3D.Object3DPlugins"
+except ImportError:
+    import Object3D
+    __package__ = "Object3D.Object3DPlugins"
+    
 import os
 try:
     import OpenGL.GL  as GL
