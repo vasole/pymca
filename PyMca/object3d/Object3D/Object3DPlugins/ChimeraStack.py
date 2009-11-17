@@ -1,14 +1,7 @@
-from __future__ import absolute_import
-try:
-    import PyMca.Object3D
-    __package__ = "PyMca.Object3D.Object3DPlugins"
-except ImportError:
-    import Object3D
-    __package__ = "Object3D.Object3DPlugins"    
 import os
 import h5py
-from . import Object3DStack
-from .. import Object3DFileDialogs
+import Object3DStack
+from Object3D import Object3DFileDialogs
 qt = Object3DFileDialogs.qt
 
 class ChimeraStack(Object3DStack.Object3DStack):

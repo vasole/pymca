@@ -1,10 +1,3 @@
-from __future__ import absolute_import
-try:
-    import PyMca.Object3D
-    __package__ = "PyMca.Object3D.Object3DPlugins"
-except ImportError:
-    import Object3D
-    __package__ = "Object3D.Object3DPlugins"
 import os
 try:
     import OpenGL.GL  as GL
@@ -16,13 +9,13 @@ try:
     from PyMca import spslut
 except:
     import spslut
-from .. import Object3DFileDialogs
-from .. import Object3DBase
+from Object3D import Object3DFileDialogs
+from Object3D import Object3DBase
 try:
-    from .. import Object3DCTools
+    from Object3D import Object3DCTools
 except:
     import Object3DCTools
-from . import Object3DMeshConfig
+import Object3DMeshConfig
 qt = Object3DMeshConfig.qt
 import weakref
 #import buffers

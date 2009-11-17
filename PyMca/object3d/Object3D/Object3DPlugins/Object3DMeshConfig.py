@@ -1,15 +1,8 @@
-from __future__ import absolute_import
-try:
-    import PyMca.Object3D
-    __package__ = "PyMca.Object3D.Object3DPlugins"
-except ImportError:
-    import Object3D
-    __package__ = "Object3D.Object3DPlugins"
-from .. import Object3DQt as qt
-from .. import Object3DPrivateConfig
-from .. import PrivateConfigTools
-from ..HorizontalSpacer import HorizontalSpacer
-from ..VerticalSpacer import VerticalSpacer
+from Object3D import Object3DQt as qt
+from Object3D import Object3DPrivateConfig
+from Object3D import PrivateConfigTools
+from Object3D.HorizontalSpacer import HorizontalSpacer
+from Object3D.VerticalSpacer import VerticalSpacer
 import weakref
 DEBUG = 0
 
