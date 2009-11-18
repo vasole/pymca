@@ -32,6 +32,7 @@ QTVERSION = qt.qVersion()
 try:
     #this is installation dependent I guess
     from matplotlib import rcParams
+    from matplotlib import __version__ as matplotlib_version
     #rcParams['numerix'] = "numeric"
     from matplotlib.font_manager import FontProperties
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -593,7 +594,11 @@ class QtMcaAdvancedFitReport:
                     axplot(dict['result']['energy'],
                            dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
                     legendlist.append('pileup')
-                legend = ax.legend(legendlist,0,
+                if matplotlib_version < '0.99.0':
+                    legend = ax.legend(legendlist,0,
+                                       prop = fontproperties, labelsep=0.02)
+                else:
+                    legend = ax.legend(legendlist,0,
                                        prop = fontproperties, labelspacing=0.02)
             except ValueError:
                 fig = Figure(figsize=(6,3)) # in inches
@@ -609,7 +614,11 @@ class QtMcaAdvancedFitReport:
                     ax.plot(dict['result']['energy'],
                                 dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
                     legendlist.append('pileup')
-                legend = ax.legend(legendlist,0,
+                if matplotlib_version < '0.99.0':
+                    legend = ax.legend(legendlist,0,
+                                   prop = fontproperties, labelsep=0.02)
+                else:
+                    legend = ax.legend(legendlist,0,
                                    prop = fontproperties, labelspacing=0.02)
 
             ax.set_xlabel('Energy')

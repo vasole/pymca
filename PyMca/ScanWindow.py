@@ -88,6 +88,7 @@ colorlist  = [colordict['black'],
 #
 try:
     from matplotlib import rcParams
+    from matplotlib import __version__ as matplotlib_version
     #rcParams['numerix'] = "numeric"
     from matplotlib.font_manager import FontProperties
     #2D stuff
@@ -240,8 +241,15 @@ try:
                     fontproperties = FontProperties(size=fontsize)
                     labelsep = 0.015
                     drawframe = True   # with frame
-                    
-                legend = ax.legend(legendslist,
+                if matplotlib_version < '0.99.0':
+                    legend = ax.legend(legendslist,
+                                   loc = loc,
+                                   #fontname = "Times",
+                                   prop = fontproperties,
+                                   labelsep = labelsep,
+                                   pad = 0.15)
+                else:
+                    legend = ax.legend(legendslist,
                                    loc = loc,
                                    #fontname = "Times",
                                    prop = fontproperties,
@@ -380,8 +388,15 @@ try:
                     fontproperties = FontProperties(size=fontsize)
                     labelsep = 0.015
                     drawframe = True   # with frame
-                    
-                legend = ax.legend(legendslist,
+                if matplotlib_version < '0.99.0':
+                    legend = ax.legend(legendslist,
+                                   loc = loc,
+                                   fontname = "Times",
+                                   prop = fontproperties,
+                                   labelsep = labelsep,
+                                   pad = 0.15)
+                else:
+                    legend = ax.legend(legendslist,
                                    loc = loc,
                                    fontname = "Times",
                                    prop = fontproperties,
