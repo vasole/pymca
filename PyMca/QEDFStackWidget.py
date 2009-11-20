@@ -792,8 +792,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             if self.stack.data.dtype not in [numpy.float, numpy.float32]:
                 self.stack.data = self.stack.data.astype(numpy.float)
             shape = self.stack.data.shape
-            if 1:#try:
-                if 1:
+            try:
+                if 0:
                     images, eigenvalues, eigenvectors = function(self.stack.data,
                                                                  npc,
                                                                  binning=binning)
@@ -832,7 +832,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 if isinstance(self.stack.data, numpy.ndarray):
                     self.stack.data.shape = shape
                 self.pcaWindow.show()
-            else:#except:
+            except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
