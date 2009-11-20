@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# You can access your bundled files at the following paths:
+#
+# "$1/Contents/Resources/PyMcaMain.app"
+#
+#
+export QTDIR=$1/Contents/Resources/PyMcaMain.app/Contents/Frameworks
+export DYLD_LIBRARY_PATH=$QTDIR:$QTDIR/QtCore.framework:$QTDIR/QtGui.framework:$QTDIR/QtNetwork.framework:$QTDIR/QtOpenGL.network:$QTDIR/QtSgl.framework:$QTDIR/QtSvg.framework:$QTDIR/QtTest.framework:$QTDIR/QtXml.framework:$QTDIR/QtAssistant.framework:$QTDIR/QtScriptFramework:$DYLD_LIBRARY_PATH
+$1/Contents/Resources/PyMcaMain.app/Contents/MacOS/PyMcaMain &
+
+sleep 20
+exit
