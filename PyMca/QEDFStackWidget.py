@@ -264,6 +264,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             self._stackSaveMenu = qt.QMenu()
             self._stackSaveMenu.addAction(qt.QString("Stack as NeXus"),
                                                  self.saveStackAsNeXus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 NeXus"),
+                                                 self.saveStackAsFloat32NeXus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 NeXus"),
+                                                 self.saveStackAsFloat64NeXus)
             self._stackSaveMenu.addAction(qt.QString("Stack as NeXus+/data/data"),
                                                  self.saveStackAsNeXusPlus)
             self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data/data"),
@@ -430,23 +434,32 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         else:
             return ""
 
-    def saveStackAsNeXus(self):
+    def saveStackAsNeXus(self, dtype=None):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='nexus')
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+                                    labels = None, dtype=dtype, mode='nexus')
+
+    def saveStackAsFloat32NeXus(self):
+        self.saveStackAsNeXus(dtype=numpy.float32)
+
+    def saveStackAsFloat64NeXus(self):
+        self.saveStackAsNeXus(dtype=numpy.float64)
 
     def saveStackAsNeXusPlus(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='nexus+')
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+                                    labels = None, dtype=None, mode='nexus+')
 
     def saveStackAsSimpleHDF5(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='simple')
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+                                    labels = None, dtype=None, mode='simple')
 
     def saveStackAsSimplestHDF5(self):
         filename = self._getOutputHDF5Filename()
@@ -779,8 +792,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             if self.stack.data.dtype not in [numpy.float, numpy.float32]:
                 self.stack.data = self.stack.data.astype(numpy.float)
             shape = self.stack.data.shape
-            try:
-                if 0:
+            if 1:#try:
+                if 1:
                     images, eigenvalues, eigenvectors = function(self.stack.data,
                                                                  npc,
                                                                  binning=binning)
@@ -819,7 +832,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 if isinstance(self.stack.data, numpy.ndarray):
                     self.stack.data.shape = shape
                 self.pcaWindow.show()
-            except:
+            else:#except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
