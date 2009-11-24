@@ -1975,7 +1975,7 @@ class McaAdvancedFit(qt.QWidget):
         try:
             if MATPLOTLIB:
                 if filetype in ['EPS', 'PNG', 'SVG']:
-                    size = (6, 3) #in inches
+                    size = (7, 3.5) #in inches
                     logy = self._logY
                     if filedescription == "B/WGraphics":
                         bw = True

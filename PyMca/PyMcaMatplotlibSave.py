@@ -29,6 +29,7 @@ __author__ = "V.A. Sole - ESRF BLISS Group"
 import os
 import numpy
 from matplotlib import cm
+from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -70,7 +71,7 @@ colorlist  = [colordict['black'],
               colordict['yellow']]
 
 class PyMcaMatplotlibSave:
-    def __init__(self, size = (6,3),
+    def __init__(self, size = (7,3.5),
                  logx = False,
                  logy = False,
                  legends = True,
@@ -189,6 +190,9 @@ class PyMcaMatplotlibSave:
 
     def setYLabel(self, label):
         self.ax.set_ylabel(label)
+
+    def setTitle(self, title):
+        self.ax.set_title(title)
         
     def plotLegends(self):
         if not self._legend:return
@@ -196,19 +200,38 @@ class PyMcaMatplotlibSave:
         loc = (1.01, 0.0)
         labelsep = 0.015
         drawframe = True
+        fontproperties = FontProperties(size=10)
         if len(self._legendList) > 14:
             drawframe = False
-            loc = (1.05, -0.2)
-            fontproperties = FontProperties(size=8)
-        else:
-            fontproperties = FontProperties(size=10)
-
-        legend = self.ax.legend(self._legendList,
+            if matplotlib_version < '0.99.0':
+                fontproperties = FontProperties(size=8)
+                loc = (1.05, -0.2)
+            else:
+                if len(self._legendList) < 18:
+                    #drawframe = True
+                    loc = (1.01,  0.0)
+                elif len(self._legendList) < 25:
+                    loc = (1.05,  0.0)
+                    fontproperties = FontProperties(size=8)
+                elif len(self._legendList) < 28:
+                    loc = (1.05,  0.0)
+                    fontproperties = FontProperties(size=6)
+                else:
+                    loc = (1.05,  -0.1)
+                    fontproperties = FontProperties(size=6)
+        
+        if matplotlib_version < '0.99.0':
+            legend = self.ax.legend(self._legendList,
                                 loc = loc,
                                 prop = fontproperties,
                                 labelsep = labelsep,
                                 pad = 0.15)
-
+        else:
+            legend = self.ax.legend(self._legendList,
+                                loc = loc,
+                                prop = fontproperties,
+                                labelspacing = labelsep,
+                                borderpad = 0.15)
         legend.draw_frame(drawframe)
 
 
@@ -225,7 +248,7 @@ class PyMcaMatplotlibSave:
         if self.limitsSet:
             self.ax.set_ylim(self.ymin, self.ymax)
             self.ax.set_xlim(self.xmin, self.xmax)
-
+        #self.plotLegends()
         self.canvas.print_figure(filename)
         return
 
@@ -583,9 +606,27 @@ class PyMcaMatplotlibSaveImage:
         
 if __name__ == "__main__":
     import sys
-    a=numpy.arange(1200.)
-    a.shape = 20, 60
-    PyMcaMatplotlibSaveImage(a, "filename.png", colormap="rainbow")
-    print "Image filename.png saved"
+    if len(sys.argv) < 2:
+        a=numpy.arange(1200.)
+        a.shape = 20, 60
+        PyMcaMatplotlibSaveImage(a, "filename.png", colormap="rainbow")
+        print "Image filename.png saved"
+    else:
+        w=PyMcaMatplotlibSave(legends=True)
+        x = numpy.arange(1200.)
+        w.setLimits(0, 1200., 0, 12000.)
+        if len(sys.argv) > 2:
+            n = int(sys.argv[2])
+        else:
+            n = 14
+        for i in range(n):
+            y = x * i
+            w.addDataToPlot(x,y, legend="%d" % i)
+        #w.setTitle('title')
+        w.setXLabel('Channel')
+        w.setYLabel('Counts')
+        w.plotLegends()
+        w.saveFile("filename.png")
+        print "Plot filename.png saved"
     sys.exit(0)
     
