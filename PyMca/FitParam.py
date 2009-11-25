@@ -42,7 +42,11 @@ import EnergyTable
 import PyMcaDirs
 if QTVERSION > '4.0.0':
     import StripBackgroundWidget
-    import ScanWindow
+    SCANWINDOW = StripBackgroundWidget.SCANWINDOW
+    if SCANWINDOW:
+        import ScanWindow
+    else:
+        import Plot1DMatplotlib
     import numpy
 
 
@@ -81,9 +85,12 @@ class FitParamWidget(FitParamForm):
             tabAttLayout = qt.QGridLayout(self.tabAtt)
             tabAttLayout.setMargin(11)
             tabAttLayout.setSpacing(6)
-            self.graph = ScanWindow.ScanWindow(self)
-            self.graph._togglePointsSignal()
-            self.graph.graph.crossPicker.setEnabled(False)
+            if SCANWINDOW:
+                self.graph = ScanWindow.ScanWindow(self)
+                self.graph._togglePointsSignal()
+                self.graph.graph.crossPicker.setEnabled(False)
+            else:
+                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
             self.graph.setWindowFlags(qt.Qt.Dialog)
             self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graph)
@@ -253,7 +260,6 @@ class FitParamWidget(FitParamForm):
                 pass
 
     def __attPlotButtonSlot(self):
-        #
         try:
             self.computeEfficiency()
         except:
@@ -326,7 +332,8 @@ class FitParamWidget(FitParamForm):
                 coeffs   =  thickness *\
                            numpy.array(massatt(formula,1.0,energies)['total'])
                 efficiency *= (1.0 - numpy.exp(-coeffs))
-        self.graph.setTitle('Filter (not beam filter) and detector correction')
+        if SCANWINDOW:
+            self.graph.setTitle('Filter (not beam filter) and detector correction')
         self.graph.newCurve(energies, efficiency,
                             legend='Ta * (1.0 - Td)',
                             xlabel='Energy (keV)',

@@ -41,7 +41,12 @@ import ConfigDict
 import os
 import types
 if QTVERSION > '4.0.0':
-    import ScanWindow
+    try:
+        import ScanWindow
+        SCANWINDOW = True
+    except ImportError:
+        import Plot1DMatplotlib
+        SCANWINDOW = False
     import numpy
 
 class MaterialEditor(qt.QWidget):
@@ -103,10 +108,12 @@ class MaterialEditor(qt.QWidget):
                          self._massAttenuationSlot)
         if self.__toolMode:
             self.materialGUI.setCurrent(a[0])
-            if self.graph is None:
+            if (self.graph is None) and SCANWINDOW:
                 self.graph = ScanWindow.ScanWindow(self)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
+            else:
+                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:
@@ -157,14 +164,17 @@ class MaterialEditor(qt.QWidget):
             energy = numpy.arange(1, 100, 0.1)
             data=Elements.getMaterialTransmission(compoundList, fractionList, energy,
                                              density=density, thickness=thickness, listoutput=False)
-            if self.graph is None:
+            if self.graph is None and (SCANWINDOW):
                 self.graph = ScanWindow.ScanWindow()
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
+            else:
+                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
 
             self.graph.show()
             self.graph.raise_()
-            self.graph.setTitle(ddict['Comment'])
+            if SCANWINDOW:
+                self.graph.setTitle(ddict['Comment'])
             if self.__toolMode:
                 legend = ddict['Comment']
             else:
@@ -190,13 +200,16 @@ class MaterialEditor(qt.QWidget):
             data=Elements.getMaterialMassAttenuationCoefficients(compoundList,
                                                                  fractionList,
                                                                  energy)
-            if self.graph is None:
+            if (self.graph is None) and SCANWINDOW:
                 self.graph = ScanWindow.ScanWindow()
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
+            else:
+                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
             self.graph.show()
             self.graph.raise_()
-            self.graph.setTitle(ddict['Comment'])
+            if SCANWINDOW:
+                self.graph.setTitle(ddict['Comment'])
             legend = 'Coherent'
             self.graph.newCurve(energy, numpy.array(data[legend.lower()]),
                                 legend=legend,

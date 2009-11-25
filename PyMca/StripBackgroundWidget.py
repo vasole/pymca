@@ -26,7 +26,12 @@
 #############################################################################*/
 import sys
 import PyMcaQt as qt
-import ScanWindow
+try:
+    import ScanWindow
+    SCANWINDOW = True
+except ImportError:
+    import Plot1DMatplotlib
+    SCANWINDOW = False
 import numpy
 import SpecfitFuns
 
@@ -256,7 +261,10 @@ class StripBackgroundWidget(qt.QWidget):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripParametersWidget(self)
-        self.graphWidget = ScanWindow.ScanWindow(self)
+        if SCANWINDOW:
+            self.graphWidget = ScanWindow.ScanWindow(self)
+        else:
+            self.graphWidget = Plot1DMatplotlib.Plot1DMatplotlib(self)
         try:
             self.graphWidget.scanWindowInfoWidget.hide()
         except:
