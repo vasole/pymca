@@ -300,6 +300,9 @@ class MaterialComboBox(qt.QComboBox):
 
     def _mySignal(self, qstring0):
         qstring = qstring0
+        text = str(qstring0)
+        if text == '-':
+            return
         (result, index) = self.ownValidator.validate(qstring,0)
         if result != self.ownValidator.Valid:
             qstring = self.ownValidator.fixup(qstring)
@@ -402,7 +405,6 @@ class MaterialComboBox(qt.QComboBox):
             if self.lineEdit() is not None:
                 if QTVERSION < '4.0.0':
                     self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
-                
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'),(dict,))
         else:
@@ -444,6 +446,8 @@ class MaterialValidator(qt.QValidator):
 
     def validate(self, qstring, pos):
         text = str(qstring)
+        if text == '-':
+            return (self.Valid, pos)
         try:
             number = float(text)
             return (self.Invalid, pos)
