@@ -184,8 +184,6 @@ class MaterialEditor(qt.QWidget):
                 self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
                 self.graph = self.graphDialog.plot1DWindow
 
-            if SCANWINDOW:
-                self.graph.setTitle(ddict['Comment'])
             if self.__toolMode:
                 legend = ddict['Comment']
             else:
@@ -197,6 +195,7 @@ class MaterialEditor(qt.QWidget):
                                 xlabel='Energy (keV)',
                                 ylabel='Transmission',
                                 replace=True)
+            self.graph.setTitle(ddict['Comment'])
             if SCANWINDOW:
                 self.graph.show()
                 self.graph.raise_()
@@ -239,6 +238,7 @@ class MaterialEditor(qt.QWidget):
                                 ylabel='Mass Att. (cm2/g)',
                                 replace=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
+            self.graph.setTitle(ddict['Comment'])
             if SCANWINDOW:
                 self.graph.show()
                 self.graph.raise_()

@@ -77,6 +77,31 @@ class MatplotlibGraph(FigureCanvas):
 
         self._logY = False
 
+        #event handling
+        """
+        self.fig.canvas.mpl_connect('button_press_event',
+                                    self.onMousePressed)
+        self.fig.canvas.mpl_connect('button_release_event',
+                                    self.onMouseReleased)
+        self.fig.canvas.mpl_connect('motion_notify_event',
+                                    self.onMouseMoved)
+        """
+
+    def onMousePressed(self, event):
+        if event.inaxes != self.ax:
+            print "RETURNING"
+            return
+        if DEBUG:
+            print "onMousePressed, event = ",event.xdata, event.ydata
+        
+    def onMouseMoved(self, event):
+        if DEBUG:
+            print "onMouseMoved, event = ",event.xdata, event.ydata
+
+    def onMouseReleased(self, event):
+        if DEBUG:
+            print "onMouseReleased, event = ",event.xdata, event.ydata               
+
     def setLimits(self, xmin, xmax, ymin, ymax):
         self._canvas.setLimits(xmin, xmax, ymin, ymax)
         self.xmin = xmin
@@ -167,6 +192,24 @@ class MatplotlibGraph(FigureCanvas):
     def removeCurve(self, legend):
         del self._legendList[self._legendList.index(legend)]
 
+
+    #QtBlissGraph like 
+    def setTitle(self, text=""):
+        self.ax.set_title(text)
+
+    def y1Label(self, label=None):
+        if label is None:
+            return self.ax.get_ylabel()
+        else:
+            return self.ax.set_ylabel(label)
+
+    def x1Label(self, label=None):
+        if label is None:
+            return self.ax.get_xlabel()
+        else:
+            return self.ax.set_xlabel(label)
+        
+
 class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
     def __init__(self, parent=None,**kw):
         Plot1DWindowBase.Plot1DWindowBase.__init__(self, **kw)
@@ -175,13 +218,26 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
         mainLayout.addWidget(self.graph)
         self._logY = False
         self.newCurve = self.addCurve
+        self.setTitle = self.graph.setTitle
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         """
+        if legend is None:
+            key = "Unnamed curve 1.1"
+        else:
+            key = str(legend)
+        if info is None:
+            info = {}
+        xlabel = info.get('xlabel', 'X')
+        ylabel = info.get('ylabel', 'Y')
+        if kw.has_key('xlabel'):
+            info['xlabel'] = kw['xlabel'] 
+        if kw.has_key('ylabel'):
+            info['ylabel'] = kw['ylabel'] 
         Plot1DWindowBase.Plot1DWindowBase.addCurve(self, x, y, legend=legend,
-                               info=info, replace=replace, replot=replot)        
+                               info=info, replace=replace, replot=replot)
         if replot:
             if replace:
                 self.replot('REPLACE')
@@ -206,6 +262,7 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
             if mode == 'REPLACE':                
                 #self.graph.fig.clear()
                 self.graph.ax.cla()
+                self.graph._dataCounter = 0
             for curve in self.curveList:
                 x, y, legend, info = self.curveDict[curve]
                 self.graph.newCurve(curve, x, y, logfilter=self._logY)
@@ -229,8 +286,13 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
         if self.activeCurve is None:
             if len(self.curveList):
                 self.activeCurve = self.curveList[0]
-        #if self.activeCurve is not None:
-        #    self.graph.setActiveCurve(self.activeCurve)            
+        if self.activeCurve is not None:
+            #self.graph.setActiveCurve(self.activeCurve)
+            info = self.curveDict[self.activeCurve][-1]
+            xlabel = info['xlabel']
+            ylabel = info['ylabel']
+            self.graph.x1Label(xlabel)
+            self.graph.y1Label(ylabel)
 
     def _toggleLogY(self):
         if self._logY:
@@ -298,6 +360,9 @@ if __name__ == "__main__":
     print "All curves = ",   plot.getAllCurves()
     plot.removeCurve("dummy")
     plot.addCurve(x, y, "dummy2")
+    plot.graph.setTitle('Title')
+    plot.graph.x1Label('X')
+    plot.graph.y1Label('Y')
     print "All curves = ",   plot.getAllCurves()
     app.exec_()
 
