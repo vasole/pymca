@@ -318,6 +318,9 @@ class PyMca(PyMcaMdi.PyMca):
                     if OBJECT3D:
                         self.mainTabWidget.addTab(self.glWindow, "OpenGL")
                     self.mdi.addWindow(self.mainTabWidget)
+                    #print "Markus patch"
+                    #self.mainTabWidget.show()
+                    #print "end Markus patch"
                     self.mainTabWidget.showMaximized()
                     if False:
                         self.connectDispatcher(self.mcawindow, self.sourceWidget)
@@ -439,6 +442,10 @@ class PyMca(PyMcaMdi.PyMca):
         return False
 
     def dispatcherAddSelectionSlot(self, ddict):
+        if self.__useTabWidget:
+            if self.mainTabWidget.isHidden():
+                #make sure it is visible in case of being closed
+                self.mainTabWidget.show()
         if DEBUG:
             return self._dispatcherAddSelectionSlot(ddict)
         try:

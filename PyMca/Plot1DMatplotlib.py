@@ -273,6 +273,15 @@ if 0:
             self.graph.setActiveCurve(key)
         return self.activeCurve
 
+class Plot1DMatplotlibDialog(qt.QDialog):
+    def __init__(self, parent=None, **kw):
+        qt.QDialog.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
+        self.plot1DWindow = Plot1DMatplotlib(self)
+        self.mainLayout.addWidget(self.plot1DWindow)
+
 
 if __name__ == "__main__":
     import numpy

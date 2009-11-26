@@ -58,7 +58,19 @@ class MaterialEditor(qt.QWidget):
         else:
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
-        self.graph = graph
+        if graph is None:
+            self.graph = None
+        elif SCANWINDOW:
+            self.graph = graph
+        elif isinstance(graph, Plot1DMatplotlib.Plot1DMatplotlibDialog):
+            self.graphDialog = graph
+            self.graph = self.graphDialog.plot1DWindow
+        else:
+            print "MaterialEditor, I should not be here"
+            print "Receviedgraph = ", graph
+            self.graphDialog = None
+            self.graph = None
+            
         if QTVERSION < '4.0.0':
             toolmode = False
         self.__toolMode = toolmode
@@ -112,7 +124,7 @@ class MaterialEditor(qt.QWidget):
                 self.graph = ScanWindow.ScanWindow(self)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-            else:
+            elif self.graph is None:
                 self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
@@ -168,11 +180,10 @@ class MaterialEditor(qt.QWidget):
                 self.graph = ScanWindow.ScanWindow()
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-            else:
-                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
+            elif self.graph is None:
+                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
+                self.graph = self.graphDialog.plot1DWindow
 
-            self.graph.show()
-            self.graph.raise_()
             if SCANWINDOW:
                 self.graph.setTitle(ddict['Comment'])
             if self.__toolMode:
@@ -186,6 +197,12 @@ class MaterialEditor(qt.QWidget):
                                 xlabel='Energy (keV)',
                                 ylabel='Transmission',
                                 replace=True)
+            if SCANWINDOW:
+                self.graph.show()
+                self.graph.raise_()
+            else:
+                self.graphDialog.exec_()
+                
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -204,10 +221,9 @@ class MaterialEditor(qt.QWidget):
                 self.graph = ScanWindow.ScanWindow()
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-            else:
-                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
-            self.graph.show()
-            self.graph.raise_()
+            elif self.graph is None:
+                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
+                self.graph = self.graphDialog.plot1DWindow
             if SCANWINDOW:
                 self.graph.setTitle(ddict['Comment'])
             legend = 'Coherent'
@@ -223,6 +239,11 @@ class MaterialEditor(qt.QWidget):
                                 ylabel='Mass Att. (cm2/g)',
                                 replace=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
+            if SCANWINDOW:
+                self.graph.show()
+                self.graph.raise_()
+            else:
+                self.graphDialog.exec_()
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)

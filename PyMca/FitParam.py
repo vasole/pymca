@@ -89,11 +89,14 @@ class FitParamWidget(FitParamForm):
                 self.graph = ScanWindow.ScanWindow(self)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-            else:
-                self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
-            self.graph.setWindowFlags(qt.Qt.Dialog)
-            self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+                self.graph.setWindowFlags(qt.Qt.Dialog)
+                self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graph)
+            else:
+                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog(self)
+                self.graph = self.graphDialog.plot1DWindow
+                self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+                                                        graph=self.graphDialog)
             self.attTable = self.tabAttenuators.table
             #self.multilayerTable =self.tabAttenuators.matrixTable
             tabAttLayout.addWidget(self.tabAttenuators,0,0)
@@ -339,7 +342,10 @@ class FitParamWidget(FitParamForm):
                             xlabel='Energy (keV)',
                             ylabel='Efficiency Term',
                             replace=True)
-        self.graph.show()
+        if SCANWINDOW:
+            self.graph.show()
+        else:
+            self.graphDialog.exec_()
     
     def __contComboActivated(self, idx):
         if idx==4:
