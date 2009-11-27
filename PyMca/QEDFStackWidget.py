@@ -199,11 +199,13 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             self.setWindowTitle("PyMCA - ROI Imaging Tool")
             screenHeight = qt.QDesktopWidget().height()
             if screenHeight > 0:
-                self.setMaximumHeight(int(0.99*screenHeight))
+                if QTVERSION < '4.5.0':
+                    self.setMaximumHeight(int(0.99*screenHeight))
                 self.setMinimumHeight(int(0.5*screenHeight))
             screenWidth = qt.QDesktopWidget().width()
             if screenWidth > 0:
-                self.setMaximumWidth(int(screenWidth)-5)
+                if QTVERSION < '4.5.0':
+                    self.setMaximumWidth(int(screenWidth)-5)
                 self.setMinimumWidth(min(int(0.5*screenWidth),800))
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(6)
@@ -415,10 +417,16 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if QTVERSION < '4.0.0':
             box.moveToLast(self.stackWindow)
             box.moveToLast(self.roiWindow)
+            self.mainLayout.addWidget(box)
         else:
             box.addWidget(self.stackWindow)
             box.addWidget(self.roiWindow)
-        self.mainLayout.addWidget(box)
+            try:
+                #give the stretch factor to the image
+                self.mainLayout.addWidget(box, 1)
+            except:
+                self.mainLayout.addWidget(box)
+        
 
     def _stackSaveToolButtonSignal(self):
         self._stackSaveMenu.exec_(self.cursor().pos())
