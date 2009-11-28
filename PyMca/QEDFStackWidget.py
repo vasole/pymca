@@ -626,8 +626,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         getfilter = True
         fileTypeList = ["PNG Files (*png)",
                         "JPEG Files (*jpg *jpeg)",
+                        "IMAGE Files (*)",
                         "EDF Files (*edf)",
-                        "EDF Files (*ccd)"]
+                        "EDF Files (*ccd)",
+                        "EDF Files (*)"]
         message = "Open image file"
         filenamelist, filefilter = self._getFileList(fileTypeList, message=message, getfilter=getfilter)
         if len(filenamelist) < 1:
@@ -635,18 +637,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         
         imagelist = []
         imagenames= []
-        if filefilter.split()[0] in ['PNG', 'JPEG']:
-            for filename in filenamelist:
-                image = qt.QImage(filename)
-                if image.isNull():
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Cannot read file %s as an image" % filename)
-                    msg.exec_()
-                    return
-                imagelist.append(image)
-                imagenames.append(os.path.basename(filename))
-        else:
+        if filefilter.split()[0] in ["EDF"]:
             for filename in filenamelist:
                 #read the edf file
                 edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
@@ -686,6 +677,19 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                                             ymirror)
                     imagelist.append(image)
                     imagenames.append(imagename)
+        else:
+            #Try pure Image formats
+            for filename in filenamelist:
+                image = qt.QImage(filename)
+                if image.isNull():
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Cannot read file %s as an image" % filename)
+                    msg.exec_()
+                    return
+                imagelist.append(image)
+                imagenames.append(os.path.basename(filename))
+
         if len(imagelist) == 0:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
