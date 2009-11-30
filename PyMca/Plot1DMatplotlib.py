@@ -8,12 +8,14 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
-
+import matplotlib.patches as patches
+Rectangle = patches.Rectangle
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
 import PyMcaDirs
+import numpy
 
-DEBUG = 1
+DEBUG = 0
 
 colordict = {}
 colordict['blue']   = '#0000ff'
@@ -77,33 +79,115 @@ class MatplotlibGraph(FigureCanvas):
 
         self._logY = False
 
+        self.__zooming = False
+        self._zoomStack = []
+        self.xAutoScale = True
+        self.yAutoScale = True
+
         #event handling
-        """
+        self._x0 = None
+        self._y0 = None
+        self._zoomRectangle = None
         self.fig.canvas.mpl_connect('button_press_event',
                                     self.onMousePressed)
         self.fig.canvas.mpl_connect('button_release_event',
                                     self.onMouseReleased)
         self.fig.canvas.mpl_connect('motion_notify_event',
                                     self.onMouseMoved)
-        """
 
     def onMousePressed(self, event):
-        if event.inaxes != self.ax:
-            print "RETURNING"
-            return
         if DEBUG:
             print "onMousePressed, event = ",event.xdata, event.ydata
+        if event.inaxes != self.ax:
+            if DEBUG:
+                print "RETURNING"
+            return
+        if event.button == 3:
+            #right click
+            self.__zooming = False
+            return
+
+        self.__zooming = True        
+        self._zoomRect = None
+        self._x0 = event.xdata
+        self._y0 = event.ydata
+        self._xmin, self._xmax  = self.ax.get_xlim()
+        self._ymin, self._ymax  = self.ax.get_ylim()
         
     def onMouseMoved(self, event):
         if DEBUG:
             print "onMouseMoved, event = ",event.xdata, event.ydata
-
+        if not self.__zooming:
+            return
+        if self._x0 is None:
+            return
+        self._x1 = event.xdata
+        self._y1 = event.ydata
+        
+        if self._x1 < self._xmin:
+            self._x1 = self._xmin
+        elif self._x1 > self._xmax:
+            self._x1 = self._xmax
+ 
+        if self._y1 < self._ymin:
+            self._y1 = self._ymin
+        elif self._y1 > self._ymax:
+            self._y1 = self._ymax
+ 
+        if self._x1 < self._x0:
+            x = self._x1
+            w = self._x0 - self._x1
+        else:
+            x = self._x0
+            w = self._x1 - self._x0
+        if self._y1 < self._y0:
+            y = self._y1
+            h = self._y0 - self._y1
+        else:
+            y = self._y0
+            h = self._y1 - self._y0
+        if self._zoomRectangle is None:
+            self._zoomRectangle = Rectangle(xy=(x,y),
+                                           width=w,
+                                           height=h,
+                                           fill=False)
+            self.ax.add_patch(self._zoomRectangle)
+        else:
+            self._zoomRectangle.set_bounds(x, y, w, h)
+            #self._zoomRectangle._update_patch_transform()
+        self.fig.canvas.draw()
+        
     def onMouseReleased(self, event):
         if DEBUG:
-            print "onMouseReleased, event = ",event.xdata, event.ydata               
+            print "onMouseReleased, event = ",event.xdata, event.ydata
+        if event.button == 3:
+            #right click
+            self.__zooming = False
+            if len(self._zoomStack):
+                xmin, xmax, ymin, ymax = self._zoomStack.pop()
+                self.setLimits(xmin, xmax, ymin, ymax)
+                self.draw()
+            return
+        if self._x0 is None:
+            return
+        if self._zoomRectangle is None:
+            return
+        x, y = self._zoomRectangle.get_xy()
+        w = self._zoomRectangle.get_width()
+        h = self._zoomRectangle.get_height()
+        self._zoomRectangle.remove()
+        self._x0 = None
+        self._y0 = None
+        self._zoomRectangle = None
+        xmin, xmax = self.ax.get_xlim()
+        ymin, ymax = self.ax.get_ylim()
+        self._zoomStack.append((xmin, xmax, ymin, ymax))
+        self.setLimits(x, x+w, y, y+h)
+        self.draw()
 
     def setLimits(self, xmin, xmax, ymin, ymax):
-        self._canvas.setLimits(xmin, xmax, ymin, ymax)
+        self.ax.set_xlim(xmin, xmax)
+        self.ax.set_ylim(ymin, ymax)
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -113,13 +197,13 @@ class MatplotlibGraph(FigureCanvas):
     def getX1AxisLimits(self):
         if DEBUG:
             print "getX1AxisLimitsCalled"
-        xlim = self.axes.get_xlim()
+        xlim = self.ax.get_xlim()
         return xlim
 
     def getY1AxisLimits(self):
         if DEBUG:
             print "getY1AxisLimitsCalled"
-        ylim = self.axes.get_ylim()
+        ylim = self.ax.get_ylim()
 
     def _filterData(self, x, y):
         index = numpy.flatnonzero((self.xmin <= x) & (x <= self.xmax))
@@ -209,6 +293,12 @@ class MatplotlibGraph(FigureCanvas):
         else:
             return self.ax.set_xlabel(label)
         
+    def zoomReset(self):
+        self._zoomStack = []
+        xmin, xmax = 0, 1
+        ymin, ymax = 0, 1
+        for line2D in self.ax.lines:
+            label = line2D.get_label()
 
 class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
     def __init__(self, parent=None,**kw):
@@ -278,6 +368,14 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
                     self.graph.newCurve(curve, x, y, logfilter=self._logY)
             self.graph.draw()
             return
+
+    def _zoomReset(self):
+        xmin, xmax = self.getGraphXLimits()
+        ymin, ymax = self.getGraphYLimits()
+        self.graph.setLimits(xmin, xmax, ymin, ymax)
+        self.graph._zoomStack = []
+        self.graph.draw()
+
 
     def _updateActiveCurve(self):
         self.activeCurve = self.getActiveCurve(just_legend=True)
