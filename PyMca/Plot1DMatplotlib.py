@@ -119,6 +119,11 @@ class MatplotlibGraph(FigureCanvas):
             print "onMouseMoved, event = ",event.xdata, event.ydata
         if not self.__zooming:
             return
+        elif event.inaxes != self.ax:
+            if DEBUG:
+                print "RETURNING"
+            return
+
         if self._x0 is None:
             return
         self._x1 = event.xdata
@@ -295,10 +300,26 @@ class MatplotlibGraph(FigureCanvas):
         
     def zoomReset(self):
         self._zoomStack = []
-        xmin, xmax = 0, 1
-        ymin, ymax = 0, 1
+        xmin = None
         for line2D in self.ax.lines:
-            label = line2D.get_label()
+            x = line2D.get_xdata()
+            y = line2D.get_ydata()
+            if xmin is None:
+                xmin = x.min()
+                xmax = x.max()
+                ymin = y.min()
+                ymax = y.max()
+                continue
+            xmin = min(xmin, x.min())
+            xmax = max(xmax, x.max())
+            ymin = min(ymin, y.min())
+            ymax = max(ymax, y.max())
+        if xmin is None:
+            xmin = 0
+            xmax = 1
+            ymin = 0
+            ymax = 1
+        self.setLimits(xmin, xmax, ymin, ymax)
 
 class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
     def __init__(self, parent=None,**kw):
@@ -370,10 +391,15 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
             return
 
     def _zoomReset(self):
-        xmin, xmax = self.getGraphXLimits()
-        ymin, ymax = self.getGraphYLimits()
-        self.graph.setLimits(xmin, xmax, ymin, ymax)
-        self.graph._zoomStack = []
+        if True:
+            #looking at own data
+            xmin, xmax = self.getGraphXLimits()
+            ymin, ymax = self.getGraphYLimits()
+            self.graph.setLimits(xmin, xmax, ymin, ymax)
+            self.graph._zoomStack = []
+        else:
+            #use graph data themselves
+            self.graph.zoomReset()
         self.graph.draw()
 
 
