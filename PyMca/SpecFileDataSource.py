@@ -65,16 +65,19 @@ class SpecFileDataSource:
         self.sourceType   = SOURCE_TYPE
         self.__sourceNameList = nameList
         self.__source_info_cached = None
+        
         self.refresh()
                 
     def refresh(self):
         self._sourceObjectList=[]
+        self.__fileHeaderList = []
         for name in self.__sourceNameList:
             if not os.path.exists(name):
                 raise ValueError,"File %s does not exists" % name
         for name in self.__sourceNameList:
             self._sourceObjectList.append(specfile.Specfile(name))
-        self.__lastKeyInfo = {}    
+            self.__fileHeaderList.append(False)
+        self.__lastKeyInfo = {}
 
     def getSourceInfo(self):
         """
@@ -100,6 +103,11 @@ class SpecFileDataSource:
         sf_type=[]
         for i in scanlist:
             sel=self._sourceObjectList[0].select(i)
+            if self.__fileHeaderList[0] == False:
+                try:
+                    self.__fileHeaderList[0] = sel.fileheader('')
+                except:
+                    self.__fileHeaderList[0] = None                
             try: n= sel.nbmca()
             except: n= 0
             num_mca.append(n)
@@ -109,6 +117,7 @@ class SpecFileDataSource:
             try: n= sel.command()
             except: n= ""
             commands.append(n)
+        source_info["FileHeader"]=self.__fileHeaderList[0]
         source_info["NumMca"]=num_mca
         source_info["NumPts"]=num_pts
         source_info["Commands"]= commands
@@ -184,6 +193,12 @@ class SpecFileDataSource:
         info["SourceName"] = self.sourceName
         info["Key"]        = scankey
         info['FileName']   = self.__sourceNameList[index]
+        if self.__fileHeaderList[index] == False:
+            try:
+                self.__fileHeaderList[index] = scandata.fileheader('')
+            except:
+                self.__fileHeaderList[index] = None
+        info["FileHeader"] = self.__fileHeaderList[index]
         try: info["Number"] = scandata.number()
         except: info["Number"] = None
         try: info["Order"] = scandata.order()

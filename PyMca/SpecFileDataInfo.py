@@ -86,6 +86,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         self.__createMotorTable()
         self.__createCounterTable()
         self.__createHeaderText()
+        self.__createFileHeaderText()
 
     if QTVERSION > '4.0.0':
         def sizeHint(self):
@@ -169,6 +170,24 @@ class SpecFileDataInfo(qt.QTabWidget):
     def __createHeaderText(self):
         text= self.info.get("Header", None)
         if text is not None:
+            if qt.qVersion() < '3.0.0':
+                wid = qt.QTextView(self)
+            elif qt.qVersion() < '4.0.0':
+                wid = qt.QTextEdit(self)
+                wid.setReadOnly(1)
+            else:
+                wid = qt.QTextEdit()
+                wid.setReadOnly(1)
+            if qt.qVersion() < '4.0.0':
+                wid.setText(string.join(text, "\n"))
+                self.addTab(wid, "Scan Header")
+            else:
+                wid.insertHtml(string.join(text, "<BR>"))
+                self.addTab(wid, "Scan Header")
+
+    def __createFileHeaderText(self):
+        text= self.info.get("FileHeader", None)
+        if text not in [None, []]:
             if qt.qVersion() < '3.0.0':
                 wid = qt.QTextView(self)
             elif qt.qVersion() < '4.0.0':
