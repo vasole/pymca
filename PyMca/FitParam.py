@@ -93,10 +93,11 @@ class FitParamWidget(FitParamForm):
                 self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graph)
             else:
-                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog(self)
+                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog(self)                
                 self.graph = self.graphDialog.plot1DWindow
                 self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graphDialog)
+            self.graph.fitButton.hide()
             self.attTable = self.tabAttenuators.table
             #self.multilayerTable =self.tabAttenuators.matrixTable
             tabAttLayout.addWidget(self.tabAttenuators,0,0)

@@ -123,9 +123,11 @@ class MaterialEditor(qt.QWidget):
             if (self.graph is None) and SCANWINDOW:
                 self.graph = ScanWindow.ScanWindow(self)
                 self.graph._togglePointsSignal()
+                self.graph.fitButton.hide()
                 self.graph.graph.crossPicker.setEnabled(False)
             elif self.graph is None:
                 self.graph = Plot1DMatplotlib.Plot1DMatplotlib(self)
+                self.graph.fitButton.hide()                
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:

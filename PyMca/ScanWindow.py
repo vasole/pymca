@@ -670,9 +670,9 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
 
         #fit icon
-        tb = self._addToolButton(self.fitIcon,
-                             self._fitIconSignal,
-                             'Simple Fit of Active Curve')
+        self.fitButton = self._addToolButton(self.fitIcon,
+                                 self._fitIconSignal,
+                                 'Simple Fit of Active Curve')
 
 
         self.newplotIcons = True

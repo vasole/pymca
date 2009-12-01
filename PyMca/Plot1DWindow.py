@@ -125,9 +125,9 @@ class Plot1DWindow(Plot1DQwt.Plot1DQwt):
 
 
         #fit icon
-        tb = self._addToolButton(self.fitIcon,
-                             self._fitIconSignal,
-                             'Simple Fit of Active Curve')
+        self.fitButton = self._addToolButton(self.fitIcon,
+                                 self._fitIconSignal,
+                                 'Simple Fit of Active Curve')
 
 
         self.newplotIcons = False

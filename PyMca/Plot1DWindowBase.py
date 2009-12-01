@@ -131,9 +131,9 @@ class Plot1DWindowBase(qt.QWidget, Plot1D.Plot1D):
 
 
         #fit icon
-        tb = self._addToolButton(self.fitIcon,
-                             self._fitIconSignal,
-                             'Simple Fit of Active Curve')
+        self.fitButton = self._addToolButton(self.fitIcon,
+                                 self._fitIconSignal,
+                                 'Simple Fit of Active Curve')
 
 
         if self.newplotIconsFlag:

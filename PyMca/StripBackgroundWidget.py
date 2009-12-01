@@ -266,6 +266,7 @@ class StripBackgroundWidget(qt.QWidget):
         else:
             self.graphWidget = Plot1DMatplotlib.Plot1DMatplotlib(self)
         try:
+            self.graphWidget.fitButton.hide()
             self.graphWidget.scanWindowInfoWidget.hide()
         except:
             pass
