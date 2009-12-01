@@ -321,7 +321,7 @@ class FitParamForm(QWidget):
 
         layout5.addMultiCellWidget(self.lastLabel,16,16,2,3)
         layout5.addWidget(self.maxSpin,16,4)
-        layout5.addMultiCellWidget(self.bottomLine,17,18,0,4)
+        layout5.addMultiCellWidget(self.bottomLine,17,17,0,4)
 
         tabFitLayout.addLayout(layout5)
 
