@@ -32,7 +32,7 @@ except:
     import NexusDataSource
 import posixpath
 import numpy
-    
+DEBUG = 0    
 SOURCE_TYPE = "HDF5Stack1D"
 
 class HDF5Stack1D(DataObject.DataObject):
@@ -154,8 +154,11 @@ class HDF5Stack1D(DataObject.DataObject):
 
         #figure out the shape of the stack
         shape = yDataset.shape
-
-        dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape)
+        mcaIndex = selection.get('index', len(shape)-1)
+        if mcaIndex == -1:
+            mcaIndex = len(shape) - 1
+        dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
+                                                index=mcaIndex)
         try:
             self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
             DONE = False
@@ -170,6 +173,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 raise
         
         if not DONE:
+            self.info["McaIndex"] = 2
             n = 0
             i_idx = dim0 * dim1
 
@@ -193,43 +197,77 @@ class HDF5Stack1D(DataObject.DataObject):
                             mpath = scan + mSelection
                             mDataset = hdf[mpath].value
                     yDataset = hdf[path].value
-                    yDataset.shape = -1, mcaDim
-                    if mSelection is not None:
-                        case = -1
-                        nMonitorData = 1
-                        for  v in mDataset.shape:
-                            nMonitorData *= v
-                        if nMonitorData == yDataset.shape[0]:
-                            mDataset.shape = yDataset.shape[0]
-                            case = 0
-                        elif nMonitorData == (yDataset.shape[0] * yDataset.shape[1]):
-                            case = 1
-                            mDataset.shape = yDataset.shape[0], yDataset.shape[1]
-                        if case == -1:
-                            raise ValueError, "I do not know how to handle this monitor data"
-                    for mca in range(yDataset.shape[0]):
-                        i = int(n/dim1)
-                        j = n % dim1
+                    if mcaIndex != 0:
+                        yDataset.shape = -1, mcaDim
                         if mSelection is not None:
-                            if case == 0:
-                                self.data[i, j, :] = yDataset[mca,:]/mDataset[mca]
-                                self.data[i, j, :] = 0.0
-                            elif case == 1:
-                                self.data[i, j, :]  = yDataset[mca,:]/mDataset[mca, :]
-                        else:
-                            self.data[i, j, :] = yDataset[mca,:]
-                        n += 1
+                            case = -1
+                            nMonitorData = 1
+                            for  v in mDataset.shape:
+                                nMonitorData *= v
+                            if nMonitorData == yDataset.shape[0]:
+                                mDataset.shape = yDataset.shape[0]
+                                case = 0
+                            elif nMonitorData == (yDataset.shape[0] * yDataset.shape[1]):
+                                case = 1
+                                mDataset.shape = yDataset.shape[0], yDataset.shape[1]
+                            if case == -1:
+                                raise ValueError, "I do not know how to handle this monitor data"
+                        for mca in range(yDataset.shape[0]):
+                            i = int(n/dim1)
+                            j = n % dim1
+                            if mSelection is not None:
+                                if case == 0:
+                                    self.data[i, j, :] = yDataset[mca,:]/mDataset[mca]
+                                    self.data[i, j, :] = 0.0
+                                elif case == 1:
+                                    self.data[i, j, :]  = yDataset[mca,:]/mDataset[mca, :]
+                            else:
+                                self.data[i, j, :] = yDataset[mca,:]
+                            n += 1
+                    else:
+                        yDataset.shape = mcaDim, -1
+                        if mSelection is not None:
+                            case = -1
+                            nMonitorData = 1
+                            for  v in mDataset.shape:
+                                nMonitorData *= v
+                            if nMonitorData == yDataset.shape[1]:
+                                mDataset.shape = yDataset.shape[1]
+                                case = 0
+                            #elif nMonitorData == (yDataset.shape[1] * yDataset.shape[2]):
+                            #    case = 1
+                            #    mDataset.shape = yDataset.shape[1], yDataset.shape[2]
+                            if case == -1:
+                                raise ValueError, "I do not know how to handle this monitor data"
+                        for mca in range(yDataset.shape[1]):
+                            i = int(n/dim1)
+                            j = n % dim1
+                            if mSelection is not None:
+                                if case == 0:
+                                    self.data[i, j, :] = yDataset[:,mca]/mDataset[mca]
+                                    self.data[i, j, :] = 0.0
+                                elif case == 1:
+                                    self.data[i, j, :]  = yDataset[:, mca]/mDataset[:, mca]
+                            else:
+                                self.data[i, j, :] = yDataset[:, mca]
+                            n += 1
                     if dim0 == 1:
                         self.onProgress(j)
                 if dim0 != 1:
                     self.onProgress(i)
             self.onEnd()
+        else:
+            self.info["McaIndex"] = mcaIndex
+
 
         self.info["SourceType"] = SOURCE_TYPE
-        self.info["SourceName"] = filelist[0]
+        self.info["SourceName"] = filelist
         self.info["Size"]       = 1
         self.info["NumberOfFiles"] = 1
-        self.info["FileIndex"] = 0
+        if mcaIndex == 0:
+            self.info["FileIndex"] = 1
+        else:
+            self.info["FileIndex"] = 0
         self.info['McaCalib'] = [ 0.0, 1.0, 0.0]
         self.info['Channel0'] = 0
         shape = self.data.shape
@@ -238,11 +276,17 @@ class HDF5Stack1D(DataObject.DataObject):
             self.info[key] = shape[i]
 
 
-    def getDimensions(self, nFiles, nScans, shape):
+    def getDimensions(self, nFiles, nScans, shape, index=None):
         #some body may want to overwrite this
         """
         Returns the shape of the final stack as (Dim0, Dim1, Nchannels)
         """
+        if index is None:
+            index = -1
+        if index == -1:
+            index = len(shape) - 1
+        if DEBUG:
+            print "INDEX = ", index
         #figure out the shape of the stack
         if len(shape) == 0:
             #a scalar?
@@ -251,21 +295,34 @@ class HDF5Stack1D(DataObject.DataObject):
             #nchannels
             nMca = 1
         elif len(shape) == 2:
-            #npoints x nchannels
-            nMca = shape[0]
+            if index == 0:
+                #npoints x nchannels
+                nMca = shape[1]
+            else:
+                #npoints x nchannels
+                nMca = shape[0]
         elif len(shape) == 3:
-            #dim1 x dim2 x nchannels
-            nMca = shape[0] * shape[1]
+            if index in [2, -1]:
+                #dim1 x dim2 x nchannels
+                nMca = shape[0] * shape[1]
+            elif index == 0:
+                nMca = shape[1] * shape[2]
+            else:
+                raise IndexError, "Only first and last dimensions handled"
         else:
-            #assume the last dimension is the mca
             nMca = 1
-            for i in range(len(shape) - 1):
+            for i in range(len(shape)):
+                if i == index:
+                    continue
                 nMca *= shape[i]
-
-        mcaDim = shape[-1]
+                
+        mcaDim = shape[index]
+        if DEBUG:
+            print "nMca = ", nMca
+            print "mcaDim = ", mcaDim
 
         # HDF allows to work directly from the files without loading
-        # them into memory. I do not use that feature (yet)
+        # them into memory.
         if (nScans == 1) and (nFiles > 1):
             if nMca == 1:
                 #specfile like case
@@ -282,10 +339,14 @@ class HDF5Stack1D(DataObject.DataObject):
                 dim1 = nMca * nScans # nScans is 1
             elif len(shape) == 2:
                 dim0 = nFiles # it is 1
-                dim1 = shape[0] * nScans # nScans is 1
+                dim1 = nMca * nScans # nScans is 1
             elif len(shape) == 3:
-                dim0 = shape[0]
-                dim1 = shape[1]
+                if index == 0:
+                    dim0 = shape[1]
+                    dim1 = shape[2]
+                else:
+                    dim0 = shape[0]
+                    dim1 = shape[1]
             else:
                 #specfile like multiple mca
                 dim0 = nFiles # it is 1
@@ -322,7 +383,7 @@ class HDF5Stack1D(DataObject.DataObject):
             #I should not reach this point
             raise ValueError, "Unhandled case"
 
-        return dim0, dim1, shape[-1]
+        return dim0, dim1, shape[index]
 
     def onBegin(self, n):
         pass

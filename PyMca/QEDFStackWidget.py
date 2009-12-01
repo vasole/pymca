@@ -1316,24 +1316,33 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
         self.stack = stack
         shape = self.stack.data.shape
-        self.mcaIndex   = mcaindex
-        self.otherIndex = 0
+        if self.stack.info.has_key('McaIndex'):
+            self.mcaIndex = stack.info['McaIndex']
+        else:
+            self.mcaIndex   = mcaindex
         if fileindex is None:
             fileindex      = 2
             if hasattr(self.stack, "info"):
                 if self.stack.info.has_key('FileIndex'):
                     fileindex = stack.info['FileIndex']
-                if fileindex == 0:
-                    self.mcaIndex   = 2
-                    self.otherIndex = 1
-                elif fileindex == 1:
-                    self.mcaIndex   = 2
-                    self.otherIndex = 0
+                if self.stack.info.has_key('McaIndex'):
+                    self.mcaIndex = stack.info['McaIndex']
                 else:
-                    self.mcaIndex = 1
-                    self.otherIndex = 0
+                    if fileindex == 0:
+                        self.mcaIndex   = 2
+                        self.otherIndex = 1
+                    elif fileindex == 1:
+                        self.mcaIndex   = 2
+                        self.otherIndex = 0
+                    else:
+                        self.mcaIndex = 1
+                        self.otherIndex = 0
                 
         self.fileIndex = fileindex
+        for i in range(3):
+            if i not in [self.mcaIndex, fileindex]:
+                self.otherIndex = i
+                break
         self.originalPlot()
 
     def originalPlot(self):        
@@ -1341,6 +1350,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if isinstance(self.stack.data, numpy.ndarray):
             self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
             #original ICR mca
+            if DEBUG:
+                print "(self.otherIndex, self.fileIndex) = ", (self.otherIndex, self.fileIndex)
             i = max(self.otherIndex, self.fileIndex)
             j = min(self.otherIndex, self.fileIndex)                
             mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j) * 1.0
@@ -1360,9 +1371,22 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                               self.__stackImageData[i:i+step,:])
                     tmpData.shape = step*shape[1], shape[2]
                     numpy.add(mcaData0, numpy.sum(tmpData, 0), mcaData0)
+            elif self.mcaIndex == 0:
+                self.__stackImageData = numpy.zeros((shape[1], shape[2]),
+                                                self.stack.data.dtype)
+                mcaData0 = numpy.zeros((shape[0],), numpy.float)
+                step = 1
+                for i in range(shape[0]):
+                    tmpData = self.stack.data[i,:,:]
+                    numpy.add(self.__stackImageData,
+                              tmpData,
+                              self.__stackImageData)
+                    mcaData0[i] = tmpData.sum()
             if DEBUG:
                 print "Print dynamic loading elapsed = ", time.time() -t0
-                
+
+        if DEBUG:
+            print "__stackImageData.shape = ",  self.__stackImageData.shape               
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
@@ -1544,8 +1568,22 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         print "ROI image calculation elapsed = ", time.time() - t0
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
-                    background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
-                    self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
+                        self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                    else:
+                        shape = self.stack.data.shape                        
+                        self.__ROIImageData[:,:] = 0
+                        background = self.__ROIImageData[:,:] * 1
+                        for i in range(i1, i2):
+                            tmpData = self.stack.data[i,:,:]
+                            numpy.add(self.__ROIImageData,
+                                      tmpData,
+                                      self.__ROIImageData)
+                            if (i == i1):
+                                background = tmpData
+                        if i2 > i1:
+                            background = (background + tmpData) * 0.5 * (i2-i1)
                 else:
                     if DEBUG:
                         t0 = time.time()

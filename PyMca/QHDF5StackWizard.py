@@ -110,7 +110,33 @@ class FileListPage(QtGui.QWizardPage):
             self.setFileList(filelist)
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         self.inputDir = os.path.dirname(filelist[0])
-        self.raise_()        
+        self.raise_()
+
+
+class StackIndexWidget(QtGui.QWidget):
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.mainLayout = QtGui.QHBoxLayout(self)
+        #self.mainLayout.setMargin(0)
+        #self.mainLayout.setSpacing(0)
+
+        self.buttonGroup = QtGui.QButtonGroup(self)
+        for text in ["1D data is first dimension", "1D data is last dimension"]:
+            rButton = QtGui.QRadioButton(self)
+            rButton.setText(text)
+            self.mainLayout.addWidget(rButton)
+            self.buttonGroup.addButton(rButton)
+        rButton.setChecked(True)
+        self._stackIndex = -1
+        self.connect(self.buttonGroup,
+                         QtCore.SIGNAL('buttonPressed(QAbstractButton *)'),
+                         self._slot)
+
+    def _slot(self, button):
+        if "first" in str(button.text()).lower():
+            self._stackIndex =  0
+        else:
+            self._stackIndex = -1
 
 class DatasetSelectionPage(QtGui.QWizardPage):
     def __init__(self, parent):
@@ -124,7 +150,10 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         self.mainLayout = QtGui.QVBoxLayout(self)
         self.nexusWidget = LocalQNexusWidget(self)
         self.nexusWidget.buttons.hide()
-        self.mainLayout.addWidget(self.nexusWidget)
+        self.mainLayout.addWidget(self.nexusWidget, 1)
+
+        self.stackIndexWidget = StackIndexWidget(self)
+        self.mainLayout.addWidget(self.stackIndexWidget, 0)
 
     def setFileList(self, filelist):
         self.dataSource = NexusDataSource.NexusDataSource(filelist[0])
@@ -188,10 +217,11 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         selection['x'] = []
         selection['y'] = []
         selection['m'] = []
+        selection['index'] = self.stackIndexWidget._stackIndex
         for key in ['x', 'y', 'm']:
             if len(cntSelection[key]):
                 for idx in cntSelection[key]:
-                    selection[key].append(cntlist[idx])                
+                    selection[key].append(cntlist[idx])              
         self.selection = selection
         return True
 
@@ -257,7 +287,7 @@ class QHDF5StackWizard(QtGui.QWizard):
 
     def getParameters(self):
         return self._fileList.fileList, self._datasetSelection.selection
-
+    
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
