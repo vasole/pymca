@@ -920,10 +920,17 @@ class ImageShapeDialog(qt.QDialog):
         label2.setText("Number of columns = ")
         self.cancelButton = qt.QPushButton(self)
         self.cancelButton.setText("Dismiss")
-        self.cancelButton.setAutoDefault(False)
         self.okButton    = qt.QPushButton(self)
         self.okButton.setText("Accept")
-        self.okButton.setAutoDefault(False)
+        if QTVERSION > '4.0.0':
+            self.cancelButton.setAutoDefault(False)
+            self.okButton.setAutoDefault(False)
+            self.connect(self.rows,
+                         qt.SIGNAL("editingFinished()"),
+                         self._rowsChanged)
+            self.connect(self.columns,
+                         qt.SIGNAL("editingFinished()"),
+                         self._columnsChanged)
         self.mainLayout.addWidget(label1, 0, 0)
         self.mainLayout.addWidget(self.rows, 0, 1)
         self.mainLayout.addWidget(label2, 1, 0)
@@ -937,14 +944,23 @@ class ImageShapeDialog(qt.QDialog):
                      qt.SIGNAL("clicked()"),
                      self.accept)
 
+    def _rowsChanged(self):
+        nrows, ncolumns = self.getImageShape()
+        if (nrows * ncolumns) != self._size:
+            self.columns.setText("%g" % (self._size/float(nrows)))
+        
+    def _columnsChanged(self):
+        nrows, ncolumns = self.getImageShape()
+        if (nrows * ncolumns) != self._size:
+            self.rows.setText("%g" % (self._size/float(ncolumns)))
+
     def getImageShape(self):
         text = str(self.rows.text())
-        if len(text): nrows = int(text)
-        else: nrows = None
+        if len(text): nrows = int(float(text))
+        else: nrows = 0
         text = str(self.columns.text())
-        if len(text): ncolumns = int(text)
-        else: ncolumns = None
-        ncolumns = int(text)
+        if len(text): ncolumns = int(float(text))
+        else: ncolumns = 0
         return nrows, ncolumns
 
     def accept(self):
