@@ -78,12 +78,18 @@ class SpecFileStack(DataObject.DataObject):
                 nmca += numberofmca
         if numberofdetectors == 0:
             raise ValueError, "No MCA found in file %s" % filelist[0]
+
+        if (nscans > 1) and ((nmca/numberofdetectors) == nscans):
+            SLOW_METHOD = True
+        else:
+            SLOW_METHOD = False
+        
         #get last mca of first point
         key = "%s.1.%s" % (keylist[-1], numberofmca)
         dataObject = tempInstance._getMcaData(key)
         self.info.update(dataObject.info)
         arrRet = dataObject.data
-        self.onBegin(self.nbFiles*numberofmca/numberofdetectors)
+        self.onBegin(self.nbFiles*nmca/numberofdetectors)
 
         self.incrProgressBar= 0
         if info['NbMcaDet'] > 1:
@@ -91,7 +97,33 @@ class SpecFileStack(DataObject.DataObject):
             iterlist = range(info['NbMcaDet'],info['NbMca']+1,info['NbMcaDet'])
         else:
             iterlist = [1]
-        if shape is None:
+        if SLOW_METHOD and shape is None:
+            self.data = Numeric.zeros((self.nbFiles,
+                                   nmca/numberofdetectors,
+                                   arrRet.shape[0]),
+                                   arrRet.dtype.char)
+            filecounter         = 0
+            for tempFileName in filelist:
+                tempInstance=SpecFileDataSource.SpecFileDataSource(tempFileName)
+                mca_number = -1
+                for keyindex in keylist:
+                    info = tempInstance.getKeyInfo(keyindex)
+                    numberofmca       = info['NbMca']                    
+                    if numberofmca <= 0:
+                        continue
+                    key = "%s.1.%s" % (keyindex, numberofmca)
+                    dataObject = tempInstance._getMcaData(key)
+                    arrRet = dataObject.data
+                    mca_number += 1
+                    for i in iterlist:
+                        #mcadata = scan_obj.mca(i)
+                        self.data[filecounter,
+                                  mca_number,
+                                  :] = arrRet[:]
+                        self.incrProgressBar += 1
+                        self.onProgress(self.incrProgressBar)
+                filecounter += 1
+        elif shape is None:
             self.data = Numeric.zeros((self.nbFiles,
                                    numberofmca/numberofdetectors,
                                    arrRet.shape[0]),
