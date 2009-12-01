@@ -1,4 +1,4 @@
-#/*##########################################################################
+﻿#/*##########################################################################
 # Copyright (C) 2004-2008 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
@@ -41,6 +41,19 @@ import types
 import ConfigDict
 import CoherentScattering
 import IncoherentScattering
+
+""" 
+Constant                     Symbol      2006 CODATA value      Relative uncertainty 
+Electron relative atomic mass   Ar(e) 5.485 799 0943(23) × 10–4     4.2 × 10–10
+Molar mass constant             Mu    0.001 kg/mol                   defined
+Rydberg constant                R∞    10 973 731.568 527(73) m–1    6.6 × 10–12
+Planck constant                 h     6.626 068 96(33) × 10–34 Js   5.0 × 10–8
+Speed of light                  c     299 792 458 m/s                defined
+Fine structure constant         α     7.297 352 5376(50) × 10–3     6.8 × 10–10
+Avogadro constant               NA    6.022 141 79(30) × 1023 mol–1 5.0 × 10–8
+"""
+
+AVOGADRO_NUMBER = 6.02214179E23
 
 ElementsInfo = [
    ["H",   1,    1,1,   "hydrogen",   1.00800,     1008.00   ],
@@ -2517,7 +2530,7 @@ def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
         except:
           raise ValueError,"Unknown element %s" % ele
     #convert from cm2/atom to cm2/g
-    return (value * 6.022142E23)/ Element[ele]['mass']        
+    return (value * AVOGADRO_NUMBER)/ Element[ele]['mass']
 
 
 def getElementIncoherentScatteringFunction(ele, theta, energy):
@@ -2710,7 +2723,7 @@ def getelementmassattcoef(ele,energy=None):
             ddict['photo'].append(photo)
             ddict['pair'].append(pair)
             ddict['total'].append(cohe+comp+photo+pair)    
-    return ddict                                                          
+    return ddict
 
 def getElementLShellRates(symbol,energy=None,photoweights = None):
     """
