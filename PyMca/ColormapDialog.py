@@ -45,7 +45,10 @@ class MyQLineEdit(qt.QLineEdit):
 
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
-        self.emit(qt.SIGNAL("returnPressed()"),())
+        if QTVERSION < '4.0.0':
+            self.emit(qt.SIGNAL("returnPressed()"),())
+        else:
+            self.emit(qt.SIGNAL("returnPressed()"))
         
     def setPaletteBackgroundColor(self, qcolor):
         if qt.qVersion() < '3.0.0':

@@ -834,9 +834,26 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                               "Elapsed = ", time.time() - e0
                 self.pcaWindow.setSelectionMask(self.__selectionMask,
                                                 plot=False)
+
+                methodlabel = pcaParameters.get('methodlabel', "")
+                imagenames=None
+                vectornames=None
+                if " ICA " in methodlabel:
+                    nimages = images.shape[0]
+                    imagenames = []
+                    vectornames = []
+                    itmp = nimages/2
+                    for i in range(itmp):
+                        imagenames.append("ICAimage %02d" % i)
+                        vectornames.append("ICAvector %02d" % i)
+                    for i in range(itmp):
+                        imagenames.append("Eigenimage %02d" % i)
+                        vectornames.append("Eigenvector %02d" % i)
                 self.pcaWindow.setPCAData(images,
-                                          eigenvalues,
-                                          eigenvectors)
+                                       eigenvalues,
+                                       eigenvectors,
+                                       imagenames=imagenames,
+                                       vectornames=vectornames)
                 if not self.pcaWindowInMenu:
                     self.__selectFromStackMenu.addAction(qt.QString("Show PCA Maps"),
                                                self.showPCAWindow)
@@ -1992,7 +2009,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         return []
         else:
             #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
-            if (PyMcaDirs.nativeFileDialogs):
+            if (PyMcaDirs.nativeFileDialogs) and (not getfilter):
                 filetypes = ""
                 for filetype in fileTypeList:
                     filetypes += filetype+"\n"
@@ -2214,7 +2231,18 @@ if __name__ == "__main__":
             PyMcaDirs.outputDir = os.path.dirname(filename)
     elif len(args) == 1:
         if not omnicfile:
-            stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
+            try:
+                stack.loadIndexedStack(args, begin, end, fileindex=fileindex)
+            except:
+                msg = qt.QMessageBox()
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1])
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.setWindowTitle("Error")
+                    msg.exec_()
+                sys.exit(1)                
         try:
             PyMcaDirs.inputDir = os.path.dirname(args[0])
             if PyMcaDirs.outputDir is None:
@@ -2265,10 +2293,31 @@ if __name__ == "__main__":
                     stack = QSpecFileStack()
             if len(filelist) == 1:
                 if not omnicfile:
-                    stack.loadIndexedStack(filelist[0], begin, end, fileindex=fileindex)
+                    try:
+                        stack.loadIndexedStack(filelist[0], begin, end,
+                                               fileindex=fileindex)
+                    except:
+                        msg = qt.QMessageBox()
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText("%s" % sys.exc_info()[1])
+                        if QTVERSION < '4.0.0':
+                            msg.exec_loop()
+                        else:
+                            msg.exec_()
+                        sys.exit(1)
             elif len(filelist):
                 if not omnicfile:
-                    stack.loadFileList(filelist, fileindex=fileindex)
+                    try:
+                        stack.loadFileList(filelist, fileindex=fileindex)
+                    except:
+                        msg = qt.QMessageBox()
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText("%s" % sys.exc_info()[1])
+                        if QTVERSION < '4.0.0':
+                            msg.exec_loop()
+                        else:
+                            msg.exec_()
+                        sys.exit(1)
             else:
                 print "Usage: "
                 print "python QEDFStackWidget.py SET_OF_EDF_FILES"

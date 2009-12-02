@@ -478,10 +478,9 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
         c = 1
 
     if binning > 1:
-        if not isinstance(data, numpy.ndarray):
-            raise TypeError, "Binning is only supported when using numpy arrays"
-        data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
-        data=numpy.sum(data , axis=-1)
+        if isinstance(data, numpy.ndarray):
+            data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
+            data=numpy.sum(data , axis=-1)
         N=N/binning
 
     if ncomponents > N:
@@ -503,15 +502,28 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
                 for j in range(step):
                     print "Training data %d out of %d" % (i+j+1,r)
                 tmpData = data[i:(i+step),:,:]
-                tmpData.shape = step*shape[1], shape[2] 
+                if binning > 1:
+                    tmpData.shape = step*shape[1], shape[2]/binning, binning
+                    tmpData = numpy.sum(tmpData, axis=-1)
+                else:
+                    tmpData.shape = step*shape[1], shape[2] 
                 pca.train(tmpData)
             tmpData = None
             last = i + step
         else:
             last = 0
-        for i in range(last, r):
-            print "Training data %d out of %d" % (i+1,r)
-            pca.train(data[i,:,:])
+        if binning > 1:
+            for i in range(last, r):
+                print "Training data %d out of %d" % (i+1,r)
+                tmpData = data[i,:,:]
+                tmpData.shape = shape[1], shape[2]/binning, binning
+                tmpData = numpy.sum(tmpData, axis=-1)
+                pca.train(tmpData)
+            tmpData = None
+        else:
+            for i in range(last, r):
+                print "Training data %d out of %d" % (i+1,r)
+                pca.train(data[i,:,:])
     else:
         if data.shape[0] > 10000:
             step = 1000
@@ -541,7 +553,13 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
         images = numpy.zeros((ncomponents, r, c), data.dtype)
         for i in range(r):
             print "Building images. Projecting data %d out of %d" % (i+1,r)
-            images[:, i, :] = numpy.dot(proj.astype(data.dtype), data[i,:,:].T)
+            if binning > 1:
+                tmpData = data[i,:,:]
+                tmpData.shape = data.shape[1], data.shape[2]/binning, binning
+                tmpData = numpy.sum(tmpData, axis=-1)
+                images[:, i, :] = numpy.dot(proj.astype(data.dtype), tmpData.T)
+            else:
+                images[:, i, :] = numpy.dot(proj.astype(data.dtype), data[i,:,:].T)
     else:
         images = numpy.dot(proj.astype(data.dtype), data.T)
         if binning == 1:
@@ -575,10 +593,9 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
     #    raise TypeError, "ICA is only supported when using numpy arrays"
 
     if binning > 1:
-        if not isinstance(data, numpy.ndarray):
-            raise TypeError, "Binning is only supported when using numpy arrays"
-        data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
-        data=numpy.sum(data , axis=-1)
+        if isinstance(data, numpy.ndarray):
+            data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
+            data=numpy.sum(data , axis=-1)
         N=N/binning
 
     if ncomponents > N:
@@ -605,16 +622,28 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
                     for i in range(0, last, step):
                         print "Training data from %d to %d out of %d" % (i+1, i+step, r)
                         tmpData = data[i:(i+step),:,:]
-                        tmpData.shape = step*shape[1], shape[2] 
+                        if binning > 1:
+                            tmpData.shape = step*shape[1], shape[2]/binning, binning
+                            tmpData = numpy.sum(tmpData, axis=-1)
+                        else:
+                            tmpData.shape = step*shape[1], shape[2] 
                         ica.train(tmpData)
                     tmpData = None
-                    print "last = ",last
                     last = i + step
                 else:
                     last = 0
-                for i in range(last, r):
-                    print "Training data %d out of %d" % (i+1, r)
-                    ica.train(data[i,:,:])
+                if binning > 1:
+                    for i in range(last, r):
+                        print "Training data %d out of %d" % (i+1,r)
+                        tmpData = data[i,:,:]
+                        tmpData.shape = shape[1], shape[2]/binning, binning
+                        tmpData = numpy.sum(tmpData, axis=-1)
+                        ica.train(tmpData)
+                    tmpData = None
+                else:
+                    for i in range(last, r):
+                        print "Training data %d out of %d" % (i+1, r)
+                        ica.train(data[i,:,:])
             else:
                 if data.shape[0] > 10000:
                     step = 1000
@@ -674,7 +703,13 @@ def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True'):
             images = numpy.zeros((2*ncomponents, r , c), data.dtype)
             for i in range(r):
                 print "Building images. Projecting data %d out of %d" % (i+1,r)
-                tmpData = ica.white.execute(data[i,:,:])
+                if binning > 1:
+                    tmpData = data[i,:,:]
+                    tmpData.shape = data.shape[1], data.shape[2]/binning, binning
+                    tmpData = numpy.sum(tmpData, axis=-1)
+                    tmpData = ica.white.execute(tmpData)
+                else:
+                    tmpData = ica.white.execute(data[i,:,:])
                 images[ncomponents:(2*ncomponents), i, :] =tmpData.T[:,:]
                 images[0:ncomponents, i, :] = numpy.dot(tmpData, ica.filters).T[:,:]
         else:

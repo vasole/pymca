@@ -128,6 +128,38 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
                                Append=1)
     del edfout #force file close
 
+def getHDF5FileInstanceAndBuffer(filename, shape,
+                                 buffername="data",
+                                 dtype=numpy.float32):
+    if not HDF5:
+        raise IOError, 'h5py does not seem to be installed in your system'
+
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+        except:
+            raise IOError, "Cannot overwrite existing file!"
+    hdf = phynx.File(filename, 'a')
+    entryName = "data"
+    nxEntry = hdf.require_group(entryName, type='Entry')
+    nxEntry.require_dataset('title', data = "PyMca saved 3D Array")
+    nxEntry['start_time'] = getDate()
+    nxData = nxEntry.require_group('NXdata', type='Data')
+    data = nxData.require_dataset(buffername,
+                           shape=shape,
+                           dtype=dtype,
+                           chunks=(1, shape[1], shape[2]))
+    data.attrs['signal'] = 1
+    for i in range(len(shape)):
+        dim = numpy.arange(shape[i]).astype(numpy.float32)
+        dset = nxData.require_dataset('dim_%d' % i,
+                               dim.shape,
+                               dim.dtype,
+                               dim,
+                               chunks=dim.shape)
+        dset.attrs['axis'] = i + 1
+    nxEntry['end_time'] = getDate()
+    return hdf, data
 
 def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
     if not HDF5:

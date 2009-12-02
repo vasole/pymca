@@ -31,6 +31,23 @@ import numpy.oldnumeric as Numeric
 import numpy
 import sys
 import os
+HDF5 = False
+try:
+    import h5py
+    import PyMca.phynx as phynx
+    HDF5 = True
+except ImportError:
+    try:
+        import phynx
+        HDF5 = True
+    except ImportError:
+        try:
+            from xpaxs.io import phynx
+            HDF5 = True
+        except ImportError:
+            pass
+        
+
 SOURCE_TYPE = "EdfFileStack"
 DEBUG = 0
 
@@ -296,11 +313,32 @@ class EDFStack(DataObject.DataObject):
                                                        arrRet.shape[0],
                                                        arrRet.shape[1]),
                                                        numpy.float32)
-                                except:
-                                    self.data = numpy.zeros((self.nbFiles,
+                                except MemoryError:
+                                    text = "Memory Error: Attempt subsampling or convert to HDF5"
+                                    if HDF5 and ('PyMcaQt' in sys.modules):
+                                        import PyMcaQt as qt
+                                        import ArraySave
+                                        msg=qt.QMessageBox.information( None,
+                                          "Memory error\n",
+                                          "Do you want to convert your data to HDF5?\n",
+                                          qt.QMessageBox.Yes,qt.QMessageBox.No)
+                                        if msg == qt.QMessageBox.No:
+                                            raise MemoryError, text
+                                        hdf5file = qt.QFileDialog.getSaveFileName(None,
+                                                    "Please select output file name",
+                                                    os.path.dirname(filelist[0]),
+                                                    "HDF5 files *.h5")
+                                        if not len(hdf5file):
+                                            raise IOError, "Invalid output file"
+                                        hdf5file = str(hdf5file)
+                                        if not hdf5file.endswith(".h5"):
+                                            hdf5file += ".h5"
+                                        hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
+                                                      (self.nbFiles,
                                                        arrRet.shape[0],
-                                                       arrRet.shape[1]),
-                                                       numpy.int16)
+                                                       arrRet.shape[1]))               
+                                    else:    
+                                        raise MemoryError, "Memory Error"
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
@@ -324,11 +362,21 @@ class EDFStack(DataObject.DataObject):
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)
             self.info[key] = shape[i]
-        self.info["SourceType"] = SOURCE_TYPE
-        self.info["SourceName"] = self.sourceName
-        self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
-        self.info["NumberOfFiles"] = self.__nFiles * 1
-        self.info["FileIndex"] = fileindex
+        if not isinstance(self.data, numpy.ndarray):
+            hdf.flush()
+            self.info["SourceType"] = "HDF5Stack1D"
+            self.info["McaIndex"] = 2
+            self.info["FileIndex"] = 0
+            self.info["SourceName"] = [hdf5file]
+            self.info["NumberOfFiles"] = 1
+            self.info["Size"]       = 1
+        else:
+            self.info["SourceType"] = SOURCE_TYPE
+            self.info["FileIndex"] = fileindex
+            self.info["SourceName"] = self.sourceName
+            self.info["NumberOfFiles"] = self.__nFiles * 1
+            self.info["Size"] = self.__nFiles * self.__nImagesPerFile
+            
 
     def onBegin(self, n):
         pass
