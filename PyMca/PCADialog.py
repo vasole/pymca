@@ -24,7 +24,8 @@
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
-#############################################################################*/import sys
+#############################################################################*/
+import sys
 import time
 import PyMcaQt as qt
 PCA = False
