@@ -32,7 +32,6 @@ QTVERSION = qt.qVersion()
 MATPLOTLIB = False
 if QTVERSION > '4.0.0':
     import RGBCorrelator
-    from RGBCorrelatorWidget import ImageShapeDialog
     try:
         import QPyMcaMatplotlibSave
         MATPLOTLIB = True
@@ -635,6 +634,9 @@ class MaskImageWidget(qt.QWidget):
     def __applyMaskToImage(self):
         if self.__selectionMask is None:
             return
+        #if not self.__selectionFlag:
+        #    print "Return because of selection flag"
+        #    return
 
         if self.colormap is None:
             if self.__image is not None:

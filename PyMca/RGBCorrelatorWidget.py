@@ -41,6 +41,15 @@ USE_STRING = False
 qt = RGBCorrelatorSlider.qt
 
 QTVERSION = qt.qVersion()
+try:
+    import NNMADialog
+    NNMA = NNMADialog.NNMA
+    import PCADialog
+    PCA = PCADialog.PCA
+except:
+    NNMA = False
+    PCA  = False
+
 DEBUG = 0
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
@@ -196,7 +205,10 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         self.connect(self.calculationButton,
                      qt.SIGNAL("clicked()"),
-                     self.showCalculationDialog)
+                     self._showCalculationDialog)
+        self._calculationMenu = None
+        self.pcaDialog  = None
+        self.nnmaDialog = None
 
         self.connect(self.__imageResizeButton,
                      qt.SIGNAL("clicked()"),
@@ -212,6 +224,25 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.connect(self.buttonGroup,
                      qt.SIGNAL("buttonClicked(int)"),
                      self._colormapTypeChange)
+
+    def _showCalculationDialog(self):
+        if (not NNMA) and (not PCA):
+            return self.showCalculationDialog()
+        if self._calculationMenu is None:
+            self._calculationMenu = qt.QMenu()
+            self._calculationMenu.addAction(qt.QString("Image calculator"),
+                                            self.showCalculationDialog)
+            if PCA:
+                if PCADialog.MDP:
+                    self._calculationMenu.addAction(qt.QString("PCA/ICA Analysis"),
+                                            self.showPCADialog)
+                else:
+                    self._calculationMenu.addAction(qt.QString("PCA Analysis"),
+                                            self.showPCADialog)
+            if NNMA:
+                self._calculationMenu.addAction(qt.QString("NNMA Analysis"),
+                                            self.showNNMADialog)
+        self._calculationMenu.exec_(self.cursor().pos())
 
     def toggleSliders(self):
         if self.sliderWidget.isHidden():
@@ -871,6 +902,52 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.calculationDialog.isHidden():
             self.calculationDialog.show()
         self.calculationDialog.raise_()
+
+    def getSelectedDataList(self):
+        itemList = self.tableWidget.selectedItems()
+        nImages = len(self._imageList)
+        datalist = []
+        for item in itemList:
+            row = item.row()
+            if row >= nImages:
+                errorText = "Requested to work with non existing \nimage number %d." % row
+                qt.QMessageBox.critical(self,"ValueError", errorText)
+                return
+            label = self._imageList[row]
+            datalist.append(self._imageDict[label]['image'])
+        return datalist
+
+    def showPCADialog(self):
+        if self.pcaDialog is None:
+            self.pcaDialog = PCADialog.PCADialog(rgbwidget=self,
+                                                 selection=False)
+            self.pcaDialog.pcaWindow.buildAndConnectImageButtonBox()
+
+        datalist = self.getSelectedDataList()
+        if len(datalist) < 2:
+            errorText = "Please select at least two images"
+            qt.QMessageBox.critical(self,"ValueError", errorText)
+            return
+        
+        self.pcaDialog.setData(datalist)
+        self.pcaDialog.show()
+        self.pcaDialog.raise_()
+
+    def showNNMADialog(self):
+        if self.nnmaDialog is None:
+            self.nnmaDialog = NNMADialog.NNMADialog(rgbwidget=self,
+                                                 selection=False)
+            self.nnmaDialog.nnmaWindow.buildAndConnectImageButtonBox()
+
+        datalist = self.getSelectedDataList()
+        if len(datalist) < 2:
+            errorText = "Please select at least two images"
+            qt.QMessageBox.critical(self,"ValueError", errorText)
+            return
+        
+        self.nnmaDialog.setData(datalist)
+        self.nnmaDialog.show()
+        self.nnmaDialog.raise_()
 
     def addImageSlot(self, ddict):
         self.addImage(ddict['image'], ddict['label'])
