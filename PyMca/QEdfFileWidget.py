@@ -316,6 +316,8 @@ class QEdfFileWidget(qt.QWidget):
         # --- array parameter
         self.__dummyW = qt.QWidget(self.splitter)
         self.__dummyW.layout =qt.QVBoxLayout(self.__dummyW)
+        self.__dummyW.layout.setMargin(0)
+        self.__dummyW.layout.setSpacing(0)
         if not justviewer:
             if not QT4:
                 self.applygroup = qt.QHButtonGroup(self.__dummyW,"")
@@ -344,6 +346,8 @@ class QEdfFileWidget(qt.QWidget):
                 self.applygroup.addButton(self.applytoall, 1)
                 self.applygroup.setExclusive(True)
                 self.applygroupLayout = qt.QHBoxLayout(self.applygroupContainer)
+                self.applygroupLayout.setMargin(0)
+                self.applygroupLayout.setSpacing(0)
                 self.applygroupLayout.addWidget(self.applytoone)
                 self.applygroupLayout.addWidget(self.applytoall)
                 self.__dummyW.layout.addWidget(self.applygroupContainer) 
@@ -370,7 +374,7 @@ class QEdfFileWidget(qt.QWidget):
         self.allImages = 0
         # --- main layout
         self.mainLayout.setMargin(5)
-        self.mainLayout.setSpacing(5)
+        self.mainLayout.setSpacing(2)
 
         #self.mainLayout.addWidget(self.infoBar)
         self.mainLayout.addWidget(self.splitter)
@@ -393,6 +397,8 @@ class QEdfFileWidget(qt.QWidget):
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
+        self.toolBarLayout.setMargin(0)
+        self.toolBarLayout.setMargin(2)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
         self._addToolButton(self.zoomResetIcon,

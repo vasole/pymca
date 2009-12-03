@@ -120,10 +120,10 @@ class SPSMcaArrayWidget(qt.QWidget):
         self.setTitle(title)
         
     def setInfo(self, info):
-        self.setSize(info["rows"], info["cols"])
+        self.setDataSize(info["rows"], info["cols"])
         self.setTitle(info["Key"])
 
-    def setSize(self,rows,cols,selsize=None):
+    def setDataSize(self,rows,cols,selsize=None):
         self.rows= rows
         self.cols= cols
         if self.cols<=self.rows:
@@ -176,10 +176,10 @@ class SPSXiaArrayWidget(qt.QWidget):
         self.title.setText("%s"%title)
 
     def setInfo(self, info):
-        self.setSize(info["rows"], info["cols"], info.get("Detectors", None))
+        self.setDataSize(info["rows"], info["cols"], info.get("Detectors", None))
         self.setTitle(info["Key"])
 
-    def setSize(self, rows, cols, dets=None):
+    def setDataSize(self, rows, cols, dets=None):
         self.rows= rows
         self.cols= cols
 
@@ -231,10 +231,10 @@ class SPS_ImageArray(qt.QWidget):
         self.setTitle(title)
         
     def setInfo(self, info):
-        self.setSize(info["rows"], info["cols"])
+        self.setDataSize(info["rows"], info["cols"])
         self.setTitle(info["Key"])
 
-    def setSize(self,rows,cols,selsize=None):
+    def setDataSize(self,rows,cols,selsize=None):
         self.rows= rows
         self.cols= cols
 
@@ -295,9 +295,9 @@ class SPS_StandardArray(qt.QWidget):
 
         self.connect(self.plotCombo, qt.SIGNAL("activated(int)"), self.__plotChanged)
 
-        self.setSize(rows, cols)
+        self.setDataSize(rows, cols)
 
-    def setSize(self, rows, cols):
+    def setDataSize(self, rows, cols):
         self.rows= rows
         self.cols= cols
 
@@ -476,7 +476,8 @@ class QSpsWidget(qt.QWidget):
 
         # --- command buttons
         butWidget= qt.QWidget(self)
-        butWidget.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Minimum, qt.QSizePolicy.Minimum))
+        butWidget.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Minimum,
+                                               qt.QSizePolicy.Minimum))
         addButton= qt.QPushButton("Add", butWidget)
         removeButton= qt.QPushButton("Remove", butWidget)
         replaceButton= qt.QPushButton("Replace", butWidget)
@@ -647,7 +648,7 @@ class QSpsWidget(qt.QWidget):
         if wid is None:
             arrayType = "ARRAY"
             wid= self.__getParamWidget("array")
-            wid.setSize(info["rows"], info["cols"])
+            wid.setDataSize(info["rows"], info["cols"])
         else:
             arrayType = atype.upper()
 
