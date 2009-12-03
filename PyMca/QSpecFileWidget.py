@@ -744,14 +744,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.emit(qt.SIGNAL("otherSignals"), ddict)
             
 def test():
-    import DataSource
+    import QDataSource
     a = qt.QApplication(sys.argv)
     w = QSpecFileWidget()
     if len(sys.argv) > 1:
-        d = DataSource.DataSource(sys.argv[1])
+        d = QDataSource.QDataSource(sys.argv[1])
     else:
         if os.path.exists('03novs060sum.mca'):
-            d = DataSource.DataSource('03novs060sum.mca')
+            d = QDataSource.QDataSource('03novs060sum.mca')
         else:
             print "Usage:"
             print "      python QSpecFileWidget.py filename"

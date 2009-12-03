@@ -97,7 +97,7 @@ class EdfFile_StandardArray(qt.QWidget):
         self.connect(self.iCombo, qt.SIGNAL("activated(int)"),    self.__iChanged)
         self.setImages(images)
 
-        self.setSize(rows, cols)
+        self.setDataSize(rows, cols)
 
     def setImages(self,images,info=None):
         self.iCombo.clear()
@@ -119,7 +119,7 @@ class EdfFile_StandardArray(qt.QWidget):
             if QT4:self.iCombo.setCurrentIndex(image)
             else:  self.iCombo.setCurrentItem(image)
     
-    def setSize(self, rows, cols):
+    def setDataSize(self, rows, cols):
         self.rows= rows
         self.cols= cols
 
@@ -329,7 +329,8 @@ class QEdfFileWidget(qt.QWidget):
                 self.applygroup.setExclusive(1)
                 self.__dummyW.layout.addWidget(self.applygroup)            
                 if qt.qVersion() > '3.0.0': self.applygroup.setFlat(1)
-                self.applygroup.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.Fixed))
+                self.applygroup.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.MinimumExpanding,
+                                                             qt.QSizePolicy.Fixed))
                 self.connect(self.applygroup,qt.SIGNAL("clicked(int)"),self.groupSignal)
             else:
                 self.applygroupContainer = qt.QWidget(self.__dummyW)
@@ -972,7 +973,7 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.replot()
         wid = self.__getParamWidget('array')
         wid.setImages(1)
-        wid.setSize(0,0)
+        wid.setDataSize(0,0)
 
 
     def setDataSource(self,data=None):
@@ -1046,7 +1047,7 @@ class QEdfFileWidget(qt.QWidget):
                 wid.setImages(nimages,  info = imageinfo)                
             wid.setCurrentImage(self.currentArray)
             #P.B. -> pointer(a,d1,d2,i1,i2) = a+ (i1+i2 * d1) 
-            wid.setSize(int(info["Dim_2"]), int(info["Dim_1"]))
+            wid.setDataSize(int(info["Dim_2"]), int(info["Dim_1"]))
             if DEBUG:
                 print "Image size = ",info["Dim_2"],"x",info["Dim_1"]
                 print "data  size = ",Numeric.shape(data) 
