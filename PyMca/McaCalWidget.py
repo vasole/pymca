@@ -45,6 +45,8 @@ if 0:
 import copy
 DEBUG = 0
 
+LOW_HEIGHT_THRESHOLD = 660
+
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
@@ -144,8 +146,11 @@ class McaCalWidget(qt.QDialog):
         #The calibration Widget
         self.bottomPanel = qt.QWidget(self.container)
         self.bottomPanel.layout = qt.QHBoxLayout(self.bottomPanel)
-        self.bottomPanel.layout.setSpacing(0)
-        self.bottomPanel.layout.setMargin(10)
+        self.bottomPanel.layout.setSpacing(6)
+        if qt.QDesktopWidget().height() < LOW_HEIGHT_THRESHOLD:
+            self.bottomPanel.layout.setMargin(2)
+        else:
+            self.bottomPanel.layout.setMargin(10)
         self.peakpar        = PeakSearchParameters(self.bottomPanel)
         self.bottomPanel.layout.addWidget(self.peakpar)
         """
@@ -910,6 +915,13 @@ class PeakSearchParameters(qt.QWidget):
                 parw= qt.QWidget(parf)
             else:
                 layout= qt.QVBoxLayout(self)
+                if qt.QDesktopWidget().height() < LOW_HEIGHT_THRESHOLD:
+                    lowHeight = True
+                else:
+                    lowHeight = False
+                if lowHeight:
+                    layout.setMargin(0)
+                    layout.setSpacing(0)
 
             # --- parameters
                 parf= qt.QGroupBox(self)
@@ -927,6 +939,9 @@ class PeakSearchParameters(qt.QWidget):
                 grid= qt.QGridLayout(parw, 3, 3)
         else:
             grid= qt.QGridLayout(parw)
+            if lowHeight:
+                grid.setMargin(0)
+                grid.setSpacing(2)
         lab= qt.QLabel("Sensitivity", parw)
         grid.addWidget(lab, 0, 0, qt.Qt.AlignLeft)
         lab= qt.QLabel("Fwhm (pts)", parw)
@@ -1016,6 +1031,8 @@ class CalibrationParameters(qt.QWidget):
         
     def build(self):
         layout= qt.QHBoxLayout(self)
+        if qt.QDesktopWidget().height() < LOW_HEIGHT_THRESHOLD:
+            layout.setMargin(0)
         parw = self
         
         lab= qt.QLabel("Order:", parw)
