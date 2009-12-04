@@ -610,6 +610,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         self._logY = False
+        self._logX = False
         self._buildToolBar()
         self._buildGraph()
         self.scanWindowInfoWidget = ScanWindowInfoWidget.\
@@ -662,6 +663,17 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         else:
             self.yLogButton.setChecked(False)
             self.yLogButton.setDown(False)
+
+        #x Logarithmic
+        self.xLogButton = self._addToolButton(self.logxIcon,
+                            self._toggleLogX,
+                            'Toggle Logarithmic X Axis (On/Off)',
+                            toggle = True)
+        if QTVERSION < '4.0.0':
+            self.xLogButton.setState(qt.QButton.Off)
+        else:
+            self.xLogButton.setChecked(False)
+            self.xLogButton.setDown(False)
 
         #toggle Points/Lines
         tb = self._addToolButton(self.togglePointsIcon,
@@ -1259,6 +1271,36 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
         self.graph.clearCurves()    
         self.graph.toggleLogY()
+
+        sellist = []
+        i = 0
+        for key in self.dataObjectsList:
+            if key in self.dataObjectsDict.keys():
+                sel ={}
+                sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
+                sel['dataobject'] = self.dataObjectsDict[key]
+                sel['Key'] = self.dataObjectsDict[key].info['Key']
+                if self.dataObjectsDict[key].info.has_key('selectionlegend'):
+                    sel['legend'] = self.dataObjectsDict[key].info['selectionlegend']
+                else:
+                    sel['legend'] = self.dataObjectsDict[key].info['legend']
+                sel['scanselection'] = True
+                sel['selection'] = self.dataObjectsDict[key].info['selection']
+                sellist.append(sel)
+            i += 1
+        self._addSelection(sellist, replot=False)
+        self.graph.setactivecurve(activecurve)
+
+    def _toggleLogX(self):
+        if DEBUG:print "_toggleLogX"
+        if self._logX:
+            self._logX = False
+        else:
+            self._logX = True
+        activecurve = self.graph.getActiveCurve(justlegend=1)
+
+        self.graph.clearCurves()    
+        self.graph.toggleLogX()
 
         sellist = []
         i = 0

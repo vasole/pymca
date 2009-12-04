@@ -493,6 +493,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.connect(self, qt.SIGNAL("legendClicked(QwtPlotItem *)"), self._legendClicked)
             
         #replot
+        self.__logx1 = 0
         self.__logy1 = 0
         self.__logy2 = 0
         #self.plotimage()
@@ -683,6 +684,45 @@ class QtBlissGraph(qwt.QwtPlot):
         if self.checky1scale() or self.checky2scale():
             self.replot()
             
+    def toggleLogX(self):
+        if self.__logx1: 
+            #get the current limits
+            if QWTVERSION4:
+                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
+                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
+                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
+                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
+            else:
+                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            self.__logx1 =0
+            if self.xAutoScale:
+                self.setAxisAutoScale(qwt.QwtPlot.xBottom)
+            self.setAxisScaleEngine(Qwt.QwtPlot.xBottom, Qwt.QwtLinearScaleEngine())
+        else:
+            #get current margins
+            #get the current limits
+            if QWTVERSION4:
+                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
+                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
+                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
+                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
+            else:
+                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            self.__logx1 =1
+            self.enableAxis(qwt.QwtPlot.xBottom)
+            if self.xAutoScale:
+                self.setAxisAutoScale(qwt.QwtPlot.xBottom)
+            self.setAxisScaleEngine(Qwt.QwtPlot.xBottom, Qwt.QwtLog10ScaleEngine())
+        self.replot()
+        if self.checky1scale() or self.checky2scale():
+            self.replot()
+
     def zoomReset(self):
         if self.yAutoScale:
             self.setAxisAutoScale(qwt.QwtPlot.yLeft) 
@@ -2427,6 +2467,11 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def setX1AxisLimits(self, xmin, xmax, replot=None):
         if replot is None: replot = True
+        if self.__logx1:
+            if xmin <= 0:
+                xmin = 1
+            if xmax <= 0:
+                xmax = xmin+1
         self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
         if replot:self.replot()
 
