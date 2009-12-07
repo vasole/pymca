@@ -1469,6 +1469,7 @@ class QtBlissGraph(qwt.QwtPlot):
             brush = symbol.brush()
             brush.setColor(pen.color())
             symbol.setBrush(brush)
+            curve.setSymbol(symbol)
 
     def toggleLine(self, key):
         if QWTVERSION4:return
