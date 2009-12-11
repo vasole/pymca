@@ -1,7 +1,7 @@
 __doc__= "Generate specfile from EPL97 total cross sections in keV and barn" 
 import os
 import sys
-import EPDLParser
+import EPDL97Parser as EPDLParser
 Elements = EPDLParser.Elements
 AVOGADRO_NUMBER = EPDLParser.AVOGADRO_NUMBER
 import numpy

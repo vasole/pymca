@@ -1,4 +1,5 @@
 import sys
+import os
 __doc__ =\
 """
 The 1997 release of the Evaluated Photon Data Library (EPDL97)
@@ -184,7 +185,7 @@ DEBUG = 0
 AVOGADRO_NUMBER = 6.02214179E23
 
 #Read the EPDL library
-EPDL = 'EPDL97.DAT'
+EPDL = os.path.join(os.path.dirname(__file__),'EPDL97.DAT')
 infile = open(EPDL, 'rb')
 EPDL97_DATA = infile.read()
 infile.close()

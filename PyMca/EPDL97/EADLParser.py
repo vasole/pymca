@@ -1,4 +1,5 @@
 import sys
+import os
 __doc__ =\
 """
 The 1997 release of the Evaluated Atomic Data Library (EADL97)
@@ -147,7 +148,7 @@ Elements = ['H', 'He',
             'Bh', 'Hs', 'Mt']
 
 #Read the EPDL library
-EADL = 'EADL.DAT'
+EADL = os.path.join(os.path.dirname(__file__),'EADL.DAT')
 infile = open(EADL, 'rb')
 EADL97_DATA = infile.read()
 infile.close()
