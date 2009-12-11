@@ -70,6 +70,11 @@ data_files = [('PyMca', ['LICENSE.GPL',
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
               ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
 
+if os.path.exists(os.path.join("PyMca", "EPDL97")):
+    data_files.append(('PyMca/EPDL97',glob.glob('PyMca/EPDL97/*.py')))
+    data_files.append(('PyMca/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
+    data_files.append(('PyMca/EPDL97',['PyMca/EPDL97/LICENSE']))
+
 LOCAL_PHYNX =False
 if os.path.exists(os.path.join("PyMca", "phynx")):
     LOCAL_PHYNX = True
@@ -188,8 +193,6 @@ def build_Object3DQhull(ext_modules):
                         include_dirs = [numpy.get_include()])
 
     ext_modules.append(module)
-
-
 
 ext_modules = []
 build_FastEdf(ext_modules)
