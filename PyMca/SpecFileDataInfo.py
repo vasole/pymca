@@ -55,6 +55,13 @@ else:
                 else:
                     item.setText(text)
 
+    class SpecFileDataInfoCustomEvent(qt.QEvent):
+        def __init__(self, ddict):
+            if ddict is None:
+                ddict = {}
+            self.dict = ddict
+            qt.QEvent.__init__(self, qt.QEvent.User)
+
     
 import string
 
@@ -81,6 +88,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         else:
             qt.QTabWidget.__init__(self, parent)
             if name is not None:self.setWindowTitle(name)
+            self._notifyCloseEventToWidget = []
         self.info= info
         self.__createInfoTable()
         self.__createMotorTable()
@@ -91,7 +99,11 @@ class SpecFileDataInfo(qt.QTabWidget):
     if QTVERSION > '4.0.0':
         def sizeHint(self):
             return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
-                            3 * qt.QTabWidget.sizeHint(self).height())                            
+                            3 * qt.QTabWidget.sizeHint(self).height())
+
+        def notifyCloseEventToWidget(self, widget):
+            if widget not in self._notifyCloseEventToWidget:
+                self._notifyCloseEventToWidget.append(widget)
 
     def __createInfoTable(self):
         pars= [ par for par in self.InfoTableItems if par[0] in self.info.keys() ]
@@ -210,9 +222,14 @@ class SpecFileDataInfo(qt.QTabWidget):
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("SpecFileDataInfoSignal"), (ddict,))
         else:
-            self.emit(qt.SIGNAL("SpecFileDataInfoSignal"),ddict)
-        qt.QTabWidget.closeEvent(self, event)
-
+            #self.emit(qt.SIGNAL("SpecFileDataInfoSignal"),ddict)
+            if len(self._notifyCloseEventToWidget):
+                for widget in self._notifyCloseEventToWidget:
+                    newEvent = SpecFileDataInfoCustomEvent(ddict)
+                    qt.QApplication.postEvent(widget,
+                                          newEvent)
+                self._notifyCloseEventToWidget = []
+        return qt.QTabWidget.closeEvent(self, event)
 
 def test():
     import SpecFileLayer

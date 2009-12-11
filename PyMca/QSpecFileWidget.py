@@ -528,13 +528,16 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                      qt.PYSIGNAL('SpecFileDataInfoSignal'),
                      self._dataInfoClosed)
         else:
-            self.connect(dataInfoWidget,
-                     qt.SIGNAL('SpecFileDataInfoSignal'),
-                     self._dataInfoClosed)
+            dataInfoWidget.notifyCloseEventToWidget(self)
 
     def _dataInfoClosed(self, ddict):
         if ddict['event'] == "SpecFileDataInfoClosed":
             del self.dataInfoWidgetDict[ddict['id']]
+
+    def customEvent(self, event):
+        if hasattr(event, 'dict'):
+            ddict = event.dict
+            self._dataInfoClosed(ddict)
 
     def _addClicked(self):
         if DEBUG: print "Overwritten _addClicked method"
@@ -742,7 +745,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
         else:
             self.emit(qt.SIGNAL("otherSignals"), ddict)
-            
+
 def test():
     import QDataSource
     a = qt.QApplication(sys.argv)
