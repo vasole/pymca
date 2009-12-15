@@ -708,6 +708,7 @@ def getFluorescenceYields(z, lines=None):
         lines = EADL97_DATA
     radiative_dict = getRadiativeWidths(z, lines)
     nonradiative_dict = getNonradiativeWidths(z, lines)
+    ddict={}
     for key in radiative_dict.keys():
         x = radiative_dict[key]
         a = nonradiative_dict[key]
@@ -752,9 +753,9 @@ def getLShellCosterKronigYields(z, lines=None):
     ddict['f13'] = 0.0
     ddict['f23'] = 0.0
     for i in range(2):
-        shell = '%d' % i 
+        shell = 'L%d' % (i+1) 
         try:
-            ddict.update(getCosterKronigYields, shell=shell)
+            ddict.update(getCosterKronigYields(z, shell=shell))
         except IOError:
             pass
     return ddict
