@@ -1,3 +1,9 @@
+#F LShellConstants.dat
+#U00 Reference:
+#U01 M.H. Chen, B. Crasemann, H. Mark 
+#U02 Widths and fluorescence yields of atomic L-shell vacancy states
+#U03 Physical Review A volume 25 number 1 (1981) 177-182.
+#U04 Widths are given in eV
 
 #S 1 L1 x-ray data
 #N 6
@@ -111,6 +117,7 @@
 107  2.534  17.536  0.047  0.593  0.216  
 108  2.534  17.536  0.047  0.593  0.216  
 109  2.534  17.536  0.047  0.593  0.216  
+
 #S 2 L2 x-ray data
 #N 5
 #L Z  gammaAL2  gammaL2  f23  omegaL2
@@ -223,6 +230,7 @@
 107  3.168  12.118  0.199  0.539  
 108  3.168  12.118  0.199  0.539  
 109  3.168  12.118  0.199  0.539  
+
 #S 3 L3 x-ray data
 #N 4
 #L Z  gammaAL3  gammaL3  omegaL3
