@@ -1451,26 +1451,18 @@ class QtBlissGraph(qwt.QwtPlot):
                 #newsymbol = qwt.QwtSymbol.XCross  # good
                 #newsymbol = qwt.QwtSymbol.Cross   # good
                 newsymbol = qwt.QwtSymbol.Ellipse  # good (at least on windows)
-            if True:                               # good (at least on windows)
-                newsymbol = qwt.QwtSymbol(newsymbol,
-                                      qt.QBrush(pen.color()),
-                                      pen,
-                                      qt.QSize(5, 5))
-                curve.setSymbol(newsymbol)
-            else:
-                symbol.setStyle(newsymbol)
-                brush = symbol.brush()
-                brush.setColor(pen.color())
-                symbol.setBrush(brush)
+            newsymbol = qwt.QwtSymbol(newsymbol,
+                                  qt.QBrush(pen.color()),
+                                  pen,
+                                  qt.QSize(5, 5))
         else:
             newsymbol = self.symbols['none']
-            symbol.setStyle(newsymbol)
-            symbol.setPen(pen)
-            brush = symbol.brush()
-            brush.setColor(pen.color())
-            symbol.setBrush(brush)
-            curve.setSymbol(symbol)
-
+            newsymbol = qwt.QwtSymbol(newsymbol,
+                                  qt.QBrush(pen.color()),
+                                  pen,
+                                  qt.QSize(5, 5))
+        curve.setSymbol(newsymbol)
+                
     def toggleLine(self, key):
         if QWTVERSION4:return
         if key not in self.curves.keys():
