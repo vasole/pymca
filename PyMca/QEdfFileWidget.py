@@ -46,6 +46,7 @@ import ColormapDialog
 import PyMcaPrintPreview
 import ArraySave
 import PyMcaDirs
+import SpecFileDataInfo
 
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
@@ -354,6 +355,7 @@ class QEdfFileWidget(qt.QWidget):
                 self.connect(self.applygroup,qt.SIGNAL("buttonClicked(int)"),
                              self.groupSignal)
 
+        self.dataInfoWidgetDict = {}
         self.paramWidget = EdfFile_StandardArray(self.__dummyW)
         self.__dummyW.layout.addWidget(self.paramWidget)
         if QTVERSION < '4.0.0':
@@ -389,11 +391,17 @@ class QEdfFileWidget(qt.QWidget):
             self.zoomResetIcon	= qt.QIconSet(qt.QPixmap(IconDict["zoomreset"]))
             self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
             self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
+            self.infoIcon = None
         else:
             self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
             self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
             self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
-            self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
+            self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
+            try:
+                self.infoIcon	= qt.QApplication.style().\
+                                  standardIcon(qt.QStyle.SP_MessageBoxInformation)
+            except:
+                self.infoIcon = None
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
@@ -410,6 +418,11 @@ class QEdfFileWidget(qt.QWidget):
                             self.selectColormap,
                             'Color-Scale the Graph')
         
+        #info
+        if self.infoIcon is not None:
+            self._addToolButton(self.infoIcon,
+                             self._showInformation,
+                            'Show source information')
 
         #save
         if MATPLOTLIB:
@@ -453,6 +466,34 @@ class QEdfFileWidget(qt.QWidget):
         self.toolBarLayout.addWidget(tb)
         self.connect(tb,qt.SIGNAL('clicked()'), action)
         return tb
+
+    def _showInformation(self):
+        if (self.data is None) or \
+           (self.currentArray is None):
+            qt.QMessageBox.information(self, "No data",\
+                                       "No information to be shown")
+
+        #this is not very efficient because it could be cached
+        #while this implies a new reading
+        infoSource= self.data.getSourceInfo()
+        dataObject = self.data.getDataObject(infoSource['KeyList']\
+                                             [self.currentArray])
+        info = dataObject.info
+        infoWidget = SpecFileDataInfo.SpecFileDataInfo(info, parent=None)
+        infoWidget.show()
+        infoWidget.notifyCloseEventToWidget(self)
+        self.dataInfoWidgetDict[id(infoWidget)] = infoWidget
+
+    def _dataInfoClosed(self, ddict):
+        if ddict['event'] == "SpecFileDataInfoClosed":
+            key = ddict['id']
+            if self.dataInfoWidgetDict.has_key(key):
+                del self.dataInfoWidgetDict[key]
+
+    def customEvent(self, event):
+        if hasattr(event, 'dict'):
+            ddict = event.dict
+            self._dataInfoClosed(ddict)
 
     def _zoomReset(self):
         if DEBUG:print "_zoomReset"

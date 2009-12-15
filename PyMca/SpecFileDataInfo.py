@@ -154,10 +154,27 @@ class SpecFileDataInfo(qt.QTabWidget):
                 table.setRowHeight(row, rheight)
 
     def __createMotorTable(self):
-        names= self.info.get("MotorNames", None)
-        pos= self.info.get("MotorValues", None)
+        nameKeys = ["MotorNames", "motor_mne"]
+        for key in nameKeys:
+            names= self.info.get(key, None)
+            if names is not None:
+                if key != nameKeys[0]:
+                    #EDF like ...
+                    names = names.split()
+                break
+        valKeys = ["MotorValues", "motor_pos"] 
+        for key in valKeys:
+            pos= self.info.get(key, None)
+            if pos is not None:
+                if key != valKeys[0]:
+                    #EDF like ...
+                    pos = pos.split()
+                break
         if names is not None and pos is not None:
             num= len(names)
+            if num != len(pos):
+                print "Incorrent number of labels or values"
+                return
             if num:
                 table= self.__createTable(num, "Motor", "Position")
                 for idx in range(num):
@@ -167,10 +184,27 @@ class SpecFileDataInfo(qt.QTabWidget):
                 self.addTab(table, "Motors")
 
     def __createCounterTable(self):
-        cnts= self.info.get("LabelNames", None)
-        vals= self.info.get("LabelValues", None)
+        nameKeys = ["LabelNames", "counter_mne"] 
+        for key in nameKeys:
+            cnts= self.info.get(key, None)
+            if cnts is not None:
+                if key != nameKeys[0]:
+                    #EDF like ...
+                    cnts = cnts.split()
+                break
+        valKeys = ["LabelValues", "counter_pos"] 
+        for key in valKeys:
+            vals= self.info.get(key, None)
+            if vals is not None:
+                if key != valKeys[0]:
+                    #EDF like ...
+                    vals = vals.split()
+                break
         if cnts is not None and vals is not None:
             num= len(cnts)
+            if num != len(vals):
+                print "Incorrent number of labels or values"
+                return                
             if num:
                 table= self.__createTable(num, "Counter", "Value")
                 for idx in range(num):
