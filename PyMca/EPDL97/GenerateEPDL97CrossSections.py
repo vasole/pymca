@@ -253,7 +253,11 @@ for i in range(1, 101):
         d = 0.0
         for l in photo_label_list:
             a = photo_dict[l]['value'][n] * factor
-            line += " %.6E" % a
+            #this tiny modification saves 20 Mbytes ...
+            if a > 0.0:
+                line += " %.6E" % a
+            else:
+                line += " 0." % a
             d += a
         line += " %.6E %.6E\n" % (photo[n]-d, total[n])       
         outfile.write(line)
