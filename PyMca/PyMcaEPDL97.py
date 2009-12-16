@@ -27,7 +27,11 @@
 __doc__= "Interface to the PyMca EPDL97 description" 
 import os
 import sys
-from PyMca import specfile
+try:
+    from PyMca import specfile
+except ImportError:
+    print "Importing specfile from local directory"
+    import specfile
 import numpy
 #import copy
 log = numpy.log

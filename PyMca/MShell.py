@@ -60,6 +60,23 @@ ElementM4ShellValues = Numeric.transpose(sf[3].data()).tolist()
 ElementM5ShellValues = Numeric.transpose(sf[4].data()).tolist()
 sf=None
 
+EADL97 = False
+fname = os.path.join(dirname, "EADL97_MShellConstants.dat")
+if os.path.exists(fname):
+    sf = specfile.Specfile(fname)
+    EADL97_ElementM1ShellConstants = sf[0].alllabels()
+    EADL97_ElementM2ShellConstants = sf[1].alllabels()
+    EADL97_ElementM3ShellConstants = sf[2].alllabels()
+    EADL97_ElementM4ShellConstants = sf[3].alllabels()
+    EADL97_ElementM5ShellConstants = sf[4].alllabels()
+    EADL97_ElementM1ShellValues = Numeric.transpose(sf[0].data()).tolist()
+    EADL97_ElementM2ShellValues = Numeric.transpose(sf[1].data()).tolist()
+    EADL97_ElementM3ShellValues = Numeric.transpose(sf[2].data()).tolist()
+    EADL97_ElementM4ShellValues = Numeric.transpose(sf[3].data()).tolist()
+    EADL97_ElementM5ShellValues = Numeric.transpose(sf[4].data()).tolist()
+    EADL97 = True
+    sf = None
+
 
 Elements = ['H', 'He', 
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
@@ -85,23 +102,43 @@ def getz(ele):
 #fluorescence yields
 def getomegam1(ele):
     index = ElementM1ShellConstants.index('omegaM1')
-    return ElementM1ShellValues[getz(ele)-1][index]
+    value = ElementM1ShellValues[getz(ele)-1][index]
+    if (value <= 0.0) and EADL97:
+        index = EADL97_ElementM1ShellConstants.index('omegaM1')
+        value = EADL97_ElementM1ShellValues[getz(ele)-1][index]
+    return value
 
 def getomegam2(ele):
     index = ElementM2ShellConstants.index('omegaM2')
-    return ElementM2ShellValues[getz(ele)-1][index]
+    value = ElementM2ShellValues[getz(ele)-1][index]
+    if (value <= 0.0) and EADL97:
+        index = EADL97_ElementM2ShellConstants.index('omegaM2')
+        value = EADL97_ElementM2ShellValues[getz(ele)-1][index]
+    return value
 
 def getomegam3(ele):
     index = ElementM3ShellConstants.index('omegaM3')
-    return ElementM3ShellValues[getz(ele)-1][index]
+    value = ElementM3ShellValues[getz(ele)-1][index]
+    if (value <= 0.0) and EADL97:
+        index = EADL97_ElementM3ShellConstants.index('omegaM3')
+        value = EADL97_ElementM3ShellValues[getz(ele)-1][index]
+    return value
 
 def getomegam4(ele):
     index = ElementM4ShellConstants.index('omegaM4')
-    return ElementM4ShellValues[getz(ele)-1][index]
+    value = ElementM4ShellValues[getz(ele)-1][index]
+    if (value <= 0.0) and EADL97:
+        index = EADL97_ElementM4ShellConstants.index('omegaM4')
+        value = EADL97_ElementM4ShellValues[getz(ele)-1][index]
+    return value
 
 def getomegam5(ele):
     index = ElementM5ShellConstants.index('omegaM5')
-    return ElementM5ShellValues[getz(ele)-1][index]
+    value = ElementM5ShellValues[getz(ele)-1][index]
+    if (value <= 0.0) and EADL97:
+        index = EADL97_ElementM5ShellConstants.index('omegaM5')
+        value = EADL97_ElementM5ShellValues[getz(ele)-1][index]
+    return value
 
 #Coster Kronig transitions
 def getCosterKronig(ele):
@@ -114,16 +151,33 @@ def getCosterKronig(ele):
         if   t in ElementM1ShellConstants:
              index   = ElementM1ShellConstants.index(t)
              ck[t]   = ElementM1ShellValues[getz(ele)-1][index]
+             if (ck[t] <= 0.0) and EADL97:
+                 #try to extend with EADL97 values
+                 index   = EADL97_ElementM1ShellConstants.index(t)
+                 ck[t]   = EADL97_ElementM1ShellValues[getz(ele)-1][index]
         elif t in ElementM2ShellConstants:
              index   = ElementM2ShellConstants.index(t)
              ck[t]   = ElementM2ShellValues[getz(ele)-1][index]
+             if (ck[t] <= 0.0) and EADL97:
+                 #try to extend with EADL97 values
+                 index   = EADL97_ElementM2ShellConstants.index(t)
+                 ck[t]   = EADL97_ElementM2ShellValues[getz(ele)-1][index]
         elif t in ElementM3ShellConstants:
              index   = ElementM3ShellConstants.index(t)
              ck[t]   = ElementM3ShellValues[getz(ele)-1][index]
+             if (ck[t] <= 0.0) and EADL97:
+                 #try to extend with EADL97 values
+                 index   = EADL97_ElementM3ShellConstants.index(t)
+                 ck[t]   = EADL97_ElementM3ShellValues[getz(ele)-1][index]
         elif t in ElementM4ShellConstants:
              index   = ElementM4ShellConstants.index(t)
              ck[t]   = ElementM4ShellValues[getz(ele)-1][index]
-        else: print "%s not in M-Shell Coster-Kronig transitions" % t
+             if (ck[t] <= 0.0) and EADL97:
+                 #try to extend with EADL97 values
+                 index   = EADL97_ElementM4ShellConstants.index(t)
+                 ck[t]   = EADL97_ElementM4ShellValues[getz(ele)-1][index]
+        else:
+            print "%s not in M-Shell Coster-Kronig transitions" % t
     return ck
 
 #Jump ratios following Veigele: Atomic Data Tables 5 (1973) 51-111. p 54 and 55

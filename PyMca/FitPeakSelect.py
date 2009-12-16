@@ -340,11 +340,14 @@ class FitPeakSelect(qt.QWidget):
 
     def setPeaksDisabled(self,symbol):
         z = self.__getZ(symbol)
-        if   z > 66:
+        if (z > 47) and (Elements.getomegam5('Cd') > 0.0):
+            #we have data available to support that
+            disabled = []
+        elif z > 66:
             #self.peaks.setDisabled(['Ka','Kb'])
             #disabled = ['Ka','Kb']
             disabled = []
-        elif z > 24:
+        elif z > 17:
             #self.peaks.setDisabled(['Ka','Kb','M'])
             #disabled = ['Ka','Kb','M']
             disabled = ['M']
@@ -356,7 +359,7 @@ class FitPeakSelect(qt.QWidget):
             #self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
             #disabled = ['Ka','Kb','L','L1','L2','L3','M']
             disabled = ['Ka', 'Kb','L','L1','L2','L3','M']
-        
+
         ele = symbol
         if self.energyValue is not None:
             for peak in ['K', 'Ka', 'Kb', 'L','L1','L2','L3','M']:
