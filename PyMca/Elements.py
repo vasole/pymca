@@ -1,5 +1,5 @@
 ﻿#/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -41,6 +41,7 @@ import types
 import ConfigDict
 import CoherentScattering
 import IncoherentScattering
+import PyMcaEPDL97
 
 """ 
 Constant                     Symbol      2006 CODATA value      Relative uncertainty 
@@ -430,8 +431,6 @@ def getMJumpWeight(ele,excitedshells=[1.0,1.0,1.0,1.0,1.0]):
             wjump[i] = 0.0
     return wjump
 
-
-
 def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
     #shellist = ['M1', 'M2', 'M3', 'M4', 'M5']
     # or ['L1', 'L2', 'L3']
@@ -448,7 +447,20 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
     else:
         elework = ele
         element = ele
-    if totals:
+    if totals and (energy < 1.0):
+        raise ValueError, "Incompatible combination"
+    elif (energy < 1.0):
+        #make sure the binding energies are correct
+        if PyMcaEPDL97.EPDL97_DICT[ele]['original']:
+            #make sure the binding energies are those used by this module and not EADL ones
+            PyMcaEPDL97.setElementBindingEnergies(ele,
+                                                  Element[ele]['binding'])
+        return PyMcaEPDL97.getPhotoelectricWeights(ele,
+                                                   shelllist,
+                                                   energy,
+                                                   normalize=normalize,
+                                                   totals=False)
+    elif totals:
         totalPhoto = []
     logf = Numeric.log
     expf = Numeric.exp
@@ -2198,6 +2210,17 @@ def getmassattcoef(compound,energy=None):
             energy =[energy]
         eneindex = 0
         for ene in energy:
+            if ene < 1.0:
+                if PyMcaEPDL97.EPDL97_DICT[ele]['original']:
+                    #make sure the binding energies are those used by this module and not EADL ones
+                    PyMcaEPDL97.setElementBindingEnergies(ele,
+                                                          Element[ele]['binding'])
+                tmpDict = PyMcaEPDL97.getElementCrossSections(ele, ene)
+                cohe  = tmpDict['coherent']
+                comp  = tmpDict['compton']
+                photo = tmpDict['photo']
+                pair  = 0.0
+            else:
                 i0=max(Numeric.nonzero((xcom_data['energy'] <= ene)))
                 i1=min(Numeric.nonzero((xcom_data['energy'] >= ene)))
                 if (i1 == i0) or (i0>i1):
@@ -2232,20 +2255,20 @@ def getmassattcoef(compound,energy=None):
                             pair =0.0
                     else:
                         pair =0.0
-                if eltindex == 0:
-                    dict['energy'].append(ene)
-                    dict['coherent'].append(cohe *fraction[eltindex])
-                    dict['compton'].append(comp *fraction[eltindex])
-                    dict['photo'].append(photo *fraction[eltindex])
-                    dict['pair'].append(pair*fraction[eltindex])
-                    dict['total'].append((cohe+comp+photo+pair)*fraction[eltindex])
-                else:
-                    dict['coherent'][eneindex] += cohe  *fraction[eltindex]
-                    dict['compton'] [eneindex] += comp  *fraction[eltindex]
-                    dict['photo']   [eneindex] += photo *fraction[eltindex]
-                    dict['pair']    [eneindex] += pair  *fraction[eltindex]
-                    dict['total']   [eneindex] += (cohe+comp+photo+pair) * fraction[eltindex]
-                eneindex += 1
+            if eltindex == 0:
+                dict['energy'].append(ene)
+                dict['coherent'].append(cohe *fraction[eltindex])
+                dict['compton'].append(comp *fraction[eltindex])
+                dict['photo'].append(photo *fraction[eltindex])
+                dict['pair'].append(pair*fraction[eltindex])
+                dict['total'].append((cohe+comp+photo+pair)*fraction[eltindex])
+            else:
+                dict['coherent'][eneindex] += cohe  *fraction[eltindex]
+                dict['compton'] [eneindex] += comp  *fraction[eltindex]
+                dict['photo']   [eneindex] += photo *fraction[eltindex]
+                dict['pair']    [eneindex] += pair  *fraction[eltindex]
+                dict['total']   [eneindex] += (cohe+comp+photo+pair) * fraction[eltindex]
+            eneindex += 1
         eltindex += 1    
     return dict                                                          
 
@@ -2425,6 +2448,17 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
             energy =[energy]
         eneindex = 0
         for ene in energy:
+            if ene < 1.0:
+                if PyMcaEPDL97.EPDL97_DICT[ele]['original']:
+                    #make sure the binding energies are those used by this module and not EADL ones
+                    PyMcaEPDL97.setElementBindingEnergies(ele,
+                                                          Element[ele]['binding'])
+                tmpDict = PyMcaEPDL97.getElementCrossSections(ele, ene)
+                cohe  = tmpDict['coherent']
+                comp  = tmpDict['compton']
+                photo = tmpDict['photo']
+                pair  = 0.0
+            else:
                 i0=max(Numeric.nonzero((xcom_data['energy'] <= ene)))
                 i1=min(Numeric.nonzero((xcom_data['energy'] >= ene)))
                 if (i1 == i0) or (i0>i1):
@@ -2459,20 +2493,20 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                             pair =0.0
                     else:
                         pair =0.0
-                if eltindex == 0:
-                    dict['energy'].append(ene)
-                    dict['coherent'].append(cohe * materialElements[ele])
-                    dict['compton'].append(comp * materialElements[ele])
-                    dict['photo'].append(photo * materialElements[ele])
-                    dict['pair'].append(pair* materialElements[ele])
-                    dict['total'].append((cohe+comp+photo+pair)* materialElements[ele])
-                else:
-                    dict['coherent'][eneindex] += cohe  * materialElements[ele]
-                    dict['compton'] [eneindex] += comp  * materialElements[ele]
-                    dict['photo']   [eneindex] += photo * materialElements[ele]
-                    dict['pair']    [eneindex] += pair  * materialElements[ele]
-                    dict['total']   [eneindex] += (cohe+comp+photo+pair) *  materialElements[ele]
-                eneindex += 1
+            if eltindex == 0:
+                dict['energy'].append(ene)
+                dict['coherent'].append(cohe * materialElements[ele])
+                dict['compton'].append(comp * materialElements[ele])
+                dict['photo'].append(photo * materialElements[ele])
+                dict['pair'].append(pair* materialElements[ele])
+                dict['total'].append((cohe+comp+photo+pair)* materialElements[ele])
+            else:
+                dict['coherent'][eneindex] += cohe  * materialElements[ele]
+                dict['compton'] [eneindex] += comp  * materialElements[ele]
+                dict['photo']   [eneindex] += photo * materialElements[ele]
+                dict['pair']    [eneindex] += pair  * materialElements[ele]
+                dict['total']   [eneindex] += (cohe+comp+photo+pair) *  materialElements[ele]
+            eneindex += 1
         eltindex += 1    
     return dict
 
@@ -2682,6 +2716,17 @@ def getelementmassattcoef(ele,energy=None):
     if (type(energy) != type([])):
         energy =[energy]
     for ene in energy:
+        if ene < 1.0:
+            if PyMcaEPDL97.EPDL97_DICT[ele]['original']:
+                #make sure the binding energies are those used by this module and not EADL ones
+                PyMcaEPDL97.setElementBindingEnergies(ele,
+                                                      Element[ele]['binding'])
+            tmpDict = PyMcaEPDL97.getElementCrossSections(ele, ene)
+            cohe  = tmpDict['coherent']
+            comp  = tmpDict['compton']
+            photo = tmpDict['photo']
+            pair  = 0.0
+        else:
             i0=max(Numeric.nonzero((Element[ele]['xcom']['energy'] <= ene)))
             i1=min(Numeric.nonzero((Element[ele]['xcom']['energy'] >= ene)))
             if i1 <= i0:
@@ -2717,12 +2762,12 @@ def getelementmassattcoef(ele,energy=None):
                         pair =0.0
                 else:
                     pair =0.0
-            ddict['energy'].append(ene)
-            ddict['coherent'].append(cohe)
-            ddict['compton'].append(comp)
-            ddict['photo'].append(photo)
-            ddict['pair'].append(pair)
-            ddict['total'].append(cohe+comp+photo+pair)    
+        ddict['energy'].append(ene)
+        ddict['coherent'].append(cohe)
+        ddict['compton'].append(comp)
+        ddict['photo'].append(photo)
+        ddict['pair'].append(pair)
+        ddict['total'].append(cohe+comp+photo+pair)    
     return ddict
 
 def getElementLShellRates(symbol,energy=None,photoweights = None):

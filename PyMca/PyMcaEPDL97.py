@@ -211,6 +211,8 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
 
     if type(energy) in [type(1), type(1.0)]:
         energy = numpy.array([energy])
+    elif type(energy) in [type([]), type((1,))]:
+        energy = numpy.array(energy)
 
     binding = EPDL97_DICT[element]['binding']
     wdata = EPDL97_DICT[element]['EPDL97']
@@ -287,3 +289,52 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
         for key in ['coherent', 'compton', 'photo']:
             ddict['total'][i] += ddict[key][i]
     return ddict        
+
+
+def getPhotoelectricWeights(element, shelllist, energy, normalize = None, totals = None):
+    """
+    getPhotoelectricWeights(element,shelllist,energy,normalize=None,totals=None)
+    Given a certain list of shells and one excitation energy, gives back the ratio
+    mu(shell, energy)/mu(energy) where mu refers to the photoelectric mass attenuation
+    coefficient.
+    The special shell "all others" refers to all the shells not in the K, L or M groups.
+    Therefore, valid values for the items in the shellist are:
+        'K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5', 'all other'
+    For instance, for the K shell, it is the equivalent of (Jk-1)/Jk where Jk is the k jump.
+    If normalize is None or True, normalizes the output to the shells given in shelllist.
+    If totals is True, gives back the a dictionnary with all the mass attenuation coefficients
+    used in the calculations.
+    """
+    if normalize is None:
+        normalize = True
+        
+    if totals is None:
+        totals = False
+
+    #it is not necessary to force shells because the proper way to work is to force this
+    #module to respect a given set of binding energies.
+    ddict = getElementCrossSections(element, energy=energy, forced_shells=None)
+
+    w = []
+    d = ddict['photo']
+    for key in shelllist:
+        if d > 0.0:
+            wi = ddict[key][0]/d
+        else:
+            wi = 0.0
+        w += [wi]
+
+    if normalize:
+        total = sum(w)
+        for i in range(len(w)):
+            if total > 0.0:
+                w[i] = w[i]/total
+            else:
+                w[i] = 0.0
+
+    if totals:
+        return w, ddict
+    else:
+        return w
+
+    
