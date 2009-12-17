@@ -188,6 +188,10 @@ def _initializeElement(element):
         EPDL97_DICT[element]['EPDL97']['all other']-=\
                 EPDL97_DICT[element]['EPDL97'][key]
 
+    #take care of rounding problems
+    EPDL97_DICT[element]['EPDL97']['all other']\
+        [EPDL97_DICT[element]['EPDL97']['all other'] < 0.0] = 0.0
+
 def getElementCrossSections(element, energy=None, forced_shells=None):
     """
     getCrossSections(element, energy, excited_shells=None)
@@ -209,6 +213,10 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
     elif energy is None:
         energy = EPDL97_DICT[element]['EPDL97']['energy']
 
+    try:
+        n = len(energy)
+    except TypeError:
+        energy = numpy.array([energy])        
     if type(energy) in [type(1), type(1.0)]:
         energy = numpy.array([energy])
     elif type(energy) in [type([]), type((1,))]:
@@ -288,6 +296,8 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
 
         for key in ['coherent', 'compton', 'photo']:
             ddict['total'][i] += ddict[key][i]
+    for key in ddict.keys():
+        ddict[key] = ddict[key].tolist()
     return ddict        
 
 
@@ -316,7 +326,7 @@ def getPhotoelectricWeights(element, shelllist, energy, normalize = None, totals
     ddict = getElementCrossSections(element, energy=energy, forced_shells=None)
 
     w = []
-    d = ddict['photo']
+    d = ddict['photo'][0]
     for key in shelllist:
         if d > 0.0:
             wi = ddict[key][0]/d

@@ -1854,6 +1854,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 formula   = attenuator[0]
                 thickness = attenuator[1] * attenuator[2]
                 coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+
             try:
                 trans = Numeric.exp(-coeffs)
             except OverflowError:
@@ -1975,7 +1976,6 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                     else:
                         trans = outputDict[ele]['mass fraction'] *\
                                  muphoto[-1]/(mutotal[-1] + mutotal[i] * (sinAlphaIn/sinAlphaOut))
-
                         #correction term
                         if thickness > 0.0:
                             if abs(sinAlphaIn) > 0.0:
@@ -2216,9 +2216,9 @@ def getmassattcoef(compound,energy=None):
                     PyMcaEPDL97.setElementBindingEnergies(ele,
                                                           Element[ele]['binding'])
                 tmpDict = PyMcaEPDL97.getElementCrossSections(ele, ene)
-                cohe  = tmpDict['coherent']
-                comp  = tmpDict['compton']
-                photo = tmpDict['photo']
+                cohe  = tmpDict['coherent'][0]
+                comp  = tmpDict['compton'][0]
+                photo = tmpDict['photo'][0]
                 pair  = 0.0
             else:
                 i0=max(Numeric.nonzero((xcom_data['energy'] <= ene)))
@@ -2454,9 +2454,9 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                     PyMcaEPDL97.setElementBindingEnergies(ele,
                                                           Element[ele]['binding'])
                 tmpDict = PyMcaEPDL97.getElementCrossSections(ele, ene)
-                cohe  = tmpDict['coherent']
-                comp  = tmpDict['compton']
-                photo = tmpDict['photo']
+                cohe  = tmpDict['coherent'][0]
+                comp  = tmpDict['compton'][0]
+                photo = tmpDict['photo'][0]
                 pair  = 0.0
             else:
                 i0=max(Numeric.nonzero((xcom_data['energy'] <= ene)))
@@ -2722,9 +2722,9 @@ def getelementmassattcoef(ele,energy=None):
                 PyMcaEPDL97.setElementBindingEnergies(ele,
                                                       Element[ele]['binding'])
             tmpDict = PyMcaEPDL97.getElementCrossSections(ele, ene)
-            cohe  = tmpDict['coherent']
-            comp  = tmpDict['compton']
-            photo = tmpDict['photo']
+            cohe  = tmpDict['coherent'][0]
+            comp  = tmpDict['compton'][0]
+            photo = tmpDict['photo'][0]
             pair  = 0.0
         else:
             i0=max(Numeric.nonzero((Element[ele]['xcom']['energy'] <= ene)))
@@ -2862,7 +2862,7 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
             shellrates = ElementShellRates[n][z-1]
         shelltransitions = ElementShellTransitions[n]
         ddict[rays] = []
-        minenergy = 0.300
+        minenergy = 0.200
         if 'TOTAL' in shelltransitions:
             indexoffset = 2
         else:
@@ -2891,7 +2891,7 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
     return ddict    
 
     
-def _updateElementDict(symbol, dict, energy=None, minenergy=0.3990, minrate=0.0010,
+def _updateElementDict(symbol, dict, energy=None, minenergy=0.200, minrate=0.0010,
                                                      normalize = None, photoweights = None):
     if normalize   is None: normalize   = True
     if photoweights is None: photoweights = True
@@ -2955,7 +2955,7 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=0.3990, minrate=0.00
     dict['buildparameters']['minenergy'] = minenergy
     dict['buildparameters']['minrate']   = minrate
     
-def updateDict(energy=None, minenergy=0.3990, minrate=0.0010, cb=True):
+def updateDict(energy=None, minenergy=0.200, minrate=0.0010, cb=True):
     for ele in ElementList:
         _updateElementDict(ele, Element[ele], energy=energy, minenergy=minenergy, minrate=minrate)
     if cb:
