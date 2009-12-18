@@ -30,7 +30,8 @@ import sys
 try:
     from PyMca import specfile
 except ImportError:
-    print "Importing specfile from local directory"
+    #this is needed for frozen versions
+    #print "Importing specfile from local directory"
     import specfile
 import numpy
 #import copy
