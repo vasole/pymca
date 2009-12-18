@@ -37,6 +37,7 @@ os.system("cp -Rf ./PyMca/HTML ./dist/PyMcaMain.app/Contents/Resources/lib/pytho
 os.system("cp -f ./PyMca/Scofield1973.dict ./dist/PyMcaMain.app/Contents/Resources/lib/python2.5")
 os.system("cp -f ./PyMca/*ShellRates*.dat ./dist/PyMcaMain.app/Contents/Resources/lib/python2.5")
 os.system("cp -f ./PyMca/*ShellConstants*.dat ./dist/PyMcaMain.app/Contents/Resources/lib/python2.5")
+os.system("cp -f ./PyMca/E*.dat ./dist/PyMcaMain.app/Contents/Resources/lib/python2.5")
 os.system("cp -f ./PyMca/BindingEnergies.dat ./dist/PyMcaMain.app/Contents/Resources/lib/python2.5")
 os.system("cp -f ./PyMca/McaTheory.cfg ./dist/PyMcaMain.app/Contents/Resources/lib/python2.5")
 os.system("cp -f ./PyMca/changelog.txt ./dist/PyMcaMain.app/Contents/Resources")
