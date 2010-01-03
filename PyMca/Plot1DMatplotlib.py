@@ -1,3 +1,31 @@
+#!/usr/bin/env python
+#/*##########################################################################
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option) 
+# any later version.
+#
+# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307, USA.
+#
+# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# and cannot be used as a free plugin for a non-free program. 
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# is a problem for you.
+#############################################################################*/
+__author__ = "V.A. Sole - ESRF Data Analysis"
 import Plot1DWindowBase
 qt = Plot1DWindowBase.qt
 QTVERSION = qt.qVersion()
@@ -10,6 +38,7 @@ from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import matplotlib.patches as patches
 Rectangle = patches.Rectangle
+Polygon = patches.Polygon
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
 import PyMcaDirs
@@ -79,10 +108,24 @@ class MatplotlibGraph(FigureCanvas):
 
         self._logY = False
 
+        #default settings
+        self.setDefaultPlotPoints(False)
+        self.setDefaultPlotLines(True)
+
+        #zoom handling
+        self.enableZoom = self.setZoomModeEnabled
+        self.setZoomModeEnabled(True)
         self.__zooming = False
         self._zoomStack = []
         self.xAutoScale = True
         self.yAutoScale = True
+
+        #drawingmode handling
+        self.setDrawModeEnabled(False)
+        self.__drawModeList = ['line', 'polygon']
+        self.__drawing = False
+        self._drawingPatch = None
+        self._drawModePatch = 'line'
 
         #event handling
         self._x0 = None
@@ -95,6 +138,41 @@ class MatplotlibGraph(FigureCanvas):
         self.fig.canvas.mpl_connect('motion_notify_event',
                                     self.onMouseMoved)
 
+    def setDefaultPlotPoints(self, flag=False):
+        if flag:
+            self.__plotPoints = True
+        else:
+            self.__plotPoints = False
+
+    def setDefaultPlotLines(self, flag=False):
+        if flag:
+            self.__plotLines = True
+        else:
+            self.__plotLines = False
+
+    def setZoomModeEnabled(self, flag=True):
+        self.__zoomEnabled = flag
+        if flag:
+            #cannot draw and zoom simultaneously
+            self.setDrawModeEnabled(False)
+            self._selecting = False
+
+    def setDrawModeEnabled(self, flag=True):
+        self.__drawModeEnabled = flag
+        if flag:
+            #cannot draw and zoom simultaneously
+            self.setZoomModeEnabled(False)
+
+    def setDrawModePatch(self, mode=None):
+        if mode is None:
+            mode = self.__drawModeList[0]
+
+        mode = mode.lower()
+        #raise an error in case of an invalid mode
+        modeIndex = self.__drawModeList.index(mode)
+
+        self._drawModePatch = mode
+
     def onMousePressed(self, event):
         if DEBUG:
             print "onMousePressed, event = ",event.xdata, event.ydata
@@ -104,20 +182,26 @@ class MatplotlibGraph(FigureCanvas):
             return
         if event.button == 3:
             #right click
+            if self._drawingPatch is not None:
+                self._drawingPatch.remove()
+                self.draw()
+            self._drawingPatch = None
             self.__zooming = False
             return
 
-        self.__zooming = True        
+        self.__zooming = self.__zoomEnabled
         self._zoomRect = None
         self._x0 = event.xdata
         self._y0 = event.ydata
         self._xmin, self._xmax  = self.ax.get_xlim()
         self._ymin, self._ymax  = self.ax.get_ylim()
-        
+
+        self.__drawing = self.__drawModeEnabled
+            
     def onMouseMoved(self, event):
         if DEBUG:
             print "onMouseMoved, event = ",event.xdata, event.ydata
-        if not self.__zooming:
+        if (not self.__zooming) and (not self.__drawing):
             return
         elif event.inaxes != self.ax:
             if DEBUG:
@@ -129,66 +213,116 @@ class MatplotlibGraph(FigureCanvas):
         self._x1 = event.xdata
         self._y1 = event.ydata
         
-        if self._x1 < self._xmin:
-            self._x1 = self._xmin
-        elif self._x1 > self._xmax:
-            self._x1 = self._xmax
- 
-        if self._y1 < self._ymin:
-            self._y1 = self._ymin
-        elif self._y1 > self._ymax:
-            self._y1 = self._ymax
- 
-        if self._x1 < self._x0:
-            x = self._x1
-            w = self._x0 - self._x1
-        else:
-            x = self._x0
-            w = self._x1 - self._x0
-        if self._y1 < self._y0:
-            y = self._y1
-            h = self._y0 - self._y1
-        else:
-            y = self._y0
-            h = self._y1 - self._y0
-        if self._zoomRectangle is None:
-            self._zoomRectangle = Rectangle(xy=(x,y),
-                                           width=w,
-                                           height=h,
-                                           fill=False)
-            self.ax.add_patch(self._zoomRectangle)
-        else:
-            self._zoomRectangle.set_bounds(x, y, w, h)
-            #self._zoomRectangle._update_patch_transform()
-        self.fig.canvas.draw()
+        if self.__zooming:
+            if self._x1 < self._xmin:
+                self._x1 = self._xmin
+            elif self._x1 > self._xmax:
+                self._x1 = self._xmax
+     
+            if self._y1 < self._ymin:
+                self._y1 = self._ymin
+            elif self._y1 > self._ymax:
+                self._y1 = self._ymax
+     
+            if self._x1 < self._x0:
+                x = self._x1
+                w = self._x0 - self._x1
+            else:
+                x = self._x0
+                w = self._x1 - self._x0
+            if self._y1 < self._y0:
+                y = self._y1
+                h = self._y0 - self._y1
+            else:
+                y = self._y0
+                h = self._y1 - self._y0
+
+            if self._zoomRectangle is None:
+                self._zoomRectangle = Rectangle(xy=(x,y),
+                                               width=w,
+                                               height=h,
+                                               fill=False)
+                self.ax.add_patch(self._zoomRectangle)
+            else:
+                self._zoomRectangle.set_bounds(x, y, w, h)
+                #self._zoomRectangle._update_patch_transform()
+            self.fig.canvas.draw()
+            return
+        
+        if self.__drawing:
+            if self._drawingPatch is None:
+                self._mouseData = numpy.zeros((2,2), numpy.float32)
+                self._mouseData[0,0] = self._x0
+                self._mouseData[0,1] = self._y0
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
+                self._drawingPatch = Polygon(self._mouseData,
+                                             closed=True,
+                                             fill=False)
+                self.ax.add_patch(self._drawingPatch)
+            elif self._drawModePatch == 'line':
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
+                self._drawingPatch.set_xy(self._mouseData)
+            elif self._drawModePatch == 'polygon':
+                self._mouseData[-1,0] = self._x1
+                self._mouseData[-1,1] = self._y1
+                self._drawingPatch.set_xy(self._mouseData)
+                self._drawingPatch.set_hatch('/')
+                self._drawingPatch.set_closed(True)
+            self.fig.canvas.draw()
         
     def onMouseReleased(self, event):
         if DEBUG:
             print "onMouseReleased, event = ",event.xdata, event.ydata
         if event.button == 3:
             #right click
+            if self.__drawing:
+                self.__drawing = False
+                self._drawingPatch = None
+                ddict = {}
+                ddict['event'] = 'drawingFinished'
+                ddict['type']  = '%s' % self._drawModePatch
+                ddict['data']  = self._mouseData * 1
+                self.mySignal(ddict)
+                return
+
             self.__zooming = False
             if len(self._zoomStack):
                 xmin, xmax, ymin, ymax = self._zoomStack.pop()
                 self.setLimits(xmin, xmax, ymin, ymax)
                 self.draw()
-            return
+
         if self._x0 is None:
             return
-        if self._zoomRectangle is None:
+
+        if self.__drawing and (self._drawingPatch is not None):
+            nrows, ncols = self._mouseData.shape                
+            self._mouseData = numpy.resize(self._mouseData, (nrows+1,2))
+            self._mouseData[-1,0] = self._x1
+            self._mouseData[-1,1] = self._y1
+            self._drawingPatch.set_xy(self._mouseData)
+
+        if (self._zoomRectangle is None):
             return
-        x, y = self._zoomRectangle.get_xy()
-        w = self._zoomRectangle.get_width()
-        h = self._zoomRectangle.get_height()
-        self._zoomRectangle.remove()
-        self._x0 = None
-        self._y0 = None
-        self._zoomRectangle = None
-        xmin, xmax = self.ax.get_xlim()
-        ymin, ymax = self.ax.get_ylim()
-        self._zoomStack.append((xmin, xmax, ymin, ymax))
-        self.setLimits(x, x+w, y, y+h)
-        self.draw()
+
+        if self._zoomRectangle is not None:
+            x, y = self._zoomRectangle.get_xy()
+            w = self._zoomRectangle.get_width()
+            h = self._zoomRectangle.get_height()
+            self._zoomRectangle.remove()
+            self._x0 = None
+            self._y0 = None
+            self._zoomRectangle = None
+            xmin, xmax = self.ax.get_xlim()
+            ymin, ymax = self.ax.get_ylim()
+            self._zoomStack.append((xmin, xmax, ymin, ymax))
+            self.setLimits(x, x+w, y, y+h)
+            self.draw()
+
+
+    def mySignal(self, ddict):
+        self.emit(qt.SIGNAL('MatplotlibGraphSignal'), ddict)
 
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.ax.set_xlim(xmin, xmax)
@@ -221,6 +355,8 @@ class MatplotlibGraph(FigureCanvas):
         return index
 
     def _getColorAndStyle(self):
+        self.__lastColorIndex = self.colorIndex * 1
+        self.__lastStyleIndex = self.styleIndex * 1
         color = self.colorList[self.colorIndex]
         style = self.styleList[self.styleIndex]
         self.colorIndex += 1
@@ -264,25 +400,53 @@ class MatplotlibGraph(FigureCanvas):
                 if label == legend:
                     break
         if label is not None:
-           line2D.set_xdata(x)
-           line2D.set_ydata(y)
+           if kw.has_key('marker'):
+               line2D.set_marker(kw['marker'])
+           line2D.set_linestyle(style)
+           #line2D.set_xdata(x)
+           #line2D.set_ydata(y)
+           line2D.set_data(x, y)
+           #restore color and style index
+           self.colorIndex = self.__lastColorIndex * 1
+           self.styleIndex = self.__lastStyleIndex * 1
            return
         if self._logY:
-            self.ax.semilogy( x, y, label=legend, linestyle = style, color=color, linewidth = linewidth, **kw)
+            curveList = self.ax.semilogy( x, y, label=legend, linestyle =style, color=color, linewidth = linewidth, **kw)
             #self.ax.set_yscale('log')
         else:
-            self.ax.plot( x, y, label=legend, linestyle = style, color=color, linewidth = linewidth, **kw)
+            curveList = self.ax.plot( x, y, label=legend, linestyle =style, color=color, linewidth = linewidth, **kw)
+        #curveList[0].set_linestyle(style)
         self._dataCounter += 1
         self._legendList.append(legend)
 
     def newCurve(self, legend, x, y, **kw):
-        self.addDataToPlot( x, y, legend=legend, linewidth=1.5)
+        if self.__plotPoints:
+            marker = 'o'
+        else:
+            marker = 'None'
+        if self.__plotLines:
+            linestyle = None
+        else:
+            linestyle = ''
+        self.addDataToPlot( x, y, legend=legend, linewidth=1.5,
+                            linestyle=linestyle, marker=marker)
 
     def removeCurve(self, legend):
         del self._legendList[self._legendList.index(legend)]
+        for line2D in self.ax.lines:
+            label = line2D.get_label()
+            if label == legend:
+                line2D.remove()
+                break
 
 
     #QtBlissGraph like 
+    def isZoomEnabled(self):
+        if self.__zoomEnabled:
+            return True
+        else:
+            return False
+
     def setTitle(self, text=""):
         self.ax.set_title(text)
 
@@ -330,6 +494,7 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
         self._logY = False
         self.newCurve = self.addCurve
         self.setTitle = self.graph.setTitle
+        self.__toggleCounter = 0
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
@@ -432,6 +597,20 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
             self.graph.ax.set_yscale('linear')
         self.graph.draw()
 
+    def _togglePointsSignal(self):
+        self.__toggleCounter = (self.__toggleCounter + 1) % 3
+        if self.__toggleCounter == 1:
+            self.graph.setDefaultPlotLines(True)
+            self.graph.setDefaultPlotPoints(True)
+        elif self.__toggleCounter == 2:
+            self.graph.setDefaultPlotPoints(True)
+            self.graph.setDefaultPlotLines(False)
+        else:
+            self.graph.setDefaultPlotLines(True)
+            self.graph.setDefaultPlotPoints(False)
+        #self.graph.setActiveCurve(self.graph.getActiveCurve(justlegend=1))
+        self.replot()
+
 if 0:
     def getGraphXLimits(self):
         """
@@ -475,6 +654,17 @@ if __name__ == "__main__":
     y = x * x
     app = qt.QApplication([])
     plot = Plot1DMatplotlib(uselegendmenu=True)
+    if 0:
+        plot.graph.setZoomModeEnabled(True)
+    else:
+        def mySlot(ddict):
+            print ddict['event']
+            print ddict['data']
+        qt.QObject.connect(plot.graph,
+                           qt.SIGNAL('MatplotlibGraphSignal'),
+                           mySlot)
+        plot.graph.setDrawModeEnabled(True)
+        plot.graph.setDrawModePatch('polygon')
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
