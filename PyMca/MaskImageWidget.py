@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -296,7 +296,7 @@ class MaskImageWidget(qt.QWidget):
         ddict['id'] = id(self)
         self.emitMaskImageSignal(ddict)        
 
-    def buildAndConnectImageButtonBox(self):
+    def buildAndConnectImageButtonBox(self, replace=True):
         # The IMAGE selection
         self.imageButtonBox = qt.QWidget(self)
         buttonBox = self.imageButtonBox
@@ -310,12 +310,9 @@ class MaskImageWidget(qt.QWidget):
         self.removeImageButton = qt.QPushButton(buttonBox)
         self.removeImageButton.setIcon(icon)
         self.removeImageButton.setText("REMOVE IMAGE")
-        self.replaceImageButton = qt.QPushButton(buttonBox)
-        self.replaceImageButton.setIcon(icon)
-        self.replaceImageButton.setText("REPLACE IMAGE")
         self.imageButtonBoxLayout.addWidget(self.addImageButton)
         self.imageButtonBoxLayout.addWidget(self.removeImageButton)
-        self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
+
         
         self.mainLayout.addWidget(buttonBox)
         
@@ -323,9 +320,15 @@ class MaskImageWidget(qt.QWidget):
                     self._addImageClicked)
         self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
                     self._removeImageClicked)
-        self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
-                    self._replaceImageClicked)
-
+        if replace:
+            self.replaceImageButton = qt.QPushButton(buttonBox)
+            self.replaceImageButton.setIcon(icon)
+            self.replaceImageButton.setText("REPLACE IMAGE")
+            self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
+            self.connect(self.replaceImageButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._replaceImageClicked)
+    
     def _setEraseSelectionMode(self):
         if DEBUG:print "_setEraseSelectionMode"
         self.__eraseMode = True
