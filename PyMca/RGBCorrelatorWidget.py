@@ -955,6 +955,9 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.pcaDialog = PCADialog.PCADialog(rgbwidget=self,
                                                  selection=False)
             self.pcaDialog.pcaWindow.buildAndConnectImageButtonBox()
+            self.connect(self.pcaDialog.pcaWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         self.maskImageSlot)            
 
         datalist = self.getSelectedDataList()
         if len(datalist) < 2:
@@ -971,6 +974,9 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.nnmaDialog = NNMADialog.NNMADialog(rgbwidget=self,
                                                  selection=False)
             self.nnmaDialog.nnmaWindow.buildAndConnectImageButtonBox()
+            self.connect(self.nnmaDialog.nnmaWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         self.maskImageSlot)            
 
         datalist = self.getSelectedDataList()
         if len(datalist) < 2:
@@ -981,6 +987,21 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.nnmaDialog.setData(datalist)
         self.nnmaDialog.show()
         self.nnmaDialog.raise_()
+
+    def maskImageSlot(self, ddict):
+        if ddict['event'] == "addImageClicked":
+            ddict['label'] = ddict['title']
+            self.addImageSlot(ddict)
+            return
+        if ddict['event'] == "replaceImageClicked":
+            ddict['label'] = ddict['title']
+            self.replaceImageSlot(ddict)
+            return
+        if ddict['event'] == "removeImageClicked":
+            ddict['label'] = ddict['title']
+            self.removeImageSlot(ddict)
+            return
+
 
     def addImageSlot(self, ddict):
         self.addImage(ddict['image'], ddict['label'])
