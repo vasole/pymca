@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,6 +31,7 @@ import RGBCorrelatorSlider
 import RGBCorrelatorTable
 import RGBImageCalculator
 import numpy.oldnumeric as Numeric
+import numpy
 import spslut
 from PyMca_Icons import IconDict
 import ArraySave
@@ -724,6 +725,38 @@ class RGBCorrelatorWidget(qt.QWidget):
                         dataObject = source.getDataObject(key)
                         self.addImage(dataObject.data,
                                       os.path.basename(fname)+" "+key)
+                elif fname.lower().split(".")[-1] in ["jpg","jpeg",
+                                                      "tif","tiff",
+                                                      "png"]:
+                    #try a pure image format
+                    qimage = qt.QImage(fname)
+                    if qimage.isNull():
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText("Cannot read file %s as an image" % fname)
+                        msg.exec_()
+                        return
+                    #convert to black and white
+                    height = qimage.height()
+                    width  = qimage.width()
+                    if qimage.format() == qt.QImage.Format_Indexed8:
+                        pixmap0 = numpy.fromstring(qimage.bits().asstring(width * height),
+                                             dtype = numpy.uint8)
+                        pixmap = numpy.zeros((height * width, 4), numpy.uint8)
+                        pixmap[:,0] = pixmap0[:]
+                        pixmap[:,1] = pixmap0[:]
+                        pixmap[:,2] = pixmap0[:]
+                        pixmap[:,3] = 255
+                        pixmap.shape = height, width, 4
+                    else:
+                        image = qimage.convertToFormat(qt.QImage.Format_ARGB32) 
+                        pixmap = numpy.fromstring(qimage.bits().asstring(width * height * 4),
+                                             dtype = numpy.uint8)
+                    pixmap.shape = height, width, -1
+                    data = pixmap[:,:,0] * 0.114 +\
+                                pixmap[:,:,1] * 0.587 +\
+                                pixmap[:,:,2] * 0.299
+                    self.addImage(data, os.path.basename(fname))
                 else:
                     if len(fname) < 5:
                         self.addBatchDatFile(fname, csv=False)
