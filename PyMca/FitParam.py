@@ -90,10 +90,10 @@ class FitParamWidget(FitParamForm):
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setMargin(0)
                 self.graphDialog.mainLayout.setSpacing(0)
-                self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graph = self.graphDialog.graph
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-                self.graphDialog.mainLayout.addWidget(self.graph)
                 self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graphDialog)
             else:
@@ -101,6 +101,14 @@ class FitParamWidget(FitParamForm):
                 self.graph = self.graphDialog.plot1DWindow
                 self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                         graph=self.graphDialog)
+            self.graphDialog.mainLayout.addWidget(self.graph)
+            self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
+            self.graphDialog.okButton.setText('OK')
+            self.graphDialog.okButton.setAutoDefault(True)
+            self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
+            self.graphDialog.connect(self.graphDialog.okButton,
+                                     qt.SIGNAL('clicked()'),
+                                     self.graphDialog.accept)
             self.graph.fitButton.hide()
             self.attTable = self.tabAttenuators.table
             #self.multilayerTable =self.tabAttenuators.matrixTable

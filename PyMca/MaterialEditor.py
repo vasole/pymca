@@ -60,13 +60,14 @@ class MaterialEditor(qt.QWidget):
             self.setWindowTitle(name)
         if graph is None:
             self.graph = None
+            self.graphDialog = None
         elif SCANWINDOW:
-            self.graphDialog = qt.QDialog(self)
-            self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
-            self.graphDialog.mainLayout.setMargin(0)
-            self.graphDialog.mainLayout.setSpacing(0)
-            self.graph = ScanWindow.ScanWindow(self.graphDialog)
-            self.graphDialog.mainLayout.addWidget(self.graph)
+            if isinstance(graph, qt.QDialog):
+                self.graphDialog = graph
+                self.graph = self.graphDialog.graph
+            else:
+                self.graphDialog = None
+                self.graph = graph
         elif isinstance(graph, Plot1DMatplotlib.Plot1DMatplotlibDialog):
             self.graphDialog = graph
             self.graph = self.graphDialog.plot1DWindow
@@ -174,6 +175,16 @@ class MaterialEditor(qt.QWidget):
     def _comboSlot(self, ddict):
         self.materialGUI.setCurrent(ddict['text'])
 
+    def _addGraphDialogButton(self):
+        self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
+        self.graphDialog.okButton.setText('OK')
+        self.graphDialog.okButton.setAutoDefault(True)
+        self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
+        self.graphDialog.connect(self.graphDialog.okButton,
+                                 qt.SIGNAL('clicked()'),
+                                 self.graphDialog.accept)
+
+
     def _transmissionSlot(self, ddict):
         try:
             compoundList = ddict['CompoundList']
@@ -183,6 +194,7 @@ class MaterialEditor(qt.QWidget):
             energy = numpy.arange(1, 100, 0.1)
             data=Elements.getMaterialTransmission(compoundList, fractionList, energy,
                                              density=density, thickness=thickness, listoutput=False)
+            addButton = False
             if self.graph is None and (SCANWINDOW):
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
@@ -192,10 +204,13 @@ class MaterialEditor(qt.QWidget):
                 self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
+                addButton = True
             elif self.graph is None:
                 self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
                 self.graph = self.graphDialog.plot1DWindow
-
+                addButton = True
+            if addButton:
+                self._addGraphDialogButton()
             if self.__toolMode:
                 legend = ddict['Comment']
             else:
@@ -208,8 +223,8 @@ class MaterialEditor(qt.QWidget):
                                 ylabel='Transmission',
                                 replace=True)
             self.graph.setTitle(ddict['Comment'])
-            self.graphDialog.exec_()
-                
+            if self.graphDialog is not None:
+                self.graphDialog.exec_()                
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -224,6 +239,7 @@ class MaterialEditor(qt.QWidget):
             data=Elements.getMaterialMassAttenuationCoefficients(compoundList,
                                                                  fractionList,
                                                                  energy)
+            addButton = False
             if (self.graph is None) and SCANWINDOW:
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
@@ -233,9 +249,13 @@ class MaterialEditor(qt.QWidget):
                 self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
+                addButton = True
             elif self.graph is None:
                 self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
                 self.graph = self.graphDialog.plot1DWindow
+                addButton = True
+            if addButton:
+                self._addGraphDialogButton()
             self.graph.setTitle(ddict['Comment'])
             legend = 'Coherent'
             self.graph.newCurve(energy, numpy.array(data[legend.lower()]),
@@ -251,7 +271,8 @@ class MaterialEditor(qt.QWidget):
                                 replace=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setTitle(ddict['Comment'])
-            self.graphDialog.exec_()
+            if self.graphDialog is not None:
+                self.graphDialog.exec_()
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
