@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -61,7 +61,12 @@ class MaterialEditor(qt.QWidget):
         if graph is None:
             self.graph = None
         elif SCANWINDOW:
-            self.graph = graph
+            self.graphDialog = qt.QDialog(self)
+            self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
+            self.graphDialog.mainLayout.setMargin(0)
+            self.graphDialog.mainLayout.setSpacing(0)
+            self.graph = ScanWindow.ScanWindow(self.graphDialog)
+            self.graphDialog.mainLayout.addWidget(self.graph)
         elif isinstance(graph, Plot1DMatplotlib.Plot1DMatplotlibDialog):
             self.graphDialog = graph
             self.graph = self.graphDialog.plot1DWindow
@@ -179,7 +184,12 @@ class MaterialEditor(qt.QWidget):
             data=Elements.getMaterialTransmission(compoundList, fractionList, energy,
                                              density=density, thickness=thickness, listoutput=False)
             if self.graph is None and (SCANWINDOW):
-                self.graph = ScanWindow.ScanWindow()
+                self.graphDialog = qt.QDialog(self)
+                self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
+                self.graphDialog.mainLayout.setMargin(0)
+                self.graphDialog.mainLayout.setSpacing(0)
+                self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
             elif self.graph is None:
@@ -198,11 +208,7 @@ class MaterialEditor(qt.QWidget):
                                 ylabel='Transmission',
                                 replace=True)
             self.graph.setTitle(ddict['Comment'])
-            if SCANWINDOW:
-                self.graph.show()
-                self.graph.raise_()
-            else:
-                self.graphDialog.exec_()
+            self.graphDialog.exec_()
                 
         except:
             msg=qt.QMessageBox(self)
@@ -219,14 +225,18 @@ class MaterialEditor(qt.QWidget):
                                                                  fractionList,
                                                                  energy)
             if (self.graph is None) and SCANWINDOW:
-                self.graph = ScanWindow.ScanWindow()
+                self.graphDialog = qt.QDialog(self)
+                self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
+                self.graphDialog.mainLayout.setMargin(0)
+                self.graphDialog.mainLayout.setSpacing(0)
+                self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
             elif self.graph is None:
                 self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
                 self.graph = self.graphDialog.plot1DWindow
-            if SCANWINDOW:
-                self.graph.setTitle(ddict['Comment'])
+            self.graph.setTitle(ddict['Comment'])
             legend = 'Coherent'
             self.graph.newCurve(energy, numpy.array(data[legend.lower()]),
                                 legend=legend,
@@ -241,11 +251,7 @@ class MaterialEditor(qt.QWidget):
                                 replace=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setTitle(ddict['Comment'])
-            if SCANWINDOW:
-                self.graph.show()
-                self.graph.raise_()
-            else:
-                self.graphDialog.exec_()
+            self.graphDialog.exec_()
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -86,12 +86,16 @@ class FitParamWidget(FitParamForm):
             tabAttLayout.setMargin(11)
             tabAttLayout.setSpacing(6)
             if SCANWINDOW:
-                self.graph = ScanWindow.ScanWindow(self)
+                self.graphDialog = qt.QDialog(self)
+                self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
+                self.graphDialog.mainLayout.setMargin(0)
+                self.graphDialog.mainLayout.setSpacing(0)
+                self.graph = ScanWindow.ScanWindow(self.graphDialog)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-                self.graph.setWindowFlags(qt.Qt.Dialog)
+                self.graphDialog.mainLayout.addWidget(self.graph)
                 self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
-                                                        graph=self.graph)
+                                                        graph=self.graphDialog)
             else:
                 self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog(self)                
                 self.graph = self.graphDialog.plot1DWindow
@@ -336,17 +340,14 @@ class FitParamWidget(FitParamForm):
                 coeffs   =  thickness *\
                            numpy.array(massatt(formula,1.0,energies)['total'])
                 efficiency *= (1.0 - numpy.exp(-coeffs))
-        if SCANWINDOW:
-            self.graph.setTitle('Filter (not beam filter) and detector correction')
+
+        self.graph.setTitle('Filter (not beam filter) and detector correction')
         self.graph.newCurve(energies, efficiency,
                             legend='Ta * (1.0 - Td)',
                             xlabel='Energy (keV)',
                             ylabel='Efficiency Term',
                             replace=True)
-        if SCANWINDOW:
-            self.graph.show()
-        else:
-            self.graphDialog.exec_()
+        self.graphDialog.exec_()
     
     def __contComboActivated(self, idx):
         if idx==4:
