@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -90,7 +90,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 mSelection = None
         else:
             mSelection = None
-
+            
         if scanlist is None:
             #if the scanlist is None, it is assumed we are interested on all
             #the scans containing the selection, not that all the scans
@@ -148,7 +148,8 @@ class HDF5Stack1D(DataObject.DataObject):
             path = "/" + scanlist[0] + ySelection
             if mSelection is not None:
                 mpath = "/" + scanlist[0] + mSelection
-        yDataset = tmpHdf[path] 
+        yDataset = tmpHdf[path]
+
         if self.__dtype is None:
             self.__dtype = yDataset.dtype
 
@@ -167,6 +168,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 print "Attempting dynamic loading"
                 self.data = yDataset
                 if mSelection is not None:
+                    mDataset = tmpHdf[mpath]
                     self.monitor = mDataset
                 DONE = True
             else:
@@ -218,7 +220,6 @@ class HDF5Stack1D(DataObject.DataObject):
                             if mSelection is not None:
                                 if case == 0:
                                     self.data[i, j, :] = yDataset[mca,:]/mDataset[mca]
-                                    self.data[i, j, :] = 0.0
                                 elif case == 1:
                                     self.data[i, j, :]  = yDataset[mca,:]/mDataset[mca, :]
                             else:
@@ -245,7 +246,6 @@ class HDF5Stack1D(DataObject.DataObject):
                             if mSelection is not None:
                                 if case == 0:
                                     self.data[i, j, :] = yDataset[:,mca]/mDataset[mca]
-                                    self.data[i, j, :] = 0.0
                                 elif case == 1:
                                     self.data[i, j, :]  = yDataset[:, mca]/mDataset[:, mca]
                             else:
