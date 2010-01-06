@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -92,7 +92,7 @@ class NNMAParametersDialog(qt.QDialog):
         validator = qt.QDoubleValidator(self._tolerance)
         self._tolerance.setValidator(validator)
         self._tolerance._validator = validator
-        self._tolerance.setText("0.01")
+        self._tolerance.setText("0.001")
         self.nnmaConfiguration.mainLayout.addWidget(label, 0, 0)
         self.nnmaConfiguration.mainLayout.addWidget(self._tolerance, 0, 1)
         label = qt.QLabel(self.nnmaConfiguration)
