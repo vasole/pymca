@@ -1,3 +1,50 @@
+VERSION 4.4.0
+
+Extend the usability of the code down to 100 eV extending XCOM mass
+attenuation coefficients with EPDL97 data when energies are below 1 keV.
+
+Alternative background subtraction algorithm (SNIP) implemented.
+
+Support of HDF5 file format.
+
+Possibility to export ROI imaging tool data stack in HDF5.
+
+Workaround 32-bit limit when handling huge EDF maps in 32-bit machines.
+
+Better customization capabilities when saving images through matplotlib.
+
+Support Fit2D .chi files.
+
+Simple support of ADSC files wrapping them as EDF files.
+
+Possibility to save images as 32-bit floats for people using the ImageJ EDF
+plugin.
+
+Support combined PCA when using two data stacks.
+
+Support Independent Component Analysis via MDP if installed.
+
+Support non-negative Matrix Approximation Analysis using Uwe Schmitt modules
+(http://public.procoders.net/nnma/)
+
+Add multivariate analysis capabilities to the RGBCorrelator.
+
+Implement a mechanism to add plugins to 1D plots.
+
+Implement simple 3D visualization capabilities.
+
+Solve X-ray tube profile generation problems at tube voltages below 20 kV.
+
+Allow a greater number of energies defining the X-ray tube emission profile.
+
+Correct logarithmic colormap handling.
+
+Correct colormap problems in 64-bit platforms.
+
+Correct problem preventing data calibration in some 64-bit platforms.
+
+Minor bugs corrected and minor features added.
+
 VERSION 4.3.0
 
 Speed up fit configuration when using multiple energies.
