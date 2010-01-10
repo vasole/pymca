@@ -695,7 +695,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         formatlist = ["ASCII Files *dat",
                       "EDF Files *edf",
                       "EDF Files *ccd",
-                      "CSV Files *csv"]
+                      "CSV Files *csv",
+                      "All Files *]
         strlist = qt.QStringList()
         for f in formatlist:
                 strlist.append(f)
