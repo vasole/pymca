@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -297,8 +297,7 @@ class  EdfFile:
             else:
                 self.Images[Index].ByteOrder = 'HighByteFirst'
             if string.upper(self.SysByteOrder) != string.upper(self.Images[Index].ByteOrder):
-                print "Swapping bytes"
-                self.data = self.data.byteswap()
+                self.__data = self.__data.byteswap()
                 self.Images[Index].ByteOrder = self.SysByteOrder
 
             self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
