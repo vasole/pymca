@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -103,10 +103,10 @@ class QNexusWidget(QtGui.QWidget):
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
         if 'Object3D' in sys.modules:
-            self.buttons = Buttons(self, options=['SCAN', 'MCA', '3D'])
+            self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
             self.cntTable.set3DEnabled(True)
         else:
-            self.buttons = Buttons(self, options=['SCAN', 'MCA'])
+            self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
             self.cntTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
         self.connect(self.hdf5Widget,

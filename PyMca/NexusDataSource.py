@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -216,6 +216,9 @@ class NexusDataSource:
             output.info['selectiontype'] = "1D"
         elif selection['selectiontype'] == "3D":
             output.info['selectiontype'] = "3D"
+        elif selection['selectiontype'] == "2D":
+            output.info['selectiontype'] = "2D"
+            output.info['imageselection'] = True
         else:
             raise TypeError, "Unsupported selection type %s" % selection['selectiontype']
         if selection.has_key('LabelNames'):
@@ -244,7 +247,10 @@ class NexusDataSource:
                 elif len(data.shape) > 2:
                     raise TypeError, "%s selection is not 1D" % cnt.upper()                
             if cnt == 'y':
-                output.y = [data]
+                if output.info['selectiontype'] == "2D":
+                    output.data = data
+                else:
+                    output.y = [data]
             elif cnt == 'x':
                 #there can be more than one X except for 1D
                 if output.info['selectiontype'] == "1D":

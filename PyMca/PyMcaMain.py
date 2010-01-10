@@ -28,6 +28,7 @@ __revision__ = "$Revision: 2.02 $"
 #############################################################################*/
 import sys, getopt, string
 nativeFileDialogs = None
+DEBUG = 0
 if __name__ == '__main__':
     options     = '-f'
     longoptions = ['spec=','shm=','debug=', 'qt=', 'nativefiledialogs=']
@@ -50,6 +51,7 @@ if __name__ == '__main__':
             keywords['shm']  = arg
         elif opt in ('--debug'):
             debugreport = 1
+            DEBUG = 1
         elif opt in ('-f'):
             keywords['fresh'] = 1
         elif opt in ('--qt'):
@@ -201,7 +203,6 @@ if QTVERSION > '4.3.0':
     except:
         pass
 
-DEBUG = 0
 SOURCESLIST = QDispatcher.QDataSource.source_types.keys()
 
 """
@@ -422,6 +423,12 @@ class PyMca(PyMcaMdi.PyMca):
         if ddict.has_key('imageselection'):
             if ddict['imageselection']:
                 return True
+        if ddict.has_key('selection'):
+            if ddict['selection'] is None:
+                return False
+            if ddict['selection'].has_key('selectiontype'):
+                if ddict['selection']['selectiontype'] == '2D':
+                    return True
         return False
 
     def _is3DSelection(self, ddict):
@@ -474,7 +481,7 @@ class PyMca(PyMcaMdi.PyMca):
                 #toadd = True
             title  = "ImageWindow RGB Correlator"
             self.imageWindowCorrelator.setWindowTitle(title)
-            legend = ddict['legend'] 
+            legend = ddict['legend']
             if  legend not in self.imageWindowDict.keys():
                 imageWindow = PyMcaImageWindow.PyMcaImageWindow(name = legend,
                                 correlator = self.imageWindowCorrelator)
