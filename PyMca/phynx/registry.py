@@ -21,7 +21,12 @@ class _Registry(object):
 
     @sync
     def __contains__(self, name):
-        return name in self.__data
+        try:
+            return name in self.__data
+        except TypeError:
+            print "name %s does not seem to be a string ..." % name
+            print "It's type is ", type(name)
+            return False
 
     @sync
     def __getitem__(self, name):

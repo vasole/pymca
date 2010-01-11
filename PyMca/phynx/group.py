@@ -102,8 +102,9 @@ class Group(h5py.Group, _PhynxProperties):
         # 1.8 API.
         item = super(Group, self).__getitem__(name)
         if 'class' in item.attrs:
-            return registry[item.attrs['class']](self, name)
-        elif 'NX_class' in item.attrs:
+            if item.attrs['class'] in registry:
+                return registry[item.attrs['class']](self, name)
+        if 'NX_class' in item.attrs:
             return registry[item.attrs['NX_class']](self, name)
         elif isinstance(item, h5py.Dataset):
             return Dataset(self, name)
