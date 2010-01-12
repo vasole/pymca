@@ -333,9 +333,13 @@ class RGBImageCalculator(qt.QWidget):
         self.__imageColormapDialog.show()
 
     def __initColormapDialog(self):
-        a = numpy.ravel(self._imageData)
-        minData = min(a)
-        maxData = max(a)
+        try:
+            minData = self._imageData.min()
+            maxData = self._imageData.max()
+        except:
+            a = numpy.ravel(self._imageData)
+            minData = min(a)
+            maxData = max(a)
         self.__imageColormapDialog = ColormapDialog.ColormapDialog(slider=True)
         self.__imageColormapDialog.colormapIndex  = self.__imageColormapDialog.colormapList.index("Temperature")
         self.__imageColormapDialog.colormapString = "Temperature"
