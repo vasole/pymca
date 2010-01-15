@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -93,6 +93,7 @@ else:
 SNIP = False
 if QTVERSION > '4.0.0':
     import SNIPWindow
+    import SGWindow
     SNIP = True
     
 
@@ -882,11 +883,31 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
     def subtractSnipBackground(self):
         snipMenu = qt.QMenu()
+        snipMenu.addAction("Savitzky-Golay Filtering",
+                           self.replaceStackWithSavitzkyGolayFiltering)
         snipMenu.addAction("Subtract SNIP 1D Background",
                            self.subtract1DSnipBackground)
         snipMenu.addAction("Subtract SNIP 2D Background",
                            self.subtract2DSnipBackground)
         snipMenu.exec_(self.cursor().pos())
+
+    def replaceStackWithSavitzkyGolayFiltering(self):
+        selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")
+        if selection is None:
+            return
+        spectrum = selection['dataobject'].y[0]
+        snipWindow = SGWindow.SGDialog(None,
+                                           spectrum)
+        #snipWindow.setModal(True)
+        snipWindow.show()
+        ret = snipWindow.exec_()
+        if ret:
+            snipParametersDict = snipWindow.getParameters()
+            snipWindow.close()
+            function = snipParametersDict['function']
+            arguments = snipParametersDict['arguments']
+            function(self.stack, *arguments)
+            self.setStack(self.stack)
 
     def subtract1DSnipBackground(self):
         selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")

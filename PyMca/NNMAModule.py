@@ -293,7 +293,15 @@ def nnma(stack, ncomponents, binning=None,
     values      = numpy.zeros((ncomponents,), numpy.float32)
     for i in range(ncomponents):
         idx = sorted_idx[i]
-        new_images[i,:]  = images[idx, :]
+        if 1:
+            new_images[i, :] = images[idx, :]
+        else:
+            #imaging the projected sum gives same results
+            Atmp = images[idx, :]
+            Atmp.shape = -r*c, 1
+            Xtmp = X[idx,:]
+            Xtmp.shape = 1, -1
+            new_images[i, :] = numpy.sum(numpy.dot(Atmp, Xtmp), axis=1)
         new_vectors[i,:] = X[idx,:]
         values[i] = 100.*total_nnma_intensity[idx][0]/original_intensity
     new_images.shape = ncomponents, r, c
