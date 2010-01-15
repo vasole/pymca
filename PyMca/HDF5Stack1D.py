@@ -26,6 +26,7 @@
 #############################################################################*/
 import posixpath
 import DataObject
+import h5py
 try:
     from PyMca import NexusDataSource
 except:
@@ -62,7 +63,7 @@ class HDF5Stack1D(DataObject.DataObject):
         scanlist is the list of first level "directories" containing the 1D data
                  Example: The actual path has the form:
                  /whatever1/whatever2/counts
-                 That means scanlist = ["/whatever"]
+                 That means scanlist = ["/whatever1"]
                  and               selection['y'] = "/whatever2/counts"
         """
         if type(filelist) == type(''):
@@ -74,7 +75,10 @@ class HDF5Stack1D(DataObject.DataObject):
         #if there is more than one file, it is assumed all the files have
         #the same structure.
         tmpHdf = hdfStack._sourceObjectList[0]
-        entryNames = tmpHdf["/"].keys()
+        entryNames = []
+        for key in tmpHdf["/"].keys():
+            if isinstance(tmpHdf["/"+key], h5py.Group):
+                entryNames.append(key)
 
         #built the selection in terms of HDF terms
         #for the time being, the x selection will be ignored but not the
@@ -111,17 +115,32 @@ class HDF5Stack1D(DataObject.DataObject):
             else:
                 JUST_KEYS = True
                 #expect same structure in the files
-                i = 0
-                for entry in entryNames:
-                    i += 1
-                    path = "/"+entry + ySelection
-                    dirname = posixpath.dirname(path)
-                    base = posixpath.basename(path)
-                    try:
-                        if base in tmpHdf[dirname].keys():                        
-                            scanlist.append("1.%d" % i)
-                    except:
-                        pass
+                if len(entryNames):
+                    i = 0
+                    for entry in entryNames:
+                        i += 1
+                        path = "/"+entry + ySelection
+                        dirname = posixpath.dirname(path)
+                        base = posixpath.basename(path)
+                        try:
+                            if base in tmpHdf[dirname].keys():                        
+                                scanlist.append("1.%d" % i)
+                        except:
+                            pass
+                    if not len(scanlist):
+                        path = "/" + ySelection
+                        dirname = posixpath.dirname(path)
+                        base = posixpath.basename(path)
+                        try:
+                            if base in tmpHdf[dirname].keys():
+                                JUST_KEYS = False
+                                scanlist.append("")
+                        except:
+                            #it will crash later on
+                            pass                        
+                else:
+                    JUST_KEYS = False
+                    scanlist.append("")
         else:
             try:
                 number, order = map(int, scanlist[0].split("."))
@@ -133,10 +152,12 @@ class HDF5Stack1D(DataObject.DataObject):
                     if scan not in entryNames:
                         raise ValueError, "Entry %s not in file"
 
+        
         nFiles = len(filelist)
         nScans = len(scanlist)
-        if not nScans:
-            raise IOError, "No entry contains the required data"
+        if JUST_KEYS:
+            if not nScans:
+                raise IOError, "No entry contains the required data"
 
         #Now is to decide the number of mca ...
         #I assume all the scans contain the same number of mca
