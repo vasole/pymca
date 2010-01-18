@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.54 $"
+__revision__ = "$Revision: 1.55 $"
 import sys
 import time
 import QtBlissGraph
@@ -1821,12 +1821,40 @@ class McaWidget(qt.QWidget):
                     self.caldict[newlegend] = copy.deepcopy(self.caldict[legend])
                 del self.dataObjectsDict[legend]
             self.graph.replot()
+        elif dict['event'] == "MouseClick":
+            #check if we are in automatic ROI mode
+            if self.currentroi not in ["ICR", None, "None"]:
+                self.roilist,self.roidict = self.roiwidget.getroilistanddict()
+                fromdata = self.roidict[self.currentroi]['from']
+                todata = self.roidict[self.currentroi]['to']
+                pos = 0.5 * (fromdata + todata)
+                delta = dict['x'] - pos
+                self.roidict[self.currentroi]['to'] += delta
+                self.roidict[self.currentroi]['from'] += delta
+                self.graph.setx1markerpos(self.roimarkers[0],fromdata)
+                self.graph.setx1markerpos(self.roimarkers[1],todata )
+                self.roiwidget.fillfromroidict(roilist=self.roilist,
+                                           roidict=self.roidict)
+                key = self.currentroi
+                ddict = {}
+                ddict['event'] = 'selectionChanged'
+                ddict['key'] = key
+                ddict['roi'] = {}
+                ddict['roi']['from'] = self.roidict[key]['from' ]
+                ddict['roi']['to'] = self.roidict[key]['to' ]
+                ddict['colheader'] = 'Raw Counts'
+                self.__anasignal(ddict)
+                dict ={}
+                dict['event']  = "SetActiveCurveEvent"
+                dict['legend'] = self.graph.getactivecurve(justlegend=1)
+                self.__graphsignal(dict)
         else:
             if DEBUG:
                 print "Unhandled event ",   dict['event']   
 
     def emitCurrentROISignal(self):
-        if self.currentroi is None: return
+        if self.currentroi is None:
+            return
         #I have to get the current calibration
         if str(self.graph.xlabel()).upper() != "CHANNEL":
             #I have to get the energy
