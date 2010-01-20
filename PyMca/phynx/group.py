@@ -20,8 +20,13 @@ class Group(h5py.Group, _PhynxProperties):
     """
     """
 
+    __px_unrecognized = []
+
     @property
-    @sync
+    def children(self):
+        return self.values()
+
+    @property
     def entry(self):
         try:
             target = self['/'.join(self.name.split('/')[:2])]
@@ -31,17 +36,13 @@ class Group(h5py.Group, _PhynxProperties):
             return None
 
     @property
-    @sync
     def measurement(self):
         try:
             return self.entry.measurement
         except AttributeError:
             return None
 
-    @property
-    def parent(self):
-        return self[posixpath.split(self.name)[0]]
-
+    # TODO: remove for h5py-1.2:
     @property
     @sync
     def signals(self):
@@ -66,22 +67,21 @@ class Group(h5py.Group, _PhynxProperties):
         attributes of the group.
 
         """
-        with parent_object.plock:
-            h5py.Group.__init__(self, parent_object, name, create=create)
-            if create:
-                self.attrs['class'] = self.__class__.__name__
-                try:
-                    self.attrs['NX_class'] = self.nx_class
-                except AttributeError:
-                    pass
+        h5py.Group.__init__(self, parent_object, name, create=create)
+        if create:
+            self.attrs['class'] = self.__class__.__name__
+            try:
+                self.attrs['NX_class'] = self.nx_class
+            except AttributeError:
+                pass
 
-            _PhynxProperties.__init__(self, parent_object)
+        _PhynxProperties.__init__(self, parent_object)
 
-            if attrs:
-                for attr, val in attrs.iteritems():
-                    if not np.isscalar(val):
-                        val = str(val)
-                    self.attrs[attr] = val
+        if attrs:
+            for attr, val in attrs.iteritems():
+                if not np.isscalar(val):
+                    val = str(val)
+                self.attrs[attr] = val
 
     @sync
     def __repr__(self):
@@ -101,17 +101,32 @@ class Group(h5py.Group, _PhynxProperties):
         # create create the group twice. This might be possible with the
         # 1.8 API.
         item = super(Group, self).__getitem__(name)
-        if 'class' in item.attrs:
-            if item.attrs['class'] in registry:
-                return registry[item.attrs['class']](self, name)
-        if 'NX_class' in item.attrs:
-            return registry[item.attrs['NX_class']](self, name)
-        elif isinstance(item, h5py.Dataset):
+        attrs = item.attrs
+
+        if 'class' in attrs:
+            cls = attrs['class']
+        elif 'NX_class' in attrs:
+            cls = attrs['NX_class']
+        else:
+            cls = None
+
+        try:
+            return registry[cls](self, name)
+        except (KeyError, TypeError):
+            if (cls is not None) and (cls not in self.__px_unrecognized):
+                self.__px_unrecognized.append(cls)
+                print (
+                    'phynx does not recognize the "%r" class and will '
+                    'provide a default interface instead. If this is an '
+                    'official phynx or NeXus class, please file a bug report '
+                    'with the phynx project.' % cls
+                )
+
+        if isinstance(item, h5py.Dataset):
             return Dataset(self, name)
         else:
             return Group(self, name)
 
-    @sync
     def __setitem__(self, name, value):
         super(Group, self).__setitem__(name, value)
 
@@ -157,24 +172,18 @@ class Group(h5py.Group, _PhynxProperties):
                 )
             return item
 
-    @sync
     def listobjects(self):
         print "listobjects is deprecated, use values"
         return self.values()
 
     @sync
     def values(self):
-        try:
-            values = super(Group, self).values()
-        except AttributeError:
-            print "Please update to h5py-1.2"
-            values = super(Group, self).listobjects()
+        values = super(Group, self).values()
         try:
             return self.file._sorted(values)
         except TypeError:
             return values
 
-    @sync
     def listnames(self):
         print "listnames is deprecated, use keys"
         return self.keys()
@@ -183,7 +192,6 @@ class Group(h5py.Group, _PhynxProperties):
     def keys(self):
         return [posixpath.split(i.name)[-1] for i in self.values()]
 
-    @sync
     def listitems(self):
         print "listitems is deprecated, use items"
         return self.items()
@@ -191,6 +199,3 @@ class Group(h5py.Group, _PhynxProperties):
     @sync
     def items(self):
         return [(posixpath.split(i.name)[-1], i) for i in self.values()]
-
-
-registry.register(Group)
