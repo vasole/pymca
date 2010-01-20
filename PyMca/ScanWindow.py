@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1380,6 +1380,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                           '","-separated CSV *.csv',
                           '";"-separated CSV *.csv',
                           '"tab"-separated CSV *.csv',
+                          'OMNIC CSV *.csv',
                           'Widget PNG *.png',
                           'Widget JPG *.jpg']
             if self.outputFilter is None:
@@ -1594,9 +1595,12 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                         csvseparator = ","
                     elif ";" in filterused[0]:
                         csvseparator = ";"
+                    elif "OMNIC" in filterused[0]:
+                        csvseparator = ","
                     else:
                         csvseparator = "\t"
-                    ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel)) 
+                    if "OMNIC" not in filterused[0]:
+                        ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel)) 
                     for i in range(len(y)):
                         ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
                 else:
