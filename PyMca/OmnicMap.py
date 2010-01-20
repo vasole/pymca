@@ -19,6 +19,11 @@ class OmnicMap(DataObject.DataObject):
             fid = open(filename, 'r')
         data=fid.read()
         fid.close()
+
+        try:
+            omnicInfo = self.getOmnicInfo(data)
+        except:
+            omnicInfo = None
         self.sourceName = [filename]        
         firstByte = data.index("Spectrum position")
         s = data[firstByte:(firstByte+100-16)]
@@ -83,8 +88,52 @@ class OmnicMap(DataObject.DataObject):
         self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
         self.info["NumberOfFiles"] = self.__nFiles * 1
         self.info["FileIndex"] = 0
-        self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info["Channel0"] = 0.0
+        if omnicInfo is not None:
+            self.info['McaCalib'] = [omnicInfo['First X value']*1.0,
+                                     omnicInfo['Data spacing']*1.0,
+                                     0.0]
+        else:
+            self.info["McaCalib"] = [0.0, 1.0, 0.0]
+
+    def getOmnicInfo(self, data):
+        #additional information
+        fmt="I" #unsigned long in 32-bit
+        offset=372 #93*4 unsigned integers
+        infoBlockIndex = (struct.unpack(fmt,data[offset:(offset+4)])[0]-204)/4.
+        infoBlockIndex = int(infoBlockIndex)
+        #infoblock is the position of the information block
+        offset = infoBlockIndex * 4
+        #read 13 unsigned integers
+        nValues = 13
+        fmt = "%dI" % nValues
+        values = struct.unpack(fmt,data[offset:(offset+4*nValues)])
+        ddict = {}
+        ddict['Number of points'] = values[0]
+        ddict['Number of scan points'] = values[6] 
+        ddict['Interferogram peak position'] = values[7]
+        ddict['Number of sample scans'] = values[8]
+        ddict['Number of FFT points'] = values[10]
+        ddict['Number of background scans'] = values[12]
+        offset = (infoBlockIndex + 3) * 4
+        nFloats = 47
+        fmt = "%df" % nFloats
+        vFloats = struct.unpack(fmt,data[offset:(offset+4*nFloats)])
+        lastX  = vFloats[0]
+        firstX = vFloats[1]
+        startIndicesOfSpectra = vFloats[14]
+        laserFrequency = vFloats[16]
+        ddict['First X value'] = firstX
+        ddict['Last X value']  = lastX
+        ddict['Identifier for start indices of spectra'] = vFloats[14]
+        ddict['Laser frequency']  = vFloats[16]
+        ddict['Data spacing']  = (lastX - firstX)/(ddict['Number of points']-1.0)
+        ddict['Background gain'] = vFloats[10]
+        if DEBUG:
+            for key in ddict.keys():
+                print key, ddict[key]
+        return ddict
+        
         
 if __name__ == "__main__":
     filename = None
