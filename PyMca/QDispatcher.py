@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -44,12 +44,12 @@ class QDispatcher(qt.QWidget):
         fileTypeList = ["Spec Files (*mca)",
                         "Spec Files (*dat)",
                         "Spec Files (*spec)",
-                        "SPE Files (*SPE)",
+                        "SPE Files (*SPE *spe)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "CSV Files (*csv)"]
         if QDataSource.NEXUS:
-            fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5)")
+            fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")
         fileTypeList.append("All Files (*)")
         
         self.sourceSelector = QSourceSelector.QSourceSelector(self, filetypelist=fileTypeList)
