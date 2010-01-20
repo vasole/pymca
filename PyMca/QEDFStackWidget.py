@@ -784,7 +784,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if self.__stackImageData is None:
             return
         if self.pcaParametersDialog is None:
-            self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self)
+            self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self,
+                                                                     regions=True)
             spectrumLength = max(self.__mcaData0.y[0].shape)
             self.pcaParametersDialog.nPC.setMaximum(spectrumLength)
             self.pcaParametersDialog.nPC.setValue(min(10,spectrumLength))
@@ -794,6 +795,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     binningOptions.append(number)
             ddict = {'options':binningOptions, 'binning': 1, 'method': 0}
             self.pcaParametersDialog.setParameters(ddict)
+        selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")
+        if selection is None:
+            return
+        y = selection['dataobject'].y[0]
+        x = selection['dataobject'].x[0]
+        self.pcaParametersDialog.setSpectrum(x, y)
         ret = self.pcaParametersDialog.exec_()
         if ret:
             pcaParameters = self.pcaParametersDialog.getParameters()
@@ -802,6 +809,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             function = pcaParameters['function']
             binning = pcaParameters['binning']
             npc = pcaParameters['npc']
+            mask = pcaParameters['mask']
             if self.stack.data.dtype not in [numpy.float, numpy.float32]:
                 self.stack.data = self.stack.data.astype(numpy.float)
             shape = self.stack.data.shape
@@ -809,7 +817,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 if 0:
                     images, eigenvalues, eigenvectors = function(self.stack.data,
                                                                  npc,
-                                                                 binning=binning)
+                                                                 binning=binning,
+                                                                 mask=mask)
                 else:
                     if DEBUG:
                         import time
@@ -824,7 +833,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     threadResult = self._submitPCAThread(function,
                                                          data,
                                                          npc,
-                                                         binning=binning)
+                                                         binning=binning,
+                                                         mask=mask)
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
                             if threadResult[0] == "Exception":

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,6 +31,7 @@ import MaskImageWidget
 import ScanWindow
 import sys
 import PCAModule
+import numpy
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
@@ -42,7 +43,8 @@ class HorizontalSpacer(qt.QWidget):
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
 class PCAParametersDialog(qt.QDialog):
-    def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10]):
+    def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10],
+                 regions=False):
         qt.QDialog.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setCaption("PCA Configuration Dialog")
@@ -118,7 +120,26 @@ class PCAParametersDialog(qt.QDialog):
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
         self.binningCombo.setEnabled(False)
-        
+        self.connect(self.binningCombo,
+                     qt.SIGNAL("activated(int)"),
+                     self._updatePlotFromBinningCombo)
+        if regions:
+            self.__regions = True
+            #Region handling
+            self.regionsWidget = RegionsWidget(self)
+            self.regionsWidget.setEnabled(False)
+            self.connect(self.regionsWidget,
+                         qt.SIGNAL('RegionsWidgetSignal'),
+                         self.regionsWidgetSlot)
+            #the plot
+            self.scanWindow = ScanWindow.ScanWindow(self)
+            self.scanWindow.scanWindowInfoWidget.hide()
+            self.connect(self.scanWindow.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         self._graphSlot)
+        else:
+            #the optional plot
+            self.scanWindow = None
 
         #the OK button
         hbox = qt.QWidget(self)
@@ -127,15 +148,53 @@ class PCAParametersDialog(qt.QDialog):
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("Accept")
+        self.okButton.setAutoDefault(False)
         hboxLayout.addWidget(HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.okButton)
         hboxLayout.addWidget(HorizontalSpacer(hbox))
         self.mainLayout.addWidget(self.speedOptions)
+        if regions:
+            self.mainLayout.addWidget(self.regionsWidget)
         self.mainLayout.addWidget(hbox)
+        if self.scanWindow is not None:
+            self.mainLayout.addWidget(self.scanWindow)
+
         self.connect(self.okButton,
                      qt.SIGNAL("clicked()"),
                      self.accept)
 
+
+    def regionsWidgetSlot(self, ddict):
+        fromValue = ddict['from']
+        toValue   = ddict['to']
+        self.graph = self.scanWindow.graph
+        self.graph.clearMarkers()
+        #self.fromMarker = -1
+        #self.toMarker = -1
+        self.fromMarker = self.graph.insertX1Marker(fromValue,1.1,
+                                label = 'From')
+        self.toMarker = self.graph.insertX1Marker(toValue,1.1,
+                                label = 'To')
+        self.graph.setmarkercolor(self.fromMarker,'blue')
+        self.graph.setmarkercolor(self.toMarker,'blue')
+        self.graph.setmarkerfollowmouse(self.fromMarker,1)
+        self.graph.setmarkerfollowmouse(self.toMarker,1)
+        self.graph.enablemarkermode()
+        self.graph.replot() 
+
+    def _graphSlot(self, ddict):
+        if ddict['event'] == "markerMoved":
+            marker = ddict['marker']
+            value =  ddict['x']
+            signal = False
+            if marker == self.fromMarker:
+                self.regionsWidget.fromLine.setText("%f" % value)
+            elif marker == self.toMarker:
+                self.regionsWidget.toLine.setText("%f" % value)
+            else:
+                signal = True
+            self.regionsWidget._editingSlot(signal=signal)
+                
     def _slot(self, button):
         button.setChecked(True)
         index = self.buttonGroup.checkedId()
@@ -144,7 +203,47 @@ class PCAParametersDialog(qt.QDialog):
             self.binningCombo.setEnabled(True)
         else:
             self.binningCombo.setEnabled(False)
+        if self.__regions:
+            if index < 3:
+                self.regionsWidget.setEnabled(False)
+            else:
+                self.regionsWidget.setEnabled(True)
         return
+
+    def setSpectrum(self, x, y, legend=None):
+        if self.scanWindow is None:
+            self.scanWindow = ScanWindow.ScanWindow(self)
+            self.scanWindow.scanWindowInfoWidget.hide()
+            self.mainLayout.addWidget(self.scanWindow)
+        if legend is None:
+            legend = "Current Active Spectrum"
+        self._x = x
+        self._y = y
+        self.regionsWidget.setLimits(x.min(), x.max())
+        self._legend = legend
+        self.updatePlot()
+
+    def _updatePlotFromBinningCombo(self, value):
+        if self.scanWindow is None:
+            return
+        self.updatePlot()
+
+    def updatePlot(self):
+        binning = int(self.binningCombo.currentText())
+        x = self._x * 1.0
+        y = self._y * 1.0
+        x.shape = 1, -1
+        y.shape = 1, -1
+        r, c = x.shape
+        x.shape = r, c/binning, binning
+        y.shape = r, c/binning, binning
+        x = x.sum(axis=-1)/binning
+        y = y.sum(axis=-1)
+        x.shape = -1
+        y.shape = -1
+        self._binnedX = x
+        self._binnedY = y
+        self.scanWindow.newCurve(x, y, self._legend, replace=True)
 
     def setParameters(self, ddict):
         if ddict.has_key('options'):
@@ -174,7 +273,137 @@ class PCAParametersDialog(qt.QDialog):
         ddict['method'] = i
         ddict['methodlabel'] = self.methods[i]
         ddict['function'] = self.functions[i]
+        mask = None
+        if self.__regions:
+            regions = self.regionsWidget.getRegions()
+            if not len(regions):
+                mask = None
+            else:
+                mask = numpy.zeros(self._binnedX.shape, numpy.int32)
+                for region in regions:
+                    mask[(self._binnedX >= region[0]) *\
+                         (self._binnedX <= region[1])] = 1
+        ddict['mask'] = mask
         return ddict
+
+class RegionsWidget(qt.QGroupBox):
+    def __init__(self, parent=None, nregions=10, limits=[0.0, 1000.]):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Spectral Regions')
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+        if nregions % 2:
+            nregions += 1            
+        self.nRegions = nregions
+        self.regionList = []
+        self.__limits = [limits[0], limits[1]]
+        for i in range(self.nRegions):
+            self.regionList.append([limits[0], limits[1]])
+        self.nRegionsLabel = qt.QLabel(self)
+        self.nRegionsLabel.setText("Number of Regions:")
+        self.nRegionsSpinBox = qt.QSpinBox(self)
+        self.nRegionsSpinBox.setMinimum(0)
+        self.nRegionsSpinBox.setValue(0)
+        self.nRegionsSpinBox.setMaximum(self.nRegions)
+        self.mainLayout.addWidget(self.nRegionsLabel, 0, 0)
+        self.mainLayout.addWidget(self.nRegionsSpinBox, 0, 1)
+        self.connect(self.nRegionsSpinBox,
+                     qt.SIGNAL("valueChanged(int)"),
+                     self._regionsChanged)
+
+        self.currentRegionLabel = qt.QLabel(self)
+        self.currentRegionLabel.setText("Current Region:")
+        self.currentRegionSpinBox = qt.QSpinBox(self)
+        self.currentRegionSpinBox.setMinimum(1)
+        self.currentRegionSpinBox.setValue(1)
+        self.currentRegionSpinBox.setMaximum(1)
+        self.mainLayout.addWidget(self.currentRegionLabel, 0, 2)
+        self.mainLayout.addWidget(self.currentRegionSpinBox, 0, 3)
+        self.connect(self.currentRegionSpinBox,
+                     qt.SIGNAL("valueChanged(int)"),
+                     self._currentRegionChanged)
+
+        label = qt.QLabel(self)
+        label.setText("From:")
+        self.fromLine = qt.QLineEdit(self)
+        self.fromLine.setText("%f" % limits[0])
+        self.fromLine._v  = qt.QDoubleValidator(self.fromLine)
+        self.fromLine.setValidator(self.fromLine._v)
+        self.mainLayout.addWidget(label, 0, 4)
+        self.mainLayout.addWidget(self.fromLine, 0, 5)
+        self.connect(self.fromLine,
+                     qt.SIGNAL("editingFinished()"),
+                     self._editingSlot)
+
+        label = qt.QLabel(self)
+        label.setText("To:")
+        self.toLine = qt.QLineEdit(self)
+        self.toLine.setText("%f" % limits[1])
+        self.toLine._v  = qt.QDoubleValidator(self.toLine)
+        self.toLine.setValidator(self.toLine._v)
+        self.mainLayout.addWidget(label, 0, 6)
+        self.mainLayout.addWidget(self.toLine, 0, 7)
+        self.connect(self.toLine,
+                     qt.SIGNAL("editingFinished()"),
+                     self._editingSlot)
+        self._regionsChanged(0)
+
+    def setLimits(self, xmin, xmax):
+        for i in range(len(self.regionList)):
+            self.regionList[i][0] = max(self.regionList[i][0], xmin)
+            self.regionList[i][1] = min(self.regionList[i][1], xmax)
+        self.__limits = [xmin, xmax]
+        current = self.currentRegionSpinBox.value()
+        self._currentRegionChanged(current)
+
+    def _regionsChanged(self, value):
+        if value == 0:
+            self.toLine.setDisabled(True)
+            self.fromLine.setDisabled(True)
+            self.currentRegionSpinBox.setDisabled(True)
+        else:
+            current = self.currentRegionSpinBox.value()
+            self.currentRegionSpinBox.setMaximum(value)
+            self.toLine.setDisabled(False)
+            self.fromLine.setDisabled(False)
+            self.currentRegionSpinBox.setDisabled(False)
+            if current > value:
+                self.currentRegionSpinBox.setValue(value)
+                self._currentRegionChanged(value)
+
+    def _currentRegionChanged(self, value):
+        fromValue, toValue = self.regionList[value-1]
+        self.fromLine.setText("%f" % fromValue)
+        self.toLine.setText("%f" % toValue)
+        self.mySignal()
+
+    def _editingSlot(self, signal=True):
+        current = self.currentRegionSpinBox.value()-1
+        self.regionList[current][0] = float(str(self.fromLine.text()))
+        self.regionList[current][1] = float(str(self.toLine.text()))
+        if self.regionList[current][0] < self.__limits[0]:
+            self.regionList[current][0] = self.__limits[0]
+        if self.regionList[current][1] > self.__limits[1]:
+            self.regionList[current][1] = self.__limits[1]
+        if signal:
+            self.mySignal()
+
+    def mySignal(self):
+        current = self.currentRegionSpinBox.value()-1
+        ddict={}
+        ddict['event']= 'regionChanged'
+        ddict['from'] = self.regionList[current][0]
+        ddict['to'] = self.regionList[current][1]
+        self.emit(qt.SIGNAL('RegionsWidgetSignal'), ddict)
+
+    def getRegions(self):
+        nRegions = self.nRegionsSpinBox.value()
+        regions = []
+        if nRegions > 0:
+            for i in range(nRegions):
+                regions.append(self.regionList[i])
+        return regions
 
 class PCAWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
