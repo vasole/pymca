@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.55 $"
+__revision__ = "$Revision: 1.56 $"
 import sys
 import time
 import QtBlissGraph
@@ -808,6 +808,7 @@ class McaWidget(qt.QWidget):
                           xdata = xdata + calib[2]* xhelp * xhelp
                 return xdata
         elif self.calibration == self.calboxoptions[2]:
+            legend = info.get('legend', None)
             if self.caldict.has_key(legend):
                 A = self.caldict[legend]['A']
                 B = self.caldict[legend]['B']

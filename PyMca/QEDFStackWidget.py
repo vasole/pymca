@@ -800,6 +800,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             return
         y = selection['dataobject'].y[0]
         x = selection['dataobject'].x[0]
+        selection['dataobject'].info['legend'] = self.__getLegend()
+        x = self.mcaWidget.getEnergyFromChannels(x,
+                                    selection['dataobject'].info)
         self.pcaParametersDialog.setSpectrum(x, y)
         ret = self.pcaParametersDialog.exec_()
         if ret:
