@@ -36,26 +36,8 @@ class File(Group, h5py.File):
             raise RuntimeError('unrecognized format')
 
     @property
-    def file(self):
-        return self
-
-    # maintain forward compatibility with h5py-1.2:
-    @property
-    def filename(self):
-        return self._filename
-
-    @property
     def format(self):
         return self.attrs.get('format_version', None)
-
-    # maintain forward compatibility with h5py-1.2:
-    @property
-    def name(self):
-        return '/'
-
-    @property
-    def parent(self):
-        return None
 
     def __init__(self, name, mode='a', lock=None, sorted_with=None):
         """
@@ -84,7 +66,6 @@ class File(Group, h5py.File):
                     '__exit__ methods'
                 )
         self._plock = lock
-        self._filename = name
 
         self._sorted = None
         self.sorted_with(sorted_with)

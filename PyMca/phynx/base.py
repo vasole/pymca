@@ -3,13 +3,23 @@
 from __future__ import absolute_import, with_statement
 
 try:
-    from enthought.traits.api import HasTraits_DISABLED
+    from enthought.traits.api import HasTraits, MetaHasTraits
 except ImportError:
+    MetaHasTraits = type
+
     class HasTraits(object):
         pass
 
 from .exceptions import H5Error
 from .utils import simple_eval
+
+
+class _RegisterPhynxClass(MetaHasTraits):
+
+    def __init__(cls, name, bases, attrs):
+        if cls.__name__ != '_PhynxProperties':
+            from .registry import registry
+            registry.register(cls)
 
 
 class _PhynxProperties(HasTraits):
@@ -19,13 +29,11 @@ class _PhynxProperties(HasTraits):
     python properties.
     """
 
+    __metaclass__ = _RegisterPhynxClass
+
     @property
     def acquisition_shape(self):
         return simple_eval(self.attrs.get('acquisition_shape', '()'))
-
-    @property
-    def file(self):
-        return self._file
 
     @property
     def npoints(self):
@@ -37,10 +45,11 @@ class _PhynxProperties(HasTraits):
 
     @property
     def source_file(self):
-        return self.attrs.get('source_file', self.file.name)
+        return self.attrs.get('source_file', self.file.filename)
 
     def __init__(self, parent_object):
-        with parent_object.plock:
+        if 1:
+#        with parent_object.plock:
             self._plock = parent_object.plock
             self._file = parent_object.file
             for attr in ['acquisition_shape', 'source_file', 'npoints']:
