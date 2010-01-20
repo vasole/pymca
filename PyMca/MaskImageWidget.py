@@ -514,7 +514,12 @@ class MaskImageWidget(qt.QWidget):
         self.__imageData = data
         if clearmask:
             self.__selectionMask = None
-        self.plotImage(update = True)
+        if self.colormapDialog is not None:
+            minData = self.__imageData.min()
+            maxData = self.__imageData.max()
+            self.colormapDialog.setDataMinMax(minData, maxData, update=True)
+        else:
+            self.plotImage(update = True)
 
     def getImageData(self):
         return self.__imageData
@@ -567,6 +572,7 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.graph.clear()
             self.graphWidget.picker.data = None
             return
+        
         if update:
             if self.__selectionMask is None:
                 self.__selectionMask = numpy.zeros(self.__imageData.shape,

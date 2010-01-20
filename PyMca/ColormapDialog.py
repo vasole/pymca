@@ -576,7 +576,7 @@ class ColormapDialog(qt.QDialog):
     """
     set min/max value of data source
     """
-    def setDataMinMax(self, minVal, maxVal):
+    def setDataMinMax(self, minVal, maxVal, update=True):
         if minVal is not None:
             vmin = float(str(minVal))
             self.dataMin = vmin
@@ -584,8 +584,9 @@ class ColormapDialog(qt.QDialog):
             vmax = float(str(maxVal))
             self.dataMax = vmax
 
-        # are current values in the good range ?
-        self._update()
+        if update:
+            # are current values in the good range ?
+            self._update()
 
     """
     send 'ColormapChanged' signal
