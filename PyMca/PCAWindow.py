@@ -138,6 +138,7 @@ class PCAParametersDialog(qt.QDialog):
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._graphSlot)
         else:
+            self.__regions = False
             #the optional plot
             self.scanWindow = None
 
