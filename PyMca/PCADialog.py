@@ -83,7 +83,11 @@ class PCADialog(qt.QDialog):
                                             imageicons=selection,
                                             standalonesave=True)
         self.pcaWindow.setDefaultColormap(0, logflag=False)
-        self.pcaParametersDialog = None
+        self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self)
+        self.pcaParametersDialog.nPC.setMaximum(11)
+        self.pcaParametersDialog.nPC.setValue(10)
+        self.pcaParametersDialog.hide()
+        self.pcaParametersDialogInitialized = False
         self.pcaWindow.hide()
 
         #connections
@@ -108,12 +112,12 @@ class PCADialog(qt.QDialog):
             msg.exec_()
             return
 
-        if self.pcaParametersDialog is None:
-            self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self)
+        if not self.pcaParametersDialogInitialized:
             self.pcaParametersDialog.nPC.setMaximum(self._spectrumLength)
             self.pcaParametersDialog.nPC.setValue(min(10, self._spectrumLength))
             ddict = {'options':self._binningOptions, 'binning': 1, 'method': 0}
             self.pcaParametersDialog.setParameters(ddict)
+            self.pcaParametersDialogInitialized = True
         ret = self.pcaParametersDialog.exec_()
         if ret:
             if DEBUG:
@@ -123,13 +127,23 @@ class PCADialog(qt.QDialog):
             function = pcaParameters['function']
             binning = pcaParameters['binning']
             npc = pcaParameters['npc']
+            mask = pcaParameters['mask']
             kw = pcaParameters.get('kw', {})
             data = self._data
             old_shape = self._data.shape
+            if mask is not None:
+                if mask.sum() < npc:
+                    msg = qt.QMessageBox(self)
+                    msg.setWindowTitle("Not enough data")
+                    msg.setIcon(qt.QMessageBox.Information)
+                    msg.setText("Number of components too high")
+                    msg.exec_()
+                    return
             if DEBUG:
                 images, eigenvalues, eigenvectors = function(data,
                                                              npc,
                                                              binning=binning,
+                                                             mask=mask,
                                                              **kw)
             else:
                 try:
@@ -137,6 +151,7 @@ class PCADialog(qt.QDialog):
                                                          data,
                                                          npc,
                                                          binning=binning,
+                                                         mask=mask,
                                                          **kw)
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
@@ -215,9 +230,13 @@ class PCADialog(qt.QDialog):
                 if (self._spectrumLength % number) == 0:
                     self._binningOptions.append(number)
         if self.pcaParametersDialog is not None:
+            value = self.pcaParametersDialog.nPC.value()
             self.pcaParametersDialog.nPC.setMaximum(self._spectrumLength)
-            self.pcaParametersDialog.nPC.setValue(min(10, self._spectrumLength))
-            ddict = {'options':self._binningOptions, 'binning': 1, 'method': 0}
+            self.pcaParametersDialog.nPC.setValue(min(value, self._spectrumLength))
+
+
+    def setSpectrum(self, x, y, legend=None):
+        return self.pcaParametersDialog.setSpectrum(x, y, legend=legend)
 
     def _submitThread(self, function, *var, **kw):
         message = "Please Wait: PCA Going On"
@@ -263,6 +282,7 @@ class PCADialog(qt.QDialog):
         return result
 
 if __name__ == "__main__":
+    DEBUG = 1
     import os
     import EdfFile
     app = qt.QApplication([])
@@ -270,8 +290,10 @@ if __name__ == "__main__":
                        app, qt.SLOT("quit()"))
     d = PCADialog()
     imageList = []
-    for t in ["mix1.edf", "mix2.edf", "mix3.edf"]:
-        fname = os.path.join(os.path.dirname(__file__), "tests", t)
+    for t in ["D:\DATA\ICA\mix1.edf",
+              "D:\DATA\ICA\mix2.edf",
+              "D:\DATA\ICA\mix3.edf"]:
+        fname = t
         if not os.path.exists(fname):
             break
         edf = EdfFile.EdfFile(fname)

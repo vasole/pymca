@@ -125,18 +125,7 @@ class PCAParametersDialog(qt.QDialog):
                      self._updatePlotFromBinningCombo)
         if regions:
             self.__regions = True
-            #Region handling
-            self.regionsWidget = RegionsWidget(self)
-            self.regionsWidget.setEnabled(False)
-            self.connect(self.regionsWidget,
-                         qt.SIGNAL('RegionsWidgetSignal'),
-                         self.regionsWidgetSlot)
-            #the plot
-            self.scanWindow = ScanWindow.ScanWindow(self)
-            self.scanWindow.scanWindowInfoWidget.hide()
-            self.connect(self.scanWindow.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         self._graphSlot)
+            self.__addRegionsWidget()
         else:
             self.__regions = False
             #the optional plot
@@ -164,6 +153,24 @@ class PCAParametersDialog(qt.QDialog):
                      qt.SIGNAL("clicked()"),
                      self.accept)
 
+    def __addRegionsWidget(self):
+        #Region handling
+        self.regionsWidget = RegionsWidget(self)
+        self.regionsWidget.setEnabled(False)
+        self.connect(self.regionsWidget,
+                     qt.SIGNAL('RegionsWidgetSignal'),
+                     self.regionsWidgetSlot)
+        #the plot
+        self.scanWindow = ScanWindow.ScanWindow(self)
+        self.scanWindow.scanWindowInfoWidget.hide()
+        self.connect(self.scanWindow.graph,
+                     qt.SIGNAL("QtBlissGraphSignal"),
+                     self._graphSlot)
+        if not self.__regions:
+            #I am adding after instantiation
+            self.mainLayout.insertWidget(2,self.regionsWidget)
+            self.mainLayout.addWidget(self.scanWindow)
+        self.__regions = True
 
     def regionsWidgetSlot(self, ddict):
         fromValue = ddict['from']
@@ -213,11 +220,12 @@ class PCAParametersDialog(qt.QDialog):
 
     def setSpectrum(self, x, y, legend=None):
         if self.scanWindow is None:
-            self.scanWindow = ScanWindow.ScanWindow(self)
-            self.scanWindow.scanWindowInfoWidget.hide()
-            self.mainLayout.addWidget(self.scanWindow)
+            self.__addRegionsWidget()
         if legend is None:
             legend = "Current Active Spectrum"
+        if not isinstance(x, numpy.ndarray):
+            x = numpy.array(x)
+            y = numpy.array(y)
         self._x = x
         self._y = y
         self.regionsWidget.setLimits(x.min(), x.max())
