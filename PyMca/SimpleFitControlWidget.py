@@ -295,7 +295,7 @@ class SimpleFitControlWidget(qt.QWidget):
         else:
             w.functionCheckBox.setChecked(False)
         if ddict['strip_flag']:
-            w.stripCheckBoxx.setChecked(True)
+            w.stripCheckBox.setChecked(True)
         else:
             w.stripCheckBox.setChecked(False)
         if ddict['background_flag']:

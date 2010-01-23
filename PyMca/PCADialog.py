@@ -185,10 +185,10 @@ class PCADialog(qt.QDialog):
                     imagenames.append("Eigenimage %02d" % i)
                     vectornames.append("Eigenvector %02d" % i)
             self.pcaWindow.setPCAData(images,
-                                       eigenvalues,
-                                       eigenvectors,
-                                       imagenames=imagenames,
-                                       vectornames=vectornames)
+                                      eigenvalues,
+                                      eigenvectors,
+                                      imagenames=imagenames,
+                                      vectornames=vectornames)
             self.pcaWindow.show()
             self.pcaWindow.raise_()
 
@@ -289,12 +289,19 @@ if __name__ == "__main__":
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
     d = PCADialog()
+    if len(sys.argv) < 2:
+        fileList = ["D:\DATA\ICA\mix1.edf",
+                    "D:\DATA\ICA\mix2.edf",
+                    "D:\DATA\ICA\mix3.edf"]
+    else:
+        fileList = []
+        for i in range(1, len(sys.argv)):
+            fileList.append(sys.argv[i])
     imageList = []
-    for t in ["D:\DATA\ICA\mix1.edf",
-              "D:\DATA\ICA\mix2.edf",
-              "D:\DATA\ICA\mix3.edf"]:
-        fname = t
+    for fname in fileList:
+        print fname
         if not os.path.exists(fname):
+            print "File name %s does not exists" % fname
             break
         edf = EdfFile.EdfFile(fname)
         data = edf.GetData(0)
