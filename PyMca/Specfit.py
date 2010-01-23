@@ -1689,9 +1689,6 @@ class Specfit:
        
 def test():
     import SpecfitFunctions
-    import Tkinter
-    import MyBlissgraph
-    
     a=SpecfitFunctions.SpecfitFunctions()
     x = Numeric.arange(1000).astype(Numeric.Float)
     p1 = Numeric.array([1500,100.,50.0])
@@ -1702,7 +1699,7 @@ def test():
     fit.setdata(x=x,y=y)
     fit.importfun("SpecfitFunctions.py")
     fit.settheory('Gaussians')
-    print fit.configure()
+    #print fit.configure()
     fit.setbackground('Constant')
     if 1:
         fit.estimate()
@@ -1713,20 +1710,18 @@ def test():
     print "Obtained parameters : "
     for param in fit.paramlist:
         print param['name'],' = ',param['fitresult']
-    print "chisq = ",fit.chisq 
-    root=Tkinter.Tk()
-    app  = MyBlissgraph.Blissgraph(root)
-    xs    = ['Equis', x]
-    data  = ['Counts','Equis',y]
-    data2 = ['Fit','Equis',fit.gendata()]
-    app.setx(xs)
-    app.sety(data)
-    app.sety(data2)
-    root.geometry("500x400+50+50")
-    root.title("Blissgraph")
-
-    app.pack(fill='both',expand='yes')
-    root.mainloop()
+    print "chisq = ",fit.chisq
+    print "Attempting a plot"
+    import PyQt4.Qt as qt
+    import ScanWindow
+    qtApp = qt.QApplication([])
+    sw = ScanWindow.ScanWindow()
+    sw.addCurve(x, y, legend="Data")
+    yfit = fit.gendata()
+    sw.addCurve(x, yfit, legend="Fit")
+    sw.addCurve(x, y-yfit, legend="Data-Fit")
+    sw.show()
+    qtApp.exec_()
 
 
 if __name__ == "__main__":
