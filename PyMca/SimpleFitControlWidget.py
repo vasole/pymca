@@ -50,58 +50,137 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.mainLayout.setMargin(2)
         self.mainLayout.setSpacing(2)
 
+        row = 0
+
         #actual fit function
         self.functionCheckBox = qt.QCheckBox(self)
-        self.functionLabel    = qt.QLabel(self)
-        self.functionLabel.setText("Fit Function to be used")
+        self.functionCheckBox.setText("Fit Function to be used")
         self.functionCombo    = qt.QComboBox(self)
         self.functionCombo.addItem(str("Add Function(s)"))
         self.functionSetupButton = qt.QPushButton(self)
         self.functionSetupButton.setText('SETUP')
         self.functionSetupButton.setAutoDefault(False)
 
-        row = 0
         self.mainLayout.addWidget(self.functionCheckBox,    row, 0)
-        self.mainLayout.addWidget(self.functionLabel,       row, 1)
-        self.mainLayout.addWidget(HorizontalSpacer(self),   row, 2)
+        self.mainLayout.addWidget(HorizontalSpacer(self),   row, 1)
+        self.mainLayout.addWidget(self.functionSetupButton, row, 2)
         self.mainLayout.addWidget(self.functionCombo,       row, 3)
-        self.mainLayout.addWidget(self.functionSetupButton, row, 4)
-
-
-        #stripping
-        self.stripCheckBox = qt.QCheckBox(self)
-        self.stripLabel    = qt.QLabel(self)
-        self.stripLabel.setText("Non-analytical (or estimation) background algorithm")
-        self.stripCombo    = qt.QComboBox(self)
-        self.stripCombo.addItem(str("Strip"))
-        self.stripCombo.addItem(str("SNIP"))
-        self.stripSetupButton = qt.QPushButton(self)
-        self.stripSetupButton.setText('SETUP')
-        self.stripSetupButton.setAutoDefault(False)
-
-        row = 1
-        self.mainLayout.addWidget(self.stripCheckBox,       row, 0)
-        self.mainLayout.addWidget(self.stripLabel,          row, 1)
-        self.mainLayout.addWidget(HorizontalSpacer(self),   row, 2)
-        self.mainLayout.addWidget(self.stripCombo,          row, 3)
-        self.mainLayout.addWidget(self.stripSetupButton,    row, 4)
+        row += 1
+        
 
         #background
         self.backgroundCheckBox = qt.QCheckBox(self)
-        self.backgroundLabel    = qt.QLabel(self)
-        self.backgroundLabel.setText("Background function")
+        self.backgroundCheckBox.setText("Background function")
         self.backgroundCombo    = qt.QComboBox(self)
         self.backgroundCombo.addItem(str("Add Function(s)"))
         self.backgroundSetupButton = qt.QPushButton(self)
         self.backgroundSetupButton.setText('SETUP')
         self.backgroundSetupButton.setAutoDefault(False)
 
-        row = 2
         self.mainLayout.addWidget(self.backgroundCheckBox,    row, 0)
-        self.mainLayout.addWidget(self.backgroundLabel,       row, 1)
-        self.mainLayout.addWidget(HorizontalSpacer(self),     row, 2)
+        self.mainLayout.addWidget(HorizontalSpacer(self),     row, 1)
+        self.mainLayout.addWidget(self.backgroundSetupButton, row, 2)
         self.mainLayout.addWidget(self.backgroundCombo,       row, 3)
-        self.mainLayout.addWidget(self.backgroundSetupButton, row, 4)
+        row += 1
+
+
+        #stripping
+        self.stripCheckBox = qt.QCheckBox(self)
+        self.stripCheckBox.setText("Non-analytical (or estimation) background algorithm")
+        self.stripCombo    = qt.QComboBox(self)
+        self.stripCombo.addItem(str("Strip"))
+        self.stripCombo.addItem(str("SNIP"))
+        self.stripSetupButton = qt.QPushButton(self)
+        self.stripSetupButton.setText('SETUP')
+        self.stripSetupButton.setAutoDefault(False)
+        self.connect(self.stripCombo,
+                     qt.SIGNAL("activated(int)"),
+                     self._stripComboActivated)
+
+        self.mainLayout.addWidget(self.stripCheckBox,       row, 0)
+        self.mainLayout.addWidget(HorizontalSpacer(self),   row, 1)
+        self.mainLayout.addWidget(self.stripSetupButton,    row, 2)
+        self.mainLayout.addWidget(self.stripCombo,          row, 3)
+        row += 1
+
+        self.snipWidthLabel = qt.QLabel(self)
+        self.snipWidthLabel.setText(str("SNIP Background Width"))
+        self.snipWidthSpin = qt.QSpinBox(self)
+        self.snipWidthSpin.setMinimum(1)
+        self.snipWidthSpin.setMaximum(300)
+        self.snipWidthSpin.setValue(10)
+        self.mainLayout.addWidget(self.snipWidthLabel,     row, 0)
+        self.mainLayout.addWidget(self.snipWidthSpin,      row, 3)
+        row += 1
+
+        self.stripWidthLabel = qt.QLabel(self)
+        self.stripWidthLabel.setText(str("Strip Background Width"))
+        self.stripWidthSpin = qt.QSpinBox(self)
+        self.stripWidthSpin.setMinimum(1)
+        self.stripWidthSpin.setMaximum(100)
+        self.stripWidthSpin.setValue(4)
+        self.mainLayout.addWidget(self.stripWidthLabel,     row, 0)
+        self.mainLayout.addWidget(self.stripWidthSpin,      row, 3)
+        row += 1
+
+        self.stripIterLabel = qt.QLabel(self)
+        self.stripIterLabel.setText(str("Strip Background Iterations"))
+        self.stripIterSpin = qt.QSpinBox(self)
+        self.stripIterSpin.setMinimum(0)
+        self.stripIterSpin.setMaximum(100000)
+        self.stripIterSpin.setValue(5000)
+        self.mainLayout.addWidget(self.stripIterLabel,     row, 0)
+        self.mainLayout.addWidget(self.stripIterSpin,      row, 3)
+        row += 1
+
+        self.stripFilterLabel = qt.QLabel(self)
+        text = str("Strip Background Smoothing Width (Savitsky-Golay)")
+        self.stripFilterLabel.setText(text)
+        self.stripFilterSpin = qt.QSpinBox(self)
+        self.stripFilterSpin.setMinimum(0)
+        self.stripFilterSpin.setMaximum(40)
+        self.stripFilterSpin.setSingleStep(2)
+        self.mainLayout.addWidget(self.stripFilterLabel,     row, 0)
+        self.mainLayout.addWidget(self.stripFilterSpin,      row, 3)
+        row += 1
+
+        #anchors
+        self.anchorsContainer = qt.QWidget(self)
+        anchorsContainerLayout = qt.QHBoxLayout(self.anchorsContainer)
+        anchorsContainerLayout.setMargin(2)
+        anchorsContainerLayout.setSpacing(2)
+        self.stripAnchorsCheckBox = qt.QCheckBox(self.anchorsContainer)
+        self.stripAnchorsCheckBox.setText(str("Strip Background use Anchors"))
+        anchorsContainerLayout.addWidget(self.stripAnchorsCheckBox)
+        self.stripAnchorsList = []
+        for i in range(4):
+            anchor = qt.QLineEdit(self.anchorsContainer)
+            anchor._v = qt.QDoubleValidator(anchor)
+            anchor.setValidator(anchor._v)
+            anchor.setText("0.0")
+            anchorsContainerLayout.addWidget(anchor)
+            self.stripAnchorsList.append(anchor)
+        self.mainLayout.addWidget(self.anchorsContainer,      row, 0, 1, 4)
+        row += 1
+        
+
+    def _stripComboActivated(self, iValue):
+        if iValue == 1:
+            self.setSNIP(True)
+        else:
+            self.setSNIP(False)
+
+    def setSNIP(self, bValue):
+        if bValue:
+            self.snipWidthSpin.setEnabled(True)
+            self.stripWidthSpin.setEnabled(False)
+            self.stripIterSpin.setEnabled(False)
+            self.stripCombo.setCurrentIndex(1)
+        else:
+            self.snipWidthSpin.setEnabled(False)
+            self.stripWidthSpin.setEnabled(True)
+            self.stripIterSpin.setEnabled(True)
+            self.stripCombo.setCurrentIndex(0)        
 
 class FitControl(qt.QGroupBox):
     def __init__(self, parent=None):
@@ -120,8 +199,8 @@ class FitControl(qt.QGroupBox):
         self.fitAlgorithmCombo.addItem(str("Linear Fit"))
 
         self.mainLayout.addWidget(self.fitAlgorithmLabel, row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 2)
-        self.mainLayout.addWidget(self.fitAlgorithmCombo, row, 4)
+        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(self.fitAlgorithmCombo, row, 3)
         row += 1
 
         #weighting
@@ -132,8 +211,8 @@ class FitControl(qt.QGroupBox):
         self.weightCombo.addItem(str("Poisson (1/Y)"))
 
         self.mainLayout.addWidget(self.weightLabel,       row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 2)
-        self.mainLayout.addWidget(self.weightCombo,       row, 4)
+        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(self.weightCombo,       row, 3)
         row += 1
 
         
@@ -147,7 +226,7 @@ class FitControl(qt.QGroupBox):
         self.functionEstimationCombo.setCurrentIndex(2)
 
         self.mainLayout.addWidget(self.functionEstimationLabel, row, 0)
-        self.mainLayout.addWidget(self.functionEstimationCombo, row, 4)
+        self.mainLayout.addWidget(self.functionEstimationCombo, row, 3)
         row += 1
 
         #background estimation policy
@@ -161,7 +240,7 @@ class FitControl(qt.QGroupBox):
         self.backgroundEstimationCombo.setCurrentIndex(2)
 
         self.mainLayout.addWidget(self.backgroundEstimationLabel, row, 0)
-        self.mainLayout.addWidget(self.backgroundEstimationCombo, row, 4)
+        self.mainLayout.addWidget(self.backgroundEstimationCombo, row, 3)
         row += 1
 
         #number of iterations
@@ -172,8 +251,8 @@ class FitControl(qt.QGroupBox):
         self.iterSpin.setMaximum(10000)
         self.iterSpin.setValue(10)
         self.mainLayout.addWidget(self.iterLabel,         row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 2)
-        self.mainLayout.addWidget(self.iterSpin,          row, 4)
+        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(self.iterSpin,          row, 3)
         row += 1
 
         #chi square handling
@@ -193,8 +272,8 @@ class FitControl(qt.QGroupBox):
             self.chi2Value.setValue(0.001)
 
         self.mainLayout.addWidget(self.chi2Label,         row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 2)
-        self.mainLayout.addWidget(self.chi2Value,         row, 4)
+        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(self.chi2Value,         row, 3)
         row +=1 
 
         #fitting region
@@ -235,16 +314,16 @@ class FitControl(qt.QGroupBox):
         self.regionBottomLine.setFrameShadow(qt.QFrame.Sunken)
         self.regionBottomLine.setFrameShape(qt.QFrame.HLine)
 
-        self.mainLayout.addWidget(self.regionTopLine,   row, 0, 1, 5)
+        self.mainLayout.addWidget(self.regionTopLine,   row, 0, 1, 4)
         row += 1 
         self.mainLayout.addWidget(self.regionCheckBox,row, 0)
-        self.mainLayout.addWidget(self.firstLabel,    row, 3)
-        self.mainLayout.addWidget(self.firstValue,    row, 4)
+        self.mainLayout.addWidget(self.firstLabel,    row, 1)
+        self.mainLayout.addWidget(self.firstValue,    row, 3)
         row += 1
-        self.mainLayout.addWidget(self.lastLabel,     row, 3)
-        self.mainLayout.addWidget(self.lastValue,     row, 4)
+        self.mainLayout.addWidget(self.lastLabel,     row, 1)
+        self.mainLayout.addWidget(self.lastValue,     row, 3)
         row += 1
-        self.mainLayout.addWidget(self.regionBottomLine, row, 0, 1, 5)
+        self.mainLayout.addWidget(self.regionBottomLine, row, 0, 1, 4)
         row += 1
 
 class SimpleFitControlWidget(qt.QWidget):
@@ -264,7 +343,6 @@ class SimpleFitControlWidget(qt.QWidget):
             ddict = ddict0["fit"]
         else:
             ddict = ddict0
-
         workingKeys = []
         originalKeys = ddict.keys() 
         for key in originalKeys:
@@ -286,8 +364,6 @@ class SimpleFitControlWidget(qt.QWidget):
         w = self.functionDefinitionWidget
         idx = w.functionCombo.findText(ddict['fit_function'])
         w.functionCombo.setCurrentIndex(idx)
-        idx = w.stripCombo.findText(ddict['strip_function'])
-        w.stripCombo.setCurrentIndex(idx)
         idx = w.backgroundCombo.findText(ddict['background_function'])
         w.backgroundCombo.setCurrentIndex(idx)
         if ddict['function_flag']:
@@ -302,6 +378,35 @@ class SimpleFitControlWidget(qt.QWidget):
             w.backgroundCheckBox.setChecked(True)
         else:
             w.backgroundCheckBox.setChecked(False)
+        if ddict['stripalgorithm'] in [0, 1, "0", "1"]:
+            idx = int(ddict['stripalgorithm'])
+        else:
+            idx = w.stripCombo.findText(ddict['stripalgorithm'])
+        w.stripCombo.setCurrentIndex(idx)
+        w.setSNIP(idx)
+
+        w.snipWidthSpin.setValue(int(ddict["snipwidth"]))
+        w.stripWidthSpin.setValue(int(ddict["stripwidth"]))
+        w.stripFilterSpin.setValue(int(ddict["stripfilterwidth"]))
+
+        w.stripIterSpin.setValue(int(ddict['stripiterations']))             
+        ddict['stripconstant'] = 1.0
+        w.stripFilterSpin.setValue(int(ddict['stripfilterwidth']))
+
+        if int(ddict["stripanchorsflag"]):
+            w.stripAnchorsCheckBox.setChecked(True)
+        else:
+            w.stripAnchorsCheckBox.setChecked(False)
+        anchorslist = ddict.get("stripanchorslist", [0, 0, 0, 0])
+        anchorslist = ddict["stripanchorslist"]
+        for lineEdit in w.stripAnchorsList:
+            lineEdit.setText("0.0")
+
+        i = 0
+        for value in anchorslist:
+            w.stripAnchorsList[i].setText("%g" % float(value))
+            i += 1
+        
         w = self.fitControlWidget
         idx = w.fitAlgorithmCombo.findText(ddict['fit_algorithm'])
         w.fitAlgorithmCombo.setCurrentIndex(idx)
@@ -330,20 +435,39 @@ class SimpleFitControlWidget(qt.QWidget):
         ddict = {}
         w = self.functionDefinitionWidget
         ddict['fit_function'] = str(w.functionCombo.currentText())
-        ddict['strip_function'] = str(w.stripCombo.currentText())
+        ddict['stripalgorithm'] = str(w.stripCombo.currentText())
         ddict['background_function'] = str(w.backgroundCombo.currentText())
         if w.functionCheckBox.isChecked():
             ddict['function_flag']  = 1
         else:
             ddict['function_flag']  = 0
-        if w.stripCheckBox.isChecked():
-            ddict['strip_flag']  = 1
-        else:
-            ddict['strip_flag']  = 0
         if w.backgroundCheckBox.isChecked():
             ddict['background_flag']  = 1
         else:
             ddict['background_flag']  = 0
+        if w.stripCheckBox.isChecked():
+            ddict['strip_flag']  = 1
+        else:
+            ddict['strip_flag']  = 0
+
+        ddict['snipwidth']  = w.snipWidthSpin.value()
+        ddict['stripwidth'] = w.stripWidthSpin.value()
+        ddict['stripiterations'] = w.stripIterSpin.value()            
+        ddict['stripconstant'] = 1.0
+        ddict['stripfilterwidth'] = w.stripFilterSpin.value()
+
+        if w.stripAnchorsCheckBox.isChecked():
+            ddict['stripanchorsflag'] = 0
+        else:
+            ddict['stripanchorsflag'] = 1
+
+        ddict["stripanchorslist"] = []
+        for lineEdit in w.stripAnchorsList:
+            text = str(lineEdit.text())
+            if not len(text):
+                text = 0.0
+            ddict["stripanchorslist"].append(float(text))
+
         w = self.fitControlWidget
         ddict['fit_algorithm'] = str(w.fitAlgorithmCombo.currentText())
         ddict['weight']     = str(w.weightCombo.currentText())
@@ -366,12 +490,17 @@ def test():
     app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
     wid = SimpleFitControlWidget()
     ddict = {}
+    ddict['stripwidth'] = 4
+    ddict['stripiterations'] = 4000
+    ddict['stripconstant'] = 1.0
+    ddict['stripfilterwidth'] = 3
+    ddict['stripanchorsflag'] = 1
+    ddict['stripanchorslist'] = [0, 1, 2, 3]
     ddict['use_limits'] = 1
     ddict['xmin'] = 1
     ddict['xmax'] = 1024
     wid.setConfiguration(ddict)
     wid.show()
-    print wid.getConfiguration()
     app.exec_()
 
 if __name__=="__main__":

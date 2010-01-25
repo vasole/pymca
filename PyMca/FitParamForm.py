@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.18 $"
+__revision__ = "$Revision: 1.19 $"
 import sys
 from PyMcaQt import *
 
@@ -43,7 +43,7 @@ else:
             self.setMaximum(v)
 
         def setLineStep(self, v):
-            pass
+            self.setSingleStep(v)
         
     class Q3GridLayout(QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
