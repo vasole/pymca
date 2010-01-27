@@ -632,18 +632,14 @@ def test():
     fit.setData(x, y)
     fit.fit()
     print "Expected parameters 1500,100.,50.0, 1500,700.,50.0"
-    try:
-        import PyMcaQt as qt
-        import MultiParameters
-        a = qt.QApplication(sys.argv)
-        qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
-        w = MultiParameters.ParametersTab()
-        w.fillfromfit(fit.paramlist, current='Fit')
-        w.removeview(view='Region 1')
-        w.show()
-        a.exec_()
-    except:
-        pass
+    import PyMcaQt as qt
+    import Parameters
+    a = qt.QApplication(sys.argv)
+    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    w =Parameters.Parameters()
+    w.fillfromfit(fit.paramlist)
+    w.show()
+    a.exec_()
 
 if __name__=="__main__":
     DEBUG = 1
