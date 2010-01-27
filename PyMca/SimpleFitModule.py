@@ -631,6 +631,19 @@ def test():
     #fit.setBackgroundFunction('Constant')
     fit.setData(x, y)
     fit.fit()
+    print "Expected parameters 1500,100.,50.0, 1500,700.,50.0"
+    try:
+        import PyMcaQt as qt
+        import MultiParameters
+        a = qt.QApplication(sys.argv)
+        qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+        w = MultiParameters.ParametersTab()
+        w.fillfromfit(fit.paramlist, current='Fit')
+        w.removeview(view='Region 1')
+        w.show()
+        a.exec_()
+    except:
+        pass
 
 if __name__=="__main__":
     DEBUG = 1

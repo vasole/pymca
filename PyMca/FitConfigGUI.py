@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -160,3 +160,9 @@ class FitConfigGUI(qt.QWidget):
         Layout5.addWidget(self.ConfigureButton,0,0)
         Layout9.addLayout(Layout5)
         FitConfigGUILayout.addLayout(Layout9)
+
+if __name__ == "__main__":
+    app = qt.QApplication([])
+    w = FitConfigGUI()
+    w.show()
+    app.exec_()
