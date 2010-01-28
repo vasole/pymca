@@ -38,6 +38,30 @@ class TopWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
 
+class StatusWidget(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QHBoxLayout(self)
+        self.mainLayout.setMargin(2)
+        self.mainLayout.setSpacing(2)
+        
+        self.statusLabel = qt.QLabel(self)
+        self.statusLabel.setText(str("Status:"))
+        self.statusLine = qt.QLineEdit(self)
+        self.statusLine.setText(str("Ready"))
+        self.statusLine.setReadOnly(1)
+
+        self.chisqLabel = qt.QLabel(self)
+        self.chisqLabel.setText(str("Chisq:"))
+
+        self.chisqLine = qt.QLineEdit(self)
+        self.chisqLine.setText(str(""))
+        self.chisqLine.setReadOnly(1)
+        
+        self.mainLayout.addWidget(self.statusLabel)
+        self.mainLayout.addWidget(self.statusLine)
+        self.mainLayout.addWidget(self.chisqLabel)
+        self.mainLayout.addWidget(self.chisqLine)
 
 class SimpleFitGUI(qt.QWidget):
     def __init__(self, parent=None, fit=None):
@@ -52,6 +76,7 @@ class SimpleFitGUI(qt.QWidget):
         self.mainLayout.setSpacing(2)
         self.topWidget  = TopWidget(self)
         self.parametersTable = Parameters.Parameters(self)
+        self.statusWidget  = StatusWidget(self)
 
         #build the actions widget
         self.fitActions = qt.QWidget(self)
@@ -67,29 +92,69 @@ class SimpleFitGUI(qt.QWidget):
         self.fitActions.mainLayout.addWidget(self.fitActions.estimateButton)
         self.fitActions.mainLayout.addWidget(self.fitActions.startFitButton)
         self.fitActions.mainLayout.addWidget(self.fitActions.dismissButton)
-        """
+        self.mainLayout.addWidget(self.topWidget)
+        self.mainLayout.addWidget(self.parametersTable)
+        self.mainLayout.addWidget(self.statusWidget)
+        self.mainLayout.addWidget(self.fitActions)
+
+        #connect
         self.connect(self.fitActions.estimateButton,
                     qt.SIGNAL("clicked()"),self.estimate)
         self.connect(self.fitActions.startFitButton,
                                 qt.SIGNAL("clicked()"),self.startFit)
         self.connect(self.fitActions.dismissButton,
                                 qt.SIGNAL("clicked()"),self.dismiss)        
-        """
-        self.mainLayout.addWidget(self.topWidget)
-        self.mainLayout.addWidget(self.parametersTable)
-        self.mainLayout.addWidget(self.fitActions)
 
     def estimate(self):
-        print "estimate called"
+        self.setStatus("Estimate started")
+        try:
+            self.fitModule.estimate()
+            self.setStatus()
+            self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
+        except:
+            text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText(text)
+            msg.exec_()
+            self.setStatus("Ready (after estimate error)")
+            
+
+    def setStatus(self, text=None):
+        if text is None:
+            text = "%s" % self.fitModule.getStatus()
+
+        self.statusWidget.statusLine.setText(text)
 
     def startFit(self):
-        print "start fit called"
+        #get parameters from table
+        self.fitModule.paramlist = self.parametersTable.fillFitFromTable()
+        if DEBUG:
+            print self.fitModule.paramlist
+        self.fitModule.startFit()
+        self.setStatus()
+        self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
 
     def dismiss(self):
         self.close()
 
 def test():
-    w = SimpleFitGUI()
+    import numpy
+    import SpecfitFunctions
+    a=SpecfitFunctions.SpecfitFunctions()
+    x = numpy.arange(1000).astype(numpy.float)
+    p1 = numpy.array([1500,100.,50.0])
+    p2 = numpy.array([1500,700.,50.0])
+    y = a.gauss(p1, x)+1
+    y = y + a.gauss(p2,x)
+
+    fit = SimpleFitModule.SimpleFit()
+    fit.importFunctions(SpecfitFunctions)
+    fit.setFitFunction('Gaussians')
+    #fit.setBackgroundFunction('Gaussians')
+    #fit.setBackgroundFunction('Constant')
+    fit.setData(x, y)
+    w = SimpleFitGUI(fit=fit)
     w.show()
     return w
 

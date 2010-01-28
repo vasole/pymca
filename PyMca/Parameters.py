@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -251,6 +251,9 @@ class Parameters(QTable):
         self.parameters[param]['relatedto_item']=None
         self.__configuring = False
 
+    def fillTableFromFit(self, fitparameterslist):
+        return self.fillfromfit(fitparameterslist)
+
     def fillfromfit(self,fitparameterslist):
         if QTVERSION < '4.0.0':
             self.setNumRows(len(fitparameterslist))
@@ -290,6 +293,9 @@ class Parameters(QTable):
                            group=group,
                            xmin=xmin,
                            xmax=xmax)
+
+    def fillFitFromTable(self):
+        return self.fillfitfromtable()
 
     def fillfitfromtable(self):
         fitparameterslist=[]
