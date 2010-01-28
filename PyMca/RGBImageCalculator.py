@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -176,11 +176,9 @@ class RGBImageCalculator(qt.QWidget):
 
     def _saveMatplotlibImage(self):
         if self._matplotlibSaveImage is None:
-            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
-                                                                            self._imageData)
-            self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBImage")            
-        else:
-            self._matplotlibSaveImage.setImageData(self._imageData)
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, None)
+            self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBImage")
+        self._matplotlibSaveImage.setImageData(self._imageData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
 

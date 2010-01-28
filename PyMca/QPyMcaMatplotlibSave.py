@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -39,97 +39,104 @@ import PyMcaMatplotlibSave
 from PyMca_Icons import IconDict
 import PyMcaPrintPreview
 import PyMcaDirs
+
 DEBUG = 0
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
 
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
+                                          qt.QSizePolicy.Fixed))
 
 class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Expanding))
-
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
+                                          qt.QSizePolicy.Expanding))
 
 class SaveImageSetup(qt.QWidget):
     def __init__(self, parent=None, image=None):
-	qt.QWidget.__init__(self, parent)
-	self.mainLayout = qt.QGridLayout(self)
-	self.mainLayout.setColumnStretch(0, 1)
-	self.mainLayout.setColumnStretch(1, 0)
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setColumnStretch(0, 1)
+        self.mainLayout.setColumnStretch(1, 0)
         self.setWindowTitle("PyMca - Matplotlib save image")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastOutputDir = None
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
-	#top
-	self.top = TopWidget(self)
-	self.mainLayout.addWidget(self.top, 0, 0)
+        #top
+        self.top = TopWidget(self)
+        self.mainLayout.addWidget(self.top, 0, 0)
 
-	#image
-	self.imageWidget = QPyMcaMatplotlibImage(self, image)
-	self.mainLayout.addWidget(self.imageWidget, 1, 0)
-	
-	#right
-	self.right = RightWidget(self)
-	self.mainLayout.addWidget(self.right, 1, 1)
+        #image
+        self.imageWidget = QPyMcaMatplotlibImage(self, image)
+        self.mainLayout.addWidget(self.imageWidget, 1, 0)
 
-	#buttons
-	self._buttonContainer = qt.QWidget(self)
-	self._buttonContainer.mainLayout = qt.QVBoxLayout(self._buttonContainer)
+        #right
+        self.right = RightWidget(self)
+        self.mainLayout.addWidget(self.right, 1, 1)
 
-	self.updateButton = qt.QPushButton(self._buttonContainer)
-	self.updateButton.setText("Update")
+        #buttons
+        self._buttonContainer = qt.QWidget(self)
+        self._buttonContainer.mainLayout = qt.QVBoxLayout(self._buttonContainer)
 
-	self.printButton = qt.QPushButton(self._buttonContainer)
-	self.printButton.setText("Print")
+        self.updateButton = qt.QPushButton(self._buttonContainer)
+        self.updateButton.setText("Update")
 
-	self.saveButton = qt.QPushButton(self._buttonContainer)
-	self.saveButton.setText("Save")
+        self.printButton = qt.QPushButton(self._buttonContainer)
+        self.printButton.setText("Print")
 
-	self._buttonContainer.mainLayout.addWidget(self.updateButton)
-	self._buttonContainer.mainLayout.addWidget(self.printButton)
-	self._buttonContainer.mainLayout.addWidget(self.saveButton)
-	self.mainLayout.addWidget(self._buttonContainer, 0, 1)
+        self.saveButton = qt.QPushButton(self._buttonContainer)
+        self.saveButton.setText("Save")
 
-	self.connect(self.updateButton, qt.SIGNAL('clicked()'),
-		     self.updateClicked)
+        self._buttonContainer.mainLayout.addWidget(self.updateButton)
+        self._buttonContainer.mainLayout.addWidget(self.printButton)
+        self._buttonContainer.mainLayout.addWidget(self.saveButton)
+        self.mainLayout.addWidget(self._buttonContainer, 0, 1)
 
-	self.connect(self.printButton, qt.SIGNAL('clicked()'),
-		     self.printClicked)
+        self.connect(self.updateButton, qt.SIGNAL('clicked()'),
+                     self.updateClicked)
 
-	self.connect(self.saveButton, qt.SIGNAL('clicked()'),
-		     self.saveClicked)
+        self.connect(self.printButton, qt.SIGNAL('clicked()'),
+                     self.printClicked)
+
+        self.connect(self.saveButton, qt.SIGNAL('clicked()'),
+                     self.saveClicked)
 
 
     def sizeHint(self):
-	return qt.QSize(3 * qt.QWidget.sizeHint(self).width(),
-			3 * qt.QWidget.sizeHint(self).height())
+        return qt.QSize(3 * qt.QWidget.sizeHint(self).width(),
+                        3 * qt.QWidget.sizeHint(self).height())
 
     def setImageData(self, image=None):
         self.imageWidget.imageData = image
         self.updateClicked()
 
     def setPixmapImage(self, image=None, bgr=False):
-        self.imageWidget.setPixmapImage(image, bgr)
+        #this is not to loose time plotting twice
+        self.imageWidget.setPixmapImage(None, bgr)
         if image is None:
             self.right.setPixmapMode(False)
         else:
             self.right.setPixmapMode(True)
+        #update configuration withoutplotting because of having
+        #set the current pixmap to None
         self.updateClicked()
+        #and plot
+        self.imageWidget.setPixmapImage(image, bgr)
 
     def getParameters(self):
-	ddict = self.imageWidget.getParameters()
-	ddict.update(self.top.getParameters())
-	ddict.update(self.right.getParameters())
-	return ddict
+        ddict = self.imageWidget.getParameters()
+        ddict.update(self.top.getParameters())
+        ddict.update(self.right.getParameters())
+        return ddict
 
     def setParameters(self, ddict):
-	self.top.setParameters(ddict)
-	self.imageWidget.setParameters(ddict)
-	self.right.setParameters(ddict)
+        self.top.setParameters(ddict)
+        self.imageWidget.setParameters(ddict)
+        self.right.setParameters(ddict)
 
     def updateClicked(self):
         try:
@@ -216,53 +223,56 @@ class SaveImageSetup(qt.QWidget):
                 msg.setWindowTitle('Matplotlib Save Image')
                 msg.exec_()
                 return
-        config = self.imageWidget.getParameters()
         try:
-            s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
-            if self.imageWidget.pixmapImage is not None:
-                s.setPixmapImage(self.imageWidget.pixmapImage)
-            s.setParameters(config)
-            s.saveImage(finalFile)
+            self.imageWidget.print_figure(finalFile, format=finalFile[-3:])
         except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error saving file: %s" % sys.exc_info()[1])
-            msg.setWindowTitle('Matplotlib Save Image')
-            msg.exec_()
+            print "WARNING: trying to save using obsolete method"
+            config = self.imageWidget.getParameters()
+            try:
+                s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
+                if self.imageWidget.pixmapImage is not None:
+                    s.setPixmapImage(self.imageWidget.pixmapImage)
+                s.setParameters(config)
+                s.saveImage(finalFile)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error saving file: %s" % sys.exc_info()[1])
+                msg.setWindowTitle('Matplotlib Save Image')
+                msg.exec_()
 
 
 class TopWidget(qt.QWidget):
     def __init__(self, parent = None):
-	qt.QWidget.__init__(self, parent)
-	self.mainLayout = qt.QGridLayout(self)
-	self.mainLayout.setMargin(0)
-	self.mainLayout.setSpacing(2)
-	self.labelList = ['Title', 'X Label', 'Y Label']
-	self.keyList   = ['title', 'xlabel', 'ylabel']
-	self.lineEditList = []
-	for i in range(len(self.labelList)):
-	    label = qt.QLabel(self)
-	    label.setText(self.labelList[i])
-	    lineEdit = qt.QLineEdit(self)
-	    self.mainLayout.addWidget(label, i, 0)
-	    self.mainLayout.addWidget(lineEdit, i, 1)
-	    self.lineEditList.append(lineEdit)
-
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+        self.labelList = ['Title', 'X Label', 'Y Label']
+        self.keyList   = ['title', 'xlabel', 'ylabel']
+        self.lineEditList = []
+        for i in range(len(self.labelList)):
+            label = qt.QLabel(self)
+            label.setText(self.labelList[i])
+            lineEdit = qt.QLineEdit(self)
+            self.mainLayout.addWidget(label, i, 0)
+            self.mainLayout.addWidget(lineEdit, i, 1)
+            self.lineEditList.append(lineEdit)
 
     def getParameters(self):
-	ddict = {}
-	i = 0
-	for label in self.keyList:
-	    ddict[label] = str(self.lineEditList[i].text())
-	    i = i + 1
-	return ddict
+        ddict = {}
+        i = 0
+        for label in self.keyList:
+            ddict[label] = str(self.lineEditList[i].text())
+            i = i + 1
+        return ddict
 
     def setParameters(self, ddict):
-	for label in ddict.keys():
-	    if label.lower() in self.keyList:
-		i = self.keyList.index(label)
-		self.lineEditList[i].setText(ddict[label])
-	return
+        for label in ddict.keys():
+            if label.lower() in self.keyList:
+                i = self.keyList.index(label)
+                self.lineEditList[i].setText(ddict[label])
+        return
 
 class SimpleComboBox(qt.QComboBox):
     def __init__(self, parent=None, options=['1', '2', '3']):
@@ -277,75 +287,75 @@ class SimpleComboBox(qt.QComboBox):
     	    self.addItem(item)
 
     def setCurrentText(self, text):
-	for i in self.count():
-	    if str(self.itemText(i)) == text:
-		self.setCurrentIndex(i)
-		break
+        for i in self.count():
+            if str(self.itemText(i)) == text:
+                self.setCurrentIndex(i)
+                break
 
 class RightWidget(qt.QWidget):
     def __init__(self, parent = None):
-	qt.QWidget.__init__(self, parent)
-	self.mainLayout = qt.QVBoxLayout(self)
-	self.gridWidget = qt.QWidget(self) 
-	self.gridLayout = qt.QGridLayout(self.gridWidget)
-	self.gridLayout.setMargin(0)
-	self.gridLayout.setSpacing(2)
-	self.labelList = ['X Axis',
-                          'Y Axis',
-			  'Origin',
-			  'Interpolation',
-                          'Colormap',
-                          'Lin/Log Colormap',
-			  'Colorbar',
-			  'Contour',
-			  'Contour Labels',
-			  'Contour Label Format',
-                          'Contour Levels',
-                          'Image Background',
-                          'X Pixel Size',
-                          'Y Pixel Size',
-                          'X Origin',
-                          'Y Origin',
-                          'Zoom X Min',
-                          'Zoom X Max',
-                          'Zoom Y Min',
-                          'Zoom Y Max',
-                          'Value Min',
-                          'Value Max']
-	self.keyList = []
-	for label in self.labelList:
-	    self.keyList.append(label.lower().replace(' ','').replace('/',""))
-	self.comboBoxList = []
-	for i in range(len(self.labelList)):
-	    label = qt.QLabel(self)
-	    label.setText(self.labelList[i])
-	    if self.labelList[i] in ['X Axis', 'Y Axis']:
-		options = ['Off', 'On']
-	    elif self.labelList[i] in ['Colormap']:
-		options = ['Temperature','Grey', 'Yerg',\
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.gridWidget = qt.QWidget(self) 
+        self.gridLayout = qt.QGridLayout(self.gridWidget)
+        self.gridLayout.setMargin(0)
+        self.gridLayout.setSpacing(2)
+        self.labelList = ['X Axis',
+                        'Y Axis',
+                        'Origin',
+                        'Interpolation',
+                        'Colormap',
+                        'Lin/Log Colormap',
+                        'Colorbar',
+                        'Contour',
+                        'Contour Labels',
+                        'Contour Label Format',
+                        'Contour Levels',
+                        'Image Background',
+                        'X Pixel Size',
+                        'Y Pixel Size',
+                        'X Origin',
+                        'Y Origin',
+                        'Zoom X Min',
+                        'Zoom X Max',
+                        'Zoom Y Min',
+                        'Zoom Y Max',
+                        'Value Min',
+                        'Value Max']
+        self.keyList = []
+        for label in self.labelList:
+            self.keyList.append(label.lower().replace(' ','').replace('/',""))
+        self.comboBoxList = []
+        for i in range(len(self.labelList)):
+            label = qt.QLabel(self)
+            label.setText(self.labelList[i])
+            if self.labelList[i] in ['X Axis', 'Y Axis']:
+                options = ['Off', 'On']
+            elif self.labelList[i] in ['Colormap']:
+                options = ['Temperature','Grey', 'Yerg',\
                            'Red', 'Green', 'Blue',\
                            'Rainbow', 'Jet','Hot', 'Cool', 'Copper']
                 if hasattr(cm, 'spectral'):
                     options.append('Spectral')
-	    elif self.labelList[i] in ['Lin/Log Colormap']:
-		options = ['Linear','Logarithmic']
-	    elif self.labelList[i] in ['Colorbar']:
-		options = ['None', 'Vertical', 'Horizontal']
-	    elif self.labelList[i] in ['Origin']:
-		options = ['Lower', 'Upper']
-	    elif self.labelList[i] in ['Interpolation']:
-		options = ['Nearest', 'Bilinear']
-	    elif self.labelList[i] in ['Contour']:
-		options = ['Off', 'Line']
-	    elif self.labelList[i] in ['Contour Labels']:
-		options = ['On', 'Off']
-	    elif self.labelList[i] in ['Contour Label Format']:
-		options = ['%.3f', '%.2f', '%.1f', '%.0f', '%.1e', '%.2e', '%.3e']
-	    elif self.labelList[i] in ['Contour Levels']:
-		options = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]
-	    elif self.labelList[i] in ['Image Background']:
-		options = ['Black', 'White', 'Grey']
-	    if i <= self.labelList.index('Image Background'):
+            elif self.labelList[i] in ['Lin/Log Colormap']:
+                options = ['Linear','Logarithmic']
+            elif self.labelList[i] in ['Colorbar']:
+                options = ['None', 'Vertical', 'Horizontal']
+            elif self.labelList[i] in ['Origin']:
+                options = ['Lower', 'Upper']
+            elif self.labelList[i] in ['Interpolation']:
+                options = ['Nearest', 'Bilinear']
+            elif self.labelList[i] in ['Contour']:
+                options = ['Off', 'Line']
+            elif self.labelList[i] in ['Contour Labels']:
+                options = ['On', 'Off']
+            elif self.labelList[i] in ['Contour Label Format']:
+                options = ['%.3f', '%.2f', '%.1f', '%.0f', '%.1e', '%.2e', '%.3e']
+            elif self.labelList[i] in ['Contour Levels']:
+                options = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]
+            elif self.labelList[i] in ['Image Background']:
+                options = ['Black', 'White', 'Grey']
+            if i <= self.labelList.index('Image Background'):
                 line = SimpleComboBox(self, options)
             else:
                 line = MyLineEdit(self)
@@ -371,9 +381,9 @@ class RightWidget(qt.QWidget):
                     line.setText('0.0')
                 else:
                     line.setText('1.0')
-	    self.gridLayout.addWidget(label, i, 0)
-	    self.gridLayout.addWidget(line, i, 1)
-	    self.comboBoxList.append(line)
+            self.gridLayout.addWidget(label, i, 0)
+            self.gridLayout.addWidget(line, i, 1)
+            self.comboBoxList.append(line)
 
 	self.mainLayout.addWidget(self.gridWidget)
 	self.mainLayout.addWidget(VerticalSpacer(self))
@@ -412,15 +422,15 @@ class RightWidget(qt.QWidget):
 	return ddict
 
     def setParameters(self, ddict):
-	for label in ddict.keys():
-	    if label.lower() in self.keyList:
-		i = self.keyList.index(label)
-		if i > self.labelList.index('Image Background'):
+        for label in ddict.keys():
+            if label.lower() in self.keyList:
+                i = self.keyList.index(label)
+                if i > self.labelList.index('Image Background'):
                     if ddict[label] is not None:
                         self.comboBoxList[i].setText("%f" % ddict[label])
                 else:
                     self.comboBoxList[i].setCurrentText(ddict[label])
-	return
+        return
 	
 class MyLineEdit(qt.QLineEdit):
     def sizeHint(self):
@@ -439,10 +449,10 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      colorbar=None,
                      title='',
                      interpolation='nearest',
-		     colormap=None,
+                     colormap=None,
                      linlogcolormap='linear',
                      origin='lower',
-		     contour='off',
+                     contour='off',
                      contourlabels='on',
                      contourlabelformat='%.3f',                 
                      contourlevels=2,
@@ -454,30 +464,30 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      xlimits=None,
                      ylimits=None,
                      vlimits=None):
-	self.figure = Figure(figsize=size, dpi=dpi) #in inches
+        self.figure = Figure(figsize=size, dpi=dpi) #in inches
 
-	#How to set this color equal to the other widgets color?
-	#self.figure.set_facecolor('1.0')
+        #How to set this color equal to the other widgets color?
+        #self.figure.set_facecolor('1.0')
 
         FigureCanvas.__init__(self, self.figure)
         FigureCanvas.setSizePolicy(self,
                                    qt.QSizePolicy.Expanding,
                                    qt.QSizePolicy.Expanding)
 
-	self.imageData = imageData
-	self.pixmapImage = None
-	self.config={'xaxis':xaxis,
-		     'yaxis':yaxis,
-		     'title':title,
-		     'xlabel':xlabel,
-		     'ylabel':ylabel,
-		     'colorbar':colorbar,
-		     'colormap':colormap,
-		     'linlogcolormap':linlogcolormap,
-		     'interpolation':interpolation,
-		     'origin':origin,
-		     'contour':contour,
-		     'contourlabels':contourlabels,
+        self.imageData = imageData
+        self.pixmapImage = None
+        self.config={'xaxis':xaxis,
+                     'yaxis':yaxis,
+                     'title':title,
+                     'xlabel':xlabel,
+                     'ylabel':ylabel,
+                     'colorbar':colorbar,
+                     'colormap':colormap,
+                     'linlogcolormap':linlogcolormap,
+                     'interpolation':interpolation,
+                     'origin':origin,
+                     'contour':contour,
+                     'contourlabels':contourlabels,
                      'contourlabelformat':contourlabelformat,
                      'contourlevels':contourlevels,
                      'extent':extent,
@@ -548,13 +558,13 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                          
         self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
 
-	self.updateFigure()
+        self.updateFigure()
 
     def updateFigure(self):
-	self.figure.clear()
-	if (self.imageData is None) and \
+        self.figure.clear()
+        if (self.imageData is None) and \
            (self.pixmapImage is None):
-	    return
+            return
 
 	# The axes
         self.axes = self.figure.add_axes([.15, .15, .75, .8])
@@ -571,8 +581,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             self._updatePixmapFigure()
             return
 
-	interpolation = self.config['interpolation']
-	origin = self.config['origin']
+        interpolation = self.config['interpolation']
+        origin = self.config['origin']
 
         cmap = self.__temperatureCmap
         ccmap = cm.gray
@@ -580,8 +590,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             cmap  = cm.gray
             ccmap = self.__temperatureCmap
         elif self.config['colormap'] in ['yarg','yerg']:
-	    cmap  = self.__reversedGrayCmap
-	    ccmap = self.__temperatureCmap
+            cmap  = self.__reversedGrayCmap
+            ccmap = self.__temperatureCmap
         elif self.config['colormap']=='jet':
             cmap = cm.jet
         elif self.config['colormap']=='hot':
@@ -630,6 +640,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             vmin = min(vlimits[0], vlimits[1])
             vmax = max(vlimits[0], vlimits[1])
             imageData = self.imageData.clip(vmin,vmax)
+
         if self.config['linlogcolormap'] != 'linear':
             if vmin <= 0:
                 if vmax > 0:                   
@@ -650,33 +661,33 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                                         cmap=cmap,
                                         extent=extent,
                                         norm=Normalize(vmin, vmax))
-        
+
         ylim = self.axes.get_ylim()
         
         if self.config['colorbar'] is not None:
-	    barorientation = self.config['colorbar']
-	    self._colorbar = self.figure.colorbar(self._image,
-	                                orientation=barorientation)
+            barorientation = self.config['colorbar']
+            self._colorbar = self.figure.colorbar(self._image,
+                                        orientation=barorientation)
 
-	#contour plot
-	if self.config['contour'] != 'off':
-	    dataMin = imageData.min()
-	    dataMax = imageData.max()
+        #contour plot
+        if self.config['contour'] != 'off':
+            dataMin = imageData.min()
+            dataMax = imageData.max()
             ncontours = int(self.config['contourlevels'])
-	    levels = (numpy.arange(ncontours)) *\
+            levels = (numpy.arange(ncontours)) *\
                      (dataMax - dataMin)/float(ncontours)	    
-	    if self.config['contour'] == 'filled':
-		self._contour = self.axes.contourf(imageData, levels,
-	             origin=origin,
+            if self.config['contour'] == 'filled':
+                self._contour = self.axes.contourf(imageData, levels,
+                     origin=origin,
                      cmap=ccmap,
                      extent=extent)
-	    else:
-		self._contour = self.axes.contour(imageData, levels,
-	             origin=origin,
+            else:
+                self._contour = self.axes.contour(imageData, levels,
+                     origin=origin,
                      cmap=ccmap,
-	             linewidths=2,
+                     linewidths=2,
                      extent=extent)
-	    if self.config['contourlabels'] != 'off':
+            if self.config['contourlabels'] != 'off':
                 self.axes.clabel(self._contour, fontsize=9,
                         inline=1, fmt=self.config['contourlabelformat'])
             if 0 and  self.config['colorbar'] is not None:
@@ -684,18 +695,18 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                     barorientation = 'vertical'
                 else:
                     barorientation = 'horizontal'
-        	self._ccolorbar=self.figure.colorbar(self._contour,
+                self._ccolorbar=self.figure.colorbar(self._contour,
                                                      orientation=barorientation,
                                                      extend='both')
 
         self.__postImage(ylim)
 
     def getParameters(self):
-	return self.config
+        return self.config
 
     def setParameters(self, ddict):
-	self.config.update(ddict)
-	self.updateFigure()
+        self.config.update(ddict)
+        self.updateFigure()
 
     def setPixmapImage(self, image=None, bgr=False):
         if image is None:
@@ -710,22 +721,26 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         else:
             self.pixmapImage = image
 
-        # This is slow, but I do not expect huge images
         shape = self.pixmapImage.shape
         self.pixmapMask = numpy.ones(shape, numpy.uint8)
         shape = self.pixmapImage.shape
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                if (self.pixmapImage[i,j,0] == 0):
-                    if (self.pixmapImage[i,j,1] == 0):
-                        if (self.pixmapImage[i,j,2] == 0):
-                            self.pixmapMask[i,j,0:3] = [0, 0, 0]
-                                
+        if 0:
+            # This is slow, but I do not expect huge images
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    if (self.pixmapImage[i,j,0] == 0):
+                        if (self.pixmapImage[i,j,1] == 0):
+                            if (self.pixmapImage[i,j,2] == 0):
+                                self.pixmapMask[i,j,0:3] = [0, 0, 0]
+        else:
+            #the image is RGBA, so the sum when there is nothing is 255
+            s = self.pixmapImage.sum(axis=-1)
+            self.pixmapMask[s==255, 0:3] = 0
         self.updateFigure()
 
     def _updatePixmapFigure(self):
-	interpolation = self.config['interpolation']
-	origin = self.config['origin']
+        interpolation = self.config['interpolation']
+        origin = self.config['origin']
         if self.config['extent'] is None:
             h= self.pixmapImage.shape[0]
             w= self.pixmapImage.shape[1]
@@ -742,14 +757,22 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         else:
             extent = self.config['extent']
         if self.config['imagebackground'].lower() == 'white':
-            self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask) +\
+            if 0:
+                self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask) +\
                                (self.pixmapMask == 0) * 255
+            else:
+                self.pixmapImage[self.pixmapMask == 0] = 255
         elif self.config['imagebackground'].lower() == 'grey':
-            self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask) +\
+            if 0:
+                self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask) +\
                                (self.pixmapMask == 0) * 128
+            else:
+                self.pixmapImage[self.pixmapMask == 0] = 128
         else:
-            self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask)
-
+            if 0:
+                self.pixmapImage[:] = (self.pixmapImage * self.pixmapMask)
+            else:
+                self.pixmapImage[self.pixmapMask == 0]= 0
         self._image = self.axes.imshow(self.pixmapImage,
                                        interpolation=interpolation,
                                        origin=origin,
@@ -811,7 +834,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             xmax = max(xlimits)
             self.axes.set_xlim(xmin, xmax)
 
-	self.draw()
+        self.draw()
 
 def test():
     app = qt.QApplication([])
