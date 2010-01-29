@@ -598,7 +598,7 @@ class Parameters(QTable):
         #take the first with similar name
         for param in candidates:
                 j=len(param)-1
-                while ('0' < param[j]) & (param[j] < '9'):
+                while ('0' <= param[j]) & (param[j] < '9'):
                     j=j-1
                     if j == -1:
                         break
@@ -695,11 +695,18 @@ class Parameters(QTable):
                         newvalue=qt.QString(str(kw[key]))
                     else:
                         if len(str(kw[key])):
-                            newvalue=string.atof(str(kw[key]))
-                            if key is 'sigma':
-                                newvalue= "%6.3g" % newvalue
-                            else:
-                                newvalue= "%8g" % newvalue
+                            keyDone = False
+                            if key == "val1":
+                                if str(self.parameters[name]['code']) in\
+                                       ['DELTA', 'FACTOR', 'SUM']:
+                                    newvalue = str(kw[key])
+                                    keyDone = True
+                            if not keyDone:
+                                newvalue=string.atof(str(kw[key]))
+                                if key is 'sigma':
+                                    newvalue= "%6.3g" % newvalue
+                                else:
+                                    newvalue= "%8g" % newvalue
                         else:
                             newvalue=""
                         newvalue=qt.QString(newvalue)
@@ -847,7 +854,7 @@ class Parameters(QTable):
                     self.setReadOnly(name,['fitresult','sigma'])
                 elif str(self.parameters[name]['code']) == 'SUM':
                     self.parameters[name]['val1']=self.parameters[name]['relatedto']
-                    self.parameters[name]['val2']=self.parameters[name]['delta']
+                    self.parameters[name]['val2']=self.parameters[name]['sum']
                     self.parameters[name]['cons1']=\
                         self.paramlist.index(str(self.parameters[name]['val1']))
                     try:
