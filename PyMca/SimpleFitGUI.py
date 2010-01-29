@@ -136,6 +136,7 @@ class SimpleFitGUI(qt.QWidget):
             self.fitModule = SimpleFitModule.SimpleFit()
         else:
             self.fitModule = fit
+        self._configurationDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(2)
         self.mainLayout.setSpacing(2)
@@ -177,6 +178,10 @@ class SimpleFitGUI(qt.QWidget):
                      qt.SIGNAL("currentIndexChanged(int)"),
                      self.backgroundComboSlot)
 
+        self.connect(self.topWidget.configureButton,
+                     qt.SIGNAL("clicked()"),
+                     self.configureButtonSlot)
+
         #connect actions
         self.connect(self.fitActions.estimateButton,
                     qt.SIGNAL("clicked()"),self.estimate)
@@ -217,6 +222,31 @@ class SimpleFitGUI(qt.QWidget):
             fname = str(self.topWidget.backgroundCombo.itemText(idx))
         self.setBackgroundFunction(fname)
 
+    def configureButtonSlot(self):
+        if self._configurationDialog is None:
+            self.configurationDialog =\
+                SimpleFitConfigurationGUI.SimpleFitConfigurationGUI()
+        self.configurationDialog.setSimpleFitInstance(self.fitModule)
+        if not self.configurationDialog.exec_():
+            return
+        newConfig = self.configurationDialog.getConfiguration()
+        self.fitModule.setConfiguration(newConfig)
+        newConfig = self.fitModule.getConfiguration()
+        #self.topWidget.setFunctions(newConfig['fit']['functions'])
+        fname = self.fitModule.getFitFunction()
+        if fname in [None, "None", "NONE"]:
+            idx = 0
+        else:
+            idx = newConfig['fit']['functions'].index(fname) + 1
+        self.topWidget.fitFunctionCombo.setCurrentIndex(idx)
+        fname = self.fitModule.getBackgroundFunction()
+        if fname in [None, "None", "NONE"]:
+            idx = 0
+        else:
+            idx = newConfig['fit']['functions'].index(fname) + 1
+        idx = self.topWidget.backgroundCombo.findText(fname)
+        self.topWidget.backgroundCombo.setCurrentIndex(idx)
+        
     def setFitFunction(self, fname):
         current = self.fitModule.getFitFunction()
         if current != fname:

@@ -55,8 +55,8 @@ class FitFunctionDefinition(qt.QGroupBox):
         #actual fit function
         self.functionCheckBox = qt.QCheckBox(self)
         self.functionCheckBox.setText("Fit Function to be used")
-        self.functionCombo    = qt.QComboBox(self)
-        self.functionCombo.addItem(str("Add Function(s)"))
+        self.fitFunctionCombo    = qt.QComboBox(self)
+        self.fitFunctionCombo.addItem(str("None"))
         self.functionSetupButton = qt.QPushButton(self)
         self.functionSetupButton.setText('SETUP')
         self.functionSetupButton.setAutoDefault(False)
@@ -64,7 +64,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.mainLayout.addWidget(self.functionCheckBox,    row, 0)
         self.mainLayout.addWidget(HorizontalSpacer(self),   row, 1)
         self.mainLayout.addWidget(self.functionSetupButton, row, 2)
-        self.mainLayout.addWidget(self.functionCombo,       row, 3)
+        self.mainLayout.addWidget(self.fitFunctionCombo,       row, 3)
         row += 1
         
 
@@ -72,7 +72,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.backgroundCheckBox = qt.QCheckBox(self)
         self.backgroundCheckBox.setText("Background function")
         self.backgroundCombo    = qt.QComboBox(self)
-        self.backgroundCombo.addItem(str("Add Function(s)"))
+        self.backgroundCombo.addItem(str("None"))
         self.backgroundSetupButton = qt.QPushButton(self)
         self.backgroundSetupButton.setText('SETUP')
         self.backgroundSetupButton.setAutoDefault(False)
@@ -163,7 +163,6 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.mainLayout.addWidget(self.anchorsContainer,      row, 0, 1, 4)
         row += 1
         
-
     def _stripComboActivated(self, iValue):
         if iValue == 1:
             self.setSNIP(True)
@@ -181,6 +180,33 @@ class FitFunctionDefinition(qt.QGroupBox):
             self.stripWidthSpin.setEnabled(True)
             self.stripIterSpin.setEnabled(True)
             self.stripCombo.setCurrentIndex(0)        
+
+
+    def setFunctions(self, functionList):
+        currentFunction = str(self.fitFunctionCombo.currentText())
+        currentBackground = str(self.backgroundCombo.currentText())
+        self.fitFunctionCombo.clear()
+        self.backgroundCombo.clear()
+        self.fitFunctionCombo.addItem('None')
+        self.backgroundCombo.addItem('None')
+        for key in functionList:
+            self.fitFunctionCombo.addItem(str(key))
+            self.backgroundCombo.addItem(str(key))
+
+        #restore previous values
+        idx = self.fitFunctionCombo.findText(currentFunction)
+        self.fitFunctionCombo.setCurrentIndex(idx)
+        idx = self.backgroundCombo.findText(currentBackground)
+        self.backgroundCombo.setCurrentIndex(idx)
+
+    def getFunctions(self):
+        functionList = []
+        n = self.fitFunctionCombo.count()
+        for i in range(n):
+            if i == 0:
+                continue
+            functionList.append(str(self.fitFunctionCombo.itemText(i)))
+        return functionList
 
 class FitControl(qt.QGroupBox):
     def __init__(self, parent=None):
@@ -362,9 +388,17 @@ class SimpleFitControlWidget(qt.QWidget):
     def _setConfiguration(self, ddict):
         #all the keys will be present
         w = self.functionDefinitionWidget
-        idx = w.functionCombo.findText(ddict['fit_function'])
-        w.functionCombo.setCurrentIndex(idx)
-        idx = w.backgroundCombo.findText(ddict['background_function'])
+        if ddict.has_key('functions'):
+            w.setFunctions(ddict['functions'])
+        if ddict['fit_function'] in [None, "None", "NONE"]:
+            idx = 0
+        else:
+            idx = w.fitFunctionCombo.findText(ddict['fit_function'])
+        w.fitFunctionCombo.setCurrentIndex(idx)
+        if ddict['background_function'] in [None, "None", "NONE"]:
+            idx = 0
+        else:
+            idx = w.backgroundCombo.findText(ddict['background_function'])
         w.backgroundCombo.setCurrentIndex(idx)
         if ddict['function_flag']:
             w.functionCheckBox.setChecked(True)
@@ -434,7 +468,8 @@ class SimpleFitControlWidget(qt.QWidget):
     def getConfiguration(self):
         ddict = {}
         w = self.functionDefinitionWidget
-        ddict['fit_function'] = str(w.functionCombo.currentText())
+        ddict['functions'] =  w.getFunctions()
+        ddict['fit_function'] = str(w.fitFunctionCombo.currentText())
         ddict['stripalgorithm'] = str(w.stripCombo.currentText())
         ddict['background_function'] = str(w.backgroundCombo.currentText())
         if w.functionCheckBox.isChecked():

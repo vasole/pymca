@@ -31,7 +31,7 @@ import types
 import Gefit
 import SpecfitFuns
 
-DEBUG = 0
+DEBUG = 1
 
 class SimpleFit:
     def __init__(self):
@@ -43,16 +43,14 @@ class SimpleFit:
         self._functionDict = {}
 
         #the current fit function
-        self._fitFunction = None
         self._stripFunction = None
-        self._backgroundFunction = None
 
     def getDefaultConfiguration(self):
         self._fitConfiguration = {}
         self._fitConfiguration['fit'] = {}
-        self._fitConfiguration['fit']['fit_function'] = None
+        self._fitConfiguration['fit']['fit_function'] = "None"
         self._fitConfiguration['fit']['function_flag'] = 1
-        self._fitConfiguration['fit']['background_function'] = None
+        self._fitConfiguration['fit']['background_function'] = "None"
         self._fitConfiguration['fit']['background_flag'] = 1
         self._fitConfiguration['fit']['stripalgorithm'] = "Strip"
         self._fitConfiguration['fit']['strip_flag'] = 1        
@@ -75,10 +73,15 @@ class SimpleFit:
         self._fitConfiguration['functions'] = {}
         
     def configure(self, ddict):
-        print "configuration to be implemented"
+        if ddict.has_key('fit'):
+            givenKeys = ddict['fit'].keys()
+            for key in self._fitConfiguration['fit'].keys():
+                if key in givenKeys:
+                    self._fitConfiguration['fit'][key] = ddict['fit'][key]
+        print "configuration to be improved"
 
     def setConfiguration(self, ddict):
-        return self.configure(dditc)
+        return self.configure(ddict)
 
     def getConfiguration(self):
         return self._fitConfiguration
@@ -159,30 +162,30 @@ class SimpleFit:
 
     def setFitFunction(self, name):
         if name in [None, "None", "NONE"]:
-            self._fitFunction = None
+            self._fitConfiguration['fit']['fit_function'] = "None"
             return
         self._fitFunctionConfigured = False
         if name not in self._fitConfiguration['fit']['functions']:
             txt = "Function %s not among defined functions"  % name
             raise KeyError, txt
-        self._fitFunction = name
+        self._fitConfiguration['fit']['fit_function'] = name
 
     def getFitFunction(self):
-        return self._fitFunction
+        return "%s" % self._fitConfiguration['fit']['fit_function']
 
     def setBackgroundFunction(self, name):
         if name in [None, "None", "NONE"]:
-            self._backgroundFunction = None
+            self._fitConfiguration['fit']['background_function'] = "None"
             return
         self._backgroundFunctionConfigured = False
         if name not in self._fitConfiguration['fit']['functions']:
             txt = "Function %s not among defined functions"  % name
             raise KeyError, txt
-        self._backgroundFunction = name
+        self._fitConfiguration['fit']['background_function'] = name
 
     def getBackgroundFunction(self):
-        return self._backgroundFunction
-
+        return "%s" % self._fitConfiguration['fit']['background_function']
+    
     def _getLimits(self, x, xmin, xmax):
         if self._fitConfiguration['fit']['use_limits']:
             xmin = self._fitConfiguration['fit']['xmin']
@@ -389,20 +392,22 @@ class SimpleFit:
         backgroundDict  = {'parameters':[]}
         fitFunctionDict = {'parameters':[]}
         backgroundParameters, backgroundConstraints = [], [[],[],[]]
+        backgroundFunction = self.getBackgroundFunction() 
         if self._fitConfiguration['fit']['background_flag']:
-            if self._backgroundFunction is not None:
+            if backgroundFunction not in [None, "None", "NONE"]:
                 backgroundParameters, backgroundConstraints =\
                                       self.estimateBackground()
                 backgroundDict = self._fitConfiguration['functions']\
-                              [self._backgroundFunction]
+                              [backgroundFunction]
         self._setStatus("Background estimation finished")
         functionParameters, functionConstraints = [], [[],[],[]]
+        fitFunction = self._fitConfiguration['fit']['fit_function']
         if self._fitConfiguration['fit']['function_flag']:
-            if self._fitFunction is not None:
+            if fitFunction not in [None, "None", "NONE"]:
                 functionParameters, functionConstraints=\
                                     self.estimateFunction()
                 fitFunctionDict = self._fitConfiguration['functions']\
-                                      [self._fitFunction]
+                                      [fitFunction]
         self._setStatus("Fit function estimation finished")
 
         #estimations are made
@@ -600,10 +605,10 @@ class SimpleFit:
 
         nb = self.__nBackgroundParameters
         if nb:
-            result += self._fitConfiguration['functions'][self._backgroundFunction]\
+            result += self._fitConfiguration['functions'][self.getBackgroundFunction()]\
                       ['function'](pars, t)
         if len(self.paramlist) > nb:
-            result += self._fitConfiguration['functions'][self._fitFunction]\
+            result += self._fitConfiguration['functions'][self.getFitFunction()]\
                       ['function'](pars, t)
         return result
 

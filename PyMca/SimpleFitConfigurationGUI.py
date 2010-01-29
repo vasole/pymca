@@ -36,7 +36,7 @@ import PyMcaDirs
 DEBUG = 0
 
 class SimpleFitConfigurationGUI(qt.QDialog):
-    def __init__(self, parent = None, specfit=None):
+    def __init__(self, parent = None, fit=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PyMca - Simple Fit Configuration")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
@@ -47,6 +47,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         self.mainLayout.addWidget(self.fitControlWidget)
         self.buildAndConnectActions()
         self.mainLayout.addWidget(VerticalSpacer(self))
+        self.setSimpleFitInstance(fit)
 
         #input output directory
         self.initDir = None
@@ -77,6 +78,11 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         self.connect(reject, qt.SIGNAL("clicked()"), self.reject)
         self.connect(accept, qt.SIGNAL("clicked()"), self.accept)
 
+    def setSimpleFitInstance(self, fitInstance):
+        self.simpleFitInstance = fitInstance
+        if self.simpleFitInstance is not None:
+            self.setConfiguration(self.simpleFitInstance.getConfiguration())
+
     def setConfiguration(self, ddict):
         if ddict.has_key('fit'):
             self.fitControlWidget.setConfiguration(ddict['fit'])
@@ -84,7 +90,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
     def getConfiguration(self):
         ddict = {}
         for name in ['fit']:
-            ddict[name] = self.fitControlWidget.getConfiguration()
+            ddict[name] = self.__getConfiguration(name)
         return ddict
 
     def __getConfiguration(self, name):
