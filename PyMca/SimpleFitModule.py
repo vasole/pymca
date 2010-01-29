@@ -77,7 +77,13 @@ class SimpleFit:
     def configure(self, ddict):
         print "configuration to be implemented"
 
-    def setData(self, x, y, sigma=None, xmin=None, xmax=None):
+    def setConfiguration(self, ddict):
+        return self.configure(dditc)
+
+    def getConfiguration(self):
+        return self._fitConfiguration
+
+    def setData(self, x, y, sigma=None, xmin=None, xmax=None, **kw):
         idx = numpy.argsort(x)
         if sigma is not None:
             self._sigma = sigma[idx]
@@ -152,9 +158,13 @@ class SimpleFit:
             self._fitConfiguration['fit']['functions'].append(functionName)
 
     def setFitFunction(self, name):
+        if name in [None, "None", "NONE"]:
+            self._fitFunction = None
+            return
         self._fitFunctionConfigured = False
         if name not in self._fitConfiguration['fit']['functions']:
-            raise KeyError, "Function %s not among defined functions"
+            txt = "Function %s not among defined functions"  % name
+            raise KeyError, txt
         self._fitFunction = name
 
     def getFitFunction(self):
@@ -166,7 +176,8 @@ class SimpleFit:
             return
         self._backgroundFunctionConfigured = False
         if name not in self._fitConfiguration['fit']['functions']:
-            raise KeyError, "Function %s not among defined functions"
+            txt = "Function %s not among defined functions"  % name
+            raise KeyError, txt
         self._backgroundFunction = name
 
     def getBackgroundFunction(self):
@@ -507,7 +518,6 @@ class SimpleFit:
 
     def startFit(self):
         self._setStatus("Fit started")
-        print "start fit to be implemented"
         param_list = self.final_theory
         length      = len(param_list)
         param_val   = []
@@ -583,7 +593,7 @@ class SimpleFit:
               param['sigma']= result[2][i]
            i = i + 1
         self._setStatus("Fit finished")           
-        print self.paramlist
+        return result
 
     def modelFunction(self, pars, t):
         result = 0.0 * t
