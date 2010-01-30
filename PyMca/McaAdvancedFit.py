@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -34,6 +34,7 @@ QTVERSION = qt.qVersion()
 
 try:
     import PyMcaMatplotlibSave
+    import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -106,6 +107,7 @@ class McaAdvancedFit(qt.QWidget):
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastInputDir = None
         self.configDialog = None
+        self.matplotlibDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(margin)
         self.mainLayout.setSpacing(0)
@@ -1984,11 +1986,20 @@ class McaAdvancedFit(qt.QWidget):
                     if self.peaksSpectrumButton.isChecked():  legends = True
                     elif 'ymatrix' in fitresult['result'].keys(): legends = False
                     else: legends = False
-                    mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
+                    #if self.matplotlibDialog is None:
+                    try:
+                        self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
+                                                QPyMcaMatplotlibSaveDialog(size=size,
                                                                     logy=logy,
                                                                     legends=legends,
                                                                     bw = bw)
-
+                        mtplt = self.matplotlibDialog.plot
+                    except:
+                        mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
+                                                                    logy=logy,
+                                                                    legends=legends,
+                                                                    bw = bw)
+                        self.matplotlibDialog = None
                     if self._energyAxis:
                         x = fitresult['result']['energy']
                     else:
@@ -2042,7 +2053,11 @@ class McaAdvancedFit(qt.QWidget):
                     else:
                         mtplt.setXLabel('Channel')
                     mtplt.setYLabel('Counts')
-                    mtplt.saveFile(specFile)
+                    if self.matplotlibDialog is not None:
+                        if self.matplotlibDialog.exec_():
+                            mtplt.saveFile(specFile)
+                    else:
+                        mtplt.saveFile(specFile)
                     return
         except:
             msg = qt.QMessageBox(self)

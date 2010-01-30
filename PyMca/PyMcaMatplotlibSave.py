@@ -70,7 +70,7 @@ colorlist  = [colordict['black'],
               colordict['darkbrown'],
               colordict['yellow']]
 
-class PyMcaMatplotlibSave:
+class PyMcaMatplotlibSave(FigureCanvas):
     def __init__(self, size = (7,3.5),
                  logx = False,
                  logy = False,
@@ -78,7 +78,7 @@ class PyMcaMatplotlibSave:
                  bw = False):
 
         self.fig = Figure(figsize=size) #in inches
-        self.canvas = FigureCanvas(self.fig)
+        FigureCanvas.__init__(self, self.fig)
 
         self._logX = logx
         self._logY = logy
@@ -249,7 +249,7 @@ class PyMcaMatplotlibSave:
             self.ax.set_ylim(self.ymin, self.ymax)
             self.ax.set_xlim(self.xmin, self.xmax)
         #self.plotLegends()
-        self.canvas.print_figure(filename)
+        self.print_figure(filename)
         return
 
 class PyMcaMatplotlibSaveImage:

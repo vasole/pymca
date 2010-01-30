@@ -25,7 +25,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import PyMcaQt as qt
 import sys
 import os
@@ -55,6 +55,56 @@ class VerticalSpacer(qt.QWidget):
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
                                           qt.QSizePolicy.Expanding))
 
+class TopWidget(qt.QWidget):
+    def __init__(self, parent = None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+        self.labelList = ['Title', 'X Label', 'Y Label']
+        self.keyList   = ['title', 'xlabel', 'ylabel']
+        self.lineEditList = []
+        for i in range(len(self.labelList)):
+            label = qt.QLabel(self)
+            label.setText(self.labelList[i])
+            lineEdit = qt.QLineEdit(self)
+            self.mainLayout.addWidget(label, i, 0)
+            self.mainLayout.addWidget(lineEdit, i, 1)
+            self.lineEditList.append(lineEdit)
+
+    def getParameters(self):
+        ddict = {}
+        i = 0
+        for label in self.keyList:
+            ddict[label] = str(self.lineEditList[i].text())
+            i = i + 1
+        return ddict
+
+    def setParameters(self, ddict):
+        for label in ddict.keys():
+            if label.lower() in self.keyList:
+                i = self.keyList.index(label)
+                self.lineEditList[i].setText(ddict[label])
+        return
+
+class ButtonsWidget(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+
+        self.updateButton = qt.QPushButton(self)
+        self.updateButton.setText("Update")
+
+        self.printButton = qt.QPushButton(self)
+        self.printButton.setText("Print")
+
+        self.saveButton = qt.QPushButton(self)
+        self.saveButton.setText("Save")
+
+        self.mainLayout.addWidget(self.updateButton)
+        self.mainLayout.addWidget(self.printButton)
+        self.mainLayout.addWidget(self.saveButton)
+
 class SaveImageSetup(qt.QWidget):
     def __init__(self, parent=None, image=None):
         qt.QWidget.__init__(self, parent)
@@ -79,30 +129,18 @@ class SaveImageSetup(qt.QWidget):
         self.mainLayout.addWidget(self.right, 1, 1)
 
         #buttons
-        self._buttonContainer = qt.QWidget(self)
-        self._buttonContainer.mainLayout = qt.QVBoxLayout(self._buttonContainer)
-
-        self.updateButton = qt.QPushButton(self._buttonContainer)
-        self.updateButton.setText("Update")
-
-        self.printButton = qt.QPushButton(self._buttonContainer)
-        self.printButton.setText("Print")
-
-        self.saveButton = qt.QPushButton(self._buttonContainer)
-        self.saveButton.setText("Save")
-
-        self._buttonContainer.mainLayout.addWidget(self.updateButton)
-        self._buttonContainer.mainLayout.addWidget(self.printButton)
-        self._buttonContainer.mainLayout.addWidget(self.saveButton)
+        self._buttonContainer = ButtonsWidget(self)
         self.mainLayout.addWidget(self._buttonContainer, 0, 1)
 
-        self.connect(self.updateButton, qt.SIGNAL('clicked()'),
+        self.connect(self._buttonContainer.updateButton,
+                     qt.SIGNAL('clicked()'),
                      self.updateClicked)
 
-        self.connect(self.printButton, qt.SIGNAL('clicked()'),
+        self.connect(self._buttonContainer.printButton,
+                     qt.SIGNAL('clicked()'),
                      self.printClicked)
 
-        self.connect(self.saveButton, qt.SIGNAL('clicked()'),
+        self.connect(self._buttonContainer.saveButton, qt.SIGNAL('clicked()'),
                      self.saveClicked)
 
 
@@ -240,39 +278,6 @@ class SaveImageSetup(qt.QWidget):
                 msg.setText("Error saving file: %s" % sys.exc_info()[1])
                 msg.setWindowTitle('Matplotlib Save Image')
                 msg.exec_()
-
-
-class TopWidget(qt.QWidget):
-    def __init__(self, parent = None):
-        qt.QWidget.__init__(self, parent)
-        self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
-        self.mainLayout.setSpacing(2)
-        self.labelList = ['Title', 'X Label', 'Y Label']
-        self.keyList   = ['title', 'xlabel', 'ylabel']
-        self.lineEditList = []
-        for i in range(len(self.labelList)):
-            label = qt.QLabel(self)
-            label.setText(self.labelList[i])
-            lineEdit = qt.QLineEdit(self)
-            self.mainLayout.addWidget(label, i, 0)
-            self.mainLayout.addWidget(lineEdit, i, 1)
-            self.lineEditList.append(lineEdit)
-
-    def getParameters(self):
-        ddict = {}
-        i = 0
-        for label in self.keyList:
-            ddict[label] = str(self.lineEditList[i].text())
-            i = i + 1
-        return ddict
-
-    def setParameters(self, ddict):
-        for label in ddict.keys():
-            if label.lower() in self.keyList:
-                i = self.keyList.index(label)
-                self.lineEditList[i].setText(ddict[label])
-        return
 
 class SimpleComboBox(qt.QComboBox):
     def __init__(self, parent=None, options=['1', '2', '3']):
