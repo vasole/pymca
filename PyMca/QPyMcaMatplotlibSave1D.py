@@ -108,9 +108,13 @@ class MatplotlibCurveTable(qt.QTableWidget):
             self.setRowHeight(i, rheight)
 
         i = 0
+        #self.__disconnect = True
         for legend in curvelist:
             self.addCurve(i, legend, curvedict[legend])
             i += 1
+        #self.__disconnect = False
+        #self.resizeColumnToContents(0)
+        #self.resizeColumnToContents(3)
 
     def addCurve(self, i, legend, ddict):
         j = 0
@@ -135,6 +139,9 @@ class MatplotlibCurveTable(qt.QTableWidget):
                                        qt.QTableWidgetItem.Type)
             item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
             self.setItem(i, j, item)
+            #qt.QObject.connect(self,
+            #                   qt.SIGNAL("itemChanged(QTableWidgetItem *)"),
+            #                   self._mySlot)
         else:
             item.setText(alias)
         #item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
@@ -172,10 +179,10 @@ class MatplotlibCurveTable(qt.QTableWidget):
 
         idx = widget.findText(ddict['linestyle'])
         widget.setCurrentIndex(idx)
-        self.resizeColumnToContents(0)
-        #self.resizeColumnToContents(3)
 
     def _mySlot(self, ddict):
+        #if self.__disconnect:
+        #    return
         ddict = {}
         ddict['curvelist'] = []
         ddict['curvedict'] = {}
@@ -281,6 +288,7 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
                      self.reject)
 
     def exec_(self):
+        self.plot.draw()
         if self.doNotShowAgain.isChecked():
             return qt.QDialog.Accepted
         else:
@@ -405,13 +413,8 @@ class QPyMcaMatplotlibSave(FigureCanvas):
 
 
     def _filterData(self, x, y):
-        index = numpy.flatnonzero((self.xmin <= x) & (x <= self.xmax))
-        x = numpy.take(x, index)
-        y = numpy.take(y, index)
-        index = len(index)
-        if index:
-            index = numpy.flatnonzero((self.ymin <= y) & (y <= self.ymax))
-            index = len(index)
+        index = numpy.flatnonzero((self.xmin <= x) & (x <= self.xmax)&\
+                                  (self.ymin <= y) & (y <= self.ymax))
         return index
 
     def _getColorAndStyle(self):
@@ -430,14 +433,19 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                       linewidth = None,
                       linestyle = None,
                       alias = None,**kw):
-        n = max(x.shape)
         if self.limitsSet is not None:
             n = self._filterData(x, y)
+            if not len(n):
+                return
+            #x = x[n]
+            #y = y[n]
+        n = max(x.shape)
         if n == 0:
             #nothing to plot
             if DEBUG:
                 print "nothing to plot"
             return
+        
         style = None
         if color is None:
             color, style = self._getColorAndStyle()
@@ -462,6 +470,9 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         self.curveDict[legend]['linestyle'] = style
         self.curveDict[legend]['color'] = color
         self.curveDict[legend]['linewidth'] = linewidth
+        if alias is not None:
+            self.curveDict[legend]['alias'] = alias
+            self._legendList[-1] = alias
         if self.curveTable is not None:
             self.curveTable.setCurveListAndDict(self.curveList, self.curveDict)
         
@@ -515,7 +526,12 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                                 labelspacing = labelsep,
                                 borderpad = 0.15)
         legend.draw_frame(drawframe)
-        self.draw()
+
+    def draw(self):
+        if self.limitsSet:
+            self.ax.set_xlim(self.xmin, self.xmax)
+            self.ax.set_ylim(self.ymin, self.ymax)
+        FigureCanvas.draw(self)
 
     def updateFromTable(self, ddict):
         #for line2D in self.ax.lines:
@@ -555,8 +571,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
             legendList.append(alias)
         if self._legend:
             self.plotLegends(legendList)
-        else:
-            self.draw()
+        self.draw()
 
     def saveFile(self, filename, format=None):
         if format is None:

@@ -45,7 +45,7 @@ import PyMcaPrintPreview
 import os
 import PyMcaDirs
 try:
-    import PyMcaMatplotlibSave
+    import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -87,6 +87,7 @@ class McaWidget(qt.QWidget):
             self.setWindowTitle(name)
         self.outputDir = None
         self.outputFilter = None
+        self.matplotlibDialog = None
         """ 
         class McaWidget(qt.QSplitter):
             def __init__(self, parent=None, specfit=None,fl=None,**kw):
@@ -749,10 +750,16 @@ class McaWidget(qt.QWidget):
             legends = True
         else:
             legends = False
-        mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
+        if self.matplotlibDialog is None:
+            self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
+                                    QPyMcaMatplotlibSaveDialog(size=size,
                                                         logy=logy,
                                                         legends=legends,
-                                                        bw = bw)        
+                                                        bw = bw)
+        mtplt = self.matplotlibDialog.plot
+        mtplt.setParameters({'logy':logy,
+                             'legends':legends,
+                             'bw':bw})
         xmin, xmax = self.graph.getx1axislimits()
         ymin, ymax = self.graph.gety1axislimits()
         mtplt.setLimits(xmin, xmax, ymin, ymax)
@@ -762,7 +769,10 @@ class McaWidget(qt.QWidget):
         info  = self.dataObjectsDict[key].info
         xdata = self.getEnergyFromChannels(xdata, info)
         ydata = self.dataObjectsDict[key].y[0] * 1
-        mtplt.addDataToPlot( xdata, ydata)
+        dataCounter = 1
+        alias = "%c" % (96+dataCounter)
+        mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
+        dataCounter += 1
 
         objectKeys = self.dataObjectsDict.keys()
         for key in self.graph.curves.keys():
@@ -772,12 +782,17 @@ class McaWidget(qt.QWidget):
                     info  = self.dataObjectsDict[key].info
                     xdata = self.getEnergyFromChannels(xdata, info)
                     ydata = self.dataObjectsDict[key].y[0] * 1
-                    mtplt.addDataToPlot(xdata, ydata)
-                    
-        mtplt.plotLegends()
+                    alias = "%c" % (96+dataCounter)
+                    dataCounter += 1
+                    mtplt.addDataToPlot(xdata, ydata, legend=key, alias=alias)
+        
         mtplt.setXLabel(str(self.graph.x1Label()))
         mtplt.setYLabel(str(self.graph.y1Label()))
-        mtplt.saveFile(filename)
+        if legends:
+            mtplt.plotLegends()
+        ret = self.matplotlibDialog.exec_()
+        if ret == qt.QDialog.Accepted:
+            mtplt.saveFile(filename)
         return
         
 
