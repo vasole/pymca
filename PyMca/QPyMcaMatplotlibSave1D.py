@@ -81,36 +81,217 @@ class HorizontalSpacer(qt.QWidget):
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
 
+class MatplotlibCurveTable(qt.QTableWidget):
+    def __init__(self, parent=None):
+        qt.QTableWidget.__init__(self, parent)
+        labels = ["Curve", "Alias", "Color", "Line Style"]
+        n = len(labels)
+        self.setColumnCount(len(labels))
+        for i in range(len(labels)):
+            item = self.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(labels[i],
+                                           qt.QTableWidgetItem.Type)
+            item.setText(labels[i])
+            self.setHorizontalHeaderItem(i,item)
+        rheight = self.horizontalHeader().sizeHint().height()
+        self.setMinimumHeight(5*rheight)
+        self.labels = labels
+
+    def setCurveListAndDict(self, curvelist, curvedict):
+        n = len(curvelist)
+        self.setRowCount(n)
+        if n < 1:
+            return
+        rheight = self.horizontalHeader().sizeHint().height()
+        for i in range(n):
+            self.setRowHeight(i, rheight)
+
+        i = 0
+        for legend in curvelist:
+            self.addCurve(i, legend, curvedict[legend])
+            i += 1
+
+    def addCurve(self, i, legend, ddict):
+        j = 0
+        widget = self.cellWidget(i, j)
+        if widget is None:
+            widget = CheckBoxItem(self, i, j)
+            self.setCellWidget(i, j, widget)
+            qt.QObject.connect(widget,
+                               qt.SIGNAL('CheckBoxItemSignal'),
+                               self._mySlot)
+        widget.setChecked(True)
+        widget.setText(legend)
+
+        #alias
+        alias = ddict.get('alias', None)
+        if alias is None:
+            alias = legend
+        j = 1
+        item = self.item(i, j)
+        if item is None:
+            item = qt.QTableWidgetItem(alias,
+                                       qt.QTableWidgetItem.Type)
+            item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
+            self.setItem(i, j, item)
+        else:
+            item.setText(alias)
+        #item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
+
+        #color
+        j = 2
+        widget = self.cellWidget(i, j)
+        if widget is None:
+            options = colordict.keys()
+            options.sort()
+            widget = ComboBoxItem(self, i, j, options=options)
+            self.setCellWidget(i, j, widget)
+            qt.QObject.connect(widget,
+                               qt.SIGNAL('ComboBoxItemSignal'),
+                               self._mySlot)
+        color = ddict['color']
+        if color == 'k':
+            color = '#000000'
+        for key in colordict.keys():
+            if colordict[key] == color:
+                break
+        idx = widget.findText(key)
+        widget.setCurrentIndex(idx)
+
+        #linestyle
+        j = 3
+        widget = self.cellWidget(i, j)
+        options = ['-','--','-.',':']
+        if widget is None:
+            widget = ComboBoxItem(self, i, j, options=options)
+            self.setCellWidget(i, j, widget)
+            qt.QObject.connect(widget,
+                               qt.SIGNAL('ComboBoxItemSignal'),
+                               self._mySlot)
+
+        idx = widget.findText(ddict['linestyle'])
+        widget.setCurrentIndex(idx)
+        self.resizeColumnToContents(0)
+        #self.resizeColumnToContents(3)
+
+    def _mySlot(self, ddict):
+        ddict = {}
+        ddict['curvelist'] = []
+        ddict['curvedict'] = {}
+        for i in range(self.rowCount()):
+            widget = self.cellWidget(i, 0)
+            legend = str(widget.text())
+            ddict['curvelist'].append(legend) 
+            ddict['curvedict'][legend] = {}
+            alias = str(self.item(i, 1).text())
+            if widget.isChecked():
+                plot = 1
+            else:
+                plot = 0
+            ddict['curvedict'][legend]['plot']  = plot
+            ddict['curvedict'][legend]['alias'] = alias
+            widget = self.cellWidget(i, 2)
+            color = colordict[str(widget.currentText())]
+            ddict['curvedict'][legend]['color'] = color
+            widget = self.cellWidget(i, 3)
+            linestyle = str(widget.currentText())
+            ddict['curvedict'][legend]['linestyle'] = linestyle
+        self.emit(qt.SIGNAL("CurveTableSignal"), ddict)
+
+class ComboBoxItem(qt.QComboBox):
+    def __init__(self, parent, row, col, options=[1,2,3]):
+        qt.QCheckBox.__init__(self, parent)
+        self.__row = row
+        self.__col = col
+        for option in options:
+            self.addItem(option)
+        qt.QObject.connect(self, qt.SIGNAL("activated(int)"), self._mySignal)
+
+    def _mySignal(self, value):
+        ddict = {}
+        ddict["event"] = "activated"
+        ddict["item"] = value
+        ddict["row"] = self.__row * 1
+        ddict["col"] = self.__col * 1
+        self.emit(qt.SIGNAL('ComboBoxItemSignal'), ddict)
+
+class CheckBoxItem(qt.QCheckBox):
+    def __init__(self, parent, row, col):
+        qt.QCheckBox.__init__(self, parent)
+        self.__row = row
+        self.__col = col
+        qt.QObject.connect(self, qt.SIGNAL("clicked(bool)"), self._mySignal)
+
+    def _mySignal(self, value):
+        ddict = {}
+        ddict["event"] = "clicked"
+        ddict["state"] = value
+        ddict["row"] = self.__row * 1
+        ddict["col"] = self.__col * 1
+        self.emit(qt.SIGNAL('CheckBoxItemSignal'), ddict)
+
+
 class QPyMcaMatplotlibSaveDialog(qt.QDialog):
     def __init__(self, parent=None, **kw):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("Matplotlib preview - Resize to your taste")
-        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
+        self._lastGoodSize = None
+        self.curveTable = MatplotlibCurveTable(self)
         self.plot = QPyMcaMatplotlibSave(self, **kw)
+        self.plot.setCurveTable(self.curveTable)
         self.actionsWidget = qt.QWidget(self)
         layout = qt.QHBoxLayout(self.actionsWidget)
         layout.setMargin(0)
         layout.setSpacing(2)
+        self.doNotShowAgain = qt.QCheckBox(self.actionsWidget)
+        self.doNotShowAgain.setChecked(False)
+        self.doNotShowAgain.setText("Don't show again this dialog")
+
         self.acceptButton = qt.QPushButton(self.actionsWidget)
         self.acceptButton.setText("Accept")
         self.acceptButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(self.actionsWidget)
         self.dismissButton.setText("Dismiss")
         self.dismissButton.setAutoDefault(False)
-        layout.addWidget(self.acceptButton)
+        layout.addWidget(self.doNotShowAgain)
         layout.addWidget(HorizontalSpacer(self.actionsWidget))
+        layout.addWidget(self.acceptButton)
         layout.addWidget(self.dismissButton)
-        self.mainLayout.addWidget(self.plot)
-        self.mainLayout.addWidget(self.actionsWidget)
-        
+        horizontal = False
+        if horizontal:
+            self.mainLayout.addWidget(self.plot, 0, 0)
+            self.mainLayout.addWidget(self.curveTable, 0, 1)
+            self.mainLayout.addWidget(self.actionsWidget, 1, 0, 1, 2)
+            self.mainLayout.setColumnStretch(0, 1)
+        else:
+            self.mainLayout.addWidget(self.curveTable, 0, 0)
+            self.mainLayout.addWidget(self.plot, 1, 0)
+            self.mainLayout.addWidget(self.actionsWidget, 2, 0)
+            self.mainLayout.setRowStretch(1, 1)
+
         self.connect(self.acceptButton,
                      qt.SIGNAL("clicked()"),
                      self.accept)
         self.connect(self.dismissButton,
                      qt.SIGNAL("clicked()"),
                      self.reject)
+
+    def exec_(self):
+        if self.doNotShowAgain.isChecked():
+            return qt.QDialog.Accepted
+        else:
+            if self._lastGoodSize is not None:
+                self.resize(self._lastGoodSize)
+            return qt.QDialog.exec_(self)
+
+    def accept(self):
+        self._lastGoodSize = self.size()
+        return qt.QDialog.accept(self)
+
 
 class QPyMcaMatplotlibSave(FigureCanvas):
     def __init__(self, parent=None,
@@ -126,17 +307,75 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         FigureCanvas.setSizePolicy(self,
                                    qt.QSizePolicy.Expanding,
                                    qt.QSizePolicy.Expanding)
-        
+        self.curveTable = None
         self.dpi=dpi
+        ddict = {'logx':logx,
+                 'logy': logy,
+                 'legends':legends,
+                 'bw':bw}
+        self.ax=None
+        self.curveList = []
+        self.curveDict = {}
+        self.setParameters(ddict)
+        #self.setBlackAndWhiteEnabled(bw)
+        #self.setLogXEnabled(logx)
+        #self.setLogYEnabled(logy)
+        #self.setLegendsEnabled(legends)
+        
+        self.xmin = None
+        self.xmax = None
+        self.ymin = None
+        self.ymax = None
+        self.limitsSet = False
 
-        self._logX = logx
-        self._logY = logy
-        self._bw   = bw
-        self._legend   = legends
-        self._legendList = []
+    def setCurveTable(self, table):
+        self.curveTable = table
+        self.connect(self.curveTable,
+                     qt.SIGNAL("CurveTableSignal"),
+                     self.updateFromTable)
+
+    def setParameters(self,kw):
+        if kw.has_key('bw'):
+            self.setBlackAndWhiteEnabled(kw['bw'])
+        if kw.has_key('logx'):
+            self.setLogXEnabled(kw['logx'])
+        if kw.has_key('logy'):
+            self.setLogYEnabled(kw['logy'])
+        if kw.has_key('legends'):
+            self.setLegendsEnabled(kw['legends'])
         self._dataCounter = 0
+        self.createAxes()
 
-        if not legends:
+    def setBlackAndWhiteEnabled(self, flag):
+        self._bw = flag
+        if self._bw:
+            self.colorList = ['k']   #only black
+            self.styleList = ['-', ':', '-.', '--']
+            self.nColors   = 1
+        else:
+            self.colorList = colorlist
+            self.styleList = ['-', '-.', ':']
+            self.nColors   = len(colorlist)
+        self._dataCounter = 0
+        self.nStyles   = len(self.styleList)
+        self.colorIndex = 0
+        self.styleIndex = 0
+
+    def setLogXEnabled(self, flag):
+        self._logX = flag
+
+    def setLogYEnabled(self, flag):
+        self._logY = flag
+
+    def setLegendsEnabled(self, flag):
+        self._legend   = flag
+        self._legendList = []
+
+    def createAxes(self):
+        self.fig.clear()
+        if self.ax is not None:
+            self.ax.cla()
+        if not self._legend:
             if self._logY:
                 ax = self.fig.add_axes([.15, .15, .75, .8])
             else:
@@ -148,33 +387,14 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                 ax = self.fig.add_axes([.15, .15, .7, .8])
 
         ax.set_axisbelow(True)
-
         self.ax = ax
-
-
         if self._logY:
             self._axFunction = ax.semilogy
         else:
             self._axFunction = ax.plot
-
-        if self._bw:
-            self.colorList = ['k']   #only black
-            self.styleList = ['-', ':', '-.', '--']
-            self.nColors   = 1
-        else:
-            self.colorList = colorlist
-            self.styleList = ['-', '-.', ':']
-            self.nColors   = len(colorlist)
-        self.nStyles   = len(self.styleList)
-
-        self.colorIndex = 0
-        self.styleIndex = 0
-
-        self.xmin = None
-        self.xmax = None
-        self.ymin = None
-        self.ymax = None
-        self.limitsSet = False
+        self._legendList=[]
+        self.curveList = []
+        self.curveDict = {}
 
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.xmin = xmin
@@ -208,7 +428,8 @@ class QPyMcaMatplotlibSave(FigureCanvas):
     def addDataToPlot(self, x, y, legend = None,
                       color = None,
                       linewidth = None,
-                      linestyle = None, **kw):
+                      linestyle = None,
+                      alias = None,**kw):
         n = max(x.shape)
         if self.limitsSet is not None:
             n = self._filterData(x, y)
@@ -233,7 +454,17 @@ class QPyMcaMatplotlibSave(FigureCanvas):
             #legend = "%02d" % self._dataCounter    #01, 02, 03, ...
             legend = "%c" % (96+self._dataCounter)  #a, b, c, ..
         self._legendList.append(legend)
-
+        if legend not in self.curveList:
+            self.curveList.append(legend)
+        self.curveDict[legend] = {}
+        self.curveDict[legend]['x'] = x
+        self.curveDict[legend]['y'] = y
+        self.curveDict[legend]['linestyle'] = style
+        self.curveDict[legend]['color'] = color
+        self.curveDict[legend]['linewidth'] = linewidth
+        if self.curveTable is not None:
+            self.curveTable.setCurveListAndDict(self.curveList, self.curveDict)
+        
     def setXLabel(self, label):
         self.ax.set_xlabel(label)
 
@@ -243,26 +474,28 @@ class QPyMcaMatplotlibSave(FigureCanvas):
     def setTitle(self, title):
         self.ax.set_title(title)
         
-    def plotLegends(self):
+    def plotLegends(self, legendlist=None):
         if not self._legend:return
-        if not len(self._legendList):return
+        if legendlist is None:
+            legendlist = self._legendList
+        if not len(legendlist):return
         loc = (1.01, 0.0)
         labelsep = 0.015
         drawframe = True
         fontproperties = FontProperties(size=10)
-        if len(self._legendList) > 14:
+        if len(legendlist) > 14:
             drawframe = False
             if matplotlib_version < '0.99.0':
                 fontproperties = FontProperties(size=8)
                 loc = (1.05, -0.2)
             else:
-                if len(self._legendList) < 18:
+                if len(legendlist) < 18:
                     #drawframe = True
                     loc = (1.01,  0.0)
-                elif len(self._legendList) < 25:
+                elif len(legendlist) < 25:
                     loc = (1.05,  0.0)
                     fontproperties = FontProperties(size=8)
-                elif len(self._legendList) < 28:
+                elif len(legendlist) < 28:
                     loc = (1.05,  0.0)
                     fontproperties = FontProperties(size=6)
                 else:
@@ -270,19 +503,60 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                     fontproperties = FontProperties(size=6)
         
         if matplotlib_version < '0.99.0':
-            legend = self.ax.legend(self._legendList,
+            legend = self.ax.legend(legendlist,
                                 loc = loc,
                                 prop = fontproperties,
                                 labelsep = labelsep,
                                 pad = 0.15)
         else:
-            legend = self.ax.legend(self._legendList,
+            legend = self.ax.legend(legendlist,
                                 loc = loc,
                                 prop = fontproperties,
                                 labelspacing = labelsep,
                                 borderpad = 0.15)
         legend.draw_frame(drawframe)
+        self.draw()
 
+    def updateFromTable(self, ddict):
+        #for line2D in self.ax.lines:
+        #    #label = line2D.get_label()
+        #    #if label == legend:
+        #    line2D.remove()
+        xlabel = self.ax.get_xlabel()
+        ylabel = self.ax.get_ylabel()
+        if self.limitsSet:
+            xlim = self.ax.get_xlim()
+            ylim = self.ax.get_ylim()
+        self.ax.cla()
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
+        if self.limitsSet:
+            self.ax.set_xlim(xlim)
+            self.ax.set_ylim(ylim)
+        legendList = []
+        curvelist = ddict['curvelist']
+        for legend in curvelist:
+            if not ddict['curvedict'][legend]['plot']:
+                continue
+            x = self.curveDict[legend]['x']
+            y = self.curveDict[legend]['y']
+            alias = ddict['curvedict'][legend]['alias']
+            linestyle = self.curveDict[legend]['linestyle']
+            if 0:
+                color = self.curveDict[legend]['color']
+            else:
+                color = ddict['curvedict'][legend]['color']
+            linewidth = self.curveDict[legend]['linewidth']
+            linestyle = ddict['curvedict'][legend]['linestyle']
+            self._axFunction( x, y,
+                              linestyle=linestyle,
+                              color=color,
+                              linewidth=linewidth)
+            legendList.append(alias)
+        if self._legend:
+            self.plotLegends(legendList)
+        else:
+            self.draw()
 
     def saveFile(self, filename, format=None):
         if format is None:
@@ -305,7 +579,7 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication([])
     w0=QPyMcaMatplotlibSaveDialog(legends=True)
-    w=w0.mplt
+    w=w0.plot
     x = numpy.arange(1200.)
     w.setLimits(0, 1200., 0, 12000.)
     if len(sys.argv) > 2:
@@ -323,3 +597,12 @@ if __name__ == "__main__":
     if ret:
         w.saveFile("filename.png")
         print "Plot filename.png saved"
+    w.setParameters({'logy':True, 'bw':True})
+    for i in range(n):
+        y = x * i + 1
+        w.addDataToPlot(x,y, legend="%d" % i)
+    #w.setTitle('title')
+    w.setXLabel('Channel')
+    w.setYLabel('Counts')
+    w.plotLegends()
+    ret = w0.exec_()
