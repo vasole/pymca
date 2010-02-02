@@ -297,6 +297,14 @@ class Parameters(QTable):
     def fillFitFromTable(self):
         return self.fillfitfromtable()
 
+    def getConfiguration(self):
+        ddict = {}
+        ddict['parameters'] = self.fillFitFromTable()
+        return ddict
+
+    def setConfiguration(self, ddict):
+        self.fillTableFromFit(ddict['parameters'])
+
     def fillfitfromtable(self):
         fitparameterslist=[]
         for param in self.paramlist:

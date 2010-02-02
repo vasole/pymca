@@ -86,7 +86,14 @@ class SimpleFit:
             for key in self._fitConfiguration['fit'].keys():
                 if key in givenKeys:
                     self._fitConfiguration['fit'][key] = ddict['fit'][key]
-        print "configuration to be improved"
+            for key in ddict.keys():
+                if key in ['fit', 'functions']:
+                    continue
+                self._fitConfiguration[key] = ddict[key]
+                print self._fitConfiguration[key]
+
+                    
+        print "Configuration of background and fit function to be made"
         for key in ['strip_flag', 'stripanchorsflag', 'stripalgorithm',
                     'stripwidth', 'stripiterations', 'stripconstant']:
             if oldConfig['fit'][key] != self._fitConfiguration['fit'][key]:
@@ -542,7 +549,18 @@ class SimpleFit:
             return [],[[],[],[]]
         ddict = self._fitConfiguration['functions'][fname]
         estimateFunction = ddict['estimate']
-
+        if estimateFunction is None:
+            if fname in self._fitConfiguration.keys():
+                parameters = []
+                constraints = [[],[],[]]
+                if 'parameters' in self._fitConfiguration[fname]:
+                    defaultPar = self._fitConfiguration[fname]['parameters']
+                    for parameter in defaultPar:
+                        parameters.append(parameter['estimation'])
+                        constraints[0].append(parameter['code'])
+                        constraints[1].append(parameter['cons1'])
+                        constraints[2].append(parameter['cons2'])
+                return parameters, constraints
         parameters, constraints = estimateFunction(self._x, self._y, self._z)
         return parameters, constraints
 
@@ -554,7 +572,18 @@ class SimpleFit:
             return [],[[],[],[]]
         ddict = self._fitConfiguration['functions'][fname]
         estimateFunction = ddict['estimate']
-
+        if estimateFunction is None:
+            if fname in self._fitConfiguration.keys():
+                parameters = []
+                constraints = [[],[],[]]
+                if 'parameters' in self._fitConfiguration[fname]:
+                    defaultPar = self._fitConfiguration[fname]['parameters']
+                    for parameter in defaultPar:
+                        parameters.append(parameter['estimation'])
+                        constraints[0].append(parameter['code'])
+                        constraints[1].append(parameter['cons1'])
+                        constraints[2].append(parameter['cons2'])
+                return parameters, constraints
         parameters, constraints = estimateFunction(self._x * 1,
                                                    self._y * 1,
                                                    self._z * 1)
