@@ -136,6 +136,7 @@ class SimpleFitGUI(qt.QWidget):
             self.fitModule = SimpleFitModule.SimpleFit()
         else:
             self.fitModule = fit
+        self.graph = None
         self._configurationDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(2)
@@ -224,12 +225,14 @@ class SimpleFitGUI(qt.QWidget):
 
     def configureButtonSlot(self):
         if self._configurationDialog is None:
-            self.configurationDialog =\
+            self._configurationDialog =\
                 SimpleFitConfigurationGUI.SimpleFitConfigurationGUI()
-        self.configurationDialog.setSimpleFitInstance(self.fitModule)
-        if not self.configurationDialog.exec_():
+        self._configurationDialog.setSimpleFitInstance(self.fitModule)
+        if not self._configurationDialog.exec_():
+            if DEBUG:
+                print "NOT UPDATING CONFIGURATION"
             return
-        newConfig = self.configurationDialog.getConfiguration()
+        newConfig = self._configurationDialog.getConfiguration()
         self.fitModule.setConfiguration(newConfig)
         newConfig = self.fitModule.getConfiguration()
         #self.topWidget.setFunctions(newConfig['fit']['functions'])
@@ -295,9 +298,38 @@ class SimpleFitGUI(qt.QWidget):
         self.setStatus()
         self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
         self.statusWidget.chi2Line.setText("%f" % chisq)
+        ddict = {}
+        ddict['event'] = "FitFinished"
+        ddict['x']    = self.fitModule._x
+        ddict['y']    = self.fitModule._y
+        ddict['yfit'] = self.evaluateDefinedFunction()
+        self.emit(qt.SIGNAL('SimpleFitSignal'), ddict)
+        self.updateGraph()
+
+    def updateGraph(self):
+        #this is to be overwritten and for test purposes
+        if self.graph is None:
+            return
+        ddict = {}
+        ddict['event'] = "FitFinished"
+        ddict['x']    = self.fitModule._x
+        ddict['y']    = self.fitModule._y
+        ddict['yfit'] = self.evaluateDefinedFunction()
+        if hasattr(self.graph, "newCurve"):
+            self.graph.newCurve('Data', ddict['x'], ddict['y']) 
+            self.graph.newCurve('Fit', ddict['x'], ddict['yfit']) 
+            self.graph.newCurve('Strip', ddict['x'], self.fitModule._z) 
+        elif hasattr(self.graph, "addCurve"):
+            self.graph.addCurve(ddict['x'], ddict['y'], 'Data') 
+            self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
+        self.graph.show()
+        self.graph.replot()
 
     def dismiss(self):
         self.close()
+
+    def evaluateDefinedFunction(self, x=None):
+        return self.fitModule.evaluateDefinedFunction()
 
 def test():
     import numpy
@@ -306,8 +338,8 @@ def test():
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
     p2 = numpy.array([1500,700.,50.0])
-    y = a.gauss(p1, x)+1
-    y = y + a.gauss(p2,x)
+    y = a.gauss(p1, x)
+    y = y + a.gauss(p2,x) + x * 5.
     if 0:
         fit = SimpleFitModule.SimpleFit()
         fit.importFunctions(SpecfitFunctions)
@@ -319,16 +351,20 @@ def test():
         w.show()
     else:
         fit=None
+        import QtBlissGraph
+        graph = QtBlissGraph.QtBlissGraph()
         w = SimpleFitGUI(fit=fit)
         fname = SpecfitFunctions.__file__
-        w.setData(x, y)
+        w.setData(x, y, xmin=x[0], xmax=x[-1])
+        graph.newCurve("Z0", w.fitModule._x, w.fitModule._z+1) 
         w.show()
+        w.graph = graph
         w.importFunctions(fname)
         w.setFitFunction('Gaussians')
     return w
 
 if __name__=="__main__":
-    DEBUG = 1
+    DEBUG = 0
     app = qt.QApplication([])
     w = test()
     app.exec_()

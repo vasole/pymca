@@ -33,7 +33,14 @@ import ConfigDict
 import PyMca_Icons as Icons
 import os.path
 import PyMcaDirs
-DEBUG = 0
+
+#strip background handling
+import StripBackgroundWidget
+SCANWINDOW = StripBackgroundWidget.SCANWINDOW
+import numpy
+
+import Parameters
+DEBUG = 1
 
 class SimpleFitConfigurationGUI(qt.QDialog):
     def __init__(self, parent = None, fit=None):
@@ -43,14 +50,111 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(2)
         self.mainLayout.setSpacing(2)
-        self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)
-        self.mainLayout.addWidget(self.fitControlWidget)
+        if 0:
+            self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)
+            self.mainLayout.addWidget(self.fitControlWidget)
+            self.connect(self.fitControlWidget,
+                         qt.SIGNAL("FitControlSignal"),
+                         self._fitControlSlot)
+            self._stripDialog = None
+        else:            
+            self.tabWidget = qt.QTabWidget(self)
+            self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)
+            self.connect(self.fitControlWidget,
+                         qt.SIGNAL("FitControlSignal"),
+                         self._fitControlSlot)
+            self.tabWidget.insertTab(0, self.fitControlWidget, "FIT")
+            self.fitFunctionWidgetStack = qt.QWidget(self)
+            self.fitFunctionWidgetStack.mainLayout = qt.QStackedLayout(self.fitFunctionWidgetStack)
+            self.fitFunctionWidgetStack.mainLayout.setMargin(0)
+            self.fitFunctionWidgetStack.mainLayout.setSpacing(0)            
+            self.tabWidget.insertTab(1, self.fitFunctionWidgetStack, "FUNCTION")
+            self.backgroundWidgetStack = qt.QWidget(self)
+            self.backgroundWidgetStack.mainLayout = qt.QStackedLayout(self.backgroundWidgetStack)
+            self.backgroundWidgetStack.mainLayout.setMargin(0)
+            self.backgroundWidgetStack.mainLayout.setSpacing(0)            
+            self.tabWidget.insertTab(2, self.backgroundWidgetStack, "BACKGROUND")
+            self.mainLayout.addWidget(self.tabWidget)
+            self._stripDialog = None
         self.buildAndConnectActions()
         self.mainLayout.addWidget(VerticalSpacer(self))
+        self._fitFunctionWidgets = {}
+        self._backgroundWidgets = {}
         self.setSimpleFitInstance(fit)
-
         #input output directory
         self.initDir = None
+
+    def _fitControlSlot(self, ddict):
+        if DEBUG:
+            print "FitControlSignal", ddict
+        event = ddict['event']
+        if event == "stripSetupCalled":
+            if self._stripDialog is None:
+                self._stripDialog = StripBackgroundWidget.StripBackgroundDialog()
+                self._stripDialog.setWindowIcon(qt.QIcon(\
+                                    qt.QPixmap(Icons.IconDict["gioconda16"])))
+            pars = self.__getConfiguration("FIT")
+            if self.simpleFitInstance is None:
+                return
+            xmin = pars['xmin']
+            xmax = pars['xmax']
+            idx = (self.simpleFitInstance._x0 >= xmin) & (self.simpleFitInstance._x0 <= xmax)
+            x = self.simpleFitInstance._x0[idx] * 1
+            y = self.simpleFitInstance._y0[idx] * 1
+            self._stripDialog.setParameters(pars)
+            self._stripDialog.setData(x, y)
+            ret = self._stripDialog.exec_()
+            if not ret:
+                return
+            pars = self._stripDialog.getParameters()
+            self.fitControlWidget.setConfiguration(pars)
+        if event == "fitFunctionChanged":
+            functionName = ddict['fit_function']
+            fun = self.simpleFitInstance._fitConfiguration['functions'][functionName]
+            instance = self._fitFunctionWidgets.get(functionName, None)
+            if instance is None:
+                widget = fun.get('widget', None)
+                if widget is None:
+                    instance = self._buildDefaultWidget(functionName, background=False)
+                self._fitFunctionWidgets[functionName] = instance
+            self.fitFunctionWidgetStack.mainLayout.setCurrentWidget(instance)
+        if event == "backgroundFunctionChanged":
+            functionName = ddict['background_function']
+            fun = self.simpleFitInstance._fitConfiguration['functions'][functionName]
+            instance = self._backgroundWidgets.get(functionName, None)
+            if instance is None:
+                widget = fun.get('widget', None)
+                if widget is None:
+                    instance = self._buildDefaultWidget(functionName, background=True)
+                self._backgroundWidgets[functionName] = instance
+            self.backgroundWidgetStack.mainLayout.setCurrentWidget(instance)
+
+    def _buildDefaultWidget(self, functionName, background=False):
+        parameters = self.simpleFitInstance._fitConfiguration['functions'][functionName]['parameters']
+        xmin = self.simpleFitInstance._x.min()
+        xmax = self.simpleFitInstance._x.max()
+        paramlist = []
+        for i in range(len(parameters)):
+            pname = parameters[i]
+            paramlist.append({'name':pname+"_1",
+                              'estimation':0,
+                              'group':1,
+                              'code':'FREE',
+                              'cons1':0,
+                              'cons2':0,
+                              'fitresult':0.0,
+                              'sigma':0.0,
+                              'xmin':xmin,
+                              'xmax':xmax})
+        if background:
+            widget = Parameters.Parameters(self.backgroundWidgetStack)
+            widget.fillTableFromFit(paramlist)
+            self.backgroundWidgetStack.mainLayout.addWidget(widget)
+        else:
+            widget = Parameters.Parameters(self.fitFunctionWidgetStack)
+            widget.fillTableFromFit(paramlist)
+            self.fitFunctionWidgetStack.mainLayout.addWidget(widget)
+        return widget
 
     def buildAndConnectActions(self):
         buts= qt.QGroupBox(self)

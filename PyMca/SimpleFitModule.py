@@ -30,11 +30,16 @@ import os
 import types
 import Gefit
 import SpecfitFuns
+import copy
 
-DEBUG = 1
+DEBUG = 0
 
 class SimpleFit:
     def __init__(self):
+        #no data available by default
+        self._x0 = None
+        self._y0 = None
+        
         #get default configuration
         self.getDefaultConfiguration()
 
@@ -52,7 +57,8 @@ class SimpleFit:
         self._fitConfiguration['fit']['function_flag'] = 1
         self._fitConfiguration['fit']['background_function'] = "None"
         self._fitConfiguration['fit']['background_flag'] = 1
-        self._fitConfiguration['fit']['stripalgorithm'] = "Strip"
+        self._fitConfiguration['fit']['strip_function'] = "Strip"
+        self._fitConfiguration['fit']['stripalgorithm'] = 0
         self._fitConfiguration['fit']['strip_flag'] = 1        
         self._fitConfiguration['fit']['fit_algorithm'] = "Levenberg-Marquardt"
         self._fitConfiguration['fit']['weight'] = "NO Weight"
@@ -66,6 +72,7 @@ class SimpleFit:
         self._fitConfiguration['fit']['functions'] = []
         #strip/snip background configuration related
         self._fitConfiguration['fit']['stripanchorsflag'] = 0
+        self._fitConfiguration['fit']['stripanchorslist'] = []
         self._fitConfiguration['fit']['stripfilterwidth'] = 1
         self._fitConfiguration['fit']['stripwidth'] = 4
         self._fitConfiguration['fit']['stripiterations'] = 5000
@@ -73,18 +80,36 @@ class SimpleFit:
         self._fitConfiguration['functions'] = {}
         
     def configure(self, ddict):
+        oldConfig = self.getConfiguration()
         if ddict.has_key('fit'):
             givenKeys = ddict['fit'].keys()
             for key in self._fitConfiguration['fit'].keys():
                 if key in givenKeys:
                     self._fitConfiguration['fit'][key] = ddict['fit'][key]
         print "configuration to be improved"
+        for key in ['strip_flag', 'stripanchorsflag', 'stripalgorithm',
+                    'stripwidth', 'stripiterations', 'stripconstant']:
+            if oldConfig['fit'][key] != self._fitConfiguration['fit'][key]:
+                print "RECALCULATING STRIP"
+                self._getStripBackground()
+                break
+            if key == 'stripanchorsflag':
+                if len(oldConfig['fit']['stripanchorslist']) !=\
+                   len(self._fitConfiguration['fit']['stripanchorslist']):
+                    print "ANCHORS CHANGE"
+                    self._getStripBackground()
+                    break
 
     def setConfiguration(self, ddict):
         return self.configure(ddict)
 
     def getConfiguration(self):
-        return self._fitConfiguration
+        ddict = {}
+        for key in self._fitConfiguration.keys():
+            if key == 'functions':
+                continue
+            ddict[key] = copy.deepcopy(self._fitConfiguration[key])
+        return ddict
 
     def setData(self, x, y, sigma=None, xmin=None, xmax=None, **kw):
         idx = numpy.argsort(x)
@@ -114,7 +139,6 @@ class SimpleFit:
             sys.path.append(os.path.dirname(modname))
             f=os.path.basename(os.path.splitext(modname)[0])
             newfun=__import__(f)
-            print dir(newfun)
         else:
             raise ValueError, "Cannot interprete/find %s" % modname
             
@@ -256,6 +280,10 @@ class SimpleFit:
         if niter > 0:
             if DEBUG:
                 print "CALCULATING STRIP"
+                print "iterations = ", niter
+                print "constant   = ", self._fitConfiguration['fit']['stripconstant']
+                print "width      = ", self._fitConfiguration['fit']['stripwidth']
+                print "anchors    = ", anchorslist
             result=SpecfitFuns.subac(ysmooth,
                                   self._fitConfiguration['fit']['stripconstant'],
                                   niter,
@@ -276,6 +304,8 @@ class SimpleFit:
                                   1,
                                   anchorslist)
         else:
+            if DEBUG:
+                print "NO STRIP, NO SNIP"
             result     = numpy.zeros(ysmooth.shape, numpy.float) + min(ysmooth)
 
         return result
@@ -382,12 +412,18 @@ class SimpleFit:
         return numpy.zeros(ywork.shape, numpy.float)
 
     def fit(self):
+        if self._y0 is None:
+            self._setStatus("No data to be fitted")
+            return
         self.estimate()
         self.startFit()
         return self.getResults()
 
     def estimate(self):
         self._fitResult = None
+        if self._y0 is None:
+            self._setStatus("No data to be fitted")
+            return
         self._setStatus("Estimate started")
         backgroundDict  = {'parameters':[]}
         fitFunctionDict = {'parameters':[]}
@@ -431,7 +467,7 @@ class SimpleFit:
                 if conflict:
                     parname = "Bkg_"+parname
                 if nBasePar < nActualPar:
-                    parname = parname + ("%d" % (int(i/nBasePar)))
+                    parname = parname + ("_%d" % (1+int(i/nBasePar)))
                 self.final_theory.append(parname)
 
         nBasePar   = len(fitFunctionDict['parameters'])
@@ -440,7 +476,7 @@ class SimpleFit:
             for i in range(nActualPar):
                 parname = fitFunctionDict['parameters'][i%nBasePar]
                 if nBasePar < nActualPar:
-                    parname = parname + ("%d" % (int(i/nBasePar)))
+                    parname = parname + ("_%d" % (1+int(i/nBasePar)))
                 self.final_theory.append(parname)
 
         print self.final_theory 
@@ -512,16 +548,22 @@ class SimpleFit:
 
 
     def estimateFunction(self):
+        self._z = self._getStripBackground()
         fname = self.getFitFunction()
         if fname is None:
             return [],[[],[],[]]
         ddict = self._fitConfiguration['functions'][fname]
         estimateFunction = ddict['estimate']
 
-        parameters, constraints = estimateFunction(self._x, self._y, self._z)
+        parameters, constraints = estimateFunction(self._x * 1,
+                                                   self._y * 1,
+                                                   self._z * 1)
         return parameters, constraints
 
     def startFit(self):
+        if self._y0 is None:
+            self._setStatus("No data to be fitted")
+            return
         self._setStatus("Fit started")
         param_list = self.final_theory
         length      = len(param_list)
@@ -606,22 +648,39 @@ class SimpleFit:
         nb = self.__nBackgroundParameters
         if nb:
             result += self._fitConfiguration['functions'][self.getBackgroundFunction()]\
-                      ['function'](pars, t)
+                      ['function'](pars[0:nb], t)
         if len(self.paramlist) > nb:
             result += self._fitConfiguration['functions'][self.getFitFunction()]\
-                      ['function'](pars, t)
+                      ['function'](pars[nb:], t)
         return result
 
     def getResults(self):
         print " get results to be implemented"
 
+    def _evaluateBackground(self, x):
+        pars = self._fitResult['fittedvalues']
+        nb = self.__nBackgroundParameters
+        if nb:
+            return self._fitConfiguration['functions'][self.getBackgroundFunction()]\
+                      ['function'](pars[:nb], x)
+            
+        else:
+            return numpy.zeros(x.shape, numpy.float)
+
+    def _evaluateFunction(self, x):
+        pars = self._fitResult['fittedvalues']
+        nb = self.__nBackgroundParameters
+        if len(self.paramlist) > nb:
+            return self._fitConfiguration['functions'][self.getFitFunction()]\
+                      ['function'](pars[nb:], x)
+        else:
+            return numpy.zeros(x.shape, numpy.float)
+
     def evaluateDefinedFunction(self, x=None):
-        print "Evaluate defined function to be implemented"
         if x is None:
             x = self._x
-        y = numpy.zeros(x.shape, numpy.float)
-        y += self.evaluateBackground(x)
-        y += self.evaluateFunction(x)
+        y = self._evaluateBackground(x)
+        y += self._evaluateFunction(x)
         if self._fitConfiguration['fit']['strip_flag']:
             #If the x is not self._x, how to add the strip?
             try:
