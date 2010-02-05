@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -251,7 +251,9 @@
 #define SPS_LONG        9
 #define SPS_ULONG       10
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
   Input: Type code
@@ -664,3 +666,7 @@ SPS_CreateArray (char * spec_version, char *arrayname,
 /* Deletes everything which there is */
 /* Should be called before you quit the program */
 void SPS_CleanUpAll (void);
+
+#ifdef __cplusplus
+}
+#endif
