@@ -486,6 +486,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 self.pcaWindow.setSelectionMask(ddict['current'], plot=True)
             if ddict['id'] != id(self.externalImagesWindow):
                 self.externalImagesWindow.setSelectionMask(ddict['current'], plot=True)
+            if NNMA:
+                if ddict['id'] != id(self.nnmaWindow):
+                    self.nnmaWindow.setSelectionMask(ddict['current'],
+                                                               plot=True)
             return
         if ddict['event'] == "resetSelection":
             self.__selectionMask = None
@@ -496,6 +500,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 self.pcaWindow._resetSelection(owncall=False)
             if ddict['id'] != id(self.externalImagesWindow):
                 self.externalImagesWindow._resetSelection(owncall=False)
+            if NNMA:
+                if ddict['id'] != id(self.nnmaWindow):
+                    self.nnmaWindow._resetSelection(owncall=False)
             return
         if ddict['event'] == "addImageClicked":
             self._addImageClicked(ddict['image'], ddict['title'])
@@ -1155,7 +1162,15 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
             self.connect(self.externalImagesWindow,
                          qt.SIGNAL('MaskImageWidgetSignal'),
-                         slave._maskImageWidgetSlot)                     
+                         slave._maskImageWidgetSlot)
+        if self.nnmaWindow is not None:
+            self.connect(slave.nnmaWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         self._maskImageWidgetSlot)
+
+            self.connect(self.nnmaWindow,
+                         qt.SIGNAL('MaskImageWidgetSignal'),
+                         slave._maskImageWidgetSlot)            
 
     def _buildBottom(self):
         n = 0
