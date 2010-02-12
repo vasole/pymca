@@ -231,6 +231,8 @@ class SimpleFitGUI(qt.QWidget):
         if not self._configurationDialog.exec_():
             if DEBUG:
                 print "NOT UPDATING CONFIGURATION"
+            oldConfig = self.fitModule.getConfiguration()
+            self._configurationDialog.setConfiguration(oldConfig)
             return
         newConfig = self._configurationDialog.getConfiguration()
         self.fitModule.setConfiguration(newConfig)
@@ -249,6 +251,8 @@ class SimpleFitGUI(qt.QWidget):
             idx = newConfig['fit']['functions'].index(fname) + 1
         idx = self.topWidget.backgroundCombo.findText(fname)
         self.topWidget.backgroundCombo.setCurrentIndex(idx)
+        print "TABLE TO BE CLEANED"
+        #self.estimate()
         
     def setFitFunction(self, fname):
         current = self.fitModule.getFitFunction()
@@ -270,17 +274,22 @@ class SimpleFitGUI(qt.QWidget):
     def estimate(self):
         self.setStatus("Estimate started")
         self.statusWidget.chi2Line.setText("")
-        try:
+        if DEBUG:
             self.fitModule.estimate()
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
-        except:
-            text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText(text)
-            msg.exec_()
-            self.setStatus("Ready (after estimate error)")
+        else:
+            try:
+                self.fitModule.estimate()
+                self.setStatus()
+                self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
+            except:
+                text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText(text)
+                msg.exec_()
+                self.setStatus("Ready (after estimate error)")
             
 
     def setStatus(self, text=None):
@@ -333,6 +342,7 @@ class SimpleFitGUI(qt.QWidget):
 
 def test():
     import numpy
+    #import DefaultFitFunctions as SpecfitFunctions
     import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)

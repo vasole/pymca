@@ -40,7 +40,105 @@ SCANWINDOW = StripBackgroundWidget.SCANWINDOW
 import numpy
 
 import Parameters
-DEBUG = 1
+DEBUG = 0
+
+class DummyWidget(qt.QWidget):
+    def __init__(self, parent=None, text="Automatically estimated function"):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
+        self.label = qt.QLabel(self)
+        self.label.setAlignment(qt.Qt.AlignHCenter)
+        self.label.setText(text)
+        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.mainLayout.addWidget(self.label)
+        self.mainLayout.addWidget(VerticalSpacer(self))
+        self._configuration = {}
+
+    def setConfiguration(self, ddict):
+        self._configuration = ddict
+
+    def getConfiguration(self):
+        return self._configuration
+
+    def configure(self, ddict=None):
+        if ddict is None:
+            return self.getConfiguration()
+        else:
+            return self.setConfiguration(ddict)
+
+class DefaultParametersWidget(qt.QWidget):
+    def __init__(self, parent=None, fit=None, background=False):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
+        self.parametersWidget = Parameters.Parameters(self)
+        self.mainLayout.addWidget(self.parametersWidget)
+        self.simpleFitInstance = fit
+        self.background = background
+        self._buffer = {}
+
+    def setConfiguration(self, ddict):
+        if self.simpleFitInstance is None:
+            self._buffer = ddict
+            return
+        if ddict['configuration']['estimation'] is None:
+            #initialize with the default parameters
+            parameters = ddict['parameters']
+            xmin = self.simpleFitInstance._x.min()
+            xmax = self.simpleFitInstance._x.max()
+            if self.background:
+                group = 0
+            else:
+                group = 1
+            paramlist = []
+            for i in range(len(parameters)):
+                pname = parameters[i]+"_1"
+                paramdict = {'name':pname,
+                             'estimation':0,
+                             'group':group,
+                             'code':'FREE',
+                             'cons1':0,
+                             'cons2':0,
+                             'fitresult':0.0,
+                             'sigma':0.0,
+                             'xmin':xmin,
+                             'xmax':xmax}               
+                paramlist.append(paramdict)
+        else:
+            parameters = ddict['configuration']['estimation']['parameters']
+            paramlist = []
+            for parameter in parameters:
+                paramdict = ddict['configuration']['estimation'][parameter]              
+                paramlist.append(paramdict)
+        self.parametersWidget.fillTableFromFit(paramlist)
+            
+    def getConfiguration(self):
+        if self.simpleFitInstance is None:
+            return  self._buffer
+        paramlist = self.parametersWidget.fillFitFromTable()
+        ddict = {}
+        ddict['configuration']={}
+        ddict['configuration']['estimation'] = {}
+        ddict['configuration']['estimation']['parameters'] = []
+        for param in paramlist:
+            name = param['name']
+            ddict['configuration']['estimation']['parameters'].append(name)
+            ddict['configuration']['estimation'][name] = {}
+            for key in param.keys():
+                if key in ['xmax', 'xmin']:
+                    ddict['configuration']['estimation'][name][key] = float(param[key])
+                else:
+                    ddict['configuration']['estimation'][name][key] = param[key]
+        return ddict        
+
+    def configure(self, ddict=None):
+        if ddict is None:
+            return self.getConfiguration()
+        else:
+            return self.setConfiguration(ddict)
 
 class SimpleFitConfigurationGUI(qt.QDialog):
     def __init__(self, parent = None, fit=None):
@@ -108,6 +206,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                 return
             pars = self._stripDialog.getParameters()
             self.fitControlWidget.setConfiguration(pars)
+            
         if event == "fitFunctionChanged":
             functionName = ddict['fit_function']
             if functionName in [None, "None", "NONE"]:
@@ -125,8 +224,18 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                 widget = fun.get('widget', None)
                 if widget is None:
                     instance = self._buildDefaultWidget(functionName, background=False)
+                else:
+                    instance = widget(self.fitFunctionWidgetStack)
+                    self.fitFunctionWidgetStack.mainLayout.addWidget(instance)
                 self._fitFunctionWidgets[functionName] = instance
+            if hasattr(instance, 'configure'):
+                configureMethod = fun['configure']
+                if configureMethod is not None:
+                    #make sure it is up-to-date
+                    fun['configuration'].update(configureMethod())
+                    instance.configure(fun)
             self.fitFunctionWidgetStack.mainLayout.setCurrentWidget(instance)
+            
         if event == "backgroundFunctionChanged":
             functionName = ddict['background_function']
             if functionName in [None, "None", "NONE"]:
@@ -144,38 +253,46 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                 widget = fun.get('widget', None)
                 if widget is None:
                     instance = self._buildDefaultWidget(functionName, background=True)
+                else:
+                    instance = widget(self.backgroundWidgetStack)
+                    self.backgroundWidgetStack.mainLayout.addWidget(instance)
                 self._backgroundWidgets[functionName] = instance
+            if hasattr(instance, 'configure'):
+                configureMethod = fun['configure']
+                if configureMethod is not None:
+                    #make sure it is up-to-date
+                    fun['configuration'].update(configureMethod())
+                    instance.configure(fun)
             self.backgroundWidgetStack.mainLayout.setCurrentWidget(instance)
 
     def _buildDefaultWidget(self, functionName, background=False):
-        parameters = self.simpleFitInstance._fitConfiguration['functions'][functionName]['parameters']
-        xmin = self.simpleFitInstance._x.min()
-        xmax = self.simpleFitInstance._x.max()
-        paramlist = []
-        if background:
-            group = 0
+        functionDescription = self.simpleFitInstance._fitConfiguration['functions']\
+                                                                  [functionName]
+
+        #if we here that means the function does not provide a widget
+        #if the function does not provide an authomatic estimate
+        #the user has to fill the default parameters in the default table
+        estimate   = functionDescription['estimate']
+        if estimate is None:
+            if background:
+                widget = DefaultParametersWidget(self.backgroundWidgetStack,
+                                                 self.simpleFitInstance, background=background)
+                widget.setConfiguration(functionDescription)
+                self.backgroundWidgetStack.mainLayout.addWidget(widget)
+            else:
+                widget = DefaultParametersWidget(self.fitFunctionWidgetStack,
+                                                 self.simpleFitInstance,
+                                                 background=background)
+                widget.setConfiguration(functionDescription)
+                self.fitFunctionWidgetStack.mainLayout.addWidget(widget)
         else:
-            group = 1
-        for i in range(len(parameters)):
-            pname = parameters[i]
-            paramlist.append({'name':pname+"_1",
-                              'estimation':0,
-                              'group':group,
-                              'code':'FREE',
-                              'cons1':0,
-                              'cons2':0,
-                              'fitresult':0.0,
-                              'sigma':0.0,
-                              'xmin':xmin,
-                              'xmax':xmax})
-        if background:
-            widget = Parameters.Parameters(self.backgroundWidgetStack)
-            widget.fillTableFromFit(paramlist)
-            self.backgroundWidgetStack.mainLayout.addWidget(widget)
-        else:
-            widget = Parameters.Parameters(self.fitFunctionWidgetStack)
-            widget.fillTableFromFit(paramlist)
-            self.fitFunctionWidgetStack.mainLayout.addWidget(widget)
+            text = "%s is automatically configured and estimated" % functionName
+            if background:
+                widget = DummyWidget(self.backgroundWidgetStack, text=text)
+                self.backgroundWidgetStack.mainLayout.addWidget(widget)
+            else:
+                widget = DummyWidget(self.fitFunctionWidgetStack, text=text)
+                self.fitFunctionWidgetStack.mainLayout.addWidget(widget)
         return widget
 
     def buildAndConnectActions(self):
@@ -212,11 +329,13 @@ class SimpleFitConfigurationGUI(qt.QDialog):
     def setConfiguration(self, ddict):
         if ddict.has_key('fit'):
             self.fitControlWidget.setConfiguration(ddict['fit'])
+            currentConfig = self.simpleFitInstance.getConfiguration()
             fitFunction = ddict['fit']['fit_function']
             background = ddict['fit']['background_function']
             if fitFunction not in self._fitFunctionWidgets.keys():
                 self._fitControlSlot({'event':'fitFunctionChanged',
                                       'fit_function':fitFunction})
+
             if background not in self._backgroundWidgets.keys():
                 self._fitControlSlot({'event':'backgroundFunctionChanged',
                                       'background_function':background})
@@ -224,33 +343,43 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             fname = ddict['fit']['fit_function']
             widget = self._fitFunctionWidgets[fname]
             if fname not in [None, "None", "NONE"]:
-                if ddict.has_key(fname):
-                    widget.setConfiguration(ddict[fname])
+                if ddict['functions'].has_key(fname):
+                    #if currentConfig['functions'][fname]['widget'] is not None:
+                        widget.setConfiguration(ddict['functions'][fname])
             
             #background function
             fname = ddict['fit']['background_function']
             widget = self._backgroundWidgets[fname]
             if fname not in [None, "None", "NONE"]:
-                if ddict.has_key(fname):
-                    widget.setConfiguration(ddict[fname])
+                if ddict['functions'].has_key(fname):
+                    #if currentConfig['functions'][fname]['widget'] is not None:
+                        widget.setConfiguration(ddict['functions'][fname])
 
     def getConfiguration(self):
+        oldConfiguration = self.simpleFitInstance.getConfiguration()
         ddict = {}
         for name in ['fit']:
             ddict[name] = self.__getConfiguration(name)
 
         #fit function
         fname = ddict['fit']['fit_function']
+        ddict['functions'] = {}
         widget = self._fitFunctionWidgets[fname]
         if fname not in [None, "None", "NONE"]:
-            ddict[fname] = widget.getConfiguration()
-                        
+            ddict['functions'][fname]={}
+            ddict['functions'][fname]['configuration'] =\
+                oldConfiguration['functions'][fname]['configuration']
+            ddict['functions'][fname]['configuration'].update(widget.getConfiguration()['configuration'])
 
         #background function
         fname = ddict['fit']['background_function']
         widget = self._backgroundWidgets[fname]
         if fname not in [None, "None", "NONE"]:
-            ddict[fname] = widget.getConfiguration()
+            ddict['functions'][fname]={}
+            ddict['functions'][fname]['configuration'] =\
+                oldConfiguration['functions'][fname]['configuration']
+            ddict['functions'][fname]['configuration'].update(widget.getConfiguration()['configuration'])
+                    
         return ddict
 
     def __getConfiguration(self, name):

@@ -30,17 +30,8 @@ QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
     raise ImportError, "This module requieres Qt4"
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                                          qt.QSizePolicy.Expanding))
+HorizontalSpacer = qt.HorizontalSpacer
+VerticalSpacer   = qt.VerticalSpacer
 
 class FitFunctionDefinition(qt.QGroupBox):
     def __init__(self, parent=None):

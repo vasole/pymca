@@ -79,8 +79,16 @@ class SimpleFit:
         self._fitConfiguration['fit']['stripconstant'] = 1.0
         self._fitConfiguration['functions'] = {}
         
-    def configure(self, ddict):
+    def configure(self, ddict=None):
+        if ddict is None:
+            return self.getConfiguration()
+        else:
+            return self.setConfiguration(ddict)
+
+    def setConfiguration(self, ddict):
         oldConfig = self.getConfiguration()
+        if ddict is None:
+            return oldConfig
         if ddict.has_key('fit'):
             givenKeys = ddict['fit'].keys()
             for key in self._fitConfiguration['fit'].keys():
@@ -90,25 +98,46 @@ class SimpleFit:
                 if key in ['fit', 'functions']:
                     continue
                 self._fitConfiguration[key] = ddict[key]
-                print self._fitConfiguration[key]
 
-                    
-        print "Configuration of background and fit function to be made"
+        if ddict.has_key('functions'):
+            functionNames = ddict['functions'].keys()
+            for fName in functionNames:
+                if fName not in self._fitConfiguration['functions'].keys():
+                    print "WARNING:Function %s not among defined functions" % fName
+                    continue
+                self._fitConfiguration['functions'][fName]['configuration']=\
+                        ddict['functions'][fName]['configuration']
+                configureMethod = self._fitConfiguration['functions'][fName]\
+                                  ['configure']
+                if configureMethod is not None:
+                    configureMethod(ddict['functions'][fName]['configuration'])
+
+        #if data are present, update strip background                    
+        if (self._x0 is None) or (self._y0 is None):
+            return
+        if (oldConfig['fit']['xmin'] != self._fitConfiguration['fit']['xmin']) or\
+           (oldConfig['fit']['xmax'] != self._fitConfiguration['fit']['xmax']):
+            if DEBUG:
+                print "SETTING DATA AGAIN"
+            self.setData(self._x0, self._y0,
+                         xmin=self._fitConfiguration['fit']['xmin'],
+                         xmax=self._fitConfiguration['fit']['xmax'])
+            return
+
         for key in ['strip_flag', 'stripanchorsflag', 'stripalgorithm',
                     'stripwidth', 'stripiterations', 'stripconstant']:
             if oldConfig['fit'][key] != self._fitConfiguration['fit'][key]:
-                print "RECALCULATING STRIP"
+                if DEBUG:
+                    print "RECALCULATING STRIP"
                 self._getStripBackground()
                 break
             if key == 'stripanchorsflag':
                 if len(oldConfig['fit']['stripanchorslist']) !=\
                    len(self._fitConfiguration['fit']['stripanchorslist']):
-                    print "ANCHORS CHANGE"
+                    if DEBUG:
+                        print "ANCHORS CHANGE, RECALCULATING STRIP"
                     self._getStripBackground()
                     break
-
-    def setConfiguration(self, ddict):
-        return self.configure(ddict)
 
     def getConfiguration(self):
         ddict = {}
@@ -116,6 +145,23 @@ class SimpleFit:
             if key == 'functions':
                 continue
             ddict[key] = copy.deepcopy(self._fitConfiguration[key])
+
+        ddict['functions'] = {}
+        for key in self._fitConfiguration['functions'].keys():
+            ddict['functions'][key] = {}
+            ddict['functions'][key]['configuration'] = copy.deepcopy(\
+                self._fitConfiguration['functions'][key]['configuration'])
+            configureMethod = self._fitConfiguration['functions']\
+                                                      [key]['configure']
+            if configureMethod is not None:
+                currentFunctionConfig = configureMethod()
+                for newKey in currentFunctionConfig.keys():
+                    if newKey not in ['estimation']:
+                        ddict['functions'][key]['configuration'][newKey] = currentFunctionConfig[newKey]
+            parameters = self._fitConfiguration['functions'][key]['parameters']
+            ddict['functions'][key]['parameters'] =  parameters
+            widget = self._fitConfiguration['functions'][key]['widget']
+            ddict['functions'][key]['widget'] = widget
         return ddict
 
     def setData(self, x, y, sigma=None, xmin=None, xmax=None, **kw):
@@ -132,6 +178,8 @@ class SimpleFit:
         idx = (self._x0 >= xmin) & (self._x0 <= xmax)
         self._x = self._x0[idx]
         self._y = self._y0[idx]
+        self._fitConfiguration['fit']['xmin'] = xmin * 1.0
+        self._fitConfiguration['fit']['xmax'] = xmax * 1.0
         if sigma is not None:
             self._sigma = self._sigma0[idx]
         print "TODO: Make sure we have something to fit"
@@ -155,7 +203,7 @@ class SimpleFit:
         try:
             estimate=newfun.ESTIMATE
         except:
-            estimate=None
+            estimate=None        
         try:
             derivative=newfun.DERIVATIVE
         except:
@@ -176,16 +224,21 @@ class SimpleFit:
             functionName = theory[i]
             ddict['function'] = function[i]
             ddict['parameters'] = parameters[i]
-            ddict['estimate']   =None
-            ddict['derivative'] =None
-            ddict['configure']  =None
-            ddict['widget']     =None
+            ddict['default_parameters'] = None
+            ddict['estimate']   = None
+            ddict['derivative'] = None
+            ddict['configure']  = None
+            ddict['widget']     = None
+            ddict['configuration'] = {} 
             if estimate is not None:
                 ddict['estimate'] = estimate[i]
             if derivative is not None:
                 ddict['derivative'] = derivative[i]
             if configure is not None:
                 ddict['configure'] = configure[i]
+                ddict['configuration'] = configure[i]()
+                if ddict['estimate'] is None:
+                    ddict['configuration']['estimation'] = None
             if widget is not None:
                 ddict['widget'] = widget[i]
             self._fitConfiguration['functions'][functionName] = ddict
@@ -414,8 +467,6 @@ class SimpleFit:
         self.laststripanchorsflag     = self.config['fit']['stripanchorsflag']
         self.laststripanchorslist     = self.config['fit']['stripanchorslist']
 
-
-        print "Get strip background to be implemented"
         return numpy.zeros(ywork.shape, numpy.float)
 
     def fit(self):
@@ -573,17 +624,24 @@ class SimpleFit:
         ddict = self._fitConfiguration['functions'][fname]
         estimateFunction = ddict['estimate']
         if estimateFunction is None:
-            if fname in self._fitConfiguration.keys():
-                parameters = []
-                constraints = [[],[],[]]
-                if 'parameters' in self._fitConfiguration[fname]:
-                    defaultPar = self._fitConfiguration[fname]['parameters']
-                    for parameter in defaultPar:
-                        parameters.append(parameter['estimation'])
-                        constraints[0].append(parameter['code'])
-                        constraints[1].append(parameter['cons1'])
-                        constraints[2].append(parameter['cons2'])
-                return parameters, constraints
+            parameters = []
+            constraints = [[],[],[]]
+            if ddict['configuration']['estimation'] is not None:
+                estimation = ddict['configuration']['estimation']
+                defaultPar = estimation['parameters']
+                for parameter in defaultPar:
+                    parameters.append(estimation[parameter]['estimation'])
+                    constraints[0].append(estimation[parameter]['code'])
+                    constraints[1].append(estimation[parameter]['cons1'])
+                    constraints[2].append(estimation[parameter]['cons2'])
+            else:
+                defaultPar = ddict['parameters']
+                for parameter in defaultPar:
+                    parameters.append(0.0)
+                    constraints[0].append(0)
+                    constraints[1].append(0)
+                    constraints[2].append(0)
+            return parameters, constraints
         parameters, constraints = estimateFunction(self._x * 1,
                                                    self._y * 1,
                                                    self._z * 1)
