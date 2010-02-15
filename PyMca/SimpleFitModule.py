@@ -74,6 +74,7 @@ class SimpleFit:
         self._fitConfiguration['fit']['stripanchorsflag'] = 0
         self._fitConfiguration['fit']['stripanchorslist'] = []
         self._fitConfiguration['fit']['stripfilterwidth'] = 1
+        self._fitConfiguration['fit']['snipwidth'] = 10
         self._fitConfiguration['fit']['stripwidth'] = 4
         self._fitConfiguration['fit']['stripiterations'] = 5000
         self._fitConfiguration['fit']['stripconstant'] = 1.0
@@ -391,83 +392,6 @@ class SimpleFit:
             result[0]=0.5*(result[0]+result[1])
             result[-1]=0.5*(result[-1]+result[-2])
         return result
-
-
-        ysmooth = Numeric.ravel(self.__smooth(self.ydata))
-
-        #SNIP algorithm
-        if self.config['fit']['stripalgorithm'] == 1:
-            if DEBUG:
-                print "CALCULATING SNIP"
-            if len(anchorslist) == 0:
-                anchorslist = [0, len(ysmooth)-1]
-            anchorslist.sort()
-            self.zz = 0.0 * ysmooth
-            lastAnchor = 0
-            width = self.config['fit']['snipwidth']
-            for anchor in anchorslist:
-                if (anchor > lastAnchor) and (anchor < len(ysmooth)):
-                    self.zz[lastAnchor:anchor] =\
-                            SpecfitFuns.snip1d(ysmooth[lastAnchor:anchor], width, 0)
-                    lastAnchor = anchor
-            if lastAnchor < len(ysmooth):                
-                self.zz[lastAnchor:] =\
-                        SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)            
-            self.zz.shape = n, 1         
-            self.laststripalgorithm  = self.config['fit']['stripalgorithm']
-            self.lastsnipwidth       = self.config['fit']['snipwidth']
-            self.laststripfilterwidth = self.config['fit']['stripfilterwidth']
-            self.laststripanchorsflag     = self.config['fit']['stripanchorsflag']
-            self.laststripanchorslist     = self.config['fit']['stripanchorslist']
-            return
-        
-        #strip background
-        niter = self.config['fit']['stripiterations']
-        if niter > 0:
-            if DEBUG:
-                print "CALCULATING STRIP"
-            if (niter > 1000) and (self.config['fit']['stripwidth'] == 1):
-                self.zz=SpecfitFuns.subac(ysmooth,
-                                      self.config['fit']['stripconstant'],
-                                      niter/20,4, anchorslist)
-                self.zz=SpecfitFuns.subac(self.zz,
-                                      self.config['fit']['stripconstant'],
-                                      niter/4,
-                                      self.config['fit']['stripwidth'],
-                                      anchorslist)
-            else:
-                self.zz=SpecfitFuns.subac(ysmooth,
-                                      self.config['fit']['stripconstant'],
-                                      niter,
-                                      self.config['fit']['stripwidth'],
-                                      anchorslist)
-                if niter > 1000:
-                    #make sure to get something smooth
-                    self.zz = SpecfitFuns.subac(self.zz,
-                                      self.config['fit']['stripconstant'],
-                                      500,1,
-                                      anchorslist)
-                else:
-                    #make sure to get something smooth but with less than
-                    #500 iterations
-                    self.zz = SpecfitFuns.subac(self.zz,
-                                      self.config['fit']['stripconstant'],
-                                      int(self.config['fit']['stripwidth']*2),
-                                      1,
-                                      anchorslist)
-            self.zz     = Numeric.resize(self.zz,(n,1))
-        else:
-            self.zz     = Numeric.zeros((n,1),Numeric.Float) + min(ysmooth)
-
-        self.laststripalgorithm  = self.config['fit']['stripalgorithm']
-        self.laststripwidth      = self.config['fit']['stripwidth']
-        self.laststripfilterwidth = self.config['fit']['stripfilterwidth']
-        self.laststripconstant   = self.config['fit']['stripconstant'] 
-        self.laststripiterations = self.config['fit']['stripiterations'] 
-        self.laststripanchorsflag     = self.config['fit']['stripanchorsflag']
-        self.laststripanchorslist     = self.config['fit']['stripanchorslist']
-
-        return numpy.zeros(ywork.shape, numpy.float)
 
     def fit(self):
         if self._y0 is None:
