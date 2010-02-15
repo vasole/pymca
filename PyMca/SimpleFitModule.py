@@ -324,7 +324,7 @@ class SimpleFit:
             anchorslist.sort()
             result = 0.0 * ysmooth
             lastAnchor = 0
-            width = self.config['fit']['snipwidth']
+            width = self._fitConfiguration['fit']['snipwidth']
             for anchor in anchorslist:
                 if (anchor > lastAnchor) and (anchor < len(ysmooth)):
                     result[lastAnchor:anchor] =\
@@ -475,7 +475,7 @@ class SimpleFit:
             return
         self.estimate()
         self.startFit()
-        return self.getResults()
+        return self.getResult()
 
     def estimate(self):
         self._fitResult = None
@@ -713,16 +713,21 @@ class SimpleFit:
                 raise
 
         self._fitResult = {}
+        self._fitResult['fit_function'] = self.getFitFunction()
+        self._fitResult['background_function'] = self.getBackgroundFunction()
         self._fitResult['fittedvalues'] = result[0]
         self._fitResult['chisq']        = result[1]
         self._fitResult['sigma_values'] = result[2]
         self._fitResult['niter']        = result[3]
         self._fitResult['lastdeltachi'] = result[4]
+        self._fitResult['n_background_parameters'] = self.__nBackgroundParameters
         if DEBUG:
             print "Found parameters = ", self._fitResult['fittedvalues']
         i=0
+        self._fitResult['parameters'] = []
         for param in self.paramlist:
            if param['code'] != 'IGNORE':
+              self._fitResult['parameters'].append(param['name'])  
               param['fitresult'] = result[0][i]
               param['sigma']= result[2][i]
            i = i + 1
@@ -741,8 +746,13 @@ class SimpleFit:
                       ['function'](pars[nb:], t)
         return result
 
-    def getResults(self):
-        print " get results to be implemented"
+    def getResult(self, configuration=False):
+        #print " get results to be implemented"
+        ddict = {}
+        ddict['result'] = self._fitResult
+        if configuration:
+            ddict['configuration'] = self.getConfiguration()
+        return ddict        
 
     def _evaluateBackground(self, x):
         pars = self._fitResult['fittedvalues']

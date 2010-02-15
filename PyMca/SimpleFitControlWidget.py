@@ -536,9 +536,9 @@ class SimpleFitControlWidget(qt.QWidget):
         ddict['stripfilterwidth'] = w.stripFilterSpin.value()
 
         if w.stripAnchorsCheckBox.isChecked():
-            ddict['stripanchorsflag'] = 0
-        else:
             ddict['stripanchorsflag'] = 1
+        else:
+            ddict['stripanchorsflag'] = 0
 
         ddict["stripanchorslist"] = []
         for lineEdit in w.stripAnchorsList:

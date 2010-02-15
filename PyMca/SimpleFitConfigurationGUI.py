@@ -369,7 +369,12 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             ddict['functions'][fname]={}
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
-            ddict['functions'][fname]['configuration'].update(widget.getConfiguration()['configuration'])
+            newConfig = widget.getConfiguration()
+            if newConfig.has_key('configuration'):
+                ddict['functions'][fname]['configuration'].update(\
+                                        newConfig['configuration'])
+            else:
+                ddict['functions'][fname]['configuration'].update(newConfig)
 
         #background function
         fname = ddict['fit']['background_function']
@@ -378,7 +383,12 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             ddict['functions'][fname]={}
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
-            ddict['functions'][fname]['configuration'].update(widget.getConfiguration()['configuration'])
+            newConfig = widget.getConfiguration()
+            if newConfig.has_key('configuration'):
+                ddict['functions'][fname]['configuration'].update(\
+                                        newConfig['configuration'])
+            else:
+                ddict['functions'][fname]['configuration'].update(newConfig)
                     
         return ddict
 
