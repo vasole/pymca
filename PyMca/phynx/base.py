@@ -12,7 +12,7 @@ except ImportError:
 
 from .exceptions import H5Error
 from .utils import simple_eval
-
+import h5py.version
 
 class _RegisterPhynxClass(MetaHasTraits):
 
@@ -35,12 +35,13 @@ class _PhynxProperties(HasTraits):
     def acquisition_shape(self):
         return simple_eval(self.attrs.get('acquisition_shape', '()'))
 
-    @property
-    def file(self):
-        from h5py import h5i
-        fid = h5i.get_file_id(self.id)
-        from .file import File
-        return File(None, bind=fid)
+    if h5py.version.version >= '1.3.0':
+        @property
+        def file(self):
+            from h5py import h5i
+            fid = h5i.get_file_id(self.id)
+            from .file import File
+            return File(None, bind=fid)
 
     @property
     def npoints(self):
