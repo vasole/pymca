@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -162,28 +162,61 @@ class EDFStack(DataObject.DataObject):
                             self.data[:,:, self.incrProgressBar] = pieceOfStack
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
-                    except MemoryError:
-                        for i in range(5):
-                            print "\7"
-                        print "**************************************************"
-                        print " Memory error!, attempting 2x2 sampling reduction"
-                        print "**************************************************"
-                        s1 = int(arrRet.shape[0]/2)
-                        s2 = int(arrRet.shape[1]/2)
-                        if arrRet.shape[0] % 2:
-                            s1 = s1 + 1
-                        if arrRet.shape[1] % 2:
-                            s2 = s2 + 1
-                        self.data = numpy.zeros((s1, s2,
-                                                 self.nbFiles),
-                                                 self.__dtype)
-                        self.incrProgressBar=0
-                        for tempEdfFileName in filelist:
-                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                            pieceOfStack=tempEdf.GetData(0)
-                            self.data[:,:, self.incrProgressBar] = pieceOfStack[
-                                                                    ::2,::2]
-                            self.incrProgressBar += 1
+                    except (MemoryError, ValueError):
+                        hdf5done = False
+                        if HDF5 and ('PyMcaQt' in sys.modules):
+                            import PyMcaQt as qt
+                            import ArraySave
+                            msg=qt.QMessageBox.information( None,
+                              "Memory error\n",
+                              "Do you want to convert your data to HDF5?\n",
+                              qt.QMessageBox.Yes,qt.QMessageBox.No)
+                            if msg != qt.QMessageBox.No:
+                                hdf5file = qt.QFileDialog.getSaveFileName(None,
+                                            "Please select output file name",
+                                            os.path.dirname(filelist[0]),
+                                            "HDF5 files *.h5")
+                                if not len(hdf5file):
+                                    raise IOError, "Invalid output file"
+                                hdf5file = str(hdf5file)
+                                if not hdf5file.endswith(".h5"):
+                                    hdf5file += ".h5"
+                                hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
+                                              (arrRet.shape[0],
+                                               arrRet.shape[1],
+                                               self.nbFiles))
+                                self.incrProgressBar=0
+                                for tempEdfFileName in filelist:
+                                    tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                    pieceOfStack=tempEdf.GetData(0)
+                                    self.data[:,:, self.incrProgressBar] = pieceOfStack[:,:]
+                                    self.incrProgressBar += 1
+                                    self.onProgress(self.incrProgressBar)
+                                hdf5done = True
+                        if not hdf5done:
+                            for i in range(3):
+                                print "\7"
+                            samplingStep = None
+                            i = 2
+                            while samplingStep is None:
+                                print "**************************************************"
+                                print " Memory error!, attempting %dx%d sampling reduction " % (i,i)
+                                print "**************************************************"
+                                s1, s2 = arrRet[::i, ::i].shape
+                                try:
+                                    self.data = numpy.zeros((s1, s2,
+                                                         self.nbFiles),
+                                                         self.__dtype)
+                                    samplingStep = i
+                                except:
+                                    i += 1
+                            self.incrProgressBar=0
+                            for tempEdfFileName in filelist:
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                pieceOfStack=tempEdf.GetData(0)
+                                self.data[:,:, self.incrProgressBar] = pieceOfStack[
+                                                            ::samplingStep,::samplingStep]
+                                self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
         else:
