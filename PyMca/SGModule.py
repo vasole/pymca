@@ -12,6 +12,8 @@
 import numpy
 from numpy.linalg import solve
 
+ODD_SIGN = 1.0
+
 def calc_coeff(num_points, pol_degree, diff_order=0):
 
     """ calculates filter coefficients for symmetric savitzky-golay filter.
@@ -50,6 +52,8 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
 
     # calculate filter-coefficients
     coeff = numpy.dot(A, wvec)
+    if (ODD_SIGN < 0) and (diff_order %2):
+        coeff *= ODD_SIGN
 
     return coeff
 
@@ -86,9 +90,39 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
     for i in range(data.shape[0]):
         data[i,N:-N] = convolve(data[i,:],coeff, mode='valid')
         if order > 0:
-            data[i, :N] = 0
-            data[i, -N:] = 0
+            data[i, :N]  = data[i, N]
+            data[i, -N:] = data[i,-N]            
     data.shape = oldShape
     return
+
+if getSavitzkyGolay(10*numpy.arange(10.), npoints=3, degree=1,order=1)[5] < 0:
+    ODD_SIGN = -1
+
+if __name__ == "__main__":
+    x=numpy.arange(100.)
+    y=100*x
+    print "Testing first derivative"
+    yPrime=getSavitzkyGolay(y, npoints=3, degree=1,order=1)
+    if abs(yPrime[50]-100.) > 1.0e-5:
+        print "ERROR, got %f instead of 100." % yPrime[50]
+    else:
+        print "OK"
+    print "Testing second derivative"
+    y=100*x*x
+    yPrime=getSavitzkyGolay(y, npoints=3, degree=2,order=2)
+    if abs(yPrime[50]-100.) > 1.0e-5:
+        print "ERROR, got %f instead of 100." % yPrime[50]
+    else:
+        print "OK"
+    print "Testing third order derivative"
+    y=100*x*x*x
+    yPrime=getSavitzkyGolay(y, npoints=5, degree=3,order=3)
+    if abs(yPrime[50]-100.) > 1.0e-5:
+        print "ERROR, got %f instead of 100." % yPrime[50]
+    else:
+        print "OK"
+    
+
+    
     
 
