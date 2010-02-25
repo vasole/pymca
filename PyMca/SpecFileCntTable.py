@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -406,9 +406,12 @@ else:
         def set3DEnabled(self, value):
             if value:
                 self.__is3DEnabled = True
+                if len(self.xSelection) > 3:
+                    self.xSelection = self.xSelection[-3:]
             else:
+                self.__is3DEnabled = False
                 if len(self.xSelection) > 1:
-                    self.xSelection = [1 * self.xSelection[0]]
+                    self.xSelection = [1 * self.xSelection[0]]                    
             self._update()
 
         def _mySlot(self, ddict):
@@ -426,7 +429,9 @@ else:
                         #that is to support mesh plots
                         self.xSelection = self.xSelection[-2:]
                     if len(self.xSelection) > 1:
-                        self.xSelection = self.xSelection[-1:]                    
+                        self.xSelection = self.xSelection[-1:]
+                elif len(self.xSelection) > 3:
+                    self.xSelection = self.xSelection[-3:]
 
             if col == 2:
                 if ddict["state"]:
