@@ -289,7 +289,7 @@ class Object3DScale(qt.QGroupBox):
             self.__disconnect = True
             for i in [0, 1, 2]:
                 if scale[i] != float(str(self.lineEditList[i].text())):
-                    self.lineEditList[i].setText("%.6f" % scale[i])
+                    self.lineEditList[i].setText("%.7g" % scale[i])
             self.__disconnect = False
             if (self.__oldScale[0] != scale[0]) or \
                (self.__oldScale[1] != scale[1]) or \
@@ -338,7 +338,7 @@ class Object3DScale(qt.QGroupBox):
         self.zScaleSlider.setValue(scale[2])
 
         for i in [0, 1, 2]:
-            self.lineEditList[i].setText("%.6f" % scale[i])
+            self.lineEditList[i].setText("%.7g" % scale[i])
 
 class Object3DPrivateInterface(qt.QGroupBox):
     def __init__(self, parent = None):
