@@ -1,47 +1,57 @@
-#/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
-#
-# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
-# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
-#
-# This toolkit is free software; you can redistribute it and/or modify it 
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
-# any later version.
-#
-# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
-#
-# You should have received a copy of the GNU General Public License along with
-# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA 02111-1307, USA.
-#
-# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem for you.
-#############################################################################*/
+/****************************************************************************
+*
+*   Copyright (c) 1998-2010 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2010 Certified Scientific Software (CSS)
+*
+*   The software contained in this file "sps.c" is designed to interface
+*   the shared-data structures used and defined by the CSS "spec" package
+*   with other utility software.
+*
+*   Permission is hereby granted, free of charge, to any person obtaining a
+*   copy of the software in this file and associated header files (the
+*   "Software"), to deal in the Software without restriction, including
+*   without limitation the rights to use, copy, modify, merge, publish,
+*   distribute, sublicense, and/or sell copies of the Software, and to
+*   permit persons to whom the Software is furnished to do so, subject to
+*   the following conditions:
+*
+*   The above copyright notice and this permission notice shall be included
+*   in all copies or substantial portions of the Software.
+*
+*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+*   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+*   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+*   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+*   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+*   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+*   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*
+****************************************************************************/
+/****************************************************************************
+*   @(#)sps.c	5.18  02/26/10 CSS
+*
+*   "Spec" Release 5
+*
+*   This file was mostly an ESRF creation, but includes code from and is
+*   maintained by Certified Scientific Software.
+*
+****************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h> 
+#include <unistd.h>
+#include <stdarg.h>
 #include <string.h>
-#include <sys/time.h>
-#include <math.h>
+#include <ctype.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <sys/shm.h>
 #include <sys/ipc.h> 
-#include <blissmalloc.h>
-#include <spec_shm.h>
+#include <sys/shm.h>
 #include <signal.h>
 
+#include <spec_shm.h>
 
 #ifndef IPCS
-#define IPCS "LC_ALL=C ipcs -m"  /* let the system find the path. */
+#define IPCS "LC_ALL=C ipcs -m"
 #endif
 
 #define SHM_MAX_ENTRIES 8192
@@ -49,47 +59,15 @@
 
 #define SHM_CLEANUP 1
 
-#define SHM_NOTSPEC 1
-#define SHM_NOTSHM  2
-#define SHM_NOIPCS  3
+typedef struct shm_header SHM;
 
 /* 
    id_buffer hold all the SPEC shared memory ids in the system 
    The routine init_ShmIDs is used to fill this buffer (slow!)
 */
 
-static unsigned int id_buffer[SHM_MAX_ENTRIES];
-static unsigned int id_no = 0;
-
-/* The data structure for all types of shared memories */
-struct shm_handle {
-  int handle_state; /* SCANNED , ATTACHED, CREATED, */ 
-
-  char * spec_version;  /* Copy from Spec shared memory header */
-  char * array_name;
-  unsigned int pid;
-  unsigned int utime;
-
-  struct shm_created *status_shm;   /* Shared memory pointer if attached */
-  unsigned int id;                 /* ID if scanned */
-  int attached;                     /* Flag if we are currently attached */
-  int stay_attached;                /* Flag - want to stay always attached  */
-  int write_flag;                   /* Flag if we want to write to the array*/
-
-  int no_referenced;
-  
-  void *private_data_copy;          /* A private buffer of the data */
-  int buffer_len;                   /* The length of this buffer in bytes */
-
-  int my_creation;                  /* Did we create this shared mem array */
-
-  int isstatus;                     /* Is this a status shared array */
-  struct shm_handle *array_handles; /* All the array handles of the 
-				     status array */
-  struct shm_handle *array_next;    /* The array handle linked list */ 
-  
-  struct shm_handle *next;          /* to the next handle */
-};
+static u32_t id_buffer[SHM_MAX_ENTRIES];
+static s32_t id_no = 0;
 
 /*
   The table SpecIDTab holds a table of all SPEC shmids for every spec
@@ -97,21 +75,21 @@ struct shm_handle {
 */
 
 struct arrayid {
-  char *name;
-  unsigned int id;
+	char    *name;
+	u32_t   id;
 };
 
 struct specid {
-  char *spec_version;
-  unsigned int id;
-  int pid;
-  int ids_utime;
-  struct arrayid *array_names;
-  int arrayno;
+	char    *spec_version;
+	u32_t   id;
+	u32_t   pid;
+	u32_t   ids_utime;
+	struct  arrayid *array_names;
+	s32_t   arrayno;
 }; 
 
-static struct specid SpecIDTab[SHM_MAX_ENTRIES];
-static int SpecIDNo = 0;
+static struct   specid SpecIDTab[SHM_MAX_ENTRIES];
+static int      SpecIDNo = 0;
 
 /* 
    The structure sps_array is used as a handle to one array in a spec
@@ -120,26 +98,18 @@ static int SpecIDNo = 0;
 */
 
 typedef struct sps_array {
-  struct shm_header *shm;
-  unsigned int utime;
-  char * spec;
-  char * array;
-  int write_flag;
-  int attached;
-  int stay_attached;
-  int pointer_got_count;
-  unsigned int id;
-  void *private_data_copy;
-  int buffer_len;
-} * SPS_ARRAY ; 
-
-/* Linked list of all allocated buffers */   
-
-struct buffer_ptr {
-  void *ptr;
-  struct buffer_ptr *next;
-};
-
+	SHM     *shm;
+	u32_t   utime;
+	char    *spec;
+	char    *array;
+	int     write_flag;
+	int     attached;
+	int     stay_attached;
+	int     pointer_got_count;
+	u32_t   id;
+	void    *private_data_copy;
+	int     buffer_len;
+} *SPS_ARRAY;
 
 /* 
    Linked list of shared memories I created or I created handles for 
@@ -148,119 +118,108 @@ struct buffer_ptr {
 */
 
 struct shm_created {
-  int id;
-  char *array_name;
-  char *spec_version;
-  int isstatus;
-  struct shm_created *status_shm;
-  int no_referenced;
-  struct shm_header *shm;
-  SPS_ARRAY handle;
-  int my_creation;
-  struct shm_created *next;
+	s32_t   id;
+	char    *array_name;
+	char    *spec_version;
+	int     isstatus;
+	struct  shm_created *status_shm;
+	int     no_referenced;
+	SHM     *shm;
+	SPS_ARRAY handle;
+	int     my_creation;
+	struct  shm_created *next;
 };
 
 static struct shm_created *SHM_CREATED_HEAD = NULL;
 
-static void *c_shmat (int id, char * ptr, int flag);
-static void c_shmdt (void *ptr);
-static int find_TabIDX_composed (char * fullname);
-static int find_TabIDX(char * spec_version, int pid);
-static int find_ArrayIDX (int tab_idx, char * array_name);
-static char *composeVersion (char *version, int pid); 
-static int extractVersion (char *fullname, char *name, int *pid); 
-static int iscomposed (char *fullname); 
-static int CheckSpecRunning (struct shm_header * shm);
-static void delete_SpecIDTab (void); 
-static int SearchSpecVersions (void);
-static int SearchSpecArrays (char * fullname);
-static int SearchArrayOnly (char *arrayname); 
-static int init_ShmIDs (void);
-static int getShmIDs (unsigned int **id_ptr, char * spec_version, 
-        char * name, int type);
-static int delete_id_from_list (unsigned int id); 
-static int checkSHM (struct shm_header *shm, 
-        char * spec_version, char * name, int type);
-static struct shm_header *attachArray (char *fullname, char *array, 
-	int read_only); 
-static struct shm_header *attachSpec (char * fullname);
-static size_t typedsize(int t);
-int SPS_Size(int type);
-static void typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset);
-char * SPS_GetNextSpec (int flag);
-char * SPS_GetNextArray (char * fullname, int flag);
-static char * GetNextAll (int flag);
-int SPS_GetSpecState (char *version);
-static SPS_ARRAY add_private_shm (struct shm_header *shm, char *fullname, 
-			   char *array, int write_flag);
-static SPS_ARRAY convert_to_handle (char *spec_version, char *array_name);
-static int DeconnectArray (SPS_ARRAY private_shm);
-static int ReconnectToArray (SPS_ARRAY private_shm, int write_flag);
-static void *CopyDataRC (char *fullname, char *array, int my_type, int row, 
-      int col, int *act_copied, int use_row, int direction, void *my_buffer);
-void *SPS_GetDataRow (char *name, char *array, int my_type, int row, 
-		       int col, int *act_cols);
-void *SPS_GetDataCol (char *name, char *array, int my_type, int col, 
-		       int row, int *act_rows);
-void * SPS_GetDataPointer (char *fullname, char* array, int write_flag);
-int SPS_ReturnDataPointer (void *pointer);
-int SPS_CopyFromShared (char *name, char *array, void *buffer, int my_type,
-		      int items_in_buffer);
-int SPS_CopyToShared (char *name, char *array, void *buffer, int my_type,
-		      int items_in_buffer);
-static int TypedCopy (char *fullname, char *array, void *buffer, int my_type,
-		      int items_in_buffer, int direction);
-static int typedcp_private (SPS_ARRAY private_shm, void *buffer, int my_type,
-			    int items_in_buffer, int direction);
-void * SPS_GetDataCopy (char *fullname, char *array, int my_type, 
-			int *rows_ptr, int *cols_ptr);
-int SPS_FreeDataCopy (char *fullname, char *array);
-char * SPS_GetEnvStr (char *spec_version, char *array_name, char *identifier);
-int SPS_PutEnvStr (char *spec_version, char *array_name, 
-	       char *identifier, char *set_value);
-int SPS_IsUpdated (char *fullname, char *array); 
-int SPS_UpdateDone (char *fullname, char *array);
-int SPS_GetArrayInfo (char * spec_version, char * array_name, int *rows, 
-		  int *cols, int *type, int *flag);
-static struct shm_created * 
-ll_addnew_array (char *specversion, char *arrayname, int isstatus, 
-		 struct shm_created* status, int id, int my_creation,
-		 struct shm_header *shm);
-static struct shm_created *ll_find_pointer (struct shm_header* shm);
-static struct shm_created *ll_find_array 
-                (char *specversion, char *arrayname, int isstatus);
-static void * id_is_our_creation (unsigned int id);
-static void * shm_is_our_creation (void *shm);
-static void ll_delete_array (struct shm_created *todel);
-static struct shm_header * 
-create_shm (char * specversion, char *array, int rows, 
-	    int cols, int type, int flags);
-static struct shm_header * create_master_shm (char* name);
-static void delete_shm (int id); 
-static void delete_id_from_status (struct shm_header *status, int id);
-int SPS_CreateArray (char * spec_version, char *arrayname,
-		 int rows, int cols, int type, int flags);
-static int delete_handle(SPS_ARRAY handle);
-void SPS_CleanUpAll (void);
+static  SHM     *attachArray(char *fullname, char *array, int read_only);
+static  SHM     *attachSpec(char *fullname);
+static  SHM     *create_master_shm(char *name);
+static  SHM     *create_shm(char *specversion, char *array, int rows, int cols, int type, int flags);
+static  SPS_ARRAY add_private_shm(SHM *shm, char *fullname, char *array, int write_flag);
+static  SPS_ARRAY convert_to_handle(char *spec_version, char *array_name);
+static  char    *GetNextAll(int flag);
+static  char    *composeVersion(char *version, u32_t pid);
+static  int     CheckSpecRunning(SHM *shm);
+static  int     DeconnectArray(SPS_ARRAY private_shm);
+static  int     ReconnectToArray(SPS_ARRAY private_shm, int write_flag);
+static  int     SearchSpecVersions(void);
+static  int     checkSHM(SHM *shm, char *spec_version, char *name, u32_t type);
+static  int     delete_handle(SPS_ARRAY handle);
+static  int     extractVersion(char *fullname, char *name, u32_t *pid);
+static  int     find_ArrayIDX(int tab_idx, char *array_name);
+static  int     find_TabIDX(char *spec_version, u32_t pid);
+static  int     find_TabIDX_composed(char *fullname);
+static  int     getShmIDs(u32_t **id_ptr, char *spec_version, char *name, u32_t type);
+static  int     init_ShmIDs(void);
+static  int     iscomposed(char *fullname);
+static  int     TypedCopy(char *fullname, char *array, void *buffer, int my_type,
+			int items_in_buffer, int direction);
+static  int     typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset);
+static  int     typedcp_private(SPS_ARRAY private_shm, void *buffer, int my_type,
+			int items_in_buffer, int direction);
+static  s32_t   SearchArrayOnly(char *arrayname);
+static  size_t  typedsize(int t);
+static  struct shm_created *ll_addnew_array(char *specversion, char *arrayname, int isstatus,
+			struct shm_created *status, s32_t id, int my_creation, SHM *shm);
+static  struct shm_created *ll_find_array(char *specversion, char *arrayname, int isstatus);
+static  struct shm_created *ll_find_pointer(SHM *shm);
+static  void    *CopyDataRC(char *fullname, char *array, int my_type, int row, int col,
+			int *act_copied, int use_row, int direction, void *my_buffer);
+static  void    *c_shmat(s32_t id, char *ptr, int flag);
+static  void    c_shmdt(void *ptr);
+static  void    *id_is_our_creation(u32_t id);
+static  void    *shm_is_our_creation(void *shm);
+static  void    SearchSpecArrays(char *fullname);
+static  void    delete_SpecIDTab(void);
+static  void    delete_id_from_list(u32_t id);
+static  void    delete_id_from_status(SHM *status, s32_t id);
+static  void    delete_shm(s32_t id);
+static  void    ll_delete_array(struct shm_created *todel);
 
+char    *SPS_GetEnvStr(char *spec_version, char *array_name, char *identifier);
+char    *SPS_GetNextArray(char *fullname, int flag);
+char    *SPS_GetNextSpec(int flag);
+int     SPS_CopyFromShared(char *name, char *array, void *buffer, int my_type, int items_in_buffer);
+int     SPS_CopyToShared(char *name, char *array, void *buffer, int my_type, int items_in_buffer);
+int     SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int type, int flags);
+int     SPS_FreeDataCopy(char *fullname, char *array);
+int     SPS_GetArrayInfo(char *spec_version, char *array_name, int *rows, int *cols, int *type, int *flag);
+int     SPS_GetFrameSize(char *spec_version, char *array_name);
+int     SPS_IsUpdated(char *fullname, char *array);
+int     SPS_LatestFrame(char *fullname, char *array);
+int     SPS_PutEnvStr(char *spec_version, char *array_name, char *identifier, char *set_value);
+int     SPS_ReturnDataPointer(void *pointer);
+int     SPS_Size(int type);
+int     SPS_UpdateDone(char *fullname, char *array);
+s32_t   SPS_GetSpecState(char *version);
+void    *SPS_GetDataCol(char *name, char *array, int my_type, int col, int row, int *act_rows);
+void    *SPS_GetDataCopy(char *fullname, char *array, int my_type, int *rows_ptr, int *cols_ptr);
+void    *SPS_GetDataPointer(char *fullname, char*array, int write_flag);
+void    *SPS_GetDataRow(char *name, char *array, int my_type, int row, int col, int *act_cols);
+void    SPS_CleanUpAll(void);
+
+#if SPS_DEBUG
+static  int     SPS_AttachToArray(char *fullname, char *array, int write_flag);
+static  int     SPS_DetachFromArray(char *fullname, char*array);
+#endif
 
 /* 
    Our private attach and dettach to stay connected with the shared memory
    we created ourselves
 */
 
-static void *c_shmat (int id, char * ptr, int flag) 
-{
-  void * shm;
-  if((shm = id_is_our_creation(id)))
-    return shm;
-  return shmat (id, ptr, flag);
+static void *c_shmat(s32_t id, char *ptr, int flag) {
+	void *shm;
+
+	if ((shm = id_is_our_creation(id)))
+		return shm;
+	return shmat(id, ptr, flag);
 }
 
-static void c_shmdt (void *ptr) 
-{
-  if (shm_is_our_creation(ptr) == NULL)
-    shmdt (ptr);
+static void c_shmdt(void *ptr) {
+	if (shm_is_our_creation(ptr) == NULL)
+		shmdt(ptr);
 }
 
 /* 
@@ -269,81 +228,76 @@ static void c_shmdt (void *ptr)
    between two different versions of spec with the same name. 
    Input: spec_version the name of the version to look for
           pid: the pid of the specversion or 0 if every pid. 
-   Returns: -1 if not found , idx otherwise
+   Returns: -1 if not found, idx otherwise
 */
 
-static int find_TabIDX_composed (char * fullname) 
-{ 
-  int i, idx = -1;
-  
-  if (fullname) {
-    for (i = 0; i < SpecIDNo; i++)
-      if (strcmp (fullname, SpecIDTab[i].spec_version) == 0) {
-	idx = i;
-      }
-  }
-  
-  return idx;
+static int find_TabIDX_composed(char *fullname) {
+	int     i;
+
+	if (!fullname || !*fullname)
+		return(-1);
+
+	for (i = 0; i < SpecIDNo; i++)
+		if (!strcmp(fullname, SpecIDTab[i].spec_version))
+			return(i);
+	return(-1);
 }
 
-static int find_TabIDX(char * spec_version, int pid) 
-{ 
-  int i, idx = -1;
-  int found = 0;
-  char * fullname;
+static int find_TabIDX(char *spec_version, u32_t pid) {
+	int     i, idx = -1;
+	char    *fullname;
 
-  if (pid) 
-    fullname = composeVersion(spec_version, pid);
-  else 
-    fullname = spec_version;
+	if (pid)
+		fullname = composeVersion(spec_version, pid);
+	else
+		fullname = spec_version;
 
-  if (fullname) {
-    for (i = 0; i < SpecIDNo; i++)
-      if (strcmp (fullname, SpecIDTab[i].spec_version) == 0) {
-	found++;
-	idx = i;
-      }
-    
-    if (fullname != spec_version) 
-      free(fullname);
-  }
-  
-  return idx;
+	if (!fullname || !*fullname)
+		return(-1);
+
+	for (i = 0; i < SpecIDNo; i++)
+		if (!strcmp(fullname, SpecIDTab[i].spec_version)) {
+			idx = i;
+			break;
+		}
+
+	if (fullname != spec_version)
+		 free(fullname);
+
+	return(idx);
 }
 
-static int find_ArrayIDX (int tab_idx, char * array_name)
-{ 
-  int i;
+static int find_ArrayIDX(int tab_idx, char *array_name) {
+	int     i;
+	char    *s;
 
-  if (tab_idx >= SpecIDNo) 
-    return -1;
-  
-  for (i = 0; i < SpecIDTab[tab_idx].arrayno; i++)
-    if (SpecIDTab[tab_idx].array_names[i].name && 
-        strcmp (array_name, SpecIDTab[tab_idx].array_names[i].name) == 0) {
-      return i;
-    }
-  
-  return -1;
+	if (tab_idx >= SpecIDNo)
+		return -1;
+
+	for (i = 0; i < SpecIDTab[tab_idx].arrayno; i++)
+		if ((s = SpecIDTab[tab_idx].array_names[i].name))
+			if (!strcmp(array_name, s))
+				return i;
+	return(-1);
 }
 
 /* 
    Used internally to combine the version and the pid to a string 
    Input: version: spec version name 
-          pid: int 
+	  pid: u32_t
    returns: NULL if error
             combined string of both version and pid i.e. fourc(12345)
 */
-static char *composeVersion (char *version,int pid) 
-{
-  int len;
-  char * comb;
-  len = strlen (version) + 10;
-  comb = (char *) malloc (sizeof (char) * len);
-  if (comb == NULL) 
-    return NULL;
-  sprintf(comb, "%s(%d)", version, pid);
-  return comb;
+static char *composeVersion(char *version, u32_t pid) {
+	int     len;
+	char    *comb;
+
+	len = strlen(version) + 10;
+	comb = (char *) malloc(len * sizeof(char));
+	if (comb == NULL)
+		return(NULL);
+	sprintf(comb, "%s(%u)", version, pid);
+	return(comb);
 }
 
 /* 
@@ -351,16 +305,15 @@ static char *composeVersion (char *version,int pid)
    Input: fullname: i.e. fourc(12345) or just pslits
           version: pointer to char array which has enough space
                    memory for string will have to be freed  
-          pid: pointer to long int will contain pid 
+	  pid: pointer to s32_t will contain pid
    returns: 1 if fullname contained a pid
             0 if not
 */
-static int extractVersion (char *fullname, char *name, int *pid) 
-{
-  long int pid_buf;
+static int extractVersion(char *fullname, char *name, u32_t *pid) {
+  u32_t pid_buf;
   char version_buf[512];
 
-  if (sscanf(fullname,"%[^(](%ld)", version_buf, &pid_buf) == 2) {
+  if (sscanf(fullname,"%[^(](%u)", version_buf, &pid_buf) == 2) {
     if (name) strcpy(name, version_buf);
     if (pid)  *pid = pid_buf;
     return 1;
@@ -375,39 +328,37 @@ static int extractVersion (char *fullname, char *name, int *pid)
   fast test to see if there is a chance that the pid is included in the name
 */
 
-static int iscomposed (char *fullname) 
-{
-  return (strchr (fullname, '(') ? 1 : 0);
+static int iscomposed(char *fullname) {
+  return (strchr(fullname, '(')? 1:0);
 }
 
 /* Checks if the update program is still running */
-static int CheckSpecRunning (struct shm_header * shm)
-{
+static int CheckSpecRunning(SHM *shm) {
   int id = shm->head.head.shmid;
   struct shmid_ds info;
 
-  shmctl (id, IPC_STAT, &info);
+  shmctl(id, IPC_STAT, &info);
 
   if (info.shm_perm.uid != getuid())
     return 1; /* Can not test if process still runs */
   
-  if (shm->head.head.pid && kill (shm->head.head.pid, 0) == 0)
+  if (shm->head.head.pid && kill(shm->head.head.pid, 0) == 0)
     return 1; 
   
   /* Shared Memory ID not longer updated id, shm->head.head.pid */
 
 #if SHM_CLEANUP
-  shmctl (id, IPC_STAT, &info);
+  shmctl(id, IPC_STAT, &info);
   if (info.shm_nattch == 1) {
-    shmctl(id, IPC_RMID, &info);
+    shmctl(id, IPC_RMID, NULL);
   }
-  delete_id_from_list (id);
+  delete_id_from_list(id);
 #endif
 
   return 0;
 }
 
-static void delete_SpecIDTab () 
+static void delete_SpecIDTab(void)
 {
   int i,j;
   for (i = 0; i < SpecIDNo; i++) {
@@ -416,8 +367,8 @@ static void delete_SpecIDTab ()
 	free(SpecIDTab[i].array_names[j].name);
 	SpecIDTab[i].array_names[j].name = NULL;
       }
-    free (SpecIDTab[i].array_names);
-    free (SpecIDTab[i].spec_version);
+    free(SpecIDTab[i].array_names);
+    free(SpecIDTab[i].spec_version);
   }
   SpecIDNo = 0;
 }
@@ -432,39 +383,36 @@ static void delete_SpecIDTab ()
    for every Specversion
 */
  
-static int SearchSpecVersions ()  
+static int SearchSpecVersions(void)
 {
-  unsigned int *id_ptr;
-  struct shm_header *shm;
+  u32_t *id_ptr;
+  SHM *shm;
   int i, j, n;
   int found;
 
   delete_SpecIDTab();
 
-  init_ShmIDs ();
-  if ( (SpecIDNo = getShmIDs (&id_ptr, NULL, NULL, SHM_IS_STATUS)) == 0)
+  init_ShmIDs();
+  if ((SpecIDNo = getShmIDs(&id_ptr, NULL, NULL, SHM_IS_STATUS)) == 0)
     return 0;
 
   for (n = 0, i = 0; i < SpecIDNo; i++) {
-    if ((shm = (struct shm_header *) c_shmat(id_ptr[i],(char *)0, SHM_RDONLY)) 
-	== (struct shm_header *) -1)
+    if ((shm = (SHM *) c_shmat(id_ptr[i], NULL, SHM_RDONLY)) == (SHM *) -1)
       continue;
     if (CheckSpecRunning(shm) == 0) {
-      c_shmdt ((void *) shm);
+      c_shmdt((void *) shm);
       continue;
     }
 
     /* Find if the name of the spec_version is already used */
     for (found = 0, j = 0; j < n; j++) 
-      if (strcmp (shm->head.head.spec_version,SpecIDTab[j].spec_version)== 0)
-	found ++;
+      if (strcmp(shm->head.head.spec_version,SpecIDTab[j].spec_version)== 0)
+	found++;
 
     if (!found) {
-      SpecIDTab[n].spec_version = 
-	(char *) strdup (shm->head.head.spec_version);
+      SpecIDTab[n].spec_version = (char *) strdup(shm->head.head.spec_version);
     } else {
-      SpecIDTab[n].spec_version = 
-	composeVersion(shm->head.head.spec_version, shm->head.head.pid);
+      SpecIDTab[n].spec_version = composeVersion(shm->head.head.spec_version, shm->head.head.pid);
     }
 
     SpecIDTab[n].pid = shm->head.head.pid;
@@ -472,8 +420,8 @@ static int SearchSpecVersions ()
     SpecIDTab[n].arrayno = 0;
     SpecIDTab[n].array_names = NULL;
     SpecIDTab[n].ids_utime = 0;
-    n ++;
-    c_shmdt ((void *) shm);
+    n++;
+    c_shmdt((void *) shm);
   }
 
   return SpecIDNo = n;
@@ -488,33 +436,30 @@ static int SearchSpecVersions ()
    Input: fullname : Name of the Version with possible pid (fourc, spec(123)
 */
 
-static int SearchSpecArrays (char * fullname) 
-{
-  unsigned int id;
+static void SearchSpecArrays(char *fullname) {
+  s32_t id;
   int found;
   int redone = 0;
   int i, si, no, idx;
-  struct shm_header *shm = NULL;
+  SHM *shm = NULL;
   struct shm_status *st;
 
  redo:
-  found = ( ( si = find_TabIDX_composed(fullname) ) == -1) ? 0 : 1; 
+  found = ((si = find_TabIDX_composed(fullname)) == -1)? 0:1;
   
   if (found) {
-    shm = (struct shm_header *) 
-      c_shmat(SpecIDTab[si].id, (char *)0,SHM_RDONLY);
+    shm = (SHM *) c_shmat(SpecIDTab[si].id, NULL, SHM_RDONLY);
   }
-  if ( !found || 
-       !checkSHM (shm, SpecIDTab[si].spec_version, NULL, SHM_IS_STATUS) ) {
-    if (found && shm && shm != (struct shm_header *) -1)
-      c_shmdt ((void *) shm);
+  if (!found || !checkSHM(shm, SpecIDTab[si].spec_version, NULL, SHM_IS_STATUS) ) {
+    if (found && shm && shm != (SHM *) -1)
+      c_shmdt((void *) shm);
     
     if (!redone) {
       redone = 1;
       SearchSpecVersions();
       goto redo;
     } else 
-      return 0;
+      return;
   }
   
   if (shm->head.head.version < 4)
@@ -527,13 +472,13 @@ static int SearchSpecArrays (char * fullname)
   
   if (SpecIDTab[si].arrayno) {
     if (SpecIDTab[si].ids_utime == st->utime) {
-      c_shmdt ( (void *) shm);
-      return SpecIDTab[si].arrayno;
+      c_shmdt((void *) shm);
+      return;
     } else {
       for (i = 0; i < SpecIDTab[si].arrayno; i++)
 	if (SpecIDTab[si].array_names[i].name)
 	  free(SpecIDTab[si].array_names[i].name);
-      free (SpecIDTab[si].array_names);
+      free(SpecIDTab[si].array_names);
       SpecIDTab[si].arrayno = 0;
       SpecIDTab[si].array_names = NULL;
     }
@@ -544,48 +489,46 @@ static int SearchSpecArrays (char * fullname)
   for (no = 0, i = 0; i < SHM_MAX_IDS; i++) {
     if (st->ids[i] == -1) 
       continue;
-    no ++;
+    no++;
   }
 
-  SpecIDTab[si].arrayno = no ;
+  SpecIDTab[si].arrayno = no;
   if (no) 
-    SpecIDTab[si].array_names = 
-      (struct arrayid *) malloc (sizeof (struct arrayid) * no);
+    SpecIDTab[si].array_names = (struct arrayid *) malloc(sizeof(struct arrayid) * no);
   
   /* Make a table of all arraynames with their shm ids */
   for (idx = 0, i = 0; idx < SHM_MAX_IDS; idx++) {
-    struct shm_header * shm_array;
+    SHM *shm_array;
+
     id = st->ids[idx]; /* the shared memory can change while we go through */ 
     if (id == -1 || i >= no) /* therefore save id and check again i */ 
       continue;
-    shm_array = (struct shm_header *) c_shmat(id, NULL, SHM_RDONLY);
-    if (!checkSHM (shm_array, SpecIDTab[si].spec_version, NULL, 0)) {
+    shm_array = (SHM *) c_shmat(id, NULL, SHM_RDONLY);
+    if (!checkSHM(shm_array, SpecIDTab[si].spec_version, NULL, 0)) {
       SpecIDTab[si].array_names[i].name = NULL;
       SpecIDTab[si].array_names[i].id = 0;
-      if (shm_array && shm_array != (struct shm_header *) -1) 
-	c_shmdt ((void *) shm_array);
-      i ++;
+      if (shm_array && shm_array != (SHM *) -1)
+	c_shmdt((void *) shm_array);
+      i++;
       continue;
     }
     SpecIDTab[si].array_names[i].name = 
-      (char *) strdup (shm_array->head.head.name);
+      (char *) strdup(shm_array->head.head.name);
     SpecIDTab[si].array_names[i].id = id;
-    c_shmdt ((void *) shm_array);
-    i ++;
+    c_shmdt((void *) shm_array);
+    i++;
   }
 
-  c_shmdt ((void *) shm);
-  return 0;
+  c_shmdt((void *) shm);
 }  
   
-static int SearchArrayOnly (char *arrayname) 
-{
-  unsigned int *id_ptr;
+static s32_t SearchArrayOnly(char *arrayname) {
+  u32_t *id_ptr;
   int no;
 
-  if ( (no = getShmIDs (&id_ptr, NULL, arrayname, SHM_IS_ARRAY)) == 0) {
-    init_ShmIDs ();
-    if ( (no = getShmIDs (&id_ptr, NULL, arrayname, SHM_IS_ARRAY)) == 0) 
+  if ((no = getShmIDs(&id_ptr, NULL, arrayname, SHM_IS_ARRAY)) == 0) {
+    init_ShmIDs();
+    if ((no = getShmIDs(&id_ptr, NULL, arrayname, SHM_IS_ARRAY)) == 0)
       return -1;
   }
 
@@ -596,101 +539,108 @@ static int SearchArrayOnly (char *arrayname)
    Get a list of all SPEC shared memory ids. This operation uses the external
    program ipcs and is therefore very slow. 
    Input: None
-   Returns: 1 if error , 0 if OK
+   Returns: 1 if error, 0 if OK
+
+   The SHM_INFO/SHM_STAT can bypass ipcs on Linux kernels, when those
+   shmctl() commands are supported.
 */
 
-static int init_ShmIDs ()
-{
-  int id, use_m;
-  struct shm_header *shm;
-  struct shmid_ds info;
-  char buf[256];
-  FILE *pd;
-  int col = 0;
+static int init_ShmIDs(void) {
+	int     i, id, col = 0;
+	SHM     *shm;
+	struct  shmid_ds info;
+	char    *p, buf[256];
+	FILE    *pd;
 
-  pd = (FILE*) popen(IPCS,"r");
-  
-  if (!pd) {
-    return 1;
-  }
+#if defined(__linux__)
+	int     maxid;
 
-  use_m = 1;    /* expect an "m" in the first column (hp700, hp10, solaris) */
-  id_no =0;
-  while (!feof(pd)) {
-    if (fgets(buf, sizeof(buf) - 1, pd) == NULL)
-      break;
-    if (use_m && buf[0] != 'm' && buf[0] != 'k' && buf[0] != 's' && buf[0] != 't' && buf[0] != 'c')
-      continue;
+# ifndef SHM_STAT
+#  define SHM_STAT        13
+#  define SHM_INFO        14
+# endif
 
-    if (!strncmp(buf, "cl", 2)) {
-      use_m = 0;       /* On linux mandrake, "key" is in french : "touche" !! */
-      col = 2;         /* We will find shmid in the second column */
-      continue;
-    }
+	pd = NULL;
+	i = id_no = 0;
+	if ((maxid = shmctl(0, SHM_INFO, (void *) buf)) < 0)
+#endif
+	{
+		if ((pd = (FILE*) popen(IPCS,"r")) == NULL)
+			return 1;
+	}
 
-    if (!strncmp(buf, "touche", 6)) {
-      use_m = 0;       /* On linux mandrake, "key" is in french : "touche" !! */
-      col = 2;         /* We will find shmid in the second column */
-      continue;
-    }
+	for (;;) {
+#if defined(__linux__)
+		if (maxid > 0) {
+			if (i > maxid)
+				break;
+			id = shmctl(i++, SHM_STAT, (void *) buf);
+		} else
+#endif
+		{
+			if (feof(pd))
+				break;
+			if (fgets(p = buf, sizeof(buf) - 1, pd) == NULL)
+				break;
+			while (isspace(*p))
+				p++;
+			if (col == 0) {
+				/* Find column of ipcs output containing ID */
+				for (col = 1; *p; col++) {
+					/* "shmid" is usual column header on Linux */
+					if (!strncasecmp(p, "shmid", 5))
+						break;
+					/* "ID" is usual column header on Solaris/Mac */
+					if (!strncasecmp(p, "ID ", 3))
+						break;
+					while (*p && !isspace(*p))
+						p++;
+					while (isspace(*p))
+						p++;
+				}
+				if (!*p)
+					col = 0;
+				continue;
+			}
+			if (col == 0)
+				continue;
+			for (i = 1; i < col; i++) {
+				while (*p && !isspace(*p))
+					p++;
+				while (isspace(*p))
+					p++;
+			}
+			if (sscanf(p, "%d", &id) != 1)
+				continue;
+		}
+		if ((shm = (SHM *) c_shmat(id, NULL, SHM_RDONLY)) == (SHM *) -1)
+			continue;
 
-    if (!strncmp(buf, "key", 3)) {
-      use_m = 0;      /* On linux, "key" is label of first column */
-      col = 2;        /* We will find shmid in the second column */
-      continue;
-    }
-
-    if (!strncmp(buf, "shmid", 5)) {
-      use_m = 0;      /* On newer linuxes, "shmid" is label of first column */
-      col = 1;        /* We find shmid in the first column */
-      continue;
-    }
-
-    if (use_m) {
-      if (buf[0] == 'm') {
-	if (sscanf(buf + 1, "%d", &id) != 1)
-	  continue;
-      } else
-	continue;
-    } else {
-      if (col == 2) { 
-	if (sscanf(buf, "%*s %d", &id) != 1)
-	  continue;
-      } else if (col == 1) {
-	if (sscanf(buf, "%d", &id) != 1)
-	  continue;
-      }
-    }
-
-    if ((shm = (struct shm_header *) c_shmat(id, (char *) 0, SHM_RDONLY)) 
-	== (struct shm_header *) -1)
-      continue;
-    
-    if (shm->head.head.magic != SHM_MAGIC) {
-      c_shmdt((void *)shm);
-      continue;
-    }
+		if (shm->head.head.magic != SHM_MAGIC) {
+		      c_shmdt((void *) shm);
+		      continue;
+		}
     
 #if SHM_CLEANUP
-    if (!id_is_our_creation(id)) {
-      shmctl (id, IPC_STAT, &info);
-      if (info.shm_nattch == 1) {
-	c_shmdt((void *)shm);
-	shmctl(id, IPC_RMID, &info);
-	continue;
-      }
-    }
+		if (!id_is_our_creation(id)) {
+			shmctl(id, IPC_STAT, &info);
+			if (info.shm_nattch == 1) {
+				c_shmdt((void *)shm);
+				shmctl(id, IPC_RMID, NULL);
+				continue;
+			}
+		}
 #endif
+		if (id_no < SHM_MAX_ENTRIES)
+			id_buffer[id_no++] = id;
 
-    if (id_no < SHM_MAX_ENTRIES) {
-      id_buffer[id_no++] = id;
-    } 
-    
-    c_shmdt((void *)shm);
-  }
-  
-  pclose(pd);
-  return 0;
+		c_shmdt((void *)shm);
+	}
+
+	if (pd)
+		pclose(pd);
+
+	return 0;
 } 
 
 
@@ -706,27 +656,25 @@ static int init_ShmIDs ()
 	 type : 0 or a bitmap that must be set in the type field of the
 	        array (i.e. SHM_STATUS)
  */
-static int getShmIDs (unsigned int **id_ptr, char * spec_version, 
-	       char * name, int type)
-{
-  unsigned int id;
+static int getShmIDs(u32_t **id_ptr, char *spec_version,
+	       char *name, u32_t type) {
+  u32_t id;
   int i, ids_no;
-  struct shm_header *shm;
-  static unsigned int ids[SHM_MAX_ENTRIES];
+  SHM *shm;
+  static u32_t ids[SHM_MAX_ENTRIES];
 
   for (ids_no = 0, i = 0; i < id_no; i++) {
     id = id_buffer[i];
     
-    if ((shm = (struct shm_header *) c_shmat(id, (char *) 0, SHM_RDONLY)) 
-	== (struct shm_header *) -1)
+    if ((shm = (SHM *) c_shmat(id, NULL, SHM_RDONLY)) == (SHM *) -1)
       continue;
-    
+
     if (! checkSHM(shm, spec_version, name, type)) {
       c_shmdt((void *)shm);
       continue;
     }
 
-    c_shmdt ((void *)shm);
+    c_shmdt((void *)shm);
 
     if (ids_no < SHM_MAX_ENTRIES) {
       ids[ids_no++] = id;
@@ -738,15 +686,14 @@ static int getShmIDs (unsigned int **id_ptr, char * spec_version,
 } 
 
 /* Delete a list ids from our */
-static int delete_id_from_list (unsigned int id) 
-{
+static void delete_id_from_list(u32_t id) {
   int i, j, k, l, no;
-  struct arrayid * new_arrays, *old_arrays;
+  struct arrayid *new_arrays, *old_arrays;
   for (i = 0; i < SpecIDNo; i++) {
     if (SpecIDTab[i].id == id) {
       /* Just set it to 0 if the id is a spec status shared memory */
       SpecIDTab[i].id = 0;
-      return 0;
+      return;
     }
     for (j = 0; j < SpecIDTab[i].arrayno; j++)
       if (SpecIDTab[i].array_names[j].id == id) { 
@@ -756,11 +703,11 @@ static int delete_id_from_list (unsigned int id)
 	  free(SpecIDTab[i].array_names[j].name);
 	no = SpecIDTab[i].arrayno -1;
 	if (no) {
-	  new_arrays = (struct arrayid *)malloc (no * sizeof(struct arrayid));
+	  new_arrays = (struct arrayid *) malloc(no * sizeof(struct arrayid));
 	  if (new_arrays == NULL) {
 	    SpecIDTab[i].array_names[j].id = 0; 
 	    SpecIDTab[i].array_names[j].name = NULL;
-	    return 1;
+	    return;
 	  }
 	  for (k = 0, l = 0; k < SpecIDTab[i].arrayno; k++) {
 	    if (k != j) { 
@@ -772,11 +719,11 @@ static int delete_id_from_list (unsigned int id)
 	} else 
 	  new_arrays = NULL;
 	SpecIDTab[i].arrayno = no;
-	SpecIDTab[i].array_names = new_arrays ;
-	free (old_arrays);
+	SpecIDTab[i].array_names = new_arrays;
+	free(old_arrays);
+	return;
       }
   }
-  return 0;
 }
 
 /* 
@@ -790,38 +737,36 @@ static int delete_id_from_list (unsigned int id)
    given.
 */
 
-static int checkSHM (struct shm_header *shm, 
-	     char * spec_version, char * name, int type)
-{
-  static char spec_name[512];
-  int pid;
+static int checkSHM(SHM *shm, char *spec_version, char *name, u32_t type) {
+	char    spec_name[512];
+	u32_t   pid;
 
-  if (shm == NULL || shm == (struct shm_header *) -1)
-     return 0;
+	if (shm == NULL || shm == (SHM *) -1)
+		return(0);
 
-  if (shm->head.head.magic != SHM_MAGIC) 
-    return 0;
-  
-  if (spec_version) {
-    if (iscomposed (spec_version) == 0) {
-      if (strcmp (shm->head.head.spec_version, spec_version) != 0 )
-	return 0;
-    } else {
-      extractVersion(spec_version, spec_name, &pid);
-      if (strcmp (shm->head.head.spec_version, spec_name) != 0 ||
-	  shm->head.head.pid != pid )
-	return 0;
-    }
-  }
+	if (shm->head.head.magic != SHM_MAGIC)
+		return(0);
 
-  if (name && strcmp (shm->head.head.name, name) != 0 ) 
-    return 0;
-    
-  if (type && (type & shm->head.head.flags) != type ) 
-    return 0;
+	if (spec_version) {
+		if (!iscomposed(spec_version)) {
+			if (strcmp(shm->head.head.spec_version, spec_version))
+				return(0);
+		} else {
+			extractVersion(spec_version, spec_name, &pid);
+			if (strcmp(shm->head.head.spec_version, spec_name))
+				return(0);
+			if (shm->head.head.pid != pid)
+				return(0);
+		}
+	}
 
-  return CheckSpecRunning(shm);
+	if (name && strcmp(shm->head.head.name, name))
+		return(0);
 
+	if (type && (type&shm->head.head.flags) != type)
+		return(0);
+
+	return(CheckSpecRunning(shm));
 }
 
 
@@ -833,53 +778,49 @@ static int checkSHM (struct shm_header *shm,
             pointer to SPEC shared memory shm_header
 */
 
-static struct shm_header *attachArray (char *fullname, char *array, 
-				       int read_only) 
-{ 
+static SHM *attachArray(char *fullname, char *array, int read_only) {
   int idx, arr_idx, i, id;
-  struct shm_header *shm = NULL;
+  SHM *shm;
 
+  shm = NULL;
   if (fullname) {
     for (i = 0; i < 2; i++) {
       idx = find_TabIDX_composed(fullname);
       if (idx == -1) {
 	SearchSpecVersions();
-	if ( (idx = find_TabIDX_composed(fullname)) == -1) 
+	if ((idx = find_TabIDX_composed(fullname)) == -1)
 	  return NULL;
       }
       
       arr_idx = find_ArrayIDX(idx, array);
       if (arr_idx == -1) {
 	SearchSpecArrays(fullname);
-	if ( (arr_idx = find_ArrayIDX(idx, array)) == -1) 
+	if ((arr_idx = find_ArrayIDX(idx, array)) == -1)
 	  return NULL;
       }
       
-      shm = (struct shm_header *) 
-	c_shmat(SpecIDTab[idx].array_names[arr_idx].id, (char *)0, 
-		read_only ? SHM_RDONLY : 0);
+      shm = (SHM *) c_shmat(SpecIDTab[idx].array_names[arr_idx].id, NULL, read_only? SHM_RDONLY:0);
       
       /* We might not be attached because the id is not longer valid */
-      if (shm != (struct shm_header *) -1)
+      if (shm != (SHM *) -1)
 	break;
     
       SearchSpecVersions(); /* and retry */
     }
   } else { /* Use another method of finding the shared mem */
     if ((id = SearchArrayOnly(array)) != -1)
-      shm = (struct shm_header *) 
-	c_shmat(id, (char *)NULL, read_only ? SHM_RDONLY : 0);
+      shm = (SHM *) c_shmat(id, NULL, read_only? SHM_RDONLY:0);
     
     /* We might not be attached */
-    if (shm == (struct shm_header *) -1)
+    if (shm == (SHM *) -1)
       return NULL;
     else 
       return shm;
   }
   
-  if (!checkSHM (shm, fullname, array, 0)) {
-    if (shm && shm != (struct shm_header *) -1)
-      c_shmdt ( (void *) shm);
+  if (!checkSHM(shm, fullname, array, 0)) {
+    if (shm && shm != (SHM *) -1)
+      c_shmdt((void *) shm);
     return NULL;
   }
   
@@ -893,10 +834,9 @@ static struct shm_header *attachArray (char *fullname, char *array,
             pointer to SPEC shared memory shm_header
 */
 
-static struct shm_header *attachSpec (char * fullname) 
-{ 
+static SHM *attachSpec(char *fullname) {
   int idx = -1;
-  struct shm_header *shm;
+  SHM *shm;
 
   /* Search in out index - if already known */
   idx = find_TabIDX_composed(fullname);
@@ -911,13 +851,12 @@ static struct shm_header *attachSpec (char * fullname)
   /* Maybe we find a pointer in our table */
 
   /* Attach to the shared memory in read-only mode */
-  shm = (struct shm_header *) 
-    c_shmat(SpecIDTab[idx].id, (char *)0,SHM_RDONLY);
+  shm = (SHM *) c_shmat(SpecIDTab[idx].id, NULL, SHM_RDONLY);
   
   /* Check that the shared memory is still valid */
-  if (!checkSHM (shm, fullname, NULL, 0)) {
-    if (shm && shm != (struct shm_header *) -1)
-      c_shmdt ( (void *) shm);
+  if (!checkSHM(shm, fullname, NULL, 0)) {
+    if (shm && shm != (SHM *) -1)
+      c_shmdt((void *) shm);
     return NULL;
   }
   
@@ -929,9 +868,9 @@ static struct shm_header *attachSpec (char * fullname)
 static size_t typedsize(int t) {
 	switch (t) {
 	  case SHM_USHORT: return(sizeof(unsigned short));
-	  case SHM_UINT:  return(sizeof(unsigned int));
+	  case SHM_ULONG:  return(sizeof(u32_t));
 	  case SHM_SHORT:  return(sizeof(short));
-	  case SHM_INT:   return(sizeof(int));
+	  case SHM_LONG:   return(sizeof(s32_t));
 	  case SHM_UCHAR:  return(sizeof(unsigned char));
 	  case SHM_CHAR:   return(sizeof(char));
 	  case SHM_STRING: return(sizeof(char));
@@ -941,8 +880,7 @@ static size_t typedsize(int t) {
 	}
 }
 
-int SPS_Size (int t)
-{
+int SPS_Size(int t) {
   return typedsize(t);
 }
 
@@ -956,10 +894,10 @@ int SPS_Size (int t)
 */
 
 #define ONECP(tto, tfrom) do {\
-				register     tto     *a = (tto *)   t; \
-				register     tfrom   *b = (tfrom *) f; \
-				register int    n = np; \
-				register int    offs = offset; \
+				tto     *a = (tto *)   t; \
+				tfrom   *b = (tfrom *) f; \
+				n = np; \
+				offs = offset; \
 				if (n > 0) { if (rev == 0) \
 				  while (n--) *a++ = *b++; \
 				else if (rev == 1) \
@@ -970,80 +908,81 @@ int SPS_Size (int t)
 				else while (n++) *a++ = *b--; \
 			} while (0)
 
-static void typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset)
-{
+static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset) {
+	int     n, offs;
+
 	if (np == 0)
-	  return;
+		return(0);
 
 	if (ft == tt && np > 0 && rev == 0) {
-	  memcpy(t, f, np * typedsize(ft));
-	  return;
+		memcpy(t, f, np * typedsize(ft));
+		return(0);
 	}
 
 	switch (tt) {
-	 case SHM_INT:
+	 case SHM_LONG:
 	   switch (ft) {
-	    case SHM_DOUBLE:  ONECP(int, double);                   break;
-	    case SHM_FLOAT:   ONECP(int, float);                    break;
-	    case SHM_UINT:   ONECP(int, unsigned int);            break;
-	    case SHM_USHORT:  ONECP(int, unsigned short);           break;
-	    case SHM_UCHAR:   ONECP(int, unsigned char);            break;
+	    case SHM_DOUBLE:  ONECP(s32_t, double);                  break;
+	    case SHM_FLOAT:   ONECP(s32_t, float);                   break;
+	    case SHM_ULONG:   ONECP(s32_t, u32_t);                   break;
+	    case SHM_USHORT:  ONECP(s32_t, unsigned short);          break;
+	    case SHM_UCHAR:   ONECP(s32_t, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
-	    case SHM_CHAR:    ONECP(int, char);                     break;
-	    case SHM_SHORT:   ONECP(int, short);                    break;
-	    case SHM_INT:    ONECP(int, int);                     break;
+	    case SHM_CHAR:    ONECP(s32_t, char);                    break;
+	    case SHM_SHORT:   ONECP(s32_t, short);                   break;
+	    case SHM_LONG:    ONECP(s32_t, s32_t);                   break;
 	   }
 	   break;
-	 case SHM_UINT:
+	 case SHM_ULONG:
 	   switch (ft) {
-	    case SHM_DOUBLE:  ONECP(unsigned int, double);          break;
-	    case SHM_FLOAT:   ONECP(unsigned int, float);           break;
-	    case SHM_UINT:   ONECP(unsigned int, unsigned int);   break;
-	    case SHM_USHORT:  ONECP(unsigned int, unsigned short);  break;
-	    case SHM_UCHAR:   ONECP(unsigned int, unsigned char);   break;
+	    case SHM_DOUBLE:  ONECP(u32_t, double);                  break;
+	    case SHM_FLOAT:   ONECP(u32_t, float);                   break;
+	    case SHM_ULONG:   ONECP(u32_t, u32_t);                   break;
+	    case SHM_USHORT:  ONECP(u32_t, unsigned short);          break;
+	    case SHM_UCHAR:   ONECP(u32_t, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
-	    case SHM_CHAR:    ONECP(unsigned int, char);            break;
-	    case SHM_SHORT:   ONECP(unsigned int, short);           break;
-	    case SHM_INT:    ONECP(unsigned int, int);            break;
+	    case SHM_CHAR:    ONECP(u32_t, char);                    break;
+	    case SHM_SHORT:   ONECP(u32_t, short);                   break;
+	    case SHM_LONG:    ONECP(u32_t, s32_t);                   break;
 	   }
 	   break;
 	 case SHM_USHORT:
 	   switch (ft) {
 	    case SHM_DOUBLE:  ONECP(unsigned short, double);         break;
 	    case SHM_FLOAT:   ONECP(unsigned short, float);          break;
-	    case SHM_UINT:   ONECP(unsigned short, unsigned int);  break;
+	    case SHM_ULONG:   ONECP(unsigned short, u32_t);          break;
 	    case SHM_USHORT:  ONECP(unsigned short, unsigned short); break;
 	    case SHM_UCHAR:   ONECP(unsigned short, unsigned char);  break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(unsigned short, char);           break;
 	    case SHM_SHORT:   ONECP(unsigned short, short);          break;
-	    case SHM_INT:    ONECP(unsigned short, int);           break;
+	    case SHM_LONG:    ONECP(unsigned short, s32_t);          break;
 	   }
 	   break;
 	 case SHM_UCHAR:
 	   switch (ft) {
 	    case SHM_DOUBLE:  ONECP(unsigned char, double);          break;
 	    case SHM_FLOAT:   ONECP(unsigned char, float);           break;
-	    case SHM_UINT:   ONECP(unsigned char, unsigned int);   break;
+	    case SHM_ULONG:   ONECP(unsigned char, u32_t);           break;
 	    case SHM_USHORT:  ONECP(unsigned char, unsigned short);  break;
 	    case SHM_UCHAR:   ONECP(unsigned char, unsigned char);   break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(unsigned char, char);            break;
 	    case SHM_SHORT:   ONECP(unsigned char, short);           break;
-	    case SHM_INT:    ONECP(unsigned char, int);            break;
+	    case SHM_LONG:    ONECP(unsigned char, s32_t);           break;
 	   }
 	   break;
 	 case SHM_SHORT:
 	   switch (ft) {
 	    case SHM_DOUBLE:  ONECP(short, double);                  break;
 	    case SHM_FLOAT:   ONECP(short, float);                   break;
-	    case SHM_UINT:   ONECP(short, unsigned int);           break;
+	    case SHM_ULONG:   ONECP(short, u32_t);                   break;
 	    case SHM_USHORT:  ONECP(short, unsigned short);          break;
 	    case SHM_UCHAR:   ONECP(short, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(short, char);                    break;
 	    case SHM_SHORT:   ONECP(short, short);                   break;
-	    case SHM_INT:    ONECP(short, int);                    break;
+	    case SHM_LONG:    ONECP(short, s32_t);                   break;
 	   }
 	   break;
 	 case SHM_STRING:  /*FALLTHROUGH*/
@@ -1051,58 +990,58 @@ static void typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offse
 	   switch (ft) {
 	    case SHM_DOUBLE:  ONECP(char, double);                   break;
 	    case SHM_FLOAT:   ONECP(char, float);                    break;
-	    case SHM_UINT:   ONECP(char, unsigned int);            break;
+	    case SHM_ULONG:   ONECP(char, u32_t);                    break;
 	    case SHM_USHORT:  ONECP(char, unsigned short);           break;
 	    case SHM_UCHAR:   ONECP(char, unsigned char);            break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(char, char);                     break;
 	    case SHM_SHORT:   ONECP(char, short);                    break;
-	    case SHM_INT:    ONECP(char, int);                     break;
+	    case SHM_LONG:    ONECP(char, s32_t);                    break;
 	   }
 	   break;
 	 case SHM_FLOAT:
 	   switch (ft) {
 	    case SHM_DOUBLE:  ONECP(float, double);                  break;
 	    case SHM_FLOAT:   ONECP(float, float);                   break;
-	    case SHM_UINT:   ONECP(float, unsigned int);           break;
+	    case SHM_ULONG:   ONECP(float, u32_t);                   break;
 	    case SHM_USHORT:  ONECP(float, unsigned short);          break;
 	    case SHM_UCHAR:   ONECP(float, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(float, char);                    break;
 	    case SHM_SHORT:   ONECP(float, short);                   break;
-	    case SHM_INT:    ONECP(float, int);                    break;
+	    case SHM_LONG:    ONECP(float, s32_t);                   break;
 	   }
 	   break;
 	 case SHM_DOUBLE:
 	   switch (ft) {
 	    case SHM_DOUBLE:  ONECP(double, double);                 break;
 	    case SHM_FLOAT:   ONECP(double, float);                  break;
-	    case SHM_UINT:   ONECP(double, unsigned int);          break;
+	    case SHM_ULONG:   ONECP(double, u32_t);                  break;
 	    case SHM_USHORT:  ONECP(double, unsigned short);         break;
 	    case SHM_UCHAR:   ONECP(double, unsigned char);          break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(double, char);                   break;
 	    case SHM_SHORT:   ONECP(double, short);                  break;
-	    case SHM_INT:    ONECP(double, int);                   break;
+	    case SHM_LONG:    ONECP(double, s32_t);                  break;
 	   }
 	   break;
 	}
+	return(0);
 }
 
 /*
-  char * SPS_GetNextSpec (int flag)
+  char *SPS_GetNextSpec(int flag)
   Input: Flag to know if this is the first call to SPS_GetNextSpec
          1: Get first in list, 0: Get next 
   Returns: Name of the SPEC version or NULL if no more in the list
 */
-char * SPS_GetNextSpec (int flag) 
-{
+char *SPS_GetNextSpec(int flag) {
   static int loop_count = 0; 
   if (flag == 0) {
     SearchSpecVersions();
     loop_count = 0;
   } else
-    loop_count ++;
+    loop_count++;
 
   if (loop_count >= SpecIDNo) {
     loop_count = 0;
@@ -1113,15 +1052,14 @@ char * SPS_GetNextSpec (int flag)
 
 
 /*
-  char * SPS_GetNextArray (char * version, int flag)
+  char *SPS_GetNextArray(char *version, int flag)
   Input: version : name of SPEC version, or NULL for all. 
          Flag to know if this is the first call to SPS_GetNextArray
          1: Get first in list, 0: Get next 
   Returns: Name of the SPEC array name or NULL if no more in the list
 */
 
-char * SPS_GetNextArray (char * fullname, int flag)
-{
+char *SPS_GetNextArray(char *fullname, int flag) {
   static int loop_count = 0;
   int idx = -1;
 
@@ -1129,12 +1067,12 @@ char * SPS_GetNextArray (char * fullname, int flag)
     return GetNextAll(flag);
   
   if (flag == 0) {
-    SearchSpecArrays (fullname);
+    SearchSpecArrays(fullname);
     loop_count = 0;
   } else
-    loop_count ++;
+    loop_count++;
   
-  idx = find_TabIDX_composed (fullname);
+  idx = find_TabIDX_composed(fullname);
 
   if (idx == -1 || loop_count >= SpecIDTab[idx].arrayno || 
       SpecIDTab[idx].array_names[loop_count].name == NULL) {
@@ -1144,10 +1082,9 @@ char * SPS_GetNextArray (char * fullname, int flag)
     return SpecIDTab[idx].array_names[loop_count].name;
 }
 
-static char * GetNextAll (int flag)
-{
+static char *GetNextAll(int flag) {
   static int loop_count = 0;
-  static char * spec_version = NULL;
+  static char *spec_version = NULL;
   int idx = -1;
   
   for (;;) {
@@ -1158,9 +1095,9 @@ static char * GetNextAll (int flag)
       }
       SearchSpecArrays(spec_version);
     } else
-      loop_count ++;
+      loop_count++;
     
-    idx = find_TabIDX_composed (spec_version);
+    idx = find_TabIDX_composed(spec_version);
     
     if (idx == -1 || loop_count >= SpecIDTab[idx].arrayno || 
 	SpecIDTab[idx].array_names[loop_count].name == NULL) {
@@ -1177,21 +1114,20 @@ static char * GetNextAll (int flag)
    Input: version : specversion with PID if necessary (spec(1234) or fourc)
    Returns: State
 */
-int SPS_GetSpecState (char *version)
-{
-  struct shm_header *spec_shm;
-  int state = 0;
+s32_t SPS_GetSpecState(char *version) {
+  SHM *spec_shm;
+  s32_t state = 0;
   struct shm_status *st;
   SPS_ARRAY private_shm;
   int was_attached;
   
-  if ((private_shm = convert_to_handle (version, NULL)) == NULL)
+  if ((private_shm = convert_to_handle(version, NULL)) == NULL)
     return -1;
   
-  /* private_shm -> stay_attached = 1; Always stay attached to the status */
-  was_attached = private_shm -> attached;
+  /* private_shm->stay_attached = 1; Always stay attached to the status */
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 0))
+  if (ReconnectToArray(private_shm, 0))
     return -1;
   
   spec_shm = private_shm->shm;
@@ -1204,17 +1140,15 @@ int SPS_GetSpecState (char *version)
     state = st->spec_state;
   } 
   
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   return state;
 }
 
-static SPS_ARRAY add_private_shm (struct shm_header *shm, char *fullname, 
-			   char *array, int write_flag)
-{
+static SPS_ARRAY add_private_shm(SHM *shm, char *fullname, char *array, int write_flag) {
   SPS_ARRAY private_shm;
-  private_shm = (SPS_ARRAY) malloc (sizeof(struct sps_array));
+  private_shm = (SPS_ARRAY) malloc(sizeof(struct sps_array));
   if (private_shm == NULL) {
     return NULL;
   }
@@ -1241,41 +1175,80 @@ static SPS_ARRAY add_private_shm (struct shm_header *shm, char *fullname,
 }
 
 static SPS_ARRAY
-convert_to_handle (char *spec_version, char *array_name)
-{
+convert_to_handle(char *spec_version, char *array_name) {
   struct shm_created *shm_list;
   SPS_ARRAY private_shm;
 
   if (spec_version == NULL && array_name == NULL)
     return NULL; /* Why would somebody want to do that */
   
-  shm_list = ll_find_array (spec_version, array_name, array_name ? 0 : 1);
+  shm_list = ll_find_array(spec_version, array_name, array_name? 0:1);
   
   /* If not in list then put it into the list if it is not the generic
      spec_version (NULL) */
  
  if (shm_list == 0) {
-    private_shm = add_private_shm (NULL, spec_version, array_name, 0);
-    shm_list = ll_addnew_array (spec_version, array_name, 
-				  array_name ? 0 : 1, NULL, 0, 0, NULL);
-    shm_list -> handle = private_shm;
+    private_shm = add_private_shm(NULL, spec_version, array_name, 0);
+    shm_list = ll_addnew_array(spec_version, array_name,
+				  array_name? 0:1, NULL, 0, 0, NULL);
+    shm_list->handle = private_shm;
   } else {
-    private_shm = shm_list-> handle;
-    if (shm_list -> spec_version == NULL && private_shm -> spec ) 
-      shm_list -> spec_version = (char *) strdup (private_shm -> spec);
+    private_shm = shm_list->handle;
+    if (shm_list->spec_version == NULL && private_shm->spec )
+      shm_list->spec_version = (char *) strdup(private_shm->spec);
   }
   return private_shm;
 }
     
+#if SPS_DEBUG
+/* 
+   Attaches to a SPEC array. Returns a private opaque structure which user
+   should not modify. To get the real data call 
+   Input: fullname specversion with PID if necessary (spec(1234) or fourc)
+          array_name: The name of the SPEC array (i.e. MCA_DATA)
+	  write_flag: One if you intend to modify the shared memory
+   Output: NULL if error
+	   opaque structure to attached memory
+*/
 
+static int SPS_AttachToArray(char *fullname, char *array, int write_flag) {
+  SPS_ARRAY private_shm;
+  
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
+    return 1;
+  private_shm->write_flag = write_flag;
+  private_shm->stay_attached = 1;
+  if (private_shm) 
+    ReconnectToArray(private_shm, 0);
+  return 0;
+}
 
-static int DeconnectArray (SPS_ARRAY private_shm)
-{
+/* 
+   Detaches from a SPEC array. The opaque pointer private_shm stays valid.
+   If it is used in further calls the functions automatically try to reattach
+   to the SPEC array.
+   Input: fullname: Spec name
+          array name of the array
+   Returns: 1 error occured
+            0 everything OK
+*/
+
+static int SPS_DetachFromArray(char *fullname, char*array) {
+  SPS_ARRAY private_shm;
+  
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
+    return 1;
+  private_shm->stay_attached = 0;
+  return DeconnectArray(private_shm);
+}
+#endif /* SPS_DEBUG */
+
+static int DeconnectArray(SPS_ARRAY private_shm) {
   if (private_shm ->attached) {
-    c_shmdt ((void *)private_shm -> shm);
-    private_shm -> attached = 0;
-    private_shm -> shm = NULL;
-    private_shm -> pointer_got_count = 0;
+    c_shmdt((void *)private_shm->shm);
+    private_shm->attached = 0;
+    private_shm->shm = NULL;
+    private_shm->pointer_got_count = 0;
   }
   return 0;
 }
@@ -1288,53 +1261,51 @@ static int DeconnectArray (SPS_ARRAY private_shm)
             0 success
 */
 
-static int ReconnectToArray (SPS_ARRAY private_shm, int write_flag)
-{
-  struct shm_header *shm = NULL;
-
+static int ReconnectToArray(SPS_ARRAY private_shm, int write_flag) {
+  SHM *shm;
+  
   if (write_flag && !private_shm ->write_flag) { /*Reattach with write flag */
     private_shm ->write_flag = 1;
-    shm = private_shm -> shm;
+    shm = private_shm->shm;
     if (shm) {
-      c_shmdt ((void *) shm);
-      private_shm -> attached = 0;
-      private_shm -> shm = NULL;
+      c_shmdt((void *) shm);
+      private_shm->attached = 0;
+      private_shm->shm = NULL;
     }
   }
 
   if (!private_shm ->attached) {
-    if (private_shm -> id != 0) {
-      shm = c_shmat (private_shm -> id, (char *) 0, 
-		     private_shm->write_flag ? 0 : SHM_RDONLY);
+    if (private_shm->id != 0) {
+      shm = c_shmat(private_shm->id, NULL, private_shm->write_flag? 0:SHM_RDONLY);
     } else
       shm = NULL;
   } else  
-    shm = private_shm -> shm;
+    shm = private_shm->shm;
     
   /*  Check shm and try to get a new one if old one not longer valid */
-  if (!checkSHM (shm, private_shm -> spec, private_shm -> array, 0) ) {
-    if (shm && shm != (struct shm_header *) -1) {
-      c_shmdt ((void *) shm);
-      private_shm -> attached = 0;
-      private_shm -> shm = NULL;
+  if (!checkSHM(shm, private_shm->spec, private_shm->array, 0) ) {
+    if (shm && shm != (SHM *) -1) {
+      c_shmdt((void *) shm);
+      private_shm->attached = 0;
+      private_shm->shm = NULL;
     }
     
-    if (private_shm -> array) {
-      if ((shm = attachArray (private_shm->spec, private_shm->array,
-			      private_shm->write_flag ? 0 : 1)) == NULL)
+    if (private_shm->array) {
+      if ((shm = attachArray(private_shm->spec, private_shm->array,
+			      private_shm->write_flag? 0:1)) == NULL)
 	return 1;
     } else {
-      if ((shm = attachSpec (private_shm->spec)) == NULL)
+      if ((shm = attachSpec(private_shm->spec)) == NULL)
 	return 1;
     }
   }
 
   private_shm->shm        = shm;
-  private_shm->attached  = (shm == NULL) ? 0 : 1;
-  private_shm->id         = shm -> head.head.shmid;
+  private_shm->attached  = (shm == NULL)? 0:1;
+  private_shm->id         = shm->head.head.shmid;
   /* If we are attached and the SPEC version is still unknown - update now */
-  if (shm && private_shm -> spec == NULL) 
-    private_shm -> spec = (char *) strdup ( shm -> head.head.spec_version );
+  if (shm && private_shm->spec == NULL)
+    private_shm->spec = (char *) strdup(shm->head.head.spec_version);
   
   return 0;
 }
@@ -1350,18 +1321,17 @@ static int ReconnectToArray (SPS_ARRAY private_shm, int write_flag)
 	    party quit and recreated the shared memory) 
 	    
 */
-void* SPS_GetDataPointer (char *fullname, char* array, int write_flag) 
-{
+void *SPS_GetDataPointer(char *fullname, char *array, int write_flag) {
   SPS_ARRAY private_shm;
   
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return NULL;
-  if (ReconnectToArray (private_shm, write_flag))
+  if (ReconnectToArray(private_shm, write_flag))
     return NULL;
 
-  private_shm -> pointer_got_count ++; 
+  private_shm->pointer_got_count++;
   if (private_shm->shm->head.head.version < 4)
-	return &(((struct shm_oheader *)private_shm->shm)->data);
+    return &(((struct shm_oheader *)(private_shm->shm))->data);
   return &(private_shm->shm->data);
 }
 
@@ -1375,32 +1345,32 @@ void* SPS_GetDataPointer (char *fullname, char* array, int write_flag)
             1 error
 */
 
-int SPS_ReturnDataPointer (void *data)
-{
-   SPS_ARRAY private_shm;
-   struct shm_created *created;
-   struct shm_head *sh;
-   struct shm_header *shm;
+int SPS_ReturnDataPointer(void *data) {
+  SPS_ARRAY private_shm;
+  struct shm_created *created;
+  struct shm_head *sh;
+  SHM *shm;
+  
+  /* Try old header size first, since it is smaller */
+  sh = (struct shm_head *) (((char *) data) - SHM_OHEAD_SIZE);
+  if (sh->magic != SHM_MAGIC)
+     sh = (struct shm_head *) (((char *) data) - SHM_HEAD_SIZE);
+  if (sh->magic != SHM_MAGIC)
+     return(1);
 
-   /* Try old header size first, since it is smaller */
-   sh = (struct shm_head *) (((char *) data) - SHM_OHEAD_SIZE);
-   if (sh->magic != SHM_MAGIC)
-      sh = (struct shm_head *) (((char *) data) - SHM_HEAD_SIZE);
-   if (sh->magic != SHM_MAGIC)
-      return(1);
-   shm = (struct shm_header *) sh;
+  shm = (SHM *) sh;
 
-   if ((created = ll_find_pointer (shm)) == NULL)
-     return 1;
-
+  if ((created = ll_find_pointer(shm)) == NULL)
+    return 1;
+  
   if ((private_shm = created->handle) == NULL)
     return 1;
 
-  private_shm -> pointer_got_count --; 
+  private_shm->pointer_got_count--;
 
-  if (private_shm -> pointer_got_count <= 0) {
+  if (private_shm->pointer_got_count <= 0) {
     private_shm->pointer_got_count = 0;
-    return DeconnectArray (private_shm);
+    return DeconnectArray(private_shm);
   }
   return 0;
 }
@@ -1420,14 +1390,13 @@ int SPS_ReturnDataPointer (void *data)
 	  items_in_buffer: buffersize in number of items of type my_type 
 	                   in buffer
    Returns: 0 success
-            1 overflow , but copy done
+	    1 overflow, but copy done
            -1 error Nothing done
 */
 
-int SPS_CopyFromShared (char *fullname, char *array, void *buffer, int my_type,
-		      int items_in_buffer)
-{
-  return TypedCopy (fullname, array, buffer, my_type, items_in_buffer, 0);
+int SPS_CopyFromShared(char *fullname, char *array, void *buffer, int my_type,
+		      int items_in_buffer) {
+  return TypedCopy(fullname, array, buffer, my_type, items_in_buffer, 0);
 }
 
 /* 
@@ -1445,14 +1414,13 @@ int SPS_CopyFromShared (char *fullname, char *array, void *buffer, int my_type,
 	  items_in_buffer: buffersize in number of items of type my_type 
 	                   in buffer
    Returns: 0 success
-            1 overflow , but copy done
+	    1 overflow, but copy done
            -1 error Nothing done
 */
 
-int SPS_CopyToShared (char *fullname, char *array, void *buffer, int my_type,
-		      int items_in_buffer)
-{
-  return TypedCopy (fullname, array, buffer, my_type, items_in_buffer, 1);
+int SPS_CopyToShared(char *fullname, char *array, void *buffer, int my_type,
+		      int items_in_buffer) {
+  return TypedCopy(fullname, array, buffer, my_type, items_in_buffer, 1);
 }
 
 /* 
@@ -1470,46 +1438,44 @@ int SPS_CopyToShared (char *fullname, char *array, void *buffer, int my_type,
 	  items_in_buffer: buffersize in number of items of type my_type 
 	                   in buffer
    Returns: 0 success
-            1 overflow , but copy done
+	    1 overflow, but copy done
            -1 error Nothing done
 */
 
-static int TypedCopy (char *fullname, char *array, void *buffer, int my_type,
-		      int items_in_buffer, int direction)
-{
+static int TypedCopy(char *fullname, char *array, void *buffer, int my_type,
+		      int items_in_buffer, int direction) {
   SPS_ARRAY private_shm;
   int was_attached, overflow;
   
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return -1;
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, direction))
+  if (ReconnectToArray(private_shm, direction))
     return -1;
   
-  overflow = typedcp_private (private_shm, buffer, my_type, items_in_buffer, 
+  overflow = typedcp_private(private_shm, buffer, my_type, items_in_buffer,
 		     direction); 
   
-  if (was_attached == 0 && private_shm -> stay_attached == 0) 
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   return overflow;
 }
 
-static int typedcp_private (SPS_ARRAY private_shm, void *buffer, int my_type,
-			int items_in_buffer, int direction)
-{
+static int typedcp_private(SPS_ARRAY private_shm, void *buffer, int my_type,
+			int items_in_buffer, int direction) {
   void *data_ptr;
   int rows, cols, type, n_to_copy, overflow;
   
   /* Do the data copy taking type and my_type into account */
-  rows = private_shm -> shm -> head.head.rows;
-  cols = private_shm -> shm -> head.head.cols;
-  type = private_shm -> shm -> head.head.type;
+  rows = private_shm->shm->head.head.rows;
+  cols = private_shm->shm->head.head.cols;
+  type = private_shm->shm->head.head.type;
   if (private_shm->shm->head.head.version < 4)
     data_ptr = &(((struct shm_oheader *)(private_shm->shm))->data);
   else
-	data_ptr = &(private_shm->shm->data) ;
+    data_ptr = &(private_shm->shm->data);
   if (rows * cols > items_in_buffer) {
     overflow = 1;
     n_to_copy = items_in_buffer;
@@ -1519,10 +1485,10 @@ static int typedcp_private (SPS_ARRAY private_shm, void *buffer, int my_type,
   }
   
   if (direction) {
-    typedcp ( data_ptr, type, buffer, my_type, n_to_copy, 0 , 0);
-    private_shm -> shm -> head.head.utime++; /* Updated */
+    typedcp(data_ptr, type, buffer, my_type, n_to_copy, 0, 0);
+    private_shm->shm->head.head.utime++; /* Updated */
   } else {
-    typedcp ( buffer, my_type, data_ptr, type, n_to_copy, 0 , 0);
+    typedcp(buffer, my_type, data_ptr, type, n_to_copy, 0, 0);
   }
   return overflow;
 }
@@ -1534,10 +1500,9 @@ static int typedcp_private (SPS_ARRAY private_shm, void *buffer, int my_type,
    my_buffer is NULL if it should copy to the internal buffer otherwise the 
              buffer to copy from or to
 */
-static void *CopyDataRC (char *fullname, char *array, int my_type, 
+static void *CopyDataRC(char *fullname, char *array, int my_type,
 			 int row, int col, int *act_copied, 
-			 int use_row, int direction, void *my_buffer)
-{
+			 int use_row, int direction, void *my_buffer) {
   int rows, cols, type, flag;
   void *buffer = NULL;
   SPS_ARRAY private_shm;
@@ -1549,41 +1514,41 @@ static void *CopyDataRC (char *fullname, char *array, int my_type,
   if (act_copied) 
     *act_copied = 0;
 
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return NULL;
 
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, direction))
+  if (ReconnectToArray(private_shm, direction))
     return NULL;
   
-  rows = private_shm -> shm -> head.head.rows;
-  cols = private_shm -> shm -> head.head.cols;
-  type = private_shm -> shm -> head.head.type;
-  flag = private_shm -> shm -> head.head.flags;
+  rows = private_shm->shm->head.head.rows;
+  cols = private_shm->shm->head.head.cols;
+  type = private_shm->shm->head.head.type;
+  flag = private_shm->shm->head.head.flags;
 
   if ((use_row && (row < 0 || row >= rows)) || 
       (!use_row && (col < 0 || col >= cols)))
     return NULL;
 
-  size  = (use_row ? cols : rows) * typedsize(my_type); /* full row/column */
+  size  = (use_row? cols:rows) * typedsize(my_type); /* full row/column */
   
   if (my_buffer == NULL) {
-    if ( private_shm->private_data_copy == NULL || 
+    if (private_shm->private_data_copy == NULL ||
 	 size > private_shm->buffer_len ) {
       if (size > private_shm->buffer_len) {
-	free (private_shm -> private_data_copy);
-	private_shm -> private_data_copy = NULL;
-	private_shm -> buffer_len = 0;
+	free(private_shm->private_data_copy);
+	private_shm->private_data_copy = NULL;
+	private_shm->buffer_len = 0;
       }
       
-      if ( (buffer = (void *) malloc (size)) == NULL) 
+      if ((buffer = (void *) malloc(size)) == NULL)
 	goto error;
       allocated = 1;
-      private_shm -> private_data_copy = buffer;
-      private_shm -> buffer_len = size;
+      private_shm->private_data_copy = buffer;
+      private_shm->buffer_len = size;
     } else
-      buffer = private_shm -> private_data_copy;
+      buffer = private_shm->private_data_copy;
   } else
     buffer = my_buffer;
 
@@ -1602,10 +1567,10 @@ static void *CopyDataRC (char *fullname, char *array, int my_type,
       n_to_copy = col;
     
     if (direction) {
-      typedcp ( data_ptr , type, buffer, my_type, n_to_copy, 0, 0);
-      private_shm -> shm -> head.head.utime++; /* Updated */
+      typedcp(data_ptr, type, buffer, my_type, n_to_copy, 0, 0);
+      private_shm->shm->head.head.utime++; /* Updated */
     } else {
-      typedcp ( buffer, my_type, data_ptr, type, n_to_copy, 0, 0);
+      typedcp(buffer, my_type, data_ptr, type, n_to_copy, 0, 0);
     }
     
   } else {
@@ -1616,17 +1581,17 @@ static void *CopyDataRC (char *fullname, char *array, int my_type,
       n_to_copy = row;
     
     if (direction) {
-      typedcp ( data_ptr , type, buffer, my_type, n_to_copy, 2, cols);
-      private_shm -> shm -> head.head.utime++; /* Updated */
+      typedcp(data_ptr, type, buffer, my_type, n_to_copy, 2, cols);
+      private_shm->shm->head.head.utime++; /* Updated */
     } else {
-      typedcp ( buffer, my_type, data_ptr, type, n_to_copy, 1, cols);
+      typedcp(buffer, my_type, data_ptr, type, n_to_copy, 1, cols);
     }
     
   }
 
  error:
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   if (act_copied) 
     *act_copied = n_to_copy;
@@ -1655,10 +1620,9 @@ static void *CopyDataRC (char *fullname, char *array, int my_type,
   Returns: Pointer to the data array (DO NOT USE free() to free this buffer)
 */
 
-void * SPS_GetDataRow (char *name, char *array, int my_type, 
-			int row, int col, int *act_cols)
-{
-  return CopyDataRC (name, array, my_type, row, col, act_cols, 1, 0, NULL);
+void *SPS_GetDataRow(char *name, char *array, int my_type,
+			int row, int col, int *act_cols) {
+  return CopyDataRC(name, array, my_type, row, col, act_cols, 1, 0, NULL);
 } 
 
 /*
@@ -1682,10 +1646,9 @@ void * SPS_GetDataRow (char *name, char *array, int my_type,
   Returns: Pointer to the data array (DO NOT USE free() to free this buffer)
 */
 
-void * SPS_GetDataCol (char *name, char *array, int my_type, 
-			int col, int row, int *act_rows)
-{
-  return CopyDataRC (name, array, my_type, row, col, act_rows, 0, 0, NULL);
+void *SPS_GetDataCol(char *name, char *array, int my_type,
+			int col, int row, int *act_rows) {
+  return CopyDataRC(name, array, my_type, row, col, act_rows, 0, 0, NULL);
 } 
 
 /*
@@ -1707,11 +1670,10 @@ void * SPS_GetDataCol (char *name, char *array, int my_type,
            1 error
 */
 
-int SPS_CopyRowFromShared (char *name, char *array, void *buf, 
-     int my_type, int row, int col, int *act_cols)
-{
+int SPS_CopyRowFromShared(char *name, char *array, void *buf,
+     int my_type, int row, int col, int *act_cols) {
   return 
-   (CopyDataRC (name, array, my_type, row, col, act_cols, 1, 0, buf) ? 0 : 1);
+   (CopyDataRC(name, array, my_type, row, col, act_cols, 1, 0, buf)? 0:1);
 } 
 
 /*
@@ -1733,11 +1695,10 @@ int SPS_CopyRowFromShared (char *name, char *array, void *buf,
            1 error
 */
 
-int SPS_CopyColFromShared (char *name, char *array, void *buf, 
-     int my_type, int col, int row, int *act_rows)
-{
+int SPS_CopyColFromShared(char *name, char *array, void *buf,
+     int my_type, int col, int row, int *act_rows) {
   return 
-   (CopyDataRC (name, array, my_type, row, col, act_rows, 0, 0, buf) ? 0 : 1);
+   (CopyDataRC(name, array, my_type, row, col, act_rows, 0, 0, buf)? 0:1);
 } 
 
 /*
@@ -1759,11 +1720,10 @@ int SPS_CopyColFromShared (char *name, char *array, void *buf,
            1 error
 */
 
-int SPS_CopyRowToShared (char *name, char *array, void *buf, 
-     int my_type, int row, int col, int *act_cols)
-{
+int SPS_CopyRowToShared(char *name, char *array, void *buf,
+     int my_type, int row, int col, int *act_cols) {
   return 
-   (CopyDataRC (name, array, my_type, row, col, act_cols, 1, 1, buf) ? 0 : 1);
+   (CopyDataRC(name, array, my_type, row, col, act_cols, 1, 1, buf)? 0:1);
 } 
 
 /*
@@ -1785,11 +1745,10 @@ int SPS_CopyRowToShared (char *name, char *array, void *buf,
            1 error
 */
 
-int SPS_CopyColToShared (char *name, char *array, void *buf, 
-     int my_type, int col, int row, int *act_rows)
-{
+int SPS_CopyColToShared(char *name, char *array, void *buf,
+     int my_type, int col, int row, int *act_rows) {
   return 
-   (CopyDataRC (name, array, my_type, row, col, act_rows, 0, 1, buf) ? 0 : 1);
+   (CopyDataRC(name, array, my_type, row, col, act_rows, 0, 1, buf)? 0:1);
 } 
 
 /*
@@ -1812,27 +1771,26 @@ int SPS_CopyColToShared (char *name, char *array, void *buf,
   Returns: Pointer to the data array (DO NOT USE free() to free this buffer)
 */
 
-void * SPS_GetDataCopy (char *fullname, char *array, int my_type, 
-			int *rows_ptr, int *cols_ptr)
-{
+void *SPS_GetDataCopy(char *fullname, char *array, int my_type,
+			int *rows_ptr, int *cols_ptr) {
   int rows, cols, type, flag;
   void *buffer = NULL;
   SPS_ARRAY private_shm;
   int allocated = 0;
   int was_attached, size;
 
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return NULL;
 
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 0))
+  if (ReconnectToArray(private_shm, 0))
     return NULL;
   
-  rows = private_shm -> shm -> head.head.rows;
-  cols = private_shm -> shm -> head.head.cols;
-  type = private_shm -> shm -> head.head.type;
-  flag = private_shm -> shm -> head.head.flags;
+  rows = private_shm->shm->head.head.rows;
+  cols = private_shm->shm->head.head.cols;
+  type = private_shm->shm->head.head.type;
+  flag = private_shm->shm->head.head.flags;
 
   if (rows_ptr) 
     *rows_ptr = rows;
@@ -1841,48 +1799,47 @@ void * SPS_GetDataCopy (char *fullname, char *array, int my_type,
   
   size  = rows * cols * typedsize(my_type);
   
-  if ( private_shm->private_data_copy == NULL || 
+  if (private_shm->private_data_copy == NULL ||
        size > private_shm->buffer_len ) {
     if (size > private_shm->buffer_len) {
-      free (private_shm -> private_data_copy);
-      private_shm -> private_data_copy = NULL;
-      private_shm -> buffer_len = 0;
+      free(private_shm->private_data_copy);
+      private_shm->private_data_copy = NULL;
+      private_shm->buffer_len = 0;
     }
 
-    if ( (buffer = (void *) malloc (size)) == NULL) 
+    if ((buffer = (void *) malloc(size)) == NULL)
       goto error;
     allocated = 1;
-    private_shm -> private_data_copy = buffer;
-    private_shm -> buffer_len = size;
+    private_shm->private_data_copy = buffer;
+    private_shm->buffer_len = size;
   }
 
-  if (typedcp_private (private_shm, private_shm -> private_data_copy, 
+  if (typedcp_private(private_shm, private_shm->private_data_copy,
 		       my_type, rows * cols, 0)) {
     if (allocated) {
-      free (buffer);
+      free(buffer);
       buffer = NULL;
     }
   } else 
-    buffer = private_shm -> private_data_copy;
+    buffer = private_shm->private_data_copy;
   
  error:
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   return buffer;
 }
 
-int SPS_FreeDataCopy (char *fullname, char *array)
-{
+int SPS_FreeDataCopy(char *fullname, char *array) {
   SPS_ARRAY private_shm;
 
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return 1;
   
-  if (private_shm && private_shm -> private_data_copy != NULL) {
-    free (private_shm -> private_data_copy);
-    private_shm -> private_data_copy = NULL;
-    private_shm -> buffer_len = 0;
+  if (private_shm && private_shm->private_data_copy != NULL) {
+    free(private_shm->private_data_copy);
+    private_shm->private_data_copy = NULL;
+    private_shm->buffer_len = 0;
   }
   return 0;
 }
@@ -1902,10 +1859,9 @@ int SPS_FreeDataCopy (char *fullname, char *array)
 */
 
 char * 
-SPS_GetEnvStr (char *spec_version, char *array_name, char *identifier)
-{
+SPS_GetEnvStr(char *spec_version, char *array_name, char *identifier) {
   int rows, cols;
-  char * data;
+  char *data;
   char id[SHM_MAX_STR_LEN + 1];
   static char value[SHM_MAX_STR_LEN + 1];
   SPS_ARRAY private_shm;
@@ -1913,12 +1869,12 @@ SPS_GetEnvStr (char *spec_version, char *array_name, char *identifier)
   int was_attached, i;
   char strange[SHM_MAX_STR_LEN + 1];
 
-  if ((private_shm = convert_to_handle (spec_version, array_name)) == NULL)
+  if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return NULL;
   
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 0)) 
+  if (ReconnectToArray(private_shm, 0))
     return NULL; /* Can not attach */
   
   if (private_shm->shm->head.head.type != SHM_STRING) 
@@ -1927,26 +1883,26 @@ SPS_GetEnvStr (char *spec_version, char *array_name, char *identifier)
   if (private_shm->shm->head.head.version < 4)
     data = (char *) &(((struct shm_oheader *)(private_shm->shm))->data);
   else
-	data = (char *) &(private_shm->shm->data);
+    data = (char *) &(private_shm->shm->data);
   rows = private_shm->shm->head.head.rows;
   cols = private_shm->shm->head.head.cols;
 
   if (cols > SHM_MAX_STR_LEN)
-    goto back; /* We better give up , our buffer might be too small */
+    goto back; /* We better give up, our buffer might be too small */
   
   for (i =0; i < rows; i++) {
-    strcpy (strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
-    if (sscanf (strange,"%[^=]=%[^\n]", id, value) == 2) {
+    strcpy(strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
+    if (sscanf(strange,"%[^=]=%[^\n]", id, value) == 2) {
       /* OK we have a pair */
       if (strcmp(id, identifier) == 0) {
 	res = value;
-	break ;
+	break;
       }
     }
   }
  back:
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
 
   return res;
 } 
@@ -1963,12 +1919,10 @@ SPS_GetEnvStr (char *spec_version, char *array_name, char *identifier)
                     around but make a copy of the contents as the storage
                     space is reused at every call to this function.
 */
-
-char * 
-SPS_GetNextEnvKey (char *spec_version, char *array_name, int flag)
-{
+char *
+SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
   int rows, cols;
-  char * data;
+  char *data;
   char id[SHM_MAX_STR_LEN + 1];
   static char value[SHM_MAX_STR_LEN + 1];
   SPS_ARRAY private_shm;
@@ -1991,7 +1945,7 @@ SPS_GetNextEnvKey (char *spec_version, char *array_name, int flag)
       return NULL;
     } else {
       res=keys[loop_count];
-      loop_count ++;
+      loop_count++;
       return res;
     }
   }
@@ -2006,12 +1960,12 @@ SPS_GetNextEnvKey (char *spec_version, char *array_name, int flag)
   loop_count = 0;
   keyNO = 0;
 
-  if ((private_shm = convert_to_handle (spec_version, array_name)) == NULL)
+  if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return NULL;
   
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 0)) 
+  if (ReconnectToArray(private_shm, 0))
     return NULL; /* Can not attach */
   
   if (private_shm->shm->head.head.type != SHM_STRING) 
@@ -2025,26 +1979,26 @@ SPS_GetNextEnvKey (char *spec_version, char *array_name, int flag)
   cols = private_shm->shm->head.head.cols;
 
   if (cols > SHM_MAX_STR_LEN)
-    goto back; /* We better give up , our buffer might be too small */
+    goto back; /* We better give up, our buffer might be too small */
   
   keys = malloc(sizeof(char *) * rows);
-  for (i =0; i < rows; i++) {
-    strcpy (strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
-    if (sscanf (strange,"%[^=]=%[^\n]", id, value) == 2) {
+  for (i = 0; i < rows; i++) {
+    strcpy(strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
+    if (sscanf(strange,"%[^=]=%[^\n]", id, value) == 2) {
       /* OK we have a pair */
       keys[i] = (char*) strdup(id);
-      keyNO ++;
+      keyNO++;
     }
   }
  back:
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   if (keyNO) {
     loop_count = 1;
     return keys[0];
   } else {
-    free (keys);
+    free(keys);
     keys = NULL;
     return NULL;
   }
@@ -2064,23 +2018,22 @@ SPS_GetNextEnvKey (char *spec_version, char *array_name, int flag)
 */
 
 int
-SPS_PutEnvStr (char *spec_version, char *array_name, 
-	       char *identifier, char *set_value)
-{
+SPS_PutEnvStr(char *spec_version, char *array_name,
+	       char *identifier, char *set_value) {
   int rows, cols;
-  char * data;
+  char *data;
   SPS_ARRAY private_shm;
   int res = 1;
   int was_attached, i, use_row;
   char id[SHM_MAX_STR_LEN + 1], value[SHM_MAX_STR_LEN + 1],
     strange[SHM_MAX_STR_LEN + 1];
 
-  if ((private_shm = convert_to_handle (spec_version, array_name)) == NULL)
+  if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return 1;
   
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 1)) 
+  if (ReconnectToArray(private_shm, 1))
     return 1;
   
   if (private_shm->shm->head.head.type != SHM_STRING) 
@@ -2092,21 +2045,21 @@ SPS_PutEnvStr (char *spec_version, char *array_name,
   if (private_shm->shm->head.head.version < 4)
     data = (char *) &(((struct shm_oheader *)(private_shm->shm))->data);
   else
-	data = (char *) &(private_shm->shm->data);
+    data = (char *) &(private_shm->shm->data);
   rows = private_shm->shm->head.head.rows;
   cols = private_shm->shm->head.head.cols;
 
-  if (strlen (identifier) + strlen (value) + 2 > cols ||
+  if ((int)(strlen(identifier) + strlen (value) + 2) > cols ||
       cols > SHM_MAX_STR_LEN)
     goto back; /* We will no be able to fit that in */
 
   for (i =0, use_row = -1; i < rows; i++) {
-    strcpy (strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
-    if (sscanf (strange,"%[^=]=%[^\n]", id, value) == 2) {
+    strcpy(strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
+    if (sscanf(strange,"%[^=]=%[^\n]", id, value) == 2) {
       /* OK we have a pair */
       if (strcmp(id, identifier) == 0) {
 	use_row = i; /* We can reuse this row */
-	break ;
+	break;
       }
     } else {
       use_row = i; /* Delete the entry which doesn't have the correct format */
@@ -2117,16 +2070,16 @@ SPS_PutEnvStr (char *spec_version, char *array_name,
   if (use_row == -1)
     goto back; /* Sorry no more space in the array */
 
-  strcpy (data + cols * use_row, identifier);
-  strcat (data + cols * use_row, "=");
-  strcat (data + cols * use_row, set_value);
+  strcpy(data + cols * use_row, identifier);
+  strcat(data + cols * use_row, "=");
+  strcat(data + cols * use_row, set_value);
 
-  private_shm->shm->head.head.utime ++; /* Updated */
+  private_shm->shm->head.head.utime++; /* Updated */
   res = 0; /* Success - tell everybody*/
 
  back:
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
 
   return res;
 } 
@@ -2143,30 +2096,54 @@ SPS_PutEnvStr (char *spec_version, char *array_name,
            -1 Error - memory not longer updated
             1 Contents changed - new valid data
 */
-int SPS_IsUpdated (char *fullname, char *array) 
-{
-  unsigned int utime;
+int SPS_IsUpdated(char *fullname, char *array) {
+  u32_t utime;
   int updated;
   int was_attached;
   SPS_ARRAY private_shm;
 
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return -1;
 
-  utime = private_shm -> utime;
-  was_attached = private_shm -> attached;
+  utime = private_shm->utime;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 0))
+  if (ReconnectToArray(private_shm, 0))
     return -1;
   
-  private_shm -> utime = private_shm->shm->head.head.utime;
+  private_shm->utime = private_shm->shm->head.head.utime;
 
-  updated = (private_shm->shm->head.head.utime == utime) ? 0 : 1;
+  updated = (private_shm->shm->head.head.utime == utime)? 0:1;
 
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
 
   return updated;
+}
+  
+int SPS_LatestFrame(char *fullname, char *array) {
+#if SHM_VERSION >= 5
+	int     frame;
+	int     was_attached;
+	SPS_ARRAY private_shm;
+
+	if ((private_shm = convert_to_handle(fullname, array)) == NULL)
+		return(-1);
+
+	was_attached = private_shm->attached;
+
+	if (ReconnectToArray(private_shm, 0))
+		return(-1);
+
+	frame = private_shm->shm->head.head.latest_frame;
+
+	if (was_attached == 0 && private_shm->stay_attached == 0)
+		DeconnectArray(private_shm);
+
+	return(frame);
+#else
+	return(0);
+#endif
 }
   
 /* 
@@ -2183,28 +2160,27 @@ int SPS_IsUpdated (char *fullname, char *array)
            -1 Error - memory not longer updated
 */
 
-int SPS_UpdateCounter (char *fullname, char *array) 
-{
-  unsigned int utime;
+int SPS_UpdateCounter(char *fullname, char *array) {
+  u32_t utime;
   int updated;
   int was_attached;
   SPS_ARRAY private_shm;
 
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return -1;
 
-  utime = private_shm -> utime;
-  was_attached = private_shm -> attached;
+  utime = private_shm->utime;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 0))
+  if (ReconnectToArray(private_shm, 0))
     return -1;
   
-  private_shm -> utime = private_shm->shm->head.head.utime;
+  private_shm->utime = private_shm->shm->head.head.utime;
 
-  updated = private_shm -> utime;
+  updated = private_shm->utime;
 
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
 
   return updated;
 }
@@ -2218,25 +2194,24 @@ int SPS_UpdateCounter (char *fullname, char *array)
    Returns: 1 Error - memory not longer updated or no write permission
             0 success
 */
-int SPS_UpdateDone (char *fullname, char *array)
-{
+int SPS_UpdateDone(char *fullname, char *array) {
   int was_attached;
   SPS_ARRAY private_shm;
   
-  if ((private_shm = convert_to_handle (fullname, array)) == NULL)
+  if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return 1;
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
   
-  if (ReconnectToArray (private_shm, 1))
+  if (ReconnectToArray(private_shm, 1))
     return 1;
 
-  if (private_shm -> write_flag == 0) 
+  if (private_shm->write_flag == 0)
     return 1;
 
-  private_shm->utime = ++ (private_shm->shm->head.head.utime);
+  private_shm->utime = ++(private_shm->shm->head.head.utime);
   
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   return 0;
 }
@@ -2254,18 +2229,17 @@ int SPS_UpdateDone (char *fullname, char *array)
 */
 
 int 
-SPS_GetArrayInfo (char * spec_version, char * array_name, int *rows, 
-		  int *cols, int *type, int *flag)
-{
+SPS_GetArrayInfo(char *spec_version, char *array_name, int *rows,
+		  int *cols, int *type, int *flag) {
   int was_attached;
   SPS_ARRAY private_shm;
   
-  if ((private_shm = convert_to_handle (spec_version, array_name)) == NULL)
+  if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return 1;
   
-  was_attached = private_shm -> attached;
+  was_attached = private_shm->attached;
 
-  if (ReconnectToArray (private_shm, 0)) {
+  if (ReconnectToArray(private_shm, 0)) {
     if (rows) *rows = 0;
     if (cols) *cols = 0;
     if (type) *type = 0;
@@ -2273,85 +2247,107 @@ SPS_GetArrayInfo (char * spec_version, char * array_name, int *rows,
     return 1;
   } 
 
-  if (rows) *rows = private_shm -> shm -> head.head.rows;
-  if (cols) *cols = private_shm -> shm -> head.head.cols;
-  if (type) *type = private_shm -> shm -> head.head.type;
-  if (flag) *flag = private_shm -> shm -> head.head.flags;
+  if (rows) *rows = private_shm->shm->head.head.rows;
+  if (cols) *cols = private_shm->shm->head.head.cols;
+  if (type) *type = private_shm->shm->head.head.type;
+  if (flag) *flag = private_shm->shm->head.head.flags;
   
-  if (was_attached == 0 && private_shm -> stay_attached == 0)  
-    DeconnectArray (private_shm);
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
   
   return 0;
 }
 
+int 
+SPS_GetFrameSize(char *spec_version, char *array_name) {
+#if SHM_VERSION >= 5
+	int     frame_size;
+	int     was_attached;
+	SPS_ARRAY private_shm;
+
+	if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
+		return(-1);
+
+	was_attached = private_shm->attached;
+
+	if (ReconnectToArray(private_shm, 0))
+		return(-1);
+
+	frame_size = private_shm->shm->head.head.frame_size;
+
+	if (was_attached == 0 && private_shm->stay_attached == 0)
+		DeconnectArray(private_shm);
+
+	return(frame_size);
+#else
+	return(0);
+#endif
+}
+
 static struct shm_created *
-ll_addnew_array (char *specversion, char *arrayname, int isstatus, 
-		 struct shm_created* status, int id, int my_creation,
-		 struct shm_header *shm) 
-{
+ll_addnew_array(char *specversion, char *arrayname, int isstatus,
+		 struct shm_created *status, s32_t id, int my_creation, SHM *shm) {
   struct shm_created *created, **new_created;
   struct shm_created *new_array;
 
-  for (created = SHM_CREATED_HEAD , new_created = & SHM_CREATED_HEAD; 
-       created ; new_created = &(created->next) , created = created ->next) {
+  for (created = SHM_CREATED_HEAD, new_created = & SHM_CREATED_HEAD;
+       created; new_created = &(created->next), created = created ->next) {
   }
   
   new_array = (struct shm_created *) malloc(sizeof(struct shm_created));
   if (new_array == NULL)
     return NULL;
 
-  new_array -> next = NULL;
-  new_array -> no_referenced = 0;
-  new_array -> isstatus = isstatus;
-  new_array -> status_shm = status;
-  new_array -> id = id;
-  new_array -> my_creation = my_creation;
-  new_array -> handle = NULL;
-  new_array -> shm = shm;
+  new_array->next = NULL;
+  new_array->no_referenced = 0;
+  new_array->isstatus = isstatus;
+  new_array->status_shm = status;
+  new_array->id = id;
+  new_array->my_creation = my_creation;
+  new_array->handle = NULL;
+  new_array->shm = shm;
   
   if (specversion) {
-    if ((new_array->spec_version = (char *)strdup (specversion)) == NULL) {
-      free (new_array);
+    if ((new_array->spec_version = (char *) strdup(specversion)) == NULL) {
+      free(new_array);
       return NULL;
     }
   } else 
     new_array ->spec_version = NULL;
 
   if (arrayname) {
-    if ((new_array->array_name = (char *) strdup (arrayname)) == NULL) {
+    if ((new_array->array_name = (char *) strdup(arrayname)) == NULL) {
       if (new_array->spec_version)
-	free (new_array->spec_version);
-      free (new_array);
+	free(new_array->spec_version);
+      free(new_array);
       return NULL;
     }
   } else 
-    new_array -> array_name = NULL;
+    new_array->array_name = NULL;
 
   *new_created = new_array;
   return new_array;
 }
 
-static struct shm_created *ll_find_pointer (struct shm_header* shm)
-{
+static struct shm_created *ll_find_pointer(SHM *shm) {
   struct shm_created *created;
   
-  for (created = SHM_CREATED_HEAD ; created ; created = created ->next) {
-    if ( created->handle && created->handle->shm == shm)
+  for (created = SHM_CREATED_HEAD; created; created = created ->next) {
+    if (created->handle && created->handle->shm == shm)
       return created;
   }
   return NULL;
 }
 
 static struct shm_created *
-ll_find_array (char *specversion, char *arrayname, int isstatus)
-{
+ll_find_array(char *specversion, char *arrayname, int isstatus) {
   struct shm_created *created;
   
-  for (created = SHM_CREATED_HEAD ; created ; created = created ->next) {
-    if ( ( specversion == NULL || created->spec_version == NULL || 
-	   strcmp (created->spec_version, specversion) == 0) && 
-	 ( arrayname == NULL || created->array_name == NULL || 
-	   strcmp (created->array_name, arrayname) == 0) &&
+  for (created = SHM_CREATED_HEAD; created; created = created ->next) {
+    if ((specversion == NULL || created->spec_version == NULL ||
+	   strcmp(created->spec_version, specversion) == 0) &&
+	 (arrayname == NULL || created->array_name == NULL ||
+	   strcmp(created->array_name, arrayname) == 0) &&
 	 created->isstatus == isstatus ) {
       return created;
     }
@@ -2360,73 +2356,72 @@ ll_find_array (char *specversion, char *arrayname, int isstatus)
 }
 
 static void * 
-id_is_our_creation (unsigned int id) 
-{
+id_is_our_creation(u32_t id) {
   struct shm_created *created;
   
-  for (created = SHM_CREATED_HEAD ; created ; created = created ->next) 
-    if (created->id == id)
-      return (created -> my_creation) ? created -> shm : NULL;
+  for (created = SHM_CREATED_HEAD; created; created = created ->next)
+    if (created->id == (int) id)
+      return (created->my_creation)? created->shm:NULL;
   
   return NULL;
 }
 
 static void * 
-shm_is_our_creation (void *shm) 
-{
+shm_is_our_creation(void *shm) {
   struct shm_created *created;
   
-  for (created = SHM_CREATED_HEAD ; created ; created = created ->next) 
-    if ( (void *) created->shm == shm)
-      return (created -> my_creation) ? created -> shm : NULL;
+  for (created = SHM_CREATED_HEAD; created; created = created ->next)
+    if ((void *) created->shm == shm)
+      return (created->my_creation)? created->shm:NULL;
   
   return NULL;
 }
 
 static void
-ll_delete_array (struct shm_created *todel)
-{
+ll_delete_array(struct shm_created *todel) {
   struct shm_created *created, **new_created;
   
-  for (created = SHM_CREATED_HEAD , new_created = & SHM_CREATED_HEAD; 
-       created ; new_created = &(created->next) , created = created ->next) {
+  for (created = SHM_CREATED_HEAD, new_created = & SHM_CREATED_HEAD;
+       created; new_created = &(created->next), created = created ->next) {
     if (created == todel) {
       *new_created = created->next;
       if (created->spec_version)
-	free (created->spec_version);
+	free(created->spec_version);
       if (created->array_name)
-	free (created->array_name);
-      free (created);
-      break;
+	free(created->array_name);
+      free(created);
+      return;
     }
   }
 }
 
-static struct shm_header * 
-create_shm (char * specversion, char *array, int rows, 
-	    int cols, int type, int flags)
-{
+static SHM *
+create_shm(char *specversion, char *array, int rows, int cols, int type, int flags) {
   int sflag = 0644, key = -1;
-  int id;
+  s32_t id;
   int size;
-  struct shm_header *shm;
+  SHM *shm;
 
   if (key == -1) 
     key = IPC_PRIVATE;
   else 
     sflag |= IPC_CREAT;
 
-  size = rows * cols * typedsize (type) + sizeof (struct shm_header);
+  size = rows * cols * typedsize(type) + sizeof(SHM);
   id = shmget((key_t) key, (size_t) size, sflag);
   /*
    * now put the structure into the shared memory
    * Remember to attach to it first
    */
 
-  if ((shm = (struct shm_header*) shmat(id, (char*) 0, 0)) 
-      == (struct shm_header *) -1) {
+  if ((shm = (SHM *) shmat(id, (char*) 0, 0)) == (SHM *) -1) {
     return NULL;
   }
+
+#if defined(__linux__)
+  /* Will be removed after last detach */
+  shmctl(id, IPC_RMID, NULL);
+#endif
 
   /* init header */
   shm->head.head.magic = SHM_MAGIC;
@@ -2444,13 +2439,12 @@ create_shm (char * specversion, char *array, int rows,
   return shm;
 }  
 
-static struct shm_header * 
-create_master_shm (char* name)
-{
+static SHM *
+create_master_shm(char *name) {
   int sflag = 0644, key = -1;
-  int id;
+  s32_t id;
   int size, i;
-  struct shm_header *shm;
+  SHM *shm;
   struct shm_status *st;
   
   if (key == -1) 
@@ -2458,14 +2452,18 @@ create_master_shm (char* name)
   else 
     sflag |= IPC_CREAT;
 
-  size = sizeof (struct shm_status) + sizeof (struct shm_header);
+  size = sizeof(struct shm_status) + sizeof(SHM);
   id = shmget((key_t) key, (size_t) size, sflag);
 
-  if ((shm = (struct shm_header*) shmat(id, (char*) 0, 0)) 
-      == (struct shm_header *) -1) {
+  if ((shm = (SHM *) shmat(id, NULL, 0)) == (SHM *) -1) {
     return NULL;
   }
   
+#if defined(__linux__)
+  /* Will be removed after last detach */
+  shmctl(id, IPC_RMID, NULL);
+#endif
+
   /* init header */
   shm->head.head.magic = SHM_MAGIC;
   shm->head.head.type = 0;
@@ -2482,7 +2480,7 @@ create_master_shm (char* name)
   if (shm->head.head.version < 4)
     st = (struct shm_status *) &(((struct shm_oheader *)shm)->data);
   else
-	st = (struct shm_status *) &(shm->data);
+    st = (struct shm_status *) &(shm->data);
   st->spec_state = 0;
   st->utime = 0;                 /* updated when ids[] changes */
   for (i = 0; i < SHM_MAX_IDS; i++)
@@ -2491,27 +2489,24 @@ create_master_shm (char* name)
   return shm;
 }  
 
-static void delete_shm (int id) 
-{
-  struct shmid_ds info;
-  shmctl(id, IPC_RMID, &info);
+static void delete_shm(s32_t id) {
+  shmctl(id, IPC_RMID, NULL);
 }
 
-static void delete_id_from_status (struct shm_header *status, int id) 
-{
+static void delete_id_from_status(SHM *status, s32_t id) {
   struct shm_status *st;
   int i, j;
   if (status->head.head.version < 4)
     st = (struct shm_status *) &(((struct shm_oheader *)status)->data);
   else
-	st = (struct shm_status *) &(status->data);
+    st = (struct shm_status *) &(status->data);
   for (i = 0; i < SHM_MAX_IDS; i++)
     if (st->ids[i] == id) {
       for (j = i; j < SHM_MAX_IDS -1; j++)
 	st->ids[j] = st->ids[j+1];
       break;
     }
-  st->utime ++;
+  st->utime++;
 }
 
 /* 
@@ -2536,10 +2531,8 @@ static void delete_id_from_status (struct shm_header *status, int id)
 */
 
 int
-SPS_CreateArray (char * spec_version, char *arrayname,
-		 int rows, int cols, int type, int flags) 
-{
-  struct shm_header *shm, *ashm;
+SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int type, int flags) {
+  SHM *shm, *ashm;
   int i, idx;
   struct shm_status *st;
   struct shm_created *shm_array, *shm_status;
@@ -2550,115 +2543,113 @@ SPS_CreateArray (char * spec_version, char *arrayname,
   if (spec_version == NULL || arrayname == NULL)
     return 1;
 
-  if ((shm_status = ll_find_array (spec_version, NULL, 1)) == NULL) {
+  if ((shm_status = ll_find_array(spec_version, NULL, 1)) == NULL) {
     
     /* SearchSpecArrays (spec_version); */
     /* Check if there is already a spec_version which exists */
-    if ((idx = find_TabIDX (spec_version, 0)) != -1) 
+    if ((idx = find_TabIDX(spec_version, 0)) != -1)
       return 1; /* We can not add to a spec_version we not created*/
     
     /* Create a spec_version */
-    if ((shm = create_master_shm (spec_version)) == NULL)
+    if ((shm = create_master_shm(spec_version)) == NULL)
       return 1;
-    if ((shm_status = ll_addnew_array (spec_version, NULL, 1, NULL, 
-	     shm -> head.head.shmid, 1, shm))	== NULL) {
-      c_shmdt ((void *)shm);
+    if ((shm_status = ll_addnew_array(spec_version, NULL, 1, NULL,
+	     shm->head.head.shmid, 1, shm))   == NULL) {
+      c_shmdt((void *)shm);
       return 1;
     }
-    private_shm = add_private_shm (shm, spec_version, NULL, 1);
-    shm_status -> handle = private_shm;
+    private_shm = add_private_shm(shm, spec_version, NULL, 1);
+    shm_status->handle = private_shm;
     
     
   } else {
-    if (shm_status -> shm == NULL) {
-      if ((shm = (struct shm_header *)shmat (shm_status->id, (char*) 0, 0)) 
-	  == (struct shm_header *) -1) {
+    if (shm_status->shm == NULL) {
+      if ((shm = (SHM *) shmat(shm_status->id, NULL, 0)) == (SHM *) -1) {
 	return 1;
       }
-      shm_status -> shm = shm;
+      shm_status->shm = shm;
     } else
-      shm = shm_status -> shm;
+      shm = shm_status->shm;
   }
     
   /* There is already an array with this name - delete it */
-  if ((shm_array = ll_find_array (spec_version, arrayname, 0)) != NULL) {
+  if ((shm_array = ll_find_array(spec_version, arrayname, 0)) != NULL) {
     if (shm_array->shm != NULL)
-      shmdt ((void *)shm_array->shm);
-    delete_id_from_status (shm_array->status_shm->shm, shm_array->id) ;
-    delete_shm (shm_array->id);
-    ll_delete_array (shm_array);
+      shmdt((void *)shm_array->shm);
+    delete_id_from_status(shm_array->status_shm->shm, shm_array->id);
+    delete_shm(shm_array->id);
+    ll_delete_array(shm_array);
   }
 
   /* Create the new array */    
-  ashm = create_shm (spec_version, arrayname, rows, cols, type, flags); 
+  ashm = create_shm(spec_version, arrayname, rows, cols, type, flags);
   if (ashm == NULL) 
     return 1;
-  if ((shm_array = ll_addnew_array (spec_version, arrayname, 0, shm_status, 
-		 ashm -> head.head.shmid, 1, ashm)) == NULL) {
-    shmdt ((void*)ashm);
+  if ((shm_array = ll_addnew_array(spec_version, arrayname, 0, shm_status,
+		 ashm->head.head.shmid, 1, ashm)) == NULL) {
+    shmdt((void*)ashm);
     return 1;
   }
 
   /* Add reference to this array to the STATUS array */
-  st = (struct shm_status *) &(shm -> data) ;
+  st = (struct shm_status *) &(shm->data);
   
   for (i = 0; i < SHM_MAX_IDS; i++) 
     if (st->ids[i] == -1)
       break;
   st->ids[i] = ashm->head.head.shmid;
-  st->utime ++;
+  st->utime++;
   
-  private_shm = add_private_shm (ashm, spec_version, arrayname, 1);
-  shm_array -> handle = private_shm;
+  private_shm = add_private_shm(ashm, spec_version, arrayname, 1);
+  shm_array->handle = private_shm;
   
 
   return 0;
 }
 
-static int delete_handle(SPS_ARRAY handle)
-{
+static int delete_handle(SPS_ARRAY handle) {
   if (handle == NULL)
     return 1;
-  if (handle -> buffer_len && handle -> private_data_copy) 
-    free (handle -> private_data_copy);
-  if (handle -> spec)
-    free (handle -> spec);
-  if (handle -> array)
-    free (handle -> array);
-  free (handle);
+  if (handle->buffer_len && handle->private_data_copy)
+    free (handle->private_data_copy);
+  if (handle->spec)
+    free(handle->spec);
+  if (handle->array)
+    free(handle->array);
+  free(handle);
   return 0;
 }
 
 /* Deletes everything which there is */
 /* Should be called before you quit the program */
 
-void SPS_CleanUpAll ()
+void SPS_CleanUpAll(void)
 {
   struct shm_created *created, *created_next;
-  for (created = SHM_CREATED_HEAD ; created ; ) {
+  for (created = SHM_CREATED_HEAD; created; ) {
     if (created->handle && created->handle->attached && created->handle->shm) 
       shmdt ((void *)created->handle->shm);
     
-    if ( created -> my_creation) {
-      delete_shm (created->id) ;
+    if (created->my_creation) {
+      delete_shm(created->id);
     }
     
-    if (created -> handle) 
-      delete_handle (created -> handle);
+    if (created->handle)
+      delete_handle (created->handle);
 
-    if (created -> array_name) 
-      free (created -> array_name);
+    if (created->array_name)
+      free(created->array_name);
   
-    if (created -> spec_version)
-      free (created -> spec_version);
+    if (created->spec_version)
+      free(created->spec_version);
     
-    created_next = created -> next;
+    created_next = created->next;
     free(created);
     
     created = created_next;
   }
   
-  SHM_CREATED_HEAD = NULL ;
+  SHM_CREATED_HEAD = NULL;
   id_no = 0;
 
   delete_SpecIDTab();
@@ -2666,9 +2657,12 @@ void SPS_CleanUpAll ()
 
 
 #if SPS_DEBUG
-static bench_mark ();
+
+#include <sys/time.h>
+
+static bench_mark();
  
-static PrintIDDir () 
+static PrintIDDir()
 {
   int i, j;
   char *spec_version, *array;
@@ -2677,23 +2671,23 @@ static PrintIDDir ()
   double *double_buf=NULL;
   int k_row, k_col;
   
-  for (i=0; spec_version = SPS_GetNextSpec (i) ; i++) {
+  for (i=0; spec_version = SPS_GetNextSpec(i); i++) {
     state = SPS_GetSpecState(spec_version);
-    printf ("%s state = 0x%x\n",spec_version, state);
-    for (j=0; array = SPS_GetNextArray (spec_version, j) ; j++) {
-      SPS_GetArrayInfo (spec_version, array, &rows, &cols, &type, &flags);
-      printf ("    %s: %dx%d type:%d flags:0x%x \n",
+    printf("%s state = 0x%x\n",spec_version, state);
+    for (j=0; array = SPS_GetNextArray(spec_version, j); j++) {
+      SPS_GetArrayInfo(spec_version, array, &rows, &cols, &type, &flags);
+      printf("    %s: %dx%d type:%d flags:0x%x \n",
 	      array, rows, cols, type, flags);
       /* Reading data */
-      double_buf = SPS_GetDataCopy (spec_version, array, SHM_DOUBLE, 
+      double_buf = SPS_GetDataCopy(spec_version, array, SHM_DOUBLE,
 				    &rows, &cols);
       
-      for (k_row = 0; k_row < rows && k_row < 10; k_row ++) {
-	for (k_col = 0; k_col < cols && k_col < 7; k_col ++)
-	  printf ("%10.10g ",*(double_buf + k_row * cols + k_col));
+      for (k_row = 0; k_row < rows && k_row < 10; k_row++) {
+	for (k_col = 0; k_col < cols && k_col < 7; k_col++)
+	  printf("%10.10g ",*(double_buf + k_row * cols + k_col));
 	printf("\n");
       }
-      SPS_FreeDataCopy (spec_version,array);
+      SPS_FreeDataCopy(spec_version,array);
     }
   }
 }   
@@ -2705,10 +2699,10 @@ main()
   char *str;
   int rows,cols,type, flag, flags;
   int i, j;
-  int *ptr;
+  s32_t *ptr;
   double *double_buf=NULL;
   int k_row, k_col;
-  char * spec_version, *array;
+  char *spec_version, *array;
   int state;
 
   printf("(C)reate,(*)(d)ir,(p)oll,(r)st,(e)nv,(w)rite env,(b)ench,(q)uit\n");
@@ -2719,32 +2713,32 @@ main()
       printf("spec_version array_name rows cols type flags\n");
       scanf("%s %s %d %d %d %d",buf1,buf2,&rows,&cols, &type, &flag);
       SPS_CreateArray(buf1,buf2, rows, cols, type, flag);
-      SPS_GetArrayInfo (buf1, buf2, &rows, &cols, &type, &flag);
+      SPS_GetArrayInfo(buf1, buf2, &rows, &cols, &type, &flag);
       ptr = SPS_GetDataPointer(buf1, buf2, 1);
-      if (type == SHM_INT) {
+      if (type == SHM_LONG) {
 	for (i = 0; i < rows; i++) 
 	  for (j = 0; j < cols; j++) 
 	    *(ptr + i * cols + j) = i * 100 + j;
       }
       break;
     case 'd': 
-      PrintIDDir ();
+      PrintIDDir();
       break;
     case '*':
-      for (j=0; array = SPS_GetNextArray (NULL, j) ; j++) {
-	SPS_GetArrayInfo (NULL, array, &rows, &cols, &type, &flags);
-	printf ("    %s: %dx%d type:%d flags:0x%x \n",
+      for (j=0; array = SPS_GetNextArray(NULL, j); j++) {
+	SPS_GetArrayInfo(NULL, array, &rows, &cols, &type, &flags);
+	printf("    %s: %dx%d type:%d flags:0x%x \n",
 		array, rows, cols, type, flags);
 	/* Reading data */
-	double_buf = SPS_GetDataCopy (NULL, array, SHM_DOUBLE, 
+	double_buf = SPS_GetDataCopy(NULL, array, SHM_DOUBLE,
 				      &rows, &cols);
 	
-	for (k_row = 0; k_row < rows && k_row < 10; k_row ++) {
-	  for (k_col = 0; k_col < cols && k_col < 7; k_col ++)
+	for (k_row = 0; k_row < rows && k_row < 10; k_row++) {
+	  for (k_col = 0; k_col < cols && k_col < 7; k_col++)
 	    printf ("%10.10g ",*(double_buf + k_row * cols + k_col));
 	  printf("\n");
 	}
-	SPS_FreeDataCopy (NULL, array);
+	SPS_FreeDataCopy(NULL, array);
       }
       break;
     case 'q': 
@@ -2762,7 +2756,7 @@ main()
 	spec_version = NULL;
       else
 	spec_version = buf1;
-      str = SPS_GetEnvStr (spec_version, buf2, buf3);
+      str = SPS_GetEnvStr(spec_version, buf2, buf3);
       printf("%s=<%s>\n",buf3,str ? str : "not found");
       break;
     case 'w':
@@ -2772,10 +2766,10 @@ main()
 	spec_version = NULL;
       else
 	spec_version = buf1;
-      printf("Result %d\n",SPS_PutEnvStr (spec_version, buf2, buf3, buf4));
+      printf("Result %d\n",SPS_PutEnvStr(spec_version, buf2, buf3, buf4));
       break;
     case 'p': 
-      printf ("Waiting for specversion hop array test\n");
+      printf("Waiting for specversion hop array test\n");
       printf("spec_version array_name\n");
       scanf("%s %s",buf1,buf2);
       if (buf1[0] == '*')
@@ -2788,13 +2782,13 @@ main()
       printf("Waiting for %s:%s\n",(spec_version == NULL)?"NULL":spec_version,
 	     buf2);
       for (;;) {
-	if (SPS_IsUpdated (spec_version,buf2) == 1) {
+	if (SPS_IsUpdated(spec_version,buf2) == 1) {
 	  printf("Changed:\n");
-	  double_buf = SPS_GetDataCopy (spec_version, buf2, SHM_DOUBLE, 
+	  double_buf = SPS_GetDataCopy(spec_version, buf2, SHM_DOUBLE,
 					&rows, &cols);
-	  for (k_row = 0; k_row < rows && k_row < 10; k_row ++) {
-	    for (k_col = 0; k_col < cols && k_col < 7; k_col ++)
-	      printf ("%10.10g ",*(double_buf + k_row * cols + k_col));
+	  for (k_row = 0; k_row < rows && k_row < 10; k_row++) {
+	    for (k_col = 0; k_col < cols && k_col < 7; k_col++)
+	      printf("%10.10g ",*(double_buf + k_row * cols + k_col));
 	    printf("\n");
 	  }
 	}
@@ -2806,22 +2800,9 @@ main()
   }
 }
 
-#if MY_TIMEVAL
-struct timeval {
-  unsigned int	tv_sec;		/* seconds */
-  int		tv_usec;	/* and microseconds */
-};
-
-struct timezone {
-  int	tz_minuteswest;	/* minutes west of Greenwich */
-  int	tz_dsttime;	/* type of dst correction */
-};
-#endif
-
 /* Benchmark our routines */
-static bench(char *str)
-{
-  static struct timeval start, stop;
+static bench(char *str) {
+static struct timeval start, stop;
   struct timezone tzp;
 
   if (str == (char *)NULL) {
@@ -2838,38 +2819,46 @@ static bench(char *str)
 }
 
 
-static bench_mark () 
+static bench_mark()
 {
   int i;
 
-  printf("Version spec must run with\nshared array doubletest[1024][1024]\nshared int array longtest[1024][1024]\nshared string array text[200][200]\narray_op(\"fill\",doubletest,10000)\narray_op(\"fill\",longtest,10000)\ntext[0][]=\"id=myvalue\"\n"); 
+  printf("\n\
+     Version spec must run with\n\
+     shared array doubletest[1024][1024]\n\
+     shared long array longtest[1024][1024]\n\
+     shared string array text[200][200]\n\
+     array_op(\"fill\",doubletest,10000)\n\
+     array_op(\"fill\",longtest,10000)\n\
+     text[0][]=\"id=myvalue\"\n\
+  \n");
 
   getchar();
 
-  bench (NULL);
-  SPS_IsUpdated ("not","found");
-  bench ("SPS_IsUpdated non existing specversion not");
-  SPS_IsUpdated ("not","found");
-  bench ("SPS_IsUpdated non existing specversion not");
-  SPS_IsUpdated ("spec","not");
-  bench ("SPS_IsUpdated version spec, array not");
+  bench(NULL);
+  SPS_IsUpdated("not","found");
+  bench("SPS_IsUpdated non existing specversion not");
+  SPS_IsUpdated("not","found");
+  bench("SPS_IsUpdated non existing specversion not");
+  SPS_IsUpdated("spec","not");
+  bench("SPS_IsUpdated version spec, array not");
 
   printf("\n");
-  SPS_GetDataCopy ("spec", "doubletest", SHM_DOUBLE, NULL, NULL);
-  bench ("SPS_GetDataCopy version spec, array doubletest as double");
-  SPS_GetDataCopy ("spec", "longtest", SHM_DOUBLE, NULL, NULL);
-  bench ("SPS_GetDataCopy version spec, array longtest as double");
+  SPS_GetDataCopy("spec", "doubletest", SHM_DOUBLE, NULL, NULL);
+  bench("SPS_GetDataCopy version spec, array doubletest as double");
+  SPS_GetDataCopy("spec", "longtest", SHM_DOUBLE, NULL, NULL);
+  bench("SPS_GetDataCopy version spec, array longtest as double");
 
   printf("\n");
   for (i=0;i<1000;i++) 
-    SPS_IsUpdated ("spec","doubletest");
-  bench ("SPS_IsUpdated version spec, array doubletest, 1000 times");
+    SPS_IsUpdated("spec","doubletest");
+  bench("SPS_IsUpdated version spec, array doubletest, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_GetSpecState ("spec");
-  bench ("SPS_GetSpecState version spec, 1000 times");
+    SPS_GetSpecState("spec");
+  bench("SPS_GetSpecState version spec, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_GetEnvStr ("spec","text","id");
-  bench ("SPS_GetEnvStr version spec, array text, id, 1000 times");
+    SPS_GetEnvStr("spec","text","id");
+  bench("SPS_GetEnvStr version spec, array text, id, 1000 times");
 
   printf("\n");
   SPS_AttachToArray("spec","doubletest",0);
@@ -2878,14 +2867,14 @@ static bench_mark ()
   bench("Attached and Staying attached now");
 
   for (i=0;i<1000;i++) 
-    SPS_IsUpdated ("spec","doubletest");
-  bench ("SPS_IsUpdated version spec, array doubletest, 1000 times");
+    SPS_IsUpdated("spec","doubletest");
+  bench("SPS_IsUpdated version spec, array doubletest, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_GetSpecState ("spec");
-  bench ("SPS_GetSpecState version spec, 1000 times");
+    SPS_GetSpecState("spec");
+  bench("SPS_GetSpecState version spec, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_GetEnvStr ("spec","text","id");
-  bench ("SPS_GetEnvStr version spec, array text, id, 1000 times");
+    SPS_GetEnvStr("spec","text","id");
+  bench("SPS_GetEnvStr version spec, array text, id, 1000 times");
 
   printf("\n");
   SPS_DetachFromArray("spec","doubletest");
@@ -2894,35 +2883,34 @@ static bench_mark ()
   bench("Detach and Staying detached now");
 
   for (i=0;i<1000;i++) 
-    SPS_IsUpdated ("spec","doubletest");
-  bench ("SPS_IsUpdated version spec, array doubletest, 1000 times");
+    SPS_IsUpdated("spec","doubletest");
+  bench("SPS_IsUpdated version spec, array doubletest, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_GetSpecState ("spec");
-  bench ("SPS_GetSpecState version spec, 1000 times");
+    SPS_GetSpecState("spec");
+  bench("SPS_GetSpecState version spec, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_GetEnvStr ("spec","text","id");
-  bench ("SPS_GetEnvStr version spec, array text, id, 1000 times");
+    SPS_GetEnvStr("spec","text","id");
+  bench("SPS_GetEnvStr version spec, array text, id, 1000 times");
 
   printf("\nNow testing the NULL version tests\n");
   for (i=0;i<1000;i++) 
-    SPS_GetEnvStr (NULL, "text","id");
-  bench ("SPS_GetEnvStr NULL, array text, id, 1000 times");
+    SPS_GetEnvStr(NULL, "text","id");
+  bench("SPS_GetEnvStr NULL, array text, id, 1000 times");
   for (i=0;i<1000;i++) 
-    SPS_IsUpdated (NULL, "doubletest");
-  bench ("SPS_IsUpdated NULL, array doubletest, 1000 times");
+    SPS_IsUpdated(NULL, "doubletest");
+  bench("SPS_IsUpdated NULL, array doubletest, 1000 times");
   
   printf("\nNow mix it\n");
   for (i=0;i<1000;i++) { 
-    SPS_IsUpdated (NULL, "doubletest");
-    SPS_IsUpdated ("spec", "doubletest");
+    SPS_IsUpdated(NULL, "doubletest");
+    SPS_IsUpdated("spec", "doubletest");
   }
-  bench ("SPS_IsUpdated NULL mixed , array doubletest, 1000 times");
+  bench("SPS_IsUpdated NULL mixed, array doubletest, 1000 times");
 
   printf("\n");
   SPS_CreateArray("version","array",100,100,0,0);
-  bench ("SPS_CreateArray");
+  bench("SPS_CreateArray");
   SPS_CleanUpAll();
-  bench ("SPS_CleanUpAll");
+  bench("SPS_CleanUpAll");
 }
 #endif
-
