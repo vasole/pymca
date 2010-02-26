@@ -54,6 +54,8 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         ddict['standalonesave'] = False
         if kw.has_key('dynamic'):
             del ddict['dynamic']
+        if kw.has_key('crop'):
+            del ddict['crop']
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
@@ -87,31 +89,30 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         dynamic = kw.get("dynamic", False)
         self._dynamic = dynamic
 
-                    
-        self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
-        infotext = "Crop image to the currently zoomed window"
-        cropPosition = 12
-        if kw.has_key('imageicons'):
-            if not kw['imageicons']:
-                cropPosition = 6
-        self.cropButton = self.graphWidget._addToolButton(\
-                                        self.cropIcon,
-                                        self._cropIconChecked,
-                                        infotext,
-                                        toggle = False,
-                                        position = cropPosition)
+        crop = kw.get("crop", True)                    
+        if crop:
+            self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
+            infotext = "Crop image to the currently zoomed window"
+            cropPosition = 12
+            if kw.has_key('imageicons'):
+                if not kw['imageicons']:
+                    cropPosition = 6
+            self.cropButton = self.graphWidget._addToolButton(\
+                                            self.cropIcon,
+                                            self._cropIconChecked,
+                                            infotext,
+                                            toggle = False,
+                                            position = cropPosition)
 
-        self.flipIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
-
-        infotext = "Flip image and data, not the scale."
-        self.graphWidget.hFlipToolButton.setToolTip('Flip image')
-        self._flipMenu = qt.QMenu()
-        self._flipMenu.addAction(qt.QString("Flip Image and Vertical Scale"),
-                                 self.__hFlipIconSignal)
-        self._flipMenu.addAction(qt.QString("Flip Image Left-Right"),
-                                 self._flipLeftRight)
-        self._flipMenu.addAction(qt.QString("Flip Image Up-Down"),
-                                 self._flipUpDown)        
+            infotext = "Flip image and data, not the scale."
+            self.graphWidget.hFlipToolButton.setToolTip('Flip image')
+            self._flipMenu = qt.QMenu()
+            self._flipMenu.addAction(qt.QString("Flip Image and Vertical Scale"),
+                                     self.__hFlipIconSignal)
+            self._flipMenu.addAction(qt.QString("Flip Image Left-Right"),
+                                     self._flipLeftRight)
+            self._flipMenu.addAction(qt.QString("Flip Image Up-Down"),
+                                     self._flipUpDown)        
 
     def sizeHint(self):
         return qt.QSize(400, 400)
@@ -230,7 +231,10 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             self._dynamicAction(index)
         elif self._stack:
             self.setImageData(self.imageList[index])
-            self.graphWidget.graph.setTitle("Image %d" % index)        
+            if self.imageNames is None:
+                self.graphWidget.graph.setTitle("Image %d" % index)
+            else:
+                self.graphWidget.graph.setTitle(self.imageNames[index])
         else:
             qimage = self._imageDict[self.imageNames[index]]
             data = self.imageList[index]
@@ -291,39 +295,63 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         labels = []
         for i in range(len(self.imageList)):
             labels.append(self.imageNames[i].replace(" ","_"))
+        if len(labels):
+            mask = self.getSelectionMask()
+            if mask is not None:
+                labels.append("Mask")
+                return MaskImageWidget.MaskImageWidget.saveImageList(self,
+                                          imagelist=self.imageList+[mask],
+                                          labels=labels)
         return MaskImageWidget.MaskImageWidget.saveImageList(self,
                                           imagelist=self.imageList,
                                           labels=labels)
 
-    def setImageList(self, imagelist, dynamic=False):
+    def setImageList(self, imagelist, imagenames=None, dynamic=False):
         if hasattr(imagelist, 'shape'):
             #should I only accept lists?
             if len(imagelist.shape) == 3:
-                return self.setStack(imagelist, index=0)
+                return self.setStack(imagelist, index=0, imagenames=imagenames)
+        if type(imagelist) in [type([0]), type((0,))]:
+            if not len(imagelist):
+                return
+            if hasattr(imagelist[0],'shape'):
+                #I have a list of images
+                #I can treat it as a stack
+                return self.setStack(imagelist, index=0, imagenames=imagenames)
         self._stack = False
         self._dynamic = dynamic
         self.imageList = imagelist
+        self.imageNames = imagenames
         if imagelist is not None:
+            current = self.slider.value()
             self.slider.setMaximum(len(self.imageList)-1)
-            self.showImage(0)
+            if current < len(self.imageList):
+                self.showImage(current)
+            else:
+                self.showImage(0)
             
-    def setStack(self, stack, index=None):
+    def setStack(self, stack, index=None, imagenames=None):
         if index is None:
             index = 0
-        shape = stack.shape
-        nImages = shape[index]
-        imagelist = [None] * nImages
-        for i in range(nImages):
-            if index == 0:
-                imagelist[i] = stack[i, :, :]
-                imagelist[i].shape = shape[1], shape[2]
-            elif index == 1:
-                imagelist[i] = stack[:, i, :]
-                imagelist[i].shape = shape[0], shape[2]
-            elif index == 2:
-                imagelist[i] = stack[:, :, i]
-                imagelist[i].shape = shape[0], shape[1]
+        if hasattr(stack, "shape"):
+            shape = stack.shape
+            nImages = shape[index]
+            imagelist = [None] * nImages
+            for i in range(nImages):
+                if index == 0:
+                    imagelist[i] = stack[i, :, :]
+                    imagelist[i].shape = shape[1], shape[2]
+                elif index == 1:
+                    imagelist[i] = stack[:, i, :]
+                    imagelist[i].shape = shape[0], shape[2]
+                elif index == 2:
+                    imagelist[i] = stack[:, :, i]
+                    imagelist[i].shape = shape[0], shape[1]
+        else:
+            nImages = len(stack)
+            imagelist = stack
         self.imageList = imagelist
+        self.imageNames = imagenames
         self._dynamic = False
         self._stack = True
         mask = self.getSelectionMask()
@@ -332,8 +360,12 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             if mask.shape != shape:
                 mask = numpy.zeros(shape, numpy.uint8)                
                 self.setSelectionMask(mask, plot=False)
+        current = self.slider.value()
         self.slider.setMaximum(len(self.imageList)-1)
-        self.showImage(0)
+        if current < len(self.imageList):
+            self.showImage(current)
+        else:
+            self.showImage(0)
 
 def test2():
     app = qt.QApplication([])

@@ -64,6 +64,7 @@ except ImportError:
     pass
 import MaskImageWidget
 import ExternalImagesWindow
+import StackROIWindow
 import copy
 import CloseEventNotifyingWidget
 
@@ -343,6 +344,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                         position = 8)
 
         self.__selectFromStackMenu = qt.QMenu()
+        self.__selectFromStackMenu.addAction(qt.QString("Show Altenative ROI Window"),
+                                               self.showAlternativeRoiWindow)
         self.__selectFromStackMenu.addAction(qt.QString("Load external image"),
                                                self.__selectFromExternalImageDialog)
         self.__selectFromStackMenu.addAction(qt.QString("Show external image for selection"),
@@ -394,12 +397,19 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                         position = 8 + filterOffset)        
         standaloneSaving = True
 
+        self.newRoiWindow = StackROIWindow.StackROIWindow(parent=None,crop=False,
+                                                         rgbwidget=self.rgbWidget,
+                                                         selection=True,
+                                                         colormap=True,
+                                                         imageicons=True,
+                                                         standalonesave=True)
+
         self.roiWindow = MaskImageWidget.MaskImageWidget(parent=box,
                                                          rgbwidget=self.rgbWidget,
                                                          selection=True,
                                                          colormap=True,
                                                          imageicons=True,
-                                          standalonesave=standaloneSaving)
+                                                         standalonesave=standaloneSaving)
 
         if QTVERSION > '4.0.0':
             infotext  = 'Toggle background subtraction from current image\n'
@@ -480,6 +490,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if ddict['event'] == "selectionMaskChanged":
             self.__selectionMask = ddict['current']
             self.plotStackImage(update=False)
+            if ddict['id'] != id(self.newRoiWindow):
+                self.newRoiWindow.setSelectionMask(ddict['current'], plot=True)
             if ddict['id'] != id(self.roiWindow):
                 self.roiWindow.setSelectionMask(ddict['current'], plot=True)
             if ddict['id'] != id(self.pcaWindow):
@@ -494,6 +506,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if ddict['event'] == "resetSelection":
             self.__selectionMask = None
             self.plotStackImage(update=True)
+            if ddict['id'] != id(self.newRoiWindow):
+                self.newRoiWindow._resetSelection(owncall=False)
             if ddict['id'] != id(self.roiWindow):
                 self.roiWindow._resetSelection(owncall=False)
             if ddict['id'] != id(self.pcaWindow):
@@ -618,6 +632,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             self.__selectFromStackMenu.exec_loop(self.cursor().pos())
         else:
             self.__selectFromStackMenu.exec_(self.cursor().pos())
+
+    def showAlternativeRoiWindow(self):
+        self.newRoiWindow.show()
+        self.newRoiWindow.raise_()
 
     def showExternalImagesWindow(self):
         if self.externalImagesWindow.getQImage() is None:
@@ -1138,6 +1156,14 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             slave = self.slave
 
         #roi window
+        self.connect(slave.newRoiWindow,
+                     qt.SIGNAL('MaskImageWidgetSignal'),
+                     self._maskImageWidgetSlot)
+
+        self.connect(self.newRoiWindow,
+                     qt.SIGNAL('MaskImageWidgetSignal'),
+                     slave._maskImageWidgetSlot)                     
+
         self.connect(slave.roiWindow,
                      qt.SIGNAL('MaskImageWidgetSignal'),
                      self._maskImageWidgetSlot)
@@ -1295,21 +1321,17 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                              qt.PYSIGNAL('MaskImageWidgetSignal'),
                              self._maskImageWidgetSlot)
         else:
-            self.connect(self.roiWindow,
+            widgetList = [self.newRoiWindow,
+                          self.roiWindow,
+                          self.externalImagesWindow]
+            if self.pcaWindow is not None:
+                widgetList.append(self.pcaWindow)
+            if self.nnmaWindow is not None:
+                widgetList.append(self.nnmaWindow)
+            for widget in widgetList:
+                self.connect(widget,
                      qt.SIGNAL('MaskImageWidgetSignal'),
                      self._maskImageWidgetSlot)
-            if self.pcaWindow is not None:
-                self.connect(self.pcaWindow,
-                             qt.SIGNAL('MaskImageWidgetSignal'),
-                             self._maskImageWidgetSlot)
-            if self.nnmaWindow is not None:
-                self.connect(self.nnmaWindow,
-                             qt.SIGNAL('MaskImageWidgetSignal'),
-                             self._maskImageWidgetSlot)
-            self.connect(self.externalImagesWindow,
-                         qt.SIGNAL('MaskImageWidgetSignal'),
-                         self._maskImageWidgetSlot)
-
 
         self.stackGraphWidget.graph.canvas().setMouseTracking(1)
         self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
@@ -1579,6 +1601,13 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             if (ddict["name"] == "ICR"):                
                 i1 = 0
                 i2 = self.stack.data.shape[self.mcaIndex]
+                xw =  ddict['calibration'][0] + \
+                      ddict['calibration'][1] * self.__mcaData0.x[0] + \
+                      ddict['calibration'][2] * self.__mcaData0.x[0] * \
+                                                self.__mcaData0.x[0]
+                imiddle = int(0.5 * (i1+i2))
+                pos = 0.5 * (ddict['from'] + ddict['to'])
+                imiddle = max(Numeric.nonzero(xw <= pos))
             elif (ddict["type"]).upper() != "CHANNEL":
                 #energy roi
                 xw =  ddict['calibration'][0] + \
@@ -1595,6 +1624,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     i2 = max(i2) + 1
                 else:
                     return
+                pos = 0.5 * (ddict['from'] + ddict['to'])
+                imiddle = max(Numeric.nonzero(xw <= pos))
             else:
                 i1 = Numeric.nonzero(ddict['from'] <= self.__mcaData0.x[0])
                 if len(i1):
@@ -1609,75 +1640,188 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 else:
                     i2 = 0
                 i2 = min(i2+1, self.stack.data.shape[self.mcaIndex])
+                pos = 0.5 * (ddict['from'] + ddict['to'])
+                imiddle = max(Numeric.nonzero(self.__mcaData0.x[0] <= pos))
+                xw = self.__mcaData0.x[0]
             if self.fileIndex == 0:
                 if self.mcaIndex == 1:
-                    background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
-                    self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                    leftImage  = self.stack.data[:,i1,:]
+                    middleImage = self.stack.data[:,imiddle,:]
+                    rightImage = self.stack.data[:,i2-1,:]
+                    dataImage  = self.stack.data[:,i1:i2,:]
+                    maxImage   = numpy.max(dataImage, 1)
+                    minImage   = numpy.min(dataImage, 1)
+                    background =  0.5 * (i2-i1) * (leftImage+rightImage)                    
+                    self.__ROIImageData = Numeric.sum(dataImage,1)
                 else:
                     if DEBUG:
                         t0 = time.time()
                     if isinstance(self.stack.data, numpy.ndarray):
-                        background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
-                        self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+                        leftImage  = self.stack.data[:,:,i1]
+                        middleImage = self.stack.data[:,:,imiddle]
+                        rightImage = self.stack.data[:,:,i2-1]
+                        dataImage  = self.stack.data[:,:,i1:i2]
+                        maxImage   = numpy.max(dataImage, 2)
+                        minImage   = numpy.min(dataImage, 2)
+                        background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                        self.__ROIImageData = Numeric.sum(dataImage,2)
                     else:
                         shape = self.stack.data.shape
                         self.__ROIImageData[:,:] = 0
                         background = self.__ROIImageData[:,:] * 1
+                        leftImage  = self.__ROIImageData[:,:] * 1
+                        middleImage= self.__ROIImageData[:,:] * 1
+                        rightImage = self.__ROIImageData[:,:] * 1
+                        maxImage   = self.__ROIImageData[:,:] * 1
+                        minImage   = self.__ROIImageData[:,:] * 1
                         step = 1
                         for i in range(shape[0]):
                             tmpData = self.stack.data[i:i+step,:, i1:i2] * 1
                             numpy.add(self.__ROIImageData[i:i+step,:],
                                   numpy.sum(tmpData, 2),
                                   self.__ROIImageData[i:i+step,:])
-                            background[i:i+step, :] += 0.5*(i2-i1)*(tmpData[:,:,0] + tmpData[:,:,-1])
+                            numpy.add(minImage[i:i+step,:],
+                                      numpy.min(tmpData, 2),
+                                      minImage[i:i+step,:])
+                            numpy.add(maxImage[i:i+step,:],
+                                      numpy.max(tmpData, 2),
+                                      maxImage[i:i+step,:])                            
+                            leftImage[i:i+step, :]   += tmpData[:, :, 0]
+                            middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
+                            rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                   
+                        background = 0.5*(i2-i1)*(leftImage+rightImage)
                     if DEBUG:
                         print "ROI image calculation elapsed = ", time.time() - t0
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     if isinstance(self.stack.data, numpy.ndarray):
-                        background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
-                        self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
+                        leftImage  = self.stack.data[i1,:,:]
+                        middleImage= self.stack.data[imiddle,:,:]
+                        rightImage = self.stack.data[i2-1,:,:]
+                        dataImage  = self.stack.data[i1:i2,:,:]
+                        maxImage   = numpy.max(dataImage, 0)
+                        minImage   = numpy.min(dataImage, 0)
+                        background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                        self.__ROIImageData = Numeric.sum(dataImage, 0)
                     else:
                         shape = self.stack.data.shape                        
                         self.__ROIImageData[:,:] = 0
                         background = self.__ROIImageData[:,:] * 1
+                        leftImage  = self.__ROIImageData[:,:] * 1
+                        middleImage= self.__ROIImageData[:,:] * 1
+                        rightImage = self.__ROIImageData[:,:] * 1
+                        maxImage   = self.__ROIImageData[:,:] * 1
+                        minImage   = self.__ROIImageData[:,:] * 1
+                        istep = 1
                         for i in range(i1, i2):
                             tmpData = self.stack.data[i,:,:]
                             numpy.add(self.__ROIImageData,
                                       tmpData,
                                       self.__ROIImageData)
+                            if i == i1:
+                                minImage = tmpData
+                                maxImage = tmpData
+                            else:
+                                minMask  = tmpData < minImage
+                                maxMask  = tmpData > minImage
+                                minImage[minMask] = tmpData[minMask]
+                                maxImage[maxMask] = tmpData[maxMask]
                             if (i == i1):
-                                background = tmpData
+                                leftImage = tmpData
+                            if (i == imiddle):
+                                middleImage = tmpData                            
+                            if i == (i2-1):
+                                rightImage = tmpData
                         if i2 > i1:
-                            background = (background + tmpData) * 0.5 * (i2-i1)
+                            background = (leftImage + rightImage) * 0.5 * (i2-i1)
                 else:
                     if DEBUG:
                         t0 = time.time()
                     if isinstance(self.stack.data, numpy.ndarray):
-                        background =  0.5 * (i2-i1) * (self.stack.data[:,:,i1]+self.stack.data[:,:,i2-1])
-                        self.__ROIImageData = Numeric.sum(self.stack.data[:,:,i1:i2],2)
+                        leftImage  = self.stack.data[:,:,i1]
+                        middleImage= self.stack.data[:,:,imiddle]
+                        rightImage = self.stack.data[:,:,i2-1]
+                        dataImage  = self.stack.data[:,:,i1:i2]
+                        maxImage   = numpy.max(dataImage, 2)
+                        minImage   = numpy.min(dataImage, 2)
+                        background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                        self.__ROIImageData = Numeric.sum(dataImage,2)
                     else:
                         shape = self.stack.data.shape
                         self.__ROIImageData[:,:] = 0
                         background = self.__ROIImageData[:,:] * 1
+                        leftImage  = self.__ROIImageData[:,:] * 1
+                        middleImage= self.__ROIImageData[:,:] * 1
+                        rightImage = self.__ROIImageData[:,:] * 1
+                        maxImage   = self.__ROIImageData[:,:] * 1
+                        minImage   = self.__ROIImageData[:,:] * 1
                         step = 1
                         for i in range(shape[0]):
                             tmpData = self.stack.data[i:i+step,:, i1:i2] * 1
                             numpy.add(self.__ROIImageData[i:i+step,:],
                                   numpy.sum(tmpData, 2),
                                   self.__ROIImageData[i:i+step,:])
-                            background[i:i+step, :] += 0.5*(i2-i1)*(tmpData[:,:,0] + tmpData[:,:,-1])
+                            numpy.add(minImage[i:i+step,:],
+                                      numpy.min(tmpData, 2),
+                                      minImage[i:i+step,:])
+                            numpy.add(maxImage[i:i+step,:],
+                                      numpy.max(tmpData, 2),
+                                      maxImage[i:i+step,:])                            
+                            leftImage[i:i+step, :]   += tmpData[:, :, 0]
+                            middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
+                            rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                        
+                        background = 0.5*(i2-i1)*(leftImage+rightImage)
                     if DEBUG:
                         print "ROI image calculation elapsed = ", time.time() - t0
             else:
                 #self.fileIndex = 2
                 if self.mcaIndex == 0:
-                    background =  0.5 * (i2-i1) * (self.stack.data[i1,:,:]+self.stack.data[i2-1,:,:])
-                    self.__ROIImageData = Numeric.sum(self.stack.data[i1:i2,:,:],0)
+                    leftImage  = self.stack.data[i1,:,:]
+                    middleImage= self.stack.data[imiddle,:,:]
+                    rightImage = self.stack.data[i2-1,:,:]
+                    background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                    dataImage  = self.stack.data[i1:i2,:,:]
+                    minImage   = numpy.min(dataImage, 0)
+                    maxImage   = numpy.max(dataImage, 0)
+                    self.__ROIImageData = Numeric.sum(dataImage,0)
                 else:
-                    background =  0.5 * (i2-i1) * (self.stack.data[:,i1,:]+self.stack.data[:,i2-1,:])
-                    self.__ROIImageData = Numeric.sum(self.stack.data[:,i1:i2,:],1)
-            self.__ROIImageBackground = background
+                    leftImage  = self.stack.data[:,i1,:]
+                    middleImage= self.stack.data[:,imidle,:]
+                    rightImage = self.stack.data[:,i2-1,:]
+                    background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                    dataImage  = self.stack.data[:,i1:i2,:]
+                    minImage   = numpy.min(dataImage, 1)
+                    maxImage   = numpy.max(dataImage, 1)
+                    self.__ROIImageData = Numeric.sum(dataImage,1)
+            self.__ROIImageBackground     = background
+            try:
+                if ddict["name"] == "ICR":
+                    cursor = "Energy"
+                    if abs(ddict['calibration'][0]) < 1.0e-5:
+                        if abs(ddict['calibration'][1]-1) < 1.0e-5:
+                            if abs(ddict['calibration'][2]) < 1.0e-5:
+                                cursor = "Channel"
+                elif ddict["type"].upper() == "CHANNEL":
+                    cursor = "Channel"
+                else:
+                    cursor = ddict["type"]
+                self.newRoiWindow.setImageList([self.__ROIImageData * 1,
+                                             maxImage,
+                                             minImage,
+                                             leftImage,
+                                             middleImage,
+                                             rightImage,
+                                             background],
+                                             imagenames=[title,
+                                                         '%s Maximum' % title,
+                                                         '%s Minimum' % title,
+                                                         '%s %.6g' % (cursor,xw[i1]),
+                                                         '%s %.6g' % (cursor,xw[imiddle]),
+                                                         '%s %.6g' % (cursor,xw[(i2-1)]),
+                                                         '%s Background' %title])
+            except:
+                print "Error on alternative ROI window:"
+                print sys.exc_info()
             self.__stackBackgroundAnchors = [i1, i2-1]
             if self.roiBackgroundButton.isChecked():
                 self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
@@ -2008,6 +2152,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def closeEvent(self, event):
         if self.__stackColormapDialog is not None:
             self.__stackColormapDialog.close()
+        if self.newRoiWindow.colormapDialog is not None:
+            self.newRoiWindow.colormapDialog.close()
+        self.newRoiWindow.close()
         if self.roiWindow.colormapDialog is not None:
             self.roiWindow.colormapDialog.close()
         if self.roiWindow._matplotlibSaveImage is not None:
