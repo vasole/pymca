@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.44 $"
+__revision__ = "$Revision: 1.45 $"
 import sys
 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -123,7 +123,7 @@ class FitParamWidget(FitParamForm):
             self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
             self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
                          self.__attPlotButtonSlot)
-            if maxheight < 800:
+            if maxheight < 801:
                 self.setMaximumHeight(int(0.8*maxheight))
                 self.setMinimumHeight(int(0.8*maxheight))
 
