@@ -91,7 +91,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
         data[i,N:-N] = convolve(data[i,:],coeff, mode='valid')
         if order > 0:
             data[i, :N]  = data[i, N]
-            data[i, -N:] = data[i,-N]            
+            data[i, -N:] = data[i,-(N+1)]            
     data.shape = oldShape
     return
 
@@ -121,8 +121,3 @@ if __name__ == "__main__":
         print "ERROR, got %f instead of 100." % yPrime[50]
     else:
         print "OK"
-    
-
-    
-    
-
