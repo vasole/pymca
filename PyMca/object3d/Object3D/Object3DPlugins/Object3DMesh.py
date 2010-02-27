@@ -528,10 +528,11 @@ def getObject3DInstance(config=None):
                     'EDF Files (*)']
     old = Object3DFileDialogs.Object3DDirs.nativeFileDialogs * 1
     Object3DFileDialogs.Object3DDirs.nativeFileDialogs = False
-    fileList, filterUsed = Object3DFileDialogs.getFileList(None, fileTypeList,
-                                               "Please select one object data file",
-                                               "OPEN",
-                                               True)
+    fileList, filterUsed = Object3DFileDialogs.getFileList(None,
+                                    filetypelist=fileTypeList,
+                                    message="Please select one object data file",
+                                    mode="OPEN",
+                                    getfilter=True)
     Object3DFileDialogs.Object3DDirs.nativeFileDialogs = old
     if not len(fileList):
         return None

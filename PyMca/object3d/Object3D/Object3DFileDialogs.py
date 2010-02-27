@@ -1,5 +1,8 @@
 import Object3DQt as qt
-import Object3DDirs
+try:
+    from PyMca import PyMcaDirs as Object3DDirs
+except:
+    import Object3DDirs
 import os
 QTVERSION = qt.qVersion()
 
@@ -20,21 +23,43 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
         wdir = Object3DDirs.outputDir
     if getfilter is None:
         getfilter = False
+    if getfilter:
+        if QTVERSION < '4.5.1':
+            native_possible = False
+        else:
+            native_possible = True
+    else:
+        native_possible = True
     filterused = None
-    if Object3DDirs.nativeFileDialogs:
+    if native_possible and Object3DDirs.nativeFileDialogs:
         filetypes = ""
         for filetype in fileTypeList:
             filetypes += filetype+"\n"
-        if mode == "OPEN":
-            filelist = qt.QFileDialog.getOpenFileNames(parent,
-                    message,
-                    wdir,
-                    filetypes)
+        if getfilter:
+            if mode == "OPEN":
+                filelist, filterused = qt.QFileDialog.getOpenFileNamesAndFilter(parent,
+                        message,
+                        wdir,
+                        filetypes)
+            else:
+                filelist = qt.QFileDialog.getSaveFileNameAndFilter(parent,
+                        message,
+                        wdir,
+                        filetypes)
+                if len(filelist):
+                    filterused = filelist[1]
+                    filelist=filelist[0]
         else:
-            filelist = [qt.QFileDialog.getSaveFileName(parent,
-                    message,
-                    wdir,
-                    filetypes)]
+            if mode == "OPEN":
+                filelist = qt.QFileDialog.getOpenFileNames(parent,
+                        message,
+                        wdir,
+                        filetypes)
+            else:
+                filelist = [qt.QFileDialog.getSaveFileName(parent,
+                        message,
+                        wdir,
+                        filetypes)]
         if not len(filelist):
             if getfilter:
                 return [], filterused

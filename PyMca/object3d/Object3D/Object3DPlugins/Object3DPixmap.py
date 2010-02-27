@@ -1,0 +1,353 @@
+import os
+import numpy
+try:
+    import OpenGL.GL  as GL
+    from OpenGL.GL import glDeleteLists
+except ImportError:
+    raise ImportError, "OpenGL must be installed to use these functionalities"
+
+try:
+    from PyMca import spslut
+    from PyMca import EdfFile
+except ImportError:
+    import spslut
+    import EdfFile
+
+try:
+    from PyMca.Object3D import Object3DFileDialogs
+    from PyMca.Object3D import Object3DBase
+except ImportError:
+    from Object3D import Object3DFileDialogs
+    from Object3D import Object3DBase
+
+import weakref
+
+import time
+DEBUG = 0
+    
+DRAW_MODES = ['NONE',
+              'POINT',
+              'WIRE',
+              'SURFACE']
+
+COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
+                spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
+
+class Object3DPixmap(Object3DBase.Object3D):
+    def __init__(self, name="Pixmap"):
+        Object3DBase.Object3D.__init__(self, name)
+        Object3DBase.Object3D.__init__(self, name)
+
+        self.pixmap = None
+        self.xSize  = None
+        self.ySize  = None
+        self.zPosition = 0.0
+        self.__imageData = None
+        self.textureId = -1
+        self.drawList = 0
+        self._forceListCalculation = True
+        self._forceTextureCalculation = True
+        self.__alpha  = 1.0
+        self.__xMirror = False
+        self.__yMirror = False  # OpenGL origin is bottom left ...
+        self.__widthStep  = 1.0
+        self.__heightStep = 1.0
+        self._linear = True        
+        self.pointSelectionGridList = 0
+        self._forcePointSelectionGridListCalculation = False
+
+        #centered on XY plane and on Z
+        self._configuration['common']['anchor'] = [2, 2, 2]
+
+    def setQPixmap(self, qpixmap):
+        if not isinstance(qpixmap, qt.QPixmap):
+            raise TypeError, "This does not seem to be a QPixmap"
+        qimage = qpixmap.toImage()
+        return self.setImage(qimage)
+
+    def setQImage(self, qimage):
+        """
+        QImage
+        """
+        if not isinstance(qimage, qt.QImage):
+            raise TypeError, "This does not seem to be a QImage"
+        height = qimage.height()
+        width  = qimage.width()
+        image = qimage.convertToFormat(qt.QImage.Format_ARGB32) 
+        pixmap = numpy.fromstring(qimage.bits().asstring(width * height * 4),
+                             dtype = numpy.uint8)
+        return self.setPixmap(pixmap, width, height,
+                           xmirror=False, ymirror=True)
+
+    def setPixmap(self, pixmap, width, height, xmirror = False, ymirror = False, z=0.0):
+        """
+        spslut string output
+        """
+        if type(pixmap) == type(""):
+            raise ValueError, "Input pixmap has to be an uin8 array"
+
+        #make sure we work with integers
+        self.__width  = int(width)
+        self.__height = int(height)
+
+        # some cards still need to pad to powers of 2
+        self.__tWidth  = self.getPaddedValue(self.__width)
+        self.__tHeight = self.getPaddedValue(self.__height)
+
+        if (self.__tWidth != self.__width) or (self.__tHeight != self.__height):
+            #I have to zero padd the texture to make sure it works on all cards ...
+            self.pixmap = numpy.zeros((self.__tWidth*self.__tHeight, 4), numpy.uint8)
+            pixmap.shape = [width*height, 4]
+            tjump = self.__tWidth
+            pjump = self.__width
+            for i in range(height):
+                self.pixmap[i*tjump:(i*tjump+pjump), :] = pixmap[(i*pjump):(i+1)*pjump,:]
+        else:
+            self.pixmap = pixmap
+            self.pixmap.shape = [width*height, 4]
+        self.pixmap[:,3] = 255 #alpha
+        self.__xMirror = xmirror
+        self.__yMirror = ymirror
+        self.zPosition = z
+        aspectRatio = False
+        if aspectRatio:
+            if height > width:
+                delta = 0.5*(height - width)
+                self.setLimits(-delta, 0.0, self.zPosition,
+                           width+delta, height,
+                           self.zPosition)
+            else:
+                delta = 0.5*(width - height)
+                self.setLimits(0.0, -delta, self.zPosition,
+                           width, height+delta,
+                           self.zPosition)
+        else:
+            self.setLimits(0.0, 0.0, self.zPosition,
+                       width, height, self.zPosition)
+
+    def setImage(self, *var, **kw):
+        return self.setPixmap(*var, **kw)
+
+    def setImageData(self, data):
+        """
+        setImageData(self, data)
+        data is a numpy array
+        """
+        (image,size,minmax)= spslut.transform(data, (1,0),
+                                  (spslut.LINEAR,3.0),
+                                  "RGBX", spslut.TEMP,
+                                  1,
+                                  (0, 1),
+                                  (0, 255), 1)
+        self.setPixmap(image, size[0], size[1], xmirror = False, ymirror = True)
+
+    def getPaddedValue(self, v):
+        a = 2
+        while (a<v):
+            a *=2
+        return int(a)
+
+    def __mirrorRotator(self, xMirror, yMirror):
+        if yMirror or xMirror:
+            if yMirror:
+                rotX = numpy.zeros((4,4), numpy.float64)
+                rotX[0,0] =  1
+                rotX[1,1] =  1
+                rotX[2,2] =  1
+                rotX[3,3] =  1                    
+                cs = -1.0
+                sn =  0.0
+                rotX[1,1] =  cs; rotX[1,2] = sn   
+                rotX[2,1] = -sn; rotX[2,2] = cs
+                GL.glMultMatrixd(rotX)
+                GL.glTranslated(0.0, -self.__height, 0.0) 
+
+            if xMirror:
+                #RotY
+                cs = -1.0
+                sn = 0.0
+                rotY = numpy.zeros((4,4), numpy.float64)
+                rotY[0,0] =  1
+                rotY[1,1] =  1
+                rotY[2,2] =  1
+                rotY[3,3] =  1
+                rotY[0,0] =  cs; rotY[0,2] = -sn   #inverted respect to the others
+                rotY[2,0] =  sn; rotY[2,2] =  cs                
+                GL.glMultMatrixd(rotY)
+                GL.glTranslated(-self.__width, 0.0, 0.0) 
+
+    def drawObject(self):
+        if DEBUG:e0=time.time()
+        if self.pixmap is None:return
+
+        if self.__xMirror or self.__yMirror:
+            self.__mirrorRotator(self.__xMirror, self.__yMirror)
+
+        if self._vertexSelectionMode:
+            if (self.pointSelectionGridList < 0 ) or self._forcePointSelectionGridListCalculation:
+                self.buildPointSelectionGridList()
+
+            GL.glTranslate(0.5 * self.__widthStep, 0.5 * self.__heightStep, 0.0)
+            # drawing lines the height is not a problem but the points are displaced
+            # and I would have to add one point ...
+            GL.glCallList(self.pointSelectionGridList)
+            GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
+        else:
+            if self._forceTextureCalculation:
+                self.buildTexture()
+            GL.glPushAttrib(GL.GL_ALL_ATTRIB_BITS)
+            GL.glDisable(GL.GL_DEPTH_TEST)
+            alpha = 1.0 - self._configuration['common']['transparency']
+            GL.glColor4f(1.0, 1.0, 1.0, alpha)
+            GL.glEnable(GL.GL_BLEND)
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            if (self.drawList <= 0) or self._forceListCalculation:
+                self.buildQuad()
+            GL.glCallList(self.drawList)
+            GL.glPopAttrib()
+            """
+            if (self.pointSelectionGridList < 0 ) or self._forcePointSelectionGridListCalculation:
+                self.buildPointSelectionGridList()
+            GL.glTranslate(0.5 * self.__widthStep, 0.5 * self.__heightStep, 0.0)
+            GL.glCallList(self.pointSelectionGridList)
+            GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
+            """
+            
+        if DEBUG:print "elapsed = ", time.time() - e0
+
+    def buildTexture(self):
+        """
+        Normal procedure:
+        Generate a texture name with glGenTextures.
+        Select the new texture with glBindTexture.
+        Fill the texture with an image using glTexImage2D.
+        Set the texture's minification and magnification filters using glTexParameteri.
+        Enable 2D textures with glEnable.
+        When producing geometry, bind the texture before starting the polygon and then
+        set a texture coordinate with glTexCoord before each glVertex.
+        """
+
+        self.textureId = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.textureId)
+        GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT )
+        GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT )
+        linear = self._linear
+        if linear:
+            GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR )
+            GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR )
+        else:
+            GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST )
+            GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST )
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA,
+                    self.__tWidth,
+                    self.__tHeight,
+                    0, GL.GL_RGBA,
+                    GL.GL_UNSIGNED_BYTE, self.pixmap)
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        self._forceTextureCalculation = False
+        
+    def buildQuad(self):
+        if self.drawList > 0:
+            GL.glDeleteLists(self.drawList, 1)
+        aspectRatio = False
+        if aspectRatio:
+            xmin, ymin, zmin = 0.0, 0.0, self.zPosition
+            xmax, ymax, zmax = self.__width, self.__height, self.zPosition
+        else:
+            xmin, ymin, zmin = self._limits[0]
+            xmax, ymax, zmax = self._limits[1]
+        tx0 = 0.0
+        tx1 = (1.0 * self.__width)/self.__tWidth
+        ty0 = 0.0
+        ty1 = (1.0 * self.__height)/self.__tHeight
+        self.drawList = GL.glGenLists(1)
+        GL.glNewList(self.drawList, GL.GL_COMPILE)
+       	GL.glBindTexture(GL.GL_TEXTURE_2D, self.textureId)
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        GL.glBegin(GL.GL_QUADS)
+       	GL.glTexCoord2d(tx0, ty0)
+       	GL.glVertex3f(xmin, ymin, zmin)
+	GL.glTexCoord2d(tx0, ty1)
+	GL.glVertex3f(xmin, ymax, zmin)
+	GL.glTexCoord2d(tx1, ty1)
+	GL.glVertex3f(xmax, ymax, zmin)
+	GL.glTexCoord2d(tx1, ty0)
+	GL.glVertex3f(xmax, ymin, zmin)
+        GL.glEnd()
+        GL.glDisable(GL.GL_TEXTURE_2D)
+        GL.glEndList()
+        self._forceListCalculation = False
+
+
+MENU_TEXT = 'Pixmap'
+def getObject3DInstance(config=None):
+    fileTypeList = ['Picture Files (*jpg *jpeg *tif *tiff *png)',
+                    'EDF Files (*edf)',
+                    'EDF Files (*ccd)',
+                    'ADSC Files (*img)',                    
+                    'EDF Files (*)']
+    fileList, filterUsed = Object3DFileDialogs.getFileList(None,
+                                    filetypelist=fileTypeList,
+                                    message="Please select one object data file",
+                                    mode="OPEN",
+                                    getfilter=True)
+    if not len(fileList):
+        return
+    fname = fileList[0]
+    if str(filterUsed.split()[0]) == "Picture":
+        qimage = qt.QImage(fname)
+        if qimage.isNull():
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Cannot read file %s as an image" % fname)
+            msg.exec_()
+            return
+        object3D = Object3DPixmap(os.path.basename(fname))
+        object3D.setQImage(qimage)
+        return object3D
+    if str(filterUsed.split()[0]) in ["EDF", "ADSC"]:
+        edf = EdfFile.EdfFile(fname)
+        data = edf.GetData(0)
+        if True:
+            object3D = Object3DPixmap(os.path.basename(fname))
+            object3D.setImageData(data)
+        else:
+            (image,size,minmax)= spslut.transform(data, (1,0),
+                                      (spslut.LINEAR,3.0),
+                                      "RGBX", spslut.TEMP,
+                                      1,
+                                      (0, 1),
+                                      (0, 255), 1)
+            object3D = Object3DPixmap(os.path.basename(fname))
+            object3D.setPixmap(image, size[0], size[1], xmirror = False, ymirror = True)
+        return object3D
+    return None
+    
+if __name__ == "__main__":
+    import sys
+    import os
+    from PyMca.Object3D import SceneGLWindow
+    from PyMca.Object3D import Object3DFileDialogs
+    qt=SceneGLWindow.qt
+    app = qt.QApplication(sys.argv)
+    window = SceneGLWindow.SceneGLWindow()
+    window.show()
+    object3D=getObject3DInstance()
+    if object3D is None:
+        name = "125 rows x 80 columns array"
+        data = numpy.arange(10000.).astype(numpy.float32)
+        data.shape = [125, 80]
+        (image,size,minmax)= spslut.transform(data, (1,0),
+                                      (spslut.LINEAR,3.0),
+                                      "RGBX", spslut.TEMP,
+                                      1,
+                                      (0, 1),
+                                      (0, 255), 1)
+        object3D = Object3DPixmap(os.path.basename(name))
+        object3D.setPixmap(image, size[0], size[1], xmirror = False, ymirror = True)
+    window.addObject(object3D)
+    object3D = None
+    window.glWidget.setZoomFactor(1.0)
+    window.show()
+    app.exec_()
+
