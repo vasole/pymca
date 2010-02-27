@@ -19,6 +19,7 @@ try:
 except ImportError:
     from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
+qt=Object3DFileDialogs.qt
 
 import weakref
 
@@ -328,7 +329,6 @@ if __name__ == "__main__":
     import os
     from PyMca.Object3D import SceneGLWindow
     from PyMca.Object3D import Object3DFileDialogs
-    qt=SceneGLWindow.qt
     app = qt.QApplication(sys.argv)
     window = SceneGLWindow.SceneGLWindow()
     window.show()
