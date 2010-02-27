@@ -19,6 +19,8 @@ try:
 except ImportError:
     from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
+
+
 qt=Object3DFileDialogs.qt
 
 import weakref
@@ -94,6 +96,12 @@ class Object3DPixmap(Object3DBase.Object3D):
         # some cards still need to pad to powers of 2
         self.__tWidth  = self.getPaddedValue(self.__width)
         self.__tHeight = self.getPaddedValue(self.__height)
+
+        maximum_texture = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
+        #print "MAXIMUM  = ", maximum_texture
+        if (self.__tWidth > maximum_texture) or (self.__tHeight > maximum_texture):
+            raise ValueError, "Invalid final texture size: %d x %d" % (self.__tWidth,
+                                                                 self.__tHeight)
 
         if (self.__tWidth != self.__width) or (self.__tHeight != self.__height):
             #I have to zero padd the texture to make sure it works on all cards ...
@@ -227,7 +235,6 @@ class Object3DPixmap(Object3DBase.Object3D):
         When producing geometry, bind the texture before starting the polygon and then
         set a texture coordinate with glTexCoord before each glVertex.
         """
-
         self.textureId = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.textureId)
         GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT )
