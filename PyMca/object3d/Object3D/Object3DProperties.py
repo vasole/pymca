@@ -233,6 +233,9 @@ class Object3DScale(qt.QGroupBox):
         self.lineEditList = []
         self.validatorList = []
         i = 0
+        self._lineSlotList =[self._xLineSlot,
+                             self._yLineSlot,
+                             self._zLineSlot]
         for axis in ['x', 'y', 'z']:
             label = qt.QLabel("%s Scale" % axis)
             lineEdit = qt.QLineEdit(self)
@@ -247,7 +250,7 @@ class Object3DScale(qt.QGroupBox):
             lineEdit.setFixedWidth(lineEdit.fontMetrics().width('######.#####'))
             self.connect(lineEdit,
                          qt.SIGNAL('editingFinished()'),
-                         self._lineSlot)
+                         self._lineSlotList[i])
             i+= 1
 
         # xScaling
@@ -258,7 +261,7 @@ class Object3DScale(qt.QGroupBox):
         self.l.addWidget(self.xScaleSlider, i, 2)
         self.connect(self.xScaleSlider,
                      qt.SIGNAL("valueChanged(double)"),
-                     self._sliderSlot)
+                     self._xSliderSlot)
 
         # yScaling
         i += 1
@@ -268,7 +271,7 @@ class Object3DScale(qt.QGroupBox):
         self.l.addWidget(self.yScaleSlider, i, 2)
         self.connect(self.yScaleSlider,
                      qt.SIGNAL("valueChanged(double)"),
-                     self._sliderSlot)
+                     self._ySliderSlot)
 
         # zScaling
         i += 1
@@ -278,9 +281,9 @@ class Object3DScale(qt.QGroupBox):
         self.l.addWidget(self.zScaleSlider, i, 2)
         self.connect(self.zScaleSlider,
                      qt.SIGNAL("valueChanged(double)"),
-                     self._sliderSlot)
+                     self._zSliderSlot)
 
-    def _sliderSlot(self, *var):
+    def _xSliderSlot(self, *var):
         if not self.__disconnect:
             scale = [self.xScaleSlider.value(),
                      self.yScaleSlider.value(),
@@ -295,9 +298,43 @@ class Object3DScale(qt.QGroupBox):
                (self.__oldScale[1] != scale[1]) or \
                (self.__oldScale[2] != scale[2]) :
                 self.__oldScale = scale
-                self._signal()
+                self._signal("xScaleUpdated")
 
-    def _lineSlot(self):
+    def _ySliderSlot(self, *var):
+        if not self.__disconnect:
+            scale = [self.xScaleSlider.value(),
+                     self.yScaleSlider.value(),
+                     self.zScaleSlider.value()]
+
+            self.__disconnect = True
+            for i in [0, 1, 2]:
+                if scale[i] != float(str(self.lineEditList[i].text())):
+                    self.lineEditList[i].setText("%.7g" % scale[i])
+            self.__disconnect = False
+            if (self.__oldScale[0] != scale[0]) or \
+               (self.__oldScale[1] != scale[1]) or \
+               (self.__oldScale[2] != scale[2]) :
+                self.__oldScale = scale
+                self._signal("yScaleUpdated")
+
+    def _zSliderSlot(self, *var):
+        if not self.__disconnect:
+            scale = [self.xScaleSlider.value(),
+                     self.yScaleSlider.value(),
+                     self.zScaleSlider.value()]
+
+            self.__disconnect = True
+            for i in [0, 1, 2]:
+                if scale[i] != float(str(self.lineEditList[i].text())):
+                    self.lineEditList[i].setText("%.7g" % scale[i])
+            self.__disconnect = False
+            if (self.__oldScale[0] != scale[0]) or \
+               (self.__oldScale[1] != scale[1]) or \
+               (self.__oldScale[2] != scale[2]) :
+                self.__oldScale = scale
+                self._signal("zScaleUpdated")
+
+    def _xLineSlot(self):
         if not self.__disconnect:
             self.__disconnect = True
             scale = [1, 1, 1]
@@ -307,15 +344,48 @@ class Object3DScale(qt.QGroupBox):
             self.yScaleSlider.setValue(scale[1])
             self.zScaleSlider.setValue(scale[2])
             self.__disconnect = False
-            self._signal()
+            self._signal("xScaleUpdated")
 
+    def _yLineSlot(self):
+        if not self.__disconnect:
+            self.__disconnect = True
+            scale = [1, 1, 1]
+            for i in [0, 1 , 2]:
+                scale[i] = float(str(self.lineEditList[i].text()))
+            self.xScaleSlider.setValue(scale[0])
+            self.yScaleSlider.setValue(scale[1])
+            self.zScaleSlider.setValue(scale[2])
+            self.__disconnect = False
+            self._signal("yScaleUpdated")
+
+    def _zLineSlot(self):
+        if not self.__disconnect:
+            self.__disconnect = True
+            scale = [1, 1, 1]
+            for i in [0, 1 , 2]:
+                scale[i] = float(str(self.lineEditList[i].text()))
+            self.xScaleSlider.setValue(scale[0])
+            self.yScaleSlider.setValue(scale[1])
+            self.zScaleSlider.setValue(scale[2])
+            self.__disconnect = False
+            self._signal("zScaleUpdated")
 
     def _signal(self, event = None):
         if DEBUG: print "emitting Object3DScaleSignal"
         if self.__disconnect: return
         if event is None:
             event = "ScaleUpdated"
+        oldScale = self._lastParameters * 1
         ddict = self.getParameters()
+        scale = ddict['scale']
+        emit = False
+        for i in range(3):
+            if abs((scale[i]-oldScale[i])) > 1.0e-10:
+                emit = True
+                ddict['magnification'] = scale[i]/oldScale[i] 
+                break
+        if not emit:
+            return
         ddict['event'] = event
         self.emit(qt.SIGNAL('Object3DScaleSignal'), ddict)
 
@@ -326,6 +396,7 @@ class Object3DScale(qt.QGroupBox):
 
         ddict = {}
         ddict['scale'] = scale
+        self._lastParameters = scale
         return ddict
 
     def setParameters(self, ddict = None):
@@ -339,6 +410,7 @@ class Object3DScale(qt.QGroupBox):
 
         for i in [0, 1, 2]:
             self.lineEditList[i].setText("%.7g" % scale[i])
+        self._lastParameters = scale
 
 class Object3DPrivateInterface(qt.QGroupBox):
     def __init__(self, parent = None):

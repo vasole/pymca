@@ -41,6 +41,7 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
                         message,
                         wdir,
                         filetypes)
+                filterused = str(filterused)
             else:
                 filelist = qt.QFileDialog.getSaveFileNameAndFilter(parent,
                         message,

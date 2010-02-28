@@ -452,7 +452,10 @@ class SceneGLWidget(qt.QGLWidget):
             configDict = object3D.getConfiguration()['common']
             #This call could be made at the object if needed ...
             GL.glPointSize(configDict['pointsize'])
-            GL.glScalef(*configDict['scale'])
+            SCALE_BEFORE = True
+            if SCALE_BEFORE:
+                #print "SCALING BEFORE"
+                GL.glScalef(*configDict['scale'])
             if self.__selectingVertex:
                 if object3D.selected():
                     #force Object3D GL_SELECT equivalent drawing
@@ -574,6 +577,9 @@ class SceneGLWidget(qt.QGLWidget):
                                     distance[3,1],
                                     distance[3,2])
                     
+                if not SCALE_BEFORE:
+                    #print "SCALING AFTER"
+                    GL.glScalef(*configDict['scale'])
 
                 if self.__selectingVertex:
                     if object3D.selected():                    

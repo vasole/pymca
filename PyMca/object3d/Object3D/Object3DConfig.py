@@ -65,8 +65,23 @@ class Object3DConfig(qt.QWidget):
 
     def _scaleSlot(self, ddict0):
         ddict = {}
+        event = ddict0['event']
         ddict['common'] = ddict0
         ddict['common'].update(self.scaleWidget.getParameters())
+
+        #get the movement positions
+        movementsDict = self.movementsWidget.getParameters()
+        ddict['common'].update(movementsDict)
+        if event == "xScaleUpdated":
+            if ddict['common']['scale'][0] != 0.0:
+                ddict['common']['translation'][0] /= ddict0['magnification']
+        if event == "yScaleUpdated":
+            if ddict['common']['scale'][1] != 0.0:
+                ddict['common']['translation'][1] /= ddict0['magnification']
+        if event == "zScaleUpdated":
+            if ddict['common']['scale'][2] != 0.0:
+                ddict['common']['translation'][2] /= ddict0['magnification']
+        self.movementsWidget.setParameters(ddict['common'])
         self._signal(ddict)
 
     def _propertiesSlot(self, ddict):

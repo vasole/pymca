@@ -302,7 +302,7 @@ def getObject3DInstance(config=None):
     if not len(fileList):
         return
     fname = fileList[0]
-    if str(filterUsed.split()[0]) == "Picture":
+    if filterUsed.split()[0] == "Picture":
         qimage = qt.QImage(fname)
         if qimage.isNull():
             msg = qt.QMessageBox(self)
@@ -313,7 +313,7 @@ def getObject3DInstance(config=None):
         object3D = Object3DPixmap(os.path.basename(fname))
         object3D.setQImage(qimage)
         return object3D
-    if str(filterUsed.split()[0]) in ["EDF", "ADSC"]:
+    if filterUsed.split()[0] in ["EDF", "ADSC"]:
         edf = EdfFile.EdfFile(fname)
         data = edf.GetData(0)
         if True:
