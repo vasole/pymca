@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -156,7 +156,8 @@ class PeakTableWidget(QTable):
                           'calenergy':  qt.QString()}
         self.peaklist.append(peak)
         self.setReadWrite(peak,'setenergy')
-        self.setReadOnly (peak,['number','channel','line','calenergy'])
+        self.setReadWrite(peak,'channel')
+        self.setReadOnly (peak,['number','line','calenergy'])
         col = self.peaks[peak]['fields'].index('element')
         self.peaks[peak]['element_item']=QPeriodicComboTableItem(self,
                                         row = linew, col= col)
