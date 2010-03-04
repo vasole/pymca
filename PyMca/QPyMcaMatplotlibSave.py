@@ -262,7 +262,10 @@ class SaveImageSetup(qt.QWidget):
                 msg.exec_()
                 return
         try:
-            self.imageWidget.print_figure(finalFile, format=finalFile[-3:])
+            self.imageWidget.print_figure(finalFile,
+                                          edgecolor='w',
+                                          facecolor='w',
+                                          format=finalFile[-3:])
         except:
             print "WARNING: trying to save using obsolete method"
             config = self.imageWidget.getParameters()
@@ -292,7 +295,7 @@ class SimpleComboBox(qt.QComboBox):
     	    self.addItem(item)
 
     def setCurrentText(self, text):
-        for i in self.count():
+        for i in range(self.count()):
             if str(self.itemText(i)) == text:
                 self.setCurrentIndex(i)
                 break
@@ -473,6 +476,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
         #How to set this color equal to the other widgets color?
         #self.figure.set_facecolor('1.0')
+        #self.figure.set_edgecolor('1.0')
 
         FigureCanvas.__init__(self, self.figure)
         FigureCanvas.setSizePolicy(self,
@@ -846,6 +850,7 @@ def test():
     a=numpy.arange(256.)
     a.shape = 16, 16
     w = SaveImageSetup(None, a)
+    w.setParameters(w.getParameters())
     w.show()
     app.exec_()
 
