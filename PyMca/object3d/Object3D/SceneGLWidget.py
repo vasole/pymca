@@ -1044,7 +1044,9 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 self.emit(qt.SIGNAL('vertexSelected'), ddict)
                 return
 
+            #print "glu pro before height correction",GLU.gluUnProject(x, y, 0.0)
             y = self.height()- y
+            #print "glu pro after height correction",GLU.gluUnProject(x, y, 0.0)
 
             #I should try to do all this in paintGL to avoid make current ...
             self.makeCurrent()
