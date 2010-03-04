@@ -42,15 +42,15 @@ class Object3DPixmap(Object3DBase.Object3D):
         Object3DBase.Object3D.__init__(self, name)
 
         self.pixmap = None
-        self.xSize  = None
-        self.ySize  = None
-        self.zPosition = 0.0
-        self.__imageData = None
+        self._qt = False
+        self._xCalibration = [0.0, 1.0, 0.0]
+        self._yCalibration = [0.0, 1.0, 0.0]
+        self._zValue = 0.0
+        self._imageData = None
         self.textureId = -1
         self.drawList = 0
         self._forceListCalculation = True
         self._forceTextureCalculation = True
-        self.__alpha  = 1.0
         self.__xMirror = False
         self.__yMirror = False  # OpenGL origin is bottom left ...
         self.__widthStep  = 1.0
@@ -66,7 +66,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         if not isinstance(qpixmap, qt.QPixmap):
             raise TypeError, "This does not seem to be a QPixmap"
         qimage = qpixmap.toImage()
-        return self.setImage(qimage)
+        return self.setQImage(qimage)
 
     def setQImage(self, qimage):
         """
@@ -76,9 +76,10 @@ class Object3DPixmap(Object3DBase.Object3D):
             raise TypeError, "This does not seem to be a QImage"
         height = qimage.height()
         width  = qimage.width()
-        image = qimage.convertToFormat(qt.QImage.Format_ARGB32) 
+        image = qimage.convertToFormat(qt.QImage.Format_ARGB32)
         pixmap = numpy.fromstring(qimage.bits().asstring(width * height * 4),
                              dtype = numpy.uint8)
+        self._qt = True
         return self.setPixmap(pixmap, width, height,
                            xmirror=False, ymirror=True)
 
@@ -89,6 +90,9 @@ class Object3DPixmap(Object3DBase.Object3D):
         if type(pixmap) == type(""):
             raise ValueError, "Input pixmap has to be an uin8 array"
 
+        self._imageData = None
+        self._forceTextureCalculation = True
+        
         #make sure we work with integers
         self.__width  = int(width)
         self.__height = int(height)
@@ -96,7 +100,6 @@ class Object3DPixmap(Object3DBase.Object3D):
         # some cards still need to pad to powers of 2
         self.__tWidth  = self.getPaddedValue(self.__width)
         self.__tHeight = self.getPaddedValue(self.__height)
-
         maximum_texture = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
         #print "MAXIMUM  = ", maximum_texture
         if (self.__tWidth > maximum_texture) or (self.__tHeight > maximum_texture):
@@ -134,6 +137,11 @@ class Object3DPixmap(Object3DBase.Object3D):
             self.setLimits(0.0, 0.0, self.zPosition,
                        width, height, self.zPosition)
 
+    def setLimits(self, *var):
+        Object3DBase.Object3D.setLimits(self, *var)
+        self._buildPointSelectionVertices()
+        self._forcePointSelectionGridListCalculation = True
+
     def setImage(self, *var, **kw):
         return self.setPixmap(*var, **kw)
 
@@ -142,13 +150,15 @@ class Object3DPixmap(Object3DBase.Object3D):
         setImageData(self, data)
         data is a numpy array
         """
+        self._qt = False
         (image,size,minmax)= spslut.transform(data, (1,0),
                                   (spslut.LINEAR,3.0),
                                   "RGBX", spslut.TEMP,
                                   1,
                                   (0, 1),
                                   (0, 255), 1)
-        self.setPixmap(image, size[0], size[1], xmirror = False, ymirror = True)
+        self.setPixmap(image, size[0], size[1], xmirror = False, ymirror = False)
+        self._imageData = data
 
     def getPaddedValue(self, v):
         a = 2
@@ -235,22 +245,33 @@ class Object3DPixmap(Object3DBase.Object3D):
         When producing geometry, bind the texture before starting the polygon and then
         set a texture coordinate with glTexCoord before each glVertex.
         """
+        if self.textureId >= 0:
+            #I should use texture subimage whenever possible ... 
+            #glDeleteTextures(GLsizei n, const GLuint *textureNames);
+            GL.glDeleteTextures(self.textureId)
         self.textureId = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.textureId)
         GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT )
         GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT )
         linear = self._linear
         if linear:
-            GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR )
+            GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST )
             GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR )
         else:
             GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST )
             GL.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST )
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA,
-                    self.__tWidth,
-                    self.__tHeight,
-                    0, GL.GL_RGBA,
-                    GL.GL_UNSIGNED_BYTE, self.pixmap)
+        if self._qt:
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA,
+                        self.__tWidth,
+                        self.__tHeight,
+                        0, GL.GL_BGRA,
+                        GL.GL_UNSIGNED_BYTE, self.pixmap)
+        else:
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA,
+                        self.__tWidth,
+                        self.__tHeight,
+                        0, GL.GL_RGBA,
+                        GL.GL_UNSIGNED_BYTE, self.pixmap)
         GL.glEnable(GL.GL_TEXTURE_2D)
         self._forceTextureCalculation = False
         
@@ -285,6 +306,102 @@ class Object3DPixmap(Object3DBase.Object3D):
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glEndList()
         self._forceListCalculation = False
+
+    def isVertexSelectionModeSupported(self):
+        return True
+
+    def _buildPointSelectionVertices(self):
+        # I assume self.__width * self.__height points
+        # distributed in the limits interval
+        xsize = self.__width
+        ysize = self.__height
+        
+        xmin, ymin, zmin = self._limits[0]
+        xmax, ymax, zmax = self._limits[1]
+
+        self.__widthStep  = (xmax - xmin)/xsize
+        self.__heightStep = (ymax - ymin)/ysize
+        
+        x = xmin + numpy.arange(xsize).astype(numpy.float32) * self.__widthStep 
+        y = ymin + numpy.arange(ysize).astype(numpy.float32) * self.__heightStep
+
+        if DEBUG:e0 = time.time()
+        #fast method to generate the vertices 
+        self.vertices = numpy.zeros((xsize * ysize, 3), numpy.float32)
+        A=numpy.outer(x, numpy.ones(len(y), numpy.float32))
+        B=numpy.outer(y, numpy.ones(len(x), numpy.float32))
+
+        self.vertices[:,0]=A.flatten()
+        self.vertices[:,1]=B.transpose().flatten()
+        self.vertices[:,2]=0.5 * (zmax - zmin)
+
+        self.zdata = self.vertices[:,2]
+        if DEBUG:print "vertex generation elapsed = ", time.time()-e0
+
+        #get the associated selection colors
+        i = numpy.arange(len(self.vertices))
+        self.vertexSelectionColors = numpy.zeros((len(self.vertices),3), numpy.float32)
+        self.vertexSelectionColors[:,0] = (i & 255)/255.
+        self.vertexSelectionColors[:,1] = ((i >> 8) & 255)/255.
+        self.vertexSelectionColors[:,2] = ((i >> 16) & 255)/255.
+
+    def buildPointSelectionGridList0(self):
+        #in fact I am using a line selection
+        if self.pointSelectionGridList > 0:
+            GL.glDeleteLists(self.pointSelectionGridList, 1)
+        self.pointSelectionGridList = GL.glGenLists(1)
+        GL.glNewList(self.pointSelectionGridList, GL.GL_COMPILE)
+        GL.glVertexPointerf(self.vertices)
+        GL.glColorPointerf(self.vertexSelectionColors)
+        GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
+        GL.glEnableClientState(GL.GL_COLOR_ARRAY)
+        for j in range(self.__width):
+            GL.glDrawArrays(GL.GL_LINE_STRIP, j*self.__height, self.__height)
+        GL.glDisableClientState(GL.GL_COLOR_ARRAY)
+        GL.glDisableClientState(GL.GL_VERTEX_ARRAY)
+        GL.glEndList()
+        self._forcePointSelectionGridListCalculation = False
+
+    def buildPointSelectionGridList(self):
+        if self.pointSelectionGridList > 0:
+            GL.glDeleteLists(self.pointSelectionGridList, 1)
+
+        self.pointSelectionGridList = GL.glGenLists(1)
+        #print self.pointSelectionGridList
+        GL.glNewList(self.pointSelectionGridList, GL.GL_COMPILE)
+        GL.glVertexPointerf(self.vertices)
+        GL.glColorPointerf(self.vertexSelectionColors)
+        GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
+        GL.glEnableClientState(GL.GL_COLOR_ARRAY)
+        GL.glDrawArrays(GL.GL_POINTS, 0, self.__width*self.__height)
+        GL.glDisableClientState(GL.GL_COLOR_ARRAY);
+        GL.glDisableClientState(GL.GL_VERTEX_ARRAY); 
+        GL.glEndList()
+        self._forcePointSelectionGridListCalculation = False
+
+    def getIndexValues(self, index):
+        """
+        x,y,z, I
+        """
+        if DEBUG:
+            print "INDEX = ",index
+            print "Width, Height =", self.__width, self.__height
+        xindex = int(index/self.__height)
+        yindex = index % (self.__height)
+        xvalue = self._xCalibration[0] +\
+                 self._xCalibration[1] * xindex+\
+                 self._xCalibration[2] * xindex * xindex
+        yvalue = self._yCalibration[0] +\
+                 self._yCalibration[1] * yindex+\
+                 self._yCalibration[2] * yindex * yindex
+        try:
+            z = self._zValue[index]
+        except TypeError:
+            z = self._zValue
+        if self._imageData is None:
+            return xvalue, yvalue, z, z
+        else:
+            return xvalue, yvalue, z, self._imageData[yindex, xindex]
 
 
 MENU_TEXT = 'Pixmap'
@@ -327,9 +444,10 @@ def getObject3DInstance(config=None):
                                       (0, 1),
                                       (0, 255), 1)
             object3D = Object3DPixmap(os.path.basename(fname))
-            object3D.setPixmap(image, size[0], size[1], xmirror = False, ymirror = True)
+            object3D.setPixmap(image, size[0], size[1], xmirror = False, ymirror = False)
         return object3D
     return None
+
     
 if __name__ == "__main__":
     import sys
@@ -351,10 +469,13 @@ if __name__ == "__main__":
                                       (0, 1),
                                       (0, 255), 1)
         object3D = Object3DPixmap(os.path.basename(name))
-        object3D.setPixmap(image, size[0], size[1], xmirror = False, ymirror = True)
+        object3D.setPixmap(image, size[0], size[1],
+                           xmirror = False,
+                           ymirror = False)
     window.addObject(object3D)
     object3D = None
     window.glWidget.setZoomFactor(1.0)
     window.show()
+    app.processEvents()
     app.exec_()
 
