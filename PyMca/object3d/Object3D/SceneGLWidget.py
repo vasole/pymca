@@ -38,6 +38,13 @@ class SceneGLWidget(qt.QGLWidget):
             for i in [0, 1, 2, 3]:
                 self.__currentViewPosition[i, i] = 1
             self.scene.setCurrentViewMatrix(self.__currentViewPosition)
+        self.__sceneModelViewMatrix = numpy.zeros((4,4), numpy.float)
+        for i in [0, 1, 2, 3]:
+            self.__sceneModelViewMatrix[i, i] = 1
+        self.__sceneProjectionMatrix = self.__sceneModelViewMatrix * 1.0 
+        self.__selectedModelViewMatrix  = self.__sceneModelViewMatrix * 1.0 
+        self.__selectedProjectionMatrix = self.__sceneModelViewMatrix * 1.0 
+
 
         self.__zoomFactor = 1.0/self.scene.getZoomFactor()
 
@@ -444,7 +451,6 @@ class SceneGLWidget(qt.QGLWidget):
         childList = tree.childList()
         for subTree in childList:
             name = subTree.name()
-            #print "DRAWING NAME = ", name
             object3D = subTree.root[0]
             GL.glPushMatrix()
             GL.glPushName(self.scene.getIndex(name))
@@ -581,8 +587,17 @@ class SceneGLWidget(qt.QGLWidget):
                     #print "SCALING AFTER"
                     GL.glScalef(*configDict['scale'])
 
+                #get the current matrix
+                if name.upper() == "SCENE":
+                    self.__sceneModelViewMatrix = GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX)
+                    self.__sceneProjectionMatrix = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)
+
+                if object3D.selected():
+                    self.__selectedModelViewMatrix = GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX)
+                    self.__selectedProjectionMatrix = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)
+
                 if self.__selectingVertex:
-                    if object3D.selected():                    
+                    if object3D.selected():
                         # draw the object
                         object3D.draw()
                 else:
@@ -935,9 +950,13 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 print "setting selection mode"
                 GL.glRenderMode(GL.GL_SELECT)
         """
-        if event.buttons() & qt.Qt.RightButton:return
+        if event.buttons() & qt.Qt.RightButton:
+            if DEBUG:
+                print "Right button clicked"
+            return
         if self._objectSelectionMode:
-            if DEBUG:print "in object selection mode"
+            if DEBUG:
+                print "in object selection mode"
             y = self.height()- y
 
             self.makeCurrent()
@@ -1153,10 +1172,21 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             self.emit(qt.SIGNAL('vertexSelected'), ddict)
 
     def mouseReleaseEvent(self, event):
+        if DEBUG:
+            print "Release event = L", event.button() & qt.Qt.LeftButton
+            print "Release event = M", event.button() & qt.Qt.MidButton
+            print "Release event = R", event.button() & qt.Qt.RightButton
         if self._objectSelectionMode:
             self.setCacheEnabled(True)
             return
+        #This does not work: event.buttons() excludes the button that caused the event
         if event.buttons() & qt.Qt.MidButton:
+            pass
+
+        #This does not work: event.buttons() excludes the button that caused the event
+        if event.buttons() & qt.Qt.RightButton:
+            if DEBUG:
+                print "Right button released"
             pass
 
     def mouseMoveEvent(self, event):
@@ -1202,6 +1232,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                             self.__currentViewPosition)
             self.scene.setCurrentViewMatrix(self.__currentViewPosition)
             self.cacheUpdateGL()
+            viewMatrix = self.scene.getCurrentViewMatrix()
         elif event.buttons() & qt.Qt.MidButton:
             #Z translation
             #in orthographic projection is almost senseless
@@ -1215,6 +1246,50 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 self.__currentViewPosition[3,2] -= dy
                 self.scene.setCurrentViewMatrix(self.__currentViewPosition)            
                 self.cacheUpdateGL()
+        else:
+            if DEBUG:
+                print "I can only be here is mouse tracking is enabled"
+            xPixel = event.x()
+            yPixel = event.y()
+            width  = self.width()
+            height = self.height()
+            x = xPixel
+            y = self.height()- yPixel
+            if 0:
+                # I am not sure about the value of Z being the correct one
+                # but I expect this to be used when in "2D" mode
+                z = 0.0
+            else:
+                # The correct way (NeHe "Using gluUnproject" tutorial)
+                # glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z)
+                z = GL.glReadPixels(x, int(y), 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
+                z = z[0]
+            
+            #print numpy.dot(numpy.linalg.inv(self.__sceneModelViewMatrix), xyz)
+            #x, y, z, w = numpy.dot(numpy.linalg.inv(self.__sceneModelViewMatrix), xyz)
+            ddict = {}
+            ddict['event']  = 'mouseMoved'
+            ddict['xpixel'] = xPixel
+            ddict['ypixel'] = yPixel
+            ddict['zpixel'] = z
+            view = GL.glGetIntegerv(GL.GL_VIEWPORT)
+            glX, glY, glZ   = GLU.gluUnProject(x, y, z,
+                                   model=self.__sceneModelViewMatrix,
+                                   proj=self.__sceneProjectionMatrix,
+                                   view=view)
+            ddict['x'] = glX
+            ddict['y'] = glY
+            ddict['z'] = glZ
+            glX, glY, glZ   = GLU.gluUnProject(x, y, z,
+                                   model=self.__selectedModelViewMatrix,
+                                   proj=self.__selectedProjectionMatrix,
+                                   view=view)
+            ddict['xselected'] = glX
+            ddict['yselected'] = glY
+            ddict['zselected'] = glZ                        
+            if DEBUG:
+                print "Emitting mouseMoved signal", ddict
+            self.emit(qt.SIGNAL('mouseMoved'), ddict)
         self.lastPos = qt.QPoint(event.pos())
 
     def cacheUpdateGL(self):
