@@ -2299,8 +2299,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             nFiles *= (end[i] - begin[i] + 1)
         fileList = [None] * nFiles
         if len(begin) == 1:
-            for i in range(begin, end+1, 1):
-                fileList[i] = pattern % (i)
+            i = 0
+            for j in range(begin[0], end[0]+1, 1):
+                fileList[i] = pattern % (j)
+                i += 1
         elif len(begin) == 2:
             i = 0
             for j in range(begin[0], end[0]+1, 1):
