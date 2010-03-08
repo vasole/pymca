@@ -62,6 +62,36 @@ class Object3DPixmap(Object3DBase.Object3D):
         #centered on XY plane and on Z
         self._configuration['common']['anchor'] = [2, 2, 2]
 
+    def setConfiguration(self, ddict):
+        Object3DBase.Object3D.setConfiguration(self, ddict)
+        if self._qt:
+            return
+        if self._imageData is None:
+            return
+        if ddict['common'].has_key('event'):
+            if ddict['common']['event'] == 'ColormapChanged':
+                self._forceTextureCalculation = True
+        if not self._forceTextureCalculation:
+            return
+        colormap = self._configuration['common']['colormap']
+        (pixmap,size,minmax)= spslut.transform(self._imageData,
+                                          (1,0),
+                                          (colormap[6],3.0),
+                                          "RGBX",
+                                          COLORMAPLIST[int(str(colormap[0]))],
+                                          colormap[1],
+                                          (colormap[2], colormap[3]),
+                                          (0, 255),1)
+        width = size[0]
+        height = size[1]
+        pixmap.shape = [width*height, 4]
+        tjump = self.__tWidth
+        pjump = self.__width
+        for i in range(height):
+            self.pixmap[i*tjump:(i*tjump+pjump), :] = pixmap[(i*pjump):(i+1)*pjump,:]
+        self.pixmap[:,3] = 255
+        return
+        
     def setQPixmap(self, qpixmap):
         if not isinstance(qpixmap, qt.QPixmap):
             raise TypeError, "This does not seem to be a QPixmap"
@@ -158,6 +188,10 @@ class Object3DPixmap(Object3DBase.Object3D):
                                   (0, 1),
                                   (0, 255), 1)
         self.setPixmap(image, size[0], size[1], xmirror = False, ymirror = False)
+        self._configuration['common']['colormap'][2]=minmax[0]
+        self._configuration['common']['colormap'][3]=minmax[1]
+        self._configuration['common']['colormap'][4]=minmax[0]
+        self._configuration['common']['colormap'][5]=minmax[1]
         self._imageData = data
 
     def getPaddedValue(self, v):
@@ -472,6 +506,7 @@ if __name__ == "__main__":
         object3D.setPixmap(image, size[0], size[1],
                            xmirror = False,
                            ymirror = False)
+        object3D.setImageData(data)
     window.addObject(object3D)
     object3D = None
     window.glWidget.setZoomFactor(1.0)
