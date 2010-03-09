@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import QtBlissGraph
@@ -593,17 +593,22 @@ class ColormapDialog(qt.QDialog):
     """
     def sendColormap(self):
         if DEBUG:print "sending colormap"
+        #prevent unexpected behaviour because of bad limits
+        if self.minValue > self.maxValue:
+            vmax = self.minValue
+        else:
+            vmax = self.maxValue
         try:
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("ColormapChanged"),
                         (self.colormapIndex, self.autoscale,
-                         self.minValue, self.maxValue,
+                         self.minValue, vmax,
                          self.dataMin, self.dataMax,
                          self.colormapType))
             else:
                 self.emit(qt.SIGNAL("ColormapChanged"),
                         self.colormapIndex, self.autoscale,
-                        self.minValue, self.maxValue,
+                        self.minValue, vmax,
                         self.dataMin, self.dataMax,
                         self.colormapType)
             
