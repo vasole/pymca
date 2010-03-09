@@ -261,7 +261,11 @@ class Object3DColormap(qt.QGroupBox):
                 self.minText.setEnabled(1)
                 self.maxText.setEnabled(1)
                 for slider in self.sliderList:
+                    self.__disconnected = True
+                    delta = (self.dataMax - self.dataMin)/200.
+                    slider.setRange(self.dataMin, self.dataMax, delta)
                     slider.setEnabled(True)
+                    self.__disconnected = False
 
 
     # MINIMUM
@@ -290,8 +294,12 @@ class Object3DColormap(qt.QGroupBox):
 
     def getParameters(self):
         ddict = {}
+        if self.minValue > self.maxValue:
+            vMax = self.minValue
+        else:
+            vMax = self.maxValue
         ddict['colormap'] = [self.colormapIndex, self.autoscale,
-                        self.minValue, self.maxValue,
+                        self.minValue, vMax,
                         self.dataMin, self.dataMax,
                         self.colormapType]
         return ddict

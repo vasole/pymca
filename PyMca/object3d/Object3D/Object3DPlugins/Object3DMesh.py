@@ -199,6 +199,8 @@ class Object3DMesh(Object3DBase.Object3D):
         self.nVertices = self.vertices.shape[0]
 
     def getColors(self):
+        if DEBUG:
+            t0 = time.time()
         self._configuration['common']['colormap'][4]=self.values.min()
         self._configuration['common']['colormap'][5]=self.values.max()
         colormap = self._configuration['common']['colormap']
@@ -212,17 +214,20 @@ class Object3DMesh(Object3DBase.Object3D):
                                               (0, 255),1)
         self.vertexColors.shape = self.nVertices, 4
         self.vertexColors[:, 3] = self._alpha
+        if DEBUG:
+            print "colors elapsed = ", time.time() - t0
         #selection colors
         # if I have more than pow(2, 24) vertices
-        # the vertex with number pow(2, 24) will never be selected 
+        # the vertex with number pow(2, 24) will never be selected
+        if 0:
+            i = numpy.arange(self.nVertices)
+            self.vertexSelectionColors = numpy.zeros((self.nVertices,4),
+                                                     numpy.uint8)
+            self.vertexSelectionColors[:,0] = (i & 255)
+            self.vertexSelectionColors[:,1] = ((i >> 8) & 255)
+            self.vertexSelectionColors[:,2] = ((i >> 16) & 255)
+            self.vertexSelectionColors[:,3] = 255 - (i >> 24)
         return
-        i = numpy.arange(self.nVertices)
-        self.vertexSelectionColors = numpy.zeros((self.nVertices,4),
-                                                 numpy.uint8)
-        self.vertexSelectionColors[:,0] = (i & 255)
-        self.vertexSelectionColors[:,1] = ((i >> 8) & 255)
-        self.vertexSelectionColors[:,2] = ((i >> 16) & 255)
-        self.vertexSelectionColors[:,3] = 255 - (i >> 24)
         
     def _obtainLimits(self):
         xmin, ymin, zmin =  self._x.min(), self._y.min(), self._z.min() 

@@ -1429,21 +1429,60 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 			}
 			glEnd();
 		}else{
-			glBegin(GL_POINTS);
-			px = (float *) xArray->data;
-			for (i=0; i<xSize; i++){
-				py = (float *) yArray->data;
-				for (j=0; j<ySize; j++){
-					pz = (float *) zArray->data;
-					for (k=0; k<zSize; k++){
-						glVertex3f(*px, *py, *pz);
-						pz++;
+			if ((indexArray != NULL) && (vertexArrayGL != NULL))
+			{
+				pVAGL = vertexArrayGL;
+				glVertexPointer(3, GL_FLOAT, 0, vertexArrayGL);
+				glEnableClientState(GL_VERTEX_ARRAY);
+				px = (float *) xArray->data;
+				index=0;
+				for (i=0; i<xSize; i++){
+					py = (float *) yArray->data;
+					for (j=0; j<ySize; j++){
+						pz = (float *) zArray->data;
+						for (k=0; k<zSize; k++){
+							pVAGL->x = *px;
+							pVAGL->y = *py;
+							pVAGL->z = *pz;
+							index++;
+							if (index == maxElements){
+								pIA = indexArray;
+								pVAGL = vertexArrayGL;
+								glDrawArrays(GL_POINTS, 0, index);
+								indexOffset+=index;
+								index=0;
+							}else{
+								pIA++;
+								pVAGL++;
+							}
+							pz++;
+						}
+						py++;
 					}
-					py++;
+					px++;
 				}
-				px++;
+				if(index > 0)
+				{
+					glDrawArrays(GL_POINTS, 0, index);
+				}
+				glDisableClientState(GL_VERTEX_ARRAY);
+			}else{
+				glBegin(GL_POINTS);
+				px = (float *) xArray->data;
+				for (i=0; i<xSize; i++){
+					py = (float *) yArray->data;
+					for (j=0; j<ySize; j++){
+						pz = (float *) zArray->data;
+						for (k=0; k<zSize; k++){
+							glVertex3f(*px, *py, *pz);
+							pz++;
+						}
+						py++;
+					}
+					px++;
+				}
+				glEnd();
 			}
-			glEnd();
 		}
 	}else{
 		if (cFilter == 1){
