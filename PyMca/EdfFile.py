@@ -92,6 +92,7 @@ __version__=  '$Revision: 1.6 $'
 ################################################################################  
 import sys, string
 import numpy
+import MarCCD
 import os.path , tempfile, shutil
 try:
     from FastEdf import extended_fread
@@ -153,7 +154,8 @@ class  EdfFile:
         self.File = 0
         if fastedf is None:fastedf=0
         self.fastedf=fastedf
-        
+        self.ADSC = False
+        self.MARCCD = False
         if sys.byteorder=="big": self.SysByteOrder="HighByteFirst"
         else: self.SysByteOrder="LowByteFirst"
         
@@ -168,6 +170,8 @@ class  EdfFile:
                 self.File=open(self.FileName, "rb")
 
             self.File.seek(0, 0)
+            if self.File.read(2) in ["II", "MM"]:
+                self.MARCCD = True
         except:
             try:
                 self.File.close()
@@ -176,16 +180,20 @@ class  EdfFile:
             raise IOError, "EdfFile: Error opening file"
 
         self.File.seek(0, 0)
+        if self.MARCCD:
+            self._wrapMarCCD()
+            self.File.close()
+            return
         
         Index=0
         line = self.File.readline()
-        self.ADSC = False
+        
         while line != "":            
             if string.count(line, "{\n") >= 1 or string.count(line, "{\r\n")>=1:
                 Index=self.NumImages
                 self.NumImages = self.NumImages + 1
                 self.Images.append(Image())
-                self.Images[Index].HeaderPosition=self.File.tell()    
+            Position=self.File.tell()    
                 
             if string.count(line, "=") >= 1:
                 listItems = string.split(line, "=", 1)
@@ -306,7 +314,29 @@ class  EdfFile:
             self.Images[Index].StaticHeader['Offset_2'] = 0
             self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
 
-        
+    def _wrapMarCCD(self):
+        mccd = MarCCD.MarCCD(self.File)
+        self.NumImages = 1
+        self.__data = mccd.getData()
+        self.__info = mccd.getInfo()
+        self.Images.append(Image())
+        Index = 0
+        self.Images[Index].Dim1 = self.__data.shape[0]
+        self.Images[Index].Dim2 = self.__data.shape[1]
+        self.Images[Index].NumDim=2
+        if self.__data.dtype == numpy.uint8:
+            self.Images[Index].DataType= 'UnsignedByte'
+        elif self.__data.dtype == numpy.uint16:
+            self.Images[Index].DataType= 'UnsignedShort'
+        else:
+            self.Images[Index].DataType= 'UnsignedInt'
+        self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
+        self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
+        self.Images[Index].StaticHeader['Offset_1'] = 0
+        self.Images[Index].StaticHeader['Offset_2'] = 0
+        self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
+        self.Images[Index].Header.update(self.__info)
+                
     def GetNumImages(self):
         """ Returns number of images of the object (and associated file)
         """
@@ -346,7 +376,7 @@ class  EdfFile:
         if Index < 0 or Index >= self.NumImages: raise ValueError, "EdfFile: Index out of limit"
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
-            if self.ADSC:
+            if self.ADSC or self.MARCCD:
                 return self.__data
             else:
                 self.File.seek(self.Images[Index].DataPosition,0)
@@ -380,7 +410,7 @@ class  EdfFile:
                     sizeToRead = self.Images[Index].Dim1 * datasize
                     Data = numpy.fromstring(self.File.read(sizeToRead),
                                 datatype)
-        elif self.ADSC:
+        elif self.ADSC or self.MARCCD:
             return self.__data[Pos[1]:(Pos[1]+Size[1]),
                                Pos[0]:(Pos[0]+Size[0])]
         elif fastedf and CAN_USE_FASTEDF:

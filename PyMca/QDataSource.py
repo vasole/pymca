@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -92,7 +92,16 @@ def getSourceType(sourceName0):
         if not len(line.replace("\n","")):
             line = f.readline()
         f.close()
-        if line[0] == "{":
+        if sourceName.lower().endswith('tiff') or\
+           sourceName.lower().endswith('tif'):
+            mccd = False
+        elif len(line) < 2:
+            mccd = False
+        elif line[0:2] in ["II","MM"]:
+            mccd = True
+        else:
+            mccd = False
+        if (line[0] == "{") or mccd:
             return EdfFileDataSource.SOURCE_TYPE
         else:
             if NEXUS:
