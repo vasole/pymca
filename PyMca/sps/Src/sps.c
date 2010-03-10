@@ -562,7 +562,7 @@ static int init_ShmIDs(void) {
 
 	pd = NULL;
 	i = id_no = 0;
-	if ((maxid = shmctl(0, SHM_INFO, (void *) buf)) < 0)
+	if ((maxid = shmctl(0, SHM_INFO, (void *) buf)) <= 0)
 #endif
 	{
 		if ((pd = (FILE*) popen(IPCS,"r")) == NULL)
@@ -2914,3 +2914,4 @@ static bench_mark()
   bench("SPS_CleanUpAll");
 }
 #endif
+
