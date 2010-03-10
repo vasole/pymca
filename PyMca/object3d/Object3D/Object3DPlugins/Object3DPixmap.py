@@ -83,23 +83,34 @@ class Object3DPixmap(Object3DBase.Object3D):
         if not self._forceTextureCalculation:
             return
         colormap = self._configuration['common']['colormap']
-        (pixmap,size,minmax)= spslut.transform(self._imageData,
-                                          (1,0),
-                                          (colormap[6],3.0),
-                                          "RGBX",
-                                          COLORMAPLIST[int(str(colormap[0]))],
-                                          colormap[1],
-                                          (colormap[2], colormap[3]),
-                                          (0, 255),1)
-        width = size[0]
-        height = size[1]
-        pixmap.shape = -1, 4
         if not self._meshImage:
+            (pixmap,size,minmax)= spslut.transform(self._imageData,
+                                              (1,0),
+                                              (colormap[6],3.0),
+                                              "RGBX",
+                                              COLORMAPLIST[int(str(colormap[0]))],
+                                              colormap[1],
+                                              (colormap[2], colormap[3]),
+                                              (0, 255),1)
+            width = size[0]
+            height = size[1]
+            pixmap.shape = -1, 4
             tjump = self.__tWidth
             pjump = self.__width
             for i in range(height):
                 self.pixmap[i*tjump:(i*tjump+pjump), :] = pixmap[(i*pjump):(i+1)*pjump,:]
-        self.pixmap[:, 3] = 255
+        else:
+            (pixmap,size,minmax)= spslut.transform(self._imageData.T,
+                                              (1,0),
+                                              (colormap[6],3.0),
+                                              "RGBX",
+                                              COLORMAPLIST[int(str(colormap[0]))],
+                                              colormap[1],
+                                              (colormap[2], colormap[3]),
+                                              (0, 255),1)
+            pixmap.shape = -1, 4
+            self.pixmap[:,0:3] = pixmap[:,0:3]
+        self.pixmap[:,3] = 255
         return
         
     def setQPixmap(self, qpixmap):
@@ -204,16 +215,16 @@ class Object3DPixmap(Object3DBase.Object3D):
            (shape[1] > maxTextureSize):
             #very slow
             self._meshImage = True
-            self._imageData = data.T.astype(numpy.float32)
-            self.__width  = self._imageData.shape[0]
-            self.__height = self._imageData.shape[1]
+            self._imageData = data.astype(numpy.float32)
+            self.__width  = self._imageData.shape[1]
+            self.__height = self._imageData.shape[0]
             self.zPosition = 0.0
             self._xValues = numpy.arange(self.__width).astype(numpy.float32)
             self._yValues = numpy.arange(self.__height).astype(numpy.float32)
             self._zValues  = numpy.zeros(self._imageData.shape, numpy.float32)
             self.setLimits(0.0, 0.0, self.zPosition,
                        self.__width-1, self.__height-1, self.zPosition)
-            (image,size,minmax)= spslut.transform(self._imageData, (1,0),
+            (image,size,minmax)= spslut.transform(self._imageData.T, (1,0),
                                       (spslut.LINEAR,3.0),
                                       "RGBX", spslut.TEMP,
                                        0,
@@ -330,28 +341,27 @@ class Object3DPixmap(Object3DBase.Object3D):
         else:
             alpha = int(255 * alpha)
         self.pixmap[:, 3] = alpha        
-        
-        GL.glColor4f(1.0, 1.0, 1.0, alpha)
         shape = self._imageData.shape
         self._imageData.shape = -1,1
         if DRAW_MODES[self._configuration['common']['mode']] == "POINT":
-            Object3DCTools.draw2DGridPoints(self._xValues,
+            if False:
+                Object3DCTools.drawXYZPoints(self.vertices,
+                                         self.pixmap)
+            else:
+                Object3DCTools.draw2DGridPoints(self._xValues,
                            self._yValues,
                            self._zValues,
-                           self.pixmap,
-                           self._imageData)
+                           self.pixmap)
         elif DRAW_MODES[self._configuration['common']['mode']] == "WIRE":
             Object3DCTools.draw2DGridLines(self._xValues,
                            self._yValues,
                            self._zValues,
-                           self.pixmap,
-                           self._imageData)
+                           self.pixmap)
         elif DRAW_MODES[self._configuration['common']['mode']] == "SURFACE":
             Object3DCTools.draw2DGridQuads(self._xValues,
                            self._yValues,
                            self._zValues,
-                           self.pixmap,
-                           self._imageData)
+                           self.pixmap)
         self._imageData.shape = shape
 
     def buildTexture(self):
@@ -602,6 +612,7 @@ if __name__ == "__main__":
         name = "125 rows x 80 columns array"
         data = numpy.arange(10000.).astype(numpy.float32)
         data.shape = [125, 80]
+        data[120:125, 70:80]  = 0
         (image,size,minmax)= spslut.transform(data, (1,0),
                                       (spslut.LINEAR,3.0),
                                       "RGBX", spslut.TEMP,
