@@ -20,6 +20,13 @@ except ImportError:
     from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
 
+try:
+    from PyMca.Object3D import Object3DCTools
+except ImportError:
+    try:
+        from Object3D import Object3DCTools
+    except:
+        import Object3DCTools
 
 qt=Object3DFileDialogs.qt
 
@@ -59,6 +66,8 @@ class Object3DPixmap(Object3DBase.Object3D):
         self.pointSelectionGridList = 0
         self._forcePointSelectionGridListCalculation = False
 
+        #draw points by default
+        self._configuration['common']['mode'] = 1
         #centered on XY plane and on Z
         self._configuration['common']['anchor'] = [2, 2, 2]
 
@@ -84,12 +93,13 @@ class Object3DPixmap(Object3DBase.Object3D):
                                           (0, 255),1)
         width = size[0]
         height = size[1]
-        pixmap.shape = [width*height, 4]
-        tjump = self.__tWidth
-        pjump = self.__width
-        for i in range(height):
-            self.pixmap[i*tjump:(i*tjump+pjump), :] = pixmap[(i*pjump):(i+1)*pjump,:]
-        self.pixmap[:,3] = 255
+        pixmap.shape = -1, 4
+        if not self._meshImage:
+            tjump = self.__tWidth
+            pjump = self.__width
+            for i in range(height):
+                self.pixmap[i*tjump:(i*tjump+pjump), :] = pixmap[(i*pjump):(i+1)*pjump,:]
+        self.pixmap[:, 3] = 255
         return
         
     def setQPixmap(self, qpixmap):
@@ -121,6 +131,7 @@ class Object3DPixmap(Object3DBase.Object3D):
             raise ValueError, "Input pixmap has to be an uin8 array"
 
         self._imageData = None
+        self._meshImage = False
         self._forceTextureCalculation = True
         
         #make sure we work with integers
@@ -169,7 +180,11 @@ class Object3DPixmap(Object3DBase.Object3D):
 
     def setLimits(self, *var):
         Object3DBase.Object3D.setLimits(self, *var)
+        if DEBUG:
+            t0 = time.time()
         self._buildPointSelectionVertices()
+        if DEBUG:
+            print "POINT SELECTION ELAPSED = ", time.time() - t0
         self._forcePointSelectionGridListCalculation = True
 
     def setImage(self, *var, **kw):
@@ -181,18 +196,50 @@ class Object3DPixmap(Object3DBase.Object3D):
         data is a numpy array
         """
         self._qt = False
-        (image,size,minmax)= spslut.transform(data, (1,0),
-                                  (spslut.LINEAR,3.0),
-                                  "RGBX", spslut.TEMP,
-                                  1,
-                                  (0, 1),
-                                  (0, 255), 1)
-        self.setPixmap(image, size[0], size[1], xmirror = False, ymirror = False)
-        self._configuration['common']['colormap'][2]=minmax[0]
-        self._configuration['common']['colormap'][3]=minmax[1]
-        self._configuration['common']['colormap'][4]=minmax[0]
-        self._configuration['common']['colormap'][5]=minmax[1]
-        self._imageData = data
+        maxTextureSize = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
+        shape = data.shape
+        self._dataMin = data.min()
+        self._dataMax = data.max()
+        if (shape[0] > maxTextureSize) or\
+           (shape[1] > maxTextureSize):
+            #very slow
+            self._meshImage = True
+            self._imageData = data.T.astype(numpy.float32)
+            self.__width  = self._imageData.shape[0]
+            self.__height = self._imageData.shape[1]
+            self.zPosition = 0.0
+            self._xValues = numpy.arange(self.__width).astype(numpy.float32)
+            self._yValues = numpy.arange(self.__height).astype(numpy.float32)
+            self._zValues  = numpy.zeros(self._imageData.shape, numpy.float32)
+            self.setLimits(0.0, 0.0, self.zPosition,
+                       self.__width-1, self.__height-1, self.zPosition)
+            (image,size,minmax)= spslut.transform(self._imageData, (1,0),
+                                      (spslut.LINEAR,3.0),
+                                      "RGBX", spslut.TEMP,
+                                       0,
+                                      (self._dataMin, self._dataMax),
+                                      (0, 255), 1)
+            self.pixmap = image
+            self.pixmap.shape = -1, 4
+            self.pixmap[:,3]  = 255
+        else:
+            self._meshImage = False
+            (image,size,minmax)= spslut.transform(data, (1,0),
+                                      (spslut.LINEAR,3.0),
+                                      "RGBX", spslut.TEMP,
+                                       0,
+                                      (self._dataMin, self._dataMax),
+                                      (0, 255), 1)
+            self.setPixmap(image,
+                           size[0],
+                           size[1],
+                           xmirror = False,
+                           ymirror = False)
+        self._configuration['common']['colormap'][2]=self._dataMin
+        self._configuration['common']['colormap'][3]=self._dataMax
+        self._configuration['common']['colormap'][4]=self._dataMin
+        self._configuration['common']['colormap'][5]=self._dataMax
+        self._imageData = data.astype(numpy.float32)
 
     def getPaddedValue(self, v):
         a = 2
@@ -231,7 +278,9 @@ class Object3DPixmap(Object3DBase.Object3D):
 
     def drawObject(self):
         if DEBUG:e0=time.time()
-        if self.pixmap is None:return
+        if self.pixmap is None:
+            if self._imageData is None:
+                return
 
         if self.__xMirror or self.__yMirror:
             self.__mirrorRotator(self.__xMirror, self.__yMirror)
@@ -246,27 +295,64 @@ class Object3DPixmap(Object3DBase.Object3D):
             GL.glCallList(self.pointSelectionGridList)
             GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
         else:
-            if self._forceTextureCalculation:
-                self.buildTexture()
-            GL.glPushAttrib(GL.GL_ALL_ATTRIB_BITS)
-            GL.glDisable(GL.GL_DEPTH_TEST)
-            alpha = 1.0 - self._configuration['common']['transparency']
-            GL.glColor4f(1.0, 1.0, 1.0, alpha)
-            GL.glEnable(GL.GL_BLEND)
-            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            if (self.drawList <= 0) or self._forceListCalculation:
-                self.buildQuad()
-            GL.glCallList(self.drawList)
-            GL.glPopAttrib()
-            """
-            if (self.pointSelectionGridList < 0 ) or self._forcePointSelectionGridListCalculation:
-                self.buildPointSelectionGridList()
-            GL.glTranslate(0.5 * self.__widthStep, 0.5 * self.__heightStep, 0.0)
-            GL.glCallList(self.pointSelectionGridList)
-            GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
-            """
+            if self._meshImage:
+                self._drawMesh()
+            else:
+                #draw pixmap
+                if self._forceTextureCalculation:
+                    self.buildTexture()
+                GL.glPushAttrib(GL.GL_ALL_ATTRIB_BITS)
+                GL.glDisable(GL.GL_DEPTH_TEST)
+                alpha = 1.0 - self._configuration['common']['transparency']
+                GL.glColor4f(1.0, 1.0, 1.0, alpha)
+                GL.glEnable(GL.GL_BLEND)
+                GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+                if (self.drawList <= 0) or self._forceListCalculation:
+                    self.buildQuad()
+                GL.glCallList(self.drawList)
+                GL.glPopAttrib()
+                """
+                if (self.pointSelectionGridList < 0 ) or self._forcePointSelectionGridListCalculation:
+                    self.buildPointSelectionGridList()
+                GL.glTranslate(0.5 * self.__widthStep, 0.5 * self.__heightStep, 0.0)
+                GL.glCallList(self.pointSelectionGridList)
+                GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
+                """
             
         if DEBUG:print "elapsed = ", time.time() - e0
+
+    def _drawMesh(self):
+        alpha = 1.0 - self._configuration['common']['transparency']
+        if alpha < 0:
+            alpha = 0
+        elif alpha >= 1.0:
+            alpha = 255
+        else:
+            alpha = int(255 * alpha)
+        self.pixmap[:, 3] = alpha        
+        
+        GL.glColor4f(1.0, 1.0, 1.0, alpha)
+        shape = self._imageData.shape
+        self._imageData.shape = -1,1
+        if DRAW_MODES[self._configuration['common']['mode']] == "POINT":
+            Object3DCTools.draw2DGridPoints(self._xValues,
+                           self._yValues,
+                           self._zValues,
+                           self.pixmap,
+                           self._imageData)
+        elif DRAW_MODES[self._configuration['common']['mode']] == "WIRE":
+            Object3DCTools.draw2DGridLines(self._xValues,
+                           self._yValues,
+                           self._zValues,
+                           self.pixmap,
+                           self._imageData)
+        elif DRAW_MODES[self._configuration['common']['mode']] == "SURFACE":
+            Object3DCTools.draw2DGridQuads(self._xValues,
+                           self._yValues,
+                           self._zValues,
+                           self.pixmap,
+                           self._imageData)
+        self._imageData.shape = shape
 
     def buildTexture(self):
         """
@@ -349,35 +435,53 @@ class Object3DPixmap(Object3DBase.Object3D):
         # distributed in the limits interval
         xsize = self.__width
         ysize = self.__height
-        
+
         xmin, ymin, zmin = self._limits[0]
         xmax, ymax, zmax = self._limits[1]
 
         self.__widthStep  = (xmax - xmin)/xsize
         self.__heightStep = (ymax - ymin)/ysize
         
-        x = xmin + numpy.arange(xsize).astype(numpy.float32) * self.__widthStep 
-        y = ymin + numpy.arange(ysize).astype(numpy.float32) * self.__heightStep
+        x = xmin + numpy.arange(xsize) * self.__widthStep 
+        y = ymin + numpy.arange(ysize) * self.__heightStep
 
         if DEBUG:e0 = time.time()
-        #fast method to generate the vertices 
         self.vertices = numpy.zeros((xsize * ysize, 3), numpy.float32)
-        A=numpy.outer(x, numpy.ones(len(y), numpy.float32))
-        B=numpy.outer(y, numpy.ones(len(x), numpy.float32))
+        if 0:
+            #fast method to generate the vertices 
+            A=numpy.outer(x, numpy.ones(len(y), numpy.float32))
+            B=numpy.outer(y, numpy.ones(len(x), numpy.float32))
 
-        self.vertices[:,0]=A.flatten()
-        self.vertices[:,1]=B.transpose().flatten()
-        self.vertices[:,2]=0.5 * (zmax - zmin)
-
+            self.vertices[:,0]=A.flatten()
+            self.vertices[:,1]=B.transpose().flatten()
+            self.vertices[:,2]=0.5 * (zmax - zmin)
+        else:
+            #this is faster
+            A, B = numpy.meshgrid(y.astype(numpy.float32), x.astype(numpy.float32))
+            A.shape = -1
+            B.shape = -1
+            self.vertices[:,0]=B
+            self.vertices[:,1]=A
         self.zdata = self.vertices[:,2]
         if DEBUG:print "vertex generation elapsed = ", time.time()-e0
 
         #get the associated selection colors
+        if DEBUG:
+            e0 = time.time()
         i = numpy.arange(len(self.vertices))
-        self.vertexSelectionColors = numpy.zeros((len(self.vertices),3), numpy.float32)
-        self.vertexSelectionColors[:,0] = (i & 255)/255.
-        self.vertexSelectionColors[:,1] = ((i >> 8) & 255)/255.
-        self.vertexSelectionColors[:,2] = ((i >> 16) & 255)/255.
+        self.__useUInt8 = True
+        if self.__useUInt8:
+            self.vertexSelectionColors = numpy.zeros((len(self.vertices),3), numpy.uint8)
+            self.vertexSelectionColors[:,0] = (i & 255)
+            self.vertexSelectionColors[:,1] = ((i >> 8) & 255)
+            self.vertexSelectionColors[:,2] = ((i >> 16) & 255)
+        else:
+            self.vertexSelectionColors = numpy.zeros((len(self.vertices),3), numpy.float32)
+            self.vertexSelectionColors[:,0] = (i & 255)/255.
+            self.vertexSelectionColors[:,1] = ((i >> 8) & 255)/255.
+            self.vertexSelectionColors[:,2] = ((i >> 16) & 255)/255.
+        if DEBUG:
+            print "vertex selection color elapsed = ", time.time()-e0
 
     def buildPointSelectionGridList0(self):
         #in fact I am using a line selection
@@ -401,10 +505,12 @@ class Object3DPixmap(Object3DBase.Object3D):
             GL.glDeleteLists(self.pointSelectionGridList, 1)
 
         self.pointSelectionGridList = GL.glGenLists(1)
-        #print self.pointSelectionGridList
         GL.glNewList(self.pointSelectionGridList, GL.GL_COMPILE)
         GL.glVertexPointerf(self.vertices)
-        GL.glColorPointerf(self.vertexSelectionColors)
+        if self.__useUInt8:
+            GL.glColorPointerub(self.vertexSelectionColors)
+        else:
+            GL.glColorPointerf(self.vertexSelectionColors)
         GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
         GL.glEnableClientState(GL.GL_COLOR_ARRAY)
         GL.glDrawArrays(GL.GL_POINTS, 0, self.__width*self.__height)

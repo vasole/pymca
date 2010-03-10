@@ -1370,11 +1370,6 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 	if (!j)
 		return NULL;
 
-	if (cSize > 0)
-	{
-		pc = (GLubyte *) colorArray->data;
-	}
-
 	/* The actual openGL stuff */
 	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxElementsVertices);
 	if (maxElementsVertices <= 0)
@@ -1400,9 +1395,13 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 	}else{
 		maxElements = maxElementsVertices;
 	}
+	if (cSize > 0)
+	{
+		pc = (GLubyte *) colorArray->data;
+		colorArrayGL  = (ColorArray *) malloc(maxElements * sizeof(ColorArray));
+	}
 	indexArray  = (GLuint *) malloc(maxElements * sizeof(GLuint));
 	vertexArrayGL = (VertexArray *) malloc(maxElements * sizeof(VertexArray));
-	colorArrayGL  = (ColorArray *) malloc(maxElements * sizeof(ColorArray));
 	/* The actual openGL stuff */
 	if (pc == NULL){
 		if ((vSize >0) && (vFilter != 0)){
