@@ -561,16 +561,18 @@ static int init_ShmIDs(void) {
 # endif
 
 	pd = NULL;
-	i = id_no = 0;
-	if ((maxid = shmctl(0, SHM_INFO, (void *) buf)) <= 0)
+	i = 0;
+	if ((maxid = shmctl(0, SHM_INFO, (void *) buf)) < 0)
 #endif
 	{
 		if ((pd = (FILE*) popen(IPCS,"r")) == NULL)
 			return 1;
 	}
-
+	id_no = 0;
 	for (;;) {
 #if defined(__linux__)
+		if (maxid == 0)
+				return 1;
 		if (maxid > 0) {
 			if (i > maxid)
 				break;
