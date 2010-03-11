@@ -215,7 +215,8 @@ class Object3DPixmap(Object3DBase.Object3D):
            (shape[1] > maxTextureSize):
             #very slow
             self._meshImage = True
-            self._imageData = data.astype(numpy.float32)
+            #self._imageData = data.astype(numpy.float32)
+            self._imageData = data
             self.__width  = self._imageData.shape[1]
             self.__height = self._imageData.shape[0]
             self.zPosition = 0.0
@@ -250,7 +251,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         self._configuration['common']['colormap'][3]=self._dataMax
         self._configuration['common']['colormap'][4]=self._dataMin
         self._configuration['common']['colormap'][5]=self._dataMax
-        self._imageData = data.astype(numpy.float32)
+        #self._imageData = data.astype(numpy.float32)
 
     def getPaddedValue(self, v):
         a = 2
