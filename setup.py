@@ -198,6 +198,16 @@ def build_Object3DQhull(ext_modules):
 
     ext_modules.append(module)
 
+def build_PyMcaSciPy(ext_modules):
+    data_files.append(('PyMca/PyMcaSciPy', ['PyMca/PyMcaSciPy/__init__.py']))
+    data_files.append(('PyMca/PyMcaSciPy/signal', ['PyMca/PyMcaSciPy/signal/__init__.py',
+                                      'PyMca/PyMcaSciPy/signal/median.py']))                   
+    module = Extension(name = 'PyMca.PyMcaSciPy.signal.mediantools',
+                       sources = glob.glob('PyMca/PyMcaSciPy/signal/*.c'),
+                       define_macros = [],
+                       include_dirs = [numpy.get_include()])
+    ext_modules.append(module)
+
 ext_modules = []
 build_FastEdf(ext_modules)
 build_specfile(ext_modules)
@@ -214,7 +224,7 @@ if LOCAL_OBJECT3D:
     except:
         print "Object3D Module could not be built"
         print sys.exc_info()
-
+build_PyMcaSciPy(ext_modules)
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
 from distutils.command.install_data import install_data
