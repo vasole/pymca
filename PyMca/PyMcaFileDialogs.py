@@ -1,26 +1,65 @@
-import Object3DQt as qt
-try:
-    from PyMca import PyMcaDirs as Object3DDirs
-except:
-    import Object3DDirs
+import PyMcaQt as qt
+import PyMcaDirs
 import os
 QTVERSION = qt.qVersion()
 
-def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilter=None):
-    if filetypelist is None:
-        fileTypeList = ['All Files (*)']
-    else:
-        fileTypeList = filetypelist
+def getExistingDirectory(parent=None, message=None, mode=None):
     if message is None:
-        message = "Please select a file"
+        message = "Please select a directory"
     if mode is None:
         mode = "OPEN"
     else:
         mode = mode.upper()
     if mode == "OPEN":
-        wdir = Object3DDirs.inputDir
+        wdir = PyMcaDirs.inputDir
     else:
-        wdir = Object3DDirs.outputDir
+        wdir = PyMcaDirs.outputDir
+    if PyMcaDirs.nativeFileDialogs:
+        outdir=str(qt.QFileDialog.getExistingDirectory(parent,
+                        message,
+                        wdir))
+    else:
+        outfile = qt.QFileDialog(parent)
+        outfile.setWindowTitle("Output Directory Selection")
+        outfile.setModal(1)
+        outfile.setDirectory(wdir)
+        outfile.setFileMode(outfile.DirectoryOnly)
+        ret = outfile.exec_()
+        if ret:
+            outdir=str(outfile.selectedFiles()[0])
+        else:
+            outdir = ""
+            outfile.close()
+            del outfile
+    if len(outdir):
+        if mode == "OPEN":
+            PyMcaDirs.inputDir = os.path.dirname(outdir)
+            if PyMcaDirs.outputDir is None:
+                PyMcaDirs.outputDir = os.path.dirname(outdir)
+        else:
+            PyMcaDirs.outputDir = os.path.dirname(outdir)
+            if PyMcaDirs.inputDir is None:
+                PyMcaDirs.inputDir = os.path.dirname(outdir)
+    return outdir
+
+def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilter=None, single=False):
+    if filetypelist is None:
+        fileTypeList = ['All Files (*)']
+    else:
+        fileTypeList = filetypelist
+    if message is None:
+        if single:
+            message = "Please select one file"
+        else:
+            message = "Please select one or more files"
+    if mode is None:
+        mode = "OPEN"
+    else:
+        mode = mode.upper()
+    if mode == "OPEN":
+        wdir = PyMcaDirs.inputDir
+    else:
+        wdir = PyMcaDirs.outputDir
     if getfilter is None:
         getfilter = False
     if getfilter:
@@ -31,13 +70,20 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
     else:
         native_possible = True
     filterused = None
-    if native_possible and Object3DDirs.nativeFileDialogs:
+    if native_possible and PyMcaDirs.nativeFileDialogs:
         filetypes = ""
         for filetype in fileTypeList:
             filetypes += filetype+"\n"
         if getfilter:
             if mode == "OPEN":
-                filelist, filterused = qt.QFileDialog.getOpenFileNamesAndFilter(parent,
+                if single:
+                    filelist, filterused = qt.QFileDialog.getOpenFileNameAndFilter(parent,
+                        message,
+                        wdir,
+                        filetypes)
+                    filelist =[filelist]
+                else:
+                    filelist, filterused = qt.QFileDialog.getOpenFileNamesAndFilter(parent,
                         message,
                         wdir,
                         filetypes)
@@ -47,22 +93,28 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
                         message,
                         wdir,
                         filetypes)
-                if len(filelist):
-                    filterused = filelist[1]
-                    filelist=filelist[0]
+                if len(filelist[0]):
+                    filterused = str(filelist[1])
+                    filelist=[filelist[0]]
                 else:
-                    filelist=[]
+                    filelist = []
         else:
             if mode == "OPEN":
-                filelist = qt.QFileDialog.getOpenFileNames(parent,
+                if single:
+                    filelist = [qt.QFileDialog.getOpenFileName(parent,
+                            message,
+                            wdir,
+                            filetypes)]
+                else:
+                    filelist = qt.QFileDialog.getOpenFileNames(parent,
+                            message,
+                            wdir,
+                            filetypes)                    
+            else:
+                filelist = qt.QFileDialog.getSaveFileName(parent,
                         message,
                         wdir,
                         filetypes)
-            else:
-                filelist = [qt.QFileDialog.getSaveFileName(parent,
-                        message,
-                        wdir,
-                        filetypes)]
                 filelist = str(filelist)
                 if len(filelist):
                     filelist = [filelist]
@@ -110,8 +162,10 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
                 return [], filterused
             else:
                 return []
-        else:            
+        else:
             filelist = fdialog.selectedFiles()
+            if single:
+                filelist = [filelist[0]]
             filterused = str(fdialog.selectedFilter())
             if mode != "OPEN":
                 if "." in filterused:
@@ -132,15 +186,16 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
             fdialog.close()
             del fdialog
     filelist = map(str, filelist)
-    if not(len(filelist)): return []
+    if not(len(filelist)):
+        return []
     if mode == "OPEN":
-        Object3DDirs.inputDir = os.path.dirname(filelist[0])
-        if Object3DDirs.outputDir is None:
-            Object3DDirs.outputDir = os.path.dirname(filelist[0])
+        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+        if PyMcaDirs.outputDir is None:
+            PyMcaDirs.outputDir = os.path.dirname(filelist[0])
     else:
-        Object3DDirs.outputDir = os.path.dirname(filelist[0])
-        if Object3DDirs.inputDir is None:
-            Object3DDirs.inputDir = os.path.dirname(filelist[0])        
+        PyMcaDirs.outputDir = os.path.dirname(filelist[0])
+        if PyMcaDirs.inputDir is None:
+            PyMcaDirs.inputDir = os.path.dirname(filelist[0])        
     filelist.sort()
     if getfilter:
         return filelist, filterused
@@ -150,5 +205,11 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
 if __name__ == "__main__":
     app = qt.QApplication([])
     fileTypeList = ['PNG Files (*.png *.jpg)']
-    print getFileList(None, fileTypeList,"Please select a file", "SAVE", True)
+    print getExistingDirectory()
+    PyMcaDirs.nativeFileDialogs = False
+    print getExistingDirectory()
+    PyMcaDirs.nativeFileDialogs = True
+    print getFileList(None, fileTypeList,"Please select a file", "SAVE", True, single=True)
+    PyMcaDirs.nativeFileDialogs = False
+    print getFileList(None, fileTypeList,"Please select files", "LOAD", getfilter=False, single=False)
     #app.exec_()
