@@ -83,14 +83,22 @@ class Object3DPixmap(Object3DBase.Object3D):
         if not self._forceTextureCalculation:
             return
         colormap = self._configuration['common']['colormap']
+
+        #avoid recalculating min and max values
+        if colormap[1]:
+            vMin = colormap[4]
+            vMax = colormap[5]
+        else:
+            vMin = colormap[2]
+            vMax = colormap[3]
         if not self._meshImage:
             (pixmap,size,minmax)= spslut.transform(self._imageData,
                                               (1,0),
                                               (colormap[6],3.0),
                                               "RGBX",
                                               COLORMAPLIST[int(str(colormap[0]))],
-                                              colormap[1],
-                                              (colormap[2], colormap[3]),
+                                              0,
+                                              (vMin, vMax),
                                               (0, 255),1)
             width = size[0]
             height = size[1]
@@ -105,8 +113,8 @@ class Object3DPixmap(Object3DBase.Object3D):
                                               (colormap[6],3.0),
                                               "RGBX",
                                               COLORMAPLIST[int(str(colormap[0]))],
-                                              colormap[1],
-                                              (colormap[2], colormap[3]),
+                                              0,
+                                              (vMin, vMax),
                                               (0, 255),1)
             pixmap.shape = -1, 4
             self.pixmap[:,0:3] = pixmap[:,0:3]
@@ -201,6 +209,21 @@ class Object3DPixmap(Object3DBase.Object3D):
     def setImage(self, *var, **kw):
         return self.setPixmap(*var, **kw)
 
+
+    def updateImageData(self, data):
+        if self._imageData is None:
+            return self.setImageData(data)
+        if (self._imageData.shape[0] != data.shape[0]) or\
+           (self._imageData.shape[1] != data.shape[1]):
+            return self.setImageData(data)
+        self._imageData = data
+        self._dataMin = data.min()
+        self._dataMax = data.max()
+        self._configuration['common']['colormap'][4]=self._dataMin
+        self._configuration['common']['colormap'][5]=self._dataMax
+        ddict = {'common':{'event':'ColormapChanged'}}
+        self.setConfiguration(ddict)
+        
     def setImageData(self, data):
         """
         setImageData(self, data)
@@ -208,8 +231,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         """
         self._qt = False
         maxTextureSize = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
-        shape = data.shape
-        
+        shape = data.shape        
         self._dataMin = data.min()
         self._dataMax = data.max()
         self._imageData = data
@@ -627,9 +649,19 @@ if __name__ == "__main__":
                            ymirror = False)
         object3D.setImageData(data)
     window.addObject(object3D)
-    object3D = None
     window.glWidget.setZoomFactor(1.0)
     window.show()
-    app.processEvents()
+    while(0):
+        time.sleep(0.01)
+        data = numpy.random.random((2048, 2048))*1000
+        #data = data.astype(numpy.float32)
+        data = data.astype(numpy.int16)
+        #data = data.astype(numpy.int8)
+        t0 = time.time()
+        object3D.updateImageData(data)
+        window.glWidget.setZoomFactor(1.0)
+        print "elapsed = ",  time.time() - t0
+        app.processEvents()
+    object3D = None
     app.exec_()
 
