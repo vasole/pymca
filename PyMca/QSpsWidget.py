@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,15 +24,15 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.2 $"
+__revision__ = "$Revision: 1.3 $"
 import sys
 import spswrap as sps
 import PyMcaQt as qt
 import SpecFileCntTable
+import MaskImageWidget
 QTVERSION = qt.qVersion()
 import PyMca_Icons as icons
 DEBUG = 0
-
 SOURCE_TYPE = 'SPS'
 SCAN_MODE = True
 
@@ -40,7 +40,75 @@ if QTVERSION > '4.0.0':
     class QGridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
-   
+
+class SPSFramesMcaWidget(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(0)
+        self.graphWidget = MaskImageWidget.MaskImageWidget(self,
+                                    imageicons=False,
+                                    selection=False)
+        self.graph = self.graphWidget.graphWidget.graph 
+        self.mainLayout.addWidget(self.graphWidget)
+
+    def setInfo(self, info):
+        self.setDataSize(info["rows"], info["cols"])
+        self.setTitle(info["Key"])
+        self.info=info
+
+    def setDataSource(self, data):
+        self.data = data
+        self.connect(self.data,
+                     qt.SIGNAL("updated"),
+                     self._update)
+        
+        dataObject = self._getDataObject()
+        self.graphWidget.setImageData(dataObject.data)
+        self.lastDataObject = dataObject
+
+    def _update(self, ddict):
+        targetwidgetid = ddict.get('targetwidgetid', None)
+        if targetwidgetid not in [None, id(self)]:
+            return
+        print "RECEIVED KEYS = ", ddict.keys()
+        dataObject = self._getDataObject(ddict['Key'],
+                                        selection=None)
+        if dataObject is not None:
+            self.graphWidget.setImageData(dataObject.data)
+            self.lastDataObject = dataObject
+
+    def _getDataObject(self, key=None, selection=None):
+        if key is None:
+            key = self.info['Key']
+        dataObject = self.data.getDataObject(key,
+                                             selection=None,
+                                             poll=False)
+        if dataObject is not None:
+            dataObject.info['legend'] = self.info['Key']
+            dataObject.info['imageselection'] = False
+            dataObject.info['scanselection'] = False
+            dataObject.info['targetwidgetid'] = id(self)
+            self.data.addToPoller(dataObject)
+        return dataObject
+        
+
+    def setDataSize(self,rows,cols,selsize=None):
+        self.rows= rows
+        self.cols= cols
+        if self.cols<=self.rows:
+            self.idx='cols'
+        else:
+            self.idx='rows'
+
+    def setTitle(self, title):
+        self.graph.setTitle("%s"%title)
+
+    def getSelection(self):
+        keys = {"plot":self.idx,"x":0,"y":1}
+        return [keys]
+        
 
 class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
     def setInfo(self, info):
@@ -370,11 +438,13 @@ class QSpsWidget(qt.QWidget):
                    "xia": SPSXiaArrayWidget, 
                    "mca": SPSMcaArrayWidget, 
                    "array": SPS_StandardArray,
-                   "image": SPS_ImageArray, 
+                   "image": SPS_ImageArray,
+                   "frames_mca":SPSFramesMcaWidget,
+                   "frames_image":qt.QWidget,
                    "empty": qt.QWidget}
     TypeArrays= {"MCA_DATA": "mca", "XIA_PLOT": "mca",
-                "XIA_DATA": "xia", "XIA_BASELINE":"xia",
-                "SCAN_D": "scan", "image_data":"image" }
+                 "XIA_DATA": "xia", "XIA_BASELINE":"xia",
+                 "SCAN_D": "scan", "image_data":"image" }
 
     def __init__(self, parent=None, name="SPSSelector", fl=0):
         if QTVERSION < '4.0.0':
@@ -628,7 +698,13 @@ class QSpsWidget(qt.QWidget):
         info= self.data.getKeyInfo(self.currentArray)
         wid= None
         atype = None
-        if (info['flag'] & sps.TAG_IMAGE) == sps.TAG_IMAGE:
+        if 0 and ((info['flag'] & sps.TAG_FRAMES) == sps.TAG_FRAMES) and\
+           ((info['flag'] & sps.TAG_IMAGE) == sps.TAG_IMAGE):
+            atype = "frames_image"
+        elif ((info['flag'] & sps.TAG_FRAMES) == sps.TAG_FRAMES) and\
+           ((info['flag'] & sps.TAG_MCA) == sps.TAG_MCA):
+            atype = "frames_mca"
+        elif (info['flag'] & sps.TAG_IMAGE) == sps.TAG_IMAGE:
             atype = "image"
         elif (info['flag'] & sps.TAG_MCA)  == sps.TAG_MCA:
             atype = "mca"
@@ -639,11 +715,15 @@ class QSpsWidget(qt.QWidget):
         if atype is not None:
             wid= self.__getParamWidget(atype)
             wid.setInfo(info)
+            if hasattr(wid, "setDataSource"):
+                wid.setDataSource(self.data)
         else:
             for (array, atype) in self.TypeArrays.items():
                 if self.currentArray[0:len(array)]==array:
                     wid= self.__getParamWidget(atype)
                     wid.setInfo(info)
+                    if hasattr(wid, "setDataSource"):
+                        wid.setDataSource(self.data)
                     break
         if wid is None:
             arrayType = "ARRAY"

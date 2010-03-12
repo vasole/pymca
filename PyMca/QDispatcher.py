@@ -110,6 +110,11 @@ class QDispatcher(qt.QWidget):
 
         if event is None:event = "addSelection"
         for sel in sel_list:
+            #The dispatcher should be a singleton to work properly
+            #implement a patch
+            targetwidgetid = sel.get('targetwidgetid', None)
+            if targetwidgetid not in [None, id(self)]:
+                continue
             #find the source
             sourcelist = sel['SourceName']
             for source in self.sourceList:
@@ -142,6 +147,7 @@ class QDispatcher(qt.QWidget):
                                                       poll=False)
                             if dataObject is not None:
                                 dataObject.info['legend'] = sel['legend']
+                                dataObject.info['targetwidgetid'] = targetwidgetid
                                 source.addToPoller(dataObject)
                             else:
                                 #this may happen on deletion??
@@ -279,6 +285,9 @@ class QDispatcher(qt.QWidget):
         else:
             sel_list = []
             for objectReference in ddict["id"]:
+                targetwidgetid = ddict.get('targetwidgetid', None)
+                if targetwidgetid not in [None, id(self)]:
+                    continue
                 sel = {}
                 sel['SourceName'] = ddict['SourceName']
                 sel['SourceType'] = ddict['SourceType']

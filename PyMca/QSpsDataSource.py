@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -50,6 +50,7 @@ class QSpsDataSource(QSource.QSource):
         self.sourceType = self.__dataSource.sourceType 
         self.getKeyInfo = self.__dataSource.getKeyInfo 
         self.refresh    = self.__dataSource.refresh
+        self.getSourceInfo = self.__dataSource.getSourceInfo
 
     def __getattr__(self,attr):
         if not attr.startswith("__"):
@@ -103,6 +104,7 @@ class QSpsDataSource(QSource.QSource):
                         sel['selection'] = info['selection']
                         sel['legend'] = info['legend']
                         legendlist.append(info['legend'])
+                        sel['targetwidgetid'] = info.get('targetwidgetid', None)
                         sel['scanselection'] = info.get('scanselection', False) 
                         sel['imageselection'] = info.get('imageselection', False) 
                         ddict['selectionlist'].append(sel)

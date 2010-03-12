@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -45,7 +45,10 @@ try:
     IS_IMAGE=sps.IS_IMAGE
     error=sps.error
     updatecounter=sps.updatecounter
+    TAG_FRAMES=sps.TAG_FRAMES
 except:
+    #make sure older versions of sps do not give troubles
+    TAG_FRAMES=0x0100
     #windows does not use it
     pass
 
