@@ -1,29 +1,31 @@
-#/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
-#
-# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
-# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
-#
-# This toolkit is free software; you can redistribute it and/or modify it 
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
-# any later version.
-#
-# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
-#
-# You should have received a copy of the GNU General Public License along with
-# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA 02111-1307, USA.
-#
-# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem for you.
-#############################################################################*/
+/****************************************************************************
+*
+*   Copyright (c) 1998-2010 European Synchrotron Radiation Facility (ESRF)
+*
+*   The software contained in this file "sps.h" is designed to interface
+*   the shared-data structures used and defined by the CSS "spec" package
+*   with other utility software.
+*
+*   Permission is hereby granted, free of charge, to any person obtaining a
+*   copy of the software in this file and associated header files (the
+*   "Software"), to deal in the Software without restriction, including
+*   without limitation the rights to use, copy, modify, merge, publish,
+*   distribute, sublicense, and/or sell copies of the Software, and to
+*   permit persons to whom the Software is furnished to do so, subject to
+*   the following conditions:
+*
+*   The above copyright notice and this permission notice shall be included
+*   in all copies or substantial portions of the Software.
+*
+*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+*   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+*   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+*   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+*   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+*   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+*   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*
+****************************************************************************/
 /* Small documentation for the library:
    Your program might get a list of available arrays with the two functions
    ------------------------------------------------------------------------ 
@@ -237,6 +239,7 @@
 #define SPS_TAG_IMAGE    0x0020
 #define SPS_TAG_SCAN     0x0040
 #define SPS_TAG_INFO     0x0080
+#define SPS_TAG_FRAMES   0x0100
 
 /* array data types */
 #define SPS_DOUBLE      0
