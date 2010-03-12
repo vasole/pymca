@@ -28,7 +28,7 @@
 *
 ****************************************************************************/
 /****************************************************************************
-*   @(#)sps.c	5.18  02/26/10 CSS
+*   @(#)sps.c	5.19  03/11/10 CSS
 *
 *   "Spec" Release 5
 *
@@ -553,7 +553,7 @@ static int init_ShmIDs(void) {
 	FILE    *pd;
 
 #if defined(__linux__)
-	int     maxid;
+	int     id_cnt, maxid;
 
 # ifndef SHM_STAT
 #  define SHM_STAT        13
@@ -561,7 +561,7 @@ static int init_ShmIDs(void) {
 # endif
 
 	pd = NULL;
-	i = 0;
+	id_cnt = 0;
 	if ((maxid = shmctl(0, SHM_INFO, (void *) buf)) < 0)
 #endif
 	{
@@ -572,11 +572,11 @@ static int init_ShmIDs(void) {
 	for (;;) {
 #if defined(__linux__)
 		if (maxid == 0)
-				return 1;
+			return 1;
 		if (maxid > 0) {
-			if (i > maxid)
+			if (id_cnt > maxid)
 				break;
-			id = shmctl(i++, SHM_STAT, (void *) buf);
+			id = shmctl(id_cnt++, SHM_STAT, (void *) buf);
 		} else
 #endif
 		{
@@ -2916,4 +2916,3 @@ static bench_mark()
   bench("SPS_CleanUpAll");
 }
 #endif
-
