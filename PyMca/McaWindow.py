@@ -1919,7 +1919,8 @@ class McaWidget(qt.QWidget):
             source = sel['SourceName']
             key    = sel['Key']
             if sel.has_key("scanselection"):
-                if sel["scanselection"]:continue
+                if sel["scanselection"] != "MCA":
+                    continue
             mcakeys    = [key]
             for mca in mcakeys:
                 curveinfo={}
@@ -2146,7 +2147,8 @@ class McaWidget(qt.QWidget):
             source = sel['SourceName']
             key    = sel['Key']
             if sel.has_key("scanselection"):
-                if sel["scanselection"]:continue
+                if sel["scanselection"] != "MCA":
+                    continue
             mcakeys    = [key]
             for mca in mcakeys:
                 legend = sel['legend']
@@ -2168,7 +2170,8 @@ class McaWidget(qt.QWidget):
         doit = False
         for sel in sellist:
             if sel.has_key("scanselection"):
-                if sel["scanselection"]:continue
+                if sel["scanselection"] != "MCA":
+                    continue
             doit = True
             break
             

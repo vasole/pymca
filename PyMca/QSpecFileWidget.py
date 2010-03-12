@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -93,6 +93,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.autoAddBox.setText("Auto ADD")
         self.autoReplaceBox = qt.QCheckBox(autoBox)
         self.autoReplaceBox.setText("Auto REPLACE")
+            
         if self.autoReplace:
             self.autoAddBox.setChecked(False)
             self.autoReplaceBox.setChecked(True)
@@ -108,6 +109,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         autoBoxLayout.addWidget(self.autoOffBox)
         autoBoxLayout.addWidget(self.autoAddBox)
         autoBoxLayout.addWidget(self.autoReplaceBox)
+        self.forceMcaBox = qt.QCheckBox(autoBox)
+        self.forceMcaBox.setText("Force MCA")
+        autoBoxLayout.addWidget(self.forceMcaBox)
 
         if QTVERSION < '4.0.0':
             self.mainLayout.addWidget(self.list)
@@ -212,6 +216,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.connect(self.autoReplaceBox, qt.SIGNAL("clicked()"),
                      self._setAutoReplace)
 
+        self.connect(self.forceMcaBox,
+                     qt.SIGNAL('clicked()'),
+                     self._setForcedMca)
+
         if QTVERSION < '4.0.0':
             self.connect(self.mainTab,
                          qt.SIGNAL('currentChanged(QWidget*)'),
@@ -259,6 +267,15 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.autoOffBox.setChecked(False)
         self.autoAddBox.setChecked(False)
         self.autoReplaceBox.setChecked(True)
+
+    def _setForcedMca(self):
+        if self.forceMcaBox.isChecked():
+            if OBJECT3D:
+                self.object3DBox.setChecked(False)
+                self.object3DBox.setEnabled(False)
+        else:
+            if OBJECT3D:
+                self.object3DBox.setEnabled(True)
 
     # 
     # Data management
@@ -583,7 +600,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['SourceType'] = self.data.sourceType
                     sel['Key'] = scan
                     sel['selection'] = {}
-                    sel['scanselection']  = True
+                    if self.forceMcaBox.isChecked():
+                        sel['scanselection']  = "MCA"
+                    else:
+                        sel['scanselection']  = True
                     sel['selection']['x'] = cnt_sel['x'] 
                     sel['selection']['y'] = cnt_sel['y'] 
                     sel['selection']['m'] = cnt_sel['m']
@@ -647,14 +667,16 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['SourceType'] = self.data.sourceType
                     sel['Key'] = scan
                     sel['selection'] = {}
-                    sel['scanselection']  = True
+                    if self.forceMcaBox.isChecked():
+                        sel['scanselection']  = "MCA"
+                    else:
+                        sel['scanselection']  = True
                     sel['selection']['x'] = cnt_sel['x'] 
                     sel['selection']['y'] = cnt_sel['y'] 
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
-                    sel_list.append(sel)
-            
+                    sel_list.append(sel)            
             
         if len(sel_list): 
             if QTVERSION < '4.0.0':
@@ -705,7 +727,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 sel['SourceType'] = self.data.sourceType
                 sel['Key'] = scan
                 if len(cnt_sel['y']): #if there is something to plot
-                    sel['scanselection']  = True #This could also be SCAN
+                    if self.forceMcaBox.isChecked():
+                        sel['scanselection']  = "MCA"
+                    else:
+                        sel['scanselection']  = True #This could also be SCAN
                     sel['selection'] = {}
                     sel['selection']['x'] = cnt_sel['x'] 
                     sel['selection']['y'] = cnt_sel['y'] 

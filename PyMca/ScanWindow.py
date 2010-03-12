@@ -892,6 +892,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
             if not sel.has_key("scanselection"): continue
+            if sel['scanselection'] == "MCA":
+                continue
             if not sel["scanselection"]:continue
             if len(key.split(".")) > 2: continue
             dataObject = sel['dataobject']
@@ -1070,6 +1072,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             source = sel['SourceName']
             key    = sel['Key']
             if not sel.has_key("scanselection"): continue
+            if sel['scanselection'] == "MCA":
+                continue
             if not sel["scanselection"]:continue
             if len(key.split(".")) > 2: continue
 
@@ -1105,6 +1109,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         doit = 0
         for sel in sellist:
             if not sel.has_key("scanselection"): continue
+            if sel['scanselection'] == "MCA":
+                continue
             if not sel["scanselection"]:continue
             if len(sel["Key"].split(".")) > 2: continue
             dataObject = sel['dataobject']
