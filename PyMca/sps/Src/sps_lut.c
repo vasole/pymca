@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -47,8 +47,7 @@
 	**	Therefore implement inline versions of these functions here.
 	*/
 	
-	__inline long int 
-	lrint (double flt) ;
+	__inline long int lrint (double flt)
 	{	int intgr;
 
 		_asm
@@ -59,8 +58,7 @@
 		return intgr ;
 	} 
 	
-	__inline long int 
-	lrintf (float flt)
+	__inline long int lrintf (float flt)
 	{	int intgr;
 
 		_asm
@@ -518,7 +516,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
 #define CALCPREDATA(ty, mty, mapty, logfct, powfct, premin , premax)\
 {\
  ty vmin, vmax;\
- ty val;\
+ /*ty val;*/\
  mapty *Xptr;\
  mapty *fb;\
  int lval;\
@@ -1460,31 +1458,31 @@ void SPS_PutZdata(void *data, int type, int cols, int rows, int x, int y,
     *((double *)data + ind) = z;
     break;
   case SPS_FLOAT :
-    *((float *)data + ind) = z;
+    *((float *)data + ind) = (float) z;
     break;
   case SPS_INT :
-    *((int *)data + ind) = z;
+    *((int *)data + ind) = (int )z;
     break;
   case SPS_UINT :
-    *((unsigned int *)data + ind) = z;
+    *((unsigned int *)data + ind) = (unsigned int) z;
     break;
   case SPS_SHORT :
-    *((short *)data + ind) = z;
+    *((short *)data + ind) = (short) z;
     break;
   case SPS_USHORT :
-    *((unsigned short *)data + ind) = z;
+    *((unsigned short *)data + ind) = (unsigned short) z;
     break;
   case SPS_CHAR :
-    *((char *)data + ind) = z;
+    *((char *)data + ind) = (char) z;
     break;
   case SPS_UCHAR :
-    *((unsigned char *)data + ind) = z;
+    *((unsigned char *)data + ind) = (unsigned char) z;
     break;
   case SPS_LONG :
-    *((long *)data + ind) = z;
+    *((long *)data + ind) = (long) z;
     break;
   case SPS_ULONG :
-    *((unsigned long *)data + ind) = z;
+    *((unsigned long *)data + ind) = (unsigned long) z;
     break;
   }
   return;
