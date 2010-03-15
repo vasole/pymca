@@ -42,11 +42,14 @@ def getExistingDirectory(parent=None, message=None, mode=None):
                 PyMcaDirs.inputDir = os.path.dirname(outdir)
     return outdir
 
-def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilter=None, single=False):
+def getFileList(parent=None, filetypelist=None, message=None,
+                mode=None, getfilter=None, single=False, currentfilter=None):
     if filetypelist is None:
         fileTypeList = ['All Files (*)']
     else:
         fileTypeList = filetypelist
+    if currentfilter is None:
+        currentfilter = filetypelist[0]
     if message is None:
         if single:
             message = "Please select one file"
@@ -71,9 +74,10 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
         native_possible = True
     filterused = None
     if native_possible and PyMcaDirs.nativeFileDialogs:
-        filetypes = ""
+        filetypes = currentfilter+"\n"
         for filetype in fileTypeList:
-            filetypes += filetype+"\n"
+            if filetype != currentfilter:
+                filetypes += filetype+"\n"
         if getfilter:
             if mode == "OPEN":
                 if single:
@@ -140,8 +144,10 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
         fdialog.setModal(True)
         fdialog.setWindowTitle(message)
         strlist = qt.QStringList()
+        strlist.append(currentfilter)
         for filetype in fileTypeList:
-            strlist.append(filetype)
+            if filetype != currentfilter:
+                strlist.append(filetype)
         fdialog.setFilters(strlist)
         if mode == "OPEN":
             fdialog.setFileMode(fdialog.ExistingFiles)
