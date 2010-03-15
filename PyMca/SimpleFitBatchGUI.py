@@ -31,8 +31,10 @@ import PyMcaQt as qt
 from PyMca_Icons import IconDict
 import PyMcaDirs
 import PyMcaFileDialogs
+PyMcaDirs.nativeFileDialogs = False
 QTVERSION = qt.qVersion()
 HDF5SUPPORT = True
+import QDataSource
 
 class SimpleFitBatchGUI(qt.QWidget):
     def __init__(self,parent=None):
@@ -44,6 +46,7 @@ class SimpleFitBatchGUI(qt.QWidget):
         self.mainLayout.setSpacing(2)
         self._inputDir   = None
         self._outputDir  = None
+        self._lastInputFileFilter = None
         self._fileList   = []
         self._build()
 
@@ -56,9 +59,9 @@ class SimpleFitBatchGUI(qt.QWidget):
         self._listButton.setText('Browse')
         self._listButton.setAutoDefault(False)
         self.connect(self._listButton,qt.SIGNAL('clicked()'),self.browseList)
-        self.mainLayout.addWidget(self._listLabel,  0, 0)
+        self.mainLayout.addWidget(self._listLabel,  0, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         self.mainLayout.addWidget(self._listView,   0, 1)
-        self.mainLayout.addWidget(self._listButton, 0, 2)
+        self.mainLayout.addWidget(self._listButton, 0, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
 
     def browseList(self):
         if self._inputDir is None:
@@ -74,15 +77,19 @@ class SimpleFitBatchGUI(qt.QWidget):
         filetypes.append("All files (*)")
         message = "Open a set of files"
         mode = "OPEN"
-        getfilter = False
-        fileList  = PyMcaFileDialogs.getFileList(self,
+        getfilter = True
+        currentfilter = self._lastInputFileFilter
+        fileList, fileFilter  = PyMcaFileDialogs.getFileList(self,
                                                  filetypelist=filetypes,
                                                  message=message,
                                                  mode=mode,
-                                                 getfilter=False,
-                                                 single=False)
+                                                 getfilter=getfilter,
+                                                 single=False,
+                                                 currentfilter=currentfilter)
         if not len(fileList):
             return
+        else:
+            self._lastInputFileFilter = fileFilter
         self._inputDir = os.path.dirname(fileList[0])
         if (QTVERSION < '4.2.0') or (not len(self._fileList)):
             self.setFileList(fileList)
@@ -115,6 +122,18 @@ class SimpleFitBatchGUI(qt.QWidget):
                 self._fileList.append(ffile)
                 text += ffile + "\n"
         self._listView.insertPlainText(text)
+        sourceType = QDataSource.getSourceType(self._fileList[0])
+        dataSourceClass  = QDataSource.source_types[sourceType]
+        dataSourceWidget = QDataSource.source_widgets[sourceType]
+        self._dataSource = dataSourceClass(self._fileList[0])
+        self._dataWidget = dataSourceWidget()
+        self._dataWidget.setDataSource(self._dataSource)
+        self.connect(self._dataWidget,
+                     qt.SIGNAL('addSelection'), self.printSelection)
+        self._dataWidget.show()
+
+    def printSelection(self, ddict):
+        print "Received = ", ddict
 
 if __name__ == "__main__":
     app = qt.QApplication([])
