@@ -154,8 +154,11 @@ try:
     import h5py
     if h5py.version.version < '1.2.0':
         includes = ['h5py._extras']
-    else:
+    elif h5py.version.version < '1.3.0':
         includes = ['h5py._stub', 'h5py._sync', 'h5py.utils']
+    else:
+        includes = ['h5py._extras', 'h5py._stub', 'h5py.utils',
+                    'h5py._conv', 'h5py._proxy']
 except:
     includes = []
     
