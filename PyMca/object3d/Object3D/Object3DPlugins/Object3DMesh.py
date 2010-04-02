@@ -513,8 +513,12 @@ class Object3DMesh(Object3DBase.Object3D):
         """
         x,y,z, I
         """
-        xindex = int(index/self.ySize)
-        yindex = index % (self.ySize)
+        if self._xyz:
+            xindex = index
+            yindex = index
+        else:
+            xindex = int(index/self.ySize)
+            yindex = index % (self.ySize)
         if self.__flat:
             zindex = 0
         else:
