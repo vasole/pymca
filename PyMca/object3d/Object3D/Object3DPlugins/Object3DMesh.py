@@ -124,11 +124,19 @@ class Object3DMesh(Object3DBase.Object3D):
         if (xyz is not None) and (x is None) and (y is None):
             arr = Object3DCTools.getVertexArrayMeshAxes(xyz)
             if arr is not None:
+                doit = True
                 x = arr[0]
-                y = arr[1]
-                z = numpy.zeros(x.shape[0]*y.shape[0], numpy.float)
-                z[:] = xyz[:, 2]
-                xyz = None
+                if len(x) > 1:
+                    if abs(x[1] - xyz[0,0]) > 1.0e-10:
+                        #not proper C order
+                        #prevent bad plotting of a regular grid
+                        doit = False
+                        x = None
+                if doit:
+                    y = arr[1]                        
+                    z = numpy.zeros(x.shape[0]*y.shape[0], numpy.float)
+                    z[:] = xyz[:, 2]
+                    xyz = None
         if (x is None) and (y is None) and (xyz is None):
             #regular mesh
             self.xSize, self.ySize = data.shape
