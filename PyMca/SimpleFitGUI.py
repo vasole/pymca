@@ -32,6 +32,14 @@ import Parameters
 qt = Parameters.qt
 if qt.qVersion() < '4.0.0':
     raise ImportError, "This module requires PyQt4"
+try:
+    #raise ImportError
+    if 1:
+        from QtBlissGraph import QtBlissGraph as GraphWindow
+    else:
+        from ScanWindow import ScanWindow as GraphWindow
+except ImportError:
+    from Plot1DMatplotlib import Plot1DMatplotlib as GraphWindow
 
 DEBUG = 0
 
@@ -129,14 +137,19 @@ class StatusWidget(qt.QWidget):
         self.mainLayout.addWidget(self.chi2Line)
 
 class SimpleFitGUI(qt.QWidget):
-    def __init__(self, parent=None, fit=None):
+    def __init__(self, parent=None, fit=None, graph=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SimpleFitGUI")
         if fit is None:
             self.fitModule = SimpleFitModule.SimpleFit()
         else:
             self.fitModule = fit
-        self.graph = None
+        if graph is None:
+            self.__useTab = True
+            self.graph = GraphWindow()
+        else:
+            self.__useTab = False
+            self.graph = graph
         self._configurationDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(2)
@@ -145,7 +158,16 @@ class SimpleFitGUI(qt.QWidget):
         config = self.fitModule.getConfiguration()
         self.topWidget.setFunctions(config['fit']['functions'])
         config = None
-        self.parametersTable = Parameters.Parameters(self)
+
+        if self.__useTab:
+            self.mainTab = qt.QTabWidget(self)
+            self.mainLayout.addWidget(self.mainTab)
+            self.parametersTable = Parameters.Parameters()
+            self.mainTab.addTab(self.graph, 'GRAPH')
+            self.mainTab.addTab(self.parametersTable, 'FIT')
+        else:
+            self.parametersTable = Parameters.Parameters(self)
+
         self.statusWidget  = StatusWidget(self)
 
         #build the actions widget
@@ -163,7 +185,10 @@ class SimpleFitGUI(qt.QWidget):
         self.fitActions.mainLayout.addWidget(self.fitActions.startFitButton)
         self.fitActions.mainLayout.addWidget(self.fitActions.dismissButton)
         self.mainLayout.addWidget(self.topWidget)
-        self.mainLayout.addWidget(self.parametersTable)
+        if self.__useTab:
+            self.mainLayout.addWidget(self.mainTab)
+        else:
+            self.mainLayout.addWidget(self.parametersTable)
         self.mainLayout.addWidget(self.statusWidget)
         self.mainLayout.addWidget(self.fitActions)
 
@@ -269,7 +294,20 @@ class SimpleFitGUI(qt.QWidget):
             self.topWidget.backgroundCombo.setCurrentIndex(idx)
 
     def setData(self, *var, **kw):
-        return self.fitModule.setData(*var, **kw)
+        returnValue = self.fitModule.setData(*var, **kw)
+        if self.__useTab:
+            if hasattr(self.graph, "addCurve"):
+                self.graph.addCurve(self.fitModule._x,
+                                    self.fitModule._y,
+                                    legend='Data',
+                                    replace=True)
+            elif hasattr(self.graph, "newCurve"):
+                self.graph.clearCurves()
+                self.graph.newCurve('Data',
+                                    self.fitModule._x,
+                                    self.fitModule._y)
+                self.graph.replot()
+        return returnValue
 
     def estimate(self):
         self.setStatus("Estimate started")
@@ -324,15 +362,16 @@ class SimpleFitGUI(qt.QWidget):
         ddict['x']    = self.fitModule._x
         ddict['y']    = self.fitModule._y
         ddict['yfit'] = self.evaluateDefinedFunction()
-        if hasattr(self.graph, "newCurve"):
+        if hasattr(self.graph, "addCurve"):
+            self.graph.addCurve(ddict['x'], ddict['y'], 'Data') 
+            self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
+            self.graph.addCurve(ddict['x'], self.fitModule._z, 'Background') 
+        elif hasattr(self.graph, "newCurve"):
             self.graph.newCurve('Data', ddict['x'], ddict['y']) 
             self.graph.newCurve('Fit', ddict['x'], ddict['yfit']) 
             self.graph.newCurve('Strip', ddict['x'], self.fitModule._z) 
-        elif hasattr(self.graph, "addCurve"):
-            self.graph.addCurve(ddict['x'], ddict['y'], 'Data') 
-            self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
+            self.graph.replot()
         self.graph.show()
-        self.graph.replot()
 
     def dismiss(self):
         self.close()
@@ -361,14 +400,10 @@ def test():
         w.show()
     else:
         fit=None
-        import QtBlissGraph
-        graph = QtBlissGraph.QtBlissGraph()
         w = SimpleFitGUI(fit=fit)
-        fname = SpecfitFunctions.__file__
         w.setData(x, y, xmin=x[0], xmax=x[-1])
-        graph.newCurve("Z0", w.fitModule._x, w.fitModule._z+1) 
         w.show()
-        w.graph = graph
+        fname = SpecfitFunctions.__file__
         w.importFunctions(fname)
         w.setFitFunction('Gaussians')
     return w
