@@ -237,7 +237,8 @@ class SimpleFit:
                 ddict['derivative'] = derivative[i]
             if configure is not None:
                 ddict['configure'] = configure[i]
-                ddict['configuration'] = configure[i]()
+                if ddict['configure'] is not None:
+                    ddict['configuration'] = configure[i]()
                 if ddict['estimate'] is None:
                     ddict['configuration']['estimation'] = None
             if widget is not None:
@@ -461,7 +462,6 @@ class SimpleFit:
                     parname = parname + ("_%d" % (1+int(i/nBasePar)))
                 self.final_theory.append(parname)
 
-        print self.final_theory 
         CONS=['FREE',
             'POSITIVE',
             'QUOTED',
@@ -524,21 +524,28 @@ class SimpleFit:
             return [],[[],[],[]]
         ddict = self._fitConfiguration['functions'][fname]
         estimateFunction = ddict['estimate']
+        
         if estimateFunction is None:
-            if fname in self._fitConfiguration.keys():
-                parameters = []
-                constraints = [[],[],[]]
-                if 'parameters' in self._fitConfiguration[fname]:
-                    defaultPar = self._fitConfiguration[fname]['parameters']
-                    for parameter in defaultPar:
-                        parameters.append(parameter['estimation'])
-                        constraints[0].append(parameter['code'])
-                        constraints[1].append(parameter['cons1'])
-                        constraints[2].append(parameter['cons2'])
-                return parameters, constraints
+            parameters = []
+            constraints = [[],[],[]]
+            if ddict['configuration']['estimation'] is not None:
+                estimation = ddict['configuration']['estimation']
+                defaultPar = estimation['parameters']
+                for parameter in defaultPar:
+                    parameters.append(estimation[parameter]['estimation'])
+                    constraints[0].append(estimation[parameter]['code'])
+                    constraints[1].append(estimation[parameter]['cons1'])
+                    constraints[2].append(estimation[parameter]['cons2'])
+            else:
+                defaultPar = ddict['parameters']
+                for parameter in defaultPar:
+                    parameters.append(0.0)
+                    constraints[0].append(0)
+                    constraints[1].append(0)
+                    constraints[2].append(0)
+            return parameters, constraints
         parameters, constraints = estimateFunction(self._x, self._y, self._z)
         return parameters, constraints
-
 
     def estimateFunction(self):
         self._z = self._getStripBackground()
@@ -678,17 +685,28 @@ class SimpleFit:
             ddict['configuration'] = self.getConfiguration()
         return ddict        
 
-    def _evaluateBackground(self, x):
+    def _evaluateBackground(self, x=None):
+        if x is None:
+            x = self._x
         pars = self._fitResult['fittedvalues']
         nb = self.__nBackgroundParameters
         if nb:
-            return self._fitConfiguration['functions'][self.getBackgroundFunction()]\
+            y = self._fitConfiguration['functions'][self.getBackgroundFunction()]\
                       ['function'](pars[:nb], x)
             
         else:
-            return numpy.zeros(x.shape, numpy.float)
+            y = numpy.zeros(x.shape, numpy.float)
+        if self._fitConfiguration['fit']['strip_flag']:
+            #If the x is not self._x, how to add the strip?
+            try:
+                y += self._z
+            except:
+                print "Cannot add strip background"
+        return y
 
-    def _evaluateFunction(self, x):
+    def _evaluateFunction(self, x=None):
+        if x is None:
+            x = self._x
         pars = self._fitResult['fittedvalues']
         nb = self.__nBackgroundParameters
         if len(self.paramlist) > nb:
@@ -702,12 +720,6 @@ class SimpleFit:
             x = self._x
         y = self._evaluateBackground(x)
         y += self._evaluateFunction(x)
-        if self._fitConfiguration['fit']['strip_flag']:
-            #If the x is not self._x, how to add the strip?
-            try:
-                y += self._z
-            except:
-                print "Cannot add strip background"
         return y 
 
 def test():

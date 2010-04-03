@@ -225,11 +225,14 @@ class SimpleFitGUI(qt.QWidget):
                 functionsfile= str(fn)
             if not len(functionsfile):
                 return
-        try:
+        if DEBUG:
             self.fitModule.importFunctions(functionsfile)
-        except:
-            qt.QMessageBox.critical(self, "ERROR",
-                                    "Function not imported")
+        else:
+            try:
+                self.fitModule.importFunctions(functionsfile)
+            except:
+                qt.QMessageBox.critical(self, "ERROR",
+                                        "Function not imported")
 
         config = self.fitModule.getConfiguration()
         self.topWidget.setFunctions(config['fit']['functions'])
@@ -362,14 +365,15 @@ class SimpleFitGUI(qt.QWidget):
         ddict['x']    = self.fitModule._x
         ddict['y']    = self.fitModule._y
         ddict['yfit'] = self.evaluateDefinedFunction()
+        ddict['background'] = self.fitModule._evaluateBackground()
         if hasattr(self.graph, "addCurve"):
             self.graph.addCurve(ddict['x'], ddict['y'], 'Data') 
             self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
-            self.graph.addCurve(ddict['x'], self.fitModule._z, 'Background') 
+            self.graph.addCurve(ddict['x'], ddict['background'], 'Background') 
         elif hasattr(self.graph, "newCurve"):
             self.graph.newCurve('Data', ddict['x'], ddict['y']) 
             self.graph.newCurve('Fit', ddict['x'], ddict['yfit']) 
-            self.graph.newCurve('Strip', ddict['x'], self.fitModule._z) 
+            self.graph.newCurve('Background', ddict['x'], ddict['background']) 
             self.graph.replot()
         self.graph.show()
 
@@ -403,9 +407,10 @@ def test():
         w = SimpleFitGUI(fit=fit)
         w.setData(x, y, xmin=x[0], xmax=x[-1])
         w.show()
-        fname = SpecfitFunctions.__file__
+        import SimpleFitUserEstimatedFunctions
+        fname = SimpleFitUserEstimatedFunctions.__file__
         w.importFunctions(fname)
-        w.setFitFunction('Gaussians')
+        w.setFitFunction('User Estimated Gaussians')
     return w
 
 if __name__=="__main__":
