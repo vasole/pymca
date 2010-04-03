@@ -343,9 +343,21 @@ class SimpleFitGUI(qt.QWidget):
         #get parameters from table
         self.fitModule.paramlist = self.parametersTable.fillFitFromTable()
         if DEBUG:
-            print self.fitModule.paramlist
-        values, chisq, sigma, niter, lastdeltachi = self.fitModule.startFit()
-        self.setStatus()
+            values, chisq, sigma, niter, lastdeltachi = self.fitModule.startFit()
+            self.setStatus()
+        else:
+            try:
+                values,chisq,sigma,niter,lastdeltachi = self.fitModule.startFit()
+                self.setStatus()
+            except:
+                text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText(text)
+                msg.exec_()
+                self.setStatus("Ready (after fit error)")
+                return
+            
         self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
         self.statusWidget.chi2Line.setText("%f" % chisq)
         ddict = {}
