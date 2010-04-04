@@ -605,7 +605,7 @@ class SimpleFit:
             weightflag = 1
 
         print "STILL TO HANDLE DERIVATIVES"
-        model_deriv = None
+        model_deriv = self.modelFunctionDerivative
         if self._fitConfiguration['fit']['strip_flag']:
             y = self._y - self._z
         else:
@@ -676,6 +676,27 @@ class SimpleFit:
             result += self._fitConfiguration['functions'][self.getFitFunction()]\
                       ['function'](pars[nb:], t)
         return result
+
+    def numericDerivative(self, f, parameters, index, x):
+        """
+        numericDerivative(self, f, parameters, index, x)
+        calculates the numeric derivate of f(parameters, x) respect
+        to the parameter indexed by the given index
+        """
+        #numeric derivative
+        x=numpy.array(x)
+        delta = (parameters[index] + numpy.equal(parameters[index],0.0)) * 0.00001
+
+        #make a copy of the parameters
+        newpar = parameters * 1
+        newpar[index] = parameters[index] + delta
+        f1 = f(newpar, x)
+        newpar[index] = parameters[index] - delta
+        f2 = f(newpar, x)
+        return (f1-f2) / (2.0 * delta)
+
+    def modelFunctionDerivative(self, pars, index, x):
+        return self.numericDerivative(self.modelFunction, pars, index, x)
 
     def getResult(self, configuration=False):
         #print " get results to be implemented"
