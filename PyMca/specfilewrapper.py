@@ -27,6 +27,7 @@
 import specfile
 import os
 import string
+import numpy
 import numpy.oldnumeric as Numeric
 try:
     import SPXFileParser
@@ -314,14 +315,50 @@ class myscandata:
             if self.scanheader[0][0:2] == '<<':
                 #amptek
                 try:
-                    if self.scanheader[-5][0:5] == 'LABEL':
-                        values = string.split(self.scanheader[-4])
-                        x0,y0 = map(float,values)
-                        values = string.split(self.scanheader[-3])
+                    amptekCalibrationLines = []
+                    amptekInCalibrationLines = False
+                    for line in self.scanheader:
+                        if '<<CALIBRATION>>' in line:
+                            amptekInCalibrationLines = True
+                            continue
+                        if line.startswith('<<'):
+                            amptekInCalibrationLines = False
+                            continue
+                        if amptekInCalibrationLines and\
+                           ('LABEL' not in line):
+                            amptekCalibrationLines.append(line)
+                    n = len(amptekCalibrationLines)
+                    if n == 0 :
+                        return output
+                    if n == 1:
+                        #one point calibration
+                        x0,y0 = 0.0, 0.0
+                        values = amptekCalibrationLines[0].split()
                         x1,y1 = map(float,values)
                         gain = (y1-y0)/(x1-x0)
                         zero = y0 - gain * x0
-                        output = ['#@CALIB  %g  %g  0' % (zero, gain)]
+                    elif n == 2:
+                        #two point calibration
+                        values = amptekCalibrationLines[0].split()
+                        x0,y0 = map(float,values)
+                        values = amptekCalibrationLines[1].split()
+                        x1,y1 = map(float,values)
+                        gain = (y1-y0)/(x1-x0)
+                        zero = y0 - gain * x0
+                    else:
+                        x = numpy.zeros((n,), numpy.float)
+                        y = numpy.zeros((n,), numpy.float)
+                        for i in range(n):
+                            values = amptekCalibrationLines[i].split()
+                            x[i], y[i] = map(float,values)
+                        Sxy = numpy.dot(x, y.T)
+                        Sxx = numpy.dot(x, x.T)
+                        Sx  = x.sum()
+                        Sy  = y.sum()
+                        d = n * Sxx - Sx * Sx
+                        zero = (Sxx * Sy - Sx * Sxy)/d
+                        gain = (n * Sxy - Sx * Sy)/d
+                    output = ['#@CALIB  %g  %g  0' % (zero, gain)]
                 except:
                     pass
             return output
