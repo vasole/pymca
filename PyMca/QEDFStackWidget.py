@@ -52,6 +52,7 @@ import PyMcaDirs
 import SpecfitFuns
 import time
 import OmnicMap
+import OpusDPTMap
 import LuciaMap
 import SupaVisioMap
 import AifiraMap
@@ -1481,8 +1482,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                            "selectiontype":"1D",
                            "SourceName":"EDF Stack",
                            "Key":"SUM"}
+
         dataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)
                         + self.stack.info['Channel0']]
+
         dataObject.y = [mcaData0]
 
         #store the original spectrum
@@ -1614,18 +1617,32 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                       ddict['calibration'][1] * self.__mcaData0.x[0] + \
                       ddict['calibration'][2] * self.__mcaData0.x[0] * \
                                                 self.__mcaData0.x[0]
-                i1 = Numeric.nonzero(ddict['from'] <= xw)
-                if len(i1):
-                    i1 = min(i1)
+                if xw[0] < xw[-1]:
+                    i1 = Numeric.nonzero(ddict['from'] <= xw)
+                    if len(i1):
+                        i1 = min(i1)
+                    else:
+                        return
+                    i2 = Numeric.nonzero(xw <= ddict['to'])
+                    if len(i2):
+                        i2 = max(i2) + 1
+                    else:
+                        return
+                    pos = 0.5 * (ddict['from'] + ddict['to'])
+                    imiddle = max(Numeric.nonzero(xw <= pos))
                 else:
-                    return
-                i2 = Numeric.nonzero(xw <= ddict['to'])
-                if len(i2):
-                    i2 = max(i2) + 1
-                else:
-                    return
-                pos = 0.5 * (ddict['from'] + ddict['to'])
-                imiddle = max(Numeric.nonzero(xw <= pos))
+                    i2 = Numeric.nonzero(ddict['from']<= xw)
+                    if len(i2):
+                        i2 = max(i2)
+                    else:
+                        return
+                    i1 = Numeric.nonzero(xw <= ddict['to'])
+                    if len(i1):
+                        i1 = min(i1) + 1
+                    else:
+                        return
+                    pos = 0.5 * (ddict['from'] + ddict['to'])
+                    imiddle = min(Numeric.nonzero(xw <= pos))
             else:
                 i1 = Numeric.nonzero(ddict['from'] <= self.__mcaData0.x[0])
                 if len(i1):
@@ -2276,6 +2293,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
+                        "OPUS-DPT Files (*.DPT *.dpt)",
                         "HDF5 Files (*.nxs *.hdf *.h5)", 
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
@@ -2459,6 +2477,9 @@ if __name__ == "__main__":
                 omnicfile = False
                 if filefilter.upper().startswith('HDF5'):
                     stack = QHDF5Stack1D.QHDF5Stack1D(filelist)
+                    omnicfile = True
+                elif filefilter.upper().startswith('OPUS-DPT'):
+                    stack = OpusDPTMap.OpusDPTMap(filelist[0])
                     omnicfile = True
                 elif filefilter[0:6].upper() == "AIFIRA":
                     stack = AifiraMap.AifiraMap(filelist[0])
