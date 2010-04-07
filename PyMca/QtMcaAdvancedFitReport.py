@@ -702,7 +702,10 @@ class QtMcaAdvancedFitReport:
         text+= "</FONT></H2>"
         text+="<br>"
         result = self.fitresult['result']
-        labels=['Element','Group','Fit&nbsp; Area','Sigma','Energy','Ratio','FWHM','Chi&nbsp; square']
+        if self.tableFlag == 1:
+            labels=['Element','Group','Fit&nbsp; Area','Sigma']
+        else:
+            labels=['Element','Group','Fit&nbsp; Area','Sigma','Energy','Ratio','FWHM','Chi&nbsp; square']
         lemmon=string.upper("#%x%x%x" % (255,250,205))
         hcolor = string.upper("#%x%x%x" % (230,240,249))       
         text+="<CENTER>"
@@ -712,7 +715,7 @@ class QtMcaAdvancedFitReport:
         for l in range(len(labels)):
             if l < 2:
                 text += '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
-            elif l > 3:
+            elif (l > 3) or (self.tableFlag == 1):
                 text += '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
             else:
                 text += '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])                
@@ -736,6 +739,8 @@ class QtMcaAdvancedFitReport:
                 iterator = [result[group]['peaks']]
             else:
                 iterator = 1 * result[group]['peaks']
+            if self.tableFlag == 1:
+                iterator = []
             for peak in iterator:
                 text += '<tr><td>&nbsp;</td>'
                 name  = peak
@@ -756,6 +761,8 @@ class QtMcaAdvancedFitReport:
                 iterator = [result[group]['escapepeaks']]
             else:
                 iterator = 1 * result[group]['escapepeaks']
+            if self.tableFlag == 1:
+                iterator = []
             for peak0 in iterator:
                 name  = peak0+"esc"
                 peak  = peak0+"esc"
