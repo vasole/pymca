@@ -84,7 +84,13 @@ if os.system(cmd):
     sys.exit(1)
 
 include_files = []
-for f in ["attdata", "HTML", "Scofield1973.dict", "changelog.txt", "McaTheory.cfg"]:
+flist = ["attdata",
+         "HTML",
+         "Scofield1973.dict",
+         "changelog.txt",
+         "McaTheory.cfg",
+         "PyMcaSplashImage.png"]
+for f in flist:
     include_files.append((os.path.join(PyMcaDir, f), f))
 
 flist = glob.glob(os.path.join(PyMcaDir, "*.dat"))
