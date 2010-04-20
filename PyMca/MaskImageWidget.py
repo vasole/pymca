@@ -62,29 +62,33 @@ else:
 
 DEBUG = 0
 
-
+if QTVERSION < '4.6.0':
+    USE_PICKER = True
+else:
+    USE_PICKER = False
 class MyPicker(Qwt.QwtPlotPicker):
     def __init__(self, *var):
         Qwt.QwtPlotPicker.__init__(self, *var)
         self.__text = Qwt.QwtText()
         self.data = None
 
-    def trackerText(self, var):
-        d=self.invTransform(var)
-        if self.data is None:
-            self.__text.setText("%g, %g" % (d.x(), d.y()))
-        else:
-            limits = self.data.shape
-            x = round(d.y())
-            y = round(d.x())
-            if x < 0: x = 0
-            if y < 0: y = 0
-            x = min(int(x), limits[0]-1)
-            y = min(int(y), limits[1]-1)
-            z = self.data[x, y]
-            self.__text.setText("%d, %d, %.4g" % (y, x, z))
-        return self.__text
-
+    if USE_PICKER:
+        def trackerText(self, var):
+            d=self.invTransform(var)
+            if self.data is None:
+                self.__text.setText("%g, %g" % (d.x(), d.y()))
+            else:
+                limits = self.data.shape
+                x = round(d.y())
+                y = round(d.x())
+                if x < 0: x = 0
+                if y < 0: y = 0
+                x = min(int(x), limits[0]-1)
+                y = min(int(y), limits[1]-1)
+                z = self.data[x, y]
+                self.__text.setText("%d, %d, %.4g" % (y, x, z))
+            return self.__text
+    
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False):
@@ -184,13 +188,12 @@ class MaskImageWidget(qt.QWidget):
         self.connect(self.graphWidget.zoomResetToolButton,
                      qt.SIGNAL("clicked()"), 
                      self._zoomResetSignal)
-        
         self.graphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
-                               Qwt.QwtPlot.yLeft,
-                               Qwt.QwtPicker.NoSelection,
-                               Qwt.QwtPlotPicker.CrossRubberBand,
-                               Qwt.QwtPicker.AlwaysOn,
-                               self.graphWidget.graph.canvas())
+                           Qwt.QwtPlot.yLeft,
+                           Qwt.QwtPicker.NoSelection,
+                           Qwt.QwtPlotPicker.CrossRubberBand,
+                           Qwt.QwtPicker.AlwaysOn,
+                           self.graphWidget.graph.canvas())
         self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
         self.graphWidget.graph.enableSelection(False)
         self.graphWidget.graph.enableZoom(True)
