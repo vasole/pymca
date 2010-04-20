@@ -165,6 +165,7 @@ try:
     else:
         includes = ['h5py._extras', 'h5py._stub', 'h5py.utils',
                     'h5py._conv', 'h5py._proxy']
+    includes.append('PyMca.phynx.utils.sorting')
 except:
     includes = []
     
