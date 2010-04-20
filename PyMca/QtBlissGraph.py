@@ -567,7 +567,7 @@ class QtBlissGraph(qwt.QwtPlot):
                             Qwt.QwtPicker.AlwaysOff,
                             self.canvas())
                     self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
-                    #self.crossPicker.setTrackerPen(qt.QPen(qt.Qt.red))
+                    self.crossPicker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
                     self.crossPicker.setEnabled(1)
             else:
                 if 0:
