@@ -1243,7 +1243,8 @@ class PyMca(PyMcaMdi.PyMca):
                 else:
                     return []
         else:
-            if PyMcaDirs.nativeFileDialogs:
+            if False and PyMcaDirs.nativeFileDialogs:
+                #windows cannot handle thousands of files in a file dialog
                 filetypes = ""
                 for filetype in fileTypeList:
                     filetypes += filetype+"\n"
