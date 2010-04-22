@@ -35,6 +35,7 @@ try:
 except:
     SPX = False
 import Fit2DChiFileParser
+import re
 DEBUG = 0
 
 def Specfile(filename):
@@ -43,6 +44,24 @@ def Specfile(filename):
     else:
         return None
     line0  = f.readline()
+    if filename.upper().endswith('DTA'):
+        #TwinMic single column file
+        line = line0 * 1
+        line = line.replace('\r','')
+        line = line.replace('\n','')
+        line = line.replace('\t',' ')
+        s = line.split(' ')
+        if len(s) == 2:
+            if len(s[-1]) == 0:
+                try:
+                    v = float(s[0])
+                    f.close()
+                    output = specfilewrapper(filename, dta=True)
+                    f.close()
+                    return output
+                except:
+                    #try to read in other way
+                    pass
     line = line0
     while(len(line)):
         if len(line) > 1:
@@ -74,12 +93,26 @@ def Specfile(filename):
     return output
 
 class specfilewrapper:
-    def __init__(self,filename,amptek=None, qxas = None):
+    def __init__(self,filename,amptek=None, qxas = None, dta = None):
         if amptek is None: amptek = False
         if qxas   is None: qxas   = False
+        if dta    is None: dta    = False
         self.amptek = amptek
         self.qxas   = qxas
         self.header = []
+        if dta:
+            self.dta = True
+            #TwinMic .dta files with only one spectrum
+            f = open(filename, 'rb')
+            raw_content = f.read()
+            f.close()
+            expr = '([-+]?\d+)\t\r\n'
+            self.data = [float(i) for i in re.split(expr,raw_content) if i <> '']
+            self.data = numpy.array(self.data, numpy.float32)
+            self.header = ['#S1 %s' % os.path.basename(filename)]
+            self.data.shape = -1, 1
+            self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header)]
+            return
         if self.qxas:
             f = open(filename)
         else:
@@ -193,7 +226,7 @@ class specfilewrapper:
             self.scandata=[myscandata(self.data,'SCAN','1.1', labels=labels),myscandata(self.data,'MCA','2.1')]
 
     def list(self):
-        if self.amptek or self.qxas:
+        if self.amptek or self.qxas or self.dta:
             return "1:1"
         else:
             return "1:2"
@@ -390,7 +423,7 @@ class myscandata:
 
 class BufferedFile:
     def __init__(self, filename):
-        f = open(filename, 'r')
+        f = open(filename, 'rb')
         self.__buffer = f.read()
         f.close()
         self.__buffer=self.__buffer.replace("\r", "\n")
