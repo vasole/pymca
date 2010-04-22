@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __revision__ = "$Revision: 1.50$"
 ###########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -640,17 +640,19 @@ class McaBatchGUI(qt.QWidget):
             filetypes += "HDF5 (*.nxs *.h5 *.hdf)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
         #if (QTVERSION < '4.3.0') and sys.platform == "win32":
-        if PyMcaDirs.nativeFileDialogs:
-                if QTVERSION < '4.0.0':
-                    filelist= filedialog.getOpenFileNames(qt.QString(filetypes),
-                            wdir,
-                            self,"openFile", "Open a set of files")
-                else:
-                    filelist = qt.QFileDialog.getOpenFileNames(self,
-                                    "Open a set of files",
-                                    wdir,
-                                    filetypes,
-                                    None)    #This should be the last file filter used
+        if False and PyMcaDirs.nativeFileDialogs:
+            #windows file dialogs have difficulties when dealing with
+            #thousands of files, I do not know if other platforms too
+            if QTVERSION < '4.0.0':
+                filelist= filedialog.getOpenFileNames(qt.QString(filetypes),
+                        wdir,
+                        self,"openFile", "Open a set of files")
+            else:
+                filelist = qt.QFileDialog.getOpenFileNames(self,
+                                "Open a set of files",
+                                wdir,
+                                filetypes,
+                                None)    #This should be the last file filter used
         else:
             if QTVERSION < '4.0.0':
                 filedialog.setFilters(filetypes)
