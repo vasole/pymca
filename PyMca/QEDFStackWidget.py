@@ -1111,7 +1111,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             omnicfile = False
             luciafile = False
             supavisio = False
-            hdffile = False
+            hdffile   = False
+            opusfile  = False
             if len(filelist) == 1:
                 f = open(filelist[0])
                 line = f.read(10)
@@ -1130,6 +1131,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     supavisio = True
                 elif filelist[0][-3:].upper() in ["RBS"]:
                     supavisio = True
+                elif filefilter.upper().startswith('OPUS-DPT'):
+                    opusfile = True
             try:
                 if hdffile:
                     self.slave.setStack(QHDF5Stack1D.QHDF5Stack1D(filelist))
@@ -1139,6 +1142,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     self.slave.setStack(LuciaMap.LuciaMap(filelist[0]))
                 elif supavisio:
                     self.slave.setStack(SupaVisioMap.SupaVisioMap(filelist[0]))
+                elif opusfile:
+                    self.slave.setStack(OpusDPTMap.OpusDPTMap(filelist[0]))
                 else:
                     self.slave.setStack(QStack(filelist))
             except:

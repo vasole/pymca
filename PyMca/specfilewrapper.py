@@ -99,9 +99,9 @@ class specfilewrapper:
         if dta    is None: dta    = False
         self.amptek = amptek
         self.qxas   = qxas
+        self.dta = dta
         self.header = []
-        if dta:
-            self.dta = True
+        if self.dta:
             #TwinMic .dta files with only one spectrum
             f = open(filename, 'rb')
             raw_content = f.read()
