@@ -1919,7 +1919,7 @@ class McaWidget(qt.QWidget):
             source = sel['SourceName']
             key    = sel['Key']
             if sel.has_key("scanselection"):
-                if sel["scanselection"] != "MCA":
+                if sel["scanselection"] not in [False, "MCA"]:
                     continue
             mcakeys    = [key]
             for mca in mcakeys:
@@ -2147,7 +2147,7 @@ class McaWidget(qt.QWidget):
             source = sel['SourceName']
             key    = sel['Key']
             if sel.has_key("scanselection"):
-                if sel["scanselection"] != "MCA":
+                if sel["scanselection"] not in [False, "MCA"]:
                     continue
             mcakeys    = [key]
             for mca in mcakeys:
