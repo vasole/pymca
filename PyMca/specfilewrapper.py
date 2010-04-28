@@ -103,12 +103,17 @@ class specfilewrapper:
         self.header = []
         if self.dta:
             #TwinMic .dta files with only one spectrum
-            f = open(filename, 'rb')
-            raw_content = f.read()
-            f.close()
-            expr = '([-+]?\d+)\t\r\n'
-            self.data = [float(i) for i in re.split(expr,raw_content) if i <> '']
-            self.data = numpy.array(self.data, numpy.float32)
+            if 0:
+                f = open(filename, 'rb')
+                raw_content = f.read()
+                f.close()
+                expr = '([-+]?\d+)\t\r\n'
+                self.data = [float(i) for i in re.split(expr,raw_content) if i <> '']
+                self.data = numpy.array(self.data, numpy.float32)
+            else:
+                self.data = numpy.fromfile(filename,
+                                           dtype=numpy.float32,
+                                           sep='\t\r\n')
             self.header = ['#S1 %s' % os.path.basename(filename)]
             self.data.shape = -1, 1
             self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header)]
