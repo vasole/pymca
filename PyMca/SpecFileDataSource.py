@@ -452,7 +452,7 @@ class SpecFileDataSource:
             if selection  is not None:
                 selectiontype = selection.get('selectiontype', "1D")
             output.info['selectiontype'] = selectiontype
-            if output.info['selectiontype'] not in ['2D']:
+            if output.info['selectiontype'] not in ['2D', '3D', 'STACK']:
                 ch0 =  int(output.info['Channel0'])
                 output.x = [Numeric.arange(ch0, ch0 + len(output.data)).astype(Numeric.Float)]
                 output.y = [output.data[:].astype(Numeric.Float)]
@@ -480,6 +480,18 @@ class SpecFileDataSource:
                         nChannels = mcaData.shape[0]
                         output.data = numpy.zeros((npoints, nChannels), numpy.float32)
                     output.data[i,:] = mcaData
+                #I have all the MCA data ready for image plot
+                if selectiontype == 'STACK':
+                    output.data.shape = 1, npoints, -1
+                    shape = output.data.shape
+                    for i in range(len(shape)):
+                        key = 'Dim_%d' % (i+1,)
+                        output.info[key] = shape[i]
+                    output.info["SourceType"] = "SpecFileStack"
+                    output.info["SourceName"] = self.sourceName
+                    output.info["Size"]       = shape[0] * shape[1]
+                    output.info["NumberOfFiles"] = 1
+                    output.info["FileIndex"] = 1
         elif (key_type=="scan") and mca3D:
             output = self._getScanData(key, raw = True)
             output.x = None

@@ -448,6 +448,20 @@ class PyMca(PyMcaMdi.PyMca):
                         return True           
         return False
 
+    def _isStackSelection(self, ddict):
+        if self._is2DSelection(ddict):
+            return False
+        if self._is3DSelection(ddict):
+            return False
+        if ddict.has_key('selection'):
+            if ddict['selection'] is None:
+                return False
+            if ddict['selection'].has_key('selectiontype'):
+                if ddict['selection']['selectiontype'] == 'STACK':
+                    return True
+        return False
+
+
     def dispatcherAddSelectionSlot(self, ddict):
         if self.__useTabWidget:
             if self.mainTabWidget.isHidden():
@@ -518,6 +532,14 @@ class PyMca(PyMcaMdi.PyMca):
                                                         [legend])
             else:
                 self.imageWindowDict[legend]._addSelection(ddict)
+        elif self._isStackSelection(ddict):
+            legend = ddict['legend']
+            widget = QEDFStackWidget.QEDFStackWidget()
+            widget.notifyCloseEventToWidget(self)            
+            widget.setStack(ddict['dataobject'])
+            widget.setWindowTitle(legend)
+            widget.show()
+            self._widgetDict[id(widget)] = widget        
         else:
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":

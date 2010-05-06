@@ -517,7 +517,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 self.menu.popup(self.cursor().pos())
 
     def mcaDeviceSelected(self, ddict):
-        action = ddict['action']
+        action, actiontype = ddict['action'].split()
         mca = ddict['mca'] + 1
         sel_list = []
         itemlist = self.list.selectedItems()
@@ -529,8 +529,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             sel['Key'] = "%s.%d"% (scan, mca)
             #sel['selection'] = None
             sel['selection'] = {}
-            sel['selection']['selectiontype'] = "2D"
-            sel['imageselection'] = True
+            if actiontype.upper() == "STACK":
+                sel['selection']['selectiontype'] = "STACK"
+                sel['imageselection'] = False
+            else:
+                sel['selection']['selectiontype'] = "2D"
+                sel['imageselection'] = True                
             sel['scanselection'] = False
             sel['mcaselection']  = False
             sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']

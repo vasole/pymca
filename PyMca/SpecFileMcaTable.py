@@ -267,6 +267,7 @@ else:
             self.table._hHeader.menu.addAction('ADD Image')
             self.table._hHeader.menu.addAction('REMOVE Image')
             self.table._hHeader.menu.addAction('REPLACE Image')
+            self.table._hHeader.menu.addAction('ADD Stack')
 
         def _horizontalHeaderClicked(self, value):
             if value < 0:
@@ -282,7 +283,7 @@ else:
             ddict = {}
             ddict['event'] = 'McaDeviceSelected'
             ddict['mca']   = value
-            ddict['action'] = txt.split()[0]
+            ddict['action'] = txt
             self.emit(qt.SIGNAL("McaDeviceSelected"), ddict)
 
         def build(self, info):
