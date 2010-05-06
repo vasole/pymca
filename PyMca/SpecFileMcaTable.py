@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -258,7 +258,32 @@ else:
             self.connect(self.table,
                          qt.SIGNAL("cellDoubleClicked(int, int)"),
                          self._cellDoubleClicked)
+            
+            self.table._hHeader = self.table.horizontalHeader()
+            self.connect(self.table._hHeader,
+                     qt.SIGNAL('sectionClicked(int)'),
+                     self._horizontalHeaderClicked)
+            self.table._hHeader.menu = qt.QMenu()
+            self.table._hHeader.menu.addAction('ADD Image')
+            self.table._hHeader.menu.addAction('REMOVE Image')
+            self.table._hHeader.menu.addAction('REPLACE Image')
 
+        def _horizontalHeaderClicked(self, value):
+            if value < 0:
+                return
+            item = self.table.horizontalHeaderItem(value)
+            text = str(item.text())
+            if text.startswith("No MCA for"):
+                return
+            action = self.table._hHeader.menu.exec_(self.cursor().pos())
+            if action is None:
+                return
+            txt = str(action.text())
+            ddict = {}
+            ddict['event'] = 'McaDeviceSelected'
+            ddict['mca']   = value
+            ddict['action'] = txt.split()[0]
+            self.emit(qt.SIGNAL("McaDeviceSelected"), ddict)
 
         def build(self, info):
             if info['NbMca'] > 0:

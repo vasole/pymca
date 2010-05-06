@@ -105,6 +105,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.object3DBox = qt.QCheckBox(autoBox)
             self.object3DBox.setText("3D On")
             autoBoxLayout.addWidget(self.object3DBox)
+            self.connect(self.mcaTable,
+                         qt.SIGNAL("McaDeviceSelected"),
+                         self.mcaDeviceSelected)
 
         autoBoxLayout.addWidget(self.autoOffBox)
         autoBoxLayout.addWidget(self.autoAddBox)
@@ -282,6 +285,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     #
     #NEW data management
     def setDataSource(self, datasource):
+        if DEBUG:
+            print "setDataSource(self, datasource) called"
+            print "datasource = ", datasource
         self.data = datasource
         self.refresh()
         if QTVERSION < '4.0.0':return
@@ -435,7 +441,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if not len(sel):return
             info = self.data.getKeyInfo(sel[0])
             self.mcaTable.build(info)
-            if 0:
+            if True:
                 #This does not work properly yet
                 NbMca = info.get('NbMcaDet', 0)
                 self.cntTable.build(info['LabelNames'], nmca=NbMca)
@@ -509,6 +515,33 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 self.menu.addAction("Show scan header", self.__showScanInfo)
                 self.menu_idx = self.scans.index(sn)
                 self.menu.popup(self.cursor().pos())
+
+    def mcaDeviceSelected(self, ddict):
+        action = ddict['action']
+        mca = ddict['mca'] + 1
+        sel_list = []
+        itemlist = self.list.selectedItems()
+        scan_sel = [str(item.text(1)) for item in itemlist]
+        for scan in scan_sel:
+            sel = {}
+            sel['SourceName'] = self.data.sourceName
+            sel['SourceType'] = self.data.sourceType
+            sel['Key'] = "%s.%d"% (scan, mca)
+            #sel['selection'] = None
+            sel['selection'] = {}
+            sel['selection']['selectiontype'] = "2D"
+            sel['imageselection'] = True
+            sel['scanselection'] = False
+            sel['mcaselection']  = False
+            sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
+            sel_list.append(sel)
+        if len(scan_sel):
+            if action == 'ADD':
+                self.emit(qt.SIGNAL("addSelection"), sel_list)
+            elif action == 'REMOVE':
+                self.emit(qt.SIGNAL("removeSelection"), sel_list)
+            elif action == 'REPLACE':
+                self.emit(qt.SIGNAL("replaceSelection"), sel_list)
 
     def __showScanInfo(self, idx = None):
         if idx is None:

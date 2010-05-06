@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -362,17 +362,21 @@ class SpecFileDataSource:
         elif key_type=="mca": (scan_key, mca_no)=self.__getMcaPars(key)
 
         if self.__source_info_cached is None:
-            sourcekeys = self.getSourceInfo()['KeyList']
+            sourceinfo = self.getSourceInfo()
+            sourcekeys = sourceinfo['KeyList']
         else:
-            sourcekeys = self.__source_info_cached['KeyList']
+            sourceinfo = self.__source_info_cached
+            sourcekeys = sourceinfo['KeyList']
             if scan_key not in sourcekeys:
-                sourcekeys = self.getSourceInfo()['KeyList']
+                sourceinfo = self.getSourceInfo()
+                sourcekeys = sourceinfo['KeyList']
         if scan_key not in sourcekeys:
             raise KeyError, "Key %s not in source keys" % key
 
         mca3D = False
         if DEBUG:
             print "SELECTION = ", selection
+            print "key_type = ", key_type
         if key_type == "scan":
             if selection  is not None:
                 if selection.has_key('mcalist'):
@@ -444,12 +448,38 @@ class SpecFileDataSource:
                 output.data = None
         elif key_type=="mca":
             output = self._getMcaData(key)
-            ch0 =  int(output.info['Channel0'])
-            output.x = [Numeric.arange(ch0, ch0 + len(output.data)).astype(Numeric.Float)]
-            output.y = [output.data[:].astype(Numeric.Float)]
-            output.m = None
-            output.info['selectiontype'] = "1D"
-            output.data = None
+            selectiontype = "1D"
+            if selection  is not None:
+                selectiontype = selection.get('selectiontype', "1D")
+            output.info['selectiontype'] = selectiontype
+            if output.info['selectiontype'] not in ['2D']:
+                ch0 =  int(output.info['Channel0'])
+                output.x = [Numeric.arange(ch0, ch0 + len(output.data)).astype(Numeric.Float)]
+                output.y = [output.data[:].astype(Numeric.Float)]
+                output.m = None
+                output.data = None
+            else:
+                output.x    = None
+                output.y    = None
+                output.m    = None
+                output.data = None
+                npoints = output.info['NbMca']/output.info['NbMcaDet']
+                index = 0
+                scan_obj = self._sourceObjectList[index].select(scan_key)
+                SPECFILE = True
+                if isinstance(self._sourceObjectList[index], specfile.specfilewrapper):
+                    SPECFILE = False
+                for i in range(npoints):
+                    if SPECFILE:
+                        wmca_no= (mca_no-1)*output.info['NbMcaDet'] + int(i+1)
+                        mcaData= scan_obj.mca(wmca_no)
+                    else:
+                        mca_key = '%s.%d' % (scan_key, mca_no)
+                        mcaData = self._getMcaData(mca_key).data
+                    if i == 0:
+                        nChannels = mcaData.shape[0]
+                        output.data = numpy.zeros((npoints, nChannels), numpy.float32)
+                    output.data[i,:] = mcaData
         elif (key_type=="scan") and mca3D:
             output = self._getScanData(key, raw = True)
             output.x = None
