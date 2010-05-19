@@ -130,21 +130,17 @@ class QDispatcher(qt.QWidget):
                         #I should create a weakref to it in order to be informed
                         #about its deletion.
                         if source.sourceType != "SPS":
-                            if 1 or DEBUG:
+                            try:
                                 dataObject = source.getDataObject(sel['Key'],
                                                       selection=sel['selection'])
-                            else:
-                                try:
-                                    dataObject = source.getDataObject(sel['Key'],
-                                                          selection=sel['selection'])
-                                except:
-                                    error = sys.exc_info()
-                                    text = "Failed to read data source.\n"
-                                    text += "Source: %s\n" % source.sourceName
-                                    text += "Key: %s\n"  % sel['Key']
-                                    text += "Error: %s" % error[1]
-                                    qt.QMessageBox.critical(self,"%s" % error[0], text)
-                                    continue
+                            except:
+                                error = sys.exc_info()
+                                text = "Failed to read data source.\n"
+                                text += "Source: %s\n" % source.sourceName
+                                text += "Key: %s\n"  % sel['Key']
+                                text += "Error: %s" % error[1]
+                                qt.QMessageBox.critical(self,"%s" % error[0], text)
+                                continue
                         else:
                             dataObject = source.getDataObject(sel['Key'],
                                                       selection=sel['selection'], 
