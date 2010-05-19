@@ -257,6 +257,7 @@ class smart_install_data(install_data):
         return install_data.run(self)
 
 from distutils.command.install_scripts import install_scripts
+"""
 class smart_install_scripts(install_scripts):
     def run (self):
         global PYMCA_SCRIPTS_DIR
@@ -310,7 +311,7 @@ class smart_install_scripts(install_scripts):
                     mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
                     log.info("changing mode of %s to %o", file, mode)
                     os.chmod(file, mode)
-   
+"""   
 description = "GPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
 """
@@ -329,8 +330,8 @@ distrib = setup(name="PyMca",
                 data_files = data_files,
 ##                package_data = package_data,
 ##                package_dir = {'': 'lib'},
-                cmdclass = {'install_data':smart_install_data, 
-                            'install_scripts':smart_install_scripts},
+                cmdclass = {'install_data':smart_install_data}, 
+#                            'install_scripts':smart_install_scripts},
                 scripts=script_files,
                 )
 

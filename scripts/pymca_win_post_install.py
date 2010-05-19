@@ -95,9 +95,10 @@ def remove():
 
 # main()
 if len(sys.argv) > 1:
-    if sys.argv[1] == '-install':
+    if sys.argv[1] in ['-install', 'install']:
         install()
-    elif sys.argv[1] == '-remove':
+    elif sys.argv[1] in ['-remove', 'remove']:
         remove()
     else:
         print "Script was called with option %s" % sys.argv[1]
+        print "It has to be called with option -install or -remove"

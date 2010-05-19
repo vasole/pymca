@@ -1,1 +1,10 @@
-Mca2Edf.py
+#!python
+
+import os
+import sys
+import PyMca
+
+sys.path.insert(0, os.path.dirname(PyMca.__file__))
+
+execfile(os.path.join(os.path.dirname(PyMca.__file__), 'Mca2Edf.py'))
+
