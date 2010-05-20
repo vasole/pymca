@@ -794,6 +794,10 @@ class FitParamWidget(FitParamForm):
             return None
 
     def __setFitPar(self):
+        #Default 10 eV separation between two peaks only accessible
+        #through file editing for the time being
+        #self.deltaOnePeak = self.__get("fit", "deltaonepeak", 0.010)
+        
         self.linpolOrder= self.__get("fit", "linpolorder", 1, int)
         self.exppolOrder= self.__get("fit", "exppolorder", 1, int)
         continuum= self.__get("fit", "continuum", 0, int)
@@ -866,6 +870,8 @@ class FitParamWidget(FitParamForm):
 
     def __getFitPar(self):
         pars= {}
+        #Default 10 eV separation between two peaks accessible through file
+        pars['deltaonepeak'] = self.__get("fit", "deltaonepeak", 0.010, float)
         err = "__getFitPar"
         #if 1:
         try:
