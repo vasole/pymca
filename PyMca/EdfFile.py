@@ -188,7 +188,7 @@ class  EdfFile:
         Index=0
         line = self.File.readline()
         
-        while line != "":            
+        while line != "":
             if string.count(line, "{\n") >= 1 or string.count(line, "{\r\n")>=1:
                 Index=self.NumImages
                 self.NumImages = self.NumImages + 1
@@ -209,7 +209,7 @@ class  EdfFile:
                     self.Images[Index].StaticHeader[typeItem]=valueItem
                 else:
                     self.Images[Index].Header[typeItem]=valueItem
-            if string.count(line, "}\n") >= 1:
+            if (string.count(line, "}\n") or string.count(line, "}\r")) >= 1:
                 #for i in STATIC_HEADER_ELEMENTS_CAPS:
                 #    if self.Images[Index].StaticHeader[i]=="":
                 #        raise "Bad File Format"
