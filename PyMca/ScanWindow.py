@@ -1941,7 +1941,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             info = copy.deepcopy(dataObject.info)
             info['xlabel'] = xlabel
             info['ylabel'] = ylabel
-            output.append([x, y, label, info])
+            output.append([x, y, key, info])
             ndata += 1
         return output
 
