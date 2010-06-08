@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -59,9 +59,12 @@ else:
     QWTVERSION4 = True
 
 try:
-    from PyMca_Icons import IconDict
-except:
-    pass
+    from PyMca.PyMca_Icons import IconDict
+except ImportError:
+    try:
+       from PyMca_Icons import IconDict
+    except ImportError:
+        pass
 import time
 import numpy
 from numpy.oldnumeric import *
@@ -69,12 +72,16 @@ DEBUG = 0
 USE_SPS_LUT = 1
 if USE_SPS_LUT:
     try:
-        import spslut
+        from PyMca import spslut
         COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
-    except:
-        USE_SPS_LUT = 0
-
+    except ImportError:
+        try:
+            import spslut
+            COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
+                        spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
+        except ImportError:
+            USE_SPS_LUT = 0
 #import arrayfns
 if QTVERSION < '3.0.0':
     qt.QCursor.ArrowCursor   = qt.ArrowCursor
@@ -97,7 +104,7 @@ elif QTVERSION > '4.0.0':
 if not USE_SPS_LUT:
     # from scipy.pilutil
     def bytescale(data, cmin=None, cmax=None, high=255, low=0):
-        if data.typecode == UInt8:
+        if data.dtype == numpy.uint8:
             return data
         high = high - low
         if cmin is None:
