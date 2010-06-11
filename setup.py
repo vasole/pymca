@@ -28,6 +28,7 @@ for line in file(os.path.join('PyMca', 'PyMcaMain.py')).readlines():
 
 print "PyMca X-Ray Fluorescence Toolkit %s" % __version__
 print 
+
 print "Type 'L' to view the license."
 print "Type 'yes' to accept the terms of the license."
 print "Type 'no' to decline the terms of the license."
@@ -312,7 +313,7 @@ class smart_install_scripts(install_scripts):
                     log.info("changing mode of %s to %o", file, mode)
                     os.chmod(file, mode)
 """   
-description = "GPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
+description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
 """
 
