@@ -34,8 +34,7 @@ from RGBImageCalculator import qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     import RGBCorrelator
-
-
+    
 DEBUG = 0
 
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
@@ -52,6 +51,17 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self.dataObjectsList = []
         self.dataObjectsDict = {}
         self._plotEnabled    = True
+        self._externalWidget = None
+        self.slider = qt.QSlider(self)
+        self.slider.setOrientation(qt.Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(0)
+        
+        self.mainLayout.addWidget(self.slider)
+        self.connect(self.slider,
+                     qt.SIGNAL("valueChanged(int)"),
+                     self._showImage)
+        self.slider.hide()
 
     def _connectCorrelator(self):
         if QTVERSION > '4.0.0':
@@ -118,8 +128,22 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         print "Nothing to plot"
             self.dataObjectsList = [legend]
             self.dataObjectsDict = {legend:dataObject}
-            self._imageData = dataObject.data
-            self.name.setText(legend)
+            shape = dataObject.data.shape 
+            if len(shape) == 2:
+                self._nImages = 1 
+                self._imageData = dataObject.data
+                self.slider.hide()
+                self.name.setText(legend)
+            else:
+                self._nImages = 1
+                for dimension in dataObject.data.shape[:-2]:
+                    self._nImages *= dimension
+                dataObject.data.shape = self._nImages, shape[-2], shape[-1]
+                self._imageData = dataObject.data[0]
+                self.slider.setMaximum(self._nImages-1)
+                self.slider.setValue(0)
+                self.slider.show()
+                self.name.setText(legend+" 0")
             if self._plotEnabled:
                 self.plotImage(True)
 
@@ -158,6 +182,21 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         RGBImageCalculator.RGBImageCalculator.closeEvent(self, event)    
 
 
+    def _showImage(self, index):
+        self.showImage(index, moveslider=False)
+            
+    def showImage(self, index=0, moveslider=True):
+        legend = self.dataObjectsList[0]
+        dataObject = self.dataObjectsDict[legend]
+        self._imageData = dataObject.data[index]
+        self.plotImage(True)
+        txt = "%s %d" % (legend, index)
+        self.graphWidget.graph.setTitle(txt)
+        self.name.setText(txt)
+
+        if moveslider:
+            self.slider.setValue(index)
+        
 class TimerLoop:
     def __init__(self, function = None, period = 1000):
         self.__timer = qt.QTimer()
