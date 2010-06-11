@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -62,6 +62,12 @@ class NumpyArrayTableView(QtGui.QTableView):
         self.verticalHeader().setModel(verticalHeaderModel)
 
     def setArrayData(self, data):
+        t = "%s" % data.dtype
+        if '|' in t:
+            fmt = "%s"
+        else:
+            fmt = "%g"
+        self._model.setFormat(fmt)
         self._model.setArrayData(data)
         #some linux distributions need this call
         self.setModel(self._model)
