@@ -65,7 +65,20 @@ class Fit2DChiFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         for i in range(npoints):
             if self.__currentLine < lenBuffer:
                 line = self.__buffer[self.__currentLine]
-                data[i,:] = map(float, line.split())
+                try:
+                    data[i,:] = map(float, line.split())
+                except ValueError:
+                    if i == 0:
+                        values = map(float, line.split())
+                        nActualValues = len(values)
+                        if nActualValues < len(labels):
+                            labels = labels[-nActualValues:]
+                            data = numpy.zeros((npoints, len(labels)),
+                                               numpy.float32)
+                            data[i,:] = values
+                            self.__currentLine += 1
+                            continue
+                    raise
             self.__currentLine += 1
 
         scanheader = ['#S 1  ' + command]
