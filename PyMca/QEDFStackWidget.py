@@ -2370,7 +2370,7 @@ if __name__ == "__main__":
             if "," in arg:
                 begin = map(int,arg.split(","))
             else:
-                begin = int(arg)
+                begin = [int(arg)]
         elif opt in '--end':
             if "," in arg:
                 end = map(int,arg.split(","))
