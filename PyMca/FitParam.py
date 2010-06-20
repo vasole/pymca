@@ -503,7 +503,7 @@ class FitParamWidget(FitParamForm):
         pars= {}
         sections = FitParamSections * 1
         sections.append('multilayer')
-        if 0: sections.append('materials')
+        sections.append('materials')
         sections.append('tube')
         for key in sections:
             pars[key]= self.__getPar(key)
@@ -522,8 +522,7 @@ class FitParamWidget(FitParamForm):
             return self.__getAttPar()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
-        if 0:       
-            if parname in ["materials", "MATERIALS"]:
+        if parname in ["materials", "MATERIALS"]:
                 return self.__getMaterialsPar()            
         if parname in ["tube", "TUBE"]:
             return self.__getTubePar()
