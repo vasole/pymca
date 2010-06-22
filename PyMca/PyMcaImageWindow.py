@@ -140,7 +140,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                     self._nImages *= dimension
                 #This is a problem for dynamic data        
                 #dataObject.data.shape = self._nImages, shape[-2], shape[-1]
-                self._imageData = self._getImageFromSingleIndex(0)
+                self._imageData = self._getImageDataFromSingleIndex(0)
                 self.slider.setMaximum(self._nImages-1)
                 self.slider.setValue(0)
                 self.slider.show()
@@ -148,14 +148,14 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             if self._plotEnabled:
                 self.plotImage(True)
 
-    def _getImageFromSingleIndex(self, index):
+    def _getImageDataFromSingleIndex(self, index):
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
         shape = dataObject.data.shape
         if len(shape) == 2:
             if index > 0:
                 raise IndexError, "Only one image in stack"
-            return dataObject.data[0]
+            return dataObject.data
         if len(shape) == 3:
             return dataObject.data[index]
 
@@ -210,7 +210,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def showImage(self, index=0, moveslider=True):
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
-        self._imageData = dataObject.data[index]
+        self._imageData = self._getImageDataFromSingleIndex(index)
         self.plotImage(True)
         txt = "%s %d" % (legend, index)
         self.graphWidget.graph.setTitle(txt)
