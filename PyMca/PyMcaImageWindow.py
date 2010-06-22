@@ -130,7 +130,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             self.dataObjectsDict = {legend:dataObject}
             shape = dataObject.data.shape 
             if len(shape) == 2:
-                self._nImages = 1 
+                self._nImages = 1
                 self._imageData = dataObject.data
                 self.slider.hide()
                 self.name.setText(legend)
@@ -138,14 +138,36 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 self._nImages = 1
                 for dimension in dataObject.data.shape[:-2]:
                     self._nImages *= dimension
-                dataObject.data.shape = self._nImages, shape[-2], shape[-1]
-                self._imageData = dataObject.data[0]
+                #This is a problem for dynamic data        
+                #dataObject.data.shape = self._nImages, shape[-2], shape[-1]
+                self._imageData = self._getImageFromSingleIndex(0)
                 self.slider.setMaximum(self._nImages-1)
                 self.slider.setValue(0)
                 self.slider.show()
                 self.name.setText(legend+" 0")
             if self._plotEnabled:
                 self.plotImage(True)
+
+    def _getImageFromSingleIndex(self, index):
+        legend = self.dataObjectsList[0]
+        dataObject = self.dataObjectsDict[legend]
+        shape = dataObject.data.shape
+        if len(shape) == 2:
+            if index > 0:
+                raise IndexError, "Only one image in stack"
+            return dataObject.data[0]
+        if len(shape) == 3:
+            return dataObject.data[index]
+
+        #I have to deduce the appropriate indices from the given index
+        #always assuming C order
+        acquisitionShape =  dataObject.data.shape[:-2]
+        if len(shape) == 4:
+            j = index % acquisitionShape[-1]
+            i = int(index/(acquisitionShape[-1]*acquisitionShape[-2]))
+            return dataObject.data[i, j]
+
+        raise IndexError, "Unhandled dimension"
 
     def setPlotEnabled(self, value=True):
         self._plotEnabled = value
