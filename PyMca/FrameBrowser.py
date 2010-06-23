@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -222,6 +222,9 @@ class FrameBrowser(QtGui.QWidget):
         ddict["new"]   = self._oldIndex + 1
         self.emit(QtCore.SIGNAL("indexChanged"), ddict)
 
+    def setRange(self, first, last):
+        return self.setLimits(first, last)
+
     def setLimits(self, first, last):
         bottom = min(first, last)
         top = max(first, last)
@@ -243,10 +246,78 @@ class FrameBrowser(QtGui.QWidget):
 
     def getCurrentIndex(self):
         return self._oldIndex + 1
-        
-def test(args):
+
+    def setValue(self, value):
+        self.lineEdit.setText("%d" % value)
+        self._textChangedSlot()
+
+class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
+    def __init__(self, *var, **kw):
+        QtGui.QAbstractSlider.__init__(self, *var, **kw)
+        self.setOrientation(QtCore.Qt.Horizontal)
+        self.mainLayout = QtGui.QHBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+        self._slider  = QtGui.QSlider(self)
+        self._slider.setOrientation(QtCore.Qt.Horizontal)
+        self._browser = FrameBrowser(self)
+        self.mainLayout.addWidget(self._slider)
+        self.mainLayout.addWidget(self._browser)
+        self.connect(self._slider,
+                     QtCore.SIGNAL("valueChanged(int)"),
+                     self._sliderSlot)
+        self.connect(self._browser,
+                     QtCore.SIGNAL("indexChanged"),
+                     self._browserSlot)
+
+
+    def setMinimum(self, value):
+        self._slider.setMinimum(value)
+        maximum = self._slider.maximum()
+        if value == 1:
+            self._browser.setNFrames(maximum)
+        else:
+            self._browser.setRange(minimum, maximum)
+
+    def setMaximum(self, value):
+        self._slider.setMaximum(value)
+        minimum = self._slider.minimum()
+        if minimum == 1:
+            self._browser.setNFrames(value)
+        else:
+            self._browser.setRange(minimum, value)
+
+    def setRange(self, *var):
+        self._slider.setRange(*var)
+        self._browser.setRange(*var)
+
+    def _sliderSlot(self, value):
+        self._browser.setValue(value)
+        self.emit(QtCore.SIGNAL("valueChanged(int)"), value)
+
+    def _browserSlot(self, ddict):
+        self._slider.setValue(ddict['new'])
+
+    def setValue(self, value):
+        self._slider.setValue(value)
+        self._browser.setValue(value)
+    
+def test1(args):
     app=QtGui.QApplication(args)
-    w=FrameBrowser(n=10)
+    w=HorizontalSliderWithBrowser()
+    def slot(ddict):
+        print ddict
+    QtCore.QObject.connect(w,
+                       QtCore.SIGNAL("valueChanged(int)"),
+                       slot)
+    w.setRange(8, 20)
+    w.show()
+    app.exec_()
+
+
+def test2(args):
+    app=QtGui.QApplication(args)
+    w=FrameBrowser()
     def slot(ddict):
         print ddict
     QtCore.QObject.connect(w,
@@ -260,5 +331,5 @@ def test(args):
 
 if __name__=="__main__":
     import sys
-    test(sys.argv)
+    test1(sys.argv)
     

@@ -34,7 +34,11 @@ from RGBImageCalculator import qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     import RGBCorrelator
-    
+try:
+    from PyMca import FrameBrowser
+    USE_BROWSER = True
+except ImportError:
+    USE_BROWSER = False
 DEBUG = 0
 
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
@@ -53,15 +57,17 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self._plotEnabled    = True
         self._externalWidget = None
         self.setDefaultColormap(2, logflag=True)
-        self.slider = qt.QSlider(self)
-        self.slider.setOrientation(qt.Qt.Horizontal)
-        self.slider.setMinimum(0)
-        self.slider.setMaximum(0)
+        if USE_BROWSER:
+            self.slider = FrameBrowser.HorizontalSliderWithBrowser(self)
+        else:
+            self.slider = qt.QSlider(self)
+            self.slider.setOrientation(qt.Qt.Horizontal)
+        self.slider.setRange(0, 0)
         
         self.mainLayout.addWidget(self.slider)
         self.connect(self.slider,
                      qt.SIGNAL("valueChanged(int)"),
-                     self._showImage)
+                     self._showImageSliderSlot)
         self.slider.hide()
 
     def _connectCorrelator(self):
@@ -142,7 +148,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 #This is a problem for dynamic data        
                 #dataObject.data.shape = self._nImages, shape[-2], shape[-1]
                 self._imageData = self._getImageDataFromSingleIndex(0)
-                self.slider.setMaximum(self._nImages-1)
+                self.slider.setRange(0, self._nImages - 1)
                 self.slider.setValue(0)
                 self.slider.show()
                 self.name.setText(legend+" 0")
@@ -204,8 +210,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             self.correlator.close()
         RGBImageCalculator.RGBImageCalculator.closeEvent(self, event)    
 
-
-    def _showImage(self, index):
+    def _showImageSliderSlot(self, index):
         self.showImage(index, moveslider=False)
             
     def showImage(self, index=0, moveslider=True):

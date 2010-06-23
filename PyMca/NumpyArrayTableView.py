@@ -56,10 +56,10 @@ class NumpyArrayTableView(QtGui.QTableView):
         QtGui.QTableView.__init__(self, parent)
         self._model = NumpyArrayTableModel.NumpyArrayTableModel(self)
         self.setModel(self._model)
-        horizontalHeaderModel = HorizontalHeader(self._model)
-        verticalHeaderModel = VerticalHeader(self._model)
-        self.horizontalHeader().setModel(horizontalHeaderModel)
-        self.verticalHeader().setModel(verticalHeaderModel)
+        self._horizontalHeaderModel = HorizontalHeader(self._model)
+        self._verticalHeaderModel = VerticalHeader(self._model)
+        self.horizontalHeader().setModel(self._horizontalHeaderModel)
+        self.verticalHeader().setModel(self._verticalHeaderModel)
 
     def setArrayData(self, data):
         t = "%s" % data.dtype
@@ -71,6 +71,8 @@ class NumpyArrayTableView(QtGui.QTableView):
         self._model.setArrayData(data)
         #some linux distributions need this call
         self.setModel(self._model)
+        self.horizontalHeader().setModel(self._horizontalHeaderModel)
+        self.verticalHeader().setModel(self._verticalHeaderModel)
         
     def setCurrentArrayIndex(self, index):
         return self._model.setCurrentArrayIndex(index)
