@@ -52,6 +52,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self.dataObjectsDict = {}
         self._plotEnabled    = True
         self._externalWidget = None
+        self.setDefaultColormap(2, logflag=True)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)

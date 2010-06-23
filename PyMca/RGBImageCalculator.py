@@ -61,6 +61,7 @@ class RGBImageCalculator(qt.QWidget):
         self.__imagePixmap   = None
         self.__imageColormap = None
         self.__imageColormapDialog = None
+        self.setDefaultColormap(2, logflag=False)
         self._y1AxisInverted = False
         self._matplotlibSaveImage = None
         self._build(math = math, replace = replace)
@@ -214,9 +215,9 @@ class RGBImageCalculator(qt.QWidget):
             (self.__imagePixmap,size,minmax)= spslut.transform(\
                                 self._imageData,
                                 (1,0),
-                                (spslut.LINEAR,3.0),
+                                (self.__defaultColormapType,3.0),
                                 "BGRX",
-                                spslut.TEMP,
+                                self.__defaultColormap,
                                 1,
                                 (0,1))
         else:
@@ -320,6 +321,13 @@ class RGBImageCalculator(qt.QWidget):
         self.graphWidget.graph.zoomReset()
         self.graphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
         self.plotImage(True)
+
+    def setDefaultColormap(self, colormapindex, logflag=False):
+        self.__defaultColormap = COLORMAPLIST[min(colormapindex, len(COLORMAPLIST)-1)]
+        if logflag:
+            self.__defaultColormapType = spslut.LOG
+        else:
+            self.__defaultColormapType = spslut.LINEAR
 
     def selectColormap(self):
         if self._imageData is None:return
