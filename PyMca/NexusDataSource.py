@@ -237,11 +237,15 @@ class NexusDataSource:
             if not len(selection[cnt]):
                 continue
             path =  entry + selection['cntlist'][selection[cnt][0]]
-            try:
-                data = phynxFile[path].value
-            except MemoryError:
-                print "MemoryError, Dynamic reading"
-                data = phynxFile[path]
+            data = phynxFile[path]
+            totalElements = 1
+            for dim in data.shape:
+                totalElements *= dim
+            if totalElements < 1.0E8:
+                try:
+                    data = phynxFile[path].value
+                except MemoryError:
+                    pass
             if output.info['selectiontype'] == "1D":
                 if len(data.shape) == 2:
                     if min(data.shape) == 1:
