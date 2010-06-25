@@ -1,7 +1,7 @@
 import mediantools
 from numpy import asarray
 
-def medfilt2d(input, kernel_size=3):
+def medfilt2d(input_data, kernel_size=3):
     """Median filter two 2-dimensional arrays.
 
   Description:
@@ -23,7 +23,7 @@ def medfilt2d(input, kernel_size=3):
            result.
 
     """
-    image = asarray(input)
+    image = asarray(input_data)
     if kernel_size is None:
         kernel_size = [3] * 2
     kernel_size = asarray(kernel_size)
