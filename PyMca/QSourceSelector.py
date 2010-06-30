@@ -233,7 +233,7 @@ class QSourceSelector(qt.QWidget):
                 if type(filename) != type([]):
                     filename = [filename]
             if not os.path.exists(filename[0]):
-                if '%' not in filename[0]
+                if '%' not in filename[0]:
                     raise IOError, ("File %s does not exist" % filename[0])
 
             #check if it is a stack
