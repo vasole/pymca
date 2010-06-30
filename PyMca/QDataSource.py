@@ -86,14 +86,15 @@ def getSourceType(sourceName0):
     if sps is not None:
         if sourceName in sps.getspeclist():
             return QSpsDataSource.SOURCE_TYPE
-    if NEXUS and ('%' in sourceName):
-        try:
-            f = h5py.File(sourceName, 'r', driver='family')
-            f.close()
-            f = None
-            return NexusDataSource.SOURCE_TYPE
-        except:
-            pass        
+    if not os.path.exists(sourceName):
+        if ('%' in sourceName):
+            try:
+                f = h5py.File(sourceName, 'r', driver='family')
+                f.close()
+                f = None
+                return NexusDataSource.SOURCE_TYPE
+            except:
+                pass        
     if os.path.exists(sourceName):
         f = open(sourceName)
         line = f.readline()

@@ -111,7 +111,10 @@ class NexusDataSource:
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
             try:
-                if '%' in name:
+                if os.path.exists(name):
+                    phynxInstance = phynx.File(name, 'r', lock=None,
+                                           sorted_with=h5py_sorting)
+                elif '%' in name:
                     phynxInstance = phynx.File(name, 'r',
                                                driver='family',
                                                lock=None,
@@ -119,11 +122,10 @@ class NexusDataSource:
                 else:
                     phynxInstance = phynx.File(name, 'r', lock=None,
                                            sorted_with=h5py_sorting)
-                                       #sorting_list=['start_time',
-                                       #              'end_time',
-                                       #              'name'])
             except TypeError:
-                if '%' in name:
+                if os.path.exists(name):
+                    phynxInstance = phynx.File(name, 'r', lock=None)
+                elif '%' in name:
                     phynxInstance = phynx.File(name, 'r',
                                                driver='family',
                                                lock=None)
