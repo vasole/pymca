@@ -26,6 +26,7 @@
 #############################################################################*/
 from PyQt4 import QtCore, QtGui
 import NumpyArrayTableModel
+import sys
 
 class HorizontalHeader(QtCore.QAbstractItemModel):
     def __init__(self, parent=None):
@@ -71,6 +72,9 @@ class NumpyArrayTableView(QtGui.QTableView):
         self._model.setArrayData(data)
         #some linux distributions need this call
         self.setModel(self._model)
+        if sys.platform not in ['win32']:
+            self._horizontalHeaderModel = HorizontalHeader(self._model)
+            self._verticalHeaderModel = VerticalHeader(self._model)
         self.horizontalHeader().setModel(self._horizontalHeaderModel)
         self.verticalHeader().setModel(self._verticalHeaderModel)
         
