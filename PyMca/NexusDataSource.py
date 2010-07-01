@@ -27,6 +27,7 @@
 __revision__ = "$Revision: 1.1 $"
 import numpy
 import DataObject
+import sys
 import os
 import types
 import h5py
@@ -93,6 +94,50 @@ def _get_number_list(txt):
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
     return nbs
 
+def get_family_pattern(filelist):
+    name1 = filelist[0]
+    name2 = filelist[1]
+    if name1 == name2:
+        return name1
+    i0=0
+    for i in range(len(name1)):
+        if i >= len(name2):
+            break
+        elif name1[i] == name2[i]:
+            pass
+        else:
+            break
+    i0 = i
+    for i in range(i0,len(name1)):
+        if i >= len(name2):
+            break
+        elif name1[i] != name2[i]:
+            pass
+        else:
+            break
+    i1 = i
+    if i1 > 0:
+        delta=1
+        while (i1-delta):
+            if (name2[(i1-delta)] in ['0', '1', '2',
+                                    '3', '4', '5',
+                                    '6', '7', '8',
+                                    '9']):
+                delta = delta + 1
+            else:
+                if delta > 1: delta = delta -1
+                break
+        fmt = '%dd' % delta
+        if delta > 1:
+            fmt = "%0" + fmt
+        else:
+            fmt = "%" + fmt
+        rootname = name1[0:(i1-delta)]+fmt+name2[i1:]
+    else:
+        rootname = name1[0:]
+    return rootname
+
+
 class NexusDataSource:
     def __init__(self,nameInput):
         if type(nameInput) == types.ListType:
@@ -106,33 +151,63 @@ class NexusDataSource:
         self.sourceType = SOURCE_TYPE
         self.__sourceNameList = nameList
         self.refresh()
-
+        
     def refresh(self):
         self._sourceObjectList=[]
+        FAMILY = False
         for name in self.__sourceNameList:
-            try:
-                if os.path.exists(name):
-                    phynxInstance = phynx.File(name, 'r', lock=None,
-                                           sorted_with=h5py_sorting)
-                elif '%' in name:
-                    phynxInstance = phynx.File(name, 'r',
-                                               driver='family',
-                                               lock=None,
-                                           sorted_with=h5py_sorting)
-                else:
-                    phynxInstance = phynx.File(name, 'r', lock=None,
-                                           sorted_with=h5py_sorting)
-            except TypeError:
-                if os.path.exists(name):
-                    phynxInstance = phynx.File(name, 'r', lock=None)
-                elif '%' in name:
-                    phynxInstance = phynx.File(name, 'r',
+            if not os.path.exists(name):
+                if '%' in name:
+                    try:
+                        phynxInstance = phynx.File(name, 'r',
+                           driver='family',
+                           lock=None,
+                           sorted_with=h5py_sorting)
+                    except TypeError:
+                        phynxInstance = phynx.File(name, 'r',
                                                driver='family',
                                                lock=None)
                 else:
+                    raise IOError, "File %s does not exists" % name
+            try:
+                phynxInstance = phynx.File(name, 'r', lock=None,
+                                           sorted_with=h5py_sorting)
+            except IOError:
+                if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
+                    FAMILY = True
+                else:
+                    raise
+            except TypeError:
+                try:
                     phynxInstance = phynx.File(name, 'r', lock=None)
+                except IOError:
+                    if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
+                        FAMILY = True
+                    else:
+                        raise
+            if FAMILY and (len(self._sourceObjectList) > 0):
+                raise IOError, "Mixing segmented and non-segmented HDF5 files not supported yet"
+            else:
+                break
             phynxInstance._sourceName = name
             self._sourceObjectList.append(phynxInstance)
+        if FAMILY:
+            pattern = get_family_pattern(self.__sourceNameList)
+            if '%' in pattern:
+                try:
+                    phynxInstance = phynx.File(pattern, 'r',
+                                            driver='family', 
+                                            lock=None,
+                                           sorted_with=h5py_sorting)
+                except TypeError:
+                    phynxInstance = phynx.File(pattern, 'r', 
+                                            driver='family',lock=None)
+            else:
+                raise IOError, "Cannot set of HDF5 files"
+            self.sourceName   = [pattern]
+            self.__sourceNameList = [pattern]
+            self._sourceObjectList=[phynxInstance]
+            phynxInstance._sourceName = pattern
         self.__lastKeyInfo = {}
 
     def getSourceInfo(self):
@@ -356,7 +431,7 @@ def DataSource(name="", source_type=SOURCE_TYPE):
 
         
 if __name__ == "__main__":
-    import sys,time
+    import time
     try:
         sourcename=sys.argv[1]
         key       =sys.argv[2]        

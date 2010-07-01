@@ -626,7 +626,7 @@ if __name__ == "__main__":
         w.setFile(sys.argv[1])
     else:
         import NexusDataSource
-        dataSource = NexusDataSource.NexusDataSource(sys.argv[1])
+        dataSource = NexusDataSource.NexusDataSource(sys.argv[1:])
         w.setDataSource(dataSource)
     def addSelection(sel):
         print sel

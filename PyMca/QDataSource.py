@@ -114,6 +114,8 @@ def getSourceType(sourceName0):
             return EdfFileDataSource.SOURCE_TYPE
         else:
             if NEXUS:
+                if h5py.is_hdf5(sourceName):
+                    return NexusDataSource.SOURCE_TYPE
                 try:
                     f = h5py.File(sourceName, 'r')
                     f.close()
