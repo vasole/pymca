@@ -187,7 +187,7 @@ class NexusDataSource:
                         raise
             if FAMILY and (len(self._sourceObjectList) > 0):
                 raise IOError, "Mixing segmented and non-segmented HDF5 files not supported yet"
-            else:
+            elif FAMILY:
                 break
             phynxInstance._sourceName = name
             self._sourceObjectList.append(phynxInstance)
