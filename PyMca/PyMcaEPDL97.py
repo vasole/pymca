@@ -136,7 +136,12 @@ def _initializeElement(element):
     """
     #read the specfile data
     sf = specfile.Specfile(EPDL97_FILE)
-    scan = sf[ElementList.index(element)]
+    scan_index = ElementList.index(element)
+    if scan_index > 99:
+        #just to avoid a crash
+        #I do not expect any fluorescent analysis of these elements ...
+        scan_index = 99
+    scan = sf[scan_index]
     labels = scan.alllabels()
     data = scan.data()
     scan = None
