@@ -102,8 +102,11 @@ def getSourceType(sourceName0):
             line = f.readline()
         f.close()
         if sourceName.lower().endswith('tiff') or\
-           sourceName.lower().endswith('tif'):
+            sourceName.lower().endswith('tif'):
             mccd = False
+        elif sourceName.lower().endswith('.cbf'):
+            #pilatus CBF
+            mccd = True
         elif len(line) < 2:
             mccd = False
         elif line[0:2] in ["II","MM"]:

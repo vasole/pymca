@@ -92,7 +92,17 @@ __version__=  '$Revision: 1.6 $'
 ################################################################################  
 import sys, string
 import numpy
-import MarCCD
+try:
+    import MarCCD
+    MARCCD_SUPPORT = True
+except ImportError:
+    #MarCCD
+    MARCCD_SUPPORT = False
+try:
+    import PilatusCBF
+    PILATUS_CBF_SUPPORT = True
+except ImportError:
+    PILATUS_CBF_SUPPORT = False
 import os.path , tempfile, shutil
 try:
     from FastEdf import extended_fread
@@ -156,22 +166,31 @@ class  EdfFile:
         self.fastedf=fastedf
         self.ADSC = False
         self.MARCCD = False
+        self.PILATUS_CBF = False
         if sys.byteorder=="big": self.SysByteOrder="HighByteFirst"
         else: self.SysByteOrder="LowByteFirst"
         
         try:
-            if os.path.isfile(self.FileName)==0:                
+            if os.path.isfile(self.FileName)==0:
+                #write access
                 self.File = open(self.FileName, "wb")
-                self.File.close()    
-
-            if (os.access(self.FileName,os.W_OK)):
-                self.File=open(self.FileName, "r+b")
-            else : 
-                self.File=open(self.FileName, "rb")
-
-            self.File.seek(0, 0)
-            if self.File.read(2) in ["II", "MM"]:
-                self.MARCCD = True
+                self.File.close()
+            else:
+                if (os.access(self.FileName,os.W_OK)):
+                    self.File=open(self.FileName, "r+b")
+                else : 
+                    self.File=open(self.FileName, "rb")
+                self.File.seek(0, 0)
+                twoChars = self.File.read(2) 
+                if twoChars in ["II", "MM"]:
+                    if not MARCCD_SUPPORT:
+                        raise IOError("MarCCD support not implemented")
+                    self.MARCCD = True
+                if os.path.basename(FileName).upper().endswith('.CBF'):
+                    if not PILATUS_CBF_SUPPORT:
+                        raise IOError("CBF support not implemented")
+                    if twoChars[0] != "{":
+                        self.PILATUS_CBF = True
         except:
             try:
                 self.File.close()
@@ -182,6 +201,10 @@ class  EdfFile:
         self.File.seek(0, 0)
         if self.MARCCD:
             self._wrapMarCCD()
+            self.File.close()
+            return
+        if self.PILATUS_CBF:
+            self._wrapPilatusCBF()
             self.File.close()
             return
         
@@ -329,7 +352,30 @@ class  EdfFile:
         elif self.__data.dtype == numpy.uint16:
             self.Images[Index].DataType= 'UnsignedShort'
         else:
-            self.Images[Index].DataType= 'UnsignedInt'
+            self.Images[Index].DataType= 'UnsignedInteger'
+        self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
+        self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
+        self.Images[Index].StaticHeader['Offset_1'] = 0
+        self.Images[Index].StaticHeader['Offset_2'] = 0
+        self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
+        self.Images[Index].Header.update(self.__info)
+
+    def _wrapPilatusCBF(self):
+        mccd = PilatusCBF.PilatusCBF(self.File)
+        self.NumImages = 1
+        self.__data = mccd.getData()
+        self.__info = mccd.getInfo()
+        self.Images.append(Image())
+        Index = 0
+        self.Images[Index].Dim1 = self.__data.shape[0]
+        self.Images[Index].Dim2 = self.__data.shape[1]
+        self.Images[Index].NumDim=2
+        if self.__data.dtype == numpy.uint8:
+            self.Images[Index].DataType= 'UnsignedByte'
+        elif self.__data.dtype == numpy.uint16:
+            self.Images[Index].DataType= 'UnsignedShort'
+        else:
+            self.Images[Index].DataType= 'UnsignedInteger'
         self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
         self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
         self.Images[Index].StaticHeader['Offset_1'] = 0
@@ -376,7 +422,7 @@ class  EdfFile:
         if Index < 0 or Index >= self.NumImages: raise ValueError, "EdfFile: Index out of limit"
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
-            if self.ADSC or self.MARCCD:
+            if self.ADSC or self.MARCCD or self.PILATUS_CBF:
                 return self.__data
             else:
                 self.File.seek(self.Images[Index].DataPosition,0)
@@ -410,7 +456,7 @@ class  EdfFile:
                     sizeToRead = self.Images[Index].Dim1 * datasize
                     Data = numpy.fromstring(self.File.read(sizeToRead),
                                 datatype)
-        elif self.ADSC or self.MARCCD:
+        elif self.ADSC or self.MARCCD or self.PILATUS_CBF:
             return self.__data[Pos[1]:(Pos[1]+Size[1]),
                                Pos[0]:(Pos[0]+Size[0])]
         elif fastedf and CAN_USE_FASTEDF:
