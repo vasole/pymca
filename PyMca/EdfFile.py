@@ -174,7 +174,9 @@ class  EdfFile:
             if os.path.isfile(self.FileName)==0:
                 #write access
                 self.File = open(self.FileName, "wb")
-                self.File.close()
+                #It's amazing that the following line has not given errors
+                #before because ot not being commented
+                #self.File.close()
             else:
                 if (os.access(self.FileName,os.W_OK)):
                     self.File=open(self.FileName, "r+b")
