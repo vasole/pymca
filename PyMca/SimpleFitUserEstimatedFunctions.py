@@ -89,7 +89,7 @@ FUNCTION=[fitfuns.gaussian,
           fitfuns.polynomial,
           fitfuns.polynomial]
           
-PARAMETERS=[['Height','Position','FWHM'],
+PARAMETERS=[['Height','Position','Fwhm'],
             ['Height','Position','Fwhm'],
             ['Height','Position','Fwhm','Eta'],
             ['Area','Position','Fwhm'],
@@ -102,10 +102,10 @@ PARAMETERS=[['Height','Position','FWHM'],
              'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H'],
             ['Constant'],
             ['Constant', 'Slope'],
-            ['a(0', ' a(1)', 'a(2)'],
-            ['a(0', ' a(1)', 'a(2)', 'a(3)'],
-            ['a(0', ' a(1)', 'a(2)', 'a(3)','a(4)'],
-            ['a(0', ' a(1)', 'a(2)', 'a(3)','a(4)', 'a(5)']]
+            ['a(0)', ' a(1)', 'a(2)'],
+            ['a(0)', ' a(1)', 'a(2)', 'a(3)'],
+            ['a(0)', ' a(1)', 'a(2)', 'a(3)','a(4)'],
+            ['a(0)', ' a(1)', 'a(2)', 'a(3)','a(4)', 'a(5)']]
             
 
 THEORY=['User Estimated Gaussians',

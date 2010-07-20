@@ -263,6 +263,7 @@ class SimpleFitGUI(qt.QWidget):
             self._configurationDialog.setConfiguration(oldConfig)
             return
         newConfig = self._configurationDialog.getConfiguration()
+        self.topWidget.setFunctions(newConfig['fit']['functions'])
         self.fitModule.setConfiguration(newConfig)
         newConfig = self.fitModule.getConfiguration()
         #self.topWidget.setFunctions(newConfig['fit']['functions'])

@@ -327,9 +327,28 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             self.setConfiguration(self.simpleFitInstance.getConfiguration())
 
     def setConfiguration(self, ddict):
+        currentConfig = self.simpleFitInstance.getConfiguration()
+        currentFiles  = []
+        for functionName in currentConfig['functions'].keys():
+            fname = currentConfig['functions'][functionName]['file']
+            if fname not in currentFiles:
+                currentFiles.append(fname)
+
+        if ddict.has_key('functions'):
+            #make sure new modules are imported
+            for functionName in ddict['functions'].keys():
+                fileName = ddict['functions'][functionName]['file']
+                if fileName not in currentFiles:
+                    try:
+                        if DEBUG:
+                            print "Adding file %s" % fileName
+                        self.simpleFitInstance.importFunctions(fileName)
+                        currentFiles.append(fileName)
+                    except:
+                        print "Cannot import file %s" % fileName
+            
         if ddict.has_key('fit'):
             self.fitControlWidget.setConfiguration(ddict['fit'])
-            currentConfig = self.simpleFitInstance.getConfiguration()
             fitFunction = ddict['fit']['fit_function']
             background = ddict['fit']['background_function']
             if fitFunction not in self._fitFunctionWidgets.keys():
@@ -367,6 +386,8 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         widget = self._fitFunctionWidgets[fname]
         if fname not in [None, "None", "NONE"]:
             ddict['functions'][fname]={}
+            ddict['functions'][fname]['file'] = \
+                oldConfiguration['functions'][fname]['file']                
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
             newConfig = widget.getConfiguration()
@@ -481,24 +502,21 @@ class SimpleFitConfigurationGUI(qt.QDialog):
 
     def loadConfiguration(self, filename):
         cfg= ConfigDict.ConfigDict()
-        if DEBUG:
+        try:
             cfg.read(filename)
             self.initDir = os.path.dirname(filename)
             self.setConfiguration(cfg)
-        else:
-            try:
-                cfg.read(filename)
-                self.initDir = os.path.dirname(filename)
-                self.setConfiguration(cfg)
-            except:
-                qt.QMessageBox.critical(self, "Load Parameters",
-                    "ERROR while loading parameters from\n%s"%filename, 
-                    qt.QMessageBox.Ok,
-                    qt.QMessageBox.NoButton,
-                    qt.QMessageBox.NoButton)
+        except:
+            if DEBUG:
+                raise
+            qt.QMessageBox.critical(self, "Load Parameters",
+                "ERROR while loading parameters from\n%s"%filename, 
+                qt.QMessageBox.Ok,
+                qt.QMessageBox.NoButton,
+                qt.QMessageBox.NoButton)
         
     def saveConfiguration(self, filename):
-        cfg= ConfigDict.ConfigDict(self.getConfiguration())
+        cfg = ConfigDict.ConfigDict(self.getConfiguration())
         if DEBUG:
             cfg.write(filename)
             self.initDir = os.path.dirname(filename)

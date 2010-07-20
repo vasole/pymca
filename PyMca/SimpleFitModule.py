@@ -163,6 +163,8 @@ class SimpleFit:
             ddict['functions'][key]['parameters'] =  parameters
             widget = self._fitConfiguration['functions'][key]['widget']
             ddict['functions'][key]['widget'] = widget
+            fname = self._fitConfiguration['functions'][key]['file']
+            ddict['functions'][key]['file'] = fname
         return ddict
 
     def setData(self, x, y, sigma=None, xmin=None, xmax=None, **kw):
@@ -230,6 +232,7 @@ class SimpleFit:
             ddict['derivative'] = None
             ddict['configure']  = None
             ddict['widget']     = None
+            ddict['file']       = newfun.__file__
             ddict['configuration'] = {} 
             if estimate is not None:
                 ddict['estimate'] = estimate[i]
