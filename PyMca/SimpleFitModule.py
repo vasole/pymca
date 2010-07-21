@@ -34,7 +34,7 @@ import copy
 
 DEBUG = 0
 
-class SimpleFit:
+class SimpleFit(object):
     def __init__(self):
         #no data available by default
         self._x0 = None
@@ -86,7 +86,7 @@ class SimpleFit:
         else:
             return self.setConfiguration(ddict)
 
-    def setConfiguration(self, ddict):
+    def setConfiguration(self, ddict, try_import=False):
         oldConfig = self.getConfiguration()
         if ddict is None:
             return oldConfig
@@ -104,8 +104,13 @@ class SimpleFit:
             functionNames = ddict['functions'].keys()
             for fName in functionNames:
                 if fName not in self._fitConfiguration['functions'].keys():
-                    print "WARNING:Function %s not among defined functions" % fName
-                    continue
+                    if try_import:
+                        ffile = ddict['functions'][fName].get('file', None)
+                        if ffile is not None:
+                            self.importFunctions(ffile)
+                    else:        
+                        print "WARNING:Function %s not among defined functions" % fName
+                        continue
                 self._fitConfiguration['functions'][fName]['configuration']=\
                         ddict['functions'][fName]['configuration']
                 configureMethod = self._fitConfiguration['functions'][fName]\
@@ -430,6 +435,8 @@ class SimpleFit:
                                     self.estimateFunction()
                 fitFunctionDict = self._fitConfiguration['functions']\
                                       [fitFunction]
+        if DEBUG:
+            print "ESTIMATION = ",functionParameters, functionConstraints
         self._setStatus("Fit function estimation finished")
 
         #estimations are made
