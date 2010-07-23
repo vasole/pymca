@@ -190,7 +190,8 @@ class SimpleFit(object):
         self._fitConfiguration['fit']['xmax'] = xmax * 1.0
         if sigma is not None:
             self._sigma = self._sigma0[idx]
-        print "TODO: Make sure we have something to fit"
+        if DEBUG:
+            print "TODO: Make sure we have something to fit"
         #get strip/SNIP background
         self._z = self._getStripBackground()
 
@@ -613,8 +614,8 @@ class SimpleFit(object):
             weightflag = 0
         else:
             weightflag = 1
-
-        print "STILL TO HANDLE DERIVATIVES"
+        if DEBUG:
+            print "STILL TO HANDLE DERIVATIVES"
         model_deriv = self.modelFunctionDerivative
         if self._fitConfiguration['fit']['strip_flag']:
             y = self._y - self._z

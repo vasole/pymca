@@ -68,6 +68,7 @@ import ExternalImagesWindow
 import StackROIWindow
 import copy
 import CloseEventNotifyingWidget
+import StackSimpleFitWindow
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -240,6 +241,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.nnmaWindow = None
         self.nnmaWindowInMenu = False
 
+        self.simpleFitWindow = None
+
         self._build(vertical)
         self._buildBottom()
         self._buildConnections()
@@ -359,6 +362,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                                     standalonesave=True)
         
         self.externalImagesWindow.hide()
+
+        #stack simple fitting
+        self.__selectFromStackMenu.addAction(qt.QString("Stack Simple fitting"),
+                                               self.__showSimpleFitWindow)
         
         if PCA:
             self.__selectFromStackMenu.addAction(qt.QString("Calculate Principal Components Maps"),
@@ -911,6 +918,27 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     msg.exec_()
                 if isinstance(self.stack.data, numpy.ndarray):
                     self.stack.data.shape = shape
+
+    def __showSimpleFitWindow(self):
+        if self.simpleFitWindow is None:
+            self.simpleFitWindow = StackSimpleFitWindow.StackSimpleFitWindow()
+        selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")
+        if selection is None:
+            return
+        y = selection['dataobject'].y[0]
+        x = selection['dataobject'].x[0]
+        selection['dataobject'].info['legend'] = self.__getLegend()
+        x = self.mcaWidget.getEnergyFromChannels(x,
+                                    selection['dataobject'].info)
+        xmin, xmax = self.mcaWidget.graph.getX1AxisLimits()
+        self.simpleFitWindow.setSpectrum(x,
+                                         y,
+                                         xmin = xmin,
+                                         xmax=xmax)
+        self.simpleFitWindow.setData(x,
+                                      self.stack.data,
+                                      data_index=self.mcaIndex)
+        self.simpleFitWindow.show()
 
     def showPCAWindow(self):
         self.pcaWindow.show()

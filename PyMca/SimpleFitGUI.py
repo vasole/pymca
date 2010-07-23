@@ -137,7 +137,7 @@ class StatusWidget(qt.QWidget):
         self.mainLayout.addWidget(self.chi2Line)
 
 class SimpleFitGUI(qt.QWidget):
-    def __init__(self, parent=None, fit=None, graph=None):
+    def __init__(self, parent=None, fit=None, graph=None, actions=True):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SimpleFitGUI")
         if fit is None:
@@ -170,27 +170,29 @@ class SimpleFitGUI(qt.QWidget):
 
         self.statusWidget  = StatusWidget(self)
 
-        #build the actions widget
-        self.fitActions = qt.QWidget(self)
-        self.fitActions.mainLayout = qt.QHBoxLayout(self.fitActions)
-        self.fitActions.mainLayout.setMargin(2)
-        self.fitActions.mainLayout.setSpacing(2)
-        self.fitActions.estimateButton = qt.QPushButton(self.fitActions)
-        self.fitActions.estimateButton.setText("Estimate")
-        self.fitActions.startFitButton = qt.QPushButton(self.fitActions)
-        self.fitActions.startFitButton.setText("Start Fit")
-        self.fitActions.dismissButton = qt.QPushButton(self.fitActions)
-        self.fitActions.dismissButton.setText("Dismiss")
-        self.fitActions.mainLayout.addWidget(self.fitActions.estimateButton)
-        self.fitActions.mainLayout.addWidget(self.fitActions.startFitButton)
-        self.fitActions.mainLayout.addWidget(self.fitActions.dismissButton)
         self.mainLayout.addWidget(self.topWidget)
         if self.__useTab:
             self.mainLayout.addWidget(self.mainTab)
         else:
             self.mainLayout.addWidget(self.parametersTable)
         self.mainLayout.addWidget(self.statusWidget)
-        self.mainLayout.addWidget(self.fitActions)
+
+        if actions:
+            #build the actions widget
+            self.fitActions = qt.QWidget(self)
+            self.fitActions.mainLayout = qt.QHBoxLayout(self.fitActions)
+            self.fitActions.mainLayout.setMargin(2)
+            self.fitActions.mainLayout.setSpacing(2)
+            self.fitActions.estimateButton = qt.QPushButton(self.fitActions)
+            self.fitActions.estimateButton.setText("Estimate")
+            self.fitActions.startFitButton = qt.QPushButton(self.fitActions)
+            self.fitActions.startFitButton.setText("Start Fit")
+            self.fitActions.dismissButton = qt.QPushButton(self.fitActions)
+            self.fitActions.dismissButton.setText("Dismiss")
+            self.fitActions.mainLayout.addWidget(self.fitActions.estimateButton)
+            self.fitActions.mainLayout.addWidget(self.fitActions.startFitButton)
+            self.fitActions.mainLayout.addWidget(self.fitActions.dismissButton)
+            self.mainLayout.addWidget(self.fitActions)
 
         #connect top widget
         self.connect(self.topWidget.addFunctionButton,
@@ -208,13 +210,14 @@ class SimpleFitGUI(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self.configureButtonSlot)
 
-        #connect actions
-        self.connect(self.fitActions.estimateButton,
-                    qt.SIGNAL("clicked()"),self.estimate)
-        self.connect(self.fitActions.startFitButton,
-                                qt.SIGNAL("clicked()"),self.startFit)
-        self.connect(self.fitActions.dismissButton,
-                                qt.SIGNAL("clicked()"),self.dismiss)        
+        if actions:
+            #connect actions
+            self.connect(self.fitActions.estimateButton,
+                        qt.SIGNAL("clicked()"),self.estimate)
+            self.connect(self.fitActions.startFitButton,
+                                    qt.SIGNAL("clicked()"),self.startFit)
+            self.connect(self.fitActions.dismissButton,
+                                    qt.SIGNAL("clicked()"),self.dismiss)        
 
     def importFunctions(self, functionsfile=None):
         if functionsfile is None:
