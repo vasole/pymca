@@ -283,7 +283,8 @@ class SimpleFitGUI(qt.QWidget):
             idx = newConfig['fit']['functions'].index(fname) + 1
         idx = self.topWidget.backgroundCombo.findText(fname)
         self.topWidget.backgroundCombo.setCurrentIndex(idx)
-        print "TABLE TO BE CLEANED"
+        if DEBUG:
+            print "TABLE TO BE CLEANED"
         #self.estimate()
         
     def setFitFunction(self, fname):

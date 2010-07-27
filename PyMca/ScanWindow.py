@@ -44,6 +44,8 @@ import ScanWindowInfoWidget
 import Plot1DBase
 
 QTVERSION = qt.qVersion()
+if QTVERSION > '4.0.0':
+    import SimpleFitGUI
 
 
 DEBUG = 0
@@ -535,12 +537,18 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                          qt.PYSIGNAL('ScanFitSignal') ,
                          self._scanFitSignalReceived)
         else:
+            self.customFit = SimpleFitGUI.SimpleFitGUI()
+            import SimpleFitUserEstimatedFunctions
+            self.customFit.fitModule.importFunctions(SimpleFitUserEstimatedFunctions)
             self.connect(self.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._graphSignalReceived)
             self.connect(self.scanFit,
                          qt.SIGNAL('ScanFitSignal') ,
                          self._scanFitSignalReceived)
+            self.connect(self.customFit,
+                         qt.SIGNAL('SimpleFitSignal') ,
+                         self._customFitSignalReceived)
         self.dataObjectsDict = {}
         self.dataObjectsList = []
 
@@ -682,9 +690,19 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
 
         #fit icon
-        self.fitButton = self._addToolButton(self.fitIcon,
+        if QTVERSION < '4.0.0':
+            self.fitButton = self._addToolButton(self.fitIcon,
                                  self._fitIconSignal,
                                  'Simple Fit of Active Curve')
+        else:
+            self.fitButton = self._addToolButton(self.fitIcon,
+                                 self._fitIconMenu,
+                                 'Simple Fit of Active Curve')
+            self.fitButtonMenu = qt.QMenu()
+            self.fitButtonMenu.addAction(qt.QString("Simple Fit"),
+                                   self._fitIconSignal)
+            self.fitButtonMenu.addAction(qt.QString("Customized Fit") ,
+                                   self._customFitSignal)
 
 
         self.newplotIcons = True
@@ -1199,6 +1217,27 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             self.graph.replot()
             return
 
+    def _customFitSignalReceived(self, ddict):
+        if ddict['event'] == "FitFinished":
+            newDataObject = self.__customFitDataObject
+
+            xplot = ddict['x']
+            yplot = ddict['yfit']
+            newDataObject.x = [xplot]
+            newDataObject.y = [yplot]
+            newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]            
+
+            #here I should check the log or linear status
+            self.graph.newcurve(newDataObject.info['legend'],
+                                x=xplot,
+                                y=yplot,
+                                logfilter=self._logY)
+            if newDataObject.info['legend'] not in self.dataObjectsList:
+                self.dataObjectsList.append(newDataObject.info['legend'])
+            self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+        self.graph.replot()
+        
+
     def _scanFitSignalReceived(self, ddict):
         if DEBUG:print "_graphSignalReceived", ddict
         if ddict['event'] == "EstimateFinished":
@@ -1341,9 +1380,16 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         self.graph.setActiveCurve(self.graph.getActiveCurve(justlegend=1))
         self.graph.replot()
 
+    def _fitIconMenu(self):
+        self.fitButtonMenu.exec_(self.cursor().pos())        
+
     def _fitIconSignal(self):
         if DEBUG:print "_fitIconSignal"
         self.__QSimpleOperation("fit")
+
+    def _customFitSignal(self):
+        if DEBUG:print "_customFitSignal"
+        self.__QSimpleOperation("custom_fit")
 
     def _saveIconSignal(self):
         if DEBUG:print "_saveIconSignal"
@@ -1444,6 +1490,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         return tmpstr
         
     def __QSimpleOperation(self, operation):
+        return self.__simpleOperation(operation)
         try:
             self.__simpleOperation(operation)
         except:
@@ -1707,15 +1754,36 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 self.scanFit.raiseW()
             else:
                 self.scanFit.raise_()
+        elif operation == "custom_fit":
+            #remove a existing fit if present
+            xmin,xmax=self.graph.getX1AxisLimits()
+            outputlegend = legend + "Custom Fit"
+            for key in self.graph.curves.keys():
+                if key == outputlegend:
+                    self.graph.delcurve(outputlegend)
+                    break
+            if outputlegend in self.dataObjectsDict.keys():
+                del self.dataObjectsDict[key]
+            if outputlegend in self.dataObjectsList:
+                i = self.dataObjectsList.index(key)
+                del self.dataObjectsList[i]
+            self.customFit.setData(x = x,
+                                   y = y,
+                                   xmin = xmin,
+                                   xmax = xmax,
+                                   legend = legend)
+            if self.customFit.isHidden():
+                self.customFit.show()
+            self.customFit.raise_()
         else:
             raise "ValueError","Unknown operation %s" % operation
-        if operation != "fit":
+        if operation not in ["fit", "custom_fit"]:
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
             newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]
 
         #and add it to the plot
-        if True and (operation != 'fit'):
+        if True and (operation not in ['fit', 'custom_fit']):
             sel['dataobject'] = newDataObject
             sel['scanselection'] = True
             sel['selection'] = copy.deepcopy(dataObject.info['selection'])
@@ -1729,6 +1797,9 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             newDataObject.info['legend'] = outputlegend
             if operation == 'fit':
                 self.__fitDataObject = newDataObject
+                return
+            if operation == 'custom_fit':
+                self.__customFitDataObject = newDataObject
                 return
 
             if newDataObject.info['legend'] not in self.dataObjectsList:
