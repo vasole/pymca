@@ -538,8 +538,6 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                          self._scanFitSignalReceived)
         else:
             self.customFit = SimpleFitGUI.SimpleFitGUI()
-            import SimpleFitUserEstimatedFunctions
-            self.customFit.fitModule.importFunctions(SimpleFitUserEstimatedFunctions)
             self.connect(self.graph,
                          qt.SIGNAL("QtBlissGraphSignal"),
                          self._graphSignalReceived)

@@ -28,6 +28,7 @@ import sys
 import os
 import SimpleFitModule
 import SimpleFitConfigurationGUI
+import SimpleFitUserEstimatedFunctions
 import Parameters
 qt = Parameters.qt
 if qt.qVersion() < '4.0.0':
@@ -142,6 +143,7 @@ class SimpleFitGUI(qt.QWidget):
         self.setWindowTitle("SimpleFitGUI")
         if fit is None:
             self.fitModule = SimpleFitModule.SimpleFit()
+            self.fitModule.importFunctions(SimpleFitUserEstimatedFunctions)
         else:
             self.fitModule = fit
         if graph is None:
