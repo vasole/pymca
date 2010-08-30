@@ -184,7 +184,8 @@ class HDF5Stack1D(DataObject.DataObject):
         try:
             self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
             DONE = False
-        except MemoryError:
+        except (MemoryError, ValueError):
+            #some versions report ValueError instead of MemoryError
             if (nFiles == 1) and (len(shape) == 3):
                 print "Attempting dynamic loading"
                 self.data = yDataset
