@@ -227,7 +227,18 @@ class SaveImageSetup(qt.QWidget):
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
-            outstr=str(outfile.selectedFiles()[0])
+            try:
+                outstr=str(outfile.selectedFiles()[0])
+            except UnicodeError:
+                print "WARNING: Unsupported characters in file name, trying workaround"
+                try:
+                    outstr = str(outfile.selectedFiles()[0].toLocal8Bit())
+                except:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Error saving image: %s" % sys.exc_info()[1])
+                    msg.setWindowTitle('Matplotlib Save Image')
+                    msg.exec_()
             try:            
                 outputDir  = os.path.dirname(outstr)
                 self.lastOutputDir = outputDir
