@@ -990,11 +990,16 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                                         logfilter=self._logY,
                                         symbol=symbol)
                     if self.scanWindowInfoWidget is not None:
-                        activeLegend = self.getActiveCurveLegend()
+                        activeLegend = self.graph.getActiveCurve(justlegend=1)
                         if activeLegend is not None:
                             if activeLegend == newLegend:
                                 self.scanWindowInfoWidget.updateFromDataObject\
                                                             (dataObject)
+                        else:
+                            dummyDataObject = DataObject.DataObject()
+                            dummyDataObject.y=[Numeric.array([])]
+                            dummyDataObject.x=[Numeric.array([])]
+                            self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)                            
             else:
                 #we have to loop for all y values
                 ycounter = -1

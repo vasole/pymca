@@ -217,7 +217,7 @@ class EDFStack(DataObject.DataObject):
                                 self.data[:,:, self.incrProgressBar] = pieceOfStack[
                                                             ::samplingStep,::samplingStep]
                                 self.incrProgressBar += 1
-                            self.onProgress(self.incrProgressBar)
+                                self.onProgress(self.incrProgressBar)
                     self.onEnd()
         else:
             if len(singleImageShape) == 1:
@@ -346,7 +346,7 @@ class EDFStack(DataObject.DataObject):
                                                        arrRet.shape[0],
                                                        arrRet.shape[1]),
                                                        numpy.float32)
-                                except MemoryError:
+                                except (MemoryError, ValueError):
                                     text = "Memory Error: Attempt subsampling or convert to HDF5"
                                     if HDF5 and ('PyMcaQt' in sys.modules):
                                         import PyMcaQt as qt
@@ -383,7 +383,7 @@ class EDFStack(DataObject.DataObject):
                     else:
                         for tempEdfFileName in filelist:
                             tempEdf=EdfFile.EdfFile(tempEdfFileName)
-                            pieceOfStack=tempEdf.GetData(0)    
+                            pieceOfStack=tempEdf.GetData(0)
                             self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
