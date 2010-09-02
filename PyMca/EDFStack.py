@@ -260,6 +260,7 @@ class EDFStack(DataObject.DataObject):
                                               i,:] = \
                                                               pieceOfStack[:,:]
                                 self.incrProgressBar += 1
+                                self.onProgress(self.incrProgressBar)
                         elif arrRet.shape[1] == 1:
                             self.data = numpy.zeros((self.nbFiles,
                                                arrRet.shape[1] * nImages,
@@ -274,6 +275,7 @@ class EDFStack(DataObject.DataObject):
                                               i,:] = \
                                                               pieceOfStack[:,:]
                                 self.incrProgressBar += 1
+                                self.onProgress(self.incrProgressBar)
                     else:
                         self.data = numpy.zeros((nImages * self.nbFiles,
                                                arrRet.shape[0],
@@ -288,6 +290,7 @@ class EDFStack(DataObject.DataObject):
                                           :,:] = \
                                                           pieceOfStack[:,:]
                             self.incrProgressBar += 1
+                            self.onProgress(self.incrProgressBar)
                     self.onEnd()
                 else:
                     #this is the common case
