@@ -577,8 +577,12 @@ class PyMca(PyMcaMdi.PyMca):
             legend = ddict['legend'] 
             if legend in self.imageWindowDict.keys():
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
-                self.mainTabWidget.removeTab(index)
-                self.imageWindowDict[legend]._removeSelection(ddict)
+                if index >0:
+                    self.imageWindowDict[legend].close()
+                    self.imageWindowDict[legend].setParent(None)
+                    self.mainTabWidget.removeTab(index)
+                    self.imageWindowDict[legend]._removeSelection(ddict)
+                    del self.imageWindowDict[legend]
         elif self._is3DSelection(ddict):
             self.glWindow._removeSelection(ddict)             
         else:
@@ -610,11 +614,15 @@ class PyMca(PyMcaMdi.PyMca):
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
                 if key == legend:continue
                 if index >= 0:
+                    self.imageWindowDict[key].close()
+                    self.imageWindowDict[key].setParent(None)
                     self.mainTabWidget.removeTab(index)
                     self.imageWindowDict[key]._removeSelection(ddict)
-            self.imageWindowDict[key].setPlotEnabled(False)
+                    del self.imageWindowDict[key]
+            if legend in self.imageWindowDict.keys():
+                self.imageWindowDict[legend].setPlotEnabled(False)
             self.dispatcherAddSelectionSlot(ddict)
-            index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
+            index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
             if index != self.mainTabWidget.currentIndex():
                 if QTVERSION < '4.0.0':
                     self.mainTabWidget.setCurrentPage(index)
