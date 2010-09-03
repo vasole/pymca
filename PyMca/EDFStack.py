@@ -111,6 +111,7 @@ class EDFStack(DataObject.DataObject):
         self.onBegin(self.nbFiles)
         singleImageShape = arrRet.shape
         if (fileindex == 2) or (self.__imageStack):
+            self.__imageStack = True
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
@@ -182,14 +183,16 @@ class EDFStack(DataObject.DataObject):
                                 if not hdf5file.endswith(".h5"):
                                     hdf5file += ".h5"
                                 hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
-                                              (arrRet.shape[0],
-                                               arrRet.shape[1],
-                                               self.nbFiles))
+                                              (self.nbFiles,
+                                               arrRet.shape[0],
+                                               arrRet.shape[1]))
                                 self.incrProgressBar=0
-                                for tempEdfFileName in filelist:
+                                for tempEdfFileName in filelist[0:10]:
+                                    print tempEdfFileName
                                     tempEdf=EdfFile.EdfFile(tempEdfFileName)
                                     pieceOfStack=tempEdf.GetData(0)
-                                    self.data[:,:, self.incrProgressBar] = pieceOfStack[:,:]
+                                    self.data[self.incrProgressBar,:,:] = pieceOfStack[:,:]
+                                    hdf.flush()
                                     self.incrProgressBar += 1
                                     self.onProgress(self.incrProgressBar)
                                 hdf5done = True
@@ -220,6 +223,7 @@ class EDFStack(DataObject.DataObject):
                                 self.onProgress(self.incrProgressBar)
                     self.onEnd()
         else:
+            self.__imageStack = False
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
@@ -391,7 +395,6 @@ class EDFStack(DataObject.DataObject):
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
-
         self.__nFiles         = self.incrProgressBar
         self.__nImagesPerFile = nImages
         shape = self.data.shape
@@ -401,8 +404,12 @@ class EDFStack(DataObject.DataObject):
         if not isinstance(self.data, numpy.ndarray):
             hdf.flush()
             self.info["SourceType"] = "HDF5Stack1D"
-            self.info["McaIndex"] = 2
-            self.info["FileIndex"] = 0
+            if self.__imageStack:
+                self.info["McaIndex"] = 0
+                self.info["FileIndex"] = 1
+            else:
+                self.info["McaIndex"] = 2
+                self.info["FileIndex"] = 0
             self.info["SourceName"] = [hdf5file]
             self.info["NumberOfFiles"] = 1
             self.info["Size"]       = 1

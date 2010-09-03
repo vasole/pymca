@@ -164,7 +164,9 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 raise IndexError, "Only one image in stack"
             return dataObject.data
         if len(shape) == 3:
-            return dataObject.data[index]
+            data = dataObject.data[index:index+1,:,:]
+            data.shape = data.shape[1:]
+            return data
 
         #I have to deduce the appropriate indices from the given index
         #always assuming C order

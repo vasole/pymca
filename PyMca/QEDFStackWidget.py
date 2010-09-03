@@ -1499,7 +1499,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 mcaData0 = numpy.zeros((shape[0],), numpy.float)
                 step = 1
                 for i in range(shape[0]):
-                    tmpData = self.stack.data[i,:,:]
+                    tmpData = self.stack.data[i:i+step,:,:]
+                    tmpData.shape = tmpData.shape[1:]
                     numpy.add(self.__stackImageData,
                               tmpData,
                               self.__stackImageData)
@@ -1762,9 +1763,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         rightImage = self.__ROIImageData[:,:] * 1
                         maxImage   = self.__ROIImageData[:,:] * 1
                         minImage   = self.__ROIImageData[:,:] * 1
+                        if DEBUG:
+                            t0 = time.time()
                         istep = 1
                         for i in range(i1, i2):
-                            tmpData = self.stack.data[i,:,:]
+                            tmpData = self.stack.data[i:i+istep,:,:]
+                            tmpData.shape = self.__ROIImageData.shape
                             numpy.add(self.__ROIImageData,
                                       tmpData,
                                       self.__ROIImageData)
@@ -1782,6 +1786,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                 middleImage = tmpData                            
                             if i == (i2-1):
                                 rightImage = tmpData
+                        if DEBUG:
+                            print "Dynamic ROI elapsed = ", time.time() - t0
                         if i2 > i1:
                             background = (leftImage + rightImage) * 0.5 * (i2-i1)
                 else:
@@ -2118,27 +2124,66 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         n_nonselected = self.__stackImageData.shape[0] *\
                         self.__stackImageData.shape[1] - npixels
         if n_nonselected < npixels:
+            positiveMask = False
             cleanMask = numpy.nonzero(self.__selectionMask == 0)
         else:
+            positiveMask = True
             cleanMask = numpy.nonzero(self.__selectionMask > 0)
+        if DEBUG:
+            print "self.fileIndex, self.mcaIndex", self.fileIndex, self.mcaIndex
+        if DEBUG:
+            t0 = time.time()            
         if len(cleanMask[0]) and len(cleanMask[1]):
             cleanMask = numpy.array(cleanMask).transpose()
             if self.fileIndex == 2:
                 if self.mcaIndex == 0:
-                    for r, c in cleanMask:
-                        mcaData += self.stack.data[:,r,c]
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        for r, c in cleanMask:
+                            mcaData += self.stack.data[:,r,c]
+                    else:
+                        if DEBUG:
+                            print "Dynamic loading case 0"
+                        #no other choice than to read all images
+                        #for the time being, one by one
+                        for i in xrange(self.stack.data.shape[0]):
+                            tmpData = self.stack.data[i:i+1,:,:]
+                            tmpData.shape = tmpData.shape[1:]
+                            if positiveMask:
+                                mcaData[i] = tmpData[self.__selectionMask.T > 0].sum()
+                            else:
+                                mcaData[i] = tmpData[self.__selectionMask.T == 0].sum()
+                elif self.mcaIndex == 1:
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        for r, c in cleanMask:
+                            mcaData += self.stack.data[r,:,c]
+                    else:
+                        raise IndexError, "Dynamic loading case 1"
                 else:
-                    for r, c in cleanMask:
-                        mcaData += self.stack.data[r,:,c]
-            else:
-                if self.mcaIndex == 1:
-                    for r, c in cleanMask:
-                        mcaData += self.stack.data[r,:,c]
-                else:
+                    raise IndexError, "Wrong combination of indices. Case 0"
+            elif self.fileIndex == 1:
+                if self.mcaIndex == 0:
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        for r, c in cleanMask:
+                            mcaData += self.stack.data[:,r,c]
+                    else:
+                        if DEBUG:
+                            print "Dynamic loading case 2"
+                        #no other choice than to read all images
+                        #for the time being, one by one
+                        for i in xrange(self.stack.data.shape[0]):
+                            tmpData = self.stack.data[i:i+1,:,:]
+                            tmpData.shape = tmpData.shape[1:]
+                            if positiveMask:
+                                mcaData[i] = tmpData[self.__selectionMask.T > 0].sum()
+                            else:
+                                mcaData[i] = tmpData[self.__selectionMask.T == 0].sum()                                
+                elif self.mcaIndex == 2:
                     if isinstance(self.stack.data, numpy.ndarray):
                         for r, c in cleanMask:
                             mcaData += self.stack.data[r,c,:]
                     else:
+                        if DEBUG:
+                            print "Dynamic loading case 3"
                         #try to minimize access to the file
                         row_dict = {}
                         for r, c in cleanMask:
@@ -2148,8 +2193,43 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             row_dict[key].append(c)
                         for key in row_dict.keys():
                             r = int(key)
-                            mcaData += numpy.sum(self.stack.data[r, row_dict[key],:],0)
-                            
+                            tmpMcaData = self.stack.data[r:r+1, row_dict[key],:]
+                            tmpMcaData.shape = 1, -1
+                            mcaData += numpy.sum(tmpMcaData,0)
+                else:
+                    raise IndexError, "Wrong combination of indices. Case 1"
+            elif self.fileIndex == 0:
+                if self.mcaIndex == 1:
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        for r, c in cleanMask:
+                            mcaData += self.stack.data[r,:,c]
+                    else:
+                        raise IndexError, "Dynamic loading case 4"
+                elif self.mcaIndex == 2:
+                    if isinstance(self.stack.data, numpy.ndarray):
+                        for r, c in cleanMask:
+                            mcaData += self.stack.data[r,c,:]
+                    else:
+                        if DEBUG:
+                            print "Dynamic loading case 5"
+                        #try to minimize access to the file
+                        row_dict = {}
+                        for r, c in cleanMask:
+                            if r not in row_dict.keys():
+                                key = '%d' % r
+                                row_dict[key] = []
+                            row_dict[key].append(c)
+                        for key in row_dict.keys():
+                            r = int(key)
+                            tmpMcaData = self.stack.data[r:r+1, row_dict[key],:]
+                            tmpMcaData.shape = 1, -1
+                            mcaData += numpy.sum(tmpMcaData,0)
+                else:
+                    raise IndexError, "Wrong combination of indices. Case 2"
+            else:
+                raise IndexError, "File index undefined"
+        if DEBUG:
+            print "Mca sum elapsed = ", time.time() - t0
         if n_nonselected < npixels:
             mcaData = self.__mcaData0.y[0] - mcaData
 
