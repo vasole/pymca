@@ -2124,11 +2124,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         n_nonselected = self.__stackImageData.shape[0] *\
                         self.__stackImageData.shape[1] - npixels
         if n_nonselected < npixels:
-            positiveMask = False
-            cleanMask = numpy.nonzero(self.__selectionMask == 0)
+            arrayMask = (self.__selectionMask == 0)
         else:
-            positiveMask = True
-            cleanMask = numpy.nonzero(self.__selectionMask > 0)
+            arrayMask = (self.__selectionMask > 0)
+        cleanMask = numpy.nonzero(arrayMask)
         if DEBUG:
             print "self.fileIndex, self.mcaIndex", self.fileIndex, self.mcaIndex
         if DEBUG:
@@ -2148,10 +2147,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         for i in xrange(self.stack.data.shape[0]):
                             tmpData = self.stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
-                            if positiveMask:
-                                mcaData[i] = tmpData[self.__selectionMask.T > 0].sum()
-                            else:
-                                mcaData[i] = tmpData[self.__selectionMask.T == 0].sum()
+                            mcaData[i] = (tmpData*arrayMask).sum()
                 elif self.mcaIndex == 1:
                     if isinstance(self.stack.data, numpy.ndarray):
                         for r, c in cleanMask:
@@ -2173,10 +2169,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         for i in xrange(self.stack.data.shape[0]):
                             tmpData = self.stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
-                            if positiveMask:
-                                mcaData[i] = tmpData[self.__selectionMask.T > 0].sum()
-                            else:
-                                mcaData[i] = tmpData[self.__selectionMask.T == 0].sum()                                
+                            #multiplication is faster than selection
+                            #tmpData[arrayMask].sum() in my machine
+                            mcaData[i] = (tmpData*arrayMask).sum()
                 elif self.mcaIndex == 2:
                     if isinstance(self.stack.data, numpy.ndarray):
                         for r, c in cleanMask:

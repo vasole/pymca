@@ -223,7 +223,7 @@ class HDF5Stack1D(DataObject.DataObject):
                     try:
                         yDataset = hdf[path].value
                         IN_MEMORY = True
-                    except MemoryError:
+                    except (MemoryError, ValueError):
                         yDataset = hdf[path]
                         IN_MEMORY = False
                     nMcaInYDataset = 1
