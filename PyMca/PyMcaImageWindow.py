@@ -284,8 +284,8 @@ if __name__ == "__main__":
     else:PYMCA = False
 
     if PYMCA:
-        import PyMca
-        w = PyMca.PyMca()
+        from PyMca import PyMcaMain
+        w = PyMcaMain.PyMca()
         w.show()
     else:
         w = PyMcaImageWindow()
