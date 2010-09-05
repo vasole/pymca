@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -79,6 +79,15 @@ class SpecFileDataInfo(qt.QTabWidget):
         ("McaPresetTime", "Mca Preset Time"),
         ("McaLiveTime", "Mca Live Time"),
         ("McaRealTime", "Mca Real Time"),
+        #EDF Related
+        ("HeaderID", "HeaderID"),
+        ("Image", "Image"),
+        ("DataType", "Data Type"),
+        ("ByteOrder", "Byte Order"),
+        ("Dim_1", "1st Dimension"),
+        ("Dim_2", "2nd Dimension"),
+        ("Dim_3", "3rd Dimension"),
+        ("Size", "File Data Size"),
     ]
 
     def __init__(self, info, parent=None, name="DataSpecFileInfo", fl=0):
@@ -94,6 +103,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         self.__createMotorTable()
         self.__createCounterTable()
         self.__createHeaderText()
+        self.__createEDFHeaderText()
         self.__createFileHeaderText()
 
     if QTVERSION > '4.0.0':
@@ -214,6 +224,9 @@ class SpecFileDataInfo(qt.QTabWidget):
                 self.addTab(table, "Counters")
 
     def __createHeaderText(self):
+        text = self.info.get("SourceType","")
+        if text.upper() in ['EDFFILE', 'EDFFILESTACK']:
+            return
         text= self.info.get("Header", None)
         if text is not None:
             if qt.qVersion() < '3.0.0':
@@ -230,6 +243,28 @@ class SpecFileDataInfo(qt.QTabWidget):
             else:
                 wid.insertHtml(string.join(text, "<BR>"))
                 self.addTab(wid, "Scan Header")
+
+    def __createEDFHeaderText(self):
+        text = self.info.get("SourceType","")
+        if text.upper() not in ['EDFFILE', 'EDFFILESTACK']:
+            return
+        keys = self.info.keys()
+        nameKeys = []
+        vals = []
+        for key in keys:
+            if key in ['SourceName', 'SourceType']:
+                continue
+            nameKeys.append(key)
+            vals.append(self.info.get(key," --- "))
+        num = len(nameKeys)
+        if num:
+            table= self.__createTable(num, "Keyword", "Value")
+            for idx in range(num):
+                table.setText(idx, 0, str(nameKeys[idx]))
+                table.setText(idx, 1, str(vals[idx]))
+            self.__adjustTable(table)
+            self.addTab(table, "Header")
+
 
     def __createFileHeaderText(self):
         text= self.info.get("FileHeader", None)
