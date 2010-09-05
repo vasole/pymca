@@ -472,6 +472,7 @@ class QEdfFileWidget(qt.QWidget):
            (self.currentArray is None):
             qt.QMessageBox.information(self, "No data",\
                                        "No information to be shown")
+            return
 
         #this is not very efficient because it could be cached
         #while this implies a new reading
@@ -650,6 +651,53 @@ class QEdfFileWidget(qt.QWidget):
             self.printPreview.raise_()
 
     def _buildActions(self):
+        if QTVERSION < '4.0.0':
+            return self._buildActionsQt3(self)
+        self.buttonBox = qt.QWidget(self)
+        buttonBox = self.buttonBox
+        self.buttonBoxLayout = qt.QGridLayout(buttonBox)
+        self.buttonBoxLayout.setMargin(2)
+        self.buttonBoxLayout.setSpacing(2)
+        
+        self.add2DButton = qt.QPushButton(buttonBox)
+        self.add2DButton.setText("ADD 2D")
+        self.remove2DButton = qt.QPushButton(buttonBox)
+        self.remove2DButton.setText("REMOVE 2D")
+        self.replace2DButton = qt.QPushButton(buttonBox)
+        self.replace2DButton.setText("REPLACE 2D")
+
+        self.addButton = qt.QPushButton(buttonBox)
+        self.addButton.setText("ADD")
+        self.removeButton = qt.QPushButton(buttonBox)
+        self.removeButton.setText("REMOVE")
+        self.replaceButton = qt.QPushButton(buttonBox)
+        self.replaceButton.setText("REPLACE")
+        
+        self.buttonBoxLayout.addWidget(self.add2DButton, 0, 0)
+        self.buttonBoxLayout.addWidget(self.remove2DButton, 0, 1)
+        self.buttonBoxLayout.addWidget(self.replace2DButton, 0, 2)
+
+        self.buttonBoxLayout.addWidget(self.addButton, 1, 0)
+        self.buttonBoxLayout.addWidget(self.removeButton, 1, 1)
+        self.buttonBoxLayout.addWidget(self.replaceButton, 1, 2)
+        
+        self.mainLayout.addWidget(buttonBox)
+        
+        self.connect(self.add2DButton, qt.SIGNAL("clicked()"), 
+                    self._add2DClicked)
+        self.connect(self.remove2DButton, qt.SIGNAL("clicked()"), 
+                    self._remove2DClicked)
+        self.connect(self.replace2DButton, qt.SIGNAL("clicked()"), 
+                    self._replace2DClicked)
+
+        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
+                    self._addClicked)
+        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
+                    self._removeClicked)
+        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
+                    self._replaceClicked)
+
+    def _buildActionsQt3(self):
         self.buttonBox = qt.QWidget(self)
         buttonBox = self.buttonBox
         self.buttonBoxLayout = qt.QHBoxLayout(buttonBox)
@@ -1209,6 +1257,58 @@ class QEdfFileWidget(qt.QWidget):
                 self.emit(qt.PYSIGNAL("replaceSelection"), (signalsellist,))
             else:
                 self.emit(qt.SIGNAL("replaceSelection"), signalsellist)
+
+    def _add2DClicked(self, replace=False):
+        if DEBUG:
+            print "ADD 2D clicked"
+        if (self.data is None) or \
+           (self.currentArray is None):
+            return
+
+        #this is not very efficient because it could be cached
+        #while this implies a new reading
+        infoSource= self.data.getSourceInfo()
+        sel = {}
+        sel['SourceType'] = infoSource['SourceType'] 
+        sel['SourceName'] = self.data.sourceName
+        sel['Key'] = infoSource['KeyList'][self.currentArray]
+        f, i = sel['Key'].split(".")
+        f = int(f) - 1
+        sel['legend'] = os.path.basename(self.data.sourceName[f]) +\
+                        " "+ str(self.paramWidget.iCombo.currentText())
+        sel['selectiontype'] = '2D' 
+        sel['imageselection']  = True
+        sel['mcaselection']  = False
+        sel['scanselection'] = False
+        sel['selection'] = None
+        if replace:
+            self.emit(qt.SIGNAL("replaceSelection"), [sel])
+        else:
+            self.emit(qt.SIGNAL("addSelection"), [sel])
+
+    def _remove2DClicked(self):
+        if DEBUG:
+            print "REMOVE 2D clicked"
+        infoSource= self.data.getSourceInfo()
+        sel = {}
+        sel['SourceType'] = infoSource['SourceType'] 
+        sel['SourceName'] = self.data.sourceName
+        sel['Key'] = infoSource['KeyList'][self.currentArray]
+        f, i = sel['Key'].split(".")
+        f = int(f) - 1
+        sel['legend'] = os.path.basename(self.data.sourceName[f]) +\
+                        " "+ str(self.paramWidget.iCombo.currentText())
+        sel['selectiontype'] = '2D' 
+        sel['imageselection']  = True
+        sel['mcaselection']  = False
+        sel['scanselection'] = False
+        sel['selection'] = None
+        self.emit(qt.SIGNAL("removeSelection"), [sel])
+
+    def _replace2DClicked(self):
+        if DEBUG:
+            print "REPLACE 2D clicked"
+        self._add2DClicked(replace=True)
 
     def _addClicked(self):
         if DEBUG:
