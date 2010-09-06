@@ -474,12 +474,10 @@ class QEdfFileWidget(qt.QWidget):
                                        "No information to be shown")
             return
 
-        #this is not very efficient because it could be cached
-        #while this implies a new reading
+        #this could be cached because implies a new reading
         infoSource= self.data.getSourceInfo()
-        dataObject = self.data.getDataObject(infoSource['KeyList']\
+        info = self.data.getKeyInfo(infoSource['KeyList']\
                                              [self.currentArray])
-        info = dataObject.info
         infoWidget = SpecFileDataInfo.SpecFileDataInfo(info, parent=None)
         infoWidget.show()
         infoWidget.notifyCloseEventToWidget(self)
