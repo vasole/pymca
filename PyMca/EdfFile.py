@@ -177,6 +177,8 @@ class  EdfFile:
                 #It's amazing that the following line has not given errors
                 #before because ot not being commented
                 #self.File.close()
+                #nothing more to be done in case of writing to the file
+                return
             else:
                 if (os.access(self.FileName,os.W_OK)):
                     self.File=open(self.FileName, "r+b")
