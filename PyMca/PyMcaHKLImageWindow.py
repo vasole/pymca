@@ -62,10 +62,10 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         info = self._getHKLInfoFromWidget()
 
         toDeg = 180.0/numpy.pi
-        deltaH = toDeg * numpy.arctan((y - info['pixel_zero_h']) *\
+        deltaH = toDeg * numpy.arctan((x - info['pixel_zero_h']) *\
                         (info['pixel_size_h']/info['distance']))
         
-        deltaV = toDeg *arctan((x - info['pixel_zero_v'])*\
+        deltaV = toDeg *arctan((y - info['pixel_zero_v'])*\
                         (info['pixel_size_v']/info['distance']))
 
         phi = info['phi']
@@ -75,7 +75,8 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         # delta in vertical (following BM28)
         # gamma in horizontal (following BM28)
         gamma = info['gamma'] + deltaH
-        delta = info['delta'] + deltaV
+        delta = info['delta'] - deltaV
+        #end of BM28 customization
 
         mu    = info['mu']
         wavelength = info['lambda']
