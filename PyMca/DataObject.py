@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,15 +22,15 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-import numpy.oldnumeric as Numeric
+import numpy
 import copy
 
-class DataObject:
+class DataObject(object):
     def __init__(self):
         self.info = {}
-        self.data = Numeric.array([])
+        self.data = numpy.array([])
 
     def getInfo(self):
         return self.info
@@ -106,8 +106,8 @@ class DataObject:
                         ch0 = int(output.info['Channel0'])
                     else:
                         ch0 = 0
-                    dataObject.x = [Numeric.arange(ch0,
-                                 ch0 + len(dataObject.y[0])).astype(Numeric.Float)]
+                    dataObject.x = [numpy.arange(ch0,
+                                 ch0 + len(dataObject.y[0])).astype(numpy.float)]
                 if not dataObject.info.has_key("selectiontype"):
                     dataObject.info["selectiontype"] = "%dD" % len(dataObject.y) 
                 return dataObject
