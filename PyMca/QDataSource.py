@@ -113,7 +113,7 @@ def getSourceType(sourceName0):
             mccd = True
         else:
             mccd = False
-        if (line[0] == "{") or mccd:
+        if (line.startswith("{")) or mccd:
             return EdfFileDataSource.SOURCE_TYPE
         else:
             if NEXUS:
