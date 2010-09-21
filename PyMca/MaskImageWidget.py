@@ -299,6 +299,10 @@ class MaskImageWidget(qt.QWidget):
         ddict['id'] = id(self)
         self.emitMaskImageSignal(ddict)        
 
+    def setY1AxisInverted(self, value):
+        self._y1AxisInverted = value
+        self.graphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
+
     def buildAndConnectImageButtonBox(self, replace=True):
         # The IMAGE selection
         self.imageButtonBox = qt.QWidget(self)
@@ -576,10 +580,10 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.picker.data = None
             return
         
+        if self.__selectionMask is None:
+            self.__selectionMask = numpy.zeros(self.__imageData.shape,
+                                                 numpy.uint8)
         if update:
-            if self.__selectionMask is None:
-                self.__selectionMask = numpy.zeros(self.__imageData.shape,
-                                                     numpy.uint8)
             self.getPixmapFromData()
             self.__pixmap0 = self.__pixmap.copy()
             self.graphWidget.picker.data = self.__imageData
@@ -808,6 +812,9 @@ class MaskImageWidget(qt.QWidget):
             i2 = min(abs(int(round(xmax)))+1, self.__imageData.shape[1])
             j1 = max(int(round(ymin)),0)
             j2 = min(abs(int(round(ymax)))+1,self.__imageData.shape[0])
+            if self.__selectionMask is None:
+                self.__selectionMask = numpy.zeros(self.__imageData.shape,
+                                     numpy.uint8)
             self.__selectionMask[j1:j2, i1:i2] = 1
             emitsignal = True
 

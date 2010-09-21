@@ -30,6 +30,7 @@ import numpy.linalg
 try:
     import numpy.core._dotblas as dotblas
 except ImportError:
+    print "WARNING: Not using BLAS"
     dotblas = numpy
     
 try:

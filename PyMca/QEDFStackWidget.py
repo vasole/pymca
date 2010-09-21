@@ -1635,7 +1635,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             title = "%s" % ddict["name"]
             self.roiWindow.graphWidget.graph.setTitle(title)
             self.roiWindow.graphWidget.__title = title
-            if (ddict["name"] == "ICR"):                
+            if (ddict["name"] == "ICR"):
                 i1 = 0
                 i2 = self.stack.data.shape[self.mcaIndex]
                 xw =  ddict['calibration'][0] + \
