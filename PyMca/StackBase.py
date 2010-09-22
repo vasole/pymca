@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #/*##########################################################################
 # Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
@@ -199,7 +198,7 @@ class StackBase(object):
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
                            "selectiontype":"1D",
-                           "SourceName":"EDF Stack",
+                           "SourceName":"Stack",
                            "Key":"SUM"}
 
         dataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)
@@ -359,7 +358,7 @@ class StackBase(object):
             else:
                 dataObject = self._mcaData0
             return dataObject
-        npixels = len(numpy.nonzero(numpy.ravel(self._selectionMask)>0)[0]) * 1.0
+        npixels = self._selectionMask.sum()
         if npixels == 0:
             if normalize:
                 npixels = self._stackImageData.shape[0] * self._stackImageData.shape[1] * 1.0
@@ -487,7 +486,7 @@ class StackBase(object):
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
                            "selectiontype":"1D",
-                           "SourceName":"EDF Stack",
+                           "SourceName":"Stack",
                            "Key":"Selection"}
         dataObject.x = [numpy.arange(len(mcaData)).astype(numpy.float)
                         + self._stack.info['Channel0']]

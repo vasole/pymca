@@ -50,7 +50,7 @@ class StackSelector(object):
     def __init__(self, parent=None):
         self.parent = parent
         
-    def getStack(self, filelist=None):
+    def getStack(self, filelist=None, imagestack=False):
         if filelist in [None, []]:
             filelist, filefilter = self._getStackOfFiles(getfilter=True)
         else:
@@ -64,14 +64,13 @@ class StackSelector(object):
                 if h5py.is_hdf5(filelist[0]):
                     filefilter = "HDF5"
 
-        imagestack = False
-        aifirafile = False
         fileindex = 0
         begin = None
         end = None
+        aifirafile = False
         if len(filelist):
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-            f = open(filelist[0])
+            f = open(filelist[0], 'rb')
             #read 10 characters
             line = f.read(10)
             f.close()
@@ -149,6 +148,69 @@ class StackSelector(object):
         else:
             return stack
     
+    def getStackFromPattern(self, filepattern, begin, end, increment=None,
+                            imagestack=False, fileindex=0):
+        #get the first filename
+        filename =  filepattern % tuple(begin)
+        if not os.path.exists(filename):
+            raise IOError, "Filename %s does not exist." % filename
+        #get the file list
+        args = self.getFileListFromPattern(filepattern, begin, end, increment=increment)
+
+        #get the file type
+        f = open(args[0], 'rb')
+        #read 10 characters
+        line = f.read(10)
+        f.close()
+
+        omnicfile = False
+        if line[0] == "\n":
+            line = line[1:]
+        if line[0] == "{":
+            if imagestack:
+                #prevent any modification
+                fileindex = 0
+            if filepattern is not None:
+                if len(begin) != 1:
+                    raise IOError, "EDF stack redimensioning not supported yet"
+            stack = QStack(imagestack=imagestack)
+        elif line.startswith('Spectral'):
+            stack = OmnicMap.OmnicMap(args[0])
+            omnicfile = True
+        elif line.startswith('#\tDate:'):
+            stack = LuciaMap.LuciaMap(args[0])
+            omnicfile = True
+        elif args[0][-4:].upper() in ["PIGE", "PIXE"]:
+            stack = SupaVisioMap.SupaVisioMap(args[0])
+            omnicfile = True
+        elif args[0][-3:].upper() in ["RBS"]:
+            stack = SupaVisioMap.SupaVisioMap(args[0])
+            omnicfile = True
+        elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
+            if not HDF5:
+                raise IOError, "No HDF5 support while trying to read an HDF5 file"  
+            stack = QHDF5Stack1D.QHDF5Stack1D(args)
+            omnicfile = True
+        else:
+            if HDF5:
+                if h5py.is_hdf5(args[0]):
+                    stack = QHDF5Stack1D.QHDF5Stack1D(args)
+                    omnicfile = True
+                else:                    
+                    stack = QSpecFileStack()
+            else:                    
+                stack = QSpecFileStack()
+
+        if len(begin) == 2:
+            if increment is None:
+                increment = [1] * len(begin)
+            shape = (len(range(begin[0], end[0]+1, increment[0])),
+                     len(range(begin[1], end[1]+1, increment[1])))
+        else:
+            shape = None
+        stack.loadFileList(args, fileindex=fileindex, shape=shape)
+        return stack
+
     def _getFileList(self, fileTypeList, message=None, getfilter=None):
         if message is None:
             message = "Please select a file"
@@ -278,7 +340,7 @@ class StackSelector(object):
                 for k in range(begin[1], end[1]+1, increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
-            #raise ValueError, "Cannot handle three indices yet."
+            raise ValueError, "Cannot handle three indices yet."
             for j in range(begin[0], end[0]+1, increment[0]):
                 for k in range(begin[1], end[1]+1, increment[1]):
                     for l in range(begin[2], end[2]+1, increment[2]):
@@ -290,7 +352,6 @@ class StackSelector(object):
 
 if __name__ == "__main__":
     from PyMca import QStackWidget
-    from PyMca.QEDFStackWidget import QStack
     import getopt
     options = ''
     longoptions = ["fileindex=",
@@ -309,6 +370,7 @@ if __name__ == "__main__":
     begin = None
     end = None
     imagestack=False
+    increment=None
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
@@ -341,16 +403,18 @@ if __name__ == "__main__":
         if (begin is None) or (end is None):
             raise ValueError, "A file pattern needs at least a set of begin and end indices"
     app = qt.QApplication([])
-    w = StackSelector()
+    widget = QStackWidget.QStackWidget()
+    w = StackSelector(widget)
     if filepattern is not None:
         #get the first filename
         filename =  filepattern % tuple(begin)
         if not os.path.exists(filename):
             raise IOError, "Filename %s does not exist." % filename
         #ignore the args even if present
-        args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
-    widget = QStackWidget.QStackWidget()
-    stack = w.getStack(args)
+        stack = w.getStackFromPattern(filepattern, begin, end, increment=increment,
+                                      imagestack=imagestack)
+    else:
+        stack = w.getStack(args, imagestack=imagestack)
     if type(stack) == type([]):
         #aifira like, two stacks
         widget.setStack(stack[0])

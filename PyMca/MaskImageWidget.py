@@ -518,7 +518,13 @@ class MaskImageWidget(qt.QWidget):
 
     def setImageData(self, data, clearmask=False):
         self.__image = None
-        self.__imageData = data
+        if data is None:
+            self.__imageData = data
+            self.__selectionMask = None
+            self.plotImage(update = True)
+            return
+        else:
+            self.__imageData = data
         if clearmask:
             self.__selectionMask = None
         if self.colormapDialog is not None:
@@ -1003,6 +1009,9 @@ def test():
         data = numpy.arange(40000).astype(numpy.int32)
         data.shape = 200, 200
         container.setImageData(data)
+        #data.shape = 100, 400
+        #container.setImageData(None)
+        #container.setImageData(data)
     container.show()
     def theSlot(ddict):
         print ddict['event']

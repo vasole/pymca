@@ -30,16 +30,19 @@ import numpy
 import weakref
 
 from PyMca import PyMcaQt as qt
+from PyMca import DataObject
 from PyMca import McaWindow
 from PyMca import StackBase
 from PyMca import CloseEventNotifyingWidget
 from PyMca import MaskImageWidget
 from PyMca import StackROIWindow
 from PyMca import RGBCorrelator
+from PyMca.RGBCorrelatorWidget import ImageShapeDialog
 from PyMca.PyMca_Icons import IconDict
 from PyMca import StackSelector
+from PyMca import PyMcaDirs
 
-DEBUG = 1
+DEBUG = 0
 QTVERSION = qt.qVersion()
 
 class QStackWidget(StackBase.StackBase,
@@ -117,6 +120,20 @@ class QStackWidget(StackBase.StackBase,
 
         #add some missing icons
         offset = 6
+        infotext  = 'If checked, spectra will be added normalized to the number\n'
+        infotext += 'of pixels. Be carefull if you are preparing a batch and you\n'
+        infotext += 'fit the normalized spectra because the data in the batch will\n'
+        infotext += 'have a different weight because they are not normalized.'
+        self.normalizeIcon = qt.QIcon(qt.QPixmap(IconDict["normalize16"]))
+        self.normalizeButton = self.stackGraphWidget._addToolButton(\
+                                        self.normalizeIcon,
+                                        self.normalizeIconChecked,
+                                        infotext,
+                                        toggle = True,
+                                        state = False,
+                                        position = 6)
+        offset += 1
+
         if self.master:
             self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
             self.loadStackButton = self.stackGraphWidget._addToolButton(\
@@ -135,6 +152,28 @@ class QStackWidget(StackBase.StackBase,
                                              state = False,
                                              position = offset)
         
+    def setStack(self, *var, **kw):
+        self.stackWidget.setImageData(None)
+        self.roiWidget.setImageData(None)
+        StackBase.StackBase.setStack(self, *var, **kw)
+        if (1 in self._stack.data.shape) and\
+           isinstance(self._stack.data, numpy.ndarray):
+            oldshape = self._stack.data.shape
+            dialog = ImageShapeDialog(self, shape = oldshape[0:2])
+            dialog.setModal(True)
+            ret = dialog.exec_()
+            if ret:
+                shape = dialog.getImageShape()
+                dialog.close()
+                del dialog
+                self._stack.data.shape = [shape[0], shape[1], oldshape[2]]
+                self.stackWidget.setImageData(None)
+                self.roiWidget.setImageData(None)
+                StackBase.StackBase.setStack(self, self._stack, **kw)
+
+    def normalizeIconChecked(self):
+        pass
+
     def loadSlaveStack(self):
         if self._slave is not None:
             actionList = ['Load Slave', 'Show Slave', 'Delete Slave']
@@ -356,10 +395,7 @@ class QStackWidget(StackBase.StackBase,
         self.stackWidget.setImageData(self._stackImageData)
 
     def showOriginalMca(self):
-        tmp = self._selectionMask
-        self._selectionMask = None
-        self._addMcaClicked(action="ADD")
-        self._selectionMask = tmp
+        self.sendMcaSelection(self._mcaData0, action="ADD")
 
     def showROIImageList(self, imageList, image_names=None):
         self.roiWidget.setImageData(imageList[0])
@@ -399,16 +435,37 @@ class QStackWidget(StackBase.StackBase,
         self.replaceImage(image, title)
 
     def __getLegend(self):
-        title = str(self.roiGraphWidget.graph.title().text())
-        return "Stack " + title + " selection"
+        if self._selectionMask is None:
+            legend = "Stack SUM"
+        elif self._selectionMask.sum() == 0:
+            legend = "Stack SUM"
+        else:
+            title = str(self.roiGraphWidget.graph.title().text())
+            legend = "Stack " + title + " selection"
+        return legend
 
     def _addMcaClicked(self, action=None):
         if action is None:
             action = "ADD"
         if self._stackImageData is None:
-            return            
-        dataObject = self.calculateMcaDataObject(normalize=False)
+            return
+
+        if self.normalizeButton.isChecked():        
+            dataObject = self.calculateMcaDataObject(normalize=True)
+        else:
+            dataObject = self.calculateMcaDataObject(normalize=False)
         legend = self.__getLegend()
+
+        if self.normalizeButton.isChecked():
+            if self._selectionMask is None:
+                npixels = self._stackImageData.shape[0] *\
+                          self._stackImageData.shape[1]
+            else:
+                npixels = self._selectionMask.sum()
+                if npixels == 0:
+                    npixels = self._stackImageData.shape[0] *\
+                              self._stackImageData.shape[1]
+            legend += "/%d" % npixels
         return self.sendMcaSelection(dataObject,
                           key = "Selection",
                           legend =legend,
@@ -441,11 +498,11 @@ class QStackWidget(StackBase.StackBase,
         if key is None:
             key = "SUM"
         if legend is None:
-            legend = "EDF Stack SUM"
-            print "TO IMPLEMENT"
-            #if self.normalizeButton.isChecked():
-            #    npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]
-            #    legend += "/%d" % npixels
+            legend = "Stack SUM"
+            if self.normalizeButton.isChecked():
+                npixels = self._stackImageData.shape[0] *\
+                          self._stackImageData.shape[1]
+                legend += "/%d" % npixels
         sel = {}
         sel['SourceName'] = "EDF Stack"
         sel['Key']        =  key
@@ -586,7 +643,76 @@ def test():
     return w
 
 if __name__ == "__main__":
+    import getopt
+    options = ''
+    longoptions = ["fileindex=",
+                   "filepattern=", "begin=", "end=", "increment=",
+                   "nativefiledialogs=", "imagestack="]
+    try:
+        opts, args = getopt.getopt(
+                     sys.argv[1:],
+                     options,
+                     longoptions)
+    except getopt.error,msg:
+        print msg
+        sys.exit(1)
+    fileindex = 0
+    filepattern=None
+    begin = None
+    end = None
+    imagestack=False
+    for opt, arg in opts:
+        if opt in '--begin':
+            if "," in arg:
+                begin = map(int,arg.split(","))
+            else:
+                begin = [int(arg)]
+        elif opt in '--end':
+            if "," in arg:
+                end = map(int,arg.split(","))
+            else:
+                end = int(arg)
+        elif opt in '--increment':
+            if "," in arg:
+                increment = map(int,arg.split(","))
+            else:
+                increment = int(arg)
+        elif opt in '--filepattern':
+            filepattern = arg.replace('"','')
+            filepattern = filepattern.replace("'","")
+        elif opt in '--fileindex':
+            fileindex = int(arg)
+        elif opt in '--imagestack':
+            imagestack = int(arg)
+        elif opt in '--nativefiledialogs':
+            if int(arg):
+                PyMcaDirs.nativeFileDialogs=True
+            else:
+                PyMcaDirs.nativeFileDialogs=False
+    if filepattern is not None:
+        if (begin is None) or (end is None):
+            raise ValueError, "A file pattern needs at least a set of begin and end indices"
     app = qt.QApplication([])
-    w = test()
+    widget = QStackWidget()
+    w = StackSelector.StackSelector(widget)
+    if filepattern is not None:
+        #get the first filename
+        filename =  filepattern % tuple(begin)
+        if not os.path.exists(filename):
+            raise IOError, "Filename %s does not exist." % filename
+        #ignore the args even if present
+        args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
+    stack = w.getStack(args, imagestack=imagestack)
+    if type(stack) == type([]):
+        #aifira like, two stacks
+        widget.setStack(stack[0])
+        slave = QStackWidget.QStackWidget(master=False,
+                                          rgbwidget=widget.rgbWidget)
+        slave.setStack(stack[1])
+        widget.setSlave(slave)
+        stack = None
+    else:
+        widget.setStack(stack)
+    widget.show()
     app.exec_()
     

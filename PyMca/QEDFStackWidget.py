@@ -1142,7 +1142,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             hdffile   = False
             opusfile  = False
             if len(filelist) == 1:
-                f = open(filelist[0])
+                f = open(filelist[0], 'rb')
                 line = f.read(10)
                 f.close()
                 if filefilter.upper().startswith('HDF5'):
@@ -2435,7 +2435,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 for k in range(begin[1], end[1]+1, increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
-            #raise ValueError, "Cannot handle three indices yet."
+            raise ValueError, "Cannot handle three indices yet."
             for j in range(begin[0], end[0]+1, increment[0]):
                 for k in range(begin[1], end[1]+1, increment[1]):
                     for l in range(begin[2], end[2]+1, increment[2]):
@@ -2508,7 +2508,7 @@ if __name__ == "__main__":
         args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
     aifirafile = False
     if len(args):
-        f = open(args[0])
+        f = open(args[0], 'rb')
         #read 10 characters
         line = f.read(10)
         f.close()
@@ -2581,7 +2581,7 @@ if __name__ == "__main__":
             filelist, filefilter = w._getStackOfFiles(getfilter=True)
             if len(filelist):
                 PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-                f = open(filelist[0])
+                f = open(filelist[0], 'rb')
                 #read 10 characters
                 line = f.read(10)
                 f.close()
