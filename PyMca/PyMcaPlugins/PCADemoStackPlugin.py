@@ -176,15 +176,15 @@ class PCADemoStackPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if DEBUG:
-            print "mySlot ", ddict['event']
+            print "mySlot ", ddict['event'], ddict.keys()
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
-            self.addImage(ddict['current'], ddict['title'])
+            self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] == "replaceImageClicked":
-            self.replaceImage(ddict['current'], ddict['title'])
+            self.replaceImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "resetSelection":
             self.setStackSelectionMask(None)
 

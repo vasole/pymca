@@ -61,6 +61,15 @@ class StackPluginBase(object):
             instance_id = id(self)
         return self._stackWindow.setSelectionMask(mask,
                                                   instance_id=instance_id)
+
+    def addImage(self, image, name):
+        return self._stackWindow.addImage(image, name)
+
+    def removeImage(self, name):
+        return self._stackWindow.removeImage(name)
+
+    def replaceImage(self, image, name):
+        return self._stackWindow.replaceImage(image, name)
         
     #Plot window related functions
     def getActiveCurve(self):
