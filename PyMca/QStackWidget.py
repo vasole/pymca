@@ -661,6 +661,7 @@ if __name__ == "__main__":
     begin = None
     end = None
     imagestack=False
+    increment=None
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
@@ -696,13 +697,11 @@ if __name__ == "__main__":
     widget = QStackWidget()
     w = StackSelector.StackSelector(widget)
     if filepattern is not None:
-        #get the first filename
-        filename =  filepattern % tuple(begin)
-        if not os.path.exists(filename):
-            raise IOError, "Filename %s does not exist." % filename
         #ignore the args even if present
-        args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
-    stack = w.getStack(args, imagestack=imagestack)
+        stack = w.getStackFromPattern(filepattern, begin, end, increment=increment,
+                                      imagestack=imagestack)
+    else:
+        stack = w.getStack(args, imagestack=imagestack)
     if type(stack) == type([]):
         #aifira like, two stacks
         widget.setStack(stack[0])

@@ -406,10 +406,6 @@ if __name__ == "__main__":
     widget = QStackWidget.QStackWidget()
     w = StackSelector(widget)
     if filepattern is not None:
-        #get the first filename
-        filename =  filepattern % tuple(begin)
-        if not os.path.exists(filename):
-            raise IOError, "Filename %s does not exist." % filename
         #ignore the args even if present
         stack = w.getStackFromPattern(filepattern, begin, end, increment=increment,
                                       imagestack=imagestack)
