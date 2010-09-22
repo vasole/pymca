@@ -27,6 +27,8 @@
 #############################################################################*/
 import sys
 import numpy
+import weakref
+
 from PyMca import PyMcaQt as qt
 from PyMca import McaWindow
 from PyMca import StackBase
@@ -35,6 +37,7 @@ from PyMca import MaskImageWidget
 from PyMca import StackROIWindow
 from PyMca import RGBCorrelator
 from PyMca.PyMca_Icons import IconDict
+from PyMca import StackSelector
 
 DEBUG = 1
 QTVERSION = qt.qVersion()
@@ -67,6 +70,10 @@ class QStackWidget(StackBase.StackBase,
         self.mainLayout.setSpacing(2)
         self.mcaWidget = mcawidget
         self.rgbWidget = rgbwidget
+        self.master = master
+        self._slave = None
+        self._masterStack = None
+        self.stackSelector = None
         self._build(vertical=vertical)
         self._buildBottom()
         self._buildConnections()
@@ -109,8 +116,16 @@ class QStackWidget(StackBase.StackBase,
 
 
         #add some missing icons
-
-
+        offset = 6
+        if self.master:
+            self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
+            self.loadStackButton = self.stackGraphWidget._addToolButton(\
+                                        self.loadIcon,
+                                        self.loadSlaveStack,
+                                        'Load another stack of same shape',
+                                        position = offset)
+            offset += 1
+        
         self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"]))
         infotext = "Call/Load Stack Plugins"
         self.stackGraphWidget._addToolButton(self.pluginIcon,
@@ -118,12 +133,56 @@ class QStackWidget(StackBase.StackBase,
                                              infotext,
                                              toggle = False,
                                              state = False,
-                                             position = 6)
+                                             position = offset)
+        
+    def loadSlaveStack(self):
+        if self._slave is not None:
+            actionList = ['Load Slave', 'Show Slave', 'Delete Slave']
+            menu = qt.QMenu(self)
+            for action in actionList:
+                text = qt.QString(action)
+                menu.addAction(text)
+            a = menu.exec_(qt.QCursor.pos())
+            if a is None:
+                return None
+            if str(a.text()).startswith("Load"):
+                self._slave = None
+            elif str(a.text()).startswith("Show"):
+                self._slave.show()
+                self._slave.raise_()
+                return
+            else:
+                self._slave = None
+                return
+        if self.stackSelector  is None:
+            self.stackSelector = StackSelector.StackSelector(self)
 
+        stack = self.stackSelector.getStack()
+        if stack is None:
+            return
+        if type(stack) == type([]):
+            stack = stack[0]
 
-        #self.mainLayout.addWidget(self.roiWidget, 1, 0)
-        #self.mainLayout.addWidget(self.mcaWidget, 0, 1, 2, 2)
+        slave = QStackWidget(rgbwidget=self.rgbWidget,
+                                  master=False)
+        slave.setStack(stack)
+        self.setSlave(slave)
 
+    def setSlave(self, slave):
+        self._slave = None
+        self._slave = slave
+        self._slave.setSelectionMask(self.getSelectionMask())
+        self._slave.show()
+        self._slave._setMaster(self)
+
+    def _setMaster(self, master=None):
+        if self.master:
+            self._masterStack = None
+            return
+        if master is None:
+            master = self
+        self._masterStack = weakref.proxy(master)
+        
     def _pluginClicked(self):
         actionList = []
         menu = qt.QMenu(self)
@@ -207,6 +266,7 @@ class QStackWidget(StackBase.StackBase,
 
     def _buildBottom(self):
         n = 0
+        self.tab = None
         if self.mcaWidget is None:
             n += 1
         if self.rgbWidget is None:
@@ -310,7 +370,8 @@ class QStackWidget(StackBase.StackBase,
     def addImage(self, image, name, info=None, replace=False, replot=True):
         self.rgbWidget.addImage(image, name)
         if self.tab is None:
-            self.rgbWidget.show()
+            if self.master:
+                self.rgbWidget.show()
         else:
             self.tab.setCurrentWidget(self.rgbWidget)
 
@@ -406,6 +467,15 @@ class QStackWidget(StackBase.StackBase,
 
     def setSelectionMask(self, mask, instance_id=None):
         self._selectionMask = mask
+        if instance_id == id(self):
+            return
+
+        if DEBUG:
+            if self._slave is not None:
+                print "MASTER  setSelectionMask CALLED"
+            elif self._masterStack is not None:
+                print "SLAVE setSelectionMask CALLED"
+
         #inform built in widgets
         for widget in [self.stackWidget, self.roiWidget]:
             if instance_id != id(widget):
@@ -413,6 +483,32 @@ class QStackWidget(StackBase.StackBase,
                     widget._resetSelection(owncall=False)
                 else:
                     widget.setSelectionMask(mask, plot=True)
+
+        #inform slave
+        if self._slave is not None:
+            #This is a master instance
+            instanceList = [id(self._slave),
+                            id(self._slave.stackWidget),
+                            id(self._slave.roiWidget)]
+            for key in self._slave.pluginInstanceDict.keys():
+                instanceList.append(id(self._slave.pluginInstanceDict[key]))
+            if instance_id not in instanceList:
+                #Originated by the master
+                if DEBUG:
+                    print "INFORMING SLAVE"
+                self._slave.setSelectionMask(mask, instance_id=id(self))
+
+        if self._masterStack is not None:
+            #This is a slave instance
+            instanceList = [id(self.stackWidget),
+                            id(self.roiWidget)]
+            for key in self.pluginInstanceDict.keys():
+                instanceList.append(id(self.pluginInstanceDict[key]))
+            if instance_id in instanceList:
+                #Originated by the slave
+                if DEBUG:
+                    print "INFORMING MASTER"
+                self._masterStack.setSelectionMask(mask, instance_id=id(self))
         
         #Inform plugins
         for key in self.pluginInstanceDict.keys():
@@ -472,8 +568,7 @@ class QStackWidget(StackBase.StackBase,
         if not self.__ROIConnected:
             return
         if ddict['event'] == "ROISignal":
-            self.updateROIImages(ddict)            
-
+            self.updateROIImages(ddict)
     
 def test():
     #create a dummy stack

@@ -2413,36 +2413,33 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         message = "Open ONE indexed stack or SEVERAL files"
         return self._getFileList(fileTypeList, message=message, getfilter=getfilter)
 
-    def getFileListFromPattern(self, pattern, begin, end):
+    def getFileListFromPattern(self, pattern, begin, end, increment=None):
         if type(begin) == type(1):
             begin = [begin]
         if type(end) == type(1):
             end = [end]
         if len(begin) != len(end):
             raise ValueError, "Begin list and end list do not have same length"
-        nFiles = 1
-        for i in range(len(begin)):
-            nFiles *= (end[i] - begin[i] + 1)
-        fileList = [None] * nFiles
+        if increment is None:
+            increment = [1] * len(begin)
+        elif type(increment) == type(1):
+            increment = [increment]
+        if len(increment) != len(begin):
+            raise ValueError, "Increment list and begin list do not have same length"
+        fileList = []
         if len(begin) == 1:
-            i = 0
             for j in range(begin[0], end[0]+1, 1):
-                fileList[i] = pattern % (j)
-                i += 1
+                fileList.append(pattern % (j))
         elif len(begin) == 2:
-            i = 0
-            for j in range(begin[0], end[0]+1, 1):
-                for k in range(begin[1], end[1]+1, 1):
-                    fileList[i] = pattern % (j, k)
-                    i += 1
+            for j in range(begin[0], end[0]+1, increment[0]):
+                for k in range(begin[1], end[1]+1, increment[1]):
+                    fileList.append(pattern % (j, k))
         elif len(begin) == 3:
-            raise ValueError, "Cannot handle three indices yet."
-            i = 0
-            for j in range(begin[0], end[0]+1, 1):
-                for k in range(begin[1], end[1]+1, 1):
-                    for l in range(begin[2], end[2]+1, 1):
-                        fileList[i] = pattern % (j, k, l)
-                        i += 1
+            #raise ValueError, "Cannot handle three indices yet."
+            for j in range(begin[0], end[0]+1, increment[0]):
+                for k in range(begin[1], end[1]+1, increment[1]):
+                    for l in range(begin[2], end[2]+1, increment[2]):
+                        fileList.append(pattern % (j, k, l))
         else:
             raise ValueError, "Cannot handle more than three indices."
         return fileList
@@ -2451,7 +2448,7 @@ if __name__ == "__main__":
     import getopt
     options = ''
     longoptions = ["fileindex=",
-                   "filepattern=", "begin=", "end=",
+                   "filepattern=", "begin=", "end=", "increment=",
                    "nativefiledialogs=", "imagestack="]
     try:
         opts, args = getopt.getopt(
@@ -2467,6 +2464,7 @@ if __name__ == "__main__":
     filepattern=None
     begin = None
     end = None
+    increment = None
     imagestack=False
     for opt, arg in opts:
         if opt in '--begin':
@@ -2479,6 +2477,11 @@ if __name__ == "__main__":
                 end = map(int,arg.split(","))
             else:
                 end = int(arg)
+        elif opt in '--increment':
+            if "," in arg:
+                increment = map(int,arg.split(","))
+            else:
+                increment = int(arg)
         elif opt in '--filepattern':
             filepattern = arg.replace('"','')
             filepattern = filepattern.replace("'","")
@@ -2502,7 +2505,7 @@ if __name__ == "__main__":
         if not os.path.exists(filename):
             raise IOError, "Filename %s does not exist." % filename
         #ignore the args even if present
-        args = w.getFileListFromPattern(filepattern, begin, end)
+        args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
     aifirafile = False
     if len(args):
         f = open(args[0])
