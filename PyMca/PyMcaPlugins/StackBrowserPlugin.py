@@ -30,47 +30,44 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import StackPluginBase
 try:
-    from PyMca import StackROIWindow
+    from PyMca import StackBrowser
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print "ROIStackPlugin importing from somewhere else"
-    import StackROIWindow
+    import StackBrowser
     import PyMca_Icons
 
-DEBUG = 1
+DEBUG = 0
 
-class ROIStackPlugin(StackPluginBase.StackPluginBase):
+class StackBrowserPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.DEBUG = DEBUG
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'Show':[self._showWidget,
-                                   "Show ROIs",
+                                   "Show Stack Image Browser",
                                    PyMca_Icons.brushselect]}
         self.__methodKeys = ['Show']
-        self.roiWindow = None
+        self.widget = None
 
     def stackUpdated(self):
         if DEBUG:
-            print "ROIStackPlugin.stackUpdated() called"
-        if self.roiWindow is None:
+            print "StackBrowserPlugin.stackUpdated() called"
+        if self.widget is None:
             return
-        if self.roiWindow.isHidden():
+        if self.widget.isHidden():
             return
-        images, names = self.getStackROIImagesAndNames()
-        self.roiWindow.setImageList(images, imagenames=names, dynamic=False)
+        stack = self.getStackDataObject()
+        self.widget.setStackDataObject(stack, stack_name="Stack Index")
         mask = self.getStackSelectionMask()
-        self.roiWindow.setSelectionMask(mask)
+        self.widget.setSelectionMask(mask)
 
     def selectionMaskUpdated(self):
-        if self.roiWindow is None:
+        if self.widget is None:
             return
-        if self.roiWindow.isHidden():
+        if self.widget.isHidden():
             return
         mask = self.getStackSelectionMask()
-        self.roiWindow.setSelectionMask(mask)
-
-    def stackROIImageListUpdated(self):
-        self.stackUpdated()
+        self.widget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
         if DEBUG:
@@ -100,29 +97,28 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
         return apply(self.methodDict[name][0])
 
     def _showWidget(self):
-        if self.roiWindow is None:
-            self.roiWindow = StackROIWindow.StackROIWindow(parent=None,
-                                                        crop=False,
-                                                        rgbwidget=None,
-                                                        selection=True,
-                                                        colormap=True,
-                                                        imageicons=True,
-                                                        standalonesave=True)
-            self.roiWindow.setSelectionMode(True)
-            qt = StackROIWindow.qt
-            qt.QObject.connect(self.roiWindow,
+        if self.widget is None:
+            self.widget = StackBrowser.StackBrowser(parent=None,
+                                                    rgbwidget=None,
+                                                    selection=True,
+                                                    colormap=True,
+                                                    imageicons=True,
+                                                    standalonesave=True)
+            self.widget.setSelectionMode(True)
+            qt = StackBrowser.qt
+            qt.QObject.connect(self.widget,
                    qt.SIGNAL('MaskImageWidgetSignal'),
                    self.mySlot)
 
         #Show
-        self.roiWindow.show()
-        self.roiWindow.raise_()        
+        self.widget.show()
+        self.widget.raise_()        
 
-        #update ROIs
+        #update
         self.stackUpdated()
 
 
-MENU_TEXT = "Alternative ROI Options"
+MENU_TEXT = "Stack Image Browser"
 def getStackPluginInstance(stackWindow, **kw):
-    ob = ROIStackPlugin(stackWindow)
+    ob = StackBrowserPlugin(stackWindow)
     return ob

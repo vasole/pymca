@@ -34,7 +34,7 @@ import time
 import os
 import sys
 import glob
-DEBUG = 1
+DEBUG = 0
 PLUGINS_DIR = None
 try:
     if os.path.exists(os.path.join(os.path.dirname(__file__),"PyMcaPlugins")):
@@ -94,8 +94,7 @@ class StackBase(object):
         fileList = glob.glob(os.path.join(directory, "*.py"))
         targetMethod = 'getStackPluginInstance'
         for module in fileList:
-            #try:
-            if 1:
+            try:
                 pluginName = os.path.basename(module)[:-3]
                 plugin = "PyMcaPlugins." + pluginName
                 if pluginName in self.pluginList:
@@ -112,7 +111,7 @@ class StackBase(object):
                     self.pluginInstanceDict[plugin] = \
                             sys.modules[plugin].getStackPluginInstance(self)
                     self.pluginList.append(plugin)
-            else:#except:
+            except:
                 if DEBUG:
                     print "Problem importing module %s" % plugin
         return len(self.pluginList)

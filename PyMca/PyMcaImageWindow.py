@@ -72,8 +72,9 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
 
     def _connectCorrelator(self):
         if QTVERSION > '4.0.0':
-            self.ownCorrelator = True
-            self.correlator = RGBCorrelator.RGBCorrelator()
+            if self.correlator is None:
+                self.ownCorrelator = True
+                self.correlator = RGBCorrelator.RGBCorrelator()
             self.correlator.setWindowTitle("ImageWindow RGB Correlator")
             self.connect(self, qt.SIGNAL("addImageClicked"),
                          self.correlator.addImageSlot)
