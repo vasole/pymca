@@ -109,6 +109,11 @@ class StackPluginBase(object):
         if DEBUG:
             print "stackUpdated(self) not implemented"
 
+    def stackROIImageListUpdated(self):
+        if DEBUG:
+            print "stackROIImageListUpdated(self) not implemented"
+        return
+
     def selectionMaskUpdated(self):
         if DEBUG:
             print "selectionMaskUpdated(self) not implemented"
