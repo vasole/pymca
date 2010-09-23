@@ -51,20 +51,34 @@ def subtractSnip1DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
         roi_min = 0
     if roi_max is None:
         roi_max = len(spectrum)
+    mcaIndex = -1
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
+        mcaIndex = stack.info.get('McaIndex', -1)
     else:
         data = stack
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError("This Plugin only supports numpy arrays")
     oldShape = data.shape
-    data.shape = -1, oldShape[-1]
-    if roi_min > 0:
-        data[:, 0:roi_min] = 0
-    if roi_max < oldShape[-1]:
-        data[:, roi_max:] = 0
+    if mcaIndex in [-1, len(data.shape)-1]:
+        data.shape = -1, oldShape[-1]
+        if roi_min > 0:
+            data[:, 0:roi_min] = 0
+        if roi_max < oldShape[-1]:
+            data[:, roi_max:] = 0
+        for i in xrange(data.shape[0]):
+            data[i,roi_min:roi_max] -= snip1d(data[i,roi_min:roi_max],
+                                              width, smoothing)
+        data.shape = oldShape
 
-    for i in range(data.shape[0]):
-        data[i,roi_min:roi_max] -= snip1d(data[i,roi_min:roi_max], width, smoothing)
-    data.shape = oldShape
+    elif mcaIndex == 0:
+        data.shape = oldShape[0], -1
+        for i in xrange(data.shape[-1]):
+            data[roi_min:roi_max, i] -= snip1d(data[roi_min:roi_max, i],
+                                               width, smoothing)
+        data.shape = oldShape
+    else:
+        raise ValueError("Invalid 1D index %d" % mcaIndex)
     return
 
 def getImageBackground(image, width, roi_min=None, roi_max=None, smoothing=1):
@@ -81,7 +95,7 @@ def getImageBackground(image, width, roi_min=None, roi_max=None, smoothing=1):
 
 getSnip2DBackground = getImageBackground
 
-def subtractSnip2DBackgroundFromStack(stack, width, roi_min=None, roi_max=None,  smoothing=1, index=0):
+def subtractSnip2DBackgroundFromStack(stack, width, roi_min=None, roi_max=None,  smoothing=1, index=None):
     """
     index is the dimension used to index the images
     """
@@ -91,8 +105,14 @@ def subtractSnip2DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
         roi_max = image.shape
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
+        if index is None:
+            index = stack.info.get('McaIndex', 0)
     else:
         data = stack
+    if index is None:
+        index = 2
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError("This Plugin only supports numpy arrays")
     shape = data.shape
     if index == 0:
         if (roi_min[0] > 0) or (roi_min[1] > 0):

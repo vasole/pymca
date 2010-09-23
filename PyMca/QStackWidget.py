@@ -400,6 +400,8 @@ class QStackWidget(StackBase.StackBase,
     def showROIImageList(self, imageList, image_names=None):
         self.roiWidget.setImageData(imageList[0])
         self.roiWidget.graphWidget.graph.setTitle(image_names[0])
+        self._ROIImageList = imageList
+        self._ROIImageNames = image_names
 
         #self.roiWidget.setImageList(imageList, image_names)
 

@@ -9,6 +9,7 @@ These plugins will be compatible with any stack window that provides the functio
     getStackData
     getStackInfo
     setStack
+    getStackROIImagesAndNames
 
     #mask related
     setStackSelectionMask
@@ -43,7 +44,10 @@ class StackPluginBase(object):
         self._stackWindow = weakref.proxy(stackWindow)
         pass
 
-    #stack related functions
+    #stack related functions    
+    def getStackROIImagesAndNames(self):
+        return self._stackWindow.getStackROIImagesAndNames()
+
     def getStackDataObject(self):
         return self._stackWindow.getStackDataObject()
 
@@ -62,6 +66,9 @@ class StackPluginBase(object):
         return self._stackWindow.setSelectionMask(mask,
                                                   instance_id=instance_id)
 
+    def setStack(self, *var, **kw):
+        return self._stackWindow.setStack(*var, **kw)
+    
     def addImage(self, image, name):
         return self._stackWindow.addImage(image, name)
 

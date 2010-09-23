@@ -81,18 +81,33 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
     coeff = calc_coeff(npoints, degree, order)
     N = numpy.size(coeff-1)/2
     convolve = numpy.convolve
+    mcaIndex = -1
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
+        mcaIndex = stack.info.get('McaIndex', -1)
     else:
         data = stack
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError("This Plugin only supports numpy arrays")
     oldShape = data.shape
-    data.shape = -1, oldShape[-1]        
-    for i in range(data.shape[0]):
-        data[i,N:-N] = convolve(data[i,:],coeff, mode='valid')
-        if order > 0:
-            data[i, :N]  = data[i, N]
-            data[i, -N:] = data[i,-(N+1)]            
-    data.shape = oldShape
+    if mcaIndex in [-1, len(data.shape)-1]:
+        data.shape = -1, oldShape[-1]
+        for i in xrange(data.shape[0]):
+            data[i,N:-N] = convolve(data[i,:],coeff, mode='valid')
+            if order > 0:
+                data[i, :N]  = data[i, N]
+                data[i, -N:] = data[i,-(N+1)]            
+        data.shape = oldShape
+    elif mcaIndex == 0:
+        data.shape = oldShape[0], -1
+        for i in xrange(data.shape[-1]):
+            data[N:-N, i] = convolve(data[i,:],coeff, mode='valid')
+            if order > 0:
+                data[:N, i] = data[N, i]
+                data[-N:, i] = data[-(N+1), i]            
+        data.shape = oldShape
+    else:
+        raise ValueError("Invalid 1D index %d" % mcaIndex)
     return
 
 if getSavitzkyGolay(10*numpy.arange(10.), npoints=3, degree=1,order=1)[5] < 0:

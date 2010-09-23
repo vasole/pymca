@@ -145,6 +145,8 @@ subtract =[
 "                "
 ]
 
+substract = subtract
+
 smooth = [
 "16 16 3 1",
 "O c none",
@@ -3366,6 +3368,7 @@ IconDict= {
     "average16":average16,
     "smooth":smooth,
     "subtract":subtract,
+    "substract":substract,
     "togglepoints":togglepoints,
     "remove":remove,
     "additionalselect":additionalselect,

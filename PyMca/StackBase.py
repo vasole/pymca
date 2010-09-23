@@ -63,6 +63,7 @@ class StackBase(object):
                          'calibration':[0, 1.0, 0.0],
                          'from': 0,
                          'to': -1}
+
         self._ROIImageDict = {'ROI': None,
                               'Maximum': None,
                               'Minimum': None,
@@ -70,6 +71,9 @@ class StackBase(object):
                               'Middle': None,
                               'Right': None,
                               'Background':None}
+
+        self._ROIImageList = []
+        self._ROIImageNames = []
 
         self.pluginList = []
         self.pluginInstanceDict = {}
@@ -340,7 +344,12 @@ class StackBase(object):
 
     def showROIImageList(self, imageList, image_names=None):
         if DEBUG:
-            print "showROIImageList to be implemented"         
+            print "showROIImageList to be implemented"
+        self._ROIImageList  = imageList
+        self._ROIImageNames = image_names
+
+    def getStackROIImagesAndNames(self):
+        return self._ROIImageList, self._ROIImageNames
 
     def calculateMcaDataObject(self, normalize=False):
         #original ICR mca
