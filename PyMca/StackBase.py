@@ -343,10 +343,13 @@ class StackBase(object):
             print "showOriginalMca to be implemented" 
 
     def showROIImageList(self, imageList, image_names=None):
-        if DEBUG:
-            print "showROIImageList to be implemented"
         self._ROIImageList  = imageList
         self._ROIImageNames = image_names
+        self._stackROIImageListUpdated()
+
+    def _stackROIImageListUpdated(self):
+        for key in self.pluginInstanceDict.keys():
+            self.pluginInstanceDict[key].stackROIImageListUpdated()
 
     def getStackROIImagesAndNames(self):
         return self._ROIImageList, self._ROIImageNames

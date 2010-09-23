@@ -402,8 +402,7 @@ class QStackWidget(StackBase.StackBase,
         self.roiWidget.graphWidget.graph.setTitle(image_names[0])
         self._ROIImageList = imageList
         self._ROIImageNames = image_names
-
-        #self.roiWidget.setImageList(imageList, image_names)
+        self._stackROIImageListUpdated()
 
     def addImage(self, image, name, info=None, replace=False, replot=True):
         self.rgbWidget.addImage(image, name)
