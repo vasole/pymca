@@ -31,18 +31,18 @@ These plugins will be compatible with any stack window that provides the functio
 import numpy
 import StackPluginBase
 try:
-    from PyMca.PCAWindow import PCAParametersDialog
+    from PyMca.NNMAWindow import NNMAParametersDialog
     from PyMca import StackPluginResultsWindow    
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print "PCAStackPlugin importing from somewhere else"
-    from PCAWindow import PCAParametersDialog
+    from NNMAWindow import NNMAParametersDialog
     import StackPluginResultsWindow
     import PyMca_Icons
 
 DEBUG = 0
 
-class PCAStackPlugin(StackPluginBase.StackPluginBase):
+class NNMAStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.DEBUG = DEBUG
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
@@ -104,7 +104,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
     #The specific part
     def calculate(self):
         if self.configurationWidget is None:
-            self.configurationWidget = PCAParametersDialog(None, regions=True)
+            self.configurationWidget = NNMAParametersDialog(None)
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             #I could get some defaults from the stack itslef 
@@ -121,25 +121,22 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                 binningOptions.append(number)
         ddict = {'options':binningOptions, 'binning': 1, 'method': 0}
         self.configurationWidget.setParameters(ddict)
-        y = spectrum
-        self.configurationWidget.setSpectrum(x, y)
+        #y = spectrum
+        #self.configurationWidget.setSpectrum(x, y)
         ret = self.configurationWidget.exec_()
         if ret:
             self.widget = None
-            pcaParameters = self.configurationWidget.getParameters()
+            nnmaParameters = self.configurationWidget.getParameters()
             self.configurationWidget.close()
-            method = pcaParameters['method']
-            methodlabel = pcaParameters.get('methodlabel', "")
-            function = pcaParameters['function']
-            pcaParameters['ncomponents'] = pcaParameters['npc']
             #At some point I should make sure I get directly the
             #function and the parameters from the configuration widget
-            del pcaParameters['npc']
-            del pcaParameters['method']
-            del pcaParameters['function']
-            del pcaParameters['methodlabel']
-            binning = pcaParameters['binning']
-            mask = pcaParameters['mask']
+            function = nnmaParameters['function']
+            print nnmaParameters.keys()
+            ddict = {}
+            ddict.update(nnmaParameters['kw'])
+            ddict['ncomponents'] = nnmaParameters['npc']
+            ddict['binning'] = nnmaParameters['binning']
+            del nnmaParameters
             stack = self.getStackDataObject()
             if isinstance(stack, numpy.ndarray):
                 if stack.data.dtype not in [numpy.float, numpy.float32]:
@@ -147,7 +144,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
 
             oldShape = stack.data.shape
             images, eigenValues, eigenVectors = function(stack,
-                                                         **pcaParameters)
+                                                         **ddict)
             if stack.data.shape != oldShape:
                 stack.data.shape = oldShape
 
@@ -156,16 +153,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             nimages = images.shape[0]
             imageNames = []
             vectorNames = []
-            itmp = nimages
-            if " ICA " in methodlabel:
-                itmp = nimages/2
-                for i in range(itmp):
-                    imageNames.append("ICAimage %02d" % i)
-                    vectorNames.append("ICAvector %02d" % i)
-            for i in range(itmp):
-                imageNames.append("Eigenimage %02d" % i)
-                vectorNames.append("Eigenvector %02d" % i)
-                    
+            vectorTitles = []
+            for i in range(nimages):
+                imageNames.append("NNMA Image %02d" % i)
+                vectorNames.append("NNMA Component %02d" % i)
+                vectorTitles.append("%g %% explained intensity" %\
+                                                   eigenValues[i])
             self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                             usetab=True)
             self.widget.buildAndConnectImageButtonBox()
@@ -177,7 +170,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setStackPluginResults(images,
                                               spectra=eigenVectors,
                                               image_names=imageNames,
-                                              spectra_names=vectorNames)
+                                              spectra_names=vectorNames,
+                                              spectra_titles=vectorTitles)
             self._showWidget()
 
     
@@ -191,7 +185,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         #update
         self.selectionMaskUpdated()
 
-MENU_TEXT = "PyMca PCA"
+MENU_TEXT = "PyMca NNMA"
 def getStackPluginInstance(stackWindow, **kw):
-    ob = PCAStackPlugin(stackWindow)
+    ob = NNMAStackPlugin(stackWindow)
     return ob

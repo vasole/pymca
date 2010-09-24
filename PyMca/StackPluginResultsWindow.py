@@ -120,7 +120,8 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.slider.setValue(index)
 
     def setStackPluginResults(self, images, spectra=None,
-                   image_names = None, spectra_names = None, xvalues=None):
+                   image_names = None, spectra_names = None,
+                   xvalues=None, spectra_titles=None):
         self.spectrumList = spectra
         if type(images) == type([]):
             self.imageList = images
@@ -159,10 +160,13 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                     self.xValues.append(numpy.arange(len(self.spectrumList[0])))
             else:
                 self.xValues = xValues
+            self.spectrumGraphTitles = spectra_titles
             legend = self.spectrumNames[0]
             x = self.xValues[0]
             y = self.spectrumList[0]
-            self.spectrumGraph.newCurve(x, y, legend, replace=True) 
+            self.spectrumGraph.newCurve(x, y, legend, replace=True)
+            if self.spectrumGraphTitles is not None:
+                self.spectrumGraph.graph.setTitle(self.spectrumGraphTitles[0])
             
         self.slider.setValue(0)
 

@@ -599,9 +599,14 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             images = numpy.dot(proj.astype(data.dtype), data.T)
         else:
             images = numpy.dot(proj.astype(data.dtype), data[:,mask>0].T)
-        if binning == 1:
-            if data.shape != oldShape:
-                data.shape = oldShape
+
+    #make sure the shape of the original data is not modified
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        if stack.data.shape != oldShape:
+            stack.data.shape = oldShape
+    else:
+        if stack.shape != oldShape:
+            stach.shape = oldShape
 
     if mask is not None:
         eigenvectors = numpy.zeros((ncomponents, N),pca.v.dtype)
