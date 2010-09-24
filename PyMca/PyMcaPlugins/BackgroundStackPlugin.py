@@ -39,7 +39,7 @@ except ImportError:
     import SNIPWindow
     import PyMca_Icons
 
-DEBUG = 1
+DEBUG = 0
 
 class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
@@ -75,13 +75,6 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
                                      
     def stackUpdated(self):
         self.dialogWidget = None
-        self.resultsWidget = None
-        self.results = None
-
-    def selectionMaskUpdated(self):
-        if self.resultsWidget is not None:
-            mask = self.getStackSelectionMask()
-            self.resultsWidget.setSelectionMask(mask)
 
     #Methods implemented by the plugin
     def getMethods(self):

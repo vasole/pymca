@@ -44,7 +44,7 @@ import os
 DEBUG = 0
 import time
 
-def lanczosPCA(stack, ncomponents, binning=None, **kw):
+def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
     if DEBUG:
         print "lanczosPCA"
     if binning is None:
@@ -111,7 +111,7 @@ def lanczosPCA(stack, ncomponents, binning=None, **kw):
     images.shape = ncomponents, r, c
     return images, eigenvalues, vectors
 
-def lanczosPCA2(stack, ncomponents, binning=None, **kw):
+def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
     """
     This is a fast method, but it may loose information
     """
@@ -211,7 +211,7 @@ def lanczosPCA2(stack, ncomponents, binning=None, **kw):
     images.shape = ncomponents, r, c
     return images, evals,  vectors
 
-def multipleArrayPCA(stackList, ncomponents, binning=None, **kw):
+def multipleArrayPCA(stackList, ncomponents=10, binning=None, **kw):
     """
     Given a list of arrays, calculate the requested principal components from
     the matrix resulting from their column concatenation. Therefore, all the
@@ -306,7 +306,7 @@ def multipleArrayPCA(stackList, ncomponents, binning=None, **kw):
         
     return images, eigenvalues, eigenvectors
 
-def expectationMaximizationPCA(stack, ncomponents, binning=None, **kw):
+def expectationMaximizationPCA(stack, ncomponents=10, binning=None, **kw):
     """
     This is a fast method when the number of components is small
     """
@@ -381,7 +381,7 @@ def expectationMaximizationPCA(stack, ncomponents, binning=None, **kw):
     images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
-def numpyPCA(stack, ncomponents, binning=None, **kw):
+def numpyPCA(stack, ncomponents=10, binning=None, **kw):
     """
     This is a covariance method using numpy numpy.linalg.eigh
     """
@@ -438,23 +438,23 @@ def numpyPCA(stack, ncomponents, binning=None, **kw):
     images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
-def mdpPCASVDFloat32(stack, ncomponents, binning=None, mask=None):
+def mdpPCASVDFloat32(stack, ncomponents=10, binning=None, mask=None):
     return mdpPCA(stack, ncomponents,
                   binning=binning, dtype='float32', svd='True', mask=mask)
 
-def mdpPCASVDFloat64(stack, ncomponents, binning=None, mask=None):
+def mdpPCASVDFloat64(stack, ncomponents=10, binning=None, mask=None):
     return mdpPCA(stack, ncomponents,
                   binning=binning, dtype='float64', svd='True', mask=mask)
 
-def mdpICAFloat32(stack, ncomponents, binning=None, mask=None):
+def mdpICAFloat32(stack, ncomponents=10, binning=None, mask=None):
     return mdpICA(stack, ncomponents,
                   binning=binning, dtype='float32', svd='True', mask=mask)
 
-def mdpICAFloat64(stack, ncomponents, binning=None, mask=None):
+def mdpICAFloat64(stack, ncomponents=10, binning=None, mask=None):
     return mdpICA(stack, ncomponents,
                   binning=binning, dtype='float64', svd='True', mask=mask)
 
-def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True', mask=None):
+def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mask=None):
     if DEBUG:
         print "MDP Method"
         print "binning =", binning
@@ -612,7 +612,7 @@ def mdpPCA(stack, ncomponents, binning=None, dtype='float64', svd='True', mask=N
     images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
-def mdpICA(stack, ncomponents, binning=None, dtype='float64', svd='True', mask=None):
+def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mask=None):
     #This part is common to all ...
     if binning is None:
         binning = 1

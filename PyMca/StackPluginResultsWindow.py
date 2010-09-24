@@ -102,8 +102,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.showImage(index, moveslider=False)
         if self.spectrumList is not None:
             legend = self.spectrumNames[index]
+            x = self.xValues[index]
             y = self.spectrumList[index]
-            self.spectrumGraph.newCurve(range(len(y)), y, legend, replace=True)
+            self.spectrumGraph.newCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
                 self.spectrumGraph.graph.setTitle(self.spectrumGraphTitles[index])
                 
@@ -119,7 +120,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.slider.setValue(index)
 
     def setStackPluginResults(self, images, spectra=None,
-                   image_names = None, spectra_names = None):
+                   image_names = None, spectra_names = None, xvalues=None):
         self.spectrumList = spectra
         if type(images) == type([]):
             self.imageList = images
@@ -152,9 +153,16 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                     self.spectrumNames.append("Spectrum %02d" % i)
             else:
                 self.spectrumNames = spectra_names
+            if xvalues is None:
+                self.xValues = []
+                for i in range(nimages):
+                    self.xValues.append(numpy.arange(len(self.spectrumList[0])))
+            else:
+                self.xValues = xValues
             legend = self.spectrumNames[0]
+            x = self.xValues[0]
             y = self.spectrumList[0]
-            self.spectrumGraph.newCurve(range(len(y)), y, legend, replace=True) 
+            self.spectrumGraph.newCurve(x, y, legend, replace=True) 
             
         self.slider.setValue(0)
 
