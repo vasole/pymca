@@ -93,10 +93,10 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         if crop:
             self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
             infotext = "Crop image to the currently zoomed window"
-            cropPosition = 12
-            if kw.has_key('imageicons'):
-                if not kw['imageicons']:
-                    cropPosition = 6
+            cropPosition = 6
+            #if kw.has_key('imageicons'):
+            #    if not kw['imageicons']:
+            #        cropPosition = 6
             self.cropButton = self.graphWidget._addToolButton(\
                                             self.cropIcon,
                                             self._cropIconChecked,

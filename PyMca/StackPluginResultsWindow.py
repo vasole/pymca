@@ -48,9 +48,10 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.slider.setMinimum(0)
         self.slider.setMaximum(0)
 
-        # The 1D graph
-        self.spectrumGraph = ScanWindow.ScanWindow(self)
-        self.mainTab.addTab(self.spectrumGraph, "VECTORS")
+        if ddict['usetab']:
+            # The 1D graph
+            self.spectrumGraph = ScanWindow.ScanWindow(self)
+            self.mainTab.addTab(self.spectrumGraph, "VECTORS")
         
         self.mainLayout.addWidget(self.slider)
         self.connect(self.slider,
@@ -125,6 +126,12 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.spectrumList = spectra
         if type(images) == type([]):
             self.imageList = images
+            if image_names is None:
+                self.imageNames = []
+                for i in range(nimages):
+                    self.imageNames.append("Image %02d" % i)
+            else:
+                self.imageNames = image_names
         elif len(images.shape) == 3:
             nimages = images.shape[0]
             self.imageList = [0] * nimages
