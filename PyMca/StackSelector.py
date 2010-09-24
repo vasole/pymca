@@ -163,6 +163,7 @@ class StackSelector(object):
         line = f.read(10)
         f.close()
 
+        specfile = False
         omnicfile = False
         if line[0] == "\n":
             line = line[1:]
@@ -198,17 +199,19 @@ class StackSelector(object):
                     omnicfile = True
                 else:                    
                     stack = QSpecFileStack()
+                    specfile = True
             else:                    
                 stack = QSpecFileStack()
+                specfile = True
 
-        if len(begin) == 2:
+        if specfile and (len(begin) == 2):
             if increment is None:
                 increment = [1] * len(begin)
             shape = (len(range(begin[0], end[0]+1, increment[0])),
                      len(range(begin[1], end[1]+1, increment[1])))
+            stack.loadFileList(args, fileindex=fileindex, shape=shape)
         else:
-            shape = None
-        stack.loadFileList(args, fileindex=fileindex, shape=shape)
+            stack.loadFileList(args, fileindex=fileindex)
         return stack
 
     def _getFileList(self, fileTypeList, message=None, getfilter=None):
@@ -333,17 +336,17 @@ class StackSelector(object):
             raise ValueError, "Increment list and begin list do not have same length"
         fileList = []
         if len(begin) == 1:
-            for j in range(begin[0], end[0]+1, 1):
+            for j in range(begin[0], end[0]+increment[0], increment[0]):
                 fileList.append(pattern % (j))
         elif len(begin) == 2:
-            for j in range(begin[0], end[0]+1, increment[0]):
-                for k in range(begin[1], end[1]+1, increment[1]):
+            for j in range(begin[0], end[0]+increment[0], increment[0]):
+                for k in range(begin[1], end[1]+increment[1], increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
             raise ValueError, "Cannot handle three indices yet."
-            for j in range(begin[0], end[0]+1, increment[0]):
-                for k in range(begin[1], end[1]+1, increment[1]):
-                    for l in range(begin[2], end[2]+1, increment[2]):
+            for j in range(begin[0], end[0]+increment[0], increment[0]):
+                for k in range(begin[1], end[1]+increment[1], increment[1]):
+                    for l in range(begin[2], end[2]+increment[2], increment[2]):
                         fileList.append(pattern % (j, k, l))
         else:
             raise ValueError, "Cannot handle more than three indices."

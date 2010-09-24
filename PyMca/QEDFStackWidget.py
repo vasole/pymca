@@ -2428,17 +2428,17 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             raise ValueError, "Increment list and begin list do not have same length"
         fileList = []
         if len(begin) == 1:
-            for j in range(begin[0], end[0]+1, 1):
+            for j in range(begin[0], end[0]+increment[0], increment[0]):
                 fileList.append(pattern % (j))
         elif len(begin) == 2:
-            for j in range(begin[0], end[0]+1, increment[0]):
-                for k in range(begin[1], end[1]+1, increment[1]):
+            for j in range(begin[0], end[0]+increment[0], increment[0]):
+                for k in range(begin[1], end[1]+increment[1], increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
             raise ValueError, "Cannot handle three indices yet."
-            for j in range(begin[0], end[0]+1, increment[0]):
-                for k in range(begin[1], end[1]+1, increment[1]):
-                    for l in range(begin[2], end[2]+1, increment[2]):
+            for j in range(begin[0], end[0]+increment[0], increment[0]):
+                for k in range(begin[1], end[1]+increment[1], increment[1]):
+                    for l in range(begin[2], end[2]+increment[2], increment[2]):
                         fileList.append(pattern % (j, k, l))
         else:
             raise ValueError, "Cannot handle more than three indices."
@@ -2507,6 +2507,7 @@ if __name__ == "__main__":
         #ignore the args even if present
         args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
     aifirafile = False
+    specfile = False
     if len(args):
         f = open(args[0], 'rb')
         #read 10 characters
@@ -2541,13 +2542,17 @@ if __name__ == "__main__":
             stack = QHDF5Stack1D.QHDF5Stack1D(args)
             omnicfile = True
         else:
+            specfile = True
             stack = QSpecFileStack()
         f.close()
     if len(args) > 1:
         shape = None
-        if filepattern is not None:
+        if specfile and (filepattern is not None):
             if len(begin) == 2:
-                shape = (end[0]-begin[0]+1, end[1]-begin[1]+1)
+                if increment is None:
+                    increment = [1] * len(begin)
+                shape = (len(range(begin[0], end[0]+1, increment[0])),
+                         len(range(begin[1], end[1]+1, increment[1])))
             stack.loadFileList(args, fileindex=fileindex, shape=shape)
         else:
             stack.loadFileList(args, fileindex=fileindex)
