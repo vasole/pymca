@@ -47,7 +47,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         StackPluginBase.DEBUG = DEBUG
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'Calculate':[self.calculate,
-                                        "Perform PCA",
+                                        "Perform NNMA",
                                         None],
                            'Show':[self._showWidget,
                                    "Show last results",
@@ -131,7 +131,6 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             #At some point I should make sure I get directly the
             #function and the parameters from the configuration widget
             function = nnmaParameters['function']
-            print nnmaParameters.keys()
             ddict = {}
             ddict.update(nnmaParameters['kw'])
             ddict['ncomponents'] = nnmaParameters['npc']
