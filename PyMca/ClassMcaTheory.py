@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -46,21 +46,26 @@ class McaTheory:
         self.sigmay0 = None
         
         if initdict is None:
-            initdict = os.path.join(os.path.dirname(__file__),"McaTheory.cfg")
-            if os.path.exists(initdict):
-                self.config = ConfigDict.ConfigDict(filelist   =initdict)
-            else:
+            dirname = os.path.dirname(__file__)
+            initdict = os.path.join(dirname, "McaTheory.cfg")
+            if not os.path.exists(initdict):
                 #Frozen version deals differently with the path
-                initdict = os.path.join(os.path.dirname(os.path.dirname(__file__)),"McaTheory.cfg")
+                dirname = os.path.dirname(dirname)
+                initdict = os.path.join(dirname, "McaTheory.cfg")
+                if not os.path.exists(initdict):
+                    if dirname.lower().endswith("library.zip"):
+                        dirname = os.path.dirname(dirname)
+                        initdict = os.path.join(dirname, "McaTheory.cfg")
                 if os.path.exists(initdict):
-                    self.config = ConfigDict.ConfigDict(filelist   =initdict)
+                    self.config = ConfigDict.ConfigDict(filelist = initdict)
                 else:
-                    print "Cannot find file ",os.path.dirname(__file__)+"\\McaTheory.cfg",' or ',initdict                  
+                    print "Cannot find file McaTheory.cfg"
+                    raise IOError("File %s does not exist" % initdict)
         else:
             if os.path.exists(initdict):
-                self.config = ConfigDict.ConfigDict(filelist   =initdict)
+                self.config = ConfigDict.ConfigDict(filelist = initdict)
             else:
-                raise IOError, "file %s does not exist" % initdict
+                raise IOError, "File %s does not exist" % initdict
                 self.config = {}
                 self.config['fit'] = {}
                 self.config['attenuators'] = {}

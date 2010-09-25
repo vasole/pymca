@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,21 +22,25 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import ConfigDict
 import sys
 import imp
 import os
-dict=ConfigDict.ConfigDict()
+ddict = ConfigDict.ConfigDict()
 dirmod = os.path.dirname(__file__) 
-dictfile = os.path.join(dirmod,"Scofield1973.dict")
-if os.path.exists(dictfile):
-    dict.read(dictfile)
-else:
-    #freeze does bad things with the path ...
-    dictfile = os.path.join(os.path.dirname(dirmod),"Scofield1973.dict")
-    if os.path.exists(dictfile):
-        dict.read(dictfile)
-    else:
-        print "Cannot find file ",dictfile                
+dictfile = os.path.join(dirmod, "Scofield1973.dict")
+if not os.path.exists(dictfile):
+    dirmod = os.path.dirname(dirmod)
+    dictfile = os.path.join(dirmod,"Scofield1973.dict")
+    if not os.path.exists(dictfile):
+        if dirmod.lower().endswith("library.zip"):
+            dirmod = os.path.dirname(dirmod)
+    dictfile = os.path.join(dirmod,"Scofield1973.dict")
+if not os.path.exists(dictfile):
+    print "Cannot find file ", dictfile
+    raise IOError("Cannot find file %s " % dictfile)
+ddict.read(dictfile)
+
+

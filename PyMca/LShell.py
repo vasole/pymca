@@ -34,8 +34,12 @@ inputfile = os.path.join(dirname, "LShellRates.dat")
 if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)
     inputfile = os.path.join(dirname, "LShellRates.dat")
+    if dirname.lower().endswith("library.zip"):
+        dirname = os.path.dirname(dirname)
+        inputfile = os.path.join(dirname, "LShellRates.dat")
     if not os.path.exists(inputfile):
-         print "Cannot find inputfile ",inputfile
+        print "Cannot find inputfile ",inputfile
+        raise IOError("Cannot find LShellRates.dat file")
 sf=specfile.Specfile(os.path.join(dirname, "LShellRates.dat"))
 ElementL1ShellTransitions = sf[0].alllabels()
 ElementL2ShellTransitions = sf[1].alllabels()

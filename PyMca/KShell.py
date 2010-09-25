@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,9 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.4 $"
+__revision__ = "$Revision: 1.5 $"
 
 import numpy.oldnumeric as Numeric
 import specfile
@@ -36,7 +36,12 @@ if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)
     inputfile = os.path.join(dirname, "KShellRates.dat")
     if not os.path.exists(inputfile):
-         print "Cannot find inputfile ",inputfile    
+        if dirname.lower().endswith("library.zip"):
+            dirname = os.path.dirname(dirname)
+            inputfile = os.path.join(dirname, "KShellRates.dat")
+    if not os.path.exists(inputfile):
+        print "Cannot find inputfile ",inputfile
+        raise IOError("Cannot find KShellRates.dat file")
 
 sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
 ElementKShellTransitions = sf[0].alllabels()

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -39,19 +39,24 @@ ElementList= ['H','He','Li','Be','B','C','N','O','F','Ne',
      'Es','Fm','Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt']
 
 dirmod = os.path.dirname(Scofield1973.__file__) 
-file   = os.path.join(dirmod,"attdata")
-file   = os.path.join(file,"incoh.dict")
-if not os.path.exists(file):
+ffile   = os.path.join(dirmod,"attdata")
+ffile   = os.path.join(ffile,"incoh.dict")
+if not os.path.exists(ffile):
     #freeze does bad things with the path ...
-    file = os.path.dirname(dirmod)
-    file = os.path.join(file,"attdata")
-    file = os.path.join(file,"incoh.dict")
-    if not os.path.exists(file):
-        print "Cannot find file ",file
-        raise IOError,"Cannot find file %s" % file
+    dirmod = os.path.dirname(dirmod)
+    ffile = os.path.join(dirmod, "attdata")
+    ffile = os.path.join(ffile, "incoh.dict")
+    if not os.path.exists(ffile):
+        if dirmod.lower().endswith("library.zip"):
+            dirmod = os.path.dirname(dirmod)
+            ffile = os.path.join(dirmod,"attdata")
+            ffile = os.path.join(ffile, "incoh.dict")
+    if not os.path.exists(ffile):
+        print "Cannot find file ", ffile
+        raise IOError("Cannot find file %s" % ffile)
 
 COEFFICIENTS = ConfigDict.ConfigDict()
-COEFFICIENTS.read(file)    
+COEFFICIENTS.read(ffile)    
 xvalues = COEFFICIENTS['ISCADT']['XSVAL']
 svalues = Numeric.reshape(COEFFICIENTS['ISCADT']['SCATF'], (100,len(xvalues)))
 #svalues = COEFFICIENTS['ISCADT']['SCATF']

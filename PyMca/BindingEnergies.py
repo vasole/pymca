@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.1 $"
+__revision__ = "$Revision: 1.2 $"
 
 import numpy
 import specfile
@@ -37,7 +37,12 @@ if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)
     inputfile = os.path.join(dirname, filename)
     if not os.path.exists(inputfile):
-         print "Cannot find inputfile ",inputfile    
+        if dirname.lower().endswith("library.zip"):
+            dirname = os.path.dirname(dirname)
+            inputfile = os.path.join(dirname, filename)
+    if not os.path.exists(inputfile):
+        print "Cannot find inputfile ",inputfile
+        raise IOError("Cannot find BindingEnergies.dat file")
 
 sf=specfile.Specfile(os.path.join(dirname, filename))
 ElementShells = sf[0].alllabels()

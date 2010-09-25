@@ -2611,19 +2611,21 @@ def getelementmassattcoef(ele,energy=None):
         dirmod = os.path.dirname(Scofield1973.__file__) 
         #read xcom file
         #print dirmod+"/"+ele+".mat"
-        xcomfile = os.path.join(dirmod,"attdata")
-        xcomfile = os.path.join(xcomfile,ele+".mat")
-        if os.path.exists(xcomfile):
-            f=open(xcomfile)
-        else:
+        xcomfile = os.path.join(dirmod, "attdata")
+        xcomfile = os.path.join(xcomfile, ele+".mat")
+        if not os.path.exists(xcomfile):
             #freeze does bad things with the path ...
-            xcomfile = os.path.dirname(dirmod)
-            xcomfile = os.path.join(xcomfile,"attdata")
-            xcomfile = os.path.join(xcomfile,ele+".mat")
-            if os.path.exists(xcomfile):
-                f=open(xcomfile)
-            else:
-                print "Cannot find file ",xcomfile                
+            dirmod = os.path.dirname(dirmod)
+            xcomfile = os.path.join(dirmod, "attdata")
+            xcomfile = os.path.join(xcomfile, ele+".mat")
+            if dirmod.lower().endswith("library.zip"):
+                dirmod = os.path.dirname(dirmod)
+                xcomfile = os.path.join(dirmod, "attdata")
+                xcomfile = os.path.join(xcomfile, ele+".mat")
+            if not os.path.exists(xcomfile):
+                print "Cannot find file ",xcomfile
+                raise IOError("Cannot find %s" % xcomfile)
+        f = open(xcomfile, 'r')
         line=f.readline()
         while (string.split(line,'ENERGY')[0] == line):
             line = f.readline()
@@ -2967,18 +2969,21 @@ def _getMaterialDict():
     dirmod  = os.path.dirname(Scofield1973.__file__) 
     matdict = os.path.join(dirmod,"attdata")
     matdict = os.path.join(matdict,"MATERIALS.DICT")
-    if os.path.exists(matdict):
-        cDict.read(matdict)
-    else:
+    if not os.path.exists(matdict):
         #freeze does bad things with the path ...
-        matdict = os.path.dirname(dirmod)
-        matdict = os.path.join(matdict,"attdata")
-        matdict = os.path.join(matdict,"MATERIALS.DICT")
-        if os.path.exists(matdict):
-            cDict.read(matdict)
-        else:
-            print "Cannot find file ",matdict
-            return {}
+        dirmod = os.path.dirname(dirmod)
+        matdict = os.path.join(dirmod, "attdata")
+        matdict = os.path.join(matdict, "MATERIALS.DICT")
+        if not os.path.exists(matdict):
+            if dirmod.lower().endswith("library.zip"):
+                dirmod = os.path.dirname(dirmod)
+                matdict = os.path.join(dirmod, "attdata")
+                matdict = os.path.join(matdict, "MATERIALS.DICT")
+    if not os.path.exists(matdict):
+        print "Cannot find file ", matdict
+        #raise IOError("Cannot find %s" % matdict)
+        return {}
+    cDict.read(matdict)
     return cDict
     
 class BoundMethodWeakref:

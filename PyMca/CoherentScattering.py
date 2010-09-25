@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import ConfigDict
 import os
@@ -30,19 +30,23 @@ import numpy.oldnumeric as Numeric
 import Scofield1973
 
 dirmod = os.path.dirname(Scofield1973.__file__) 
-file   = os.path.join(dirmod,"attdata")
-file   = os.path.join(file,"atomsf.dict")
-if not os.path.exists(file):
+ffile   = os.path.join(dirmod, "attdata")
+ffile   = os.path.join(ffile, "atomsf.dict")
+if not os.path.exists(ffile):
     #freeze does bad things with the path ...
-    file = os.path.dirname(dirmod)
-    file = os.path.join(file,"attdata")
-    file = os.path.join(file,"atomsf.dict")
-    if not os.path.exists(file):
-        print "Cannot find file ",file
-        raise "IOError","Cannot find file %s" % file
-
+    dirmod = os.path.dirname(dirmod)
+    ffile = os.path.join(dirmod, "attdata")
+    ffile = os.path.join(ffile, "atomsf.dict")
+    if not os.path.exists(ffile):
+        if dirmod.lower().endswith("library.zip"):
+            dirmod = os.path.dirname(dirmod)
+            ffile = os.path.join(dirmod, "attdata")
+            ffile = os.path.join(ffile, "atomsf.dict")            
+    if not os.path.exists(ffile):
+        print "Cannot find file ", ffile
+        raise IOError("Cannot find file %s" % ffile)
 COEFFICIENTS = ConfigDict.ConfigDict()
-COEFFICIENTS.read(file)    
+COEFFICIENTS.read(ffile)    
 KEVTOANG = 12.39852000
 R0 = 2.82E-13 #electron radius in cm
 

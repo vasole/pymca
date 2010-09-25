@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -55,24 +55,26 @@ ElementList = ['H', 'He',
 
 dirmod = os.path.dirname(__file__)
 EPDL97_FILE = os.path.join(dirmod,"EPDL97_CrossSections.dat")
-if os.path.exists(EPDL97_FILE):
-    pass
-else:
+if not os.path.exists(EPDL97_FILE):
     #freeze does bad things with the path ...
-    EPDL97_FILE = os.path.join(os.path.dirname(dirmod),
+    dirmod = os.path.dirname(dirmod)
+    EPDL97_FILE = os.path.join(dirmod,
                                os.path.basename(EPDL97_FILE))
     if not os.path.exists(EPDL97_FILE):
-        raise IOError, "Cannot find the EPDL97 specfile"
+        if dirmod.lower().endswith("library.zip"):
+            dirmod = os.path.dirname(dirmod)
+            EPDL97_FILE = os.path.join(dirmod,
+                               os.path.basename(EPDL97_FILE))
+    if not os.path.exists(EPDL97_FILE):
+        raise IOError("Cannot find the EPDL97 specfile")
 
 EADL97_FILE = os.path.join(dirmod,"EADL97_BindingEnergies.dat")
-if os.path.exists(EADL97_FILE):
-    pass
-else:
+if not os.path.exists(EADL97_FILE):
     #freeze does bad things with the path ...
     EADL97_FILE = os.path.join(os.path.dirname(dirmod),
                                os.path.basename(EADL97_FILE))
     if not os.path.exists(EADL97_FILE):
-        raise IOError, "Cannot find the EADL97 specfile"
+        raise IOError("Cannot find the EADL97 specfile")
 
 
 EPDL97_DICT = {}

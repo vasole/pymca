@@ -33,7 +33,12 @@ if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)
     inputfile = os.path.join(dirname, "MShellRates.dat")
     if not os.path.exists(inputfile):
-         print "Cannot find inputfile ",inputfile
+        if dirname.lower().endswith("library.zip"):
+            dirname = os.path.dirname(dirname)
+            inputfile = os.path.join(dirname, "MShellRates.dat")
+    if not os.path.exists(inputfile):
+        print "Cannot find inputfile ",inputfile
+        raise IOError("Cannot find MShellRates.dat file")
 
 sf=specfile.Specfile(os.path.join(dirname, "MShellRates.dat"))
 ElementM1ShellTransitions = sf[0].alllabels()

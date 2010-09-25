@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
+import os
 from SpecfitGUI import qt
 QTVERSION = qt.qVersion()
 import SpecfitGUI
@@ -49,9 +50,16 @@ class McaSimpleFit(qt.QWidget):
         self.headerlabel.setAlignment(qt.Qt.AlignHCenter)       
         self.setheader('<b>Fit of XXXXXXXXXX from Channel XXXXX to XXXX<\b>')
         ##############
-        self.specfit.importfun("SpecfitFunctions.py")
+        defaultFunctions = "SpecfitFunctions.py"
+        if os.path.exists(defaultFunctions):
+            self.specfit.importfun(defaultFunctions)
+        else:
+            defaultFunctions = os.path.join(os.path.dirname(__file__),
+                                            defaultFunctions)
+        self.specfit.importfun(defaultFunctions)
         self.specfit.settheory('Area Gaussians')
         self.specfit.setbackground('Linear')
+            
         fitconfig = {}
         fitconfig.update(self.specfit.fitconfig)
         fitconfig['WeightFlag'] = 1
