@@ -2054,6 +2054,15 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def removeCurve(self, legend, replot=True):
         return self.removeCurves([legend], replot=replot)
 
+    def setGraphTitle(self, title):
+        self.graph.setTitle(text)
+
+    def setGraphXTitle(self, title):
+        self.graph.x1Label(title)
+
+    def setGraphYTitle(self, title):
+        self.graph.y1Label(title)
+
     #end of plugins interface
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
                  replace=False, replot=True, info=None, **kw):

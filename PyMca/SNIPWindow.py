@@ -184,7 +184,7 @@ class SNIP2DParametersWidget(qt.QWidget):
         return self.parametersDict
 
 class SNIPWindow(qt.QWidget):
-    def __init__(self, parent, data, image=None):
+    def __init__(self, parent, data, image=None, x=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -204,6 +204,12 @@ class SNIPWindow(qt.QWidget):
         self.__image = image
         if self.__image:
             self.spectrum = None
+        else:
+            if x is None:
+                self.xValues = range(len(spectrum))
+            else:
+                self.xValues = x
+        if self.__image:
             self.image = data
             self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                             colormap=True,
@@ -221,7 +227,7 @@ class SNIPWindow(qt.QWidget):
             self.spectrum = spectrum
             self.parametersWidget = SNIP1DParametersWidget(self, length=len(spectrum))
             self.graph = ScanWindow.ScanWindow(self)
-            self.graph.newCurve(range(len(spectrum)),
+            self.graph.newCurve(self.xValues,
                             spectrum, "Spectrum", replace=True)
             self.mainLayout.addWidget(self.parametersWidget)
             self.mainLayout.addWidget(self.graph)
@@ -277,7 +283,7 @@ class SNIPWindow(qt.QWidget):
                                                    roi_min=roi_min,
                                                    roi_max=roi_max,
                                                    smoothing=smoothing)
-            self.graph.newCurve(range(len(self.spectrum)),
+            self.graph.newCurve(self.xValues,
                             self.background, "Background", replace=False)
         
             #Force information update
@@ -287,7 +293,7 @@ class SNIPWindow(qt.QWidget):
 
 
 class SNIPDialog(qt.QDialog):
-    def __init__(self, parent, data):
+    def __init__(self, parent, data, x=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -303,9 +309,10 @@ class SNIPDialog(qt.QDialog):
         else:
             spectrum = data
         if self.__image:
-            self.parametersWidget = SNIPWindow(self, image, image=True)
+            self.parametersWidget = SNIPWindow(self, image, image=True, x=x)
         else:
-            self.parametersWidget = SNIPWindow(self, spectrum, image=False)
+            self.parametersWidget = SNIPWindow(self, spectrum, image=False,x=x)
+        self.graph = self.parametersWidget.graph
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)

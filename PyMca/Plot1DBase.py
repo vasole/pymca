@@ -150,3 +150,12 @@ class Plot1DBase:
         print "setActiveCurve not implemented"
         return None
 
+    def setGraphTitle(self, title):
+        print "setGraphTitle not implemented"
+
+    def setGraphXTitle(self, title):
+        print "setGraphXTitle not implemented"
+
+    def setGraphYTitle(self, title):
+        print "setGraphYTitle not implemented"
+        

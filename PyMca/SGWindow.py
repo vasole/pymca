@@ -91,18 +91,22 @@ class SGParametersWidget(qt.QWidget):
         return self.parametersDict
 
 class SGWindow(qt.QWidget):
-    def __init__(self, parent, data, image=None):
+    def __init__(self, parent, data, image=None, x=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("Savitzky-Golay Filter Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         spectrum = data
+        if x is None:
+            self.xValues = range(len(spectrum))
+        else:
+            self.xValues = x
         self.image = None
         self.spectrum = spectrum
         self.parametersWidget = SGParametersWidget(self, length=len(spectrum))
         self.graph = ScanWindow.ScanWindow(self)
-        self.graph.newCurve(range(len(spectrum)),
+        self.graph.newCurve(self.xValues,
                         spectrum, "Spectrum", replace=True)
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graph)
@@ -124,7 +128,7 @@ class SGWindow(qt.QWidget):
             maptoy2 = True
         else:
             maptoy2 = False
-        self.graph.newCurve(range(len(self.spectrum)),
+        self.graph.newCurve(self.xValues,
                     self.background, "Filtered Spectrum",
                     replace=False,
                     maptoy2=maptoy2)
@@ -135,7 +139,7 @@ class SGWindow(qt.QWidget):
             self.graph.setActiveCurve(legend)
 
 class SGDialog(qt.QDialog):
-    def __init__(self, parent, data):
+    def __init__(self, parent, data, x=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("Savitzky-Golay Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -146,7 +150,8 @@ class SGDialog(qt.QDialog):
             spectrum = data.ravel()
         else:
             spectrum = data
-        self.parametersWidget = SGWindow(self, spectrum, image=False)
+        self.parametersWidget = SGWindow(self, spectrum, image=False, x=x)
+        self.graph = self.parametersWidget.graph
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)

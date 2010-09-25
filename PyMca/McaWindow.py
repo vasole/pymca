@@ -2300,8 +2300,32 @@ class McaWidget(qt.QWidget):
             ddict['colheader'] = 'Raw Counts'
             self.__anasignal(ddict)
 
+    def getActiveCurve(self):
+        legend = self.graph.getactivecurve(justlegend=1)
+        if legend is None:
+            return None
 
-
+        info, x, y = self.getinfodatafromlegend(legend)
+        if info is not None:
+            curveinfo = self.graph.getcurveinfo(legend)
+            if self.calibration == 'None':
+                calib = [0.0,1.0,0.0]
+            else:
+                if curveinfo.has_key('McaCalib'):
+                    calib = curveinfo['McaCalib']
+                else:
+                    calib = [0.0, 1.0, 0.0]
+            calibrationOrder = curveinfo.get('McaCalibOrder',2)
+            if calibrationOrder == 'TOF':
+                x = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+            else:
+                x = calib[0] + calib[1] * x + calib[2] * x * x
+        else:
+            info = {}
+        info['xlabel'] = self.graph.x1Label()
+        info['ylabel'] = self.graph.y1Label()
+        return x, y, legend, info
+    
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)

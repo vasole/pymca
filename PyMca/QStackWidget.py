@@ -627,6 +627,23 @@ class QStackWidget(StackBase.StackBase,
             return
         if ddict['event'] == "ROISignal":
             self.updateROIImages(ddict)
+
+    def getActiveCurve(self):
+        legend = self.mcaWidget.graph.getactivecurve(justlegend=1)
+        if legend is None:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Please select an active curve")
+            msg.exec_()
+            return
+        x, y, legend, info = self.mcaWidget.getActiveCurve()
+        return x, y, legend, info
+
+    def getGraphXLimits(self):
+        return self.mcaWidget.graph.getX1AxisLimits()
+        
+    def getGraphYLimits(self):
+        return self.mcaWidget.graph.getY1AxisLimits()
     
 def test():
     #create a dummy stack
