@@ -41,6 +41,8 @@ from PyMca.RGBCorrelatorWidget import ImageShapeDialog
 from PyMca.PyMca_Icons import IconDict
 from PyMca import StackSelector
 from PyMca import PyMcaDirs
+from PyMca import ArraySave
+HDF5 = ArraySave.HDF5
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
@@ -93,10 +95,35 @@ class QStackWidget(StackBase.StackBase,
         self.stackWindow.mainLayout = qt.QVBoxLayout(self.stackWindow)
         self.stackWindow.mainLayout.setMargin(0)
         self.stackWindow.mainLayout.setSpacing(0)
-  
-        self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
-                                                           selection=False,
-                                                           imageicons=False)
+
+        if HDF5:
+            self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
+                                                        selection=False,
+                                                        standalonesave=False,
+                                                        imageicons=False)
+            self._stackSaveMenu = qt.QMenu()
+            self._stackSaveMenu.addAction(qt.QString("Stack as NeXus"),
+                                                 self.saveStackAsNeXus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 NeXus"),
+                                                 self.saveStackAsFloat32NeXus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 NeXus"),
+                                                 self.saveStackAsFloat64NeXus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as NeXus+/data/data"),
+                                                 self.saveStackAsNeXusPlus)
+            self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data/data"),
+                                                 self.saveStackAsSimpleHDF5)
+            self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data"),
+                                                 self.saveStackAsSimplestHDF5)
+            self._stackSaveMenu.addAction(qt.QString("Standard Graphics"),
+                                     self.stackWidget._saveIconSignal)
+            self.connect(self.stackWidget.saveToolButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._stackSaveToolButtonSignal)
+        else:
+            self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
+                                                        selection=False,
+                                                        imageicons=False)
+            
         self.stackGraphWidget = self.stackWidget.graphWidget
 
         self.roiWindow = qt.QWidget(box)
@@ -173,6 +200,52 @@ class QStackWidget(StackBase.StackBase,
 
     def normalizeIconChecked(self):
         pass
+
+    def _stackSaveToolButtonSignal(self):
+        self._stackSaveMenu.exec_(self.cursor().pos())
+
+    def _getOutputHDF5Filename(self, nexus=False):
+        fileTypes = "HDF5 Files (*.h5)\nHDF5 Files (*.hdf)"
+        message = "Enter output filename"
+        wdir = PyMcaDirs.outputDir
+        filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
+        if len(filename):
+            return str(filename)
+        else:
+            return ""
+
+    def saveStackAsNeXus(self, dtype=None):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+                                    labels = None, dtype=dtype, mode='nexus')
+
+    def saveStackAsFloat32NeXus(self):
+        self.saveStackAsNeXus(dtype=numpy.float32)
+
+    def saveStackAsFloat64NeXus(self):
+        self.saveStackAsNeXus(dtype=numpy.float64)
+
+    def saveStackAsNeXusPlus(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+                                    labels = None, dtype=None, mode='nexus+')
+
+    def saveStackAsSimpleHDF5(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+                                    labels = None, dtype=None, mode='simple')
+
+    def saveStackAsSimplestHDF5(self):
+        filename = self._getOutputHDF5Filename()
+        if not len(filename):
+            return            
+        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='simplest')
 
     def loadSlaveStack(self):
         if self._slave is not None:
