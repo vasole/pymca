@@ -56,11 +56,11 @@ class McaTheory:
                     if dirname.lower().endswith("library.zip"):
                         dirname = os.path.dirname(dirname)
                         initdict = os.path.join(dirname, "McaTheory.cfg")
-                if os.path.exists(initdict):
-                    self.config = ConfigDict.ConfigDict(filelist = initdict)
-                else:
-                    print "Cannot find file McaTheory.cfg"
-                    raise IOError("File %s does not exist" % initdict)
+            if os.path.exists(initdict):
+                self.config = ConfigDict.ConfigDict(filelist = initdict)
+            else:
+                print "Cannot find file McaTheory.cfg"
+                raise IOError("File %s does not exist" % initdict)
         else:
             if os.path.exists(initdict):
                 self.config = ConfigDict.ConfigDict(filelist = initdict)
