@@ -28,7 +28,7 @@ import ConfigDict
 import sys
 import imp
 import os
-ddict = ConfigDict.ConfigDict()
+dict = ConfigDict.ConfigDict()
 dirmod = os.path.dirname(__file__) 
 dictfile = os.path.join(dirmod, "Scofield1973.dict")
 if not os.path.exists(dictfile):
@@ -41,6 +41,6 @@ if not os.path.exists(dictfile):
 if not os.path.exists(dictfile):
     print "Cannot find file ", dictfile
     raise IOError("Cannot find file %s " % dictfile)
-ddict.read(dictfile)
+dict.read(dictfile)
 
 
