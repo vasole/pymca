@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.14 $"
+import numpy
 from numpy.oldnumeric import *
 import SpecfitFuns
 import string
@@ -61,6 +62,7 @@ SPECFITFUNCTIONS_DEFAULTS={'FileAction':0,
                  'FwhmPoints':8,
                  'AutoFwhm':0,
                  'Sensitivity':2.5,
+                 'ForcePeakPresence':0,
                  'McaMode':0,
                  #Hypermet
                  'HypermetTails':15,
@@ -299,7 +301,7 @@ class SpecfitFunctions:
             ysearch[search_fwhm:(search_fwhm+len(y))]=y*yscaling
         npoints=len(ysearch)
         if npoints > (1.5)*search_fwhm:
-           peaks=SpecfitFuns.seek(ysearch,0,npoints,
+            peaks=SpecfitFuns.seek(ysearch,0,npoints,
                                     search_fwhm,
                                     search_sensitivity)       
         else:
@@ -395,6 +397,13 @@ class SpecfitFunctions:
             #                   mca=search_mca)
        else:
             peaks = []
+       if not len(peaks):
+            mca = int(string.atof(self.config.get('McaMode', 0)))
+            forcePeak =  int(string.atof(self.config.get('ForcePeakPresence', 0)))
+            if (not mca) and forcePeak:
+                delta = yy - zz
+                peaks  = [int(numpy.nonzero(delta == delta.max())[0])]
+                
        #print "peaks = ",peaks
        #print "peaks subac = ",self.seek(yy-zz,fwhm=search_fwhm,
        #                        sensitivity=search_sens,
@@ -406,7 +415,10 @@ class SpecfitFunctions:
             for i in peaks:
                 if j == 0:
                     sig=5*abs(xx[npoints-1]-xx[0])/npoints
-                    param = array([yy[int(i)] - zz [int(i)], xx[int(i)] ,sig])
+                    peakpos = xx[int(i)]
+                    if abs(peakpos) < 1.0e-16:
+                        peakpos = 0.0
+                    param = array([yy[int(i)] - zz[int(i)], peakpos ,sig])
                     largest = param
                 else:
                     param2 = array([yy[int(i)] - zz [int(i)], xx[int(i)] ,sig])
@@ -517,14 +529,14 @@ class SpecfitFunctions:
        return  fittedpar,cons
 
     def estimate_agauss(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
-       fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
-       #get the number of found peaks
-       npeaks=len(cons[0])/3
-       for i in range(npeaks):
+        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
+        #get the number of found peaks
+        npeaks=len(cons[0])/3
+        for i in range(npeaks):
             height = fittedpar[3*i]
             fwhm = fittedpar[3*i+2]
             fittedpar[3*i] = (height * fwhm / (2.0*sqrt(2*log(2))))*sqrt(2*pi)
-       return fittedpar,cons
+        return fittedpar,cons
 
     def estimate_alorentz(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
@@ -1077,22 +1089,22 @@ CONFIGURE=[fitfuns.configure,
            fitfuns.configure]
 
 def test(a):
-    import Tkinter
-    import NewSpecfit
-    import SimplePlot
+    import PyMcaQt as qt
+    import Specfit
+    import ScanWindow
     #print dir(a)
     x = arange(1000).astype(Float)
     p1 = array([1500,100.,50.0])
     p2 = array([1500,700.,50.0])
     y = a.gauss(p1,x)+1
     y = y + a.gauss(p2,x)
-    root=Tkinter.Tk()
+    app=qt.QApplication([])
     #fit=Specfit.Specfit(root,x,y,
     #                    user_theory='New Theory',
     #                    user_function=a.gauss,
     #                    user_parameters=['Height','Position','FWHM'])
     #                    #user_estimate=estimate)
-    fit=NewSpecfit.Specfit(x,y)
+    fit=Specfit.Specfit(x,y)
     fit.addtheory('Gaussians',a.gauss,['Height','Position','FWHM'],
                     a.estimate_gauss)                       
     fit.settheory('Gaussians')
@@ -1102,8 +1114,11 @@ def test(a):
     fit.startfit()
     yfit=fit.gendata(x=x,parameters=fit.paramlist)
     print "I set an offset of 1 to see the difference in log scale :-)"
-    SimplePlot.plot([x,y+1,yfit])
-    root.mainloop()
+    w = ScanWindow.ScanWindow()
+    w.addCurve(x, y + 1, "Data + 1")
+    w.addCurve(x, yfit, "Fit")
+    w.show()
+    app.exec_()
 
           
 if __name__ == "__main__":

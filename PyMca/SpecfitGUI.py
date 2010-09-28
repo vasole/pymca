@@ -246,7 +246,8 @@ class SpecfitGUI(qt.QWidget):
             sheet2={'notetitle':'Search',
                 'fields':(["EntryField",'FwhmPoints', 'Fwhm Points: '],
                           ["EntryField",'Sensitivity','Sensitivity: '],
-                          ["EntryField",'Yscaling',   'Y Factor   : '])}
+                          ["EntryField",'Yscaling',   'Y Factor   : '],
+                          ["CheckField",'ForcePeakPresence',   'Force peak presence '])}
             w=QScriptOption.QScriptOption(self,name='Fit Configuration',
                             sheets=(sheet1,sheet2),
                             default=oldconfiguration)

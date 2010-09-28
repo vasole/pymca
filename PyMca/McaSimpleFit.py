@@ -51,9 +51,7 @@ class McaSimpleFit(qt.QWidget):
         self.setheader('<b>Fit of XXXXXXXXXX from Channel XXXXX to XXXX<\b>')
         ##############
         defaultFunctions = "SpecfitFunctions.py"
-        if os.path.exists(defaultFunctions):
-            self.specfit.importfun(defaultFunctions)
-        else:
+        if not os.path.exists(defaultFunctions):
             defaultFunctions = os.path.join(os.path.dirname(__file__),
                                             defaultFunctions)
         self.specfit.importfun(defaultFunctions)
