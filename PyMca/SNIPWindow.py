@@ -45,7 +45,7 @@ class HorizontalSpacer(qt.QWidget):
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
 class SNIP1DParametersWidget(qt.QWidget):
-    def __init__(self, parent = None, length=2000):
+    def __init__(self, parent = None, length=2000, smooth=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
@@ -56,10 +56,15 @@ class SNIP1DParametersWidget(qt.QWidget):
                                'roi_max':length,
                                'width':min(30, length/10),
                                'smoothing':1}
-        for text in ["SNIP background width (2 to 3 times fwhm) :",
+        textLabels = ["SNIP background width (2 to 3 times fwhm) :",
                      "Minimum channel considered:",
                      "Maximum channel considered:",
-                     "Pleliminar smoothing level:"]:
+                     "Pleliminar smoothing level:"]
+        if smooth:
+            textLabels[0] = "SNIP width :"
+            self.parametersDict['width'] = 3
+            
+        for text in textLabels:
             label = qt.QLabel(self)
             label.setText(text)
             self.mainLayout.addWidget(label, i, 0)        
@@ -90,6 +95,18 @@ class SNIP1DParametersWidget(qt.QWidget):
                   
     def getParameters(self):
         return self.parametersDict
+
+    def setParameters(self, ddict=None):
+        if ddict is None:
+            return
+        
+        actualKeys = self.widgetDict.keys()
+        for key in ddict.keys():
+            if key in actualKeys:
+                w = self.widgetDict[key] 
+                w.setMaximum(max(ddict[key], w.value()))
+                w.setMinimum(min(ddict[key], w.value()))
+                w.setValue(ddict[key])
 
 class SNIP2DParametersWidget(qt.QWidget):
     def __init__(self, parent = None, shape=(4000,4000)):
@@ -184,7 +201,7 @@ class SNIP2DParametersWidget(qt.QWidget):
         return self.parametersDict
 
 class SNIPWindow(qt.QWidget):
-    def __init__(self, parent, data, image=None, x=None):
+    def __init__(self, parent, data, image=None, x=None, smooth=False):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -201,6 +218,7 @@ class SNIPWindow(qt.QWidget):
                 spectrum = data
         elif not image:
             spectrum = data
+        self.__smooth = smooth
         self.__image = image
         if self.__image:
             self.spectrum = None
@@ -225,7 +243,9 @@ class SNIPWindow(qt.QWidget):
         else:
             self.image = None
             self.spectrum = spectrum
-            self.parametersWidget = SNIP1DParametersWidget(self, length=len(spectrum))
+            self.parametersWidget = SNIP1DParametersWidget(self,
+                                                           length=len(spectrum),
+                                                           smooth=smooth)
             self.graph = ScanWindow.ScanWindow(self)
             self.graph.newCurve(self.xValues,
                             spectrum, "Spectrum", replace=True)
@@ -283,23 +303,28 @@ class SNIPWindow(qt.QWidget):
                                                    roi_min=roi_min,
                                                    roi_max=roi_max,
                                                    smoothing=smoothing)
+            if self.__smooth:
+                legend0 = "Smoothed Spectrum"
+            else:
+                legend0 = "Background"
             self.graph.newCurve(self.xValues,
-                            self.background, "Background", replace=False)
+                            self.background, legend0, replace=False)
         
             #Force information update
             legend = self.graph.getActiveCurve(just_legend=True)
-            if legend.startswith('Background'):
+            if legend.startswith(legend0[0:5]):
                 self.graph.setActiveCurve(legend)
 
 
 class SNIPDialog(qt.QDialog):
-    def __init__(self, parent, data, x=None):
+    def __init__(self, parent, data, x=None, smooth=False):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(10)
         self.mainLayout.setSpacing(2)
         self.__image = False
+        self.__smooth = smooth
         if len(data.shape) == 2:
             if 1 not in data.shape:
                 image = data
@@ -311,7 +336,8 @@ class SNIPDialog(qt.QDialog):
         if self.__image:
             self.parametersWidget = SNIPWindow(self, image, image=True, x=x)
         else:
-            self.parametersWidget = SNIPWindow(self, spectrum, image=False,x=x)
+            self.parametersWidget = SNIPWindow(self, spectrum, image=False,
+                                               x=x, smooth=smooth)
         self.graph = self.parametersWidget.graph
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
@@ -335,6 +361,8 @@ class SNIPDialog(qt.QDialog):
         parametersDict = self.parametersWidget.getParameters()
         if self.__image:
             parametersDict['function'] = SNIPModule.subtractSnip2DBackgroundFromStack
+        elif self.__smooth:
+            parametersDict['function'] = SNIPModule.replaceStackWithSnip1DBackground            
         else:
             parametersDict['function'] = SNIPModule.subtractSnip1DBackgroundFromStack
         parametersDict['arguments'] = [parametersDict['width'],

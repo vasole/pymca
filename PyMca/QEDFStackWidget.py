@@ -952,6 +952,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         snipMenu = qt.QMenu()
         snipMenu.addAction("Savitzky-Golay Filtering",
                            self.replaceStackWithSavitzkyGolayFiltering)
+        snipMenu.addAction("Smooth with SNIP 1D Background",
+                           self.replaceWith1DSnipBackground)
         snipMenu.addAction("Subtract SNIP 1D Background",
                            self.subtract1DSnipBackground)
         snipMenu.addAction("Subtract SNIP 2D Background",
@@ -976,13 +978,13 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             function(self.stack, *arguments)
             self.setStack(self.stack)
 
-    def subtract1DSnipBackground(self):
+    def subtract1DSnipBackground(self, smooth=False):
         selection = self._addMcaClicked(action="GET_CURRENT_SELECTION")
         if selection is None:
             return
         spectrum = selection['dataobject'].y[0]
         snipWindow = SNIPWindow.SNIPDialog(None,
-                                           spectrum)
+                                           spectrum, smooth=smooth)
         #snipWindow.setModal(True)
         snipWindow.show()
         ret = snipWindow.exec_()
@@ -993,6 +995,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             arguments = snipParametersDict['arguments']
             function(self.stack, *arguments)
             self.setStack(self.stack)
+
+    def replaceWith1DSnipBackground(self):
+        return self.subtract1DSnipBackground(smooth=True)
 
     def subtract2DSnipBackground(self):
         if self.__ROIImageData is None:

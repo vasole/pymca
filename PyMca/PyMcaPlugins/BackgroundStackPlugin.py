@@ -63,6 +63,12 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         self.methodDict["Subtract SNIP 1D Background"] =[function,
                                                       info,
                                                       icon]
+        function = self.replaceWith1DSnipBackground
+        info  = "Smooth and replace current stack\n"
+        info += "by its SNIP1D background."
+        self.methodDict["Deglitch with SNIP 1D Background"] =[function,
+                                                              info,
+                                                              PyMca_Icons.smooth]
         function = self.subtract2DSnipBackground
         info = SNIP2Dtext
         self.methodDict["Subtract SNIP 2D Background"] =[function,
@@ -70,6 +76,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
                                                       icon]
 
         self.__methodKeys = ["Savitzky-Golay Filtering",
+                             "Deglitch with SNIP 1D Background",
                              "Subtract SNIP 1D Background",
                              "Subtract SNIP 2D Background"]
                                      
@@ -110,13 +117,13 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
             function(stack, *arguments)
             self.setStack(stack)
 
-    def subtract1DSnipBackground(self):
+    def subtract1DSnipBackground(self, smooth=False):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
         x, spectrum, legend, info = activeCurve
         snipWindow = SNIPWindow.SNIPDialog(None,
-                                           spectrum, x=x)
+                                           spectrum, x=x, smooth=smooth)
         snipWindow.graph.setGraphXTitle(info['xlabel'])
         snipWindow.graph.setGraphYTitle(info['ylabel'])
         #snipWindow.setModal(True)
@@ -130,6 +137,9 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
             stack = self.getStackDataObject()
             function(stack, *arguments)
             self.setStack(stack)
+
+    def replaceWith1DSnipBackground(self):
+        return self.subtract1DSnipBackground(smooth=True)
 
     def subtract2DSnipBackground(self):
         imageList = self.getStackROIImagesAndNames()

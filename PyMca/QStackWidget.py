@@ -115,8 +115,8 @@ class QStackWidget(StackBase.StackBase,
             self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data"),
                                                  self.saveStackAsSimplestHDF5)
             self._stackSaveMenu.addAction(qt.QString("Standard Graphics"),
-                                     self.stackWidget._saveIconSignal)
-            self.connect(self.stackWidget.saveToolButton,
+                                self.stackWidget.graphWidget._saveIconSignal)
+            self.connect(self.stackWidget.graphWidget.saveToolButton,
                          qt.SIGNAL("clicked()"), 
                          self._stackSaveToolButtonSignal)
         else:
@@ -218,7 +218,7 @@ class QStackWidget(StackBase.StackBase,
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+        ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
                                     labels = None, dtype=dtype, mode='nexus')
 
     def saveStackAsFloat32NeXus(self):
@@ -231,21 +231,21 @@ class QStackWidget(StackBase.StackBase,
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+        ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
                                     labels = None, dtype=None, mode='nexus+')
 
     def saveStackAsSimpleHDF5(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename,
+        ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
                                     labels = None, dtype=None, mode='simple')
 
     def saveStackAsSimplestHDF5(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return            
-        ArraySave.save3DArrayAsHDF5(self.stack.data, filename, labels = None, dtype=None, mode='simplest')
+        ArraySave.save3DArrayAsHDF5(self._stack.data, filename, labels = None, dtype=None, mode='simplest')
 
     def loadSlaveStack(self):
         if self._slave is not None:

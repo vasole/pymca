@@ -39,12 +39,18 @@ class __ModuleWrapper:
         if os.path.isdir(value):
             self.__wrapped.__dict__[name]=value
         else:
-            raise ValueError, "Non existing directory %s" % value
+            if not len("%s" % value):
+                self.__wrapped.__dict__[name] = os.getcwd()
+            else:  
+                raise ValueError, "Non existing directory %s" % value
     elif name == "outputDir":
         if os.path.isdir(value):
             self.__wrapped.__dict__[name]=value
         else:
-            raise ValueError, "Non existing directory %s" % value
+            if not len("%s" % value):
+                self.__wrapped.__dict__[name] = os.getcwd()
+            else:  
+                raise ValueError, "Non existing directory %s" % value
     elif name == "nativeFileDialogs":
         self.__wrapped.__dict__[name]=value
     elif name.startswith("__"):

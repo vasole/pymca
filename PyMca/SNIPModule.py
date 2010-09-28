@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -80,6 +80,42 @@ def subtractSnip1DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
     else:
         raise ValueError("Invalid 1D index %d" % mcaIndex)
     return
+
+def replaceStackWithSnip1DBackground(stack, width, roi_min=None, roi_max=None,  smoothing=1):
+    if roi_min is None:
+        roi_min = 0
+    if roi_max is None:
+        roi_max = len(spectrum)
+    mcaIndex = -1
+    if hasattr(stack, "info") and hasattr(stack, "data"):
+        data = stack.data
+        mcaIndex = stack.info.get('McaIndex', -1)
+    else:
+        data = stack
+    if not isinstance(data, numpy.ndarray):
+        raise TypeError("This Plugin only supports numpy arrays")
+    oldShape = data.shape
+    if mcaIndex in [-1, len(data.shape)-1]:
+        data.shape = -1, oldShape[-1]
+        if roi_min > 0:
+            data[:, 0:roi_min] = 0
+        if roi_max < oldShape[-1]:
+            data[:, roi_max:] = 0
+        for i in xrange(data.shape[0]):
+            data[i,roi_min:roi_max] = snip1d(data[i,roi_min:roi_max],
+                                              width, smoothing)
+        data.shape = oldShape
+
+    elif mcaIndex == 0:
+        data.shape = oldShape[0], -1
+        for i in xrange(data.shape[-1]):
+            data[roi_min:roi_max, i] = snip1d(data[roi_min:roi_max, i],
+                                               width, smoothing)
+        data.shape = oldShape
+    else:
+        raise ValueError("Invalid 1D index %d" % mcaIndex)
+    return
+
 
 def getImageBackground(image, width, roi_min=None, roi_max=None, smoothing=1):
     if roi_min is None:
