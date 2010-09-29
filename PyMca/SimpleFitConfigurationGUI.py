@@ -87,6 +87,8 @@ class DefaultParametersWidget(qt.QWidget):
         if ddict['configuration']['estimation'] is None:
             #initialize with the default parameters
             parameters = ddict['parameters']
+            if type(parameters) == type(""):
+                parameters = [parameters]
             xmin = self.simpleFitInstance._x.min()
             xmax = self.simpleFitInstance._x.max()
             if self.background:
@@ -109,6 +111,8 @@ class DefaultParametersWidget(qt.QWidget):
                 paramlist.append(paramdict)
         else:
             parameters = ddict['configuration']['estimation']['parameters']
+            if type(parameters) == type(""):
+                parameters = [parameters]
             paramlist = []
             for parameter in parameters:
                 paramdict = ddict['configuration']['estimation'][parameter]              
@@ -337,6 +341,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         if ddict.has_key('functions'):
             #make sure new modules are imported
             for functionName in ddict['functions'].keys():
+                print "functionName = ", functionName
                 fileName = ddict['functions'][functionName]['file']
                 if fileName not in currentFiles:
                     try:
