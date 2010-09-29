@@ -62,7 +62,8 @@ class ScanFit(qt.QWidget):
         self.specfit.setbackground('Linear')
         fitconfig = {}
         fitconfig.update(self.specfit.fitconfig)
-        fitconfig['WeightFlag'] = 1
+        fitconfig['WeightFlag'] = 0
+        fitconfig['ForcePeakPresence'] = 1
         fitconfig['McaMode']    = 0
         self.specfit.configure(**fitconfig)
         self.specfitGUI = SpecfitGUI.SpecfitGUI(self,config=1, status=1, buttons=0,
