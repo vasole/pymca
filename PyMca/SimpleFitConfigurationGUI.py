@@ -341,7 +341,6 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         if ddict.has_key('functions'):
             #make sure new modules are imported
             for functionName in ddict['functions'].keys():
-                print "functionName = ", functionName
                 fileName = ddict['functions'][functionName]['file']
                 if fileName not in currentFiles:
                     try:
@@ -407,6 +406,8 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         widget = self._backgroundWidgets[fname]
         if fname not in [None, "None", "NONE"]:
             ddict['functions'][fname]={}
+            ddict['functions'][fname]['file'] = \
+                oldConfiguration['functions'][fname]['file']                
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
             newConfig = widget.getConfiguration()
