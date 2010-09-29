@@ -329,6 +329,13 @@ class ScanFit(qt.QWidget):
         text += self.specfitGUI.guiparameters.getText()
         return  text
 
+
+    def getConfiguration(self):
+        return self.specfit.configure()
+
+    def setConfiguration(self, fitconfig):
+        self.specfit.configure(**fitconfig)
+        self.specfitGUI.updateGUI(configuration=fitconfig)        
        
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):

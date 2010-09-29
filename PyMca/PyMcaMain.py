@@ -72,7 +72,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.4.1-20100928"
+__version__ = "4.4.1-20100929"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -684,7 +684,10 @@ class PyMca(PyMcaMdi.PyMca):
         if configDict.has_key('ROI'):      self.__configureRoi(configDict['ROI'])
         if configDict.has_key('Elements'): self.__configureElements(configDict['Elements'])
         if configDict.has_key('Fit'):      self.__configureFit(configDict['Fit'])
-        if configDict.has_key('SimpleFit'):self.__configureSimpleFit(configDict['SimpleFit'])
+        if configDict.has_key('ScanSimpleFit'):
+            self.__configureScanSimpleFit(configDict['ScanSimpleFit'])
+        if configDict.has_key('ScanCustomFit'):
+            self.__configureScanCustomFit(configDict['ScanCustomFit'])
         
     def getConfig(self):
         d = {}
@@ -767,6 +770,19 @@ class PyMca(PyMcaMdi.PyMca):
         #d['Fit'] ['LastFit']['fitdone']= 1
         #d['Fit'] ['LastFit']['xmin'] = self.mcawindow.advancedfit.mcafit.sigma0
         #d['Fit'] ['LastFit']['xmax'] = self.mcawindow.advancedfit.mcafit.sigma0
+
+        #ScanFit related
+        d['ScanSimpleFit'] = {}
+        d['ScanSimpleFit']['Configuration'] = {}
+        if DEBUG:
+                  d['ScanSimpleFit']['Configuration'].update(\
+                      self.scanwindow.scanFit.getConfiguration())
+        else:
+            try:
+                  d['ScanSimpleFit']['Configuration'].update(\
+                      self.scanwindow.scanFit.getConfiguration())
+            except:
+                print "Error getting ScanFint configuration"
         return d
         
     def saveConfig(self, config, filename = None):
@@ -906,8 +922,37 @@ class PyMca(PyMcaMdi.PyMca):
                 else:
                     print "hidden"     
             
-    def __configureSimpleFit(self, dict):
+    def __configureFit(self, d):
+        if d.has_key('Configuration'):
+            self.mcawindow.advancedfit.mcafit.configure(d['Configuration'])
+            if not self.mcawindow.advancedfit.isHidden():
+                self.mcawindow.advancedfit._updateTop()
+        if d.has_key('ConfigDir'):
+            self.mcawindow.advancedfit.configDir = d['ConfigDir'] * 1
+        if False and d.has_key('LastFit'):
+            if (d['LastFit']['ydata0'] != None) and \
+               (d['LastFit']['ydata0'] != 'None'):               
+                self.mcawindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
+                                                   y=d['LastFit']['ydata0'],
+                                              sigmay=d['LastFit']['sigmay0'],
+                                              **d['Information'])
+                if d['LastFit']['hidden'] == 'False':
+                    self.mcawindow.advancedfit.show()
+                    self.mcawindow.advancedfit.raiseW()
+                    if d['LastFit']['fitdone']:
+                        try:
+                            self.mcawindow.advancedfit.fit()
+                        except:
+                            pass  
+                else:
+                    print "hidden"     
+
+    def __configureScanCustomFit(self, ddict):
         pass
+
+    def __configureScanSimpleFit(self, ddict):
+        if ddict.has_key('Configuration'):
+            self.scanwindow.scanFit.setConfiguration(ddict['Configuration'])
                 
     def initMenuBar(self):
         if self.options["MenuFile"]:
