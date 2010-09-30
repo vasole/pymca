@@ -1,26 +1,35 @@
-import Plot1D
+import Plot1DWindowBase
 import QtBlissGraph
 qt = QtBlissGraph.qt
 
-class Plot1DQwt(qt.QWidget, Plot1D.Plot1D):
+class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
     def __init__(self, parent=None,**kw):
-        qt.QWidget.__init__(self, parent)
-        Plot1D.Plot1D.__init__(self)
-        mainLayout = qt.QVBoxLayout(self)
-        mainLayout.setMargin(0)
-        mainLayout.setSpacing(0)
+        Plot1DWindowBase.Plot1DWindowBase.__init__(self, parent, **kw)
+        mainLayout = self.layout()
         self.graph = QtBlissGraph.QtBlissGraph(self, **kw)
         mainLayout.addWidget(self.graph)
-        self.curveList = []
-        self.curveDict = {}
+        self.newCurve = self.addCurve
+        self.setTitle = self.graph.setTitle
         self.activeCurve = None
         self._logY = False
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         """
-        Plot1D.Plot1D.addCurve(self, x, y, legend=legend,
+        if legend is None:
+            key = "Unnamed curve 1.1"
+        else:
+            key = str(legend)
+        if info is None:
+            info = {}
+        xlabel = info.get('xlabel', 'X')
+        ylabel = info.get('ylabel', 'Y')
+        if kw.has_key('xlabel'):
+            info['xlabel'] = kw['xlabel'] 
+        if kw.has_key('ylabel'):
+            info['ylabel'] = kw['ylabel'] 
+        Plot1DWindowBase.Plot1DWindowBase.addCurve(self, x, y, legend=legend,
                                info=info, replace=replace, replot=replot)        
         if replot:
             if replace:
@@ -33,7 +42,7 @@ class Plot1DQwt(qt.QWidget, Plot1D.Plot1D):
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
         """
-        Plot1D.Plot1D.removeCurve(self, legend, replot=replot)
+        Plot1DWindowBase.Plot1DWindowBase.removeCurve(self, legend, replot=replot)
         if legend in self.graph.curves.keys():
             self.graph.removeCurve(legend)
         self._updateActiveCurve()
@@ -72,19 +81,22 @@ class Plot1DQwt(qt.QWidget, Plot1D.Plot1D):
         if self.activeCurve is not None:
             self.graph.setActiveCurve(self.activeCurve)            
 
+
+    def _zoomReset(self):
+        self.graph.zoomReset()
+
     def getGraphXLimits(self):
         """
         Get the graph X limits. 
         """
-        xmin, ymin, xmax, ymax = self.graph.getX1AxisLimits()
+        xmin, xmax = self.graph.getX1AxisLimits()
         return xmin, xmax
         
-
     def getGraphYLimits(self):
         """
         Get the graph Y (left) limits. 
         """
-        xmin, ymin, xmax, ymax = self.graph.getY1AxisLimits()
+        ymin, ymax = self.graph.getY1AxisLimits()
         return ymin, ymax
 
     def setActiveCurve(self, legend):
