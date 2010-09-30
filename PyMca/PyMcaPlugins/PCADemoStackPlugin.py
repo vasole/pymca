@@ -47,7 +47,7 @@ except ImportError:
 qt = StackPluginResultsWindow.qt
 HorizontalSpacer = qt.HorizontalSpacer
 
-DEBUG = 1
+DEBUG = 0
 class PCADemoParametersDialog(qt.QDialog):
     def __init__(self, parent = None):
         qt.QDialog.__init__(self, parent)
