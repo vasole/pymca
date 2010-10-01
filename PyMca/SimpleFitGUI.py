@@ -35,8 +35,10 @@ if qt.qVersion() < '4.0.0':
     raise ImportError, "This module requires PyQt4"
 try:
     #raise ImportError
-    if 1:
+    if 0:
         from QtBlissGraph import QtBlissGraph as GraphWindow
+    elif 1:
+        from Plot1DQwt import Plot1DQwt as GraphWindow
     else:
         from ScanWindow import ScanWindow as GraphWindow
 except ImportError:
@@ -152,6 +154,10 @@ class SimpleFitGUI(qt.QWidget):
         else:
             self.__useTab = False
             self.graph = graph
+        if hasattr(self.graph, "fitButton"):
+            self.graph.fitButton.hide()
+        if hasattr(self.graph, "scanWindowInfoWidget"):
+            self.graph.scanWindowInfoWidget.hide()
         self._configurationDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(2)

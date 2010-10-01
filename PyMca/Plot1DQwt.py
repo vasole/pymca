@@ -6,12 +6,17 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
     def __init__(self, parent=None,**kw):
         Plot1DWindowBase.Plot1DWindowBase.__init__(self, parent, **kw)
         mainLayout = self.layout()
+        if not kw.has_key('usecrosscursor'):
+            kw['usecrosscursor'] = True
         self.graph = QtBlissGraph.QtBlissGraph(self, **kw)
+        self.graph.canvas().setMouseTracking(1)
+        self.graph.setCanvasBackground(qt.Qt.white)
         mainLayout.addWidget(self.graph)
         self.newCurve = self.addCurve
         self.setTitle = self.graph.setTitle
         self.activeCurve = None
         self._logY = False
+        self.__toggleCounter = 0
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
@@ -85,6 +90,56 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
     def _zoomReset(self):
         self.graph.zoomReset()
 
+    def _yAutoScaleToggle(self):
+        if self.graph.yAutoScale:
+            self.graph.yAutoScale = False
+            self.yAutoScaleButton.setDown(False)
+            self.yAutoScaleButton.setChecked(False)
+            self.graph.setY1AxisLimits(*self.graph.getY1AxisLimits())
+            y2limits = self.graph.getY2AxisLimits()
+            if y2limits is not None:self.graph.setY2AxisLimits(*y2limits)
+        else:
+            self.graph.yAutoScale = True
+            self.yAutoScaleButton.setDown(True)
+            self.graph.zoomReset()
+
+    def _xAutoScaleToggle(self):
+        if self.graph.xAutoScale:
+            self.graph.xAutoScale = False
+            self.xAutoScaleButton.setDown(False)
+            self.xAutoScaleButton.setChecked(False)
+            self.graph.setX1AxisLimits(*self.graph.getX1AxisLimits())
+        else:
+            self.graph.xAutoScale = True
+            self.xAutoScaleButton.setDown(True)
+            self._zoomReset()
+
+    def _toggleLogY(self):
+        if self._logY:
+            self._logY = False
+        else:
+            self._logY = True
+        activeCurve = self.graph.getActiveCurve(justlegend=1)
+        self.activeCurve = activeCurve
+        self.graph.clearCurves()    
+        self.graph.toggleLogY()
+        self.replot(mode="ADD")
+        self.graph.setActiveCurve(activeCurve)
+
+    def _togglePointsSignal(self):
+        self.__toggleCounter = (self.__toggleCounter + 1) % 3
+        if self.__toggleCounter == 1:
+            self.graph.setDefaultPlotLines(True)
+            self.graph.setDefaultPlotPoints(True)
+        elif self.__toggleCounter == 2:
+            self.graph.setDefaultPlotPoints(True)
+            self.graph.setDefaultPlotLines(False)
+        else:
+            self.graph.setDefaultPlotLines(True)
+            self.graph.setDefaultPlotPoints(False)
+        self.graph.setActiveCurve(self.graph.getActiveCurve(justlegend=1))
+        self.graph.replot()
+
     def getGraphXLimits(self):
         """
         Get the graph X limits. 
@@ -124,9 +179,9 @@ if __name__ == "__main__":
     print "Active curve = ", plot.getActiveCurve()
     print "X Limits = ",     plot.getGraphXLimits()
     print "Y Limits = ",     plot.getGraphYLimits()
-    print "All curves = ",   plot.getAllCurves()
-    plot.removeCurve("dummy")
-    print "All curves = ",   plot.getAllCurves()
+    #print "All curves = ",   plot.getAllCurves()
+    #plot.removeCurve("dummy")
+    #print "All curves = ",   plot.getAllCurves()
     app.exec_()
 
     
