@@ -36,7 +36,6 @@ import PyMcaDirs
 
 #strip background handling
 import StripBackgroundWidget
-SCANWINDOW = StripBackgroundWidget.SCANWINDOW
 import numpy
 
 import Parameters
@@ -369,6 +368,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                 if ddict['functions'].has_key(fname):
                     #if currentConfig['functions'][fname]['widget'] is not None:
                         widget.setConfiguration(ddict['functions'][fname])
+                        self.fitFunctionWidgetStack.mainLayout.setCurrentWidget(widget)
             
             #background function
             fname = ddict['fit']['background_function']
@@ -377,6 +377,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                 if ddict['functions'].has_key(fname):
                     #if currentConfig['functions'][fname]['widget'] is not None:
                         widget.setConfiguration(ddict['functions'][fname])
+                        self.backgroundWidgetStack.mainLayout.setCurrentWidget(widget)
 
     def getConfiguration(self):
         oldConfiguration = self.simpleFitInstance.getConfiguration()

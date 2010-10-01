@@ -321,8 +321,7 @@ class StackSimpleFit(object):
             self._images['chisq'][row, column] = result['chisq']
 
         #specfile output always available
-        specfile = os.path.join(self.outputDir,
-                                self.outputFile+".spec")
+        specfile = self.getOutputFileNames()['specfile']
         
         self._appendOneResultToSpecfile(specfile, result=fitOutput)
 
@@ -351,6 +350,19 @@ class StackSimpleFit(object):
         sf.write(text)
         sf.close()
 
+    def getOutputFileNames(self):
+        specfile = os.path.join(self.outputDir,
+                                self.outputFile+".spec")
+        imgDir = os.path.join(self.outputDir, "IMAGES")
+        filename = os.path.join(imgDir, self.outputFile)
+        csv = filename + ".csv"
+        edf = filename + ".edf"
+        ddict = {}
+        ddict['specfile'] = specfile
+        ddict['csv'] = csv
+        ddict['edf'] = edf
+        return ddict
+        
     def onProcessStackFinished(self):
         if DEBUG:
             print "Stack proccessed"
@@ -366,15 +378,16 @@ class StackSimpleFit(object):
                 labels.append('s(%s)' % parameter)
             datalist[-1] = self._images['chisq']
             labels.append('chisq')
-            filename = os.path.join(self.imgDir,
-                                    self.outputFile)
+            filenames = self.getOutputFileNames()
+            csvName = filenames['csv']
+            edfName = filenames['edf']
             ArraySave.save2DArrayListAsASCII(datalist,
-                                             filename+".csv",
+                                             csvName,
                                              labels=labels,
                                              csv=True,
                                              csvseparator=";")
             ArraySave.save2DArrayListAsEDF(datalist,
-                                           filename+".edf",
+                                           edfName,
                                            labels = labels,
                                            dtype=numpy.float32)
 

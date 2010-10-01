@@ -160,9 +160,43 @@ class StackSimpleFitWindow(qt.QWidget):
         self.stackFitInstance.setData(self.stack_x, self.stack_y,
                                      sigma=None, xmin=xmin, xmax=xmax)
         self.stackFitInstance.setDataIndex(self.data_index)
+        #check filenames
+        fileNames = self.stackFitInstance.getOutputFileNames()
+        deleteFiles = None
+        for key in fileNames.keys():
+            fileName = fileNames[key]
+            if os.path.exists(fileName):
+                msg = qt.QMessageBox()
+                msg.setWindowTitle("Output file(s) exists")
+                msg.setIcon(qt.QMessageBox.Information)
+                msg.setText("Do you want to delete current output files?")
+                msg.setStandardButtons(qt.QMessageBox.Yes|qt.QMessageBox.No)
+                answer=msg.exec_()
+                if answer == qt.QMessageBox.Yes:
+                    deleteFiles = True
+                else:
+                    deleteFiles = False
+                break
+
+        if deleteFiles == False:
+            #nothing to be done (yet)
+            return
+        
+        if deleteFiles:
+            try:
+                for key in fileNames.keys():
+                    fileName = fileNames[key]
+                    if os.path.exists(fileName):
+                        os.remove(fileName)
+            except:
+                qt.QMessageBox.critical(self, "Delete Error",
+                    "ERROR while deleting file:\n%s"% fileName, 
+                    qt.QMessageBox.Ok,
+                    qt.QMessageBox.NoButton,
+                    qt.QMessageBox.NoButton)
+                return
         self.thread.start()
         self.setEnabled(False)
-
 
     def progressBarUpdate(self, idx, total):
         self.progressBar.show()

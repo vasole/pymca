@@ -114,6 +114,7 @@ class StackBase(object):
             except:
                 if DEBUG:
                     print "Problem importing module %s" % plugin
+                    raise
         return len(self.pluginList)
 
     def setStack(self, stack, mcaindex=2, fileindex=None):
