@@ -322,28 +322,33 @@ class SimpleFitGUI(qt.QWidget):
                 self.graph.newCurve('Data',
                                     self.fitModule._x,
                                     self.fitModule._y)
-                self.graph.replot()
+            self.graph.replot()
         return returnValue
 
     def estimate(self):
         self.setStatus("Estimate started")
         self.statusWidget.chi2Line.setText("")
-        if DEBUG:
+        try:
+            x = self.fitModule._x
+            y = self.fitModule._y
+            if hasattr(self.graph, "addCurve"):
+                self.graph.addCurve(x, y, 'Data') 
+            elif hasattr(self.graph, "newCurve"):
+                self.graph.newCurve('Data', x, y) 
+            self.graph.removeCurve("Fit")
+            self.graph.removeCurve("Background", replot=True)
             self.fitModule.estimate()
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
-        else:
-            try:
-                self.fitModule.estimate()
-                self.setStatus()
-                self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
-            except:
-                text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText(text)
-                msg.exec_()
-                self.setStatus("Ready (after estimate error)")
+        except:
+            if DEBUG:
+                raise
+            text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText(text)
+            msg.exec_()
+            self.setStatus("Ready (after estimate error)")
             
 
     def setStatus(self, text=None):
@@ -355,21 +360,19 @@ class SimpleFitGUI(qt.QWidget):
     def startFit(self):
         #get parameters from table
         self.fitModule.paramlist = self.parametersTable.fillFitFromTable()
-        if DEBUG:
-            values, chisq, sigma, niter, lastdeltachi = self.fitModule.startFit()
+        try:
+            values,chisq,sigma,niter,lastdeltachi = self.fitModule.startFit()
             self.setStatus()
-        else:
-            try:
-                values,chisq,sigma,niter,lastdeltachi = self.fitModule.startFit()
-                self.setStatus()
-            except:
-                text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText(text)
-                msg.exec_()
-                self.setStatus("Ready (after fit error)")
-                return
+        except:
+            if DEBUG:
+                raise
+            text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText(text)
+            msg.exec_()
+            self.setStatus("Ready (after fit error)")
+            return
             
         self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
         self.statusWidget.chi2Line.setText("%f" % chisq)
@@ -399,7 +402,7 @@ class SimpleFitGUI(qt.QWidget):
             self.graph.newCurve('Data', ddict['x'], ddict['y']) 
             self.graph.newCurve('Fit', ddict['x'], ddict['yfit']) 
             self.graph.newCurve('Background', ddict['x'], ddict['background']) 
-            self.graph.replot()
+        self.graph.replot()
         self.graph.show()
 
     def dismiss(self):
