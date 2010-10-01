@@ -206,7 +206,6 @@ class  EdfFile:
                     if twoChars[0] != "{":
                         self.PILATUS_CBF = True
         except:
-            raise
             try:
                 self.File.close()
             except:
