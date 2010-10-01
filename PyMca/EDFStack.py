@@ -122,7 +122,7 @@ class EDFStack(DataObject.DataObject):
                                            self.__dtype)
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
-                    tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                    tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                     for i in range(nImages):
                         pieceOfStack=tempEdf.GetData(i)
                         self.data[:,i, self.incrProgressBar] = pieceOfStack[:]
@@ -142,7 +142,7 @@ class EDFStack(DataObject.DataObject):
                                                self.__dtype)
                     self.incrProgressBar=0
                     for tempEdfFileName in filelist:
-                        tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                        tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                         for i in range(nImages):
                             pieceOfStack=tempEdf.GetData(i)
                             self.data[:,:,
@@ -158,7 +158,7 @@ class EDFStack(DataObject.DataObject):
                                                  self.__dtype)
                         self.incrProgressBar=0
                         for tempEdfFileName in filelist:
-                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                             pieceOfStack=tempEdf.GetData(0)    
                             self.data[:,:, self.incrProgressBar] = pieceOfStack
                             self.incrProgressBar += 1
@@ -188,8 +188,7 @@ class EDFStack(DataObject.DataObject):
                                                arrRet.shape[1]))
                                 self.incrProgressBar=0
                                 for tempEdfFileName in filelist[0:10]:
-                                    print tempEdfFileName
-                                    tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                    tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                     pieceOfStack=tempEdf.GetData(0)
                                     self.data[self.incrProgressBar,:,:] = pieceOfStack[:,:]
                                     hdf.flush()
@@ -215,7 +214,7 @@ class EDFStack(DataObject.DataObject):
                                     i += 1
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
-                                tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                 pieceOfStack=tempEdf.GetData(0)
                                 self.data[:,:, self.incrProgressBar] = pieceOfStack[
                                                             ::samplingStep,::samplingStep]
@@ -234,7 +233,7 @@ class EDFStack(DataObject.DataObject):
                                            self.__dtype)
                 self.incrProgressBar=0
                 for tempEdfFileName in filelist:
-                    tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                    tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                     for i in range(nImages):
                         pieceOfStack=tempEdf.GetData(i)
                         self.data[self.incrProgressBar, :,i] = pieceOfStack[:]
@@ -257,7 +256,7 @@ class EDFStack(DataObject.DataObject):
                                                self.__dtype)
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
-                                tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                 for i in range(nImages):
                                     pieceOfStack=tempEdf.GetData(i)
                                     self.data[self.incrProgressBar,
@@ -272,7 +271,7 @@ class EDFStack(DataObject.DataObject):
                                                self.__dtype)
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
-                                tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                 for i in range(nImages):
                                     pieceOfStack=tempEdf.GetData(i)
                                     self.data[self.incrProgressBar,
@@ -287,7 +286,7 @@ class EDFStack(DataObject.DataObject):
                                                self.__dtype)
                         self.incrProgressBar=0
                         for tempEdfFileName in filelist:
-                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                             for i in range(nImages):
                                 pieceOfStack=tempEdf.GetData(i)
                                 self.data[nImages*self.incrProgressBar+i,
@@ -382,14 +381,14 @@ class EDFStack(DataObject.DataObject):
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
-                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                             pieceOfStack=tempEdf.GetData(0)    
                             self.data[:,self.incrProgressBar,:] = pieceOfStack[:,:]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     else:
                         for tempEdfFileName in filelist:
-                            tempEdf=EdfFile.EdfFile(tempEdfFileName)
+                            tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                             pieceOfStack=tempEdf.GetData(0)
                             self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
                             self.incrProgressBar += 1

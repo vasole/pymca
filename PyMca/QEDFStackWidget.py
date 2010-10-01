@@ -2579,6 +2579,8 @@ if __name__ == "__main__":
                 else:
                     msg.setWindowTitle("Error")
                     msg.exec_()
+                if DEBUG:
+                    raise
                 sys.exit(1)                
         try:
             PyMcaDirs.inputDir = os.path.dirname(args[0])
@@ -2657,6 +2659,8 @@ if __name__ == "__main__":
                             msg.exec_loop()
                         else:
                             msg.exec_()
+                        if DEBUG:
+                            raise
                         sys.exit(1)
             else:
                 print "Usage: "

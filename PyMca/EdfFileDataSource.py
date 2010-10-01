@@ -56,7 +56,7 @@ class EdfFileDataSource:
     def refresh(self):
         self._sourceObjectList=[]
         for name in self.__sourceNameList:
-            self._sourceObjectList.append(EdfFile.EdfFile(name,fastedf=self._fastedf))
+            self._sourceObjectList.append(EdfFile.EdfFile(name, access='rb', fastedf=self._fastedf))
         self.__lastKeyInfo = {}
 
     def getSourceInfo(self):

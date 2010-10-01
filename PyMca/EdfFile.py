@@ -180,17 +180,20 @@ class  EdfFile:
             if access[0].upper() == "R":
                 if not os.path.isfile(self.FileName):
                     raise IOError("File %s not found" % FileName)
-
         try:
             if not os.path.isfile(self.FileName):
                 #write access
-                self.File = open(self.FileName, "wb")
+                if access is None:
+                    access = "wb"
+                self.File = open(self.FileName, access)
                 return
             else:
-                if (os.access(self.FileName, os.W_OK)):
-                    self.File = open(self.FileName, "r+b")
-                else :
-                    self.File = open(self.FileName, "rb")
+                if access is None:
+                    if (os.access(self.FileName, os.W_OK)):
+                        access = "r+b"
+                    else:
+                        access = "rb"
+                self.File = open(self.FileName, access)
                 self.File.seek(0, 0)
                 twoChars = self.File.read(2)
                 if twoChars in ["II", "MM"]:
@@ -203,6 +206,7 @@ class  EdfFile:
                     if twoChars[0] != "{":
                         self.PILATUS_CBF = True
         except:
+            raise
             try:
                 self.File.close()
             except:
