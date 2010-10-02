@@ -560,7 +560,7 @@ def getObject3DInstance(config=None):
     #file index is irrelevant in case of an actual 3D stack.
     filename = fileList[0]
     legend = os.path.basename(filename)    
-    edf = EdfFile.EdfFile(filename)
+    edf = EdfFile.EdfFile(filename, access='rb')
     data = edf.GetData(0).astype(numpy.float32)
     object3D = Object3DMesh(os.path.basename(filename))
     object3D.setData(data, z=data[:])
@@ -582,7 +582,7 @@ if __name__ == "__main__":
         for i in range(1, len(sys.argv)):
             flist.append(sys.argv[i])
         for f in flist:
-            edf = EdfFile.EdfFile(f)
+            edf = EdfFile.EdfFile(f, access='rb')
             data = edf.GetData(0)
             object3D = Object3DMesh(os.path.basename(f))
     else:
