@@ -399,46 +399,46 @@ class StackBase(object):
             cleanMask = numpy.array(cleanMask).transpose()
             if self.fileIndex == 2:
                 if self.mcaIndex == 0:
-                    if isinstance(self.stack.data, numpy.ndarray):
+                    if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self.stack.data[:,r,c]
+                            mcaData += self._stack.data[:,r,c]
                     else:
                         if DEBUG:
                             print "Dynamic loading case 0"
                         #no other choice than to read all images
                         #for the time being, one by one
-                        for i in xrange(self.stack.data.shape[0]):
-                            tmpData = self.stack.data[i:i+1,:,:]
+                        for i in xrange(self._stack.data.shape[0]):
+                            tmpData = self._stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
                             mcaData[i] = (tmpData*arrayMask).sum()
                 elif self.mcaIndex == 1:
-                    if isinstance(self.stack.data, numpy.ndarray):
+                    if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self.stack.data[r,:,c]
+                            mcaData += self._stack.data[r,:,c]
                     else:
                         raise IndexError, "Dynamic loading case 1"
                 else:
                     raise IndexError, "Wrong combination of indices. Case 0"
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
-                    if isinstance(self.stack.data, numpy.ndarray):
+                    if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self.stack.data[:,r,c]
+                            mcaData += self._stack.data[:,r,c]
                     else:
                         if DEBUG:
                             print "Dynamic loading case 2"
                         #no other choice than to read all images
                         #for the time being, one by one
-                        for i in xrange(self.stack.data.shape[0]):
-                            tmpData = self.stack.data[i:i+1,:,:]
+                        for i in xrange(self._stack.data.shape[0]):
+                            tmpData = self._stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
                             #multiplication is faster than selection
                             #tmpData[arrayMask].sum() in my machine
                             mcaData[i] = (tmpData*arrayMask).sum()
                 elif self.mcaIndex == 2:
-                    if isinstance(self.stack.data, numpy.ndarray):
+                    if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self.stack.data[r,c,:]
+                            mcaData += self._stack.data[r,c,:]
                     else:
                         if DEBUG:
                             print "Dynamic loading case 3"
@@ -451,7 +451,7 @@ class StackBase(object):
                             row_dict[key].append(c)
                         for key in row_dict.keys():
                             r = int(key)
-                            tmpMcaData = self.stack.data[r:r+1, row_dict[key],:]
+                            tmpMcaData = self._stack.data[r:r+1, row_dict[key],:]
                             tmpMcaData.shape = 1, -1
                             mcaData += numpy.sum(tmpMcaData,0)
                 else:
@@ -611,9 +611,9 @@ class StackBase(object):
                             maxImage[maxMask] = tmpData[maxMask]
                         if (i == i1):
                             leftImage = tmpData
-                        if (i == imiddle):
+                        elif (i == imiddle):
                             middleImage = tmpData                            
-                        if i == (i2-1):
+                        elif i == (i2-1):
                             rightImage = tmpData
                     if DEBUG:
                         print "Dynamic ROI elapsed = ", time.time() - t0
