@@ -26,9 +26,31 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
+import numpy
 import ExternalImagesWindow
 qt = ExternalImagesWindow.qt
+try:
+    from PyMca.PyMcaSciPy.signal import median
+except:
+    from PyMcaSciPy.signal import median
+medfilt2d = median.medfilt2d
 from PyMca_Icons import IconDict
+
+class MedianParameters(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QHBoxLayout(self)
+        self.mainLayout.setMargin(0)
+        self.mainLayout.setSpacing(2)
+        self.label = qt.QLabel(self)
+        self.label.setText("Median filter width: ")
+        self.widthSpin = qt.QSpinBox(self)
+        self.widthSpin.setMinimum(1)
+        self.widthSpin.setMaximum(99)
+        self.widthSpin.setValue(1)
+        self.widthSpin.setSingleStep(2)
+        self.mainLayout.addWidget(self.label)
+        self.mainLayout.addWidget(self.widthSpin)
 
 class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
     def __init__(self, *var, **kw):
@@ -46,8 +68,25 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
                                     position = 6)
         self.buildAndConnectImageButtonBox()
         self._toggleSelectionMode()
-        #self.graphWidget._yAutoScaleToggle()
-        #self.graphWidget._xAutoScaleToggle()
+        self._medianParameters = {'use':True,
+                                  'row_width':1,
+                                  'column_width':1}
+        self._medianParametersWidget = MedianParameters(self)
+        self._medianParametersWidget.widthSpin.setValue(1)        
+        self.layout().addWidget(self._medianParametersWidget)
+        self.connect(self._medianParametersWidget.widthSpin,
+                     qt.SIGNAL('valueChanged(int)'),
+                     self.setKernelWidth)
+
+    def setKernelWidth(self, value):
+        kernelSize = numpy.asarray(value)
+        if len(kernelSize.shape) == 0:
+            kernelSize = [kernelSize.item()] * 2
+        self._medianParameters['row_width'] = kernelSize[0]
+        self._medianParameters['column_width'] = kernelSize[1]
+        self._medianParametersWidget.widthSpin.setValue(int(kernelSize[0]))
+        current = self.slider.value()
+        self.showImage(current, moveslider=False)
 
     def subtractBackground(self):
         current = self.slider.value()
@@ -67,18 +106,35 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
                     if imageName.lower().endswith('background'):
                         backgroundIndex = i
                         break
+        mfText = self._medianTitle()
         if backgroundIndex is None:
             self.setImageData(self.imageList[index])
             if self.imageNames is None:
-                self.graphWidget.graph.setTitle("Image %d" % index)
+                self.graphWidget.graph.setTitle(mfText+"Image %d" % index)
             else:
-                self.graphWidget.graph.setTitle(self.imageNames[index])
+                self.graphWidget.graph.setTitle(mfText+self.imageNames[index])
         else:
             self.setImageData(self.imageList[index]-\
                               self.imageList[backgroundIndex])
             if self.imageNames is None:
-                self.graphWidget.graph.setTitle("Image %d Net" % index)
+                self.graphWidget.graph.setTitle(mfText+"Image %d Net" % index)
             else:
-                self.graphWidget.graph.setTitle(self.imageNames[index]+ " Net")
+                self.graphWidget.graph.setTitle(mfText+self.imageNames[index]+ " Net")
         if moveslider:
             self.slider.setValue(index)
+
+    def _medianTitle(self):
+        a = self._medianParameters['row_width']
+        b = self._medianParameters['column_width']
+        if max(a, b) > 1:
+            return "MF(%d,%d) " % (a, b)
+        else:
+            return ""
+
+    def setImageData(self, data, **kw):
+        if self._medianParameters['use']:
+            if max(self._medianParameters['row_width'],
+                   self._medianParameters['column_width']) > 1:
+                data = medfilt2d(data,[self._medianParameters['row_width'],
+                                   self._medianParameters['column_width']])
+        ExternalImagesWindow.ExternalImagesWindow.setImageData(self, data, **kw)

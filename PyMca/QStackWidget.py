@@ -366,6 +366,8 @@ class QStackWidget(StackBase.StackBase,
         try:
             self.pluginInstanceDict[key].applyMethod(methods[idx])    
         except:
+            if DEBUG:
+                raise
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])

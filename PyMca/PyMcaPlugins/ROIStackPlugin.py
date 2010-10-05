@@ -37,7 +37,7 @@ except ImportError:
     import StackROIWindow
     import PyMca_Icons
 
-DEBUG = 1
+DEBUG = 0
 
 class ROIStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
