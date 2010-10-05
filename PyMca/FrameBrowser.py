@@ -301,6 +301,9 @@ class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
     def setValue(self, value):
         self._slider.setValue(value)
         self._browser.setValue(value)
+
+    def value(self):
+        return self._slider.value()
     
 def test1(args):
     app=QtGui.QApplication(args)

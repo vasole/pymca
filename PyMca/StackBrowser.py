@@ -165,13 +165,18 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
 
     def _showImageSliderSlot(self, index):
         self.showImage(index, moveslider=False)
+
+    def _buildTitle(self, legend, index):
+        return "%s %d" % (legend, index)
             
     def showImage(self, index=0, moveslider=True):
+        if not len(self.dataObjectsList):
+            return
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
         data = self._getImageDataFromSingleIndex(index)       
         self.setImageData(data, clearmask=False)
-        txt = "%s %d" % (legend, index)
+        txt = self._buildTitle(legend, index)
         self.graphWidget.graph.setTitle(txt)
         self.name.setText(txt)
         if moveslider:

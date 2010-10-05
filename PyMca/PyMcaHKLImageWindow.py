@@ -74,8 +74,14 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
 
         # delta in vertical (following BM28)
         # gamma in horizontal (following BM28)
-        gamma = info['gamma'] + deltaH
-        delta = info['delta'] - deltaV
+        if 0:
+            #original
+            gamma = info['gamma'] + deltaH
+            delta = info['delta'] - deltaV
+        else:
+            #MarCCD settings
+            gamma = info['gamma'] - deltaV
+            delta = info['delta'] - deltaH            
         #end of BM28 customization
 
         mu    = info['mu']
