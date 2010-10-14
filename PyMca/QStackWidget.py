@@ -46,7 +46,8 @@ HDF5 = ArraySave.HDF5
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
-StackBase.DEBUG = DEBUG
+if DEBUG:
+    StackBase.DEBUG = DEBUG
 
 class QStackWidget(StackBase.StackBase,
                    CloseEventNotifyingWidget.CloseEventNotifyingWidget):

@@ -602,13 +602,11 @@ class StackBase(object):
                                   tmpData,
                                   roiImage)
                         if i == i1:
-                            minImage = tmpData
-                            maxImage = tmpData
+                            minImage = tmpData * 1
+                            maxImage = tmpData * 1
                         else:
-                            minMask  = tmpData < minImage
-                            maxMask  = tmpData > minImage
-                            minImage[minMask] = tmpData[minMask]
-                            maxImage[maxMask] = tmpData[maxMask]
+                            minImage = numpy.minimum(minImage, tmpData, minImage)
+                            maxImage = numpy.maximum(maxImage, tmpData, minImage)
                         if (i == i1):
                             leftImage = tmpData
                         elif (i == imiddle):
