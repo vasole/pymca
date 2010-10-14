@@ -120,10 +120,18 @@ class QNexusWidget(QtGui.QWidget):
                      self.buttonsSlot)
 
         self._hdf5WidgetDatasetMenu = QtGui.QMenu(self)
-        self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Open"),
-                                    self._openDataset)
-        self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Properties"),
-                                    self._showDatasetProperties)
+        self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Add to selection table"),
+                                    self._addToSelectionTable)
+
+        if 0:
+            #these two options can be combined into one for the time being
+            self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Open"),
+                                        self._openDataset)
+            self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Properties"),
+                                        self._showDatasetProperties)
+        else:
+            self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Information"),
+                                    self._showInfoWidgetSlot)
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
@@ -396,21 +404,37 @@ class QNexusWidget(QtGui.QWidget):
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
         name = ddict['name']
-        if True:
-            if ddict['dtype'].startswith('|S'):
-                #print "string"
-                return self.showInfoWidget(filename, name, False)
-                pass
-            elif 1:
-                #should I show the option menu?
-                self.showInfoWidget(filename, name, True)
-                return
-            else:
-                self.__lastDatasetDict= ddict
-                self._hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
-                self.__lastDatasetDict= None
-                return
-        return self.showInfoWidget(filename, name)
+        if ddict['dtype'].startswith('|S'):
+            #handle a right click on a dataset of string type
+            return self.showInfoWidget(filename, name, False)
+            pass
+        elif ddict['dtype'] == '':
+            #handle a right click on a group
+            return self.showInfoWidget(filename, name, False)
+        elif 0:
+            #should I show the option menu?
+            self.showInfoWidget(filename, name, True)
+            return
+        else:
+            #handle a right click on a numeric dataset
+            self.__lastDatasetDict= ddict
+            self._hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
+            self.__lastDatasetDict= None
+            return
+
+    def _addToSelectionTable(self, ddict=None):
+        if ddict is None:
+            ddict = self.__lastDatasetDict
+        #handle as a double click
+        ddict['event'] = "itemDoubleClicked"
+        self.hdf5Slot(ddict)
+
+    def _showInfoWidgetSlot(self, ddict=None):
+        if ddict is None:
+            ddict = self.__lastDatasetDict
+        filename = ddict['file']
+        name = ddict['name']
+        return self.showInfoWidget(filename, name, True)
 
     def _openDataset(self, ddict=None):
         if ddict is None:

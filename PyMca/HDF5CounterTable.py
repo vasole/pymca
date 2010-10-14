@@ -39,7 +39,7 @@ class HDF5CounterTable(QtGui.QTableWidget):
         self.ySelection   = []
         self.monSelection = []
         self.__is3DEnabled = False
-        labels = ['Counter', 'X    ', 'Y    ', 'Mon', 'Alias']
+        labels = ['Counter', 'Axes', 'Signals', 'Monitor', 'Alias']
         self.setColumnCount(len(labels))
         for i in range(len(labels)):
             item = self.horizontalHeaderItem(i)
@@ -57,9 +57,14 @@ class HDF5CounterTable(QtGui.QTableWidget):
                      QtCore.SIGNAL("cellChanged(int, int)"),
                      self._aliasSlot)
 
-    def build(self, cntlist, aliaslist):
+    def build(self, cntlist, aliaslist=None):
         self.__building = True
         nmca = 0
+        if aliaslist is None:
+            import posixpath
+            aliaslist = []
+            for item in cntlist:
+                aliaslist.append(posixpath.basename(item))
         if len(cntlist) != len(aliaslist):
             raise ValueError, "Alias list and counter list must have same length"
         self.cntList = cntlist
@@ -175,15 +180,18 @@ class HDF5CounterTable(QtGui.QTableWidget):
         self._update()
 
     def _update(self):
+        axisLabels = ['X', 'Y', 'Z']
         for i in range(self.rowCount()):
             j = 1
             widget = self.cellWidget(i, j)
             if i in self.xSelection:
                 if not widget.isChecked():
                     widget.setChecked(True)
+                widget.setText(axisLabels[self.xSelection.index(i)])
             else:
                 if widget.isChecked():
                     widget.setChecked(False)
+                widget.setText("")
             j = 2
             widget = self.cellWidget(i, j)
             if i in self.ySelection:

@@ -545,6 +545,10 @@ class HDF5Widget(FileView):
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
+    if len(sys.argv) < 2:
+        print "Usage:"
+        print "python HDF5Widget.py path_to_hdf5_file_name"
+        sys.exit(0)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
     #fileModel.openFile('/home/darren/temp/PSI.hdf')
