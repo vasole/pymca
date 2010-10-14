@@ -63,15 +63,15 @@ char *check_malloc (int size)
    
 static char doc_median2d[] = "filt = _median2d(data, size)";
 
-extern void f_medfilt2(float*,float*,intp*,intp*);
-extern void d_medfilt2(double*,double*,intp*,intp*);
-extern void b_medfilt2(unsigned char*,unsigned char*,intp*,intp*);
-extern void short_medfilt2(short*, short*,intp*,intp*);
-extern void ushort_medfilt2(unsigned short*,unsigned short*,intp*,intp*);
-extern void int_medfilt2(int*, int*,intp*,intp*);
-extern void uint_medfilt2(unsigned int*,unsigned int*,intp*,intp*);
-extern void long_medfilt2(long*, long*,intp*,intp*);
-extern void ulong_medfilt2(unsigned long*,unsigned long*,intp*,intp*);
+extern void f_medfilt2(float*,float*,int*,int*);
+extern void d_medfilt2(double*,double*,int*,int*);
+extern void b_medfilt2(unsigned char*,unsigned char*,int*,int*);
+extern void short_medfilt2(short*, short*,int*,int*);
+extern void ushort_medfilt2(unsigned short*,unsigned short*,int*,int*);
+extern void int_medfilt2(int*, int*,int*,int*);
+extern void uint_medfilt2(unsigned int*,unsigned int*,int*,int*);
+extern void long_medfilt2(long*, long*,int*,int*);
+extern void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*);
 
 static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
 {
@@ -79,7 +79,9 @@ static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
     int typenum;
     PyArrayObject *a_image=NULL, *a_size=NULL;
     PyArrayObject *a_out=NULL;
-    intp Nwin[2] = {3,3};
+    int Nwin[2] = {3,3};
+	long *lhelp;
+	int Idims[2] = {0, 0};
 
     if (!PyArg_ParseTuple(args, "O|O", &image, &size)) return NULL;
 
@@ -92,8 +94,11 @@ static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
 	if (a_size == NULL) goto fail;
 	if ((RANK(a_size) != 1) || (DIMS(a_size)[0] < 2)) 
 	    PYERR("Size must be a length two sequence");
-	Nwin[0] = ((intp *)DATA(a_size))[0];
-	Nwin[1] = ((intp *)DATA(a_size))[1];
+	lhelp = (long *) DATA(a_size);
+	Nwin[0] = (int) (*lhelp);
+	Nwin[1] = (int) (*(lhelp++));
+	Idims[0] = (int) (a_image->dimensions[0]);
+	Idims[1] = (int) (a_image->dimensions[1]);
     }  
 
     a_out = (PyArrayObject *)PyArray_SimpleNew(2,DIMS(a_image),typenum);
@@ -105,34 +110,34 @@ static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
     else {
 	switch (typenum) {
 	case PyArray_UBYTE:
-	    b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out), Nwin, DIMS(a_image));
+	    b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_FLOAT:
-	    f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out), Nwin, DIMS(a_image));
+	    f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_DOUBLE:
-	    d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out), Nwin, DIMS(a_image));
+	    d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_SHORT:
-	    short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out), Nwin, DIMS(a_image));
+	    short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_USHORT:
-	    ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out), Nwin, DIMS(a_image));
+	    ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_INT:
-	    int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out), Nwin, DIMS(a_image));
+	    int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_UINT:
-	    uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out), Nwin, DIMS(a_image));
+	    uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_LONG:
-	    long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out), Nwin, DIMS(a_image));
+	    long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out), Nwin, Idims);
 	    break;
 	case PyArray_ULONG:
-	    ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out), Nwin, DIMS(a_image));
+	    ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out), Nwin, Idims);
 	    break;
 	default:
-	  PYERR("2D median filter only supports Int8, Float32, and Float64.");
+	  PYERR("Median filter unsupported data type.");
 	}
     }
 
@@ -149,7 +154,7 @@ static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
 
 }
 
-static struct PyMethodDef toolbox_module_methods[] = {
+static struct PyMethodDef mediantools_methods[] = {
 	{"_medfilt2d", mediantools_median2d, METH_VARARGS, doc_median2d},
 	{NULL,		NULL, 0}		/* sentinel */
 };
@@ -160,15 +165,13 @@ PyMODINIT_FUNC initmediantools(void) {
         PyObject *m, *d;
 	
 	/* Create the module and add the functions */
-	m = Py_InitModule("mediantools", toolbox_module_methods);
+	m = Py_InitModule("mediantools", mediantools_methods);
 
 	/* Import the C API function pointers for the Array Object*/
 	import_array();
 
 	/* Make sure the multiarraymodule is loaded so that the zero
 	   and one objects are defined */
-	/* XXX: This should be updated for scipy. I think it's pulling in 
-	   Numeric's multiarray. */
 	PyImport_ImportModule("numpy.core.multiarray");
 	/* { PyObject *multi = PyImport_ImportModule("multiarray"); } */
 

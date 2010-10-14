@@ -6,32 +6,26 @@
  * on scipy that is big and potentially difficult to built on some 
  * platforms.
  * 
- * Using this code outside python:
+ * Using this code outside PyMca:
  * 
- * The includes are needed to define the type of intp because one needs
- * to know which python is used in order to know if intp is a long or an
- * int in 64 bit platforms. The check_malloc function has to be provided
- * for error handling.
- */
-
+ * The check_malloc function has to be provided for error handling.
+ *
 /*--------------------------------------------------------------------*/
 
-#include "Python.h"
-#define NO_IMPORT_ARRAY
-#include "numpy/noprefix.h"
+#include <stdlib.h>
 
 extern char *check_malloc (int);
 
 /* defined below */
-void f_medfilt2(float*,float*,intp*,intp*);
-void d_medfilt2(double*,double*,intp*,intp*);
-void b_medfilt2(unsigned char*,unsigned char*,intp*,intp*);
-void short_medfilt2(short*, short*,intp*,intp*);
-void ushort_medfilt2(unsigned short*,unsigned short*,intp*,intp*);
-void int_medfilt2(int*, int*,intp*,intp*);
-void uint_medfilt2(unsigned int*,unsigned int*,intp*,intp*);
-void long_medfilt2(long*, long*,intp*,intp*);
-void ulong_medfilt2(unsigned long*,unsigned long*,intp*,intp*);
+void f_medfilt2(float*,float*,int*,int*);
+void d_medfilt2(double*,double*,int*,int*);
+void b_medfilt2(unsigned char*,unsigned char*,int*,int*);
+void short_medfilt2(short*, short*,int*,int*);
+void ushort_medfilt2(unsigned short*,unsigned short*,int*,int*);
+void int_medfilt2(int*, int*,int*,int*);
+void uint_medfilt2(unsigned int*,unsigned int*,int*,int*);
+void long_medfilt2(long*, long*,int*,int*);
+void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*);
 
 /* The QUICK_SELECT routine is based on Hoare's Quickselect algorithm,
  * with unrolled recursion. 
@@ -92,7 +86,7 @@ TYPE NAME(TYPE arr[], int n)                                            \
 
 /* 2-D median filter with zero-padding on edges. */
 #define MEDIAN_FILTER_2D(NAME, TYPE, SELECT)                            \
-void NAME(TYPE* in, TYPE* out, intp* Nwin, intp* Ns)                    \
+void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                    \
 {                                                                       \
     int nx, ny, hN[2];                                                  \
     int pre_x, pre_y, pos_x, pos_y;                                     \
