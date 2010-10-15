@@ -26,6 +26,8 @@
 #############################################################################*/
 import numpy
 import SpecfitFuns
+arctan = numpy.arctan
+pi = numpy.pi
 
 class SimpleFitDefaultFunctions:
     def __init__(self):
@@ -59,6 +61,9 @@ class SimpleFitDefaultFunctions:
         Function to calulate slit width and knife edge cut
         """
         return 0.5*SpecfitFuns.slit(pars,x)
+
+    def atan(self, pars, x):
+        return pars[0] * (0.5 + (arctan((1.0*x-pars[1])/pars[2])/pi))
     
     def polynomial(self, pars, x):
         result = numpy.zeros(x.shape, numpy.float) + pars[0]
@@ -81,6 +86,7 @@ FUNCTION=[fitfuns.gaussian,
           fitfuns.stepDown,
           fitfuns.stepUp,
           fitfuns.slit,
+          fitfuns.atan,
           fitfuns.hypermet,
           fitfuns.polynomial,
           fitfuns.polynomial,
@@ -98,6 +104,7 @@ PARAMETERS=[['Height','Position','Fwhm'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM','BeamFWHM'],
+            ['Height','Position','Width'],
             ['G_Area','Position','FWHM',
              'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H'],
             ['Constant'],
@@ -117,6 +124,7 @@ THEORY=['User Estimated Gaussians',
         'User Estimated Step Down',
         'User Estimated Step Up',
         'User Estimated Slit',
+        'User Estimated Atan',
         'User Estimated Hypermet',
         'User Estimated Constant',
         'User Estimated First Order Polynomial',

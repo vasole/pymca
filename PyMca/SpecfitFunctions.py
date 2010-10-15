@@ -27,6 +27,7 @@
 __revision__ = "$Revision: 1.14 $"
 import numpy
 from numpy.oldnumeric import *
+arctan = numpy.arctan
 import SpecfitFuns
 import string
 import os
@@ -104,6 +105,7 @@ CDELTA      = 5
 CSUM        = 6
 CIGNORED    = 7
 
+
 class SpecfitFunctions:
     def __init__(self,config=None):
         if config is None:
@@ -157,22 +159,25 @@ class SpecfitFunctions:
        #return pars[0] + pars [1] * x + SpecfitFuns.apvoigt(pars[2:len(pars)],x)
 
     def stepdown(self,pars,x):
-       """
-       A fit function.
-       """
-       return 0.5*SpecfitFuns.downstep(pars,x)
+        """
+        A fit function.
+        """
+        return 0.5*SpecfitFuns.downstep(pars,x)
 
     def stepup(self,pars,x):
-       """
-       A fit function.
-       """
-       return 0.5*SpecfitFuns.upstep(pars,x)
+        """
+        A fit function.
+        """
+        return 0.5*SpecfitFuns.upstep(pars,x)
 
     def slit(self,pars,x):
-       """
-       A fit function.
-       """
-       return 0.5*SpecfitFuns.slit(pars,x)
+        """
+        A fit function.
+        """
+        return 0.5*SpecfitFuns.slit(pars,x)
+
+    def atan(self, pars, x):
+        return pars[0] * (0.5 + (arctan((1.0*x-pars[1])/pars[2])/pi))
 
     def periodic_gauss(self, pars, x):
         """
@@ -908,6 +913,9 @@ class SpecfitFunctions:
                         
         return largest,cons
 
+    def estimate_atan(self, *var, **kw):
+        return self.estimate_stepup(*var, **kw)
+
     def estimate_periodic_gauss(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
         if yscaling == None:
             try:
@@ -1036,6 +1044,7 @@ FUNCTION=[fitfuns.gauss,
           fitfuns.stepdown,
           fitfuns.stepup,
           fitfuns.slit,
+          fitfuns.atan,
           fitfuns.hypermet,
           fitfuns.periodic_gauss]
           
@@ -1048,6 +1057,7 @@ PARAMETERS=[['Height','Position','FWHM'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM','BeamFWHM'],
+            ['Height','Position','Width'],
             ['G_Area','Position','FWHM',
              'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H'],
             ['N', 'Delta', 'Height', 'Position', 'FWHM']]
@@ -1061,6 +1071,7 @@ THEORY=['Gaussians',
         'Step Down',
         'Step Up',
         'Slit',
+        'Atan',
         'Hypermet',
         'Periodic Gaussians']
 
@@ -1073,10 +1084,12 @@ ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_stepdown,
           fitfuns.estimate_stepup,
           fitfuns.estimate_slit,
+          fitfuns.estimate_atan,
           fitfuns.estimate_hypermet,
           fitfuns.estimate_periodic_gauss]
 
 CONFIGURE=[fitfuns.configure,
+           fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
