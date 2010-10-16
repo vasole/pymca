@@ -246,7 +246,8 @@ class StackBase(object):
             i2 = self._stack.data.shape[self.mcaIndex]
             imiddle = int(0.5 * (i1+i2))
             pos = 0.5 * (ddict['from'] + ddict['to'])
-            imiddle = max(numpy.nonzero(xw <= pos)[0])
+            if ddict["type"].upper() != "CHANNEL":
+                imiddle = max(numpy.nonzero(xw <= pos)[0])
         elif ddict["type"].upper() != "CHANNEL":
             #energy like ROI
             if xw[0] < xw[-1]:
