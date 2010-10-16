@@ -1,4 +1,11 @@
-import mediantools
+try:
+    import mediantools
+except ImportError:
+    try:
+        from PyMca.PyMcaSciPy.signal import mediantools
+    except ImportError:
+        from PyMcaSciPy.signal import mediantools        
+
 from numpy import asarray
 
 def medfilt2d(input_data, kernel_size=None):

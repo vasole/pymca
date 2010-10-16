@@ -27,8 +27,12 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import numpy
-from PyMca import StackBrowser
-from PyMca.PyMcaSciPy.signal import median 
+try:
+    from PyMca import StackBrowser
+    from PyMca.PyMcaSciPy.signal import median
+except ImportError:
+    import StackBrowser
+    from PyMcaSciPy.signal import median
 
 medfilt2d = median.medfilt2d
 qt = StackBrowser.qt

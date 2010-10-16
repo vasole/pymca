@@ -253,6 +253,7 @@ installOptions = dict(
 exec_list = ["PyMcaMain",
              "PyMcaBatch",
              "QEDFStackWidget",
+             "QStackWidget",
              "PeakIdentifier",
              "EdfFileSimpleViewer",
              "PyMcaPostBatch",
