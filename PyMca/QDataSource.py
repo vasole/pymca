@@ -68,7 +68,7 @@ else:
 NEXUS = True
 try:
     import NexusDataSource
-    import QNexusWidget
+    import PyMcaNexusWidget
     import h5py
 except:
     NEXUS = False
@@ -76,7 +76,7 @@ except:
 
 if NEXUS:
     source_types[NexusDataSource.SOURCE_TYPE] = NexusDataSource.NexusDataSource
-    source_widgets[NexusDataSource.SOURCE_TYPE] = QNexusWidget.QNexusWidget
+    source_widgets[NexusDataSource.SOURCE_TYPE] = PyMcaNexusWidget.PyMcaNexusWidget
 
 def getSourceType(sourceName0):
     if type(sourceName0) == type([]):

@@ -66,9 +66,6 @@ class HDF5Stack1D(DataObject.DataObject):
                  That means scanlist = ["/whatever1"]
                  and               selection['y'] = "/whatever2/counts"
         """
-        if type(filelist) == type(''):
-            filelist = [filelist]
-
         # all the files in the same source
         hdfStack = NexusDataSource.NexusDataSource(filelist)
 

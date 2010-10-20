@@ -144,18 +144,27 @@ class NexusDataSource:
             nameList = nameInput
         else:
             nameList = [nameInput]
+        self.sourceName = []
         for name in nameList:
             if type(name) != types.StringType:
-                raise TypeError,"Constructor needs string as first argument"            
-        self.sourceName   = nameList
+                if not isinstance(name, phynx.File):
+                    text = "Constructor needs string as first argument"
+                    raise TypeError(text)
+                else:
+                    self.sourceName.append(name.file)
+                    continue
+            self.sourceName.append(name)
         self.sourceType = SOURCE_TYPE
-        self.__sourceNameList = nameList
+        self.__sourceNameList = self.sourceName
         self.refresh()
         
     def refresh(self):
         self._sourceObjectList=[]
         FAMILY = False
         for name in self.__sourceNameList:
+            if isinstance(name, phynx.File):
+                self._sourceObjectList.append(name)
+                continue
             if not os.path.exists(name):
                 if '%' in name:
                     try:

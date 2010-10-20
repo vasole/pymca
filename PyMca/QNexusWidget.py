@@ -119,19 +119,6 @@ class QNexusWidget(QtGui.QWidget):
                      QtCore.SIGNAL('ButtonsSignal'),
                      self.buttonsSlot)
 
-        self._hdf5WidgetDatasetMenu = QtGui.QMenu(self)
-        self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Add to selection table"),
-                                    self._addToSelectionTable)
-
-        if 0:
-            #these two options can be combined into one for the time being
-            self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Open"),
-                                        self._openDataset)
-            self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Properties"),
-                                        self._showDatasetProperties)
-        else:
-            self._hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Information"),
-                                    self._showInfoWidgetSlot)
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
@@ -417,28 +404,41 @@ class QNexusWidget(QtGui.QWidget):
             return
         else:
             #handle a right click on a numeric dataset
-            self.__lastDatasetDict= ddict
-            self._hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
-            self.__lastDatasetDict= None
+            _hdf5WidgetDatasetMenu = QtGui.QMenu(self)
+            _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Add to selection table"),
+                                        self._addToSelectionTable)
+
+            if 0:
+                #these two options can be combined into one for the time being
+                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Open"),
+                                            self._openDataset)
+                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Properties"),
+                                            self._showDatasetProperties)
+            else:
+                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Information"),
+                                        self._showInfoWidgetSlot)
+                self._lastDatasetDict= ddict
+                _hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
+                self._lastDatasetDict= None
             return
 
     def _addToSelectionTable(self, ddict=None):
         if ddict is None:
-            ddict = self.__lastDatasetDict
+            ddict = self._lastDatasetDict
         #handle as a double click
         ddict['event'] = "itemDoubleClicked"
         self.hdf5Slot(ddict)
 
     def _showInfoWidgetSlot(self, ddict=None):
         if ddict is None:
-            ddict = self.__lastDatasetDict
+            ddict = self._lastDatasetDict
         filename = ddict['file']
         name = ddict['name']
         return self.showInfoWidget(filename, name, True)
 
     def _openDataset(self, ddict=None):
         if ddict is None:
-            ddict = self.__lastDatasetDict
+            ddict = self._lastDatasetDict
         filename = ddict['file']
         name = ddict['name']
         self._checkWidgetDict()
@@ -475,7 +475,7 @@ class QNexusWidget(QtGui.QWidget):
 
     def _showDatasetProperties(self, ddict=None):
         if ddict is None:
-            ddict = self.__lastDatasetDict
+            ddict = self._lastDatasetDict
         filename = ddict['file']
         name = ddict['name']
         return self.showInfoWidget(filename, name)
@@ -636,6 +636,12 @@ class QNexusWidget(QtGui.QWidget):
             if ddict.has_key('event'):
                 if ddict['event'] == "closeEventSignal":
                     if self._widgetDict.has_key(ddict['id']):
+                        if DEBUG:
+                            try:
+                                widget = self._widgetDict[ddict['id']] 
+                                print "DELETING ", widget.windowTitle()
+                            except:
+                                pass
                         del self._widgetDict[ddict['id']]
     
 if __name__ == "__main__":
