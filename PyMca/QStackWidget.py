@@ -212,9 +212,18 @@ class QStackWidget(StackBase.StackBase,
         wdir = PyMcaDirs.outputDir
         filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
         if len(filename):
-            return str(filename)
-        else:
-            return ""
+            try:
+                return str(filename)
+            except UnicodeEncodeError:
+                if 0:
+                    return str(unicode(filename).encode('utf-8'))
+                else:
+                    msg = qt.QMessageBox(self)
+                    msg.setWindowTitle("Encoding error")
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Please use ASCII characters in file name and path")
+                    msg.exec_()
+        return ""
 
     def saveStackAsNeXus(self, dtype=None):
         filename = self._getOutputHDF5Filename()

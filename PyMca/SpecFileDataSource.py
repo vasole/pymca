@@ -59,7 +59,7 @@ class SpecFileDataSource:
             #who knows if one day will make selections thru several files...
             raise TypeError,"Constructor needs string as first argument"    
         for name in nameList:
-            if type(name) != types.StringType:
+            if type(name) not in [types.StringType, types.UnicodeType]:
                 raise TypeError,"Constructor needs string as first argument"            
         self.sourceName   = nameInput
         self.sourceType   = SOURCE_TYPE

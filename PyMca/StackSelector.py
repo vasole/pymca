@@ -289,7 +289,10 @@ class StackSelector(object):
                         return [], filterused
                     else:
                         return []
-        filelist = map(str, filelist)
+        try:
+            filelist = map(str, filelist)
+        except UnicodeEncodeError:
+            filelist = map(unicode, filelist)
         if not(len(filelist)): return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.outputDir is None:
