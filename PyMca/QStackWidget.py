@@ -809,8 +809,7 @@ if __name__ == "__main__":
     if type(stack) == type([]):
         #aifira like, two stacks
         widget.setStack(stack[0])
-        slave = QStackWidget.QStackWidget(master=False,
-                                          rgbwidget=widget.rgbWidget)
+        slave = QStackWidget(master=False, rgbwidget=widget.rgbWidget)
         slave.setStack(stack[1])
         widget.setSlave(slave)
         stack = None
