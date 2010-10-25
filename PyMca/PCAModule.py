@@ -606,7 +606,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             stack.data.shape = oldShape
     else:
         if stack.shape != oldShape:
-            stach.shape = oldShape
+            stack.shape = oldShape
 
     if mask is not None:
         eigenvectors = numpy.zeros((ncomponents, N),pca.v.dtype)
