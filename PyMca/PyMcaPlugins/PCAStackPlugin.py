@@ -145,6 +145,11 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                      qt.SIGNAL('finished()'),
                      self.threadFinished)
         self.thread.start()
+        self.configurationWidget.show()
+        message = "Please wait. PCA Calculation going on."
+        CalculationThread.waitingMessageDialog(self.thread,
+                                message=message,
+                                parent=self.configurationWidget) 
 
     def actualCalculation(self):        
         pcaParameters = self.configurationWidget.getParameters()

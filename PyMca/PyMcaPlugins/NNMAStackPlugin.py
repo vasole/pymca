@@ -145,6 +145,11 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                      qt.SIGNAL('finished()'),
                      self.threadFinished)
         self.thread.start()
+        self.configurationWidget.show()
+        message = "Please wait. NNMA Calculation going on."
+        CalculationThread.waitingMessageDialog(self.thread,
+                                message=message,
+                                parent=self.configurationWidget) 
 
     def actualCalculation(self):
         nnmaParameters = self.configurationWidget.getParameters()
