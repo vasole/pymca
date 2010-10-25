@@ -30,6 +30,7 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import numpy
 import StackPluginBase
+import CalculationThread
 try:
     from PyMca.PCAWindow import PCAParametersDialog
     from PyMca import StackPluginResultsWindow    
@@ -40,6 +41,7 @@ except ImportError:
     import StackPluginResultsWindow
     import PyMca_Icons
 
+qt = StackPluginResultsWindow.qt
 DEBUG = 0
 
 class PCAStackPlugin(StackPluginBase.StackPluginBase):
@@ -55,6 +57,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ['Calculate', 'Show']
         self.configurationWidget = None
         self.widget = None
+        self.thread = None
 
     def stackUpdated(self):
         if DEBUG:
@@ -105,6 +108,13 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
     def calculate(self):
         if self.configurationWidget is None:
             self.configurationWidget = PCAParametersDialog(None, regions=True)
+            self._status = qt.QLabel(self.configurationWidget)
+            self._status.setAlignment(qt.Qt.AlignHCenter)
+            font = qt.QFont(self._status.font())
+            font.setBold(True)
+            self._status.setFont(font)
+            self._status.setText("Ready")
+            self.configurationWidget.layout().addWidget(self._status)
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             #I could get some defaults from the stack itslef 
@@ -125,61 +135,92 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.setSpectrum(x, y)
         ret = self.configurationWidget.exec_()
         if ret:
-            self.widget = None
-            pcaParameters = self.configurationWidget.getParameters()
-            self.configurationWidget.close()
-            method = pcaParameters['method']
-            methodlabel = pcaParameters.get('methodlabel', "")
-            function = pcaParameters['function']
-            pcaParameters['ncomponents'] = pcaParameters['npc']
-            #At some point I should make sure I get directly the
-            #function and the parameters from the configuration widget
-            del pcaParameters['npc']
-            del pcaParameters['method']
-            del pcaParameters['function']
-            del pcaParameters['methodlabel']
-            binning = pcaParameters['binning']
-            mask = pcaParameters['mask']
-            stack = self.getStackDataObject()
-            if isinstance(stack, numpy.ndarray):
-                if stack.data.dtype not in [numpy.float, numpy.float32]:
-                    print "WARNING: Non floating point data"
+            self._executeFunctionAndParameters()
 
-            oldShape = stack.data.shape
-            images, eigenValues, eigenVectors = function(stack,
-                                                         **pcaParameters)
-            if stack.data.shape != oldShape:
-                stack.data.shape = oldShape
+    def _executeFunctionAndParameters(self):
+        self.widget = None
+        self.thread = CalculationThread.CalculationThread(\
+                            calculation_method=self.actualCalculation)
+        qt.QObject.connect(self.thread,
+                     qt.SIGNAL('finished()'),
+                     self.threadFinished)
+        self.thread.start()
 
-            imageNames=None
-            vectorNames=None
-            nimages = images.shape[0]
-            imageNames = []
-            vectorNames = []
-            itmp = nimages
-            if " ICA " in methodlabel:
-                itmp = nimages/2
-                for i in range(itmp):
-                    imageNames.append("ICAimage %02d" % i)
-                    vectorNames.append("ICAvector %02d" % i)
+    def actualCalculation(self):        
+        pcaParameters = self.configurationWidget.getParameters()
+        self._status.setText("Calculation going on")
+        self.configurationWidget.setEnabled(False)        
+        #self.configurationWidget.close()
+        method = pcaParameters['method']
+        self.__methodlabel = pcaParameters.get('methodlabel', "")
+        function = pcaParameters['function']
+        pcaParameters['ncomponents'] = pcaParameters['npc']
+        #At some point I should make sure I get directly the
+        #function and the parameters from the configuration widget
+        del pcaParameters['npc']
+        del pcaParameters['method']
+        del pcaParameters['function']
+        del pcaParameters['methodlabel']
+        binning = pcaParameters['binning']
+        mask = pcaParameters['mask']
+        stack = self.getStackDataObject()
+        if isinstance(stack, numpy.ndarray):
+            if stack.data.dtype not in [numpy.float, numpy.float32]:
+                print "WARNING: Non floating point data"
+                text = "Calculation going on."
+                text += " WARNING: Non floating point data."
+                self._status.setText(text)
+
+        oldShape = stack.data.shape
+        result =  function(stack, **pcaParameters)
+        if stack.data.shape != oldShape:
+            stack.data.shape = oldShape
+        return result
+
+    def threadFinished(self):
+        result = self.thread.result
+        self.thread = None
+        if type(result) == type((1,)):
+            #if we receive a tuple there was an error
+            if len(result):
+                if result[0] == "Exception":
+                    self._status.setText("Ready after calculation error")
+                    self.configurationWidget.setEnabled(True)
+                    raise result[1],result[2]
+                    return
+        self._status.setText("Ready")
+        self.configurationWidget.setEnabled(True)
+        self.configurationWidget.close()        
+        images, eigenValues, eigenVectors = result
+        methodlabel = self.__methodlabel
+        imageNames=None
+        vectorNames=None
+        nimages = images.shape[0]
+        imageNames = []
+        vectorNames = []
+        itmp = nimages
+        if " ICA " in methodlabel:
+            itmp = nimages/2
             for i in range(itmp):
-                imageNames.append("Eigenimage %02d" % i)
-                vectorNames.append("Eigenvector %02d" % i)
-                    
-            self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
-                                            usetab=True)
-            self.widget.buildAndConnectImageButtonBox()
-            qt = StackPluginResultsWindow.qt
-            qt.QObject.connect(self.widget,
-                               qt.SIGNAL('MaskImageWidgetSignal'),
-                               self.mySlot)
+                imageNames.append("ICAimage %02d" % i)
+                vectorNames.append("ICAvector %02d" % i)
+        for i in range(itmp):
+            imageNames.append("Eigenimage %02d" % i)
+            vectorNames.append("Eigenvector %02d" % i)
+                
+        self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
+                                        usetab=True)
+        self.widget.buildAndConnectImageButtonBox()
+        qt = StackPluginResultsWindow.qt
+        qt.QObject.connect(self.widget,
+                           qt.SIGNAL('MaskImageWidgetSignal'),
+                           self.mySlot)
 
-            self.widget.setStackPluginResults(images,
-                                              spectra=eigenVectors,
-                                              image_names=imageNames,
-                                              spectra_names=vectorNames)
-            self._showWidget()
-
+        self.widget.setStackPluginResults(images,
+                                          spectra=eigenVectors,
+                                          image_names=imageNames,
+                                          spectra_names=vectorNames)
+        self._showWidget()        
     
     def _showWidget(self):
         if self.widget is None:
