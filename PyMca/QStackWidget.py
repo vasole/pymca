@@ -139,7 +139,17 @@ class QStackWidget(StackBase.StackBase,
                                                          colormap=True,
                                                          imageicons=True,
                                                          standalonesave=standaloneSaving)
-        self.roiGraphWidget = self.roiWidget.graphWidget        
+        infotext  = 'Toggle background subtraction from current image\n'
+        infotext += 'subtracting a straight line between the ROI limits.'
+        self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+        self.roiBackgroundButton = self.roiWidget.graphWidget._addToolButton(\
+                                    self.roiBackgroundIcon,
+                                    self._roiSubtractBackgroundClicked,
+                                    infotext,
+                                    toggle = True,
+                                    state = False,
+                                    position = 6)
+        self.roiGraphWidget = self.roiWidget.graphWidget
         self.stackWindow.mainLayout.addWidget(self.stackWidget)
         self.roiWindow.mainLayout.addWidget(self.roiWidget)
         box.addWidget(self.stackWindow)
@@ -202,6 +212,15 @@ class QStackWidget(StackBase.StackBase,
 
     def normalizeIconChecked(self):
         pass
+
+    def _roiSubtractBackgroundClicked(self):
+        if not len(self._ROIImageList):
+            return
+        if self.roiBackgroundButton.isChecked():
+            self.roiWidget.setImageData(self._ROIImageList[0]-\
+                                        self._ROIImageList[-1])
+        else:
+            self.roiWidget.setImageData(self._ROIImageList[0])
 
     def _stackSaveToolButtonSignal(self):
         self._stackSaveMenu.exec_(self.cursor().pos())
@@ -484,7 +503,10 @@ class QStackWidget(StackBase.StackBase,
         self.sendMcaSelection(self._mcaData0, action="ADD")
 
     def showROIImageList(self, imageList, image_names=None):
-        self.roiWidget.setImageData(imageList[0])
+        if self.roiBackgroundButton.isChecked():
+            self.roiWidget.setImageData(imageList[0]-imageList[-1])
+        else:
+            self.roiWidget.setImageData(imageList[0])
         self.roiWidget.graphWidget.graph.setTitle(image_names[0])
         self._ROIImageList = imageList
         self._ROIImageNames = image_names
