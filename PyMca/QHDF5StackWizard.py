@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -121,11 +121,13 @@ class StackIndexWidget(QtGui.QWidget):
         #self.mainLayout.setSpacing(0)
 
         self.buttonGroup = QtGui.QButtonGroup(self)
+        i = 0
         for text in ["1D data is first dimension", "1D data is last dimension"]:
             rButton = QtGui.QRadioButton(self)
             rButton.setText(text)
             self.mainLayout.addWidget(rButton)
-            self.buttonGroup.addButton(rButton)
+            self.buttonGroup.addButton(rButton, i)
+            i += 1
         rButton.setChecked(True)
         self._stackIndex = -1
         self.connect(self.buttonGroup,
@@ -137,6 +139,15 @@ class StackIndexWidget(QtGui.QWidget):
             self._stackIndex =  0
         else:
             self._stackIndex = -1
+
+    def setIndex(self, index):
+        if index == 0:
+            self._stackIndex = 0
+            self.buttonGroup.button(0).setChecked(True)
+        else:
+            self._stackIndex = -1
+            self.buttonGroup.button(1).setChecked(True)
+
 
 class DatasetSelectionPage(QtGui.QWizardPage):
     def __init__(self, parent):
@@ -187,6 +198,10 @@ class DatasetSelectionPage(QtGui.QWizardPage):
             if 'signal' in nxData[key].attrs.keys():
                 if int(nxData[key].attrs['signal']) == 1:
                     signalList.append(key)
+                    if len(signalList) == 1:
+                        if 'interpretation' in nxData[key].attrs.keys():
+                            if nxData[key].attrs['interpretation'] == "image":
+                                self.stackIndexWidget.setIndex(0)
 
         if not len(signalList):
             return

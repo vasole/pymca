@@ -104,16 +104,18 @@ class QStackWidget(StackBase.StackBase,
                                                         standalonesave=False,
                                                         imageicons=False)
             self._stackSaveMenu = qt.QMenu()
-            self._stackSaveMenu.addAction(qt.QString("Stack as NeXus"),
-                                                 self.saveStackAsNeXus)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 NeXus"),
-                                                 self.saveStackAsFloat32NeXus)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 NeXus"),
-                                                 self.saveStackAsFloat64NeXus)
-            self._stackSaveMenu.addAction(qt.QString("Stack as NeXus+/data/data"),
-                                                 self.saveStackAsNeXusPlus)
-            self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data/data"),
-                                                 self.saveStackAsSimpleHDF5)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Spectra"),
+                                                 self.saveStackAsNeXusSpectra)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Images"),
+                                                 self.saveStackAsNeXusImages)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 Spectra"),
+                                                 self.saveStackAsFloat32NeXusSpectra)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 Spectra"),
+                                                 self.saveStackAsFloat64NeXusSpectra)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 Images"),
+                                                 self.saveStackAsFloat32NeXusImages)
+            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 Images"),
+                                                 self.saveStackAsFloat64NeXusImages)
             self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data"),
                                                  self.saveStackAsSimplestHDF5)
             self._stackSaveMenu.addAction(qt.QString("Standard Graphics"),
@@ -244,18 +246,53 @@ class QStackWidget(StackBase.StackBase,
                     msg.exec_()
         return ""
 
-    def saveStackAsNeXus(self, dtype=None):
+    def saveStackAsNeXus(self, dtype=None, interpretation=None):
+        mcaIndex = self._stack.info.get('McaIndex', -1)
+        if interpretation is None:
+            if mcaIndex in [0, -1]:
+                interpretation = "spectrum"
+            else:
+                interpretation = "image"
+        if interpretation not in ["spectrum", "image"]:
+            raise ValueError("Unknown data interpretation %s" % interpretation)
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
-                                    labels = None, dtype=dtype, mode='nexus')
+        ArraySave.save3DArrayAsHDF5(self._stack.data,
+                                    filename,
+                                    labels = None,
+                                    dtype=dtype,
+                                    mode='nexus',
+                                    mcaindex=mcaIndex,
+                                    interpretation=interpretation)
 
-    def saveStackAsFloat32NeXus(self):
-        self.saveStackAsNeXus(dtype=numpy.float32)
+    def saveStackAsNeXusSpectra(self):
+        try:
+            self.saveStackAsNeXus(interpretation="spectrum")
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setWindowTitle("Error saving stack")
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+            msg.exec_()
+            if DEBUG:
+                raise
 
-    def saveStackAsFloat64NeXus(self):
-        self.saveStackAsNeXus(dtype=numpy.float64)
+
+    def saveStackAsNeXusImages(self):
+        self.saveStackAsNeXus(interpretation="image")
+
+    def saveStackAsFloat32NeXusSpectra(self):
+        self.saveStackAsNeXus(dtype=numpy.float32, interpretation="spectrum")
+
+    def saveStackAsFloat64NeXusSpectra(self):
+        self.saveStackAsNeXus(dtype=numpy.float64, interpretation="spectrum")
+
+    def saveStackAsFloat32NeXusImages(self):
+        self.saveStackAsNeXus(dtype=numpy.float32, interpretation="image")
+
+    def saveStackAsFloat64NeXusImages(self):
+        self.saveStackAsNeXus(dtype=numpy.float64, interpretation="image")
 
     def saveStackAsNeXusPlus(self):
         filename = self._getOutputHDF5Filename()
@@ -299,7 +336,18 @@ class QStackWidget(StackBase.StackBase,
         if self.stackSelector  is None:
             self.stackSelector = StackSelector.StackSelector(self)
 
-        stack = self.stackSelector.getStack()
+        try:
+            stack = self.stackSelector.getStack()
+        except:
+            txt = "%s" % sys.exc_info()[1]
+            if txt.startswith("Incomplete selection"):
+                return
+            msg = qt.QMessageBox(self)
+            msg.setWindowTitle("Error loading slave stack")
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+            msg.exec_()
+            return
         if stack is None:
             return
         if type(stack) == type([]):
@@ -309,6 +357,7 @@ class QStackWidget(StackBase.StackBase,
                                   master=False)
         slave.setStack(stack)
         self.setSlave(slave)
+
 
     def setSlave(self, slave):
         self._slave = None

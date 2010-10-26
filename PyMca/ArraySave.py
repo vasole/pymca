@@ -161,10 +161,21 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     nxEntry['end_time'] = getDate()
     return hdf, data
 
-def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
+def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
+                      mcaindex=-1, interpretation=None):
     if not HDF5:
         raise IOError, 'h5py does not seem to be installed in your system'
-    shape = data.shape
+    if (mcaindex == 0) and (interpretation in ["spectrum", None]):
+        #stack of images to be saved as stack of spectra
+        modify = True
+        shape  = [data.shape[1], data.shape[2], data.shape[0]]
+    elif (mcaindex != 0 ) and (interpretation in ["image"]):
+        #stack of spectra to be saved as stack of images
+        modify = True
+        shape = [data.shape[2], data.shape[0], data.shape[1]]
+    else:
+        modify = False
+        shape = data.shape
     if dtype is None:
         dtype =data.dtype
     if mode.lower() in ['nexus', 'nexus+']:
@@ -180,12 +191,59 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
         nxEntry.require_dataset('title', data = "PyMca saved 3D Array")
         nxEntry['start_time'] = getDate()
         nxData = nxEntry.require_group('NXdata', type='Data')
-        dset = nxData.require_dataset('data',
+        if modify:
+            if interpretation in ["image"]:
+                dset = nxData.require_dataset('data',
+                                   shape=shape,
+                                   dtype=dtype,
+                                   chunks=(1, shape[1], shape[2]))
+                for i in range(data.shape[-1]):
+                    tmp = data[:,:, i:i+1]
+                    tmp.shape = 1, shape[1], shape[2]
+                    dset[i, :, :] = tmp
+            elif 0:
+                #if I do not match the input and output shapes it takes ages
+                #to save the images as spectra. However, it is much faster
+                #when performing spectra operations.
+                dset = nxData.require_dataset('data',
+                               shape=shape,
+                               dtype=dtype,
+                               chunks=(1, shape[1], shape[2]))
+                for i in range(data.shape[1]): #shape[0]
+                    chunk = numpy.zeros((1, data.shape[2], data.shape[0]), dtype)
+                    for k in range(data.shape[0]): #shape[2]
+                        if 0:
+                            tmpData = data[k:k+1]
+                            for j in range(data.shape[2]): #shape[1]
+                                tmpData.shape = data.shape[1], data.shape[2]
+                                chunk[0, j, k] = tmpData[i, j]
+                        else:
+                            tmpData = data[k:k+1, i, :]
+                            tmpData.shape = -1
+                            chunk[0, :, k] = tmpData
+                    print "Saving item ", i, "of ", data.shape[1]
+                    dset[i, :, :] = chunk
+            else:
+                #if I do not match the input and output shapes it takes ages
+                #to save the images as spectra. This is a very fast saving, but
+                #the perfromance is awful when reading.
+                dset = nxData.require_dataset('data',
+                               shape=shape,
+                               dtype=dtype,
+                               chunks=(shape[0], shape[1], 1))
+                for i in range(data.shape[0]):
+                    tmp = data[i:(i+1),:,:]
+                    tmp.shape = shape[0], shape[1], 1
+                    dset[:, :, i:(i+1)] = tmp
+        else:
+            dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
                                data=data,
                                chunks=(1, shape[1], shape[2]))
-        dset.attrs['signal'] = 1
+        dset.attrs['signal'] = "1"
+        if interpretation is not None:
+            dset.attrs['interpretation'] = interpretation
         for i in range(len(shape)):
             dim = numpy.arange(shape[i]).astype(numpy.float32)
             dset = nxData.require_dataset('dim_%d' % i,
@@ -212,7 +270,6 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
                            dtype=dtype,
                            data=data,
                            chunks=(1, shape[1], shape[2]))
-        hdf.flush()
     else:
         if os.path.exists(filename):
             try:
@@ -228,7 +285,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus'):
                            dtype=dtype,
                            data=data,
                            chunks=(1, shape[1], shape[2]))
-        hdf.flush()
+    hdf.flush()
     hdf.close()
 
 def getDate():
