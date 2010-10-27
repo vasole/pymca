@@ -75,9 +75,15 @@ def install():
     f = ip_dir + r'\%s.lnk'%fname
     mkshortcut(python,name,f,script)
 
-    name = 'QEDFStackWidget'
+    name = 'QStackWidget'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'ROI Imaging Tool'
+    f = ip_dir + r'\%s.lnk'%fname
+    mkshortcut(python_console,name,f,script)
+
+    name = 'QEDFStackWidget'
+    script = '"'+lib_dir+r'\%s.py"'%name
+    fname = 'ROI Imaging Tool(OLD)'
     f = ip_dir + r'\%s.lnk'%fname
     mkshortcut(python_console,name,f,script)
 

@@ -252,7 +252,6 @@ installOptions = dict(
 
 exec_list = ["PyMcaMain",
              "PyMcaBatch",
-             "QEDFStackWidget",
              "QStackWidget",
              "PeakIdentifier",
              "EdfFileSimpleViewer",
@@ -306,7 +305,7 @@ if not sys.platform.startswith('win'):
         #generate the lowercase commands
         if f == "PyMcaMain":
             os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'pymca')))
-        elif f == "QEDFStackWidget":
+        elif f == "QStackWidget":
             os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'pymcaroitool')))
         elif f == "EdfFileSimpleViewer":
             os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'edfviewer')))
