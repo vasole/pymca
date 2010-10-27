@@ -2449,10 +2449,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             raise ValueError, "Cannot handle more than three indices."
         return fileList
 
-if __name__ == "__main__":
+def runAsMain():
     import getopt
     options = ''
-    longoptions = ["fileindex=",
+    longoptions = ["fileindex=","old",
                    "filepattern=", "begin=", "end=", "increment=",
                    "nativefiledialogs=", "imagestack="]
     try:
@@ -2713,3 +2713,6 @@ if __name__ == "__main__":
         app.exec_loop()
     else:
         app.exec_()
+
+if __name__ == "__main__":
+    runAsMain()
