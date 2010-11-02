@@ -59,10 +59,10 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
                         wdir,
                         filetypes)
             else:
-                filelist = [qt.QFileDialog.getSaveFileName(parent,
+                filelist = qt.QFileDialog.getSaveFileName(parent,
                         message,
                         wdir,
-                        filetypes)]
+                        filetypes)
                 filelist = str(filelist)
                 if len(filelist):
                     filelist = [filelist]
