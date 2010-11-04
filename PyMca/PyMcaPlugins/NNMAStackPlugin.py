@@ -163,6 +163,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         ddict.update(nnmaParameters['kw'])
         ddict['ncomponents'] = nnmaParameters['npc']
         ddict['binning'] = nnmaParameters['binning']
+        #ddict['kmeans'] = False
         del nnmaParameters
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
@@ -194,7 +195,6 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.close()        
 
         images, eigenValues, eigenVectors = result
-
         imageNames=None
         vectorNames=None
         nimages = images.shape[0]

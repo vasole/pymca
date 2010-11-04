@@ -154,6 +154,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import py_nnma
 import numpy
+try:
+    import mdp
+    if mdp.__version__ >= '2.6':
+        MDP = True
+    else:
+        MDP = False
+except:
+    MDP = False
 DEBUG = 0
 
 function_list = ['FNMAI', 'ALS', 'FastHALS', 'GDCLS']
@@ -170,7 +178,9 @@ function_dict = {"NNSC": py_nnma.NNSC,
                  "SNMF": py_nnma.SNMF,
                  }
 def nnma(stack, ncomponents, binning=None,
-         function=None, eps=5e-5, verbose=DEBUG, maxcount=1000):
+         function=None, eps=5e-5, verbose=DEBUG, maxcount=1000, kmeans=False):
+    if kmeans and (not MDP):
+        raise ValueError("K Means not supported")
     #I take the defaults for the other parameters
     param = dict(alpha=.1, tau=2, regul=1e-2, sparse_par=1e-1, psi=1e-3)
     if function is None:
@@ -288,9 +298,13 @@ def nnma(stack, ncomponents, binning=None,
     original_intensity = numpy.sum(data)
 
     #final values
-    new_images  = numpy.zeros((ncomponents, r*c), numpy.float32)
-    new_vectors = numpy.zeros(X.shape, numpy.float32)
-    values      = numpy.zeros((ncomponents,), numpy.float32)
+    if kmeans:
+        n_more = 1
+    else:
+        n_more = 0
+    new_images  = numpy.zeros((ncomponents + n_more, r*c), numpy.float32)
+    new_vectors = numpy.zeros((X.shape[0]+n_more, X.shape[1]), numpy.float32)
+    values      = numpy.zeros((ncomponents+n_more,), numpy.float32)
     for i in range(ncomponents):
         idx = sorted_idx[i]
         if 1:
@@ -304,8 +318,18 @@ def nnma(stack, ncomponents, binning=None,
             new_images[i, :] = numpy.sum(numpy.dot(Atmp, Xtmp), axis=1)
         new_vectors[i,:] = X[idx,:]
         values[i] = 100.*total_nnma_intensity[idx][0]/original_intensity
-    new_images.shape = ncomponents, r, c
-    return new_images, values, new_vectors
+    new_images.shape = ncomponents + n_more, r, c
+    if kmeans:
+        classifier = mdp.nodes.KMeansClassifier(ncomponents)
+        for i in xrange(ncomponents):
+            classifier.train(new_vectors[i:i+1])
+        k = 0
+        for i in xrange(r):
+            for j in xrange(c):
+                spectrum = data[k:k+1,:]
+                new_images[-1, i,j] = classifier.label(spectrum)[0]
+                k += 1
+    return new_images, values, new_vectors        
 
 if __name__ == "__main__":
     import EDFStack
