@@ -377,11 +377,18 @@ class QStackWidget(StackBase.StackBase,
     def _pluginClicked(self):
         actionList = []
         menu = qt.QMenu(self)
-        text = qt.QString("Reload")
+        text = qt.QString("Reload Plugins")
+        menu.addAction(text)
+        actionList.append(text)
+        global DEBUG
+        if DEBUG:
+            text = qt.QString("Toggle DEBUG mode OFF")
+        else:
+            text = qt.QString("Toggle DEBUG mode ON")
         menu.addAction(text)
         actionList.append(text)
         menu.addSeparator()
-        callableKeys = ["Dummy"]
+        callableKeys = ["Dummy0", "Dummy1"]
         for m in self.pluginList:
             if m == "PyMcaPlugins.StackPluginBase":
                 continue
@@ -412,7 +419,14 @@ class QStackWidget(StackBase.StackBase,
                 msg.setIcon(qt.QMessageBox.Information)
                 msg.setText("Problem loading plugins")
                 msg.exec_()
-            return        
+            return
+        if idx == 1:
+            if DEBUG:
+                DEBUG = 0
+            else:
+                DEBUG = 1
+            StackBase.DEBUG = DEBUG
+            return
         key = callableKeys[idx]
         methods = self.pluginInstanceDict[key].getMethods()
         if len(methods) == 1:
