@@ -28,7 +28,7 @@ application=os.path.join(pymcapath, "PyMcaMain.py")
 #probably matplotlib and PyOpenGL are properly detected by py2app
 setup(
     app=[application],
-    options={'py2app':{'packages':['h5py','OpenGL','ctypes','matplotlib','logging','Object3D']}}
+    options={'py2app':{'packages':['h5py','OpenGL','ctypes','matplotlib','logging','Object3D','PyMcaPlugins']}}
 )
 
 #add the data files
