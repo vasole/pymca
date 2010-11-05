@@ -314,6 +314,36 @@ class QStackWidget(StackBase.StackBase,
             return            
         ArraySave.save3DArrayAsHDF5(self._stack.data, filename, labels = None, dtype=None, mode='simplest')
 
+    def loadStack(self):
+        if self._stackImageData is not None:
+            #clear with a small stack
+            stack = DataObject.DataObject()
+            stack.data = numpy.zeros((100,100,100), numpy.float32)
+            self.setStack(stack)
+        if self.stackSelector  is None:
+            self.stackSelector = StackSelector.StackSelector(self)
+        stack = self.stackSelector.getStack()
+        self.setStack(stack)
+
+    def setStack(self, *var, **kw):
+        self.stackWidget.setImageData(None)
+        self.roiWidget.setImageData(None)
+        StackBase.StackBase.setStack(self, *var, **kw)
+        if (1 in self._stack.data.shape) and\
+           isinstance(self._stack.data, numpy.ndarray):
+            oldshape = self._stack.data.shape
+            dialog = ImageShapeDialog(self, shape = oldshape[0:2])
+            dialog.setModal(True)
+            ret = dialog.exec_()
+            if ret:
+                shape = dialog.getImageShape()
+                dialog.close()
+                del dialog
+                self._stack.data.shape = [shape[0], shape[1], oldshape[2]]
+                self.stackWidget.setImageData(None)
+                self.roiWidget.setImageData(None)
+                StackBase.StackBase.setStack(self, self._stack, **kw)
+
     def loadSlaveStack(self):
         if self._slave is not None:
             actionList = ['Load Slave', 'Show Slave', 'Delete Slave']

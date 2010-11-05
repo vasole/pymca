@@ -72,7 +72,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.4.1-20101102"
+__version__ = "4.4.1-RC1"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -185,7 +185,8 @@ import Mca2Edf
 STACK = False
 if QTVERSION > '4.0.0':
     try:
-        import QEDFStackWidget
+        import QStackWidget
+        import StackSelector
         STACK = True
     except:
         STACK = False
@@ -552,7 +553,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.imageWindowDict[legend]._addSelection(ddict)
         elif self._isStackSelection(ddict):
             legend = ddict['legend']
-            widget = QEDFStackWidget.QEDFStackWidget()
+            widget = QStackWidget.QStackWidget()
             widget.notifyCloseEventToWidget(self)            
             widget.setStack(ddict['dataobject'])
             widget.setWindowTitle(legend)
@@ -1396,103 +1397,17 @@ class PyMca(PyMcaMdi.PyMca):
 
     def __roiImaging(self):
         if self.__imagingTool is None:
-            fileTypeList = ["EDF Files (*edf)",
-                        "EDF Files (*ccd)",
-                        "Specfile Files (*mca)",
-                        "Specfile Files (*dat)",
-                        "OMNIC Files (*map)",
-                        "OPUS-DPT Files (*.DPT *.dpt)",
-                        "HDF5 Files (*.nxs *.hdf *.h5)", 
-                        "AIFIRA Files (*DAT)",
-                        "SupaVisio Files (*pige *pixe *rbs)",
-                        "All Files (*)"]
-            if 'h5py' not in sys.modules:
-                idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)") 
-                del fileTypeList[idx]
-            message = "Open ONE indexed stack or SEVERAL files"
-            filelist, filefilter = self.__getStackOfFiles(fileTypeList,
-                                                          message,
-                                                          getfilter=True)
-            if not(len(filelist)): return
-            filelist.sort()
-            self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
-            PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-            """
-            if QTVERSION > '4.0.0':
-                rgbWidget = PyMcaPostBatch.RGBCorrelator.RGBCorrelator(self.mdi)
-                rgbWidget.setWindowTitle("ROI Imaging RGB Correlator")
-                self.mdi.addWindow(rgbWidget)
-                rgbWidget.show()
-            else:
-                rgbWidget = None
-            """
             rgbWidget = None
             try:
-                widget = QEDFStackWidget.QEDFStackWidget(mcawidget=self.mcawindow,
-                                                                     rgbwidget=rgbWidget,
-                                                                     master=True)
+                widget = QStackWidget.QStackWidget(mcawidget=self.mcawindow,
+                                                   rgbwidget=rgbWidget,
+                                                   master=True)
                 widget.notifyCloseEventToWidget(self)
                 self.__imagingTool = id(widget)                
                 self._widgetDict[self.__imagingTool] = widget
-                omnicfile = False
-                luciafile = False
-                supavisio = False
-                aifirafile = False
-                hdf5file = False
-                if len(filelist) == 1:
-                    f = open(filelist[0])
-                    line = f.read(10)
-                    f.close()
-                    if line[0]=="\n":
-                        line = line[1:]
-                    if line.startswith('Spectral'):
-                        omnicfile = True
-                    elif line.startswith('#\tDate:'):
-                        luciafile = True
-                    elif "AIFIRA" == filefilter.split()[0].upper():
-                        aifirafile = True
-                    elif "HDF5" == filefilter.split()[0].upper():
-                        hdf5file = True
-                    elif "SupaVisio" == filefilter.split()[0]:
-                        supavisio = True
-                    elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
-                        supavisio = True
-                    elif filelist[0][-3:].upper() in ["RBS"]:
-                        supavisio = True
-                try:
-                    if omnicfile:
-                        widget.setStack(QEDFStackWidget.OmnicMap.OmnicMap(filelist[0]))
-                    elif luciafile:
-                        widget.setStack(QEDFStackWidget.LuciaMap.LuciaMap(filelist[0]))
-                    elif aifirafile:
-                        stack = QEDFStackWidget.AifiraMap.AifiraMap(filelist[0])
-                        masterStack = QEDFStackWidget.DataObject.DataObject()
-                        masterStack.info = QEDFStackWidget.copy.deepcopy(stack.info)
-                        masterStack.data = stack.data[:,:,0:1024]
-                        masterStack.info['Dim_2'] = int(masterStack.info['Dim_2'] / 2)
-
-                        slaveStack = QEDFStackWidget.DataObject.DataObject()
-                        slaveStack.info = QEDFStackWidget.copy.deepcopy(stack.info)
-                        slaveStack.data = stack.data[:,:, 1024:]
-                        slaveStack.info['Dim_2'] = int(slaveStack.info['Dim_2'] / 2)
-                        widget.setStack(masterStack)
-                        widget.slave = QEDFStackWidget.QEDFStackWidget(rgbwidget=widget.rgbWidget,
-                                                  master=False)
-                        widget.slave.setStack(slaveStack)
-                        widget.connectSlave(widget.slave)
-                        widget._resetSelection()
-                        widget.loadStackButton.hide()
-                        widget.slave.show()
-                    elif supavisio:
-                        widget.setStack(QEDFStackWidget.SupaVisioMap.SupaVisioMap(filelist[0]))
-                    elif hdf5file:
-                        widget.setStack(QEDFStackWidget.QHDF5Stack1D.QHDF5Stack1D(filelist))
-                    elif 'OPUS-DPT'in filefilter:
-                        widget.setStack(QEDFStackWidget.OpusDPTMap.OpusDPTMap(filelist[0]))
-                    else:
-                        widget.setStack(QEDFStackWidget.QStack(filelist))
-                except:
-                    widget.setStack(QEDFStackWidget.QSpecFileStack(filelist))
+                #w = StackSelector.StackSelector(self)
+                #stack = w.getStack()
+                widget.loadStack()
                 widget.show()
             except IOError:
                 widget = None

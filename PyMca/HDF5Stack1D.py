@@ -191,6 +191,7 @@ class HDF5Stack1D(DataObject.DataObject):
                     self.monitor = mDataset
                 DONE = True
             else:
+                #what to do if the number of dimensions is only 2?
                 raise
         
         if not DONE:
@@ -243,28 +244,48 @@ class HDF5Stack1D(DataObject.DataObject):
                                 mDataset.shape = nMcaInYDataset, mcaDim
                             if case == -1:
                                 raise ValueError, "I do not know how to handle this monitor data"
-                        for mca in range(nMcaInYDataset):
-                            i = int(n/dim1)
-                            j = n % dim1
-                            if len(yDataset.shape) == 3:
-                                ii = int(mca/yDataset.shape[1])
-                                jj = mca % yDataset.shape[1]
-                                yData = yDataset[ii, jj]
-                            elif len(yDataset.shape) == 2:
-                                yData = yDataset[mca,:]
-                            elif len(yDataset.shape) == 1:
-                                yData = yDataset[:]                            
-                            if mSelection is not None:
-                                if case == 0:
-                                    self.data[i, j, :] = yData/mDataset[mca]
-                                elif case == 1:
-                                    self.data[i, j, :]  = yData/mDataset[mca, :]
-                            else:
-                                self.data[i, j, :] = yData
-                            n += 1
+                        if (len(yDataset.shape) == 3) and\
+                           (dim1 == yDataset.shape[1]):
+                            mca = 0
+                            deltaI = int(yDataset.shape[1]/dim1)
+                            for ii in xrange(yDataset.shape[0]):
+                                i = int(n/dim1)
+                                yData = yDataset[ii:(ii+1)]
+                                yData.shape = -1, mcaDim
+                                if mSelection is not None:
+                                    if case == 0:
+                                        mData = numpy.outer(mDataset[mca:(mca+dim1)],
+                                                            numpy.ones((mcaDim)))
+                                        self.data[i, :, :] = yData/mData
+                                    elif case == 1:
+                                        mData = mDataset[mca:(mca+dim1), :]
+                                        mData.shape = -1, mcaDim
+                                        self.data[i, :, :]  = yData/mData
+                                else:
+                                    self.data[i:(i+deltaI), :] = yData
+                                n += yDataset.shape[1]
+                                mca += dim1
+                        else:
+                            for mca in range(nMcaInYDataset):
+                                i = int(n/dim1)
+                                j = n % dim1
+                                if len(yDataset.shape) == 3:
+                                    ii = int(mca/yDataset.shape[1])
+                                    jj = mca % yDataset.shape[1]
+                                    yData = yDataset[ii, jj]
+                                elif len(yDataset.shape) == 2:
+                                    yData = yDataset[mca,:]
+                                elif len(yDataset.shape) == 1:
+                                    yData = yDataset
+                                if mSelection is not None:
+                                    if case == 0:
+                                        self.data[i, j, :] = yData/mDataset[mca]
+                                    elif case == 1:
+                                        self.data[i, j, :]  = yData/mDataset[mca, :]
+                                else:
+                                    self.data[i, j, :] = yData
+                                n += 1
                     else:
-                        if IN_MEMORY:
-                            yDataset.shape = mcaDim, -1
                         if mSelection is not None:
                             case = -1
                             nMonitorData = 1
@@ -278,25 +299,50 @@ class HDF5Stack1D(DataObject.DataObject):
                             #    mDataset.shape = yDataset.shape[1], yDataset.shape[2]
                             if case == -1:
                                 raise ValueError, "I do not know how to handle this monitor data"
-                        for mca in range(nMcaInYDataset):
-                            i = int(n/dim1)
-                            j = n % dim1
-                            if len(yDataset.shape) == 3:
-                                ii = int(mca/yDataset.shape[2])
-                                jj = mca % yDataset.shape[2]
-                                yData = yDataset[:, ii, jj]
-                            elif len(yDataset.shape) == 2:
-                                yData = yDataset[:, mca]
-                            elif len(yDataset.shape) == 1:
-                                yData = yDataset[:]                            
+                        if IN_MEMORY:
+                            yDataset.shape = mcaDim, -1
+                        if len(yDataset.shape) != 3:
+                            for mca in range(nMcaInYDataset):
+                                i = int(n/dim1)
+                                j = n % dim1
+                                if len(yDataset.shape) == 3:
+                                    ii = int(mca/yDataset.shape[2])
+                                    jj = mca % yDataset.shape[2]
+                                    yData = yDataset[:, ii, jj]
+                                elif len(yDataset.shape) == 2:
+                                    yData = yDataset[:, mca]
+                                elif len(yDataset.shape) == 1:
+                                    yData = yDataset[:]                            
+                                if mSelection is not None:
+                                    if case == 0:
+                                        self.data[i, j, :] = yData/mDataset[mca]
+                                    elif case == 1:
+                                        self.data[i, j, :]  = yData/mDataset[:, mca]
+                                else:
+                                    self.data[i, j, :] = yData
+                                n += 1
+                        else:
+                            #dynamic stack of images to be read as MCA
+                            for nImage in xrange(yDataset.shape[0]):
+                                tmp = yDataset[nImage:(nImage+1)]
+                                if len(tmp.shape) == 3:
+                                    i = int(n/dim1)
+                                    j = n % dim1
+                                    for ii in xrange(tmp.shape[1]):
+                                        for jj in xrange(tmp.shape[2]):
+                                            self.data[i+ii, j+jj, nImage] = tmp[0, ii, jj]
                             if mSelection is not None:
-                                if case == 0:
-                                    self.data[i, j, :] = yData/mDataset[mca]
-                                elif case == 1:
-                                    self.data[i, j, :]  = yData/mDataset[:, mca]
+                                for mca in range(nMcaInDataSet):
+                                    i = int(n/dim1)
+                                    j = n % dim1
+                                    yData = self.data[i, j, :]
+                                    if case == 0:
+                                        self.data[i, j, :] = yData/mDataset[mca]
+                                    elif case == 1:
+                                        self.data[i, j, :]  = yData/mDataset[:, mca]
+                                    n += 1
                             else:
-                                self.data[i, j, :] = yData
-                            n += 1
+                                n += tmp.shape[1] * tmp.shape[2]
                     if dim0 == 1:
                         self.onProgress(j)
                 if dim0 != 1:

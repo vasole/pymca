@@ -185,7 +185,10 @@ class McaAdvancedFitBatch:
             if HDF5SUPPORT:
                 if h5py.is_hdf5(inputfile):
                     self._HDF5 = True
-                    return HDF5Stack1D.HDF5Stack1D(inputfile, self.selection)
+                    try:
+                        return HDF5Stack1D.HDF5Stack1D([inputfile], self.selection)
+                    except:
+                        raise
             ffile = self.__tryEdf(inputfile)
             if ffile is None:
                 ffile = self.__tryLucia(inputfile)
