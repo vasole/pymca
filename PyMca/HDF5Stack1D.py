@@ -219,7 +219,18 @@ class HDF5Stack1D(DataObject.DataObject):
                             mpath = scan + mSelection
                             mDataset = hdf[mpath].value
                     try:
-                        yDataset = hdf[path].value
+                        yDataset = hdf[path]
+                        tmpShape = yDataset.shape
+                        totalBytes = numpy.ones((1,), yDataset.dtype).itemsize
+                        for nItems in tmpShape:
+                            totalBytes *= nItems
+                        if (totalBytes/(1024.*1024.)) > 500:
+                            #read from disk
+                            IN_MEMORY = False
+                        else:
+                            #read the data into memory
+                            yDataset = hdf[path].value 
+                            IN_MEMORY = True
                         IN_MEMORY = True
                     except (MemoryError, ValueError):
                         yDataset = hdf[path]
