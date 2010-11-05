@@ -34,7 +34,7 @@ inputfile = os.path.join(dirname, "LShellRates.dat")
 if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)
     inputfile = os.path.join(dirname, "LShellRates.dat")
-    if dirname.lower().endswith("library.zip"):
+    if dirname.lower().endswith(".zip"):
         dirname = os.path.dirname(dirname)
         inputfile = os.path.join(dirname, "LShellRates.dat")
     if not os.path.exists(inputfile):

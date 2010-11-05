@@ -47,7 +47,7 @@ if not os.path.exists(ffile):
     ffile = os.path.join(dirmod, "attdata")
     ffile = os.path.join(ffile, "incoh.dict")
     if not os.path.exists(ffile):
-        if dirmod.lower().endswith("library.zip"):
+        if dirmod.lower().endswith(".zip"):
             dirmod = os.path.dirname(dirmod)
             ffile = os.path.join(dirmod,"attdata")
             ffile = os.path.join(ffile, "incoh.dict")

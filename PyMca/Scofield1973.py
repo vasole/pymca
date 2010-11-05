@@ -35,7 +35,7 @@ if not os.path.exists(dictfile):
     dirmod = os.path.dirname(dirmod)
     dictfile = os.path.join(dirmod,"Scofield1973.dict")
     if not os.path.exists(dictfile):
-        if dirmod.lower().endswith("library.zip"):
+        if dirmod.lower().endswith(".zip"):
             dirmod = os.path.dirname(dirmod)
     dictfile = os.path.join(dirmod,"Scofield1973.dict")
 if not os.path.exists(dictfile):

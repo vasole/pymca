@@ -2618,7 +2618,7 @@ def getelementmassattcoef(ele,energy=None):
             dirmod = os.path.dirname(dirmod)
             xcomfile = os.path.join(dirmod, "attdata")
             xcomfile = os.path.join(xcomfile, ele+".mat")
-            if dirmod.lower().endswith("library.zip"):
+            if dirmod.lower().endswith(".zip"):
                 dirmod = os.path.dirname(dirmod)
                 xcomfile = os.path.join(dirmod, "attdata")
                 xcomfile = os.path.join(xcomfile, ele+".mat")
@@ -2975,7 +2975,7 @@ def _getMaterialDict():
         matdict = os.path.join(dirmod, "attdata")
         matdict = os.path.join(matdict, "MATERIALS.DICT")
         if not os.path.exists(matdict):
-            if dirmod.lower().endswith("library.zip"):
+            if dirmod.lower().endswith(".zip"):
                 dirmod = os.path.dirname(dirmod)
                 matdict = os.path.join(dirmod, "attdata")
                 matdict = os.path.join(matdict, "MATERIALS.DICT")

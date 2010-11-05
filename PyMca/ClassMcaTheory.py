@@ -53,7 +53,7 @@ class McaTheory:
                 dirname = os.path.dirname(dirname)
                 initdict = os.path.join(dirname, "McaTheory.cfg")
                 if not os.path.exists(initdict):
-                    if dirname.lower().endswith("library.zip"):
+                    if dirname.lower().endswith(".zip"):
                         dirname = os.path.dirname(dirname)
                         initdict = os.path.join(dirname, "McaTheory.cfg")
             if os.path.exists(initdict):

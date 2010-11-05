@@ -61,7 +61,7 @@ if not os.path.exists(EPDL97_FILE):
     EPDL97_FILE = os.path.join(dirmod,
                                os.path.basename(EPDL97_FILE))
     if not os.path.exists(EPDL97_FILE):
-        if dirmod.lower().endswith("library.zip"):
+        if dirmod.lower().endswith(".zip"):
             dirmod = os.path.dirname(dirmod)
             EPDL97_FILE = os.path.join(dirmod,
                                os.path.basename(EPDL97_FILE))

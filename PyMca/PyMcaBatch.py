@@ -903,7 +903,7 @@ class McaBatchGUI(qt.QWidget):
                 dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
 
             if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith("library.zip")):
+               (dirname.lower().endswith(".zip")):
                 frozen = True
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch.exe")
@@ -1003,7 +1003,7 @@ class McaBatchGUI(qt.QWidget):
             except:
                 dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
             if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith("library.zip")):
+               (dirname.lower().endswith(".zip")):
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch") 
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
@@ -1562,7 +1562,7 @@ class McaBatchWindow(qt.QWidget):
             except:
                 dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
             if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith("library.zip")):
+               (dirname.lower().endswith(".zip")):
                 myself  = os.path.dirname(dirname) 
                 myself  = os.path.join(myself, "EdfFileSimpleViewer.exe")
             else:
@@ -1587,7 +1587,7 @@ class McaBatchWindow(qt.QWidget):
                 dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
             if DEBUG:print "final dirname = ",dirname
             if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith("library.zip")):
+               (dirname.lower().endswith(".zip")):
                 myself  = os.path.dirname(dirname) 
                 myself  = os.path.join(myself, "EdfFileSimpleViewer")
             else:
