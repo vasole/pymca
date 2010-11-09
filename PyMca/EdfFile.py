@@ -88,7 +88,7 @@
 """
 __author__ = 'Alexandre Gobbo (gobbo@esrf.fr)'
 __version__ = '$Revision: 1.6 $'
-
+DEBUG = 0
 ################################################################################  
 import sys, string
 import numpy
@@ -351,6 +351,8 @@ class  EdfFile:
             self.Images[Index].StaticHeader['Offset_2'] = 0
             self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
 
+        self.__makeSureFileIsClosed()
+
     def _wrapMarCCD(self):
         mccd = MarCCD.MarCCD(self.File)
         self.NumImages = 1
@@ -402,7 +404,14 @@ class  EdfFile:
         """
         return self.NumImages
 
-    def GetData(self, Index, DataType="", Pos=None, Size=None):
+    def GetData(self, *var, **kw):
+        try:
+            self.__makeSureFileIsOpen()
+            return self._GetData(*var, **kw)
+        finally:
+            self.__makeSureFileIsClosed()
+            
+    def _GetData(self, Index, DataType="", Pos=None, Size=None):
         """ Returns numpy array with image data
             Index:          The zero-based index of the image in the file
             DataType:       The edf type of the array to be returnd
@@ -618,8 +627,14 @@ class  EdfFile:
             ret[i] = self.Images[Index].StaticHeader[i]
         return ret
 
-
-    def WriteImage (self, Header, Data, Append=1, DataType="", ByteOrder=""):
+    def WriteImage(self, *var, **kw):
+        try:
+            self.__makeSureFileIsOpen()
+            return self._WriteImage(*var, **kw)
+        finally:
+            self.__makeSureFileIsClosed()
+    
+    def _WriteImage (self, Header, Data, Append=1, DataType="", ByteOrder=""):
         """ Writes image to the file. 
             Header:         Dictionary containing the non-static header
                             information (static information is generated
@@ -735,6 +750,42 @@ class  EdfFile:
     ############################################################################
     #Internal Methods
 
+    def __makeSureFileIsOpen(self):
+        if DEBUG:
+            print "Making sure file is open"
+        if self.ADSC or self.MARCCD or self.PILATUS_CBF:
+            if DEBUG:
+                print "Special case. Image is buffered"
+            return
+        if self.File in [0, None]:
+            if DEBUG:
+                print "File is None"
+        elif self.File.closed:
+            if DEBUG:
+                print "Reopening closed file"
+            accessMode = self.File.mode
+            fileName = self.File.name
+            newFile = open(fileName, accessMode)
+            self.File  = newFile
+        return
+
+    def __makeSureFileIsClosed(self):
+        if DEBUG:
+            print "Making sure file is closed"
+        if self.ADSC or self.MARCCD or self.PILATUS_CBF:
+            if DEBUG:
+                print "Special case. Image is buffered"
+            return
+        if self.File in [0, None]:
+            if DEBUG:
+                print "File is None"
+        elif not self.File.closed:
+            if DEBUG:
+                print "Closing file"
+            self.File.close()
+        return
+
+        
     def __GetDefaultNumpyType__(self, EdfType, index=None):
         """ Internal method: returns NumPy type according to Edf type
         """
@@ -807,7 +858,7 @@ class  EdfFile:
 
     def __del__(self):
         try:
-            self.File.close()
+            self.__makeSureFileIsClosed()
         except:
             pass
 
