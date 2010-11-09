@@ -4,7 +4,7 @@ import os
 DEBUG = 0
 inputDir  = None
 outputDir = None
-nativeFileDialogs = True
+nativeFileDialogs = False
 
 class __ModuleWrapper:
   def __init__(self, wrapped):
