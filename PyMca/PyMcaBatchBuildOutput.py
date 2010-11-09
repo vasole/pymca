@@ -29,6 +29,8 @@ import os
 import EdfFile
 import numpy
 
+DEBUG = 0
+
 class PyMcaBatchBuildOutput:
     def __init__(self, inputdir = None, outputdir = None):
         self.inputDir  = inputdir
@@ -42,6 +44,8 @@ class PyMcaBatchBuildOutput:
         if delete is None:
             if outputdir == inputdir:
                 delete = True
+        if DEBUG:
+            print "delete option = ", delete
         allfiles = os.listdir(inputdir)
         partialedflist = []
         partialdatlist = []
@@ -54,11 +58,15 @@ class PyMcaBatchBuildOutput:
         #IMAGES
         edfoutlist = []
         for filename in partialedflist:
+            if DEBUG:
+                print "Dealing with filename ", filename
             edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
             i = 0
             for edfname in edflist:
-                edf    = EdfFile.EdfFile(edfname, fastedf = 0)
-                data0   = edf.GetData(0)
+                edf    = EdfFile.EdfFile(edfname, access='rb', fastedf = 0)
+                nImages = edf.GetNumImages()
+                #get always the last image
+                data0   = edf.GetData(nImages-1)
                 data0[data0<0] = 0
                 if i == 0:
                     header = edf.GetHeader(0)
@@ -69,14 +77,22 @@ class PyMcaBatchBuildOutput:
                 i += 1
             edfname  = filename.replace('_000000_partial.edf',".edf")
             edfoutname = os.path.join(outputdir, edfname)
-            edfout   = EdfFile.EdfFile(edfoutname)
+            if DEBUG:
+                print "Dealing with output filename ", edfoutname
+            if os.path.exists(edfoutname):
+                if DEBUG:
+                    print "Output file already exists, trying to delete it"
+                os.remove(edfoutname)
+            edfout   = EdfFile.EdfFile(edfoutname, access="wb")
             edfout.WriteImage (header , data, Append=0)
-            #force close
             del edfout
             edfoutlist.append(edfoutname)
             if delete:
                 for filename in edflist:
-                    os.remove(filename)
+                    try:
+                        os.remove(filename)
+                    except:
+                        print "Cannot delete file ", filename
 
         #DAT IMAGES
         datoutlist = []

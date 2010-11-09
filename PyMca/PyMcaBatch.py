@@ -261,22 +261,23 @@ class McaBatchGUI(qt.QWidget):
         vBox.l.setMargin(0)
         vBox.l.setSpacing(2)
         bigbox.l.addWidget(vBox)
-        self.__overwrite = qt.QCheckBox(vBox)
-        self.__overwrite.setText('Overwrite Fit Files')
-        self.__overwrite.setChecked(True)
-        vBox.l.addWidget(self.__overwrite)
+
+        if 0:
+            #These options are obsolete now
+            self.__overwrite = qt.QCheckBox(vBox)
+            self.__overwrite.setText('Overwrite Fit Files')
+            self.__overwrite.setChecked(True)
+            vBox.l.addWidget(self.__overwrite)
+            
+            self.__useExisting = qt.QCheckBox(vBox)
+            self.__useExisting.setText('Use Existing Fit Files')
+            self.__useExisting.setChecked(False)
+            vBox.l.addWidget(self.__useExisting)
         
-        self.__useExisting = qt.QCheckBox(vBox)
-        self.__useExisting.setText('Use Existing Fit Files')
-        self.__useExisting.setChecked(False)
-        vBox.l.addWidget(self.__useExisting)
-        
-        #self.useGroup.setExclusive(1)
-        #if QTVERSION > '3.0.0':self.useGroup.setFlat(1)
-        self.connect(self.__overwrite,   qt.SIGNAL("clicked()"),
-                                         self.__clickSignal0)
-        self.connect(self.__useExisting, qt.SIGNAL("clicked()"),
-                                         self.__clickSignal1)
+            self.connect(self.__overwrite,   qt.SIGNAL("clicked()"),
+                                             self.__clickSignal0)
+            self.connect(self.__useExisting, qt.SIGNAL("clicked()"),
+                                             self.__clickSignal1)
         self.connect(self.__concentrationsBox, qt.SIGNAL("clicked()"),
                                                self.__clickSignal2)
         self.connect(self.__htmlBox, qt.SIGNAL("clicked()"),
@@ -290,47 +291,48 @@ class McaBatchGUI(qt.QWidget):
         boxStep.l.setSpacing(0)
         boxStep0.l.addWidget(boxStep)
         bigbox.l.addWidget(boxStep0)
-        
-        self.__boxFStep   = qt.QWidget(boxStep)
-        boxFStep = self.__boxFStep
-        boxFStep.l = qt.QHBoxLayout(boxFStep)
-        boxFStep.l.setMargin(0)
-        boxFStep.l.setSpacing(0)
-        boxStep.l.addWidget(boxFStep)
-        label= qt.QLabel(boxFStep)
-        label.setText("File Step:")
-        self.__fileSpin = qt.QSpinBox(boxFStep)
-        if QTVERSION < '4.0.0':
-            self.__fileSpin.setMinValue(1)
-            self.__fileSpin.setMaxValue(10)
-        else:
-            self.__fileSpin.setMinimum(1)
-            self.__fileSpin.setMaximum(10)
-        self.__fileSpin.setValue(1)
-        boxFStep.l.addWidget(label)
-        boxFStep.l.addWidget(self.__fileSpin)
+
+        if 0:
+            self.__boxFStep   = qt.QWidget(boxStep)
+            boxFStep = self.__boxFStep
+            boxFStep.l = qt.QHBoxLayout(boxFStep)
+            boxFStep.l.setMargin(0)
+            boxFStep.l.setSpacing(0)
+            boxStep.l.addWidget(boxFStep)
+            label= qt.QLabel(boxFStep)
+            label.setText("File Step:")
+            self.__fileSpin = qt.QSpinBox(boxFStep)
+            if QTVERSION < '4.0.0':
+                self.__fileSpin.setMinValue(1)
+                self.__fileSpin.setMaxValue(10)
+            else:
+                self.__fileSpin.setMinimum(1)
+                self.__fileSpin.setMaximum(10)
+            self.__fileSpin.setValue(1)
+            boxFStep.l.addWidget(label)
+            boxFStep.l.addWidget(self.__fileSpin)
 
 
-        self.__boxMStep   = qt.QWidget(boxStep0)
-        boxMStep = self.__boxMStep
-        boxMStep.l = qt.QHBoxLayout(boxMStep)
-        boxMStep.l.setMargin(0)
-        boxMStep.l.setSpacing(0)
-        boxStep0.l.addWidget(boxMStep)
-        
-        label= qt.QLabel(boxMStep)
-        label.setText("MCA Step:")
-        self.__mcaSpin = qt.QSpinBox(boxMStep)
-        if QTVERSION < '4.0.0':
-            self.__mcaSpin.setMinValue(1)
-            self.__mcaSpin.setMaxValue(10)
-        else:
-            self.__mcaSpin.setMinimum(1)
-            self.__mcaSpin.setMaximum(10)
-        self.__mcaSpin.setValue(1)
+            self.__boxMStep   = qt.QWidget(boxStep0)
+            boxMStep = self.__boxMStep
+            boxMStep.l = qt.QHBoxLayout(boxMStep)
+            boxMStep.l.setMargin(0)
+            boxMStep.l.setSpacing(0)
+            boxStep0.l.addWidget(boxMStep)
+            
+            label= qt.QLabel(boxMStep)
+            label.setText("MCA Step:")
+            self.__mcaSpin = qt.QSpinBox(boxMStep)
+            if QTVERSION < '4.0.0':
+                self.__mcaSpin.setMinValue(1)
+                self.__mcaSpin.setMaxValue(10)
+            else:
+                self.__mcaSpin.setMinimum(1)
+                self.__mcaSpin.setMaximum(10)
+            self.__mcaSpin.setValue(1)
 
-        boxMStep.l.addWidget(label)
-        boxMStep.l.addWidget(self.__mcaSpin)
+            boxMStep.l.addWidget(label)
+            boxMStep.l.addWidget(self.__mcaSpin)
         
 
         
@@ -438,7 +440,11 @@ class McaBatchGUI(qt.QWidget):
         self.connect(self.__startButton,qt.SIGNAL("clicked()"),self.start)
         self._layout.addWidget(box)
 
-
+    def close(self):
+        if self._edfSimpleViewer is not None:
+            self._edfSimpleViewer.close()
+            self._edfSimpleViewer = None
+        qt.QWidget.close(self)
 
     def setFileList(self,filelist=None):
         if filelist is None:filelist = []
@@ -772,16 +778,22 @@ class McaBatchGUI(qt.QWidget):
             else:
                 self.raise_()
             return
+
         if len(self.fileList) == 1:
             if sys.platform != 'darwin':
                 if self.__splitBox.isChecked():
-                    text = "Multiple processes can only be used with multiple input files."
-                    qt.QMessageBox.critical(self, "ERROR",text)
-                    if QTVERSION < '4.0.0':
-                        self.raiseW()
-                    else:
-                        self.raise_()
-                    return
+                    allowSingleFileSplitProcesses = False
+                    if HDF5SUPPORT:
+                        if h5py.is_hdf5(self.fileList[0]):
+                            allowSingleFileSplitProcesses = True
+                    if not allowSingleFileSplitProcesses:
+                        text = "Multiple processes can only be used with multiple input files."
+                        qt.QMessageBox.critical(self, "ERROR",text)
+                        if QTVERSION < '4.0.0':
+                            self.raiseW()
+                        else:
+                            self.raise_()
+                        return
                     
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
@@ -831,15 +843,29 @@ class McaBatchGUI(qt.QWidget):
             if htmlindex[-5:] != "html":
                 htmlindex+=".html"
         roiwidth = float(str(self.__roiSpin.text()))
-        overwrite= self.__overwrite.isChecked()
-        filestep = int(str(self.__fileSpin.text()))
-        mcastep  = int(str(self.__mcaSpin.text()))
+        if 0:
+            overwrite= self.__overwrite.isChecked()
+            filestep = int(str(self.__fileSpin.text()))
+            mcastep  = int(str(self.__mcaSpin.text()))
+        else:
+            overwrite= 1
+            filestep = 1
+            mcastep = 1
+            if len(self.fileList) == 1:
+                if self.__splitBox.isChecked():
+                    nbatches = int(str(self.__splitSpin.text()))
+                    mcastep = nbatches
+                
         fitfiles = self.__fitBox.isChecked()
         selection = self._selection
         if selection is None:
             selectionFlag = False
         else:
             selectionFlag = True
+
+        if self._edfSimpleViewer is not None:
+            self._edfSimpleViewer.close()
+            self._edfSimpleViewer = None
         if roifit:
             window =  McaBatchWindow(name="ROI"+name,actions=1, outputdir=self.outputDir,
                                      html=html, htmlindex=htmlindex, table = 0)
@@ -972,15 +998,29 @@ class McaBatchGUI(qt.QWidget):
             import time
             if self.__splitBox.isChecked():
                 nbatches = int(str(self.__splitSpin.text()))
-                filechunk = int(len(self.fileList)/nbatches)
-                processList = []
-                for i in range(nbatches):
-                    beginoffset = filechunk * i
-                    endoffset   = len(self.fileList) - filechunk * (i+1)
-                    if (i+1) == nbatches:endoffset = 0
-                    cmd1        = cmd + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
-                                          (beginoffset, endoffset, i)
-                    processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
+                if len(self.fileList) > 1:
+                    filechunk = int(len(self.fileList)/nbatches)
+                    processList = []
+                    for i in range(nbatches):
+                        beginoffset = filechunk * i
+                        endoffset   = len(self.fileList) - filechunk * (i+1)
+                        if (i+1) == nbatches:endoffset = 0
+                        cmd1        = cmd + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
+                                              (beginoffset, endoffset, i)
+                        processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
+                        if DEBUG:
+                            print "CMD = ", cmd1
+                else:
+                    #f = open("CMD", 'wb')                        
+                    processList = []
+                    for i in range(nbatches):
+                        #the mcastep has been dealt with above
+                        cmd1        = cmd + " --mcaoffset=%d --chunk=%d" % (i, i)
+                        processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
+                        if DEBUG:
+                            print "CMD = ", cmd1
+                        #f.write(cmd1+"\n")
+                    #f.close()
                 self._processList = processList
                 if self._timer is None:
                     self._timer = qt.QTimer(self)
@@ -1128,8 +1168,10 @@ class McaBatchGUI(qt.QWidget):
             self._edfSimpleViewer.show()
         if rgb is not None:
             if len(b):
-                if sys.platform == "win32":subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
-                else:os.system("%s %s &" % (rgb, b[0]))
+                if sys.platform == "win32":
+                    subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
+                else:
+                    os.system("%s %s &" % (rgb, b[0]))
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
         if DEBUG:work.buildOutput(delete=False)
         else:work.buildOutput(delete=True)
@@ -1221,7 +1263,8 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
         else:
             qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
 
-        if self.pleasePause:self.__pauseMethod()
+        if self.pleasePause:
+            self.__pauseMethod()
         
     def __pauseMethod(self):
         if QTVERSION < '4.0.0':
@@ -1536,8 +1579,12 @@ class McaBatchWindow(qt.QWidget):
                 a = HtmlIndex.HtmlIndex(directory)
                 a.buildRecursiveIndex()
         if dict['chunk'] is not None:
-            sys.exit(0)
-        #self.__ended = True
+            if 0:
+                #this was giving troubles using HDF5 files as input
+                sys.exit(0)
+            else:
+                #this seems to work properly
+                self.close()
     
     def onReportWritten(self):
         if self.__ended:

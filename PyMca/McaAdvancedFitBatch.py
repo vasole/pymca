@@ -278,10 +278,12 @@ class McaAdvancedFitBatch:
             keylist[i] = "1.%04d" % i
 
         for i in range(nimages):
+            if self.pleaseBreak: break
             self.onImage(keylist[i], keylist)
-            self.__ncols = len(range(0+self.mcaOffset,
+            self.__ncols = numberofmca
+            colsToIter = range(0+self.mcaOffset,
                                      numberofmca,
-                                     self.mcaStep))
+                                     self.mcaStep)
             self.__row = i
             self.__col = -1
             try:
@@ -291,10 +293,9 @@ class McaAdvancedFitBatch:
                 print sys.exc_info()
                 print "Batch resumed"
                 continue
-            for mca_index in range(self.__ncols):
-                mca = 0 + self.mcaOffset + mca_index * self.mcaStep
+            for mca in colsToIter:
                 if self.pleaseBreak: break
-                self.__col += 1
+                self.__col = mca
                 mcadata = cache_data[mca, :]
                 if info.has_key('MCA start ch'):
                     xmin = float(info['MCA start ch'])
@@ -750,8 +751,17 @@ class McaAdvancedFitBatch:
                         os.mkdir(dirname)
                     except:
                         print "I could not create directory % s" % dirname
-                edfout   = EdfFile.EdfFile(edfname)
-                edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=0)
+                Append = 0
+                if os.path.exists(edfname):
+                    try:
+                        os.remove(edfname)
+                    except:
+                        print "I cannot delete output file"
+                        print "trying to append image to the end"
+                        Append = 1 
+                edfout   = EdfFile.EdfFile(edfname, access='wb')
+                edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=Append)
+                edfout = None
                 self.savedImages.append(edfname)
             #save specfile format
             if self.chunk is None:
