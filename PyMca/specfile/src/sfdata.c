@@ -75,6 +75,9 @@
 #include <SpecFile.h>
 #include <SpecFileP.h>
 #include <locale_management.h>
+#ifdef PYMCA_POSIX
+#include <locale.h>
+#endif
 
 #include <ctype.h>
 /*
@@ -201,7 +204,12 @@ SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error 
              maxcol=200;
      long    rows;
      int     i;
-     
+
+#ifdef PYMCA_POSIX
+	char *currentLocaleBuffer;
+	char localeBuffer[21];
+#endif
+
      if (index <= 0 ){
         return(-1);
      }
@@ -293,6 +301,11 @@ if(0){
     ptr++;
 }
 
+#ifdef PYMCA_POSIX
+	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
+	strcpy(localeBuffer, currentLocaleBuffer);
+	setlocale(LC_NUMERIC, "C\0");
+#endif
     for ( ; ptr < to; ptr++) {
         /* get a complete line */
         i=0;
@@ -394,7 +407,9 @@ if(0){
         }
     }
 
-
+#ifdef PYMCA_POSIX
+	setlocale(LC_NUMERIC, localeBuffer);
+#endif
 
     /* 
     * make a copy in specfile structure

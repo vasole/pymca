@@ -118,7 +118,7 @@ def build_FastEdf(ext_modules):
 
 def build_specfile(ext_modules):
     if os.name.lower().startswith('posix'):
-        specfile_define_macros = [('SPECFILE_POSIX', None)]
+        specfile_define_macros = [('PYMCA_POSIX', None)]
     else:
         specfile_define_macros = define_macros
     module  = Extension(name = 'PyMca.specfile',

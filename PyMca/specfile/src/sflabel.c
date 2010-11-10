@@ -68,6 +68,9 @@
 #include <SpecFile.h>
 #include <SpecFileP.h>
 #include <locale_management.h>
+#ifdef PYMCA_POSIX
+#include <locale.h>
+#endif
 
 /*
  * Declarations
@@ -476,6 +479,10 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
      long      motct = 0;
      long      no_lines;
      short     i,j;
+#ifdef PYMCA_POSIX
+	char *currentLocaleBuffer;
+	char localeBuffer[21];
+#endif
      
      if (sfSetCurrent(sf,index,error) == -1) {
          *retpos = (double *) NULL;
@@ -505,7 +512,11 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
      }
 
      motct = 0;
-
+#ifdef PYMCA_POSIX
+	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
+	strcpy(localeBuffer, currentLocaleBuffer);
+	setlocale(LC_NUMERIC, "C\0");
+#endif
      for (j=0;j<no_lines;j++) {
          thisline = lines[j] + 4;
          endline  = thisline + strlen(thisline);
@@ -532,7 +543,11 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
 
          motct++; 
 
-       }
+	 }
+
+#ifdef PYMCA_POSIX
+	setlocale(LC_NUMERIC, localeBuffer);
+#endif
 
      /*
       * Save in specfile structure

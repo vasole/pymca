@@ -24,6 +24,9 @@ if sys.platform == "win32":
     define_macros = [('WIN32',None)]    
 elif os.name.lower().startswith('posix'):
     define_macros = [('SPECFILE_POSIX', None)]
+    #this one is more efficient but keeps the locale
+    #changed for longer time
+    #define_macros = [('PYMCA_POSIX', None)]
 else:
     define_macros = []
 setup (

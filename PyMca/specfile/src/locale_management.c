@@ -1,14 +1,21 @@
 #include <locale_management.h>
 
+#ifdef PYMCA_POSIX
+#else
 #ifdef SPECFILE_POSIX
 #include <locale.h>
+#endif
 #endif
 
 #include <stdlib.h>
 #include <string.h>
 
+
 double PyMcaAtof(const char * inputString)
 {
+#ifdef PYMCA_POSIX
+	return atof(inputString);
+#else 
 #ifdef SPECFILE_POSIX
 	char *currentLocaleBuffer;
 	char *restoredLocaleBuffer;
@@ -22,5 +29,6 @@ double PyMcaAtof(const char * inputString)
 	return(result);
 #else
 	return atof(inputString);
+#endif
 #endif
 }
