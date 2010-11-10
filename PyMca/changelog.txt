@@ -1,3 +1,72 @@
+VERSION 4.4.1
+
+Allow detailed customization of 1D output.
+
+Add simple normalization plugins to the Scan window.
+
+Implement a plugin system for the ROI Imaging tool.
+
+Implement a generic batch fitting of stacks as a stack plugin. The functions are totally specified by the user.
+
+Implement background removal tools as stack plugins.
+
+Implement an alternative ROI window as a stack plugin. 
+
+Support convertion of big EDF image stacks to HDF5.
+
+Visualization of large image stacks via dynamic loading and use of HDF5.
+
+Support MDP based PCA and ICA on user selected regions.
+
+Read calibration from OMNIC 7.x .map files.
+
+Support Bruker Opus mpas exported in DPT format.
+
+Improve the reading speed of TwinMic .dta files.
+
+Add simple MarCCD support.
+
+Add very simple support for some flavours of Pilatus CBF.
+
+Show file header information.
+
+Properly handle Amptek MCA calibration when more than two points or ROIs have been used.
+
+Allow Savitzky-Golay (SG) filtering of stacks.
+
+Correct problem affecting odd order SG derivatives.
+
+Very primitive HDF5 2D Visualization.
+
+Possibility to visualize HDF5 3D datasets as series of images.
+
+Implement a context menu on the main window HDF5 browser.
+
+Table visualization of non-numerical HDF5 datasets.
+
+Support segmented HDF5 files using default segmentation.
+
+llow the use of several processes when batch fitting a single HDF5 file.
+
+Allow reading of pure image formats in the RGB correlator.
+
+The fit configuration window was too high for Mac computers having exactly 800
+pixels vertical resolution.
+
+Workaround a windows problem when trying to select thousands of files in the
+batch file dialog by using Qt file dialogs.
+
+Minor visualization and data handling improvements.
+
+Prevent a crash when the excitation energy is below 1 keV.
+
+Add a script to build PyMca from source on Debian or Ubuntu systems.
+
+Make specfile LC_NUMERIC locale independent to solve Debian bug report 602471.
+
+Unify the sps library used by PyMca and the one used by Certified Scientific
+Software package SPEC. Use a BSD like license for the associated code.
+
 VERSION 4.4.0
 
 Extend the usability of the code down to 100 eV extending XCOM mass
