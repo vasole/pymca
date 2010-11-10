@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -171,6 +171,7 @@ staticforward PyTypeObject Scandatatype;
    /*
     * Utility function
     */
+
 static char           * compList(long *nolist,long howmany);
 
    /*
@@ -207,8 +208,8 @@ static struct PyMethodDef  specfile_methods[] =
     */
 static PyObject * specfile_open   (char *filename);             /* create  */
 static PyObject * specfile_close  (PyObject *self);             /* dealloc */
-static int        specfile_noscans(PyObject *self);             /* length  */
-static PyObject * specfile_scan   (PyObject *self,int index);   /* item    */
+static Py_ssize_t specfile_noscans(PyObject *self);             /* length  */
+static PyObject * specfile_scan   (PyObject *self, Py_ssize_t index);   /* item    */
 static int        specfile_print  (PyObject *self,FILE *fp, 
                                                    int flags);  /* print*/
 static PyObject * specfile_getattr(PyObject *self,char *name);  /* getattr */
@@ -262,14 +263,13 @@ static struct PyMethodDef  scandata_methods[] = {
    /*
     * Scandata python basic operation
     */
-static PyObject * scandata_new    (void);                         /* create */
-static PyObject * scandata_free   (PyObject *self);               /* dealloc */
-static int        scandata_size   (PyObject *self);               /* length */
-static PyObject * scandata_col    (PyObject *self,int index);     /* item */
-static PyObject * scandata_slice  (PyObject *self,int lidx,int hidx);/* slice */
-static int        scandata_print  (PyObject *self,FILE *fp, 
-                                                   int flags);    /* print*/
-static PyObject * scandata_getattr(PyObject *self,char *name);    /* getattr */
+static PyObject * scandata_new    (void);                                             /* create */
+static PyObject * scandata_free   (PyObject *self);                                   /* dealloc */
+static Py_ssize_t scandata_size   (PyObject *self);                                   /* length */
+static PyObject * scandata_col    (PyObject *self, Py_ssize_t index);				  /* item */
+static PyObject * scandata_slice  (PyObject *self, Py_ssize_t lidx, Py_ssize_t hidx); /* slice */
+static int        scandata_print  (PyObject *self,FILE *fp, int flags);               /* print*/
+static PyObject * scandata_getattr(PyObject *self,char *name);                        /* getattr */
 
 /*
  * module init
@@ -558,19 +558,19 @@ specfile_close(PyObject *self) {
   /*
    * Sequence type methods
    */
-static int
+static Py_ssize_t
 specfile_noscans(PyObject *self) {
     int       no_scans;
 
     specfileobject *f = (specfileobject *)self;
     no_scans = f->length;
 
-    return no_scans;
+    return (Py_ssize_t) no_scans;
 
 }
 
 static PyObject *
-specfile_scan(PyObject *self,int index) {
+specfile_scan(PyObject *self, Py_ssize_t index) {
     int error;
 
     scandataobject *v;
@@ -587,7 +587,7 @@ specfile_scan(PyObject *self,int index) {
         return NULL;
 
     v->file  = f;
-    v->index = index+1;
+    v->index = (int) index+1;
     v->cols  = SfNoColumns(f->sf,v->index,&error);
 
     Py_INCREF(self);
@@ -670,7 +670,6 @@ scandata_data(PyObject *self,PyObject *args) {
 
     SpecFile *sf;
     int     idx,didx;
-
     PyArrayObject *r_array;
 
     scandataobject *s = (scandataobject *) self;
@@ -680,9 +679,10 @@ scandata_data(PyObject *self,PyObject *args) {
 
     if (!PyArg_ParseTuple(args,"") )
            onError("wrong arguments for data");
-    ret = SfData(sf,idx,&data,&data_info,&error);
-    if ( ret == -1 )
-           onError("cannot read data");
+
+	ret = SfData(sf,idx,&data,&data_info,&error);
+	if ( ret == -1 )
+		   onError("cannot read data");
 
 /*    printf("DATA: %d rows / %d columns\n", data_info[1], data_info[0]);*/
 
@@ -1230,16 +1230,16 @@ scandata_free(PyObject *self) {
     return NULL;
 }
 
-static int
+static Py_ssize_t
 scandata_size(PyObject *self) {
 
     scandataobject *s = (scandataobject *) self;
   
-    return s->cols;
+    return (Py_ssize_t) s->cols;
 }
 
 static PyObject *
-scandata_col(PyObject *self,int index) {
+scandata_col(PyObject *self, Py_ssize_t index) {
     int     error;
     npy_intp ret;
     double  *data;
@@ -1259,7 +1259,7 @@ scandata_col(PyObject *self,int index) {
 
     sf  = (s->file)->sf;
     idx = s->index;
-    col = index + 1;
+    col = (int) (index + 1);
 
     ret = SfDataCol(sf,idx,col,&data,&error);
 
@@ -1292,7 +1292,7 @@ scandata_col(PyObject *self,int index) {
 }
 
 static PyObject *
-scandata_slice(PyObject *self,int ilow,int ihigh) {
+scandata_slice(PyObject *self, Py_ssize_t ilow, Py_ssize_t ihigh) {
     return NULL;
 }
 

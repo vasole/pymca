@@ -111,25 +111,29 @@ else:
 
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca.FastEdf',
-                                            sources = glob.glob('PyMca/edf/*.c'),
-                                            define_macros = define_macros,
-                                            include_dirs = [numpy.get_include()])
+                        sources = glob.glob('PyMca/edf/*.c'),
+                        define_macros = define_macros,
+                        include_dirs = [numpy.get_include()])
     ext_modules.append(module)
 
 def build_specfile(ext_modules):
+    if os.name.lower().startswith('posix'):
+        specfile_define_macros = [('SPECFILE_POSIX', None)]
+    else:
+        specfile_define_macros = define_macros
     module  = Extension(name = 'PyMca.specfile',
-                                            sources = glob.glob('PyMca/specfile/src/*.c'),
-                                            define_macros = define_macros,
-                                            include_dirs = ['PyMca/specfile/include',
-                                                                numpy.get_include()])
+                        sources = glob.glob('PyMca/specfile/src/*.c'),
+                        define_macros = specfile_define_macros,
+                        include_dirs = ['PyMca/specfile/include',
+                                            numpy.get_include()])
     ext_modules.append(module)
 
 def build_specfit(ext_modules):
     module  = Extension(name = 'PyMca.SpecfitFuns',
-                                            sources = glob.glob('PyMca/specfit/*.c'),
-                                            define_macros = define_macros,
-                                            include_dirs = ['PyMca/specfit',
-                                                             numpy.get_include()])
+                        sources = glob.glob('PyMca/specfit/*.c'),
+                        define_macros = define_macros,
+                        include_dirs = ['PyMca/specfit',
+                                         numpy.get_include()])
     ext_modules.append(module)
 
 def build_sps(ext_modules):

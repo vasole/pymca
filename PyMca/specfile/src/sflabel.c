@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /*char RcsId[] = "$Header: /segfs/bliss/source/python/specfile/specfile-3.1/src/RCS/sflabel.c,v 1.3 2003/02/03 13:15:35 rey Exp $"; */
 /************************************************************************
@@ -67,6 +67,7 @@
  */
 #include <SpecFile.h>
 #include <SpecFileP.h>
+#include <locale_management.h>
 
 /*
  * Declarations
@@ -513,7 +514,7 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
             if (*ptr==' ') { 
                posstr[i] = '\0';
 
-               pos[motct]  = atof(posstr);
+               pos[motct]  = PyMcaAtof(posstr);
 
                motct++; 
                i=-1; 
@@ -527,7 +528,7 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
             i++;
          }
          posstr[i]   = '\0';
-         pos[motct]  = atof(posstr);
+         pos[motct]  = PyMcaAtof(posstr);
 
          motct++; 
 
