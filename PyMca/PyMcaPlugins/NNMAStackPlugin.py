@@ -133,25 +133,37 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.setParameters(ddict)
         #y = spectrum
         #self.configurationWidget.setSpectrum(x, y)
+        self.configurationWidget.show()
+        self.configurationWidget.raise_()
         ret = self.configurationWidget.exec_()
         if ret:
             self._executeFunctionAndParameters()
 
     def _executeFunctionAndParameters(self):
+        if DEBUG:
+            print "NNMAStackPlugin _executeFunctionAndParameters"
         self.widget = None
         self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
         qt.QObject.connect(self.thread,
                      qt.SIGNAL('finished()'),
                      self.threadFinished)
-        self.thread.start()
         self.configurationWidget.show()
         message = "Please wait. NNMA Calculation going on."
+        if DEBUG:
+            print "NNMAStackPlugin starting thread"
+        self.thread.start()
+        if DEBUG:
+            print "NNMAStackPlugin waitingMessageDialog"
         CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
                                 parent=self.configurationWidget) 
+        if DEBUG:
+            print "NNMAStackPlugin waitingMessageDialog passed"
 
     def actualCalculation(self):
+        if DEBUG:
+            print "NNMAStackPlugin actualCalculation"
         nnmaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
         self.configurationWidget.setEnabled(False)        
@@ -180,6 +192,8 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         return result
 
     def threadFinished(self):
+        if DEBUG:
+            print "NNMAStackPlugin threadFinished"
         result = self.thread.result
         self.thread = None
         if type(result) == type((1,)):
@@ -206,8 +220,12 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             vectorNames.append("NNMA Component %02d" % i)
             vectorTitles.append("%g %% explained intensity" %\
                                                eigenValues[i])
+        if DEBUG:
+            print "NNMAStackPlugin threadFinished. Create widget"
         self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=True)
+        if DEBUG:
+            print "NNMAStackPlugin threadFinished. Widget created"
         self.widget.buildAndConnectImageButtonBox()
         qt = StackPluginResultsWindow.qt
         qt.QObject.connect(self.widget,
