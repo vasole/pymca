@@ -13,6 +13,18 @@ global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
 import string
 
+SPECFILE_USE_GNU_SOURCE = os.getenv("SPECFILE_USE_GNU_SOURCE")
+if SPECFILE_USE_GNU_SOURCE is None:
+    SPECFILE_USE_GNU_SOURCE = 0
+    if sys.platform.lower().startswith("linux"):
+        print("WARNING:")
+        print("A cleaner locale independent implementation")
+        print("may be achieved setting SPECFILE_USE_GNU_SOURCE to 1")
+        print("For instance running this script as:")
+        print("SPECFILE_USE_GNU_SOURCE=1 python setup.py build")
+else:
+    SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
+
 for line in file(os.path.join('PyMca', 'PyMcaMain.py')).readlines():
     if line[:11] == '__version__':
         exec(line)
@@ -119,6 +131,10 @@ def build_FastEdf(ext_modules):
 def build_specfile(ext_modules):
     if os.name.lower().startswith('posix'):
         specfile_define_macros = [('PYMCA_POSIX', None)]
+        #the best choice is to use _GNU_SOURCE if possible
+        #because that enables the use of strtod_l
+        if SPECFILE_USE_GNU_SOURCE:
+            specfile_define_macros = [('_GNU_SOURCE', 1)]
     else:
         specfile_define_macros = define_macros
     module  = Extension(name = 'PyMca.specfile',

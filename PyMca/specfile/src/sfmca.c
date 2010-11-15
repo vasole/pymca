@@ -62,8 +62,10 @@
 #include <SpecFile.h>
 #include <SpecFileP.h>
 #include <locale_management.h>
+#ifndef _GNU_SOURCE
 #ifdef PYMCA_POSIX
 #include <locale.h>
+#endif
 #endif
 
 #include <ctype.h>
@@ -167,11 +169,12 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
 
      long    blocks=1, 
              initsize=1024;
+#ifndef _GNU_SOURCE
 #ifdef PYMCA_POSIX
 	char *currentLocaleBuffer;
 	char localeBuffer[21];
 #endif
-
+#endif
 
      headersize = ((SpecScan *)sf->current->contents)->data_offset
                 - ((SpecScan *)sf->current->contents)->offset;
@@ -257,10 +260,12 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
     /*
      * continue
      */
+#ifndef _GNU_SOURCE
 #ifdef PYMCA_POSIX
 	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
 	strcpy(localeBuffer, currentLocaleBuffer);
 	setlocale(LC_NUMERIC, "C\0");
+#endif
 #endif
      for ( ;(*(ptr+1) != '\n' || (*ptr == MCA_CONT)) && ptr < to - 1 ; ptr++)
      { 
@@ -271,10 +276,12 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
                     if ((data = (double *)realloc (data, sizeof(double) * blocks * initsize)) 
                                        == (double *)NULL) {
                           *error = SF_ERR_MEMORY_ALLOC;
+#ifndef _GNU_SOURCE
 #ifdef PYMCA_POSIX
 	setlocale(LC_NUMERIC, localeBuffer);
 #endif
-                          return(-1);
+#endif
+							return(-1);
                     }
 
                 }
@@ -297,8 +304,10 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
        data[vals] = val;
        vals++;
      }
+#ifndef _GNU_SOURCE
 #ifdef PYMCA_POSIX
 	setlocale(LC_NUMERIC, localeBuffer);
+#endif
 #endif
 
     *retdata = data;

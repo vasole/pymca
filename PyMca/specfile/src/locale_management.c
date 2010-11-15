@@ -1,18 +1,30 @@
 #include <locale_management.h>
+#include <stdlib.h>
 
+#ifdef _GNU_SOURCE
+#include <xlocale.h>
+#include <locale.h>
+#else
 #ifdef PYMCA_POSIX
 #else
 #ifdef SPECFILE_POSIX
 #include <locale.h>
 #endif
 #endif
+#endif
 
-#include <stdlib.h>
 #include <string.h>
-
 
 double PyMcaAtof(const char * inputString)
 {
+#ifdef _GNU_SOURCE
+	double result;
+	locale_t newLocale;
+	newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL); 
+	result = strtod_l(inputString, NULL, newLocale);
+	freelocale(newLocale);
+	return result;
+#else
 #ifdef PYMCA_POSIX
 	return atof(inputString);
 #else 
@@ -29,6 +41,7 @@ double PyMcaAtof(const char * inputString)
 	return(result);
 #else
 	return atof(inputString);
+#endif
 #endif
 #endif
 }
