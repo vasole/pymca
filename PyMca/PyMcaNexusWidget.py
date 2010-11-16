@@ -114,7 +114,15 @@ class PyMcaNexusWidget(QNexusWidget):
         sel['selection']['m'] = []
         sel['selection']['index'] = index
         self._checkWidgetDict()
-        stack = HDF5Stack1D.HDF5Stack1D(phynxFile, sel['selection'],
+        if 1:
+            #this does not crash because
+            #the same phynx instance is shared
+            stack = HDF5Stack1D.HDF5Stack1D(phynxFile, sel['selection'],
+                                scanlist=scanlist,
+                                dtype=None)
+        else:
+            #this crashes
+            stack = HDF5Stack1D.HDF5Stack1D([filename], sel['selection'],
                                 scanlist=scanlist,
                                 dtype=None)
         widget = QStackWidget.QStackWidget()

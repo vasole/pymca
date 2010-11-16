@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -37,7 +37,7 @@ SOURCE_TYPE = "EdfFile"
 DEBUG = 0
 
 class EdfFileDataSource:
-    def __init__(self,nameInput):
+    def __init__(self,nameInput, fastedf=False):
         if type(nameInput) == types.ListType:
             nameList = nameInput
         else:
@@ -50,7 +50,9 @@ class EdfFileDataSource:
         self.__sourceNameList = nameList
         #this is to be added
         #self._fastedf = True
-        self._fastedf = False
+        self._fastedf = fastedf
+        if fastedf:
+            print "fastedf is unsafe!"
         self.refresh()
 
     def refresh(self):
