@@ -252,8 +252,8 @@ class FrameBrowser(QtGui.QWidget):
         self._textChangedSlot()
 
 class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
-    def __init__(self, *var, **kw):
-        QtGui.QAbstractSlider.__init__(self, *var, **kw)
+    def __init__(self, *var):
+        QtGui.QAbstractSlider.__init__(self, *var)
         self.setOrientation(QtCore.Qt.Horizontal)
         self.mainLayout = QtGui.QHBoxLayout(self)
         self.mainLayout.setMargin(0)

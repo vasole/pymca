@@ -103,7 +103,7 @@ class MedianFilterStackPlugin(StackPluginBase.StackPluginBase):
                                                     colormap=True,
                                                     imageicons=True,
                                                     standalonesave=True)
-            self.widget.setKernelWidth(3)
+            self.widget.setKernelWidth(1)
             self.widget.setSelectionMode(True)
             qt = Median2DBrowser.qt
             qt.QObject.connect(self.widget,
@@ -118,7 +118,7 @@ class MedianFilterStackPlugin(StackPluginBase.StackPluginBase):
         self.stackUpdated()
 
 
-MENU_TEXT = "Median Filter"
+MENU_TEXT = "Image Browser with Median Filter"
 def getStackPluginInstance(stackWindow, **kw):
     ob = MedianFilterStackPlugin(stackWindow)
     return ob

@@ -31,6 +31,7 @@ from PyMca import MaskImageWidget
 from PyMca import FrameBrowser
 from PyMca import DataObject
 qt = MaskImageWidget.qt
+IconDict = MaskImageWidget.IconDict
 
 DEBUG = 0
 
@@ -54,14 +55,43 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         self.nameBox.mainLayout.addWidget(self.nameLabel)
         self.nameBox.mainLayout.addWidget(self.name)
 
+        self.roiWidthLabel = qt.QLabel(self.nameBox)
+        self.roiWidthLabel.setText("Width = ")
+        self.roiWidthSpin = qt.QSpinBox(self.nameBox)
+        self.roiWidthSpin.setMinimum(1)
+        self.roiWidthSpin.setMaximum(9999)
+        self.roiWidthSpin.setValue(1)
+        self.roiWidthSpin.setSingleStep(2)
+        self.nameBox.mainLayout.addWidget(self.roiWidthLabel)
+        self.nameBox.mainLayout.addWidget(self.roiWidthSpin)
+
         self.slider = FrameBrowser.HorizontalSliderWithBrowser(self)
         self.slider.setRange(0, 0)
 
         self.mainLayout.addWidget(self.nameBox)
         self.mainLayout.addWidget(self.slider)
+        self.connect(self.roiWidthSpin,
+                     qt.SIGNAL("valueChanged(int)"),
+                     self._roiWidthSlot)
         self.connect(self.slider,
                      qt.SIGNAL("valueChanged(int)"),
                      self._showImageSliderSlot)
+        self.connect(self.name,
+                     qt.SIGNAL("editingFinished()"),
+                     self._nameSlot)
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
+        infotext  = 'Toggle background image subtraction from current image\n'
+        infotext += 'No action if no background image available.'
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+        self.backgroundButton = self.graphWidget._addToolButton(\
+                                    self.backgroundIcon,
+                                    self.subtractBackground,
+                                    infotext,
+                                    toggle = True,
+                                    state = False,
+                                    position = 6)
+
+        self._backgroundSubtraction = False
         self.slider.hide()
         self.buildAndConnectImageButtonBox(replace=True)
 
@@ -131,9 +161,28 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         else:
             self.plotImage()
 
-    def _getImageDataFromSingleIndex(self, index):
+    def subtractBackground(self):
+        if self.backgroundButton.isChecked():
+            self._backgroundSubtraction = True
+        else:
+            self._backgroundSubtraction = False        
+        index = self.slider.value()
+        self._showImageSliderSlot(index)
+
+    def _roiWidthSlot(self, width):
+        index = self.slider.value()
+        self._showImageSliderSlot(index)
+
+    def _getImageDataFromSingleIndex(self, index, width=None, background=None):
+        if width is None:
+            width = int(0.5*(self.roiWidthSpin.value() - 1))
+        if width < 1:
+            width = 0
+        if background is None:
+            background = self._backgroundSubtraction
         if not len(self.dataObjectsList):
-            print "nothing to show"
+            if DEBUG:
+                print("nothing to show")
             return
         legend = self.dataObjectsList[0]
         if type(legend) == type([]):
@@ -146,29 +195,90 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
             return dataObject.data
         if self._browsingIndex == 0:
             if len(shape) == 3:
-                data = dataObject.data[index:index+1,:,:]
-                data.shape = data.shape[1:]
+                if width < 1:
+                    data = dataObject.data[index:index+1,:,:]
+                    data.shape = data.shape[1:]
+                else:
+                    i0 = index - width
+                    i1 = index + width + 1
+                    i0 = max(i0, 0)
+                    i1 = min(i1, shape[0])
+                    if background:
+                        data = dataObject.data[i0:i1,:,:]
+                        backgroundData = 0.5*(i1-i0)*\
+                                     (data[0, :, :]+data[-1, :,:])
+                        data = data.sum(axis=0) - backgroundData                        
+                    else:
+                        data = dataObject.data[i0:i1,:,:].sum(axis=0)
                 return data
             #I have to deduce the appropriate indices from the given index
             #always assuming C order
             acquisitionShape =  dataObject.data.shape[:-2]
             if len(shape) == 4:
-                j = index % acquisitionShape[-1]
-                i = int(index/(acquisitionShape[-1]*acquisitionShape[-2]))
-                return dataObject.data[i, j]
+                if width < 1:
+                    j = index % acquisitionShape[-1]
+                    i = int(index/(acquisitionShape[-1]*acquisitionShape[-2]))
+                    return dataObject.data[i, j]
+                else:
+                    npoints = (acquisitionShape[-1]*acquisitionShape[-2])
+                    i0 = max(index - width, 0)
+                    i1 = min(index + width + 1, npoints)
+                    for tmpIndex in xrange(i0, i1):
+                        j = tmpIndex % acquisitionShape[-1]
+                        i = int(index/npoints)
+                        if tmpIndex == i0:
+                            data = dataObject.data[i, j]
+                            backgroundData = data * 1
+                        elif tmpIndex == (i1-1):
+                            tmpData = dataObject.data[i, j]
+                            backgroundData = 0.5*(i1-i0)*\
+                                     (background+tmpData)
+                            data += tmpData
+                        else:
+                            data += dataObject.data[i, j]
+                    if background:
+                        data -= backgroundData
+                    return data
         elif self._browsingIndex == -1:
             if len(shape) == 3:
-                data = dataObject.data[:,:,index:index+1]
-                data.shape = data.shape[0], data.shape[1]
+                if width < 1:
+                    data = dataObject.data[:,:,index:index+1]
+                    data.shape = data.shape[0], data.shape[1]
+                else:
+                    i0 = index - width
+                    i1 = index + width + 1
+                    i0 = max(i0, 0)
+                    i1 = min(i1, shape[-1])
+                    if background:
+                        data = dataObject.data[:,:,i0:i1]
+                        backgroundData = 0.5*(i1-i0)*\
+                                     (data[:, :,  0]+data[:,:,-1])
+                        data = data.sum(axis=-1) - backgroundData
+                    else:
+                        data = dataObject.data[:,:,i0:i1].sum(axis=-1)
                 return data
         raise IndexError, "Unhandled dimension"
 
     def _showImageSliderSlot(self, index):
         self.showImage(index, moveslider=False)
 
+    def _nameSlot(self):
+        txt = str(self.name.text())
+        if len(txt):
+            self.graphWidget.graph.setTitle(txt)
+        else:
+            self.name.setText(str(self.graphWidget.graph.title().text()))
+
     def _buildTitle(self, legend, index):
-        return "%s %d" % (legend, index)
-            
+        width = int(0.5*(self.roiWidthSpin.value() - 1))
+        if width < 1:
+            title = "%s %d" % (legend, index)
+        else:
+            title = "%s from %d to %d" % (legend, index - width, index + width)
+        if self._backgroundSubtraction:
+            title += " Net"
+        return title
+        
     def showImage(self, index=0, moveslider=True):
         if not len(self.dataObjectsList):
             return

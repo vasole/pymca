@@ -81,10 +81,11 @@ class Median2DBrowser(StackBrowser.StackBrowser):
     def _buildTitle(self, legend, index):
         a = self._medianParameters['row_width']
         b = self._medianParameters['column_width']
+        title = StackBrowser.StackBrowser._buildTitle(self, legend, index)
         if max(a, b) > 1:
-            return "Median Filter (%d,%d) of %s %d" % (a, b, legend, index)
+            return "Median Filter (%d,%d) of %s" % (a, b, title)
         else:
-            return StackBrowser.StackBrowser._buildTitle(self, legend, index)
+            return title
 
     def setImageData(self, data, **kw):
         if self._medianParameters['use']:
