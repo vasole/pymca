@@ -785,7 +785,11 @@ class McaBatchGUI(qt.QWidget):
                     allowSingleFileSplitProcesses = False
                     if HDF5SUPPORT:
                         if h5py.is_hdf5(self.fileList[0]):
-                            allowSingleFileSplitProcesses = True
+                            if DEBUG:
+                                print("Disallow single HDF5 process split")
+                                print("due to problems with concurrent access")
+                            #allowSingleFileSplitProcesses = True
+                            allowSingleFileSplitProcesses = False
                     if not allowSingleFileSplitProcesses:
                         text = "Multiple processes can only be used with multiple input files."
                         qt.QMessageBox.critical(self, "ERROR",text)
