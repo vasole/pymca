@@ -782,22 +782,23 @@ class McaBatchGUI(qt.QWidget):
         if len(self.fileList) == 1:
             if sys.platform != 'darwin':
                 if self.__splitBox.isChecked():
-                    allowSingleFileSplitProcesses = False
-                    if HDF5SUPPORT:
-                        if h5py.is_hdf5(self.fileList[0]):
-                            if DEBUG:
-                                print("Disallow single HDF5 process split")
-                                print("due to problems with concurrent access")
-                            #allowSingleFileSplitProcesses = True
-                            allowSingleFileSplitProcesses = False
-                    if not allowSingleFileSplitProcesses:
-                        text = "Multiple processes can only be used with multiple input files."
-                        qt.QMessageBox.critical(self, "ERROR",text)
-                        if QTVERSION < '4.0.0':
-                            self.raiseW()
-                        else:
-                            self.raise_()
-                        return
+                    if int(str(self.__splitSpin.text())) > 1:
+                        allowSingleFileSplitProcesses = False
+                        if HDF5SUPPORT:
+                            if h5py.is_hdf5(self.fileList[0]):
+                                if DEBUG:
+                                    print("Disallow single HDF5 process split")
+                                    print("due to problems with concurrent access")
+                                #allowSingleFileSplitProcesses = True
+                                allowSingleFileSplitProcesses = False
+                        if not allowSingleFileSplitProcesses:
+                            text = "Multiple processes can only be used with multiple input files."
+                            qt.QMessageBox.critical(self, "ERROR",text)
+                            if QTVERSION < '4.0.0':
+                                self.raiseW()
+                            else:
+                                self.raise_()
+                            return
                     
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
@@ -925,7 +926,7 @@ class McaBatchGUI(qt.QWidget):
             window.show()
             b.start()
         elif sys.platform == 'win32':
-            listfile = "tmpfile"
+            listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
             try:
                 dirname = os.path.dirname(__file__)
@@ -956,7 +957,7 @@ class McaBatchGUI(qt.QWidget):
                     rgb = '%s "%s"' % (sys.executable, rgb)
             self._rgb = rgb
             if type(self.configFile) == type([]):
-                cfglistfile = "tmpfile.cfg"
+                cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
                 self.genListFile(cfglistfile, config=True)
                 dirname  = os.path.dirname(dirname)
                 if frozen:
@@ -1040,7 +1041,7 @@ class McaBatchGUI(qt.QWidget):
                 os.system(cmd)
             self.show()
         else:
-            listfile = "tmpfile"
+            listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
             try:
                 dirname = os.path.dirname(__file__)
@@ -1069,7 +1070,7 @@ class McaBatchGUI(qt.QWidget):
 
             self._rgb = rgb
             if type(self.configFile) == type([]):
-                cfglistfile = "tmpfile.cfg"
+                cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
                 self.genListFile(cfglistfile, config=True)
                 cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d --selection=%d &" % \
                                                     (myself,
@@ -1124,10 +1125,12 @@ class McaBatchGUI(qt.QWidget):
                     msg.exec_()
             
     def genListFile(self,listfile, config=None):
-        try:
-            os.remove(listfile)
-        except:
-            pass
+        if os.path.exists(listfile):
+            try:
+                os.remove(listfile)
+            except:
+                print("Cannot delete file %s" % listfile)
+                raise
         if config is None:
             lst = self.fileList
         elif config:
@@ -1191,7 +1194,9 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,
                      roifit = None, roiwidth=None, overwrite=1,
                      filestep=1, mcastep=1, concentrations=0,
-                     fitfiles=0, filebeginoffset=0, fileendoffset=0, mcaoffset=0, chunk=None, selection=None):
+                     fitfiles=0, filebeginoffset=0, fileendoffset=0,
+                     mcaoffset=0, chunk=None,
+                     selection=None, lock=None):
         McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile, filelist, outputdir,
                                                          roifit=roifit, roiwidth=roiwidth,
                                                          overwrite=overwrite, filestep=filestep,
@@ -1202,8 +1207,9 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
                                                          fileendoffset = fileendoffset,
                                                          mcaoffset  = mcaoffset,
                                                          chunk=chunk,
-                                                         selection=selection) 
-        qt.QThread.__init__(self)        
+                                                         selection=selection,
+                                                         lock=lock) 
+        qt.QThread.__init__(self)
         self.parent = parent
         self.pleasePause = 0
         

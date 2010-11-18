@@ -52,10 +52,12 @@ class McaAdvancedFitBatch:
                     overwrite=1, filestep=1, mcastep=1,
                     concentrations=0, fitfiles=1, fitimages=1,
                     filebeginoffset = 0, fileendoffset=0,
-                    mcaoffset=0, chunk = None, selection=None):
+                    mcaoffset=0, chunk = None,
+                    selection=None, lock=None):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
+        self._lock = lock
         self.fitFiles = fitfiles
         self._concentrations = concentrations
         if type(initdict) == type([]):
