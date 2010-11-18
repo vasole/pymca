@@ -210,6 +210,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                         data = data.sum(axis=0) - backgroundData                        
                     else:
                         data = dataObject.data[i0:i1,:,:].sum(axis=0)
+                    data /= float(i1-i0)
                 return data
             #I have to deduce the appropriate indices from the given index
             #always assuming C order
@@ -238,6 +239,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                             data += dataObject.data[i, j]
                     if background:
                         data -= backgroundData
+                    data /= float(i1-i0)
                     return data
         elif self._browsingIndex == -1:
             if len(shape) == 3:
@@ -256,6 +258,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                         data = data.sum(axis=-1) - backgroundData
                     else:
                         data = dataObject.data[:,:,i0:i1].sum(axis=-1)
+                    data /= float(i1-i0)
                 return data
         raise IndexError, "Unhandled dimension"
 
@@ -274,7 +277,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         if width < 1:
             title = "%s %d" % (legend, index)
         else:
-            title = "%s from %d to %d" % (legend, index - width, index + width)
+            title = "%s average %d to %d" % (legend, index - width, index + width)
         if self._backgroundSubtraction:
             title += " Net"
         return title
