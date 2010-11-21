@@ -157,6 +157,12 @@ except ImportError:
     MATPLOTLIB = False
 
 try:
+    import mdp
+    MDP = True
+except ImportError:
+    MDP = False
+
+try:
     import h5py
     if h5py.version.version < '1.2.0':
         includes = ['h5py._extras']
@@ -178,6 +184,10 @@ if OBJECT3D:
     special_modules =[os.path.dirname(ctypes.__file__),
                   os.path.dirname(OpenGL.__file__),
                   os.path.dirname(Object3D.__file__)]
+    if MDP:
+        #mdp versions above 2.5 need special treatment
+        if mdp.__version__  > '2.5':
+            special_modules.append(os.path.dirname(mdp.__file__))
     if MATPLOTLIB:
         special_modules.append(os.path.dirname(matplotlib.__file__))
     if SCIPY:
@@ -194,6 +204,10 @@ if OBJECT3D:
 else:
     excludes = ["Tkinter", "PyMcaPlugins", "scipy", "Numeric","numarray"]
     special_modules = [os.path.dirname(ctypes.__file__)]
+    if MDP:
+        #mdp versions above 2.5 need special treatment
+        if mdp.__version__  > '2.5':
+            special_modules.append(os.path.dirname(mdp.__file__))
     if MATPLOTLIB:
         special_modules.append(os.path.dirname(matplotlib.__file__))
     if SCIPY:
@@ -203,7 +217,7 @@ else:
     
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
-    
+
 
 #Next line was for the plugins in frozen but now is in shared zip library
 #include_files.append((PyMcaDir, "PyMca"))
