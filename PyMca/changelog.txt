@@ -8,7 +8,7 @@ Implement a plugin system for the ROI Imaging tool.
 
 Implement a generic batch fitting of stacks as a stack plugin. The functions are totally specified by the user.
 
-Implement background removal tools as stack plugins.
+Implement simple background removal tools as stack plugins.
 
 Implement an alternative ROI window as a stack plugin. 
 
