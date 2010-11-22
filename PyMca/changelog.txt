@@ -20,7 +20,7 @@ Support MDP based PCA and ICA on user selected regions.
 
 Read calibration from OMNIC 7.x .map files.
 
-Support Bruker Opus mpas exported in DPT format.
+Support Bruker Opus maps exported in DPT format.
 
 Improve the reading speed of TwinMic .dta files.
 
