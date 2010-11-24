@@ -34,64 +34,64 @@ def install():
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'PyMca'
     f = ip_dir + r'\%s.lnk' % fname 
-    mkshortcut(python_console,name,f,script)
+    mkshortcut(python_console,name,f,script, "%HOMEDRIVE%%HOMEPATH%")
 
     name = 'PyMcaMain'
     script = '"'+lib_dir+r'\%s.py" -f'%name
     fname = 'PyMca Fresh Start'
     f = ip_dir + r'\%s.lnk' % fname
-    mkshortcut(python_console,name,f,script)
+    mkshortcut(python_console,name,f,script, "%HOMEDRIVE%%HOMEPATH%")
 
     name = 'EdfFileSimpleViewer'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'EDF Viewer'
     f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python,name,f,script)
+    mkshortcut(python,name,f,script, "%HOMEDRIVE%%HOMEPATH%")
 
     name = 'ElementsInfo'
     script = '"'+lib_dir+r'\%s.py"'%name
     f = ip_dir + r'\%s.lnk'%name
-    mkshortcut(python,name,f,script)
+    mkshortcut(python,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'Mca2Edf'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'Mca to Edf Converter'
     f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python,name,f,script)
+    mkshortcut(python,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'PeakIdentifier'
     script = '"'+lib_dir+r'\%s.py"'%name
     f = ip_dir + r'\%s.lnk'%name
-    mkshortcut(python,name,f,script)
+    mkshortcut(python,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'PyMcaBatch'
     script = '"'+lib_dir+r'\%s.py"'%name
     f = ip_dir + r'\%s.lnk'%name
-    mkshortcut(python_console,name,f,script)
+    mkshortcut(python_console,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'PyMcaPostBatch'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'RGB Correlator'
     f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python,name,f,script)
+    mkshortcut(python,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'QStackWidget'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'ROI Imaging Tool'
     f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python_console,name,f,script)
+    mkshortcut(python_console,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'QEDFStackWidget'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'ROI Imaging Tool(OLD)'
     f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python_console,name,f,script)
+    mkshortcut(python_console,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     name = 'ChangeLog'
     script = '"'+lib_dir+r'\%s.py" LICENSE.GPL'%name
     fname = 'License'
     f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python,name,f,script)
+    mkshortcut(python,name,f,script,"%HOMEDRIVE%%HOMEPATH%")
 
     # Create documentation shortcuts ...
 
