@@ -364,31 +364,29 @@ class McaBatchGUI(qt.QWidget):
 
 
         #BATCH SPLITTING
-        if sys.platform != 'darwin':
-            self.__splitBox = qt.QCheckBox(vBox)
-            self.__splitBox.setText('EXPERIMENTAL: Use several processes')
-            vBox.l.addWidget(self.__splitBox)
-            #box3 = qt.QHBox(box2)
-            self.__box4 = qt.QWidget(boxStep0)
-            box4 = self.__box4
-            box4.l = qt.QHBoxLayout(box4)
-            box4.l.setMargin(0)
-            box4.l.setSpacing(0)
-            boxStep0.l.addWidget(box4)
-            
-            label= qt.QLabel(box4)
-            label.setText("Number of processes:")
-            self.__splitSpin = qt.QSpinBox(box4)
-            if QTVERSION < '4.0.0':
-                self.__splitSpin.setMinValue(1)
-                self.__splitSpin.setMaxValue(1000)
-            else:
-                self.__splitSpin.setMinimum(1)
-                self.__splitSpin.setMaximum(1000)
-            self.__splitSpin.setValue(2)
-            box4.l.addWidget(label)
-            box4.l.addWidget(self.__splitSpin)
-
+        self.__splitBox = qt.QCheckBox(vBox)
+        self.__splitBox.setText('EXPERIMENTAL: Use several processes')
+        vBox.l.addWidget(self.__splitBox)
+        #box3 = qt.QHBox(box2)
+        self.__box4 = qt.QWidget(boxStep0)
+        box4 = self.__box4
+        box4.l = qt.QHBoxLayout(box4)
+        box4.l.setMargin(0)
+        box4.l.setSpacing(0)
+        boxStep0.l.addWidget(box4)
+        
+        label= qt.QLabel(box4)
+        label.setText("Number of processes:")
+        self.__splitSpin = qt.QSpinBox(box4)
+        if QTVERSION < '4.0.0':
+            self.__splitSpin.setMinValue(1)
+            self.__splitSpin.setMaxValue(1000)
+        else:
+            self.__splitSpin.setMinimum(1)
+            self.__splitSpin.setMaximum(1000)
+        self.__splitSpin.setValue(2)
+        box4.l.addWidget(label)
+        box4.l.addWidget(self.__splitSpin)
         
         self._layout.addWidget(bigbox)
 
@@ -468,7 +466,7 @@ class McaBatchGUI(qt.QWidget):
                         self._hdf5Widget.hide()
                         self._selection=None
                     else:
-                        dialog = qt.QDialog()
+                        dialog = qt.QDialog(self)
                         dialog.setWindowTitle('Select your data set')
                         dialog.mainLayout = qt.QVBoxLayout(dialog)
                         dialog.mainLayout.setMargin(0)
@@ -477,7 +475,14 @@ class McaBatchGUI(qt.QWidget):
                         nexusWidget = QNexusWidget.QNexusWidget(dialog)
                         nexusWidget.buttons.hide()
                         nexusWidget.setDataSource(datasource)
+                        button = qt.QPushButton(dialog)
+                        button.setText("Done")
+                        button.setAutoDefault(True)
+                        qt.QObject.connect(button,
+                                           qt.SIGNAL('clicked()'),
+                                           dialog.accept)
                         dialog.mainLayout.addWidget(nexusWidget)
+                        dialog.mainLayout.addWidget(button)
                         ret = dialog.exec_()
                         cntSelection = nexusWidget.cntTable.getCounterSelection()
                         cntlist = cntSelection['cntlist']
@@ -780,25 +785,32 @@ class McaBatchGUI(qt.QWidget):
             return
 
         if len(self.fileList) == 1:
-            if sys.platform != 'darwin':
-                if self.__splitBox.isChecked():
-                    if int(str(self.__splitSpin.text())) > 1:
-                        allowSingleFileSplitProcesses = False
-                        if HDF5SUPPORT:
-                            if h5py.is_hdf5(self.fileList[0]):
-                                if DEBUG:
-                                    print("Disallow single HDF5 process split")
-                                    print("due to problems with concurrent access")
-                                #allowSingleFileSplitProcesses = True
-                                allowSingleFileSplitProcesses = False
-                        if not allowSingleFileSplitProcesses:
-                            text = "Multiple processes can only be used with multiple input files."
-                            qt.QMessageBox.critical(self, "ERROR",text)
-                            if QTVERSION < '4.0.0':
-                                self.raiseW()
-                            else:
-                                self.raise_()
-                            return
+            if self.__splitBox.isChecked():
+                if sys.platform == 'darwin':
+                    text = 'Multiple processes not yet supported on MacOS X'
+                    qt.QMessageBox.critical(self, "ERROR",text)
+                    if QTVERSION < '4.0.0':
+                        self.raiseW()
+                    else:
+                        self.raise_()
+                    return
+                if int(str(self.__splitSpin.text())) > 1:
+                    allowSingleFileSplitProcesses = False
+                    if HDF5SUPPORT:
+                        if h5py.is_hdf5(self.fileList[0]):
+                            if DEBUG:
+                                print("Disallow single HDF5 process split")
+                                print("due to problems with concurrent access")
+                            #allowSingleFileSplitProcesses = True
+                            allowSingleFileSplitProcesses = False
+                    if not allowSingleFileSplitProcesses:
+                        text = "Multiple processes can only be used with multiple input files."
+                        qt.QMessageBox.critical(self, "ERROR",text)
+                        if QTVERSION < '4.0.0':
+                            self.raiseW()
+                        else:
+                            self.raise_()
+                        return
                     
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
