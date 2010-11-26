@@ -273,8 +273,10 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
             #    print "x1 = ", x1
             #    print 1, y0
             #    print 2, y1
-            ddict[key][i] = exp((log(y0) * log(x1/x) +\
+            if (y0 > 0) and (y1 > 0):
+                ddict[key][i] = exp((log(y0) * log(x1/x) +\
                                  log(y1) * log(x/x0))/log(x1/x0))
+            
 
         #partial cross sections
         for key in atomic_shells:
