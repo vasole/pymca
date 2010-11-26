@@ -608,22 +608,24 @@ class McaBatchGUI(qt.QWidget):
 
     def __getFileType(self,inputfile):
         try:
-            file = None
+            ffile = None
             try:
-                file   = EdfFileLayer.EdfFileLayer(fastedf=0)
-                file.SetSource(inputfile)
-                fileinfo = file.GetSourceInfo()
-                if fileinfo['KeyList'] == []:file=None
+                ffile   = EdfFileLayer.EdfFileLayer(fastedf=0)
+                ffile.SetSource(inputfile)
+                fileinfo = ffile.GetSourceInfo()
+                if fileinfo['KeyList'] == []:ffile=None
                 return "EdfFile"
             except:
                 pass
-            if (file is None):
-                file   = SpecFileLayer.SpecFileLayer()
-                file.SetSource(inputfile)
-            del file
+            if (ffile is None):
+                ffile   = SpecFileLayer.SpecFileLayer()
+                ffile.SetSource(inputfile)
+            del ffile
             return "Specfile" 
         except:
-            qt.QMessageBox.critical(self, sys.exc_info()[0],'I do not know what to do with file\n %s' % file)
+            qt.QMessageBox.critical(self,
+                                    sys.exc_info()[0],
+                                    'I do not know what to do with file\n %s' % ffile)
             if QTVERSION < '4.0.0':
                 self.raiseW()
             else:
@@ -784,16 +786,18 @@ class McaBatchGUI(qt.QWidget):
                 self.raise_()
             return
 
-        if len(self.fileList) == 1:
-            if self.__splitBox.isChecked():
-                if sys.platform == 'darwin':
-                    text = 'Multiple processes not yet supported on MacOS X'
+        if self.__splitBox.isChecked():
+            if sys.platform == 'darwin':
+                if ".app" in os.path.dirname(__file__):
+                    text  = 'Multiple processes only supported on MacOS X when built from source\n'
+                    text += 'and not when running the frozen binary.'  
                     qt.QMessageBox.critical(self, "ERROR",text)
                     if QTVERSION < '4.0.0':
                         self.raiseW()
                     else:
                         self.raise_()
                     return
+            if len(self.fileList) == 1:
                 if int(str(self.__splitSpin.text())) > 1:
                     allowSingleFileSplitProcesses = False
                     if HDF5SUPPORT:
@@ -909,8 +913,9 @@ class McaBatchGUI(qt.QWidget):
             self.__b      = b
             window.show()
             b.start()
-        elif sys.platform == 'darwin':
-            #almost identical to batch    
+        elif (sys.platform == 'darwin') and\
+             ((".app" in os.path.dirname(__file__)) or (not self.__splitBox.isChecked())):
+            #almost identical to batch
             window =  McaBatchWindow(name="ROI"+name,actions=1,outputdir=self.outputDir,
                                      html=html,htmlindex=htmlindex, table = table)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
@@ -1068,7 +1073,18 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(viewer):viewer = None
                 if not os.path.exists(rgb):rgb = None
             else:
-                myself  = sys.executable+" "+ os.path.join(dirname, "PyMcaBatch.py")
+                myself = "PyMcaBatch.py"
+                if not os.path.exists(os.path.join(dirname, myself)):
+                    dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                    if not os.path.exists(os.path.join(dirname, myself)):
+                        text  = 'Cannot locate PyMcaBatch.py file.\n'
+                        qt.QMessageBox.critical(self, "ERROR",text)
+                        if QTVERSION < '4.0.0':
+                            self.raiseW()
+                        else:
+                            self.raise_()
+                        return                
+                myself  = sys.executable+" "+ os.path.join(dirname, myself)
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
                 if not os.path.exists(viewer):
@@ -1176,6 +1192,10 @@ class McaBatchGUI(qt.QWidget):
         if n > 0: return
         self._timer.stop()
         self.show()
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
 
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
         if DEBUG:a, b, c = work.buildOutput(delete=False)
@@ -1784,6 +1804,7 @@ def main():
             app.exec_loop()
         else:
             w.show()
+            w.raise_()
             app.exec_()
     else:
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
