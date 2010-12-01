@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -409,7 +409,7 @@ class QPeriodicComboTableItem(QComboTableItem):
         else:
             QComboBox.__init__(self)
             self.addItems(strlist)
-            print "still to continue"
+            print("still to continue")
 
     def setSelection(self, symbol=None):
         if symbol is None:
@@ -507,7 +507,10 @@ class QPeriodicList(MyQListView):
             self.connect(self, SIGNAL("selectionChanged()"), self.__selectionChanged)
             self.__fill_list()
         else:
-            strlist= QStringList()
+            try:
+                strlist= QStringList()
+            except:
+                strlist= []
             strlist.append("Z")
             strlist.append("Symbol")
             if detailed:
@@ -519,7 +522,7 @@ class QPeriodicList(MyQListView):
             self.header().setStretchLastSection(False)
             self.setRootIsDecorated(0)
             self.connect(self, SIGNAL("itemSelectionChanged()"), self.__selectionChanged)
-            print "what to do? "
+            print("what to do? ")
             """
             self.header().setClickEnabled(0, -1)
             self.setAllColumnsShowFocus(1)
@@ -585,7 +588,7 @@ def testwidget():
     import sys
 
     def change(list):
-        print "New selection:", list
+        print("New selection:", list)
 
     a = QApplication(sys.argv)
     QObject.connect(a,SIGNAL("lastWindowClosed()"),a, SLOT("quit()"))
@@ -595,7 +598,7 @@ def testwidget():
     if QTVERSION < '4.0.0':
         f = QPeriodicTable(w)
     else:
-        f = QPeriodicTable()        
+        f = QPeriodicTable()
     if QTVERSION < '4.0.0':
         o= QWidget(w)
         ol= QVBoxLayout(o)
