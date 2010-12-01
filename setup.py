@@ -7,11 +7,10 @@ try:
 except ImportError:
     text  = "You must have numpy installed.\n"
     text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
-    raise ImportError, text
+    raise ImportError(text)
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
-import string
 
 SPECFILE_USE_GNU_SOURCE = os.getenv("SPECFILE_USE_GNU_SOURCE")
 if SPECFILE_USE_GNU_SOURCE is None:
@@ -25,7 +24,8 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
-for line in file(os.path.join('PyMca', 'PyMcaMain.py')).readlines():
+ffile = open(os.path.join('PyMca', 'PyMcaMain.py'),'r').readlines()
+for line in ffile:
     if line[:11] == '__version__':
         exec(line)
         # Append cvs tag if working from cvs tree
@@ -38,23 +38,24 @@ for line in file(os.path.join('PyMca', 'PyMcaMain.py')).readlines():
             __version__ += 'dev_r%i' % revision
         break
 
-print "PyMca X-Ray Fluorescence Toolkit %s" % __version__
-print 
+print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
-print "Type 'L' to view the license."
-print "Type 'yes' to accept the terms of the license."
-print "Type 'no' to decline the terms of the license."
-print
+print("Type 'L' to view the license.")
+print("Type 'yes' to accept the terms of the license.")
+print("Type 'no' to decline the terms of the license.\n")
 
 while 1:
     try:
-        resp = raw_input("Do you accept the terms of the license? ")
+        if sys.version_info < (3, 0):
+            resp = raw_input("Do you accept the terms of the license? ")
+        else:
+            resp = input("Do you accept the terms of the license? ")
     except KeyboardInterrupt:
         raise SystemExit
     except:
         resp = ""
 
-    resp = string.lower(string.strip(resp))
+    resp = resp.strip().lower()
 
     if resp == "yes":
         break
@@ -120,7 +121,6 @@ else:
     define_macros = []
     script_files = glob.glob('PyMca/scripts/*')
             
-
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca.FastEdf',
                         sources = glob.glob('PyMca/edf/*.c'),
@@ -243,8 +243,8 @@ if LOCAL_OBJECT3D:
         data_files.append(('PyMca/Object3D/Object3DPlugins',
                        glob.glob('PyMca/object3d/Object3D/Object3DPlugins/*.py')))
     except:
-        print "Object3D Module could not be built"
-        print sys.exc_info()
+        print("Object3D Module could not be built")
+        print(sys.exc_info())
 build_PyMcaSciPy(ext_modules)
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
@@ -256,24 +256,24 @@ class smart_install_data(install_data):
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
         PYMCA_INSTALL_DIR = self.install_dir
-        print "PyMca to be installed in %s" %  self.install_dir
+        print("PyMca to be installed in %s" %  self.install_dir)
         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "Plugins1D")
         if os.path.exists(pymcaOld):
             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
-                print "Removing previously installed file %s" % f
+                print("Removing previously installed file %s" % f)
                 os.remove(f)
             for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
-                print "Removing previously installed file %s" % f
+                print("Removing previously installed file %s" % f)
                 os.remove(f)
-            print "Removing previously installed directory %s" % pymcaOld
+            print("Removing previously installed directory %s" % pymcaOld)
             os.rmdir(pymcaOld)
         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "PyMca.py")
         if os.path.exists(pymcaOld):
-            print "Removing previously installed file %s" % pymcaOld
+            print("Removing previously installed file %s" % pymcaOld)
             os.remove(pymcaOld)
         pymcaOld += "c"
         if os.path.exists(pymcaOld):
-            print "Removing previously installed file %s" % pymcaOld
+            print("Removing previously installed file %s" % pymcaOld)
             os.remove(pymcaOld)
         return install_data.run(self)
 
@@ -364,7 +364,7 @@ try:
     SIP = True
 except ImportError:
     SIP = False
-    print "sip must be installed for full pymca functionality."
+    print("sip must be installed for full pymca functionality.")
 
 badtext  = "No valid PyQt  with PyQwt4 or PyQwt5 installation found.\n"
 badtext += "No valid PyQt4 with PyQwt5 installation found.\n"
@@ -372,7 +372,7 @@ badtext += "You will only be able to develop applications using  a very \n"
 badtext += "small subset of PyMca."
 
 try:
-    print "PyMca is installed in %s " % PYMCA_INSTALL_DIR
+    print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
 except NameError:
     #I really do not see how this may happen but ...
     pass
@@ -401,7 +401,7 @@ if SIP:
         except ImportError:
             QT3 = False
         except:
-	    pass
+            pass
 
         try:
             import Qwt5 as qwt
@@ -428,48 +428,48 @@ if SIP:
     if QT4 and QT3:
         #print "PyMca does not work in a mixed Qt4 and qt installation (yet)"
         if QWT5:
-            print "You have PyQt4 and PyQwt5 installed."
-            print "PyMca is fully functional under PyQt4 with PyQwt5."
-            print "You can easily embed PyMca fitting in your Qt4 graphical "
-            print "applications using McaAdvancedFit.py"
+            print("You have PyQt4 and PyQwt5 installed.")
+            print("PyMca is fully functional under PyQt4 with PyQwt5.")
+            print("You can easily embed PyMca fitting in your Qt4 graphical ")
+            print("applications using McaAdvancedFit.py")
         else:
-            print badtext
+            print(badtext)
     elif QT3 and QWT5:
-        print "PyMca PyQt installations tested with PyQwt4"
-        print "You have PyQwt5 installed. It should also work."
-        print "PyMca installation successfully completed."
+        print("PyMca PyQt installations tested with PyQwt4")
+        print("You have PyQwt5 installed. It should also work.")
+        print("PyMca installation successfully completed.")
     elif QT3 and not QWT4:
-        print "PyMca PyQt installations need PyQwt5 or PyQwt4"
-        print badtext
+        print("PyMca PyQt installations need PyQwt5 or PyQwt4")
+        print(badtext)
     elif QT4 and QWT5:
-        print "You have PyQt4 and PyQwt5 installed."
-        print "PyMca is fully functional under PyQt4 with PyQwt5."
-        print "You can easily embed PyMca fitting in your Qt4 graphical "
-        print "applications using McaAdvancedFit.py"
+        print("You have PyQt4 and PyQwt5 installed.")
+        print("PyMca is fully functional under PyQt4 with PyQwt5.")
+        print("You can easily embed PyMca fitting in your Qt4 graphical ")
+        print("applications using McaAdvancedFit.py")
         try:
             if sys.platform != 'win32':
-                print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
-                print "and try the scripts:"
+                print("Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR)
+                print("and try the scripts:")
                 for script in script_files:
                     s = os.path.basename(script)
                     #if s.upper() == "PYMCA":continue
                     #if s.upper() == "MCA2EDF":continue
-                    print s
+                    print(s)
         except NameError:
             pass
     elif QT3 and QWT4:
-        print "PyMca installation successfully completed."
+        print("PyMca installation successfully completed.")
         try:
             if sys.platform != 'win32':
-                print "Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR
-                print "and try the scripts:"
+                print("Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR)
+                print("and try the scripts:")
                 for script in script_files:
-                    print os.path.basename(script)
+                    print(os.path.basename(script))
         except NameError:
             pass
     else:
-        print badtext
+        print(badtext)
 else:
-    print "No valid PyQt with qwt or PyQt4 with PyQwt5 installation found."
-    print "You will only be able to develop applications using  a very "
-    print "small subset of PyMca."
+    print("No valid PyQt with qwt or PyQt4 with PyQwt5 installation found.")
+    print("You will only be able to develop applications using  a very ")
+    print("small subset of PyMca.")
