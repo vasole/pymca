@@ -230,7 +230,7 @@ class SaveImageSetup(qt.QWidget):
             try:
                 outstr=str(outfile.selectedFiles()[0])
             except UnicodeError:
-                print "WARNING: Unsupported characters in file name, trying workaround"
+                print("WARNING: Unsupported characters in file name, trying workaround")
                 try:
                     outstr = str(outfile.selectedFiles()[0].toLocal8Bit())
                 except:
@@ -278,7 +278,7 @@ class SaveImageSetup(qt.QWidget):
                                           facecolor='w',
                                           format=finalFile[-3:])
         except:
-            print "WARNING: trying to save using obsolete method"
+            print("WARNING: trying to save using obsolete method")
             config = self.imageWidget.getParameters()
             try:
                 s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
@@ -404,9 +404,9 @@ class RightWidget(qt.QWidget):
             self.gridLayout.addWidget(line, i, 1)
             self.comboBoxList.append(line)
 
-	self.mainLayout.addWidget(self.gridWidget)
-	self.mainLayout.addWidget(VerticalSpacer(self))
-	self.setPixmapMode(False)
+        self.mainLayout.addWidget(self.gridWidget)
+        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.setPixmapMode(False)
 
     def setPixmapMode(self, flag):
         if flag:
@@ -424,9 +424,9 @@ class RightWidget(qt.QWidget):
                 self.comboBoxList[index].setEnabled(True)
 
     def getParameters(self):
-	ddict = {}
-	i = 0
-	for label in self.keyList:
+        ddict = {}
+        i = 0
+        for label in self.keyList:
             if i > self.labelList.index('Image Background'):
                 text = str(self.comboBoxList[i].text())
                 if len(text):
@@ -435,10 +435,10 @@ class RightWidget(qt.QWidget):
                     ddict[label] = None
             else:
                 ddict[label] = str(self.comboBoxList[i].currentText()).lower()
-	    if (ddict[label] == 'none') or (ddict[label] == 'default'):
-		ddict[label] = None
-	    i = i + 1
-	return ddict
+            if (ddict[label] == 'none') or (ddict[label] == 'default'):
+                ddict[label] = None
+            i = i + 1
+        return ddict
 
     def setParameters(self, ddict):
         for label in ddict.keys():
