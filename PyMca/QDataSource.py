@@ -132,14 +132,14 @@ def getSourceType(sourceName0):
 
 def QDataSource(name=None, source_type=None):
     if name is None:
-        raise ValueError,"Invalid Source Name"
+        raise ValueError("Invalid Source Name")
     if source_type is None:
         source_type = getSourceType(name)    
     try:
         sourceClass = source_types[source_type]
     except KeyError:
         #ERROR invalid source type
-        raise TypeError,"Invalid Source Type, source type should be one of %s" % source_types.keys()
+        raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
     return sourceClass(name)
   
   
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         sourcename=sys.argv[1]
         key       =sys.argv[2]        
     except:
-        print "Usage: QDataSource <sourcename> <key>"
+        print("Usage: QDataSource <sourcename> <key>")
         sys.exit()
     #one can use this:
     #obj = EdfFileDataSource(sourcename)
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     #data = obj.getData(key,selection={'pos':(10,10),'size':(40,40)})
     #data = obj.getData(key,selection={'pos':None,'size':None})
     data = obj.getDataObject(key)
-    print "info = ",data.info
-    print "data shape = ",data.data.shape
+    print("info = ",data.info)
+    print("data shape = ",data.data.shape)
 
 

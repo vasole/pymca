@@ -122,7 +122,7 @@ class QSourceSelector(qt.QWidget):
 
     def _reload(self):
         if DEBUG:
-            print "_reload called"
+            print("_reload called")
         qstring = self.fileCombo.currentText()
         if not len(qstring): return
 
@@ -149,7 +149,7 @@ class QSourceSelector(qt.QWidget):
 
     def openFile(self, filename=None,justloaded=None, specsession = False):
         if DEBUG:
-            print "openfile = ",filename
+            print("openfile = ",filename)
         staticDialog = False
         if not specsession:
             if justloaded is None: justloaded = True
@@ -234,7 +234,7 @@ class QSourceSelector(qt.QWidget):
                     filename = [filename]
             if not os.path.exists(filename[0]):
                 if '%' not in filename[0]:
-                    raise IOError, ("File %s does not exist" % filename[0])
+                    raise IOError("File %s does not exist" % filename[0])
 
             #check if it is a stack
             if len(filename) > 1:
@@ -279,7 +279,7 @@ class QSourceSelector(qt.QWidget):
 
     def closeFile(self):
         if DEBUG:
-            print "closeFile called"
+            print("closeFile called")
         #get current combobox key
         qstring = self.fileCombo.currentText()
         if not len(qstring): return
@@ -304,7 +304,7 @@ class QSourceSelector(qt.QWidget):
                     "No shared memory source available")
             return
         if QTVERSION < '4.0.0':
-            print "should I keep Qt3 version?"
+            print("should I keep Qt3 version?")
             return
         menu = qt.QMenu()
         for spec in speclist:
@@ -314,7 +314,7 @@ class QSourceSelector(qt.QWidget):
 
     def _fileSelection(self, qstring):
         if DEBUG:
-            print "file selected ", qstring
+            print("file selected ", qstring)
         key = str(qstring)
         ddict = {}
         ddict["event"] = "SourceSelected"
@@ -331,7 +331,7 @@ def test():
     import QDataSource
     w= QSourceSelector()
     def mySlot(ddict):
-        print ddict
+        print(ddict)
         if ddict["event"] == "NewSourceSelected":
             d = QDataSource.QDataSource(ddict["sourcelist"][0])
             w.specfileWidget.setDataSource(d)
