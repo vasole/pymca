@@ -323,7 +323,15 @@ class QStackWidget(StackBase.StackBase,
         if self.stackSelector  is None:
             self.stackSelector = StackSelector.StackSelector(self)
         stack = self.stackSelector.getStack()
-        self.setStack(stack)
+        if type(stack) == type([]):
+            #aifira like, two stacks
+            self.setStack(stack[0])
+            self._slave = None
+            slave = QStackWidget(master=False, rgbwidget=self.rgbWidget)
+            slave.setStack(stack[1])
+            self.setSlave(slave)
+        else:
+            self.setStack(stack)
 
     def setStack(self, *var, **kw):
         self.stackWidget.setImageData(None)
