@@ -1,16 +1,25 @@
-#include <Python.h>
+#include "Python.h"
 #include <./numpy/arrayobject.h>
+#include <stdio.h>
 
-/* static variables */
+struct module_state {
+    PyObject *error;
+};
 
-static PyObject *PyMcaIOHelperError;
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
 
 /* Function declarations */
 
 static PyObject *PyMcaIOHelper_fillSupaVisio(PyObject *dummy, PyObject *args);
 static PyObject *PyMcaIOHelper_readAifira(PyObject *dummy, PyObject *args);
 
-/* ------------------------------------------------------- */
+/* Functions */
+
 static PyObject *
 PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
 {
@@ -29,7 +38,8 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
                 PyArray_ContiguousFromObject(input, PyArray_USHORT, 2,2);
     if (inputArray == NULL)
     {
-    PyErr_SetString(PyMcaIOHelperError, "Cannot parse input array");
+	    struct module_state *st = GETSTATE(self);
+		PyErr_SetString(st->error, "Cannot parse input array");
         return NULL;
     }
     
@@ -64,24 +74,37 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
 {
     PyObject *inputFileDescriptor;
     FILE *fd;
+#if PY_MAJOR_VERSION >= 3
+	int fh;
+#endif
     PyArrayObject *outputArray;
     int nChannels = 2048;
     unsigned short channel;
     unsigned char x, y; 
     npy_intp dimensions[3];
     unsigned int *outputPointer;
+	struct module_state *st = GETSTATE(self);
 
     if (!PyArg_ParseTuple(args, "O", &inputFileDescriptor))
     {
-        PyErr_SetString(PyMcaIOHelperError, "Error parsing input arguments");
+		PyErr_SetString(st->error, "Error parsing input arguments");
         return NULL;
     }
-    if (!PyFile_Check(inputFileDescriptor))
+#if PY_MAJOR_VERSION >= 3
+    fh = PyObject_AsFileDescriptor(inputFileDescriptor);
+	if (fh < 0)
     {
-        PyErr_SetString(PyMcaIOHelperError, "Input is not a python file descriptor object");
+        return NULL;
+    }
+	fd = fdopen(fh, "r");
+#else
+	if (!PyFile_Check(inputFileDescriptor))
+    {
+        PyErr_SetString(st->error, "Input is not a python file descriptor object");
         return NULL;
     }
     fd = PyFile_AsFile(inputFileDescriptor);
+#endif
 
     dimensions[0] = 128;
     dimensions[1] = 128;
@@ -131,25 +154,74 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
 }
 
 /* Module methods */
-static PyMethodDef PyMcaIOHelperMethods[] ={
+
+static PyMethodDef PyMcaIOHelper_methods[] = {
     {"fillSupaVisio", PyMcaIOHelper_fillSupaVisio, METH_VARARGS},
     {"readAifira", PyMcaIOHelper_readAifira, METH_VARARGS},
-    {NULL,NULL, 0, NULL} /* sentinel */
+	{NULL, NULL}
 };
 
-/* Initialise the module */
-PyMODINIT_FUNC 
-initPyMcaIOHelper(void)
-{
-    PyObject *m, *d;
-    /* Create the module and add the functions */
-    m = Py_InitModule("PyMcaIOHelper", PyMcaIOHelperMethods);
+/* ------------------------------------------------------- */
 
-    /* Add some symbolic constants to the module */
-    d = PyModule_GetDict(m);
 
-    import_array();
-    PyMcaIOHelperError = PyErr_NewException("PyMcaIOHelper.error", NULL, NULL);
-    PyDict_SetItemString(d, "error", PyMcaIOHelperError);
+/* Module initialization */
+
+#if PY_MAJOR_VERSION >= 3
+
+static int PyMcaIOHelper_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
 }
 
+static int PyMcaIOHelper_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "PyMcaIOHelper",
+        NULL,
+        sizeof(struct module_state),
+        PyMcaIOHelper_methods,
+        NULL,
+        PyMcaIOHelper_traverse,
+        PyMcaIOHelper_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_PyMcaIOHelper(void)
+
+#else
+#define INITERROR return
+
+void
+initPyMcaIOHelper(void)
+#endif
+{
+	struct module_state *st;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("PyMcaIOHelper", PyMcaIOHelper_methods);
+#endif
+
+    if (module == NULL)
+        INITERROR;
+    st = GETSTATE(module);
+
+    st->error = PyErr_NewException("PyMcaIOHelper.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+    import_array();
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
+}
