@@ -105,7 +105,11 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
     }
     fd = PyFile_AsFile(inputFileDescriptor);
 #endif
-
+	if (!fd)
+	{
+        PyErr_SetString(st->error, "Cannot obtain FILE* from object");
+        return NULL;
+	}
     dimensions[0] = 128;
     dimensions[1] = 128;
     dimensions[2] = nChannels;
