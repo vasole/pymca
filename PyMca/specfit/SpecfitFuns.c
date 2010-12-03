@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,6 +27,17 @@
 #include <Python.h>
 #include <./numpy/arrayobject.h>
 #include <math.h>
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
 #define isARRAY(a) ((a) && PyArray_Check((PyArrayObject *)a))
 #define A_SIZE(a) PyArray_Size((PyObject *) a)
 #define isARRAY(a) ((a) && PyArray_Check((PyArrayObject *)a))
@@ -43,8 +54,6 @@
 #define MAX_SAVITSKY_GOLAY_WIDTH 101
 #define MIN_SAVITSKY_GOLAY_WIDTH 3
 
-
-static PyObject *ErrorObject;
 /* SNIP related functions */
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
@@ -57,51 +66,6 @@ void smooth2d(double *data, int size0, int size1);
 void smooth3d(double *data, int size0, int size1, int size2);
 /* end of SNIP related functions */
 
-typedef struct {
-    PyObject_HEAD
-    PyObject    *x_attr;    /* Attributes dictionary */
-} SpecfitFunsObject;
-
-staticforward PyTypeObject SpecfitFuns_Type;
-
-/*
- * Function prototypes
- */
-static void                SpecfitFuns_dealloc  (SpecfitFunsObject *self);
-
-#define SpecfitFunsObject_Check(v)    ((v)->ob_type == &SpecfitFuns_Type)
-
-/* SpecfitFunso methods */
-
-static void
-SpecfitFuns_dealloc(self)
-    SpecfitFunsObject *self;
-{
-    Py_XDECREF(self->x_attr);
-    PyObject_DEL(self);
-}
-
-
-static int
-SpecfitFuns_setattr(SpecfitFunsObject *self, char *name,
-    PyObject *v)
-{
-    if (self->x_attr == NULL) {
-        self->x_attr = PyDict_New();
-        if (self->x_attr == NULL)
-            return -1;
-    }
-    if (v == NULL) {
-        int rv = PyDict_DelItemString(self->x_attr, name);
-        if (rv < 0)
-            PyErr_SetString(PyExc_AttributeError,
-                    "delete non-existing SpecfitFuns attribute");
-        return rv;
-    }
-    else
-        return PyDict_SetItemString(self->x_attr, name, v);
-}
-
 /* --------------------------------------------------------------------- */
 
 static PyObject *
@@ -109,48 +73,48 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 {
     PyObject *input;
     double width0 = 50.;
-	int smooth_iterations = 0;
+    int smooth_iterations = 0;
     int llsflag = 0;
-	PyArrayObject   *ret;
-	int i, size, width;
+    PyArrayObject   *ret;
+    int i, size, width;
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
  
-	ret = (PyArrayObject *)
+    ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
 
-	if (ret == NULL){
-		printf("Cannot create 1D array from input\n");
+    if (ret == NULL){
+        printf("Cannot create 1D array from input\n");
         return NULL;
     }
 
-	size = 1;
-	for (i=0; i<ret->nd; i++)
-	{
-		size *= ret->dimensions[i];
-	}
+    size = 1;
+    for (i=0; i<ret->nd; i++)
+    {
+        size = (int) (size * ret->dimensions[i]);
+    }
 
-	width = (int )width0;
+    width = (int )width0;
 
-	for (i=0; i<smooth_iterations; i++)
-	{
-		smooth1d((double *) ret->data, size);
-	}
+    for (i=0; i<smooth_iterations; i++)
+    {
+        smooth1d((double *) ret->data, size);
+    }
 
-	if (llsflag)
-	{
-		lls((double *) ret->data, size);
-	}
+    if (llsflag)
+    {
+        lls((double *) ret->data, size);
+    }
 
-	snip1d((double *) ret->data, size, width);
+    snip1d((double *) ret->data, size, width);
 
-	if (llsflag)
-	{
-		lls_inv((double *) ret->data, size);
-	}
+    if (llsflag)
+    {
+        lls_inv((double *) ret->data, size);
+    }
 
-	return PyArray_Return(ret);
+    return PyArray_Return(ret);
 }
 
 static PyObject *
@@ -158,50 +122,50 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 {
     PyObject *input;
     double width0 = 50.;
-	int smooth_iterations = 0;
-	int llsflag = 0;
-	PyArrayObject   *ret;
-	int i, nrows, ncolumns, size, width;
+    int smooth_iterations = 0;
+    int llsflag = 0;
+    PyArrayObject   *ret;
+    int i, nrows, ncolumns, size, width;
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
  
-	ret = (PyArrayObject *)
+    ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 2, 2, NPY_ENSURECOPY);
 
-	if (ret == NULL){
-		printf("Cannot create 2D array from input\n");
+    if (ret == NULL){
+        printf("Cannot create 2D array from input\n");
         return NULL;
     }
 
-	size = 1;
-	for (i=0; i<ret->nd; i++)
-	{
-		size *= ret->dimensions[i];
-	}
-	nrows = ret->dimensions[0];
-	ncolumns = ret->dimensions[1];
+    size = 1;
+    for (i=0; i<ret->nd; i++)
+    {
+        size = (int) (size * ret->dimensions[i]);
+    }
+    nrows = (int) ret->dimensions[0];
+    ncolumns = (int) ret->dimensions[1];
 
-	width = (int )width0;
+    width = (int )width0;
 
-	for (i=0; i<smooth_iterations; i++)
-	{
-		smooth2d((double *) ret->data, nrows, ncolumns);
-	}
+    for (i=0; i<smooth_iterations; i++)
+    {
+        smooth2d((double *) ret->data, nrows, ncolumns);
+    }
 
-	if (llsflag)
-	{
-		lls((double *) ret->data, size);
-	}
+    if (llsflag)
+    {
+        lls((double *) ret->data, size);
+    }
 
-	snip2d((double *) ret->data, nrows, ncolumns, width);
+    snip2d((double *) ret->data, nrows, ncolumns, width);
 
-	if (llsflag)
-	{
-		lls_inv((double *) ret->data, size);
-	}
+    if (llsflag)
+    {
+        lls_inv((double *) ret->data, size);
+    }
 
-	return PyArray_Return(ret);
+    return PyArray_Return(ret);
 }
 
 static PyObject *
@@ -209,51 +173,51 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
 {
     PyObject *input;
     double width0 = 50.;
-	int smooth_iterations = 0;
+    int smooth_iterations = 0;
     int llsflag = 0;
-	PyArrayObject   *ret;
-	int i, nx, ny, nz, size, width;
+    PyArrayObject   *ret;
+    int i, nx, ny, nz, size, width;
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
  
-	ret = (PyArrayObject *)
+    ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 3, 3, NPY_ENSURECOPY);
 
-	if (ret == NULL){
-		printf("Cannot create 3D array from input\n");
+    if (ret == NULL){
+        printf("Cannot create 3D array from input\n");
         return NULL;
     }
 
-	size = 1;
-	for (i=0; i<ret->nd; i++)
-	{
-		size *= ret->dimensions[i];
-	}
-	nx = ret->dimensions[0];
-	ny = ret->dimensions[1];
-	nz = ret->dimensions[2];
+    size = 1;
+    for (i=0; i<ret->nd; i++)
+    {
+        size = (int) (size * ret->dimensions[i]);
+    }
+    nx = (int) ret->dimensions[0];
+    ny = (int) ret->dimensions[1];
+    nz = (int) ret->dimensions[2];
 
-	width = (int )width0;
+    width = (int )width0;
 
-	for (i=0; i<smooth_iterations; i++)
-	{
-		smooth3d((double *) ret->data, nx, ny, nz);
-	}
+    for (i=0; i<smooth_iterations; i++)
+    {
+        smooth3d((double *) ret->data, nx, ny, nz);
+    }
 
-	if (llsflag)
-	{
-		lls((double *) ret->data, size);
-	}
+    if (llsflag)
+    {
+        lls((double *) ret->data, size);
+    }
 
-	snip3d((double *) ret->data, nx, ny, nz, width);
+    snip3d((double *) ret->data, nx, ny, nz, width);
 
-	if (llsflag)
-	{
-		lls_inv((double *) ret->data, size);
-	}
+    if (llsflag)
+    {
+        lls_inv((double *) ret->data, size);
+    }
 
-	return PyArray_Return(ret);
+    return PyArray_Return(ret);
 }
 
 /* end SNIP algorithm */
@@ -335,7 +299,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     deltai= (int ) deltai0;
     if (deltai <=0) deltai = 1;
     niter = (int ) niter0;
-    n = iarray->dimensions[0];
+    n = (int) iarray->dimensions[0];
     dimensions[0] = iarray->dimensions[0];
     ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
     if (ret == NULL){
@@ -366,7 +330,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
                 return NULL;
             }
             anchordata = (int *) anchors->data;
-            nanchors   = PySequence_Size(anchors0);
+            nanchors   = (int) PySequence_Size(anchors0);
             for (i=0;i<niter;i++){
                 for (j=deltai;j<n-deltai;j++) {
                     notdoit = 0;
@@ -457,33 +421,33 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
         anchors = (PyArrayObject *)
              PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
         if (anchors == NULL)
-    {
+        {
             Py_DECREF(iarray);
             Py_DECREF(ret);
             return NULL;
         }
-    anchordata = (int *) anchors->data;
-        nanchors   = PySequence_Size(anchors0);
+        anchordata = (int *) anchors->data;
+        nanchors   = (int) PySequence_Size(anchors0);
         memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
-    for (i=0;i<niter;i++){
+        for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
-        notdoit = 0;
-            for (k=0; k<nanchors; k++)
-        {
-            l =*(anchordata+k);
+                notdoit = 0;
+                for (k=0; k<nanchors; k++)
+                {
+                    l =*(anchordata+k);
                     if (j>(l-deltai))
-            {
-                if (j<(l+deltai))
-            {
-                notdoit = 1;
-                break;
-            }
-            }
-        }
-        if (notdoit)
-            continue;
-        t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
-            if (*(retdata+j) > (t_mean * c))
+                    {
+                        if (j<(l+deltai))
+                        {
+                            notdoit = 1;
+                            break;
+                        }
+                    }
+                }
+                if (notdoit)
+                continue;
+                t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
+                if (*(retdata+j) > (t_mean * c))
                         *(retdata+j) = t_mean;
             }
         }
@@ -585,9 +549,9 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -629,7 +593,7 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -714,9 +678,9 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -761,7 +725,7 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         pgauss = (gaussian *) param->data;
         for (i=0;i<(npars/3);i++){
@@ -857,9 +821,9 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -904,7 +868,7 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         pgauss = (gaussian *) param->data;
         for (i=0;i<(npars/3);i++){
@@ -1005,9 +969,9 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%4) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1047,7 +1011,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1087,7 +1051,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             ppvoigt = (pvoigtian *) param->data;
@@ -1179,9 +1143,9 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%4) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1220,7 +1184,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1256,7 +1220,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             ppvoigt = (pvoigtian *) param->data;
@@ -1344,9 +1308,9 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1385,7 +1349,7 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1469,9 +1433,9 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1510,7 +1474,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1595,9 +1559,9 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1639,7 +1603,7 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1724,9 +1688,9 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%3) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1767,7 +1731,7 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1853,9 +1817,9 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
     }
 
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%4) != 0) {
         printf("Incorrect number of parameters\n");
@@ -1899,7 +1863,7 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -1987,7 +1951,7 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             dhelp = *px;
@@ -2067,7 +2031,7 @@ SpecfitFuns_erf(PyObject *self, PyObject *args)
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             dhelp = *px;
@@ -2181,9 +2145,9 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     expected_pars = 3 + st_term_flag * 2+lt_term_flag * 2+step_term_flag * 1;
     expected_pars = 8;
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%expected_pars) != 0) {
         printf("Incorrect number of parameters\n");
@@ -2284,7 +2248,7 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
             *pret = 0;
@@ -2502,9 +2466,9 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     expected_pars = 3 + st_term_flag * 2+lt_term_flag * 2+step_term_flag * 1;
     expected_pars = 8;
     if (nd_param == 1) {
-        npars = dim_param[0];
+        npars = (int) dim_param[0];
     }else{
-        npars = dim_param[0] * dim_param[1];
+        npars = (int) (dim_param[0] * dim_param[1]);
     }
     if ((npars%expected_pars) != 0) {
         printf("Incorrect number of parameters\n");
@@ -2610,7 +2574,7 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
-            k = dim_x [j] * k;
+            k = (int) (dim_x [j] * k);
         }
         phyper = (hypermet *) param->data;
         for (i=0;i<(npars/expected_pars);i++){
@@ -2731,7 +2695,7 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
     /* local variables */
     PyArrayObject    *yspec, *result;
     long        i;
-    long		nchannels;
+    long        nchannels;
     long        NMAX_PEAKS = 100;
     double      peaks[100];
     double      relevances[100];
@@ -3078,7 +3042,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     double  value, *nvalue, *x1, *x2, *factors;
     double  dhelp, yresult;
     double  dummy = -1.0;
-    npy_intp    nd_y, nd_x, index1, *points, *indices;
+    npy_intp    nd_y, nd_x, index1, *points, *indices, max_points;
     /*int         dimensions[1];*/
     npy_intp npoints;
     npy_intp dimensions[1];
@@ -3199,8 +3163,12 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
 */
     /* Parse the points to interpolate */
     /* find the points to interpolate */
-    points  = malloc((1<<nd_y) * nd_y * sizeof(int));
-    indices = malloc(nd_y * sizeof(int));
+    max_points = 1;
+    for (j=0; j< nd_y; j++){
+        max_points = max_points * 2;
+    }
+    points  = malloc(max_points * nd_y * sizeof(npy_intp));
+    indices = malloc(nd_y * sizeof(npy_intp));
     for (i=0;i<nd_y;i++){
         indices[i] = -1;
     }
@@ -3282,7 +3250,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
         if (badpoint == 1){
             yresult = dummy;
         }else{
-          for (k=0;k<(pow(2,nd_y) * nd_y);k++){
+          for (k=0;k<(max_points * nd_y);k++){
                 j = k % nd_y;
                 if (nd_y > 1){
                     l = k /(2 * (nd_y - j) );
@@ -3298,7 +3266,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
           }
         /* the points to interpolate */
           yresult = 0.0;
-          for (k=0;k<pow(2,nd_y);k++){
+          for (k=0;k<max_points;k++){
             dhelp =1.0;
             offset = 0;
             for (j=0;j<nd_y;j++){
@@ -3340,27 +3308,27 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     /* required input parameters */
     PyObject *grid_input;       /* The float array containing the float grid */
     PyObject *hits_input;       /* The int   array containing the number of hits */
-	PyObject *xinput;     /* The tuple containing the double xdata arrays */
+    PyObject *xinput;     /* The tuple containing the double xdata arrays */
     PyObject *yinput;     /* The array containing the double ydata values */
-	PyObject *limits_input;     /* The tuple containing the double xdata min and max values */
-	int		 use_datathreshold = 0;
-	double   data_threshold = 0.0;
+    PyObject *limits_input;     /* The tuple containing the double xdata min and max values */
+    int         use_datathreshold = 0;
+    double   data_threshold = 0.0;
 
     /* local variables */
     PyArrayObject    *grid, *hits, *ydata, **xdata, *limits;
 
-	npy_intp index;
-	npy_intp *delta_index;
+    npy_intp index;
+    npy_intp *delta_index;
     npy_intp i, j, goodpoint, grid_position;
 
-	double  value, limit0, limit1;
+    double  value, limit0, limit1;
     npy_intp    nd_grid;
     npy_intp npoints;
     double  *data_pointer, *double_pointer;
     float   *grid_pointerf;
     double  *grid_pointerd;
-	int     *hits_pointer;
-	int		double_flag;
+    int     *hits_pointer;
+    int        double_flag;
 
     /* statements */
     if (!PyArg_ParseTuple(args, "OOOOO|id", &grid_input, &hits_input, &xinput, &yinput, &limits_input,&use_datathreshold, &data_threshold)){
@@ -3368,36 +3336,36 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
         return NULL;
     }
 
-	grid = (PyArrayObject *)
+    grid = (PyArrayObject *)
              PyArray_ContiguousFromObject(grid_input, PyArray_NOTYPE,0,0);
-	switch (grid->descr->type_num){
-		case NPY_DOUBLE:
-			double_flag = 1;
-			break;
-		default:
-			double_flag = 0;
-	}
-	Py_DECREF(grid);
-	if (double_flag){
-		grid = (PyArrayObject *)
+    switch (grid->descr->type_num){
+        case NPY_DOUBLE:
+            double_flag = 1;
+            break;
+        default:
+            double_flag = 0;
+    }
+    Py_DECREF(grid);
+    if (double_flag){
+        grid = (PyArrayObject *)
              PyArray_ContiguousFromObject(grid_input, PyArray_DOUBLE,0,0);
-	} else {
-		grid = (PyArrayObject *)
+    } else {
+        grid = (PyArrayObject *)
              PyArray_ContiguousFromObject(grid_input, PyArray_FLOAT,0,0);
-	}
+    }
     nd_grid = grid->nd;
     if (nd_grid == 0) {
         printf("Grid should be at least a vector!\n");
         Py_DECREF(grid);
         return NULL;
-	}
+    }
 
-	hits = (PyArrayObject *)
+    hits = (PyArrayObject *)
              PyArray_ContiguousFromObject(hits_input, PyArray_INT,0,0);
     if (hits == NULL) {
         Py_DECREF(grid);
         return NULL;
-	}
+    }
 
 
     if (PySequence_Size(xinput) != nd_grid){
@@ -3405,14 +3373,14 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
         Py_DECREF(grid);
         Py_DECREF(hits);
         return NULL;
-	}
+    }
 
     if (PySequence_Size(limits_input) != (2*nd_grid)){
         printf("limits sequence of wrong length\n");
         Py_DECREF(grid);
         Py_DECREF(hits);
         return NULL;
-	}
+    }
 
     ydata = (PyArrayObject *)
              PyArray_ContiguousFromObject(yinput, PyArray_DOUBLE,0,0);
@@ -3439,9 +3407,9 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
         printf("Error in memory allocation\n");
         Py_DECREF(grid);
         Py_DECREF(ydata);
-		Py_DECREF(limits);
+        Py_DECREF(limits);
         Py_DECREF(hits);
-		return NULL;
+        return NULL;
     }
 
     for (i=0;i<nd_grid;i++){
@@ -3454,92 +3422,92 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
                 Py_DECREF(xdata[j]);
             }
             free(xdata);
-	        Py_DECREF(grid);
-		    Py_DECREF(ydata);
-			Py_DECREF(limits);
-			Py_DECREF(hits);
+            Py_DECREF(grid);
+            Py_DECREF(ydata);
+            Py_DECREF(limits);
+            Py_DECREF(hits);
             return NULL;
         }
     }
 
 
 
-	delta_index = (npy_intp *) malloc(nd_grid * sizeof(npy_intp));
-	if (delta_index == NULL){
+    delta_index = (npy_intp *) malloc(nd_grid * sizeof(npy_intp));
+    if (delta_index == NULL){
         printf("Error in memory allocation\n");
         Py_DECREF(grid);
         Py_DECREF(ydata);
-		Py_DECREF(limits);
-		free(xdata);
+        Py_DECREF(limits);
+        free(xdata);
         Py_DECREF(hits);
-		return NULL;
-	}
+        return NULL;
+    }
 
-	delta_index[nd_grid-1] = 1;
-	for (i=0; i < nd_grid; i++){
-		if (i==0){
-			delta_index[nd_grid-1] = 1;
-		}else{
-			delta_index[nd_grid-1-i] = delta_index[nd_grid-i] * grid->dimensions[nd_grid-i];
-		}
-	}
+    delta_index[nd_grid-1] = 1;
+    for (i=0; i < nd_grid; i++){
+        if (i==0){
+            delta_index[nd_grid-1] = 1;
+        }else{
+            delta_index[nd_grid-1-i] = delta_index[nd_grid-i] * grid->dimensions[nd_grid-i];
+        }
+    }
 
-	/* get the number of points in each of the arrays */
-	npoints = 0;
-	for (i=0; i<ydata->nd;i++){
-		if (i==0)
-			npoints = ydata->dimensions[0];
-		else
-			npoints *= ydata->dimensions[i];
-	}
+    /* get the number of points in each of the arrays */
+    npoints = 0;
+    for (i=0; i<ydata->nd;i++){
+        if (i==0)
+            npoints = ydata->dimensions[0];
+        else
+            npoints *= ydata->dimensions[i];
+    }
 
-	/* do the work */
-	data_pointer = (double *) ydata->data;
-	grid_pointerf = (float *) grid->data; 
-	grid_pointerd = (double *) grid->data; 
-	hits_pointer = (int *) hits->data;
+    /* do the work */
+    data_pointer = (double *) ydata->data;
+    grid_pointerf = (float *) grid->data; 
+    grid_pointerd = (double *) grid->data; 
+    hits_pointer = (int *) hits->data;
 
-	for (i=0;i<npoints;i++){
-		if (use_datathreshold){
-			if ((double) (*(data_pointer+i)) <= data_threshold)
-				continue;
-		}
+    for (i=0;i<npoints;i++){
+        if (use_datathreshold){
+            if ((double) (*(data_pointer+i)) <= data_threshold)
+                continue;
+        }
         goodpoint = 1;
-		grid_position = 0;
-		for (j=0; j< nd_grid; j++){
-			double_pointer = (double *) xdata[j]->data;
-			value = *(double_pointer+i);
-			double_pointer = (double *) limits->data;
-			limit0 = *(double_pointer+j);
-			limit1 = *(double_pointer+j+nd_grid);
-			index = (int)(grid->dimensions[j]*(value - limit0)/(limit1-limit0));
-			if ((index < 0) || (index >= grid->dimensions[j]))
-			{
-				/* this point is not going to contribute */
-				goodpoint = 0;
-				break;
-			}
-			grid_position += index * delta_index[j];
-		}
-		if (goodpoint){
-			if (double_flag)
-				*(grid_pointerd+grid_position) += (double) (*(data_pointer+i));
-			else
-				*(grid_pointerf+grid_position) += (float) (*(data_pointer+i));
-			*(hits_pointer+grid_position) += 1;
-		}
-	}
+        grid_position = 0;
+        for (j=0; j< nd_grid; j++){
+            double_pointer = (double *) xdata[j]->data;
+            value = *(double_pointer+i);
+            double_pointer = (double *) limits->data;
+            limit0 = *(double_pointer+j);
+            limit1 = *(double_pointer+j+nd_grid);
+            index = (int)(grid->dimensions[j]*(value - limit0)/(limit1-limit0));
+            if ((index < 0) || (index >= grid->dimensions[j]))
+            {
+                /* this point is not going to contribute */
+                goodpoint = 0;
+                break;
+            }
+            grid_position += index * delta_index[j];
+        }
+        if (goodpoint){
+            if (double_flag)
+                *(grid_pointerd+grid_position) += (double) (*(data_pointer+i));
+            else
+                *(grid_pointerf+grid_position) += (float) (*(data_pointer+i));
+            *(hits_pointer+grid_position) += 1;
+        }
+    }
     Py_DECREF(grid);
     Py_DECREF(hits);
     Py_DECREF(ydata);
     Py_DECREF(limits);
-	for (i=0;i<nd_grid;i++){
-		Py_DECREF(xdata[i]);
+    for (i=0;i<nd_grid;i++){
+        Py_DECREF(xdata[i]);
     }        
-	free(xdata);
-	free(delta_index);
-	Py_INCREF(Py_None);
-	return Py_None;
+    free(xdata);
+    free(delta_index);
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 static PyObject *
@@ -3638,25 +3606,25 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O|d", &input, &dpoints))
         return NULL;
 
-	ret = (PyArrayObject *)
+    ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
 
-	if (ret == NULL){
-		printf("Cannot create 1D array from input\n");
+    if (ret == NULL){
+        printf("Cannot create 1D array from input\n");
         return NULL;
     }
     npoints = (int )  dpoints;
     if (!(npoints % 2)) npoints +=1;
 
-	n = ret->dimensions[0];
+    n = (int) ret->dimensions[0];
 
     if((npoints < MIN_SAVITSKY_GOLAY_WIDTH) ||  (n < npoints))
-	{
+    {
         /* do not smooth data */
         return PyArray_Return(ret);
     }
 
-	/* calculate the coefficients */
+    /* calculate the coefficients */
     m     = (int) (npoints/2);
     den = (double) ((2*m-1) * (2*m+1) * (2*m + 3));
     for (i=0; i<= m; i++){
@@ -3667,24 +3635,24 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     /* do the job */
     output = (double *) ret->data;
 
-	/* simple smoothing at the beginning */
-	for (j=0; j<=(int)(npoints/3); j++)
-	{
-		smooth1d(output, m);
-	}
+    /* simple smoothing at the beginning */
+    for (j=0; j<=(int)(npoints/3); j++)
+    {
+        smooth1d(output, m);
+    }
 
-	/* simple smoothing at the end */
-	for (j=0; j<=(int)(npoints/3); j++)
-	{
-		smooth1d((output+n-m-1), m);
-	}
+    /* simple smoothing at the end */
+    for (j=0; j<=(int)(npoints/3); j++)
+    {
+        smooth1d((output+n-m-1), m);
+    }
 
-	/*one does not need the whole spectrum buffer, but code is clearer */
-	data = (double *) malloc(n * sizeof(double));
-	memcpy(data, output, n * sizeof(double));
+    /*one does not need the whole spectrum buffer, but code is clearer */
+    data = (double *) malloc(n * sizeof(double));
+    memcpy(data, output, n * sizeof(double));
 
-	/* the actual SG smoothing in the middle */
-	for (i=m; i<(n-m); i++){
+    /* the actual SG smoothing in the middle */
+    for (i=m; i<(n-m); i++){
         dhelp = 0;
         for (j=-m;j<=m;j++) {
             dhelp += coeff[m+j] * (*(data+i+j));
@@ -3693,7 +3661,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
             *(output+i) = dhelp / den;
         }
     }
-	free(data);
+    free(data);
     return PyArray_Return(ret);
 
 }
@@ -3778,7 +3746,7 @@ SpecfitFuns_spline(PyObject *self, PyObject *args)
     u   = (double *) (uarray->data);
 
     y2[0] = u[0] = 0.0;
-    n = xdata->dimensions[0];
+    n = (int) xdata->dimensions[0];
       for (i=1;i<=(n-2);i++) {
         /*printf("i = [%d] x = %f, y = %f\n",i,x[i],y[i]);*/
         sig=(x[i] - x[i-1])/( x[i+1] - x[i-1]);
@@ -3811,7 +3779,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
 
     /* local variables */
     PyArrayObject    *xdata, *ydata,  *y2data, *xinter, *result;
-    int dim_x[2], nd_x, nd_y;
+    int nd_x, nd_y;
     int n;
     double *xa, *ya, *y2a, *x, *y;
     int klo, khi, k, i, j;
@@ -3886,19 +3854,6 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
         Py_DECREF(y2data);
         return NULL;
     }
-    /* build the output array */
-    if (xinter->nd == 1) {
-        dim_x [0] = xinter->dimensions[0];
-        dim_x [1] = 0;
-    }else{
-        if (xinter->nd == 0) {
-            dim_x [0] = 0;
-            dim_x [1] = 0;
-        }else{
-            dim_x [0] = xinter->dimensions[0];
-            dim_x [1] = xinter->dimensions[1];
-        }
-    }
 
     /* Create the output array */
     result = (PyArrayObject *) PyArray_Copy(xinter);
@@ -3915,7 +3870,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
     y2a = (double *)   y2data->data;
     x   = (double *)   xinter->data;
     y   = (double *)   result->data;
-    n = xdata->dimensions[0];
+    n = (int) xdata->dimensions[0];
     /*printf("xdata ->dimensions[0] = %d\n",n);
     printf("xinter->nd = %d\n",xinter->nd);*/
     if (xinter->nd == 0){
@@ -3943,7 +3898,7 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
     }else{
         j = 1;
         for (i=0;i<(xinter->nd);i++){
-            j = j * xinter->dimensions[i];
+            j = (int) (j * xinter->dimensions[i]);
         }
         for (i=0; i<j;i++){
             klo=0;
@@ -4003,68 +3958,74 @@ static PyMethodDef SpecfitFuns_methods[] = {
     {"seek",        SpecfitFuns_seek,       METH_VARARGS},
     {"interpol",    SpecfitFuns_interpol,   METH_VARARGS},
     {"voxelize",    SpecfitFuns_voxelize,   METH_VARARGS},
-	{"pileup",      SpecfitFuns_pileup,   METH_VARARGS},
+    {"pileup",      SpecfitFuns_pileup,   METH_VARARGS},
     {"SavitskyGolay",   SpecfitFuns_SavitskyGolay,   METH_VARARGS},
     {"spline",      SpecfitFuns_spline,   METH_VARARGS},
     {"_splint",     SpecfitFuns_splint,   METH_VARARGS},
     {NULL,        NULL}        /* sentinel */
 };
 
+/* ------------------------------------------------------- */
 
-static PyObject *
-SpecfitFuns_getattr(SpecfitFunsObject *self,
-    char *name)
-{
-    if (self->x_attr != NULL) {
-        PyObject *v = PyDict_GetItemString(self->x_attr, name);
-        if (v != NULL) {
-            Py_INCREF(v);
-            return v;
-        }
-    }
-    return Py_FindMethod(SpecfitFuns_methods, (PyObject *)self, name);
+
+/* Module initialization */
+
+#if PY_MAJOR_VERSION >= 3
+
+static int SpecfitFuns_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int SpecfitFuns_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
 }
 
 
-statichere PyTypeObject SpecfitFuns_Type = {
-    /* The ob_type field must be initialized in the module init function
-     * to be portable to Windows without using C++. */
-    PyObject_HEAD_INIT(NULL)
-    0,            /*ob_size*/
-    "SpecfitFuns",                /*tp_name*/
-    sizeof(SpecfitFunsObject),    /*tp_basicsize*/
-    0,            /*tp_itemsize*/
-    /* methods */
-    (destructor)SpecfitFuns_dealloc, /*tp_dealloc*/
-    0,            /*tp_print*/
-    (getattrfunc)SpecfitFuns_getattr, /*tp_getattr*/
-    (setattrfunc)SpecfitFuns_setattr, /*tp_setattr*/
-    0,            /*tp_compare*/
-    0,            /*tp_repr*/
-    0,            /*tp_as_number*/
-    0,            /*tp_as_sequence*/
-    0,            /*tp_as_mapping*/
-    0,            /*tp_hash*/
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "SpecfitFuns",
+        NULL,
+        sizeof(struct module_state),
+        SpecfitFuns_methods,
+        NULL,
+        SpecfitFuns_traverse,
+        SpecfitFuns_clear,
+        NULL
 };
 
+#define INITERROR return NULL
 
-/* Initialization function for the module (*must* be called initSpecfitFuns) */
+PyObject *
+PyInit_SpecfitFuns(void)
 
-DL_EXPORT(void)
+#else
+#define INITERROR return
+
+void
 initSpecfitFuns(void)
+#endif
 {
-    PyObject *m, *d;
+    struct module_state *st;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("SpecfitFuns", SpecfitFuns_methods);
+#endif
 
-    /* Initialize the type of the new type object here; doing it here
-     * is required for portability to Windows without requiring C++. */
-    SpecfitFuns_Type.ob_type = &PyType_Type;
+    if (module == NULL)
+        INITERROR;
+    st = GETSTATE(module);
 
-    /* Create the module and add the functions */
-    m = Py_InitModule("SpecfitFuns", SpecfitFuns_methods);
+    st->error = PyErr_NewException("SpecfitFuns.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
     import_array();
 
-    /* Add some symbolic constants to the module */
-    d = PyModule_GetDict(m);
-    ErrorObject = PyErr_NewException("SpecfitFuns.error", NULL, NULL);
-    PyDict_SetItemString(d, "error", ErrorObject);
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }
