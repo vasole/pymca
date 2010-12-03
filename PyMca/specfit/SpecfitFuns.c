@@ -3679,8 +3679,7 @@ SpecfitFuns_spline(PyObject *self, PyObject *args)
     PyArrayObject    *xdata, *ydata, *result, *uarray;
     npy_intp dim_x[2];
     int nd_x, nd_y;
-    int n,i,k;
-    double p, qn, sig, un, *u, *y2, *x, *y;
+    double *u, *y2, *x, *y;
 
     /* statements */
     if (!PyArg_ParseTuple(args, "OO|O", &xinput, &yinput,&xinter0)){
@@ -3744,26 +3743,11 @@ SpecfitFuns_spline(PyObject *self, PyObject *args)
     y   = (double *) ( ydata->data);
     y2  = (double *) (result->data);
     u   = (double *) (uarray->data);
-
-    y2[0] = u[0] = 0.0;
-    n = (int) xdata->dimensions[0];
-      for (i=1;i<=(n-2);i++) {
-        /*printf("i = [%d] x = %f, y = %f\n",i,x[i],y[i]);*/
-        sig=(x[i] - x[i-1])/( x[i+1] - x[i-1]);
-        p=sig * y2[i-1]+2.0;
-        y2[i]=(sig-1.0)/p;
-        u[i]=(y[i+1]-y[i])/( x[i+1] - x[i]) - (y[i]-y[i-1])/( x[i] - x[i-1]);
-        u[i]=(6.0*u[i]/(x[i+1] - x[i-1])-sig*u[i-1])/p;
-    }
-
-    qn=un=0.0;
-    y2[n-1]=(un-qn*u[n-2])/(qn*y2[n-2]+1.0);
-    for (k=n-2;k>=0;k--)
-        y2[k]=y2[k]*y2[k+1]+u[k];
-
     Py_DECREF(xdata);
     Py_DECREF(ydata);
     Py_DECREF(uarray);
+
+	printf("Not implemented (yet)!\n");
 
     return PyArray_Return(result);
 }
@@ -3782,8 +3766,6 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
     int nd_x, nd_y;
     int n;
     double *xa, *ya, *y2a, *x, *y;
-    int klo, khi, k, i, j;
-    double h, b, a;
 
     /* statements */
     if (!PyArg_ParseTuple(args, "OOOO", &xinput, &yinput, &y2input,&xinter0)){
@@ -3871,58 +3853,8 @@ SpecfitFuns_splint(PyObject *self, PyObject *args)
     x   = (double *)   xinter->data;
     y   = (double *)   result->data;
     n = (int) xdata->dimensions[0];
-    /*printf("xdata ->dimensions[0] = %d\n",n);
-    printf("xinter->nd = %d\n",xinter->nd);*/
-    if (xinter->nd == 0){
-        klo=0;
-        khi=n-1;
-        while (khi-klo > 1) {
-            k=(khi+klo) >> 1;
-            if (xa[k] > x[0]) khi=k;
-            else klo=k;
-        }
-        h=xa[khi]-xa[klo];
-        /*printf("xinter = %f\n, xlow= %f , xhigh = %f \n",x[0],xa[klo],xa[khi]);
-        printf("interpolation between %d and % d, h = % f\n",klo,khi,h);*/
-        if (h == 0.0) {
-            printf("Bad table input, repeated values\n");
-            Py_DECREF(xdata);
-            Py_DECREF(ydata);
-            Py_DECREF(y2data);
-            Py_DECREF(xinter);
-            Py_DECREF(result);
-        }
-        a=(xa[khi]-x[0])/h;
-        b=(x[0]-xa[klo])/h;
-        *y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
-    }else{
-        j = 1;
-        for (i=0;i<(xinter->nd);i++){
-            j = (int) (j * xinter->dimensions[i]);
-        }
-        for (i=0; i<j;i++){
-            klo=0;
-            khi=n-1;
-            while (khi-klo > 1) {
-                k=(khi+klo) >> 1;
-                if (xa[k] > x[i]) khi=k;
-                else klo=k;
-            }
-            h=xa[khi]-xa[klo];
-            if (h == 0.0) {
-                printf("Bad table input, repeated values\n");
-                Py_DECREF(xdata);
-                Py_DECREF(ydata);
-                Py_DECREF(y2data);
-                Py_DECREF(xinter);
-                Py_DECREF(result);
-            }
-            a=(xa[khi]-x[i])/h;
-            b=(x[i]-xa[klo])/h;
-            *y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
-            y++;
-        }
-    }
+
+	printf("Not implemented (yet)!\n");
 
     Py_DECREF(xdata);
     Py_DECREF(ydata);
