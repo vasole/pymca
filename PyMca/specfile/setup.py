@@ -24,8 +24,12 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
+
 srcfiles = [ 'sfheader','sfinit','sflists','sfdata','sfindex',
              'sflabel' ,'sfmca', 'sftools','locale_management','specfile_py']
+
+if sys.version >= '3.0':
+    srcfiles[-1] += '3'
 
 sources = [] 
 for ffile in srcfiles:
