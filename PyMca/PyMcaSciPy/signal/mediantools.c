@@ -31,7 +31,19 @@ typedef struct {
   char *zero;         /* Pointer to Representation of zero */
 } Generic_Array;
 
-#define PYERR(message) {PyErr_SetString(PyExc_ValueError, message); goto fail;}
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+#define PYERR(message)  \
+        {struct module_state *st = GETSTATE(self);\
+            PyErr_SetString(st->error, message);goto fail;}
 
 #define DATA(arr) ((arr)->data)
 #define DIMS(arr) ((arr)->dimensions)
@@ -53,10 +65,10 @@ char *check_malloc (int size)
     
     the_block = (char *)malloc(size);
     if (the_block == NULL)
-	{
-	    printf("\nERROR: unable to allocate %d bytes!\n", size);
-	    longjmp(MALLOC_FAIL,-1);
-	}
+    {
+        printf("\nERROR: unable to allocate %d bytes!\n", size);
+        longjmp(MALLOC_FAIL,-1);
+    }
     return(the_block);
 }
 
@@ -73,15 +85,15 @@ extern void uint_medfilt2(unsigned int*,unsigned int*,int*,int*);
 extern void long_medfilt2(long*, long*,int*,int*);
 extern void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*);
 
-static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
+static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
 {
     PyObject *image=NULL, *size=NULL;
     int typenum;
     PyArrayObject *a_image=NULL, *a_size=NULL;
     PyArrayObject *a_out=NULL;
     int Nwin[2] = {3,3};
-	long *lhelp;
-	int Idims[2] = {0, 0};
+    long *lhelp;
+    int Idims[2] = {0, 0};
 
     if (!PyArg_ParseTuple(args, "O|O", &image, &size)) return NULL;
 
@@ -90,55 +102,55 @@ static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
     if (a_image == NULL) goto fail;
 
     if (size != NULL) {
-	a_size = (PyArrayObject *)PyArray_ContiguousFromObject(size, PyArray_LONG, 1, 1);
-	if (a_size == NULL) goto fail;
-	if ((RANK(a_size) != 1) || (DIMS(a_size)[0] < 2)) 
-	    PYERR("Size must be a length two sequence");
-	lhelp = (long *) DATA(a_size);
-	Nwin[0] = (int) (*lhelp);
-	Nwin[1] = (int) (*(lhelp++));
-	Idims[0] = (int) (a_image->dimensions[0]);
-	Idims[1] = (int) (a_image->dimensions[1]);
+    a_size = (PyArrayObject *)PyArray_ContiguousFromObject(size, PyArray_LONG, 1, 1);
+    if (a_size == NULL) goto fail;
+    if ((RANK(a_size) != 1) || (DIMS(a_size)[0] < 2)) 
+        PYERR("Size must be a length two sequence");
+    lhelp = (long *) DATA(a_size);
+    Nwin[0] = (int) (*lhelp);
+    Nwin[1] = (int) (*(lhelp++));
+    Idims[0] = (int) (a_image->dimensions[0]);
+    Idims[1] = (int) (a_image->dimensions[1]);
     }  
 
     a_out = (PyArrayObject *)PyArray_SimpleNew(2,DIMS(a_image),typenum);
     if (a_out == NULL) goto fail;
 
     if (setjmp(MALLOC_FAIL)) {
-	PYERR("Memory allocation error.");
+    PYERR("Memory allocation error.");
     }
     else {
-	switch (typenum) {
-	case PyArray_UBYTE:
-	    b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_FLOAT:
-	    f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_DOUBLE:
-	    d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_SHORT:
-	    short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_USHORT:
-	    ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_INT:
-	    int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_UINT:
-	    uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_LONG:
-	    long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out), Nwin, Idims);
-	    break;
-	case PyArray_ULONG:
-	    ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out), Nwin, Idims);
-	    break;
-	default:
-	  PYERR("Median filter unsupported data type.");
-	}
+    switch (typenum) {
+    case PyArray_UBYTE:
+        b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_FLOAT:
+        f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_DOUBLE:
+        d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_SHORT:
+        short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_USHORT:
+        ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_INT:
+        int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_UINT:
+        uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_LONG:
+        long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out), Nwin, Idims);
+        break;
+    case PyArray_ULONG:
+        ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out), Nwin, Idims);
+        break;
+    default:
+      PYERR("Median filter unsupported data type.");
+    }
     }
 
     Py_DECREF(a_image);
@@ -155,32 +167,75 @@ static PyObject *mediantools_median2d(PyObject *dummy, PyObject *args)
 }
 
 static struct PyMethodDef mediantools_methods[] = {
-	{"_medfilt2d", mediantools_median2d, METH_VARARGS, doc_median2d},
-	{NULL,		NULL, 0}		/* sentinel */
+    {"_medfilt2d", mediantools_median2d, METH_VARARGS, doc_median2d},
+    {NULL,        NULL, 0}        /* sentinel */
 };
 
 /* Initialization function for the module (*must* be called initmediantools) */
+/* Module initialization */
 
-PyMODINIT_FUNC initmediantools(void) {
-        PyObject *m, *d;
-	
-	/* Create the module and add the functions */
-	m = Py_InitModule("mediantools", mediantools_methods);
+#if PY_MAJOR_VERSION >= 3
 
-	/* Import the C API function pointers for the Array Object*/
-	import_array();
+static int mediantools_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
 
-	/* Make sure the multiarraymodule is loaded so that the zero
-	   and one objects are defined */
-	PyImport_ImportModule("numpy.core.multiarray");
-	/* { PyObject *multi = PyImport_ImportModule("multiarray"); } */
+static int mediantools_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
 
-	/* Add some symbolic constants to the module */
-	d = PyModule_GetDict(m);
 
-	/* Check for errors */
-	if (PyErr_Occurred()) {
-	  PyErr_Print();
-	  Py_FatalError("can't initialize module array");
-	}
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "mediantools",
+        NULL,
+        sizeof(struct module_state),
+        mediantools_methods,
+        NULL,
+        mediantools_traverse,
+        mediantools_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_mediantools(void)
+
+#else
+#define INITERROR return
+
+void
+initmediantools(void)
+#endif
+{
+    struct module_state *st;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("mediantools", mediantools_methods);
+#endif
+
+    if (module == NULL)
+        INITERROR;
+    st = GETSTATE(module);
+
+    st->error = PyErr_NewException("mediantools.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+    import_array();
+    PyImport_ImportModule("numpy.core.multiarray");
+    /* Check for errors */
+    if (PyErr_Occurred()) {
+      PyErr_Print();
+      Py_FatalError("can't initialize module array");
+    }
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }

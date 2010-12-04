@@ -40,7 +40,7 @@ def medfilt2d(input_data, kernel_size=None):
 
     for size in kernel_size:
         if (size % 2) != 1:
-            raise ValueError, "Each element of kernel_size should be odd."
+            raise ValueError("Each element of kernel_size should be odd.")
 
     return mediantools._medfilt2d(image, kernel_size)
 
