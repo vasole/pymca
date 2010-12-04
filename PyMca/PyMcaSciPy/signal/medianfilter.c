@@ -66,10 +66,10 @@ TYPE NAME(TYPE arr[], int n)                                            \
         /* Nibble from each end towards middle, swapping misordered items */ \
         piv = arr[lo];                                                  \
         for (ll = lo+1, hh = hi;; ll++, hh--) {                         \
-	    while (arr[ll] < piv) ll++;					\
-	    while (arr[hh] > piv) hh--;					\
-	    if (hh < ll) break;						\
-	    ELEM_SWAP(TYPE, arr, ll, hh);				\
+        while (arr[ll] < piv) ll++;                                     \
+        while (arr[hh] > piv) hh--;                                     \
+        if (hh < ll) break;                                             \
+        ELEM_SWAP(TYPE, arr, ll, hh);                                   \
         }                                                               \
         /* move pivot to top of lower partition */                      \
         ELEM_SWAP(TYPE, arr, hh, lo);                                   \
@@ -86,7 +86,7 @@ TYPE NAME(TYPE arr[], int n)                                            \
 
 /* 2-D median filter with zero-padding on edges. */
 #define MEDIAN_FILTER_2D(NAME, TYPE, SELECT)                            \
-void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                    \
+void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                      \
 {                                                                       \
     int nx, ny, hN[2];                                                  \
     int pre_x, pre_y, pos_x, pos_y;                                     \
@@ -94,7 +94,7 @@ void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                    \
     TYPE *myvals, *fptr1, *fptr2, *ptr1, *ptr2;                         \
                                                                         \
     totN = Nwin[0] * Nwin[1];                                           \
-    myvals = (TYPE *) check_malloc( totN * sizeof(TYPE));                     \
+    myvals = (TYPE *) check_malloc( totN * sizeof(TYPE));               \
                                                                         \
     hN[0] = Nwin[0] >> 1;                                               \
     hN[1] = Nwin[1] >> 1;                                               \
@@ -119,12 +119,17 @@ void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                    \
             }                                                           \
             ptr1++;                                                     \
                                                                         \
-            /* Zero pad */                                              \
-            for (k = (pre_x + pos_x + 1)*(pre_y + pos_y + 1); k < totN; k++) \
-                *fptr2++ = 0;                                         \
+            k = (pre_x + pos_x + 1)*(pre_y + pos_y + 1);                \
+            /* Prefer a shrinking window to zero padding */             \
+            if (k > totN){                                              \
+                k = totN;                                               \
+            }                                                           \
+            *fptr1++ = SELECT(myvals, k);                               \
+            /* Zero pad alternative*/                                   \
+            /*for ( ; k < totN; k++)                                    \
+                *fptr2++ = 0;                                           \
                                                                         \
-            /*      *fptr1++ = median(myvals,totN); */                  \
-            *fptr1++ = SELECT(myvals,totN);                             \
+            *fptr1++ = SELECT(myvals,totN); */                          \
         }                                                               \
     free(myvals);                                                       \
 }
@@ -136,14 +141,14 @@ QUICK_SELECT(d_quick_select, double)
 QUICK_SELECT(b_quick_select, unsigned char)
 
 /*define quick_select for rest of common types */
-	
+    
 QUICK_SELECT(short_quick_select, short);
 QUICK_SELECT(ushort_quick_select, unsigned short);
 QUICK_SELECT(int_quick_select, int);
 QUICK_SELECT(uint_quick_select, unsigned int);
 QUICK_SELECT(long_quick_select, long);
 QUICK_SELECT(ulong_quick_select, unsigned long);
-	
+    
 /* define medfilt for floats, doubles, and unsigned characters */
 MEDIAN_FILTER_2D(f_medfilt2, float, f_quick_select)
 MEDIAN_FILTER_2D(d_medfilt2, double, d_quick_select)

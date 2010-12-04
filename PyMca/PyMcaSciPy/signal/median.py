@@ -78,7 +78,9 @@ def medfilt1d(input_data, kernel_size=None):
 
     for size in kernel_size:
         if (size % 2) != 1:
-            raise ValueError, "Kernel_size should be odd."
+            image.shape = oldShape
+            raise ValueError("Kernel_size should be odd.")
     output = mediantools._medfilt2d(image, kernel_size)
     output.shape = oldShape
+    image.shape = oldShape
     return output
