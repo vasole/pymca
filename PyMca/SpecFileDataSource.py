@@ -30,7 +30,6 @@ import DataObject
 import specfilewrapper as specfile
 import numpy
 import numpy.oldnumeric as Numeric
-import string
 import types
 import os
 
@@ -131,13 +130,14 @@ class SpecFileDataSource:
         return source_info
 
     def __getScanList(self):
-        aux= string.split(self._sourceObjectList[0].list(),",")
+        aux= self._sourceObjectList[0].list().split(",")
         newlistcount=[]
         newlist=[]
         for i in aux:
-            if string.find(i,":")== -1:  start_index=end_index=int(i)
+            if not (":" in i):
+                start_index=end_index=int(i)
             else:
-                s= string.split(i,":")
+                s= i.split(":")
                 start_index=int(s[0])
                 end_index=int(s[1])
             for j in range(start_index,end_index+1):
@@ -150,21 +150,23 @@ class SpecFileDataSource:
     def __getScanType(self, num_pts, num_mca, command):
         stype= SF_EMPTY
         if num_pts>0:
-                if command is None:stype= SF_SCAN
-                elif string.find(command, "mesh")!=-1:
-                        stype= SF_MESH
-                else:   stype= SF_SCAN
+                if command is None:
+                    stype= SF_SCAN
+                elif "mesh" in command:
+                    stype= SF_MESH
+                else:
+                    stype= SF_SCAN
                 if num_mca%num_pts:
-                        stype+= SF_UMCA
+                    stype+= SF_UMCA
                 elif num_mca==num_pts:
-                        stype+= SF_MCA
+                    stype+= SF_MCA
                 elif num_mca>0:
-                        stype+= SF_NMCA
+                    stype+= SF_NMCA
         else:
                 if num_mca==1:
-                        stype= SF_MCA
+                    stype= SF_MCA
                 elif num_mca>1:
-                        stype= SF_NMCA
+                    stype= SF_NMCA
         return stype
 
 
@@ -180,8 +182,9 @@ class SpecFileDataSource:
         return self.__getScanInfo(scan_key)
 
     def __getKeyType (self,key):
-        count= string.count(key, '.')
-        if (count==1): return "scan"
+        count= key.count('.')
+        if (count==1):
+            return "scan"
         elif (count==2) or (count==3):
             return "mca"
         else:
@@ -314,7 +317,7 @@ class SpecFileDataSource:
 
     def __getMcaPars(self,key):
         index = 0
-        nums= string.split(key,'.')
+        nums= key.split('.')
         size = len(nums)
         sel_key = nums[0] + "." + nums[1]
         if size==3:
