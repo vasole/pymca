@@ -137,8 +137,17 @@ def build_specfile(ext_modules):
             specfile_define_macros = [('_GNU_SOURCE', 1)]
     else:
         specfile_define_macros = define_macros
+    sources = glob.glob('PyMca/specfile/src/*.c')
+    if sys.version < '3.0':
+        todelete = 'specfile_py3.c'
+    else:
+        todelete = 'specfile_py.c'
+    for i in range(len(sources)):
+        if todelete in sources[i]:
+            del sources[i]
+            break
     module  = Extension(name = 'PyMca.specfile',
-                        sources = glob.glob('PyMca/specfile/src/*.c'),
+                        sources = sources,
                         define_macros = specfile_define_macros,
                         include_dirs = ['PyMca/specfile/include',
                                             numpy.get_include()])
@@ -230,12 +239,14 @@ def build_PyMcaSciPy(ext_modules):
     ext_modules.append(module)
 
 ext_modules = []
-build_FastEdf(ext_modules)
+if sys.version < '3.0':
+    build_FastEdf(ext_modules)
 build_specfile(ext_modules)
 build_specfit(ext_modules)
-build_sps(ext_modules)
+if sys.version < '3.0':
+    build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
-if LOCAL_OBJECT3D:
+if (sys.version < '3.0') and LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)
