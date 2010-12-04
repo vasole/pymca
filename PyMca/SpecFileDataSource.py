@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.3$"
-
+import sys
 import DataObject
 import specfilewrapper as specfile
 import numpy
@@ -51,16 +51,21 @@ class SpecFileDataSource:
     Error= "SpecFileDataError"
 
     def __init__(self, nameInput):
-        if type(nameInput) == types.ListType:
+        if type(nameInput) == type([]):
             nameList = nameInput
         else:
             nameList = [nameInput]
         if len(nameList) > 1:
             #who knows if one day will make selections thru several files...
-            raise TypeError,"Constructor needs string as first argument"    
+            raise TypeError("Constructor needs string as first argument")
+        if sys.version < '3.0':
+            testTypes = [types.StringType, types.UnicodeType]
+        else:
+            testTypes = [type("")]
+        
         for name in nameList:
-            if type(name) not in [types.StringType, types.UnicodeType]:
-                raise TypeError,"Constructor needs string as first argument"            
+            if type(name) not in testTypes:
+                raise TypeError("Constructor needs string as first argument")            
         self.sourceName   = nameInput
         self.sourceType   = SOURCE_TYPE
         self.__sourceNameList = nameList
@@ -73,7 +78,7 @@ class SpecFileDataSource:
         self.__fileHeaderList = []
         for name in self.__sourceNameList:
             if not os.path.exists(name):
-                raise ValueError,"File %s does not exists" % name
+                raise ValueError("File %s does not exists" % name)
         for name in self.__sourceNameList:
             self._sourceObjectList.append(specfile.Specfile(name))
             self.__fileHeaderList.append(False)
@@ -180,7 +185,7 @@ class SpecFileDataSource:
         elif (count==2) or (count==3):
             return "mca"
         else:
-            raise KeyError, "SpecFileDataSource: Invalid key"
+            raise KeyError("SpecFileDataSource: Invalid key")
 
     def __getScanInfo(self, scankey):
         index = 0
@@ -253,11 +258,11 @@ class SpecFileDataSource:
                 calib = [calib[mcainfo["McaDet"]-1]]
             else:
                 if DEBUG:
-                    print "Warning","Number of calibrations does not match number of MCAs"
+                    print("Warning","Number of calibrations does not match number of MCAs")
                 if len(calib) == 1:
                     pass
                 else:
-                    raise ValueError,"Number of calibrations does not match number of MCAs"        
+                    raise ValueError("Number of calibrations does not match number of MCAs")
             ctxt= calib[0].split()
             if len(ctxt)==4:
                 #try:
@@ -273,11 +278,11 @@ class SpecFileDataSource:
                 ctime = [ctime[mcainfo["McaDet"]-1]]
             else:
                 if DEBUG:
-                    print "Warning","Number of counting times does not match number of MCAs"
+                    print("Warning","Number of counting times does not match number of MCAs")
                 if len(ctime) == 1:
                     pass
                 else:
-                    raise ValueError,"Number of counting times does not match number of MCAs"        
+                    raise ValueError("Number of counting times does not match number of MCAs")        
             ctxt= ctime[0].split()
             if len(ctxt)==4:
                 try:
@@ -292,11 +297,11 @@ class SpecFileDataSource:
                 chann = [chann[mcainfo["McaDet"] - 1]]
             else:
                 if DEBUG:
-                    print "Warning","Number of @CHANN information does not match number of MCAs"
+                    print("Warning","Number of @CHANN information does not match number of MCAs")
                 if len(chann) == 1:
                     pass
                 else:
-                    raise ValueError,"Number of @CHANN information does not match number of MCAs"        
+                    raise ValueError("Number of @CHANN information does not match number of MCAs")        
             ctxt= chann[0].split()
             if len(ctxt)==5:
                 mcainfo['Channel0'] = float(ctxt[2])
@@ -321,7 +326,7 @@ class SpecFileDataSource:
             if nums[3]==0: mca_no=int(nums[2])
             else:          mca_no=((int(nums[3])-1)*lines)+int(nums[2])
         else:
-            raise KeyError, "SpecFileData: Invalid key"
+            raise KeyError("SpecFileData: Invalid key")
         return (sel_key,mca_no)
 
     def getDataObject(self,key,selection=None):
@@ -371,12 +376,12 @@ class SpecFileDataSource:
                 sourceinfo = self.getSourceInfo()
                 sourcekeys = sourceinfo['KeyList']
         if scan_key not in sourcekeys:
-            raise KeyError, "Key %s not in source keys" % key
+            raise KeyError("Key %s not in source keys" % key)
 
         mca3D = False
         if DEBUG:
-            print "SELECTION = ", selection
-            print "key_type = ", key_type
+            print("SELECTION = ", selection)
+            print("key_type = ", key_type)
         if key_type == "scan":
             if selection  is not None:
                 if selection.has_key('mcalist'):
@@ -393,7 +398,7 @@ class SpecFileDataSource:
                 return output
             elif type(selection) != type({}):
                 #I only understand index selections
-                raise TypeError, "Only selections of type {x:[],y:[],m:[]} understood"
+                raise TypeError("Only selections of type {x:[],y:[],m:[]} understood")
             else:
                 if selection.has_key('x'):
                     indexlist = []
@@ -406,7 +411,7 @@ class SpecFileDataSource:
                         else:
                             label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
-                            raise ValueError, "Label %s not in scan labels" % label
+                            raise ValueError("Label %s not in scan labels" % label)
                         index = output.info['LabelNames'].index(label)
                         if output.x is None: output.x = []
                         output.x.append(output.data[:, index])
@@ -420,7 +425,7 @@ class SpecFileDataSource:
                         else:    
                             label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
-                            raise ValueError, "Label %s not in scan labels" % label
+                            raise ValueError("Label %s not in scan labels" % label)
                         index = output.info['LabelNames'].index(label)
                         if output.y is None:
                             output.y = []
@@ -435,7 +440,7 @@ class SpecFileDataSource:
                         else:    
                             label = output.info['LabelNames'][labelindex]
                         if label not in output.info['LabelNames']:
-                            raise ValueError, "Label %s not in scan labels" % label
+                            raise ValueError("Label %s not in scan labels" % label)
                         index = output.info['LabelNames'].index(label)
                         if output.m is None: output.m = []
                         output.m.append(output.data[:, index])
@@ -522,7 +527,7 @@ class SpecFileDataSource:
             #get the different x components
             xselection = selection.get('x', [])
             if len(xselection) != 2:
-                raise ValueError, "You have to select two X axes"
+                raise ValueError("You have to select two X axes")
             indexlist = []
             for labelindex in xselection:
                 if labelindex != 0:
@@ -533,7 +538,7 @@ class SpecFileDataSource:
                 else:
                     label = output.info['LabelNames'][labelindex]
                 if label not in output.info['LabelNames']:
-                    raise ValueError, "Label %s not in scan labels" % label
+                    raise ValueError("Label %s not in scan labels" % label)
                 index = output.info['LabelNames'].index(label)
                 if output.x is None:
                     output.x = []
@@ -559,7 +564,7 @@ class SpecFileDataSource:
                     else:    
                         label = output.info['LabelNames'][labelindex]
                     if label not in output.info['LabelNames']:
-                        raise ValueError, "Label %s not in scan labels" % label
+                        raise ValueError("Label %s not in scan labels" % label)
                     index = output.info['LabelNames'].index(label)
                     if output.m is None:
                             output.m = []
@@ -588,14 +593,14 @@ class SpecFileDataSource:
             try:
                 scan_data= Numeric.transpose(scan_obj.data()).copy()
             except:
-                raise IOError, "SF_SCAN read failed"
+                raise IOError("SF_SCAN read failed")
         elif scan_type&SF_MESH:
             try:
                 if raw:
                     try:
                         scan_data= Numeric.transpose(scan_obj.data()).copy()
                     except:
-                        raise IOError, "SF_MESH read failed"
+                        raise IOError("SF_MESH read failed")
                 else:
                     scan_array= scan_obj.data()
                     (mot1,mot2,cnts)= self.__getMeshSize(scan_array)
@@ -604,12 +609,12 @@ class SpecFileDataSource:
                         scan_data[:,idx,:]= Numeric.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                     scan_data= Numeric.transpose(scan_data).copy()
             except:
-                raise IOError, "SF_MESH read failed"
+                raise IOError("SF_MESH read failed")
         elif scan_type&SF_MCA:
             try:
                 scan_data= scan_obj.mca(1)
             except:
-                raise IOError, "SF_MCA read failed"
+                raise IOError("SF_MCA read failed")
 
         if scan_data is not None:
             #create data object
@@ -619,7 +624,7 @@ class SpecFileDataSource:
             dataObject.data = scan_data
             return dataObject
         else:
-            raise TypeError, "getData unknown type"
+            raise TypeError("getData unknown type")
 
     def _getMcaData(self, key):
         index = 0        
@@ -640,7 +645,7 @@ class SpecFileDataSource:
                     mca_no= int(key_split[2])
                     scan_data= scan_obj.mca(mca_no)
                 except: 
-                    raise IOError, "Single MCA read failed"
+                    raise IOError("Single MCA read failed")
             if scan_data is not None:
                 scan_info.update(self.__getMcaInfo(mca_no, scan_obj, scan_info))
                 dataObject = DataObject.DataObject()
@@ -654,7 +659,7 @@ class SpecFileDataSource:
                     mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                     scan_data= scan_obj.mca(mca_no)
                 except: 
-                    raise IOError, "SF_SCAN+SF_NMCA read failed"
+                    raise IOError("SF_SCAN+SF_NMCA read failed")
             elif scan_type==SF_MESH+SF_MCA:
                 try:
                     #scan_array= scan_obj.data()
@@ -662,19 +667,19 @@ class SpecFileDataSource:
                     #mca_no= 1 + int(key_split[2]) + int(key_split[3])*mot1
                     mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                     if DEBUG:
-                        print "try to read mca number = ",mca_no
-                        print "total number of mca = ",scan_info["NbMca"]
+                        print("try to read mca number = ",mca_no)
+                        print("total number of mca = ",scan_info["NbMca"])
                     scan_data= scan_obj.mca(mca_no)
                 except: 
-                    raise IOError, "SF_MESH+SF_MCA read failed"
+                    raise IOError("SF_MESH+SF_MCA read failed")
             elif scan_type&SF_NMCA or scan_type&SF_MCA:
                 try:
                     mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                     scan_data= scan_obj.mca(mca_no)
                 except:
-                    raise IOError, "SF_MCA or SF_NMCA read failed"
+                    raise IOError("SF_MCA or SF_NMCA read failed")
             else:
-                raise TypeError, "Unknown scan type!!!!!!!!!!!!!!!!"
+                raise TypeError("Unknown scan type!!!!!!!!!!!!!!!!")
             if scan_data is not None:
                 scan_info.update(self.__getMcaInfo(mca_no, scan_obj, scan_info))
                 dataObject = DataObject.DataObject()
@@ -740,16 +745,16 @@ def DataSource(name="", source_type=SOURCE_TYPE):
      sourceClass = source_types[source_type]
   except KeyError:
      #ERROR invalid source type
-     raise TypeError,"Invalid Source Type, source type should be one of %s" % source_types.keys()
+     raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
   
   return sourceClass(name)
 
   
 if __name__ == "__main__":
-    import sys,time
+    import time
 
     if len(sys.argv) not in [2,3,4]:
-        print "Usage: %s <filename> [<key_to_load>]"
+        print("Usage: %s <filename> [<key_to_load>]")
         sys.exit()
 
     filename= sys.argv[1]
@@ -757,13 +762,13 @@ if __name__ == "__main__":
     sf = DataSource(filename)
     if len(sys.argv)==2:
         info= sf.getSourceInfo()
-        print "Filename        :", sf.sourceName
-        print "Number of scans :", info["Size"]
+        print("Filename        :", sf.sourceName)
+        print("Number of scans :", info["Size"])
 
-        print "S# - command - pts - mca - type"
+        print("S# - command - pts - mca - type")
         for (s,c,p,m,t) in zip(info["KeyList"],info["Commands"],info["NumPts"],info["NumMca"],info["ScanType"]):
-                print s,"-",c,"-",p,"-",m,"-",t
-        print "KeyList = ",info["KeyList"]
+                print(s,"-",c,"-",p,"-",m,"-",t)
+        print("KeyList = ",info["KeyList"])
         #print info['Channel0']
 
     if len(sys.argv)==3:
@@ -773,13 +778,13 @@ if __name__ == "__main__":
         info= dataObject.info
         data= dataObject.data
 
-        print "Filename   :", info['SourceName']
-        print "Loaded key :", info["Key"]
-        print "Header     :"
+        print("Filename   :", info['SourceName'])
+        print("Loaded key :", info["Key"])
+        print("Header     :")
         for i,v in info.items():
-                print "-", i, ":", v
-        print "Data Shape :", data.shape
-        print "read time = ",t0
+                print("-", i, ":", v)
+        print("Data Shape :", data.shape)
+        print("read time = ",t0)
 
     if len(sys.argv)==4:
         t0 = time.time()
@@ -790,7 +795,7 @@ if __name__ == "__main__":
         t0 = time.time() - t0
         info= dataObject.info
         #print dataObject.x
-        print dataObject.y
+        print(dataObject.y)
         #print dataObject.x
 
  

@@ -7,7 +7,7 @@ try:
 except ImportError:
     text  = "You must have numpy installed.\n"
     text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
-    raise ImportError, text
+    raise ImportError(text)
 
 from distutils.core import setup
 from distutils.extension import Extension
@@ -61,9 +61,3 @@ setup (
                        ),
        ],
 )
-    
-print """Python module ready.
- If you want to generate C libraries:
- Find a Makefile ready on the directory \"src\"
- Minor changes may be needed ( customized for Linux,HP-UX and Solaris)
-"""

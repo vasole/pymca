@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,7 +26,7 @@
 # is a problem for you.
 #############################################################################*/
 """
-This clases just put in evidence the Specfile methods called from
+This class just puts in evidence the Specfile methods called from
 PyMca.
 It can be used to wrap other formats as specile
 """
@@ -44,7 +44,7 @@ class SpecFileAbstractClass:
         with two scans returns 1:2
         """
         if DEBUG:
-            print "list method called"
+            print("list method called")
         return "1:1"
 
     def __getitem__(self, item):
@@ -52,7 +52,7 @@ class SpecFileAbstractClass:
         Returns the scan data
         """
         if DEBUG:
-            print "__getitem__ called"
+            print("__getitem__ called")
         return self.scandata[item]
 
     def select(self, key):
@@ -116,7 +116,7 @@ class SpecFileAbstractScan:
     
     def command(self):
         if DEBUG:
-            print "command called"
+            print("command called")
         text = ""
         if self.scanheader is not None:
             if len(self.scanheader):
@@ -139,7 +139,7 @@ class SpecFileAbstractScan:
             
     def fileheader(self):
         if DEBUG:
-            print "file header called"
+            print("file header called")
         labels = '#L '
         for label in self.labels:
             labels += '  '+label
@@ -150,7 +150,7 @@ class SpecFileAbstractScan:
                 return ['#S1 Unknown command']
             else:
                 if DEBUG:
-                    print "returning ",self.scanheader
+                    print("returning ",self.scanheader)
                 return self.scanheader
     
     def header(self,key):

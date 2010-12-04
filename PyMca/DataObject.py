@@ -43,7 +43,7 @@ class DataObject(object):
             if selection is None:
                 return copy.deepcopy(self.data)
             else:
-                print "Not implemented (yet)"
+                print("Not implemented (yet)")
                 #it will be a new array
                 return copy.deepcopy(self.data)
     else:

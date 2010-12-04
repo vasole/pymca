@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -34,7 +34,7 @@ class Fit2DChiFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename):
         SpecFileAbstractClass.SpecFileAbstractClass.__init__(self, filename)
         if not os.path.exists(filename):
-            raise IOError, "File %s does not exists"  % filename
+            raise IOError("File %s does not exists"  % filename)
         f = open(filename, 'r')
         self.__buffer = f.read()
         f.close()
@@ -60,7 +60,7 @@ class Fit2DChiFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         if len(labels[-1]) == 0:
             labels[-1] = "Intensity"
         if npoints == 0:
-            raise IOError, "Problem reading file. Number of points is 0."
+            raise IOError("Problem reading file. Number of points is 0.")
         data = numpy.zeros((npoints, len(labels)), numpy.float32)
         for i in range(npoints):
             if self.__currentLine < lenBuffer:
@@ -112,9 +112,9 @@ def test(filename):
     if isFit2DChiFile(filename):
         sf=Fit2DChiFileParser(filename)
     else:
-        print "Not a Fit2D .Chi File"
-    print sf[0].alllabels()
-    print dir(sf[0])
+        print("Not a Fit2D .Chi File")
+    print(sf[0].alllabels())
+    print(dir(sf[0]))
     
 
 

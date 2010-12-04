@@ -79,7 +79,7 @@ def Specfile(filename):
         output = SPXFileParser.SPXFileParser(filename)
     else:
         if DEBUG:
-            print "this does not look as a specfile"
+            print("this does not look as a specfile")
         if len(line0) > 7:
             if line0.startswith('$SPEC_ID') or\
                line0.startswith('$DATE_MEA') or\
@@ -108,7 +108,7 @@ class specfilewrapper:
                 raw_content = f.read()
                 f.close()
                 expr = '([-+]?\d+)\t\r\n'
-                self.data = [float(i) for i in re.split(expr,raw_content) if i <> '']
+                self.data = [float(i) for i in re.split(expr,raw_content) if i != '']
                 self.data = numpy.array(self.data, numpy.float32)
             else:
                 self.data = numpy.fromfile(filename,
@@ -293,7 +293,7 @@ class myscandata:
     
     def command(self):
         if DEBUG:
-            print "command called"
+            print("command called")
         if self.qxas is not None:
             if self.qxas.has_key('S'):
                 text = self.qxas['S']
@@ -326,7 +326,7 @@ class myscandata:
             
     def fileheader(self):
         if DEBUG:
-            print "file header called"
+            print("file header called")
         labels = '#L '
         for label in self.labels:
             labels += '  '+label
@@ -337,7 +337,7 @@ class myscandata:
                 return ['#S1 Unknown command']
             else:
                 if DEBUG:
-                    print "returning ",self.scanheader
+                    print("returning ",self.scanheader)
                 return self.scanheader
     
     def header(self,key):
@@ -450,8 +450,8 @@ class BufferedFile:
 if __name__ == "__main__":
     import sys
     filename = sys.argv[1]
-    print filename
+    print(filename)
     sf=Specfile(filename)
     sf.list()
-    print sf[0].alllabels()
-    print dir(sf[0])
+    print(sf[0].alllabels())
+    print(dir(sf[0]))
