@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -229,7 +229,7 @@ class ElementsInfo(qt.QWidget):
     
     def infoToggle(self,**kw):
         if DEBUG:
-            print "toggleSource called"
+            print("toggleSource called")
         if self.infoWidget.isHidden():
             self.infoWidget.show()
             self.infoWidget.raiseW()
@@ -276,26 +276,26 @@ class ElementsInfo(qt.QWidget):
 class Line(qt.QFrame):
     def mouseDoubleClickEvent(self,event):
         if DEBUG:
-            print "Double Click Event"
-        dict={}
-        dict['event']="DoubleClick"
-        dict['data'] = event
+            print("Double Click Event")
+        ddict={}
+        ddict['event']="DoubleClick"
+        ddict['data'] = event
         if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"),(dict,))
+            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"), (ddict,))
         else:
-            self.emit(qt.SIGNAL("LineDoubleClickEvent"),dict)
+            self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
 
 class PixmapLabel(qt.QLabel):
     def mousePressEvent(self,event):
         if DEBUG:
-            print "Mouse Press Event"
-        dict={}
-        dict['event']="MousePress"
-        dict['data'] = event
+            print("Mouse Press Event")
+        ddict={}
+        ddict['event']="MousePress"
+        ddict['data'] = event
         if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("PixmapLabelMousePressEvent"),(dict,))
+            self.emit(qt.PYSIGNAL("PixmapLabelMousePressEvent"), (ddict,))
         else:
-            self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"),dict)
+            self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"), ddict)
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):

@@ -3022,7 +3022,7 @@ class BoundMethodWeakref:
 _registeredCallbacks=[]
 
 def registerUpdate(callback):
-    if not callable(callback):
+    if not hasattr(callback, "__call__"):
         raise TypeError("It should be a callable method")
 
     def delCallback(ref):
