@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,7 +26,6 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.26 $"
 import numpy.oldnumeric as Numeric
-import string
 import sys
 import os
 import SpecfitFuns
@@ -42,53 +41,53 @@ class Specfit:
         self.theorydict={}
         self.theorylist=[]
         self.dataupdate=None
-        if kw.has_key('weight'):
+        if 'weight' in kw:
             self.fitconfig['WeightFlag']=kw['weight']
-        elif kw.has_key('WeightFlag'):
+        elif 'WeightFlag' in kw:
             self.fitconfig['WeightFlag']=kw['WeightFlag']
         else:
             self.fitconfig['WeightFlag']=0
-        if kw.has_key('mca'):
+        if 'mca' in kw:
             self.fitconfig['McaMode']=kw['mca']
-        elif kw.has_key('McaMode'):
+        elif 'McaMode' in kw:
             self.fitconfig['McaMode']=kw['McaMode']
         else:
             self.fitconfig['McaMode']=0
-        if kw.has_key('autofwhm'):
+        if 'autofwhm' in kw:
             self.fitconfig['AutoFwhm']=kw['autofwhm']
-        elif kw.has_key('AutoFwhm'):
+        elif 'AutoFwhm' in kw:
             self.fitconfig['AutoFwhm']=kw['AutoFwhm']
         else:
             self.fitconfig['AutoFwhm']=0
-        if kw.has_key('fwhm'):
+        if 'fwhm' in kw:
             self.fitconfig['FwhmPoints']=kw['fwhm']
-        elif kw.has_key('FwhmPoints'):
+        elif 'FwhmPoints' in kw:
             self.fitconfig['FwhmPoints']=kw['FwhmPoints']
         else:
             self.fitconfig['FwhmPoints']=8
-        if kw.has_key('autoscaling'):
+        if 'autoscaling' in kw:
             self.fitconfig['AutoScaling']=kw['autoscaling']
         else:
             self.fitconfig['AutoScaling']=0
-        if kw.has_key('Yscaling'):
+        if 'Yscaling' in kw:
             self.fitconfig['Yscaling']=kw['Yscaling']
         else:
             self.fitconfig['Yscaling']=1.0
-        if kw.has_key('Sensitivity'):
+        if 'Sensitivity' in kw:
             self.fitconfig['Sensitivity']=kw['Sensitivity']
         else:
             self.fitconfig['Sensitivity']=2.5
-        if kw.has_key('ResidualsFlag'):
+        if 'ResidualsFlag' in kw:
             self.fitconfig['ResidualsFlag']=kw['ResidualsFlag']
-        elif kw.has_key('Residuals'):
+        elif 'Residuals' in kw:
             self.fitconfig['ResidualsFlag']=kw['Residuals']
         else:
             self.fitconfig['ResidualsFlag']=0
-        if kw.has_key('eh'):
+        if 'eh' in kw:
             self.eh=kw['eh']
         else:
             self.eh=EventHandler.EventHandler()
-        if self.theorydict.keys() != []:
+        if len(self.theorydict.keys()):
             for key in self.theorydict.keys():
                 self.theorylist.append(key)
         self.bkgdict={'No Background':[self.bkg_none,[],None],
@@ -123,13 +122,13 @@ class Specfit:
         self.setdata(*vars,**kw)
             
     def setdata(self,*vars,**kw):
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         elif len(vars) >1:
             x=vars[0]                    
         else:
             x=None
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         elif len(vars) > 1:
             y=vars[1]   
@@ -137,7 +136,7 @@ class Specfit:
             y=vars[0]              
         else:
             y=None
-        if kw.has_key('sigmay'):
+        if 'sigmay' in kw:
             sigmay=kw['sigmay']
         elif len(vars) >2:
             sigmay=vars[2]                    
@@ -164,12 +163,12 @@ class Specfit:
             self.sigmay0=Numeric.array(sigmay)
             self.sigmay=Numeric.array(sigmay)
 
-        if kw.has_key('xmin'):
+        if 'xmin' in kw:
             xmin=kw['xmin']
         else:
             if len(self.xdata):
                 xmin=min(self.xdata)
-        if kw.has_key('xmax'):
+        if 'xmax' in kw:
             xmax=kw['xmax']
         else:
             if len(self.xdata):
@@ -221,7 +220,7 @@ class Specfit:
 
     def addfilter(self,filterfun,*vars,**kw):
         addfilterstatus=0
-        if kw.has_key('filtername'):
+        if 'filtername' in kw:
             filtername=kw['filtername']
         else:
             kw['filtername']="Unknown"
@@ -245,17 +244,17 @@ class Specfit:
                (type(item) == type(())):
                 for item0 in item:
                         try:
-                            newindex=string.atoi(item0)                         
+                            newindex=int(item0)                         
                         except:
                             deleteerror=1
             else:
                 try:
-                    newindex=string.atoi(item0)                         
+                    newindex=int(item0)                         
                 except:
                     deleteerror=1
             if newindex not in index:
                 index.append(newindex)
-        if kw.has_key('filtername'):
+        if 'filtername' in kw:
             newindex=0
             atleast1=0
             for item in self.filterlist:
@@ -314,37 +313,37 @@ class Specfit:
             varslist=list(vars)
         else:
             varslist=[]
-        if kw.has_key('theory'):
+        if 'theory' in kw:
             theory=kw['theory']
         elif len(varslist) > 0:
             theory=varslist[0]
         else:
             return 1
-        if kw.has_key('function'):
+        if 'function' in kw:
             function=kw['function']
         elif len(varslist) > 1:
             function=varslist[1]
         else:
             return 2
-        if kw.has_key('parameters'):
+        if 'parameters' in kw:
             parameters=kw['parameters']
         elif len(varslist) > 2:
             parameters=varslist[2]
         else:
             return 3
-        if kw.has_key('estimate'):
+        if 'estimate' in kw:
             estimate=kw['estimate']
         elif len(varslist) > 3:
             estimate=varslist[3]
         else:
             estimate=None
-        if kw.has_key('configure'):
+        if 'configure' in kw:
             configure=kw['configure']
         elif len(varslist) > 4:
             configure=varslist[4]
         else:
             configure=None
-        if kw.has_key('derivative'):
+        if 'derivative' in kw:
             derivative=kw['derivative']
         elif len(varslist) > 5:
             derivative=varslist[5]
@@ -379,26 +378,26 @@ class Specfit:
             varslist=list(vars)
         else:
             varslist=[]
-        if kw.has_key('background'):
+        if 'background' in kw:
             theory=kw['background']
         elif len(varslist) > 0:
             theory=varslist[0]
         else:
             return 1
-        if kw.has_key('function'):
+        if 'function' in kw:
             function=kw['function']
         elif len(varslist) > 1:
             theory=varslist[1]
         else:
             return 2
-        if kw.has_key('parameters'):
+        if 'parameters' in kw:
             function=kw['parameters']
         elif len(varslist) > 2:
             theory=varslist[2]
         else:
             return 3
-        if kw.has_key('estimate'):
-            estimate=kw['function']
+        if 'estimate' in kw:
+            estimate=kw['estimate']
         elif len(varslist) > 3:
             estimate=varslist[3]
         else:
@@ -517,17 +516,17 @@ class Specfit:
             zz = Numeric.zeros(Numeric.shape(yy),Numeric.Float)
         #added scaling support
         yscaling=1.0
-        if self.fitconfig.has_key('AutoScaling'):
+        if 'AutoScaling' in self.fitconfig:
             if self.fitconfig['AutoScaling']:
                 yscaling=self.guess_yscaling(y=yy)
             else:
-                if self.fitconfig.has_key('Yscaling'):
+                if 'Yscaling' in self.fitconfig:
                     yscaling=self.fitconfig['Yscaling']
                 else:
                     self.fitconfig['Yscaling']=yscaling
         else:
             self.fitconfig['AutoScaling']=0 
-            if self.fitconfig.has_key('Yscaling'):
+            if 'Yscaling' in self.fitconfig:
                 yscaling=self.fitconfig['Yscaling']
             else:
                 self.fitconfig['Yscaling']=yscaling
@@ -545,7 +544,7 @@ class Specfit:
         j=1
         while (i < len(fun_esti_parameters)):             
              for k in self.theorydict[self.fitconfig['fittheory']][1]: 
-                self.final_theory.append(k+`j`)
+                self.final_theory.append(k+"%d" % j)
                 i=i+1
              j=j+1      
              
@@ -629,7 +628,7 @@ class Specfit:
             theory=newfun.THEORY
         except:
             if DEBUG:
-                print "No theory name"
+                print("No theory name")
             theory="%s" % file
         try:
             parameters=newfun.PARAMETERS
@@ -684,7 +683,7 @@ class Specfit:
                     #tkMessageBox.showerror('Error',"Problem implementing user theory")
                     badluck=1
         if badluck:
-            print "ERROR IMPORTING"
+            print("ERROR IMPORTING")
         return badluck
 
     def startfit(self,mcafit=0):
@@ -793,15 +792,15 @@ class Specfit:
         return (f1-f2) / (2.0 * delta)
        
     def gendata(self,*vars,**kw):
-        if kw.has_key('x'):
+        if 'x'in kw:
             x=kw['x']
         elif len(vars) >0:
             x=vars[0]                    
         else:
             x=self.xdata
-        if kw.has_key('parameters'):
+        if 'parameters' in kw:
             paramlist=kw['parameters']
-        elif kw.has_key('paramlist'):
+        elif 'paramlist' in kw:
             paramlist=kw['paramlist']
         elif len(vars) >1:
             paramlist=vars[1]                    
@@ -853,7 +852,7 @@ class Specfit:
         try:
             idx = Numeric.nonzero((self.xdata>=x[0]) & (self.xdata<=x[-1]))
         except:
-            print "ERROR ",x
+            print("ERROR ",x)
         yy=Numeric.take(self.ydata,idx)
         nrx=Numeric.shape(x)[0]
         nry=Numeric.shape(yy)[0]
@@ -902,15 +901,15 @@ class Specfit:
             cons = Numeric.zeros((3,len(fittedpar)),Numeric.Float)
        elif self.fitconfig['fitbkg'] == 'Square Filter':
             fwhm=5
-            if self.fitconfig.has_key('AutoFwhm'):
+            if 'AutoFwhm' in self.fitconfig:
                 fwhm=self.guess_fwhm(y=y)            
-            elif self.fitconfig.has_key('fwhm'):
+            elif 'fwhm' in self.fitconfig:
                 fwhm=self.fitconfig['fwhm']
-            elif self.fitconfig.has_key('Fwhm'):
+            elif 'Fwhm' in self.fitconfig:
                 fwhm=self.fitconfig['Fwhm']
-            elif self.fitconfig.has_key('FWHM'):
+            elif 'FWHM' in self.fitconfig:
                 fwhm=self.fitconfig['FWHM']
-            elif self.fitconfig.has_key('FwhmPoints'):
+            elif 'FwhmPoints' in self.fitconfig:
                 fwhm=self.fitconfig['FwhmPoints']
             #set an odd number
             if (fwhm % 2):
@@ -943,7 +942,7 @@ class Specfit:
         Configure the current theory passing a dictionary to the supply method
         """
         for key in self.fitconfig.keys():
-            if kw.has_key(key):
+            if key in kw:
                 self.fitconfig[key]=kw[key]
         result={}
         result.update(self.fitconfig)
@@ -953,11 +952,11 @@ class Specfit:
            result.update(self.theorydict[self.fitconfig['fittheory']][3](**kw))
            #take care of possible user interfaces
            for key in self.fitconfig.keys():
-                if result.has_key(key):
+                if key in result:
                     self.fitconfig[key]=result[key]
         #make sure fitconfig is configured in case of having the same keys
         for key in self.fitconfig.keys():
-            if kw.has_key(key):
+            if key in kw:
                 self.fitconfig[key]=kw[key]
             if key == "fitbkg":
                 error = self.setbackground(self.fitconfig[key])
@@ -965,19 +964,19 @@ class Specfit:
                 if self.fitconfig['fittheory'] is not None:
                     error = self.settheory(self.fitconfig[key])
         if error:
-            print "ERROR on background and/or theory configuration"
+            print("ERROR on background and/or theory configuration")
         result.update(self.fitconfig)
         return result 
 
     def mcafit(self,*vars,**kw):
         if (len(vars) > 0) or (len(kw.keys()) > 0):
-            if kw.has_key('x'):
+            if 'x' in kw:
                 x=kw['x']
             elif len(vars) >1:
                 x=vars[0]                    
             else:
                 x=None
-            if kw.has_key('y'):
+            if 'y' in kw:
                 y=kw['y']
             elif len(vars) == 1:
                 y=vars[0]
@@ -985,7 +984,7 @@ class Specfit:
                 y=vars[1]
             else:
                 y=self.ydata0
-            if kw.has_key('sigmay'):
+            if 'sigmay' in kw:
                 sigmay=kw['sigmay']
             elif len(vars) >2:
                 sigmay=vars[2]                    
@@ -1002,14 +1001,14 @@ class Specfit:
             if self.dataupdate is not None:
                 self.dataupdate()
  
-        if kw.has_key('debug'):
+        if 'debug' in kw:
             mcadebug = 1
         else:
             mcadebug = 0
-        if kw.has_key('Yscaling'):
+        if 'Yscaling' in kw:
             if kw['Yscaling'] is not None:
                 yscaling=kw['Yscaling']
-        elif kw.has_key('yscaling'):
+        elif 'yscaling' in kw:
             if kw['yscaling'] is not None:
                 yscaling=kw['yscaling']
         elif self.fitconfig['AutoScaling']:
@@ -1017,16 +1016,16 @@ class Specfit:
         else:
             yscaling=self.fitconfig['Yscaling']
         
-        if kw.has_key('sensitivity'):
+        if 'sensitivity' in kw:
             sensitivity=kw['sensitivity']
-        elif kw.has_key('Sensitivity'):
+        elif 'Sensitivity' in kw:
             sensitivity=kw['Sensitivity']
         else:
             sensitivity=self.fitconfig['Sensitivity']            
         
-        if kw.has_key('fwhm'):
+        if 'fwhm' in kw:
             fwhm=kw['fwhm']
-        elif kw.has_key('FwhmPoints'):
+        elif 'FwhmPoints' in kw:
             fwhm=kw['FwhmPoints']
         elif self.fitconfig['AutoFwhm']:
             fwhm=self.guess_fwhm(y=y)
@@ -1057,13 +1056,13 @@ class Specfit:
             for idx in peaksidx:
                 peaks.append(self.xdata[int(idx)])
             if mcadebug:
-                print "MCA Found peaks = ",peaks
+                print("MCA Found peaks = ",peaks)
         if len(peaks):
             regions=self.mcaregions(peaks,self.xdata[fwhm]-self.xdata[0])
         else:
             regions=[]
         if mcadebug:
-            print " regions = ",regions
+            print(" regions = ",regions)
         #if the function needs a scaling just give it
         #removed estimate should deal with it 
         #self.configure(Yscaling=yscaling,yscaling=yscaling)
@@ -1097,7 +1096,7 @@ class Specfit:
                 #awful fit, simple residuals search adding a gaussian(?)
                   if (0):
                     error=self.mcaresidualssearch_old()
-                    print "error = ",error
+                    print("error = ",error)
                     if not error:
                         for param in self.paramlist:
                             param['estimation']=param['fitresult']
@@ -1106,12 +1105,12 @@ class Specfit:
                   if newpar != []:
                     newg=1
                     for param in self.paramlist: 
-                        newg=max(newg,int(string.atof(param['group'])+1))
+                        newg=max(newg,int(float(param['group'])+1))
                         param['estimation']=param['fitresult']
                     i=-1                    
                     for pname in self.theorydict[self.fitconfig['fittheory']][1]:
                         i=i+1
-                        name=pname +`newg`
+                        name=pname + "%d" % newg
                         self.paramlist.append({'name':name,
                                    'estimation':newpar[i],
                                    'group':newg,
@@ -1174,21 +1173,21 @@ class Specfit:
         return result
 
     def mcagetareas(self,**kw):
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         else:
             x=self.xdata
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         else:
             y=self.ydata
-        if kw.has_key('sigmay'):
+        if 'sigmay' in kw:
             sigmay=kw['sigmay']
         else:
             sigmay=self.sigmay
-        if kw.has_key('parameters'):
+        if 'parameters' in kw:
             paramlist=kw['parameters']
-        elif kw.has_key('paramlist'):
+        elif 'paramlist' in kw:
             paramlist=kw['paramlist']
         else:
             paramlist=self.paramlist
@@ -1196,7 +1195,7 @@ class Specfit:
         groups=[]
         for param in paramlist:
             if param['code'] != 'IGNORE':
-                if (int(string.atof(param['group'])) != 0):
+                if (int(float(param['group'])) != 0):
                     if param['group'] not in groups:
                         groups.append(param['group'])
 
@@ -1212,11 +1211,11 @@ class Specfit:
                     if param['code'] != 'IGNORE':
                         noigno.append(param['fitresult'])
                 else:
-                    if string.find(param['name'],'Position') != -1:
+                    if param['name'].find('Position') != -1:
                         pos=param['fitresult']
-                    if (string.find(param['name'],'FWHM') != -1) | \
-                       (string.find(param['name'],'Fwhm') != -1) | \
-                       (string.find(param['name'],'fwhm') != -1):
+                    if (param['name'].find('FWHM') != -1) | \
+                       (param['name'].find('Fwhm') != -1) | \
+                       (param['name'].find('fwhm') != -1):
                             fwhm=param['fitresult']
             #now I add everything around +/- 4 sigma
             #around the peak position
@@ -1236,12 +1235,6 @@ class Specfit:
                 neto = y_around-ybkg_around
                 deltax = x_around[1:] - x_around[0:-1]
                 area=Numeric.sum(neto[0:-1]*deltax)
-            if 0:
-                import SimplePlot
-                test_yb=SpecfitFuns.subac(y_around,1.0,10000)
-                test_yb2=Numeric.take(SpecfitFuns.subac(y,1.0,10000),idx)
-                SimplePlot.plot([Numeric.take(x,idx),y_around,test_yb,test_yb2])
-                print "just bkg = ",Numeric.sum(y_around-test_yb),Numeric.sum(y_around-test_yb2)
             sigma_area=(Numeric.sqrt(Numeric.sum(y_around)))
             result.append([pos,area,sigma_area,fwhm])           
             #import SimplePlot
@@ -1251,7 +1244,7 @@ class Specfit:
         return result
 
     def guess_yscaling(self,*vars,**kw):
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         elif len(vars) > 0:
             y=vars[0]
@@ -1282,11 +1275,11 @@ class Specfit:
         return scaling
 
     def guess_fwhm(self,**kw):
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         else:
             x=self.xdata
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         else:
             y=self.ydata
@@ -1313,21 +1306,21 @@ class Specfit:
         return fwhm            
 
     def mcaresidualssearch(self,**kw):
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         else:
             y=self.ydata
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         else:
             x=self.xdata
-        if kw.has_key('sigmay'):
+        if 'sigmay' in kw:
             sigmay=kw['sigmay']
         else:
             sigmay=self.sigmay
-        if kw.has_key('parameters'):
+        if 'parameters' in kw:
             paramlist=kw['parameters']
-        elif kw.has_key('paramlist'):
+        elif 'paramlist' in kw:
             paramlist=kw['paramlist']
         else:
             paramlist=self.paramlist
@@ -1349,9 +1342,9 @@ class Specfit:
         for param in paramlist:
             i=i+1
             pname=param['name']
-            if (string.find(pname,'FWHM') != -1) | \
-               (string.find(pname,'Fwhm') != -1) | \
-               (string.find(pname,'fwhm') != -1):
+            if (pname.find('FWHM') != -1) | \
+               (pname.find('Fwhm') != -1) | \
+               (pname.find('fwhm') != -1):
                     fwhm=param['fitresult']
                     if (param['code'] == 'FREE')  | \
                        (param['code'] == 'FIXED') | \
@@ -1364,7 +1357,7 @@ class Specfit:
                             fwhmcode='FACTOR'
                             fwhmcons1=i
                             fwhmcons2=1.0
-            if string.find(pname,'Position') != -1:
+            if pname.find('Position') != -1:
                     peaks.append(param['fitresult'])
 
         #print "Residuals using fwhm = ",fwhm
@@ -1394,12 +1387,12 @@ class Specfit:
         
         for pname in self.theorydict[self.fitconfig['fittheory']][1]:
             estimation=0.0
-            if string.find(pname,'Position') != -1:
+            if pname.find('Position') != -1:
                     estimation=pos
                     code='QUOTED'
                     cons1=pos-0.5*fwhm
                     cons2=pos+0.5*fwhm
-            elif string.find(pname,'Area')!= -1:
+            elif pname.find('Area')!= -1:
                 if areanotdone:                    
                     areanotdone=0
                     area=(height * fwhm / (2.0*Numeric.sqrt(2*Numeric.log(2))))* \
@@ -1415,9 +1408,9 @@ class Specfit:
                     code='FIXED'
                     cons1=0.0
                     cons2=0.0
-            elif (string.find(pname,'FWHM') != -1) | \
-                 (string.find(pname,'Fwhm') != -1) | \
-                 (string.find(pname,'fwhm') != -1):
+            elif (pname.find('FWHM') != -1) | \
+                 (pname.find('Fwhm') != -1) | \
+                 (pname.find('fwhm') != -1):
                     estimation=fwhm
                     code=fwhmcode
                     cons1=fwhmcons1
@@ -1434,28 +1427,28 @@ class Specfit:
         return newpar,newcodes
 
     def mcaresidualssearch_old(self,**kw):
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         else:
             y=self.ydata
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         else:
             x=self.xdata
-        if kw.has_key('sigmay'):
+        if 'sigmay' in kw:
             sigmay=kw['sigmay']
         else:
             sigmay=self.sigmay
-        if kw.has_key('parameters'):
+        if 'parameters' in kw:
             paramlist=kw['parameters']
-        elif kw.has_key('paramlist'):
+        elif 'paramlist' in kw:
             paramlist=kw['paramlist']
         else:
             paramlist=self.paramlist
         areanotdone=1
         newg=1
         for param in self.paramlist: 
-            newg=max(newg,int(string.atof(param['group'])+1))
+            newg=max(newg,int(float(param['group'])+1))
         if newg == 1:
             return areanotdone
         
@@ -1469,9 +1462,9 @@ class Specfit:
         for param in paramlist:
             i=i+1
             pname=param['name']
-            if (string.find(pname,'FWHM') != -1) | \
-               (string.find(pname,'Fwhm') != -1) | \
-               (string.find(pname,'fwhm') != -1):
+            if (pname.find('FWHM') != -1) | \
+               (pname.find('Fwhm') != -1) | \
+               (pname.find('fwhm') != -1):
                     fwhm=param['fitresult']
                     if (param['code'] == 'FREE')  | \
                        (param['code'] == 'FIXED') | \
@@ -1484,7 +1477,7 @@ class Specfit:
                             fwhmcode='FACTOR'
                             fwhmcons1=i
                             fwhmcons2=1.0
-            if string.find(pname,'Position') != -1:
+            if pname.find('Position') != -1:
                     peaks.append(param['fitresult'])
 
         #calculate the residuals
@@ -1511,14 +1504,14 @@ class Specfit:
         
         for pname in self.theorydict[self.fitconfig['fittheory']][1]:
             estimation=0.0
-            name=pname+`newg`
+            name=pname+ "%d" % newg
             self.final_theory.append(pname)
-            if string.find(pname,'Position') != -1:
+            if pname.find('Position') != -1:
                     estimation=pos
                     code='QUOTED'
                     cons1=pos-0.5*fwhm
                     cons2=pos+0.5*fwhm
-            elif string.find(pname,'Area')!= -1:
+            elif pname.find('Area')!= -1:
                 if areanotdone:                    
                     areanotdone=0
                     estimation=(height * fwhm / (2.0*Numeric.sqrt(2*Numeric.log(2))))* \
@@ -1531,9 +1524,9 @@ class Specfit:
                     code='FIXED'
                     cons1=0.0
                     cons2=0.0
-            elif (string.find(pname,'FWHM') != -1) | \
-                 (string.find(pname,'Fwhm') != -1) | \
-                 (string.find(pname,'fwhm') != -1):
+            elif (pname.find('FWHM') != -1) | \
+                 (pname.find('Fwhm') != -1) | \
+                 (pname.find('fwhm') != -1):
                     estimation=fwhm
                     code=fwhmcode
                     cons1=fwhmcons1
@@ -1560,13 +1553,13 @@ class Specfit:
                self.numderiv(x=x,y=y)
                self.numderiv()
         """
-        if kw.has_key('y'):
+        if 'y' in kw:
             ydata=kw['y']
         elif len(vars) > 1:
             ydata=vars[1]
         else:
             ydata=self.y
-        if kw.has_key('x'):
+        if 'x' in kw:
             xdata=kw['x']
         elif len(vars) > 0:
             xdata=vars[0]
@@ -1635,7 +1628,7 @@ class Specfit:
                self.smooth(y=y)
                self.smooth()
         """
-        if kw.has_key('y'):
+        if 'y' in kw:
             ydata=kw['y']
         elif len(vars) > 0:
             ydata=vars[0]
@@ -1659,7 +1652,7 @@ class Specfit:
        	    y=self.y
         if len(vars) > 1:
             width=vars[1]
-        elif self.fitconfig.has_key('FwhmPoints'):
+        elif 'FwhmPoints' in self.fitconfig:
         	width=self.fitconfig['FwhmPoints']
         else:
          	width=5
@@ -1706,12 +1699,12 @@ def test():
         fit.startfit()
     else:
         fit.mcafit()
-    print "Searched parameters = ",[1,1500,100.,50.0,1500,700.,50.0]
-    print "Obtained parameters : "
+    print("Searched parameters = ",[1,1500,100.,50.0,1500,700.,50.0])
+    print("Obtained parameters : ")
     for param in fit.paramlist:
-        print param['name'],' = ',param['fitresult']
-    print "chisq = ",fit.chisq
-    print "Attempting a plot"
+        print(param['name'],' = ',param['fitresult'])
+    print("chisq = ",fit.chisq)
+    print("Attempting a plot")
     import PyQt4.Qt as qt
     import ScanWindow
     qtApp = qt.QApplication([])

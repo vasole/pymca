@@ -1,5 +1,5 @@
 ﻿#/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -448,7 +448,7 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
         elework = ele
         element = ele
     if totals and (energy < 1.0):
-        raise ValueError, "Incompatible combination"
+        raise ValueError("Incompatible combination")
     elif (energy < 1.0):
         #make sure the binding energies are correct
         if PyMcaEPDL97.EPDL97_DICT[ele]['original']:
@@ -498,7 +498,7 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
                     #that is below the binding energy of Scofield)
                     if False and (Scofield1973.dict[element]['energy'][i] - ework) < 0.005:
                         #this does not work for Cd and E=3.5376"
-                        print "Not interpolate for key = ",key,'ework = ',ework,"taken ",Scofield1973.dict[element]['energy'][i]
+                        print("Not interpolate for key = ",key,'ework = ',ework,"taken ",Scofield1973.dict[element]['energy'][i])
                         wi =  Scofield1973.dict[element][key][i]
                     elif (key != 'all other') and Scofield1973.dict[element]['energy'][i-1] < Scofield1973.dict[element]['binding'][key]:
                         wi =  Scofield1973.dict[element][key][i]
@@ -630,7 +630,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
                     auger= 1.0 - omega
                     augercor += augerfactor * auger
                 else:
-                    print "Error unknown shell, Please report"
+                    print("Error unknown shell, Please report")
                     omega = 0.0
                     #for the elements
                     
@@ -672,7 +672,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
                 elif (i==3):
                     #missing pages from article
                     pass
-                if Element[ele].has_key(key):
+                if key in Element[ele]:
                     for t in Element[ele][key]:
                         if t[2:] in mlist:
                             index = mlist.index(t[2:])
@@ -783,7 +783,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
                 energies += [ene]
                 outputDict[ele][transition]['energy'] = ene
                 if ene < 0.0:
-                    print "element = ", ele, "transition = ", transition, "exc. energy = ", energy
+                    print("element = ", ele, "transition = ", transition, "exc. energy = ", energy)
                 
             #matrix term
             formula   = matrix[0]
@@ -973,13 +973,13 @@ def _getAttFilteredElementDict(elementsList,
     outputDict = {}
     for group in elementsList:
         ele  = group[1] * 1
-        if not outputDict.has_key(ele):
+        if not (ele in outputDict):
             outputDict[ele] = {}
             outputDict[ele]['rays'] = []
         raysforloop = [group[2] + " xrays"]
         elementDict = _getUnfilteredElementDict(ele, energy)
         for rays in raysforloop:
-            if rays not in elementDict.keys():continue
+            if rays not in elementDict:continue
             else:outputDict[ele]['rays'].append(rays)
             outputDict[ele][rays] = []
             rates    = []
@@ -1008,7 +1008,7 @@ def _getAttFilteredElementDict(elementsList,
                 for i in range(len(energies)):
                     coef = coeffs[i]
                     if coef < 0.0:
-                        raise ValueError,"Positive exponent in attenuators transmission term"
+                        raise ValueError("Positive exponent in attenuators transmission term")
                     else:
                         try:
                             trans[i] = Numeric.exp(-coef)
@@ -1026,7 +1026,7 @@ def _getAttFilteredElementDict(elementsList,
                     funnyfactor = attenuator[3]
                 else:
                     if abs(attenuator[3]-freefraction) > 0.0001:
-                        raise ValueError, "All funny type filters must have same openning fraction"
+                        raise ValueError("All funny type filters must have same openning fraction")
                 coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
             if funnyfactor is None:
                 for i in range(len(rates)):
@@ -1041,7 +1041,7 @@ def _getAttFilteredElementDict(elementsList,
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in funnyfilters transmission term"
+                            raise ValueError("Positive exponent in funnyfilters transmission term")
                         else:
                             try:
                                 transFunny[i] = Numeric.exp(-coef)
@@ -1066,7 +1066,7 @@ def _getAttFilteredElementDict(elementsList,
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in detector transmission term"
+                            raise ValueError("Positive exponent in detector transmission term")
                         else:
                             try:
                                 trans[i] = 1.0 - Numeric.exp(-coef)
@@ -1181,8 +1181,8 @@ def getMultilayerFluorescence(multilayer0,
             except OverflowError:
                 for coef in coeffs:
                     if coef < 0.0:
-                        raise ValueError,"Positive exponent in attenuators transmission term"    
-                trans = 0.0 * coeffs            
+                        raise ValueError("Positive exponent in attenuators transmission term")    
+                trans = 0.0 * coeffs      
             weightList = weightList * trans
     else:
         pass
@@ -1195,7 +1195,8 @@ def getMultilayerFluorescence(multilayer0,
         #trans = getMaterialTransmission(formula, thickness, energyList,
         #        density=1.0, thickness = sum(thickness))['transmission']
         #weightList = weightList * trans
-    if total <= 0.0:raise ValueError,"Sum of weights lower or equal to 0"
+    if total <= 0.0:
+        raise ValueError("Sum of weights lower or equal to 0")
     weightList = weightList / total
 
 
@@ -1245,14 +1246,14 @@ def getMultilayerFluorescence(multilayer0,
             else:
                 del newbeamfilters[-1]
         if 0:
-            print multilayer[ilayer], "beamfilters =", newbeamfilters
-            print multilayer[ilayer], "attenuators =", origattenuators
+            print(multilayer[ilayer], "beamfilters =", newbeamfilters)
+            print(multilayer[ilayer], "attenuators =", origattenuators)
         if ilayer not in layerList:continue
         pseudomatrix = multilayer[ilayer] * 1
         newelementsList = []
         eleDict = getMaterialMassFractions([pseudomatrix[0]], [1.0])
         if eleDict == {}:
-            raise ValueError, "Invalid layer material %s" % pseudomatrix[0]
+            raise ValueError("Invalid layer material %s" % pseudomatrix[0])
         keys = eleDict.keys()
         if elementsList is None:
             newelementsList = keys
@@ -1321,7 +1322,7 @@ def getMultilayerFluorescence(multilayer0,
                 for i in range(len(energyList)):
                     coef = coeffs[i]
                     if coef < 0.0:
-                        raise ValueError,"Positive exponent in attenuators transmission term"
+                        raise ValueError("Positive exponent in attenuators transmission term")
                     else:
                         try:
                             trans[i] = Numeric.exp(-coef)
@@ -1351,7 +1352,7 @@ def getMultilayerFluorescence(multilayer0,
                 elif justone[2].upper() == 'M':
                     shellIdent = 'M5'
                 else:
-                    raise ValueError,"Unknown Element shell %s" % justone[2]
+                    raise ValueError("Unknown Element shell %s" % justone[2])
                 bindingEnergy = Element[justone[1]]['binding'][shellIdent]
                 nrgi = Numeric.nonzero(energyList >= bindingEnergy)
                 if len(nrgi) == 0:nrgi=[0]
@@ -1421,7 +1422,7 @@ def getMultilayerFluorescence(multilayer0,
                     for i in range(len(energyList)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in attenuators transmission term"
+                            raise ValueError("Positive exponent in attenuators transmission term")
                         else:
                             try:
                                 trans[i] = Numeric.exp(-coef)
@@ -1463,7 +1464,7 @@ def getMultilayerFluorescence(multilayer0,
                             for i in range(len(energyList2)):
                                 coef = coeffs[i]
                                 if coef < 0.0:
-                                    raise ValueError,"Positive exponent in attenuators transmission term"
+                                    raise ValueError("Positive exponent in attenuators transmission term")
                                 else:
                                     try:
                                         trans[i] = Numeric.exp(-coef)
@@ -1527,15 +1528,17 @@ def _combineMatrixFluorescenceDict(dictList, elementsList0):
         finalDict[ele]['mass fraction'] = {}
         finalDict[ele]['rays']=[]
         for dict in dictList:
-            if not dict.has_key(ele):continue
+            if not (ele in dict):continue
             if not len(dict[ele]['rays']):continue
             finalDict[ele]['mass fraction'] = dict[ele]['mass fraction'] * 1.0
             for key in dict[ele]['rates'].keys():
                 if key not in finalDict[ele]['rates']:
-                    if not dict[ele].has_key('weight'):dict[ele]['weight']=dict['weight'] * 1.0
+                    if not ('weight' in dict[ele]):
+                        dict[ele]['weight']=dict['weight'] * 1.0
                     finalDict[ele]['rates'][key] = dict[ele]['rates'][key] *  dict[ele]['weight']
                 else:
-                    if not dict[ele].has_key('weight'):dict[ele]['weight']=dict['weight'] * 1.0
+                    if not ('weight' in dict[ele]):
+                        dict[ele]['weight']=dict['weight'] * 1.0
                     finalDict[ele]['rates'][key] += dict[ele]['rates'][key] *  dict[ele]['weight']
             for transitions0 in dict[ele]['rays']:
                 #try to avoid creation of new references
@@ -1549,23 +1552,23 @@ def _combineMatrixFluorescenceDict(dictList, elementsList0):
                 for transition0 in dict[ele][transitions]:
                     transition = transition0 * 1
                     #print ele,"transition = ",transition
-                    if not finalDict[ele].has_key(transition):
+                    if not (transition in finalDict[ele]):
                         finalDict[ele][transition] = {'rate':0.0,
                                    'energy':dict[ele][transition]['energy'] * 1}
                     if transition not in finalDict[ele][transitions]:
                         finalDict[ele][transitions].append(transition)
                     if transition not in finalDict[ele].keys():
                         finalDict[ele][transition] = {'rate':0.0}
-                    if dict[ele].has_key(transition):
-                      if finalDict[ele].has_key(transition):
+                    if transition in dict[ele]:
+                      if transition in finalDict[ele]:
                         finalDict[ele][transition]['rate'] += w * dict[ele][transition]['rate']
                       else:
                         finalDict[ele][transition] = {}
                         finalDict[ele][transition]['rate'] = w * dict[ele][transition]['rate']
                     else:
-                        print dict[ele][transitions]
-                        print transition
-                        print "is this an error?"
+                        print(dict[ele][transitions])
+                        print(transition)
+                        print("is this an error?")
                         sys.exit(0)
     return finalDict
 
@@ -1582,13 +1585,12 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
             attenuators=[attenuators]
     if detector is not None:
         if type(detector) != types.ListType:
-            raise TypeError, \
-                  "Detector must be a list as [material, density, thickness]"
+            raise TypeError("Detector must be a list as [material, density, thickness]")
         elif len(detector) != 3:
-            raise ValueError, \
-                  "Detector must have the form [material, density, thickness]"
+            raise ValueError("Detector must have the form [material, density, thickness]")
 
-    if energy is None: raise ValueError, "Invalid Energy"
+    if energy is None:
+        raise ValueError("Invalid Energy")
     
     if elementsList is None:
         #get material elements and concentrations
@@ -1607,7 +1609,8 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
         for z, ele in elementsList:
             eleDict[ele] = 1.0    
 
-    if energy <= 0.10: raise ValueError, "Invalid Energy %.5g keV" % energy
+    if energy <= 0.10:
+        raise ValueError("Invalid Energy %.5g keV" % energy)
     
     #do the job
     outputDict = {}
@@ -1644,7 +1647,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in attenuators transmission term"
+                            raise ValueError("Positive exponent in attenuators transmission term")
                         else:
                             try:
                                 trans[i] = Numeric.exp(-coef)
@@ -1668,7 +1671,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in attenuators transmission term"
+                            raise ValueError("Positive exponent in attenuators transmission term")
                         else:
                             try:
                                 trans[i] = 1.0 - Numeric.exp(-coef)
@@ -1695,7 +1698,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                             expterm = Numeric.exp(-((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness)
                         except OverflowError:
                             if -((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness > 0.0:
-                                raise ValueError,"Positive exponent in transmission term"
+                                raise ValueError("Positive exponent in transmission term")
                             expterm = 0.0
                         trans *= (1.0 -  expterm)
                 #if ele == 'Pb':
@@ -1764,13 +1767,14 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             funnyfilters=[funnyfilters]
     if detector is not None:
         if type(detector) != types.ListType:
-            raise TypeError, \
-                  "Detector must be a list as [material, density, thickness]"
+            raise TypeError(\
+                  "Detector must be a list as [material, density, thickness]")
         elif len(detector) != 3:
-            raise ValueError, \
-                  "Detector must have the form [material, density, thickness]"
+            raise ValueError(\
+                  "Detector must have the form [material, density, thickness]")
 
-    if energy is None: raise ValueError, "Invalid Energy"
+    if energy is None:
+        raise ValueError("Invalid Energy")
     
     elementsRays = None
     if elementsList is None:
@@ -1798,21 +1802,22 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
         for z, ele in elementsList:
             eleDict[ele] = 1.0    
 
-    if energy <= 0.10: raise ValueError, "Invalid Energy %.5g keV" % energy
+    if energy <= 0.10:
+        raise ValueError("Invalid Energy %.5g keV" % energy)
     
     #do the job
     outputDict = {}
     shelllist = ['K', 'L1', 'L2', 'L3','M1', 'M2', 'M3', 'M4', 'M5']
     for z,ele in elementsList:
         #use own unfiltered dictionnary
-        if userElementDict.has_key(ele):
+        if ele in userElementDict:
             elementDict = userElementDict[ele]
         else:
             elementDict = _getUnfilteredElementDict(ele, energy)
-        if not outputDict.has_key(ele):
+        if not (ele in outputDict):
             outputDict[ele] ={}
         outputDict[ele]['mass fraction'] = eleDict[ele]
-        if not outputDict[ele].has_key('rates'):
+        if not ('rates' in outputDict[ele]):
             outputDict[ele]['rates'] = {}
         #get the fluorescence term for all shells
         fluoWeights = _getFluorescenceWeights(ele, energy, normalize = False,
@@ -1860,7 +1865,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             except OverflowError:
                 for coef in coeffs:
                     if coef < 0.0:
-                        raise ValueError,"Positive exponent in attenuators transmission term"    
+                        raise ValueError("Positive exponent in attenuators transmission term")
                 trans = 0.0 * coeffs
 
             #funnyfilters
@@ -1873,7 +1878,8 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                     funnyfactor = attenuator[3]
                 else:
                     if abs(attenuator[3]-freefraction) > 0.0001:
-                        raise ValueError, "All funny type filters must have same openning fraction"
+                        raise ValueError(\
+                            "All funny type filters must have same openning fraction")
                 coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
             if funnyfactor is None:
                 for i in range(len(rates)):
@@ -1888,7 +1894,8 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in funnyfilters transmission term"
+                            raise ValueError(\
+                                "Positive exponent in funnyfilters transmission term")
                         else:
                             try:
                                 transFunny[i] = Numeric.exp(-coef)
@@ -1913,7 +1920,8 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
-                            raise ValueError,"Positive exponent in attenuators transmission term"
+                            raise ValueError(\
+                                "Positive exponent in attenuators transmission term")
                         else:
                             try:
                                 trans[i] = 1.0 - Numeric.exp(-coef)
@@ -1964,13 +1972,13 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                     #print "overflow"
                                     if ((-(mutotal[-1]/sinAlphaIn) * thickness) > 0.0) or\
                                        ((-(mutotal[i]/sinAlphaOut) * thickness) > 0.0):
-                                        raise ValueError,"Positive exponent in transmission term"
+                                        raise ValueError("Positive exponent in transmission term")
                                     expterm = 0.0
                                 trans *= expterm
                             else:
-                                raise ValueError,"Incorrect target density and/or thickness"
+                                raise ValueError("Incorrect target density and/or thickness")
                         if trans < 0.0:
-                            print "trans lower than 0.0. Reset to 0.0"
+                            print("trans lower than 0.0. Reset to 0.0")
                             trans = 0.0
 
                     else:
@@ -1984,7 +1992,8 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                 except OverflowError:
                                     #print "overflow"
                                     if -((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness > 0.0:
-                                        raise ValueError,"Positive exponent in transmission term"
+                                        raise ValueError(\
+                                            "Positive exponent in transmission term")
                                     expterm = 0.0
                                 trans *= (1.0 -  expterm)
                     #if ele == 'Pb':
@@ -2064,10 +2073,10 @@ def getMWeights(ele,energy=None, normalize = None, shellist = None):
 
 def getxrayenergy(symbol,transition):
     if len(symbol) > 1:
-        ele = string.upper(symbol[0])+string.lower(symbol[1])
+        ele = symbol[0].upper() + symbol[1].lower()
     else:
-        ele = string.upper(symbol)
-    trans   = string.upper(transition)
+        ele = symbol.upper()
+    trans   = transition.upper()
     z = getz(ele)
     if z > len(ElementBinding):
         #Give the bindings of the last element
@@ -2100,14 +2109,14 @@ def getxrayenergy(symbol,transition):
 
     if emin > emax:
         if z != 13:
-            print "Warning, negative energy!"
-            print "Please report this message:"
-            print "Symbol=",symbol
-            print "emin = ",emin
-            print "emax = ",emax
-            print "z    = ",z
-            print "transition = ",transition
-            print "the transition will be ignored"
+            print("Warning, negative energy!")
+            print("Please report this message:")
+            print("Symbol=",symbol)
+            print("emin = ",emin)
+            print("emax = ",emax)
+            print("z    = ",z)
+            print("transition = ",transition)
+            print("the transition will be ignored")
     return emax - emin
 
 def isValidFormula(compound):
@@ -2118,8 +2127,8 @@ def isValidFormula(compound):
     #single element case
     if compound in Element.keys():return True
     try:
-        elts= [ w for w in re.split('[0-9]', compound) if w<>'' ]
-        nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w<>'' ]
+        elts= [ w for w in re.split('[0-9]', compound) if w != '' ]
+        nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
     except:
         return False
     if len(elts)==1 and len(nbs)==0:
@@ -2127,7 +2136,7 @@ def isValidFormula(compound):
             return True
         else:
             return False
-    if (len(elts)==0 and len(nbs)==0) or (len(elts)<>len(nbs)):return False
+    if (len(elts)==0 and len(nbs)==0) or (len(elts) != len(nbs)):return False
     return True
 
 def isValidMaterial(compound):
@@ -2173,14 +2182,14 @@ def getmassattcoef(compound,energy=None):
 	"""
     #single element case
     if compound in Element.keys():return getelementmassattcoef(compound,energy)
-    elts= [ w for w in re.split('[0-9]', compound) if w<>'' ]
-    nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w<>'' ]
+    elts= [ w for w in re.split('[0-9]', compound) if w != '' ]
+    nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
     if len(elts)==1 and len(nbs)==0:
         if elts in Element.keys():
             return getelementmassattcoef(compound,energy)
         else:
             return {}
-    if (len(elts)==0 and len(nbs)==0) or (len(elts)<>len(nbs)):return {}
+    if (len(elts)==0 and len(nbs)==0) or (len(elts) != len(nbs)):return {}
 
     fraction = [Element[elt]['mass'] *nb for (elt, nb) in zip(elts, nbs) ]
     div      = sum(fraction)
@@ -2395,17 +2404,17 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
             elts=[compound]
             nbs =[1]
         else:
-            elts= [ w for w in re.split('[0-9]', compound) if w<>'' ]
+            elts= [ w for w in re.split('[0-9]', compound) if w != '' ]
             try:
-                nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w<>'' ]
+                nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
             except:
-                raise ValueError, "Compound '%s' not understood" % compound                
+                raise ValueError("Compound '%s' not understood" % compound)                
             if len(elts)==1 and len(nbs)==0:
                 elts=[compound]
                 nbs =[1]
-        if (len(elts)==0 and len(nbs)==0) or (len(elts)<>len(nbs)):
-            print "compound %s not understood" % compound
-            raise ValueError, "compound %s not understood" % compound
+        if (len(elts)==0 and len(nbs)==0) or (len(elts) != len(nbs)):
+            print("compound %s not understood" % compound)
+            raise ValueError("compound %s not understood" % compound)
 
         #the proportion of the element in that compound times the compound fraction
         fraction = [Element[elt]['mass'] *nb for (elt, nb) in zip(elts, nbs) ]
@@ -2439,7 +2448,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
     dict['total']    = []
     eltindex = 0
     for ele in materialElements.keys():
-        if Element[ele].has_key('xcom'):
+        if 'xcom' in Element[ele]:
             xcom_data = Element[ele]['xcom']       
         else:
             xcom_data = getelementmassattcoef(ele,None)
@@ -2525,7 +2534,7 @@ def getcandidates(energy,threshold=None,targetrays=None):
         for ele in ElementList:
             for ray in targetrays:
                 rays = ray + " xrays"
-                if Element[ele].has_key('rays'):
+                if 'rays' in Element[ele]:
                     for transition in Element[ele][rays]:
                         e = Element[ele][transition]['energy']
                         r = Element[ele][transition]['rate']
@@ -2547,7 +2556,7 @@ def getElementFormFactor(ele, theta, energy):
             ele = getsymbol(z)
             return CoherentScattering.getElementFormFactor(ele, theta, energy)
         except:
-            raise ValueError,"Unknown element %s" % ele
+            raise ValueError("Unknown element %s" % ele)
     
 
 def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
@@ -2562,7 +2571,7 @@ def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
           value=CoherentScattering.\
             getElementCoherentDifferentialCrossSection(ele, theta, energy, p1)
         except:
-          raise ValueError,"Unknown element %s" % ele
+          raise ValueError("Unknown element %s" % ele)
     #convert from cm2/atom to cm2/g
     return (value * AVOGADRO_NUMBER)/ Element[ele]['mass']
 
@@ -2578,7 +2587,7 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
           value = IncoherentScattering.\
                 getElementIncoherentScatteringFunction(ele, theta, energy)
         except:
-          raise ValueError,"Unknown element %s" % ele
+          raise ValueError("Unknown element %s" % ele)
     return value        
 
 def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
@@ -2592,7 +2601,7 @@ def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
           value = IncoherentScattering.\
             getElementComptonDifferentialCrossSection(ele, theta, energy, p1)
         except:
-          raise ValueError,"Unknown element %s" % ele
+          raise ValueError("Unknown element %s" % ele)
     return (value * 6.022142E23)/ Element[ele]['mass']        
 
 def getelementmassattcoef(ele,energy=None):
@@ -2623,11 +2632,11 @@ def getelementmassattcoef(ele,energy=None):
                 xcomfile = os.path.join(dirmod, "attdata")
                 xcomfile = os.path.join(xcomfile, ele+".mat")
             if not os.path.exists(xcomfile):
-                print "Cannot find file ",xcomfile
+                print("Cannot find file ",xcomfile)
                 raise IOError("Cannot find %s" % xcomfile)
         f = open(xcomfile, 'r')
         line=f.readline()
-        while (string.split(line,'ENERGY')[0] == line):
+        while (line.split('ENERGY')[0] == line):
             line = f.readline()
         Element[ele]['xcom'] = {}
         Element[ele]['xcom']['energy']   =[]
@@ -2637,44 +2646,44 @@ def getelementmassattcoef(ele,energy=None):
         Element[ele]['xcom']['pair']     =[]
         Element[ele]['xcom']['total']    =[]
         line = f.readline()
-        while (string.split(line,'COHERENT')[0] == line):
-            line = string.split(line)
+        while (line.split('COHERENT')[0] == line):
+            line = line.split()
             for value in line:
-                Element[ele]['xcom']['energy'].append(string.atof(value)*1000.)   
+                Element[ele]['xcom']['energy'].append(float(value)*1000.)   
             line = f.readline()
         Element[ele]['xcom']['energy']=Numeric.array(Element[ele]['xcom']['energy'])
         line = f.readline()
-        while (string.split(line,'INCOHERENT')[0] == line):
-            line = string.split(line)
+        while (line.split('INCOHERENT')[0] == line):
+            line = line.split()
             for value in line:
-                Element[ele]['xcom']['coherent'].append(string.atof(value))   
+                Element[ele]['xcom']['coherent'].append(float(value))
             line = f.readline()
         Element[ele]['xcom']['coherent']=Numeric.array(Element[ele]['xcom']['coherent'])
         line = f.readline()
-        while (string.split(line,'PHOTO')[0] == line):
-            line = string.split(line)
+        while (line.split('PHOTO')[0] == line):
+            line = line.split()
             for value in line:
-                Element[ele]['xcom']['compton'].append(string.atof(value))   
+                Element[ele]['xcom']['compton'].append(float(value))   
             line = f.readline()
         Element[ele]['xcom']['compton']=Numeric.array(Element[ele]['xcom']['compton'])
         line = f.readline()
-        while (string.split(line,'PAIR')[0] == line):
-            line = string.split(line)
+        while (line.split('PAIR')[0] == line):
+            line = line.split()
             for value in line:
-                Element[ele]['xcom']['photo'].append(string.atof(value))   
+                Element[ele]['xcom']['photo'].append(float(value))   
             line = f.readline()
         line = f.readline()
-        while (string.split(line,'PAIR')[0] == line):
-            line = string.split(line)
+        while (line.split('PAIR')[0] == line):
+            line = line.split()
             for value in line:
-                Element[ele]['xcom']['pair'].append(string.atof(value))   
+                Element[ele]['xcom']['pair'].append(float(value))   
             line = f.readline()
         i = 0
         line = f.readline()
         while (len(line)):
-            line = string.split(line)
+            line = line.split()
             for value in line:
-                Element[ele]['xcom']['pair'][i] += string.atof(value)   
+                Element[ele]['xcom']['pair'][i] += float(value)   
                 i += 1
             line = f.readline()
         if 0:
@@ -2699,7 +2708,7 @@ def getelementmassattcoef(ele,energy=None):
             Element[ele]['xcom']['comptonlog10']=Numeric.log10(Element[ele]['xcom']['compton'])
             Element[ele]['xcom']['photolog10']=Numeric.log10(Element[ele]['xcom']['photo'])
         except:
-            raise "Math error", "Problem calculating logaritm of %s.mat file data" % ele
+            raise ValueError("Problem calculating logaritm of %s.mat file data" % ele)
         for i in range(0,len(Element[ele]['xcom']['energy'])):
             Element[ele]['xcom']['total'].append(Element[ele]['xcom']['coherent'][i]+\
                                                  Element[ele]['xcom']['compton'] [i]+\
@@ -2898,11 +2907,11 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=0.200, minrate=0.001
     if normalize   is None: normalize   = True
     if photoweights is None: photoweights = True
     if len(symbol) > 1:
-        ele = string.upper(symbol[0])+string.lower(symbol[1])
+        ele = symbol[0].upper() + symbol[1].lower()
     else:
-        ele = string.upper(symbol)
+        ele = symbol[0].upper()
     #reset existing dictionnary
-    if dict.has_key('rays'):
+    if 'rays' in dict:
         for rays in dict['rays']:
             for transition in dict[rays]:
                 #print "transition deleted = ",transition
@@ -2980,7 +2989,7 @@ def _getMaterialDict():
                 matdict = os.path.join(dirmod, "attdata")
                 matdict = os.path.join(matdict, "MATERIALS.DICT")
     if not os.path.exists(matdict):
-        print "Cannot find file ", matdict
+        print("Cannot find file ", matdict)
         #raise IOError("Cannot find %s" % matdict)
         return {}
     cDict.read(matdict)
@@ -3013,7 +3022,8 @@ class BoundMethodWeakref:
 _registeredCallbacks=[]
 
 def registerUpdate(callback):
-    if not callable(callback): raise TypeError,"It should be a callable method"
+    if not callable(callback):
+        raise TypeError("It should be a callable method")
 
     def delCallback(ref):
         try:
@@ -3088,48 +3098,50 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         ele = sys.argv[1]
         if ele in Element.keys():
-            print "Symbol        = ",getsymbol(getz(ele))
-            print "Atomic Number = ",getz(ele)
-            print "Name          = ",getname(getz(ele))
-            print "K-shell yield = ",Element[ele]['omegak']
-            print "L1-shell yield = ",Element[ele]['omegal1']
-            print "L2-shell yield = ",Element[ele]['omegal2']
-            print "L3-shell yield = ",Element[ele]['omegal3']
-            print "M1-shell yield = ",Element[ele]['omegam1']
-            print "M2-shell yield = ",Element[ele]['omegam2']
-            print "M3-shell yield = ",Element[ele]['omegam3']
-            print "M4-shell yield = ",Element[ele]['omegam4']
-            print "M5-shell yield = ",Element[ele]['omegam5']
-            print "L Coster-Kronig= ",Element[ele]['CosterKronig']['L']
-            print "M Coster-Kronig= ",Element[ele]['CosterKronig']['M']
+            print("Symbol        = ",getsymbol(getz(ele)))
+            print("Atomic Number = ",getz(ele))
+            print("Name          = ",getname(getz(ele)))
+            print("K-shell yield = ",Element[ele]['omegak'])
+            print("L1-shell yield = ",Element[ele]['omegal1'])
+            print("L2-shell yield = ",Element[ele]['omegal2'])
+            print("L3-shell yield = ",Element[ele]['omegal3'])
+            print("M1-shell yield = ",Element[ele]['omegam1'])
+            print("M2-shell yield = ",Element[ele]['omegam2'])
+            print("M3-shell yield = ",Element[ele]['omegam3'])
+            print("M4-shell yield = ",Element[ele]['omegam4'])
+            print("M5-shell yield = ",Element[ele]['omegam5'])
+            print("L Coster-Kronig= ",Element[ele]['CosterKronig']['L'])
+            print("M Coster-Kronig= ",Element[ele]['CosterKronig']['M'])
             if len(sys.argv) > 2:
                 def testCallback():
-                    print "callback called"
+                    print("callback called")
                 registerUpdate(testCallback)
-                e = string.atof(sys.argv[2])
+                e = float(sys.argv[2])
                 if 0:
                     _updateElementDict(ele,Element[ele],energy=e)
                 else:
                     import time
                     t0=time.time()
                     updateDict(energy=e)
-                    print "update took ",time.time() - t0
+                    print("update took ",time.time() - t0)
             for rays in Element[ele]['rays']:
-                print rays,":"
+                print(rays,":")
                 for transition in Element[ele][rays]:
-                    print "%s energy = %.5f  rate = %.5f" % (transition,Element[ele][transition]['energy'],
-                                                                        Element[ele][transition]['rate'])
+                    print("%s energy = %.5f  rate = %.5f" %\
+                          (transition,Element[ele][transition]['energy'],
+                                        Element[ele][transition]['rate']))
             
         if len(sys.argv) > 2:
             LOGLOG = False
-            print "OLD VALUES"
-            print getmassattcoef(ele,string.atof(sys.argv[2]))
+            print("OLD VALUES")
+            print(getmassattcoef(ele,float(sys.argv[2])))
             LOGLOG = True
-            print "NEW VALUES"
-            print getmassattcoef(ele,string.atof(sys.argv[2]))
+            print("NEW VALUES")
+            print(getmassattcoef(ele,float(sys.argv[2])))
             if len(sys.argv) >3:
-                print getcandidates(string.atof(sys.argv[2]),threshold=string.atof(sys.argv[3]))
+                print(getcandidates(float(sys.argv[2]),
+                                    threshold=float(sys.argv[3])))
             else:
-                print getcandidates(string.atof(sys.argv[2]))
+                print(getcandidates(float(sys.argv[2])))
         else:
-            print getmassattcoef(ele,[10.,11,12,12.5])
+            print(getmassattcoef(ele,[10.,11,12,12.5]))

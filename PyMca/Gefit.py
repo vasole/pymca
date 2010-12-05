@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -85,17 +85,17 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=[],
                                     ydata=ydata,
                                     sigmadata=sigmadata)
         except TypeError:
-            print "You should reconsider how to write your function"
-            raise TypeError
+            print("You should reconsider how to write your function")
+            raise TypeError("You should reconsider how to write your function")
     else:
-            return RestreinedLeastSquaresFit(model,parameters0,
-                                    data,maxiter,
-                                    constrains,weightflag,model_deriv=model_deriv,
-                                    deltachi=deltachi,
-                                    fulloutput=fulloutput,
-                                    xdata=xdata,
-                                    ydata=ydata,
-                                    sigmadata=sigmadata)
+        return RestreinedLeastSquaresFit(model,parameters0,
+                                data,maxiter,
+                                constrains,weightflag,model_deriv=model_deriv,
+                                deltachi=deltachi,
+                                fulloutput=fulloutput,
+                                xdata=xdata,
+                                ydata=ydata,
+                                sigmadata=sigmadata)
 
 def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
                                 constrains0,weightflag,model_deriv=None,deltachi=0.01,fulloutput=0,
@@ -144,9 +144,9 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
             else:
                #I should raise an exception
                 #constrains[0][i] = 0
-                raise ValueError,"Unknown constraint %s" % constrains[0][i]
+                raise ValueError("Unknown constraint %s" % constrains[0][i])
         if (constrains[0][i] == CQUOTED):
-            raise ValueError, "Linear fit cannot handle quoted constraint"
+            raise ValueError("Linear fit cannot handle quoted constraint")
     # make a local copy of the function for an easy speed up ...
     model = model0
     parameters = array(parameters0)
@@ -260,7 +260,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
             else:
                #I should raise an exception
                 #constrains[0][i] = 0
-                raise ValueError,"Unknown constraint %s" % constrains[0][i]
+                raise ValueError("Unknown constraint %s" % constrains[0][i])
     # make a local copy of the function for an easy speed up ...
     model = model0
     parameters = array(parameters0)
@@ -371,9 +371,9 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                                     B * sin(arcsin((fitparam[i] - A)/B)+ \
                                     deltapar [0] [i])
                     else:
-                        print "Error processing constrained fit"
-                        print "Parameter limits are",pmin,' and ',pmax
-                        print "A = ",A,"B = ",B
+                        print("Error processing constrained fit")
+                        print("Parameter limits are",pmin,' and ',pmax)
+                        print("A = ",A,"B = ",B)
                 newpar [free_index[i]] = pwork [0] [i]
             newpar=array(getparameters(newpar,constrains))
             workpar = take(newpar,noigno)
@@ -626,10 +626,10 @@ def test(npoints):
     stime = time.time()
     fittedpar, chisq, sigmapar = LeastSquaresFit(gauss,parameters,data)
     etime = time.time()
-    print "Took ",etime - stime, "seconds"
-    print "chi square  = ",chisq
-    print "Fitted pars = ",fittedpar
-    print "Sigma pars  = ",sigmapar
+    print("Took ",etime - stime, "seconds")
+    print("chi square  = ",chisq)
+    print("Fitted pars = ",fittedpar)
+    print("Sigma pars  = ",sigmapar)
 
 
 if __name__ == "__main__":

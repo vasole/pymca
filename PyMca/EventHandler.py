@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,9 +22,8 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
-#!/usr/bin/env python
 """
 This module implements an event handler class.
 
@@ -75,12 +74,13 @@ Full event names: A string with the event name fully specified (i.e. a.b.c)
 """
 __version__ = '0.1Beta'
 
-import new, string, os.path
+#import new, string,
+import os.path
 
-class Event:
+class Event(object):
   pass
 
-class OneEvent:
+class OneEvent(object):
   def __init__(self, parent = None, event = None):
     self.parent = parent
     self.event = event
@@ -88,7 +88,7 @@ class OneEvent:
     self.creator = None
     self.created = 0
 
-class EventHandler :
+class EventHandler(object):
     def __init__(self):
       self.callbacks = {}
       self.fulldict = {}
@@ -100,15 +100,16 @@ class EventHandler :
         return self.fulldict[fulleventstr]
       except KeyError:
         try:
-          idx = string.rindex(fulleventstr, ".") + 1
+          idx = fulleventstr.rindex(".") + 1
           parentstr = fulleventstr[:idx-1]
           parent = self._create(parentstr)
         except ValueError:
           parent = self.rootevent
           idx = 0
-        event = new.classobj(fulleventstr[idx:], (parent.event,), globals()) 
-      	self.fulldict[fulleventstr] = OneEvent(event = event, parent = parent)
-        return self.fulldict[fulleventstr]
+      #event = new.classobj(fulleventstr[idx:], (parent.event,), globals()) 
+      event = type(fulleventstr[idx:], (parent.event,), globals()) 
+      self.fulldict[fulleventstr] = OneEvent(event = event, parent = parent)
+      return self.fulldict[fulleventstr]
 
     def create(self, fulleventstr, myid = None):
       """ Create the event. This call will take a full classname a.b.c and
@@ -171,7 +172,7 @@ class EventHandler :
           try:
             cbname = cb.__name__
           except AttributeError:
-            cbname = `cb`
+            cbname = "%s" % cb
             
           s = s + "   %s" % cbname
           if regid:
@@ -193,11 +194,14 @@ class EventHandler :
       self.events = {}
       self.callbacks = {}
       for fullev, oe in self.fulldict.items(): 
-        events = string.split(fullev,".")
+        events = fullev.split(".")
         self.events[events[-1]] = oe.event  # only for our callers
         cbs = map(lambda x: x[0], self.fulldict[fullev].callbacks)
         for i in range(len(events)):
-          evname = string.join(events[:i+1], ".")
+          evname = ""
+          for piece in events[:i+1]:
+            evname += piece + "."
+          evname = evname[:-1]
           ev = self.fulldict[evname].event
           try:
             self.callbacks[ev] = self.callbacks[ev] + cbs
@@ -208,9 +212,9 @@ class EventHandler :
       """ Fire the event with arguments and keywords """
       if event in self.callbacks.keys():
         for cb in self.callbacks[event]:
-            apply(cb, args, kw)
+            cb(*args, **kw)
       else:
-        print "Warning: missing event ",event
+        print("Warning: missing event ",event)
         
     def getfullevents(self):
       """ return a list with fully specified event names (a.b.c) """
@@ -220,11 +224,11 @@ class EventHandler :
       """ return a list with name item tuples. """
       evdict = {}
       for fullev in self.fulldict.keys():
-        events = string.split(fullev,".")
+        events = fullev.split(".")
         dict = evdict
         for i in range(len(events)):
           evname = events[i]
-          if not dict.has_key(evname):
+          if not (evname in dict):
             dict[evname] = {} 
           dict = dict[evname]
       return self._dict2tup(evdict)
@@ -241,13 +245,13 @@ class EventHandler :
 def test(eh = None):
     """EventHandler class test function"""
     def callback1(data, more=None):
-         print 'Hi callback 1 (Data) with data : %s and %s' % (data, `more`)
+         print('Hi callback 1 (Data) with data : %s and %s' % (data, more))
        
     def callback2(data, more=None):
-         print 'Hi callback 2 (XData) with data : %s and %s' % (data, `more`)
+         print('Hi callback 2 (XData) with data : %s and %s' % (data, more))
 
     def callback3(data, more=None):
-         print 'Hi callback 3 (Ydata) with data : %s and %s' % (data, `more`)
+         print('Hi callback 3 (Ydata) with data : %s and %s' % (data, more))
        
     if eh is None:
       eh = EventHandler()
@@ -258,16 +262,16 @@ def test(eh = None):
     eh.register("NewDataEvent", callback1)
     eh.register("NewDataEvent.XNewDataEvent" , callback2)
     eh.register("NewDataEvent.YNewDataEvent" , callback3)
-    print `eh.getevents()`
+    print("%s" % eh.getevents())
 
     eh.event(XNewDataEvent, "this is data for 2")
     eh.event(NewDataEvent, "this is data for 1,2,3", more=[1,2,3])
     eh.event(eh.events["YNewDataEvent"], "more for 3")
 
     try:
-	eh.event("XNewDataEvent", "this is data again")
+        eh.event("XNewDataEvent", "this is data again")
     except KeyError:
-        print "Error: String as Event has been detected sucessfully"    
+        print("Error: String as Event has been detected sucessfully")
 
     eh.unregister("NewDataEvent", callback1)
     eh.event(NewDataEvent, "this is data again again")

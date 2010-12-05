@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -96,7 +96,7 @@ class McaCalWidget(qt.QDialog):
             self.caldict[legend]['A'] = 0.0  
             self.caldict[legend]['B'] = 1.0  
             self.caldict[legend]['C'] = 0.0
-        if not self.caldict[legend].has_key('order'):
+        if not ('order' in self.caldict[legend]):
                 if abs(self.caldict[legend]['C']) > 0.0:
                     self.caldict[legend]['order'] = 2
                 else:
@@ -325,7 +325,7 @@ class McaCalWidget(qt.QDialog):
         
     def peaksearch(self):
         if DEBUG:
-            print "Peak search called"
+            print("Peak search called")
         if self.__manualsearch:
             self.__manualsearch = 0
             if QTVERSION < '4.0.0':
@@ -422,7 +422,7 @@ class McaCalWidget(qt.QDialog):
 
     def __calparsignal(self,dict):
         if DEBUG:
-            print "__calparsignal called dict = ",dict
+            print("__calparsignal called dict = ",dict)
         if dict['event'] == 'coeff':
             current = dict['calname' ]
             self.current  = current
@@ -502,16 +502,16 @@ class McaCalWidget(qt.QDialog):
                 pass
             else:
                 if DEBUG:
-                    print "Unknown combobox",dict['boxname']
+                    print("Unknown combobox",dict['boxname'])
         else:
-            print "Unknown signal ",dict
+            print("Unknown signal ",dict)
 
     def __graphsignal(self, ddict):
         if DEBUG:
-            print "__graphsignal called with dict = ", ddict
+            print("__graphsignal called with dict = ", ddict)
         if ddict['event'] == 'markerSelected':
             if DEBUG:
-                print "Setting marker color"
+                print("Setting marker color")
             marker = int(ddict['marker'])
             name   = "Peak %d" % marker
             number = marker
@@ -556,7 +556,7 @@ class McaCalWidget(qt.QDialog):
             if ret == qt.QDialog.Accepted:
                 ddict=linewidget.getdict()
                 if DEBUG:
-                    print "dict got from dialog = ",ddict
+                    print("dict got from dialog = ",ddict)
                 if ddict != {}:
                     if name in self.peaktable.peaks.keys():
                         self.peaktable.configure(*ddict)
@@ -588,7 +588,7 @@ class McaCalWidget(qt.QDialog):
                     self.__peaktablesignal({'event':'use'}, calculate=False)
             else:
                 if DEBUG:
-                    print "Dialog cancelled or closed "
+                    print("Dialog cancelled or closed ")
                 self.graph.setmarkercolor(marker,'black')
                 self.graph.replot()
             del linewidget
@@ -621,11 +621,11 @@ class McaCalWidget(qt.QDialog):
                 self.__msb.setChecked(0)
         else:
             if DEBUG:
-                print "Unhandled event ",   ddict['event']
+                print("Unhandled event ",   ddict['event'])
 
     def __peaktablesignal(self, ddict, calculate=True):
         if DEBUG:
-            print "__peaktablesignal called dict = ",ddict
+            print("__peaktablesignal called dict = ",ddict)
         if (ddict['event'] == 'use') or (ddict['event'] == 'setenergy'):
             #get table dictionary
             peakdict = self.peaktable.getdict()
@@ -836,7 +836,7 @@ class McaCalWidget(qt.QDialog):
                 return [0.0,usedpeaks[0][1]/usedpeaks[0][0],0.0]
             else:
                 if DEBUG:
-                    print "Division by zero"
+                    print("Division by zero")
                 current = self.current
                 self.caldict[current]['A'] = newcal[0]
                 self.caldict[current]['B'] = newcal[1]
@@ -887,7 +887,7 @@ class PeakSearchParameters(qt.QWidget):
             specfit      = specfit
         if config is None: 
             config=self.specfit.fitconfig
-        if config.has_key("AutoYscaling"):
+        if "AutoYscaling" in config:
             autoscaling = config["AutoYscaling"]
         else:
             autoscaling = 0
@@ -1231,9 +1231,9 @@ class CalibrationParameters(qt.QWidget):
 
     def myslot(self,*var,**kw):
         if DEBUG:
-            print "Cal Parameters Slot ",var,kw
-            print self.caldict[self.currentcal]
-        if kw.has_key('event'):
+            print("Cal Parameters Slot ",var,kw)
+            print(self.caldict[self.currentcal])
+        if 'event' in kw:
             ddict={}
             if (kw['event'] == 'order'):
                 ddict={}
@@ -1350,36 +1350,36 @@ class InputLine(qt.QDialog):
         self.bottom.layout.addWidget(HorizontalSpacer(self.bottom))
         self.connect(cancelbutton, qt.SIGNAL("clicked()"), self.reject)
         self.connect(okbutton, qt.SIGNAL("clicked()"), self.accept)
-        if peakpars.has_key('name'):
+        if 'name' in peakpars:
             peakname = peakpars['name']
         else:
             peakname = 'PEAK 1'
-        if peakpars.has_key('number'):
+        if 'number' in peakpars:
             number = peakpars['number']
         else:
             number = 1
-        if peakpars.has_key('channel'):
+        if 'channel' in peakpars:
             channel = peakpars['channel']
         else:
             channel = 0
-        if peakpars.has_key('element'):
+        if 'element' in peakpars:
             element = peakpars['element']
         else:
             element = '-'
-        if peakpars.has_key('elementline'):
+        if 'elementline' in peakpars:
             elementline = peakpars['elementline']
         else:
             elementline = '-'
         if elementline == '-':
-            if peakpars.has_key('setenergy'):
+            if 'setenergy' in peakpars:
                 setenergy = peakpars['setenergy']
             else:
                 setenergy = '0.0'
-        if peakpars.has_key('use'):
+        if 'use' in peakpars:
             use = peakpars['use']
         else:
             use = 1
-        if peakpars.has_key('calenergy'):
+        if 'calenergy' in peakpars:
             calenergy = peakpars['calenergy']
         else:
             calenergy = ""
@@ -1711,7 +1711,7 @@ def test(x,y,legend):
         dict=demo.getdict()
     else:
         dict={}
-    print " output = ",dict
+    print(" output = ",dict)
     demo.close()
     del demo
     #app.exec_loop()
@@ -1751,6 +1751,8 @@ if __name__ == '__main__':
             sumflag = int(float(arg))
         if opt in ('--plotflag'):
             plotflag = int(float(arg))
+    if len(sys.argv) > 1:
+        inputfile = sys.argv[1]
     if inputfile is None:
         inputfile = '03novs060sum.mca'
     sf=specfile.Specfile(inputfile)
