@@ -30,6 +30,10 @@ __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import QtBlissGraph
 qt = QtBlissGraph.qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 import os
@@ -1133,7 +1137,7 @@ class CalibrationParameters(qt.QWidget):
         return self.caldict
 
     def _CFixSlot(self):
-        self.__orderbox(qt.QString('TOF'))
+        self.__orderbox(QString('TOF'))
     
     def __orderbox(self,qstring):
         qstring = str(qstring)
@@ -1688,7 +1692,7 @@ class SimpleComboBox(qt.QComboBox):
             self.insertStrList(options)
         else:
             for item in options:
-                self.addItem(qt.QString(item))
+                self.addItem(QString(item))
 
     def getcurrent(self):
         if QTVERSION < '4.0.0':

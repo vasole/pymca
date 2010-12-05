@@ -2128,18 +2128,19 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def getActiveCurve(self,justlegend=0):
         #check the number of curves
-        if len(self.curves.keys()) > 1:
+        curves_keys = list(self.curves.keys()) 
+        if len(curves_keys) > 1:
             if not len(self.__activecurves):
                 if justlegend:return None
                 else:return None,None,None
             else:
                 legend = self.__activecurves[0]    
-        elif  len(self.curves.keys()) == 1:
-            legend = self.curves.keys()[0]
+        elif  len(curves_keys) == 1:
+            legend = curves_keys[0]
         else:
             if justlegend:return None
             else: return None,None,None
-        if legend in self.curves.keys():
+        if legend in curves_keys:
             if justlegend:
                 return legend
             index     = self.curves[legend]['curve']
