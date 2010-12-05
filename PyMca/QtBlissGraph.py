@@ -987,7 +987,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.replot()
             else:
                 (marker,distance)=self.closestMarker(xpixel,ypixel)
-                if distance < 4:
+                if (marker is not None) and distance < 4:
                     if marker is None:
                         pass
                     elif marker not in self.markersdict.keys():
@@ -1061,7 +1061,7 @@ class QtBlissGraph(qwt.QwtPlot):
                     x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
                     y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
                     (marker,distance)=self.closestMarker(xpixel,ypixel)
-                    if distance < 4:
+                    if (marker is not None) and distance < 4:
                         if marker not in self.markersdict.keys():
                             print("Wrong Marker selection")
                         else:
