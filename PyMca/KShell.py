@@ -27,7 +27,10 @@
 __revision__ = "$Revision: 1.5 $"
 
 import numpy.oldnumeric as Numeric
-import specfile
+try:
+    from PyMca import specfile
+except ImportError:
+    import specfile
 import os
 
 dirname   = os.path.dirname(__file__)
@@ -40,7 +43,7 @@ if not os.path.exists(inputfile):
             dirname = os.path.dirname(dirname)
             inputfile = os.path.join(dirname, "KShellRates.dat")
     if not os.path.exists(inputfile):
-        print "Cannot find inputfile ",inputfile
+        print("Cannot find inputfile ",inputfile)
         raise IOError("Cannot find KShellRates.dat file")
 
 sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
@@ -135,7 +138,7 @@ if __name__ == "__main__":
         ele = sys.argv[1]
         if ele in Elements:
             z = getz(ele)
-            print "Atomic  Number = ",z
-            print "K-shell yield = ",getomegak(ele)
-            print "K-shell  jump = ",getjk(z)
+            print("Atomic  Number = ",z)
+            print("K-shell yield = ",getomegak(ele))
+            print("K-shell  jump = ",getjk(z))
 

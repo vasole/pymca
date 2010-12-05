@@ -52,11 +52,11 @@ if not os.path.exists(ffile):
             ffile = os.path.join(dirmod,"attdata")
             ffile = os.path.join(ffile, "incoh.dict")
     if not os.path.exists(ffile):
-        print "Cannot find file ", ffile
+        print("Cannot find file ", ffile)
         raise IOError("Cannot find file %s" % ffile)
 
 COEFFICIENTS = ConfigDict.ConfigDict()
-COEFFICIENTS.read(ffile)    
+COEFFICIENTS.read(ffile)
 xvalues = COEFFICIENTS['ISCADT']['XSVAL']
 svalues = Numeric.reshape(COEFFICIENTS['ISCADT']['SCATF'], (100,len(xvalues)))
 #svalues = COEFFICIENTS['ISCADT']['SCATF']
@@ -137,8 +137,8 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
 def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
     if p1 is None:p1=0.0
     if (p1 > 1.0) or (p1 < -1):
-        raise "ValueError",\
-        "Invalid degree of linear polarization respect to the scattering plane"
+        raise ValueError(\
+        "Invalid degree of linear polarization respect to the scattering plane")
     thetasin2 = pow(Numeric.sin(theta*Numeric.pi/180.0),2)
     thetacos  =  Numeric.cos(theta*Numeric.pi/180.0)
     e = energy/(1.0 + (energy/511.) * (1.0 - thetacos))
@@ -154,8 +154,7 @@ if __name__ == "__main__":
         ele   = sys.argv[1]
         theta = float(sys.argv[2])
         energy= float(sys.argv[3])
-        print getElementComptonFormFactor(ele, theta, energy)
-    
+        print(getElementComptonFormFactor(ele, theta, energy))    
     else:
-        print "Usage:"
-        print "python IncoherentScatteringFunction.py Element Theta(deg) Energy(kev)"
+        print("Usage:")
+        print("python IncoherentScatteringFunction.py Element Theta(deg) Energy(kev)")

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,10 +24,12 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem to you.
 #############################################################################*/
-#!/usr/bin/env python
-
+import sys
 import string
-import ConfigParser
+if sys.version < '3.0':
+    import ConfigParser
+else:
+    import configparser as ConfigParser
 import types
 try:
     import numpy.oldnumeric as Numeric
@@ -63,9 +65,10 @@ class ConfigDict(dict):
 
     def __tolist(self, mylist):
         if mylist is None: return None
-        if type(mylist)!=types.ListType:
-                return [ mylist ]
-        else:        return mylist
+        if type(mylist)!=type([]):
+            return [ mylist ]
+        else:
+            return mylist
 
     def getfiles(self):
         return self.filelist
@@ -97,14 +100,14 @@ class ConfigDict(dict):
         else:readsect= [ sect for sect in cfgsect if sect in sections ]
 
         for sect in readsect:
-            dict= self
+            ddict= self
             for subsectw in sect.split('.'):
                 subsect = subsectw.replace("_|_",".")
-                if not dict.has_key(subsect):
-                    dict[subsect]= {}
-                dict= dict[subsect]
+                if not (subsect in ddict):
+                    ddict[subsect]= {}
+                ddict= ddict[subsect]
             for opt in cfg.options(sect):
-                dict[opt]= self.__parse_data(cfg.get(sect, opt))
+                ddict[opt]= self.__parse_data(cfg.get(sect, opt))
 
     def __parse_data(self, data):
         if len(data):
@@ -113,14 +116,14 @@ class ConfigDict(dict):
                 if (data[0] == '[') and (data[-1] == ']'):
                     #this looks as an array
                     try:
-                        return Numeric.array(map(float,string.split(data[1:-1])))
+                        return Numeric.array([float(x) for x in data[1:-1].split()])
                     except:
                         try:
                             if (data[2] == '[') and (data[-3] == ']'):
                                 nrows = len(data[3:-3].split('] ['))
                                 indata = data[3:-3].replace('] [',' ')
-                                indata = Numeric.array(map(float,
-                                                           indata.split()))
+                                indata = Numeric.array([float(x) for x in \
+                                                           indata.split()])
                                 indata.shape = nrows,-1
                                 return indata
                         except:
@@ -133,18 +136,18 @@ class ConfigDict(dict):
         
     def __parse_line(self, line):
         if line.find(',')!=-1:
-            return [ self.__parse_string(str.strip()) for str in line.split(',') ]
+            return [ self.__parse_string(sstr.strip()) for sstr in line.split(',') ]
         else:
             return self.__parse_string(line.strip())
 
-    def __parse_string(self, str):
+    def __parse_string(self, sstr):
         try:
-            return int(str)
+            return int(sstr)
         except:
             try:
-                return float(str)
+                return float(sstr)
             except:
-                return str
+                return sstr
 
     def tostring(self, sections=None):
         import StringIO
@@ -205,13 +208,13 @@ class ConfigDict(dict):
 
 def prtdict(dict, lvl=0):
         for key in dict.keys():
-            if type(dict[key])==types.DictType:
-                for i in range(lvl): print '\t',
-                print '+',key
+            if type(dict[key])==type({}):
+                for i in range(lvl): print('\t'),
+                print('+',key)
                 prtdict(dict[key], lvl+1)
             else:
-                for i in range(lvl): print '\t',
-                print '-', key, '=', dict[key]
+                for i in range(lvl): print('\t'),
+                print('-', key, '=', dict[key])
 
 def test():
     import sys
@@ -219,7 +222,7 @@ def test():
         config= ConfigDict(filelist=sys.argv[1:])
         prtdict(config)
     else:
-        print "USAGE: %s <filelist>"%sys.argv[0]
+        print("USAGE: %s <filelist>"%sys.argv[0])
 
 
 if __name__=='__main__':

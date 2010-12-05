@@ -39,7 +39,7 @@ if not os.path.exists(dictfile):
             dirmod = os.path.dirname(dirmod)
     dictfile = os.path.join(dirmod,"Scofield1973.dict")
 if not os.path.exists(dictfile):
-    print "Cannot find file ", dictfile
+    print("Cannot find file ", dictfile)
     raise IOError("Cannot find file %s " % dictfile)
 dict.read(dictfile)
 

@@ -43,7 +43,7 @@ if not os.path.exists(ffile):
             ffile = os.path.join(dirmod, "attdata")
             ffile = os.path.join(ffile, "atomsf.dict")            
     if not os.path.exists(ffile):
-        print "Cannot find file ", ffile
+        print("Cannot find file ", ffile)
         raise IOError("Cannot find file %s" % ffile)
 COEFFICIENTS = ConfigDict.ConfigDict()
 COEFFICIENTS.read(ffile)    
@@ -76,8 +76,8 @@ def getElementFormFactor(ele, theta, energy):
 def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
     if p1 is None:p1=0.0
     if (p1 > 1.0) or (p1 < -1):
-        raise "ValueError",\
-        "Invalid degree of linear polarization respect to the scattering plane"
+        raise ValueError(\
+        "Invalid degree of linear polarization respect to the scattering plane")
     thetasin2 = pow(Numeric.sin(theta*Numeric.pi/180.0),2)
     return (1.0+ 0.5 *(p1-1.0) * thetasin2) * \
            pow(R0*getElementFormFactor(ele, theta, energy),2)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         ele   = sys.argv[1]
         theta = float(sys.argv[2])
         energy= float(sys.argv[3])
-        print getElementFormFactor(ele, theta, energy)
+        print(getElementFormFactor(ele, theta, energy))
         import Tkinter
         import SimplePlot
         root = Tkinter.Tk()
@@ -97,6 +97,6 @@ if __name__ == "__main__":
         SimplePlot.plot([e,y])        
         root.mainloop()
     else:
-        print "Usage:"
-        print "python FormFactor.py Element Theta(deg) Energy(kev)"
+        print("Usage:")
+        print("python FormFactor.py Element Theta(deg) Energy(kev)")
     

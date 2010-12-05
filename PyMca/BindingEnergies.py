@@ -27,7 +27,10 @@
 __revision__ = "$Revision: 1.2 $"
 
 import numpy
-import specfile
+try:
+    from PyMca import specfile
+except ImportError:
+    import specfile
 import os
 
 filename = "BindingEnergies.dat"
@@ -41,7 +44,7 @@ if not os.path.exists(inputfile):
             dirname = os.path.dirname(dirname)
             inputfile = os.path.join(dirname, filename)
     if not os.path.exists(inputfile):
-        print "Cannot find inputfile ",inputfile
+        print("Cannot find inputfile ",inputfile)
         raise IOError("Cannot find BindingEnergies.dat file")
 
 sf=specfile.Specfile(os.path.join(dirname, filename))
@@ -74,7 +77,7 @@ if __name__ == "__main__":
             for shell in ElementShells:
                 i = ElementShells.index(shell)
                 if ElementBinding[z][i] > 0.0:                    
-                    print shell, ElementBinding[z][i]
+                    print(shell, ElementBinding[z][i])
             sys.exit()
-    print "Usage:"
-    print "python BindingEnergies.py [element]"
+    print("Usage:")
+    print("python BindingEnergies.py [element]")

@@ -212,7 +212,7 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
     if forced_shells is None:
         forced_shells = []
     if element not in ElementList:
-        raise ValueError, "Invalid chemical symbol %s" % element
+        raise ValueError("Invalid chemical symbol %s" % element)
     if len(EPDL97_DICT[element]['EPDL97'].keys()) < 2:
         _initializeElement(element)
 
@@ -249,12 +249,12 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
         x = energy[i]
         if x > wdata['energy'][-2]:
             #take last value or extrapolate?
-            print "Warning: Extrapolating data at the end"
+            print("Warning: Extrapolating data at the end")
             j1 = len(wdata['energy']) - 1 
             j0 = j1 - 1
         elif x < wdata['energy'][0]:
             #take first value or extrapolate?
-            print "Warning: Extrapolating data at the beginning"
+            print("Warning: Extrapolating data at the beginning")
             j1 = 1 
             j0 = 0
         else:

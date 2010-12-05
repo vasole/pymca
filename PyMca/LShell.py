@@ -27,7 +27,10 @@
 __revision__ = "$Revision: 1.6 $"
 
 import numpy.oldnumeric as Numeric
-import specfile
+try:
+    from PyMca import specfile
+except ImportError:
+    import specfile
 import os
 dirname   = os.path.dirname(__file__)
 inputfile = os.path.join(dirname, "LShellRates.dat")
@@ -38,7 +41,7 @@ if not os.path.exists(inputfile):
         dirname = os.path.dirname(dirname)
         inputfile = os.path.join(dirname, "LShellRates.dat")
     if not os.path.exists(inputfile):
-        print "Cannot find inputfile ",inputfile
+        print("Cannot find inputfile ",inputfile)
         raise IOError("Cannot find LShellRates.dat file")
 sf=specfile.Specfile(os.path.join(dirname, "LShellRates.dat"))
 ElementL1ShellTransitions = sf[0].alllabels()
@@ -171,7 +174,7 @@ def getCosterKronig(ele):
                  index   = EADL97_ElementL3ShellConstants.index(t)
                  ckEADL[t]   = EADL97_ElementL3ShellValues[EADL_z-1][index]
         else:
-            print "%s not in L-Shell Coster-Kronig transitions" % t
+            print("%s not in L-Shell Coster-Kronig transitions" % t)
             continue
         ckSum += ck[t]
         
@@ -272,11 +275,11 @@ if __name__ == "__main__":
         ele = sys.argv[1]
         if ele in Elements:
             z = getz(ele)
-            print "Atomic  Number = ",z
-            print "L1-shell yield = ",getomegal1(ele)
-            print "L2-shell yield = ",getomegal2(ele)
-            print "L3-shell yield = ",getomegal3(ele)
-            print "L1-shell  jump = ",getjl1(z)
-            print "L2-shell  jump = ",getjl2(z)
-            print "L3-shell  jump = ",getjl3(z)
-            print "Coster-Kronig  = ",getCosterKronig(ele)
+            print("Atomic  Number = ",z)
+            print("L1-shell yield = ",getomegal1(ele))
+            print("L2-shell yield = ",getomegal2(ele))
+            print("L3-shell yield = ",getomegal3(ele))
+            print("L1-shell  jump = ",getjl1(z))
+            print("L2-shell  jump = ",getjl2(z))
+            print("L3-shell  jump = ",getjl3(z))
+            print("Coster-Kronig  = ",getCosterKronig(ele))

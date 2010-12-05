@@ -25,7 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 import numpy.oldnumeric as Numeric
-import specfile
+try:
+    from PyMca import specfile
+except ImportError:
+    import specfile
 import os
 dirname   = os.path.dirname(__file__)
 inputfile = os.path.join(dirname, "MShellRates.dat")
@@ -37,7 +40,7 @@ if not os.path.exists(inputfile):
             dirname = os.path.dirname(dirname)
             inputfile = os.path.join(dirname, "MShellRates.dat")
     if not os.path.exists(inputfile):
-        print "Cannot find inputfile ",inputfile
+        print("Cannot find inputfile ",inputfile)
         raise IOError("Cannot find MShellRates.dat file")
 
 sf=specfile.Specfile(os.path.join(dirname, "MShellRates.dat"))
@@ -216,7 +219,7 @@ def getCosterKronig(ele):
                  index   = EADL97_ElementM4ShellConstants.index(t)
                  ckEADL[t]   = EADL97_ElementM4ShellValues[EADL_z-1][index]
         else:
-            print "%s not in M-Shell Coster-Kronig transitions" % t
+            print("%s not in M-Shell Coster-Kronig transitions" % t)
             continue
         ckSum += ck[t]
 
@@ -324,18 +327,18 @@ if __name__ == "__main__":
         ele = sys.argv[1]
         if ele in Elements:
             z = getz(ele)
-            print "Atomic  Number = ",z
-            print "M1-shell yield = ",getomegam1(ele)
-            print "M2-shell yield = ",getomegam2(ele)
-            print "M3-shell yield = ",getomegam3(ele)
-            print "M4-shell yield = ",getomegam4(ele)
-            print "M5-shell yield = ",getomegam5(ele)
-            print "M1-shell  jump = ",getjm1(z)
-            print "M2-shell  jump = ",getjm2(z)
-            print "M3-shell  jump = ",getjm3(z)
-            print "M4-shell  jump = ",getjm4(z)
-            print "M5-shell  jump = ",getjm5(z)
-            print "Coster-Kronig  = ",getCosterKronig(ele)
+            print("Atomic  Number = ",z)
+            print("M1-shell yield = ",getomegam1(ele))
+            print("M2-shell yield = ",getomegam2(ele))
+            print("M3-shell yield = ",getomegam3(ele))
+            print("M4-shell yield = ",getomegam4(ele))
+            print("M5-shell yield = ",getomegam5(ele))
+            print("M1-shell  jump = ",getjm1(z))
+            print("M2-shell  jump = ",getjm2(z))
+            print("M3-shell  jump = ",getjm3(z))
+            print("M4-shell  jump = ",getjm4(z))
+            print("M5-shell  jump = ",getjm5(z))
+            print("Coster-Kronig  = ",getCosterKronig(ele))
             EADL97 = False
-            print "Coster-Kronig no EADL97 = ",getCosterKronig(ele)
-            
+            print("Coster-Kronig no EADL97 = ",getCosterKronig(ele))
+
