@@ -32,7 +32,6 @@ import os
 import sys
 import Gefit
 import numpy.oldnumeric as Numeric
-import string
 import copy
 DEBUG = 0
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
@@ -59,17 +58,17 @@ class McaTheory:
             if os.path.exists(initdict):
                 self.config = ConfigDict.ConfigDict(filelist = initdict)
             else:
-                print "Cannot find file McaTheory.cfg"
+                print("Cannot find file McaTheory.cfg")
                 raise IOError("File %s does not exist" % initdict)
         else:
             if os.path.exists(initdict):
                 self.config = ConfigDict.ConfigDict(filelist = initdict)
             else:
-                raise IOError, "File %s does not exist" % initdict
+                raise IOError("File %s does not exist" % initdict)
                 self.config = {}
                 self.config['fit'] = {}
                 self.config['attenuators'] = {}
-        if kw.has_key('config'):
+        if 'config' in kw:
             self.config.update(kw['config'])
         SpecfitFuns.fastagauss([1.0,10.0,1.0],Numeric.arange(10.))
         self.config['fit']['sumflag']     = kw.get('sumflag',self.config['fit']['sumflag'])
@@ -110,7 +109,7 @@ class McaTheory:
         return copy.deepcopy(self.config)
 
     def _updateCallback(self):
-        print "no update callback"
+        print("no update callback")
         #self.config['fit']['energy'] = Elements.Element['Fe']['buildparameters']['energy']
         #self.__configure()
         
@@ -251,9 +250,9 @@ class McaTheory:
           data  = []
           for element in self.config['peaks'].keys():
               if len(element) > 1:
-                  ele = string.upper(element[0:1])+string.lower(element[1:2])
+                  ele = element[0:1].upper()+element[1:2].lower()
               else:
-                  ele = string.upper(element)
+                  ele = element.upper()
               if maxenergy != Elements.Element[ele]['buildparameters']['energy']:
                   Elements.updateDict (energy= maxenergy)
               if type(self.config['peaks'][element]) == type([]):
@@ -278,10 +277,10 @@ class McaTheory:
           elementsList =[]
           for item in data:
                 if len(item[1]) > 1:
-                    elementsList.append(string.upper(item[1][0])+\
-                                        string.lower(item[1][1]))
+                    elementsList.append(item[1][0].upper()+\
+                                        item[1][1].lower())
                 else:
-                    elementsList.append(string.upper(item[1][0]))
+                    elementsList.append(item[1][0].upper())
           #import time
           #t0=time.time()
           if matrix[0].upper() != "MULTILAYER":
@@ -293,7 +292,7 @@ class McaTheory:
                   text  = "Your matrix is not properly defined.\n"
                   text += "If you used the graphical interface,\n"
                   text += "Please check the MATRIX tab" 
-                  raise ValueError, text
+                  raise ValueError(text)
           if 0:
               dict=Elements.getMultilayerFluorescence(multilayer,
                                      energylist,
@@ -336,9 +335,9 @@ class McaTheory:
             z   = item[0]
             element = item[1]
             if len(element) > 1:
-                    ele = string.upper(element[0:1])+string.lower(element[1:2])
+                    ele = element[0:1].upper()+element[1:2].lower()
             else:
-                    ele = string.upper(element)
+                    ele = element.upper()
             rays= item[2] +' xrays'
             if not rays in dict[ele]['rays']:continue
             for transition in dict[ele][rays]:
@@ -364,7 +363,7 @@ class McaTheory:
             except ZeroDivisionError:
                 text  = "Intensity of %s %s is zero\n"% (ele, rays)
                 text += "Too high attenuation?"
-                raise ZeroDivisionError, text
+                raise ZeroDivisionError(text)
 
             #--- sort ---            
             div=[[newpeaks[i][1],newpeaks[i][0],newpeaksnames[i]] for i in range(len(newpeaks))]
@@ -382,7 +381,7 @@ class McaTheory:
             if not len(newpeaks):
                 text  = "No %s for element %s" % (rays, ele)
                 text += "\nToo high attenuation?"
-                raise ValueError, text
+                raise ValueError(text)
             (r,c)=Numeric.shape(Numeric.array(newpeaks))
             PEAKS0ESCAPE.append([])                
             _nescape_ = 0
@@ -421,7 +420,7 @@ class McaTheory:
             if usematrix and (maxenergy is None):
                 text  = "Invalid energy for matrix configuration.\n"
                 text += "Please check your BEAM parameters."
-                raise ValueError, text
+                raise ValueError(text)
             elif ((not usematrix) and (self.config['fit']['energy'] is None)) or \
                  ((not usematrix) and (self.config['fit']['energy'] == [None])) or\
                  ((not usematrix) and (self.config['fit']['energy'] == ["None"])) or\
@@ -431,9 +430,9 @@ class McaTheory:
                 data  = []
                 for element in self.config['peaks'].keys():
                     if len(element) > 1:
-                        ele = string.upper(element[0:1])+string.lower(element[1:2])
+                        ele = element[0:1].upper()+element[1:2].lower()
                     else:
-                        ele = string.upper(element)
+                        ele = element.upper()
                     if maxenergy != Elements.Element[ele]['buildparameters']['energy']:
                         Elements.updateDict (energy= maxenergy)
                     if type(self.config['peaks'][element]) == type([]):
@@ -461,9 +460,9 @@ class McaTheory:
                     z   = item[0]
                     element = item[1]
                     if len(element) > 1:
-                        ele = string.upper(element[0:1])+string.lower(element[1:2])
+                        ele = element[0:1].upper()+element[1:2].lower()
                     else:
-                        ele = string.upper(element)
+                        ele = element.upper()
                     rays= item[2] +' xrays'
                     if not rays in Elements.Element[ele]['rays']:continue
                     eta = 0.0
@@ -476,10 +475,6 @@ class McaTheory:
                                        fwhm,eta])
                        #               1.00,eta])
                         newpeaksnames.append(transition)
-                        #if ele == 'Fe':
-                        if 0:
-                            print transition, 'energy  = ',Elements.Element[ele][transition]['energy'],\
-                             'rate = ',Elements.Element[ele][transition]['rate'],' fwhm =',fwhm
                     if self.attflag:
                         transmissionenergies = [x[1] for x in newpeaks]
                         oldfunnyfactor = None
@@ -501,7 +496,7 @@ class McaTheory:
                                                 #we have a funny attenuator
                                                 if (funnyfactor < 0.0) or (funnyfactor > 1.0):
                                                     text = "Funny factor should be between 0.0 and 1.0., got %g" % attenuator[4]
-                                                    raise ValueError, text
+                                                    raise ValueError(text)
                                                 if oldfunnyfactor is None:
                                                     #only has to be multiplied once!!!
                                                     oldfunnyfactor = funnyfactor 
@@ -510,7 +505,7 @@ class McaTheory:
                                                 else:
                                                     if abs(oldfunnyfactor-funnyfactor) > 0.0001:
                                                         text = "All funny type attenuators must have same openning fraction"
-                                                        raise ValueError, text
+                                                        raise ValueError(text)
                                                     trans = Numeric.exp(-coeffs)
                                             else:
                                                 #standard
@@ -519,7 +514,7 @@ class McaTheory:
                                             trans = (1.0 - Numeric.exp(-coeffs))
                                     except OverflowError:
                                         if coeffs < 0:
-                                            raise ValueError,"Positive exponent on transmission term"
+                                            raise ValueError("Positive exponent on transmission term")
                                         else:
                                             if attenuator.upper() == "DETECTOR":
                                                 trans = 1.0
@@ -538,12 +533,12 @@ class McaTheory:
                                     try:
                                         alphaIn  = self.config['attenuators'][attenuator][4]
                                     except:
-                                        print "warning, alphaIn set to 45 degrees"
+                                        print("warning, alphaIn set to 45 degrees")
                                         alphaIn  = 45.0
                                     try:
                                         alphaOut = self.config['attenuators'][attenuator][5]
                                     except:
-                                        print "warning, alphaOut set to 45 degrees"
+                                        print("warning, alphaOut set to 45 degrees")
                                         alphaOut  = 45.0
                                     matrixExcitationEnergy = Elements.Element[ele]['buildparameters']['energy']
                                     #matrixExcitationEnergy = self.config['fit']['energy']
@@ -562,7 +557,7 @@ class McaTheory:
                                                 if abs(sinAlphaIn) > 0.0:
                                                     expterm = -((coeffs[-1]/sinAlphaIn) +(coeffs[i]/sinAlphaOut)) * thickness
                                                     if expterm > 0.0:
-                                                        raise ValueError, "Positive exponent on transmission term"
+                                                        raise ValueError("Positive exponent on transmission term")
                                                     if expterm < 30:
                                                         #avoid overflow error in frozen versions
                                                         try:
@@ -578,7 +573,8 @@ class McaTheory:
                                                 newpeaks[i][0] = 0.0
                                         del transmissionenergies[-1]
                                     else:
-                                        raise ValueError, "Invalid excitation energy"
+                                        raise ValueError(\
+                                            "Invalid excitation energy")
                     #--- renormalize
                     div = sum([x[0] for x in newpeaks])
                     try:
@@ -587,7 +583,7 @@ class McaTheory:
                     except ZeroDivisionError:
                         text  = "Intensity of %s %s is zero\n"% (ele, rays)
                         text += "Too high attenuation?"
-                        raise ZeroDivisionError, text
+                        raise ZeroDivisionError(text)
                     """
                     if ele == 'Pb':
                         dummyNew = [[newpeaks[i][1],oldRatio[i],newpeaks[i][0],newpeaks[i][0]/ oldRatio[i] ] for i in range(len(newpeaks))]
@@ -610,13 +606,13 @@ class McaTheory:
                     tojoint=[]
                     if len(newpeaks) > 1:
                         if 0: #if ele == "Kr":
-                            print "ELEMENTS FILTERING "
+                            print("ELEMENTS FILTERING ")
                             testPeaks =  [[div[i][0], div[i][1][0], div[i][2]] for i in range(len(div))] 
                             testPeaks = Elements._filterPeaks(testPeaks,
                                                         ethreshold=deltaonepeak,
                                                         keeptotalrate=True)
                             for i in range(len(testPeaks)):
-                                print testPeaks[i][2], testPeaks[i][0], testPeaks[i][1]
+                                print(testPeaks[i][2], testPeaks[i][0], testPeaks[i][1])
 
                         
                         for i in range(len(newpeaks)):
@@ -672,7 +668,7 @@ class McaTheory:
                     #if ele == "Fe":
                     if 0:
                         for i in range(len(newpeaks)):
-                            print newpeaksnames[i],newpeaks[i]
+                            print(newpeaksnames[i],newpeaks[i])
                     #print "len newpeaks = ",len(newpeaks)
                     (r,c)=Numeric.shape(Numeric.array(newpeaks))
                     PEAKS0ESCAPE.append([])                
@@ -706,12 +702,12 @@ class McaTheory:
                         else:
                             PEAKSW.append(Numeric.ones((r,3+5),Numeric.Float))
             elif (not usematrix) and (len(energylist) > 1):
-                raise ValueError, "Multiple energies require a matrix definition"
+                raise ValueError("Multiple energies require a matrix definition")
             else:
-                print "Unknown case"
-                print "usematrix = ",usematrix
-                print "self.config['fit']['energy'] =",self.config['fit']['energy']
-                raise ValueError, "Unhandled Sample Matrix and Energy combination"
+                print("Unknown case")
+                print("usematrix = ",usematrix)
+                print("self.config['fit']['energy'] =",self.config['fit']['energy'])
+                raise ValueError("Unhandled Sample Matrix and Energy combination")
 ###############
         #add scatter peak
         if energylist is not None:
@@ -729,12 +725,12 @@ class McaTheory:
                                     try:
                                         alphaIn  = self.config['attenuators']['Matrix'][4]
                                     except:
-                                        print "WARNING: Matrix incident angle set to 45 deg."
+                                        print("WARNING: Matrix incident angle set to 45 deg.")
                                         alphaIn  = 45.0
                                     try:
                                         alphaOut = self.config['attenuators']['Matrix'][5]
                                     except:
-                                        print "WARNING: Matrix outgoing angle set to 45 deg."
+                                        print("WARNING: Matrix outgoing angle set to 45 deg.")
                                         alphaOut  = 45.0
 
                                     scatteringAngle = (alphaIn + alphaOut)
@@ -858,7 +854,7 @@ class McaTheory:
            (self.lastxmax != self.config['fit']['xmax']):
             if self.ydata0 is not None:
                 if DEBUG:
-                    print "Limits changed"
+                    print("Limits changed")
                 self.setdata(x=self.xdata0,
                              y=self.ydata0,
                              sigmay=self.sigmay0,
@@ -870,30 +866,30 @@ class McaTheory:
             if self.STRIP:
                 if calculateStrip:
                     if DEBUG:
-                        print "Calling to calculate non analytical background in config"
+                        print("Calling to calculate non analytical background in config")
                     self.__getselfzz()
                 else:
                     if DEBUG:
-                        print "Using previous non analytical background in config"
+                        print("Using previous non analytical background in config")
                 self.datatofit = Numeric.concatenate((self.xdata, 
                                 self.ydata-self.zz, self.sigmay),1)
                 self.laststrip = 1
             else:
                 if DEBUG:
-                    print "Using previous data"
+                    print("Using previous data")
                 self.datatofit = Numeric.concatenate((self.xdata, 
                                 self.ydata, self.sigmay),1)
                 self.laststrip = 0
                          
 
     def setdata(self,*var,**kw):
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         elif len(var) >1:
             x=var[0]                    
         else:
             x=None
-        if kw.has_key('y'):
+        if 'y' in kw:
             y=kw['y']
         elif len(var) > 1:
             y=var[1]   
@@ -901,7 +897,7 @@ class McaTheory:
             y=var[0]              
         else:
             y=None
-        if kw.has_key('sigmay'):
+        if 'sigmay' in kw:
             sigmay=kw['sigmay']
         elif len(var) >2:
             sigmay=var[2]                    
@@ -930,14 +926,14 @@ class McaTheory:
             
         xmin = self.config['fit']['xmin']
         if not self.config['fit']['use_limit']:
-            if kw.has_key('xmin'):
+            if 'xmin' in kw:
                 xmin=kw['xmin']
                 self.config['fit']['xmin'] = xmin
             elif len(self.xdata):
                 xmin=min(self.xdata)
         xmax = self.config['fit']['xmax']
         if not self.config['fit']['use_limit']:
-            if kw.has_key('xmax'):
+            if 'xmax' in kw:
                 xmax=kw['xmax']
                 self.config['fit']['xmax'] = xmax
             elif len(self.xdata):
@@ -999,8 +995,9 @@ class McaTheory:
             else:
                 result=SpecfitFuns.SavitskyGolay(Numeric.array(y).astype(Numeric.Float), 
                                     self.config['fit']['stripfilterwidth'])
-        except Exception, err:
-            raise "Error", "Unsuccessful Savitsky-Golay smoothing: %s" % err
+        except:
+            print("Unsuccessful Savitsky-Golay smoothing: %s" % sys.exc_info())
+            raise
             result=Numeric.array(y).astype(Numeric.Float)
         if len(result) > 1:
             result[1:-1]=Numeric.convolve(result,f,mode=0)
@@ -1031,7 +1028,7 @@ class McaTheory:
         #SNIP algorithm
         if self.config['fit']['stripalgorithm'] == 1:
             if DEBUG:
-                print "CALCULATING SNIP"
+                print("CALCULATING SNIP")
             if len(anchorslist) == 0:
                 anchorslist = [0, len(ysmooth)-1]
             anchorslist.sort()
@@ -1058,7 +1055,7 @@ class McaTheory:
         niter = self.config['fit']['stripiterations']
         if niter > 0:
             if DEBUG:
-                print "CALCULATING STRIP"
+                print("CALCULATING STRIP")
             if (niter > 1000) and (self.config['fit']['stripwidth'] == 1):
                 self.zz=SpecfitFuns.subac(ysmooth,
                                       self.config['fit']['stripconstant'],
@@ -1161,9 +1158,9 @@ class McaTheory:
                 if 0 and self.PARAMETERS[self.NGLOBAL+i] =='Fe K':
                   for ii in range(rw):
                     if ii < r:
-                        print self.PARAMETERS[self.NGLOBAL+i],"PEAK ",ii,PEAKSW[i][ii]
+                        print(self.PARAMETERS[self.NGLOBAL+i],"PEAK ",ii,PEAKSW[i][ii])
                     else:
-                        print self.PARAMETERS[self.NGLOBAL+i],"PEAKesc ",ii,PEAKSW[i][ii]
+                        print(self.PARAMETERS[self.NGLOBAL+i],"PEAKesc ",ii,PEAKSW[i][ii])
                 #print PARAMETERS[self.NGLOBAL+i]
                 #print PEAKSW[i][:,1]
                 #print PEAKS0ESCAPE[i]
@@ -1299,9 +1296,9 @@ class McaTheory:
                 if 0 and self.PARAMETERS[self.NGLOBAL+i] =='Fe K':
                   for ii in range(rw):
                     if ii < r:
-                        print self.PARAMETERS[self.NGLOBAL+i],"PEAK ",ii,PEAKSW[i][ii]
+                        print(self.PARAMETERS[self.NGLOBAL+i],"PEAK ",ii,PEAKSW[i][ii])
                     else:
-                        print self.PARAMETERS[self.NGLOBAL+i],"PEAKesc ",ii,PEAKSW[i][ii]
+                        print(self.PARAMETERS[self.NGLOBAL+i],"PEAKesc ",ii,PEAKSW[i][ii])
                 #print PARAMETERS[self.NGLOBAL+i]
                 #print PEAKSW[i][:,1]
                 #print PEAKS0ESCAPE[i]
@@ -1322,7 +1319,7 @@ class McaTheory:
                 else:
                     PEAKSW[i] [:,3] = param[PARAMETERS.index('Eta Factor')]                    
                 if not FASTER:
-                    print "not FASTER"
+                    print("not FASTER")
                     #if HYPERMET:
                     if hypermet:
                         if i == 0:
@@ -1460,7 +1457,7 @@ class McaTheory:
             PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
             text  = "Linear Least-Squares Fit incompatible\n"
             text += "with Exponential Background"
-            raise ValueError, text
+            raise ValueError(text)
         else:
             #I guess I will not arrive here
             #numerical derivative
@@ -1677,7 +1674,7 @@ class McaTheory:
                 if 1:
                     text  = "Linear fit is incompatible with current implementation\n"
                     text += "of the Exponential Polynomial background"
-                    raise ValueError, text
+                    raise ValueError(text)
                 else:
                     #no need to estimate background
                     backpar = []
@@ -2043,7 +2040,7 @@ class McaTheory:
         for group in self.PARAMETERS[n:]:
             fitarea   = self.fittedpar[n+i]
             sigmaarea = self.sigmapar[n+i]
-            [ele, group0] = string.split(group)
+            [ele, group0] = group.split()
             result['groups'].append(group)
             result[group]     = {}            
             result[group]['peaks']    = self.PEAKS0NAMES[i]
@@ -2136,7 +2133,7 @@ class McaTheory:
             fitarea   = self.fittedpar[n+i]
             mcaarea   = self.fittedpar[n+i]
             sigmaarea = self.sigmapar[n+i]
-            [ele, group0] = string.split(group)
+            [ele, group0] = group.split()
             result['groups'].append(group)
             result[group]     = {}            
             result[group]['peaks']    = self.PEAKS0NAMES[i]
@@ -2576,7 +2573,7 @@ class McaTheory:
                                            fulloutput=1)    
         fittedpar=fitresult[0]
         if 0:
-            print fitresult        
+            print(fitresult)        
             import qt
             import QtBlissGraph
             app = qt.QApplication(sys.argv)
@@ -2666,7 +2663,6 @@ def test(inputfile=None,scankey=None,pkm=None,
     import sys
     import specfile
     import EdfFileLayer
-    import string
     mcafit = McaTheory(initdict=pkm,maxiter=maxiter,sumflag=sumflag,
                     continuum=continuum,escapeflag=escapeflag,stripflag=stripflag,hypermetflag=hypermetflag,
                     attenuatorsflag=attenuatorsflag)
@@ -2695,7 +2691,7 @@ def test(inputfile=None,scankey=None,pkm=None,
                 image = 0
                 rc    = 0
             else:
-                image,rc   = string.split(scankey,".")
+                image,rc   = scankey.split(".")
                 info,data  = edf.LoadSource({'Key':int(image)-1})
                 if int(info['Dim_1']) > int(info['Dim_2']):
                     mcadata = data[int(rc)-1,:]
@@ -2707,7 +2703,7 @@ def test(inputfile=None,scankey=None,pkm=None,
                 y0  = Numeric.array(mcadata.tolist())
                 x = Numeric.arange(len(y0))*1.0 + xmin
         except:
-            print "assuming is a specfile ..." 
+            print("assuming is a specfile ...") 
             sf=specfile.Specfile(inputfile)
             if scankey is None:
                 scan=sf[0]
@@ -2719,15 +2715,15 @@ def test(inputfile=None,scankey=None,pkm=None,
             x = Numeric.arange(len(y0))*1.0
     t0=time.time()
     mcafit.setdata(x,y0,xmin=xmin,xmax=xmax)
-    print "set data time",time.time()-t0
+    print("set data time",time.time()-t0)
     mcafit.estimate()
-    print "estimation time ",time.time()-t0
+    print("estimation time ",time.time()-t0)
     #try:
     if 1:
         #fitresult, mcafitresult=mcafit.startfit(digest=1)
         fitresult    = mcafit.startfit(digest=0)
         mcafitresult = mcafit.digestresult(outfile)
-        print "fit took ",time.time()-t0
+        print("fit took ",time.time()-t0)
     #except:
     else:
         if plotflag:
@@ -2749,29 +2745,29 @@ def test(inputfile=None,scankey=None,pkm=None,
             app.setMainWidget(container)
             container.show()
             app.exec_loop()
-        print "error ",sys.exc_info()[1]
+        print("error ",sys.exc_info()[1])
         sys.exit(1)
     fittedpar=fitresult[0]
     chisq    =fitresult[1]
     sigmapar =fitresult[2] 
     i = 0
-    print "chisq = ",chisq
+    print("chisq = ",chisq)
     
     for param in mcafit.PARAMETERS:
         if i < mcafit.NGLOBAL:
-            print param, ' = ',fittedpar[i],' +/- ',sigmapar[i]
+            print(param, ' = ',fittedpar[i],' +/- ',sigmapar[i])
         else:
-            print param, ' = ',fittedpar[i],' +/- ',sigmapar[i]
+            print(param, ' = ',fittedpar[i],' +/- ',sigmapar[i])
         #,'mcaarea = ',areas[i-mcafit.NGLOBAL]
         i += 1
     i = 0
     #mcafit.digestresult()
     for group in mcafitresult['groups']:
-        print group,mcafitresult[group]['fitarea'],' +/- ', \
-            mcafitresult[group]['sigmaarea'],mcafitresult[group]['mcaarea']
+        print(group,mcafitresult[group]['fitarea'],' +/- ', \
+            mcafitresult[group]['sigmaarea'],mcafitresult[group]['mcaarea'])
 
-    print "##################### ROI fitting ######################"
-    print mcafit.roifit(mcafit.xdata,mcafit.ydata)
+    print("##################### ROI fitting ######################")
+    print(mcafit.roifit(mcafit.xdata,mcafit.ydata))
 
     if plotflag:
         if 0:
@@ -2861,30 +2857,30 @@ if __name__ == "__main__":
                 if opt in ('--pkm','--cfg'):
                     pkm = arg
                 if opt in ('--continuum'):
-                    continuum = int(string.atof(arg))
+                    continuum = int(float(arg))
                 if opt in ('--strip'):
-                    strip = int(string.atof(arg))
+                    strip = int(float(arg))
                 if opt in ('--maxiter'):
-                    maxiter = int(string.atof(arg))
+                    maxiter = int(float(arg))
                 if opt in ('--sumflag'):
-                    sumflag = int(string.atof(arg))
+                    sumflag = int(float(arg))
                 if opt in ('--escapeflag'):
-                    escapeflag = int(string.atof(arg))
+                    escapeflag = int(float(arg))
                 if opt in ('--stripflag'):
-                    stripflag = int(string.atof(arg))
+                    stripflag = int(float(arg))
                 if opt in ('--plotflag'):
-                    plotflag = int(string.atof(arg))
+                    plotflag = int(float(arg))
                 if opt in ('--hypermetflag'):
-                    hypermetflag = int(string.atof(arg))
+                    hypermetflag = int(float(arg))
                 if opt in ('--attenuatorsflag'):
-                    attenuatorsflag = int(string.atof(arg))
+                    attenuatorsflag = int(float(arg))
                 if opt in ('--outfile'):
                     outfile = arg
             test(inputfile=inputfile,scankey=scan,pkm=pkm,
                 maxiter=maxiter,continuum=continuum,stripflag=stripflag,sumflag=sumflag,
                 hypermetflag=hypermetflag,escapeflag=escapeflag,plotflag=plotflag,
                 attenuatorsflag=attenuatorsflag,outfile=outfile)
-            print "TIME = ",time.time()-t0
+            print("TIME = ",time.time()-t0)
         #except:
         #    print "Usage"
         #    print  "python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory0.cfg --continuum=0 --stripflag=1 --sumflag=1 --maxiter=4"

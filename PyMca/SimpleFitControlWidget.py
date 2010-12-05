@@ -28,7 +28,7 @@ import sys
 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    raise ImportError("This module requieres Qt4")
+    raise ImportError("This module requires Qt4")
 
 HorizontalSpacer = qt.HorizontalSpacer
 VerticalSpacer   = qt.VerticalSpacer
@@ -408,18 +408,18 @@ class SimpleFitControlWidget(qt.QWidget):
         self.emit(qt.SIGNAL("FitControlSignal"), ddict)
 
     def setConfiguration(self, ddict0):
-        if ddict0.has_key("fit"):
+        if "fit" in ddict0:
             ddict = ddict0["fit"]
         else:
             ddict = ddict0
         workingKeys = []
-        originalKeys = ddict.keys() 
+        originalKeys = list(ddict.keys())
         for key in originalKeys:
             workingKeys.append(key.lower())
             
         #get current configuration
         current = self.getConfiguration()
-        for key in current.keys():
+        for key in list(current.keys()):
             #avoid case sensitivity problems
             lowerCaseKey = key.lower()
             if lowerCaseKey in workingKeys:
@@ -431,7 +431,7 @@ class SimpleFitControlWidget(qt.QWidget):
     def _setConfiguration(self, ddict):
         #all the keys will be present
         w = self.functionDefinitionWidget
-        if ddict.has_key('functions'):
+        if 'functions' in ddict:
             w.setFunctions(ddict['functions'])
         if ddict['fit_function'] in [None, "None", "NONE"]:
             idx = 0

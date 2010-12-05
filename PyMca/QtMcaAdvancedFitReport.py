@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -683,7 +683,7 @@ class QtMcaAdvancedFitReport:
             del widget
             return self.__getFitImage(self.outfile+".png")
         else:
-            print "cannot generate image"
+            print("cannot generate image")
             return ""
 
     def getConcentrations(self):
@@ -792,7 +792,8 @@ def generateoutput(fitfile,outfile=None):
 
 if __name__ == "__main__":
     if len(sys.argv) <2 :
-        print "Usage: %s Input_Fit_Result_File [optional_output_file]" % sys.argv[0]
+        print("Usage: %s Input_Fit_Result_File [optional_output_file]" %\
+              sys.argv[0])
         sys.exit(1)
     app = qt.QApplication(sys.argv)
     fitfile=sys.argv[1]

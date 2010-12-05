@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,6 +26,10 @@
 #############################################################################*/
 import sys
 import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
     import Myqttable as qttable
@@ -50,8 +54,8 @@ else:
 
 class McaTable(QTable):
     def __init__(self, *args,**kw):
-        apply(QTable.__init__, (self, ) + args)
-        if kw.has_key('labels'):
+        QTable.__init__(self, *args)
+        if 'labels' in kw:
             self.labels=[]
             for label in kw['labels']:
                 self.labels.append(label)
@@ -81,7 +85,7 @@ class McaTable(QTable):
             self.verticalHeader().setClickEnabled(1)
         else:
             if DEBUG:
-                print "vertical header click to enable"
+                print("vertical header click to enable")
         self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
         #self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
         self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
@@ -104,9 +108,9 @@ class McaTable(QTable):
         self.setRowCount(nrows)
         alreadyforced = 0
         for group in result['groups']:
-            ele,group0 = string.split(group)
-            fitarea    = qt.QString("%.4e" % (result[group]['fitarea']))
-            sigmaarea  = qt.QString("%.2e" % (result[group]['sigmaarea']))
+            ele,group0 = group.split()
+            fitarea    = QString("%.4e" % (result[group]['fitarea']))
+            sigmaarea  = QString("%.2e" % (result[group]['sigmaarea']))
             fields = [ele,group0,fitarea,sigmaarea]
             col = 0
             color = qt.QColor('white')
@@ -146,12 +150,12 @@ class McaTable(QTable):
             color = qt.QColor(255,250,205)
             for peak in result[group]['peaks']:
                 name  = peak
-                energy = qt.QString("%.3f" % (result[group][peak]['energy']))
-                ratio  = qt.QString("%.5f" % (result[group][peak]['ratio']))
-                area   = qt.QString("%.4e" % (result[group][peak]['fitarea']))
-                sigma  = qt.QString("%.2e" % (result[group][peak]['sigmaarea']))
-                fwhm   = qt.QString("%.3f" % (result[group][peak]['fwhm']))
-                chisq  = qt.QString("%.2f" % (result[group][peak]['chisq']))
+                energy = QString("%.3f" % (result[group][peak]['energy']))
+                ratio  = QString("%.5f" % (result[group][peak]['ratio']))
+                area   = QString("%.4e" % (result[group][peak]['fitarea']))
+                sigma  = QString("%.2e" % (result[group][peak]['sigmaarea']))
+                fwhm   = QString("%.3f" % (result[group][peak]['fwhm']))
+                chisq  = QString("%.2f" % (result[group][peak]['chisq']))
                 if (line+1) > nlines:
                     self.setRowCount(line+1)
                 fields = [name,area,sigma,energy,ratio,fwhm,chisq]
@@ -178,12 +182,12 @@ class McaTable(QTable):
             for peak0 in result[group]['escapepeaks']:
                 peak  = peak0+"esc"
                 if result[group][peak]['ratio'] > 0.0:
-                    energy = qt.QString("%.3f" % (result[group][peak]['energy']))
-                    ratio  = qt.QString("%.5f" % (result[group][peak]['ratio']))
-                    area   = qt.QString("%.4e" % (result[group][peak]['fitarea']))
-                    sigma  = qt.QString("%.2e" % (result[group][peak]['sigmaarea']))
-                    fwhm   = qt.QString("%.3f" % (result[group][peak]['fwhm']))
-                    chisq  = qt.QString("%.2f" % (result[group][peak]['chisq']))
+                    energy = QString("%.3f" % (result[group][peak]['energy']))
+                    ratio  = QString("%.5f" % (result[group][peak]['ratio']))
+                    area   = QString("%.4e" % (result[group][peak]['fitarea']))
+                    sigma  = QString("%.2e" % (result[group][peak]['sigmaarea']))
+                    fwhm   = QString("%.3f" % (result[group][peak]['fwhm']))
+                    chisq  = QString("%.2f" % (result[group][peak]['chisq']))
                     if (line+1) > nlines:
                         self.setRowCount(line+1)
                     fields = [peak,area,sigma,energy,ratio,fwhm,chisq]
@@ -213,9 +217,9 @@ class McaTable(QTable):
 
     def __getfitpar(self,result):
         hypermet = 0
-        if  string.find(result['fitconfig']['fittheory'],"Area") != -1:
+        if  result['fitconfig']['fittheory'].find("Area") != -1:
             fitlabel='Area'
-        elif string.find(result['fitconfig']['fittheory'],"Hypermet") != -1:
+        elif result['fitconfig']['fittheory'].find("Hypermet") != -1:
             fitlabel='Area'
             hypermet = 1
         else:
@@ -224,13 +228,13 @@ class McaTable(QTable):
         sigmavalues = []
         i = 0
         for param in result['paramlist']:
-            if string.find(param['name'],'ST_Area')!= -1:
+            if param['name'].find('ST_Area') != -1:
                 values[-1]      = value * (1.0 + param['fitresult'])
                 #just an approximation
                 sigmavalues[-1] = sigmavalue * (1.0 + param['fitresult'])
-            elif string.find(param['name'],'LT_Area')!= -1:
+            elif param['name'].find('LT_Area')!= -1:
                 pass
-            elif string.find(param['name'],fitlabel)!= -1:
+            elif param['name'].find(fitlabel) != -1:
                 value      = param['fitresult']
                 sigmavalue = param['sigma'] 
                 values.append(value)
@@ -257,7 +261,7 @@ class McaTable(QTable):
             col = 0
             for label in self.labels:
                 try:
-                    dict[label] = string.atof(str(self.text(row,col)))
+                    dict[label] = float(str(self.text(row,col)))
                 except:
                     dict[label] = str(self.text(row,col))
                 col +=1
@@ -267,16 +271,17 @@ class McaTable(QTable):
             self.emit(qt.SIGNAL('McaTableSignal'), dict)
 
     def gettext(self):
-        lemon=string.upper("#%x%x%x" % (255,250,205))
+        lemon= ("#%x%x%x" % (255,250,205)).upper()
         if QTVERSION < '4.0.0':
             if QTVERSION < '3.0.0':
-                hcolor = string.upper("#%x%x%x" % (230,240,249))
+                hcolor = ("#%x%x%x" % (230,240,249)).upper()
             else:
                 hb = self.horizontalHeader().paletteBackgroundColor()
-                hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
+                hcolor = ("#%x%x%x" % (hb.red(),hb.green(),hb.blue())).upper()
         else:
-            if DEBUG:print "color background to implement"
-            hcolor = string.upper("#%x%x%x" % (230,240,249))
+            if DEBUG:
+                print("color background to implement")
+            hcolor = upper("#%x%x%x" % (230,240,249)).upper()
         text=""
         text+=("<nobr>")
         text+=( "<table>")
@@ -293,7 +298,7 @@ class McaTable(QTable):
                 text+=(str(self.horizontalHeaderItem(l).text()))
             text+=("</b></td>")
         text+=("</tr>")
-        #text+=( str(qt.QString("</br>"))
+        #text+=( str(QString("</br>"))
         if QTVERSION < '4.0.0':
             nrows = self.numRows()
         else:
@@ -344,7 +349,7 @@ class McaTable(QTable):
             if len(moretext):
                 text+=("</b>")
             text+=("</tr>")
-            #text+=( str(qt.QString("<br>"))
+            #text+=( str(QString("<br>"))
             text+=("\n")
         text+=("</table>")
         text+=("</nobr>")

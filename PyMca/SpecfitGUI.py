@@ -115,9 +115,11 @@ class SpecfitGUI(qt.QWidget):
                 else:
                     self.funevent(configuration['fittheory'])
                 if configuration['fitbkg']    is None:
-                    if QTVERSION < '4.0.0': self.guiconfig.BkgComBox.setCurrentItem(1)
-                    else: self.guiconfig.BkgComBox.setCurrentIndex(1)
-                    self.bkgevent(self.specfit.bkgdict.keys()[0])
+                    if QTVERSION < '4.0.0':
+                        self.guiconfig.BkgComBox.setCurrentItem(1)
+                    else:
+                        self.guiconfig.BkgComBox.setCurrentIndex(1)
+                    self.bkgevent(list(self.specfit.bkgdict.keys())[0])
                 else:
                     self.bkgevent(configuration['fitbkg'])
             else:
@@ -128,7 +130,7 @@ class SpecfitGUI(qt.QWidget):
                     self.guiconfig.BkgComBox.setCurrentIndex(1)
                     self.guiconfig.FunComBox.setCurrentIndex(1)
                 self.funevent(self.specfit.theorylist[0])
-                self.bkgevent(self.specfit.bkgdict.keys()[0])
+                self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             configuration.update(self.configure())
             if configuration['McaMode']:            
                 self.guiconfig.MCACheckBox.setChecked(1)

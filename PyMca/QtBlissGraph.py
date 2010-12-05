@@ -2040,7 +2040,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.delcurve(key) 
                 
         def removeMarkers(self):
-            keylist = self.markersdict.keys()
+            keylist = list(self.markersdict.keys())
             for key in keylist:
                 try:
                     self.markersdict[key]['marker'].detach()
@@ -2053,7 +2053,7 @@ class QtBlissGraph(qwt.QwtPlot):
             y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
             (marker, distance) = (None, None)
             xmarker = True
-            for key in self.markersdict.keys():
+            for key in list(self.markersdict.keys()):
                 if marker is None:
                     marker   = key
                     if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:

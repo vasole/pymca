@@ -57,7 +57,6 @@ class ScanFit(qt.QWidget):
         if not os.path.exists(funsFile):
             funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
                                 "SpecfitFunctions.py")
-        print(funsFile)
         self.specfit.importfun(funsFile)
         self.specfit.settheory('Area Gaussians')
         self.specfit.setbackground('Linear')

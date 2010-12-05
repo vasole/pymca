@@ -29,6 +29,10 @@ __revision__ = "$Revision: 1.65 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 
 QTVERSION = qt.qVersion()
 
@@ -69,10 +73,10 @@ import PyMcaDirs
 USE_BOLD_FONT = True
 DEBUG = 0
 if DEBUG:
-    print "############################################"
-    print "#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG
-    print "############################################"
-    
+    print("############################################")
+    print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
+    print("############################################")
+
 class McaAdvancedFit(qt.QWidget):
     """
     This class inherits QWidget.
@@ -268,18 +272,18 @@ class McaAdvancedFit(qt.QWidget):
         self._energyAxis = False
         if QTVERSION < '4.0.0' :
             self.__printmenu = qt.QPopupMenu()
-            self.__printmenu.insertItem(qt.QString("Calibrate"),     self._calibrate)
-            self.__printmenu.insertItem(qt.QString("Identify Peaks"),self.__peakIdentifier)
-            self.__printmenu.insertItem(qt.QString("Elements Info"), self.__elementsInfo)
-            #self.__printmenu.insertItem(qt.QString("Concentrations"),self.concentrations)
-            #self.__printmenu.insertItem(qt.QString("Spectrum from Matrix"),self.matrixSpectrum)
-            #self.__printmenu.insertItem(qt.QString("Print Table"),self.printps)
-            #self.__printmenu.insertItem(qt.QString("HTML Report"),self.htmlReport)
+            self.__printmenu.insertItem(QString("Calibrate"),     self._calibrate)
+            self.__printmenu.insertItem(QString("Identify Peaks"),self.__peakIdentifier)
+            self.__printmenu.insertItem(QString("Elements Info"), self.__elementsInfo)
+            #self.__printmenu.insertItem(QString("Concentrations"),self.concentrations)
+            #self.__printmenu.insertItem(QString("Spectrum from Matrix"),self.matrixSpectrum)
+            #self.__printmenu.insertItem(QString("Print Table"),self.printps)
+            #self.__printmenu.insertItem(QString("HTML Report"),self.htmlReport)
         else:
             self.__printmenu = qt.QMenu()
-            self.__printmenu.addAction(qt.QString("Calibrate"),     self._calibrate)
-            self.__printmenu.addAction(qt.QString("Identify Peaks"),self.__peakIdentifier)
-            self.__printmenu.addAction(qt.QString("Elements Info"), self.__elementsInfo)
+            self.__printmenu.addAction(QString("Calibrate"),     self._calibrate)
+            self.__printmenu.addAction(QString("Identify Peaks"),self.__peakIdentifier)
+            self.__printmenu.addAction(QString("Elements Info"), self.__elementsInfo)
         self.outdir      = None
         self.configDir   = None
         self.__lastreport= None
@@ -436,8 +440,10 @@ class McaAdvancedFit(qt.QWidget):
             msg.close()
         result = sthread._result
         del sthread
-        if QTVERSION < '4.0.0':self.raiseW()
-        else:self.raise_()
+        if QTVERSION < '4.0.0':
+            self.raiseW()
+        else:
+            self.raise_()
         return result
 
     def refreshWidgets(self):
@@ -562,7 +568,7 @@ class McaAdvancedFit(qt.QWidget):
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
-                            raise threadResult[1],threadResult[2]
+                            raise Exception(threadResult[1], threadResult[2])
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -597,7 +603,7 @@ class McaAdvancedFit(qt.QWidget):
         config = self.concentrationsWidget.getParameters()
         self.mcafit.config['concentrations'].update(config)
         if ddict['event'] == 'updated':
-            if ddict.has_key('concentrations'):
+            if 'concentrations' in ddict:
                 self._concentrationsDict = ddict['concentrations']
 
     def __elementclicked(self,ddict):
@@ -609,7 +615,7 @@ class McaAdvancedFit(qt.QWidget):
         self.graph.removeMarkers()
         ele = dict['current']
         items = []
-        if not dict.has_key(ele):
+        if not (ele in dict):
             self.graph.replot()
             return
         for rays in dict[ele]:
@@ -661,7 +667,7 @@ class McaAdvancedFit(qt.QWidget):
                 keylist = ['stripflag','hypermetflag','sumflag','escapeflag',
                            'fitfunction', 'continuum']
                 if key not in keylist:
-                    print "UNKNOWN key ",key
+                    print("UNKNOWN key ",key)
             config['fit'][key] = ndict[key]
         self.__fitdone = False
         #erase table
@@ -687,18 +693,21 @@ class McaAdvancedFit(qt.QWidget):
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
-                        raise threadResult[1],threadResult[2]
+                        raise Exception(threadResult[1], threadResult[2])
 
     def _tabChanged(self, value):
-        if DEBUG:print "_tabChanged(self, value) called"
+        if DEBUG:
+            print("_tabChanged(self, value) called")
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
             self.printButton.setEnabled(False)
             w = self.concentrationsWidget
             if w.parent() is None:
                 if w.isHidden():
                     w.show()
-                if QTVERSION < '4.0.0': w.raiseW()
-                else:w.raise_()
+                if QTVERSION < '4.0.0':
+                    w.raiseW()
+                else:
+                    w.raise_()
                 self.printButton.setEnabled(True)
                 #do not calculate again. It should be already updated
                 return
@@ -799,11 +808,14 @@ class McaAdvancedFit(qt.QWidget):
         del caldialog
 
     def __elementsInfo(self):
-        if self.elementsInfo is None:self.elementsInfo=ElementsInfo.ElementsInfo(None,"Elements Info")
+        if self.elementsInfo is None:
+            self.elementsInfo = ElementsInfo.ElementsInfo(None, "Elements Info")
         if self.elementsInfo.isHidden():
            self.elementsInfo.show()
-        if QTVERSION < '4.0.0':self.elementsInfo.raiseW()
-        else:self.elementsInfo.raise_()
+        if QTVERSION < '4.0.0':
+            self.elementsInfo.raiseW()
+        else:
+            self.elementsInfo.raise_()
 
     def __peakIdentifier(self, energy = None):
         if energy is None:energy = 5.9
@@ -1043,7 +1055,7 @@ class McaAdvancedFit(qt.QWidget):
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
-                            raise threadResult[1],threadResult[2]
+                            raise Exception(threadResult[1], threadResult[2])
                 dict = threadResult
             except:
                 msg = qt.QMessageBox(self)
@@ -1103,14 +1115,14 @@ class McaAdvancedFit(qt.QWidget):
         try:
             self.__anasignal(dict)
         except:
-            print "Error generating matrix output. "
-            print "Try to perform your fit again.  "
-            print  sys.exc_info()
-            print "If error persists, please report this error."
-            print "ymatrix shape = ", dict['result']['ymatrix'].shape
-            print "xmatrix shape = ", xmatrix.shape
-            print "continuum shape = ", dict['result']['continuum'].shape
-            print "zz      shape = ", self.mcafit.zz.shape
+            print("Error generating matrix output. ")
+            print("Try to perform your fit again.  ")
+            print(sys.exc_info())
+            print("If error persists, please report this error.")
+            print("ymatrix shape = ", dict['result']['ymatrix'].shape)
+            print("xmatrix shape = ", xmatrix.shape)
+            print("continuum shape = ", dict['result']['continuum'].shape)
+            print("zz      shape = ", self.mcafit.zz.shape)
 
     def peaksSpectrum(self):
         if not self.__fitdone:
@@ -1153,12 +1165,14 @@ class McaAdvancedFit(qt.QWidget):
         try:
             self.__anasignal(dict)
         except:
-            print "Error generating peaks output. "
-            print "Try to perform your fit again.  "
-            print "If error persists, please report this error."
-            print "ymatrix shape = ", dict['result'][group].shape
-            print "xmatrix shape = ", xmatrix.shape
-            print "zz      shape = ", self.mcafit.zz.shape
+            print("Error generating peaks output. ")
+            print("Try to perform your fit again.  ")
+            print(sys.exc_info())
+            print("If error persists, please report this error.")
+            print("ymatrix shape = ", dict['result']['ymatrix'].shape)
+            print("xmatrix shape = ", xmatrix.shape)
+            print("continuum shape = ", dict['result']['continuum'].shape)
+            print("zz      shape = ", self.mcafit.zz.shape)
 
     def __printps(self):
         if QTVERSION < '4.0.0':
@@ -1234,18 +1248,18 @@ class McaAdvancedFit(qt.QWidget):
         if self.browser is None:
             self.browser= qt.QWidget()
             if QTVERSION < '4.0.0':
-                self.browser.setCaption(qt.QString(self.__lastreport))
+                self.browser.setCaption(QString(self.__lastreport))
             else:
-                self.browser.setWindowTitle(qt.QString(self.__lastreport))
+                self.browser.setWindowTitle(QString(self.__lastreport))
             self.browser.layout = qt.QVBoxLayout(self.browser)
             self.browser.layout.setMargin(0)
             self.browser.layout.setSpacing(0)
             if QTVERSION < '4.0.0':
                 self.__printmenu.insertSeparator()
-                self.__printmenu.insertItem(qt.QString("Last Report"),self.showLastReport)
+                self.__printmenu.insertItem(QString("Last Report"),self.showLastReport)
             else:
                 self.__printmenu.addSeparator()
-                self.__printmenu.addAction(qt.QString("Last Report"),self.showLastReport)
+                self.__printmenu.addAction(QString("Last Report"),self.showLastReport)
 
             if QTVERSION < '4.0.0':
                 self.browsertext= qt.QTextView(self.browser)
@@ -1266,20 +1280,20 @@ class McaAdvancedFit(qt.QWidget):
             self.browser.layout.addWidget(self.browsertext)
         else:
             if QTVERSION < '4.0.0':
-                self.browser.setCaption(qt.QString(self.__lastreport))
+                self.browser.setCaption(QString(self.__lastreport))
             else:
-                self.browser.setWindowTitle(qt.QString(self.__lastreport))
+                self.browser.setWindowTitle(QString(self.__lastreport))
 
         if QTVERSION < '4.0.0':
-            self.browsertext.mimeSourceFactory().addFilePath(qt.QString(os.path.dirname(self.__lastreport)))
+            self.browsertext.mimeSourceFactory().addFilePath(QString(os.path.dirname(self.__lastreport)))
             self.browsertext.setText(text)
         else:
             dirname  = os.path.dirname(self.__lastreport)
             basename = os.path.basename(self.__lastreport)
             #self.browsertext.setMimeSourceFactory(qt.QMimeFactory.defaultFactory())
-            #self.browsertext.mimeSourceFactory().addFilePath(qt.QString(dirname))
-            self.browsertext.setSearchPaths([qt.QString(dirname)])
-            #self.browsertext.setSource(qt.QUrl(qt.QString(basename)))
+            #self.browsertext.mimeSourceFactory().addFilePath(QString(dirname))
+            self.browsertext.setSearchPaths([QString(dirname)])
+            #self.browsertext.setSource(qt.QUrl(QString(basename)))
             self.browsertext.clear()
             if QTVERSION < '4.2.0':
                 self.browsertext.insertHtml(text)
@@ -1296,19 +1310,19 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 self.browser.raise_()
 
-    def printConcentrations(self,doit=0):
+    def printConcentrations(self, doit=0):
         text = "<CENTER>"+self.concentrationsWidget.concentrationsTable.getHtmlText()+"</CENTER>"
         if (__name__ == "__main__") or (doit):
             self.__print(text)
             #print h+text
         else:
-            dict={}
-            dict['event'] = "McaAdvancedFitPrint"
-            dict['text' ] = h+text
+            ddict={}
+            ddict['event'] = "McaAdvancedFitPrint"
+            ddict['text' ] = h+text
             if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
+                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
             else:
-                self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
+                self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
     def printps(self,doit=0):
         h = self.__htmlheader()
@@ -1318,13 +1332,13 @@ class McaAdvancedFit(qt.QWidget):
             self.__print(h+text)
             #print h+text
         else:
-            dict={}
-            dict['event'] = "McaAdvancedFitPrint"
-            dict['text' ] = h+text
+            ddict={}
+            ddict['event'] = "McaAdvancedFitPrint"
+            ddict['text' ] = h+text
             if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'),(dict,))
+                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
             else:
-                self.emit(qt.SIGNAL('McaAdvancedFitSignal'),(dict))
+                self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
     def __htmlheader(self):
         header = "%s" % str(self.headerLabel.text())
@@ -1436,7 +1450,7 @@ class McaAdvancedFit(qt.QWidget):
                 body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
                 #html output -> print text
                 richtext = qt.QSimpleRichText(text, qt.QFont(),
-                                                    qt.QString(""),
+                                                    QString(""),
                                                     #0,
                                                     qt.QStyleSheet.defaultSheet(),
                                                     qt.QMimeSourceFactory.defaultFactory(),
@@ -1457,8 +1471,8 @@ class McaAdvancedFit(qt.QWidget):
                                     view,qt.QColorGroup())
                     view.moveBy(0, body.height())
                     painter.translate(0, -body.height())
-                    painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
-                                     view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
+                    painter.drawText(view.right()  - painter.fontMetrics().width(QString.number(page)),
+                                     view.bottom() - painter.fontMetrics().ascent() + 5,QString.number(page))
                     if view.top() >= richtext.height():
                         break
                     printer.newPage()
@@ -1485,7 +1499,8 @@ class McaAdvancedFit(qt.QWidget):
                 document.print_(printer)
 
     def setdata(self, *var, **kw):
-        if DEBUG:print "McaAdvancedFit.setdata deprecated, use setData instead:"
+        if DEBUG:
+            print("McaAdvancedFit.setdata deprecated, use setData instead.")
         return self.setData( *var, **kw)
 
     def setData(self,*var,**kw):
@@ -1510,27 +1525,31 @@ class McaAdvancedFit(qt.QWidget):
         
         self.__fitdone = 0
         self.info ={}
-        if kw.has_key('legend'):
-            self.info['legend'] = kw['legend']
+        key = 'legend'
+        if key in kw:
+            self.info[key] = kw[key]
         else:
-            self.info['legend'] = 'Unknown Origin'
-        if kw.has_key('xlabel'):
-            self.info['xlabel'] = kw['xlabel']
+            self.info[key] = 'Unknown Origin'
+        key = 'xlabel'
+        if key in kw:
+            self.info[key] = kw[key]
         else:
-            self.info['xlabel'] = 'X'
-        if kw.has_key('xmin'):
-            self.info['xmin'] = "%.3f" % kw['xmin']
+            self.info[key] = 'X'
+        key = 'xmin'
+        if key in kw:
+            self.info[key] = "%.3f" % kw[key]
         else:
-            self.info['xmin'] = "????"
-
-        if kw.has_key('xmax'):
-            self.info['xmax'] = "%.3f" % kw['xmax']
+            self.info[key] = "????"
+        key = 'xmax'
+        if key in kw:
+            self.info[key] = "%.3f" % kw[key]
         else:
-            self.info['xmax'] = "????"
-        if kw.has_key('sourcename'):
-            self.info['sourcename'] = "%s" % kw['sourcename']
+            self.info[key] = "????"
+        key = 'sourcename'
+        if key in kw:
+            self.info[key] = "%s" % kw[key]
         else:
-            self.info['sourcename'] = "Unknown Source"
+            self.info[key] = "Unknown Source"
         self.__var = var
         self.__kw  = kw
         self.mcafit.setdata(*var,**kw)
@@ -1538,7 +1557,7 @@ class McaAdvancedFit(qt.QWidget):
             self.configDialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0)
 
-        if kw.has_key('calibration'):
+        if 'calibration' in kw:
             if kw['calibration'] is not None:
                 if kw['calibration'] != [0.0,1.0,0.0]:
                     self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
@@ -1552,15 +1571,16 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def setheader(self, *var, **kw):
-        if DEBUG:print "McaAdvancedFit.setheader deprecated, use setHeader instead:"
+        if DEBUG:
+            print("McaAdvancedFit.setheader deprecated, use setHeader instead.")
         return self.setHeader( *var, **kw)
 
     def setHeader(self,*var,**kw):
         if len(var):
             text = var[0]
-        elif kw.has_key('text'):
+        elif 'text' in kw:
             text = kw['text']
-        elif kw.has_key('header'):
+        elif 'header' in kw:
             text = kw['header']
         else:
             text = ""
@@ -1599,13 +1619,17 @@ class McaAdvancedFit(qt.QWidget):
                 msg.exec_()
             return
         if DEBUG or (QTVERSION < '3.0.0'):
-            if DEBUG: print "calling estimate"
+            if DEBUG:
+                print("calling estimate")
             self.mcafit.estimate()
-            if DEBUG: print "calling startfit"
+            if DEBUG:
+                print("calling startfit")
             fitresult,result = self.mcafit.startfit(digest=1)
-            if DEBUG: print "filling table"
+            if DEBUG:
+                print("filling table")
             self.mcatable.fillfrommca(result)
-            if DEBUG: print "finished"
+            if DEBUG:
+                print("finished")
         else:
             try:
                 self.mcafit.estimate()
@@ -1616,7 +1640,7 @@ class McaAdvancedFit(qt.QWidget):
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
-                            raise threadResult[1],threadResult[2]
+                            raise Exception(threadResult[1], threadResult[2])
                 fitresult = threadResult[0]
                 result    = threadResult[1]
             except:
@@ -1699,7 +1723,7 @@ class McaAdvancedFit(qt.QWidget):
     def __anasignal(self, ddict):
         if type(ddict) != type({}):
             return
-        if ddict.has_key('event'):
+        if 'event' in ddict:
             ddict['info'] = {}
             ddict['info'].update(self.info)
             if QTVERSION < '4.0.0':
@@ -1808,7 +1832,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.delcurve("Pile-up")
 
         if self.matrixSpectrumButton.isChecked():
-            if dict['result'].has_key('ymatrix'):
+            if 'ymatrix' in dict['result']:
                 self.graph.newCurve("Matrix",xdata, dict['result']['ymatrix'],
                                     logfilter=logfilter)
             else:
@@ -1897,7 +1921,10 @@ class McaAdvancedFit(qt.QWidget):
             ret = outfile.exec_loop()
         else:
             outfile.setWindowTitle("Output File Selection")
-            strlist = qt.QStringList()
+            if hasattr(qt, "QStringList"):
+                strlist = qt.QStringList()
+            else:
+                strlist = []
             format_list = ['Specfile MCA  *.mca',
                            'Specfile Scan *.dat',
                            'Raw ASCII  *.txt',
@@ -2340,7 +2367,7 @@ class Top(qt.QWidget):
     def setParameters(self,ddict=None):
         if ddict == None: ddict = {}
         hypermetflag = ddict.get('hypermetflag', 1)
-        if not ddict.has_key('fitfunction'):
+        if not ('fitfunction' in ddict):
             if hypermetflag:
                 ddict['fitfunction'] = 0
             else:
@@ -2351,7 +2378,7 @@ class Top(qt.QWidget):
         else:
             self.FunComBox.setCurrentIndex(ddict['fitfunction'])
 
-        if ddict.has_key('hypermetflag'):
+        if 'hypermetflag' in ddict:
             hypermetflag = ddict['hypermetflag']
             if ddict['fitfunction'] == 0:
                 g_term    =  hypermetflag & 1
@@ -2378,29 +2405,33 @@ class Top(qt.QWidget):
                 self.ltbox.setEnabled(0)
                 self.stepbox.setEnabled(0)
 
-        if ddict.has_key('sumflag'):
-            if ddict['sumflag'] == 1:
+        key = 'sumflag'
+        if key in ddict:
+            if ddict[key] == 1:
                 self.sumbox.setChecked(1)
             else:
                 self.sumbox.setChecked(0)
 
-        if ddict.has_key('stripflag'):
-            if ddict['stripflag'] == 1:
+        key = 'stripflag'
+        if key in ddict:
+            if ddict[key] == 1:
                 self.stripbox.setChecked(1)
             else:
                 self.stripbox.setChecked(0)
 
-        if ddict.has_key('escapeflag'):
-            if ddict['escapeflag'] == 1:
+        key = 'escapeflag'
+        if key in ddict:
+            if ddict[key] == 1:
                 self.escapebox.setChecked(1)
             else:
                 self.escapebox.setChecked(0)
 
-        if ddict.has_key('continuum'):
+        key = 'continuum'
+        if key in ddict:
             if QTVERSION < '4.0.0':
-                self.BkgComBox.setCurrentItem(ddict['continuum'])
+                self.BkgComBox.setCurrentItem(ddict[key])
             else:
-                self.BkgComBox.setCurrentIndex(ddict['continuum'])
+                self.BkgComBox.setCurrentIndex(ddict[key])
 
     def getParameters(self):
         ddict={}
@@ -2471,17 +2502,17 @@ class Line(qt.QFrame):
         self.setFrameShape(qt.QFrame.HLine)
 
 
-    def mouseDoubleClickEvent(self,event):
+    def mouseDoubleClickEvent(self, event):
         if DEBUG:
-            print "Double Click Event"
-        dict={}
-        dict['event']="DoubleClick"
-        dict['data'] = event
-        dict['info'] = self.info
+            print("Double Click Event")
+        ddict={}
+        ddict['event']="DoubleClick"
+        ddict['data'] = event
+        ddict['info'] = self.info
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"),(dict,))
+            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"), (ddict,))
         else:
-            self.emit(qt.SIGNAL("LineDoubleClickEvent"), dict)
+            self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
 
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
@@ -2527,9 +2558,8 @@ class McaGraphWindow(qt.QWidget):
                          self.__graphSignal)
 
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG: print "printPreview id = ", id(self.printPreview)
-
-
+        if DEBUG:
+            print("printPreview id = ", id(self.printPreview))
 
     def __roiSlot(self,dict=None):
         if dict is None:
@@ -2587,7 +2617,7 @@ class McaGraphWindow(qt.QWidget):
                                            currentroi=self.currentroi)
             self.graph.clearmarkers()
         elif dict['event'] == 'ActiveROI':
-            print "ActiveROI event"
+            print("ActiveROI event")
             pass
         ndict = {}
         ndict['event']  = "SetActiveCurveEvent"
@@ -2821,23 +2851,23 @@ class McaGraphWindow(qt.QWidget):
         else:
             self.roiwidget.raise_()
         legend = self.graph.getactivecurve(justlegend=1)
-        dict={}
-        dict['event']  = 'RoiClicked'
-        dict['active'] = legend
+        ddict={}
+        ddict['event']  = 'RoiClicked'
+        ddict['active'] = legend
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
+            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
 
     def _saveIconSignal(self):
         legend = self.graph.getactivecurve(justlegend=1)
-        dict={}
-        dict['event']  = 'SaveClicked'
-        dict['active'] = legend
+        ddict={}
+        ddict['event']  = 'SaveClicked'
+        ddict['active'] = legend
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
+            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
 
     def __graphSignal(self, dict):
         if dict['event'] == 'MouseAt':
@@ -2849,9 +2879,7 @@ class McaGraphWindow(qt.QWidget):
             else:
                 self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
         elif dict['event'] == "SetActiveCurveEvent":
-            legend = None
-            if dict.has_key('legend'):
-                legend = dict['legend']
+            legend = dict.get('legend', None)
             if (legend is not None) and (self.roiwidget is not None):
                 legend,x,y = self.graph.getactivecurve()
                 #if self.roidict is None:

@@ -51,7 +51,6 @@ QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     import SimpleFitGUI
 
-
 DEBUG = 0
 class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def __init__(self, parent=None, name="Scan Window", specfit=None):

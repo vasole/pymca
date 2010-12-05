@@ -276,8 +276,8 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
         selfy = data [:,1]
     else:
         if data0 is not None:
-            selfx = array(map(lambda x:x[0],data0))
-            selfy = array(map(lambda x:x[1],data0))
+            selfx = array([x[0] for x in data0])
+            selfy = array([x[1] for x in data0])
         else:
             selfx = xdata
             selfy = ydata
@@ -301,7 +301,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     dummy = abs(data [:,2])
                 else:
                     if data0 is not None:
-                        dummy = abs(array(map(lambda x:x[2],data0)))
+                        dummy = abs(array([x[2] for x in data0]))
                     else:
                         dummy = abs(array(sigmadata))
                 selfweight = 1.0 / (dummy + equal(dummy,0))

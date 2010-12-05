@@ -2859,9 +2859,9 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
     if photoweights == None:photoweights = False
     ddict = {}
     if len(symbol) > 1:
-        ele = string.upper(symbol[0])+string.lower(symbol[1])
+        ele = symbol[0].upper() + symbol[1].lower()
     else:
-        ele = string.upper(symbol)
+        ele = symbol.upper()
     #fill the dictionnary
     ddict['rays']=[]
     z = getz(ele)
