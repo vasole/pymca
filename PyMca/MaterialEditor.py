@@ -72,8 +72,8 @@ class MaterialEditor(qt.QWidget):
             self.graphDialog = graph
             self.graph = self.graphDialog.plot1DWindow
         else:
-            print "MaterialEditor, I should not be here"
-            print "Receviedgraph = ", graph
+            print("MaterialEditor, I should not be here")
+            print("Receviedgraph = ", graph)
             self.graphDialog = None
             self.graph = None
             
@@ -854,7 +854,8 @@ class MaterialGUI(qt.QWidget):
             self.__fillingValues = False
         
     def _fillValues(self):
-        if DEBUG: print "fillValues(self)"
+        if DEBUG:
+            print("fillValues(self)")
         self.__fillingValues = True
         if self.__comments:
             self.__nameLine.setText("%s" % self._current['Comment'])
@@ -867,9 +868,9 @@ class MaterialGUI(qt.QWidget):
                     self.__thicknessLine.setText("%.5g" % self._current['Thickness'])
                 except:
                     self.__thicknessLine.setText("")
-        if type(self._current['CompoundList']) != types.ListType:
+        if type(self._current['CompoundList']) != type([]):
             self._current['CompoundList'] = [self._current['CompoundList']] 
-        if type(self._current['CompoundFraction']) != types.ListType:
+        if type(self._current['CompoundFraction']) != type([]):
             self._current['CompoundFraction'] = [self._current['CompoundFraction']] 
         self.__numberSpin.setValue(max(len(self._current['CompoundList']),1))
         row = 0
@@ -897,8 +898,8 @@ class MaterialGUI(qt.QWidget):
     if QTVERSION < '4.0.0':
         def _updateCurrent(self):
             if DEBUG:
-                print "updateCurrent(self)"
-                print "self._current before = ", self._current
+                print("updateCurrent(self)")
+                print("self._current before = ", self._current)
             self._current['CompoundList']     = []
             self._current['CompoundFraction'] = []
             for i in range(self.__table.numRows()):
@@ -910,12 +911,12 @@ class MaterialGUI(qt.QWidget):
             if self.__comments:
                 self._current['Comment'] = str(self.__nameLine.text())
             if DEBUG:
-                print "self._current after = ", self._current
+                print("self._current after = ", self._current)
     else:
         def _updateCurrent(self):
             if DEBUG:
-                print "updateCurrent(self)"
-                print "self._current before = ", self._current
+                print("updateCurrent(self)")
+                print("self._current before = ", self._current)
 
             self._current['CompoundList']     = []
             self._current['CompoundFraction'] = []
@@ -936,7 +937,7 @@ class MaterialGUI(qt.QWidget):
             self.__densitySlot(silent=True)
             self.__thicknessSlot(silent=True)
             if DEBUG:
-                print "self._current after = ", self._current
+                print("self._current after = ", self._current)
 
     def __densitySlot(self, silent=False):
         qstring = self.__densityLine.text()
@@ -990,7 +991,8 @@ class MaterialGUI(qt.QWidget):
         self.emit(qt.SIGNAL('MaterialMassAttenuationSignal'), ddict)        
 
     def __nameLineSlot(self):
-        if DEBUG:print "__nameLineSlot(self)"
+        if DEBUG:
+            print("__nameLineSlot(self)")
         qstring = self.__nameLine.text()
         text = str(qstring)
         if self.__toolMode:
@@ -1047,7 +1049,8 @@ class MaterialGUI(qt.QWidget):
         else:
             item = self.__table.item(row, col)
             if item is not None:
-                if DEBUG:print "table item is None"
+                if DEBUG:
+                    print("table item is None")
                 qstring = item.text()
             else:
                 qstring = ""

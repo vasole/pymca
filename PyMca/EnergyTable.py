@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -331,11 +331,11 @@ class EnergyTable(QTable):
                 self.setFocusStyle(qttable.QTable.FollowStyle)
         else:
                 if DEBUG:
-                    print "margin"
-                    print "frame shape"
-                    print "selection mode"
-                    print "focus style"
-                    print "all of them missing"
+                    print("margin")
+                    print("frame shape")
+                    print("selection mode")
+                    print("focus style")
+                    print("all of them missing")
                 self.setColumnCount(3 * self.dataColumns)
 
         labels = []
@@ -348,8 +348,8 @@ class EnergyTable(QTable):
                 self.horizontalHeader().setLabel(labels.index(label),label)
         else:
             if DEBUG:
-                print "margin to addjust"
-                print "focus style"
+                print("margin to addjust")
+                print("focus style")
             self.setFrameShape(qt.QTableWidget.NoFrame)
             self.setSelectionMode(qt.QTableWidget.NoSelection)
             self.setColumnCount(len(labels))
@@ -367,7 +367,7 @@ class EnergyTable(QTable):
                 self.adjustColumn(0 + 3*i)
             else:
                 if DEBUG:
-                    print "column adjustment missing"
+                    print("column adjustment missing")
         if QTVERSION < '4.0.0':
             self.connect(self, qt.SIGNAL("valueChanged(int,int)"),self.mySlot)
         else:
@@ -408,7 +408,7 @@ class EnergyTable(QTable):
                 #item= qttable.QCheckTableItem(self, text)
                 if QTVERSION < '3.0.0':
                     if DEBUG:
-                        print "background  color to implement in qt 2.3.0"
+                        print("background  color to implement in qt 2.3.0")
                 else:
                     self.viewport().setPaletteBackgroundColor(color)
                 item= ColorQTableItem(self, text, color)                
@@ -542,7 +542,7 @@ class EnergyTable(QTable):
                     self.adjustColumn(0 + 3*i)
                 else:
                     if DEBUG:
-                        print "column adjustment missing"
+                        print("column adjustment missing")
         except:
             self.__disconnected = False
             raise
@@ -560,8 +560,8 @@ class EnergyTable(QTable):
     def mySlot(self,row,col):
         if self.__disconnected:return
         if DEBUG:
-            print "Value changed row = ",row,"col = ",col
-            print "Text = ", self.text(row,col)
+            print("Value changed row = %d col = %d" % (row, col))
+            print("Text = %s" % self.text(row,col))
         if (col != 0) and (col !=3) and (col != 6) and (col != 9):
             try:
                 s = str(self.text(row, col))
@@ -613,7 +613,7 @@ class EnergyTable(QTable):
                     item.setText(text)
             else:
                 if DEBUG:
-                    print "checkbox can be called?"
+                    print("checkbox can be called?")
                 pass
 
     def _getDict(self):
@@ -714,7 +714,7 @@ def main(args):
     app=qt.QApplication(args)
     #tab = AttenuatorsTableWidget(None)
     def dummy(ddict):
-        print "dict =",ddict
+        print("dict =",ddict)
     tab = EnergyTable(None)
     energy = Numeric.arange(100.).astype(Numeric.Float)+ 1.5
     weight = Numeric.ones(len(energy), Numeric.Float)

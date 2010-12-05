@@ -52,7 +52,7 @@ class Plot1DBase:
             return 0
         directory = PLUGINS_DIR
         if not os.path.exists(directory):
-            raise IOError, "Directory:\n%s\ndoes not exist." % directory
+            raise IOError("Directory:\n%s\ndoes not exist." % directory)
 
         self.pluginList = []
         fileList = glob.glob(os.path.join(directory, "*.py"))
@@ -76,14 +76,14 @@ class Plot1DBase:
                     self.pluginList.append(plugin)
             except:
                 if DEBUG:
-                    print "Problem importing module %s" % plugin
+                    print("Problem importing module %s" % plugin)
         return len(self.pluginList)
     
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
         """
         Add the 1D curve given by x an y to the graph.
         """
-        print "addCurve not implemented"
+        print("addCurve not implemented")
         return None
 
     def removeCurve(self, legend, replot=True):
@@ -91,7 +91,7 @@ class Plot1DBase:
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
         """
-        print "removeCurve not implemented"
+        print("removeCurve not implemented")
         return None
     
     def getActiveCurve(self):
@@ -108,7 +108,7 @@ class Plot1DBase:
         If just_legend is True:
             The legend of the active curve (or None) is returned.
         """
-        print "getActiveCurve not implemented"
+        print("getActiveCurve not implemented")
         return None
 
     def getAllCurves(self):
@@ -125,21 +125,21 @@ class Plot1DBase:
                 [legend0, legend1, ..., legendn]
             or just an empty list.
         """
-        print "getAllCurves not implemented"
+        print("getAllCurves not implemented")
         return []
 
     def getGraphXLimits(self):
         """
         Get the graph X limits. 
         """
-        print "getGraphXLimits not implemented"
+        print("getGraphXLimits not implemented")
         return 0.0, 100.0
 
     def getGraphYLimits(self):
         """
         Get the graph Y (left) limits. 
         """
-        print "getGraphYLimits not implemented"
+        print("getGraphYLimits not implemented")
         return 0.0, 100.0
 
     def setActiveCurve(self, legend):
@@ -147,15 +147,15 @@ class Plot1DBase:
         Funtion to request the plot window to set the curve with the specified legend
         as the active curve.
         """
-        print "setActiveCurve not implemented"
+        print("setActiveCurve not implemented")
         return None
 
     def setGraphTitle(self, title):
-        print "setGraphTitle not implemented"
+        print("setGraphTitle not implemented")
 
     def setGraphXTitle(self, title):
-        print "setGraphXTitle not implemented"
+        print("setGraphXTitle not implemented")
 
     def setGraphYTitle(self, title):
-        print "setGraphYTitle not implemented"
-        
+        print("setGraphYTitle not implemented")
+

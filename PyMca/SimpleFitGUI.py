@@ -32,7 +32,7 @@ import SimpleFitUserEstimatedFunctions
 import Parameters
 qt = Parameters.qt
 if qt.qVersion() < '4.0.0':
-    raise ImportError, "This module requires PyQt4"
+    raise ImportError("This module requires PyQt4")
 try:
     #raise ImportError
     if 0:
@@ -269,7 +269,7 @@ class SimpleFitGUI(qt.QWidget):
         self._configurationDialog.setSimpleFitInstance(self.fitModule)
         if not self._configurationDialog.exec_():
             if DEBUG:
-                print "NOT UPDATING CONFIGURATION"
+                print("NOT UPDATING CONFIGURATION")
             oldConfig = self.fitModule.getConfiguration()
             self._configurationDialog.setConfiguration(oldConfig)
             return
@@ -292,7 +292,7 @@ class SimpleFitGUI(qt.QWidget):
         idx = self.topWidget.backgroundCombo.findText(fname)
         self.topWidget.backgroundCombo.setCurrentIndex(idx)
         if DEBUG:
-            print "TABLE TO BE CLEANED"
+            print("TABLE TO BE CLEANED")
         #self.estimate()
         
     def setFitFunction(self, fname):

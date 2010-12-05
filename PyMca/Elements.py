@@ -2132,6 +2132,8 @@ def isValidFormula(compound):
     except:
         return False
     if len(elts)==1 and len(nbs)==0:
+        if type(elts) == type([]):
+            return False
         if elts in Element.keys():
             return True
         else:
@@ -2315,7 +2317,7 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
     energy = Numeric.array(dict['energy'],Numeric.Float)
     mu     = Numeric.array(dict['total'],Numeric.Float) * density * thickness
     if energy0 is not None:
-        if type(energy0) != types.ListType:
+        if type(energy0) != type([]):
             listoutput = False    
     if listoutput:
         dict['energy']   = energy.tolist()
@@ -2342,13 +2344,13 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
     energy       - Energy at which the values are desired    
     massfractions- Flag to supply mass fractions on output
     """
-    if type(compoundList0) != types.ListType:
+    if type(compoundList0) != type([]):
         compoundList = [compoundList0]
     else:
         compoundList = compoundList0
     if type(fractionList0) == Numeric.ArrayType:
         fractionList = fractionList0.tolist()
-    elif type(fractionList0) != types.ListType:
+    elif type(fractionList0) != type([]):
         fractionList = [fractionList0]
     else:
         fractionList = fractionList0
@@ -2390,9 +2392,9 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
     materialElements = {}
     energy = energy0 
     if energy0 is not None:
-        if   type(energy0) == types.FloatType:
+        if type(energy0) == type(2.):
             energy = [energy0]
-        elif type(energy0) == types.IntType:
+        elif type(energy0) == type(1):
             energy = [1.0 * energy0]
         elif type(energy0) == Numeric.ArrayType:
             energy = energy0.tolist()
@@ -2686,8 +2688,8 @@ def getelementmassattcoef(ele,energy=None):
                 Element[ele]['xcom']['pair'][i] += float(value)   
                 i += 1
             line = f.readline()
-        if 0:
-            #next line gives problems under under windows
+        if sys.version >= '3.0':
+            #next line gave problems under under windows
             #just try Numeric.argsort([1,1,1,1,1]) under linux and windows to see
             #what I mean
             i1=Numeric.argsort(Element[ele]['xcom']['energy'])

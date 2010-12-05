@@ -26,6 +26,15 @@
 #############################################################################*/
 import sys
 import PyMcaQt as qt
+if not hasattr(qt, "QString"):
+    QString = str
+else:
+    QString = qt.QString
+
+if not hasattr(qt, "QStringList"):
+    QStringList = list
+else:
+    QStringList = qt.QStringList
     
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
@@ -80,7 +89,7 @@ else:
 
         def _cellChanged(self, idx):
             if DEBUG:
-                print "cell changed",idx
+                print("cell changed",idx)
             self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
 
     class QCheckBoxItem(qt.QCheckBox):
@@ -93,15 +102,11 @@ else:
         def _cellChanged(self):
             self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
 
-
-
-import string
-
 DEBUG=0
 
 class Parameters(QTable):
     def __init__(self, *args,**kw):
-        apply(QTable.__init__, (self, ) + args)
+        QTable.__init__(self, *args)
         if QTVERSION < '4.0.0':
             self.setNumRows(1)
             self.setNumCols(1)
@@ -119,7 +124,7 @@ class Parameters(QTable):
         self.__configuring = False
         self.setColumnCount(len(self.labels))
         i=0
-        if kw.has_key('labels'):
+        if 'labels' in kw:
             if QTVERSION < '4.0.0':
                 for label in kw['labels']:
                     qt.QHeader.setLabel(self.horizontalHeader(),i,label)
@@ -163,7 +168,7 @@ class Parameters(QTable):
             
         self.parameters={}
         self.paramlist=[]
-        if kw.has_key('paramlist'):
+        if 'paramlist' in kw:
             self.paramlist = kw['paramlist']
         self.build()
         if QTVERSION < '4.0.0':
@@ -200,22 +205,22 @@ class Parameters(QTable):
                                           'code',
                                           'val1',
                                           'val2'],
-                                'estimation':qt.QString('0'),          
-                                'fitresult':qt.QString(),
-                                'sigma':qt.QString(),
-                                'code':qt.QString('FREE'),
-                                'val1':qt.QString(),
-                                'val2':qt.QString(),
+                                'estimation':QString('0'),          
+                                'fitresult':QString(),
+                                'sigma':QString(),
+                                'code':QString('FREE'),
+                                'val1':QString(),
+                                'val2':QString(),
                                 'cons1':0,
                                 'cons2':0,
-                                'vmin':qt.QString('0'),
-                                'vmax':qt.QString('1'),
-                                'relatedto':qt.QString(),
-                                'factor':qt.QString('1.0'),
-                                'delta':qt.QString('0.0'),
-                                'sum':qt.QString('0.0'),
-                                'group':qt.QString(),
-                                'name':qt.QString(param),
+                                'vmin':QString('0'),
+                                'vmax':QString('1'),
+                                'relatedto':QString(),
+                                'factor':QString('1.0'),
+                                'delta':QString('0.0'),
+                                'sum':QString('0.0'),
+                                'group':QString(),
+                                'name':QString(param),
                                 'xmin':None,
                                 'xmax':None}
         self.paramlist.append(param)
@@ -224,7 +229,7 @@ class Parameters(QTable):
         self.setReadOnly(param,['name','fitresult','sigma','val1','val2'])
 
         #the code
-        a=qt.QStringList()
+        a=QStringList()
         for option in self.code_options:
             a.append(option)
         if QTVERSION < '4.0.0':
@@ -276,11 +281,11 @@ class Parameters(QTable):
             group=param['group']
             sigma=param['sigma']
             fitresult=param['fitresult']
-            if param.has_key('xmin'):
+            if 'xmin' in param:
                 xmin=param['xmin']
             else:
                 xmin=None
-            if param.has_key('xmax'):
+            if 'xmax' in param:
                 xmax=param['xmax']
             else:
                 xmax=None
@@ -316,17 +321,17 @@ class Parameters(QTable):
             xmin=self.parameters[param]['xmin']
             xmax=self.parameters[param]['xmax']            
             if len(buf):
-                fitresult=string.atof(buf)
+                fitresult=float(buf)
             else:
                 fitresult=0.0
             buf=str(self.parameters[param]['sigma'])
             if len(buf):
-                sigma=string.atof(buf)
+                sigma=float(buf)
             else:
                 sigma=0.0
             buf=str(self.parameters[param]['group'])
             if len(buf):
-                group=string.atof(buf)
+                group=float(buf)
             else:
                 group=0
             fitparam['name']=name
@@ -344,8 +349,8 @@ class Parameters(QTable):
         
     def myslot(self,row,col):
         if DEBUG:
-            print "Passing by myslot", row, col
-            print "current", self.currentRow(), self.currentColumn()
+            print("Passing by myslot(%d, %d)" % (row, col))
+            print("current(%d, %d)" % (self.currentRow(), self.currentColumn()))
         if QTVERSION > '4.0.0':
             if (col != 4) and (col != -1):
                 if row != self.currentRow():return
@@ -353,32 +358,32 @@ class Parameters(QTable):
             if self.__configuring:return
         param=self.paramlist[row]
         field=self.parameters[param]['fields'][col]
-        oldvalue=qt.QString(self.parameters[param][field])
+        oldvalue=QString(self.parameters[param][field])
         if QTVERSION < '4.0.0':
-            newvalue=qt.QString(self.text(row,col))
+            newvalue=QString(self.text(row,col))
         else:
             if col != 4:
                 item = self.item(row, col)
                 if item is not None:
                     newvalue = item.text()
                 else:
-                    newvalue = qt.QString()
+                    newvalue = QString()
             else:
                 #this is the combobox
                 widget   = self.cellWidget(row, col)
                 newvalue = widget.currentText()  
         if DEBUG:
-            print "old value = ",oldvalue
-            print "new value = ",newvalue
+            print("old value = ",oldvalue)
+            print("new value = ",newvalue)
         if self.validate(param,field,oldvalue,newvalue):
             #self.parameters[param][field]=newvalue
             if DEBUG:
-                print "Change is valid"
+                print("Change is valid")
             exec("self.configure(name=param,%s=newvalue)" % field)
         else:
             if DEBUG:
-                print "Change is not valid"
-                print "oldvalue ", oldvalue
+                print("Change is not valid")
+                print("oldvalue ", oldvalue)
             if field == 'code':
                 if QTVERSION < '4.0.0':
                     self.parameters[param]['code_item'].setCurrentItem(oldvalue)
@@ -407,7 +412,7 @@ class Parameters(QTable):
                     return 0
         else:
             try:
-                string.atof(str(newvalue))
+                float(str(newvalue))
             except:
                 return 0
         return 1
@@ -510,10 +515,10 @@ class Parameters(QTable):
         elif str(newvalue) == 'IGNORE':
             # I should check if the group can be ignored
             # for the time being I just fix all of them to ignore
-            group=int(string.atof(str(self.parameters[workparam]['group'])))
+            group=int(float(str(self.parameters[workparam]['group'])))
             candidates = []
             for param in self.parameters.keys():
-                if group == int(string.atof(str(self.parameters[param] ['group']))):
+                if group == int(float(str(self.parameters[param] ['group']))):
                     candidates.append(param)
             #print candidates 
             #I should check here if there is any relation to them
@@ -527,23 +532,23 @@ class Parameters(QTable):
                                #val2='')
             return 1
         elif str(newvalue) == 'ADD':
-            group=int(string.atof(str(self.parameters[workparam]['group'])))
+            group=int(float(str(self.parameters[workparam]['group'])))
             if group == 0:
                 #One cannot add a background group
                 return 0
             i=0
             for param in self.paramlist:
-                if i <=  int(string.atof(str(self.parameters [param] ['group']))):
+                if i <=  int(float(str(self.parameters [param] ['group']))):
                     i = i + 1
             self.addgroup(i,group)
             return 0
 
         elif str(newvalue) == 'SHOW':
-            print self.cget(workparam)
+            print(self.cget(workparam))
             return 0
 
         else:
-            print "None of the others!"
+            print("None of the others!")
 
     def addgroup(self,newg,gtype):
         line = 0
@@ -551,7 +556,7 @@ class Parameters(QTable):
         oldparamlist=list(self.paramlist)
         for param in oldparamlist:
             line = line + 1
-            paramgroup = int(string.atof(str(self.parameters [param] ['group'])))
+            paramgroup = int(float(str(self.parameters [param] ['group'])))
             if paramgroup  == gtype:
                 #Try to construct an appropriate name
                 #I have to remove any possible trailing number
@@ -564,9 +569,9 @@ class Parameters(QTable):
                     if j == -1:
                         break
                 if j >= 0 :
-                    newparam.append(param[0:j+1] + `newg`)
+                    newparam.append(param[0:j+1] + "%d" % newg)
                 else:
-                    newparam.append(`newg`)
+                    newparam.append("%d" % newg)
         for param in newparam:
             line=line+1
             self.newparameterline(param,line)
@@ -575,10 +580,10 @@ class Parameters(QTable):
 
     def freerestofgroup(self,workparam):
         if workparam in self.parameters.keys():
-            group=int(string.atof(str(self.parameters[workparam]['group'])))
+            group=int(float(str(self.parameters[workparam]['group'])))
             for param in self.parameters.keys():
                 if param != workparam:
-                    if group == int(string.atof(str(self.parameters[param]['group']))):
+                    if group == int(float(str(self.parameters[param]['group']))):
                         self.configure(name=param,
                                        code='FREE',
                                        cons1=0,
@@ -612,7 +617,7 @@ class Parameters(QTable):
                         break
                 if j >= 0 :
                     try:
-                        pos=string.index(workparam,param[0:j+1])
+                        pos=workparam.index(param[0:j+1])
                         if pos == 0:
                             best=param
                             return best,candidates
@@ -623,7 +628,9 @@ class Parameters(QTable):
 
     def setReadOnly(self,parameter,fields):
         if DEBUG:
-            print "parameter ",parameter,"fields = ",fields,"asked to be read only"
+            print("parameter ",parameter)
+            print("fields = ",fields)
+            print("asked to be read only")
         if QTVERSION < '4.0.0':
             self.setfield(parameter,fields,qttable.QTableItem.Never)
         else:
@@ -633,7 +640,9 @@ class Parameters(QTable):
         
     def setReadWrite(self,parameter,fields):
         if DEBUG:
-            print "parameter ",parameter,"fields = ",fields,"asked to be read write"
+            print("parameter ",parameter)
+            print("fields = ",fields)
+            print("asked to be read write")
         if QTVERSION < '4.0.0':
             self.setfield(parameter,fields,qttable.QTableItem.OnTyping)
         else:
@@ -642,7 +651,8 @@ class Parameters(QTable):
                             
     def setfield(self,parameter,fields,EditType):
         if DEBUG:
-            print "setfield. parameter =",parameter,"fields = ",fields
+            print("setfield. parameter =",parameter)
+            print("fields = ",fields)
         if type(parameter) == type (()) or \
            type(parameter) == type ([]):
             paramlist=parameter
@@ -685,14 +695,14 @@ class Parameters(QTable):
         
     def configure(self,*vars,**kw):
         if DEBUG:
-            print "configure called with **kw = ",kw
+            print("configure called with **kw = ",kw)
         name=None
         error=0
-        if kw.has_key('name'):
+        if 'name' in kw:
             name=kw['name']
         else:
             return 1
-        if self.parameters.has_key(name):
+        if name in self.parameters:
             row=self.parameters[name]['line']
             for key in kw.keys():
               if key is not 'name':
@@ -700,7 +710,7 @@ class Parameters(QTable):
                     col=self.parameters[name]['fields'].index(key)
                     oldvalue=self.parameters[name][key]
                     if key is 'code':
-                        newvalue=qt.QString(str(kw[key]))
+                        newvalue=QString(str(kw[key]))
                     else:
                         if len(str(kw[key])):
                             keyDone = False
@@ -710,14 +720,14 @@ class Parameters(QTable):
                                     newvalue = str(kw[key])
                                     keyDone = True
                             if not keyDone:
-                                newvalue=string.atof(str(kw[key]))
+                                newvalue=float(str(kw[key]))
                                 if key is 'sigma':
                                     newvalue= "%6.3g" % newvalue
                                 else:
                                     newvalue= "%8g" % newvalue
                         else:
                             newvalue=""
-                        newvalue=qt.QString(newvalue)
+                        newvalue=QString(newvalue)
                     #avoid endless recursivity
                     if key is not 'code':
                         if self.validate(name,key,oldvalue,newvalue):
@@ -731,16 +741,16 @@ class Parameters(QTable):
                     #    self.parameters[name][key]=newvalue
                     #    self.parameters[name]['code_item'].setCurrentItem(newvalue)
                 elif key in self.parameters[name].keys():
-                    newvalue=qt.QString(str(kw[key]))
+                    newvalue=QString(str(kw[key]))
                     self.parameters[name][key]=newvalue
                     #if key == 'relatedto':
                     #    self.parameters[name]['relatedto_item'].setCurrentItem(newvalue)    
             if DEBUG:
-                print "error = ",error
+                print("error = ",error)
             #if error == 0:
             if 1:
                 if 'code' in kw.keys():
-                    newvalue=qt.QString(kw['code'])
+                    newvalue=QString(kw['code'])
                     self.parameters[name]['code']=newvalue
                     if QTVERSION < '4.0.0':
                         self.parameters[name]['code_item'].setCurrentItem(newvalue)
@@ -763,7 +773,7 @@ class Parameters(QTable):
                             self.parameters[name]['relatedto']=kw['val1']
                           else:
                             self.parameters[name]['relatedto']=\
-                                     self.paramlist[int(string.atof(str(kw['val1'])))]
+                                     self.paramlist[int(float(str(kw['val1'])))]
                       if 'val2'in kw.keys():
                         self.parameters[name]['delta']=self.parameters[name]['val2']
                     if str(self.parameters[name]['code']) == 'SUM':
@@ -772,7 +782,7 @@ class Parameters(QTable):
                             self.parameters[name]['relatedto']=kw['val1']
                           else:
                             self.parameters[name]['relatedto']=\
-                                     self.paramlist[int(string.atof(str(kw['val1'])))]
+                                     self.paramlist[int(float(str(kw['val1'])))]
                       if 'val2'in kw.keys():
                         self.parameters[name]['sum']=self.parameters[name]['val2']
                     if str(self.parameters[name]['code']) == 'FACTOR':
@@ -781,7 +791,7 @@ class Parameters(QTable):
                             self.parameters[name]['relatedto']=kw['val1']
                           else:
                             self.parameters[name]['relatedto']=\
-                                     self.paramlist[int(string.atof(str(kw['val1'])))]
+                                     self.paramlist[int(float(str(kw['val1'])))]
                       if 'val2'in kw.keys():
                         self.parameters[name]['factor']=self.parameters[name]['val2']
                 else:
@@ -807,8 +817,8 @@ class Parameters(QTable):
                    str(self.parameters[name]['code']) == 'POSITIVE' or \
                    str(self.parameters[name]['code']) == 'IGNORE' or\
                    str(self.parameters[name]['code']) == 'FIXED' :
-                    self.parameters[name]['val1']=qt.QString()
-                    self.parameters[name]['val2']=qt.QString()                   
+                    self.parameters[name]['val1']=QString()
+                    self.parameters[name]['val2']=QString()                   
                     self.parameters[name]['cons1']=0                   
                     self.parameters[name]['cons2']=0
                     self.setReadWrite(name,'estimation')
@@ -818,12 +828,12 @@ class Parameters(QTable):
                     self.parameters[name]['val2']=self.parameters[name]['vmax']
                     try:
                         self.parameters[name]['cons1']=\
-                            string.atof(str(self.parameters[name]['val1']))
+                            float(str(self.parameters[name]['val1']))
                     except:
                         self.parameters[name]['cons1']=0
                     try:
                         self.parameters[name]['cons2']=\
-                            string.atof(str(self.parameters[name]['val2']))
+                            float(str(self.parameters[name]['val2']))
                     except:
                         self.parameters[name]['cons2']=0
                     if self.parameters[name]['cons1'] > self.parameters[name]['cons2']:
@@ -839,10 +849,10 @@ class Parameters(QTable):
                         self.paramlist.index(str(self.parameters[name]['val1']))
                     try:
                         self.parameters[name]['cons2']=\
-                            string.atof(str(self.parameters[name]['val2']))
+                            float(str(self.parameters[name]['val2']))
                     except:
                         error=1
-                        print "Forcing factor to 1" 
+                        print("Forcing factor to 1") 
                         self.parameters[name]['cons2']=1.0
                     self.setReadWrite(name,['estimation','val1','val2'])
                     self.setReadOnly(name,['fitresult','sigma'])
@@ -853,10 +863,10 @@ class Parameters(QTable):
                         self.paramlist.index(str(self.parameters[name]['val1']))
                     try:
                         self.parameters[name]['cons2']=\
-                            string.atof(str(self.parameters[name]['val2']))
+                            float(str(self.parameters[name]['val2']))
                     except:
                         error=1
-                        print "Forcing delta to 0" 
+                        print("Forcing delta to 0") 
                         self.parameters[name]['cons2']=0.0
                     self.setReadWrite(name,['estimation','val1','val2'])
                     self.setReadOnly(name,['fitresult','sigma'])
@@ -867,10 +877,10 @@ class Parameters(QTable):
                         self.paramlist.index(str(self.parameters[name]['val1']))
                     try:
                         self.parameters[name]['cons2']=\
-                            string.atof(str(self.parameters[name]['val2']))
+                            float(str(self.parameters[name]['val2']))
                     except:
                         error=1
-                        print "Forcing sum to 0" 
+                        print("Forcing sum to 0") 
                         self.parameters[name]['cons2']=0.0
                     self.setReadWrite(name,['estimation','val1','val2'])
                     self.setReadOnly(name,['fitresult','sigma'])
@@ -890,7 +900,7 @@ class Parameters(QTable):
         if param in self.parameters.keys():
             buf=str(self.parameters[param]['estimation'])
             if len(buf):
-                estimation=string.atof(buf)
+                estimation=float(buf)
             else:
                 estimation=0
             self.parameters[param]['code_item']

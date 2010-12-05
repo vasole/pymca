@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -148,7 +148,7 @@ class ParametersTab(qt.QTabWidget):
         return error
 
     def removeallviews(self,keep='Fit'):
-        for view in self.tables.keys():
+        for view in list(self.tables.keys()):
             if view != keep:
                 self.removeview(view)
 
@@ -160,7 +160,8 @@ class ParametersTab(qt.QTabWidget):
         for result in mcaresult:
              #if result['chisq'] is not None:
                 region=region+1
-                self.fillfromfit(result['paramlist'],current='Region '+`region`)
+                self.fillfromfit(result['paramlist'],current='Region '+\
+                                 "%d" % region)
         name='MCA'
         if self.tables.has_key(name):
            table=self.tables[name]
@@ -200,7 +201,8 @@ class ParametersTab(qt.QTabWidget):
                 hb = table.horizontalHeader().paletteBackgroundColor()
                 hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
         else:
-            if DEBUG: print "Actual color to ge got"
+            if DEBUG:
+                print("Actual color to ge got")
             hcolor = string.upper("#%x%x%x" % (230,240,249))
         text=""
         text+=("<nobr>")

@@ -29,7 +29,9 @@ import sys
 import string
 import PyMcaQt as qt
 if not hasattr(qt, 'QString'):
-    qt.QString = str
+    QString = str
+else:
+    QString = qt.QString
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
     from PyQt4 import Qwt5 as qwt
@@ -242,7 +244,7 @@ class QtBlissGraphWindow(qt.QMainWindow):
         self.peakButton.setToggleButton(1)
         """
         toolbar.addSeparator()
-        tb= qt.QToolButton(self.zoomResetIcon, "Reset Zoom", qt.QString.null,
+        tb= qt.QToolButton(self.zoomResetIcon, "Reset Zoom", QString(""),
                         self.view.ResetZoom, toolbar, "Reset Zoom")
         """
         tb= qt.QToolButton(self.roiResetIcon, "Remove ROIs",qt.QString.null,
@@ -257,14 +259,15 @@ class QtBlissGraphWindow(qt.QMainWindow):
                         self.view.ToggleLogX, toolbar, "Log X Axis")
         self.logxButton.setToggleButton(1)
         """
-        self.logyButton= qt.QToolButton(self.logyIcon, "Log Y Axis", qt.QString.null,
+        self.logyButton= qt.QToolButton(self.logyIcon, "Log Y Axis", QString(""),
                         self.view.ToggleLogY, toolbar, "Log Y Axis")
         self.logyButton.setToggleButton(1)
         toolbar.addSeparator()
-        tb= qt.QToolButton(self.fitIcon, "Fit Active Spectrum", qt.QString.null,
+        tb= qt.QToolButton(self.fitIcon, "Fit Active Spectrum", QString(""),
                         self.fitSpectrum, toolbar, "Fit Active Spectrum")
-        tb= qt.QToolButton(self.searchIcon, "Peak Search on Active Spectrum", qt.QString.null,
-                        self.peakSearch, toolbar, "Peak Search")
+        tb= qt.QToolButton(self.searchIcon, "Peak Search on Active Spectrum",
+                           QString(""),
+                           self.peakSearch, toolbar, "Peak Search")
     
     def __toggleNormal(self):
         pass
@@ -1737,20 +1740,20 @@ class QtBlissGraph(qwt.QwtPlot):
                     if self.legendmenu is None:
                         if qt.qVersion() < '4.0.0':
                              self.legendmenu = qt.QPopupMenu()
-                             self.legendmenu.insertItem(qt.QString("Set Active"),self.__legendsetactive)
+                             self.legendmenu.insertItem(QString("Set Active"),self.__legendsetactive)
                              self.legendmenu.insertSeparator()
-                             self.legendmenu.insertItem(qt.QString("Map to y1") ,self.__legendmaptoy1)
-                             self.legendmenu.insertItem(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                             self.legendmenu.insertItem(QString("Map to y1") ,self.__legendmaptoy1)
+                             self.legendmenu.insertItem(QString("Map to y2") ,self.__legendmaptoy2)
                              self.legendmenu.insertSeparator()
-                             self.legendmenu.insertItem(qt.QString("Remove curve") ,self.__legendremovesignal)
+                             self.legendmenu.insertItem(QString("Remove curve") ,self.__legendremovesignal)
                         else:
                              self.legendmenu = qt.QMenu()
-                             self.legendmenu.addAction(qt.QString("Set Active"),self.__legendsetactive)
+                             self.legendmenu.addAction(QString("Set Active"),self.__legendsetactive)
                              self.legendmenu.addSeparator()
-                             self.legendmenu.addAction(qt.QString("Map to y1") ,self.__legendmaptoy1)
-                             self.legendmenu.addAction(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                             self.legendmenu.addAction(QString("Map to y1") ,self.__legendmaptoy1)
+                             self.legendmenu.addAction(QString("Map to y2") ,self.__legendmaptoy2)
                              self.legendmenu.addSeparator()
-                             self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
+                             self.legendmenu.addAction(QString("Remove curve") ,self.__legendremovesignal)
                     if qt.qVersion() < '4.0.0':
                         self.legendmenu.exec_loop(self.cursor().pos())
                     else:
@@ -1804,32 +1807,32 @@ class QtBlissGraph(qwt.QwtPlot):
             if self.legendmenu is None:
                 if QTVERSION < '4.0.0':
                      self.legendmenu = qt.QPopupMenu()
-                     self.legendmenu.insertItem(qt.QString("Set Active"),self.__legendsetactive)
+                     self.legendmenu.insertItem(QString("Set Active"),self.__legendsetactive)
                      self.legendmenu.insertSeparator()
-                     self.legendmenu.insertItem(qt.QString("Map to y1") ,self.__legendmaptoy1)
-                     self.legendmenu.insertItem(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                     self.legendmenu.insertItem(QString("Map to y1") ,self.__legendmaptoy1)
+                     self.legendmenu.insertItem(QString("Map to y2") ,self.__legendmaptoy2)
                      self.legendmenu.insertSeparator()
-                     self.legendmenu.insertItem(qt.QString("Toggle Points") ,
+                     self.legendmenu.insertItem(QString("Toggle Points") ,
                                            self.__legendTogglePoints)
-                     self.legendmenu.insertItem(qt.QString("Toggle Line") ,
+                     self.legendmenu.insertItem(QString("Toggle Line") ,
                                            self.__legendToggleLine)
                      self.legendmenu.insertSeparator()
-                     self.legendmenu.insertItem(qt.QString("Remove curve") ,self.__legendremovesignal)
+                     self.legendmenu.insertItem(QString("Remove curve") ,self.__legendremovesignal)
                 else:
                      self.legendmenu = qt.QMenu()
-                     self.legendmenu.addAction(qt.QString("Set Active"),self.__legendsetactive)
+                     self.legendmenu.addAction(QString("Set Active"),self.__legendsetactive)
                      self.legendmenu.addSeparator()
-                     self.legendmenu.addAction(qt.QString("Map to y1") ,self.__legendmaptoy1)
-                     self.legendmenu.addAction(qt.QString("Map to y2") ,self.__legendmaptoy2)
+                     self.legendmenu.addAction(QString("Map to y1") ,self.__legendmaptoy1)
+                     self.legendmenu.addAction(QString("Map to y2") ,self.__legendmaptoy2)
                      self.legendmenu.addSeparator()
-                     self.legendmenu.addAction(qt.QString("Toggle Points") ,
+                     self.legendmenu.addAction(QString("Toggle Points") ,
                                            self.__legendTogglePoints)
-                     self.legendmenu.addAction(qt.QString("Toggle Line") ,
+                     self.legendmenu.addAction(QString("Toggle Line") ,
                                            self.__legendToggleLine)
                      self.legendmenu.addSeparator()
-                     self.legendmenu.addAction(qt.QString("Remove curve") ,self.__legendremovesignal)
+                     self.legendmenu.addAction(QString("Remove curve") ,self.__legendremovesignal)
                      if self.__legendrename:
-                         self.legendmenu.addAction(qt.QString("Rename curve") ,
+                         self.legendmenu.addAction(QString("Rename curve") ,
                                                    self.__legendrenamesignal)
             if QTVERSION < '4.0.0':
                 self.legendmenu.exec_loop(self.cursor().pos())
@@ -2163,6 +2166,8 @@ class QtBlissGraph(qwt.QwtPlot):
         return self.setActiveCurve(keyorindex)
             
     def setActiveCurve(self,keyorindex):
+        if keyorindex is None:
+            return -1
         if type(keyorindex) == type(" "):
             if keyorindex in self.curves.keys():
                 #index = self.curveslist.index(keyorindex) + 1
@@ -2234,7 +2239,7 @@ class QtBlissGraph(qwt.QwtPlot):
         if label is not None:
             if QWTVERSION4:
                 self.setMarkerLabel(self.markersdict[marker]['marker'],
-                                    qt.QString(label) )
+                                    QString(label) )
             else:
                 self.markersdict[marker]['marker'].setLabel(Qwt.QwtText(label))
                 
@@ -2256,7 +2261,7 @@ class QtBlissGraph(qwt.QwtPlot):
             curve = self.insertCurve(key)
             blissCurve = False
             self.curves[key] ["curve"] = curve
-        self.curves[key] ["name"] = qt.QString(str(key))
+        self.curves[key] ["name"] = QString(str(key))
         self.curveslist.append(key)
         self.curves[key] ["symbol"] = self.getnewsymbol()        
         if symbol is not None:

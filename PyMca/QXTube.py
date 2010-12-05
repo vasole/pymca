@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -221,9 +221,9 @@ class QXTube(qt.QWidget):
         if DEBUG:
             fsum = 0.0
             for l in fllines:
-                print "%s %.4f %.3e" % (l[2],l[0],l[1])
+                print("%s %.4f %.3e" % (l[2],l[0],l[1]))
                 fsum += l[1]
-            print fsum
+            print(fsum)
 
         energy, energyweight, energyscatter = XRayTubeEbel.generateLists([anode, anodedensity,
                                                                           anodethickness],
@@ -403,40 +403,40 @@ class TubeWidget(qt.QWidget):
             d["anglee"]          = 90.0
             d["deltaplotting"]   = 0.2
         """
-        if d.has_key("transmission"):
+        if "transmission" in d:
             if d["transmission"]:
                 self.transmissionCheckBox.setChecked(1)
             else:
                 self.transmissionCheckBox.setChecked(0)
             self._transmissionSlot()                
-        if d.has_key("voltage"):
+        if "voltage" in d:
             self.voltage.setText("%.1f" % d["voltage"])
-        if d.has_key("anode"):
+        if "anode" in d:
             self.anodeCombo.setCurrentIndex(Elements.ElementList.index(d["anode"]))
             self.anodeDensity.setText("%f" % Elements.Element[d["anode"]]["density"])
-        if d.has_key("anodethickness"):
+        if "anodethickness" in d:
             self.anodeThickness.setText("%f" % d["anodethickness"])
-        if d.has_key("anodedensity"):
+        if "anodedensity" in d:
             self.anodeDensity.setText("%f" % d["anodedensity"])
-        if d.has_key("window"):
+        if "window" in d:
             self.windowCombo.setCurrentIndex(Elements.ElementList.index(d["window"]))
             self.windowDensity.setText("%f" % Elements.Element[d["window"]]["density"])
-        if d.has_key("windowthickness"):
+        if "windowthickness" in d:
             self.windowThickness.setText("%f" % d["windowthickness"])
-        if d.has_key("windowdensity"):
+        if "windowdensity" in d:
             self.windowDensity.setText("%f" % d["windowdensity"])
-        if d.has_key("filter1"):
+        if "filter1" in d:
             self.filter1Combo.setCurrentIndex(Elements.ElementList.index(d["filter1"]))
             self.filter1Density.setText("%f" % Elements.Element[d["filter1"]]["density"])
-        if d.has_key("filter1thickness"):
+        if "filter1thickness" in d:
             self.filter1Thickness.setText("%f" % d["filter1thickness"])
-        if d.has_key("filter1density"):
+        if "filter1density" in d:
             self.filter1Density.setText("%f" % d["filter1density"])
-        if d.has_key("alphax"):
+        if "alphax" in d:
             self.alphaX.setText("%.1f" % d["alphax"])
-        if d.has_key("alphae"):
+        if "alphae" in d:
             self.alphaE.setText("%.1f" % d["alphae"])
-        if d.has_key("deltaplotting"):
+        if "deltaplotting" in d:
             self.delta.setText("%.3f" % d["deltaplotting"])
 
     def getParameters(self):
@@ -462,21 +462,22 @@ class TubeWidget(qt.QWidget):
 
     def _anodeSlot(self, ddict):
         if DEBUG:
-            print "_anodeSlot", ddict
+            print("_anodeSlot", ddict)
         self.anodeDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
         
     def _windowSlot(self, ddict):
         if DEBUG:
-            print "_windowSlot", ddict
+            print("_windowSlot", ddict)
         self.windowDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
 
     def _filter1Slot(self, ddict):
         if DEBUG:
-            print "_filter1Slot", ddict
+            print("_filter1Slot", ddict)
         self.filter1Density.setText("%f" % Elements.Element[ddict["element"]]["density"])
 
     def _transmissionSlot(self):
-        if DEBUG:print "_transmissionSlot"
+        if DEBUG:
+            print("_transmissionSlot")
         if self.transmissionCheckBox.isChecked():
             self.anodeThickness.setEnabled(1)
         else:
@@ -514,7 +515,8 @@ class MyQComboBox(qt.QComboBox):
         return   self.currentIndex(),str(self.currentText())
 
     def _mySignal(self, qstring0):
-        if DEBUG:print "_mySignal ", qstring0
+        if DEBUG:
+            print("_mySignal ", qstring0)
         text = str(qstring0)
         d = {}
         d['event']   = 'activated'

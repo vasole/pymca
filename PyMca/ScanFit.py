@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -57,6 +57,7 @@ class ScanFit(qt.QWidget):
         if not os.path.exists(funsFile):
             funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
                                 "SpecfitFunctions.py")
+        print(funsFile)
         self.specfit.importfun(funsFile)
         self.specfit.settheory('Area Gaussians')
         self.specfit.setbackground('Linear')

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -106,9 +106,9 @@ class QScriptOption(TabSheets.TabSheets):
         for name,sheet in self.sheets.items():
             self.output.update(sheet.get())
         #avoid pathologicval None cases
-        for key in self.output.keys():
+        for key in list(self.output.keys()):
             if self.output[key] is None:
-                if self.default.has_key(key):
+                if key in self.default:
                     self.output[key]=self.default[key]    
         
         self.accept()
@@ -125,9 +125,9 @@ class QScriptOption(TabSheets.TabSheets):
         self.output.update(self.default)
         
     def myhelp(self):    
-        print "Default - Sets back to the initial parameters"
-        print "Cancel  - Sets back to the initial parameters and quits" 
-        print "OK      - Updates the parameters and quits" 
+        print("Default - Sets back to the initial parameters")
+        print("Cancel  - Sets back to the initial parameters and quits")
+        print("OK      - Updates the parameters and quits")
         
 class FieldSheet(qt.QWidget):
     def __init__(self,parent = None,name=None,fl = 0,fields=()):
@@ -216,11 +216,11 @@ class MyEntryField(EntryField.EntryField):
             self.dict[key]=str(value)
         return
 
-    def setdefaults(self,dict):
-        for key in self.dict.keys():
-            if dict.has_key(key):
-                self.dict[key]=dict[key]
-                self.Entry.setText(str(dict[key])) 
+    def setdefaults(self, ddict):
+        for key in list(self.dict.keys()):
+            if key in ddict:
+                self.dict[key] = ddict[key]
+                self.Entry.setText(str(ddict[key])) 
         return
 
 
@@ -250,10 +250,10 @@ class MyCheckField(CheckField.CheckField):
             self.dict[key]=val
         return
 
-    def setdefaults(self,dict):
+    def setdefaults(self, ddict):
         for key in self.dict.keys():
-            if dict.has_key(key):
-                if int(dict[key]):
+            if key in ddict:
+                if int(ddict[key]):
                     self.CheckBox.setChecked(1)
                     self.dict[key]=1
                 else:
@@ -302,7 +302,7 @@ class RadioField(qt.QWidget):
             i=0
             for text in params:
                 self.RadioButton.append(qt.QRadioButton(self.RadioFieldBox,
-                                                        "RadioButton"+`i`))
+                                                        "RadioButton"+"%d" % i))
                 self.RadioButton[-1].setSizePolicy(qt.QSizePolicy(1,1,0,0,
                                 self.RadioButton[-1].sizePolicy().hasHeightForWidth()))
                 self.RadioButton[-1].setText(str(text))
@@ -327,11 +327,11 @@ class RadioField(qt.QWidget):
             self.dict[key]=val
         return
 
-    def setdefaults(self,dict):
-        for key in self.dict.keys():
-            if dict.has_key(key):
-                self.dict[key]=dict[key]
-                i=int(dict[key])
+    def setdefaults(self, ddict):
+        for key in list(self.dict.keys()):
+            if key in ddict:
+                self.dict[key]=ddict[key]
+                i=int(ddict[key])
                 self.RadioButton[i].setChecked(1)
         return
 
@@ -359,7 +359,7 @@ def test():
     else:
         w.show()
         a.exec_()
-    print w.output
-    
+    print(w.output)
+
 if __name__ == "__main__":
     test()

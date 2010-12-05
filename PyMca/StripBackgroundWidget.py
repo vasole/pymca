@@ -393,7 +393,7 @@ if __name__ == "__main__":
     qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
     w = StripBackgroundDialog()
     def mySlot(ddict):
-        print ddict
+        print(ddict)
     qt.QObject.connect(w.parametersWidget, qt.SIGNAL('StripParametersWidgetSignal'), mySlot)
     x = numpy.arange(1000.).astype(numpy.float32)
     y = 100 + x + 100 * numpy.exp(-0.5*(x-500) * (x-500)/ 30.)

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2008 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -137,7 +137,7 @@ def continuumEbel(target, e0, e = None, window = None,
         #d = Elements.Element[target]['density']
         d = density
         ttarget = 2 * rhozmax
-        print "WARNING target thickness assumed equal to maximum depth of %f cm" % (ttarget/d)
+        print("WARNING target thickness assumed equal to maximum depth of %f cm" % (ttarget/d))
     else:
         #ttarget = targetthickness * Elements.Element[target]['density']
         ttarget = targetthickness * density
@@ -329,7 +329,7 @@ def characteristicEbel(target, e0, window = None,
     if targetthickness is None:
         d = density
         ttarget = 2 * rhozmax
-        print "WARNING target thickness assumed equal to maximum depth of %f cm" % (ttarget/d)
+        print("WARNING target thickness assumed equal to maximum depth of %f cm" % (ttarget/d))
     else:
         ttarget = targetthickness * density
     generationdepth = min(ttarget, 2 * rhozmax)
@@ -475,7 +475,7 @@ if __name__ == "__main__":
                          filterlist=filterlist)
         fsum = 0.0
         for l in fllines:
-            print "%s %.4f %.3e" % (l[2],l[0],l[1])
+            print("%s %.4f %.3e" % (l[2],l[0],l[1]))
             fsum += l[1]
         energy, weight, scatter =  generateLists(target, voltage,
                         [wele, Elements.Element[wele]['density'], wthickness],
@@ -518,8 +518,8 @@ if __name__ == "__main__":
         f.write(text)
         f.close()
     except:
-        print "Usage:"
-        print "options = ",longoptions
+        print("Usage:")
+        print("options = ",longoptions)
         sys.exit(0)
         
     

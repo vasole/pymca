@@ -187,7 +187,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
 
     def _fitControlSlot(self, ddict):
         if DEBUG:
-            print "FitControlSignal", ddict
+            print("FitControlSignal", ddict)
         event = ddict['event']
         if event == "stripSetupCalled":
             if self._stripDialog is None:
@@ -344,11 +344,12 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                 if fileName not in currentFiles:
                     try:
                         if DEBUG:
-                            print "Adding file %s" % fileName
+                            print("Adding file %s" % fileName)
                         self.simpleFitInstance.importFunctions(fileName)
                         currentFiles.append(fileName)
                     except:
-                        print "Cannot import file %s" % fileName
+                        print("Cannot import file %s" % fileName)
+                        print(sys.exc_info()[1])
             
         if ddict.has_key('fit'):
             self.fitControlWidget.setConfiguration(ddict['fit'])
@@ -548,7 +549,7 @@ def test():
     ddict['fit']['xmax'] = 1024
     wid.setConfiguration(ddict)
     wid.exec_()
-    print wid.getConfiguration()
+    print(wid.getConfiguration())
     sys.exit()
 
 if __name__=="__main__":

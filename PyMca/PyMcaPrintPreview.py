@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -59,11 +59,11 @@ def testPreview():
     import os.path
 
     if len(sys.argv) < 2:
-        print "give an image file as parameter please."
+        print("give an image file as parameter please.")
         sys.exit(1)
 
     if len(sys.argv) > 2:
-        print "only one parameter please."
+        print("only one parameter please.")
         sys.exit(1)
 
     filename = sys.argv[1]

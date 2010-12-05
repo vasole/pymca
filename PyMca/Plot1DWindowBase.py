@@ -198,43 +198,43 @@ class Plot1DWindowBase(qt.QWidget, Plot1D.Plot1D):
         return tb
                 
     def _zoomReset(self):
-        print "reset zoom"
+        print("reset zoom")
 
     def _yAutoScaleToggle(self):
-        print "toggle Y auto scaling"
+        print("toggle Y auto scaling")
 
     def _xAutoScaleToggle(self):
-        print "toggle X auto scaling"
+        print("toggle X auto scaling")
                        
     def _toggleLogY(self):
-        print "toggle logarithmic Y scale"
+        print("toggle logarithmic Y scale")
 
     def _togglePointsSignal(self):
-        print "toggle points signal"
+        print("toggle points signal")
 
     def _fitIconSignal(self):
-        print "fit icon signal"
+        print("fit icon signal")
 
     def _averageIconSignal(self):
-        print "average icon signal"
+        print("average icon signal")
 
     def _deriveIconSignal(self):
-        print "deriveIconSignal"
+        print("deriveIconSignal")
 
     def _smoothIconSignal(self):
-        print "smoothIconSignal"
+        print("smoothIconSignal")
 
     def _swapSignIconSignal(self):
-        print "_swapSignIconSignal"
+        print("_swapSignIconSignal")
 
     def _yMinToZeroIconSignal(self):
-        print "_yMinToZeroIconSignal"
+        print("_yMinToZeroIconSignal")
 
     def _subtractIconSignal(self):
-        print "_subtractIconSignal"
+        print("_subtractIconSignal")
 
     def _saveIconSignal(self):
-        print "_saveIconSignal"
+        print("_saveIconSignal")
 
     def _pluginClicked(self):
         actionList = []
@@ -317,7 +317,7 @@ class Plot1DWindowBase(qt.QWidget, Plot1D.Plot1D):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     def printGraph(self):
-        print "prints the graph"
+        print("prints the graph")
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
@@ -337,13 +337,13 @@ if __name__ == "__main__":
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)
-    print "Active curve = ", plot.getActiveCurve()
-    print "X Limits = ",     plot.getGraphXLimits()
-    print "Y Limits = ",     plot.getGraphYLimits()
-    print "All curves = ",   plot.getAllCurves()
+    print("Active curve = ", plot.getActiveCurve())
+    print("X Limits = ",     plot.getGraphXLimits())
+    print("Y Limits = ",     plot.getGraphYLimits())
+    print("All curves = ",   plot.getAllCurves())
     plot.removeCurve("dummy")
     plot.addCurve(x, y, "dummy 2")
-    print "All curves = ",   plot.getAllCurves()
+    print("All curves = ",   plot.getAllCurves())
     app.exec_()
 
     

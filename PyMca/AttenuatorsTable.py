@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -415,8 +415,8 @@ class AttenuatorsTableWidget(QTable):
                 self.horizontalHeader().setLabel(labels.index(label),label)
         else:
             if DEBUG:
-                print "margin to adjust"
-                print "focus style"
+                print("margin to adjust")
+                print("focus style")
             self.setFrameShape(qt.QTableWidget.NoFrame)
             self.setSelectionMode(qt.QTableWidget.NoSelection)
             self.setColumnCount(len(labels))
@@ -476,7 +476,7 @@ class AttenuatorsTableWidget(QTable):
                 self.setRowHeight(idx, rheight)
 
         self.comboList=[]
-        matlist = Elements.Material.keys()
+        matlist = list(Elements.Material.keys())
         matlist.sort()
         if self.matrixMode or self.compoundMode:
             if self.matrixMode:roottext = "Layer"
@@ -724,15 +724,15 @@ class AttenuatorsTableWidget(QTable):
             
     def mySlot(self,row,col):
         if DEBUG:
-            print "Value changed row = ",row,"col = ",col
-            print "Text = ", self.text(row,col)
+            print("Value changed row = %d cole = &d" % (row, col))
+            print("Text = %s" % self.text(row,col))
         
-    def _comboSlot(self,dict):
+    def _comboSlot(self, ddict):
         if DEBUG:
-            print "_comboSlot",dict
-        row  = dict['row']
-        col  = dict['col']
-        text = dict['text']
+            print("_comboSlot", ddict)
+        row  = ddict['row']
+        col  = ddict['col']
+        text = ddict['text']
         self.setCurrentCell(row, col)
         self._checkDensityThickness(text,row)
         if QTVERSION < '4.0.0':
@@ -748,8 +748,8 @@ class AttenuatorsTableWidget(QTable):
                 return qttable.QTable.text(self, row, col)
             else:
                 if col not in [1, 3, 4, 5]:
-                    print "row, col", row, col
-                    print "I should not be here"
+                    print("row, col = %d, %d" % (row, col))
+                    print("I should not be here")
                 else:
                     item = self.item(row, col)
                     return item.text()
@@ -762,8 +762,8 @@ class AttenuatorsTableWidget(QTable):
                 self.cellWidget(row, 0).setText(text)
                 return
             if col not in [1, 3, 4, 5]:
-                print "only compatible columns 1, 3 and 4"
-                raise ValueError, "method for column > 2"
+                print("only compatible columns 1, 3 and 4")
+                raise ValueError("method for column > 2")
             item = self.item(row, col)
             if item is None:
                 item = qt.QTableWidgetItem(text,
@@ -796,8 +796,8 @@ class AttenuatorsTableWidget(QTable):
             if text in Elements.Element.keys():
                 defaultDensity = Elements.Element[text]['density']
             else: 
-                elts= [ w for w in re.split('[0-9]', text) if w<>'' ]
-                nbs= [ int(w) for w in re.split('[a-zA-Z]', text) if w<>'' ]
+                elts= [ w for w in re.split('[0-9]', text) if w != '' ]
+                nbs= [ int(w) for w in re.split('[a-zA-Z]', text) if w != '' ]
                 if len(elts)==1 and len(nbs)==1:
                     defaultDensity = Elements.Element[elts[0]]['density']
         elif Elements.isValidMaterial(text):

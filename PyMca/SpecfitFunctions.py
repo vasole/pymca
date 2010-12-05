@@ -29,7 +29,6 @@ import numpy
 from numpy.oldnumeric import *
 arctan = numpy.arctan
 import SpecfitFuns
-import string
 import os
 from Gefit import LeastSquaresFit
 
@@ -258,7 +257,7 @@ class SpecfitFunctions:
             ngauss=1
         newpar=[]
         for i in range(ngauss):
-            print "Defining Gaussian numer %d " % (i+1)
+            print("Defining Gaussian numer %d " % (i+1))
             newpar.append(input('Height   = '))
             newpar.append(input('Position = '))
             newpar.append(input('FWHM     = '))
@@ -378,9 +377,9 @@ class SpecfitFunctions:
        if self.config['AutoFwhm']:
             search_fwhm=self.guess_fwhm(x=xx,y=yy)
        else: 
-            search_fwhm=int(string.atof(self.config['FwhmPoints']))
-       search_sens=string.atof(self.config['Sensitivity'])
-       search_mca=int(string.atof(self.config['McaMode']))
+            search_fwhm=int(float(self.config['FwhmPoints']))
+       search_sens=float(self.config['Sensitivity'])
+       search_mca=int(float(self.config['McaMode']))
        
        if search_fwhm < 3:
             search_fwhm = 3
@@ -403,8 +402,8 @@ class SpecfitFunctions:
        else:
             peaks = []
        if not len(peaks):
-            mca = int(string.atof(self.config.get('McaMode', 0)))
-            forcePeak =  int(string.atof(self.config.get('ForcePeakPresence', 0)))
+            mca = int(float(self.config.get('McaMode', 0)))
+            forcePeak =  int(float(self.config.get('ForcePeakPresence', 0)))
             if (not mca) and forcePeak:
                 delta = yy - zz
                 peaks  = [int(numpy.nonzero(delta == delta.max())[0])]
@@ -745,7 +744,7 @@ class SpecfitFunctions:
             if self.config['QuotedPositionFlag']:
                 for i in range(npeaks):
                     delta=self.config['DeltaPositionFwhmUnits'] * \
-                      int(string.atof(self.config['FwhmPoints']))
+                      int(float(self.config['FwhmPoints']))
                     #that was delta in points
                     #I need it in terms of FWHM
                     delta=self.config['DeltaPositionFwhmUnits'] * fwhm
@@ -931,9 +930,9 @@ class SpecfitFunctions:
         if self.config['AutoFwhm']:
             search_fwhm=self.guess_fwhm(x=xx,y=yy)
         else: 
-            search_fwhm=int(string.atof(self.config['FwhmPoints']))
-        search_sens=string.atof(self.config['Sensitivity'])
-        search_mca=int(string.atof(self.config['McaMode']))
+            search_fwhm=int(float(self.config['FwhmPoints']))
+        search_sens=float(self.config['Sensitivity'])
+        search_mca=int(float(self.config['McaMode']))
        
         if search_fwhm < 3:
             search_fwhm = 3
@@ -1026,7 +1025,7 @@ class SpecfitFunctions:
             notdone=1
             #take care of lower / upper case problems ...
             for config_key in self.config.keys():
-                if string.lower(config_key) == string.lower(key):
+                if config_key.lower() == key.lower():
                     self.config[config_key] = kw[key]
                     notdone=0
             if notdone:
@@ -1126,7 +1125,7 @@ def test(a):
     fit.estimate()
     fit.startfit()
     yfit=fit.gendata(x=x,parameters=fit.paramlist)
-    print "I set an offset of 1 to see the difference in log scale :-)"
+    print("I set an offset of 1 to see the difference in log scale :-)")
     w = ScanWindow.ScanWindow()
     w.addCurve(x, y + 1, "Data + 1")
     w.addCurve(x, yfit, "Fit")

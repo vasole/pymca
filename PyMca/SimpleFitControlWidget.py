@@ -28,7 +28,7 @@ import sys
 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    raise ImportError, "This module requieres Qt4"
+    raise ImportError("This module requieres Qt4")
 
 HorizontalSpacer = qt.HorizontalSpacer
 VerticalSpacer   = qt.VerticalSpacer
@@ -233,10 +233,10 @@ class FitFunctionDefinition(qt.QGroupBox):
         return functionList
 
     def setupFitFunction(self):
-        print "FUNCTION SETUP CALLED"
+        print("FUNCTION SETUP CALLED")
 
     def setupBackground(self):
-        print "Background SETUP CALLED"
+        print("Background SETUP CALLED")
 
     def setupStrip(self):
         ddict = {}

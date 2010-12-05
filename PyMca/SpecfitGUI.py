@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -36,10 +36,7 @@ import MultiParameters
 import FitActionsGUI
 import FitStatusGUI
 import EventHandler
-if 1 or QTVERSION < '4.0.0':
-    import QScriptOption
-else:
-    print "QScriptOption not ported yet"
+import QScriptOption
 
 class SpecfitGUI(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
@@ -189,7 +186,7 @@ class SpecfitGUI(qt.QWidget):
                     self.guiconfig.FunComBox.setCurrentIndex(i)
                 self.funevent(self.specfit.fitconfig['fittheory'])
             except:
-                print  "Function not in list"
+                print("Function not in list")
                 self.funevent(self.specfit.theorylist[0])
             #current background
             try:
@@ -199,8 +196,8 @@ class SpecfitGUI(qt.QWidget):
                 else:
                     self.guiconfig.BkgComBox.setCurrentIndex(i)
             except:
-                print "Background not in list"
-                self.bkgevent(self.specfit.bkgdict.keys()[0])
+                print("Background not in list")
+                self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             #and all the rest
             if configuration['McaMode']:            
                 self.guiconfig.MCACheckBox.setChecked(1)
@@ -558,8 +555,8 @@ class SpecfitGUI(qt.QWidget):
                                        'xmax':None})
         if self.specfit.fitconfig['fittheory'] is not None:
           for pname in self.specfit.theorydict[self.specfit.fitconfig['fittheory']][1]:
-            self.specfit.final_theory.append(pname+`1`)
-            self.specfit.paramlist.append({'name':pname+`1`,
+            self.specfit.final_theory.append(pname+"1")
+            self.specfit.paramlist.append({'name':pname+"1",
                                        'estimation':0,
                                        'group':1,
                                        'code':'FREE',
@@ -578,14 +575,14 @@ class SpecfitGUI(qt.QWidget):
         return
 
     def fitstatus(self,data):
-        if data.has_key('chisq'):
+        if 'chisq' in data:
             if data['chisq'] is None:
                 self.guistatus.ChisqLine.setText(" ")
             else:
                 chisq=data['chisq']
                 self.guistatus.ChisqLine.setText("%6.2f" % chisq)
             
-        if data.has_key('status'):
+        if 'status' in data:
             status=data['status']
             self.guistatus.StatusLine.setText(str(status))
         return

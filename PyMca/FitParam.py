@@ -336,7 +336,7 @@ class FitParamWidget(FitParamForm):
                         funnyfactor = attenuator[3]
                     else:
                         if abs(attenuator[3]-freefraction) > 0.0001:
-                            raise ValueError, "All funny type filters must have same openning fraction"
+                            raise ValueError("All funny type filters must have same openning fraction")
                     coeffs +=  thickness *\
                               numpy.array(massatt(formula,1.0,energies)['total'])
                 efficiency *= (funnyfactor * numpy.exp(-coeffs)+\
@@ -415,32 +415,32 @@ class FitParamWidget(FitParamForm):
             return
         pars = self._stripDialog.getParameters()
         key = "stripalgorithm"
-        if pars.has_key(key):
+        if key in pars:
             stripAlgorithm = int(pars[key])
             self.setSNIP(stripAlgorithm)
             
         key = "snipwidth"            
-        if pars.has_key(key):
+        if key in pars:
             self.snipWidthSpin.setValue(int(pars[key]))
 
-        key = "stripwidth"            
-        if pars.has_key(key):
+        key = "stripwidth"
+        if key in pars:
             self.stripWidthSpin.setValue(int(pars[key]))
 
         key = "stripiterations"
-        if pars.has_key(key):
+        if key in pars:
             self.stripIterValue.setText("%d" % int(pars[key]))
 
         key = "stripfilterwidth"
-        if pars.has_key(key):
+        if key in pars:
             self.stripFilterSpin.setValue(int(pars[key]))
 
         key = "stripanchorsflag"
-        if pars.has_key(key):
+        if key in pars:
             self.stripAnchorsFlagCheck.setChecked(int(pars[key]))
 
         key = "stripanchorslist"
-        if pars.has_key(key):
+        if key in pars:
             anchorslist = pars[key]
             if anchorslist in [None, 'None']:
                 anchorslist = []
@@ -497,7 +497,8 @@ class FitParamWidget(FitParamForm):
         self.__setConPar(pardict)
         self.__setDetPar()
         self.__setPeakShapePar()
-        if pardict.has_key("tube"): self.xRayTube.setParameters(pardict["tube"])
+        if "tube" in pardict:
+            self.xRayTube.setParameters(pardict["tube"])
 
     def getParameters(self):
         pars= {}
@@ -532,7 +533,7 @@ class FitParamWidget(FitParamForm):
 
     def __setAttPar(self, pardict):
         if "attenuators" in pardict.keys():
-            attenuatorsList = pardict['attenuators'].keys()
+            attenuatorsList = list(pardict['attenuators'].keys())
         else:
             attenuatorsList = []
         if "materials" in pardict.keys():
@@ -542,7 +543,7 @@ class FitParamWidget(FitParamForm):
                     Elements.Material[key] = copy.deepcopy(pardict['materials'][key])
                 else:  
                     Elements.Material[filteredkey] = copy.deepcopy(pardict['materials'][key])
-        matlist = Elements.Material.keys()
+        matlist = list(Elements.Material.keys())
         matlist.sort()
         #lastrow = -1
         lastrow = -1
@@ -592,7 +593,7 @@ class FitParamWidget(FitParamForm):
                     combo.setOptions(matlist)
                 combo.lineEdit().setText(str(attpar[1]))
             else:
-                print "ERROR in __setAttPar"
+                print("ERROR in __setAttPar")
             if len(attpar) == 4:
                 attpar.append(1.0)
             self.attTable.setText(row, 3, str(attpar[2]))
@@ -641,10 +642,10 @@ class FitParamWidget(FitParamForm):
 
     def __setMultilayerPar(self, pardict):
         if "multilayer" in pardict.keys():
-            attenuatorsList = pardict['multilayer'].keys()
+            attenuatorsList = list(pardict['multilayer'].keys())
         else:
             attenuatorsList = []
-        matlist = Elements.Material.keys()
+        matlist = list(Elements.Material.keys())
         matlist.sort()
         #lastrow = -1
         lastrow = -1
@@ -665,7 +666,7 @@ class FitParamWidget(FitParamForm):
                 combo.setOptions(matlist)
                 combo.lineEdit().setText(str(attpar[1]))
             else:
-                print "ERROR in __setAttPar"                
+                print("ERROR in __setAttPar")                
             self.multilayerTable.setText(row, 3, str(attpar[2]))
             self.multilayerTable.setText(row, 4, str(attpar[3]))
 
@@ -714,7 +715,7 @@ class FitParamWidget(FitParamForm):
         return pars
 
     def __setConPar(self, pardict):
-        if pardict.has_key('concentrations'):
+        if 'concentrations' in pardict:
             self.concentrationsWidget.setParameters(pardict['concentrations'])
 
     def __getConPar(self):
@@ -1054,7 +1055,8 @@ class SectionFileDialog(qt.QFileDialog):
             if mode is not None:
                 self.setMode(mode)
         else:
-            if DEBUG:print "right to be added"
+            if DEBUG:
+                print("right to be added")
             if 0:
                 self.sectionWidget= SectionFileWidget(self,
                                                   sections=sections,
@@ -1255,7 +1257,7 @@ class FitParamDialog(qt.QDialog):
             sections.append('multilayer')
         cfg= ConfigDict.ConfigDict(initdict=pars)
         if sections is not None:
-            for key in cfg.keys():
+            for key in list(cfg.keys()):
                 if key not in sections:
                     del cfg[key]            
         try:
@@ -1483,7 +1485,7 @@ def openDialog():
         ret = wid.exec_()
     if ret == qt.QDialog.Accepted:
         npar = wid.getParameters()
-        print npar
+        print(npar)
         del wid
     app.quit()
 

@@ -6,7 +6,7 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
     def __init__(self, parent=None,**kw):
         Plot1DWindowBase.Plot1DWindowBase.__init__(self, parent, **kw)
         mainLayout = self.layout()
-        if not kw.has_key('usecrosscursor'):
+        if not ('usecrosscursor' in kw):
             kw['usecrosscursor'] = True
         self.graph = QtBlissGraph.QtBlissGraph(self, **kw)
         self.graph.canvas().setMouseTracking(1)
@@ -30,9 +30,9 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
             info = {}
         xlabel = info.get('xlabel', 'X')
         ylabel = info.get('ylabel', 'Y')
-        if kw.has_key('xlabel'):
+        if 'xlabel' in kw:
             info['xlabel'] = kw['xlabel'] 
-        if kw.has_key('ylabel'):
+        if 'ylabel' in kw:
             info['ylabel'] = kw['ylabel'] 
         Plot1DWindowBase.Plot1DWindowBase.addCurve(self, x, y, legend=legend,
                                info=info, replace=replace, replot=replot)        
@@ -176,9 +176,9 @@ if __name__ == "__main__":
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
-    print "Active curve = ", plot.getActiveCurve()
-    print "X Limits = ",     plot.getGraphXLimits()
-    print "Y Limits = ",     plot.getGraphYLimits()
+    print("Active curve = ", plot.getActiveCurve())
+    print("X Limits = ",     plot.getGraphXLimits())
+    print("Y Limits = ",     plot.getGraphYLimits())
     #print "All curves = ",   plot.getAllCurves()
     #plot.removeCurve("dummy")
     #print "All curves = ",   plot.getAllCurves()

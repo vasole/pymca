@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -222,7 +222,7 @@ class MatrixEditor(qt.QWidget):
         elif param in self._current.keys():
             return self._current[param]
         else:
-            raise "KeyError", "%s" % param
+            raise KeyError("%s" % param)
             return
 
     def _update(self):

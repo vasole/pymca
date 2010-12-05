@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -278,7 +278,7 @@ class FitPeakSelect(qt.QWidget):
             return
 
         self.peakdict = {}
-        self.table.setSelection(self.peakdict.keys())
+        self.table.setSelection(list(self.peakdict.keys()))
         self.peaks.setSelection([])
         self.peakSelectionChanged([])
 
@@ -288,14 +288,14 @@ class FitPeakSelect(qt.QWidget):
     def setSelection(self,peakdict):
         self.peakdict = {}
         self.peakdict.update(peakdict)
-        for key in self.peakdict.keys():
-                if type(self.peakdict[key])!=type([]):
+        for key in list(self.peakdict.keys()):
+                if type(self.peakdict[key])!= type([]):
                         self.peakdict[key]= [ self.peakdict[key] ]
-        self.table.setSelection(self.peakdict.keys())
+        self.table.setSelection(list(self.peakdict.keys()))
         
     def getSelection(self):
         ddict={}
-        for key in self.peakdict.keys():
+        for key in list(self.peakdict.keys()):
                 if len(self.peakdict[key]):
                         ddict[key]= self.peakdict[key]
         return ddict 
@@ -318,14 +318,14 @@ class FitPeakSelect(qt.QWidget):
 
     def elementClicked(self,symbol):
         if qt.qVersion() > '4.0.0':symbol = str(symbol)
-        if not self.peakdict.has_key(symbol):
+        if not (symbol in self.peakdict):
             self.peakdict[symbol] = []
         self.current = symbol
         if len(self.peakdict[self.current]):
             self.table.setElementSelected(self.current,1)
         else:
             self.table.setElementSelected(self.current,0)
-        for ele in self.peakdict.keys():
+        for ele in list(self.peakdict.keys()):
             if ele != symbol:
                 if not len(self.peakdict[ele]):
                     del self.peakdict[ele]
@@ -398,8 +398,8 @@ class FitPeakSelect(qt.QWidget):
 
     def _energyTableAction(self, ddict):
         if DEBUG:
-            print "_energyTableAction called",
-            print "ddict = ",ddict.dict
+            print("_energyTableAction called",)
+            print("ddict = ",ddict.dict)
         elist, wlist, flist, slist= self.energyTable.getParameters()
         maxenergy = 0.0
         for i in range(len(flist)):
@@ -435,7 +435,7 @@ class FitPeakSelect(qt.QWidget):
     def __updateSelection(self):
         if self.energyValue is not None:
             changed = 0
-            for ele in self.peakdict.keys():
+            for ele in list(self.peakdict.keys()):
                 for peak in self.peakdict[ele]:
                     if   peak in self.peakdict[ele]:
                         index = self.peakdict[ele].index(peak)
@@ -514,7 +514,8 @@ class MyQLabel(qt.QLabel):
 def testwidget():
     import sys
     def change(ddict):
-        print "New selection:", ddict
+        print("New selection:",)
+        print(ddict)
     a = qt.QApplication(sys.argv)
     qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
 

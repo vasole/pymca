@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -55,7 +55,8 @@ class TextField(qt.QWidget):
         try:
             self.setSizePolicy(qt.QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
         except:
-            if DEBUG:print "TextField Bad Size policy"
+            if DEBUG:
+                print("TextField Bad Size policy")
 
         if QTVERSION < '4.0.0':
             TextFieldLayout = qt.QHBoxLayout(self,11,6,"TextFieldLayout")
@@ -73,8 +74,9 @@ class TextField(qt.QWidget):
         try:
             self.TextLabel.setSizePolicy(qt.QSizePolicy(7,1,0,0,self.TextLabel.sizePolicy().hasHeightForWidth()))
         except:
-            if DEBUG:print "TextField Bad Size policy"
-            
+            if DEBUG:
+                print("TextField Bad Size policy")
+
         self.TextLabel.setText(str("TextLabel"))
         Layout2.addWidget(self.TextLabel)
         spacer_2 = qt.QSpacerItem(20,20,

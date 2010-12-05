@@ -170,11 +170,11 @@ if __name__ == "__main__":
     plot = Plot1D()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
-    print "Active curve = ", plot.getActiveCurve()
-    print "X Limits = ",     plot.getGraphXLimits()
-    print "Y Limits = ",     plot.getGraphYLimits()
-    print "All curves = ",   plot.getAllCurves()
+    print("Active curve = ", plot.getActiveCurve())
+    print("X Limits = ",     plot.getGraphXLimits())
+    print("Y Limits = ",     plot.getGraphYLimits())
+    print("All curves = ",   plot.getAllCurves())
     plot.removeCurve("dummy")
-    print "All curves = ",   plot.getAllCurves()
+    print("All curves = ",   plot.getAllCurves())
 
     

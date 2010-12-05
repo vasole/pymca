@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -135,7 +135,7 @@ class SimpleMath:
                 i=i+1
 
             if minimumLength < 2:
-                raise "ValueError","Not enough points to take a meaningfull average"
+                raise ValueError("Not enough points to take a meaningfull average")
             #take as x axis the first
             finalx=x[0]
             for i in range(len(x)):
@@ -201,6 +201,6 @@ if __name__ == "__main__":
     xlist = [x-0.5 , x+0.5]
     y     = [2 * x, -2*x]
     a = SimpleMath()
-    print a.average(xlist,y)
-    print a.derivate(x, 2*x)
-    
+    print(a.average(xlist,y))
+    print(a.derivate(x, 2*x))
+

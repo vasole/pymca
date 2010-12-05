@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,6 +27,10 @@
 __revision__ = "$Revision: 1.21 $"
 import sys
 import PyMcaQt as qt
+if hasattr(qt, 'QString'):
+    QString = qt.QString
+else:
+    QString = str
 
 QTVERSION = qt.qVersion()
 
@@ -53,8 +57,8 @@ import Elements
 import time
 DEBUG=0
 if DEBUG:
-    print "ConcentrationsWidget is in debug mode"    
-    
+    print("ConcentrationsWidget is in debug mode")
+
 class Concentrations(qt.QWidget):
     def __init__(self, parent=None, name="Concentrations", fl = 0):
         if QTVERSION < '4.0.0':
@@ -131,7 +135,7 @@ class Concentrations(qt.QWidget):
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
-                        raise threadResult[1],threadResult[2]
+                        raise Exception(threadResult[1], threadResult[2])
             ddict = threadResult
             self.concentrationsTable.fillFromResult(ddict)
             return ddict
@@ -455,7 +459,7 @@ class ConcentrationsWidget(qt.QWidget):
         
     def setParameters(self, ddict, signal = None):
         if signal is None:signal=True
-        if ddict.has_key('usemultilayersecondary'):
+        if 'usemultilayersecondary' in ddict:
             if ddict['usemultilayersecondary']:
                 self.secondaryCheckBox.setChecked(True)
             else:
@@ -463,7 +467,7 @@ class ConcentrationsWidget(qt.QWidget):
         else:
             self.secondaryCheckBox.setChecked(False)
 
-        if ddict.has_key('mmolarflag'):
+        if 'mmolarflag' in ddict:
             if ddict['mmolarflag']:
                 self.mMolarCheckBox.setChecked(True)
             else:
@@ -482,12 +486,12 @@ class ConcentrationsWidget(qt.QWidget):
             self.attenuatorsCheckBox.setChecked(True)
         else:    
             self.attenuatorsCheckBox.setChecked(False)
-        if ddict.has_key('reference'):
-            #self.referenceCombo.setCurrentText(qt.QString(ddict['reference']))
-            self.referenceLine.setText(qt.QString(ddict['reference']))
+        if 'reference' in ddict:
+            #self.referenceCombo.setCurrentText(QString(ddict['reference']))
+            self.referenceLine.setText(QString(ddict['reference']))
         else:
-            #self.referenceCombo.setCurrentText(qt.QString("Auto"))
-            self.referenceLine.setText(qt.QString("Auto"))
+            #self.referenceCombo.setCurrentText(QString("Auto"))
+            self.referenceLine.setText(QString("Auto"))
         
         self.fundamentalWidget.flux.setText("%.6g" % ddict['flux'])
         self.fundamentalWidget.area.setText("%.6g" % ddict['area'])
@@ -605,7 +609,7 @@ class ConcentrationsTable(QTable):
     def __init__(self, parent=None, **kw):
         QTable.__init__(self, parent)
         
-        if kw.has_key('labels'):
+        if 'labels' in kw:
             self.labels=[]
             for label in kw['labels']:
                 self.labels.append(label)
@@ -631,7 +635,7 @@ class ConcentrationsTable(QTable):
                 self.resizeColumnToContents(i)
                 
     def fillFromResult(self,result):
-        if result.has_key('mmolar'):
+        if 'mmolar' in result:
             mmolarflag = True
         else:
             mmolarflag = False
@@ -643,7 +647,7 @@ class ConcentrationsTable(QTable):
             self.labels = ['Element','Group','Fit Area','Sigma Area', 'mM concentration']
         else:
             self.labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
-        if result.has_key('layerlist'):
+        if 'layerlist' in result:
             for label in result['layerlist']:
                 self.labels += [label]
         self.setColumnCount(len(self.labels))
@@ -666,16 +670,16 @@ class ConcentrationsTable(QTable):
         for group in groupsList:
             element, group0 = group.split()
             transitions = group0 + " xrays"
-            fitarea    = qt.QString("%.6e" % (result['fitarea'][group]))
-            sigmaarea  = qt.QString("%.2e" % (result['sigmaarea'][group]))
-            area       = qt.QString("%.6e" % (result['area'][group]))
+            fitarea    = QString("%.6e" % (result['fitarea'][group]))
+            sigmaarea  = QString("%.2e" % (result['sigmaarea'][group]))
+            area       = QString("%.6e" % (result['area'][group]))
             if result['mass fraction'][group] < 0.0:
-                fraction   = qt.QString("Unknown")
+                fraction   = QString("Unknown")
             else:
                 if mmolarflag:
-                    fraction   = qt.QString("%.4g" % (result['mmolar'][group]))
+                    fraction   = QString("%.4g" % (result['mmolar'][group]))
                 else:
-                    fraction   = qt.QString("%.4g" % (result['mass fraction'][group]))
+                    fraction   = QString("%.4g" % (result['mass fraction'][group]))
             if line % 2:
                 color = qt.QColor(255,250,205)
             else:
@@ -684,17 +688,17 @@ class ConcentrationsTable(QTable):
                 fields = [element,group0,fitarea,sigmaarea,area,fraction]
             else:
                 fields = [element,group0,fitarea,sigmaarea,fraction]
-            if result.has_key('layerlist'):
+            if 'layerlist' in result:
                 for layer in result['layerlist']:
-                    #fitarea    = qt.QString("%.6e" % (result[layer]['fitarea'][group]))
-                    #area       = qt.QString("%.6e" % (result[layer]['area'][group]))
+                    #fitarea    = QString("%.6e" % (result[layer]['fitarea'][group]))
+                    #area       = QString("%.6e" % (result[layer]['area'][group]))
                     if result[layer]['mass fraction'][group] < 0.0:
-                        fraction   = qt.QString("Unknown")
+                        fraction   = QString("Unknown")
                     else:
                         if mmolarflag:
-                            fraction   = qt.QString("%.4g" % (result[layer]['mmolar'][group]))
+                            fraction   = QString("%.4g" % (result[layer]['mmolar'][group]))
                         else:
-                            fraction   = qt.QString("%.4g" % (result[layer]['mass fraction'][group]))
+                            fraction   = QString("%.4g" % (result[layer]['mass fraction'][group]))
                     fields += [fraction]
             col = 0
             for field in fields:
@@ -744,7 +748,7 @@ class ConcentrationsTable(QTable):
                 text+=str(item.text())
             text+=("</b></td>")
         text+=("</tr>")
-        #text+=( str(qt.QString("</br>"))
+        #text+=( str(QString("</br>"))
         for r in range(self.rowCount()):
             text+=("<tr>")
             if r % 2:
@@ -784,7 +788,7 @@ class ConcentrationsTable(QTable):
             if len(moretext):
                 text+=("</b>")
             text+=("</tr>")
-            #text+=( str(qt.QString("<br>"))
+            #text+=( str(QString("<br>"))
             text+=("\n")
         text+=("</table>")
         text+=("</nobr>")
@@ -948,7 +952,7 @@ if __name__ == "__main__":
             app.exec_()
 
     else:
-        print "Usage:"
-        print "ConcentrationsWidget.py [--flux=xxxx --area=xxxx] fitresultfile"    
-    
+        print("Usage:")
+        print("ConcentrationsWidget.py [--flux=xxxx --area=xxxx] fitresultfile")
+
 #python ConcentrationsWidget.py --flux=xxxx

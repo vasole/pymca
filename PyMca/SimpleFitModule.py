@@ -108,8 +108,8 @@ class SimpleFit(object):
                         ffile = ddict['functions'][fName].get('file', None)
                         if ffile is not None:
                             self.importFunctions(ffile)
-                    else:        
-                        print "WARNING:Function %s not among defined functions" % fName
+                    else:
+                        print("WARNING:Function %s not among defined functions" % fName)
                         continue
                 self._fitConfiguration['functions'][fName]['configuration']=\
                         ddict['functions'][fName]['configuration']
@@ -124,7 +124,7 @@ class SimpleFit(object):
         if (oldConfig['fit']['xmin'] != self._fitConfiguration['fit']['xmin']) or\
            (oldConfig['fit']['xmax'] != self._fitConfiguration['fit']['xmax']):
             if DEBUG:
-                print "SETTING DATA AGAIN"
+                print("SETTING DATA AGAIN")
             self.setData(self._x0, self._y0,
                          xmin=self._fitConfiguration['fit']['xmin'],
                          xmax=self._fitConfiguration['fit']['xmax'])
@@ -134,14 +134,14 @@ class SimpleFit(object):
                     'stripwidth', 'stripiterations', 'stripconstant']:
             if oldConfig['fit'][key] != self._fitConfiguration['fit'][key]:
                 if DEBUG:
-                    print "RECALCULATING STRIP"
+                    print("RECALCULATING STRIP")
                 self._getStripBackground()
                 break
             if key == 'stripanchorsflag':
                 if len(oldConfig['fit']['stripanchorslist']) !=\
                    len(self._fitConfiguration['fit']['stripanchorslist']):
                     if DEBUG:
-                        print "ANCHORS CHANGE, RECALCULATING STRIP"
+                        print("ANCHORS CHANGE, RECALCULATING STRIP")
                     self._getStripBackground()
                     break
 
@@ -191,7 +191,7 @@ class SimpleFit(object):
         if sigma is not None:
             self._sigma = self._sigma0[idx]
         if DEBUG:
-            print "TODO: Make sure we have something to fit"
+            print("TODO: Make sure we have something to fit")
         #get strip/SNIP background
         self._z = self._getStripBackground()
 
@@ -204,8 +204,8 @@ class SimpleFit(object):
             f=os.path.basename(os.path.splitext(modname)[0])
             newfun=__import__(f)
         else:
-            raise ValueError, "Cannot interprete/find %s" % modname
-            
+            raise ValueError("Cannot interprete/find %s" % modname)
+        
         theory = newfun.THEORY
         function=newfun.FUNCTION
         parameters = newfun.PARAMETERS
@@ -262,7 +262,7 @@ class SimpleFit(object):
         self._fitFunctionConfigured = False
         if name not in self._fitConfiguration['fit']['functions']:
             txt = "Function %s not among defined functions"  % name
-            raise KeyError, txt
+            raise KeyError(txt)
         self._fitConfiguration['fit']['fit_function'] = name
 
     def getFitFunction(self):
@@ -275,7 +275,7 @@ class SimpleFit(object):
         self._backgroundFunctionConfigured = False
         if name not in self._fitConfiguration['fit']['functions']:
             txt = "Function %s not among defined functions"  % name
-            raise KeyError, txt
+            raise KeyError(txt)
         self._fitConfiguration['fit']['background_function'] = name
 
     def getBackgroundFunction(self):
@@ -329,7 +329,7 @@ class SimpleFit(object):
         #SNIP algorithm
         if self._fitConfiguration['fit']['stripalgorithm'] in ["SNIP", 1]:
             if DEBUG:
-                print "CALCULATING SNIP"
+                print("CALCULATING SNIP")
             if len(anchorslist) == 0:
                 anchorslist = [0, len(ysmooth)-1]
             anchorslist.sort()
@@ -350,11 +350,13 @@ class SimpleFit(object):
         niter = self._fitConfiguration['fit']['stripiterations']
         if niter > 0:
             if DEBUG:
-                print "CALCULATING STRIP"
-                print "iterations = ", niter
-                print "constant   = ", self._fitConfiguration['fit']['stripconstant']
-                print "width      = ", self._fitConfiguration['fit']['stripwidth']
-                print "anchors    = ", anchorslist
+                print("CALCULATING STRIP")
+                print("iterations = ", niter)
+                print("constant   = ",
+                      self._fitConfiguration['fit']['stripconstant'])
+                print("width      = ",
+                      self._fitConfiguration['fit']['stripwidth'])
+                print("anchors    = ", anchorslist)
             result=SpecfitFuns.subac(ysmooth,
                                   self._fitConfiguration['fit']['stripconstant'],
                                   niter,
@@ -376,7 +378,7 @@ class SimpleFit(object):
                                   anchorslist)
         else:
             if DEBUG:
-                print "NO STRIP, NO SNIP"
+                print("NO STRIP, NO SNIP")
             result     = numpy.zeros(ysmooth.shape, numpy.float) + min(ysmooth)
 
         return result
@@ -394,8 +396,9 @@ class SimpleFit(object):
             else:
                 result=SpecfitFuns.SavitskyGolay(Numeric.array(y).astype(Numeric.Float), 
                                     self._fitConfiguration['fit']['stripfilterwidth'])
-        except Exception, err:
-            raise "Error", "Unsuccessful Savitsky-Golay smoothing: %s" % err
+        except:
+            err = sys.exc_info()[1]
+            raise ValueError("Unsuccessful Savitsky-Golay smoothing: %s" % err)
             result=numpy.array(y).astype(numpy.float)
         if len(result) > 1:
             result[1:-1]=numpy.convolve(result,f,mode=0)
@@ -437,7 +440,8 @@ class SimpleFit(object):
                 fitFunctionDict = self._fitConfiguration['functions']\
                                       [fitFunction]
         if DEBUG:
-            print "ESTIMATION = ",functionParameters, functionConstraints
+            print("ESTIMATION parameters  = ",functionParameters)
+            print("ESTIMATION constraints = ",functionConstraints)
         self._setStatus("Fit function estimation finished")
 
         #estimations are made
@@ -615,7 +619,7 @@ class SimpleFit(object):
         else:
             weightflag = 1
         if DEBUG:
-            print "STILL TO HANDLE DERIVATIVES"
+            print("STILL TO HANDLE DERIVATIVES")
         model_deriv = self.modelFunctionDerivative
         if self._fitConfiguration['fit']['strip_flag']:
             y = self._y - self._z
@@ -664,7 +668,7 @@ class SimpleFit(object):
         self._fitResult['lastdeltachi'] = result[4]
         self._fitResult['n_background_parameters'] = self.__nBackgroundParameters
         if DEBUG:
-            print "Found parameters = ", self._fitResult['fittedvalues']
+            print("Found parameters = ", self._fitResult['fittedvalues'])
         i=0
         self._fitResult['parameters'] = []
         for param in self.paramlist:
@@ -733,7 +737,7 @@ class SimpleFit(object):
             try:
                 y += self._z
             except:
-                print "Cannot add strip background"
+                print("Cannot add strip background")
         return y
 
     def _evaluateFunction(self, x=None):
@@ -770,7 +774,7 @@ def test():
     #fit.setBackgroundFunction('Constant')
     fit.setData(x, y)
     fit.fit()
-    print "Expected parameters 1500,100.,50.0, 1500,700.,50.0"
+    print("Expected parameters 1500,100.,50.0, 1500,700.,50.0")
     import PyMcaQt as qt
     import Parameters
     a = qt.QApplication(sys.argv)
