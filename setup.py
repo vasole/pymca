@@ -179,7 +179,7 @@ def build_sps(ext_modules):
                          include_dirs = ['PyMca/sps/Include',
                                           numpy.get_include()])
     ext_modules.append(module)
-    if sys.platform != "win32":
+    if (sys.platform != "win32") and (sys.version < '3.0'):
         module = (Extension(name = 'PyMca.sps',
                                             sources = ['PyMca/sps/Src/sps.c',
                                                        'PyMca/sps/Src/sps_py.c'],
@@ -243,8 +243,7 @@ if sys.version < '3.0':
     build_FastEdf(ext_modules)
 build_specfile(ext_modules)
 build_specfit(ext_modules)
-if sys.version < '3.0':
-    build_sps(ext_modules)
+build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
 if (sys.version < '3.0') and LOCAL_OBJECT3D:
     try:
