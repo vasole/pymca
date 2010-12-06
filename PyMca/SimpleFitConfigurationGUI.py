@@ -337,7 +337,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             if fname not in currentFiles:
                 currentFiles.append(fname)
 
-        if ddict.has_key('functions'):
+        if 'functions' in ddict:
             #make sure new modules are imported
             for functionName in ddict['functions'].keys():
                 fileName = ddict['functions'][functionName]['file']
@@ -351,7 +351,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                         print("Cannot import file %s" % fileName)
                         print(sys.exc_info()[1])
             
-        if ddict.has_key('fit'):
+        if 'fit' in ddict:
             self.fitControlWidget.setConfiguration(ddict['fit'])
             fitFunction = ddict['fit']['fit_function']
             background = ddict['fit']['background_function']
@@ -366,7 +366,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             fname = ddict['fit']['fit_function']
             widget = self._fitFunctionWidgets[fname]
             if fname not in [None, "None", "NONE"]:
-                if ddict['functions'].has_key(fname):
+                if fname in ddict['functions']:
                     #if currentConfig['functions'][fname]['widget'] is not None:
                         widget.setConfiguration(ddict['functions'][fname])
                         self.fitFunctionWidgetStack.mainLayout.setCurrentWidget(widget)
@@ -375,7 +375,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             fname = ddict['fit']['background_function']
             widget = self._backgroundWidgets[fname]
             if fname not in [None, "None", "NONE"]:
-                if ddict['functions'].has_key(fname):
+                if fname in ddict['functions']:
                     #if currentConfig['functions'][fname]['widget'] is not None:
                         widget.setConfiguration(ddict['functions'][fname])
                         self.backgroundWidgetStack.mainLayout.setCurrentWidget(widget)
@@ -397,7 +397,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
             newConfig = widget.getConfiguration()
-            if newConfig.has_key('configuration'):
+            if 'configuration' in newConfig:
                 ddict['functions'][fname]['configuration'].update(\
                                         newConfig['configuration'])
             else:
@@ -413,7 +413,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
             newConfig = widget.getConfiguration()
-            if newConfig.has_key('configuration'):
+            if 'configuration' in newConfig:
                 ddict['functions'][fname]['configuration'].update(\
                                         newConfig['configuration'])
             else:

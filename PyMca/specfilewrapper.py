@@ -295,7 +295,7 @@ class myscandata:
         if DEBUG:
             print("command called")
         if self.qxas is not None:
-            if self.qxas.has_key('S'):
+            if 'S' in self.qxas:
                 text = self.qxas['S']
         elif self.scanheader is not None:
             if len(self.scanheader):
@@ -315,7 +315,7 @@ class myscandata:
     def date(self):
         text = 'sometime'
         if self.qxas is not None:
-            if self.qxas.has_key('D'):
+            if 'D' in self.qxas:
                 return self.qxas['D']
         elif self.scanheader is not None:
             for line in self.scanheader:
@@ -342,8 +342,10 @@ class myscandata:
     
     def header(self,key):
         if self.qxas is not None:
-            if self.qxas.has_key(key):   return self.qxas[key]
-            elif key == "" or key == " ":return self.fileheader()
+            if key in self.qxas:
+                return self.qxas[key]
+            elif key == "" or key == " ":
+                return self.fileheader()
         if   key == 'S': return self.fileheader()[0]
         elif key == 'N':return self.fileheader()[-2]
         elif key == 'L':return self.fileheader()[-1]

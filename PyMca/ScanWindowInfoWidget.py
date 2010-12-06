@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -397,7 +397,7 @@ class ScanInfoWidget(qt.QWidget):
         scan   = info.get('Header', None)
         if scan is None:
             scan = ""
-            if info.has_key("envdict"):
+            if "envdict" in info:
                 scan = info["envdict"].get('title', "")
             self.scanLabel.setText(scan)
         else:

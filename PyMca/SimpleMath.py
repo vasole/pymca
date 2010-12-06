@@ -182,7 +182,7 @@ class SimpleMath:
                self.smooth(y=y)
                self.smooth()
         """
-        if kw.has_key('y'):
+        if 'y' in kw:
             ydata=kw['y']
         elif len(var) > 0:
             ydata=var[0]

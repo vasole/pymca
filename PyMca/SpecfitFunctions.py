@@ -327,12 +327,12 @@ class SpecfitFunctions:
         return peaks
 
 
-    def guess_fwhm(self,**kw):
-        if kw.has_key('y'):
+    def guess_fwhm(self, **kw):
+        if 'y' in kw:
             y=kw['y']
         else:
             return self.config['FwhmPoints']
-        if kw.has_key('x'):
+        if 'x' in kw:
             x=kw['x']
         else:
             x=arange(len(y))*1.0

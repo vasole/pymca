@@ -514,7 +514,7 @@ class CIF(dict):
                 if len(sLine) > 80:
                     sLine = "%s\n %s \n" % (sKey, sValue)
             sCifText += sLine
-        if self.has_key("loop_"):
+        if "loop_" in self:
             for loop in self["loop_"]:
                 sCifText += "loop_ \n"
                 lKeys = loop[0]
@@ -554,7 +554,7 @@ class CIF(dict):
         @rtype: boolean
         """
         bExists = False
-        if self.has_key(sKey):
+        if sKey in self:
             if len(self[sKey]) >= 1:
                 if self[sKey][0] not in ["?", "."]:
                     bExists = True

@@ -90,7 +90,7 @@ class SimpleFit(object):
         oldConfig = self.getConfiguration()
         if ddict is None:
             return oldConfig
-        if ddict.has_key('fit'):
+        if 'fit' in ddict:
             givenKeys = ddict['fit'].keys()
             for key in self._fitConfiguration['fit'].keys():
                 if key in givenKeys:
@@ -100,7 +100,7 @@ class SimpleFit(object):
                     continue
                 self._fitConfiguration[key] = ddict[key]
 
-        if ddict.has_key('functions'):
+        if 'functions' in ddict:
             functionNames = ddict['functions'].keys()
             for fName in functionNames:
                 if fName not in self._fitConfiguration['functions'].keys():

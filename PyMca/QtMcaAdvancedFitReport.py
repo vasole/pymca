@@ -127,9 +127,11 @@ class QtMcaAdvancedFitReport:
         d.read(self.fitfile)
         sourcename = "Unknown Source"
         selection  = "Unknown Selection"
-        if d.has_key('info'):
-            if d['info'].has_key('key'):selection=d['info']['key']
-            elif d['info'].has_key('Key'):selection=d['info']['Key']            
+        if 'info' in d:
+            if 'key' in d['info']:
+                selection=d['info']['key']
+            elif 'Key' in d['info']:
+                selection=d['info']['Key']            
             for key in d['info'].keys():
                 if string.upper(key) == 'SOURCENAME':
                     sourcename = d['info'][key]
@@ -147,7 +149,7 @@ class QtMcaAdvancedFitReport:
             self.outfile= os.path.basename(self.outfile)
         if self.outdir == '':self.outdir = "."
         self.fitresult=d
-        if d.has_key('concentrations'):
+        if 'concentrations' in d:
             self.concentrations = d['concentrations']
     
     def getText(self):
@@ -294,7 +296,7 @@ class QtMcaAdvancedFitReport:
         stdsum  = self.fitresult['result']['sigmapar'][self.fitresult['result']['parameters'].index('Sum')]
 
         hypermetflag = self.fitresult['result']['config']['fit']['hypermetflag']
-        if not self.fitresult['result']['config']['fit'].has_key('fitfunction'):
+        if not ('fitfunction' in self.fitresult['result']['config']['fit']):
             if hypermetflag:
                 self.fitresult['result']['config']['fit']['fitfunction'] = 0
             else:
@@ -415,17 +417,17 @@ class QtMcaAdvancedFitReport:
              stripfilterwidth = 1
              stripalgorithm = 0
              snipwidth = 30
-             if self.fitresult['result']['config']['fit'].has_key('stripalgorithm'):
+             if 'stripalgorithm' in self.fitresult['result']['config']['fit']:
                 stripalgorithm=self.fitresult['result']['config']['fit']['stripalgorithm']
-             if self.fitresult['result']['config']['fit'].has_key('snipwidth'):
+             if 'snipwidth' in self.fitresult['result']['config']['fit']:
                 snipwidth=self.fitresult['result']['config']['fit']['snipwidth']
-             if self.fitresult['result']['config']['fit'].has_key('stripconstant'):
+             if 'stripconstant' in self.fitresult['result']['config']['fit']:
                 constant=self.fitresult['result']['config']['fit']['stripconstant']
-             if self.fitresult['result']['config']['fit'].has_key('stripiterations'):
+             if 'stripiterations' in self.fitresult['result']['config']['fit']:
                 iterations=self.fitresult['result']['config']['fit']['stripiterations']
-             if self.fitresult['result']['config']['fit'].has_key('stripwidth'):
+             if 'stripwidth' in self.fitresult['result']['config']['fit']:
                 stripwidth=self.fitresult['result']['config']['fit']['stripwidth']
-             if self.fitresult['result']['config']['fit'].has_key('stripfilterwidth'):
+             if 'stripfilterwidth' in self.fitresult['result']['config']['fit']:
                 stripfilterwidth=self.fitresult['result']['config']['fit']['stripfilterwidth']
              if stripalgorithm == 1:
                  text+="        <TR align=left>"
@@ -474,7 +476,7 @@ class QtMcaAdvancedFitReport:
         if self.fitresult['result']['config']['fit']['continuum']:
              text+="        <TR align=left>"
              text+="            <TD><I>&nbsp;Type</I></TD>"
-             if self.fitresult['result']['config']['fit'].has_key('continuum_name'):
+             if 'continuum_name' in self.fitresult['result']['config']['fit']:
                 name = self.fitresult['result']['config']['fit']['continuum_name']
                 text+="            <TD>&nbsp;%s</TD>" % name
              elif self.fitresult['result']['config']['fit']['continuum'] == 1:

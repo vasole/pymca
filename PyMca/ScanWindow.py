@@ -450,7 +450,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             source = sel['SourceName']
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
-            if not sel.has_key("scanselection"): continue
+            if not ("scanselection" in sel): continue
             if sel['scanselection'] == "MCA":
                 continue
             if not sel["scanselection"]:continue
@@ -482,7 +482,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             else:
                 xdata = dataObject.x[0]
             sps_source = False
-            if sel.has_key('SourceType'):
+            if 'SourceType' in sel:
                 if sel['SourceType'] == 'SPS':
                     sps_source = True
 
@@ -509,7 +509,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                     ylegend = 'y%d' % ycounter
                     if sel['selection'] is not None:
                         if type(sel['selection']) == type({}):
-                            if sel['selection'].has_key('x'):
+                            if 'x' in sel['selection']:
                                 #proper scan selection
                                 ilabel = dataObject.info['selection']['y'][ycounter]
                                 ylegend = dataObject.info['LabelNames'][ilabel]
@@ -583,14 +583,14 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                     ylegend = 'y%d' % ycounter
                     if sel['selection'] is not None:
                         if type(sel['selection']) == type({}):
-                            if sel['selection'].has_key('x'):
+                            if 'x' in sel['selection']:
                                 #proper scan selection
                                 newDataObject.info['selection']['x'] = sel['selection']['x'] 
                                 newDataObject.info['selection']['y'] = [sel['selection']['y'][ycounter]]
                                 newDataObject.info['selection']['m'] = sel['selection']['m']
                                 ilabel = newDataObject.info['selection']['y'][0]
                                 ylegend = newDataObject.info['LabelNames'][ilabel]
-                    if dataObject.info.has_key('operations') and len(dataObject.y) == 1:
+                    if ('operations' in dataObject.info) and len(dataObject.y) == 1:
                         newDataObject.info['legend'] = legend
                         symbol = 'x'
                     else:
@@ -601,7 +601,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                         else:
                             symbol = None
                     maptoy2 = False
-                    if dataObject.info.has_key('operations'):
+                    if 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             maptoy2 = True
                         
@@ -631,7 +631,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         for sel in sellist:
             source = sel['SourceName']
             key    = sel['Key']
-            if not sel.has_key("scanselection"): continue
+            if not ("scanselection" in sel): continue
             if sel['scanselection'] == "MCA":
                 continue
             if not sel["scanselection"]:continue
@@ -639,9 +639,9 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
             legend = sel['legend'] #expected form sourcename + scan key
             if type(sel['selection']) == type({}):
-                if sel['selection'].has_key('y'):
+                if 'y' in sel['selection']:
                     for lName in ['cntlist', 'LabelNames']:
-                        if sel['selection'].has_key(lName):
+                        if lName in sel['selection']:
                             for index in sel['selection']['y']:
                                 removelist.append(legend +" "+\
                                                   sel['selection'][lName][index])
@@ -669,7 +669,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
         doit = 0
         for sel in sellist:
-            if not sel.has_key("scanselection"): continue
+            if not ("scanselection" in sel): continue
             if sel['scanselection'] == "MCA":
                 continue
             if not sel["scanselection"]:continue
@@ -739,7 +739,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         if ddict['event'] == "RemoveCurveEvent":
             legend = ddict['legend']
             self.graph.delcurve(legend)
-            if self.dataObjectsDict.has_key(legend):
+            if legend in self.dataObjectsDict:
                 del self.dataObjectsDict[legend]
                 del self.dataObjectsList[self.dataObjectsList.index(legend)]
             self.graph.replot()
@@ -748,7 +748,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         if ddict['event'] == "RenameCurveEvent":
             legend = ddict['legend']
             newlegend = ddict['newlegend']
-            if self.dataObjectsDict.has_key(legend):
+            if legend in self.dataObjectsDict:
                 self.dataObjectsDict[newlegend]= copy.deepcopy(self.dataObjectsDict[legend])
                 self.dataObjectsDict[newlegend].info['legend'] = newlegend
                 self.dataObjectsList.append(newlegend)
@@ -875,7 +875,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
                 sel['dataobject'] = self.dataObjectsDict[key]
                 sel['Key'] = self.dataObjectsDict[key].info['Key']
-                if self.dataObjectsDict[key].info.has_key('selectionlegend'):
+                if 'selectionlegend' in self.dataObjectsDict[key].info:
                     sel['legend'] = self.dataObjectsDict[key].info['selectionlegend']
                 else:
                     sel['legend'] = self.dataObjectsDict[key].info['legend']
@@ -906,7 +906,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
                 sel['dataobject'] = self.dataObjectsDict[key]
                 sel['Key'] = self.dataObjectsDict[key].info['Key']
-                if self.dataObjectsDict[key].info.has_key('selectionlegend'):
+                if 'selectionlegend' in self.dataObjectsDict[key].info:
                     sel['legend'] = self.dataObjectsDict[key].info['selectionlegend']
                 else:
                     sel['legend'] = self.dataObjectsDict[key].info['legend']
@@ -1237,9 +1237,9 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         newDataObject = DataObject.DataObject()
         newDataObject.data = None
         newDataObject.info = copy.deepcopy(dataObject.info)
-        if newDataObject.info.has_key('selectionlegend'):
+        if 'selectionlegend' in newDataObject.info:
             del newDataObject.info['selectionlegend']
-        if not newDataObject.info.has_key('operations'):
+        if not ('operations' in newDataObject.info):
             newDataObject.info['operations'] = []
         newDataObject.info['operations'].append(operation)
 
@@ -1277,7 +1277,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             sel['Key']    = ""
             sel['legend'] = "%s Smooth" % legend
             outputlegend  = "%s Smooth" % legend
-            if dataObject.info.has_key('operations'):
+            if 'operations' in dataObject.info:
                 if len(dataObject.info['operations']):
                     if dataObject.info['operations'][-1] == "smooth":
                         sel['legend'] = legend
@@ -1480,7 +1480,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 newDataObject = DataObject.DataObject()
                 newDataObject.data = None
                 newDataObject.info.update(self.dataObjectsDict[key].info)
-                if not newDataObject.info.has_key('operations'):
+                if not ('operations' in newDataObject.info):
                     newDataObject.info['operations'] = []
                 newDataObject.info['operations'].append(operation)
                 newDataObject.info['LabelNames'][ilabel] = "(%s - %s)" %  \

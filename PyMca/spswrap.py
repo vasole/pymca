@@ -83,7 +83,6 @@ def getarrayinfo(spec,shm):
     return result
 
 def getarraylist( spec ):
- 
     result = []
     if specrunning(spec):
         spslock.acquire()
@@ -94,7 +93,7 @@ def getarraylist( spec ):
            pass 
         spslock.release()
     else:
-        if spsdefaultarraylist.has_key(spec):
+        if spec in spsdefaultarraylist:
             return spsdefaultarraylist[spec]
         else:
             spsdefaultarraylist[spec]=[]
