@@ -49,7 +49,7 @@ if QTVERSION < '4.0.0':
                 self.table.setReadOnly(1)
             else:
                 if DEBUG:
-                    print "Methods to be implemented"
+                    print("Methods to be implemented")
             self.table.verticalHeader().setResizeEnabled(0, -1)
             self.table.horizontalHeader().setResizeEnabled(0, -1)
 
@@ -88,8 +88,8 @@ if QTVERSION < '4.0.0':
 
         def markMcaSelected(self, mcalist):
             if DEBUG:
-                print "markMcaSelected(self, mcalist) called"
-                print "mcalist = ",mcalist
+                print("markMcaSelected(self, mcalist) called")
+                print("mcalist = ",mcalist)
             scankey = ""
             if mcalist != []:
                 if len(mcalist):
@@ -334,7 +334,7 @@ else:
 
         def _cellClicked(self, row, col):
             if DEBUG:
-                print "_cellClicked ", row, col
+                print("_cellClicked %d %d " % (row, col))
             item = self.table.item(row, col)
             if item is None:
                 item = qt.QTableWidgetItem('',qt.QTableWidgetItem.Type)
@@ -342,7 +342,7 @@ else:
 
         def _cellDoubleClicked(self, row, col):
             if DEBUG:
-                print "_cellDoubleClicked ", row, col
+                print("_cellDoubleClicked %d %d" % (row, col))
             #self._toggleCell(row, col)
             pass
 

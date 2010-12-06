@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -41,7 +41,8 @@ class QSelectorWidget(qt.QWidget):
         """
         Method to be overwritten to build the main widget
         """
-        if DEBUG:print "_build():Method to be overwritten"
+        if DEBUG:
+            print("_build():Method to be overwritten")
         pass
 
     def _buildActions(self):
@@ -72,13 +73,16 @@ class QSelectorWidget(qt.QWidget):
                     self._replaceClicked)
 
     def _addClicked(self):
-        if DEBUG: print "_addClicked()"
+        if DEBUG:
+            print("_addClicked()")
     
     def _removeClicked(self):
-        if DEBUG: print "_removeClicked()"     
-        
+        if DEBUG:
+            print("_removeClicked()")   
+
     def _replaceClicked(self):
-        if DEBUG: print "_replaceClicked()"
+        if DEBUG: print(
+            "_replaceClicked()")
 
             
 def test():

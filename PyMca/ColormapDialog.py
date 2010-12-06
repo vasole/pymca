@@ -346,12 +346,14 @@ class ColormapDialog(qt.QDialog):
                                  self.__y[i])
 
         self.c.replot()
-        if DEBUG:print "Slider asking to update colormap"
+        if DEBUG:
+            print("Slider asking to update colormap")
         #self._update()
         self.sendColormap()
 
     def _update(self):
-        if DEBUG: print "colormap _update called"
+        if DEBUG:
+            print("colormap _update called")
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
         self.maxpd = self.dataMax + self.marge
@@ -371,7 +373,8 @@ class ColormapDialog(qt.QDialog):
 
     def buttonGroupChange(self, val):
         self.colormapType = val
-        if DEBUG: print "buttonGroup asking to update colormap"
+        if DEBUG:
+            print("buttonGroup asking to update colormap")
         self._update()
 
     def chval(self, ddict):
@@ -379,7 +382,7 @@ class ColormapDialog(qt.QDialog):
             if ddict['marker'] in self.markers:
                 markerIndex = self.markers.index(ddict['marker'])
             else:
-                print "Unknown marker"
+                print("Unknown marker")
                 return
         else:
             return
@@ -395,7 +398,7 @@ class ColormapDialog(qt.QDialog):
             if ddict['marker'] in self.markers:
                 markerIndex = self.markers.index(ddict['marker'])
             else:
-                print "Unknown marker"
+                print("Unknown marker")
                 return
         else:
             return
@@ -432,7 +435,7 @@ class ColormapDialog(qt.QDialog):
 
     def setAutoscale(self, val):
         if DEBUG:
-            print "setAutoscale called", val
+            print("setAutoscale called", val)
         if val:
             if QTVERSION < '4.0.0':
                 self.autoScaleButton.setOn(True)
@@ -592,7 +595,8 @@ class ColormapDialog(qt.QDialog):
     send 'ColormapChanged' signal
     """
     def sendColormap(self):
-        if DEBUG:print "sending colormap"
+        if DEBUG:
+            print("sending colormap")
         #prevent unexpected behaviour because of bad limits
         if self.minValue > self.maxValue:
             vmax = self.minValue

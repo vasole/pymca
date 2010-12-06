@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
@@ -84,7 +84,8 @@ class DoubleSlider(qt.QWidget):
         return ddict
 
     def _sliderChanged(self, value):
-        if DEBUG: print "DoubleSlider._sliderChanged()"
+        if DEBUG:
+            print("DoubleSlider._sliderChanged()")
         ddict = self.__getDict()
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("doubleSliderValueChanged"), (ddict,))

@@ -65,8 +65,8 @@ class EdfFileSimpleViewer(qt.QWidget):
 
     def _sourceSelectorSlot(self, ddict):
         if DEBUG:
-            print "_sourceSelectorSlot(self, ddict)"
-            print "ddict = ",ddict
+            print("_sourceSelectorSlot(self, ddict)")
+            print("ddict = ",ddict)
         if ddict["event"] == "NewSourceSelected":
             source = QDataSource.QDataSource(ddict["sourcelist"])
             self.sourceList.append(source)
@@ -80,7 +80,7 @@ class EdfFileSimpleViewer(qt.QWidget):
                     break
             if not found:
                 if DEBUG:
-                    print "WARNING: source not found"
+                    print("WARNING: source not found")
                 return
             sourceType = source.sourceType
             self.selectorWidget[sourceType].setDataSource(source)
@@ -92,7 +92,7 @@ class EdfFileSimpleViewer(qt.QWidget):
                     break
             if not found:
                 if DEBUG:
-                    print "WARNING: source not found"
+                    print("WARNING: source not found")
                 return
             sourceType = source.sourceType
             del self.sourceList[self.sourceList.index(source)]

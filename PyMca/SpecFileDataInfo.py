@@ -183,7 +183,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         if names is not None and pos is not None:
             num= len(names)
             if num != len(pos):
-                print "Incorrent number of labels or values"
+                print("Incorrent number of labels or values")
                 return
             if num:
                 table= self.__createTable(num, "Motor", "Position")
@@ -213,8 +213,8 @@ class SpecFileDataInfo(qt.QTabWidget):
         if cnts is not None and vals is not None:
             num= len(cnts)
             if num != len(vals):
-                print "Incorrent number of labels or values"
-                return                
+                print("Incorrent number of labels or values")
+                return
             if num:
                 table= self.__createTable(num, "Counter", "Value")
                 for idx in range(num):
@@ -304,7 +304,7 @@ def test():
     import SpecFileLayer
 
     if len(sys.argv) < 3:
-        print "USAGE: %s <filename> <key>"%sys.argv[0]
+        print("USAGE: %s <filename> <key>" % sys.argv[0])
         sys.exit(0)
 
     #d= SpecFileData()

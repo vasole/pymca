@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -68,7 +68,7 @@ def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvsepa
         for i in range(len(datalist)):
             labels.append("Array_%d" % i)
     if len(labels) != len(datalist):
-        raise ValueError, "Incorrect number of labels"
+        raise ValueError("Incorrect number of labels")
     if csv:
         header = '"row"%s"column"' % csvseparator
         for label in labels:
@@ -117,7 +117,7 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
         for i in range(ndata):
             labels.append("Array_%d" % i) 
     if len(labels) != ndata:
-        raise ValueError, "Incorrect number of labels"
+        raise ValueError("Incorrect number of labels")
     edfout   = EdfFile.EdfFile(filename)
     for i in range(ndata):
         if dtype is None:
@@ -132,13 +132,13 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                  buffername="data",
                                  dtype=numpy.float32):
     if not HDF5:
-        raise IOError, 'h5py does not seem to be installed in your system'
+        raise IOError('h5py does not seem to be installed in your system')
 
     if os.path.exists(filename):
         try:
             os.remove(filename)
         except:
-            raise IOError, "Cannot overwrite existing file!"
+            raise IOError("Cannot overwrite existing file!")
     hdf = phynx.File(filename, 'a')
     entryName = "data"
     nxEntry = hdf.require_group(entryName, type='Entry')
@@ -164,7 +164,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
 def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                       mcaindex=-1, interpretation=None):
     if not HDF5:
-        raise IOError, 'h5py does not seem to be installed in your system'
+        raise IOError('h5py does not seem to be installed in your system')
     if (mcaindex == 0) and (interpretation in ["spectrum", None]):
         #stack of images to be saved as stack of spectra
         modify = True
@@ -184,7 +184,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
             try:
                 os.remove(filename)
             except:
-                raise IOError, "Cannot overwrite existing file!"
+                raise IOError("Cannot overwrite existing file!")
         hdf = phynx.File(filename, 'a')
         entryName = "data"
         nxEntry = hdf.require_group(entryName, type='Entry')
@@ -221,7 +221,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                             tmpData = data[k:k+1, i, :]
                             tmpData.shape = -1
                             chunk[0, :, k] = tmpData
-                    print "Saving item ", i, "of ", data.shape[1]
+                    print("Saving item %d of %d" % ( i, data.shape[1]))
                     dset[i, :, :] = chunk
             else:
                 #if I do not match the input and output shapes it takes ages
@@ -263,7 +263,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
             try:
                 os.remove(filename)
             except:
-                raise IOError, "Cannot overwrite existing file!"
+                raise IOError("Cannot overwrite existing file!")
         hdf = h5py.File(filename, 'a')
         hdf.require_dataset('data',
                            shape=shape,
@@ -275,7 +275,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
             try:
                 os.remove(filename)
             except:
-                raise IOError, "Cannot overwrite existing file!"
+                raise IOError("Cannot overwrite existing file!")
         shape = data.shape
         dtype = data.dtype
         hdf = h5py.File(filename, 'a')

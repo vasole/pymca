@@ -286,8 +286,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     #NEW data management
     def setDataSource(self, datasource):
         if DEBUG:
-            print "setDataSource(self, datasource) called"
-            print "datasource = ", datasource
+            print("setDataSource(self, datasource) called")
+            print("datasource = ", datasource)
         self.data = datasource
         self.refresh()
         if QTVERSION < '4.0.0':return
@@ -305,8 +305,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     #OLD data management
     def setData(self, specfiledata):
         if DEBUG:
-            print "setData(self, specfiledata) called"
-            print "specfiledata = ",specfiledata
+            print("setData(self, specfiledata) called")
+            print("specfiledata = ",specfiledata)
         self.data= specfiledata
         self.refresh()
 
@@ -378,7 +378,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def _autoReplace(self, scanlist):
         if DEBUG:
-            print "autoreplace called with ",scanlist
+            print("autoreplace called with ",scanlist)
         if self.autoReplaceBox.isChecked():
             self._replaceClicked()
         elif self.autoAddBox.isChecked():
@@ -404,7 +404,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         """
 
         def __selectionChanged(self):
-            if DEBUG:print "__selectionChanged"
+            if DEBUG:
+                print("__selectionChanged")
             if QTVERSION > '3.0.0':
                 sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
             else:
@@ -434,10 +435,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         
         def __selectionChanged(self):
-            if DEBUG:print "__selectionChanged"
+            if DEBUG:
+                print("__selectionChanged")
             itemlist = self.list.selectedItems()
             sel = [str(item.text(1)) for item in itemlist]
-            if DEBUG: print "selection = ",sel
+            if DEBUG:
+                print("selection = ",sel)
             if not len(sel):return
             info = self.data.getKeyInfo(sel[0])
             self.mcaTable.build(info)
@@ -482,7 +485,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
 
     def __doubleClicked(self, item):
-        if DEBUG:print "__doubleClicked"
+        if DEBUG:
+            print("__doubleClicked")
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -500,14 +504,16 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     if QTVERSION < '4.0.0':        
         def __contextMenu(self, item, point, col=None):
-            if DEBUG:print "__contextMenu"
+            if DEBUG:
+                print("__contextMenu")
             if item is not None:
                 sn= str(item.text(1))
                 self.menu.setItemParameter(self.menu.idAt(0), self.scans.index(sn))
                 self.menu.popup(point)
     else:
         def __contextMenu(self, point):
-            if DEBUG:print "__contextMenu",point
+            if DEBUG:
+                print("__contextMenu",point)
             item = self.list.itemAt(point)
             if item is not None:
                 sn= str(item.text(1))
@@ -552,7 +558,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if QTVERSION > '4.0.0': 
                 idx = self.menu_idx
         if DEBUG:
-            print "Scan information:"
+            print("Scan information:")
 
         try:
             info = self.data.getDataObject(self.scans[idx]).info
@@ -594,7 +600,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._dataInfoClosed(ddict)
 
     def _addClicked(self):
-        if DEBUG: print "Overwritten _addClicked method"
+        if DEBUG:
+            print("Overwritten _addClicked method")
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
@@ -662,8 +669,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         
 
     def _removeClicked(self):
-        if DEBUG: print "Overwritten _removeClicked method"
-
+        if DEBUG:
+            print("Overwritten _removeClicked method")
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
@@ -722,7 +729,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 self.emit(qt.SIGNAL("removeSelection"), sel_list)
 
     def _replaceClicked(self):
-        if DEBUG: print "Overwritten _replaceClicked method"
+        if DEBUG:
+            print("Overwritten _replaceClicked method")
         #get selected scan keys
         if QTVERSION < '4.0.0':
             if QTVERSION > '3.0.0':
@@ -789,7 +797,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 self.emit(qt.SIGNAL("replaceSelection"), sel_list)
 
     def _tabChanged(self, value):
-        if DEBUG:print "self._tabChanged(value), value =  ",value
+        if DEBUG:
+            print("self._tabChanged(value), value =  ",value)
         if QTVERSION < '4.0.0':
             #is not an index but a widget
             index = self.mainTab.indexOf(value)
@@ -818,8 +827,8 @@ def test():
         if os.path.exists('03novs060sum.mca'):
             d = QDataSource.QDataSource('03novs060sum.mca')
         else:
-            print "Usage:"
-            print "      python QSpecFileWidget.py filename"
+            print("Usage:")
+            print("      python QSpecFileWidget.py filename")
             a.quit()
             sys.exit(0)
     w.setData(d) 

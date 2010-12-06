@@ -97,9 +97,9 @@ if QTVERSION < '4.0.0':
 
         def markCntSelected(self, cntdict):
             if DEBUG:
-                print "markCntSelected(self, cntdict)"
-                print "cntdict = ", cntdict
-                print "self.cntlist = ",self.cntlist
+                print("markCntSelected(self, cntdict)")
+                print("cntdict = ", cntdict)
+                print("self.cntlist = ",self.cntlist)
             if (cntdict != {}):
                 for cnt in self.cntlist:
                     row =self.cntlist.index(cnt)
@@ -118,8 +118,8 @@ if QTVERSION < '4.0.0':
                 
         def selectCntList(self, cntlist, numbers = True):
             if DEBUG:
-                print "selectCntList(self, cntlist)"
-                print "cntlist = ",cntlist
+                print("selectCntList(self, cntlist)")
+                print("cntlist = ",cntlist)
             if not numbers:
                 for cntname in cntlist:
                     self.selectCntName(cntname)
