@@ -186,38 +186,38 @@ class StripParametersWidget(qt.QWidget):
             self.stripCombo.setCurrentIndex(0)
 
     def setParameters(self, ddict):
-        if ddict.has_key('fit'):
+        if 'fit' in ddict:
             pars = ddict['fit']
         else:
             pars = ddict
 
         key = "stripalgorithm"
-        if pars.has_key(key):
+        if key in pars:
             stripAlgorithm = int(pars[key])
             self.setSNIP(stripAlgorithm)
             
         key = "snipwidth"            
-        if pars.has_key(key):
+        if key in pars:
             self.snipWidthSpin.setValue(int(pars[key]))
 
         key = "stripwidth"            
-        if pars.has_key(key):
+        if key in pars:
             self.stripWidthSpin.setValue(int(pars[key]))
 
         key = "stripiterations"
-        if pars.has_key(key):
+        if key in pars:
             self.stripIterValue.setText("%d" % int(pars[key]))
 
         key = "stripfilterwidth"
-        if pars.has_key(key):
+        if key in pars:
             self.stripFilterSpin.setValue(int(pars[key]))
 
         key = "stripanchorsflag"
-        if pars.has_key(key):
+        if key in pars:
             self.stripAnchorsFlagCheck.setChecked(int(pars[key]))
 
         key = "stripanchorslist"
-        if pars.has_key(key):
+        if key in pars:
             anchorslist = pars[key]
             if anchorslist in [None, 'None']:
                 anchorslist = []
