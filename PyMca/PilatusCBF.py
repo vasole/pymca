@@ -83,7 +83,7 @@ class PilatusCBF(object):
                 missing.append(item)
         if len(missing) > 0:
             if DEBUG:
-                print ("CBF file misses the keys " + " ".join(missing))
+                print("CBF file misses the keys " + " ".join(missing))
 
     def _readbinary_byte_offset(self, inStream):
         """
@@ -215,8 +215,8 @@ class CIF(dict):
         @return the 
         """
         if not os.path.isfile(_strFilename):
-            print "I cannot find the file %s" % _strFilename
-            raise
+            print("I cannot find the file %s" % _strFilename)
+            raise IOError("I cannot find the file %s" % _strFilename)
         if _bKeepComment:
             self._parseCIF(open(_strFilename, "rb").read())
         else:
@@ -252,8 +252,8 @@ class CIF(dict):
         @rtype: string
         """
         if not os.path.isfile(_strFilename):
-            print "I cannot find the file %s" % _strFilename
-            raise
+            print("I cannot find the file %s" % _strFilename)
+            raise IOError("I cannot find the file %s" % _strFilename)
         lLinesRead = open(_strFilename, "r").readlines()
         sText = ""
         for sLine in lLinesRead:
@@ -263,11 +263,11 @@ class CIF(dict):
                     sText += sLine[:iPos] + "\n"
 
                 if iPos > 80 :
-                    print "Warning, this line is too long and could cause problems in PreQuest\n", sLine
+                    print("Warning, this line is too long and could cause problems in PreQuest\n", sLine)
             else :
                 sText += sLine
                 if len(sLine.strip()) > 80 :
-                    print "Warning, this line is too long and could cause problems in PreQuest\n", sLine
+                    print("Warning, this line is too long and could cause problems in PreQuest\n", sLine)
         return sText
 
 
@@ -468,13 +468,14 @@ class CIF(dict):
         try:
             fFile = open(_strFilename, "w")
         except IOError:
-            print "Error during the opening of file for write : %s" % _strFilename
+            print("Error during the opening of file for write : %s" % _strFilename)
             return
         fFile.write(self._cif2str(_strFilename))
         try:
             fFile.close()
         except IOError:
-            print "Error during the closing of file for write : %s" % _strFilename
+            print("Error during the closing of file for write : %s" % _strFilename)
+            raise
 
 
 
@@ -586,8 +587,8 @@ class CIF(dict):
         @rtype: dictionnary
         """
         if not os.path.isfile(_strFilename):
-            print "I cannot find the file %s" % _strFilename
-            raise
+            print("I cannot find the file %s" % _strFilename)
+            raise IOError("I cannot find the file %s" % _strFilename)
         lInFile = open(_strFilename, "r").readlines()
         self["_audit_creation_method"] = 'From 2-D detector using FIT2D and CIFfile'
         self["_pd_meas_scan_method"] = "fixed"
@@ -653,7 +654,7 @@ if __name__ == "__main__":
     #fd = open('Cu_ZnO_20289.mccd', 'rb')
     filename = sys.argv[1]
     cbf = PilatusCBF(filename)
-    print cbf.getInfo()
+    print(cbf.getInfo())
     edfFile = filename+".edf"
     if os.path.exists(edfFile):
         os.remove(edfFile)

@@ -18,7 +18,7 @@ class MarCCD:
             #motorola, high endian
             fileOrder = "low"
         else:
-            raise IOError, "File is not a Mar CCD file, nor a TIFF file"
+            raise IOError("File is not a Mar CCD file, nor a TIFF file")
         if sys.byteorder != fileOrder:
             swap = True
         else:

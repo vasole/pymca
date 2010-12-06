@@ -30,6 +30,7 @@ import types
 import copy
 import EdfFile
 import string
+import sys
 import os
 import numpy.oldnumeric as Numeric
 
@@ -38,13 +39,17 @@ DEBUG = 0
 
 class EdfFileDataSource:
     def __init__(self,nameInput, fastedf=False):
-        if type(nameInput) == types.ListType:
+        if type(nameInput) == list:
             nameList = nameInput
         else:
             nameList = [nameInput]
+        if sys.version < '3.0':
+            stringTypes = [types.StringType, types.UnicodeType]
+        else:
+            stringTypes = [type("a"), type(b"a")]
         for name in nameList:
-            if type(name) not in [types.StringType, types.UnicodeType]:
-                raise TypeError,"Constructor needs string as first argument"            
+            if type(name) not in stringTypes:
+                raise TypeError("Constructor needs string as first argument")           
         self.sourceName   = nameInput
         self.sourceType = SOURCE_TYPE
         self.__sourceNameList = nameList
@@ -52,7 +57,7 @@ class EdfFileDataSource:
         #self._fastedf = True
         self._fastedf = fastedf
         if fastedf:
-            print "fastedf is unsafe!"
+            print("fastedf is unsafe!")
         self.refresh()
 
     def refresh(self):
@@ -92,7 +97,7 @@ class EdfFileDataSource:
         else:
             #should we raise a KeyError?
             if DEBUG:
-                print "Error key not in list "
+                print("Error key not in list ")
             return {}
     
     def __getKeyInfo(self,key):
@@ -103,7 +108,7 @@ class EdfFileDataSource:
         except:
             #should we rise an error?
             if DEBUG:
-                print "Error trying to interpret key =",key
+                print("Error trying to interpret key =",key)
             return {}
 
         sourceObject = self._sourceObjectList[index]
@@ -118,26 +123,28 @@ class EdfFileDataSource:
         info["rows"]     = info['Dim_2']
         info["cols"]     = info['Dim_1']
         info["type"]     = info['DataType']
-        if info.has_key('MCA start ch'):
+        if 'MCA start ch' in info:
             info['Channel0'] = int(info['MCA start ch'])
         else:
             info['Channel0'] = 0
 
-        if not info.has_key('McaCalib'):
-            if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
-                info['McaCalib'] = [string.atof(info['MCA a']),
-                                    string.atof(info['MCA b']),
-                                    string.atof(info['MCA c'])]
+        if not ( 'McaCalib' in info):
+            if ('MCA a' in info) and\
+               ('MCA b' in info) and\
+               ('MCA c' in info):
+                info['McaCalib'] = [float(info['MCA a']),
+                                    float(info['MCA b']),
+                                    float(info['MCA c'])]
             else:
                 info['McaCalib'] = [ 0.0, 1.0, 0.0]
         else:
-            if type(info['McaCalib']) == type(" "):
+            if type(info['McaCalib']) in [type(" ")]:
                 info['McaCalib'] = info['McaCalib'].replace("[","")
                 info['McaCalib'] = info['McaCalib'].replace("]","")
                 cala, calb, calc = info['McaCalib'].split(",")
-                info['McaCalib'] = [string.atof(cala),
-                                    string.atof(calb),
-                                    string.atof(calc)]
+                info['McaCalib'] = [float(cala),
+                                    float(calb),
+                                    float(calc)]
 
         self.__lastKeyInfo[key] = os.path.getmtime(sourceObject.FileName)
         return info
@@ -158,7 +165,7 @@ class EdfFileDataSource:
             #    #this is in fact a special selection: The SUM
             #    pass
             #else:
-                raise KeyError,"Key %s not in source keys" % image_key
+                raise KeyError("Key %s not in source keys" % image_key)
         #create data object
         data = DataObject.DataObject()
         data.info = self.__getKeyInfo(image_key)
@@ -170,7 +177,8 @@ class EdfFileDataSource:
         image = int(image)-1
         MCAIMP = 0
         if len(key_split) == 4:
-            if DEBUG:print "mca like selection"
+            if DEBUG:
+                print("mca like selection")
             #print data.info
             if 1:
                 MCAIMP = 1
@@ -182,7 +190,8 @@ class EdfFileDataSource:
                     size = (1,int(data.info['Dim_2']))
                 data.info['selectiontype'] = "1D"
             else:
-                if DEBUG:print "mca like selection not yet implemented"
+                if DEBUG:
+                    print("mca like selection not yet implemented")
                 pos = None
                 size = None
                 data.info['selectiontype'] = "1D"
@@ -219,7 +228,7 @@ class EdfFileDataSource:
                 elif key_split[2].upper() == 'R':
                     data.y=[data.data[int(key_split[3])-1, :].astype(Numeric.Float)]
                 else:
-                    raise "ValueError","Unknown key %s" % Key
+                    raise ValueError("Unknown key %s" % Key)
             ch0 = int(data.info['Channel0'])
             data.x = [ch0+Numeric.arange(len(data.y[0])).astype(Numeric.Float)]
             data.m = None
@@ -246,7 +255,8 @@ def DataSource(name="", source_type=SOURCE_TYPE):
      sourceClass = source_types[source_type]
   except KeyError:
      #ERROR invalid source type
-     raise TypeError,"Invalid Source Type, source type should be one of %s" % source_types.keys()
+     raise TypeError("Invalid Source Type, source type should be one of %s" %\
+                     source_types.keys())
   
   return sourceClass(name)
 
@@ -257,7 +267,7 @@ if __name__ == "__main__":
         sourcename=sys.argv[1]
         key       =sys.argv[2]        
     except:
-        print "Usage: EdfFileDataSource <file> <key>"
+        print("Usage: EdfFileDataSource <file> <key>")
         sys.exit()
     #one can use this:
     obj = EdfFileDataSource(sourcename)
@@ -267,15 +277,15 @@ if __name__ == "__main__":
     #data = obj.getDataObject(key,selection={'pos':None,'size':None})
     t0 = time.time()
     data = obj.getDataObject(key,selection=None)
-    print "elapsed = ",time.time() - t0
-    print "info = ",data.info
+    print("elapsed = ",time.time() - t0)
+    print("info = ",data.info)
     if data.data is not None:
-        print "data shape = ",data.data.shape
-        print Numeric.ravel(data.data)[0:10]
+        print("data shape = ",data.data.shape)
+        print(Numeric.ravel(data.data)[0:10])
     else:
-        print data.y[0].shape
-        print Numeric.ravel(data.y[0])[0:10]
+        print(data.y[0].shape)
+        print(Numeric.ravel(data.y[0])[0:10])
     data = obj.getDataObject('1.1',selection=None)
     r = int(key.split('.')[-1])
-    print " data[%d,0:10] = " % (r-1),data.data[r-1   ,0:10]
-    print " data[0:10,%d] = " % (r-1),data.data[0:10, r-1]        
+    print(" data[%d,0:10] = " % (r-1),data.data[r-1   ,0:10])
+    print(" data[0:10,%d] = " % (r-1),data.data[0:10, r-1])
