@@ -27,6 +27,7 @@
 import EventHandler
 import Specfit
 import sys
+import os
 
 import PyMcaQt as qt
     
@@ -55,7 +56,11 @@ class SpecfitGUI(qt.QWidget):
             self.eh = eh
         if specfit is None:
             self.specfit = Specfit.Specfit(eh=self.eh)
-            self.specfit.importfun("SpecfitFunctions.py")
+            funsFile = "SpecfitFunctions.py"
+            if not os.path.exists(funsFile):
+                funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
+                                funsFile)
+            self.specfit.importfun(funsFile)
         else:
             self.specfit = specfit
         
