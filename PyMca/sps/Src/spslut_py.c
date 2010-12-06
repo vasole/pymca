@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -49,18 +49,44 @@
     - Corrected memory leak bug
 */
 #include <stdio.h>
-
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <sps_lut.h>
 
-static PyObject *SPSLUTError;
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define PyInt_FromLong(x) PyLong_FromLong(x)
+#define GETSTATE(m) ((struct module_state*) PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+#define onError(message)  \
+     {	struct module_state *st = GETSTATE(self);\
+		PyErr_SetString(st->error, message);\
+		return NULL; }
+
+/* Function declarations */
+static PyObject *spslut_transform(PyObject *self, PyObject *args);
+static PyObject *spslut_transformarray(PyObject *self, PyObject *args);
+static PyObject *spslut_palette(PyObject *self, PyObject *args);
+
+/* Functions */
 
 PyObject *new_pyimage(const char *mode, unsigned xsize, unsigned ysize,
               void *data)
 {
+#if PY_MAJOR_VERSION >= 3
+  return PyBytes_FromStringAndSize ((const char *)data,
+                     strlen(mode) * xsize * ysize);
+#else
   return PyString_FromStringAndSize ((const char *)data,
                      strlen(mode) * xsize * ysize);
+#endif
 }
 
 static int natbyteorder()
@@ -83,9 +109,7 @@ static int natbyteorder()
   }
 }
 
-static PyObject *spslut_transform(self, args)
-     PyObject *self, *args;
-
+static PyObject *spslut_transform(PyObject *self, PyObject *args)
 {
   void *data;
   int type, cols, rows, reduc, fastreduc, meth, autoscale, mapmin=0, mapmax=255;
@@ -144,14 +168,12 @@ static PyObject *spslut_transform(self, args)
     //mapmin = 0;
     //mapmax = 255;
   } else {
-    PyErr_SetString(SPSLUTError, "Mode must be RGB, RGBX, BGR, BGRX, L or P");
-    return NULL;
+    onError("Mode must be RGB, RGBX, BGR, BGRX, L or P");
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 2, 2))) {
-    PyErr_SetString(SPSLUTError, "Input Array could is not a 2x2 array");
-    return NULL;
+    onError("Input Array could is not a 2x2 array");
   }
 
   switch (src->descr->type_num) {
@@ -176,8 +198,7 @@ static PyObject *spslut_transform(self, args)
   case NPY_DOUBLE:
     type = SPS_DOUBLE; break;
   default:
-    PyErr_SetString(SPSLUTError, "Input Array type not supported");
-    return NULL;
+    onError("Input Array type not supported");
   }
 
   data = src->data;
@@ -190,8 +211,7 @@ static PyObject *spslut_transform(self, args)
             autoscale, mapmin, mapmax, Xservinfo, palette_code,
             &min, &max, &pcols, &prows, &palette, &pal_entries);
   if (r == 0) {
-    PyErr_SetString(SPSLUTError, "Error while trying to calculate the image");
-    return NULL;
+    onError("Error while trying to calculate the image");
   }
   if (!array_output){
    /*###CHANGED - ALEXANDRE 24/07/2001*/
@@ -226,9 +246,7 @@ static PyObject *spslut_transform(self, args)
 }
 
 
-static PyObject *spslut_transformarray(self, args)
-     PyObject *self, *args;
-
+static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
 {
   void *data;
   int type, cols, rows, reduc, fastreduc, meth, autoscale, mapmin=0, mapmax=255;
@@ -285,14 +303,12 @@ static PyObject *spslut_transformarray(self, args)
     //mapmin = 0;
     //mapmax = 255;
   } else {
-    PyErr_SetString(SPSLUTError, "Mode must be RGB, RGBX, BGR, BGRX, L or P");
-    return NULL;
+    onError("Mode must be RGB, RGBX, BGR, BGRX, L or P");
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 2, 2))) {
-    PyErr_SetString(SPSLUTError, "Input Array could is not a 2x2 array");
-    return NULL;
+		onError("Input Array could is not a 2x2 array");
   }
 
   switch (src->descr->type_num) {
@@ -317,8 +333,7 @@ static PyObject *spslut_transformarray(self, args)
   case NPY_DOUBLE:
     type = SPS_DOUBLE; break;
   default:
-    PyErr_SetString(SPSLUTError, "Input Array type not supported");
-    return NULL;
+    onError("Input Array type not supported");
   }
 
   data = src->data;
@@ -329,8 +344,7 @@ static PyObject *spslut_transformarray(self, args)
             autoscale, mapmin, mapmax, Xservinfo, palette_code,
             &min, &max, &pcols, &prows, &palette, &pal_entries);
   if (r == 0) {
-    PyErr_SetString(SPSLUTError, "Error while trying to calculate the image");
-    return NULL;
+    onError("Error while trying to calculate the image");
   }
    /*###CHANGED - ALEXANDRE 24/07/2001*/
   as_dim[0] = strlen(mode);
@@ -353,9 +367,7 @@ static PyObject *spslut_transformarray(self, args)
 
 
 /* The simple palette always returns 4 bytes per entry */
-static PyObject *spslut_palette(self, args)
-     PyObject *self, *args;
-
+static PyObject *spslut_palette(PyObject *self, PyObject *args)
 {
   int entries, palette_code;
   XServer_Info Xservinfo;
@@ -375,30 +387,82 @@ static PyObject *spslut_palette(self, args)
   r = SPS_SimplePalette ( 0, entries - 1, Xservinfo, palette_code);
 
   if (r == 0) {
-    PyErr_SetString(SPSLUTError, "Error calculating the palette");
-    return NULL;
+    onError("Error calculating the palette");
   }
-
   return new_pyimage(mode, 1, entries, r);
 }
 
 
+/* Module methods */
 
-static PyMethodDef SPSLUTMethods[] = {
+static PyMethodDef SPSLUT_Methods[] = {
   { "transform", spslut_transform, METH_VARARGS},
   { "palette", spslut_palette, METH_VARARGS},
   { "transformArray", spslut_transformarray, METH_VARARGS},
   { NULL, NULL}
 };
 
-void initspslut()
-{
-  PyObject *d, *m;
-  /* Create the module and add the functions */
-  m = Py_InitModule ("spslut", SPSLUTMethods);
+/* ------------------------------------------------------- */
 
+/* Module initialization */
+
+#if PY_MAJOR_VERSION >= 3
+
+static int SPSLUT_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int SPSLUT_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "spslut",
+        NULL,
+        sizeof(struct module_state),
+        SPSLUT_Methods,
+        NULL,
+        SPSLUT_traverse,
+        SPSLUT_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_spslut(void)
+
+#else
+#define INITERROR return
+
+void
+initspslut(void)
+#endif
+{
+	PyObject *d;
+	struct module_state *st;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("spslut", SPSLUT_Methods);
+#endif
+
+    if (module == NULL)
+        INITERROR;
+    st = GETSTATE(module);
+
+    st->error = PyErr_NewException("SPSLUT.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+    import_array();
   /* Add some symbolic constants to the module */
-  d = PyModule_GetDict(m);
+  d = PyModule_GetDict(module);
 
   PyDict_SetItemString(d, "LINEAR", PyInt_FromLong(SPS_LINEAR));
   PyDict_SetItemString(d, "LOG", PyInt_FromLong(SPS_LOG));
@@ -412,7 +476,7 @@ void initspslut()
   PyDict_SetItemString(d, "REVERSEGREY", PyInt_FromLong(SPS_REVERSEGREY));
   PyDict_SetItemString(d, "MANY", PyInt_FromLong(SPS_MANY));
 
-  SPSLUTError = PyErr_NewException("spslut.error", NULL, NULL);
-  PyDict_SetItemString(d, "error", SPSLUTError);
-  import_array();
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }
