@@ -124,7 +124,7 @@ def setElementBindingEnergies(element, ddict):
         _initializeElement(element)
     EPDL97_DICT[element]['original'] = False
     EPDL97_DICT[element]['binding']={}
-    if ddict.has_key('binding'):
+    if 'binding' in ddict:
         EPDL97_DICT[element]['binding'].update(ddict['binding'])
     else:
         EPDL97_DICT[element]['binding'].update(ddict)
