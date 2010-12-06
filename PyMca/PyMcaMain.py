@@ -365,7 +365,7 @@ class PyMca(PyMcaMdi.PyMca):
                 else:
                     self.connect(self.mcawindow,qt.SIGNAL('McaWindowSignal'),
                                  self.__McaWindowSignal)
-                if kw.has_key('shm'):
+                if 'shm' in kw:
                     if len(kw['shm']) >= 8:
                         if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
                             self.mcawindow.showMaximized()
@@ -375,11 +375,11 @@ class PyMca(PyMcaMdi.PyMca):
             currentConfigDict = ConfigDict.ConfigDict()
             defaultFileName = self.__getDefaultSettingsFile()
             self.configDir  = os.path.dirname(defaultFileName)
-            if not kw.has_key('fresh'):
+            if not ('fresh' in kw):
                 if os.path.exists(defaultFileName):
                     currentConfigDict.read(defaultFileName)
                     self.setConfig(currentConfigDict)
-            if kw.has_key('spec') and kw.has_key('shm'):
+            if ('spec' in kw) and ('shm' in kw):
                 if len(kw['shm']) >= 8:
                     #if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
                     if kw['shm'][0:8] in ['MCA_DATA']:
@@ -427,13 +427,13 @@ class PyMca(PyMcaMdi.PyMca):
                 self.imageWindowDict[key].setPlotEnabled(value)
 
     def _is2DSelection(self, ddict):
-        if ddict.has_key('imageselection'):
+        if 'imageselection' in ddict:
             if ddict['imageselection']:
                 return True
-        if ddict.has_key('selection'):
+        if 'selection' in ddict:
             if ddict['selection'] is None:
                 return False
-            if ddict['selection'].has_key('selectiontype'):
+            if 'selectiontype' in ddict['selection']:
                 if ddict['selection']['selectiontype'] == '2D':
                     return True
         return False
@@ -442,14 +442,14 @@ class PyMca(PyMcaMdi.PyMca):
         if self._is2DSelection(ddict):
             return False
 
-        if ddict.has_key('selection'):
+        if 'selection' in ddict:
             if ddict['selection'] is None:
                 return False
-            if ddict['selection'].has_key('selectiontype'):
+            if 'selectiontype' in ddict['selection']:
                 if ddict['selection']['selectiontype'] == '3D':
                     return True
             
-            if ddict['selection'].has_key('x'):
+            if 'x' in ddict['selection']:
                 if ddict['selection']['x'] is not None:
                     if len(ddict['selection']['x']) > 1:
                         return True           
@@ -460,10 +460,10 @@ class PyMca(PyMcaMdi.PyMca):
             return False
         if self._is3DSelection(ddict):
             return False
-        if ddict.has_key('selection'):
+        if 'selection' in ddict:
             if ddict['selection'] is None:
                 return False
-            if ddict['selection'].has_key('selectiontype'):
+            if 'selectiontype' in ddict['selection']:
                 if ddict['selection']['selectiontype'] == 'STACK':
                     return True
         return False
@@ -688,13 +688,17 @@ class PyMca(PyMcaMdi.PyMca):
             print("Unhandled dict")
         
     def setConfig(self, configDict):
-        if configDict.has_key('PyMca'):    self.__configurePyMca(configDict['PyMca'])
-        if configDict.has_key('ROI'):      self.__configureRoi(configDict['ROI'])
-        if configDict.has_key('Elements'): self.__configureElements(configDict['Elements'])
-        if configDict.has_key('Fit'):      self.__configureFit(configDict['Fit'])
-        if configDict.has_key('ScanSimpleFit'):
+        if 'PyMca' in configDict:
+            self.__configurePyMca(configDict['PyMca'])
+        if 'ROI' in configDict:
+            self.__configureRoi(configDict['ROI'])
+        if 'Elements' in configDict:
+            self.__configureElements(configDict['Elements'])
+        if 'Fit' in configDict:
+            self.__configureFit(configDict['Fit'])
+        if 'ScanSimpleFit' in configDict:
             self.__configureScanSimpleFit(configDict['ScanSimpleFit'])
-        if configDict.has_key('ScanCustomFit'):
+        if 'ScanCustomFit' in configDict:
             self.__configureScanCustomFit(configDict['ScanCustomFit'])
         
     def getConfig(self):
@@ -801,10 +805,10 @@ class PyMca(PyMcaMdi.PyMca):
         d.write(filename)
 
     def __configurePyMca(self, dict):
-        if dict.has_key('ConfigDir'):
+        if 'ConfigDir' in dict:
             self.configDir = dict['ConfigDir']
 
-        if dict.has_key('Geometry'):
+        if 'Geometry' in dict:
             r = qt.QRect(*dict['Geometry']['MainWindow'])
             self.setGeometry(r)
             key = 'Splitter'
@@ -828,19 +832,19 @@ class PyMca(PyMcaMdi.PyMca):
             
         PyMcaDirs.nativeFileDialogs = dict.get('nativeFileDialogs', True)
 
-        if dict.has_key('Sources'):
-            if dict['Sources'].has_key('lastFileFilter'):
+        if 'Sources' in dict:
+            if 'lastFileFilter' in dict['Sources']:
                 self.sourceWidget.sourceSelector.lastFileFilter = dict['Sources']['lastFileFilter']
         for source in SOURCESLIST:
-            if dict.has_key(source):
-                if dict[source].has_key('lastInputDir'):
+            if source in dict:
+                if 'lastInputDir' in dict[source]:
                     if dict[source] ['lastInputDir'] != "None":
                         self.sourceWidget.sourceSelector.lastInputDir =  dict[source] ['lastInputDir']
                         try:
                             PyMcaDirs.inputDir = dict[source] ['lastInputDir']
                         except ValueError:
                             pass
-                if dict[source].has_key('SourceName'):
+                if 'SourceName' in dict[source]:
                     if type(dict[source]['SourceName']) != type([]):
                         dict[source]['SourceName'] = [dict[source]['SourceName'] * 1]
                     for SourceName in dict[source]['SourceName']:
@@ -868,7 +872,7 @@ class PyMca(PyMcaMdi.PyMca):
                                 else:
                                     msg.exec_()
 
-                if dict[source].has_key('WidgetConfiguration'):
+                if 'WidgetConfiguration' in dict[source]:
                     selectorWidget = self.sourceWidget.selectorWidget[source]
                     if hasattr(selectorWidget,'setWidgetConfiguration'):
                         try:
@@ -882,7 +886,7 @@ class PyMca(PyMcaMdi.PyMca):
                             else:
                                 msg.exec_()
                 """
-                if dict[source].has_key('Selection'):
+                if 'Selection' in dict[source]:
                     if type(dict[source]['Selection']) != type([]):
                         dict[source]['Selection'] = [dict[source]['Selection']]
                     if source == "EdfFile":
@@ -890,29 +894,29 @@ class PyMca(PyMcaMdi.PyMca):
                 """    
 
 
-    def __configureRoi(self, dict):
-        if dict.has_key('roidict'):
-            if dict.has_key('roilist'):
-                roilist = dict['roilist']
+    def __configureRoi(self, ddict):
+        if 'roidict' in ddict:
+            if 'roilist' in ddict:
+                roilist = ddict['roilist']
                 if type(roilist) != type([]):
                     roilist=[roilist]                
-                roidict = dict['roidict']
+                roidict = ddict['roidict']
                 self.mcawindow.roiwidget.fillfromroidict(roilist=roilist,
                                                          roidict=roidict)
             
 
-    def __configureElements(self, dict):
-        if dict.has_key('Material'):
-            ElementsInfo.Elements.Material.update(dict['Material'])    
+    def __configureElements(self, ddict):
+        if 'Material' in ddict:
+            ElementsInfo.Elements.Material.update(ddict['Material'])
 
     def __configureFit(self, d):
-        if d.has_key('Configuration'):
+        if 'Configuration' in d:
             self.mcawindow.advancedfit.mcafit.configure(d['Configuration'])
             if not self.mcawindow.advancedfit.isHidden():
                 self.mcawindow.advancedfit._updateTop()
-        if d.has_key('ConfigDir'):
+        if 'ConfigDir' in d:
             self.mcawindow.advancedfit.configDir = d['ConfigDir'] * 1
-        if False and d.has_key('LastFit'):
+        if False and ('LastFit' in d):
             if (d['LastFit']['ydata0'] != None) and \
                (d['LastFit']['ydata0'] != 'None'):               
                 self.mcawindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
@@ -931,13 +935,13 @@ class PyMca(PyMcaMdi.PyMca):
                     print("hidden")
             
     def __configureFit(self, d):
-        if d.has_key('Configuration'):
+        if 'Configuration' in d:
             self.mcawindow.advancedfit.mcafit.configure(d['Configuration'])
             if not self.mcawindow.advancedfit.isHidden():
                 self.mcawindow.advancedfit._updateTop()
-        if d.has_key('ConfigDir'):
+        if 'ConfigDir' in d:
             self.mcawindow.advancedfit.configDir = d['ConfigDir'] * 1
-        if False and d.has_key('LastFit'):
+        if False and ('LastFit' in d):
             if (d['LastFit']['ydata0'] != None) and \
                (d['LastFit']['ydata0'] != 'None'):               
                 self.mcawindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
@@ -959,7 +963,7 @@ class PyMca(PyMcaMdi.PyMca):
         pass
 
     def __configureScanSimpleFit(self, ddict):
-        if ddict.has_key('Configuration'):
+        if 'Configuration' in ddict:
             self.scanwindow.scanFit.setConfiguration(ddict['Configuration'])
                 
     def initMenuBar(self):
@@ -1456,9 +1460,9 @@ class PyMca(PyMcaMdi.PyMca):
     def customEvent(self, event):
         if hasattr(event, 'dict'):
             ddict = event.dict
-            if ddict.has_key('event'):
+            if 'event' in ddict:
                 if ddict['event'] == "closeEventSignal":
-                    if self._widgetDict.has_key(ddict['id']):
+                    if ddict['id'] in self._widgetDict:
                         if ddict['id'] == self.__imagingTool:
                             self.__imagingTool = None
                         del self._widgetDict[ddict['id']]
