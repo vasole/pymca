@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-#!/usr/bin/env python
 import sys, getopt, string
 import PyMcaQt as qt
     
@@ -202,7 +201,7 @@ class PyMca(qt.QMainWindow):
 
     def onWinToolMenu(self, idx):
         if DEBUG:
-            print "onWinToolMenu ",idx
+            print("onWinToolMenu %d " % idx)
         for midx in self.winToolMenuIndex:
                 self.winToolMenu.setItemChecked(midx, midx==idx)
         act= self.winToolMenuIndex.index(idx)
@@ -220,57 +219,57 @@ class PyMca(qt.QMainWindow):
     # Mdi windows geometry
     #
     def windowCascade(self):
-            if self.followActiveWindow: self.__disconnectFollow()
-            self.mdi.cascade()
-            for window in self.mdi.windowList():
-                    window.resize(0.7*self.mdi.width(),0.7*self.mdi.height())
-            if self.followActiveWindow: self.__connectFollow()
+        if self.followActiveWindow: self.__disconnectFollow()
+        self.mdi.cascade()
+        for window in self.mdi.windowList():
+                window.resize(0.7*self.mdi.width(),0.7*self.mdi.height())
+        if self.followActiveWindow: self.__connectFollow()
 
     def windowTile(self):
-            if self.followActiveWindow: self.__disconnectFollow()
-            self.mdi.tile()
-            if self.followActiveWindow: self.__connectFollow()
+        if self.followActiveWindow: self.__disconnectFollow()
+        self.mdi.tile()
+        if self.followActiveWindow: self.__connectFollow()
 
     def windowHorizontal(self):
-            #if self.followActiveWindow: self.__disconnectFollow()
-            if not len(self.mdi.windowList()): return
-            windowheight=float(self.mdi.height())/len(self.mdi.windowList())
-            i=0
-            for window in self.mdi.windowList():
-                    window.parentWidget().showNormal()
-                    window.parentWidget().setGeometry(0, int(windowheight*i),
-                                            self.mdi.width(),int(windowheight))
-                    if QTVERSION < '4.0.0':
-                        window.parentWidget().raiseW()
-                    else:
-                        window.parentWidget().raise_()
-                    i+=1
-            self.mdi.update()
-            self.update()
-            #if self.followActiveWindow: self.__connectFollow()
+        #if self.followActiveWindow: self.__disconnectFollow()
+        if not len(self.mdi.windowList()): return
+        windowheight=float(self.mdi.height())/len(self.mdi.windowList())
+        i=0
+        for window in self.mdi.windowList():
+                window.parentWidget().showNormal()
+                window.parentWidget().setGeometry(0, int(windowheight*i),
+                                        self.mdi.width(),int(windowheight))
+                if QTVERSION < '4.0.0':
+                    window.parentWidget().raiseW()
+                else:
+                    window.parentWidget().raise_()
+                i+=1
+        self.mdi.update()
+        self.update()
+        #if self.followActiveWindow: self.__connectFollow()
 
     def windowVertical(self):
-            #if self.followActiveWindow: self.__disconnectFollow()
-            if not len(self.mdi.windowList()): return
-            windowwidth=float(self.mdi.width())/len(self.mdi.windowList())
-            i=0
-            for window in self.mdi.windowList():
-                    window.parentWidget().showNormal()
-                    window.parentWidget().setGeometry(int(windowwidth*i),0,
-                                            int(windowwidth),self.mdi.height())
-                    
-                    if QTVERSION < '4.0.0':
-                        window.parentWidget().raiseW()
-                    else:
-                        window.parentWidget().raise_()
-                    i+=1
-            self.mdi.update()
-            self.update()
-            #if self.followActiveWindow: self.__connectFollow()
+        #if self.followActiveWindow: self.__disconnectFollow()
+        if not len(self.mdi.windowList()): return
+        windowwidth=float(self.mdi.width())/len(self.mdi.windowList())
+        i=0
+        for window in self.mdi.windowList():
+                window.parentWidget().showNormal()
+                window.parentWidget().setGeometry(int(windowwidth*i),0,
+                                        int(windowwidth),self.mdi.height())
+                
+                if QTVERSION < '4.0.0':
+                    window.parentWidget().raiseW()
+                else:
+                    window.parentWidget().raise_()
+                i+=1
+        self.mdi.update()
+        self.update()
+        #if self.followActiveWindow: self.__connectFollow()
 
     def windowFullScreen(self):
-            if len(self.mdi.windowList()):
-                    self.mdi.activeWindow().showMaximized()
+        if len(self.mdi.windowList()):
+                self.mdi.activeWindow().showMaximized()
 
 
     def initMenuBar(self):
@@ -356,7 +355,7 @@ class PyMca(qt.QMainWindow):
 
     def menuWindowAboutToShow(self):
         if DEBUG:
-            print "menuWindowAboutToShow"
+            print("menuWindowAboutToShow")
         self.menuWindow.clear()
         if len(self.mdi.windowList())==0: return
         if QTVERSION < '4.0.0':
@@ -381,7 +380,7 @@ class PyMca(qt.QMainWindow):
                         self.menuWindow.setItemChecked(idx, 1)
                     else:
                         if DEBUG:
-                            print "self.menuWindow.setItemChecked(idx, 1) equivalent missing"
+                            print("self.menuWindow.setItemChecked(idx, 1) equivalent missing")
         else:
             self.menuWindow.addAction("&Cascade", self.windowCascade)
             self.menuWindow.addAction("&Tile", self.windowTile)
@@ -402,7 +401,7 @@ class PyMca(qt.QMainWindow):
 
     def menuWindowActivated(self, idx = None):
         if DEBUG:
-            print "menuWindowActivated idx = ",idx
+            print("menuWindowActivated idx = ",idx)
         if idx is None:return
         if self.menuWindowMap[idx].isHidden():
             self.menuWindowMap[idx].show()
@@ -425,7 +424,7 @@ class PyMca(qt.QMainWindow):
                     self.followActiveWindow= follow
 
     def onWindowActivated(self, win):
-            print "Window activated"
+            print("Window activated")
             pass
 
     #
@@ -458,7 +457,7 @@ class PyMca(qt.QMainWindow):
 
     def menuToolsAboutToShow(self):
         if DEBUG:
-            print "menuToolsAboutToShow"
+            print("menuToolsAboutToShow")
         self.menuTools.clear()
         self.menuToolsMap= {}
         """
@@ -474,7 +473,7 @@ class PyMca(qt.QMainWindow):
 
     def menuToolsActivated(self, idx):
         if DEBUG:
-            print "menuToolsActivated idx = ",idx    
+            print("menuToolsActivated idx = ",idx)
         if self.menuTools.isItemChecked(idx):
             self.menuToolsMap[idx].hide()
         else:
@@ -537,8 +536,8 @@ def main(args):
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except getopt.error:
+        print(sys.exc_info()[1])
         sys.exit(1)
     # --- waiting widget
     if QTVERSION < '4.0.0':

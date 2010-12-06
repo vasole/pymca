@@ -97,9 +97,15 @@ def getSourceType(sourceName0):
                 pass        
     if os.path.exists(sourceName):
         f = open(sourceName, 'rb')
-        line = str(f.readline().decode())
-        if not len(line.replace("\n","")):
+        if sys.version < '3.0':
+            line = f.readline()
+            if not len(line.replace("\n","")):
+                line = f.readline()
+        else:
             line = str(f.readline().decode())
+            if not len(line.replace("\n","")):
+                line = str(f.readline().decode())
+            
         f.close()
         if sourceName.lower().endswith('tiff') or\
             sourceName.lower().endswith('tif'):

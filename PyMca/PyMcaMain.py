@@ -37,8 +37,8 @@ if __name__ == '__main__':
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except getopt.error:
+        print(sys.exc_info()[1])
         sys.exit(1)
     
     keywords={}
@@ -66,6 +66,11 @@ if __name__ == '__main__':
 
 import PyMcaMdi
 from PyMcaMdi import qt
+
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 
 QTVERSION = qt.qVersion()
 
@@ -98,7 +103,7 @@ if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0'
 
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
-    if qt.qVersion >= '3.0.0':
+    if QTVERSION >= '3.0.0':
         strlist = qt.QStyleFactory.keys()
         if sys.platform == "win32":
             for item in strlist:
@@ -145,7 +150,7 @@ if __name__ == "__main__":
              else:
                  break
         if os.path.exists(fname):
-            pixmap = qt.QPixmap(qt.QString(fname))
+            pixmap = qt.QPixmap(QString(fname))
             splash  = qt.QSplashScreen(pixmap)
         else:
             splash = qt.QSplashScreen()
@@ -484,13 +489,13 @@ class PyMca(PyMcaMdi.PyMca):
 
     def _dispatcherAddSelectionSlot(self, ddict):
         if DEBUG:
-            print "self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict
+            print("self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict)
 
         toadd = False
         if self._is2DSelection(ddict):
             if QTVERSION < '4.0.0':
                 if DEBUG:
-                    print "For the time being, no Qt3 support"
+                    print("For the time being, no Qt3 support")
                 return
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
@@ -586,12 +591,12 @@ class PyMca(PyMcaMdi.PyMca):
 
     def _dispatcherRemoveSelectionSlot(self, ddict):
         if DEBUG:
-            print "self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict
+            print("self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict)
 
         if self._is2DSelection(ddict):
             if QTVERSION < '4.0.0':
                 if DEBUG:
-                    print "For the time being, no Qt3 support"
+                    print("For the time being, no Qt3 support")
                 return
             legend = ddict['legend'] 
             if legend in self.imageWindowDict.keys():
@@ -622,14 +627,14 @@ class PyMca(PyMcaMdi.PyMca):
 
     def _dispatcherReplaceSelectionSlot(self, ddict):
         if DEBUG:
-            print "self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict
+            print("self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict)
         if self._is2DSelection(ddict):
             if QTVERSION < '4.0.0':
                 if DEBUG:
-                    print "For the time being, no Qt3 support"
+                    print("For the time being, no Qt3 support")
                 return
             legend = ddict['legend']
-            for key in self.imageWindowDict.keys():
+            for key in list(self.imageWindowDict.keys()):
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
                 if key == legend:continue
                 if index >= 0:
@@ -654,7 +659,8 @@ class PyMca(PyMcaMdi.PyMca):
             self.scanwindow._replaceSelection(ddict)
 
     def dispatcherOtherSignalsSlot(self, ddict):
-        if DEBUG:print "self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict
+        if DEBUG:
+            print("self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict)
         if not self.__useTabWidget:return
         if ddict['event'] == "SelectionTypeChanged":
             if QTVERSION < '4.0.0':
@@ -678,7 +684,8 @@ class PyMca(PyMcaMdi.PyMca):
         if ddict['event'] == "SourceTypeChanged":
             pass
             return
-        if DEBUG:print "Unhandled dict"
+        if DEBUG:
+            print("Unhandled dict")
         
     def setConfig(self, configDict):
         if configDict.has_key('PyMca'):    self.__configurePyMca(configDict['PyMca'])
@@ -783,7 +790,7 @@ class PyMca(PyMcaMdi.PyMca):
                   d['ScanSimpleFit']['Configuration'].update(\
                       self.scanwindow.scanFit.getConfiguration())
             except:
-                print "Error getting ScanFint configuration"
+                print("Error getting ScanFint configuration")
         return d
         
     def saveConfig(self, config, filename = None):
@@ -921,7 +928,7 @@ class PyMca(PyMcaMdi.PyMca):
                         except:
                             pass  
                 else:
-                    print "hidden"     
+                    print("hidden")
             
     def __configureFit(self, d):
         if d.has_key('Configuration'):
@@ -946,7 +953,7 @@ class PyMca(PyMcaMdi.PyMca):
                         except:
                             pass  
                 else:
-                    print "hidden"     
+                    print("hidden")
 
     def __configureScanCustomFit(self, ddict):
         pass
@@ -959,7 +966,7 @@ class PyMca(PyMcaMdi.PyMca):
         if self.options["MenuFile"]:
             if QTVERSION < '4.0.0':
                 self.menuFile= qt.QPopupMenu(self.menuBar())
-                idx= self.menuFile.insertItem(self.Icons["fileopen"], qt.QString("&Open"), self.onOpen, qt.Qt.CTRL+qt.Qt.Key_O)
+                idx= self.menuFile.insertItem(self.Icons["fileopen"], QString("&Open"), self.onOpen, qt.Qt.CTRL+qt.Qt.Key_O)
                 self.menuFile.setWhatsThis(idx, HelpDict["fileopen"])
                 idx= self.menuFile.insertItem(self.Icons["filesave"], "&Save as", self.onSaveAs, qt.Qt.CTRL+qt.Qt.Key_S)
                 self.menuFile.setWhatsThis(idx, HelpDict["filesave"])
@@ -976,14 +983,14 @@ class PyMca(PyMcaMdi.PyMca):
                 #build the actions
                 #fileopen
                 self.actionOpen = qt.QAction(self)
-                self.actionOpen.setText(qt.QString("&Open"))
+                self.actionOpen.setText(QString("&Open"))
                 self.actionOpen.setIcon(self.Icons["fileopen"])
                 self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
                 self.connect(self.actionOpen, qt.SIGNAL("triggered(bool)"),
                              self.onOpen)
                 #filesaveas
                 self.actionSaveAs = qt.QAction(self)
-                self.actionSaveAs.setText(qt.QString("&Save"))
+                self.actionSaveAs.setText(QString("&Save"))
                 self.actionSaveAs.setIcon(self.Icons["filesave"])
                 self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
                 self.connect(self.actionSaveAs, qt.SIGNAL("triggered(bool)"),
@@ -991,14 +998,14 @@ class PyMca(PyMcaMdi.PyMca):
 
                 #filesave
                 self.actionSave = qt.QAction(self)
-                self.actionSave.setText(qt.QString("Save &Default Settings"))
+                self.actionSave.setText(QString("Save &Default Settings"))
                 #self.actionSave.setIcon(self.Icons["filesave"])
                 #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
                 self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
                              self.onSave)
                 #fileprint
                 self.actionPrint = qt.QAction(self)
-                self.actionPrint.setText(qt.QString("&Print"))
+                self.actionPrint.setText(QString("&Print"))
                 self.actionPrint.setIcon(self.Icons["fileprint"])
                 self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
                 self.connect(self.actionPrint, qt.SIGNAL("triggered(bool)"),
@@ -1006,7 +1013,7 @@ class PyMca(PyMcaMdi.PyMca):
 
                 #filequit
                 self.actionQuit = qt.QAction(self)
-                self.actionQuit.setText(qt.QString("&Quit"))
+                self.actionQuit.setText(QString("&Quit"))
                 #self.actionQuit.setIcon(self.Icons["fileprint"])
                 self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
                 qt.QObject.connect(self.actionQuit,
@@ -1192,7 +1199,7 @@ class PyMca(PyMcaMdi.PyMca):
 
     def menuToolsAboutToShow(self):
         if DEBUG:
-            print "menu ToolsAboutToShow"
+            print("menu ToolsAboutToShow")
         self.menuTools.clear()
         if QTVERSION < '4.0.0':
             if self.sourceFrame.isHidden():
@@ -1224,7 +1231,9 @@ class PyMca(PyMcaMdi.PyMca):
             if XIA_CORRECT:
                 self.menuTools.addAction("XIA Correct",
                                          self.__xiaCorrect)
-        if DEBUG:"print Fit to Specfile missing"
+        if DEBUG:
+            print("Fit to Specfile missing")
+            
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
         if fontd[1]:
@@ -1233,7 +1242,7 @@ class PyMca(PyMcaMdi.PyMca):
 
     def toggleSource(self,**kw):
         if DEBUG:
-            print "toggleSource called"
+            print("toggleSource called")
         if self.sourceFrame.isHidden():
             self.sourceFrame.show()
             if QTVERSION < '4.0.0': self.sourceFrame.raiseW()
@@ -1364,7 +1373,10 @@ class PyMca(PyMcaMdi.PyMca):
                 fdialog = qt.QFileDialog(self)
                 fdialog.setModal(True)
                 fdialog.setWindowTitle(message)
-                strlist = qt.QStringList()
+                if hasattr(qt, "QStringList"):
+                    strlist = qt.QStringList()
+                else:
+                    strlist = []
                 for filetype in fileTypeList:
                     strlist.append(filetype.replace("(","").replace(")",""))
                 fdialog.setFilters(strlist)
@@ -1427,7 +1439,7 @@ class PyMca(PyMcaMdi.PyMca):
                 self.__imagingTool = None
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                print "Error info = ",sys.exc_info()
+                print("Error info = ",sys.exc_info())
                 msg.setText("Unexpected Error: %s" % (sys.exc_info()[1]))
                 if QTVERSION < '4.0.0':
                     msg.exec_loop()
@@ -1587,7 +1599,7 @@ class PyMca(PyMcaMdi.PyMca):
 
     def openSource(self,index=0):
         if DEBUG:
-            print "index = ",index
+            print("index = %d " % index)
         if index <= 0:
             if QTVERSION < '4.0.0':
                 outfile = qt.QFileDialog(self,"Select PyMca Configuration File",1)
@@ -1633,18 +1645,18 @@ class PyMca(PyMcaMdi.PyMca):
         if self.menuBrowser is None:
             self.menuBrowser= qt.QTextBrowser()
             if QTVERSION < '4.0.0':
-                self.menuBrowser.setCaption(qt.QString("Main Menu Help"))
+                self.menuBrowser.setCaption(QString("Main Menu Help"))
             else:
-                self.menuBrowser.setWindowTitle(qt.QString("Main Menu Help"))
+                self.menuBrowser.setWindowTitle(QString("Main Menu Help"))
             dir=os.path.dirname(PyMcaMdi.__file__)
             if not os.path.exists(os.path.join(dir,"HTML","Menu.html")):
                 dir = os.path.dirname(dir)
             if QTVERSION < '4.0.0':
-                self.menuBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
-                self.menuBrowser.setSource(qt.QString("Menu.html"))
+                self.menuBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
+                self.menuBrowser.setSource(QString("Menu.html"))
             else:
                 self.menuBrowser.setSearchPaths([os.path.join(dir,"HTML")])
-                self.menuBrowser.setSource(qt.QUrl(qt.QString("Menu.html")))
+                self.menuBrowser.setSource(qt.QUrl(QString("Menu.html")))
             self.menuBrowser.show()
         if self.menuBrowser.isHidden():self.menuBrowser.show()
         if QTVERSION < '4.0.0': self.menuBrowser.raiseW()
@@ -1654,18 +1666,18 @@ class PyMca(PyMcaMdi.PyMca):
         if self.displayBrowser is None:
             self.displayBrowser= qt.QTextBrowser()
             if QTVERSION < '4.0.0':
-                self.displayBrowser.setCaption(qt.QString("Data Display HOWTO"))
+                self.displayBrowser.setCaption(QString("Data Display HOWTO"))
             else:
-                self.displayBrowser.setWindowTitle(qt.QString("Data Display HOWTO"))                
+                self.displayBrowser.setWindowTitle(QString("Data Display HOWTO"))                
             dir=os.path.dirname(PyMcaMdi.__file__)
             if not os.path.exists(os.path.join(dir,"HTML","Display-HOWTO.html")):
                 dir = os.path.dirname(dir)
             if QTVERSION < '4.0.0':
-                self.displayBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
-                self.displayBrowser.setSource(qt.QString("Display-HOWTO.html"))
+                self.displayBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
+                self.displayBrowser.setSource(QString("Display-HOWTO.html"))
             else:
                 self.displayBrowser.setSearchPaths([os.path.join(dir,"HTML")])
-                self.displayBrowser.setSource(qt.QUrl(qt.QString("Display-HOWTO.html")))
+                self.displayBrowser.setSource(qt.QUrl(QString("Display-HOWTO.html")))
             self.displayBrowser.show()
         if self.displayBrowser.isHidden():self.displayBrowser.show()
         if QTVERSION < '4.0.0':self.displayBrowser.raiseW()
@@ -1675,18 +1687,18 @@ class PyMca(PyMcaMdi.PyMca):
         if self.mcaBrowser is None:
             self.mcaBrowser= MyQTextBrowser()
             if QTVERSION < '4.0.0':
-                self.mcaBrowser.setCaption(qt.QString("MCA HOWTO"))
+                self.mcaBrowser.setCaption(QString("MCA HOWTO"))
             else:
-                self.mcaBrowser.setWindowTitle(qt.QString("MCA HOWTO"))
+                self.mcaBrowser.setWindowTitle(QString("MCA HOWTO"))
             dir=os.path.dirname(PyMcaMdi.__file__)
             if not os.path.exists(dir+"/HTML"+"/MCA-HOWTO.html"):
                 dir = os.path.dirname(dir)
             if QTVERSION < '4.0.0':
-                self.mcaBrowser.mimeSourceFactory().addFilePath(qt.QString(dir+"/HTML"))
-                self.mcaBrowser.setSource(qt.QString("MCA-HOWTO.html"))
+                self.mcaBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
+                self.mcaBrowser.setSource(QString("MCA-HOWTO.html"))
             else:
                 self.mcaBrowser.setSearchPaths([os.path.join(dir,"HTML")])
-                self.mcaBrowser.setSource(qt.QUrl(qt.QString("MCA-HOWTO.html")))
+                self.mcaBrowser.setSource(qt.QUrl(QString("MCA-HOWTO.html")))
                 #f = open(os.path.join(dir,"HTML","MCA-HOWTO.html"))
                 #self.mcaBrowser.setHtml(f.read())
                 #f.close()
@@ -1726,19 +1738,19 @@ class PyMca(PyMcaMdi.PyMca):
         self.changeLog.show()
     
     def onDebug(self):
-        print "Module name = ","PyMca",__revision__.replace("$","")
-        print "Module name = ","PyQt ",qt.PYQT_VERSION_STR
+        print("Module name PyMca ",__revision__.replace("$",""))
+        print("Module name PyQt  ",qt.PYQT_VERSION_STR)
         for module in sys.modules.values():
             try:
                 if 'Revision' in module.__revision__:
                     if module.__name__ != "__main__":
-                        print "Module name = ",module.__name__,module.__revision__.replace("$","")
+                        print("Module name = ",module.__name__,module.__revision__.replace("$",""))
             except:
                 pass 
     
     def onPrint(self):
         if DEBUG:
-            print "onPrint called"
+            print("onPrint called")
         if self.scanwindow.hasFocus():
             self.scanwindow.graph.printps() 
         else:
@@ -1799,7 +1811,7 @@ if 0:
             """
             Called after a graph is closed
             """
-            print "closeGraph", name
+            print("closeGraph", name)
 
     def __getGraphNames(self):
             return [ str(window.caption()) for window in self.mdi.windowList() ]
@@ -1814,7 +1826,7 @@ if 0:
 
 class MyQTextBrowser(qt.QTextBrowser):
     def  setSource(self,name):
-        if name == qt.QString("./PyMCA.html"):
+        if name == QString("./PyMCA.html"):
             if sys.platform == 'win32':
                 dir=os.path.dirname(PyMcaMdi.__file__)
                 if not os.path.exists(dir+"/HTML"+"/PyMCA.html"):
@@ -1826,9 +1838,9 @@ class MyQTextBrowser(qt.QTextBrowser):
                 self.report.show()
             except:
                 self.report = qt.QTextBrowser()
-                self.report.setCaption(qt.QString("PyMca Report"))
-                self.report.mimeSourceFactory().addFilePath(qt.QString(os.path.dirname(PyMcaMdi.__file__)+"/HTML"))
-                self.report.mimeSourceFactory().addFilePath(qt.QString(os.path.dirname(PyMcaMdi.__file__)+"/HTML/PyMCA_files"))
+                self.report.setCaption(QString("PyMca Report"))
+                self.report.mimeSourceFactory().addFilePath(QString(os.path.dirname(PyMcaMdi.__file__)+"/HTML"))
+                self.report.mimeSourceFactory().addFilePath(QString(os.path.dirname(PyMcaMdi.__file__)+"/HTML/PyMCA_files"))
                 self.report.setSource(name)
             if self.report.isHidden():self.report.show()
             self.report.raiseW()
@@ -1838,7 +1850,7 @@ class MyQTextBrowser(qt.QTextBrowser):
 class Line(qt.QFrame):
     def mouseDoubleClickEvent(self,event):
         if DEBUG:
-            print "Double Click Event"
+            print("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
@@ -1850,7 +1862,7 @@ class Line(qt.QFrame):
 class PixmapLabel(qt.QLabel):
     def mousePressEvent(self,event):
         if DEBUG:
-            print "Mouse Press Event"
+            print("Mouse Press Event")
         ddict={}
         ddict['event']="MousePress"
         ddict['data'] = event
