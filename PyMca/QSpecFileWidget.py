@@ -574,7 +574,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             return
             
         dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
-        if info.has_key("Header"):
+        if "Header" in info:
             if info['Header'] is not None:
                 if QTVERSION > '4.0.0':
                     dataInfoWidget.setWindowTitle(info['Header'][0])
@@ -654,7 +654,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
                     if cnt_sel['y'][0] >= len(cnt_sel['cntlist']):
-                        if cnt_sel.has_key('mcalist'):
+                        if 'mcalist' in cnt_sel:
                             sel['selection']['mcalist'] = cnt_sel['mcalist']
                         else:
                             # I could rise the exception here
@@ -783,7 +783,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
                     if cnt_sel['y'][0] >= len(cnt_sel['cntlist']):
-                        if cnt_sel.has_key('mcalist'):
+                        if 'mcalist' in cnt_sel:
                             sel['selection']['mcalist'] = cnt_sel['mcalist']
                         else:
                             # I could rise the exception here

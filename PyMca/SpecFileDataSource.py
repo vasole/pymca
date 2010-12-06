@@ -243,7 +243,7 @@ class SpecFileDataSource:
     def __getMcaInfo(self, mcano, scandata, info=None):
         if info is None: info = {}
         mcainfo= {}
-        if info.has_key("NbMcaDet"):
+        if "NbMcaDet" in info:
             det= info["NbMcaDet"]
             if info["Lines"]>0:
                 mcainfo["McaPoint"]= int(mcano/info["NbMcaDet"])+(mcano%info["NbMcaDet"]>0)
@@ -387,7 +387,7 @@ class SpecFileDataSource:
             print("key_type = ", key_type)
         if key_type == "scan":
             if selection  is not None:
-                if selection.has_key('mcalist'):
+                if 'mcalist' in selection:
                     mca3D = True
 
         if (key_type=="scan") and (not mca3D):
@@ -403,11 +403,11 @@ class SpecFileDataSource:
                 #I only understand index selections
                 raise TypeError("Only selections of type {x:[],y:[],m:[]} understood")
             else:
-                if selection.has_key('x'):
+                if 'x' in selection:
                     indexlist = []
                     for labelindex in selection['x']:
                         if labelindex != 0:
-                            if selection.has_key('cntlist'):
+                            if 'cntlist' in selection:
                                 label = selection['cntlist'][labelindex]
                             else:
                                 label = output.info['LabelNames'][labelindex]
@@ -420,10 +420,10 @@ class SpecFileDataSource:
                         output.x.append(output.data[:, index])
                         indexlist.append(index)
                     output.info['selection']['x'] = indexlist
-                if selection.has_key('y'):
+                if 'y' in selection:
                     indexlist = []
                     for labelindex in selection['y']:
-                        if selection.has_key('cntlist'):
+                        if 'cntlist' in selection:
                             label = selection['cntlist'][labelindex]
                         else:    
                             label = output.info['LabelNames'][labelindex]
@@ -435,10 +435,10 @@ class SpecFileDataSource:
                         output.y.append(output.data[:, index])
                         indexlist.append(index)
                     output.info['selection']['y'] = indexlist
-                if selection.has_key('m'):
+                if 'm' in selection:
                     indexlist = []
                     for labelindex in selection['m']:
-                        if selection.has_key('cntlist'):
+                        if 'cntlist' in selection:
                             label = selection['cntlist'][labelindex]
                         else:    
                             label = output.info['LabelNames'][labelindex]
@@ -506,7 +506,7 @@ class SpecFileDataSource:
             output.y = None
             output.m = None
             #get the number of counters in the scan
-            if selection.has_key('cntlist'):
+            if 'cntlist' in selection:
                 ncounters = len(selection['cntlist'])
             else:
                 ncounters = output.info['LabelNames']
@@ -534,7 +534,7 @@ class SpecFileDataSource:
             indexlist = []
             for labelindex in xselection:
                 if labelindex != 0:
-                    if selection.has_key('cntlist'):
+                    if 'cntlist' in selection:
                         label = selection['cntlist'][labelindex]
                     else:
                         label = output.info['LabelNames'][labelindex]
@@ -559,10 +559,10 @@ class SpecFileDataSource:
                 mca_key = '%s.%d.%d' % (key, 1+detectorNumber, 1)
                 mcaData = self._getMcaData(mca_key)
                 output.y[0][(i*nChannels):((i+1)*nChannels)] = mcaData.data[:]
-            if selection.has_key('m'):
+            if 'm' in selection:
                 indexlist = []
                 for labelindex in selection['m']:
-                    if selection.has_key('cntlist'):
+                    if 'cntlist' in selection:
                         label = selection['cntlist'][labelindex]
                     else:    
                         label = output.info['LabelNames'][labelindex]
