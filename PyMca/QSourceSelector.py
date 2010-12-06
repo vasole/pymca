@@ -193,7 +193,10 @@ class QSourceSelector(qt.QWidget):
                         fdialog = qt.QFileDialog(self)
                         fdialog.setModal(True)
                         fdialog.setWindowTitle("Open a new source file")
-                        strlist = qt.QStringList()
+                        if hasattr(qt, "QStringList"):
+                            strlist = qt.QStringList()
+                        else:
+                            strlist = []
                         for filetype in self.fileTypeList:
                             strlist.append(filetype)
                         fdialog.setFilters(strlist)

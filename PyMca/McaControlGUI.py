@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,6 +27,11 @@
 import sys
 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
+
 import McaROIWidget
 import os
 import PyMcaDirs
@@ -81,18 +86,18 @@ class McaControlGUI(qt.QWidget):
 
         if qt.qVersion() < '4.0.0':
             self.calmenu = qt.QPopupMenu()
-            self.calmenu.insertItem(qt.QString("Edit"),    self.__copysignal)
-            self.calmenu.insertItem(qt.QString("Compute") ,self.__computesignal)
+            self.calmenu.insertItem(QString("Edit"),    self.__copysignal)
+            self.calmenu.insertItem(QString("Compute") ,self.__computesignal)
             self.calmenu.insertSeparator()
-            self.calmenu.insertItem(qt.QString("Load") ,   self.__loadsignal)
-            self.calmenu.insertItem(qt.QString("Save") ,   self.__savesignal)
+            self.calmenu.insertItem(QString("Load") ,   self.__loadsignal)
+            self.calmenu.insertItem(QString("Save") ,   self.__savesignal)
         else:
             self.calmenu = qt.QMenu()
-            self.calmenu.addAction(qt.QString("Edit"),    self.__copysignal)
-            self.calmenu.addAction(qt.QString("Compute") ,self.__computesignal)
+            self.calmenu.addAction(QString("Edit"),    self.__copysignal)
+            self.calmenu.addAction(QString("Compute") ,self.__computesignal)
             self.calmenu.addSeparator()
-            self.calmenu.addAction(qt.QString("Load") ,   self.__loadsignal)
-            self.calmenu.addAction(qt.QString("Save") ,   self.__savesignal)
+            self.calmenu.addAction(QString("Load") ,   self.__loadsignal)
+            self.calmenu.addAction(QString("Save") ,   self.__savesignal)
 
         layout.addWidget(calibration)
         layout.addWidget(self.calinfo)
@@ -190,7 +195,7 @@ class McaControlGUI(qt.QWidget):
     def __sourceboxactivated(self,item):
         item = str(item)
         if DEBUG:
-            print "Source box activated ",item
+            print("Source box activated %s" % item)
         comboitem,combotext = self.sourcebox.getcurrent()
         self.__emitpysignal(box=[comboitem,combotext],boxname='Source',
                            event='activated')
@@ -201,7 +206,7 @@ class McaControlGUI(qt.QWidget):
     def __calboxactivated(self,item):
         item = str(item)
         if DEBUG:
-            print "Calibration box activated ",item
+            print("Calibration box activated %s" % item)
         comboitem,combotext = self.calbox.getcurrent()
         self.__emitpysignal(box=[comboitem,combotext],boxname='Calibration',
                             event='activated')
@@ -209,7 +214,7 @@ class McaControlGUI(qt.QWidget):
     def __fitboxactivated(self,item):
         item = str(item)
         if DEBUG:
-            print "Fit box activated ",item
+            print("Fit box activated %s" % item)
         comboitem,combotext = self.fitbox.getcurrent()
         self.__emitpysignal(box=[comboitem,combotext],boxname='Fit',
                             event='activated')
@@ -231,14 +236,14 @@ class McaControlGUI(qt.QWidget):
 
     def __sourcebuttonclicked(self):
         if DEBUG:
-            print "Source button clicked"
+            print("Source button clicked")
         comboitem,combotext = self.sourcebox.getcurrent()
         self.__emitpysignal(button="Source",
                             box=[comboitem,combotext],event='clicked')
         
     def __calbuttonclicked(self):
         if DEBUG:
-            print "Calibration button clicked"
+            print("Calibration button clicked")
         if qt.qVersion() < '4.0.0':
             self.calmenu.exec_loop(self.cursor().pos())
         else:
@@ -293,7 +298,10 @@ class McaControlGUI(qt.QWidget):
                 filename = qt.QFileDialog(self)
                 filename.setWindowTitle("Load existing calibration file")
                 filename.setModal(1)
-                strlist = qt.QStringList()
+                if hasattr(qt, "QStringList"):
+                    strlist = qt.QStringList()
+                else:
+                    strlist = []
                 tmp = [self.lastInputFilter.replace("\n","")] 
                 for filetype in tmp:
                     strlist.append(filetype.replace("(","").replace(")",""))
@@ -359,7 +367,10 @@ class McaControlGUI(qt.QWidget):
                 filename = qt.QFileDialog(self)
                 filename.setWindowTitle("Save a new calibration file")
                 filename.setModal(1)
-                strlist = qt.QStringList()
+                if hasattr(qt, "QStringList"):
+                    strlist = qt.QStringList()
+                else:
+                    strlist = []
                 tmp = [self.lastInputFilter.replace("\n","")] 
                 for filetype in tmp:
                     strlist.append(filetype.replace("(","").replace(")",""))
@@ -390,13 +401,13 @@ class McaControlGUI(qt.QWidget):
 
     def __fitbuttonclicked(self):
         if DEBUG:
-            print "Fit button clicked"
+            print("Fit button clicked")
         comboitem,combotext = self.fitbox.getcurrent()
         self.__emitpysignal(button="Fit",box=[comboitem,combotext],event='clicked')
 
     def __roiresetbuttonclicked(self):
         if DEBUG:
-            print "ROI reset button clicked"
+            print("ROI reset button clicked")
         comboitem,combotext = self.roibox.getcurrent()
         self.__emitpysignal(button="Roi reset",box=[comboitem,combotext],event='clicked')
 
@@ -407,7 +418,7 @@ class McaControlGUI(qt.QWidget):
                             line_edit=None,
                             event=None):
         if DEBUG:
-            print "__emitpysignal called ",button,box
+            print("__emitpysignal called ",button,box)
         data={}
         data['button']        = button
         data['box']           = box
@@ -503,7 +514,7 @@ class McaCalInfoLine(qt.QWidget):
     def setParameters(self, pars, name = None):
         if name is not None:
             self.currentcal = name
-        if pars.has_key('order'):
+        if 'order' in pars:
             order = pars['order']
         elif pars["C"] != 0.0:
             order = 2

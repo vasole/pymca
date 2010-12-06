@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -30,6 +30,10 @@ import PyMcaDirs
 import ConfigDict
 
 import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
     
 QTVERSION = qt.qVersion()
 
@@ -128,13 +132,14 @@ class McaROIWidget(qt.QWidget):
             self.connect(self.mcaROITable,  qt.SIGNAL('McaROITableSignal') ,self.__forward)
 
     def __add(self):
-        if DEBUG:print "McaROIWidget.__add"
+        if DEBUG:
+            print("McaROIWidget.__add")
         ddict={}
         ddict['event']   = "AddROI"
         roilist,roidict  = self.mcaROITable.getroilistanddict()
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaROIWidgetSignal'),(ddict,))
         else:
             self.emit(qt.SIGNAL('McaROIWidgetSignal'),ddict)
@@ -144,14 +149,14 @@ class McaROIWidget(qt.QWidget):
         row = self.mcaROITable.currentRow()
         if row >= 0:
             index = self.mcaROITable.labels.index('Type')
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 text = str(self.mcaROITable.text(row, index))
             else:
                 text = str(self.mcaROITable.item(row, index).text())
                 
             if text.upper() != 'DEFAULT':
                 index = self.mcaROITable.labels.index('ROI')
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     key = str(self.mcaROITable.text(row, index))
                 else:
                     key = str(self.mcaROITable.item(row, index).text())
@@ -168,14 +173,14 @@ class McaROIWidget(qt.QWidget):
             ddict['roilist']    = roilist
             ddict['roidict']    = roidict
             #ddict['currentrow'] = self.mcaROITable.currentRow()
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,))
             else:
                 self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict)
         
     
     def __forward(self,ddict):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,)) 
         else:
             self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict) 
@@ -198,7 +203,7 @@ class McaROIWidget(qt.QWidget):
         self.mcaROITable.fillfromroidict(roilist=roilist,roidict=roidict)
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('McaROIWidgetSignal'), (ddict,))
         else:
             self.emit(qt.SIGNAL('McaROIWidgetSignal'), ddict)
@@ -289,17 +294,17 @@ class McaROIWidget(qt.QWidget):
         
     def setdata(self,*var,**kw):
         self.info ={}
-        if kw.has_key('legend'):
+        if 'legend' in kw:
             self.info['legend'] = kw['legend']
             del kw['legend']
         else:
             self.info['legend'] = 'Unknown Type'
-        if kw.has_key('xlabel'):
+        if 'xlabel' in kw:
             self.info['xlabel'] = kw['xlabel']
             del kw['xlabel']
         else:
             self.info['xlabel'] = 'X'
-        if kw.has_key('rois'):
+        if 'rois' in kw:
             self.mcaROITable.fillfromrois(rois)
         self.setheader(text="%s ROIs of %s" % (self.info['xlabel'],
                                                self.info['legend']))
@@ -307,9 +312,9 @@ class McaROIWidget(qt.QWidget):
     def setheader(self,*var,**kw):
         if len(var):
             text = var[0]
-        elif kw.has_key('text'):
+        elif 'text' in kw:
             text = kw['text']
-        elif kw.has_key('header'):
+        elif 'header' in kw:
             text = kw['header']
         else:
             text = ""
@@ -317,13 +322,13 @@ class McaROIWidget(qt.QWidget):
 
 class McaROITable(QTable):
     def __init__(self, *args,**kw):
-        apply(QTable.__init__, (self, ) + args)
+        QTable.__init__(self, *args)
         self.setRowCount(1)
         self.labels=['ROI','Type','From','To','Raw Counts','Net Counts']
         self.setColumnCount(len(self.labels))
         i=0
-        if qt.qVersion() < '4.0.0':
-            if kw.has_key('labels'):
+        if QTVERSION < '4.0.0':
+            if 'labels' in kw:
                 for label in kw['labels']:
                     qt.QHeader.setLabel(self.horizontalHeader(),i,label)
                     i = i + 1
@@ -333,7 +338,7 @@ class McaROITable(QTable):
                     i = i + 1
         else:
             if QTVERSION > '4.2.0':self.setSortingEnabled(False)
-            if kw.has_key('labels'):
+            if 'labels' in kw:
                 for label in kw['labels']:
                     item = self.horizontalHeaderItem(i)
                     if item is None:
@@ -354,9 +359,9 @@ class McaROITable(QTable):
                 
         self.roidict={}
         self.roilist=[]
-        if kw.has_key('roilist'):
+        if 'roilist' in kw:
             self.roilist = kw['roilist']
-        if kw.has_key('roidict'):
+        if 'roidict' in kw:
             self.roidict.update(kw['roilist'])
         self.building = False
         self.build()
@@ -369,11 +374,12 @@ class McaROITable(QTable):
             self.connect(self,qt.SIGNAL("cellChanged(int, int)"),self._cellChangedSlot)
             #self.connect(self,qt.SIGNAL("itemSelectionChanged()"),self._myslot)
         #self.connect(self,qt.SIGNAL("pressed(int,int,QPoint())"),self.myslot)
-        if qt.qVersion() > '2.3.0':
-            if qt.qVersion() < '4.0.0':
+        if QTVERSION > '2.3.0':
+            if QTVERSION < '4.0.0':
                 self.setSelectionMode(QTable.SingleRow)
             else:
-                if DEBUG:print "Qt4 selection mode?"
+                if DEBUG:
+                    print("Qt4 selection mode?")
                 #self.setMinimumHeight(8*self.horizontalHeader().sizeHint().height())
                 #self.setMaximumHeight(8*self.horizontalHeader().sizeHint().height())
     
@@ -399,21 +405,21 @@ class McaROITable(QTable):
                 line = line0 -1
                 self.roidict[key]['line'] = line
                 ROI = key
-                roitype = qt.QString("%s" % roi['type'])
-                fromdata= qt.QString("%6g" % (roi['from']))
-                todata  = qt.QString("%6g" % (roi['to']))
-                if roi.has_key('rawcounts'):
-                    rawcounts= qt.QString("%6g" % (roi['rawcounts']))
+                roitype = QString("%s" % roi['type'])
+                fromdata= QString("%6g" % (roi['from']))
+                todata  = QString("%6g" % (roi['to']))
+                if 'rawcounts' in roi:
+                    rawcounts= QString("%6g" % (roi['rawcounts']))
                 else:
                     rawcounts = " ?????? "
-                if roi.has_key('netcounts'):
-                    netcounts= qt.QString("%6g" % (roi['netcounts']))
+                if 'netcounts' in roi:
+                    netcounts= QString("%6g" % (roi['netcounts']))
                 else:
                     netcounts = " ?????? "
                 fields  = [ROI,roitype,fromdata,todata,rawcounts,netcounts]
                 col = 0 
                 for field in fields:
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         if (ROI.upper() == 'ICR') or (ROI.upper() == 'DEFAULT'):
                             key2=qttable.QTableItem(self,qttable.QTableItem.Never,field)
                         else:
@@ -446,12 +452,12 @@ class McaROITable(QTable):
         for label in self.labels:
             self.resizeColumnToContents(i)
             i=i+1
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.sortColumn(2,1,1)
         else:
             self.sortByColumn(2,qt.Qt.AscendingOrder)
         for i in range(len(self.roilist)):
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 key = str(self.text(i, 0))
             else:
                 key = str(self.item(i, 0).text())
@@ -459,11 +465,11 @@ class McaROITable(QTable):
             self.roilist[i] = key
             self.roidict[key]['line'] = i
         if len(self.roilist) == 1:
-            if qt.qVersion() > '2.3.0':
+            if QTVERSION > '2.3.0':
                 self.selectRow(0)
             else:
                 if DEBUG:
-                    print "Method not implemented, just first cell"
+                    print("Method not implemented, just first cell")
                 self.setCurrentCell(0,0)
         else:
             if currentroi in self.roidict.keys():
@@ -471,11 +477,11 @@ class McaROITable(QTable):
                     self.setCurrentCell(self.roidict[currentroi]['line'],0)
                 else:
                     self.selectRow(self.roidict[currentroi]['line'])
-                if qt.qVersion() < '4.0.0':
+                if QTVERSION < '4.0.0':
                     self.ensureCellVisible(self.roidict[currentroi]['line'],0)
                 else:
                     if DEBUG:
-                        print "Qt4 ensureCellVisible to be implemented"
+                        print("Qt4 ensureCellVisible to be implemented")
         self.building = False                
 
     def addroi(self,roi,key=None):
@@ -490,16 +496,16 @@ class McaROITable(QTable):
         self.roidict[key]['from'] = roi['from']
         self.roidict[key]['to']   = roi['to']
         ROI = key
-        roitype = qt.QString("%s" % roi['type'])
-        fromdata= qt.QString("%6g" % (roi['from']))
-        todata  = qt.QString("%6g" % (roi['to']))
-        if roi.has_key('rawcounts'):
-            rawcounts= qt.QString("%6g" % (roi['rawcounts']))
+        roitype = QString("%s" % roi['type'])
+        fromdata= QString("%6g" % (roi['from']))
+        todata  = QString("%6g" % (roi['to']))
+        if 'rawcounts' in roi:
+            rawcounts= QString("%6g" % (roi['rawcounts']))
         else:
             rawcounts = " ?????? "
         self.roidict[key]['rawcounts']   = rawcounts
-        if roi.has_key('netcounts'):
-            netcounts= qt.QString("%6g" % (roi['netcounts']))
+        if 'netcounts' in roi:
+            netcounts= QString("%6g" % (roi['netcounts']))
         else:
             netcounts = " ?????? "
         self.roidict[key]['netcounts']   = netcounts
@@ -541,7 +547,7 @@ class McaROITable(QTable):
             ddict['col'  ] = col
             if row >= len(self.roilist):
                 if DEBUG:
-                    print "deleting???"
+                    print("deleting???")
                 return
                 row = 0
             if QTVERSION < '4.0.0':
@@ -555,13 +561,14 @@ class McaROITable(QTable):
             ddict['key']   = self.roilist[row]
             ddict['colheader'] = self.labels[col]
             ddict['rowheader'] = "%d" % row
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
             else:
                 self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
 
     def _cellChangedSlot(self, row, col):
-        if DEBUG:print "_cellChangedSlot(%d, %d)" % (row, col)
+        if DEBUG:
+            print("_cellChangedSlot(%d, %d)" % (row, col))
         if  self.building:return
         if col == 0:
             self.nameSlot(row, col)
@@ -579,7 +586,7 @@ class McaROITable(QTable):
             return
         if row >= len(self.roilist):
             if DEBUG:
-                print "deleting???"
+                print("deleting???")
             return
         if QTVERSION < '4.0.0':
             text = str(self.text(row, 0))
@@ -611,7 +618,7 @@ class McaROITable(QTable):
         if col != 0: return
         if row >= len(self.roilist):
             if DEBUG:
-                print "deleting???"
+                print("deleting???")
             return
         if QTVERSION < '4.0.0':
             text = str(self.text(row, col))
@@ -649,7 +656,7 @@ class McaROITable(QTable):
             if col == 0:
                 if row >= len(self.roilist):
                     if DEBUG:
-                        print "deleting???"
+                        print("deleting???")
                     return
                     row = 0
                 if QTVERSION < '4.0.0':
@@ -672,7 +679,7 @@ class McaROITable(QTable):
                     ddict['key']   = self.roilist[row]
                     ddict['colheader'] = self.labels[col]
                     ddict['rowheader'] = "%d" % row
-                    if qt.qVersion() < '4.0.0':
+                    if QTVERSION < '4.0.0':
                         self.emit(qt.PYSIGNAL('McaROITableSignal'), (ddict,))
                     else:
                         self.emit(qt.SIGNAL('McaROITableSignal'), ddict)
@@ -716,7 +723,7 @@ class SimpleComboBox(qt.QComboBox):
 if __name__ == '__main__':
     app = qt.QApplication([])
     demo = McaROIWidget()
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         app.setMainWidget(demo)
         demo.show()
         app.exec_loop()

@@ -105,8 +105,8 @@ class QDispatcher(qt.QWidget):
 
     def _addSelectionSlot(self, sel_list, event=None):
         if DEBUG:
-            print "_addSelectionSlot"
-            print "sel_list = ",sel_list
+            print("_addSelectionSlot")
+            print("sel_list = ",sel_list)
 
         if event is None:event = "addSelection"
         for sel in sel_list:
@@ -174,8 +174,8 @@ class QDispatcher(qt.QWidget):
 
     def _removeSelectionSlot(self, sel_list):
         if DEBUG:
-            print "_removeSelectionSlot"
-            print "sel_list = ",sel_list
+            print("_removeSelectionSlot")
+            print("sel_list = ",sel_list)
         for sel in sel_list:
             ddict = {}
             ddict.update(sel)
@@ -187,8 +187,8 @@ class QDispatcher(qt.QWidget):
 
     def _replaceSelectionSlot(self, sel_list):
         if DEBUG:
-            print "_replaceSelectionSlot"
-            print "sel_list = ",sel_list
+            print("_replaceSelectionSlot")
+            print("sel_list = ",sel_list)
 
         if len(sel_list) == 1:
             self._addSelectionSlot([sel_list[0]], event = "replaceSelection")
@@ -204,8 +204,8 @@ class QDispatcher(qt.QWidget):
 
     def _sourceSelectorSlot(self, ddict):
         if DEBUG:
-            print "_sourceSelectorSlot(self, ddict)"
-            print "ddict = ",ddict
+            print("_sourceSelectorSlot(self, ddict)")
+            print("ddict = ",ddict)
         if ddict["event"] == "NewSourceSelected":
             source = QDataSource.QDataSource(ddict["sourcelist"])
             self.sourceList.append(source)
@@ -233,7 +233,7 @@ class QDispatcher(qt.QWidget):
                     break
             if not found:
                 if DEBUG:
-                    print "WARNING: source not found"
+                    print("WARNING: source not found")
                 return
             sourceType = source.sourceType
             if ddict["event"] == "SourceReloaded":
@@ -252,7 +252,7 @@ class QDispatcher(qt.QWidget):
                     break
             if not found:
                 if DEBUG:
-                    print "WARNING: source not found"
+                    print("WARNING: source not found")
                 return
             sourceType = source.sourceType
             del self.sourceList[self.sourceList.index(source)]
@@ -279,11 +279,12 @@ class QDispatcher(qt.QWidget):
                 self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
         elif ddict["event"] == "SourceClosed":
             if DEBUG:
-                print "not implemented yet"
+                print("not implemented yet")
 
 
     def _selectionUpdatedSlot(self, ddict):
-        if DEBUG: print "_selectionUpdatedSlot(self, dict)",ddict
+        if DEBUG:
+            print("_selectionUpdatedSlot(self, dict)",ddict)
         if ddict.has_key('selectionlist'):
             sel_list = ddict['selectionlist']
         else:
@@ -310,7 +311,8 @@ class QDispatcher(qt.QWidget):
         self._addSelectionSlot(sel_list)
 
     def _tabChanged(self, value):
-        if DEBUG:print "self._tabChanged(value), value =  ",value
+        if DEBUG:
+            print("self._tabChanged(value), value =  ",value)
         if QTVERSION < '4.0.0':
             pass
         else:

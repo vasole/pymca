@@ -29,6 +29,11 @@ import sys
 import time
 import QtBlissGraph
 qt = QtBlissGraph.qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
+
 qwt = QtBlissGraph.qwt
 from PyMca_Icons import IconDict
 import McaControlGUI
@@ -127,7 +132,8 @@ class McaWidget(qt.QWidget):
         self.advancedfit = McaAdvancedFit.McaAdvancedFit()
 
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG: print "printPreview id = ", id(self.printPreview)
+        if DEBUG:
+            print("printPreview id = %d" % id(self.printPreview))
 
         self.build(vertical)
         self.initIcons()
@@ -185,12 +191,12 @@ class McaWidget(qt.QWidget):
 
         if qt.qVersion() < '4.0.0':
             self.fitmenu = qt.QPopupMenu()
-            self.fitmenu.insertItem(qt.QString("Simple"),    self.mcasimplefitsignal)
-            self.fitmenu.insertItem(qt.QString("Advanced") , self.mcaadvancedfitsignal)
+            self.fitmenu.insertItem(QString("Simple"),    self.mcasimplefitsignal)
+            self.fitmenu.insertItem(QString("Advanced") , self.mcaadvancedfitsignal)
         else:
             self.fitmenu = qt.QMenu()
-            self.fitmenu.addAction(qt.QString("Simple"),    self.mcasimplefitsignal)
-            self.fitmenu.addAction(qt.QString("Advanced") , self.mcaadvancedfitsignal)
+            self.fitmenu.addAction(QString("Simple"),    self.mcasimplefitsignal)
+            self.fitmenu.addAction(QString("Advanced") , self.mcaadvancedfitsignal)
 
 
         if QTVERSION < '4.0.0':
@@ -456,7 +462,7 @@ class McaWidget(qt.QWidget):
 
     def peaksearch(self):
         if DEBUG:
-            print "Peak search called"
+            print("Peak search called")
         #get current plot limits
         xmin,xmax=self.graph.getx1axislimits()
         #set the data into specfit
@@ -603,11 +609,11 @@ class McaWidget(qt.QWidget):
         ndict = {}
         ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
         if str(self.graph.xlabel()).upper() == "CHANNEL":
-            if self.caldict.has_key(legend):
+            if legend in self.caldict:
                 ndict[legend].update(self.caldict[legend])
                 if abs(ndict[legend]['C']) > 0.0:
                     ndict[legend]['order']  = 2    
-            elif info.has_key('McaCalib'):
+            elif 'McaCalib' in info:
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][0]
                 else:
@@ -800,14 +806,14 @@ class McaWidget(qt.QWidget):
         calib = [0.0,1.0,0.0]
         curveinfo = {}
         curveinfo['McaCalib'] = calib
-        if info.has_key('McaCalib'):
+        if 'McaCalib' in info:
             if type(info['McaCalib'][0]) == type([]):
                 calib0 = info['McaCalib'][info['McaDet']-1]
             else:
                 calib0 = info['McaCalib']
             curveinfo['McaCalibSource'] = calib0
         if self.calibration == self.calboxoptions[1]:
-            if info.has_key('McaCalib'):
+            if 'McaCalib' in info:
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][info['McaDet']-1]
                 else:
@@ -824,13 +830,13 @@ class McaWidget(qt.QWidget):
                 return xdata
         elif self.calibration == self.calboxoptions[2]:
             legend = info.get('legend', None)
-            if self.caldict.has_key(legend):
+            if legend in self.caldict:
                 A = self.caldict[legend]['A']
                 B = self.caldict[legend]['B']
                 C = self.caldict[legend]['C']
                 calib = [A,B,C]
                 calibrationOrder = self.caldict[legend]['order']
-            elif info.has_key('McaCalib'):
+            elif 'McaCalib' in info:
                 calibrationOrder = info.get('McaCalibOrder', 2)
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][info['McaDet']-1]
@@ -908,7 +914,7 @@ class McaWidget(qt.QWidget):
             if self.calibration == 'None':
                 calib = [0.0,1.0,0.0]
             else:
-                if curveinfo.has_key('McaCalib'):
+                if 'McaCalib' in curveinfo:
                     calib = curveinfo['McaCalib']
                 else:
                     calib = [0.0, 1.0, 0.0]
@@ -961,7 +967,7 @@ class McaWidget(qt.QWidget):
             curveinfo = self.graph.getcurveinfo(legend)
             if self.calibration == 'None':
                 xmin,xmax =self.graph.getx1axislimits()
-                if curveinfo.has_key('McaCalibSource'):
+                if 'McaCalibSource' in curveinfo:
                     calib = curveinfo['McaCalibSource']
                 else:
                     calib = [0.0,1.0,0.0]
@@ -1002,7 +1008,7 @@ class McaWidget(qt.QWidget):
 
     def __anasignal(self,dict):
         if DEBUG:
-            print "__anasignal called dict = ",dict
+            print("__anasignal called dict = ",dict)
             
         if dict['event'] == 'clicked':
             # A button has been cicked
@@ -1025,11 +1031,11 @@ class McaWidget(qt.QWidget):
                     if info is None: return
                     ndict = {}
                     ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
-                    if self.caldict.has_key(legend):
+                    if legend in self.caldict:
                         ndict[legend].update(self.caldict[legend])
                         if abs(ndict[legend]['C']) > 0.0:
                             ndict[legend]['order']  = self.caldict[legend].get('order', 2)
-                    elif info.has_key('McaCalib'):
+                    elif 'McaCalib' in info:
                         if type(info['McaCalib'][0]) == type([]):
                             calib = info['McaCalib'][0]
                         else:
@@ -1089,7 +1095,7 @@ class McaWidget(qt.QWidget):
                     info,x, y = self.getinfodatafromlegend(legend)
                     if info is None: return
                     ndict=copy.deepcopy(self.caldict)
-                    if info.has_key('McaCalib'):
+                    if 'McaCalib' in info:
                         if type(info['McaCalib'][0]) == type([]):
                             sourcecal = info['McaCalib'][0]
                         else:
@@ -1098,7 +1104,7 @@ class McaWidget(qt.QWidget):
                         sourcecal = [0.0,1.0,0.0]
                     for curve in self.graph.curveslist:
                         curveinfo = self.graph.getcurveinfo(curve)
-                        if curveinfo.has_key('McaCalibSource'):
+                        if 'McaCalibSource' in curveinfo:
                             key = "%s (Source)" % curve
                             if key not in ndict:
                                 if curveinfo['McaCalibSource'] != [0.0,1.0,0.0]:
@@ -1132,7 +1138,7 @@ class McaWidget(qt.QWidget):
                                         else:
                                             ndict[key]['order'] = 1                                         
                     
-                    if not self.caldict.has_key(legend):
+                    if not (legend in self.caldict):
                         ndict[legend]={}
                         ndict[legend]['A'] = sourcecal[0] 
                         ndict[legend]['B'] = sourcecal[1] 
@@ -1250,7 +1256,7 @@ class McaWidget(qt.QWidget):
                 elif dict['box'][1]   == 'Advanced':
                     self.mcaadvancedfitsignal()
                 else:
-                    print "Unknown Fit Event"
+                    print("Unknown Fit Event")
         elif dict['event'] == 'activated':
             # A comboBox has been selected
             if   dict['boxname'] == 'Source':
@@ -1284,7 +1290,7 @@ class McaWidget(qt.QWidget):
                 pass
             else:
                 if DEBUG:
-                    print "Unknown combobox",dict['boxname']
+                    print("Unknown combobox",dict['boxname'])
 
         elif (dict['event'] == 'EstimateFinished'):
             pass
@@ -1349,7 +1355,7 @@ class McaWidget(qt.QWidget):
                 self.dataObjectsDict[legend2] = newDataObject2
                 #self.graph.newCurve(legend2,x=x,y=yb,logfilter=1)
 
-            if not self.caldict.has_key(legend):
+            if not (legend in self.caldict):
                 self.caldict[legend] = {}
             self.caldict[legend] ['order'] = 1
             self.caldict[legend] ['A']     = dict['result']['fittedpar'][0]
@@ -1421,10 +1427,10 @@ class McaWidget(qt.QWidget):
             if legend in self.dataObjectsDict.keys():
                 if legend in self.graph.curves.keys():                    
                     if mcamode:
-                        if not self.dataObjectsDict[legend].info.has_key('baseline'):
+                        if not ('baseline' in self.dataObjectsDict[legend].info):
                             self.graph.delcurve(legend)
                     else:
-                        if self.dataObjectsDict[legend].info.has_key('baseline'):
+                        if 'baseline' in self.dataObjectsDict[legend].info:
                             self.graph.delcurve(legend)
             #copy the original info from the curve
             newDataObject = DataObject.DataObject()
@@ -1572,11 +1578,11 @@ class McaWidget(qt.QWidget):
             self.graph.replot()
             
         elif dict['event'] == 'ActiveROI':
-            print "ActiveROI event"
+            print("ActiveROI event")
             pass
         elif dict['event'] == 'selectionChanged':
             if DEBUG:
-                print "Selection changed"
+                print("Selection changed")
             ##############
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             fromdata = dict['roi']['from']
@@ -1640,7 +1646,7 @@ class McaWidget(qt.QWidget):
             self.graph.replot()
         else:
             if DEBUG:
-                print "Unknown or ignored event",dict['event']
+                print("Unknown or ignored event",dict['event'])
 
 
     def refresh(self):
@@ -1671,16 +1677,16 @@ class McaWidget(qt.QWidget):
         
     def __graphsignal(self,dict):
         if DEBUG:
-            print "__graphsignal called dict = ",dict
+            print("__graphsignal called dict = ",dict)
         if dict['event'] == 'markerSelected':
             pass
         elif dict['event'] == 'markerMoved':
             self.roilist,self.roidict = self.roiwidget.getroilistanddict()
             if self.currentroi is None:
-                print "self.currentroi unset :(  "
+                print("self.currentroi unset :(  ")
                 return
-            if self.currentroi not in self.roidict.keys():
-                print "self.currentroi wrongly set"
+            if self.currentroi not in self.roidict:
+                print("self.currentroi wrongly set")
                 return            
             if dict['marker'] == self.roimarkers[0]:
                 self.roidict[self.currentroi]['from'] = dict['x']
@@ -1724,7 +1730,7 @@ class McaWidget(qt.QWidget):
                 self.ypos.setText('%.2f' % dict['y'])
         elif dict['event'] == "SetActiveCurveEvent":
             legend = None
-            if dict.has_key('legend'):
+            if 'legend' in dict:
                 legend = dict['legend']
             if legend is not None:
                 legend = self.graph.getactivecurve(justlegend=1)
@@ -1751,7 +1757,7 @@ class McaWidget(qt.QWidget):
                             calib[1]* x0 + \
                             calib[2]* x0 * x0
                 else:
-                    print "Should not be here"
+                    print("Should not be here")
                     return
                 #if self.roidict is None:
                 self.roilist,self.roidict = self.roiwidget.getroilistanddict()
@@ -1818,7 +1824,7 @@ class McaWidget(qt.QWidget):
             #WARNING this is to be called just from the graph!"
             legend = dict['legend']
             self.graph.delcurve(legend)
-            if self.dataObjectsDict.has_key(legend):
+            if legend in self.dataObjectsDict:
                 del self.dataObjectsDict[legend]
             self.graph.replot()
             #I should generate an event to allow the controller
@@ -1826,14 +1832,14 @@ class McaWidget(qt.QWidget):
         elif dict['event'] == "RenameCurveEvent":
             legend = dict['legend']
             newlegend = dict['newlegend']
-            if self.dataObjectsDict.has_key(legend):
+            if legend in self.dataObjectsDict:
                 self.dataObjectsDict[newlegend]= copy.deepcopy(self.dataObjectsDict[legend])
                 self.dataObjectsDict[newlegend].info['legend'] = newlegend
                 self.graph.delcurve(legend)
                 self.graph.newCurve(self.dataObjectsDict[newlegend].info['legend'],
                                     self.dataObjectsDict[newlegend].x[0],
                                     self.dataObjectsDict[newlegend].y[0])
-                if self.caldict.has_key(legend):
+                if legend in self.caldict:
                     self.caldict[newlegend] = copy.deepcopy(self.caldict[legend])
                 del self.dataObjectsDict[legend]
             self.graph.replot()
@@ -1866,7 +1872,7 @@ class McaWidget(qt.QWidget):
                 self.__graphsignal(dict)
         else:
             if DEBUG:
-                print "Unhandled event ",   dict['event']   
+                print("Unhandled event %s" % dict['event'])
 
     def emitCurrentROISignal(self):
         if self.currentroi is None:
@@ -1885,7 +1891,8 @@ class McaWidget(qt.QWidget):
                 if legend in self.dataObjectsDict.keys():
                     A = self.dataObjectsDict[legend].x[0][0]
             except:
-                if DEBUG:print "X axis offset not found" 
+                if DEBUG:
+                    print("X axis offset not found")
             B = 1.0
             C = 0.0
             order = 1
@@ -1908,7 +1915,7 @@ class McaWidget(qt.QWidget):
 
     def _addSelection(self,selection):
         if DEBUG:
-            print "__add, selection = ",selection
+            print("__add, selection = ",selection)
 
         if type(selection) == type([]):
             sellist = selection
@@ -1918,7 +1925,7 @@ class McaWidget(qt.QWidget):
         for sel in sellist:
             source = sel['SourceName']
             key    = sel['Key']
-            if sel.has_key("scanselection"):
+            if "scanselection" in sel:
                 if sel["scanselection"] not in [False, "MCA"]:
                     continue
             mcakeys    = [key]
@@ -1929,7 +1936,7 @@ class McaWidget(qt.QWidget):
                 dataObject = sel['dataobject']
                 info = dataObject.info
                 data  = dataObject.y[0]
-                if dataObject.info.has_key("selectiontype"):
+                if "selectiontype" in dataObject.info:
                     if dataObject.info["selectiontype"] != "1D": continue
                 if dataObject.x is None:
                     xhelp = None
@@ -1970,27 +1977,27 @@ class McaWidget(qt.QWidget):
                                 continue
                             data = data/mdata
                         else:
-                            raise ValueError, "Cannot normalize data"
+                            raise ValueError("Cannot normalize data")
                         dataObject.y = [data]
                 self.dataObjectsDict[legend] = dataObject
-                if info.has_key('baseline') and info.has_key('regions'):
+                if ('baseline' in info) and ('regions' in info):
                     simplefitplot = True
                 else:
                     simplefitplot = False
                 try:
                     calib = [0.0,1.0,0.0]
                     for inputkey in ['baseline', 'regions']: 
-                        if info.has_key(inputkey):
+                        if inputkey in info:
                             curveinfo[inputkey] = info[inputkey]
                     curveinfo['McaCalib'] = calib
-                    if info.has_key('McaCalib'):
+                    if 'McaCalib' in info:
                         if type(info['McaCalib'][0]) == type([]):
                             calib0 = info['McaCalib'][info['McaDet']-1]
                         else:
                             calib0 = info['McaCalib']
                         curveinfo['McaCalibSource'] = calib0
                     if self.calibration == self.calboxoptions[1]:
-                        if info.has_key('McaCalib'):
+                        if 'McaCalib' in info:
                             if type(info['McaCalib'][0]) == type([]):
                                 calib = info['McaCalib'][info['McaDet']-1]
                             else:
@@ -2024,13 +2031,13 @@ class McaWidget(qt.QWidget):
                             self.graph.xlabel('Energy')
                     elif self.calibration == self.calboxoptions[2]:
                         calibrationOrder = None
-                        if self.caldict.has_key(legend):
+                        if legend in self.caldict:
                             A = self.caldict[legend]['A']
                             B = self.caldict[legend]['B']
                             C = self.caldict[legend]['C']
                             calibrationOrder = self.caldict[legend]['order']  
                             calib = [A,B,C]
-                        elif info.has_key('McaCalib'):
+                        elif 'McaCalib' in info:
                             if type(info['McaCalib'][0]) == type([]):
                                 calib = info['McaCalib'][info['McaDet']-1]
                             else:
@@ -2074,7 +2081,7 @@ class McaWidget(qt.QWidget):
                             else:
                                 self.graph.x1Label('Energy')
                     elif self.calibration == 'Fit':
-                        print "Not yet implemented"
+                        print("Not yet implemented")
                         continue
                     elif self.calibration in  self.caldict.keys():
                             A = self.caldict[self.calibration]['A']
@@ -2136,7 +2143,8 @@ class McaWidget(qt.QWidget):
         self.graph.replot()
     
     def _removeSelection(self,selection):
-        if DEBUG: print "McaWindow._removeSelection, selection =  ",selection
+        if DEBUG:
+            print("McaWindow._removeSelection, selection =  ",selection)
         if type(selection) == type([]):
             sellist = selection
         else:
@@ -2146,7 +2154,7 @@ class McaWidget(qt.QWidget):
         for sel in sellist:
             source = sel['SourceName']
             key    = sel['Key']
-            if sel.has_key("scanselection"):
+            if "scanselection" in sel:
                 if sel["scanselection"] not in [False, "MCA"]:
                     continue
             mcakeys    = [key]
@@ -2156,12 +2164,13 @@ class McaWidget(qt.QWidget):
 
         for legend in legendlist:
             self.graph.delcurve(legend)
-            if self.dataObjectsDict.has_key(legend):
+            if legend in self.dataObjectsDict:
                 del self.dataObjectsDict[legend]
         if len(legendlist):self.graph.replot()
     
     def _replaceSelection(self,selection):
-        if DEBUG: print "McaWindow._replaceSelection, selection =  ",selection
+        if DEBUG:
+            print("McaWindow._replaceSelection, selection =  ",selection)
         if type(selection) == type([]):
             sellist = selection
         else:
@@ -2169,7 +2178,7 @@ class McaWidget(qt.QWidget):
         legendlist = []
         doit = False
         for sel in sellist:
-            if sel.has_key("scanselection"):
+            if "scanselection" in sel:
                 if sel["scanselection"] != "MCA":
                     continue
             doit = True
@@ -2199,7 +2208,7 @@ class McaWidget(qt.QWidget):
                     #text = self.mcatable.gettext()
                     #html output -> print text
                     richtext = qt.QSimpleRichText(text, qt.QFont(),
-                                                        qt.QString(""),
+                                                        QString(""),
                                                         #0,
                                                         qt.QStyleSheet.defaultSheet(),
                                                         qt.QMimeSourceFactory.defaultFactory(),
@@ -2220,8 +2229,10 @@ class McaWidget(qt.QWidget):
                                         view,qt.QColorGroup())
                         view.moveBy(0, body.height())
                         painter.translate(0, -body.height())
-                        painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
-                                         view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
+                        painter.drawText(view.right()  -\
+                            painter.fontMetrics().width("%d" % page),\
+                            view.bottom() - painter.fontMetrics().ascent() + 5,\
+                            "%d" % page)
                         if view.top() >= richtext.height():
                             break
                         printer.newPage()
@@ -2250,9 +2261,9 @@ class McaWidget(qt.QWidget):
 
     def getselfromlegend(self,legend):
         if DEBUG:
-            print "OLD getselfromlegend = ",self.OLDgetselfromlegend(legend)
-            print "complete             = ",self.graph.getcurveinfo(legend)
-            print "NEW getselfromlegend = ",self.graph.getcurveinfo(legend)['sel']
+            print("OLD getselfromlegend = ",self.OLDgetselfromlegend(legend))
+            print("complete             = ",self.graph.getcurveinfo(legend))
+            print("NEW getselfromlegend = ",self.graph.getcurveinfo(legend)['sel'])
         return self.graph.getcurveinfo(legend)
 
     
@@ -2311,7 +2322,7 @@ class McaWidget(qt.QWidget):
             if self.calibration == 'None':
                 calib = [0.0,1.0,0.0]
             else:
-                if curveinfo.has_key('McaCalib'):
+                if 'McaCalib' in curveinfo:
                     calib = curveinfo['McaCalib']
                 else:
                     calib = [0.0, 1.0, 0.0]
