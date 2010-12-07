@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import types
 from EnergyTable import qt
 from QPeriodicTable import QPeriodicTable
 #from QPeriodicTable import ElementList
@@ -389,7 +388,7 @@ class FitPeakSelect(qt.QWidget):
         elif energy == "None":
             self.energyValue = None
             self.energy.setText("None")
-        elif type(energy) == types.ListType:
+        elif type(energy) == type([]):
             self.energyValue = max(energy)
         else:
             self.energyValue = energy
