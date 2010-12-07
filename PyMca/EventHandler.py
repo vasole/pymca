@@ -198,10 +198,7 @@ class EventHandler(object):
         self.events[events[-1]] = oe.event  # only for our callers
         cbs = map(lambda x: x[0], self.fulldict[fullev].callbacks)
         for i in range(len(events)):
-          evname = ""
-          for piece in events[:i+1]:
-            evname += piece + "."
-          evname = evname[:-1]
+          evname = ".".join(events[:i+1])
           ev = self.fulldict[evname].event
           try:
             self.callbacks[ev] = self.callbacks[ev] + cbs
