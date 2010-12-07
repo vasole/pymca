@@ -203,8 +203,8 @@ class McaAdvancedFitBatch:
                 ffile.SetSource(inputfile)
             return ffile
         except:
-            raise IOError, "I do not know what to do with file %s" % inputfile        
-    
+            raise IOError("I do not know what to do with file %s" % inputfile)
+
     
     def onNewFile(self,ffile, filelist):
         self.__log(ffile)
@@ -220,8 +220,8 @@ class McaAdvancedFitBatch:
         pass
             
     def __log(self,text):
-        print text
-            
+        print(text)
+  
     def __tryEdf(self,inputfile):
         try:
             ffile   = EdfFileLayer.EdfFileLayer(fastedf=0)
@@ -291,9 +291,9 @@ class McaAdvancedFitBatch:
             try:
                 cache_data = data[i, :, :]
             except:
-                print "Error reading dataset row %d" % i
-                print sys.exc_info()
-                print "Batch resumed"
+                print("Error reading dataset row %d" % i)
+                print(sys.exc_info())
+                print("Batch resumed")
                 continue
             for mca in colsToIter:
                 if self.pleaseBreak: break
@@ -445,7 +445,8 @@ class McaAdvancedFitBatch:
                     try:
                         os.remove(self._concentrationsFile)
                     except:
-                        print "I could not delete existing concentrations file %s", self._concentrationsFile                        
+                        print("I could not delete existing concentrations file %s" %\
+                              self._concentrationsFile)
             #print "self._concentrationsFile", self._concentrationsFile
             if self.useExistingFiles and os.path.exists(fitfile):
                 useExistingResult = 1
@@ -456,9 +457,9 @@ class McaAdvancedFitBatch:
                     if dict.has_key('concentrations'):
                         concentrationsdone = 1
                 except:
-                    print "Error trying to use result file %s" % fitfile
-                    print "Please, consider deleting it."
-                    print sys.exc_info()
+                    print("Error trying to use result file %s" % fitfile)
+                    print("Please, consider deleting it.")
+                    print(sys.exc_info())
                     return
             else:
                 useExistingResult = 0
@@ -467,7 +468,8 @@ class McaAdvancedFitBatch:
                     self.mcafit.config['fit']['use_limit'] = 1
                     self.mcafit.setdata(x,y)
                 except:
-                    print "Error entering data of file with output = ",filename
+                    print("Error entering data of file with output = %s" %\
+                          filename)
                     return
                 try:
                     self.mcafit.estimate()
@@ -494,14 +496,15 @@ class McaAdvancedFitBatch:
                                             elementsfrommatrix=False,
                                             fluorates = self.mcafit._fluoRates)
                         except:
-                            print "error in concentrations"
-                            print sys.exc_info()[0:-1]
+                            print("error in concentrations")
+                            print(sys.exc_info()[0:-1])
                         concentrationsdone = True
                     else:
                         #just images
                         fitresult = self.mcafit.startfit(digest=0)
                 except:
-                    print "Error fitting file with output = ",filename
+                    print("Error fitting file with output = %s" %\
+                          filename)
                     return
             if self._concentrations:
                 if concentrationsdone == 0:
@@ -530,8 +533,8 @@ class McaAdvancedFitBatch:
                                             fitresult=fitresult0,
                                             elementsfrommatrix=False)
                         except:
-                            print "error in concentrations"
-                            print sys.exc_info()[0:-1]
+                            print("error in concentrations")
+                            print(sys.exc_info()[0:-1])
                             #return
                 self._concentrationsAsAscii=self._toolConversion.getConcentrationsAsAscii(concentrations)
                 if len(self._concentrationsAsAscii) > 1:
@@ -551,17 +554,17 @@ class McaAdvancedFitBatch:
                     try:
                         os.mkdir(fitdir)
                     except:
-                        print "I could not create directory %s" % fitdir
+                        print("I could not create directory %s" % fitdir)
                         return
                 fitdir = os.path.join(fitdir,filename+"_FITDIR")
                 if not os.path.exists(fitdir):
                     try:
                         os.mkdir(fitdir)
                     except:
-                        print "I could not create directory %s" % fitdir
+                        print("I could not create directory %s" % fitdir)
                         return
                 if not os.path.isdir(fitdir):
-                    print "%s does not seem to be a valid directory" % fitdir
+                    print("%s does not seem to be a valid directory" % fitdir)
                 else:
                     outfile = filename +"_"+key+".fit" 
                     outfile = os.path.join(fitdir,  outfile)
@@ -576,11 +579,11 @@ class McaAdvancedFitBatch:
                         try:
                             os.remove(outfile)
                         except:
-                            print "error deleting fit file"
+                            print("error deleting fit file")
                         f.write(outfile)
                     except:
-                        print "Error writing concentrations to fit file"
-                        print sys.exc_info()
+                        print("Error writing concentrations to fit file")
+                        print(sys.exc_info())
 
                 #python like output list
                 if not self.counter:
@@ -613,10 +616,12 @@ class McaAdvancedFitBatch:
                             try:
                                 os.mkdir(imgdir)
                             except:
-                                print "I could not create directory %s" % imgdir
+                                print("I could not create directory %s" %\
+                                      imgdir)
                                 return
                         elif not os.path.isdir(imgdir):
-                            print "%s does not seem to be a valid directory" % imgdir
+                            print("%s does not seem to be a valid directory" %\
+                                  imgdir)
                         self.imgDir = imgdir
                         self.__peaks  = []
                         self.__images = {}
@@ -665,8 +670,9 @@ class McaAdvancedFitBatch:
                 try:
                     self.__images['chisq'][self.__row, self.__col] = result['chisq']
                 except:
-                    print "Error on chisq row %d col %d\n" % (self.__row, self.__col)
-                    print "File = %s\n", filename
+                    print("Error on chisq row %d col %d" %\
+                          (self.__row, self.__col))
+                    print("File = %s\n" % filename)
                     pass
 
         else:
@@ -679,10 +685,12 @@ class McaAdvancedFitBatch:
                             try:
                                 os.mkdir(imgdir)
                             except:
-                                print "I could not create directory %s" % imgdir
+                                print("I could not create directory %s" %\
+                                      imgdir)
                                 return
                         elif not os.path.isdir(imgdir):
-                            print "%s does not seem to be a valid directory"
+                            print("%s does not seem to be a valid directory" %\
+                                  imgdir)
                         self.imgDir = imgdir
                         self.__ROIpeaks  = []
                         self._ROIimages = {}
@@ -696,14 +704,15 @@ class McaAdvancedFitBatch:
                                                                             self.__ncols),Numeric.Float)
                                 
                 if not hasattr(self, "_ROIimages"):
-                    print "ROI fitting only supported on EDF"
+                    print("ROI fitting only supported on EDF")
                 for group in self.__ROIpeaks:
                     for roi in self._ROIimages[group].keys():
                         try:
                             self._ROIimages[group][roi][self.__row, self.__col] = dict[group][roi]
                         except:
-                            print "error on (row,col) = ",self.__row, self.__col
-                            print "File = %s\n", filename
+                            print("error on (row,col) = %d,%d" %\
+                                  (self.__row, self.__col))
+                            print("File = %s" % filename)
                             pass
 
         #update counter
@@ -745,21 +754,21 @@ class McaAdvancedFitBatch:
                     speclabel +="  %s" % (peak)
                     edfname = ffile +"_"+peak+trailing+suffix
                 else:
-                    print "Unhandled peak name: %s. Not saved." % peak
+                    print("Unhandled peak name: %s. Not saved." % peak)
                     continue
                 dirname = os.path.dirname(edfname)
                 if not os.path.exists(dirname):
                     try:
                         os.mkdir(dirname)
                     except:
-                        print "I could not create directory % s" % dirname
+                        print("I could not create directory %s" % dirname)
                 Append = 0
                 if os.path.exists(edfname):
                     try:
                         os.remove(edfname)
                     except:
-                        print "I cannot delete output file"
-                        print "trying to append image to the end"
+                        print("I cannot delete output file")
+                        print("trying to append image to the end")
                         Append = 1 
                 edfout   = EdfFile.EdfFile(edfname, access='wb')
                 edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=Append)
@@ -816,7 +825,7 @@ class McaAdvancedFitBatch:
                         try:
                             os.mkdir(dirname)
                         except:
-                            print "I could not create directory % s" % dirname
+                            print("I could not create directory %s" % dirname)
                     edfout  = EdfFile.EdfFile(edfname)
                     edfout.WriteImage ({'Title':group+" "+roi} , self._ROIimages[group][roi],
                                          Append=i)
@@ -849,7 +858,7 @@ if __name__ == "__main__":
             roiwidth = float(arg)
     filelist=args
     if len(filelist) == 0:
-        print "No input files, run GUI"
+        print("No input files, run GUI")
         sys.exit(0)
     
     b = McaAdvancedFitBatch(cfg,filelist,outdir,roifit,roiwidth)

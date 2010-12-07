@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.12 $"
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,6 +25,7 @@ __revision__ = "$Revision: 1.12 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+__revision__ = "$Revision: 1.13 $"
 import sys
 import os
 import PyMcaQt as qt
@@ -355,8 +355,8 @@ class Mca2EdfBatch(qt.QThread):
                             self.__ncols = len(y0)
                             image = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
                         if self.__ncols !=  len(y0):
-                            print "spectrum has different number of columns"
-                            print "skipping it"
+                            print("spectrum has different number of columns")
+                            print("skipping it")
                         else:
                             image[counter,:] = y0[:]
                             if (counter+1) == self.filestep:
@@ -472,8 +472,8 @@ class Mca2EdfWindow(qt.QWidget):
         elif event.dict['event'] == 'batchResumed':self.onResume()
 
         else:
-            print "Unhandled event",event 
-                                                
+            print("Unhandled event %s" % event)
+                                
 
     def onNewFile(self, file, filelist):
         indexlist = range(0,len(filelist))

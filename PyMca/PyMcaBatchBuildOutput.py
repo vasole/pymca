@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -45,7 +45,7 @@ class PyMcaBatchBuildOutput:
             if outputdir == inputdir:
                 delete = True
         if DEBUG:
-            print "delete option = ", delete
+            print("delete option = ", delete)
         allfiles = os.listdir(inputdir)
         partialedflist = []
         partialdatlist = []
@@ -59,7 +59,7 @@ class PyMcaBatchBuildOutput:
         edfoutlist = []
         for filename in partialedflist:
             if DEBUG:
-                print "Dealing with filename ", filename
+                print("Dealing with filename %s" % filename)
             edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
             i = 0
             for edfname in edflist:
@@ -78,10 +78,10 @@ class PyMcaBatchBuildOutput:
             edfname  = filename.replace('_000000_partial.edf',".edf")
             edfoutname = os.path.join(outputdir, edfname)
             if DEBUG:
-                print "Dealing with output filename ", edfoutname
+                print("Dealing with output filename %s" % edfoutname)
             if os.path.exists(edfoutname):
                 if DEBUG:
-                    print "Output file already exists, trying to delete it"
+                    print("Output file already exists, trying to delete it")
                 os.remove(edfoutname)
             edfout   = EdfFile.EdfFile(edfoutname, access="wb")
             edfout.WriteImage (header , data, Append=0)
@@ -92,7 +92,7 @@ class PyMcaBatchBuildOutput:
                     try:
                         os.remove(filename)
                     except:
-                        print "Cannot delete file ", filename
+                        print("Cannot delete file %s" % filename)
 
         #DAT IMAGES
         datoutlist = []
@@ -202,31 +202,31 @@ class PyMcaBatchBuildOutput:
             nchain.reverse()
             for c in nchain:
                 number += c
-            format = "%" + "0%dd" % len(number)
+            fformat = "%" + "0%dd" % len(number)
             if (len(number) + len(suffix)) == len(name):
                 prefix = ""
             else:
                 prefix = name[0:n-i+1]
             prefix = os.path.join(os.path.dirname(filename),prefix)
             if not os.path.exists(prefix + number + suffix):
-                print "Internal error in EDFStack"
-                print "file should exist:",prefix + number + suffix
+                print("Internal error in EDFStack")
+                print("file should exist: %s " % (prefix + number + suffix))
                 return
             i = 0
             if begin is None:
                 begin = 0
-                testname = prefix+format % begin+suffix
+                testname = prefix+fformat % begin+suffix
                 while not os.path.exists(prefix+format % begin+suffix):
                     begin += 1
-                    testname = prefix+format % begin+suffix
+                    testname = prefix+fformat % begin+suffix
                     if len(testname) > len(filename):break
                 i = begin
             else:
                 i = begin
-            if not os.path.exists(prefix+format % i+suffix):
-                raise ValueError, "Invalid start index file = %s" % \
-                      prefix+format % i+suffix
-            f = prefix+format % i+suffix
+            if not os.path.exists(prefix+fformat % i+suffix):
+                raise ValueError("Invalid start index file = %s" % \
+                      (prefix+fformat % i+suffix))
+            f = prefix+fformat % i+suffix
             filelist = []
             while os.path.exists(f):
                 filelist.append(f)
@@ -234,15 +234,15 @@ class PyMcaBatchBuildOutput:
                 if end is not None:
                     if i > end:
                         break
-                f = prefix+format % i+suffix
+                f = prefix+fformat % i+suffix
             return filelist
 
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print "Usage:"
-        print "python PyMcaBatchBuildOutput.py directory"
+        print("Usage:")
+        print("python PyMcaBatchBuildOutput.py directory")
         sys.exit(0)
     directory = sys.argv[1]
     w = PyMcaBatchBuildOutput(directory)

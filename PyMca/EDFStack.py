@@ -115,7 +115,7 @@ class EDFStack(DataObject.DataObject):
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
-                raise IOError, "Not implemented yet"
+                raise IOError("Not implemented yet")
                 self.data = numpy.zeros((arrRet.shape[0],
                                            nImages,
                                            self.nbFiles),
@@ -135,7 +135,8 @@ class EDFStack(DataObject.DataObject):
                     #should I try to convert it to a standard one
                     #using a 3D matrix or keep as 4D matrix?
                     if self.nbFiles > 1:
-                        raise IOError, "Multiple files with multiple images implemented yet"
+                        raise IOError(\
+                            "Multiple files with multiple images implemented yet")
                     self.data = numpy.zeros((arrRet.shape[0],
                                                arrRet.shape[1],
                                                nImages * self.nbFiles),
@@ -178,7 +179,7 @@ class EDFStack(DataObject.DataObject):
                                             os.path.dirname(filelist[0]),
                                             "HDF5 files *.h5")
                                 if not len(hdf5file):
-                                    raise IOError, "Invalid output file"
+                                    raise IOError("Invalid output file")
                                 hdf5file = str(hdf5file)
                                 if not hdf5file.endswith(".h5"):
                                     hdf5file += ".h5"
@@ -197,13 +198,13 @@ class EDFStack(DataObject.DataObject):
                                 hdf5done = True
                         if not hdf5done:
                             for i in range(3):
-                                print "\7"
+                                print("\7")
                             samplingStep = None
                             i = 2
                             while samplingStep is None:
-                                print "**************************************************"
-                                print " Memory error!, attempting %dx%d sampling reduction " % (i,i)
-                                print "**************************************************"
+                                print("**************************************************")
+                                print(" Memory error!, attempting %dx%d sampling reduction ") % (i,i)
+                                print("**************************************************")
                                 s1, s2 = arrRet[::i, ::i].shape
                                 try:
                                     self.data = numpy.zeros((s1, s2,
@@ -226,7 +227,7 @@ class EDFStack(DataObject.DataObject):
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
-                raise IOError, "Not implemented yet"
+                raise IOError("Not implemented yet")
                 self.data = numpy.zeros((self.nbFiles,
                                            arrRet.shape[0],
                                            nImages),
@@ -248,7 +249,8 @@ class EDFStack(DataObject.DataObject):
                     if self.nbFiles > 1:
                         if (arrRet.shape[0] > 1) and\
                            (arrRet.shape[1] > 1):
-                                raise IOError, "Multiple files with multiple images not implemented yet"
+                                raise IOError(\
+                                    "Multiple files with multiple images not implemented yet")
                         elif arrRet.shape[0] == 1:
                             self.data = numpy.zeros((self.nbFiles,
                                                arrRet.shape[0] * nImages,
@@ -311,8 +313,8 @@ class EDFStack(DataObject.DataObject):
                         if os.path.isdir(swapdir):
                             swapfile = '/buffer/%s1/pymcaroitool.dat' %\
                                             os.getenv('HOSTNAME')
-                        print "needed megabytes= ", needed_
-                        print "using a buffer: %s" % swapfile
+                        print("needed megabytes = %f" % needed_)
+                        print("using a buffer: %s" % swapfile)
                         if os.path.exists(swapfile):
                             os.remove(swapfile)
 
@@ -362,13 +364,14 @@ class EDFStack(DataObject.DataObject):
                                           "Do you want to convert your data to HDF5?\n",
                                           qt.QMessageBox.Yes,qt.QMessageBox.No)
                                         if msg == qt.QMessageBox.No:
-                                            raise MemoryError, text
+                                            raise MemoryError(text)
                                         hdf5file = qt.QFileDialog.getSaveFileName(None,
                                                     "Please select output file name",
                                                     os.path.dirname(filelist[0]),
                                                     "HDF5 files *.h5")
                                         if not len(hdf5file):
-                                            raise IOError, "Invalid output file"
+                                            raise IOError(\
+                                                "Invalid output file")
                                         hdf5file = str(hdf5file)
                                         if not hdf5file.endswith(".h5"):
                                             hdf5file += ".h5"
@@ -377,7 +380,8 @@ class EDFStack(DataObject.DataObject):
                                                        arrRet.shape[0],
                                                        arrRet.shape[1]))               
                                     else:    
-                                        raise MemoryError, "Memory Error"
+                                        raise MemoryError(\
+                                            "Memory Error")
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
@@ -434,7 +438,7 @@ class EDFStack(DataObject.DataObject):
         if type(filename) == type([]):
             filename = filename[0]
         if not os.path.exists(filename):
-            raise IOError,"File %s does not exists" % filename
+            raise IOError("File %s does not exists" % filename)
         name = os.path.basename(filename)
         n = len(name)
         i = 1
@@ -469,31 +473,31 @@ class EDFStack(DataObject.DataObject):
             nchain.reverse()
             for c in nchain:
                 number += c
-            format = "%" + "0%dd" % len(number)
+            fformat = "%" + "0%dd" % len(number)
             if (len(number) + len(suffix)) == len(name):
                 prefix = ""
             else:
                 prefix = name[0:n-i+1]
             prefix = os.path.join(os.path.dirname(filename),prefix)
             if not os.path.exists(prefix + number + suffix):
-                print "Internal error in EDFStack"
-                print "file should exist:",prefix + number + suffix
+                print("Internal error in EDFStack")
+                print("file should exist: %s " % (prefix + number + suffix))
                 return
             i = 0
             if begin is None:
                 begin = 0
-                testname = prefix+format % begin+suffix
-                while not os.path.exists(prefix+format % begin+suffix):
+                testname = prefix+fformat % begin+suffix
+                while not os.path.exists(prefix+fformat % begin+suffix):
                     begin += 1
-                    testname = prefix+format % begin+suffix
+                    testname = prefix+fformat % begin+suffix
                     if len(testname) > len(filename):break
                 i = begin
             else:
                 i = begin
-            if not os.path.exists(prefix+format % i+suffix):
-                raise ValueError,"Invalid start index file = %s" % \
-                      prefix+format % i+suffix
-            f = prefix+format % i+suffix
+            if not os.path.exists(prefix+fformat % i+suffix):
+                raise ValueError("Invalid start index file = %s" % \
+                      (prefix+fformat % i+suffix))
+            f = prefix+fformat % i+suffix
             filelist = []
             while os.path.exists(f):
                 filelist.append(f)
@@ -501,7 +505,7 @@ class EDFStack(DataObject.DataObject):
                 if end is not None:
                     if i > end:
                         break
-                f = prefix+format % i+suffix
+                f = prefix+fformat % i+suffix
             self.loadFileList(filelist, fileindex=fileindex)
 
     def getSourceInfo(self):
@@ -514,7 +518,7 @@ class EDFStack(DataObject.DataObject):
         sourceInfo["KeyList"]= self.__keyList
 
     def getKeyInfo(self, key):
-        print "Not implemented"
+        print("Not implemented")
         return {}
 
     def isIndexedStack(self):
@@ -534,16 +538,16 @@ if __name__ == "__main__":
     #stack.loadIndexedStack("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
     stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
     shape = stack.data.shape
-    print "elapsed = ", time.time() - t0
+    print("elapsed = %f" % (time.time() - t0))
     #guess the MCA
     imax = 0
     for i in range(len(shape)):
         if shape[i] > shape[imax]:
             imax = i
 
-    print "selections ",
-    print "getZSelectionArray  shape = ", stack.getZSelectionArray().shape
-    print "getXYSelectionArray shape = ", stack.getXYSelectionArray().shape
+    print("selections ")
+    print("getZSelectionArray  shape = ", stack.getZSelectionArray().shape)
+    print("getXYSelectionArray shape = ", stack.getXYSelectionArray().shape)
 
     import PyMcaQt as qt
     app = qt.QApplication([])
@@ -557,11 +561,11 @@ if __name__ == "__main__":
         import QtBlissGraph
         w = QtBlissGraph.QtBlissGraph()
         graph = w
-    print "shape sum 0 = ",Numeric.sum(stack.data, 0).shape
-    print "shape sum 1 = ",Numeric.sum(stack.data, 1).shape
-    print "shape sum 2 = ",Numeric.sum(stack.data, 2).shape
+    print("shape sum 0 = ",Numeric.sum(stack.data, 0).shape)
+    print("shape sum 1 = ",Numeric.sum(stack.data, 1).shape)
+    print("shape sum 2 = ",Numeric.sum(stack.data, 2).shape)
     a = Numeric.sum(stack.data, imax)
-    print a.shape
+    print(a.shape)
     graph.setX1AxisLimits(0, a.shape[0])
     if 0:
         w.setY1AxisLimits(0, a.shape[1])

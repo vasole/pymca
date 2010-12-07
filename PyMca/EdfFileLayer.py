@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -35,7 +35,6 @@ __revision__ = "$Revision: 1.8 $"
 ################################################################################  
 #import fast_EdfFile as EdfFile
 import EdfFile
-import string
 ################################################################################
 
 SOURCE_TYPE = "EdfFile"
@@ -84,19 +83,19 @@ class EdfFileLayer:
             else:
                 if (type(source_name) == type([])):
                     if DEBUG:
-                        print "List of files"
+                        print("List of files")
                     self.Source=[]
                     for name in source_name:
                         try:
                             self.Source.append(EdfFile.EdfFile(name,fastedf=self.fastedf))
                         except:
-                            #print "EdfFileLayer.SetSource: Error trying to read EDF file %s" % name
+                            #print("EdfFileLayer.SetSource: Error trying to read EDF file %s" % name)
                             self.Source.append( None)                
                 else:
                     try:
                         self.Source = EdfFile.EdfFile(source_name, fastedf=self.fastedf)
                     except:
-                        #print "EdfFileLayer.SetSource: Error trying to read EDF file" 
+                        #print("EdfFileLayer.SetSource: Error trying to read EDF file")
                         self.Source=None
         else:
             self.Source=None
@@ -197,7 +196,7 @@ class EdfFileLayer:
                     index = int(index)-1
                     image = int(image)-1                    
                 except:
-                    print "Error trying to interpret key =",key
+                    print("Error trying to interpret key = %s" % key)
                     return {}
                 source = self.Source[index]
                 NumImages=source.GetNumImages()
@@ -272,7 +271,8 @@ class EdfFileLayer:
                         key = "%d.%d" % (f,i)
             else:
                 i = key0
-                if i >= numimages: raise "EdfFileData: index out of bounds"
+                if i >= numimages:
+                    raise IndexError("EdfFileData: index out of bounds")
                 imgcount   =0
                 f=0
                 for source in self.Source:
@@ -306,9 +306,9 @@ class EdfFileLayer:
                     info['Channel0'] = 0
                 if not info.has_key('McaCalib'):
                     if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
-                        info['McaCalib'] = [string.atof(info['MCA a']),
-                                            string.atof(info['MCA b']),
-                                            string.atof(info['MCA c'])]
+                        info['McaCalib'] = [float(info['MCA a']),
+                                            float(info['MCA b']),
+                                            float(info['MCA c'])]
             else:
                 # this is not correct, I assume info
                 # is the same for all sources
@@ -324,9 +324,9 @@ class EdfFileLayer:
                     info['Channel0'] = 0
                 if not info.has_key('McaCalib'):
                     if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
-                        info['McaCalib'] = [string.atof(info['MCA a']),
-                                            string.atof(info['MCA b']),
-                                            string.atof(info['MCA c'])]
+                        info['McaCalib'] = [float(info['MCA a']),
+                                            float(info['MCA b']),
+                                            float(info['MCA c'])]
                 f=0
                 for source in self.Source:
                     for i in range(source.GetNumImages()):
@@ -345,9 +345,9 @@ class EdfFileLayer:
                     info['McaCalib'] = info['McaCalib'].replace("[","")
                     info['McaCalib'] = info['McaCalib'].replace("]","")
                     cala, calb, calc = info['McaCalib'].split(",")
-                    info['McaCalib'] = [string.atof(cala),
-                                        string.atof(calb),
-                                        string.atof(calc)]
+                    info['McaCalib'] = [float(cala),
+                                        float(calb),
+                                        float(calc)]
                 
             output.append([info,array])
             #AS self.AppendPage(info,array)
@@ -399,7 +399,8 @@ class EdfFileLayer:
                 i=int(key)
             else:
                 i = key
-            if i >= numimages: raise "EdfFileData: index out of bounds"
+            if i >= numimages:
+                raise IndexError("EdfFileData: index out of bounds")
             info={}
             info["SourceType"]=SOURCE_TYPE
             info["SourceName"]=self.SourceName
@@ -418,9 +419,9 @@ class EdfFileLayer:
                 info['Channel0'] = 0
             if not info.has_key('McaCalib'):
                 if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
-                    info['McaCalib'] = [string.atof(info['MCA a']),
-                                        string.atof(info['MCA b']),
-                                        string.atof(info['MCA c'])]                    
+                    info['McaCalib'] = [float(info['MCA a']),
+                                        float(info['MCA b']),
+                                        float(info['MCA c'])]                    
             output.append([info,array])
             #AS self.AppendPage(info,array)
         if len(output) == 1:
@@ -440,29 +441,26 @@ if __name__ == "__main__":
         fast = int(sys.argv[3])
         obj=EdfFileLayer(fastedf=fast)
         if not obj.SetSource([filename]):
-            print "ERROR: cannot open file", filename
+            print("ERROR: cannot open file %s" % filename)
             sys.exit()
         #obj.LoadSource(key)
     except:
-        print "Usage: EdfFileData.py <filename> <image> <fastflag>"
+        print("Usage: EdfFileData.py <filename> <image> <fastflag>")
         sys.exit()
-    print obj.GetSourceInfo()    
+    print(obj.GetSourceInfo())
     for i in range(1):
         #this works obj.LoadSource("%d" % i)
         import time
-        print "Full"
+        print("Full")
         e=time.time()
         info,data = obj.LoadSource(key)
-        print "elapsed = ",time.time()-e
-        print "selection"
+        print("elapsed = ",time.time()-e)
+        print("selection")
         e=time.time()
         info,data = obj.LoadSource(key,pos=(0,0),size=(90,0))
-        print "elapsed = ",time.time()-e
-        print info
+        print("elapsed = ",time.time()-e)
+        print(info)
         #print obj.GetPageInfo("%d" % i)
         #print obj.GetPageInfo(i)
         #print obj.GetPageInfo({'Key':i})        
         #print obj.GetPageArray(i)
-    
-
-        

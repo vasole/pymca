@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -146,8 +146,8 @@ def test():
     if not len(filelist):
         filelist = w._getStackOfFiles()
     if not len(filelist):
-        print "Usage:"
-        print "python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE"
+        print("Usage:")
+        print("python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE")
         sys.exit(app.quit())        
     if len(filelist) == 1:
         try:

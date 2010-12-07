@@ -26,6 +26,10 @@
 #############################################################################*/
 import sys, getopt, string
 import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
     
 QTVERSION = qt.qVersion()
 
@@ -102,14 +106,14 @@ class PyMca(qt.QMainWindow):
         def createActions(self):
                 #fileopen
                 self.actionOpen = qt.QAction(self)
-                self.actionOpen.setText(qt.QString("&Open"))
+                self.actionOpen.setText(QString("&Open"))
                 self.actionOpen.setIcon(self.Icons["fileopen"])
                 self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
                 self.connect(self.actionOpen, qt.SIGNAL("triggered(bool)"),
                              self.onOpen)
                 #filesaveas
                 self.actionSaveAs = qt.QAction(self)
-                self.actionSaveAs.setText(qt.QString("&Save"))
+                self.actionSaveAs.setText(QString("&Save"))
                 self.actionSaveAs.setIcon(self.Icons["filesave"])
                 self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
                 self.connect(self.actionSaveAs, qt.SIGNAL("triggered(bool)"),
@@ -117,7 +121,7 @@ class PyMca(qt.QMainWindow):
 
                 #filesave
                 self.actionSave = qt.QAction(self)
-                self.actionSave.setText(qt.QString("Save &Defaults"))
+                self.actionSave.setText(QString("Save &Defaults"))
                 #self.actionSave.setIcon(self.Icons["filesave"])
                 #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
                 self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
@@ -125,7 +129,7 @@ class PyMca(qt.QMainWindow):
 
                 #fileprint
                 self.actionPrint = qt.QAction(self)
-                self.actionPrint.setText(qt.QString("&Print"))
+                self.actionPrint.setText(QString("&Print"))
                 self.actionPrint.setIcon(self.Icons["fileprint"])
                 self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
                 self.connect(self.actionPrint, qt.SIGNAL("triggered(bool)"),
@@ -133,7 +137,7 @@ class PyMca(qt.QMainWindow):
 
                 #filequit
                 self.actionQuit = qt.QAction(self)
-                self.actionQuit.setText(qt.QString("&Quit"))
+                self.actionQuit.setText(QString("&Quit"))
                 #self.actionQuit.setIcon(self.Icons["fileprint"])
                 self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
                 qt.QObject.connect(self.actionQuit,
@@ -156,11 +160,22 @@ class PyMca(qt.QMainWindow):
                 self.fileToolBar= qt.QToolBar(self, "filetoolbar")
                 self.fileToolBar.setLabel("File Operations")
                 self.onInitFileToolBar(self.fileToolBar)
-                fileOpen= qt.QToolButton(self.Icons["fileopen"], "Open", qt.QString.null, self.onOpen, self.fileToolBar, "open")
+                fileOpen= qt.QToolButton(self.Icons["fileopen"],
+                                         "Open",
+                                         QString(""),
+                                         self.onOpen,
+                                         self.fileToolBar, "open")
                 qt.QWhatsThis.add(fileOpen, HelpDict["fileopen"])
-                fileSave= qt.QToolButton(self.Icons["filesave"], "Save As", qt.QString.null, self.onSaveAs, self.fileToolBar, "save")
+                fileSave= qt.QToolButton(self.Icons["filesave"],
+                                         "Save As",
+                                         QString(""),
+                                         self.onSaveAs,
+                                         self.fileToolBar, "save")
                 qt.QWhatsThis.add(fileSave, HelpDict["filesave"])
-                filePrint= qt.QToolButton(self.Icons["fileprint"], "Print", qt.QString.null, self.onPrint, self.fileToolBar, "print")
+                filePrint= qt.QToolButton(self.Icons["fileprint"], "Print",
+                                          QString(""),
+                                          self.onPrint,
+                                          self.fileToolBar, "print")
                 qt.QWhatsThis.add(filePrint, HelpDict["fileprint"])
                 self.fileToolBar.addSeparator()
                 qt.QWhatsThis.whatsThisButton(self.fileToolBar)
@@ -178,11 +193,17 @@ class PyMca(qt.QMainWindow):
                     self.winToolBar= qt.QToolBar(self, "wintoolbar")
                     self.winToolBar.setLabel("Window resize")
                     self.onInitWinToolBar(self.winToolBar)
-                    FullScreen= qt.QToolButton(self.Icons["window_fullscreen"], "Full Screen", qt.QString.null,
-                                    self.windowFullScreen, self.winToolBar, "fullscreen")
+                    FullScreen= qt.QToolButton(self.Icons["window_fullscreen"],
+                                               "Full Screen",
+                                               QString(""),
+                                               self.windowFullScreen,
+                                               self.winToolBar, "fullscreen")
                     qt.QWhatsThis.add(FullScreen, HelpDict["fullscreen"])
-                    self.winToolButton= qt.QToolButton(self.Icons["window_nofullscreen"], "Tile",
-                                                    qt.QString.null, self.onWinToolAction, self.winToolBar, "wintile")
+                    self.winToolButton= qt.QToolButton(self.Icons["window_nofullscreen"],\
+                                                       "Tile",
+                                                       QString(""),
+                                                       self.onWinToolAction,
+                                                       self.winToolBar, "wintile")
                     qt.QWhatsThis.add(self.winToolButton, HelpDict["nofullscreen"])
                     self.winToolMenu= qt.QPopupMenu(self.winToolButton)
                     self.winToolMenu.setCheckable(1)
@@ -277,7 +298,7 @@ class PyMca(qt.QMainWindow):
             if QTVERSION < '4.0.0':
                 self.menuFile= qt.QPopupMenu(self.menuBar())
                 idx= self.menuFile.insertItem(self.Icons["fileopen"],
-                                              qt.QString("&Open"),
+                                              QString("&Open"),
                                               self.onOpen,
                                               qt.Qt.CTRL+qt.Qt.Key_O)
                 self.menuFile.setWhatsThis(idx, HelpDict["fileopen"])

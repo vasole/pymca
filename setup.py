@@ -94,7 +94,7 @@ if os.path.exists(os.path.join("PyMca", "EPDL97")):
     data_files.append(('PyMca/EPDL97',['PyMca/EPDL97/LICENSE']))
 
 LOCAL_PHYNX =False
-if os.path.exists(os.path.join("PyMca", "phynx")):
+if (sys.version < '3.0') and os.path.exists(os.path.join("PyMca", "phynx")):
     LOCAL_PHYNX = True
     data_files.append(('PyMca/phynx', glob.glob('PyMca/phynx/*.py')))
     data_files.append(('PyMca/phynx/utils', glob.glob('PyMca/phynx/utils/*.py')))

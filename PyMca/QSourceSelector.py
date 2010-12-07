@@ -164,11 +164,16 @@ class QSourceSelector(qt.QWidget):
                     for filetype in self.fileTypeList:
                         filetypes += filetype+"\n"
                     if sys.platform == 'win32':
-                        filelist = qt.QFileDialog.getOpenFileNames(filetypes,
+                        filelist = qt.QFileDialog.getOpenFileNames(
+                                    filetypes,
                                     wdir,
-                                    self,"openFile", "Open a new EdfFile")
+                                    self,
+                                    "openFile",
+                                    "Open a new EdfFile")
                     else:
-                        filedialog = qt.QFileDialog(self,"Open new EdfFile(s)",1)
+                        filedialog = qt.QFileDialog(self,
+                                                    "Open new EdfFile(s)",
+                                                    1)
                         if self.lastInputDir is not None:
                             filedialog.setDir(self.lastInputDir)
                         filedialog.setMode(filedialog.ExistingFiles)
@@ -184,8 +189,18 @@ class QSourceSelector(qt.QWidget):
                         filetypes = ""
                         for filetype in self.fileTypeList:
                             filetypes += filetype+"\n"
-                        filelist = qt.QFileDialog.getOpenFileNames(self,
-                                    "Open a new source file",          wdir,
+                        if sys.version < '3.0':
+                            filelist = qt.QFileDialog.getOpenFileNames(self,
+                                    "Open a new source file",
+                                    wdir,
+                                    filetypes,
+                                    self.lastFileFilter)
+                        else:
+                            filelist, self.lastFileFilter =\
+                                    qt.QFileDialog.getOpenFileNamesAndFilter(\
+                                    self,
+                                    "Open a new source file",
+                                    wdir,
                                     filetypes,
                                     self.lastFileFilter)
                         staticDialog = True

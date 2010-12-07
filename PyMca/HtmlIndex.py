@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import os
 import sys
@@ -144,7 +144,7 @@ class HtmlIndex:
                 try:
                     os.remove(index)
                 except:
-                    print "cannot delete file %s" % index
+                    print("cannot delete file %s" % index)
                     continue
 
     def _getHtmlFileList(self, directory):
@@ -160,7 +160,7 @@ class HtmlIndex:
             try:
                 os.remove(index)
             except:
-                print "cannot delete file %s" % index
+                print("cannot delete file %s" % index)
                 return
         filelist = self._getHtmlFileList(directory)
         text = ""
@@ -179,7 +179,7 @@ class HtmlIndex:
             try:
                 os.remove(index)
             except:
-                print "cannot delete file %s" % index
+                print("cannot delete file %s" % index)
                 return
         directorylist = self._getHtmlDirList(directory)
         text = ""
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         a = HtmlIndex(sys.argv[1])
     else:
-        print "Trying /tmp/HTML as input directory"
+        print("Trying /tmp/HTML as input directory")
         a = HtmlIndex('/tmp/HTML')
     a.buildRecursiveIndex()
 

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -213,7 +213,7 @@ class SpecFileLayer:
             try:
                 scan_data= Numeric.transpose(scan_obj.data()).copy()
             except:
-                raise IOError, "SF_SCAN read failed"
+                raise IOError("SF_SCAN read failed")
         elif scan_type&SF_MESH:
             try:
                 scan_array= scan_obj.data()
@@ -223,7 +223,7 @@ class SpecFileLayer:
                     scan_data[:,idx,:]= Numeric.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                 scan_data= Numeric.transpose(scan_data).copy()
             except:
-                raise IOError, "SF_MESH read failed"
+                raise IOError("SF_MESH read failed")
         elif scan_type&SF_MCA:
             return self.AppendPage(scan_info, scan_data)
         elif scan_type&SF_NMCA:
@@ -232,7 +232,7 @@ class SpecFileLayer:
         if scan_data is not None:
             return self.AppendPage(scan_info, scan_data)
         else:
-            raise IOError, "LoadScanData unknown type"
+            raise IOError("LoadScanData unknown type")
 
     def __GetMeshSize(self, scan_array):
         """ Given the scandata array, return the size tuple of the mesh
@@ -280,7 +280,7 @@ class SpecFileLayer:
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
                 except: 
-                    raise IOError, "SF_SCAN+SF_MCA read failed"
+                    raise IOError("SF_SCAN+SF_MCA read failed")
             elif scan_type==SF_NMCA:
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
@@ -293,7 +293,7 @@ class SpecFileLayer:
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
                 except: 
-                    raise IOError, "SF_NMCA read failed"
+                    raise IOError("SF_NMCA read failed")
             elif scan_type==SF_MESH+SF_MCA:
                 try:
                     scan_array= scan_obj.data()
@@ -306,7 +306,7 @@ class SpecFileLayer:
                             scan_data[idx1,idx2,:]= scan_obj.mca(mca_no)
                         return  self.AppendPage(scan_info, scan_data)
                 except: 
-                    raise IOError, "SF_MESH+SF_MCA read failed"
+                    raise IOError("SF_MESH+SF_MCA read failed")
             elif scan_type==SF_SCAN+SF_NMCA:
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
@@ -323,9 +323,9 @@ class SpecFileLayer:
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
                 except:
-                    raise IOError, "SF_SCAN+SF_NMCA read failed"
+                    raise IOError("SF_SCAN+SF_NMCA read failed")
             elif scan_type==SF_MESH+SF_NMCA:
-                    raise IOError, "SF_MESH+SF_NMCA not yet implemented"
+                    raise IOError("SF_MESH+SF_NMCA not yet implemented")
                     scan_data= None
 
         elif len(key_split)==3:
@@ -337,23 +337,23 @@ class SpecFileLayer:
                                 mca_no= int(key_split[2])
                                 scan_data= scan_obj.mca(mca_no)
                         except: 
-                                raise IOError, "Single MCA read failed"
+                                raise IOError("Single MCA read failed")
                 if scan_data is not None:
                         scan_info.update(self.__GetMcaInfo(mca_no, scan_obj, scan_info))
                         return self.AppendPage(scan_info, scan_data)
 
         elif len(key_split)==4:
                 if int(key_split[3]) > scan_info["NbMcaDet"]:
-                    raise  IOError, \
+                    raise  IOError(\
                            "Asked to read Mca %d having % d mca " % \
-                           (int(key_split[3]), scan_info["NbMcaDet"])
+                           (int(key_split[3]), scan_info["NbMcaDet"]))
 
                 if scan_type==SF_SCAN+SF_NMCA:
                     try:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
                     except: 
-                        raise IOError, "SF_SCAN+SF_NMCA read failed"
+                        raise IOError("SF_SCAN+SF_NMCA read failed")
                 elif scan_type==SF_MESH+SF_MCA:
                     try:
                         scan_array= scan_obj.data()
@@ -362,16 +362,16 @@ class SpecFileLayer:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
                     except: 
-                        raise IOError, "SF_MESH+SF_MCA read failed"
+                        raise IOError("SF_MESH+SF_MCA read failed")
                 elif scan_type&SF_NMCA or scan_type&SF_MCA:
                     try:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
                     except: 
-                        raise IOError, "SF_SCAN+SF_NMCA read failed"
+                        raise IOError("SF_SCAN+SF_NMCA read failed")
                 else:
-                    print "Unknown scan!!!!!!!!!!!!!!!!"
-                    raise IOError,"Unknown scan!!!!!!!!!!!!!!!!"
+                    print("Unknown scan!!!!!!!!!!!!!!!!")
+                    raise IOError("Unknown scan!!!!!!!!!!!!!!!!")
                 if scan_data is not None:
                         scan_info.update(self.__GetMcaInfo(mca_no, scan_obj, scan_info))
                         return self.AppendPage(scan_info, scan_data)
@@ -461,7 +461,7 @@ class SpecFileLayer:
         count= string.count(key, '.')
         if (count==1): return "scan"
         elif (count==2) or (count==3): return "mca"
-        else: raise "SpecFileData: Invalid key"
+        else: raise KeyError("SpecFileData: Invalid key %s" % key)
 
 
     def __GetScanInfo(self, scankey, scandata=None):
@@ -563,7 +563,7 @@ class SpecFileLayer:
             except: lines=0
             if nums[3]==0: mca_no=int(nums[2])
             else:          mca_no=((int(nums[3])-1)*lines)+int(nums[2])
-        else: raise "SpecFileData: Invalid key"
+        else: raise KeyError("SpecFileData: Invalid key %s" % key)
         return (sel_key,mca_no)
 
 
@@ -575,35 +575,32 @@ if __name__ == "__main__":
     import sys,time
 
     if len(sys.argv) not in [2,3]:
-        print "Usage: %s <filename> [<key_to_load>]"
+        print("Usage: %s <filename> [<key_to_load>]")
         sys.exit()
 
     filename= sys.argv[1]
     sf= SpecFileLayer()
     if not sf.SetSource(filename):
-        print "ERROR: cannot open file", filename
+        print("ERROR: cannot open file %s" % filename)
         sys.exit()
     if len(sys.argv)==2:
         info= sf.GetSourceInfo()
-        print "Filename        :", sf.SourceName
-        print "Number of scans :", info["Size"]
+        print("Filename        :", sf.SourceName)
+        print("Number of scans :", info["Size"])
 
-        print "S# - command - pts - mca - type"
+        print("S# - command - pts - mca - type")
         for (s,c,p,m,t) in zip(info["KeyList"],info["Commands"],info["NumPts"],info["NumMca"],info["ScanType"]):
-                print s,"-",c,"-",p,"-",m,"-",t
-        print "KeyList = ",info["KeyList"]
+                print(s,"-",c,"-",p,"-",m,"-",t)
+        print("KeyList = ",info["KeyList"])
         #print info['Channel0']
 
     if len(sys.argv)==3:
         info, data = sf.LoadSource(sys.argv[2])
 
-        print "Filename   :", sf.SourceName
-        print "Loaded key :", info["Key"]
-        print "Header     :"
+        print("Filename   :", sf.SourceName)
+        print("Loaded key :", info["Key"])
+        print("Header     :")
         for i,v in info.items():
-                print "-", i, ":", v
-        print "Data Shape :", data.shape
+                print("-", i, ":", v)
+        print("Data Shape :", data.shape)
 
-
-
- 
