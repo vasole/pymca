@@ -238,22 +238,10 @@ class SpecFileDataInfo(qt.QTabWidget):
                 wid = qt.QTextEdit()
                 wid.setReadOnly(1)
             if qt.qVersion() < '4.0.0':
-                htmlText = ""
-                for item in text:
-                    if htmlText == "":
-                        htmlText += item
-                    else:
-                        htmlText += "\n" + item
-                wid.setText(htmlText)
+                wid.setText("\n".join(text))
                 self.addTab(wid, "Scan Header")
             else:
-                htmlText = ""
-                for item in text:
-                    if htmlText == "":
-                        htmlText += item
-                    else:
-                        htmlText += "<BR>" + item
-                wid.insertHtml(htmlText)
+                wid.insertHtml("<BR>".join(text))
                 self.addTab(wid, "Scan Header")
 
     def __createEDFHeaderText(self):
@@ -290,22 +278,10 @@ class SpecFileDataInfo(qt.QTabWidget):
                 wid = qt.QTextEdit()
                 wid.setReadOnly(1)
             if qt.qVersion() < '4.0.0':
-                htmlText = ""
-                for item in text:
-                    if htmlText == "":
-                        htmlText += item
-                    else:
-                        htmlText += "\n" + item
-                wid.setText(htmlText)
+                wid.setText("\n".join(text))
                 self.addTab(wid, "File Header")
             else:
-                htmlText = ""
-                for item in text:
-                    if htmlText == "":
-                        htmlText += item
-                    else:
-                        htmlText += "<BR>" + item
-                wid.insertHtml(htmlText)
+                wid.insertHtml("<BR>".join(text))
                 self.addTab(wid, "File Header")
 
     def closeEvent(self, event):
