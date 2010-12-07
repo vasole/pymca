@@ -30,7 +30,6 @@ if sys.version < '3.0':
     import ConfigParser
 else:
     import configparser as ConfigParser
-import types
 try:
     import numpy.oldnumeric as Numeric
 except:
@@ -97,7 +96,8 @@ class ConfigDict(dict):
 
         if sections is None:
             readsect= cfgsect
-        else:readsect= [ sect for sect in cfgsect if sect in sections ]
+        else:
+            readsect= [ sect for sect in cfgsect if sect in sections ]
 
         for sect in readsect:
             ddict= self
@@ -168,30 +168,30 @@ class ConfigDict(dict):
         listkey= []
         valkey= []
         for key in dict.keys():
-            if type(dict[key])==types.ListType:
+            if type(dict[key]) == type([]):
                 listkey.append(key)
-            elif type(dict[key])==types.DictType:
+            elif type(dict[key]) == type({}):
                 dictkey.append(key)
             else:
                 valkey.append(key)
 
         for key in valkey:
             if type(dict[key])== Numeric.ArrayType:
-                fp.write('%s =' % key + ' [ '+string.join([str(val) for val in dict[key]], ' ')+' ]\n')
+                fp.write('%s =' % key + ' [ '+ ' '.join([str(val) for val in dict[key]])+' ]\n')
             else:
                 fp.write('%s = %s\n'%(key, dict[key]))
 
         for key in listkey:
             fp.write('%s = '%key)
-            list= []
+            llist= []
             sep= ', '
             for item in dict[key]:
-                if type(item)==types.ListType:
-                    list.append(string.join([str(val) for val in item], ', '))
+                if type(item)==type([]):
+                    llist.append(', '.join([str(val) for val in item]))
                     sep= '\n\t'
                 else:
-                    list.append(str(item))
-            fp.write('%s\n'%(string.join(list, sep)))
+                    llist.append(str(item))
+            fp.write('%s\n'%(sep.join(llist)))
         #if sections is not None:
         #    print "dictkey before = ",dictkey
         #    dictkey= [ key for key in dictkey if key in sections ]
