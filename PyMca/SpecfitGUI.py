@@ -197,8 +197,8 @@ class SpecfitGUI(qt.QWidget):
                     self.guiconfig.FunComBox.setCurrentIndex(i)
                 self.funevent(self.specfit.fitconfig['fittheory'])
             except:
-                print("Function not in list %s"\
-                      self.specfit.fitconfig['fittheory'))
+                print("Function not in list %s" %\
+                      self.specfit.fitconfig['fittheory'])
                 self.funevent(self.specfit.theorylist[0])
             #current background
             try:
@@ -209,7 +209,7 @@ class SpecfitGUI(qt.QWidget):
                 else:
                     self.guiconfig.BkgComBox.setCurrentIndex(i)
             except:
-                print("Background not in list %s"\
+                print("Background not in list %s" %\
                       self.specfit.fitconfig['fitbkg'])
                 self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             #and all the rest
