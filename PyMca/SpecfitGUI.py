@@ -56,13 +56,17 @@ class SpecfitGUI(qt.QWidget):
             self.eh = eh
         if specfit is None:
             self.specfit = Specfit.Specfit(eh=self.eh)
+        else:
+            self.specfit = specfit
+
+        #initialize the default fitting functions in case
+        #none is present
+        if not len(self.specfit.theorylist):
             funsFile = "SpecfitFunctions.py"
             if not os.path.exists(funsFile):
                 funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
                                 funsFile)
             self.specfit.importfun(funsFile)
-        else:
-            self.specfit = specfit
         
         #copy specfit configure method for direct access
         self.configure=self.specfit.configure
