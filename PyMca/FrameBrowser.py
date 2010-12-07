@@ -309,7 +309,7 @@ def test1(args):
     app=QtGui.QApplication(args)
     w=HorizontalSliderWithBrowser()
     def slot(ddict):
-        print ddict
+        print(ddict)
     QtCore.QObject.connect(w,
                        QtCore.SIGNAL("valueChanged(int)"),
                        slot)
@@ -322,7 +322,7 @@ def test2(args):
     app=QtGui.QApplication(args)
     w=FrameBrowser()
     def slot(ddict):
-        print ddict
+        print(ddict)
     QtCore.QObject.connect(w,
                        QtCore.SIGNAL("indexChanged"),
                        slot)

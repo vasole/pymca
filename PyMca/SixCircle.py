@@ -290,24 +290,24 @@ if __name__ == "__main__":
     d = SixCircle()
     d.setLambda(wavelength)
     d.setUB(UB)
-    print "H = 0 K = 0 L = 1"
+    print("H = 0 K = 0 L = 1")
     delta, theta, chi, phi, mu, gamma = 13.5558, 6.77779, -90, 0.0, 0.0, 0.0
-    print d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma)
-    print "H = 0 K = 1 L = 0"
+    print(d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma))
+    print("H = 0 K = 1 L = 0")
     delta, theta, chi, phi, mu, gamma = 13.5558, 96.77779, -90, 0.0, 0.0, 0.0
-    print d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma)
-    print "H = 1 K = 1 L = 1"
+    print(d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma))
+    print("H = 1 K = 1 L = 1")
     delta, theta, chi, phi, mu, gamma = 23.5910, 47.0595, -135., 0.0, 0.0, 0.0
-    print d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma)
-    print "H = 2 K = -1 L = 0"
+    print(d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma))
+    print("H = 2 K = -1 L = 0")
     delta, theta, chi, phi, mu, gamma = 30.6035, -11.2635, 180.0, 0.0, 0.0, 0.0
-    print d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma)
+    print(d.getHKL(delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma))
 
-    print "H = 2 K = -1 L = 0"
-    print getHKL(wavelength, UB, delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma)
+    print("H = 2 K = -1 L = 0")
+    print(getHKL(wavelength, UB, delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma))
 
     if 0:
-        print "DIDIER Image"
+        print("DIDIER Image")
         wavelength = 1.12711884437
         UB = [1.99593e-16, 2.73682e-16, -1.54, -1.08894, 1.08894, 1.6083e-16, 1.08894, 1.08894, 9.28619e-17]
         chi = 90.
@@ -316,6 +316,6 @@ if __name__ == "__main__":
         mu = 0.0
         gamma = 12.3
         delta = 23.23
-        print getHKL(wavelength, UB, delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma)
+        print(getHKL(wavelength, UB, delta=delta, theta=theta, chi=chi, phi=phi, mu=mu, gamma=gamma))
     
 

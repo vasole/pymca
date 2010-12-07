@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -204,8 +204,8 @@ def test():
                 dataObject = source.getDataObject(key)
                 w.addImage(dataObject.data, os.path.basename(fname)+" "+key)
     else:
-        print "This is a just test method using 100 x 100 matrices."
-        print "Run PyMcaPostBatch to have file loading capabilities." 
+        print("This is a just test method using 100 x 100 matrices.")
+        print("Run PyMcaPostBatch to have file loading capabilities.") 
         array1 = Numeric.arange(10000)
         array2 = Numeric.resize(Numeric.arange(10000), (100, 100))
         array2 = Numeric.transpose(array2)

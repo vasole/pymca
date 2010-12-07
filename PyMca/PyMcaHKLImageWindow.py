@@ -237,6 +237,6 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
 
         if DEBUG:
             for key in ddict.keys():
-                print key, ddict[key]
+                print(key, ddict[key])
 
         return ddict

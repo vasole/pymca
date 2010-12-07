@@ -111,7 +111,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                              self._replaceSelection)
             
     def _addSelection(self, selectionlist):
-        if DEBUG:print "_addSelection(self, selectionlist)",selectionlist
+        if DEBUG:
+            print("_addSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -133,7 +134,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                     if dataObject.y is not None:
                         dataObject.data = dataObject.y[0]
                     else:
-                        print "Nothing to plot"
+                        print("Nothing to plot")
             self.dataObjectsList = [legend]
             self.dataObjectsDict = {legend:dataObject}
             shape = dataObject.data.shape 
@@ -162,7 +163,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         shape = dataObject.data.shape
         if len(shape) == 2:
             if index > 0:
-                raise IndexError, "Only one image in stack"
+                raise IndexError("Only one image in stack")
             return dataObject.data
         if len(shape) == 3:
             data = dataObject.data[index:index+1,:,:]
@@ -177,7 +178,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             i = int(index/(acquisitionShape[-1]*acquisitionShape[-2]))
             return dataObject.data[i, j]
 
-        raise IndexError, "Unhandled dimension"
+        raise IndexError("Unhandled dimension")
 
     def setPlotEnabled(self, value=True):
         self._plotEnabled = value
@@ -189,7 +190,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 pass
             
     def _removeSelection(self, selectionlist):
-        if DEBUG:print "_removeSelection(self, selectionlist)",selectionlist
+        if DEBUG:
+            print("_removeSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -205,7 +207,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 #self.plotImage(True)
 
     def _replaceSelection(self, selectionlist):
-        if DEBUG:print "_replaceSelection(self, selectionlist)",selectionlist
+        if DEBUG:
+            print("_replaceSelection(self, selectionlist)",selectionlist)
         self._addSelection(selectionlist)
 
     def closeEvent(self, event):
@@ -244,7 +247,7 @@ class TimerLoop:
         self.__timer.start(period)
 
     def test(self):
-        print "Test function called"
+        print("Test function called")
 
 if __name__ == "__main__":
     import DataObject
@@ -260,7 +263,8 @@ if __name__ == "__main__":
     def buildSelection(dataObject, name = "image_data0"):
         key = dataObject.info['Key']
         def dataObjectDestroyed(ref, dataObjectKey=key):
-            if DEBUG: print "dataObject distroyed key = ", key
+            if DEBUG:
+                print("dataObject distroyed key = %s" % key)
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
         selection = {}
         selection['SourceType'] = 'SPS'
@@ -297,7 +301,7 @@ if __name__ == "__main__":
         flag = counter % 6
         if flag == 0:
             #add x1
-            print "Adding X1"
+            print("Adding X1")
             dataObject = buildDataObject(x1)
             selection = buildSelection(dataObject, 'X1')
             if PYMCA:
@@ -306,7 +310,7 @@ if __name__ == "__main__":
                 w._addSelection(selection)
         elif flag == 1:
             #add x2
-            print "Adding X2"
+            print("Adding X2")
             dataObject = buildDataObject(x2)
             selection = buildSelection(dataObject, 'X2')
             if PYMCA:
@@ -315,7 +319,7 @@ if __name__ == "__main__":
                 w._addSelection(selection)
         elif flag == 2:
             #add x1
-            print "Changing X1"
+            print("Changing X1")
             dataObject = buildDataObject(x2)
             selection = buildSelection(dataObject, 'X1')
             if PYMCA:
@@ -324,7 +328,7 @@ if __name__ == "__main__":
                 w._addSelection(selection)
         elif flag == 1:
             #add x2
-            print "Changing X2"
+            print("Changing X2")
             dataObject = buildDataObject(x2)
             selection = buildSelection(dataObject, 'X1')
             if PYMCA:
@@ -333,7 +337,7 @@ if __name__ == "__main__":
                 w._addSelection(selection)
         elif flag == 4:
             #replace x1
-            print "Replacing by new X1"
+            print("Replacing by new X1")
             dataObject = buildDataObject(x1-x2)
             selection = buildSelection(dataObject, 'X1')
             if PYMCA:
@@ -342,7 +346,7 @@ if __name__ == "__main__":
                 w._replaceSelection(selection)
         else:
             #replace by x2
-            print "Replacing by new X2"
+            print("Replacing by new X2")
             dataObject = buildDataObject(x2-x1)
             selection = buildSelection(dataObject, 'X2')
             if PYMCA:

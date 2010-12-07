@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -55,7 +55,8 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG: print "printPreview id = ", id(self.printPreview)
+        if DEBUG:
+            print("printPreview id = %d" % id(self.printPreview))
 
     def sizeHint(self):
         return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
@@ -280,7 +281,8 @@ class RGBCorrelatorGraph(qt.QWidget):
         return tb
 
     def _zoomReset(self, replot=None):
-        if DEBUG:print "_zoomReset"
+        if DEBUG:
+            print("_zoomReset")
         if replot is None:
             replot = True
         if self.graph is not None:

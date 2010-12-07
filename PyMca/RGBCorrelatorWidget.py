@@ -254,7 +254,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.toggleSlidersButton.setIcon(self._slidersOnIcon)
         
     def _sliderSlot(self, ddict):
-        if DEBUG: print "RGBCorrelatorWidget._sliderSlot()"
+        if DEBUG:
+            print("RGBCorrelatorWidget._sliderSlot()")
         if self.__imageLength is None: return
         tableDict = self.tableWidget.getElementSelection()
         if ddict['event'] == 'redChanged':
@@ -286,7 +287,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.__recolor(['r', 'g', 'b'])
             
     def _tableSlot(self, ddict):
-        if DEBUG: print "RGBCorrelatorWidget._tableSlot()"
+        if DEBUG:
+            print("RGBCorrelatorWidget._tableSlot()")
         if self.__imageLength is None: return
         if ddict['r'] == []:ddict['r'] = None
         if ddict['g'] == []:ddict['g'] = None
@@ -419,7 +421,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
         if colormap not in COLORMAPLIST:
-            raise ValueError, "Unknown color scheme %s" % colormap
+            raise ValueError("Unknown color scheme %s" % colormap)
 
         if (datamin is None) or (datamax is None):
             #spslut already calculates min and max
@@ -471,8 +473,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 image = Numeric.resize(image,
                          (self.__imageShape[0], self.__imageShape[1]))
             else:
-                raise ValueError, "Image cannot be reshaped to %d x %d" % \
-                          (self.__imageShape[0], self.__imageShape[1])  
+                raise ValueError("Image cannot be reshaped to %d x %d" % \
+                          (self.__imageShape[0], self.__imageShape[1]))
 
         if label not in self._imageList:
             self._imageList.append(label)
@@ -579,8 +581,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         for value in shape:
             length *= value
         if length != self.__imageLength:
-            raise ValueError, "New length %d different of old length %d" % \
-                    (length, self.__imageLength)
+            raise ValueError("New length %d different of old length %d" % \
+                    (length, self.__imageLength))
         self.__imageShape = shape
         self._updateSizeLabel()
         for key in self._imageDict.keys():
@@ -595,8 +597,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         for value in shape:
             length *= value
         if length != self.__imageLength:
-            raise ValueError, "New length %d different of old length %d" % \
-                    (length, self.__imageLength)
+            raise ValueError("New length %d different of old length %d" % \
+                    (length, self.__imageLength))
         self.__imageShape = (shape[0], shape[1])
         self._updateSizeLabel()
         for key in self._imageDict.keys():

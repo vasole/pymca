@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -152,7 +152,8 @@ class RGBCorrelatorSlider(qt.QWidget):
                       ddict)
 
     def _redSliderChanged(self, ddict):
-        if DEBUG: print "RGBCorrelatorSlider._redSliderChanged()"
+        if DEBUG:
+            print("RGBCorrelatorSlider._redSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "redChanged"
             self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
@@ -160,14 +161,16 @@ class RGBCorrelatorSlider(qt.QWidget):
             
 
     def _greenSliderChanged(self, ddict):
-        if DEBUG: print "RGBCorrelatorSlider._greenSliderChanged()"
+        if DEBUG:
+            print("RGBCorrelatorSlider._greenSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "greenChanged"
             self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
                       ddict)
 
     def _blueSliderChanged(self, ddict):
-        if DEBUG: print "RGBCorrelatorSlider._blueSliderChanged()"
+        if DEBUG:
+            print("RGBCorrelatorSlider._blueSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "blueChanged"
             self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
@@ -204,7 +207,7 @@ def test():
                        qt.SLOT('quit'))
 
     def slot(ddict):
-        print "received dict = ", ddict
+        print("received dict = ", ddict)
     w = RGBCorrelatorSlider()
     app.connect(w, qt.SIGNAL("RGBCorrelatorSliderSignal"), slot)
     w.show()

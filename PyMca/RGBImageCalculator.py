@@ -184,7 +184,8 @@ class RGBImageCalculator(qt.QWidget):
         self._matplotlibSaveImage.raise_()
 
     def plotImage(self, update = True):
-        if DEBUG:print"plotImage", update
+        if DEBUG:
+            print ("plotImage", update)
         if self._imageData is None:
             self.graphWidget.graph.clear()
         if update:
@@ -232,7 +233,8 @@ class RGBImageCalculator(qt.QWidget):
                                 (colormap[2],colormap[3]))
         
     def _calculateClicked(self):
-        if DEBUG: print "Calculate clicked"
+        if DEBUG:
+            print("Calculate clicked")
         text = str(self.mathExpression.text())
         if not len(text):
             qt.QMessageBox.critical(self, "Calculation Error",
@@ -261,9 +263,12 @@ class RGBImageCalculator(qt.QWidget):
         self.name.setText("(%s)" % name)
             
     def _addImageClicked(self):
-        if DEBUG: print "Add image clicked"
-        if self._imageData is None:return
-        if self._imageData == []:return
+        if DEBUG:
+            print("Add image clicked")
+        if self._imageData is None:
+            return
+        if self._imageData == []:
+            return
         text = str(self.name.text())
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
@@ -276,7 +281,8 @@ class RGBImageCalculator(qt.QWidget):
                   ddict)
 
     def _removeImageClicked(self):
-        if DEBUG: print "remove image clicked"
+        if DEBUG:
+            print("remove image clicked")
         text = str(self.name.text())
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
@@ -286,7 +292,8 @@ class RGBImageCalculator(qt.QWidget):
                   text)
 
     def _replaceImageClicked(self):
-        if DEBUG: print "remove image clicked"
+        if DEBUG:
+            print("replace image clicked")
         text = str(self.name.text())
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
@@ -364,7 +371,8 @@ class RGBImageCalculator(qt.QWidget):
         self.__imageColormapDialog._update()
 
     def updateImageColormap(self, *var):
-        if DEBUG:print "updateImageColormap",var 
+        if DEBUG:
+            print("updateImageColormap",var)
         if len(var) > 6:
             self.__imageColormap = [var[0],
                              var[1],
