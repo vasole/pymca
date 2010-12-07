@@ -185,7 +185,7 @@ class QSourceSelector(qt.QWidget):
                 else:
                     #if sys.platform == 'win32':
                     #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
-                    if PyMcaDirs.nativeFileDialogs:
+                    if (sys.version < '3.0') and PyMcaDirs.nativeFileDialogs:
                         filetypes = ""
                         for filetype in self.fileTypeList:
                             filetypes += filetype+"\n"
