@@ -53,11 +53,18 @@ class ScanFit(qt.QWidget):
         self.headerlabel.setAlignment(qt.Qt.AlignHCenter)       
         self.setheader('<b>Fit of XXXXXXXXXX from X XXXXX to XXXX<\b>')
         ##############
-        funsFile = "SpecfitFunctions.py"
-        if not os.path.exists(funsFile):
-            funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
-                                "SpecfitFunctions.py")
-        self.specfit.importfun(funsFile)
+        if not len(self.specfit.theorylist):
+            funsFile = "SpecfitFunctions.py"
+            if not os.path.exists(funsFile):
+                funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
+                                funsFile)
+            self.specfit.importfun(funsFile)
+        if 'Area Gaussians' not in self.specfit.theorylist:
+            funsFile = "SpecfitFunctions.py"
+            if not os.path.exists(funsFile):
+                funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
+                                funsFile)
+            self.specfit.importfun(funsFile)
         self.specfit.settheory('Area Gaussians')
         self.specfit.setbackground('Linear')
         fitconfig = {}
@@ -336,8 +343,8 @@ class ScanFit(qt.QWidget):
 
     def setConfiguration(self, fitconfig):
         self.specfit.configure(**fitconfig)
-        self.specfitGUI.updateGUI(configuration=fitconfig)        
-       
+        self.specfitGUI.updateGUI(configuration=fitconfig)
+
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)

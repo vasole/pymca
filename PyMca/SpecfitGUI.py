@@ -197,17 +197,20 @@ class SpecfitGUI(qt.QWidget):
                     self.guiconfig.FunComBox.setCurrentIndex(i)
                 self.funevent(self.specfit.fitconfig['fittheory'])
             except:
-                print("Function not in list")
+                print("Function not in list %s"\
+                      self.specfit.fitconfig['fittheory'))
                 self.funevent(self.specfit.theorylist[0])
             #current background
             try:
-                i=1+self.specfit.bkgdict.keys().index(self.specfit.fitconfig['fitbkg'])
+                #the list conversion is needed in python 3.
+                i=1+list(self.specfit.bkgdict.keys()).index(self.specfit.fitconfig['fitbkg'])
                 if QTVERSION < '4.0.0':
                     self.guiconfig.BkgComBox.setCurrentItem(i)
                 else:
                     self.guiconfig.BkgComBox.setCurrentIndex(i)
             except:
-                print("Background not in list")
+                print("Background not in list %s"\
+                      self.specfit.fitconfig['fitbkg'])
                 self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             #and all the rest
             if configuration['McaMode']:            
@@ -641,6 +644,3 @@ if __name__ == "__main__":
     else:
         w.show()
         a.exec_()
-
-
-    

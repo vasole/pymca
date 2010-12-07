@@ -290,7 +290,7 @@ class Specfit:
                 del(self.filterlist[i])
         return 0
 
-    def addtheory(self,*vars,**kw):
+    def addtheory(self, *vars, **kw):
         """
         method addtheory(self,*vars,**kw)
         Usage: self.addtheory(theory,function,parameters,estimate)
@@ -373,6 +373,7 @@ class Specfit:
             Returns 0 if everything went fine or a positive number in-
             dicating the offending parameter 
         """
+        print("addbackground called")
         status=0
         if len(vars) > 0:
             varslist=list(vars)

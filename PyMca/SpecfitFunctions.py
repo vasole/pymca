@@ -249,7 +249,6 @@ class SpecfitFunctions:
         bterm = param[1] * t + param[0]
         return gterm + bterm
 
-
     def estimate(self,x,y,z,xscaling=1.0,yscaling=1.0):
         ngauss = input(' Number of Gaussians : ')
         ngauss=int(ngauss)
