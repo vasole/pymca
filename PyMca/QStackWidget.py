@@ -739,9 +739,9 @@ class QStackWidget(StackBase.StackBase,
 
         if DEBUG:
             if self._slave is not None:
-                print "MASTER  setSelectionMask CALLED"
+                print("MASTER  setSelectionMask CALLED")
             elif self._masterStack is not None:
-                print "SLAVE setSelectionMask CALLED"
+                print("SLAVE setSelectionMask CALLED")
 
         #inform built in widgets
         for widget in [self.stackWidget, self.roiWidget]:
@@ -762,7 +762,7 @@ class QStackWidget(StackBase.StackBase,
             if instance_id not in instanceList:
                 #Originated by the master
                 if DEBUG:
-                    print "INFORMING SLAVE"
+                    print("INFORMING SLAVE")
                 self._slave.setSelectionMask(mask, instance_id=id(self))
 
         if self._masterStack is not None:
@@ -774,7 +774,7 @@ class QStackWidget(StackBase.StackBase,
             if instance_id in instanceList:
                 #Originated by the slave
                 if DEBUG:
-                    print "INFORMING MASTER"
+                    print("INFORMING MASTER")
                 self._masterStack.setSelectionMask(mask, instance_id=id(self))
         
         #Inform plugins
@@ -880,8 +880,8 @@ if __name__ == "__main__":
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except:
+        print(sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
     filepattern=None
@@ -922,7 +922,7 @@ if __name__ == "__main__":
             sys.exit(QEDFStackWidget.runAsMain())
     if filepattern is not None:
         if (begin is None) or (end is None):
-            raise ValueError, "A file pattern needs at least a set of begin and end indices"
+            raise ValueError("A file pattern needs at least a set of begin and end indices")
     app = qt.QApplication([])
     widget = QStackWidget()
     w = StackSelector.StackSelector(widget)

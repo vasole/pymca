@@ -75,7 +75,7 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 
 if QWTVERSION4:
-    raise ImportError,"QEDFStackWidget needs Qwt5"
+    raise ImportError("QEDFStackWidget needs Qwt5")
 
 PCA = False
 if QTVERSION > '4.0.0':
@@ -551,7 +551,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
-                        raise threadResult[1],threadResult[2]
+                        raise Exception(threadResult[1],threadResult[2])
             self.originalPlot()
             #self.mcaWidget.graph.newcurve("background", Numeric.arange(len(self.b)), self.b)
             #self.mcaWidget.graph.replot()
@@ -784,11 +784,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
                             if threadResult[0] == "Exception":
-                                raise threadResult[1],threadResult[2]
+                                raise Exception(threadResult[1],threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                     if DEBUG:
-                        print nnmaParameters['methodlabel'], \
-                              "Elapsed = ", time.time() - e0
+                        print("%s Elapsed = %f " %\
+                              (nnmaParameters['methodlabel'],\
+                              time.time() - e0))
                 self.nnmaWindow.setSelectionMask(self.__selectionMask,
                                                 plot=False)
                 self.nnmaWindow.setPCAData(images,
@@ -874,11 +875,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
                             if threadResult[0] == "Exception":
-                                raise threadResult[1],threadResult[2]
+                                raise Exception(threadResult[1],threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                     if DEBUG:
-                        print pcaParameters['methodlabel'], \
-                              "Elapsed = ", time.time() - e0
+                        print("%s Elapsed = %f" %\
+                              (pcaParameters['methodlabel'], \
+                              time.time() - e0))
                 self.pcaWindow.setSelectionMask(self.__selectionMask,
                                                 plot=False)
 
@@ -1110,7 +1112,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                      1,
                                                      anchorslist)
                         self.stack.data[i, :, j] -= data
-        if DEBUG:print "elapsed = ", time.time() - t0
+        if DEBUG:
+            print("elapsed = %f" % (time.time() - t0))
         #self.originalPlot()
 
     def roiSubtractBackground(self):
@@ -1478,7 +1481,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
             #original ICR mca
             if DEBUG:
-                print "(self.otherIndex, self.fileIndex) = ", (self.otherIndex, self.fileIndex)
+                print("(self.otherIndex, self.fileIndex) = (5d, %d)" %\
+                      (self.otherIndex, self.fileIndex))
             i = max(self.otherIndex, self.fileIndex)
             j = min(self.otherIndex, self.fileIndex)                
             mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j) * 1.0
@@ -1511,10 +1515,11 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                               self.__stackImageData)
                     mcaData0[i] = tmpData.sum()
             if DEBUG:
-                print "Print dynamic loading elapsed = ", time.time() -t0
+                print("Print dynamic loading elapsed = %f" %\
+                      (time.time() -t0))
 
         if DEBUG:
-            print "__stackImageData.shape = ",  self.__stackImageData.shape               
+            print("__stackImageData.shape = ",  self.__stackImageData.shape)
         calib = self.stack.info['McaCalib']
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
@@ -1747,7 +1752,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                   
                         background = 0.5*(i2-i1)*(leftImage+rightImage)
                     if DEBUG:
-                        print "ROI image calculation elapsed = ", time.time() - t0
+                        print("ROI image calculation elapsed = %f" %\
+                              (time.time() - t0))
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     if isinstance(self.stack.data, numpy.ndarray):
@@ -1792,7 +1798,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             if i == (i2-1):
                                 rightImage = tmpData
                         if DEBUG:
-                            print "Dynamic ROI elapsed = ", time.time() - t0
+                            print("Dynamic ROI elapsed = %f" %\
+                                  (time.time() - t0))
                         if i2 > i1:
                             background = (leftImage + rightImage) * 0.5 * (i2-i1)
                 else:
@@ -1833,7 +1840,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                        
                         background = 0.5*(i2-i1)*(leftImage+rightImage)
                     if DEBUG:
-                        print "ROI image calculation elapsed = ", time.time() - t0
+                        print("ROI image calculation elapsed = %f" %\
+                              (time.time() - t0))
             else:
                 #self.fileIndex = 2
                 if self.mcaIndex == 0:
@@ -1881,8 +1889,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                          '%s %.6g' % (cursor,xw[(i2-1)]),
                                                          '%s Background' %title])
             except:
-                print "Error on alternative ROI window:"
-                print sys.exc_info()
+                print("Error on alternative ROI window:")
+                print(sys.exc_info())
+                return
             self.__stackBackgroundAnchors = [i1, i2-1]
             if self.roiBackgroundButton.isChecked():
                 self.__ROIImageData =  self.__ROIImageData - self.__ROIImageBackground
@@ -1973,7 +1982,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
     def _stackZoomResetSignal(self):
         if DEBUG:
-            print "_stackZoomResetSignal"
+            print("_stackZoomResetSignal")
         self.stackGraphWidget._zoomReset(replot=False)
         self.plotStackImage(True)
 
@@ -2134,7 +2143,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             arrayMask = (self.__selectionMask > 0)
         cleanMask = numpy.nonzero(arrayMask)
         if DEBUG:
-            print "self.fileIndex, self.mcaIndex", self.fileIndex, self.mcaIndex
+            print("self.fileIndex, self.mcaIndex = %d, %d" %\
+                  (self.fileIndex, self.mcaIndex))
         if DEBUG:
             t0 = time.time()            
         if len(cleanMask[0]) and len(cleanMask[1]):
@@ -2146,7 +2156,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             mcaData += self.stack.data[:,r,c]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 0"
+                            print("Dynamic loading case 0")
                         #no other choice than to read all images
                         #for the time being, one by one
                         for i in xrange(self.stack.data.shape[0]):
@@ -2158,9 +2168,9 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         for r, c in cleanMask:
                             mcaData += self.stack.data[r,:,c]
                     else:
-                        raise IndexError, "Dynamic loading case 1"
+                        raise IndexError("Dynamic loading case 1")
                 else:
-                    raise IndexError, "Wrong combination of indices. Case 0"
+                    raise IndexError("Wrong combination of indices. Case 0")
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     if isinstance(self.stack.data, numpy.ndarray):
@@ -2168,7 +2178,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             mcaData += self.stack.data[:,r,c]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 2"
+                            print("Dynamic loading case 2")
                         #no other choice than to read all images
                         #for the time being, one by one
                         for i in xrange(self.stack.data.shape[0]):
@@ -2183,7 +2193,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             mcaData += self.stack.data[r,c,:]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 3"
+                            print("Dynamic loading case 3")
                         #try to minimize access to the file
                         row_dict = {}
                         for r, c in cleanMask:
@@ -2197,21 +2207,21 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             tmpMcaData.shape = 1, -1
                             mcaData += numpy.sum(tmpMcaData,0)
                 else:
-                    raise IndexError, "Wrong combination of indices. Case 1"
+                    raise IndexError("Wrong combination of indices. Case 1")
             elif self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     if isinstance(self.stack.data, numpy.ndarray):
                         for r, c in cleanMask:
                             mcaData += self.stack.data[r,:,c]
                     else:
-                        raise IndexError, "Dynamic loading case 4"
+                        raise IndexError("Dynamic loading case 4")
                 elif self.mcaIndex == 2:
                     if isinstance(self.stack.data, numpy.ndarray):
                         for r, c in cleanMask:
                             mcaData += self.stack.data[r,c,:]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 5"
+                            print("Dynamic loading case 5")
                         #try to minimize access to the file
                         row_dict = {}
                         for r, c in cleanMask:
@@ -2225,11 +2235,11 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             tmpMcaData.shape = 1, -1
                             mcaData += numpy.sum(tmpMcaData,0)
                 else:
-                    raise IndexError, "Wrong combination of indices. Case 2"
+                    raise IndexError("Wrong combination of indices. Case 2")
             else:
-                raise IndexError, "File index undefined"
+                raise IndexError("File index undefined")
         if DEBUG:
-            print "Mca sum elapsed = ", time.time() - t0
+            print("Mca sum elapsed = %f" % (time.time() - t0))
         if n_nonselected < npixels:
             mcaData = self.__mcaData0.y[0] - mcaData
 
@@ -2304,7 +2314,8 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.closeEvent(self, event)
 
     def _resetSelection(self):
-        if DEBUG:print "_resetSelection"
+        if DEBUG:
+            print("_resetSelection")
         if self.__stackImageData is None:
             return
         self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
@@ -2424,13 +2435,14 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if type(end) == type(1):
             end = [end]
         if len(begin) != len(end):
-            raise ValueError, "Begin list and end list do not have same length"
+            raise ValueError("Begin list and end list do not have same length")
         if increment is None:
             increment = [1] * len(begin)
         elif type(increment) == type(1):
             increment = [increment]
         if len(increment) != len(begin):
-            raise ValueError, "Increment list and begin list do not have same length"
+            raise ValueError(\
+                "Increment list and begin list do not have same length")
         fileList = []
         if len(begin) == 1:
             for j in range(begin[0], end[0]+increment[0], increment[0]):
@@ -2440,13 +2452,13 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 for k in range(begin[1], end[1]+increment[1], increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
-            raise ValueError, "Cannot handle three indices yet."
+            raise ValueError("Cannot handle three indices yet.")
             for j in range(begin[0], end[0]+increment[0], increment[0]):
                 for k in range(begin[1], end[1]+increment[1], increment[1]):
                     for l in range(begin[2], end[2]+increment[2], increment[2]):
                         fileList.append(pattern % (j, k, l))
         else:
-            raise ValueError, "Cannot handle more than three indices."
+            raise ValueError("Cannot handle more than three indices.")
         return fileList
 
 def runAsMain():
@@ -2460,8 +2472,8 @@ def runAsMain():
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except:
+        print(sys.exc_info()[1])
         sys.exit(1)
     #import time
     #t0= time.time()
@@ -2501,14 +2513,15 @@ def runAsMain():
                 PyMcaDirs.nativeFileDialogs=False                
     if filepattern is not None:
         if (begin is None) or (end is None):
-            raise ValueError, "A file pattern needs a set of begin and end indices"
+            raise ValueError(\
+                "A file pattern needs a set of begin and end indices")
     app = qt.QApplication([])
     w = QEDFStackWidget(master=True)
     if filepattern is not None:
         #get the first filename
         filename =  filepattern % tuple(begin)
         if not os.path.exists(filename):
-            raise IOError, "Filename %s does not exist." % filename
+            raise IOError("Filename %s does not exist." % filename)
         #ignore the args even if present
         args = w.getFileListFromPattern(filepattern, begin, end, increment=increment)
     aifirafile = False
@@ -2527,7 +2540,8 @@ def runAsMain():
                 fileindex = 0
             if filepattern is not None:
                 if len(begin) != 1:
-                    raise IOError, "EDF stack redimensioning not supported yet"
+                    raise IOError(\
+                        "EDF stack redimensioning not supported yet")
             stack = QStack(imagestack=imagestack)
         elif line.startswith('Spectral'):
             stack = OmnicMap.OmnicMap(args[0])
@@ -2543,7 +2557,8 @@ def runAsMain():
             omnicfile = True
         elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
             if not HDF5:
-                raise IOError, "No HDF5 support while trying to read an HDF5 file"  
+                raise IOError(\
+                    "No HDF5 support while trying to read an HDF5 file")
             stack = QHDF5Stack1D.QHDF5Stack1D(args)
             omnicfile = True
         else:
@@ -2663,18 +2678,18 @@ def runAsMain():
                             raise
                         sys.exit(1)
             else:
-                print "Usage: "
-                print "python QEDFStackWidget.py SET_OF_EDF_FILES"
-                print "python QEDFStackWidget.py --begin=0 --end=XX INDEXED_EDF_FILE"
-                print "python QEDFStackWidget.py --begin=0,0 --end=x,y --filepattern='mca_%03d%03d.fio'"
+                print("Usage: ")
+                print("python QEDFStackWidget.py SET_OF_EDF_FILES")
+                print("python QEDFStackWidget.py --begin=0 --end=XX INDEXED_EDF_FILE")
+                print("python QEDFStackWidget.py --begin=0,0 --end=x,y --filepattern='mca_%03d%03d.fio'")
                 sys.exit(1)
         elif os.path.exists(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
         elif os.path.exists("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf"):
             stack.loadIndexedStack("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
         else:
-            print "Usage: "
-            print "python QEDFStackWidget.py SET_OF_EDF_FILES"
+            print("Usage: ")
+            print("python QEDFStackWidget.py SET_OF_EDF_FILES")
             sys.exit(1)
     shape = stack.data.shape
     def quitSlot():

@@ -88,7 +88,7 @@ class StackBase(object):
             return 0
         directory = PLUGINS_DIR
         if not os.path.exists(directory):
-            raise IOError, "Directory:\n%s\ndoes not exist." % directory
+            raise IOError("Directory:\n%s\ndoes not exist." % directory)
 
         self.pluginList = []
         fileList = glob.glob(os.path.join(directory, "*.py"))
@@ -113,12 +113,13 @@ class StackBase(object):
                     self.pluginList.append(plugin)
             except:
                 if DEBUG:
-                    print "Problem importing module %s" % plugin
+                    print("Problem importing module %s" % plugin)
                     raise
         return len(self.pluginList)
 
     def setStack(self, stack, mcaindex=2, fileindex=None):
-        if isinstance(stack, DataObject.DataObject):
+        if isinstance(stack, DataObject.DataObject) or\
+           ("QStack" in ("%s" % type(stack))):
             self._stack = stack
             self._stack.info['SourceName'] = stack.info.get('SourceName',
                                                             "Data of unknown origin")
@@ -161,7 +162,8 @@ class StackBase(object):
             self._stackImageData = numpy.sum(self._stack.data, self.mcaIndex)
             #original ICR mca
             if DEBUG:
-                print "(self.otherIndex, self.fileIndex) = ", (self.otherIndex, self.fileIndex)
+                print("(self.otherIndex, self.fileIndex) = (%d, %d)" %\
+                      (self.otherIndex, self.fileIndex))
             i = max(self.otherIndex, self.fileIndex)
             j = min(self.otherIndex, self.fileIndex)                
             mcaData0 = numpy.sum(numpy.sum(self._stack.data, i), j) * 1.0
@@ -194,10 +196,10 @@ class StackBase(object):
                               self._stackImageData)
                     mcaData0[i] = tmpData.sum()
             if DEBUG:
-                print "Print dynamic loading elapsed = ", time.time() -t0
+                print("Print dynamic loading elapsed = %f" % (time.time() -t0))
 
         if DEBUG:
-            print "__stackImageData.shape = ",  self._stackImageData.shape               
+            print("__stackImageData.shape = ",  self._stackImageData.shape)               
         calib = self._stack.info.get('McaCalib', [0.0, 1.0, 0.0])
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
@@ -256,14 +258,14 @@ class StackBase(object):
                     i1 = min(i1)
                 else:
                     if DEBUG:
-                        print "updateROIImages: nothing to be made"
+                        print("updateROIImages: nothing to be made")
                     return
                 i2 = numpy.nonzero(xw <= ddict['to'])[0]
                 if len(i2):
                     i2 = max(i2) + 1
                 else:
                     if DEBUG:
-                        print "updateROIImages: nothing to be made"
+                        print("updateROIImages: nothing to be made")
                     return
                 pos = 0.5 * (ddict['from'] + ddict['to'])
                 imiddle = max(numpy.nonzero(xw <= pos)[0])
@@ -273,14 +275,14 @@ class StackBase(object):
                     i2 = max(i2)
                 else:
                     if DEBUG:
-                        print "updateROIImages: nothing to be made"
+                        print("updateROIImages: nothing to be made")
                     return
                 i1 = numpy.nonzero(xw <= ddict['to'])[0]
                 if len(i1):
                     i1 = min(i1) + 1
                 else:
                     if DEBUG:
-                        print "updateROIImages: nothing to be made"
+                        print("updateROIImages: nothing to be made")
                     return
                 pos = 0.5 * (ddict['from'] + ddict['to'])
                 imiddle = min(numpy.nonzero(xw <= pos)[0])
@@ -309,7 +311,7 @@ class StackBase(object):
         roiKeys = ['ROI', 'Maximum', 'Minimum', 'Left', 'Middle', 'Right', 'Background']
         nImages = len(roiKeys)
         imageList  = [None] * nImages
-        for i in xrange(nImages):
+        for i in range(nImages):
             key = roiKeys[i]
             imageList[i] = self._ROIImageDict[key]
 
@@ -337,11 +339,11 @@ class StackBase(object):
                     
     def showOriginalImage(self):
         if DEBUG:
-            print "showOriginalImage to be implemented" 
+            print("showOriginalImage to be implemented")
 
     def showOriginalMca(self):
         if DEBUG:
-            print "showOriginalMca to be implemented" 
+            print("showOriginalMca to be implemented")
 
     def showROIImageList(self, imageList, image_names=None):
         self._ROIImageList  = imageList
@@ -393,7 +395,8 @@ class StackBase(object):
             arrayMask = (self._selectionMask > 0)
         cleanMask = numpy.nonzero(arrayMask)
         if DEBUG:
-            print "self.fileIndex, self.mcaIndex", self.fileIndex, self.mcaIndex
+            print("self.fileIndex, self.mcaIndex = %d , %d" %\
+                  (self.fileIndex, self.mcaIndex))
         if DEBUG:
             t0 = time.time()            
         if len(cleanMask[0]) and len(cleanMask[1]):
@@ -405,10 +408,10 @@ class StackBase(object):
                             mcaData += self._stack.data[:,r,c]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 0"
+                            print("Dynamic loading case 0")
                         #no other choice than to read all images
                         #for the time being, one by one
-                        for i in xrange(self._stack.data.shape[0]):
+                        for i in range(self._stack.data.shape[0]):
                             tmpData = self._stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
                             mcaData[i] = (tmpData*arrayMask).sum()
@@ -417,9 +420,9 @@ class StackBase(object):
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r,:,c]
                     else:
-                        raise IndexError, "Dynamic loading case 1"
+                        raise IndexError("Dynamic loading case 1")
                 else:
-                    raise IndexError, "Wrong combination of indices. Case 0"
+                    raise IndexError("Wrong combination of indices. Case 0")
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
@@ -427,10 +430,10 @@ class StackBase(object):
                             mcaData += self._stack.data[:,r,c]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 2"
+                            print("Dynamic loading case 2")
                         #no other choice than to read all images
                         #for the time being, one by one
-                        for i in xrange(self._stack.data.shape[0]):
+                        for i in range(self._stack.data.shape[0]):
                             tmpData = self._stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
                             #multiplication is faster than selection
@@ -442,7 +445,7 @@ class StackBase(object):
                             mcaData += self._stack.data[r,c,:]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 3"
+                            print("Dynamic loading case 3")
                         #try to minimize access to the file
                         row_dict = {}
                         for r, c in cleanMask:
@@ -456,21 +459,21 @@ class StackBase(object):
                             tmpMcaData.shape = 1, -1
                             mcaData += numpy.sum(tmpMcaData,0)
                 else:
-                    raise IndexError, "Wrong combination of indices. Case 1"
+                    raise IndexError("Wrong combination of indices. Case 1")
             elif self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r,:,c]
                     else:
-                        raise IndexError, "Dynamic loading case 4"
+                        raise IndexError("Dynamic loading case 4")
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r,c,:]
                     else:
                         if DEBUG:
-                            print "Dynamic loading case 5"
+                            print("Dynamic loading case 5")
                         #try to minimize access to the file
                         row_dict = {}
                         for r, c in cleanMask:
@@ -484,11 +487,11 @@ class StackBase(object):
                             tmpMcaData.shape = 1, -1
                             mcaData += numpy.sum(tmpMcaData,0)
                 else:
-                    raise IndexError, "Wrong combination of indices. Case 2"
+                    raise IndexError("Wrong combination of indices. Case 2")
             else:
-                raise IndexError, "File index undefined"
+                raise IndexError("File index undefined")
         if DEBUG:
-            print "Mca sum elapsed = ", time.time() - t0
+            print("Mca sum elapsed = %f" % (time.time() - t0))
         if n_nonselected < npixels:
             mcaData = self._mcaData0.y[0] - mcaData
 
@@ -572,7 +575,8 @@ class StackBase(object):
                         rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                   
                     background = 0.5*(i2-i1)*(leftImage+rightImage)
                 if DEBUG:
-                    print "ROI image calculation elapsed = ", time.time() - t0
+                    print("ROI image calculation elapsed = %f "%\
+                          (time.time() - t0))
         elif self.fileIndex == 1:
             if self.mcaIndex == 0:
                 if isinstance(self._stack.data, numpy.ndarray):
@@ -615,7 +619,8 @@ class StackBase(object):
                         elif i == (i2-1):
                             rightImage = tmpData
                     if DEBUG:
-                        print "Dynamic ROI elapsed = ", time.time() - t0
+                        print("Dynamic ROI elapsed = %f" %\
+                              (time.time() - t0))
                     if i2 > i1:
                         background = (leftImage + rightImage) * 0.5 * (i2-i1)
             else:
@@ -656,7 +661,8 @@ class StackBase(object):
                         rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                        
                     background = 0.5*(i2-i1)*(leftImage+rightImage)
                 if DEBUG:
-                    print "ROI image calculation elapsed = ", time.time() - t0
+                    print("ROI image calculation elapsed = %f" %\
+                          (time.time() - t0))
         else:
             #self.fileIndex = 2
             if self.mcaIndex == 0:
@@ -690,33 +696,33 @@ class StackBase(object):
 
     def setSelectionMask(self, mask):
         if DEBUG:
-            print "setSelectionMask called"
+            print("setSelectionMask called")
         self._selectionMask = mask
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].selectionMaskUpdated()
 
     def getSelectionMask(self):
         if DEBUG:
-            print "getSelectionMask called"
+            print("getSelectionMask called")
 
     def addImage(self, image, name, info=None, replace=False, replot=True):
         """
         Add image data to the RGB correlator
         """
-        print "Add image data not implemented"
+        print("Add image data not implemented")
 
     def removeImage(self, name, replace=True):
         """
         Remove image data from the RGB correlator
         """
-        print "Remove image data not implemented"
+        print("Remove image data not implemented")
 
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
         """
         Add the 1D curve given by x an y to the graph.
         """
-        print "addCurve not implemented"
+        print("addCurve not implemented")
         return None
 
     def removeCurve(self, legend, replot=True):
@@ -724,7 +730,7 @@ class StackBase(object):
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
         """
-        print "removeCurve not implemented"
+        print("removeCurve not implemented")
         return None
     
     def getActiveCurve(self):
@@ -742,7 +748,7 @@ class StackBase(object):
             The legend of the active curve (or None) is returned.
         """
         if DEBUG:
-            print "getActiveCurve default implementation"
+            print("getActiveCurve default implementation")
         info = {}
         info['xlabel'] = 'Channel'
         info['ylabel'] = 'Counts'
@@ -751,12 +757,12 @@ class StackBase(object):
 
     def getGraphXLimits(self):
         if DEBUG:
-            print "getGraphXLimits default implementation"
+            print("getGraphXLimits default implementation")
         return self._mcaData0.x[0].min(), self._mcaData0.x[0].max()
 
     def getGraphYLimits(self):
         if DEBUG:
-            print "getGraphYLimits default implementation"
+            print("getGraphYLimits default implementation")
         return self._mcaData0.y[0].min(), self._mcaData0.y[0].max()
 
     def getStackDataObject(self):
@@ -775,14 +781,16 @@ def test():
     nchannels = 1024
     a = numpy.ones((nrows, ncols), numpy.float)
     stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
-    for i in xrange(nchannels):
+    for i in range(nchannels):
         stackData[:, :, i] = a * i
     stack = StackBase()
     
     stack.setStack(stackData, mcaindex=2)
-    print "This should be 0 = ",  stack.calculateROIImages(0, 0)['ROI'].sum()
-    print "This should be 0 = ",  stack.calculateROIImages(0, 1)['ROI'].sum()
-    print stackData[:,:,0:10].sum(), "should be =", stack.calculateROIImages(0, 10)['ROI'].sum()
+    print("This should be 0 = %f" %  stack.calculateROIImages(0, 0)['ROI'].sum())
+    print("This should be 0 = %f" % stack.calculateROIImages(0, 1)['ROI'].sum())
+    print("%f should be = %f" %\
+          (stackData[:,:,0:10].sum(),
+           stack.calculateROIImages(0, 10)['ROI'].sum()))
 
 if __name__ == "__main__":
     test()

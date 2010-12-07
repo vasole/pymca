@@ -43,7 +43,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
                 wizard.setStartId(1)
             ret = wizard.exec_()
             if ret != QtGui.QDialog.Accepted:
-                raise ValueError, "Incomplete selection"
+                raise ValueError("Incomplete selection")
             filelist, selection = wizard.getParameters()
         HDF5Stack1D.HDF5Stack1D.__init__(self, filelist, selection,
                                 scanlist=scanlist,

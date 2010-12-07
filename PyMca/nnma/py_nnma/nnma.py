@@ -185,8 +185,8 @@ def divide_matrix(A, by):
     elif isinstance(A, np.ndarray):
         return A / by
     else:
-        raise "wrong matrix format %s" % type(A)
-            
+        raise TypeError("wrong matrix format %s" % type(A))
+
 def dot(A, B):
 
     if is_sparse(A) and is_sparse(B):
@@ -484,7 +484,7 @@ class AlgorunnerTemplate(object):
         m, n = Y.shape
 
         if k<1 or k>m or k>n:
-            raise ValueError, "number k of components is invalid"
+            raise ValueError("number k of components is invalid")
 
         Y, YT = coerced(Y)
 
@@ -506,7 +506,8 @@ class AlgorunnerTemplate(object):
             if np.any(np.isnan(A)) or np.any(np.isinf(A)) or \
                np.any(np.isnan(X)) or np.any(np.isinf(X)):
 
-                if verbose: print "RESTART"
+                if verbose:
+                    print("RESTART")
                 A, X = self.init_factors(Y, k)
                 count = 0
             
@@ -519,8 +520,8 @@ class AlgorunnerTemplate(object):
             if verbose:
                 # each 'verbose' iterations report about actual state 
                 if count % verbose == 0:
-                    print "count=%6d obj=%E d_obj=%E" %(count, obj, 
-                                                        delta_obj)
+                    print("count=%6d obj=%E d_obj=%E" %(count, obj, 
+                                                        delta_obj))
 
             if count >= maxcount: break 
             # delta_obj should be "almost negative" and small enough:
@@ -532,8 +533,8 @@ class AlgorunnerTemplate(object):
                 self.param_update(param)
 
         if verbose:
-            print "FINISHED:"
-            print "count=%6d obj=%E d_obj=%E" %(count, obj, delta_obj)
+            print("FINISHED:")
+            print("count=%6d obj=%E d_obj=%E" %(count, obj, delta_obj))
 
         return A, X,  obj, count, count < maxcount
 
@@ -691,16 +692,15 @@ if __name__ == "__main__":
     import sys, time
 
     def run(name, routine, verbose=0):
-        print "run %12s" % name,
+        print("run %12s" % name,)
         sys.stdout.flush()
         start = time.time()
         X,Y,obj,count,converged = routine(A, 10, eps=5e-5, verbose=verbose, 
                                           maxcount=1000, **param) 
-        print "obj = %E  count=%5d  converged=%d  TIME=%.2f secs" % \
-                     (obj,count, converged, time.time()-start)
+        print("obj = %E  count=%5d  converged=%d  TIME=%.2f secs" % \
+                     (obj,count, converged, time.time()-start))
     
-    print
-    print "TEST WITH DENSE MATRIX\n"
+    print("\nTEST WITH DENSE MATRIX\n")
 
     run("NNSC", NNSC, verbose=0)
     run("FNMAI_SPARSE", FNMAI_SPARSE)
@@ -716,8 +716,7 @@ if __name__ == "__main__":
 
 
     if has_sparse:
-        print
-        print "TEST WITH SPARSE MATRIX\n"
+        print("\nTEST WITH SPARSE MATRIX\n")
         A = sp.csc_matrix(A)
 
         run("NNSC", NNSC, verbose=0)

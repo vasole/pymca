@@ -40,6 +40,12 @@ import EdfFileDataSource
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
 qt = RGBCorrelatorSlider.qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+    QStringList = qt.QStringList
+else:
+    QString = str
+    QStringList = []
 
 QTVERSION = qt.qVersion()
 try:
@@ -190,9 +196,9 @@ class RGBCorrelatorWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self.saveButtonClicked)
         self._saveButtonMenu = qt.QMenu()
-        self._saveButtonMenu.addAction(qt.QString("Save all"),
+        self._saveButtonMenu.addAction(QString("Save all"),
                                     self.saveImageList)
-        self._saveButtonMenu.addAction(qt.QString("Save selected"),
+        self._saveButtonMenu.addAction(QString("Save selected"),
                                     self.saveSelectedImages)
 
 
@@ -231,17 +237,17 @@ class RGBCorrelatorWidget(qt.QWidget):
             return self.showCalculationDialog()
         if self._calculationMenu is None:
             self._calculationMenu = qt.QMenu()
-            self._calculationMenu.addAction(qt.QString("Image calculator"),
+            self._calculationMenu.addAction(QString("Image calculator"),
                                             self.showCalculationDialog)
             if PCA:
                 if PCADialog.MDP:
-                    self._calculationMenu.addAction(qt.QString("PCA/ICA Analysis"),
+                    self._calculationMenu.addAction(QString("PCA/ICA Analysis"),
                                             self.showPCADialog)
                 else:
-                    self._calculationMenu.addAction(qt.QString("PCA Analysis"),
+                    self._calculationMenu.addAction(QString("PCA Analysis"),
                                             self.showPCADialog)
             if NNMA:
-                self._calculationMenu.addAction(qt.QString("NNMA Analysis"),
+                self._calculationMenu.addAction(QString("NNMA Analysis"),
                                             self.showNNMADialog)
         self._calculationMenu.exec_(self.cursor().pos())
 
@@ -663,7 +669,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
-        strlist = qt.QStringList()
+        strlist = QStringList()
         for f in formatlist:
                 strlist.append(f)
         if self._saveFilter is None:
@@ -699,7 +705,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                       "EDF Files *ccd",
                       "CSV Files *csv",
                       "All Files *"]
-        strlist = qt.QStringList()
+        strlist = QStringList()
         for f in formatlist:
                 strlist.append(f)
         filedialog.setFilters(strlist)

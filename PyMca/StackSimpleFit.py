@@ -32,7 +32,7 @@ try:
     from PyMca import ArraySave
     from PyMca import PyMcaDirs
 except ImportError:
-    print "StackSimpleFit is importing from somewhere else"
+    print("StackSimpleFit is importing from somewhere else")
     import ConfigDict
     import SimpleFitModule
     import ArraySave
@@ -78,7 +78,7 @@ class StackSimpleFit(object):
 
     def setConfigurationFile(self, fname):
         if not os.path.exists(fname):
-            raise IOError, "File %s does not exist"
+            raise IOError("File %s does not exist" % fname)
         w = ConfigDict.ConfigDict()
         w.read(fname)
         self.configuration = w
@@ -104,7 +104,7 @@ class StackSimpleFit(object):
         
         stack = self.stack_y 
         if stack is None:
-            raise ValueError, "No data to be processed"
+            raise ValueError("No data to be processed")
 
         if hasattr(stack, "info") and hasattr(stack, "data"):
             data = stack.data
@@ -148,8 +148,8 @@ class StackSimpleFit(object):
             try:
                 self.processStackData(i)
             except:
-                print "Error processing index = %d, row = %d column = %d" %\
-                          (i, self._row, self._column)
+                print("Error processing index = %d, row = %d column = %d" %\
+                          (i, self._row, self._column))
                 if DEBUG:
                     raise
         self.onProcessStackFinished()
@@ -258,11 +258,11 @@ class StackSimpleFit(object):
 
     def estimateFinished(self):
         if DEBUG:
-            print "Estimate finished"
+            print("Estimate finished")
 
     def aboutToGetStackData(self, idx):
         if DEBUG:
-            print "New spectrum", idx
+            print("New spectrum %d" % idx)
         self._currentFitIndex = idx
         if self.progressCallback is not None:
             self.progressCallback(idx, self._nRows * self._nColumns)
@@ -275,7 +275,7 @@ class StackSimpleFit(object):
 
     def fitFinished(self):
         if DEBUG:
-            print "fit finished"
+            print("fit finished")
 
         #get parameter results
         fitOutput = self.fit.getResult(configuration=False)
@@ -283,7 +283,7 @@ class StackSimpleFit(object):
         row= self._row
         column = self._column
         if result is None:
-            print "result not valid for row %d, column %d" % (row, column)
+            print("result not valid for row %d, column %d" % (row, column))
             return
 
         if self.fixedLenghtOutput and (self._parameters is None):
@@ -365,7 +365,7 @@ class StackSimpleFit(object):
         
     def onProcessStackFinished(self):
         if DEBUG:
-            print "Stack proccessed"
+            print("Stack proccessed")
         if self.fixedLenghtOutput:
             nParameters = len(self._parameters)
             datalist = [None] * (2*len(self._sigmas.keys())+1)

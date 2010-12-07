@@ -5,6 +5,8 @@ Routines for nonnegative matrix approximation (nnma)
 
 """
 
-from nnma import *
-
+try:
+    from nnma import *
+except ImportError:
+    from .nnma import *
 

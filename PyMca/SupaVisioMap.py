@@ -66,4 +66,4 @@ if __name__ == "__main__":
         DEBUG = 1   
         w = SupaVisioMap(filename)
     else:
-        print "Please supply input filename"
+        print("Please supply input filename")

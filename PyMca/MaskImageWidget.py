@@ -29,6 +29,10 @@ import sys
 import RGBCorrelatorGraph
 qt = RGBCorrelatorGraph.qt
 QTVERSION = qt.qVersion()
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 MATPLOTLIB = False
 if QTVERSION > '4.0.0':
     import RGBCorrelator
@@ -52,7 +56,7 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 
 if QWTVERSION4:
-    raise "ImportError","QImageFilterWidget needs Qwt5"
+    raise ImportError("QImageFilterWidget needs Qwt5")
 
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
@@ -176,13 +180,13 @@ class MaskImageWidget(qt.QWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Image Data"),
+            self._saveMenu.addAction(QString("Image Data"),
                                      self.saveImageList)
-            self._saveMenu.addAction(qt.QString("Standard Graphics"),
+            self._saveMenu.addAction(QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
             if QTVERSION > '4.0.0':
                 if MATPLOTLIB:
-                    self._saveMenu.addAction(qt.QString("Matplotlib") ,
+                    self._saveMenu.addAction(QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
 
         self.connect(self.graphWidget.zoomResetToolButton,
@@ -256,15 +260,15 @@ class MaskImageWidget(qt.QWidget):
                          qt.SIGNAL("clicked()"),
                          self._additionalSelectionMenuDialog)
                 self._additionalSelectionMenu = qt.QMenu()
-                self._additionalSelectionMenu.addAction(qt.QString("Reset Selection"),
+                self._additionalSelectionMenu.addAction(QString("Reset Selection"),
                                                         self._resetSelection)
-                self._additionalSelectionMenu.addAction(qt.QString("Invert Selection"),
+                self._additionalSelectionMenu.addAction(QString("Invert Selection"),
                                                         self._invertSelection)
-                self._additionalSelectionMenu.addAction(qt.QString("I >= Colormap Max"),
+                self._additionalSelectionMenu.addAction(QString("I >= Colormap Max"),
                                                         self._selectMax)
-                self._additionalSelectionMenu.addAction(qt.QString("Colormap Min < I < Colormap Max"),
+                self._additionalSelectionMenu.addAction(QString("Colormap Min < I < Colormap Max"),
                                                         self._selectMiddle)
-                self._additionalSelectionMenu.addAction(qt.QString("I <= Colormap Min"),
+                self._additionalSelectionMenu.addAction(QString("I <= Colormap Min"),
                                                         self._selectMin)
 
             self.connect(self.graphWidget.graph,
@@ -337,56 +341,60 @@ class MaskImageWidget(qt.QWidget):
                          self._replaceImageClicked)
     
     def _setEraseSelectionMode(self):
-        if DEBUG:print "_setEraseSelectionMode"
+        if DEBUG:
+            print("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
         self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
         self.graphWidget.graph.enableSelection(False)
 
     def _setRectSelectionMode(self):
-        if DEBUG:print "_setRectSelectionMode"
+        if DEBUG:
+            print("_setRectSelectionMode")
         self.__eraseMode = False
         self.__brushMode = False
         self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
         self.graphWidget.graph.enableSelection(True)
         
     def _setBrushSelectionMode(self):
-        if DEBUG:print "_setBrushSelectionMode"
+        if DEBUG:
+            print("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
         self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
         self.graphWidget.graph.enableSelection(False)
         
     def _setBrush(self):
-        if DEBUG:print "_setBrush"
+        if DEBUG:
+            print("_setBrush")
         if self.__brushMenu is None:
             if QTVERSION < '4.0.0':
                 self.__brushMenu = qt.QPopupMenu()
-                self.__brushMenu.insertItem(qt.QString(" 1 Image Pixel Width"),
+                self.__brushMenu.insertItem(QString(" 1 Image Pixel Width"),
                                             self.__setBrush1)
-                self.__brushMenu.insertItem(qt.QString(" 2 Image Pixel Width"),
+                self.__brushMenu.insertItem(QString(" 2 Image Pixel Width"),
                                             self.__setBrush2)
-                self.__brushMenu.insertItem(qt.QString(" 3 Image Pixel Width"),
+                self.__brushMenu.insertItem(QString(" 3 Image Pixel Width"),
                                             self.__setBrush3)
-                self.__brushMenu.insertItem(qt.QString(" 5 Image Pixel Width"),
+                self.__brushMenu.insertItem(QString(" 5 Image Pixel Width"),
                                             self.__setBrush4)
-                self.__brushMenu.insertItem(qt.QString("10 Image Pixel Width"),
+                self.__brushMenu.insertItem(QString("10 Image Pixel Width"),
                                             self.__setBrush5)
-                self.__brushMenu.insertItem(qt.QString("20 Image Pixel Width"),
+                self.__brushMenu.insertItem(QString("20 Image Pixel Width"),
                                             self.__setBrush6)
             else:
                 self.__brushMenu = qt.QMenu()
-                self.__brushMenu.addAction(qt.QString(" 1 Image Pixel Width"),
+                self.__brushMenu.addAction(QString(" 1 Image Pixel Width"),
                                            self.__setBrush1)
-                self.__brushMenu.addAction(qt.QString(" 2 Image Pixel Width"),
+                self.__brushMenu.addAction(QString(" 2 Image Pixel Width"),
                                            self.__setBrush2)
-                self.__brushMenu.addAction(qt.QString(" 3 Image Pixel Width"),
+                self.__brushMenu.addAction(QString(" 3 Image Pixel Width"),
                                            self.__setBrush3)
-                self.__brushMenu.addAction(qt.QString(" 5 Image Pixel Width"),
+                self.__brushMenu.addAction(QString(" 5 Image Pixel Width"),
                                            self.__setBrush4)
-                self.__brushMenu.addAction(qt.QString("10 Image Pixel Width"),
+                self.__brushMenu.addAction(QString("10 Image Pixel Width"),
                                            self.__setBrush5)
-                self.__brushMenu.addAction(qt.QString("20 Image Pixel Width"),
+                self.__brushMenu.addAction(QString("20 Image Pixel Width"),
                                            self.__setBrush6)
         if QTVERSION < '4.0.0':
             self.__brushMenu.exec_loop(self.cursor().pos())
@@ -495,7 +503,7 @@ class MaskImageWidget(qt.QWidget):
         
     def _resetSelection(self, owncall=True):
         if DEBUG:
-            print "_resetSelection"
+            print("_resetSelection")
         if self.__imageData is None:
             return
         self.__selectionMask = numpy.zeros(self.__imageData.shape, numpy.uint8)
@@ -657,7 +665,7 @@ class MaskImageWidget(qt.QWidget):
         if self.__selectionMask is None:
             return
         #if not self.__selectionFlag:
-        #    print "Return because of selection flag"
+        #    print("Return because of selection flag")
         #    return
 
         if self.colormap is None:
@@ -892,7 +900,7 @@ class MaskImageWidget(qt.QWidget):
 
     def _zoomResetSignal(self):
         if DEBUG:
-            print "_zoomResetSignal"
+            print("_zoomResetSignal")
         self.graphWidget._zoomReset(replot=False)
         self.plotImage(True)
 
@@ -910,7 +918,10 @@ class MaskImageWidget(qt.QWidget):
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
-        strlist = qt.QStringList()
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
+        else:
+            strlist = []
         for f in formatlist:
                 strlist.append(f)
         if self._saveFilter is None:
@@ -1014,7 +1025,7 @@ def test():
         #container.setImageData(data)
     container.show()
     def theSlot(ddict):
-        print ddict['event']
+        print(ddict['event'])
 
     if QTVERSION < '4.0.0':
         qt.QObject.connect(container,

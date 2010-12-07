@@ -36,7 +36,7 @@ from PyMca import OpusDPTMap
 from PyMca import LuciaMap
 from PyMca import SupaVisioMap
 from PyMca import AifiraMap
-from PyMca.QEDFStackWidget import QSpecFileStack, QStack
+from PyMca.QEDFStackWidget import QStack, QSpecFileStack
 try:
     from PyMca import QHDF5Stack1D
     import h5py
@@ -72,7 +72,10 @@ class StackSelector(object):
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
             f = open(filelist[0], 'rb')
             #read 10 characters
-            line = f.read(10)
+            if sys.version < '3.0':
+                line = f.read(10)
+            else:
+                line = str(f.read(10).decode())
             f.close()
             omnicfile = False
             if filefilter.upper().startswith('HDF5'):
@@ -153,7 +156,7 @@ class StackSelector(object):
         #get the first filename
         filename =  filepattern % tuple(begin)
         if not os.path.exists(filename):
-            raise IOError, "Filename %s does not exist." % filename
+            raise IOError("Filename %s does not exist." % filename)
         #get the file list
         args = self.getFileListFromPattern(filepattern, begin, end, increment=increment)
 
@@ -173,7 +176,7 @@ class StackSelector(object):
                 fileindex = 0
             if filepattern is not None:
                 if len(begin) != 1:
-                    raise IOError, "EDF stack redimensioning not supported yet"
+                    raise IOError("EDF stack redimensioning not supported yet")
             stack = QStack(imagestack=imagestack)
         elif line.startswith('Spectral'):
             stack = OmnicMap.OmnicMap(args[0])
@@ -189,7 +192,8 @@ class StackSelector(object):
             omnicfile = True
         elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
             if not HDF5:
-                raise IOError, "No HDF5 support while trying to read an HDF5 file"  
+                raise IOError(\
+                    "No HDF5 support while trying to read an HDF5 file")  
             stack = QHDF5Stack1D.QHDF5Stack1D(args)
             omnicfile = True
         else:
@@ -265,7 +269,10 @@ class StackSelector(object):
                 fdialog = qt.QFileDialog(self.parent)
                 fdialog.setModal(True)
                 fdialog.setWindowTitle(message)
-                strlist = qt.QStringList()
+                if hasattr(qt, "QStringList"):
+                    strlist = qt.QStringList()
+                else:
+                    strlist = []
                 for filetype in fileTypeList:
                     strlist.append(filetype)
                 fdialog.setFilters(strlist)
@@ -290,9 +297,9 @@ class StackSelector(object):
                     else:
                         return []
         try:
-            filelist = map(str, filelist)
+            filelist = [str(x) for x in filelist]
         except UnicodeEncodeError:
-            filelist = map(unicode, filelist)
+            filelist = [unicode(x) for x in filelist]
         if not(len(filelist)): return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.outputDir is None:
@@ -330,13 +337,15 @@ class StackSelector(object):
         if type(end) == type(1):
             end = [end]
         if len(begin) != len(end):
-            raise ValueError, "Begin list and end list do not have same length"
+            raise ValueError(\
+                "Begin list and end list do not have same length")
         if increment is None:
             increment = [1] * len(begin)
         elif type(increment) == type(1):
             increment = [increment]
         if len(increment) != len(begin):
-            raise ValueError, "Increment list and begin list do not have same length"
+            raise ValueError(\
+                "Increment list and begin list do not have same length")
         fileList = []
         if len(begin) == 1:
             for j in range(begin[0], end[0]+increment[0], increment[0]):
@@ -346,13 +355,13 @@ class StackSelector(object):
                 for k in range(begin[1], end[1]+increment[1], increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
-            raise ValueError, "Cannot handle three indices yet."
+            raise ValueError("Cannot handle three indices yet.")
             for j in range(begin[0], end[0]+increment[0], increment[0]):
                 for k in range(begin[1], end[1]+increment[1], increment[1]):
                     for l in range(begin[2], end[2]+increment[2], increment[2]):
                         fileList.append(pattern % (j, k, l))
         else:
-            raise ValueError, "Cannot handle more than three indices."
+            raise ValueError("Cannot handle more than three indices.")
         return fileList
 
 
@@ -368,8 +377,8 @@ if __name__ == "__main__":
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except:
+        print(sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
     filepattern=None
@@ -380,17 +389,17 @@ if __name__ == "__main__":
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
-                begin = map(int,arg.split(","))
+                begin = [int (x) for x in arg.split(",")]
             else:
                 begin = [int(arg)]
         elif opt in '--end':
             if "," in arg:
-                end = map(int,arg.split(","))
+                end = [int(x) for x in arg.split(",")]
             else:
                 end = int(arg)
         elif opt in '--increment':
             if "," in arg:
-                increment = map(int,arg.split(","))
+                increment = [int(x) for x in arg.split(",")]
             else:
                 increment = int(arg)
         elif opt in '--filepattern':
@@ -407,7 +416,8 @@ if __name__ == "__main__":
                 PyMcaDirs.nativeFileDialogs=False
     if filepattern is not None:
         if (begin is None) or (end is None):
-            raise ValueError, "A file pattern needs at least a set of begin and end indices"
+            raise ValueError(\
+                "A file pattern needs at least a set of begin and end indices")
     app = qt.QApplication([])
     widget = QStackWidget.QStackWidget()
     w = StackSelector(widget)

@@ -392,4 +392,4 @@ if __name__ == "__main__":
     w.show()
     ret=w.exec_()
     if ret:
-        print w.getParameters()
+        print(w.getParameters())

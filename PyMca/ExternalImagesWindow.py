@@ -380,7 +380,7 @@ def test2():
     ret = dialog.exec_()
     if ret:
         dialog.close()
-        print dialog.getParameters()
+        print(dialog.getParameters())
     #app.exec_()
 
 def test():
@@ -410,7 +410,7 @@ def test():
         container.setImageData(data)
     container.show()
     def theSlot(ddict):
-        print ddict['event']
+        print(ddict['event'])
 
     if QTVERSION < '4.0.0':
         qt.QObject.connect(container,

@@ -34,12 +34,12 @@ class OmnicMap(DataObject.DataObject):
         xPosition = float(xPosition)
         yPosition = float(yPosition)
         if DEBUG:
-            print "spectrumIndex, nSpectra, xPosition, yPosition = ", \
-                spectrumIndex, nSpectra, xPosition, yPosition                
+            print("spectrumIndex, nSpectra, xPosition, yPosition = %d %d %f %f" %\
+                    (spectrumIndex, nSpectra, xPosition, yPosition))
         secondByte = data.index("Spectrum position %d" % (spectrumIndex+1))
         self.nChannels = (secondByte - firstByte - 100)/4
         if DEBUG:
-            print "nChannels = ", self.nChannels
+            print("nChannels = %d" % self.nChannels)
         self.firstSpectrumOffset = firstByte - 16
 
         #fill the header
@@ -59,7 +59,8 @@ class OmnicMap(DataObject.DataObject):
                 break
             self.nRows = self.nRows + 1
         if DEBUG:
-            print "DIMENSIONS X = %f Y=%d" % ((self.nSpectra*1.0)/self.nRows ,self.nRows)
+            print("DIMENSIONS X = %f Y=%d" %\
+                  ((self.nSpectra*1.0)/self.nRows ,self.nRows))
         
         #arrange as an EDF Stack
         self.info = {}
@@ -131,7 +132,7 @@ class OmnicMap(DataObject.DataObject):
         ddict['Background gain'] = vFloats[10]
         if DEBUG:
             for key in ddict.keys():
-                print key, ddict[key]
+                print(key, ddict[key])
         return ddict
         
         
@@ -145,4 +146,4 @@ if __name__ == "__main__":
         DEBUG = 1   
         w = OmnicMap(filename)
     else:
-        print "Please supply input filename"
+        print("Please supply input filename")

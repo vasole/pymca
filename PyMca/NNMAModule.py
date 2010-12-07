@@ -221,7 +221,7 @@ def nnma(stack, ncomponents, binning=None,
             except MemoryError:
                 text  = "NNMAModule only works properly on numpy arrays.\n"
                 text += "Memory Error: Higher binning may help."
-                raise TypeError, text
+                raise TypeError(text)
         if binning == 1:
             if len(oldShape) == 3:
                 for i in range(r):
@@ -268,7 +268,7 @@ def nnma(stack, ncomponents, binning=None,
                                                     verbose=verbose,
                                                     **param)
         if not converged:
-            print "WARNING: Possible problems converging"
+            print("WARNING: Possible problems converging")
     #if binning > 1:
     #    numpy.add(data, mindata-1, data)
     #data.shape = oldShape
@@ -340,12 +340,12 @@ if __name__ == "__main__":
     inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
-        print inputfile
+        print(inputfile)
     elif os.path.exists(inputfile):
-        print "Using a default test case"
+        print("Using a default test case")
     else:
-        print "Usage:"
-        print "python PCAModule.py indexed_edf_stack"
+        print("Usage:")
+        print("python NNMAModule.py indexed_edf_stack")
         sys.exit(0)
     stack = EDFStack.EDFStack(inputfile)
     r0, c0, n0 = stack.data.shape
@@ -354,7 +354,7 @@ if __name__ == "__main__":
     e0 = time.time()
     images, eigenvalues, eigenvectors =  nnma(stack.data, ncomponents,
                                                      binning=1)
-    print "elapsed = ", time.time() - e0
+    print("elapsed = %f" % (time.time() - e0))
     if os.path.exists(outfile):
         os.remove(outfile)
     f = EdfFile.EdfFile(outfile)

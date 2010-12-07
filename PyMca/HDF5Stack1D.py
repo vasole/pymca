@@ -147,14 +147,14 @@ class HDF5Stack1D(DataObject.DataObject):
             if not JUST_KEYS:
                 for scan in scanlist:
                     if scan not in entryNames:
-                        raise ValueError, "Entry %s not in file"
+                        raise ValueError("Entry %s not in file" % scan)
 
         
         nFiles = len(filelist)
         nScans = len(scanlist)
         if JUST_KEYS:
             if not nScans:
-                raise IOError, "No entry contains the required data"
+                raise IOError("No entry contains the required data")
 
         #Now is to decide the number of mca ...
         #I assume all the scans contain the same number of mca
@@ -184,7 +184,7 @@ class HDF5Stack1D(DataObject.DataObject):
         except (MemoryError, ValueError):
             #some versions report ValueError instead of MemoryError
             if (nFiles == 1) and (len(shape) == 3):
-                print "Attempting dynamic loading"
+                print("Attempting dynamic loading")
                 self.data = yDataset
                 if mSelection is not None:
                     mDataset = tmpHdf[mpath]
@@ -253,7 +253,8 @@ class HDF5Stack1D(DataObject.DataObject):
                                 case = 1
                                 mDataset.shape = nMcaInYDataset, mcaDim
                             if case == -1:
-                                raise ValueError, "I do not know how to handle this monitor data"
+                                raise ValueError(\
+                                    "I do not know how to handle this monitor data")
                         if (len(yDataset.shape) == 3) and\
                            (dim1 == yDataset.shape[1]):
                             mca = 0
@@ -308,7 +309,8 @@ class HDF5Stack1D(DataObject.DataObject):
                             #    case = 1
                             #    mDataset.shape = yDataset.shape[1], yDataset.shape[2]
                             if case == -1:
-                                raise ValueError, "I do not know how to handle this monitor data"
+                                raise ValueError(\
+                                    "I do not know how to handle this monitor data")
                         if IN_MEMORY:
                             yDataset.shape = mcaDim, -1
                         if len(yDataset.shape) != 3:
@@ -388,11 +390,11 @@ class HDF5Stack1D(DataObject.DataObject):
         if index == -1:
             index = len(shape) - 1
         if DEBUG:
-            print "INDEX = ", index
+            print("INDEX = %d" % index)
         #figure out the shape of the stack
         if len(shape) == 0:
             #a scalar?
-            raise ValueError, "Selection corresponds to a scalar"
+            raise ValueError("Selection corresponds to a scalar")
         elif len(shape) == 1:
             #nchannels
             nMca = 1
@@ -410,7 +412,7 @@ class HDF5Stack1D(DataObject.DataObject):
             elif index == 0:
                 nMca = shape[1] * shape[2]
             else:
-                raise IndexError, "Only first and last dimensions handled"
+                raise IndexError("Only first and last dimensions handled")
         else:
             nMca = 1
             for i in range(len(shape)):
@@ -420,8 +422,8 @@ class HDF5Stack1D(DataObject.DataObject):
                 
         mcaDim = shape[index]
         if DEBUG:
-            print "nMca = ", nMca
-            print "mcaDim = ", mcaDim
+            print("nMca = %d" % nMca)
+            print("mcaDim = ", mcaDim)
 
         # HDF allows to work directly from the files without loading
         # them into memory.
@@ -483,7 +485,7 @@ class HDF5Stack1D(DataObject.DataObject):
             dim1 = nMca * nScans
         else:
             #I should not reach this point
-            raise ValueError, "Unhandled case"
+            raise ValueError("Unhandled case")
 
         return dim0, dim1, shape[index]
 

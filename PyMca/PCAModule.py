@@ -30,7 +30,7 @@ import numpy.linalg
 try:
     import numpy.core._dotblas as dotblas
 except ImportError:
-    print "WARNING: Not using BLAS"
+    print("WARNING: Not using BLAS, PCA calculation will be slower")
     dotblas = numpy
     
 try:
@@ -46,7 +46,7 @@ import time
 
 def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
     if DEBUG:
-        print "lanczosPCA"
+        print("lanczosPCA")
     if binning is None:
         binning = 1
         
@@ -56,7 +56,8 @@ def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
         data = stack
 
     if not isinstance(data, numpy.ndarray):
-        raise TypeError, "lanczosPCA is only supported when using numpy arrays"
+        raise TypeError(\
+            "lanczosPCA is only supported when using numpy arrays")
 
     #wrappmatrix = "double" 
     wrapmatrix = "single" 
@@ -80,7 +81,7 @@ def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
         N=N/binning
 
     if ncomponents > N:
-        raise ValueError, "Number of components too high."
+        raise ValueError("Number of components too high.")
 
     avg = numpy.sum(data, 0)/(1.0*npixels)
     numpy.subtract(data, avg, data)
@@ -121,7 +122,8 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
     else:
         data = stack
     if not isinstance(data, numpy.ndarray):
-        raise TypeError, "lanczosPCA2 is only supported when using numpy arrays"
+        raise TypeError(\
+            "lanczosPCA2 is only supported when using numpy arrays")
     r, c, N = data.shape
 
     #data=Numeric.fromstring(data.tostring(),"f")
@@ -224,7 +226,8 @@ def multipleArrayPCA(stackList, ncomponents=10, binning=None, **kw):
         data = stack
 
     if not isinstance(data, numpy.ndarray):
-        raise TypeError, "multipleArrayPCA is only supported when using numpy arrays"
+        raise TypeError(\
+            "multipleArrayPCA is only supported when using numpy arrays")
         
     if len(data.shape) == 3:
         r, c, N = data.shape
@@ -311,7 +314,7 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, **kw):
     This is a fast method when the number of components is small
     """
     if DEBUG:
-        print "expectationMaximizationPCA"
+        print("expectationMaximizationPCA")
     #This part is common to all ...
     if binning is None:
         binning = 1
@@ -332,7 +335,7 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, **kw):
         data=numpy.sum(data , axis=-1)
         N=N/binning
     if ncomponents > N:
-        raise ValueError, "Number of components too high."
+        raise ValueError("Number of components too high.")
     #end of common part
     avg = numpy.sum(data, 0)/(1.0*r*c)
     numpy.subtract(data, avg, data)
@@ -395,7 +398,7 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
         data = stack
 
     if not isinstance(data, numpy.ndarray):
-        raise TypeError, "numpyPCA is only supported when using numpy arrays"
+        raise TypeError("numpyPCA is only supported when using numpy arrays")
         
     if len(data.shape) == 3:
         r, c, N = data.shape
@@ -409,7 +412,7 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
         data=numpy.sum(data , axis=-1)
         N=N/binning
     if ncomponents > N:
-        raise ValueError, "Number of components too high."
+        raise ValueError("Number of components too high.")
     #end of common part
 
     #begin the specific coding
@@ -456,10 +459,10 @@ def mdpICAFloat64(stack, ncomponents=10, binning=None, mask=None):
 
 def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mask=None):
     if DEBUG:
-        print "MDP Method"
-        print "binning =", binning
-        print "dtype = ", dtype
-        print "svd = ", svd
+        print("MDP Method")
+        print("binning =", binning)
+        print("dtype = ", dtype)
+        print("svd = ", svd)
     #This part is common to all ...
     if binning is None:
         binning = 1
@@ -488,7 +491,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
         if binning == 1:
             if data.shape != oldShape:
                 data.shape = oldShape
-        raise ValueError, "Number of components too high."
+        raise ValueError("Number of components too high.")
     #end of common part
 
     #begin the specific coding
@@ -501,7 +504,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             last = step * (int(r/step) - 1)
             for i in range(0, last, step):
                 for j in range(step):
-                    print "Training data %d out of %d" % (i+j+1,r)
+                    print("Training data %d out of %d" % (i+j+1,r))
                 tmpData = data[i:(i+step),:,:]
                 if binning > 1:
                     tmpData.shape = step*shape[1], shape[2]/binning, binning
@@ -518,7 +521,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             last = 0
         if binning > 1:
             for i in range(last, r):
-                print "Training data %d out of %d" % (i+1,r)
+                print("Training data %d out of %d" % (i+1,r))
                 tmpData = data[i,:,:]
                 tmpData.shape = shape[1], shape[2]/binning, binning
                 tmpData = numpy.sum(tmpData, axis=-1)
@@ -529,7 +532,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             tmpData = None
         else:
             for i in range(last, r):
-                print "Training data %d out of %d" % (i+1,r)
+                print("Training data %d out of %d" % (i+1,r))
                 if mask is None:
                     pca.train(data[i,:,:])
                 else:
@@ -540,15 +543,19 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             last = step * (int(data.shape[0]/step) - 1)
             if mask is None:
                 for i in range(0, last, step):
-                    print "Training data from %d to %d of %d" % (i+1, i+step, data.shape[0])
+                    print("Training data from %d to %d of %d" %\
+                          (i+1, i+step, data.shape[0]))
                     pca.train(data[i:(i+step),:])
-                print "Training data from %d to end of %d" % (i+step+1, data.shape[0])                        
+                print("Training data from %d to end of %d" %\
+                      (i+step+1, data.shape[0]))                        
                 pca.train(data[(i+step):,:])
             else:
                 for i in range(0, last, step):
-                    print "Training data from %d to %d of %d" % (i+1, i+step, data.shape[0])
+                    print("Training data from %d to %d of %d" %\
+                          (i+1, i+step, data.shape[0]))
                     pca.train(data[i:(i+step),mask > 0])
-                print "Training data from %d to end of %d" % (i+step+1, data.shape[0])                        
+                print("Training data from %d to end of %d" %\
+                      (i+step+1, data.shape[0]))                        
                 pca.train(data[(i+step):,mask > 0])
         elif data.shape[0] > 1000:
             i = int(data.shape[0]/2)
@@ -557,13 +564,13 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
             else:
                 pca.train(data[:i,mask > 0])
             if DEBUG:
-                print "Half training"
+                print("Half training")
             if mask is None:
                 pca.train(data[i:,:])
             else:
                 pca.train(data[i:,mask > 0])
             if DEBUG:
-                print "Full training"
+                print("Full training")
         else:
             if mask is None:
                 pca.train(data)
@@ -578,7 +585,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
     if len(data.shape) == 3:
         images = numpy.zeros((ncomponents, r, c), data.dtype)
         for i in range(r):
-            print "Building images. Projecting data %d out of %d" % (i+1,r)
+            print("Building images. Projecting data %d out of %d" % (i+1,r))
             if binning > 1:
                 if mask is None:
                     tmpData = data[i,:,:]
@@ -637,7 +644,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
         c = 1
 
     #if not isinstance(data, numpy.ndarray):  
-    #    raise TypeError, "ICA is only supported when using numpy arrays"
+    #    raise TypeError("ICA is only supported when using numpy arrays")
 
     if binning > 1:
         if isinstance(data, numpy.ndarray):
@@ -649,12 +656,12 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
         if binning == 1:
             if data.shape != oldShape:
                 data.shape = oldShape
-        raise ValueError, "Number of components too high."
+        raise ValueError("Number of components too high.")
 
     if 1:
         if (mdp.__version__ >= 2.5):
             if DEBUG:
-                print "TDSEPNone"
+                print("TDSEPNone")
             ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
                                       verbose=False,
                                       dtype="float64",
@@ -667,7 +674,8 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
                     step = 10
                     last = step * (int(r/step) - 1)
                     for i in range(0, last, step):
-                        print "Training data from %d to %d out of %d" % (i+1, i+step, r)
+                        print("Training data from %d to %d out of %d" %\
+                              (i+1, i+step, r))
                         tmpData = data[i:(i+step),:,:]
                         if binning > 1:
                             tmpData.shape = step*shape[1], shape[2]/binning, binning
@@ -684,7 +692,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
                     last = 0
                 if binning > 1:
                     for i in range(last, r):
-                        print "Training data %d out of %d" % (i+1,r)
+                        print("Training data %d out of %d" % (i+1,r))
                         tmpData = data[i,:,:]
                         tmpData.shape = shape[1], shape[2]/binning, binning
                         tmpData = numpy.sum(tmpData, axis=-1)
@@ -695,7 +703,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
                     tmpData = None
                 else:
                     for i in range(last, r):
-                        print "Training data %d out of %d" % (i+1, r)
+                        print("Training data %d out of %d" % (i+1, r))
                         if mask is None:
                             ica.train(data[i,:,:])
                         else:
@@ -705,12 +713,14 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
                     step = 1000
                     last = step * (int(data.shape[0]/step) - 1)
                     for i in range(0, last, step):
-                        print "Training data from %d to %d of %d" % (i+1, i+step, data.shape[0])
+                        print("Training data from %d to %d of %d" %\
+                              (i+1, i+step, data.shape[0]))
                         if mask is None:
                             ica.train(data[i:(i+step),:])
                         else:
                             ica.train(data[i:(i+step),mask>0])
-                    print "Training data from %d to end of %d" % (i+step+1, data.shape[0])                        
+                    print("Training data from %d to end of %d" %\
+                          (i+step+1, data.shape[0]))
                     if mask is None:
                         ica.train(data[(i+step):,:])
                     else:
@@ -722,13 +732,13 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
                     else:
                         ica.train(data[:i,mask>0])
                     if DEBUG:
-                        print "Half training"
+                        print("Half training")
                     if mask is None:
                         ica.train(data[i:,:])
                     else:
                         ica.train(data[i:,mask>0])
                     if DEBUG:
-                        print "Full training"
+                        print("Full training")
                 else:
                     if mask is None:
                         ica.train(data)
@@ -736,23 +746,23 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
                         ica.train(data[:,mask>0])
             ica.stop_training()
             if DEBUG:
-                print "training elapsed = ", time.time() - t0
+                print("training elapsed = %f" % (time.time() - t0))
         else:
             if 0:
-                print "ISFANode (alike)"
+                print("ISFANode (alike)")
                 ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
                                             verbose=False,
                                             dtype='float64',
                                             white_parm={'svd':True})
             elif 1:
                 if DEBUG:
-                    print "FastICANode"
+                    print("FastICANode")
                 ica = mdp.nodes.FastICANode(white_comp=ncomponents,
                                             verbose=False,
                                             dtype=dtype)
             else:
                 if DEBUG:
-                    print "CuBICANode"
+                    print("CuBICANode")
                 ica = mdp.nodes.CuBICANode(white_comp=ncomponents,
                                             verbose=False,
                                             dtype=dtype)
@@ -778,7 +788,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
         if (len(data.shape) == 3 ):
             images = numpy.zeros((2*ncomponents, r , c), data.dtype)
             for i in range(r):
-                print "Building images. Projecting data %d out of %d" % (i+1,r)
+                print("Building images. Projecting data %d out of %d" % (i+1,r))
                 if binning > 1:
                     if mask is None:
                         tmpData = data[i,:,:]
@@ -851,12 +861,12 @@ if __name__ == "__main__":
     inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
-        print inputfile
+        print(inputfile)
     elif os.path.exists(inputfile):
-        print "Using a default test case"
+        print("Using a default test case")
     else:
-        print "Usage:"
-        print "python PCAModule.py indexed_edf_stack"
+        print("Usage:")
+        print("python PCAModule.py indexed_edf_stack")
         sys.exit(0)
     stack = EDFStack.EDFStack(inputfile)
     r0, c0, n0 = stack.data.shape
@@ -876,9 +886,9 @@ if __name__ == "__main__":
     sys.exit(0)
 
     stack.data.shape = r0, c0, n0
-    print "PCA Elapsed = ", time.time() - e0
+    print("PCA Elapsed = %f" % (time.time() - e0))
     #print "eigenvalues PCA1 = ", eigenvalues
-    print "eigenvectors PCA2 = ", eigenvectors[0,200:230]
+    print("eigenvectors PCA2 = ", eigenvectors[0,200:230])
     #stack = EDFStack.EDFStack(inputfile)
     #stack = EDFStack.EDFStack(inputfile)
     stack = None
@@ -887,9 +897,9 @@ if __name__ == "__main__":
     images2, eigenvalues, eigenvectors =  mdpPCA(stack.data, ncomponents,
                                                      binning=1)
     stack.data.shape = r0, c0, n0
-    print "MDP Elapsed = ", time.time() - e0
+    print("MDP Elapsed = %f" % (time.time() - e0))
     #print "eigenvalues MDP = ", eigenvalues
-    print "eigenvectors MDP = ", eigenvectors[0,200:230]
+    print("eigenvectors MDP = ", eigenvectors[0,200:230])
     if os.path.exists(outfile):
         os.remove(outfile)
     f = EdfFile.EdfFile(outfile)

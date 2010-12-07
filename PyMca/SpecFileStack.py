@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -77,7 +77,7 @@ class SpecFileStack(DataObject.DataObject):
             if numberofmca:
                 nmca += numberofmca
         if numberofdetectors == 0:
-            raise ValueError, "No MCA found in file %s" % filelist[0]
+            raise ValueError("No MCA found in file %s" % filelist[0])
 
         if (nscans > 1) and ((nmca/numberofdetectors) == nscans):
             SLOW_METHOD = True
@@ -161,12 +161,12 @@ class SpecFileStack(DataObject.DataObject):
             while MEMORY_ERROR:
                 try:
                     for i in range(5):
-                        print "\7"
+                        print("\7")
                     sampling_order += 1
-                    print "**************************************************"
-                    print " Memory error!, attempting %dx%d sub-sampling " % (sampling_order,
-                                                                          sampling_order)
-                    print "**************************************************"
+                    print("**************************************************")
+                    print(" Memory error!, attempting %dx%d sub-sampling " %\
+                          (sampling_order, sampling_order))
+                    print("**************************************************")
                     s0 = int(shape[0]/sampling_order)
                     s1 = int(shape[1]/sampling_order)
                     #if shape[0] % sampling_order:
@@ -187,8 +187,9 @@ class SpecFileStack(DataObject.DataObject):
                     tempInstance=specfile.Specfile(tempFileName)
                     if tempInstance is None:
                         if not os.path.exists(tempFileName):
-                            print "File %s does not exists"  % tempFileName
-                            raise IOError, "File %s does not exists"  % tempFileName
+                            print("File %s does not exists"  % tempFileName)
+                            raise IOError(\
+                                "File %s does not exists"  % tempFileName)
                     scan = tempInstance.select(keylist[-1])
                     for i in iterlist:
                         #sum the present mcas
@@ -281,7 +282,7 @@ class SpecFileStack(DataObject.DataObject):
         if type(filename) == type([]):
             filename = filename[0]
         if not os.path.exists(filename):
-            raise IOError, "File %s does not exists" % filename
+            raise IOError("File %s does not exists" % filename)
         name = os.path.basename(filename)
         n = len(name)
         i = 1
@@ -316,31 +317,31 @@ class SpecFileStack(DataObject.DataObject):
             nchain.reverse()
             for c in nchain:
                 number += c
-            format = "%" + "0%dd" % len(number)
+            fformat = "%" + "0%dd" % len(number)
             if (len(number) + len(suffix)) == len(name):
                 prefix = ""
             else:
                 prefix = name[0:n-i+1]
             prefix = os.path.join(os.path.dirname(filename),prefix)
             if not os.path.exists(prefix + number + suffix):
-                print "Internal error in EDFStack"
-                print "file should exist:",prefix + number + suffix
+                print("Internal error in EDFStack")
+                print("file should exist: %s" % (prefix + number + suffix))
                 return
             i = 0
             if begin is None:
                 begin = 0
-                testname = prefix+format % begin+suffix
-                while not os.path.exists(prefix+format % begin+suffix):
+                testname = prefix+ fformat % begin+suffix
+                while not os.path.exists(prefix + fformat % begin+suffix):
                     begin += 1
-                    testname = prefix+format % begin+suffix
+                    testname = prefix + fformat % begin+suffix
                     if len(testname) > len(filename):break
                 i = begin
             else:
                 i = begin
-            if not os.path.exists(prefix+format % i+suffix):
-                raise ValueError, "Invalid start index file = %s" % \
-                      prefix+format % i+suffix
-            f = prefix+format % i+suffix
+            if not os.path.exists(prefix+ fformat % i+suffix):
+                raise ValueError("Invalid start index file = %s" % \
+                      (prefix+ fformat % i+suffix))
+            f = prefix + fformat % i+suffix
             filelist = []
             while os.path.exists(f):
                 filelist.append(f)
@@ -348,7 +349,7 @@ class SpecFileStack(DataObject.DataObject):
                 if end is not None:
                     if i > end:
                         break
-                f = prefix+format % i+suffix
+                f = prefix + fformat % i+suffix
             self.loadFileList(filelist, fileindex=fileindex)
 
     def getSourceInfo(self):
@@ -361,7 +362,7 @@ class SpecFileStack(DataObject.DataObject):
         sourceInfo["KeyList"]= self.__keyList
 
     def getKeyInfo(self, key):
-        print "Not implemented"
+        print("Not implemented")
         return {}
 
     def isIndexedStack(self):
@@ -385,16 +386,16 @@ if __name__ == "__main__":
     else:
         stack.loadIndexedStack("..\..\mca3\c449b01_001.mca")
     shape = stack.data.shape
-    print "elapsed = ", time.time() - t0
+    print("elapsed = %f" % (time.time() - t0))
     #guess the MCA
     imax = 0
     for i in range(len(shape)):
         if shape[i] > shape[imax]:
             imax = i
 
-    print "selections ",
-    print "getZSelectionArray  shape = ", stack.getZSelectionArray().shape
-    print "getXYSelectionArray shape = ", stack.getXYSelectionArray().shape
+    print("selections ")
+    print("getZSelectionArray  shape = ", stack.getZSelectionArray().shape)
+    print("getXYSelectionArray shape = ", stack.getXYSelectionArray().shape)
 
     import PyMcaQt as qt
     app = qt.QApplication([])
@@ -408,11 +409,11 @@ if __name__ == "__main__":
         import QtBlissGraph
         w = QtBlissGraph.QtBlissGraph()
         graph = w
-    print "shape sum 0 = ",Numeric.sum(stack.data, 0).shape
-    print "shape sum 1 = ",Numeric.sum(stack.data, 1).shape
-    print "shape sum 2 = ",Numeric.sum(stack.data, 2).shape
+    print("shape sum 0 = ",Numeric.sum(stack.data, 0).shape)
+    print("shape sum 1 = ",Numeric.sum(stack.data, 1).shape)
+    print("shape sum 2 = ",Numeric.sum(stack.data, 2).shape)
     a = Numeric.sum(stack.data, imax)
-    print a.shape
+    print(a.shape)
     graph.setX1AxisLimits(0, a.shape[0])
     if 0:
         w.setY1AxisLimits(0, a.shape[1])
