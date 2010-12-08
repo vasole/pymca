@@ -143,7 +143,10 @@ def getFileList(parent=None, filetypelist=None, message=None,
         fdialog = qt.QFileDialog(parent)
         fdialog.setModal(True)
         fdialog.setWindowTitle(message)
-        strlist = qt.QStringList()
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
+        else:
+            strlist = []
         strlist.append(currentfilter)
         for filetype in fileTypeList:
             if filetype != currentfilter:
@@ -191,7 +194,7 @@ def getFileList(parent=None, filetypelist=None, message=None,
                     filelist[0] = txt
             fdialog.close()
             del fdialog
-    filelist = map(str, filelist)
+    filelist = [str(x) for x in  filelist]
     if not(len(filelist)):
         return []
     if mode == "OPEN":
