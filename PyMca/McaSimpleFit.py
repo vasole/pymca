@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -100,12 +100,12 @@ class McaSimpleFit(qt.QWidget):
 
     def setdata(self,*var,**kw):
         self.info ={}
-        if kw.has_key('legend'):
+        if 'legend' in kw:
             self.info['legend'] = kw['legend']
             del kw['legend']
         else:
             self.info['legend'] = 'Unknown Origin'
-        if kw.has_key('xlabel'):
+        if 'xlabel' in kw:
             self.info['xlabel'] = kw['xlabel']
             del kw['xlabel']
         else:
@@ -127,9 +127,9 @@ class McaSimpleFit(qt.QWidget):
     def setheader(self,*var,**kw):
         if len(var):
             text = var[0]
-        elif kw.has_key('text'):
+        elif 'text' in kw:
             text = kw['text']
-        elif kw.has_key('header'):
+        elif 'header' in kw:
             text = kw['header']
         else:
             text = ""
@@ -155,7 +155,7 @@ class McaSimpleFit(qt.QWidget):
     def __anasignal(self,ddict):
         if type(ddict) != type({}):
             return
-        if ddict.has_key('event'):
+        if 'event' in ddict:
             if string.upper(ddict['event']) == "PRINT":
                 h = self.__htmlheader()
                 if __name__ == "__main__":

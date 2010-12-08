@@ -175,7 +175,7 @@ class McaTheory:
                         energyflag.append(self.config['fit']['energyflag'][i])
                         energylist.append(self.config['fit']['energy'][i])    
                         energyweight.append(self.config['fit']['energyweight'][i])
-                        if self.config['fit'].has_key('energyscatter'):
+                        if 'energyscatter' in self.config['fit']:
                             energyscatter.append(self.config['fit']['energyscatter'][i])
                         elif i==1:
                             energyscatter.append(1)

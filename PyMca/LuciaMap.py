@@ -86,7 +86,7 @@ class LuciaMap(DataObject.DataObject):
             
         if os.path.exists(infofile):
             info = self._getInfo(infofile)
-            if info.has_key('vwidth') and info.has_key('vstep'):
+            if ('vwidth' in info) and ('vstep' in info):
                 vwidth = info['vwidth']
                 vstep = info['vstep']
                 if abs(vstep) > 0:

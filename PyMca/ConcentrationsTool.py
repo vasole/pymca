@@ -39,7 +39,7 @@ class ConcentrationsConversion:
 
         result = concentrations
         #the header
-        if result.has_key('mmolar'):
+        if 'mmolar' in result:
             mmolarflaglist = [False, True]
         else:
             mmolarflaglist = [False]
@@ -59,7 +59,7 @@ class ConcentrationsConversion:
                 labels = ['Element','Group','Fit Area','Sigma Area', 'Mass fraction']
             
             #the table
-            if result.has_key('layerlist'):
+            if 'layerlist' in result:
                 if type(result['layerlist']) != type([]):
                     result['layerlist'] = [result['layerlist']]
                 for label in result['layerlist']:
@@ -94,7 +94,7 @@ class ConcentrationsConversion:
                     fields = [element,group0,fitarea,sigmaarea,area,fraction]
                 else:
                     fields = [element,group0,fitarea,sigmaarea,fraction]
-                if result.has_key('layerlist'):
+                if 'layerlist' in result:
                     for layer in result['layerlist']:
                         if result[layer]['mass fraction'][group] < 0.0:
                             fraction   = "Unknown"
@@ -129,7 +129,7 @@ class ConcentrationsConversion:
         if concentrations is None:return text
         result =concentrations       
         #the table
-        if result.has_key('mmolar'):
+        if 'mmolar' in result:
             mmolarflaglist = [False, True]
         else:
             mmolarflaglist = [False]
@@ -138,7 +138,7 @@ class ConcentrationsConversion:
                 labels = ['Element','Group','Fit_Area','Sigma_Area', 'mM_Concentration']
             else:
                 labels = ['Element','Group','Fit_Area','Sigma_Area', 'Mass_fraction']
-            if result.has_key('layerlist'):
+            if 'layerlist' in result:
                 if type(result['layerlist']) != type([]):
                     result['layerlist'] = [result['layerlist']]
                 for label in result['layerlist']:
@@ -160,7 +160,7 @@ class ConcentrationsConversion:
                     fields = [element,group0,fitarea,sigmaarea,area,fraction]
                 else:
                     fields = [element,group0,fitarea,sigmaarea,fraction]
-                if result.has_key('layerlist'):
+                if 'layerlist' in result:
                     for layer in result['layerlist']:
                         if result[layer]['mass fraction'][group] < 0.0:
                             fraction   = "Unknown"
@@ -208,7 +208,7 @@ class ConcentrationsTool:
         else: self.fitresult = fitresult
         if config is None: config = self.config
         else:self.config=config
-        if not self.config.has_key('usemultilayersecondary'):
+        if not ('usemultilayersecondary' in self.config):
             self.config['usemultilayersecondary']= 0
         secondary = self.config['usemultilayersecondary']
         #get attenuators and matrix from fit
@@ -406,7 +406,8 @@ class ConcentrationsTool:
                     for ele in elements:
                         if key == ele:
                             present.append(key)
-                            if not referenceLayerDict.has_key(ele):referenceLayerDict[ele] = []
+                            if not (ele in referenceLayerDict):
+                                referenceLayerDict[ele] = []
                             referenceLayerDict[ele].append(ilayer)                                
             if len(present) == 0:
                 text  = "Matrix must contain at least one fitted element\n"
@@ -488,7 +489,7 @@ class ConcentrationsTool:
         dict['groups'] = groupsList
         dict['elements'] = elements
         dict['mass fraction'] = {}
-        if config.has_key('mmolarflag'):
+        if 'mmolarflag' in config:
             if config['mmolarflag']:
                 dict['mmolar'] = {}
         else:
@@ -503,7 +504,7 @@ class ConcentrationsTool:
             element = item[0]
             transitions = item[1] + " xrays"
             if element in fluo.keys():
-                if fluo[element].has_key(transitions):
+                if transitions in fluo[element]:
                     #this SHOULD be with concentration one
                     theoretical = fluo[element]['rates'][transitions] * 1.0
                     expected = theoretical * flux * solidangle
@@ -555,7 +556,7 @@ class ConcentrationsTool:
                         element = item[0]
                         transitions = item[1] + " xrays"
                         if element in fluo.keys():
-                            if fluo[element].has_key(transitions):
+                            if transitions in fluo[element]:
                                 theoretical = fluo[element]['rates'][transitions] * 1
                                 expected = theoretical * flux * solidangle
                                 if expected > 0.0:

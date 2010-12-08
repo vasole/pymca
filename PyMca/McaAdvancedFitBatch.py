@@ -165,8 +165,9 @@ class McaAdvancedFitBatch:
             if self.__stack is None:
                 self.__stack = False
                 if hasattr(self.file, "info"):
-                    if self.file.info.has_key("SourceType"):
-                        if self.file.info["SourceType"] in ["EdfFileStack", "HDF5Stack1D"]:
+                    if "SourceType" in self.file.info:
+                        if self.file.info["SourceType"] in\
+                           ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
             if self.__stack:
                 self.__processStack()
@@ -299,7 +300,7 @@ class McaAdvancedFitBatch:
                 if self.pleaseBreak: break
                 self.__col = mca
                 mcadata = cache_data[mca, :]
-                if info.has_key('MCA start ch'):
+                if 'MCA start ch' in info:
                     xmin = float(info['MCA start ch'])
                 else:
                     xmin = 0.0
@@ -350,7 +351,7 @@ class McaAdvancedFitBatch:
                             col=mca
                             row=0
                             mcadata = data[:,mca]
-                        if info.has_key('MCA start ch'):
+                        if 'MCA start ch' in info:
                             xmin = float(info['MCA start ch'])
                         else:
                             xmin = 0.0
@@ -454,7 +455,7 @@ class McaAdvancedFitBatch:
                     dict = ConfigDict.ConfigDict()
                     dict.read(fitfile)
                     result = dict['result']
-                    if dict.has_key('concentrations'):
+                    if 'concentrations' in dict:
                         concentrationsdone = 1
                 except:
                     print("Error trying to use result file %s" % fitfile)
@@ -486,7 +487,7 @@ class McaAdvancedFitBatch:
                             fitresult0['result']['config'] = self.mcafit.config
                             conf = self.mcafit.configure()
                             tconf = self._tool.configure()
-                            if conf.has_key('concentrations'):
+                            if 'concentrations' in conf:
                                 tconf.update(conf['concentrations'])
                             else:
                                 #what to do?
@@ -508,7 +509,7 @@ class McaAdvancedFitBatch:
                     return
             if self._concentrations:
                 if concentrationsdone == 0:
-                    if not result.has_key('concentrations'):
+                    if not ('concentrations' in result):
                         if useExistingResult:
                             fitresult0={}
                             fitresult0['result'] = result
@@ -521,7 +522,7 @@ class McaAdvancedFitBatch:
                             fitresult0['fitresult'] = fitresult
                             conf = self.mcafit.configure()
                         tconf = self._tool.configure()
-                        if conf.has_key('concentrations'):
+                        if 'concentrations' in conf:
                             tconf.update(conf['concentrations'])
                         else:
                             pass
@@ -635,7 +636,7 @@ class McaAdvancedFitBatch:
                         self.__images['chisq']  = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float) - 1.
                         if self._concentrations:
                             layerlist = concentrations['layerlist']
-                            if concentrations.has_key('mmolar'):
+                            if 'mmolar' in concentrations:
                                 self.__conLabel = " mM"
                                 self.__conKey   = "mmolar"
                             else:

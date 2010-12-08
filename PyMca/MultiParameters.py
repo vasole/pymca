@@ -109,9 +109,9 @@ class ParametersTab(qt.QTabWidget):
     def fillfitfromtable(self,*vars,**kw):
         if len(vars) > 0:
             name=vars[0]
-        elif kw.has_key('view'):
+        elif 'view' in kw:
             name=kw['view']
-        elif kw.has_key('name'):
+        elif 'name' in kw:
             name=kw['name']
         else:
             name=self.current
@@ -124,9 +124,9 @@ class ParametersTab(qt.QTabWidget):
         error = 1
         if len(vars) > 0:
             view=vars[0]
-        elif kw.has_key('view'):
+        elif 'view' in kw:
             view=kw['view']
-        elif kw.has_key('name'):
+        elif 'name' in kw:
             view=kw['name']
         else:
             return error
@@ -163,7 +163,7 @@ class ParametersTab(qt.QTabWidget):
                 self.fillfromfit(result['paramlist'],current='Region '+\
                                  "%d" % region)
         name='MCA'
-        if self.tables.has_key(name):
+        if name in self.tables:
            table=self.tables[name]
         else:
            self.tables[name]=McaTable.McaTable(self)
@@ -188,7 +188,7 @@ class ParametersTab(qt.QTabWidget):
 
 
     def gettext(self,**kw):
-        if kw.has_key("name"):
+        if "name" in kw:
             name = kw["name"]
         else:
             name = self.current
@@ -284,7 +284,7 @@ class ParametersTab(qt.QTabWidget):
 
     if QTVERSION > '4.0.0':
         def getText(self, **kw):
-            if kw.has_key("name"):
+            if "name" in kw:
                 name = kw["name"]
             else:
                 name = self.current

@@ -1851,7 +1851,7 @@ class McaAdvancedFit(qt.QWidget):
                     self.graph.delcurve(key)
             for group in dict['result']['groups']:
                 label = 'y'+group
-                if dict['result'].has_key(label):
+                if label in dict['result']:
                     self.graph.newCurve(label,xdata, dict['result'][label],
                                     logfilter=logfilter)
                 else:

@@ -366,19 +366,20 @@ class Mca2EdfBatch(qt.QThread):
                                 else:
                                     title = key0
                                 if 1:
-                                    dict={}
-                                    if mcainfo.has_key('Channel0'):
-                                        dict['MCA start ch'] = int(mcainfo['Channel0'])
-                                    if mcainfo.has_key('McaCalib'):
-                                        dict['MCA a'] = mcainfo['McaCalib'][0]
-                                        dict['MCA b'] = mcainfo['McaCalib'][1]
-                                        dict['MCA c'] = mcainfo['McaCalib'][2]
+                                    ddict={}
+                                    if 'Channel0' in mcainfo:
+                                        ddict['MCA start ch'] =\
+                                                   int(mcainfo['Channel0'])
+                                    if 'McaCalib' in mcainfo:
+                                        ddict['MCA a'] = mcainfo['McaCalib'][0]
+                                        ddict['MCA b'] = mcainfo['McaCalib'][1]
+                                        ddict['MCA c'] = mcainfo['McaCalib'][2]
                                 else:
-                                    dict = mcainfo
-                                dict['Title'] = title
+                                    ddict = mcainfo
+                                ddict['Title'] = title
                                 edfname = os.path.join(self.outputdir,title.replace(" ","_")+".edf")
                                 edfout  = EdfFile.EdfFile(edfname)
-                                edfout.WriteImage (dict , image, Append=0)
+                                edfout.WriteImage (ddict , image, Append=0)
                                 counter = 0
                             else:
                                 counter += 1

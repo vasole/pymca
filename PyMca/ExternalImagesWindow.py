@@ -26,6 +26,10 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 from PyMca_Icons import IconDict
 import MaskImageWidget
 import sys
@@ -52,9 +56,9 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         ddict['usetab'] = False
         ddict.update(kw)
         ddict['standalonesave'] = False
-        if kw.has_key('dynamic'):
+        if 'dynamic' in kw:
             del ddict['dynamic']
-        if kw.has_key('crop'):
+        if 'crop' in kw:
             del ddict['crop']
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
         self.slider = qt.QSlider(self)
@@ -77,13 +81,13 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Image Data"),
+            self._saveMenu.addAction(QString("Image Data"),
                                      self.saveImageList)
-            self._saveMenu.addAction(qt.QString("Standard Graphics"),
+            self._saveMenu.addAction(QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
             if QTVERSION > '4.0.0':
                 if MATPLOTLIB:
-                    self._saveMenu.addAction(qt.QString("Matplotlib") ,
+                    self._saveMenu.addAction(QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
 
         dynamic = kw.get("dynamic", False)
@@ -94,7 +98,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
             infotext = "Crop image to the currently zoomed window"
             cropPosition = 6
-            #if kw.has_key('imageicons'):
+            #if 'imageicons' in kw:
             #    if not kw['imageicons']:
             #        cropPosition = 6
             self.cropButton = self.graphWidget._addToolButton(\
@@ -107,11 +111,11 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             infotext = "Flip image and data, not the scale."
             self.graphWidget.hFlipToolButton.setToolTip('Flip image')
             self._flipMenu = qt.QMenu()
-            self._flipMenu.addAction(qt.QString("Flip Image and Vertical Scale"),
+            self._flipMenu.addAction(QString("Flip Image and Vertical Scale"),
                                      self.__hFlipIconSignal)
-            self._flipMenu.addAction(qt.QString("Flip Image Left-Right"),
+            self._flipMenu.addAction(QString("Flip Image Left-Right"),
                                      self._flipLeftRight)
-            self._flipMenu.addAction(qt.QString("Flip Image Up-Down"),
+            self._flipMenu.addAction(QString("Flip Image Up-Down"),
                                      self._flipUpDown)        
 
     def sizeHint(self):

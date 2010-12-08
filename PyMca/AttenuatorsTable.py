@@ -803,9 +803,9 @@ class AttenuatorsTableWidget(QTable):
         elif Elements.isValidMaterial(text):
             key = Elements.getMaterialKey(text)
             if key is not None:
-                if Elements.Material[key].has_key('Density'):
+                if 'Density' in Elements.Material[key]:
                     defaultDensity   = Elements.Material[key]['Density']
-                if Elements.Material[key].has_key('Thickness'):
+                if 'Thickness' in Elements.Material[key]:
                     defaultThickness =  Elements.Material[key]['Thickness'] 
         if defaultDensity >= 0.0:
             self.setText(row, 3, "%g" % defaultDensity)

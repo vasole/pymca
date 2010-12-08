@@ -74,7 +74,7 @@ class McaTable(QTable):
                  "FIXED","FACTOR","DELTA","SUM","IGNORE","ADD","SHOW"]
 
         i=0
-        if kw.has_key('labels'):
+        if 'labels' in kw:
             self.labels=[]
             for label in kw['labels']:
                 self.labels.append(label)

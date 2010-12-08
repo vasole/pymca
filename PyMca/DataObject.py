@@ -57,57 +57,59 @@ class DataObject(object):
             if type(selection) == type({}):
                 #dataObject.data = self.data #should I set it to none???    
                 dataObject.data = None
-                if selection.has_key('rows'):
+                if 'rows' in selection:
                     dataObject.x = None
                     dataObject.y = None
                     dataObject.m = None
-                    if selection['rows'].has_key('x'):
+                    if 'x' in selection['rows']:
                         for rownumber in selection['rows']['x']:
                             if rownumber is None:continue
                             if dataObject.x is None:dataObject.x = []
                             dataObject.x.append(self.data[rownumber,:])
                 
-                    if selection['rows'].has_key('y'):
+                    if 'y' in selection['rows']:
                         for rownumber in selection['rows']['y']:
                             if rownumber is None:continue
                             if dataObject.y is None:dataObject.y = []
                             dataObject.y.append(self.data[rownumber,:])
 
-                    if selection['rows'].has_key('m'):
+                    if 'm' in selection['rows']:
                         for rownumber in selection['rows']['m']:
                             if rownumber is None:continue
                             if dataObject.m is None:dataObject.m = []
                             dataObject.m.append(self.data[rownumber,:])
-                elif selection.has_key('cols') or selection.has_key('columns'):
-                    if selection.has_key('cols'):key = 'cols'
-                    else:key = columns
+                elif ('cols' in selection) or ('columns' in selection):
+                    if 'cols' in selection:
+                        key = 'cols'
+                    else:
+                        key = columns
                     dataObject.x = None
                     dataObject.y = None
                     dataObject.m = None
-                    if selection[key].has_key('x'):
+                    if 'x' in selection[key]:
                         for rownumber in selection[key]['x']:
                             if rownumber is None:continue
                             if dataObject.x is None:dataObject.x = []
                             dataObject.x.append(self.data[:,rownumber])
                 
-                    if selection[key].has_key('y'):
+                    if 'y' in selection[key]:
                         for rownumber in selection[key]['y']:
                             if rownumber is None:continue
                             if dataObject.y is None:dataObject.y = []
                             dataObject.y.append(self.data[:,rownumber])
 
-                    if selection[key].has_key('m'):
+                    if 'm' in selection[key]:
                         for rownumber in selection[key]['m']:
                             if rownumber is None:continue
                             if dataObject.m is None:dataObject.m = []
                             dataObject.m.append(self.data[:,rownumber])
                 if dataObject.x is None:
-                    if dataObject.info.has_key('Channel0'):
+                    if 'Channel0' in dataObject.info:
                         ch0 = int(output.info['Channel0'])
                     else:
                         ch0 = 0
                     dataObject.x = [numpy.arange(ch0,
                                  ch0 + len(dataObject.y[0])).astype(numpy.float)]
-                if not dataObject.info.has_key("selectiontype"):
+                if not ("selectiontype" in dataObject.info):
                     dataObject.info["selectiontype"] = "%dD" % len(dataObject.y) 
                 return dataObject
