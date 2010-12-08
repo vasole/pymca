@@ -1446,16 +1446,16 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
         self.stack = stack
         shape = self.stack.data.shape
-        if self.stack.info.has_key('McaIndex'):
+        if 'McaIndex' in self.stack.info:
             self.mcaIndex = stack.info['McaIndex']
         else:
             self.mcaIndex   = mcaindex
         if fileindex is None:
             fileindex      = 2
             if hasattr(self.stack, "info"):
-                if self.stack.info.has_key('FileIndex'):
+                if 'FileIndex' in self.stack.info:
                     fileindex = stack.info['FileIndex']
-                if self.stack.info.has_key('McaIndex'):
+                if 'McaIndex' in self.stack.info:
                     self.mcaIndex = stack.info['McaIndex']
                 else:
                     if fileindex == 0:

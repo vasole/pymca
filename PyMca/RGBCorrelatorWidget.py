@@ -1163,7 +1163,7 @@ def test():
     w = RGBCorrelatorWidget(container)
     graph = RGBCorrelatorGraph.RGBCorrelatorGraph(container)
     def slot(ddict):
-        if ddict.has_key('image'):
+        if 'image' in ddict:
             image_buffer = ddict['image'].tostring()
             size = ddict['size']
             graph.graph.pixmapPlot(image_buffer,size)

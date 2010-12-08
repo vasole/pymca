@@ -67,9 +67,9 @@ class SpecFileLayer:
         self.GetData   = self.LoadSource
 
     def GetPageInfo(self,index={}):
-        if index.has_key('SourceName'):
+        if 'SourceName' in index:
             self.SetSource(index['SourceName'])
-            if index.has_key('Key'):
+            if 'Key' in index:
                 info=self.GetData(index['Key'])   
                 return info[0]
 
@@ -508,7 +508,7 @@ class SpecFileLayer:
 
     def __GetMcaInfo(self, mcano, scandata, info={}):
         mcainfo= {}
-        if info.has_key("NbMcaDet"):
+        if "NbMcaDet" in info:
             det= info["NbMcaDet"]
             if info["Lines"]>0:
                 mcainfo["McaPoint"]= int(mcano/info["NbMcaDet"])+(mcano%info["NbMcaDet"]>0)
