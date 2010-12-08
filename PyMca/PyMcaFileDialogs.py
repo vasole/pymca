@@ -211,11 +211,11 @@ def getFileList(parent=None, filetypelist=None, message=None,
 if __name__ == "__main__":
     app = qt.QApplication([])
     fileTypeList = ['PNG Files (*.png *.jpg)']
-    print getExistingDirectory()
+    print(getExistingDirectory())
     PyMcaDirs.nativeFileDialogs = False
-    print getExistingDirectory()
+    print(getExistingDirectory())
     PyMcaDirs.nativeFileDialogs = True
-    print getFileList(None, fileTypeList,"Please select a file", "SAVE", True, single=True)
+    print(getFileList(None, fileTypeList,"Please select a file", "SAVE", True, single=True))
     PyMcaDirs.nativeFileDialogs = False
-    print getFileList(None, fileTypeList,"Please select files", "LOAD", getfilter=False, single=False)
+    print(getFileList(None, fileTypeList,"Please select files", "LOAD", getfilter=False, single=False))
     #app.exec_()

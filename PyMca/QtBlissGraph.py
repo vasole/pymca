@@ -1989,8 +1989,8 @@ class QtBlissGraph(qwt.QwtPlot):
             print("Deprecation: Please use clearCurves instead")
         return self.clearCurves()
 
-    def clearCurves(self):        
-        for key in self.curves.keys():
+    def clearCurves(self):
+        for key in list(self.curves.keys()):
             self.delcurve(key) 
         self.__activecurves=[]
         #color counter

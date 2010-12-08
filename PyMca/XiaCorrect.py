@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import XiaEdf
+import sys
 import os
 import time
 import string
@@ -8,13 +9,13 @@ import string
 __version__="$Revision: 1.11 $"
 
 def defaultErrorCB(message):
-    print message
+    print(message)
 
 def defaultLogCB(message, verbose_level=None, verbose_ask=None):
     if verbose_level is None:
-        print message
+        print(message)
     elif verbose_level <= verbose_ask:
-        print message
+        print(message)
 
 def defaultDoneCB(nbdone, total):
     pass
@@ -37,56 +38,56 @@ def parseFiles(filelist, verbose=0, keep_sum=0, log_cb=None, done_cb=None, error
     xiafiles= []
 
     for file in filelist:
-	xf= XiaEdf.XiaFilename(file)
-	if xf.isValid():
-	    log_cb(" - Parsing %s (OK - %s)"%(file, xf.getType()), 1, verbose)
-	    if not keep_sum:
-		if not xf.isSum():
-		    xiafiles.append(xf)
-	    else:
-		xiafiles.append(xf)
-	else:
-	    log_cb(" - Parsing %s (Not Xia)"%file, 1, verbose)
+        xf= XiaEdf.XiaFilename(file)
+        if xf.isValid():
+            log_cb(" - Parsing %s (OK - %s)"%(file, xf.getType()), 1, verbose)
+            if not keep_sum:
+                if not xf.isSum():
+                    xiafiles.append(xf)
+            else:
+                xiafiles.append(xf)
+        else:
+            log_cb(" - Parsing %s (Not Xia)"%file, 1, verbose)
 
     if len(xiafiles):
-	log_cb("Sorting xia files ...")
-	xiafiles.sort()
+        log_cb("Sorting xia files ...")
+        xiafiles.sort()
 
-	groupfiles= []
-	group= None
+        groupfiles= []
+        group= None
 
-	for xf in xiafiles:
-	    if group is None:
-		group= [ xf ]
-	    else:
-		if xf.isGroupedWith(group[0]):
-		    group.append(xf)
-		else:
-		    groupfiles.append(group)
-		    group= [ xf ]
-	if group is not None:
-	    groupfiles.append(group)
+        for xf in xiafiles:
+            if group is None:
+                group= [ xf ]
+            else:
+                if xf.isGroupedWith(group[0]):
+                    group.append(xf)
+                else:
+                    groupfiles.append(group)
+                    group= [ xf ]
+        if group is not None:
+            groupfiles.append(group)
 
-	grouperrors= []
-	for group in groupfiles:
-	    if group[0].isScan():
-		if not group[-1].isStat():
-		    stat= group[0].findStatFile()
-		    if stat is not None:
-			log_cb(" - Find stat file for group <%s>"%stat.get(), 1, verbose)
-			group.append(stat)
-		    else:
-			error_cb("XiaCorrect ERROR: no stat file in current group <%s>"%group[0].get())
-			grouperrors.append(group)
-	
-	for group in grouperrors:
-	    groupfiles.remove(group)
+        grouperrors= []
+        for group in groupfiles:
+            if group[0].isScan():
+                if not group[-1].isStat():
+                    stat= group[0].findStatFile()
+                    if stat is not None:
+                        log_cb(" - Find stat file for group <%s>"%stat.get(), 1, verbose)
+                        group.append(stat)
+                    else:
+                        error_cb("XiaCorrect ERROR: no stat file in current group <%s>"%group[0].get())
+                        grouperrors.append(group)
 
-	if not len(groupfiles):
-	    error_cb("XiaCorrect ERROR: No valid XIA group files")
-	    return None
+        for group in grouperrors:
+            groupfiles.remove(group)
 
-	return groupfiles
+        if not len(groupfiles):
+            error_cb("XiaCorrect ERROR: No valid XIA group files")
+            return None
+
+        return groupfiles
 
     else:
         error_cb("XiaCorrect ERROR: No XIA files found.")
@@ -109,100 +110,100 @@ def correctFiles(xiafiles, deadtime=1, livetime=0, sums=None, avgflag=0, outdir=
     log_cb("Correcting xia files ...")
 
     for group in xiafiles:
-	if not group[0].isScan():
-	    file= group[0]
-	    name= file.get()
-	    log_cb("Working on %s"%name, 1, verbose)
+        if not group[0].isScan():
+            file= group[0]
+            name= file.get()
+            log_cb("Working on %s"%name, 1, verbose)
 
-	    try:
-		xia= XiaEdf.XiaEdfCountFile(name)
-		file.setDirectory(outdir)
-		file.appendPrefix(outname)
-		name= file.get()
+            try:
+                xia= XiaEdf.XiaEdfCountFile(name)
+                file.setDirectory(outdir)
+                file.appendPrefix(outname)
+                name= file.get()
 
-		if sums is not None:
-		    err= xia.sum(sums, deadtime, livetime, avgflag)
-		    file.setType("sum", -1)
-		else:
-		    err= xia.correct(deadtime, livetime)
-	 	if len(err):
-		    error_cb(" - WARNING: in %s"%name)
-		    for msg in err:
-		        error_cb("     * " + msg)
+                if sums is not None:
+                    err= xia.sum(sums, deadtime, livetime, avgflag)
+                    file.setType("sum", -1)
+                else:
+                    err= xia.correct(deadtime, livetime)
+                if len(err):
+                    error_cb(" - WARNING: in %s"%name)
+                    for msg in err:
+                        error_cb("     * " + msg)
 
-		log_cb(" - Saving %s"%name)
-		xia.save(name, force)
-		saved += 1
+                log_cb(" - Saving %s"%name)
+                xia.save(name, force)
+                saved += 1
 
-            except XiaEdf.XiaEdfError, message:
+            except XiaEdf.XiaEdfError:
                 errors += 1
-                log_cb(message)
-		
+                log_cb(sys.exc_info()[1])
+                
         else:
-	    groupfiles= [ file.get() for file in group ]
-	    name= groupfiles[-1]
-	    log_cb("Reading %s"%name, 1, verbose)
+            groupfiles= [ file.get() for file in group ]
+            name= groupfiles[-1]
+            log_cb("Reading %s"%name, 1, verbose)
 
-	    try:
-		xia= XiaEdf.XiaEdfScanFile(name, groupfiles[:-1])
-	    except XiaEdf.XiaEdfError, message:
-		xia= None
-		errors += 1
-		error_cb(message)
+            try:
+                xia= XiaEdf.XiaEdfScanFile(name, groupfiles[:-1])
+            except XiaEdf.XiaEdfError:
+                xia= None
+                errors += 1
+                error_cb(sys.exc_info()[1])
 
-	    if xia is not None:
-		for file in group:
-		    file.setDirectory(outdir)
-		    file.appendPrefix(outname)
+            if xia is not None:
+                for file in group:
+                    file.setDirectory(outdir)
+                    file.appendPrefix(outname)
 
-		if sums is None:
-		    for file in group[:-1]:
-			det= file.getDetector()
-		    
+                if sums is None:
+                    for file in group[:-1]:
+                        det= file.getDetector()
+                    
                         if det is not None:
                             log_cb("Working on detector #%02d"%det, 1, verbose)
                             try:
                                 err= xia.correct(det, deadtime, livetime)
                                 name= file.get()
 
-				if len(err):
-				    error_cb(" - WARNING: in %s"%name)
-				    for msg in err:
-					error_cb("     * " + msg)
+                                if len(err):
+                                    error_cb(" - WARNING: in %s"%name)
+                                    for msg in err:
+                                        error_cb("     * " + msg)
 
                                 log_cb(" - Saving %s"%name)
                                 xia.save(name, force)
 
                                 saved += 1
 
-                            except XiaEdf.XiaEdfError, message:
+                            except XiaEdf.XiaEdfError:
                                 errors += 1
-                                error_cb(message)
-		else:
+                                error_cb(sys.exc_info()[1])
+                else:
                     log_cb("Working on group %s"%name, 1, verbose)
-		    file= group[-1]
-		    for isum in range(len(sums)):
-			try:
-			    err= xia.sum(sums[isum], deadtime, livetime, avgflag)
-			
-			    file.setType("sum", isum+1)
-			    name= file.get()
+                    file= group[-1]
+                    for isum in range(len(sums)):
+                        try:
+                            err= xia.sum(sums[isum], deadtime, livetime, avgflag)
+                        
+                            file.setType("sum", isum+1)
+                            name= file.get()
 
-			    if len(err):
-			        error_cb(" - WARNING: in %s"%name)
-			        for msg in err:
-				    error_cb("     * " + msg)
+                            if len(err):
+                                error_cb(" - WARNING: in %s"%name)
+                                for msg in err:
+                                    error_cb("     * " + msg)
 
-			    log_cb(" - Saving %s"%name)
-			    xia.save(name, force)
+                            log_cb(" - Saving %s"%name)
+                            xia.save(name, force)
 
-			    saved += 1
-			except XiaEdf.XiaEdfError, message:
-			    errors += 1
-			    error_cb(message)
+                            saved += 1
+                        except XiaEdf.XiaEdfError:
+                            errors += 1
+                            error_cb(sys.exc_info()[1])
 
-	processed += 1
-	done_cb(processed, total)
+        processed += 1
+        done_cb(processed, total)
                     
     done_cb(total, total)
     log_cb("\n* %d groups processed and %d files saved in %.2f sec"%(processed, saved, time.time()-tps))
@@ -223,9 +224,9 @@ def parseArguments():
 
     try:
         opts, args= getopt.getopt(sys.argv[1:], string.join(short), long)
-    except getopt.error, msg:
-        print "XiaCorrect ERROR: Cannot parse command line arguments"
-        print "\t%s"%msg
+    except getopt.error:
+        print("XiaCorrect ERROR: Cannot parse command line arguments")
+        print("\t%s" % sys.exc_info()[1])
         sys.exit(0)
 
     parsing= 0
@@ -248,33 +249,35 @@ def parseArguments():
             options["deadtime"]= 1
         if opt in ("-l", "--livetime"):
             options["livetime"]= 1
-	if opt in ("-n", "--name"):
-	    options["name"]= str(arg)
+        if opt in ("-n", "--name"):
+            options["name"]= str(arg)
         if opt in ("-s", "--sum"):
-	    if options["sums"] is None:
-		options["sums"]= []
+            if options["sums"] is None:
+                options["sums"]= []
             try:
-                sum= [ int(det) for det in arg.split(",") ]
-                if sum[0]==-1:
-                    sum= []
-                options["sums"].append(sum)
+                ssum= [ int(det) for det in arg.split(",") ]
+                if ssum[0]==-1:
+                    ssum= []
+                options["sums"].append(ssum)
             except:
-                print "XiaCorrect ERROR: Cannot parse sum detectors"
-		print "\t%s"%arg
+                print("XiaCorrect ERROR: Cannot parse sum detectors")
+                print("\t%s"%arg)
                 sys.exit(0)
-	if opt in ("-a", "--avg"):
-	    options["avgflag"]= 1
-	if opt in ("-p", "--parsing"):
-	    options["parsing"]= 1
+        if opt in ("-a", "--avg"):
+            options["avgflag"]= 1
+        if opt in ("-p", "--parsing"):
+            options["parsing"]= 1
                 
     
-    for input in options["input"]:
-        if not os.path.isdir(input):
-            print "XiaCorrect WARNING: Input directory <%s> is not valid"%input
+    for iinput in options["input"]:
+        if not os.path.isdir(iinput):
+            print("XiaCorrect WARNING: Input directory <%s> is not valid"%\
+                  iinput)
 
-        files= [ os.path.join(input, file) for file in os.listdir(input) ]
+        files= [ os.path.join(iinput, file) for file in os.listdir(iinput) ]
         if not len(files):
-            print "XiaCorrect WARNING: Input directory <%s> is empty"%(input, prog)
+            print("XiaCorrect WARNING: Input directory <%s> is empty"%\
+                  (iinput, prog))
         else:
             options["files"]+= files
 
@@ -282,18 +285,18 @@ def parseArguments():
         options["files"]+= args
 
     if not len(options["files"]):
-        print "XiaCorrect ERROR: No input datafiles"
+        print("XiaCorrect ERROR: No input datafiles")
         sys.exit(0)
 
     if not options["parsing"]:
-	if not options["deadtime"] and not options["livetime"] and options["sums"] is None:
-	    print "XiaCorrect ERROR: Must have at least deadtime, livetime or sum options"
-	    sys.exit(0)
+        if not options["deadtime"] and not options["livetime"] and options["sums"] is None:
+            print("XiaCorrect ERROR: Must have at least deadtime, livetime or sum options")
+            sys.exit(0)
 
-	if options["output"] is not None:
-	    if not os.path.isdir(options["output"]):
-		print "XiaCorrect ERROR: output directory is not valid"
-		sys.exit(0)
+        if options["output"] is not None:
+            if not os.path.isdir(options["output"]):
+                print("XiaCorrect ERROR: output directory is not valid")
+                sys.exit(0)
 
     return options 
 
@@ -345,20 +348,20 @@ Minimum options to work:
     [-i input] or <files ...>
 
 """%(prog, prog, prog, prog, prog)
-    print msg
+    print(msg)
 
 
 def mainCommandLine():
     options= parseArguments()
     files= parseFiles(options["files"], options["verbose"])
     if files is not None:
-	if options["parsing"]:
-	    for group in files:
-		print "FileGroup:"
-		for file in group:
-		    print " - ", file.get()
-	else:
-	    correctFiles(files, options["deadtime"], options["livetime"], options["sums"], options["avgflag"], \
+        if options["parsing"]:
+            for group in files:
+                print("FileGroup:")
+                for file in group:
+                    print(" - ", file.get())
+        else:
+            correctFiles(files, options["deadtime"], options["livetime"], options["sums"], options["avgflag"], \
                  options["output"], options["name"], options["force"], options["verbose"])
 
 def mainGUI(app=None):
@@ -372,10 +375,10 @@ def mainGUI(app=None):
     ret= wid.exec_()
 
     if ret==qt.QDialog.Accepted:
-	options= wid.get()
-	files= parseFiles(options["files"], options["verbose"])
-	if files is not None:
-	    correctFiles(files, options["deadtime"], options["livetime"], options["sums"], options["avgflag"], \
+        options= wid.get()
+        files= parseFiles(options["files"], options["verbose"])
+        if files is not None:
+            correctFiles(files, options["deadtime"], options["livetime"], options["sums"], options["avgflag"], \
                      options["output"], options["name"], options["force"], options["verbose"])
         
 

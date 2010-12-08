@@ -110,7 +110,7 @@ class XiaEdfCountFile:
                 raise XiaEdfError("Cannot read data in <%s>"%self.filename)
 
     def getDetList(self):
-	return self.detList
+        return self.detList
 
     def getData(self, detector=-1):
         # --- WARNING: first index is channels
@@ -133,8 +133,8 @@ class XiaEdfCountFile:
             return self.statArray[(idx*XiaStatNb):((idx+1)*XiaStatNb)]
 
     def correct(self, deadtime=1, livetime=0):
-	message= []
-	corrflag= int(self.header.get("xcorr", 0))
+        message= []
+        corrflag= int(self.header.get("xcorr", 0))
         if livetime and corrflag&2:
             raise XiaEdfError("<%s> seems already livetime corrected"%self.filename)
 
@@ -146,40 +146,40 @@ class XiaEdfCountFile:
 
         if livetime:
             lvt= Numeric.zeros((self.nbDet,1), Numeric.Float)
-	    derr= []
+            derr= []
             for idx in range(len(self.detList)):
                 lvt[idx]= self.statArray[idx*XiaStatNb + XiaStatIndex["lt"]] / 1000.0
                 if lvt[idx]==0.:
-		    lvt[idx]= 1.
-		    derr.append("#%02d"%self.detList[idx])
-	    if len(derr):
-		message.append("Null livetime on det %s"%string.join(derr))
+                    lvt[idx]= 1.
+                    derr.append("#%02d"%self.detList[idx])
+            if len(derr):
+                message.append("Null livetime on det %s"%string.join(derr))
 
             self.data[1:,:]= self.data[1:,:] / lvt
-	    self.header["xcorr"]= corrflag|2
+            self.header["xcorr"]= corrflag|2
 
         if deadtime:
             rate= Numeric.zeros((self.nbDet,1), Numeric.Float)
             for idx in range(len(self.detList)):
-		derr= []
+                derr= []
                 try:
                     rate[idx]= float(self.statArray[idx*XiaStatNb + XiaStatIndex["icr"]]) / \
                             float(self.statArray[idx*XiaStatNb + XiaStatIndex["ocr"]])
                 except:
-		    rate[idx]= 1.
-		    derr.append("#%02d"%idx)
-	    if len(derr):
-		message.append("Null OCR on det %s"%string.join(derr))
+                    rate[idx]= 1.
+                    derr.append("#%02d"%idx)
+            if len(derr):
+                message.append("Null OCR on det %s"%string.join(derr))
                 
             self.data[1:,:]= self.data[1:,:] * rate
             self.header["xcorr"]= corrflag|1
 
-	return message
+        return message
 
     def sum(self, sums=[], deadtime=0, livetime=0, average=0):
-	message= []
-	if not len(sums):
-	    return message
+        message= []
+        if not len(sums):
+            return message
 
         self.__readData()
 
@@ -188,43 +188,43 @@ class XiaEdfCountFile:
         else:
             self.data= self.data.astype(Numeric.Float)
 
-	sumdata= Numeric.zeros((len(sums), self.data.shape[1]), Numeric.Float)
+        sumdata= Numeric.zeros((len(sums), self.data.shape[1]), Numeric.Float)
 
-	for idx in range(len(sums)):
-	    if not len(sums[idx]):
-		sumdata[idx,:]= Numeric.sum(self.data[1:,], 0)
-		xdet= self.detList
-	    else:
-		mask= Numeric.zeros((self.nbDet+1,1), Numeric.Int)
-		xdet= []
-		for det in sums[idx]:
-		    if det in self.detList:
-			detidx= self.detList.index(det)
-			mask[detidx+1]= 1
-			xdet.append(det)
-		sumdata[idx,:]= Numeric.sum(self.data*mask, 0)
+        for idx in range(len(sums)):
+            if not len(sums[idx]):
+                sumdata[idx,:]= Numeric.sum(self.data[1:,], 0)
+                xdet= self.detList
+            else:
+                mask= Numeric.zeros((self.nbDet+1,1), Numeric.Int)
+                xdet= []
+                for det in sums[idx]:
+                    if det in self.detList:
+                        detidx= self.detList.index(det)
+                        mask[detidx+1]= 1
+                        xdet.append(det)
+                sumdata[idx,:]= Numeric.sum(self.data*mask, 0)
 
-	    self.header["xcorr%d"%idx]= self.header.get("xcorr", 0)
-	    self.header["xdet%d"%idx]= string.join([str(det) for det in xdet], " ")
+            self.header["xcorr%d"%idx]= self.header.get("xcorr", 0)
+            self.header["xdet%d"%idx]= string.join([str(det) for det in xdet], " ")
 
-	if average:
-	    self.data= sumdata / len(xdet)
-	else:
-	    self.data= sumdata
-	
-	for key in self.header.keys():
-	    if key[0]=='x':
-		try:
-		    det= int(key[-2:])
-		    del self.header[key]
-		except:
-		    pass
+        if average:
+            self.data= sumdata / len(xdet)
+        else:
+            self.data= sumdata
 
-	dataflag= int(self.header.get("xdata", 0))
-	self.header["xdata"]= dataflag | (1<<2)
-	self.header["xnb"]= len(sums)
+        for key in self.header.keys():
+            if key[0]=='x':
+                try:
+                    det= int(key[-2:])
+                    del self.header[key]
+                except:
+                    pass
 
-	return message
+        dataflag= int(self.header.get("xdata", 0))
+        self.header["xdata"]= dataflag | (1<<2)
+        self.header["xnb"]= len(sums)
+
+        return message
                 
     def save(self, filename, force=0):
         edf= openEdf(filename, write=1, force=force)
@@ -271,8 +271,6 @@ class XiaEdfScanFile:
         return self.nbDet
 
     def __readData(self, detector):
-        print "detector = ", detector
-        print "self.detector = ", self.detector
         if detector!=self.detector:
             self.detector= None
             self.data= None
@@ -686,21 +684,21 @@ def testScan():
         ])
 
     x.sum([1,10])
-    print x.header
+    print(x.header)
     x.save("test_sum.edf")
     #for det in [1, 2, 3, 4, 5, 6]:
     #    x.correct(det, livetime=1)
     #    x.save(det, "scan_corr_xia%02d.edf"%det)
 
 def testAcq(infile, outfile=None):
-        print "Reading ", infile
+        print("Reading ", infile)
         x= XiaEdfCountFile(infile)
         #print "DeadTime Correction ..."
         #x.correct()
         x.sum([1,10])
         if outfile is not None:
-            print x.header
-            print "Saving ", outfile
+            print(x.header)
+            print("Saving %s" % outfile)
             x.save(outfile)
     
 if __name__=="__main__": 
@@ -710,7 +708,7 @@ if __name__=="__main__":
     sys.exit(0)
 
     if len(sys.argv)<2:
-        print "%s <ct_filename> [<output_filename>]"%sys.argv[0]
+        print("%s <ct_filename> [<output_filename>]" % sys.argv[0])
         sys.exit(0)
     else:
         infile= sys.argv[1]

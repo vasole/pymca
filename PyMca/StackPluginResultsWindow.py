@@ -27,6 +27,10 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import PyMcaQt as qt
 HorizontalSpacer = qt.HorizontalSpacer
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 from PyMca_Icons import IconDict
 import MaskImageWidget
 import ScanWindow
@@ -68,13 +72,13 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Image Data"),
+            self._saveMenu.addAction(QString("Image Data"),
                                      self.saveImageList)
-            self._saveMenu.addAction(qt.QString("Standard Graphics"),
+            self._saveMenu.addAction(QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
             if QTVERSION > '4.0.0':
                 if MATPLOTLIB:
-                    self._saveMenu.addAction(qt.QString("Matplotlib") ,
+                    self._saveMenu.addAction(QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
         self.multiplyIcon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         infotext = "Multiply image by -1"
@@ -210,7 +214,7 @@ def test():
                                 image_names=["I1", "I2"], spectra_names=["V1", "V2"])
     container.show()
     def theSlot(ddict):
-        print ddict['event']
+        print(ddict['event'])
 
     if QTVERSION < '4.0.0':
         qt.QObject.connect(container,

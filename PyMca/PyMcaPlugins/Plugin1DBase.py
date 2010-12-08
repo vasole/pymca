@@ -83,8 +83,8 @@ class Plugin1DBase:
         that are applicable to the specified plot.
 
         Plot type can be "SCAN", "MCA", None, ...        
-        """        
-        print "getMethods not implemented"
+        """
+        print("getMethods not implemented")
         return []
 
     def getMethodToolTip(self, name):
@@ -103,7 +103,7 @@ class Plugin1DBase:
         """
         The plugin is asked to apply the method associated to name.
         """
-        print "applyMethod not implemented"
+        print("applyMethod not implemented")
         return
 
 def getPlugin1DInstance(plotWindow, **kw):

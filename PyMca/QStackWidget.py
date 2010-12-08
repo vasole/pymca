@@ -30,6 +30,10 @@ import numpy
 import weakref
 
 from PyMca import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 from PyMca import DataObject
 from PyMca import McaWindow
 from PyMca import StackBase
@@ -104,21 +108,21 @@ class QStackWidget(StackBase.StackBase,
                                                         standalonesave=False,
                                                         imageicons=False)
             self._stackSaveMenu = qt.QMenu()
-            self._stackSaveMenu.addAction(qt.QString("Stack as Spectra"),
+            self._stackSaveMenu.addAction(QString("Stack as Spectra"),
                                                  self.saveStackAsNeXusSpectra)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Images"),
+            self._stackSaveMenu.addAction(QString("Stack as Images"),
                                                  self.saveStackAsNeXusImages)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 Spectra"),
+            self._stackSaveMenu.addAction(QString("Stack as Float32 Spectra"),
                                                  self.saveStackAsFloat32NeXusSpectra)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 Spectra"),
+            self._stackSaveMenu.addAction(QString("Stack as Float64 Spectra"),
                                                  self.saveStackAsFloat64NeXusSpectra)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Float32 Images"),
+            self._stackSaveMenu.addAction(QString("Stack as Float32 Images"),
                                                  self.saveStackAsFloat32NeXusImages)
-            self._stackSaveMenu.addAction(qt.QString("Stack as Float64 Images"),
+            self._stackSaveMenu.addAction(QString("Stack as Float64 Images"),
                                                  self.saveStackAsFloat64NeXusImages)
-            self._stackSaveMenu.addAction(qt.QString("Stack as HDF5 /data"),
+            self._stackSaveMenu.addAction(QString("Stack as HDF5 /data"),
                                                  self.saveStackAsSimplestHDF5)
-            self._stackSaveMenu.addAction(qt.QString("Standard Graphics"),
+            self._stackSaveMenu.addAction(QString("Standard Graphics"),
                                 self.stackWidget.graphWidget._saveIconSignal)
             self.connect(self.stackWidget.graphWidget.saveToolButton,
                          qt.SIGNAL("clicked()"), 
@@ -357,7 +361,7 @@ class QStackWidget(StackBase.StackBase,
             actionList = ['Load Slave', 'Show Slave', 'Delete Slave']
             menu = qt.QMenu(self)
             for action in actionList:
-                text = qt.QString(action)
+                text = QString(action)
                 menu.addAction(text)
             a = menu.exec_(qt.QCursor.pos())
             if a is None:
@@ -415,14 +419,14 @@ class QStackWidget(StackBase.StackBase,
     def _pluginClicked(self):
         actionList = []
         menu = qt.QMenu(self)
-        text = qt.QString("Reload Plugins")
+        text = QString("Reload Plugins")
         menu.addAction(text)
         actionList.append(text)
         global DEBUG
         if DEBUG:
-            text = qt.QString("Toggle DEBUG mode OFF")
+            text = QString("Toggle DEBUG mode OFF")
         else:
-            text = qt.QString("Toggle DEBUG mode ON")
+            text = QString("Toggle DEBUG mode ON")
         menu.addAction(text)
         actionList.append(text)
         menu.addSeparator()
@@ -432,14 +436,14 @@ class QStackWidget(StackBase.StackBase,
                 continue
             module = sys.modules[m]
             if hasattr(module, 'MENU_TEXT'):
-                text = qt.QString(module.MENU_TEXT)
+                text = QString(module.MENU_TEXT)
             else:
                 text = os.path.basename(module.__file__)
                 if text.endswith('.pyc'):
                     text = text[:-4]
                 elif text.endswith('.py'):
                     text = text[:-3]
-                text = qt.QString(text)
+                text = QString(text)
             methods = self.pluginInstanceDict[m].getMethods()
             if not len(methods):
                 continue
@@ -474,9 +478,9 @@ class QStackWidget(StackBase.StackBase,
             methods.sort()
             menu = qt.QMenu(self)
             for method in methods:
-                text = qt.QString(method)
+                text = QString(method)
                 pixmap = self.pluginInstanceDict[key].getMethodPixmap(method)
-                tip = qt.QString(self.pluginInstanceDict[key].getMethodToolTip(method))
+                tip = QString(self.pluginInstanceDict[key].getMethodToolTip(method))
                 if pixmap is not None:
                     action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
                 else:

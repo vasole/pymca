@@ -191,7 +191,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         shape = dataObject.data.shape
         if len(shape) == 2:
             if index > 0:
-                raise IndexError, "Only one image in stack"
+                raise IndexError("Only one image in stack")
             return dataObject.data
         if self._browsingIndex == 0:
             if len(shape) == 3:
@@ -260,7 +260,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                         data = dataObject.data[:,:,i0:i1].sum(axis=-1)
                     data /= float(i1-i0)
                 return data
-        raise IndexError, "Unhandled dimension"
+        raise IndexError("Unhandled dimension")
 
     def _showImageSliderSlot(self, index):
         self.showImage(index, moveslider=False)

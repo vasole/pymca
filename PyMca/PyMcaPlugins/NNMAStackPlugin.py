@@ -29,14 +29,19 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
-import StackPluginBase
-import CalculationThread
+try:
+    import StackPluginBase
+    import CalculationThread
+except ImportError:
+    #python 3 needs this
+    from . import StackPluginBase
+    from . import CalculationThread
 try:
     from PyMca.NNMAWindow import NNMAParametersDialog
     from PyMca import StackPluginResultsWindow    
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "PCAStackPlugin importing from somewhere else"
+    print("NNMAStackPlugin importing from somewhere else")
     from NNMAWindow import NNMAParametersDialog
     import StackPluginResultsWindow
     import PyMca_Icons
@@ -61,7 +66,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
 
     def stackUpdated(self):
         if DEBUG:
-            print "StackBrowserPlugin.stackUpdated() called"
+            print("NNMAStackPlugin.stackUpdated() called")
         self.configurationWidget = None
         self.widget = None
 
@@ -75,7 +80,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if DEBUG:
-            print "mySlot ", ddict['event'], ddict.keys()
+            print("mySlot ", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
@@ -101,8 +106,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
-
+        return self.methodDict[name][0]()
 
     #The specific part
     def calculate(self):
@@ -141,7 +145,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
 
     def _executeFunctionAndParameters(self):
         if DEBUG:
-            print "NNMAStackPlugin _executeFunctionAndParameters"
+            print("NNMAStackPlugin _executeFunctionAndParameters")
         self.widget = None
         self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
@@ -151,19 +155,19 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.show()
         message = "Please wait. NNMA Calculation going on."
         if DEBUG:
-            print "NNMAStackPlugin starting thread"
+            print("NNMAStackPlugin starting thread")
         self.thread.start()
         if DEBUG:
-            print "NNMAStackPlugin waitingMessageDialog"
+            print("NNMAStackPlugin waitingMessageDialog")
         CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
                                 parent=self.configurationWidget) 
         if DEBUG:
-            print "NNMAStackPlugin waitingMessageDialog passed"
+            print("NNMAStackPlugin waitingMessageDialog passed")
 
     def actualCalculation(self):
         if DEBUG:
-            print "NNMAStackPlugin actualCalculation"
+            print("NNMAStackPlugin actualCalculation")
         nnmaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
         self.configurationWidget.setEnabled(False)        
@@ -180,7 +184,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
             if stack.data.dtype not in [numpy.float, numpy.float32]:
-                print "WARNING: Non floating point data"
+                print("WARNING: Non floating point data")
                 text = "Calculation going on."
                 text += " WARNING: Non floating point data."
                 self._status.setText(text)
@@ -193,7 +197,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
 
     def threadFinished(self):
         if DEBUG:
-            print "NNMAStackPlugin threadFinished"
+            print("NNMAStackPlugin threadFinished")
         result = self.thread.result
         self.thread = None
         if type(result) == type((1,)):
@@ -202,7 +206,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                 if result[0] == "Exception":
                     self._status.setText("Ready after calculation error")
                     self.configurationWidget.setEnabled(True)
-                    raise result[1],result[2]
+                    raise Exception(result[1], result[2])
                     return
         self._status.setText("Ready")
         self.configurationWidget.setEnabled(True)
@@ -221,11 +225,11 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             vectorTitles.append("%g %% explained intensity" %\
                                                eigenValues[i])
         if DEBUG:
-            print "NNMAStackPlugin threadFinished. Create widget"
+            print("NNMAStackPlugin threadFinished. Create widget")
         self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=True)
         if DEBUG:
-            print "NNMAStackPlugin threadFinished. Widget created"
+            print("NNMAStackPlugin threadFinished. Widget created")
         self.widget.buildAndConnectImageButtonBox()
         qt = StackPluginResultsWindow.qt
         qt.QObject.connect(self.widget,

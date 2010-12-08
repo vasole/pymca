@@ -29,7 +29,10 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import os
-import StackPluginBase
+try:
+    import StackPluginBase
+except ImportError:
+    from . import StackPluginBase
 try:
     from PyMca import PyMcaQt as qt
     from PyMca import EDFStack
@@ -38,7 +41,7 @@ try:
     from PyMca import ExternalImagesWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "ExternalImagesWindow importing from somewhere else"
+    print("ExternalImagesWindow importing from somewhere else")
     import PyMcaQt as qt
     import EDFStack
     import PyMcaFileDialogs
@@ -73,7 +76,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if DEBUG:
-            print "mySlot ", ddict['event'], ddict.keys()
+            print("mySlot ", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
@@ -99,8 +102,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
-
+        return self.methodDict[name][0]()
 
     def _loadImageFiles(self):
         if self.getStackDataObject() is None:

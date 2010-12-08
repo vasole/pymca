@@ -28,12 +28,15 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
-import StackPluginBase
+try:
+    import StackPluginBase
+except ImportError:
+    from . import StackPluginBase
 try:
     from PyMca import StackROIWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "ROIStackPlugin importing from somewhere else"
+    print("ROIStackPlugin importing from somewhere else")
     import StackROIWindow
     import PyMca_Icons
 
@@ -51,7 +54,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
 
     def stackUpdated(self):
         if DEBUG:
-            print "ROIStackPlugin.stackUpdated() called"
+            print("ROIStackPlugin.stackUpdated() called")
         if self.roiWindow is None:
             return
         if self.roiWindow.isHidden():
@@ -74,7 +77,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if DEBUG:
-            print "mySlot ", ddict['event'], ddict.keys()
+            print("mySlot ", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
@@ -97,7 +100,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
+        return self.methodDict[name][0]()
 
     def _showWidget(self):
         if self.roiWindow is None:

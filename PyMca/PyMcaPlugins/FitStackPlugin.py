@@ -28,12 +28,15 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
-import StackPluginBase
+try:
+    import StackPluginBase
+except ImportError:
+    from . import StackPluginBase
 try:
     from PyMca import StackSimpleFitWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "Plugin importing from somewhere else"
+    print("FitStackPlugin importing from somewhere else")
     import StackSimpleFitWindow
     import PyMca_Icons
 
@@ -69,7 +72,7 @@ class FitStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
+        return self.methodDict[name][0]()
 
     def __updateOwnData(self):
         activeCurve = self.getActiveCurve()

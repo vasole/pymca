@@ -255,18 +255,18 @@ class PCAParametersDialog(qt.QDialog):
         self.scanWindow.newCurve(x, y, self._legend, replace=True)
 
     def setParameters(self, ddict):
-        if ddict.has_key('options'):
+        if 'options' in ddict:
             self.binningCombo.clear()
             for option in ddict['options']:
                 self.binningCombo.addItem("%d" % option)
-        if ddict.has_key('binning'):
+        if 'binning' in ddict:
             option = "%d" % ddict['binning']
             for i in range(self.binningCombo.count()):
                 if str(self.binningCombo.itemText(i)) == option:
                     self.binningCombo.setCurrentIndex(i)
-        if ddict.has_key('npc'):
+        if 'npc' in ddict:
             self.nPC.setValue(ddict['npc'])
-        if ddict.has_key('method'):
+        if 'method' in ddict:
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
             if ddict['method'] != 2:
                 self.binningCombo.setEnabled(True)

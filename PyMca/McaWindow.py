@@ -2186,7 +2186,7 @@ class McaWidget(qt.QWidget):
             
         if not doit:return
         self.graph.clearcurves()
-        for key in self.dataObjectsDict.keys():
+        for key in list(self.dataObjectsDict.keys()):
             del self.dataObjectsDict[key]
         self.graph.clearMarkers()
         self.roimarkers=[-1,-1]

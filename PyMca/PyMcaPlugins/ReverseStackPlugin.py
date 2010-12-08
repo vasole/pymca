@@ -29,7 +29,10 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
-import StackPluginBase
+try:
+    import StackPluginBase
+except ImportError:
+    from . import StackPluginBase
 
 DEBUG = 0
 
@@ -88,7 +91,7 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
+        return self.methodDict[name][0]()
 
     def reverseOddRows(self):
         self.reverseRows(offset=1)

@@ -107,16 +107,16 @@ class StackPluginBase(object):
 
     def stackUpdated(self):
         if DEBUG:
-            print "stackUpdated(self) not implemented"
+            print("stackUpdated(self) not implemented")
 
     def stackROIImageListUpdated(self):
         if DEBUG:
-            print "stackROIImageListUpdated(self) not implemented"
+            print("stackROIImageListUpdated(self) not implemented")
         return
 
     def selectionMaskUpdated(self):
         if DEBUG:
-            print "selectionMaskUpdated(self) not implemented"
+            print("selectionMaskUpdated(self) not implemented")
 
     #Methods to be implemented by the plugin
     def getMethods(self):
@@ -124,7 +124,7 @@ class StackPluginBase(object):
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified stack.
         """        
-        print "BASE STACK getMethods not implemented"
+        print("BASE STACK getMethods not implemented")
         return []
 
     def getMethodToolTip(self, name):
@@ -143,7 +143,7 @@ class StackPluginBase(object):
         """
         The plugin is asked to apply the method associated to name.
         """
-        print "applyMethod not implemented"
+        print("applyMethod not implemented")
         return
 
 MENU_TEXT = "StackPluginBase"

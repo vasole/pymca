@@ -28,13 +28,16 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
-import StackPluginBase
+try:
+    import StackPluginBase
+except ImportError:
+    from . import StackPluginBase
 try:
     from PyMca import SGWindow
     from PyMca import SNIPWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "Plugin importing from somewhere else"
+    print("Plugin importing from somewhere else")
     import SGWindow
     import SNIPWindow
     import PyMca_Icons
@@ -94,7 +97,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
+        return self.methodDict[name][0]()
 
     def replaceStackWithSavitzkyGolayFiltering(self):
         activeCurve = self.getActiveCurve()

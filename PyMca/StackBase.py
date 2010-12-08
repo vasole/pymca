@@ -104,7 +104,11 @@ class StackBase(object):
                     del self.pluginInstanceDict[plugin]
                 if plugin in sys.modules:
                     if hasattr(sys.modules[plugin], targetMethod):
-                        reload(sys.modules[plugin])
+                        if sys.version < '3.0':
+                            reload(sys.modules[plugin])
+                        else:
+                            import imp
+                            imp.reload(sys.modules[plugin])                            
                 else:
                     __import__(plugin)
                 if hasattr(sys.modules[plugin], targetMethod):

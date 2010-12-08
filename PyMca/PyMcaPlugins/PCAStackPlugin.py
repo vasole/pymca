@@ -29,14 +29,19 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
-import StackPluginBase
-import CalculationThread
+try:
+    import StackPluginBase
+    import CalculationThread
+except ImportError:
+    #python 3 needs this
+    from . import StackPluginBase
+    from . import CalculationThread
 try:
     from PyMca.PCAWindow import PCAParametersDialog
     from PyMca import StackPluginResultsWindow    
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "PCAStackPlugin importing from somewhere else"
+    print("PCAStackPlugin importing from somewhere else")
     from PCAWindow import PCAParametersDialog
     import StackPluginResultsWindow
     import PyMca_Icons
@@ -61,7 +66,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
 
     def stackUpdated(self):
         if DEBUG:
-            print "StackBrowserPlugin.stackUpdated() called"
+            print("PCAStackPlugin.stackUpdated() called")
         self.configurationWidget = None
         self.widget = None
 
@@ -75,7 +80,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if DEBUG:
-            print "mySlot ", ddict['event'], ddict.keys()
+            print("mySlot ", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
@@ -101,8 +106,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
-        return apply(self.methodDict[name][0])
-
+        return self.methodDict[name][0]()
 
     #The specific part
     def calculate(self):
@@ -171,7 +175,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
             if stack.data.dtype not in [numpy.float, numpy.float32]:
-                print "WARNING: Non floating point data"
+                print("WARNING: Non floating point data")
                 text = "Calculation going on."
                 text += " WARNING: Non floating point data."
                 self._status.setText(text)
@@ -191,7 +195,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                 if result[0] == "Exception":
                     self._status.setText("Ready after calculation error")
                     self.configurationWidget.setEnabled(True)
-                    raise result[1],result[2]
+                    raise Exception(result[1], result[2])
                     return
         self._status.setText("Ready")
         self.configurationWidget.setEnabled(True)

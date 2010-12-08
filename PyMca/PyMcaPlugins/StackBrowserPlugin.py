@@ -28,12 +28,15 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
-import StackPluginBase
+try:
+    import StackPluginBase
+except ImportError:
+    from . import StackPluginBase
 try:
     from PyMca import StackBrowser
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
-    print "ROIStackPlugin importing from somewhere else"
+    print("ROIStackPlugin importing from somewhere else")
     import StackBrowser
     import PyMca_Icons
 
@@ -51,7 +54,7 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
 
     def stackUpdated(self):
         if DEBUG:
-            print "StackBrowserPlugin.stackUpdated() called"
+            print("StackBrowserPlugin.stackUpdated() called")
         if self.widget is None:
             return
         if self.widget.isHidden():
@@ -71,7 +74,7 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if DEBUG:
-            print "mySlot ", ddict['event'], ddict.keys()
+            print("mySlot ", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":

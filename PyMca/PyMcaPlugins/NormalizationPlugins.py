@@ -1,4 +1,7 @@
-import Plugin1DBase
+try:
+    import Plugin1DBase
+except ImportError:
+    from . import Plugin1DBase
 import numpy
 try:
     import PyMca.PyMca_Icons as PyMca_Icons
@@ -51,7 +54,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         """
         The plugin is asked to apply the method associated to name.
         """
-        apply(self.methodDict[name][0])
+        self.methodDict[name][0]()
         return
 
     def toMaximum(self):
@@ -192,9 +195,9 @@ if __name__ == "__main__":
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():
-        print method, ":", plugin.getMethodToolTip(method)
+        print(method, ":", plugin.getMethodToolTip(method))
     plugin.applyMethod(plugin.getMethods()[0])
     curves = plugin.getAllCurves()
     for curve in curves:
-        print curve[2]
-    print "LIMITS = ", plugin.getGraphYLimits()
+        print(curve[2])
+    print("LIMITS = ", plugin.getGraphYLimits())

@@ -117,7 +117,7 @@ class RGBCorrelator(qt.QWidget):
                 return
 
     def correlatorSignalSlot(self, ddict):
-        if ddict.has_key('image'):
+        if 'image' in ddict:
             # keep the image buffer as an array
             self._imageBuffer = ddict['image'] #.tostring()
             size = ddict['size']
