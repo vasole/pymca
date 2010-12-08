@@ -226,8 +226,8 @@ class  EdfFile:
         line = self.File.readline()
         selectedLines = [""]
         if sys.version > '2.6':
-            selectedLines.append(type(eval('b""')))
-        while line not in  selectedLines:
+            selectedLines.append(eval('b""'))
+        while line not in selectedLines:
             #decode to make sure I have character string
             #str to make sure python 2.x sees it as string and not unicode
             line = str(line.decode())
