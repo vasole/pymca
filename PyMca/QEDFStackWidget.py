@@ -2159,7 +2159,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             print("Dynamic loading case 0")
                         #no other choice than to read all images
                         #for the time being, one by one
-                        for i in xrange(self.stack.data.shape[0]):
+                        for i in range(self.stack.data.shape[0]):
                             tmpData = self.stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
                             mcaData[i] = (tmpData*arrayMask).sum()
@@ -2181,7 +2181,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                             print("Dynamic loading case 2")
                         #no other choice than to read all images
                         #for the time being, one by one
-                        for i in xrange(self.stack.data.shape[0]):
+                        for i in range(self.stack.data.shape[0]):
                             tmpData = self.stack.data[i:i+1,:,:]
                             tmpData.shape = tmpData.shape[1:]
                             #multiplication is faster than selection

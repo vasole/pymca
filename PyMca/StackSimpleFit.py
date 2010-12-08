@@ -112,7 +112,7 @@ class StackSimpleFit(object):
             data = stack
 
         #make sure all the indices are positive
-        for i in xrange(len(data_index)):
+        for i in range(len(data_index)):
             if data_index[i] < 0:
                 data_index[i] = range(len(data.shape))[data_index[i]]
 

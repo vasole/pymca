@@ -321,11 +321,11 @@ def nnma(stack, ncomponents, binning=None,
     new_images.shape = ncomponents + n_more, r, c
     if kmeans:
         classifier = mdp.nodes.KMeansClassifier(ncomponents)
-        for i in xrange(ncomponents):
+        for i in range(ncomponents):
             classifier.train(new_vectors[i:i+1])
         k = 0
-        for i in xrange(r):
-            for j in xrange(c):
+        for i in range(r):
+            for j in range(c):
                 spectrum = data[k:k+1,:]
                 new_images[-1, i,j] = classifier.label(spectrum)[0]
                 k += 1

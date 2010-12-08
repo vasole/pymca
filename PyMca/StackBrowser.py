@@ -224,7 +224,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                     npoints = (acquisitionShape[-1]*acquisitionShape[-2])
                     i0 = max(index - width, 0)
                     i1 = min(index + width + 1, npoints)
-                    for tmpIndex in xrange(i0, i1):
+                    for tmpIndex in range(i0, i1):
                         j = tmpIndex % acquisitionShape[-1]
                         i = int(index/npoints)
                         if tmpIndex == i0:
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     nchannels = 1024
     a = numpy.ones((nrows, ncols), numpy.float)
     stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
-    for i in xrange(nchannels):
+    for i in range(nchannels):
         stackData[:, :, i] = a * i
 
     app = qt.QApplication([])

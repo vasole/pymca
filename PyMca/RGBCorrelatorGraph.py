@@ -337,7 +337,10 @@ class RGBCorrelatorGraph(qt.QWidget):
             ret = outfile.exec_loop()
         else:
             outfile.setWindowTitle("Output File Selection")
-            strlist = qt.QStringList()
+            if hasattr(qt, "QStringList"):
+                strlist = qt.QStringList()
+            else:
+                strlist = []
             for f in fileTypeList:
                 strlist.append(f)
             outfile.setFilters(strlist)

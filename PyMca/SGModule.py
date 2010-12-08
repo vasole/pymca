@@ -92,7 +92,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
     oldShape = data.shape
     if mcaIndex in [-1, len(data.shape)-1]:
         data.shape = -1, oldShape[-1]
-        for i in xrange(data.shape[0]):
+        for i in range(data.shape[0]):
             data[i,N:-N] = convolve(data[i,:],coeff, mode='valid')
             if order > 0:
                 data[i, :N]  = data[i, N]
@@ -100,7 +100,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
         data.shape = oldShape
     elif mcaIndex == 0:
         data.shape = oldShape[0], -1
-        for i in xrange(data.shape[-1]):
+        for i in range(data.shape[-1]):
             data[N:-N, i] = convolve(data[i,:],coeff, mode='valid')
             if order > 0:
                 data[:N, i] = data[N, i]

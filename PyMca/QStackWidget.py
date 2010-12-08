@@ -865,7 +865,7 @@ def test():
     nchannels = 1024
     a = numpy.ones((nrows, ncols), numpy.float)
     stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
-    for i in xrange(nchannels):
+    for i in range(nchannels):
         stackData[:, :, i] = a * i
     stackData[0:10,:,:] = 0
     w = QStackWidget()

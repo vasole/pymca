@@ -114,7 +114,7 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         if mcaIndex in [-1, 2]:
             ndata = stack.data.shape[1]
             limit = 0.5 * ndata
-            for i in xrange(offset, stack.data.shape[0], 2):
+            for i in range(offset, stack.data.shape[0], 2):
                 j = 0
                 while j < limit:
                     tmp = stack.data[i, j, :] * 1
@@ -124,7 +124,7 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         elif mcaIndex == 0:
             ndata = stack.data.shape[2]
             limit = 0.5 * ndata
-            for i in xrange(offset, stack.data.shape[1], 2):
+            for i in range(offset, stack.data.shape[1], 2):
                 j = 0
                 while j < limit:
                     tmp = stack.data[:, i, j] * 1
@@ -144,7 +144,7 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         if mcaIndex in [-1, 2]:
             ndata = stack.data.shape[0]
             limit = 0.5 * ndata
-            for i in xrange(offset, stack.data.shape[1], 2):
+            for i in range(offset, stack.data.shape[1], 2):
                 j = 0
                 while j < limit:
                     tmp = stack.data[j, i, :] * 1
@@ -154,7 +154,7 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         elif mcaIndex == 0:
             ndata = stack.data.shape[1]
             limit = 0.5 * ndata
-            for i in xrange(offset, stack.data.shape[2], 2):
+            for i in range(offset, stack.data.shape[2], 2):
                 j = 0
                 while j < limit:
                     tmp = stack.data[:, j, i] * 1

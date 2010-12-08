@@ -174,7 +174,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         cntMne = info.get('counter_mne', "").split()
         cntInfo = {}
         if len(cntPos) == len(cntMne):
-            for i in xrange(len(cntMne)):
+            for i in range(len(cntMne)):
                 cntInfo[cntMne[i]] = cntPos[i]
             
         for key in cntInfo.keys():

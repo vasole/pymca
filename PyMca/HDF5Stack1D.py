@@ -259,7 +259,7 @@ class HDF5Stack1D(DataObject.DataObject):
                            (dim1 == yDataset.shape[1]):
                             mca = 0
                             deltaI = int(yDataset.shape[1]/dim1)
-                            for ii in xrange(yDataset.shape[0]):
+                            for ii in range(yDataset.shape[0]):
                                 i = int(n/dim1)
                                 yData = yDataset[ii:(ii+1)]
                                 yData.shape = -1, mcaDim
@@ -335,13 +335,13 @@ class HDF5Stack1D(DataObject.DataObject):
                                 n += 1
                         else:
                             #dynamic stack of images to be read as MCA
-                            for nImage in xrange(yDataset.shape[0]):
+                            for nImage in range(yDataset.shape[0]):
                                 tmp = yDataset[nImage:(nImage+1)]
                                 if len(tmp.shape) == 3:
                                     i = int(n/dim1)
                                     j = n % dim1
-                                    for ii in xrange(tmp.shape[1]):
-                                        for jj in xrange(tmp.shape[2]):
+                                    for ii in range(tmp.shape[1]):
+                                        for jj in range(tmp.shape[2]):
                                             self.data[i+ii, j+jj, nImage] = tmp[0, ii, jj]
                             if mSelection is not None:
                                 for mca in range(nMcaInDataSet):
