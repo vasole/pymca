@@ -2844,7 +2844,10 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
     def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
                   xmirror = 0, ymirror = 1):
         #I have to receive an array
-        if type(pixmap) in [type(""), type(b"")]:
+        selectedTypes = [type("")]
+        if sys.version > '2.6':
+            selectedTypes.append(type(eval('b""')))
+        if type(pixmap) in selectedTypes:
             shape = size
         else:
             shape = size
@@ -2876,7 +2879,7 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             self.plot().setAxisScale(Qwt.QwtPlot.yLeft, yRange[0], yRange[1])
 
         if QTVERSION < '4.0.0':
-            if type(pixmap) in [type(""), type(b"")]:
+            if type(pixmap) in selectedTypes:
                 self.image=qt.QImage(pixmap,
                                      size[0],
                                      size[1],
@@ -2891,7 +2894,7 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                                      qt.QImage.IgnoreEndian).mirror(xmirror,
                                                                     ymirror)
         else:
-            if type(pixmap) in [type(""), type(b"")]:
+            if type(pixmap) in selectedTypes:
                 self.image = qt.QImage(pixmap,
                                    size[0],
                                    size[1],
@@ -3006,7 +3009,10 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
     def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
                   xmirror = 0, ymirror=1):
         #I have to receive an array
-        if type(pixmap) in [type(""), type(b"")]:
+        selectedTypes = [type("")]
+        if sys.version > '2.6':
+            selectedTypes.append(type(eval('b""')))
+        if type(pixmap) in selectedTypes:
             shape = size
         else:
             shape = size
@@ -3027,7 +3033,7 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
         self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
         self.yMap = Qwt.QwtScaleMap(0, shape[1], *yRange)
         self.plot().setAxisScale(Qwt.QwtPlot.yLeft, *yRange)
-        if type(pixmap) in [type(""), type(b"")]:
+        if type(pixmap) in selectedTypes:
             self.image=qt.QImage(pixmap,
                                  size[0],
                                  size[1],

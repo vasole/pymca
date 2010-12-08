@@ -4,9 +4,10 @@ __doc__="""
 Routines for nonnegative matrix approximation (nnma)
 
 """
-
+import sys
 try:
-    from nnma import *
+   from nnma import *
 except ImportError:
-    from .nnma import *
+   if sys.version > '2.6':
+        eval('from .nnma import *')
 

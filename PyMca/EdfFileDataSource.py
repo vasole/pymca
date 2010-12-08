@@ -46,7 +46,7 @@ class EdfFileDataSource:
         if sys.version < '3.0':
             stringTypes = [types.StringType, types.UnicodeType]
         else:
-            stringTypes = [type("a"), type(b"a")]
+            stringTypes = [type("a"), type(eval('b"a"'))]
         for name in nameList:
             if type(name) not in stringTypes:
                 raise TypeError("Constructor needs string as first argument")           
