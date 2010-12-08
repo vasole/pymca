@@ -28,6 +28,14 @@ __revision__ = "$Revision: 1.8 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import PyMcaQt as qt
+if hasattr(qt, "QStringList"):
+    QStringList = qt.QStringList
+else:
+    QStringList = []
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 if qt.qVersion() < '3.0.0':
     import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
@@ -148,13 +156,13 @@ class PeakTableWidget(QTable):
                                     'setenergy',
                                     'use',
                                     'calenergy'],
-                          'number':     qt.QString('1'),          
-                          'channel':    qt.QString('0'),
-                          'element':    qt.QString('-'),
-                          'elementline':qt.QString('-'),
-                          'setenergy':  qt.QString('0'),
+                          'number':     QString('1'),          
+                          'channel':    QString('0'),
+                          'element':    QString('-'),
+                          'elementline':QString('-'),
+                          'setenergy':  QString('0'),
                           'use':        0,
-                          'calenergy':  qt.QString()}
+                          'calenergy':  QString()}
         self.peaklist.append(peak)
         self.setReadWrite(peak,'setenergy')
         self.setReadWrite(peak,'channel')
@@ -173,10 +181,7 @@ class PeakTableWidget(QTable):
             self.connect(self.peaks[peak]['element_item'],
                          qt.SIGNAL('cellChanged(int,int)'), self.myslot)
                          #qt.SIGNAL('activated(int)'), self.myslot)
-        try:
-            a = qt.QStringList()
-        except AttributeError:
-            a = []
+        a = QStringList()
         a.append('-')
         col = self.peaks[peak]['fields'].index('elementline')
         if qt.qVersion() < '4.0.0':
@@ -229,17 +234,14 @@ class PeakTableWidget(QTable):
             pass
         else:
             if qt.qVersion() < '4.0.0':
-                newvalue=qt.QString(self.text(row,col))
+                newvalue=QString(self.text(row,col))
             else:
                 newvalue = self.item(row, col).text()
         if field == "element":
             if str(newvalue) == '-':
                 #no element
                 #set line to -
-                try:
-                    options  = qt.QStringList()
-                except AttributeError:
-                    options = []
+                options  = QStringList()
                 options.append('-')
                 if qt.qVersion() < '4.0.0':
                     self.peaks[peak]["elementline_item"].setStringList(options)
@@ -250,12 +252,8 @@ class PeakTableWidget(QTable):
             else:
                 #get the emission energies
                 ele = str(newvalue).split()[0]
-                try:
-                    options  = qt.QStringList()
-                    energies = qt.QStringList()
-                except AttributeError:
-                    options  = []
-                    energies = []                    
+                options  = QStringList()
+                energies = QStringList()
                 options.append('-') 
                 energies.append('0.000')
                 emax = 0.0
@@ -284,13 +282,13 @@ class PeakTableWidget(QTable):
                 self.setReadWrite(peak,'setenergy')
             else:
                 #get the element energy
-                #newvalue=qt.QString(self.text(row,col-1))
+                #newvalue=QString(self.text(row,col-1))
                 elevalue=self.peaks[peak]["element_item"].currentText()
                 ele = str(elevalue).split()[0]
                 energy = "0.0"
                 for rays in Elements.Element[ele]['rays']:
                     for transition in Elements.Element[ele][rays]:
-                        option = qt.QString("%s (%.5f)" % (transition,
+                        option = QString("%s (%.5f)" % (transition,
                                     Elements.Element[ele][transition]['rate']))
                         if option == newvalue:
                             energy = "%.5f " % (Elements.Element[ele][transition]['energy'])
@@ -445,7 +443,7 @@ class PeakTableWidget(QTable):
                     col=self.peaks[name]['fields'].index(key)
                     oldvalue=self.peaks[name][key]
                     if key is 'code':
-                        newvalue = qt.QString(str(kw[key]))
+                        newvalue = QString(str(kw[key]))
                     elif key is 'element':
                         newvalue = str(kw[key]).split()[0]
                         if newvalue == "-":
@@ -464,7 +462,7 @@ class PeakTableWidget(QTable):
                             if qt.qVersion() < '4.0.0':
                                 self.peaks[name][key+"_item"].setCurrentItem(kw[key])
                             else:
-                                iv = self.peaks[name][key+"_item"].findText(qt.QString(kw[key]))
+                                iv = self.peaks[name][key+"_item"].findText(QString(kw[key]))
                                 self.peaks[name][key+"_item"].setCurrentIndex(iv)
                         except:
                             print("Error setting elementline")
@@ -477,7 +475,7 @@ class PeakTableWidget(QTable):
                     elif key == 'number':
                         if len(str(kw[key])):
                             newvalue=float(str(kw[key]))
-                            newvalue= qt.QString("%3d" % newvalue)
+                            newvalue= QString("%3d" % newvalue)
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
@@ -497,7 +495,7 @@ class PeakTableWidget(QTable):
                             print("setting channel in configure")
                         if len(str(kw[key])):
                             newvalue=float(str(kw[key]))
-                            newvalue= qt.QString("%.3f" % newvalue)
+                            newvalue= QString("%.3f" % newvalue)
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
@@ -515,7 +513,7 @@ class PeakTableWidget(QTable):
                     elif (key == 'setenergy') or (key == 'calenergy'):
                         if len(str(kw[key])):
                             newvalue=float(str(kw[key]))
-                            newvalue= qt.QString("%.4f" % newvalue)
+                            newvalue= QString("%.4f" % newvalue)
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
@@ -540,7 +538,7 @@ class PeakTableWidget(QTable):
                                 newvalue= "%8g" % newvalue
                         else:
                             newvalue=""
-                        newvalue=qt.QString(newvalue)
+                        newvalue=QString(newvalue)
         return error
 
 
@@ -603,10 +601,7 @@ class QPeriodicComboTableItem(QComboTableItem):
             SIGNAL("valueChanged(int,int)") for example.
     """
     def __init__(self, table=None, addnone=1, detailed=0, row=None, col=None):
-        try:
-            strlist = qt.QStringList()
-        except AttributeError:
-            strlist = []
+        strlist = QStringList()
         self.addnone= (addnone==1)
         if self.addnone: strlist.append("-")
         for (symbol, Z, x, y, name, mass, density) in Elements.ElementsInfo:

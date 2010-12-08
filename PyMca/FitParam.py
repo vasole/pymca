@@ -1039,13 +1039,19 @@ class SectionFileDialog(qt.QFileDialog):
         if QTVERSION < '4.0.0':
             self.addFilter("Config Files *.cfg")
         else:
-            strlist = qt.QStringList()
+            if hasattr(qt, "QStringList"):
+                strlist = qt.QStringList()
+            else:
+                strlist = []
             strlist.append("Config Files *.cfg")
             strlist.append("All Files *")
             self.setFilters(strlist)
         if initdir is not None:
             if os.path.isdir(initdir):
-                self.setDir(qt.QString(initdir))
+                if hasattr(qt, "QString"):
+                    self.setDir(qt.QString(initdir))
+                else:
+                    self.setDir(str(initdir))
                 
         if QTVERSION < '4.0.0':     
             self.sectionWidget= SectionFileWidget(self,
