@@ -1625,7 +1625,8 @@ class McaBatchWindow(qt.QWidget):
             self.pauseButton.hide()
             self.abortButton.setText("OK")
         if self.chunk is None:
-            if dict.has_key('savedimages'):self.plotImages(dict['savedimages'])
+            if 'savedimages' in dict:
+                self.plotImages(dict['savedimages'])
         if self.html:
             if not self.__writingReport:
                 directory = os.path.join(self.outputdir,"HTML")

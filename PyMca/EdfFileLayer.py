@@ -58,9 +58,9 @@ class EdfFileLayer:
         self.GetData   = self.LoadSource
 
     def GetPageInfo(self,index={}):
-        if index.has_key('SourceName'):
+        if 'SourceName' in index:
             self.SetSource(index['SourceName'])
-            if index.has_key('Key'):
+            if 'Key' in index:
                 info=self.GetData(index['Key'])   
                 return info[0]
 
@@ -249,7 +249,7 @@ class EdfFileLayer:
             f = 1
             sumrequested = 0
             if type(key0) == type({}):
-                if key0.has_key('Key'):
+                if 'Key' in key0:
                     key = key0['Key']              
             if type(key0) == type(''):
                 if len(key0.split(".")) == 2:
@@ -298,14 +298,14 @@ class EdfFileLayer:
                 if info["DataType"]=="UnsignedShort":array=self.Source[f-1].GetData(i-1,"SignedLong",Pos=edf_pos,Size=edf_size)
                 elif info["DataType"]=="UnsignedLong":array=self.Source[f-1].GetData(i-1,"DoubleValue",Pos=edf_pos,Size=edf_size)
                 else: array=self.Source[f-1].GetData(i-1,Pos=edf_pos,Size=edf_size)
-                if info.has_key('Channel0'):
+                if 'Channel0' in info:
                     info['Channel0'] = int(float(info['Channel0']))
-                elif info.has_key('MCA start ch'):
+                elif 'MCA start ch' in info:
                     info['Channel0'] = int(float(info['MCA start ch']))
                 else:
                     info['Channel0'] = 0
-                if not info.has_key('McaCalib'):
-                    if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
+                if not ('McaCalib' in info):
+                    if 'MCA a' in info and 'MCA b' in info and 'MCA c' in info:
                         info['McaCalib'] = [float(info['MCA a']),
                                             float(info['MCA b']),
                                             float(info['MCA c'])]
@@ -316,14 +316,14 @@ class EdfFileLayer:
                 i=1
                 info.update(self.Source[f-1].GetStaticHeader(i-1))
                 info.update(self.Source[f-1].GetHeader(i-1))
-                if info.has_key('Channel0'):
+                if 'Channel0' in info:
                     info['Channel0'] = int(float(info['Channel0']))
-                elif info.has_key('MCA start ch'):
+                elif 'MCA start ch' in info:
                     info['Channel0'] = int(float(info['MCA start ch']))
                 else:
                     info['Channel0'] = 0
-                if not info.has_key('McaCalib'):
-                    if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
+                if not ('McaCalib' in info):
+                    if 'MCA a' in info and 'MCA b' in info and 'MCA c' in info:
                         info['McaCalib'] = [float(info['MCA a']),
                                             float(info['MCA b']),
                                             float(info['MCA c'])]
@@ -340,7 +340,7 @@ class EdfFileLayer:
                         else:
                             array += array0 
                     f+=1
-            if info.has_key('McaCalib'):
+            if 'McaCalib' in info:
                 if type(info['McaCalib']) == type(" "):
                     info['McaCalib'] = info['McaCalib'].replace("[","")
                     info['McaCalib'] = info['McaCalib'].replace("]","")
@@ -393,7 +393,7 @@ class EdfFileLayer:
         output = []
         for key in key_list:
             if type(key) == type({}):
-                if key.has_key('Key'):
+                if 'Key' in key:
                     key = key['Key']              
             if type(key) == type(''):
                 i=int(key)
@@ -413,12 +413,12 @@ class EdfFileLayer:
             if info["DataType"]=="UnsignedShort":array=self.Source.GetData(i,"SignedLong",Pos=edf_pos,Size=edf_size)
             elif info["DataType"]=="UnsignedLong":array=self.Source.GetData(i,"DoubleValue",Pos=edf_pos,Size=edf_size)
             else: array=self.Source.GetData(i,Pos=edf_pos,Size=edf_size)
-            if info.has_key('MCA start ch'):
+            if 'MCA start ch' in info:
                 info['Channel0'] = int(info['MCA start ch'])
             else:
                 info['Channel0'] = 0
-            if not info.has_key('McaCalib'):
-                if info.has_key('MCA a') and info.has_key('MCA b') and info.has_key('MCA c'):
+            if not ('McaCalib' in info):
+                if 'MCA a' in info and 'MCA b' in info and 'MCA c' in info:
                     info['McaCalib'] = [float(info['MCA a']),
                                         float(info['MCA b']),
                                         float(info['MCA c'])]                    

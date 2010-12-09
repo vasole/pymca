@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -100,9 +100,9 @@ class ScanList(qt.QWidget):
     #
     def setSelectionMode(self, selection):
         if DEBUG:
-            print "setSelectionMode(self, selection) called"
-            print "selection = ",selection
-        if self.allSelectionMode.has_key(selection):
+            print("setSelectionMode(self, selection) called")
+            print("selection = ",selection)
+        if selection in self.allSelectionMode:
             self.list.setSelectionMode(self.allSelectionMode[selection])
 
     def setFont(self, qtfont):
@@ -113,8 +113,8 @@ class ScanList(qt.QWidget):
     #
     def setData(self, specfiledata):
         if DEBUG:
-            print "setData(self, specfiledata) called"
-            print "specfiledata = ",specfiledata
+            print("setData(self, specfiledata) called")
+            print("specfiledata = ",specfiledata)
         self.data= specfiledata
         self.refresh()
 
@@ -198,8 +198,8 @@ class ScanList(qt.QWidget):
 
     def __showScanInfo(self, idx):
         if DEBUG:
-            print "Scan information:"
-            print self.data.GetSourceInfo(self.scans[idx])
+            print("Scan information:")
+            print(self.data.GetSourceInfo(self.scans[idx]))
         info, data = self.data.LoadSource(self.scans[idx])
         self.dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
         self.dataInfoWidget.show()
@@ -219,7 +219,7 @@ class McaTable(qt.QWidget):
             self.table.setReadOnly(1)
         else:
             if DEBUG:
-                print "Methods to be implemented"
+                print("Methods to be implemented")
         self.table.verticalHeader().setResizeEnabled(0, -1)
         self.table.horizontalHeader().setResizeEnabled(0, -1)
 
@@ -258,8 +258,8 @@ class McaTable(qt.QWidget):
 
     def markMcaSelected(self, mcalist):
         if DEBUG:
-            print "markMcaSelected(self, mcalist) called"
-            print "mcalist = ",mcalist
+            print("markMcaSelected(self, mcalist) called")
+            print("mcalist = ",mcalist)
         scankey = ""
         if mcalist != []:
             if len(mcalist):
@@ -322,7 +322,7 @@ class McaTable(qt.QWidget):
                     self.table.setText(row, col, "")
 
             #if self.info["Lines"]==pts:
-            #    print "AddNorm", self.info["AllLabels"]
+            #    print("AddNorm", self.info["AllLabels"])
 
             if mca==1:
                 self.selectFirstMca()
@@ -432,9 +432,9 @@ class CntTable(qt.QWidget):
 
     def markCntSelected(self, cntdict):
         if DEBUG:
-            print "markCntSelected(self, cntdict)"
-            print "cntdict = ", cntdict
-            print "self.cntlist = ",self.cntlist
+            print("markCntSelected(self, cntdict)")
+            print("cntdict = ", cntdict)
+            print("self.cntlist = ",self.cntlist)
         if (cntdict != {}):
             for cnt in self.cntlist:
                 row =self.cntlist.index(cnt)
@@ -453,8 +453,8 @@ class CntTable(qt.QWidget):
             
     def selectCntList(self, cntlist):
         if DEBUG:
-            print "selectCntList(self, cntlist)"
-            print "cntlist = ",cntlist
+            print("selectCntList(self, cntlist)")
+            print("cntlist = ",cntlist)
         for cntname in cntlist:
             self.selectCntName(cntname)
 
@@ -701,7 +701,7 @@ class SpecFileSelector(qt.QWidget):
                     else:
                         return
                 except:
-                    print "USING STATIC METHODS, PLEASE REPORT THIS ISSUE"
+                    print("USING STATIC METHODS, PLEASE REPORT THIS ISSUE")
                     windir = self.lastInputDir
                     if windir is None:windir = ""
                     filename= str(qt.QFileDialog.getOpenFileName(windir,
@@ -748,7 +748,7 @@ class SpecFileSelector(qt.QWidget):
             for filename, comboname in self.mapComboName.items():
                 if comboname==file: break
 
-        if self.selection is not None and self.selection.has_key(filename):
+        if (self.selection is not None) and (filename in self.selection):
             mcakeys= []
             for scan in self.selection[filename].keys():
                 mcakeys += [ "%s.%s"%(scan, mca) for mca in self.selection[filename][scan] ]
@@ -760,7 +760,7 @@ class SpecFileSelector(qt.QWidget):
                 if ans==qt.QMessageBox.No: return
                 self.emit(qt.PYSIGNAL("delSelection"), (self.data.SourceName, mcakeys))
             
-        if self.selection is not None and self.selection.has_key(filename):
+        if (self.selection is not None) and (filename in self.selection):
             cntkeys= []
             for scan in self.selection[filename].keys():
                 cntkeys += [ "%s.%s"%(scan, mca) for cnt in self.selection[filename][scan] ]
@@ -815,10 +815,10 @@ class SpecFileSelector(qt.QWidget):
 
     def setSelected(self, sellist,reset=1):
         if DEBUG:
-            print "setSelected(self, sellist) called"
-            print "sellist = ",sellist
-            print "self.selection before = ",self.selection
-            print "reset = ",reset
+            print("setSelected(self, sellist) called")
+            print("sellist = ",sellist)
+            print("self.selection before = ",self.selection)
+            print("reset = ",reset)
         if reset:
             self.selection= {}
         for sel in sellist:
@@ -840,27 +840,27 @@ class SpecFileSelector(qt.QWidget):
             else:
                 mca = selkey
             scankey= "%s.%s"%(scan,order)
-            if not self.selection.has_key(filename):
+            if not (filename in self.selection):
                 self.selection[filename]= {}
-            if not self.selection[filename].has_key(scankey):
+            if not (scankey in self.selection[filename]):
                 self.selection[filename][scankey]= {}
                 self.selection[filename][scankey]['mca'] = []
                 self.selection[filename][scankey]['scan'] = {}
-            if sel[selkey].has_key('mca'):
+            if 'mca' in sel[selkey]:
                 self.selection[filename][scankey]['mca'] = []
                 for mca in sel[selkey]['mca']:               
                     self.selection[filename][scankey]['mca'].append(mca)
-            if sel[selkey].has_key('scan'):
-                keys = sel[selkey]['scan'].keys()
+            if 'scan' in sel[selkey]:
+                keys = list(sel[selkey]['scan'].keys())
                 if ('Xcnt' in keys) and ('Ycnt' in keys) and ('Mcnt' in keys): 
-                    for key in sel[selkey]['scan'].keys():
+                    for key in keys:
                         self.selection[filename][scankey]['scan'][key] = sel[selkey]['scan'][key]
                 else:
                     self.selection[filename][scankey]['scan'] ['Xcnt'] = []
                     self.selection[filename][scankey]['scan'] ['Ycnt'] = []
                     self.selection[filename][scankey]['scan'] ['Mcnt'] = []
         if DEBUG:
-            print "self.selection after = ",self.selection
+            print("self.selection after = ",self.selection)
         self.__refreshSelection()
 
     def OLDsetSelection(self, seldict={}):
@@ -870,35 +870,36 @@ class SpecFileSelector(qt.QWidget):
             for key in seldict[filename]:
                 scan, order, mca= key.split(".")
                 scankey= "%s.%s"%(scan, order)
-                if not self.selection[filename].has_key(scankey):
+                if not ((scankey in self.selection[filename]):
                     self.selection[filename][scankey]= []
                 self.selection[filename][scankey].append(mca)
         self.__refreshSelection()
     
     def __refreshSelection(self):
         if DEBUG:
-            print "__refreshSelection(self) called"
-            print self.selection
+            print("__refreshSelection(self) called")
+            print(self.selection)
         if self.selection is not None:
             sel = self.selection.get(self.data.SourceName, {})
             selkeys = []
-            for key in sel.keys():
+            for key in list(sel.keys()):
                 if sel[key]['mca'] != []:
                     selkeys.append(key)
-                elif sel[key]['scan'].has_key('Ycnt'):
+                elif 'Ycnt' in sel[key]['scan']:
                     if sel[key]['scan']['Ycnt'] !=  []:
                         selkeys.append(key)
                     
             if DEBUG:
-                print "selected scans =",selkeys,"but self.selection = ",self.selection
-                print "and self.selection.get(self.data.SourceName, {}) =",sel
+                print("selected scans =", selkeys)
+                print("but self.selection = ", self.selection)
+                print("and self.selection.get(self.data.SourceName, {}) =", sel)
             self.scanList.markScanSelected(selkeys)
             scandict = sel.get(self.currentScan, {})
-            if scandict.has_key('mca'):
+            if 'mca' in scandict:
                 self.mcaTable.markMcaSelected(scandict['mca'])
             else:
                 self.mcaTable.markMcaSelected([])
-            if scandict.has_key('scan'):
+            if 'scan' in scandict:
                 self.cntTable.markCntSelected(scandict['scan'])
             else:
                 self.cntTable.markCntSelected({})
@@ -911,25 +912,26 @@ class SpecFileSelector(qt.QWidget):
     
     def __scanSelection(self, scankey):
         if DEBUG:
-            print "__scanSelection(self, scankey) called"
-            print "scankey = ",scankey
+            print("__scanSelection(self, scankey) called")
+            print("scankey = %s" % scankey)
         self.mcaTable.setScan(scankey)
         self.cntTable.setScan(scankey)
         if len(scankey):
             self.currentScan     = scankey[0]
             self.currentScanList = scankey
-            if self.selection is not None and self.selection.has_key(self.data.SourceName):
+            if (self.selection is not None) and\
+                (self.data.SourceName in self.selection):
                 scandict = self.selection[self.data.SourceName].get(self.currentScan, {})
-                if scandict.has_key('mca'):
+                if 'mca' in scandict:
                     self.mcaTable.markMcaSelected(scandict['mca'])
                 else:
                     self.mcaTable.markMcaSelected([])
-                if scandict.has_key('scan'):
+                if 'scan' in scandict:
                     self.cntTable.markCntSelected(scandict['scan'])
                 else:
                     self.cntTable.markCntSelected({})
                 if DEBUG:
-                    print "calling refresh selection"
+                    print("calling refresh selection")
                 self.__refreshSelection()
         else:
             self.currentScan     = None
@@ -937,15 +939,15 @@ class SpecFileSelector(qt.QWidget):
 
     def __scanDoubleClicked(self, dict):
         if DEBUG:
-            print "__scanDoubleClicked(self, dict) called"
-            print "dict = ",dict
+            print("__scanDoubleClicked(self, dict) called")
+            print("dict = ",dict)
         scankey = dict['Key']
         if not len(scankey):return
         if self.currentScan != scankey:
             self.__scanSelection([scankey])
         if self.currentScan is None: return
         key = self.currentScan
-        if self.mcaTable.info.has_key('NbMca'):
+        if 'NbMca' in self.mcaTable.info:
             if self.mcaTable.info['NbMca'] == 1:
                 if dict['NbPoints'] == 0:
                     mcakeys = ["%s.1.1" % key]
@@ -965,8 +967,8 @@ class SpecFileSelector(qt.QWidget):
 
     def __mcaDoubleClicked(self, mcakeys):
         if DEBUG:
-            print "__mcaDoubleClicked(self, mcakeys) called"
-            print "mcakeys = ",mcakeys
+            print("__mcaDoubleClicked(self, mcakeys) called")
+            print("mcakeys = ",mcakeys)
         if self.currentScan is not None:
             key = self.currentScan
             if type(mcakeys) == type([]):
@@ -977,8 +979,8 @@ class SpecFileSelector(qt.QWidget):
 
     def __toggleselection(self,sel):
         if DEBUG:
-            print "toggleselection(self,sel) called"
-            print "sel = ",sel
+            print("toggleselection(self,sel) called")
+            print("sel = ",sel)
         if self.selection is None:
             self.setSelected([sel])
             self.__addClicked()
@@ -1003,13 +1005,13 @@ class SpecFileSelector(qt.QWidget):
             """
     
             scankey= "%s.%s"%(scan,order)
-            if not self.selection.has_key(filename):
+            if not (filename in self.selection):
                 self.setSelected([sel],reset=0)
                 self.__addClicked()
-            elif not self.selection[filename].has_key(scankey):
+            elif not (scankey in self.selection[filename]):
                 self.setSelected([sel],reset=0)
                 self.__addClicked()
-            elif not self.selection[filename][scankey].has_key('mca'):
+            elif not ('mca' in self.selection[filename][scankey]):
                 self.setSelected([sel],reset=0)
                 self.__addClicked()
             else:
@@ -1038,7 +1040,7 @@ class SpecFileSelector(qt.QWidget):
 
     def __cntDoubleClicked(self, cntkeys):
         if DEBUG:
-            print "__cntDoubleClicked(self, cntkeys) called"
+            print("__cntDoubleClicked(self, cntkeys) called")
         sel= {"SourceName":self.data.SourceName, "Key":cntkeys}
         #self.eh.event(self.addEvent, [sel])
 
@@ -1047,7 +1049,7 @@ class SpecFileSelector(qt.QWidget):
 
     def __addClicked(self):
         if DEBUG:
-            print "__selectClicked called"
+            print("__selectClicked called")
         if self.currentScan is not None:
             sellist = []
             scankeylist     =  self.currentScanList
@@ -1061,25 +1063,25 @@ class SpecFileSelector(qt.QWidget):
                 sel[scankey]['scan'] = {}
                 for mca in self.mcaTable.getSelection():
                     if DEBUG:
-                        print "scankey =",scankey,"adding mca = ",mca
+                        print("scankey =",scankey,"adding mca = ",mca)
                     actualmcakey = mca.replace(scankeylist[0],scankey)
                     actualscan, actualorder,actualpoint,actualmca = actualmcakey.split('.')
                     if float(actualmca) <= self.data.GetSourceInfo(scankey)['NbMca']:
                         sel[scankey]['mca'].append(actualmcakey)
                     else:
                         if DEBUG:
-                            print "mcakey ",actualmcakey," skipped"
+                            print("mcakey ",actualmcakey," skipped")
                 labellist = self.data.GetSourceInfo(scankey)['LabelNames']
                 for item in self.cntTable.getSelection():
                     if DEBUG:
-                        print item
+                        print(item)
                     if item["Xcnt"][0] in labellist:
                         if item["Ycnt"] in labellist:
                             if len(item["Mcnt"]):   
                                 if item["Mcnt"][0] in labellist:
                                     sel[scankey]['scan']['scan'] = item['scan']
                                     sel[scankey]['scan']['Xcnt'] = item["Xcnt"]
-                                    if sel[scankey]['scan'].has_key('Ycnt'):
+                                    if 'Ycnt' in sel[scankey]['scan']:
                                         sel[scankey]['scan']['Ycnt'].append(item["Ycnt"])
                                     else:
                                         sel[scankey]['scan']['Ycnt']=[item["Ycnt"]]
@@ -1087,14 +1089,14 @@ class SpecFileSelector(qt.QWidget):
                             else:
                                     sel[scankey]['scan']['scan'] = item['scan']
                                     sel[scankey]['scan']['Xcnt'] = item["Xcnt"]
-                                    if sel[scankey]['scan'].has_key('Ycnt'):
+                                    if 'Ycnt' in sel[scankey]['scan']:
                                         sel[scankey]['scan']['Ycnt'].append(item["Ycnt"])
                                     else:
                                         sel[scankey]['scan']['Ycnt']=[item["Ycnt"]]
                                     sel[scankey]['scan']['Mcnt']=item["Mcnt"]                                
                     else:
                         if DEBUG:
-                            print "scankey ",scankey," skipped"
+                            print("scankey ",scankey," skipped")
                 sellist.append(sel)
                 if self.selection is None: 
                     self.setSelected([sel],reset=1)
@@ -1104,7 +1106,7 @@ class SpecFileSelector(qt.QWidget):
         
     def __replaceClicked(self):
         if DEBUG:
-            print "__selectClicked called"
+            print("__selectClicked called")
         if self.currentScan is not None:
             scankeylist     =  self.currentScanList
             mcalist         =  self.mcaTable.getSelection()
@@ -1121,25 +1123,25 @@ class SpecFileSelector(qt.QWidget):
                 sel[scankey]['scan'] = {}
                 for mca in mcalist:
                     if DEBUG:
-                        print "scankey =",scankey,"removing mca = ",mca
+                        print("scankey =",scankey,"removing mca = ",mca)
                     actualmcakey = mca.replace(scankeylist[0],scankey)
                     actualscan, actualorder,actualpoint,actualmca = actualmcakey.split('.')
                     if float(actualmca) <= self.data.GetSourceInfo(scankey)['NbMca']:
                         sel[scankey]['mca'].append(actualmcakey)
                     else:
                         if DEBUG:
-                            print "mcakey ",actualmcakey," skipped"
+                            print("mcakey ",actualmcakey," skipped")
                 labellist = self.data.GetSourceInfo(scankey)['LabelNames']
                 for item in itemlist:
                     if DEBUG:
-                        print "removing item ",item
+                        print("removing item ",item)
                     if item["Xcnt"][0] in labellist:
                         if item["Ycnt"] in labellist:
                             if len(item["Mcnt"]):   
                                 if item["Mcnt"][0] in labellist:
                                     sel[scankey]['scan']['scan'] = item['scan']
                                     sel[scankey]['scan']['Xcnt'] = item["Xcnt"]
-                                    if sel[scankey]['scan'].has_key('Ycnt'):
+                                    if 'Ycnt' in sel[scankey]['scan']:
                                         sel[scankey]['scan']['Ycnt'].append(item["Ycnt"])
                                     else:
                                         sel[scankey]['scan']['Ycnt']=[item["Ycnt"]]
@@ -1147,14 +1149,14 @@ class SpecFileSelector(qt.QWidget):
                             else:
                                     sel[scankey]['scan']['scan'] = item['scan']
                                     sel[scankey]['scan']['Xcnt'] = item["Xcnt"]
-                                    if sel[scankey]['scan'].has_key('Ycnt'):
+                                    if 'Ycnt' in sel[scankey]['scan']:
                                         sel[scankey]['scan']['Ycnt'].append(item["Ycnt"])
                                     else:
                                         sel[scankey]['scan']['Ycnt']=[item["Ycnt"]]
                                     sel[scankey]['scan']['Mcnt']=item["Mcnt"]                                
                     else:
                         if DEBUG:
-                            print "scankey ",scankey," skipped"
+                            print("scankey ",scankey," skipped")
                 sellist.append(sel)
             if reset:
                 self.setSelected(sellist,reset=1)
@@ -1162,7 +1164,7 @@ class SpecFileSelector(qt.QWidget):
             else:
                 self.setSelected(sellist,reset=0)
             if DEBUG:
-                print "replace sellist = ",sellist
+                print("replace sellist = ",sellist)
             self.emit(qt.PYSIGNAL("replaceSelection"), (sellist,))
             
     def __OLDselectClicked(self):
@@ -1186,25 +1188,25 @@ class SpecFileSelector(qt.QWidget):
                 sel[scankey]['scan'] = {}
                 for mca in mcalist:
                     if DEBUG:
-                        print "scankey =",scankey,"removing mca = ",mca
+                        print("scankey =",scankey,"removing mca = ",mca)
                     actualmcakey = mca.replace(scankeylist[0],scankey)
                     actualscan, actualorder,actualpoint,actualmca = actualmcakey.split('.')
                     if float(actualmca) <= self.data.GetSourceInfo(scankey)['NbMca']:
                         sel[scankey]['mca'].append(actualmcakey)
                     else:
                         if DEBUG:
-                            print "mcakey ",actualmcakey," skipped"
+                            print("mcakey ",actualmcakey," skipped")
                 labellist = self.data.GetSourceInfo(scankey)['LabelNames']
                 for item in itemlist:
                     if DEBUG:
-                        print "removing item ",item
+                        print("removing item ",item)
                     if item["Xcnt"][0] in labellist:
                         if item["Ycnt"] in labellist:
                             if len(item["Mcnt"]):   
                                 if item["Mcnt"][0] in labellist:
                                     sel[scankey]['scan']['scan'] = item['scan']
                                     sel[scankey]['scan']['Xcnt'] = item["Xcnt"]
-                                    if sel[scankey]['scan'].has_key('Ycnt'):
+                                    if 'Ycnt' in sel[scankey]['scan']:
                                         sel[scankey]['scan']['Ycnt'].append(item["Ycnt"])
                                     else:
                                         sel[scankey]['scan']['Ycnt']=[item["Ycnt"]]
@@ -1212,31 +1214,31 @@ class SpecFileSelector(qt.QWidget):
                             else:
                                     sel[scankey]['scan']['scan'] = item['scan']
                                     sel[scankey]['scan']['Xcnt'] = item["Xcnt"]
-                                    if sel[scankey]['scan'].has_key('Ycnt'):
+                                    if 'Ycnt' in sel[scankey]['scan']:
                                         sel[scankey]['scan']['Ycnt'].append(item["Ycnt"])
                                     else:
                                         sel[scankey]['scan']['Ycnt']=[item["Ycnt"]]
                                     sel[scankey]['scan']['Mcnt']=item["Mcnt"]                                
                     else:
                         if DEBUG:
-                            print "scankey ",scankey," skipped"
+                            print("scankey ",scankey," skipped")
                 sellist.append(sel)
             if DEBUG:
-                print "removeSelection list = ",sellist
+                print("removeSelection list = ",sellist)
                 
                 
             self.removeSelection(sellist)
         if 0:
             if self.selection is not None:
-                if self.selection.has_key(self.data.SourceName):
-                    if self.selection[self.data.SourceName].has_key(scankey):
-                        if self.selection[self.data.SourceName][scankey].has_key('mca'):
-                            for mca in  self.selection[self.data.SourceName][scankey]['mca']:
+                if self.data.SourceName in self.selection:
+                    if scankey in self.selection[self.data.SourceName]:
+                        if 'mca' in self.selection[self.data.SourceName][scankey]:
+                            for mca in self.selection[self.data.SourceName][scankey]['mca']:
                                 if mca in  sel[scankey]['mca']:
                                     index = self.selection[self.data.SourceName][scankey]['mca'].index(mca)
                                     del self.selection[self.data.SourceName][scankey]['mca'][index]
-                        if self.selection[self.data.SourceName][scankey].has_key('scan'):
-                          if self.selection[self.data.SourceName][scankey]['scan'].has_key('Ycnt'):                                
+                        if 'scan' in self.selection[self.data.SourceName][scankey]:
+                          if 'Ycnt' in self.selection[self.data.SourceName][scankey]['scan']:                                
                             for Ycnt in  self.selection[self.data.SourceName][scankey]['scan']['Ycnt']:
                                 if Ycnt in  sel[scankey]['scan']['Ycnt']:
                                     index = self.selection[self.data.SourceName][scankey]['scan']['Ycnt'].index(Ycnt)
@@ -1259,21 +1261,21 @@ class SpecFileSelector(qt.QWidget):
 
     def removeSelection(self,selection):
         if DEBUG:
-            print "removeSelection(self,selection), selection = ",selection
+            print("removeSelection(self,selection), selection = ",selection)
         if type(selection) != type([]):
             selection=[selection]
         for sel in selection:
             scankey = sel['Key']
             if self.selection is not None:
-                if self.selection.has_key(self.data.SourceName):
-                    if self.selection[self.data.SourceName].has_key(scankey):
-                        if self.selection[self.data.SourceName][scankey].has_key('mca'):
-                            for mca in  self.selection[self.data.SourceName][scankey]['mca']:
+                if self.data.SourceName in self.selection:
+                    if scankey in self.selection[self.data.SourceName]:
+                        if 'mca' in self.selection[self.data.SourceName][scankey]:
+                            for mca in self.selection[self.data.SourceName][scankey]['mca']:
                                 if mca in  sel[scankey]['mca']:
                                     index = self.selection[self.data.SourceName][scankey]['mca'].index(mca)
                                     del self.selection[self.data.SourceName][scankey]['mca'][index]
-                        if self.selection[self.data.SourceName][scankey].has_key('scan'):
-                          if self.selection[self.data.SourceName][scankey]['scan'].has_key('Ycnt'):                                
+                        if 'scan' in self.selection[self.data.SourceName][scankey]:
+                          if 'Ycnt' in self.selection[self.data.SourceName][scankey]['scan']:                                
                             for Ycnt in  self.selection[self.data.SourceName][scankey]['scan']['Ycnt']:
                                 if Ycnt in  sel[scankey]['scan']['Ycnt']:
                                     index = self.selection[self.data.SourceName][scankey]['scan']['Ycnt'].index(Ycnt)
@@ -1325,7 +1327,7 @@ def test():
 
     def delSelection(sellist):
         global CurrSelection
-        print "delSelection", sellist
+        print("delSelection", sellist)
         for sel in sellist:
             if sel in CurrSelection:
                 CurrSelection.remove(sel)
@@ -1333,14 +1335,14 @@ def test():
 
     def addSelection(sel):
         global CurrSelection, w
-        print "addSelection", sel
+        print("addSelection", sel)
         CurrSelection+=sel
         w.setSelected(CurrSelection)
         
     def myprint(*var,**kw):
         global CurrSelection, w
-        print w.selection
-        print w.getSelection()
+        print(w.selection)
+        print(w.getSelection())
 
     #if not len(sys.argv)>1:
     #    print "USAGE: %s <specfile>"%sys.argv[0]

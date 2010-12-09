@@ -134,7 +134,7 @@ class QSource(qt.QObject):
             # a mutex is needed
             if DEBUG:
                 print("In loop")
-            dummy = self.surveyDict.keys()
+            dummy = list(self.surveyDict.keys())
             #for key in self.surveyDict:
             for key in dummy:
                 if self.isUpdated(self.sourceName, key):
@@ -148,8 +148,9 @@ class QSource(qt.QObject):
                             event.dict['event'] = 'updated'
                             event.dict['id']    = self.surveyDict[key]
                             scanselection = False
-                            if self.surveyDict[key][0].info.has_key('scanselection'):
-                                scanselection = self.surveyDict[key][0].info['scanselection']
+                            if 'scanselection' in self.surveyDict[key][0].info:
+                                scanselection = \
+                                  self.surveyDict[key][0].info['scanselection']
                             if ('key' == 'SCAN_D') or scanselection:
                                 event.dict['scanselection'] = True
                             else:

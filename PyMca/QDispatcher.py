@@ -285,7 +285,7 @@ class QDispatcher(qt.QWidget):
     def _selectionUpdatedSlot(self, ddict):
         if DEBUG:
             print("_selectionUpdatedSlot(self, dict)",ddict)
-        if ddict.has_key('selectionlist'):
+        if 'selectionlist' in ddict:
             sel_list = ddict['selectionlist']
         else:
             sel_list = []
