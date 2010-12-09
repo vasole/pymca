@@ -504,8 +504,8 @@ class McaAdvancedFitBatch:
                         #just images
                         fitresult = self.mcafit.startfit(digest=0)
                 except:
-                    print("Error fitting file with output = %s" %\
-                          filename)
+                    print("Error fitting file with output = %s: %s)" %\
+                          (filename, sys.exc_info()[1]))
                     return
             if self._concentrations:
                 if concentrationsdone == 0:

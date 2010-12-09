@@ -799,6 +799,10 @@ class RGBCorrelatorWidget(qt.QWidget):
                     f = open(filename, "r")
                 lines =f.read()
                 f.close()
+                if sys.version < '3.0':
+                    pass
+                else:
+                    lines = lines.decode()
                 lines = lines.replace("\r","\n")
                 lines = lines.replace("\n\n","\n")
                 lines = lines.replace(",","  ")
@@ -847,7 +851,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             iterationList = range(2, nlabels)
         totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
         for i in range(nrows):
-            totalArray[i, :] = map(float, lines[i+1].split())
+            totalArray[i, :] = [float(x) for x in lines[i+1].split()]
 
         nrows = int(max(totalArray[:,0]) + 1)
         ncols = int(max(totalArray[:,1]) + 1)

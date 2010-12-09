@@ -81,7 +81,7 @@ class SpectrumReader(ContentHandler):
         if self.__last_used_name.upper() == "CHANNELS":
             add_channels = self.__last_spectrum.get('channels', False)
 
-            if add_channels and type(add_channels) != types.ListType:
+            if add_channels and type(add_channels) != type([]):
                 self.__last_spectrum['channels']=[int(c) for c in str(content).split(",")]
             
         elif  self.__last_used_name in ['Date', 'Time']:

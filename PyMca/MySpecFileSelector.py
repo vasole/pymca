@@ -247,7 +247,7 @@ class McaTable(qt.QWidget):
         self.reset()
 
     def setScan(self, scankey):
-        if type(scankey)==types.ListType: 
+        if type(scankey)==type([]): 
             if len(scankey): scankey= scankey[0]
             else: scankey=None
         if scankey is None:
@@ -421,7 +421,7 @@ class CntTable(qt.QWidget):
         self.reset()
 
     def setScan(self, scankey):
-        if type(scankey)==types.ListType: 
+        if type(scankey)==type([]): 
             if len(scankey): scankey= scankey[0]
             else: scankey=None
         if scankey is None:

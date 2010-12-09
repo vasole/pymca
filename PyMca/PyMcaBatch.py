@@ -1433,7 +1433,7 @@ class McaBatchWindow(qt.QWidget):
     def onNewFile(self, file, filelist, filestep, filebeginoffset =0, fileendoffset = 0):
         if DEBUG:
             print("onNewFile: %s" % file)
-        indexlist = range(0,len(filelist),filestep)
+        indexlist = list(range(0,len(filelist),filestep))
         index  = indexlist.index(filelist.index(file)) - filebeginoffset
         #print index + filebeginoffset
         if index == 0:

@@ -151,8 +151,8 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
     model = model0
     parameters = array(parameters0)
     if data0 is not None:
-        selfx = array(map(lambda x:x[0],data0))
-        selfy = array(map(lambda x:x[1],data0))
+        selfx = array([x[0] for x in data0])
+        selfy = array([x[1] for x in data0])
     else:
         selfx = xdata
         selfy = ydata

@@ -116,7 +116,7 @@ class PyMcaBatchBuildOutput:
                     inputdata = numpy.zeros((nrows, nlabels), numpy.double)
                 chisqIndex = labels.index('chisq')
                 for i in range(nrows):
-                    inputdata[i, :] = map(float, lines[i+1].split())
+                    inputdata[i, :] = [float(x) for x in lines[i+1].split()]
                     if inputdata[i, chisqIndex] < 0.0:
                         inputdata[i, chisqIndex] = 0.0
                 data += inputdata
@@ -216,7 +216,7 @@ class PyMcaBatchBuildOutput:
             if begin is None:
                 begin = 0
                 testname = prefix+fformat % begin+suffix
-                while not os.path.exists(prefix+format % begin+suffix):
+                while not os.path.exists(prefix+ fformat % begin+suffix):
                     begin += 1
                     testname = prefix+fformat % begin+suffix
                     if len(testname) > len(filename):break
