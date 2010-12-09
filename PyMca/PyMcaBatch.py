@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-__revision__ = "$Revision: 1.50$"
 ###########################################################################
 # Copyright (C) 2004-2010 European Synchrotron Radiation Facility
 #
@@ -26,6 +25,7 @@ __revision__ = "$Revision: 1.50$"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################
+__revision__ = "$Revision: 4.12$"
 import sys
 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -683,7 +683,7 @@ class McaBatchGUI(qt.QWidget):
                     self.raise_()
                 return
         if len(filelist):
-            filelist = map(str, filelist)
+            filelist = [str(x) for x in filelist]
             self.setFileList(filelist)
         if QTVERSION < '4.0.0':
             self.raiseW()

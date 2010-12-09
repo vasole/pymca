@@ -1101,32 +1101,32 @@ def getMultilayerFluorescence(multilayer0,
     if multilayer0 is None:return []
     if secondary is None:secondary=False
     if len(multilayer0):
-        if type(multilayer0[0]) != types.ListType:
+        if type(multilayer0[0]) != type([]):
             multilayer=[multilayer0 * 1]
         else:
             multilayer=multilayer0 * 1
     if fulloutput  is None:fulloutput  = 0
-    if (type(energyList) != types.ListType) and \
+    if (type(energyList) != type([])) and \
        (type(energyList) != Numeric.ArrayType):
         energyList = [energyList]
         
     energyList = Numeric.array(energyList)
     if layerList is None:layerList = range(len(multilayer))
-    if type(layerList) != types.ListType:
+    if type(layerList) != type([]):
         layerList = [layerList]
     if elementsList is not None:
-        if type(elementsList) != types.ListType:
+        if type(elementsList) != type([]):
             elementsList = [elementsList]
 
     if weightList is not None:
-        if (type(weightList) != types.ListType) and \
+        if (type(weightList) != type([])) and \
            (type(weightList) != Numeric.ArrayType):
             weightList = [weightList]
         weightList = Numeric.array(weightList)
     else:
         weightList = Numeric.ones(len(energyList)).astype(Numeric.Float)
     if flagList is not None:
-        if (type(flagList) != types.ListType) and \
+        if (type(flagList) != type([])) and \
            (type(flagList) != Numeric.ArrayType):
             flagList = [flagList]
         flagList   = Numeric.array(flagList)
@@ -1136,11 +1136,11 @@ def getMultilayerFluorescence(multilayer0,
     optimized = 0
     if beamfilters is None:beamfilters = []
     if len(beamfilters):
-        if type(beamfilters[0]) != types.ListType:
+        if type(beamfilters[0]) != type([]):
             beamfilters=[beamfilters]
     if elementsList is not None:
         if len(elementsList):
-            if type(elementsList[0]) == types.ListType:
+            if type(elementsList[0]) == type([]):
                 if len(elementsList[0]) == 3:
                     optimized = 1
 
@@ -1581,10 +1581,10 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
     sinAlphaOut  = Numeric.sin(alphaout * (Numeric.pi)/180.)
     if attenuators is None: attenuators = []
     if len(attenuators):
-        if type(attenuators[0]) != types.ListType:
+        if type(attenuators[0]) != type([]):
             attenuators=[attenuators]
     if detector is not None:
-        if type(detector) != types.ListType:
+        if type(detector) != type([]):
             raise TypeError("Detector must be a list as [material, density, thickness]")
         elif len(detector) != 3:
             raise ValueError("Detector must have the form [material, density, thickness]")
@@ -1601,7 +1601,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
         elementsList = [[getz(x),x] for x in keys]
         elementsList.sort()
     else:
-        if (type(elementsList) != types.ListType) and (type(elementsList) != types.TupleType):
+        if (type(elementsList) != type([])) and (type(elementsList) != types.TupleType):
             elementsList  = [elementsList] 
         elementsList = [[getz(x),x] for x in elementsList]
         elementsList.sort()
@@ -1758,15 +1758,15 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
     if attenuators is None:
         attenuators = []
     if len(attenuators):
-        if type(attenuators[0]) != types.ListType:
+        if type(attenuators[0]) != type([]):
             attenuators=[attenuators]
     if funnyfilters is None:
         funnyfilters = []
     if len(funnyfilters):
-        if type(funnyfilters[0]) != types.ListType:
+        if type(funnyfilters[0]) != type([]):
             funnyfilters=[funnyfilters]
     if detector is not None:
-        if type(detector) != types.ListType:
+        if type(detector) != type([]):
             raise TypeError(\
                   "Detector must be a list as [material, density, thickness]")
         elif len(detector) != 3:
@@ -1787,7 +1787,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
         elementsList = [[getz(x),x] for x in keys]
         elementsList.sort()
     else:
-        if (type(elementsList) != types.ListType) and\
+        if (type(elementsList) != type([])) and\
            (type(elementsList) != types.TupleType):
             elementsList  = [elementsList]
         if len(elementsList[0]) == 3:
@@ -1827,7 +1827,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
         if elementsRays is None:
             raysforloop = elementDict['rays']
         else:
-            if type(elementsRays[raysforloopindex]) != types.ListType:
+            if type(elementsRays[raysforloopindex]) != type([]):
                 raysforloop = [elementsRays[raysforloopindex] + " xrays"]
             else:
                 raysforloop = []
@@ -2365,9 +2365,9 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
         deleteitems = []
         for compound in compoundList:
             if compound in Material.keys():
-                if type(Material[compound]['CompoundList']) != types.ListType:
+                if type(Material[compound]['CompoundList']) != type([]):
                     Material[compound]['CompoundList']=[Material[compound]['CompoundList']]
-                if type(Material[compound]['CompoundFraction']) != types.ListType:
+                if type(Material[compound]['CompoundFraction']) != type([]):
                     Material[compound]['CompoundFraction']=[Material[compound]['CompoundFraction']]
                 Material[compound]['CompoundFraction'] = [float(x) for x in Material[compound]['CompoundFraction']]    
                 total = sum(Material[compound]['CompoundFraction'])

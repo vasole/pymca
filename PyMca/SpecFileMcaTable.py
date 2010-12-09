@@ -77,7 +77,7 @@ if QTVERSION < '4.0.0':
             self.reset()
 
         def setScan(self, scankey):
-            if type(scankey)==types.ListType:
+            if type(scankey)==type([]):
                 if len(scankey): scankey= scankey[0]
                 else: scankey=None
             if scankey is None:

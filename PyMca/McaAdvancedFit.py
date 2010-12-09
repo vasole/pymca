@@ -1068,7 +1068,7 @@ class McaAdvancedFit(qt.QWidget):
                 return
         groupsList = fitresult['result']['groups']
 
-        if type(groupsList) != types.ListType:
+        if type(groupsList) != type([]):
             groupsList = [groupsList]
         areas = []
         for group in groupsList:
@@ -1139,7 +1139,7 @@ class McaAdvancedFit(qt.QWidget):
         fitresult = self.dict
         config = self.mcafit.configure()
         groupsList = fitresult['result']['groups']
-        if type(groupsList) != types.ListType:
+        if type(groupsList) != type([]):
             groupsList = [groupsList]
 
         nglobal    = len(fitresult['result']['parameters']) - len(groupsList)

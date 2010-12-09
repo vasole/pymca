@@ -260,7 +260,7 @@ class ConcentrationsTool:
         energyList = fitresult['result']['config']['fit']['energy']
         if energyList is None:
             raise ValueError("Invalid energy")
-        if type(energyList) != types.ListType:
+        if type(energyList) != type([]):
             energyList    = [energyList]
             flagList   = [1]
             weightList = [1.0]
@@ -300,7 +300,7 @@ class ConcentrationsTool:
 
         #get elements list from fit, not from matrix
         groupsList = fitresult['result']['groups'] * 1
-        if type(groupsList) != types.ListType:
+        if type(groupsList) != type([]):
             groupsList = [groupsList]
         
         todelete = []
