@@ -473,7 +473,7 @@ class McaROITable(QTable):
                 self.setCurrentCell(0,0)
         else:
             if currentroi in self.roidict.keys():
-                if qt.qVersion < '3.0.0':
+                if QTVERSION < '3.0.0':
                     self.setCurrentCell(self.roidict[currentroi]['line'],0)
                 else:
                     self.selectRow(self.roidict[currentroi]['line'])

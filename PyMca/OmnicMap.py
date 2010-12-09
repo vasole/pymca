@@ -24,9 +24,18 @@ class OmnicMap(DataObject.DataObject):
             omnicInfo = self.getOmnicInfo(data)
         except:
             omnicInfo = None
-        self.sourceName = [filename]        
-        firstByte = data.index("Spectrum position")
+        self.sourceName = [filename]
+        if sys.version < '3.0':
+            searchedChain = "Spectrum position"
+        else:
+            searchedChain = bytes("Spectrum position", 'utf-8')
+        firstByte = data.index(searchedChain)
         s = data[firstByte:(firstByte+100-16)]
+        if sys.version >= '3.0':
+            s = str(s)
+        if DEBUG:
+            print("firstByte = %d" % firstByte)
+            print("s1 = %s " % s)
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')
         spectrumIndex, nSpectra, xPosition, yPosition = exp.findall(s)[0:4]
         spectrumIndex = int(spectrumIndex)
@@ -35,9 +44,14 @@ class OmnicMap(DataObject.DataObject):
         yPosition = float(yPosition)
         if DEBUG:
             print("spectrumIndex, nSpectra, xPosition, yPosition = %d %d %f %f" %\
-                    (spectrumIndex, nSpectra, xPosition, yPosition))
-        secondByte = data.index("Spectrum position %d" % (spectrumIndex+1))
-        self.nChannels = (secondByte - firstByte - 100)/4
+                    (spectrumIndex, self.nSpectra, xPosition, yPosition))
+        if sys.version < '3.0':
+            secondByte = data.index("Spectrum position %d" % (spectrumIndex+1))
+        else:
+            secondByte = data.index(bytes("Spectrum position %d" % (spectrumIndex+1), 'utf-8'))
+        if DEBUG:
+            print("secondByte = ", secondByte)
+        self.nChannels = int((secondByte - firstByte - 100)/4)
         if DEBUG:
             print("nChannels = %d" % self.nChannels)
         self.firstSpectrumOffset = firstByte - 16
@@ -48,9 +62,11 @@ class OmnicMap(DataObject.DataObject):
         oldYPosition = yPosition
         self.nRows = 0
         for i in range(self.nSpectra):
-            offset = firstByte + i * (100 + self.nChannels * 4)
-            s = data[offset:(offset+100-16)]
-            #print "s = ",s
+            offset = int(firstByte + i * (100 + self.nChannels * 4))
+            if sys.version < '3.0':
+                s = data[offset:(offset+100-16)]
+            else:
+                s = str(data[offset:(offset+100-16)])
             spectrumIndex, nSpectra, xPosition, yPosition = exp.findall(s)[0:4]
             xPosition = float(xPosition)
             yPosition = float(yPosition)
@@ -64,7 +80,7 @@ class OmnicMap(DataObject.DataObject):
         
         #arrange as an EDF Stack
         self.info = {}
-        self.__nFiles = (self.nSpectra)/self.nRows
+        self.__nFiles = int((self.nSpectra)/self.nRows)
         self.data = numpy.zeros((self.__nFiles,
                                  self.nRows,
                                  self.nChannels),
@@ -76,9 +92,9 @@ class OmnicMap(DataObject.DataObject):
         fmt = "%df" % self.nChannels
         for i in range(self.__nFiles):
             for j in range(self.nRows):
-                self.data[i,j,:] = struct.unpack(fmt, data[offset:(offset+delta-100)])
-                offset = offset + delta
-                
+                self.data[i,j,:] = struct.unpack(fmt,\
+                                        data[offset:(offset+delta-100)])
+                offset = int(offset + delta)
         shape = self.data.shape
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)
@@ -145,5 +161,9 @@ if __name__ == "__main__":
     if filename is not None:
         DEBUG = 1   
         w = OmnicMap(filename)
+        print(type(w))
+        print(type(w.data[0:10]))
+        print("shape = ", w.data.shape)
+        print(type(w.info))
     else:
         print("Please supply input filename")

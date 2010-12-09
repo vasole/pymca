@@ -122,8 +122,12 @@ class StackBase(object):
         return len(self.pluginList)
 
     def setStack(self, stack, mcaindex=2, fileindex=None):
+        #unfortunaly python 3 reports
+        #isinstance(stack, DataObject.DataObject) as false
+        #for DataObject derived classes like OmnicMap!!!!
         if isinstance(stack, DataObject.DataObject) or\
-           ("QStack" in ("%s" % type(stack))):
+           ("QStack" in ("%s" % type(stack))) or\
+           ("Map" in ("%s" % type(stack))) :
             self._stack = stack
             self._stack.info['SourceName'] = stack.info.get('SourceName',
                                                             "Data of unknown origin")
