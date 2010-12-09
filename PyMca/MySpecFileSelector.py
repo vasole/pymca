@@ -870,7 +870,7 @@ class SpecFileSelector(qt.QWidget):
             for key in seldict[filename]:
                 scan, order, mca= key.split(".")
                 scankey= "%s.%s"%(scan, order)
-                if not ((scankey in self.selection[filename]):
+                if not (scankey in self.selection[filename]):
                     self.selection[filename][scankey]= []
                 self.selection[filename][scankey].append(mca)
         self.__refreshSelection()
