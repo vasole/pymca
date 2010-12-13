@@ -38,17 +38,25 @@ import Fit2DChiFileParser
 import re
 DEBUG = 0
 
-def safe_str(bytesObject):
-    try:
-        return str(bytesObject, 'utf-8')
-    except UnicodeDecodeError:
+if sys.version >= '2.6':
+    def safe_str(bytesObject):
         try:
-            return str(bytesObject, 'latin-1')
-        except:
+            return str(bytesObject, 'utf-8')
+        except UnicodeDecodeError:
             try:
-                return str(bytesObject, 'utf-16')
+                return str(bytesObject, 'latin-1')
             except:
-                return str(bytesObject)
+                try:
+                    return str(bytesObject, 'utf-16')
+                except:
+                    return str(bytesObject)
+else:
+    def safe_str(*var, **kw):
+        return str(var[0])
+
+    #python 2.5 does not have bytes function
+    def bytes(*var, **kw):
+        return var[0]
 
 def Specfile(filename):
     if os.path.exists(filename):
