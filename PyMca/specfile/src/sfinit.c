@@ -109,6 +109,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
+
 #ifdef WIN32
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,6 +139,7 @@
  */
 
 DllExport SpecFile * SfOpen   ( char *name,int *error);
+DllExport SpecFile * SfOpen2  ( int fd, char *name,int *error);
 DllExport int        SfClose  ( SpecFile *sf);
 DllExport short      SfUpdate ( SpecFile *sf, int *error);
 DllExport char     * SfError  ( int error);
@@ -199,7 +201,7 @@ sf_errors errors[]={
 
 
 /*********************************************************************
- *   Function:          SpecFile *SfOpen( name, error )
+ *   Function:          SpecFile *SfOpen( name, error)
  *
  *   Description:       Opens connection to Spec data file.
  *                      Creates index list in memory.
@@ -220,18 +222,43 @@ sf_errors errors[]={
  *********************************************************************/
 
 DllExport SpecFile *
-SfOpen(char *name,int *error) {
+SfOpen(char *name, int *error) {
 
    int         fd;
+   fd   = open(name,SF_OPENFLAG);
+   return (SfOpen2(fd, name, error));
+}
+
+
+
+/*********************************************************************
+ *   Function:          SpecFile *SfOpen2( fd, name, error)
+ *
+ *   Description:       Opens connection to Spec data file.
+ *                      Creates index list in memory.
+ *
+ *   Parameters:
+ *              Input :
+ *                      (1) Integer file handle
+ *                      (2) Filename
+ *              Output:
+ *                      (3) error number
+ *   Returns:
+ *                      SpecFile pointer.
+ *                      NULL if not successful.
+ *
+ *   Possible errors:
+ *                      SF_ERR_FILE_OPEN
+ *                      SF_ERR_MEMORY_ALLOC
+ *
+ *********************************************************************/
+
+DllExport SpecFile *
+SfOpen2(int fd, char *name,int *error) {
    SpecFile   *sf;
    short       idxret;
    SfCursor      cursor;
    struct stat mystat;
-
-#ifdef _WINDOWS
-   static HANDLE hglb;
-#endif
-   fd   = open(name,SF_OPENFLAG);
 
    if ( fd == -1 ) {
       *error = SF_ERR_FILE_OPEN;
@@ -241,8 +268,8 @@ SfOpen(char *name,int *error) {
   /*
    * Init specfile strucure
    */
-
 #ifdef _WINDOWS
+   static HANDLE hglb;
    hglb = GlobalAlloc(GPTR,sizeof(SpecFile));
    sf   = (SpecFile * ) GlobalLock(hglb);
 #else

@@ -304,13 +304,39 @@ static PyTypeObject Specfiletype = {
 static PyObject *
 specfile_open(PyObject *self, PyObject *args) /* on x = specfile.Specfile(name) */
 {
+    PyObject *input;
+#ifdef WIN32
+    PyObject *bytesObject;
+#endif
     const char *filename;
     specfileobject *object;
     SpecFile       *sf;
     int             error;
+    int                fd;
 
+    /*
     if (!PyArg_ParseTuple(args, "s", &filename)) 
       return NULL;
+     */
+
+#ifdef WIN32
+    if (!PyArg_ParseTuple(args, "O", &input))
+    {
+      return NULL;
+    }
+    {
+        bytesObject = PyUnicode_AsMBCSString(input);
+        if (!bytesObject){
+            onError("Cannot generate String from object name attribute")
+        }
+        filename = PyBytes_AsString(bytesObject);
+    }
+#else
+    if (!PyArg_ParseTuple(args, "s", &filename))
+    {
+        return NULL;
+    }
+#endif
 
     Specfiletype.tp_new = PyType_GenericNew;
     if (PyType_Ready(&Specfiletype) < 0)
@@ -322,7 +348,9 @@ specfile_open(PyObject *self, PyObject *args) /* on x = specfile.Specfile(name) 
     object->sf = NULL;
     object->name = (char *)strdup(filename);
     strcpy(object->name, filename);
-
+#ifdef WIN32
+    Py_DECREF(bytesObject);
+#endif
     if (( sf = SfOpen((char *) filename, &error)) == NULL )
     {
         Py_DECREF(object);
@@ -339,7 +367,9 @@ specfile_close(PyObject *self)
     specfileobject *f;
     f = (specfileobject *) self;
     if (f->sf)
+    {
         SfClose(f->sf);
+    }
     free(f->name);
     PyObject_DEL(f);
     return NULL;
