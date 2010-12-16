@@ -211,12 +211,6 @@ class EdfFileDataSource:
             pos  = data.info['pos']
             size = data.info['size']
         sourceObject = self._sourceObjectList[index]
-        if data.info["DataType"]=="UnsignedShort": 
-            data.data=sourceObject.GetData(image,"SignedInteger", Pos=pos,Size=size)
-        elif data.info["DataType"]=="UnsignedLong":
-            data.data=sourceObject.GetData(image,"DoubleValue",Pos=pos,Size=size)
-        else:
-            data.data=sourceObject.GetData(image,Pos=pos,Size=size)
         data.data=sourceObject.GetData(image,Pos=pos,Size=size)
         data.info['rows'], data.info['cols'] = data.data.shape[0:2]
         if data.info['selectiontype'] == "1D":
