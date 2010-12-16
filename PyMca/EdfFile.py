@@ -187,6 +187,8 @@ class  EdfFile:
                 #write access
                 if access is None:
                     access = "wb"
+                elif access == 'w' and sys.platform == 'win32':
+                    access = 'wb'
                 self.File = open(self.FileName, access)
                 return
             else:
