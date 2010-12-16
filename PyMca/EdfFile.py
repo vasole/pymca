@@ -180,6 +180,8 @@ class  EdfFile:
             if access[0].upper() == "R":
                 if not os.path.isfile(self.FileName):
                     raise IOError("File %s not found" % FileName)
+                if access == 'r' and sys.platform == 'win32':
+                    access = 'rb'
         try:
             if not os.path.isfile(self.FileName):
                 #write access
