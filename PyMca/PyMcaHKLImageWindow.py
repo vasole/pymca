@@ -62,28 +62,57 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         info = self._getHKLInfoFromWidget()
 
         toDeg = 180.0/numpy.pi
-        deltaH = toDeg * numpy.arctan((x - info['pixel_zero_h']) *\
-                        (info['pixel_size_h']/info['distance']))
-        
-        deltaV = toDeg *arctan((y - info['pixel_zero_v'])*\
-                        (info['pixel_size_v']/info['distance']))
 
         phi = info['phi']
         chi = info['chi']
         theta = info['theta']
 
-        # delta in vertical (following BM28)
-        # gamma in horizontal (following BM28)
         if 0:
-            #original
-            gamma = info['gamma'] + deltaH
-            delta = info['delta'] - deltaV
+            # delta in vertical (following BM28)
+            # gamma in horizontal (following BM28)
+            deltaH = toDeg * numpy.arctan((x - info['pixel_zero_h']) *\
+                        (info['pixel_size_h']/info['distance']))
+        
+            deltaV = toDeg *arctan((y - info['pixel_zero_v'])*\
+                        (info['pixel_size_v']/info['distance']))
+            if 0:
+               #original
+               gamma = info['gamma'] + deltaH
+               delta = info['delta'] - deltaV
+            else:
+               #MarCCD settings
+               gamma = info['gamma'] - deltaV
+               delta = info['delta'] - deltaH            
+           #end of BM28 customization
         else:
-            #MarCCD settings
-            gamma = info['gamma'] - deltaV
-            delta = info['delta'] - deltaH            
-        #end of BM28 customization
-
+	    #ID03
+            deltaH = toDeg * numpy.arctan((x - info['pixel_zero_v']) *\
+                        (info['pixel_size_v']/info['distance']))
+        
+            deltaV = toDeg *arctan((y - info['pixel_zero_h'])*\
+                        (info['pixel_size_h']/info['distance']))
+	    #delta in horizontal
+	    #gamma in vertical
+            gamma = info['gamma'] - deltaH
+            delta = info['delta'] - deltaV
+            if 0:
+                #ID03 test for EH1
+                wavelength = 1.03321027
+                ub = [1.0, 0.0, 0.0, 
+                      0.0, 1.0, 0.0,
+                      0.0, 0.0, 1.0]
+                ub[0] = 0.060082400000000001
+                ub[1] = 0.054556500000000001
+                ub[2] = -0.92985700000000004
+                ub[3] =  -1.5089399999999999
+                ub[4] =  -2.61991
+                ub[5] =  -0.0203886
+                ub[6] =  -2.1539600000000001
+                ub[7] =  0.230518
+                ub[8] = -0.011654299999999999
+                delta, theta, chi, phi, mu, gamma = 44.0035, -92.968, 90.715,\
+                                                    1.26, 0.3, 0.578
+                print(" Expected value = ", 1, 1, 0.1)
         mu    = info['mu']
         wavelength = info['lambda']
         ub = info['ub']
@@ -106,7 +135,8 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
             delta, theta, chi, phi, mu, gamma = 23.5910, 47.0595, -135.,\
                                                 0.0, 0.0, 0.0
 
-        HKL = SixCircle.getHKL(wavelength, ub,
+        HKL = SixCircle.getHKL(wavelength,
+                               ub,
                                phi=phi,
                                chi=chi,
                                theta=theta,
