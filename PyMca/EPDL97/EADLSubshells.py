@@ -64,7 +64,7 @@ SHELL_LIST = ['K (1s1/2)',
 def getSubshellFromValue(value):
     idx = int(value) - 1
     if idx < 0:
-        raise IndexError, "Invalid EADL Atomic Subshell Designator"
+        raise IndexError("Invalid EADL Atomic Subshell Designator")
     return SHELL_LIST[idx]
 
 def getValueFromSubshell(subshell):
@@ -85,4 +85,4 @@ def getValueFromSubshell(subshell):
         i += 1
         if wshell == shell.split(" ")[0]:
             return float(i)
-    raise ValueError, "Invalid shell name %s" % subshell
+    raise ValueError("Invalid shell name %s" % subshell)

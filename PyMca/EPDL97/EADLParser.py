@@ -150,7 +150,10 @@ Elements = ['H', 'He',
 #Read the EPDL library
 EADL = os.path.join(os.path.dirname(__file__),'EADL.DAT')
 infile = open(EADL, 'rb')
-EADL97_DATA = infile.read()
+if sys.version < '3.0':
+    EADL97_DATA = infile.read()
+else:
+    EADL97_DATA = infile.read().decode('UTF-8')
 infile.close()
 
 #speed up sequential access
@@ -188,7 +191,7 @@ def getParticle(value):
         return 'electron'
     if value == 8:
         return 'positron'
-    raise ValueError, 'Invalid particle code'
+    raise ValueError('Invalid particle code')
 
 def getReactionFromCode(value):
     """
@@ -203,7 +206,7 @@ def getReactionFromCode(value):
         return 'subshell'
     if value == 92:
         return 'transition'
-    raise ValueError, 'Invalid reaction descriptor code'
+    raise ValueError('Invalid reaction descriptor code')
 
 def getReactionPropertyFromCode(value):
     """
@@ -263,7 +266,7 @@ def getReactionPropertyFromCode(value):
         return 'imaginary_anomalous_scattering_factor'
     if value == 944:
         return 'real_anomalous_scattering_factor'
-    raise ValueError, 'Invalid reaction property descriptor code'
+    raise ValueError('Invalid reaction property descriptor code')
 
 def parseHeader0(line):
     """
@@ -373,8 +376,8 @@ def parseHeader1(line):
         ddict['subshell_code'] = 0    
         ddict['subshell'] = 'none'
     else:
-        print "Inconsistent data"
-        print "X1 = ", X1, "S = ", S
+        print("Inconsistent data")
+        print("X1 = ", X1, "S = ", S)
         sys.exit(1) 
     return ddict
 
@@ -388,18 +391,18 @@ def parseHeader(line0, line1):
 if 0:
     ddict = parseHeader0(EADL97_DATA[0])
     for key in ddict.keys():
-        print key, ddict[key]
+        print(key, ddict[key])
 
 if 0:
     ddict = parseHeader1(EADL97_DATA[1])
     for key in ddict.keys():
-        print key, ddict[key]
+        print(key, ddict[key])
 
 
 def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
     global LAST_INDEX
     if (z < 1) or (z>100):
-        raise ValueError, "Invalid atomic number"
+        raise ValueError("Invalid atomic number %d" % z)
     nlines = len(lines)
     i = LAST_INDEX
     while i < (nlines-1):
@@ -418,41 +421,41 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
         try:
             ddict = parseHeader(lines[i], lines[i+1])
         except:
-            print "Error with lines"
-            print "line index = ", i
-            print lines[i]
-            print lines[i+1]
-            print sys.exc_info()
+            print("Error with lines")
+            print("line index = %d" % i)
+            print(lines[i])
+            print(lines[i+1])
+            print(sys.exc_info())
             raise
         if 0:
-            print ddict['Z'], z
-            print ddict['Yi'], Yi
-            print ddict['C'], C
-            print ddict['S'], S
-            print ddict['X1'], X1
-            print ddict['Yo'], Yo
-            print ddict['I'], I
+            print(ddict['Z'], z)
+            print(ddict['Yi'], Yi)
+            print(ddict['C'], C)
+            print(ddict['S'], S)
+            print(ddict['X1'], X1)
+            print(ddict['Yo'], Yo)
+            print(ddict['I'], I)
         if DEBUG:
             if ddict['Z'] == z:
-                print "Z found"
+                print("Z found")
                 if ddict['Yi'] == Yi:
-                    print "Yi found"
+                    print("Yi found")
                     if ddict['C'] == C:
-                        print "C found"
+                        print("C found")
                         if ddict['S'] == S:
-                            print "S found with X1 = ", ddict['X1']
-                            print "Requested    X1 = ", X1
-                            print lines[i]
-                            print lines[i+1]
+                            print("S found with X1 = ", ddict['X1'])
+                            print("Requested    X1 = ", X1)
+                            print(lines[i])
+                            print(lines[i+1])
                             if ddict['X1'] == X1:
-                                print "Requested    Yo = ", Yo
-                                print "Found        Yo = ", ddict['Yo']
+                                print("Requested    Yo = ", Yo)
+                                print("Found        Yo = ", ddict['Yo'])
                                 if ddict['Yo'] == Yo:
-                                    print "Requested I = ",I
+                                    print("Requested I = ",I)
                                     if ddict['I'] == I:
-                                        print "FOUND!"
-                                        print lines[i]
-                                        print lines[i+1]
+                                        print("FOUND!")
+                                        print(lines[i])
+                                        print(lines[i+1])
                                         LAST_INDEX = i - 1
                                         return i
                                         break
@@ -470,7 +473,7 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
         i += 1
     if LAST_INDEX > 0:
         if DEBUG:
-            print "REPEATING"
+            print("REPEATING")
         LAST_INDEX = -1
         return getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I)
     return -1
@@ -484,12 +487,12 @@ def getActualDataFromLinesAndOffset(lines, index):
         end_line = lines[data_end + 1]
     data_end += 1
     if DEBUG:
-        print "COMPLETE DATA SET"
-        print lines[index:data_end]
-        print "END DATA SET"
-        print "ADDITIONAL LINE"
-        print lines[data_end]
-        print "END ADDITIONAL LINE"
+        print("COMPLETE DATA SET")
+        print(lines[index:data_end])
+        print("END DATA SET")
+        print("ADDITIONAL LINE")
+        print(lines[data_end])
+        print("END ADDITIONAL LINE")
     ndata = data_end - data_begin
     energy = numpy.zeros((ndata,), numpy.float)
     t = lines[data_begin].split()
@@ -526,7 +529,7 @@ def getActualDataFromLinesAndOffset(lines, index):
                         raise                    
     return energy, value
 
-def getBaseShellDict():
+def getBaseShellDict(nvalues=None):
     bad_shells = ['L (', 'L23',
                   'M (', 'M23', 'M45',
                   'N (', 'N23', 'N45', 'N67',
@@ -539,7 +542,10 @@ def getBaseShellDict():
             continue
         if shell[0:4] in bad_shells:
             continue
-        ddict[shell] = 0.0
+        if nvalues is None:
+            ddict[shell] = 0.0
+        else:
+            ddict[shell] = [0.0] * nvalues
     return ddict
 
 def getBaseShellList():
@@ -568,10 +574,10 @@ def getRadiativeWidths(z, lines=None):
         lines = EADL97_DATA
     index = getDataLineIndex(lines, z, 0, 91, 0, 0., 0, 921)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     shell_codes, value = getActualDataFromLinesAndOffset(lines, index)
     if DEBUG:
-        print "shell_codes, value ",shell_codes, value
+        print("shell_codes, value ",shell_codes, value)
     i = 0
     ddict = getBaseShellDict()
     for code in shell_codes:
@@ -590,10 +596,10 @@ def getNonradiativeWidths(z, lines=None):
         lines = EADL97_DATA
     index = getDataLineIndex(lines, z, 0, 91, 0, 0., 0, 922)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     shell_codes, value = getActualDataFromLinesAndOffset(lines, index)
     if DEBUG:
-        print "shell_codes, value ",shell_codes, value
+        print("shell_codes, value ",shell_codes, value)
     i = 0
     ddict = getBaseShellDict()
     for code in shell_codes:
@@ -618,7 +624,7 @@ def getRadiativeTransitionProbabilities(z, shell='K', lines=None):
     #0    92   91   11.    7  931    M3   Shell
     #0    92   91   13.    7  931    M4   Shell
     #0    92   91   14.    7  931    M5   Shell
-    ddict = getBaseShellDict()
+    ddict = getBaseShellDict(nvalues=2)
     if z < 6:
         return ddict
     if lines is None:
@@ -627,12 +633,12 @@ def getRadiativeTransitionProbabilities(z, shell='K', lines=None):
     index = getDataLineIndex(lines, z, 0, 92, 91, X1, 7, 931)
     if index < 0:
         #this error may happen when requesting non existing data too
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     shell_codes, values = getActualDataFromLinesAndOffset(lines, index)
     if DEBUG:
-        print "shell_codes, value ",shell_codes, value
+        print("shell_codes, values ",shell_codes, values)
     i = 0
-    ddict = getBaseShellDict()
+    ddict = getBaseShellDict(nvalues=2)
     for code in shell_codes:
         key = getSubshellFromValue(code)
         ddict[key] = values[i]
@@ -665,10 +671,10 @@ def getNonradiativeTransitionProbabilities(z, shell='K', lines=None):
     index = getDataLineIndex(lines, z, 0, 92, 91, X1, 9, 932)
     if index < 0:
         #this error may happen when requesting non existing data too
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     shell_codes, values = getActualDataFromLinesAndOffset(lines, index)
     if DEBUG:
-        print "shell_codes, value ",shell_codes, value
+        print("shell_codes, values ",shell_codes, values)
     i = 0
     ddict = {}#getBaseShellDict()
     for code in shell_codes:
@@ -691,10 +697,10 @@ def getBindingEnergies(z, lines=None):
         lines = EADL97_DATA
     index = getDataLineIndex(lines, z, 0, 91, 0, 0., 0, 913)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     shell_codes, value = getActualDataFromLinesAndOffset(lines, index)
     if DEBUG:
-        print "shell_codes, value ",shell_codes, value
+        print("shell_codes, value ",shell_codes, value)
     i = 0
     ddict = getBaseShellDict()
     for code in shell_codes:
@@ -733,7 +739,7 @@ def getCosterKronigYields(z, shell='L1', lines=None):
     for key in probabilities:
         items = key.split('-')
         if items[0] != shell:
-            raise ValueError, "Inconsistant data!"
+            raise ValueError("Inconsistent data!")
         if items[0][0] == items[1][0]:
             #coster kronig
             transition = 'f'+ items[0][1] + items[1][1]
@@ -798,35 +804,69 @@ if __name__ == "__main__":
         element = sys.argv[1]
     else:
         element = 'Pb'
-    print "Getting binding energies for element ", element
+    print("Getting binding energies for element %s" % element)
     ddict = getBindingEnergies(Elements.index(element)+1)
     for key in getBaseShellList():
         if ddict[key] > 0.0:
-            print "Shell = ", key, "Energy (keV) = %.7E" % (ddict[key] * 1000.)
-    print "Getting fluorescence yields for element ", element
+            print("Shell = %s Energy (keV) = %.7E" % (key, ddict[key] * 1000.))
+    print("Getting fluorescence yields for element %s" % element)
     ddict = getFluorescenceYields(Elements.index(element)+1)
     for key in getBaseShellList():
-        if ddict[key] > 0.0:
-            print "Shell = ", key, "Yield = %.7E" % (ddict[key])
+        if key in ddict:
+            if ddict[key] > 0.0:
+                print("Shell = %s Yield = %.7E" % (key, ddict[key]))
 
     #total_emission = 0.0
     for shell in ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']:
         try:
             ddict = getRadiativeTransitionProbabilities(Elements.index(element)+1,
                                                     shell=shell)
-            print "%s Shell radiative emission probabilities " % shell
+            print("%s Shell radiative emission probabilities " % shell)
         except IOError:
             continue
         total = 0.0
         for key in getBaseShellList():
-            if ddict[key] > 0.0:
-                print "Shell = ", key, "Yield = %.7E Energy = %.7E" % (ddict[key][0],
-                                                         ddict[key][1] * 1000.)
-                total += ddict[key][0]
-        print "Total %s-shell emission probability = %.7E" % (shell, total)
+            if key in ddict:
+                if ddict[key][0] > 0.0:
+                    print("Shell = %s Yield = %.7E Energy = %.7E" % (key, ddict[key][0],
+                                                         ddict[key][1] * 1000.))
+                    total += ddict[key][0]
+        print("Total %s-shell emission probability = %.7E" % (shell, total))
         #total_emission += total
     #print "total_emission = ", total_emission
-    #print getNonradiativeTransitionProbabilities(Elements.index(element)+1, 'L2')
-    print getMShellCosterKronigYields(Elements.index(element)+1)
-    print "atomic weight = ", getAtomicWeights()[Elements.index(element)]
+    for shell in ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']:
+        try:
+            ddict = getNonradiativeTransitionProbabilities(Elements.index(element)+1,
+                                                    shell=shell)
+            print("%s Shell Nonradiative emission probabilities " % shell)
+        except IOError:
+            continue
+        total = 0.0
+        shell_list = getBaseShellList() 
+        for key0 in shell_list:
+            for key1 in shell_list:
+                key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
+                if key in ddict:
+                    if ddict[key][0] > 0.0:
+                        print("Shell = %s Yield = %.7E Energy = %.7E" %\
+                                  (key, ddict[key][0], ddict[key][1] * 1000.))
+                        total += ddict[key][0]
+        print("Total %s-shell non-radiative emission probability = %.7E" % (shell, total))
+        if shell in ['K']:
+            for key0 in ['L1', 'L2' ,'L3']:
+                subtotal = 0.0
+                for key1 in shell_list:
+                    tmpKey =  key1.split()[0]
+                    key = "%s-%s%s" % (shell, key0, tmpKey)
+                    if key in ddict:
+                        if ddict[key][0] > 0.0:
+                            subtotal += ddict[key][0]
+                            if tmpKey == key0:
+                                subtotal += ddict[key][0]
+                print("%s vacancies for nonradiative transition to %s shell = %.7E"%\
+                      (key0, shell, subtotal))
+            
+    #print(getNonradiativeTransitionProbabilities(Elements.index(element)+1, 'L1'))
+    print(getMShellCosterKronigYields(Elements.index(element)+1))
+    print("atomic weight = ", getAtomicWeights()[Elements.index(element)])
     sys.exit(0)
