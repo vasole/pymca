@@ -35,16 +35,19 @@ shellList = EADLParser.getBaseShellList()
 workingShells = ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5'] 
 for shell in workingShells:
     fname = "EADL97_%sShellRadiativeRates.dat" % shell[0]
-    print "fname = ", fname
+    print("fname = %s" % fname)
     if shell in ['K', 'L1', 'M1']:
         if os.path.exists(fname):
             os.remove(fname)
         nscan = 0
         outfile = open(fname, 'wb')
-        outfile.write(getHeader(fname))
+        if sys.version < '3.0':
+            outfile.write(getHeader(fname))
+        else:
+            outfile.write(getHeader(fname).encode('UTF-8'))
     nscan += 1
     for i in range(1,101):
-        print i, Elements[i-1]
+        print("Z = %d, Element = %s" % (i, Elements[i-1]))
         element = Elements[i-1]
         try:
             ddict = EADLParser.getRadiativeTransitionProbabilities(\
@@ -52,8 +55,9 @@ for shell in workingShells:
                                     shell=shell)
             print("%s Shell radiative emission probabilities " % shell)
         except IOError:
-            print "IOError"
-            continue
+            #print "IOError"
+            #continue
+            pass
         for key in shellList:
             if key not in ddict:
                 ddict[key] = [0.0, 0.0]
@@ -82,7 +86,16 @@ for shell in workingShells:
                     continue
             text += '  %.7E' % ddict[key][0]
         text += '\n'
-        outfile.write(text)
+        if sys.version < '3.0':
+            outfile.write(text)
+        else:
+            outfile.write(text.encode('UTF-8'))
+    if sys.version < '3.0':
+        outfile.write('\n')
+    else:
+        outfile.write('\n'.encode('UTF-8'))
+if sys.version < '3.0':
     outfile.write('\n')
-outfile.write("\n")
+else:
+    outfile.write('\n'.encode('UTF-8'))
 outfile.close()
