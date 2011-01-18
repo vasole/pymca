@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -188,7 +188,7 @@ class EDFStack(DataObject.DataObject):
                                                arrRet.shape[0],
                                                arrRet.shape[1]))
                                 self.incrProgressBar=0
-                                for tempEdfFileName in filelist[0:10]:
+                                for tempEdfFileName in filelist:
                                     tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                     pieceOfStack=tempEdf.GetData(0)
                                     self.data[self.incrProgressBar,:,:] = pieceOfStack[:,:]
