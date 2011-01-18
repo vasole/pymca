@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -310,11 +310,21 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def _pluginClicked(self):
         actionList = []
         menu = qt.QMenu(self)
-        text = QString("Reload")
+        text = QString("Reload Plugins")
+        menu.addAction(text)
+        actionList.append(text)
+        text = QString("Set User Plugin Directory")
+        menu.addAction(text)
+        actionList.append(text)
+        global DEBUG
+        if DEBUG:
+            text = QString("Toggle DEBUG mode OFF")
+        else:
+            text = QString("Toggle DEBUG mode ON")
         menu.addAction(text)
         actionList.append(text)
         menu.addSeparator()
-        callableKeys = ["Dummy"]
+        callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
         for m in self.pluginList:
             if m == "PyMcaPlugins.Plugin1DBase":
                 continue
@@ -345,7 +355,23 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 msg.setIcon(qt.QMessageBox.Information)
                 msg.setText("Problem loading plugins")
                 msg.exec_()
-            return        
+            return
+        if idx == 1:
+            dirName = str(qt.QFileDialog.getExistingDirectory(self,
+                                "Enter user plugins directory",
+                                os.getcwd()))
+            if len(dirName):
+                pluginsDir = self.getPluginDirectoryList()
+                pluginsDirList = [pluginsDir[0], dirName]
+                self.setPluginDirectoryList(pluginsDirList)
+            return
+        if idx == 2:
+            if DEBUG:
+                DEBUG = 0
+            else:
+                DEBUG = 1
+            Plot1DBase.DEBUG = DEBUG
+            return
         key = callableKeys[idx]
         methods = self.pluginInstanceDict[key].getMethods(plottype="SCAN")
         if len(methods) == 1:

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -75,50 +75,69 @@ class StackBase(object):
         self._ROIImageList = []
         self._ROIImageNames = []
 
+        self.__pluginDirList = []
         self.pluginList = []
         self.pluginInstanceDict = {}
         self.getPlugins()
+
+    def setPluginDirectoryList(self, dirlist):
+        for directory in dirlist:
+            if not os.path.exists(directory):
+                raise IOError("Directory:\n%s\ndoes not exist." % directory)                
+
+        self.__pluginDirList = dirlist
+
+    def getPluginDirectoryList(self):
+        return self.__pluginDirList
 
     def getPlugins(self):
         """
         Import or reloads all the available plugins.
         It returns the number of plugins loaded.
         """
-        if PLUGINS_DIR is None:
-            return 0
-        directory = PLUGINS_DIR
-        if not os.path.exists(directory):
-            raise IOError("Directory:\n%s\ndoes not exist." % directory)
 
+        if self.__pluginDirList == []:
+           self.__pluginDirList = [PLUGINS_DIR] 
         self.pluginList = []
-        fileList = glob.glob(os.path.join(directory, "*.py"))
-        targetMethod = 'getStackPluginInstance'
-        for module in fileList:
-            try:
-                pluginName = os.path.basename(module)[:-3]
-                plugin = "PyMcaPlugins." + pluginName
-                if pluginName in self.pluginList:
-                    idx = self.pluginList.index(pluginName)
-                    del self.pluginList[idx]
-                if plugin in self.pluginInstanceDict.keys():
-                    del self.pluginInstanceDict[plugin]
-                if plugin in sys.modules:
+        for directory in self.__pluginDirList:
+            if directory is None:
+                continue
+            if not os.path.exists(directory):
+                raise IOError("Directory:\n%s\ndoes not exist." % directory)
+            
+            fileList = glob.glob(os.path.join(directory, "*.py"))
+            targetMethod = 'getStackPluginInstance'
+            for module in fileList:
+                try:
+                    pluginName = os.path.basename(module)[:-3]
+                    if directory == PLUGINS_DIR:
+                        plugin = "PyMcaPlugins." + pluginName
+                    else:
+                        plugin = pluginName
+                        if directory not in sys.path:
+                            sys.path.insert(0, directory)
+                    if pluginName in self.pluginList:
+                        idx = self.pluginList.index(pluginName)
+                        del self.pluginList[idx]
+                    if plugin in self.pluginInstanceDict.keys():
+                        del self.pluginInstanceDict[plugin]
+                    if plugin in sys.modules:
+                        if hasattr(sys.modules[plugin], targetMethod):
+                            if sys.version < '3.0':
+                                reload(sys.modules[plugin])
+                            else:
+                                import imp
+                                imp.reload(sys.modules[plugin])                            
+                    else:
+                        __import__(plugin)
                     if hasattr(sys.modules[plugin], targetMethod):
-                        if sys.version < '3.0':
-                            reload(sys.modules[plugin])
-                        else:
-                            import imp
-                            imp.reload(sys.modules[plugin])                            
-                else:
-                    __import__(plugin)
-                if hasattr(sys.modules[plugin], targetMethod):
-                    self.pluginInstanceDict[plugin] = \
-                            sys.modules[plugin].getStackPluginInstance(self)
-                    self.pluginList.append(plugin)
-            except:
-                if DEBUG:
-                    print("Problem importing module %s" % plugin)
-                    raise
+                        self.pluginInstanceDict[plugin] = \
+                                sys.modules[plugin].getStackPluginInstance(self)
+                        self.pluginList.append(plugin)
+                except:
+                    if DEBUG:
+                        print("Problem importing module %s" % plugin)
+                        raise
         return len(self.pluginList)
 
     def setStack(self, stack, mcaindex=2, fileindex=None):

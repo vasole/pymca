@@ -39,44 +39,64 @@ DEBUG = 0
 
 class Plot1DBase:
     def __init__(self):
+        self.__pluginDirList = []
         self.pluginList = []
         self.pluginInstanceDict = {}
         self.getPlugins()
+
+    def setPluginDirectoryList(self, dirlist):
+        for directory in dirlist:
+            if not os.path.exists(directory):
+                raise IOError("Directory:\n%s\ndoes not exist." % directory)                
+
+        self.__pluginDirList = dirlist
+
+    def getPluginDirectoryList(self):
+        return self.__pluginDirList
 
     def getPlugins(self):
         """
         Import or reloads all the available plugins.
         It returns the number of plugins loaded.
         """
-        if PLUGINS_DIR is None:
-            return 0
-        directory = PLUGINS_DIR
-        if not os.path.exists(directory):
-            raise IOError("Directory:\n%s\ndoes not exist." % directory)
-
+        if self.__pluginDirList == []:
+           self.__pluginDirList = [PLUGINS_DIR] 
         self.pluginList = []
-        fileList = glob.glob(os.path.join(directory, "*.py"))
-        targetMethod = 'getPlugin1DInstance'
-        for module in fileList:
-            try:
-                pluginName = os.path.basename(module)[:-3]
-                plugin = "PyMcaPlugins." + pluginName
-                if pluginName in self.pluginList:
-                    idx = self.pluginList.index(pluginName)
-                    del self.pluginList[idx]
-                if plugin in self.pluginInstanceDict.keys():
-                    del self.pluginInstanceDict[plugin]
-                if plugin in sys.modules:
+        for directory in self.__pluginDirList:
+            if directory is None:
+                continue
+            if not os.path.exists(directory):
+                raise IOError("Directory:\n%s\ndoes not exist." % directory)
+
+            fileList = glob.glob(os.path.join(directory, "*.py"))
+            targetMethod = 'getPlugin1DInstance'
+            for module in fileList:
+                try:
+                    pluginName = os.path.basename(module)[:-3]
+                    if directory == PLUGINS_DIR:
+                        plugin = "PyMcaPlugins." + pluginName
+                    else:
+                        plugin = pluginName
+                        if directory not in sys.path:
+                            sys.path.insert(0, directory)
+                    if pluginName in self.pluginList:
+                        idx = self.pluginList.index(pluginName)
+                        del self.pluginList[idx]
+                    if plugin in self.pluginInstanceDict.keys():
+                        del self.pluginInstanceDict[plugin]
+                    if plugin in sys.modules:
+                        if hasattr(sys.modules[plugin], targetMethod):
+                            reload(sys.modules[plugin])
+                    else:
+                        __import__(plugin)
                     if hasattr(sys.modules[plugin], targetMethod):
-                        reload(sys.modules[plugin])
-                else:
-                    __import__(plugin)
-                if hasattr(sys.modules[plugin], targetMethod):
-                    self.pluginInstanceDict[plugin] = sys.modules[plugin].getPlugin1DInstance(self)
-                    self.pluginList.append(plugin)
-            except:
-                if DEBUG:
-                    print("Problem importing module %s" % plugin)
+                        self.pluginInstanceDict[plugin] = \
+                                sys.modules[plugin].getPlugin1DInstance(self)
+                        self.pluginList.append(plugin)
+                except:
+                    if DEBUG:
+                        print("Problem importing module %s" % plugin)
+                        raise
         return len(self.pluginList)
     
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):

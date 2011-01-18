@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,6 +26,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
+import os
 import numpy
 import weakref
 
@@ -422,6 +423,9 @@ class QStackWidget(StackBase.StackBase,
         text = QString("Reload Plugins")
         menu.addAction(text)
         actionList.append(text)
+        text = QString("Set User Plugin Directory")
+        menu.addAction(text)
+        actionList.append(text)
         global DEBUG
         if DEBUG:
             text = QString("Toggle DEBUG mode OFF")
@@ -430,7 +434,7 @@ class QStackWidget(StackBase.StackBase,
         menu.addAction(text)
         actionList.append(text)
         menu.addSeparator()
-        callableKeys = ["Dummy0", "Dummy1"]
+        callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
         for m in self.pluginList:
             if m == "PyMcaPlugins.StackPluginBase":
                 continue
@@ -463,6 +467,15 @@ class QStackWidget(StackBase.StackBase,
                 msg.exec_()
             return
         if idx == 1:
+            dirName = str(qt.QFileDialog.getExistingDirectory(self,
+                                "Enter user plugins directory",
+                                os.getcwd()))
+            if len(dirName):
+                pluginsDir = self.getPluginDirectoryList()
+                pluginsDirList = [pluginsDir[0], dirName]
+                self.setPluginDirectoryList(pluginsDirList)
+            return
+        if idx == 2:
             if DEBUG:
                 DEBUG = 0
             else:
