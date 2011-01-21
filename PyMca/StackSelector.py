@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -175,7 +175,9 @@ class StackSelector(object):
                 #prevent any modification
                 fileindex = 0
             if filepattern is not None:
-                if len(begin) != 1:
+                #this dows not seem to put any trouble
+                #(because of no redimensioning attempt)
+                if False and (len(begin) != 1):
                     raise IOError("EDF stack redimensioning not supported yet")
             stack = QStack(imagestack=imagestack)
         elif line.startswith('Spectral'):
