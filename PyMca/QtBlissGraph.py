@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -508,6 +508,8 @@ class QtBlissGraph(qwt.QwtPlot):
         #self.plotimage()
         self.replot()
 
+        self.selectionPicker = None
+
         #if QTVERSION < '4.0.0':
         if QWTVERSION4:
             self.connect(self,
@@ -541,7 +543,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
                 self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
                 self.picker.setEnabled(1)
-            elif 1:
+            else:
                 if sys.platform == "win32":
                     #self.canvas().setPaintAttribute(Qwt.QwtPlotCanvas.PaintPacked,
                     #                                False)
@@ -578,53 +580,158 @@ class QtBlissGraph(qwt.QwtPlot):
                     self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
                     self.crossPicker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
                     self.crossPicker.setEnabled(1)
-            else:
-                if 0:
-                    self.picker = Qwt.QwtPicker(self.canvas())
-                    self.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
-                    self.connect(self.picker,
-                                 qt.SIGNAL('selected(const selectedPoints &)'),
-                                 self.testmethod)
-                    #click selection
-                    self.picker.setSelectionFlags(Qwt.QwtPicker.PointSelection| \
-                                                  Qwt.QwtPicker.ClickSelection)
-                    self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
-                else:
-                    self.picker = Qwt.QwtPlotPicker(self.canvas())
-                    self.picker.setAxis(Qwt.QwtPlot.xBottom,
-                                    Qwt.QwtPlot.yLeft)
-                    #,
-                    if 0:
-                        self.picker.setSelectionFlags(Qwt.QwtPicker.PointSelection|
-                                                      Qwt.QwtPicker.DragSelection)
-                    else:
-                        self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
-                                                      Qwt.QwtPicker.RectSelection)
-                    #this shows x and y coordenates
-                    self.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
-                    #,
-                    #                    self.canvas())
-                    self.picker.setRubberBand(Qwt.QwtPicker.RectRubberBand)
-                    self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
-                    self.picker.setEnabled(1)
-                    #only these two signals work
-                    self.connect(
-                                self.picker,
-                                qt.SIGNAL('appended(const QPoint &)'),
-                                self.pickerAppendedSlot)
-                    self.connect(
-                                self.picker,
-                                qt.SIGNAL('moved(const QPoint &)'),
-                                self.pickerMovedSlot)
-                    
+
+    def setPickerSelectionModeOn(self, mode, max_points=0):
+        if self._zooming:
+            raise ValueError("Cannot enter selection mode while zooming")
+        if self.__markermode:
+            raise ValueError("Cannot enter selection mode being in marker mode")
+        
+        #initialize the picker if needed
+        if self.selectionPicker is None:
+            self.selectionPicker = Qwt.QwtPicker(self.canvas())        
+            self.selectionPicker.setRubberBandPen(qt.QPen(qt.Qt.green))
+            #be ready for the signals
+            self.connect(self.selectionPicker,
+                         qt.SIGNAL('selected(const QwtPolygon &)'),
+                         self.pickerSelectedSlot)
+            self.connect(self.selectionPicker,
+                         qt.SIGNAL('changed(const QwtPolygon &)'),
+                         self.pickerChangedSlot)
+            self.connect(self.selectionPicker,
+                         qt.SIGNAL('appended(const QPoint &)'),
+                         self.pickerAppendedSlot)
+            self.connect(self.selectionPicker,
+                         qt.SIGNAL('moved(const QPoint &)'),
+                         self.pickerMovedSlot)
+
+        if mode.upper() == "POINT":
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.CrossRubberBand)
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.PointSelection)
+        elif mode.upper() in ["VLINE", "VERTICAL"]:
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.VLineRubberBand)
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.PointSelection)
+        elif mode.upper() in ["HLINE", "HORIZONTAL"]:
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.HLineRubberBand)
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.PointSelection)
+        elif mode.upper() == "LINE":
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.PolygonRubberBand)
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.PolygonSelection)
+        elif mode.upper() == "RECTANGLE":
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.RectRubberBand)                    
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.RectSelection)
+        elif mode.upper() == "POLYGON":
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.PolygonRubberBand) 
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.PolygonSelection)
+        elif mode.upper() == "ELLIPSE":
+            raise NotImplemented("Ellipse selection is not implemented yet")
+            self.selectionPicker.setRubberBand(Qwt.QwtPicker.EllipseRubberBand) 
+            self.selectionPicker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.selectionPicker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                              Qwt.QwtPicker.RectSelection)
+        else:
+            raise ValueError("Unknown selection mode %s" % mode)
+        self._selectionMode = mode
+        self._maximumSelectionPoints = max_points
+        self.picker.setEnabled(0)
+        self.selectionPicker.setEnabled(1)
+
+    def setPickerSelectionModeOff(self):
+        self.selectionPicker.setEnabled(0)
+        self.picker.setEnabled(1)
+
+    def pickerSelectedSlot(self, *var):
+        if DEBUG:
+            print("Polygon Selected")
+            print(var)
+            print("Forcing = %d" % self.forced)
+        polygon = var[0]
+        npoints = polygon.size()
+        xList = []
+        yList = []
+        for i in range(npoints):
+            point = polygon.point(i)
+            xpixel = point.x()
+            ypixel = point.y()
+            x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
+            y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
+            if i == 0:
+                xList = [x]
+                yList = [y]
+                xpixelList = [xpixel]
+                ypixelList = [ypixel]
+            elif (xpixel != oldx) and (ypixel != oldy):
+                xList.append(y)
+                yList.append(y)
+                xpixelList.append(xpixel)
+                ypixelList.append(ypixel)
+            oldx = xpixel
+            oldy = ypixel
+        ddict= {'event':'PolygonSelected',
+                'mode':self._selectionMode.upper(),
+                'maxpoints':self._maximumSelectionPoints,
+                'x':xList,
+                'y':yList,
+                'xpixel':xpixelList,
+                'ypixel':ypixelList,
+                'xcurve':None,
+                'ycurve':None}
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(ddict,))
+        else:
+            self.emit(qt.SIGNAL("QtBlissGraphSignal"),(ddict))
+
+    def pickerChangedSlot(self, *var):
+        if DEBUG:
+            print("pickerChangedSlot")
+            print("Polygon Changed")
+            print("Number of points = %d", var[0].size())
+                
     def pickerMovedSlot(self, *var):
-        print("Moved")
-        print("point",var[0].x(),var[0].y())
+        if DEBUG:
+            print("pickerMovedSlot")
+            print("point",var[0].x(),var[0].y())
 
     def pickerAppendedSlot(self, *var):
-        print("Appended")
-        print("point",var[0].x(),var[0].y())
-
+        polygon = self.selectionPicker.selection()
+        npoints = polygon.size()
+        if DEBUG:
+            print("pickerAppendedSlot")
+            print("point",var[0].x(),var[0].y())
+            print("Currently npoints = %d" % npoints)
+        self.forced = 0
+        if self._selectionMode.upper() == "LINE":
+            if npoints > 1:            
+                #check that I already have two distinct points
+                for i in range(polygon.size()):
+                    point = polygon.point(i)
+                    x = point.x()
+                    y = point.y()
+                    if i > 0:
+                        if x != oldx:
+                            if y != oldy:
+                                #I have two points
+                                self.forced = 1
+                                break
+                    else:
+                        oldx = x
+                        oldy = y
+                if self.forced:
+                    result = self.selectionPicker.end(True)
+                    if not result:
+                        print("Error forcing result!")
 
     def setx1timescale(self,on=0):
         if on:
@@ -3343,6 +3450,14 @@ def main(args):
                 #self.removeCurve
                 demo.graph.delcurve(ddict['legend'])
                 demo.graph.replot()
+                demo.graph.disablemarkermode()
+                demo.graph.setPickerSelectionModeOn("LINE")
+                demo.graph.setTitle("Line drawing mode is On")
+            if ddict['event'] == "PolygonSelected":
+                demo.graph.setTitle("Marker mode is On")
+                demo.graph.enablemarkermode()
+                demo.graph.setPickerSelectionModeOff()
+                print(ddict)
         demo.show()
         qt.QObject.connect(demo.graph,qt.SIGNAL('QtBlissGraphSignal'), myslot)
         sys.exit(app.exec_())
