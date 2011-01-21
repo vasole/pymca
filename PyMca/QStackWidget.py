@@ -226,8 +226,11 @@ class QStackWidget(StackBase.StackBase,
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.setImageData(self._ROIImageList[0]-\
                                         self._ROIImageList[-1])
+            self.roiWidget.graphWidget.graph.setTitle(self._ROIImageNames[0]+\
+                                                      " Net")
         else:
             self.roiWidget.setImageData(self._ROIImageList[0])
+            self.roiWidget.graphWidget.graph.setTitle(self._ROIImageNames[0])
 
     def _stackSaveToolButtonSignal(self):
         self._stackSaveMenu.exec_(self.cursor().pos())
@@ -623,9 +626,11 @@ class QStackWidget(StackBase.StackBase,
     def showROIImageList(self, imageList, image_names=None):
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.setImageData(imageList[0]-imageList[-1])
+            self.roiWidget.graphWidget.graph.setTitle(image_names[0]+\
+                                                      " Net")
         else:
             self.roiWidget.setImageData(imageList[0])
-        self.roiWidget.graphWidget.graph.setTitle(image_names[0])
+            self.roiWidget.graphWidget.graph.setTitle(image_names[0])
         self._ROIImageList = imageList
         self._ROIImageNames = image_names
         self._stackROIImageListUpdated()
