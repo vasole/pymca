@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -282,6 +282,72 @@ average16=[
 "    .           ",
 "   .            ",
 "  .             ",
+"                "
+]
+
+horizontal=[
+"16 16 2 1",
+". c blue",
+"  c None",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+" .............. ",
+" .............. ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                "
+]
+
+vertical=[
+"16 16 2 1",
+". c blue",
+"  c None",
+"                ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"       ..       ",
+"                "
+]
+
+diagonal =[
+"16 16 2 1",
+". c blue",
+"  c None",
+"                ",
+" ..             ",
+"  ..            ",
+"   ..           ",
+"    ..          ",
+"     ..         ",
+"      ..        ",
+"       ..       ",
+"        ..      ",
+"         ..     ",
+"          ..    ",
+"           ..   ",
+"            ..  ",
+"             .. ",
+"              . ",
 "                "
 ]
 
@@ -3373,7 +3439,10 @@ IconDict= {
     "remove":remove,
     "additionalselect":additionalselect,
     "crop":crop,
-    "plugin":plugin
+    "plugin":plugin,
+    "horizontal":horizontal,
+    "vertical":vertical,
+    "diagonal":diagonal
 }
 
 def showIcons():

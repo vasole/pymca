@@ -589,8 +589,10 @@ class QtBlissGraph(qwt.QwtPlot):
         
         #initialize the picker if needed
         if self.selectionPicker is None:
-            self.selectionPicker = Qwt.QwtPicker(self.canvas())        
-            self.selectionPicker.setRubberBandPen(qt.QPen(qt.Qt.green))
+            self.selectionPicker = Qwt.QwtPicker(self.canvas())
+            pen = qt.QPen(qt.Qt.green)
+            pen.setWidth(2)
+            self.selectionPicker.setRubberBandPen(pen)
             #be ready for the signals
             self.connect(self.selectionPicker,
                          qt.SIGNAL('selected(const QwtPolygon &)'),
@@ -649,7 +651,8 @@ class QtBlissGraph(qwt.QwtPlot):
         self.selectionPicker.setEnabled(1)
 
     def setPickerSelectionModeOff(self):
-        self.selectionPicker.setEnabled(0)
+        if self.selectionPicker is not None:
+            self.selectionPicker.setEnabled(0)
         self.picker.setEnabled(1)
 
     def pickerSelectedSlot(self, *var):
@@ -689,9 +692,9 @@ class QtBlissGraph(qwt.QwtPlot):
                 'xcurve':None,
                 'ycurve':None}
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),(ddict,))
+            self.emit(qt.PYSIGNAL("PolygonSignal"),(ddict,))
         else:
-            self.emit(qt.SIGNAL("QtBlissGraphSignal"),(ddict))
+            self.emit(qt.SIGNAL("PolygonSignal"),(ddict))
 
     def pickerChangedSlot(self, *var):
         if DEBUG:
@@ -1362,6 +1365,8 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.zoomState2 = (xmin, xmax, ymin, ymax)
                 self.setAutoReplot(autoreplot)
                 self.replot()                
+                #zooming is over
+                self._zooming = 0
                 ddict = {}
                 ddict['event']    = "MouseZoom"
                 ddict['xmin']        = min(xmin,xmax)
@@ -3458,8 +3463,11 @@ def main(args):
                 demo.graph.enablemarkermode()
                 demo.graph.setPickerSelectionModeOff()
                 print(ddict)
+        #rescaler = Qwt.QwtPlotRescaler(demo.graph.canvas())
+        #rescaler.setEnabled(True)
         demo.show()
         qt.QObject.connect(demo.graph,qt.SIGNAL('QtBlissGraphSignal'), myslot)
+        qt.QObject.connect(demo.graph,qt.SIGNAL('PolygonSignal'), myslot)
         sys.exit(app.exec_())
 
 

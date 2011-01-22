@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -39,19 +39,31 @@ DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
     def __init__(self, parent = None, selection=False, colormap=False,
-                 imageicons=False, standalonesave=True, standalonezoom=True):
+                 imageicons=False, standalonesave=True, standalonezoom=True,
+                 pickerselection=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
+        if QTVERSION < '4.0.0':
+            pickerselection = False
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
-                           standalonezoom=standalonezoom)
+                           standalonezoom=standalonezoom,
+                           pickerselection=pickerselection)
         self.graph = QtBlissGraph.QtBlissGraph(self)
         self.graph.xlabel("Column")
         self.graph.ylabel("Row")
         self.graph.yAutoScale = 1
         self.graph.xAutoScale = 1
+        if pickerselection:
+            if len(self._pickerSelectionButtons):
+                self.connect(self.graph,
+                         qt.SIGNAL('PolygonSignal'),
+                         self._graphPolygonSignalReceived)
+
+
+        
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
@@ -64,7 +76,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _buildToolBar(self, selection=False, colormap=False,
                       imageicons=False, standalonesave=True,
-                      standalonezoom=True):
+                      standalonezoom=True,pickerselection=False):
         if QTVERSION < '4.0.0':
             if qt.qVersion() < '3.0':
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
@@ -98,6 +110,9 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.brushSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))
             self.brushIcon          = qt.QIcon(qt.QPixmap(IconDict["brush"]))
             self.additionalIcon     = qt.QIcon(qt.QPixmap(IconDict["additionalselect"]))
+            self.hLineIcon     = qt.QIcon(qt.QPixmap(IconDict["horizontal"]))
+            self.vLineIcon     = qt.QIcon(qt.QPixmap(IconDict["vertical"]))
+            self.lineIcon     = qt.QIcon(qt.QPixmap(IconDict["diagonal"]))
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
@@ -205,6 +220,39 @@ class RGBCorrelatorGraph(qt.QWidget):
         else:
             self.imageToolButton = None
 
+        #picker selection
+        self._pickerSelectionButtons = []
+        if pickerselection:
+            self._profileSelection = True
+            self._polygonSelection = False
+            self._pickerSelectionButtons = []
+            if self._profileSelection:
+                tb = self._addToolButton(self.hLineIcon,
+                                     self._hLineProfileClicked,
+                                     'Horizontal Profile Selection',
+                                     toggle=True,
+                                     state=False)
+                self.hLineProfileButton = tb
+                self._pickerSelectionButtons.append(tb)
+    
+                tb = self._addToolButton(self.vLineIcon,
+                                     self._vLineProfileClicked,
+                                     'Vertical Profile Selection',
+                                     toggle=True,
+                                     state=False)
+                self.vLineProfileButton = tb
+                self._pickerSelectionButtons.append(tb)
+
+                tb = self._addToolButton(self.lineIcon,
+                                     self._lineProfileClicked,
+                                     'Line Profile Selection',
+                                     toggle=True,
+                                     state=False)
+                self.lineProfileButton = tb
+                self._pickerSelectionButtons.append(tb)
+            if self._polygonSelection:
+                print("Polygon selection not implemented yet")
+
         self.infoWidget = qt.QWidget(self.toolBar)
         self.infoWidget.mainLayout = qt.QHBoxLayout(self.infoWidget)
         self.infoWidget.mainLayout.setMargin(0)
@@ -241,6 +289,8 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.rectSelectionToolButton.hide()
         self.brushSelectionToolButton.hide()
         self.brushToolButton.hide()
+        if QTVERSION > '4.0.0':
+            self.additionalSelectionToolButton.hide()
 
     def showImageIcons(self):
         if self.imageToolButton is None:return
@@ -249,6 +299,59 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.rectSelectionToolButton.show()
         self.brushSelectionToolButton.show()
         self.brushToolButton.show()
+        if QTVERSION > '4.0.0':
+            self.additionalSelectionToolButton.show()
+
+    def _hLineProfileClicked(self):
+        for button in self._pickerSelectionButtons:
+            if button != self.hLineProfileButton:
+                button.setChecked(False)
+
+        if self.hLineProfileButton.isChecked():
+            self._setPickerSelectionMode("HORIZONTAL")
+        else:
+            self._setPickerSelectionMode(None)
+
+    def _vLineProfileClicked(self):
+        for button in self._pickerSelectionButtons:
+            if button != self.vLineProfileButton:
+                button.setChecked(False)
+        if self.vLineProfileButton.isChecked():
+            self._setPickerSelectionMode("VERTICAL")
+        else:
+            self._setPickerSelectionMode(None)
+
+    def _lineProfileClicked(self):
+        for button in self._pickerSelectionButtons:
+            if button != self.lineProfileButton:
+                button.setChecked(False)
+        if self.lineProfileButton.isChecked():
+            self._setPickerSelectionMode("LINE")
+        else:
+            self._setPickerSelectionMode(None)
+
+    def _setPickerSelectionMode(self, mode=None):
+        if mode is None:
+            self.graph.setPickerSelectionModeOff()
+            self.graph.enableZoom(True)
+        else:
+            try:
+                self.graph.enableZoom(False)
+                self.graph.setPickerSelectionModeOn(mode)
+            except:
+                self.graph.enableZoom(True)
+                qt.QMessageBox.critical(self, "Cannot set picker mode %s" % mode,
+                                        "%s" % sys.exc_info()[1])
+                if DEBUG:
+                    raise
+
+    def _graphPolygonSignalReceived(self, ddict):
+        if DEBUG:
+            print("PolygonSignal Received")
+            for key in ddict.keys():
+                print(key, ddict[key])
+        self.emit(qt.SIGNAL('PolygonSignal'), ddict)
+
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
         tb      = qt.QToolButton(self.toolBar)            
