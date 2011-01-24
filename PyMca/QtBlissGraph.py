@@ -655,12 +655,11 @@ class QtBlissGraph(qwt.QwtPlot):
             self.selectionPicker.setEnabled(0)
         self.picker.setEnabled(1)
 
-    def pickerSelectedSlot(self, *var):
+    def _emitSelectionPickerSignal(self, event, polygon=None):
         if DEBUG:
-            print("Polygon Selected")
-            print(var)
-            print("Forcing = %d" % self.forced)
-        polygon = var[0]
+            print("_emitSelectionPickerSignal %s" % event)
+        if polygon is None:
+            polygon = self.selectionPicker.selection()
         npoints = polygon.size()
         xList = []
         yList = []
@@ -676,13 +675,13 @@ class QtBlissGraph(qwt.QwtPlot):
                 xpixelList = [xpixel]
                 ypixelList = [ypixel]
             elif (xpixel != oldx) and (ypixel != oldy):
-                xList.append(y)
+                xList.append(x)
                 yList.append(y)
                 xpixelList.append(xpixel)
                 ypixelList.append(ypixel)
             oldx = xpixel
             oldy = ypixel
-        ddict= {'event':'PolygonSelected',
+        ddict= {'event':event,
                 'mode':self._selectionMode.upper(),
                 'maxpoints':self._maximumSelectionPoints,
                 'x':xList,
@@ -695,6 +694,15 @@ class QtBlissGraph(qwt.QwtPlot):
             self.emit(qt.PYSIGNAL("PolygonSignal"),(ddict,))
         else:
             self.emit(qt.SIGNAL("PolygonSignal"),(ddict))
+            
+    def pickerSelectedSlot(self, *var):
+        if DEBUG:
+            print("Polygon Selected")
+            print(var)
+            print("Forcing = %d" % self.forced)
+        self._emitSelectionPickerSignal("PolygonSelected",
+                                        polygon=var[0])
+        
 
     def pickerChangedSlot(self, *var):
         if DEBUG:
@@ -706,6 +714,7 @@ class QtBlissGraph(qwt.QwtPlot):
         if DEBUG:
             print("pickerMovedSlot")
             print("point",var[0].x(),var[0].y())
+        self._emitSelectionPickerSignal("PolygonMoved")
 
     def pickerAppendedSlot(self, *var):
         polygon = self.selectionPicker.selection()
@@ -735,6 +744,8 @@ class QtBlissGraph(qwt.QwtPlot):
                     result = self.selectionPicker.end(True)
                     if not result:
                         print("Error forcing result!")
+                    return
+        self._emitSelectionPickerSignal("PolygonAppended")
 
     def setx1timescale(self,on=0):
         if on:
@@ -1282,6 +1293,7 @@ class QtBlissGraph(qwt.QwtPlot):
             etime = time.time() - self.__timer
             self.__timer = -1
             if (etime < 0.2) and ((self.xpos - e.pos().x()) == 0) and ((self.xpos - e.pos().x()) == 0):
+                self._zooming = 0
                 xpixel = e.pos().x()
                 ypixel = e.pos().y()
                 x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
@@ -1329,6 +1341,7 @@ class QtBlissGraph(qwt.QwtPlot):
                     if ymax > graphYMax:
                         ymax = graphYMax
                 if xmin == xmax or ymin == ymax:
+                    self._zooming = 0
                     return
                 if self.__keepimageratio:
                     ysize = abs(ymin-ymax)

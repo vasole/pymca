@@ -40,29 +40,27 @@ DEBUG = 0
 class RGBCorrelatorGraph(qt.QWidget):
     def __init__(self, parent = None, selection=False, colormap=False,
                  imageicons=False, standalonesave=True, standalonezoom=True,
-                 pickerselection=False):
+                 profileselection=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         if QTVERSION < '4.0.0':
-            pickerselection = False
+            profileselection = False
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
                            standalonezoom=standalonezoom,
-                           pickerselection=pickerselection)
+                           profileselection=profileselection)
         self.graph = QtBlissGraph.QtBlissGraph(self)
         self.graph.xlabel("Column")
         self.graph.ylabel("Row")
         self.graph.yAutoScale = 1
         self.graph.xAutoScale = 1
-        if pickerselection:
+        if profileselection:
             if len(self._pickerSelectionButtons):
                 self.connect(self.graph,
                          qt.SIGNAL('PolygonSignal'),
                          self._graphPolygonSignalReceived)
-
-
         
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
@@ -76,7 +74,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _buildToolBar(self, selection=False, colormap=False,
                       imageicons=False, standalonesave=True,
-                      standalonezoom=True,pickerselection=False):
+                      standalonezoom=True,profileselection=False):
         if QTVERSION < '4.0.0':
             if qt.qVersion() < '3.0':
                 self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
@@ -222,7 +220,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         #picker selection
         self._pickerSelectionButtons = []
-        if pickerselection:
+        if profileselection:
             self._profileSelection = True
             self._polygonSelection = False
             self._pickerSelectionButtons = []
@@ -250,8 +248,28 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      state=False)
                 self.lineProfileButton = tb
                 self._pickerSelectionButtons.append(tb)
+
+                self._pickerSelectionWidthLabel = qt.QLabel(self.toolBar)
+                self._pickerSelectionWidthLabel.setText("W:")
+                self.toolBar.layout().addWidget(self._pickerSelectionWidthLabel)
+                self._pickerSelectionWidthValue = qt.QSpinBox(self.toolBar)
+                self._pickerSelectionWidthValue.setMinimum(1)
+                self._pickerSelectionWidthValue.setMaximum(100)
+                self.toolBar.layout().addWidget(self._pickerSelectionWidthValue)
+                #tb = self._addToolButton(None,
+                #                     self._lineProfileClicked,
+                #                     'Line Profile Selection',
+                #                     toggle=True,
+                #                     state=False)
+                #tb.setText = "W:"
+                #self.lineWidthProfileButton = tb
+                #self._pickerSelectionButtons.append(tb)
             if self._polygonSelection:
                 print("Polygon selection not implemented yet")
+        #hide profile selection buttons
+        if imageicons:
+            for button in self._pickerSelectionButtons:
+                button.hide()
 
         self.infoWidget = qt.QWidget(self.toolBar)
         self.infoWidget.mainLayout = qt.QHBoxLayout(self.infoWidget)
@@ -330,6 +348,24 @@ class RGBCorrelatorGraph(qt.QWidget):
         else:
             self._setPickerSelectionMode(None)
 
+    def hideProfileSelectionIcons(self):
+        if not len(self._pickerSelectionButtons):
+            return
+        for button in self._pickerSelectionButtons:
+            button.setChecked(False)
+            button.hide()
+        self._pickerSelectionWidthLabel.hide()
+        self._pickerSelectionWidthValue.hide()
+        self.graph.setPickerSelectionModeOff()
+
+    def showProfileSelectionIcons(self):
+        if not len(self._pickerSelectionButtons):
+            return
+        for button in self._pickerSelectionButtons:
+            button.show()
+        self._pickerSelectionWidthLabel.show()
+        self._pickerSelectionWidthValue.show()
+
     def _setPickerSelectionMode(self, mode=None):
         if mode is None:
             self.graph.setPickerSelectionModeOff()
@@ -344,12 +380,19 @@ class RGBCorrelatorGraph(qt.QWidget):
                                         "%s" % sys.exc_info()[1])
                 if DEBUG:
                     raise
+        ddict = {}
+        if mode is None:
+            mode = "NONE"
+        ddict['event'] = "PolygonModeChanged"
+        ddict['mode'] = mode
+        self.emit(qt.SIGNAL('PolygonSignal'), ddict)
 
     def _graphPolygonSignalReceived(self, ddict):
         if DEBUG:
             print("PolygonSignal Received")
             for key in ddict.keys():
                 print(key, ddict[key])
+        ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
         self.emit(qt.SIGNAL('PolygonSignal'), ddict)
 
 
@@ -365,7 +408,8 @@ class RGBCorrelatorGraph(qt.QWidget):
                         if state:
                             tb.setState(qt.QButton.On)
         else:
-            tb.setIcon(icon)
+            if icon is not None:
+                tb.setIcon(icon)
             tb.setToolTip(tip)
             if toggle is not None:
                 if toggle:

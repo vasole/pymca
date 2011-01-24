@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -95,7 +95,7 @@ class MyPicker(Qwt.QwtPlotPicker):
     
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
-                 imageicons=True, standalonesave=True, usetab=False):
+                 imageicons=True, standalonesave=True, usetab=False, profileselection=False):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -127,7 +127,8 @@ class MaskImageWidget(qt.QWidget):
         self.__useTab = usetab
         self.mainTab = None
 
-        self._build(standalonesave)
+        self._build(standalonesave, profileselection=profileselection)
+        self._profileSelectionWindow = None
 
         self.__brushMenu  = None
         self.__brushMode  = False
@@ -142,7 +143,7 @@ class MaskImageWidget(qt.QWidget):
         self._buildConnections()
         self._matplotlibSaveImage = None
 
-    def _build(self, standalonesave):
+    def _build(self, standalonesave, profileselection=False):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
@@ -157,7 +158,8 @@ class MaskImageWidget(qt.QWidget):
                                                    colormap=True,
                                                    imageicons=self.__imageIconsFlag,
                                                    standalonesave=False,
-                                                   standalonezoom=False)
+                                                   standalonezoom=False,
+                                                   profileselection=profileselection)
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
             if QTVERSION < '4.0.0':
@@ -174,7 +176,13 @@ class MaskImageWidget(qt.QWidget):
                                                    colormap=True,
                                                    imageicons=self.__imageIconsFlag,
                                                    standalonesave=False,
-                                                   standalonezoom=False)
+                                                   standalonezoom=False,
+                                                   profileselection=profileselection)
+        if profileselection:
+            self.connect(self.graphWidget,
+                         qt.SIGNAL('PolygonSignal'), 
+                         self._polygonSignalSlot)
+
         if standalonesave:
             self.connect(self.graphWidget.saveToolButton,
                          qt.SIGNAL("clicked()"), 
@@ -274,6 +282,116 @@ class MaskImageWidget(qt.QWidget):
             self.connect(self.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
+
+    def _polygonSignalSlot(self, ddict):
+        if DEBUG:
+            print("_polygonSignalSLot, event = %s" % ddict['event'])
+                
+        #ddict= {'event':event,
+        #        'mode':self._selectionMode.upper(),
+        #       'maxpoints':self._maximumSelectionPoints,
+        #        'x':xList,
+        #        'y':yList,
+        #        'xpixel':xpixelList,
+        #        'ypixel':ypixelList,
+        #        'xcurve':None,
+        #        'ycurve':None}
+        if ddict['event'] in [None, "NONE"]:
+            #Nothing to be made
+            return
+
+        #
+        if self._profileSelectionWindow is None:
+            from PyMca import ScanWindow
+            from PyMca import SpecfitFuns
+            self._profileSelectionWindow = ScanWindow.ScanWindow()
+            self._interpolate =  SpecfitFuns.interpol
+        if self.__imageData is None:
+            return
+        self._profileSelectionWindow.show()
+        #self._profileSelectionWindow.raise_()
+        if ddict['event'] == 'PolygonModeChanged':
+            return
+        shape = self.__imageData.shape
+        width = ddict['pixelwidth'] - 1
+        if ddict['mode'].upper() in ["HLINE", "HORIZONTAL"]:
+            if width < 1:
+                row = int(ddict['y'][0])
+                if row < 0:
+                    row = 0
+                if row >= shape[0]:
+                    row = shape[0] - 1
+                ydata  = self.__imageData[row, :]
+                legend = "Row = %d"  % row
+            else:
+                row0 = int(ddict['y'][0]) - 0.5 * width
+                if row0 < 0:
+                    row0 = 0
+                    row1 = row0 + width
+                else:
+                    row1 = int(ddict['y'][0]) + 0.5 * width
+                if row1 >= shape[0]:
+                    row1 = shape[0] - 1
+                    row0 = max(0, row1 - width)
+                ydata = self.__imageData[row0:int(row1+1), :].sum(axis=0)
+                legend = "Row = %d to %d"  % (row0, row1)
+            xdata  = numpy.arange(shape[1]).astype(numpy.float)
+        elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
+            if width < 1:
+                column = int(ddict['x'][0])
+                if column < 0:
+                    column = 0
+                if column >= shape[1]:
+                    column = shape[1] - 1
+                ydata  = self.__imageData[:, column]
+                legend = "Column = %d"  % column
+            else:
+                col0 = int(ddict['x'][0]) - 0.5 * width
+                if col0 < 0:
+                    col0 = 0
+                    col1 = col0 + width
+                else:
+                    col1 = int(ddict['x'][0]) + 0.5 * width
+                if col1 >= shape[1]:
+                    col1 = shape[1] - 1
+                    col0 = max(0, col1 - width)
+                ydata = self.__imageData[:, col0:int(col1+1)].sum(axis=1)
+                legend = "Col = %d to %d"  % (col0, col1)
+            xdata  = numpy.arange(shape[0]).astype(numpy.float)
+        elif ddict['mode'].upper() in ["LINE"]:
+            if width >= 1:
+                print("Not implememted")
+            if len(ddict['x']) == 1:
+                return
+            #get the interpolation points
+            col0, col1 = [int(x) for x in ddict['x']]
+            row0, row1 = [int(x) for x in ddict['y']]
+            deltaCol = abs(col0 - col1)
+            deltaRow = abs(row0 - row1)
+            if deltaCol > deltaRow:
+                npoints = deltaCol+1
+            else:    
+                npoints = deltaRow+1
+            x = numpy.zeros((npoints, 2), numpy.float)
+            x[:, 0] = numpy.linspace(row0, row1, npoints)
+            x[:, 1] = numpy.linspace(col0, col1, npoints)
+            legend = "From (%.3f, %.3f) to (%.3f, %.3f)" % (col0, row0, col1, row1)
+                
+            #the coordinates of the reference points
+            x0 = numpy.arange(float(shape[0]))
+            y0 = numpy.arange(float(shape[1]))
+            #perform the interpolation
+            ydata = self._interpolate((x0, y0), self.__imageData, x)
+            xdata = numpy.arange(float(npoints))
+        else:
+            if DEBUG:
+                print("Mode %s not supported yet" % ddict['mode'])
+            return
+        info = {}
+        info['xlabel'] = "Point"
+        info['ylabel'] = "Z"
+        self._profileSelectionWindow.addCurve(xdata, ydata, legend=legend, info=info,
+                                          replot=False, replace=True)
 
     def _hFlipIconSignal(self):
         if QWTVERSION4:
@@ -430,15 +548,18 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.graph.enableSelection(True)
             self.__brushMode  = False
             self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
-            self.graphWidget.graph.enableZoom(False)
             if QTVERSION < '4.0.0':
                 self.graphWidget.selectionToolButton.setState(qt.QButton.On)
             else:
+                self.graphWidget.hideProfileSelectionIcons()
                 self.graphWidget.selectionToolButton.setChecked(True)
+            self.graphWidget.graph.enableZoom(False)
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()
             
         else:
+            self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOff)
+            self.graphWidget.showProfileSelectionIcons()
             self.graphWidget.graph.enableZoom(True)
             if QTVERSION < '4.0.0':
                 self.graphWidget.selectionToolButton.setState(qt.QButton.Off)
@@ -1004,8 +1125,10 @@ def test():
                        qt.SIGNAL("lastWindowClosed()"),
                        app,
                        qt.SLOT('quit()'))
-
-    container = MaskImageWidget()
+    if QTVERSION < '4.0.0':
+        container = MaskImageWidget()
+    else:
+        container = MaskImageWidget(profileselection=True)
     if len(sys.argv) > 1:
         if sys.argv[1].endswith('edf'):
             import EdfFile
