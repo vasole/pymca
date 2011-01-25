@@ -480,7 +480,7 @@ class MaskImageWidget(qt.QWidget):
                             return
                     ydata += self._interpolate((x0, y0), self.__imageData, tmpMatrix)
                 xdata = numpy.arange(float(npoints))
-                legend = "y = %.3f x + %.3f ; width=%d" % (m, b, width+1)
+                legend = "y = %.3f (x-%.1f) + %.3f ; width=%d" % (m, col0, b, width+1)
         else:
             if DEBUG:
                 print("Mode %s not supported yet" % ddict['mode'])
