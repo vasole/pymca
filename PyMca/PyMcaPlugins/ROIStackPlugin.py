@@ -110,7 +110,8 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
                                                         selection=True,
                                                         colormap=True,
                                                         imageicons=True,
-                                                        standalonesave=True)
+                                                        standalonesave=True,
+                                                        profileselection=True)
             self.roiWindow.setSelectionMode(True)
             qt = StackROIWindow.qt
             qt.QObject.connect(self.roiWindow,
