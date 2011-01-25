@@ -100,6 +100,7 @@ class MaskImageWidget(qt.QWidget):
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
             self.setCaption("PyMca - Image Selection Tool")
+            profileselection = False
         else:
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle("PyMca - Image Selection Tool")
@@ -359,10 +360,12 @@ class MaskImageWidget(qt.QWidget):
                 legend = "Col = %d to %d"  % (col0, col1)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
         elif ddict['mode'].upper() in ["LINE"]:
-            if width >= 1:
-                print("Not implememted")
             if len(ddict['x']) == 1:
+                #only one point given
                 return
+            #the coordinates of the reference points
+            x0 = numpy.arange(float(shape[0]))
+            y0 = numpy.arange(float(shape[1]))
             #get the interpolation points
             col0, col1 = [int(x) for x in ddict['x']]
             row0, row1 = [int(x) for x in ddict['y']]
@@ -372,17 +375,112 @@ class MaskImageWidget(qt.QWidget):
                 npoints = deltaCol+1
             else:    
                 npoints = deltaRow+1
-            x = numpy.zeros((npoints, 2), numpy.float)
-            x[:, 0] = numpy.linspace(row0, row1, npoints)
-            x[:, 1] = numpy.linspace(col0, col1, npoints)
-            legend = "From (%.3f, %.3f) to (%.3f, %.3f)" % (col0, row0, col1, row1)
-                
-            #the coordinates of the reference points
-            x0 = numpy.arange(float(shape[0]))
-            y0 = numpy.arange(float(shape[1]))
-            #perform the interpolation
-            ydata = self._interpolate((x0, y0), self.__imageData, x)
-            xdata = numpy.arange(float(npoints))
+            if width < 1:
+                x = numpy.zeros((npoints, 2), numpy.float)
+                x[:, 0] = numpy.linspace(row0, row1, npoints)
+                x[:, 1] = numpy.linspace(col0, col1, npoints)
+                legend = "From (%.3f, %.3f) to (%.3f, %.3f)" % (col0, row0, col1, row1)
+                #perform the interpolation
+                ydata = self._interpolate((x0, y0), self.__imageData, x)
+                xdata = numpy.arange(float(npoints))
+            elif deltaCol == 0:
+                #vertical line
+                col0 = int(ddict['x'][0]) - 0.5 * width
+                if col0 < 0:
+                    col0 = 0
+                    col1 = col0 + width
+                else:
+                    col1 = int(ddict['x'][0]) + 0.5 * width
+                if col1 >= shape[1]:
+                    col1 = shape[1] - 1
+                    col0 = max(0, col1 - width)
+                ydata = self.__imageData[:, col0:int(col1+1)].sum(axis=1)
+                legend = "Col = %d to %d"  % (col0, col1)
+                npoints = max(ydata.shape)
+                xdata = numpy.arange(float(npoints))
+            elif deltaRow == 0:
+                #horizontal line
+                row0 = int(ddict['y'][0]) - 0.5 * width
+                if row0 < 0:
+                    row0 = 0
+                    row1 = row0 + width
+                else:
+                    row1 = int(ddict['y'][0]) + 0.5 * width
+                if row1 >= shape[0]:
+                    row1 = shape[0] - 1
+                    row0 = max(0, row1 - width)
+                ydata = self.__imageData[row0:int(row1+1), :].sum(axis=0)
+                legend = "Row = %d to %d"  % (row0, row1)
+                npoints = max(ydata.shape)
+                xdata = numpy.arange(float(npoints))
+            else:
+                #find m and b in the line y = mx + b
+                m = (row1 - row0) / float((col1 - col0))
+                b = row0 - m * col0
+                alpha = numpy.arctan(m)
+                npoints = deltaCol + 1
+                #imagine the following sequence
+                # - change origin to the first point
+                # - clock-wise rotation to bring the line on the x axis of a new system
+                # so that the points (col0, row0) and (col1, row1) become (x0, 0) (x1, 0)
+                # - counter clock-wise rotation to get the points (x0, -0.5 width),
+                # (x0, 0.5 width), (x1, 0.5 * width) and (x1, -0.5 * width) back to the
+                # original system.
+                # - restore the origin to (0, 0)
+                # - if those extremes are inside the image the selection is acceptable
+                cosalpha = numpy.cos(alpha)
+                sinalpha = numpy.sin(alpha)
+                newCol0 = 0.0
+                newCol1 = (col1-col0) * cosalpha + (row1-row0) * sinalpha
+                newRow0 = 0.0
+                newRow1 = -(col1-col0) * sinalpha + (row1-row0) * cosalpha
+
+                if DEBUG:
+                    print("new X0 Y0 = %f, %f  " % (newCol0, newRow0))
+                    print("new X1 Y1 = %f, %f  " % (newCol1, newRow1))
+
+                tmpX   = numpy.linspace(newCol0, newCol1, npoints)
+                rotMatrix = numpy.zeros((2,2), numpy.float)
+                rotMatrix[0,0] =   cosalpha
+                rotMatrix[0,1] =   sinalpha
+                rotMatrix[1,0] =   cosalpha
+                rotMatrix[1,1] = - sinalpha
+                if DEBUG:
+                    #test if I recover the original points
+                    testX = numpy.zeros((1, 2) , numpy.float)
+                    xy = numpy.dot(testX, rotMatrix)
+                    print("Recovered X0 = %f" % (xy[0,0] + col0))
+                    print("Recovered Y0 = %f" % (xy[0,1] + row0))
+                    print("It should be = %f, %f" % (col0, row0))
+                    testX[0,0] = newCol1
+                    testX[0,1] = newRow1
+                    xy = numpy.dot(testX, rotMatrix)
+                    print("Recovered X1 = %f" % (xy[0,0] + col0))
+                    print("Recovered Y1 = %f" % (xy[0,1] + row0))
+                    print("It should be = %f, %f" % (col1, row1))
+
+                x = numpy.zeros((npoints, 2) , numpy.float)
+                tmpMatrix = numpy.zeros((npoints, 2) , numpy.float)
+                ydata = numpy.zeros((npoints, ) , numpy.float)
+                for i in range(width):
+                    x[:, 0] = tmpX
+                    x[:, 1] = (i - 0.5) * width
+                    xy = numpy.dot(x, rotMatrix)
+                    tmpMatrix[:,1] = xy[:,0] + col0
+                    tmpMatrix[:,0] = xy[:,1] + row0
+                    rowLimits = [tmpMatrix[0,0], tmpMatrix[-1,0]]
+                    colLimits = [tmpMatrix[0,1], tmpMatrix[-1,1]]
+                    for a in rowLimits:
+                        if (a >= shape[0]) or (a < 0):
+                            print("outside row limits",a)
+                            return
+                    for a in colLimits:
+                        if (a >= shape[1]) or (a < 0):
+                            print("outside column limits",a)
+                            return
+                    ydata += self._interpolate((x0, y0), self.__imageData, tmpMatrix)
+                xdata = numpy.arange(float(npoints))
+                legend = "y = %.3f x + %.3f ; width=%d" % (m, b, width+1)
         else:
             if DEBUG:
                 print("Mode %s not supported yet" % ddict['mode'])
@@ -1125,12 +1223,11 @@ def test():
                        qt.SIGNAL("lastWindowClosed()"),
                        app,
                        qt.SLOT('quit()'))
-    if QTVERSION < '4.0.0':
-        container = MaskImageWidget()
-    else:
-        container = MaskImageWidget(profileselection=True)
+    container = MaskImageWidget()
     if len(sys.argv) > 1:
-        if sys.argv[1].endswith('edf'):
+        if sys.argv[1].endswith('edf') or\
+           sys.argv[1].endswith('cbf'):
+            container = MaskImageWidget(profileselection=True)
             import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
@@ -1140,6 +1237,7 @@ def test():
             #container.setQImage(image, image.width(),image.height())
             container.setQImage(image, 200, 200)
     else:
+        container = MaskImageWidget(profileselection=True)
         data = numpy.arange(40000).astype(numpy.int32)
         data.shape = 200, 200
         container.setImageData(data)
