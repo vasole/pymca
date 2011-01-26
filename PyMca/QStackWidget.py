@@ -145,7 +145,8 @@ class QStackWidget(StackBase.StackBase,
                                                          selection=True,
                                                          colormap=True,
                                                          imageicons=True,
-                                                         standalonesave=standaloneSaving)
+                                                         standalonesave=standaloneSaving,
+                                                         profileselection=True)
         infotext  = 'Toggle background subtraction from current image\n'
         infotext += 'subtracting a straight line between the ROI limits.'
         self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
