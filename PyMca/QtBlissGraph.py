@@ -690,6 +690,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 'ypixel':ypixelList,
                 'xcurve':None,
                 'ycurve':None}
+        self.replot()
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("PolygonSignal"),(ddict,))
         else:

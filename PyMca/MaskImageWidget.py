@@ -95,7 +95,8 @@ class MyPicker(Qwt.QwtPlotPicker):
     
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
-                 imageicons=True, standalonesave=True, usetab=False, profileselection=False):
+                 imageicons=True, standalonesave=True, usetab=False,
+                 profileselection=False, scanwindow=None):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -130,6 +131,7 @@ class MaskImageWidget(qt.QWidget):
 
         self._build(standalonesave, profileselection=profileselection)
         self._profileSelectionWindow = None
+        self._profileScanWindow = scanwindow
 
         self.__brushMenu  = None
         self.__brushMode  = False
@@ -179,6 +181,10 @@ class MaskImageWidget(qt.QWidget):
                                                    standalonesave=False,
                                                    standalonezoom=False,
                                                    profileselection=profileselection)
+
+        #for easy compatibility with RGBCorrelatorGraph
+        self.graph = self.graphWidget.graph
+
         if profileselection:
             self.connect(self.graphWidget,
                          qt.SIGNAL('PolygonSignal'), 
@@ -287,28 +293,39 @@ class MaskImageWidget(qt.QWidget):
     def _polygonSignalSlot(self, ddict):
         if DEBUG:
             print("_polygonSignalSLot, event = %s" % ddict['event'])
-                
-        #ddict= {'event':event,
-        #        'mode':self._selectionMode.upper(),
-        #       'maxpoints':self._maximumSelectionPoints,
-        #        'x':xList,
-        #        'y':yList,
-        #        'xpixel':xpixelList,
-        #        'ypixel':ypixelList,
-        #        'xcurve':None,
-        #        'ycurve':None}
+
         if ddict['event'] in [None, "NONE"]:
             #Nothing to be made
             return
 
         #
         if self._profileSelectionWindow is None:
-            from PyMca import ScanWindow
+            from PyMca import ProfileScanWidget
             from PyMca import SpecfitFuns
-            self._profileSelectionWindow = ScanWindow.ScanWindow()
+            if self._profileScanWindow is None:
+                #identical to the standard scan window
+                self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=False)
+            else:
+                self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=True)
+                self.connect(self._profileSelectionWindow,
+                             qt.SIGNAL('addClicked'),
+                             self._profileSelectionSlot)
+                self.connect(self._profileSelectionWindow,
+                             qt.SIGNAL('removeClicked'),
+                             self._profileSelectionSlot)
+                self.connect(self._profileSelectionWindow,
+                             qt.SIGNAL('replaceClicked'),
+                             self._profileSelectionSlot)
             self._interpolate =  SpecfitFuns.interpol
-        if self.__imageData is None:
-            return
+        try:
+            title = self.graphWidget.graph.title().text()
+            if sys.version < '3.0':
+                title = str(title)
+        except:
+            title = ""
+        self._profileSelectionWindow.setTitle(title)
+        if self._profileScanWindow is not None:
+            self._profileSelectionWindow.label.setText(title)
         self._profileSelectionWindow.show()
         #self._profileSelectionWindow.raise_()
         if ddict['event'] == 'PolygonModeChanged':
@@ -462,9 +479,12 @@ class MaskImageWidget(qt.QWidget):
                 x = numpy.zeros((npoints, 2) , numpy.float)
                 tmpMatrix = numpy.zeros((npoints, 2) , numpy.float)
                 ydata = numpy.zeros((npoints, ) , numpy.float)
-                for i in range(width):
+                #oversampling solves noise introduction issues
+                oversampling = (width+1)
+                ncontributors = int(width * oversampling)
+                if ncontributors == 0:
                     x[:, 0] = tmpX
-                    x[:, 1] = (i - 0.5) * width
+                    #x[:, 1] = 0.0
                     xy = numpy.dot(x, rotMatrix)
                     tmpMatrix[:,1] = xy[:,0] + col0
                     tmpMatrix[:,0] = xy[:,1] + row0
@@ -479,8 +499,27 @@ class MaskImageWidget(qt.QWidget):
                             print("outside column limits",a)
                             return
                     ydata += self._interpolate((x0, y0), self.__imageData, tmpMatrix)
+                else:
+                    x[:, 0] = tmpX
+                    for i in range(ncontributors):
+                        x[:, 1] = (i - 0.5) * (width/oversampling)
+                        xy = numpy.dot(x, rotMatrix)
+                        tmpMatrix[:,1] = xy[:,0] + col0
+                        tmpMatrix[:,0] = xy[:,1] + row0
+                        rowLimits = [tmpMatrix[0,0], tmpMatrix[-1,0]]
+                        colLimits = [tmpMatrix[0,1], tmpMatrix[-1,1]]
+                        for a in rowLimits:
+                            if (a >= shape[0]) or (a < 0):
+                                print("outside row limits",a)
+                                return
+                        for a in colLimits:
+                            if (a >= shape[1]) or (a < 0):
+                                print("outside column limits",a)
+                                return
+                        ydata += self._interpolate((x0, y0), self.__imageData, tmpMatrix)
+                    ydata /= oversampling
                 xdata = numpy.arange(float(npoints))
-                legend = "y = %.3f (x-%.1f) + %.3f ; width=%d" % (m, col0, b, width+1)
+                legend = "y = %f (x-%.1f) + %f ; width=%d" % (m, col0, b, width+1)
         else:
             if DEBUG:
                 print("Mode %s not supported yet" % ddict['mode'])
@@ -490,6 +529,56 @@ class MaskImageWidget(qt.QWidget):
         info['ylabel'] = "Z"
         self._profileSelectionWindow.addCurve(xdata, ydata, legend=legend, info=info,
                                           replot=False, replace=True)
+
+    def _profileSelectionSlot(self, ddict):
+        if DEBUG:
+            print(ddict)
+        # the curves as [[x0, y0, legend0, info0], ...] 
+        curveList = ddict['curves']
+        label = ddict['label']
+        n = len(curveList)
+        if ddict['event'] == 'ADD':
+            for i in range(n):
+                x, y, legend, info = curveList[i]
+                info['profilelabel'] = label
+                if i == (n-1):
+                    replot = True
+                self._profileScanWindow.addCurve(x, y, legend=legend, info=info,
+                                                 replot=replot, replace=False)
+        elif ddict['event'] == 'REPLACE':
+            for i in range(n):
+                x, y, legend, info = curveList[i]
+                info['profilelabel'] = label
+                if i in [0, n-1]:
+                    replace = True
+                else:
+                    replace = False
+                if i == (n-1):
+                    replot = True
+                else:
+                    replot = False
+                self._profileScanWindow.addCurve(x, y, legend=legend, info=info,
+                                                 replot=replot, replace=replace)
+        elif ddict['event'] == 'REMOVE':
+            curveList = self._profileScanWindow.getAllCurves()
+            if curveList in [None, []]:
+                return
+            toDelete = []
+            n = len(curveList)                
+            for i in range(n):
+                x, y, legend, info = curveList[i]
+                curveLabel = info.get('profilelabel', None)
+                if curveLabel is not None:
+                    if label == curveLabel:
+                        toDelete.append(legend)
+            n = len(toDelete)
+            for i in range(n):
+                legend = toDelete[i]
+                if i == (n-1):
+                    replot = True
+                else:
+                    replot = False
+                self._profileScanWindow.removeCurve(legend, replot=replot)        
 
     def _hFlipIconSignal(self):
         if QWTVERSION4:
@@ -1216,6 +1305,12 @@ class MaskImageWidget(qt.QWidget):
             self.__defaultColormapType = spslut.LOG
         else:
             self.__defaultColormapType = spslut.LINEAR
+
+    def closeEvent(self, event):
+        if self._profileSelectionWindow is not None:
+            self._profileSelectionWindow.close()
+        qt.QWidget.closeEvent(self, event)
+
 
 def test():
     app = qt.QApplication([])

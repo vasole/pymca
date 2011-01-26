@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,9 +24,9 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
-import RGBCorrelatorGraph
+import MaskImageWidget
 import ColormapDialog
 import numpy
 import spslut
@@ -36,10 +36,10 @@ try:
 except ImportError:
     MATPLOTLIB = False
 
-qt = RGBCorrelatorGraph.qt
-IconDict = RGBCorrelatorGraph.IconDict
+qt = MaskImageWidget.qt
+IconDict = MaskImageWidget.IconDict
 QTVERSION   = qt.qVersion()
-QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
+QWTVERSION4 = MaskImageWidget.QWTVERSION4
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
@@ -47,7 +47,7 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 DEBUG = 0
 
 class RGBImageCalculator(qt.QWidget):
-    def __init__(self, parent = None, math = True, replace = False):
+    def __init__(self, parent = None, math = True, replace = False, scanwindow=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMCA - RGB Image Calculator")
@@ -64,7 +64,7 @@ class RGBImageCalculator(qt.QWidget):
         self.setDefaultColormap(2, logflag=False)
         self._y1AxisInverted = False
         self._matplotlibSaveImage = None
-        self._build(math = math, replace = replace)
+        self._build(math = math, replace = replace, scanwindow=scanwindow)
         
 
     def _buildMath(self):
@@ -95,22 +95,17 @@ class RGBImageCalculator(qt.QWidget):
         self.connect(self.mathAction, qt.SIGNAL("clicked()"), 
                     self._calculateClicked)
 
-    def _build(self, math = True, replace = False):
-        if math: self._buildMath()
+    def _build(self, math = True, replace = False, scanwindow=False):
+        if math:
+            self._buildMath()
 
-        standaloneSaving = True
-        if MATPLOTLIB:
-            standaloneSaving = False
-        self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                                colormap=True,
-                                                                standalonesave=standaloneSaving)
-        if not standaloneSaving:
-            self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._saveToolButtonSignal)
-            self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Standard"),    self.graphWidget._saveIconSignal)
-            self._saveMenu.addAction(qt.QString("Matplotlib") , self._saveMatplotlibImage)
+        self.graphWidget = MaskImageWidget.MaskImageWidget(self,
+                                                           colormap=True,
+                                                           standalonesave=True,
+                                                           imageicons=False,
+                                                           profileselection=True,
+                                                           selection=False,
+                                                           scanwindow=scanwindow)
         
         self.nameBox = qt.QWidget(self)
         self.nameBox.mainLayout = qt.QHBoxLayout(self.nameBox)
@@ -157,81 +152,18 @@ class RGBImageCalculator(qt.QWidget):
         if replace:
             self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
                          self._replaceImageClicked)
-        self.connect(self.graphWidget.colormapToolButton,
-             qt.SIGNAL("clicked()"),
-             self.selectColormap)
-
-        self.connect(self.graphWidget.hFlipToolButton,
-                 qt.SIGNAL("clicked()"),
-                 self._hFlipIconSignal)
-
+            
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
-        self.graphWidget.showInfo()
-        self.connect(self.graphWidget.graph,
+        self.graphWidget.graphWidget.showInfo()
+        self.connect(self.graphWidget.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
 
-    def _saveToolButtonSignal(self):
-        self._saveMenu.exec_(self.cursor().pos())
-
-    def _saveMatplotlibImage(self):
-        if self._matplotlibSaveImage is None:
-            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None, None)
-            self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBImage")
-        self._matplotlibSaveImage.setImageData(self._imageData)
-        self._matplotlibSaveImage.show()
-        self._matplotlibSaveImage.raise_()
-
     def plotImage(self, update = True):
-        if DEBUG:
-            print ("plotImage", update)
-        if self._imageData is None:
-            self.graphWidget.graph.clear()
-        if update:
-            self.getPixmapFromData()
-        if not self.graphWidget.graph.yAutoScale:
-            ylimits = self.graphWidget.graph.getY1AxisLimits()
-        if not self.graphWidget.graph.xAutoScale:
-            xlimits = self.graphWidget.graph.getX1AxisLimits()
-        if 1:  
-            self.graphWidget.graph.pixmapPlot(self.__imagePixmap,
-                    (self._imageData.shape[1], self._imageData.shape[0]),
-                                        xmirror = 0,
-                                        ymirror = not self._y1AxisInverted)
-        else:            
-            self.graphWidget.graph.imagePlot(self._imageData,
-                                        colormap = self.__imageColormap,
-                                        xmirror = 0,
-                                        ymirror = not self._y1AxisInverted)
-        if not self.graphWidget.graph.yAutoScale:
-            self.graphWidget.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
-        if not self.graphWidget.graph.xAutoScale:
-            self.graphWidget.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)
-        self.graphWidget.graph.replot()
+        self.graphWidget.setImageData(self._imageData)
+        return self.graphWidget.plotImage(update=update)
 
-    def getPixmapFromData(self):
-        colormap = self.__imageColormap
-        if colormap is None:
-            (self.__imagePixmap,size,minmax)= spslut.transform(\
-                                self._imageData,
-                                (1,0),
-                                (self.__defaultColormapType,3.0),
-                                "BGRX",
-                                self.__defaultColormap,
-                                1,
-                                (0,1))
-        else:
-            if len(colormap) < 7: colormap.append(spslut.LINEAR)
-            (self.__imagePixmap,size,minmax)= spslut.transform(\
-                                self._imageData,
-                                (1,0),
-                                (colormap[6],3.0),
-                                "BGRX",
-                                COLORMAPLIST[int(str(colormap[0]))],
-                                colormap[1],
-                                (colormap[2],colormap[3]))
-        
     def _calculateClicked(self):
         if DEBUG:
             print("Calculate clicked")
@@ -260,8 +192,12 @@ class RGBImageCalculator(qt.QWidget):
             qt.QMessageBox.critical(self,"%s" % error[0], text)
             return 1
         self.plotImage()
-        self.name.setText("(%s)" % name)
-            
+        self.setName("(%s)" % name)
+
+    def setName(self, name):
+        self.name.setText(name)
+        self.graphWidget.graph.setTitle("%s" % name)
+                    
     def _addImageClicked(self):
         if DEBUG:
             print("Add image clicked")
@@ -305,29 +241,6 @@ class RGBImageCalculator(qt.QWidget):
         self.emit(qt.SIGNAL("replaceImageClicked"),
                   ddict)
 
-    def _hFlipIconSignal(self):
-        if QWTVERSION4:
-            qt.QMessageBox.information(self,
-                                       "Flip Image",
-                                       "Not available under PyQwt4")
-            return
-        if not self.graphWidget.graph.yAutoScale:
-            qt.QMessageBox.information(self, "Open",
-                    "Please set image Y Axis to AutoScale first")
-            return 1
-        if not self.graphWidget.graph.xAutoScale:
-            qt.QMessageBox.information(self, "Open",
-                    "Please set image X Axis to AutoScale first")
-            return 1
-
-        if self._y1AxisInverted:
-            self._y1AxisInverted = False
-        else:
-            self._y1AxisInverted = True
-        self.graphWidget.graph.zoomReset()
-        self.graphWidget.graph.zoomReset()
-        self.graphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
-        self.plotImage(True)
 
     def setDefaultColormap(self, colormapindex, logflag=False):
         self.__defaultColormap = COLORMAPLIST[min(colormapindex, len(COLORMAPLIST)-1)]
@@ -335,67 +248,6 @@ class RGBImageCalculator(qt.QWidget):
             self.__defaultColormapType = spslut.LOG
         else:
             self.__defaultColormapType = spslut.LINEAR
-
-    def selectColormap(self):
-        if self._imageData is None:return
-        if self.__imageColormapDialog is None:
-            self.__initColormapDialog()
-        if self.__imageColormapDialog.isHidden():
-            self.__imageColormapDialog.show()
-        self.__imageColormapDialog.raise_()          
-        self.__imageColormapDialog.show()
-
-    def __initColormapDialog(self):
-        try:
-            minData = self._imageData.min()
-            maxData = self._imageData.max()
-        except:
-            a = numpy.ravel(self._imageData)
-            minData = min(a)
-            maxData = max(a)
-        self.__imageColormapDialog = ColormapDialog.ColormapDialog(slider=True)
-        self.__imageColormapDialog.colormapIndex  = self.__imageColormapDialog.colormapList.index("Temperature")
-        self.__imageColormapDialog.colormapString = "Temperature"
-        self.__imageColormapDialog.setWindowTitle("Stack Colormap Dialog")
-        self.connect(self.__imageColormapDialog,
-                     qt.SIGNAL("ColormapChanged"),
-                     self.updateImageColormap)
-        self.__imageColormapDialog.setDataMinMax(minData, maxData)
-        self.__imageColormapDialog.setAutoscale(1)
-        self.__imageColormapDialog.setColormap(self.__imageColormapDialog.colormapIndex)
-        self.__imageColormap = (self.__imageColormapDialog.colormapIndex,
-                              self.__imageColormapDialog.autoscale,
-                              self.__imageColormapDialog.minValue, 
-                              self.__imageColormapDialog.maxValue,
-                              minData, maxData)
-        self.__imageColormapDialog._update()
-
-    def updateImageColormap(self, *var):
-        if DEBUG:
-            print("updateImageColormap",var)
-        if len(var) > 6:
-            self.__imageColormap = [var[0],
-                             var[1],
-                             var[2],
-                             var[3],
-                             var[4],
-                             var[5],
-                             var[6]]
-        elif len(var) > 5:
-            self.__imageColormap = [var[0],
-                             var[1],
-                             var[2],
-                             var[3],
-                             var[4],
-                             var[5]]
-        else:
-            self.__imageColormap = [var[0],
-                             var[1],
-                             var[2],
-                             var[3],
-                             var[4],
-                             var[5]]
-        self.plotImage(True)
 
     def _graphSignal(self, ddict):
         if ddict['event'] == "MouseAt":
@@ -410,7 +262,7 @@ class RGBImageCalculator(qt.QWidget):
             x = min(int(x), limits[0]-1)
             y = min(int(y), limits[1]-1)
             z = self._imageData[x, y]
-            self.graphWidget.setInfoText("    X = %d Y = %d Z = %.7g" %\
+            self.graphWidget.graphWidget.setInfoText("    X = %d Y = %d Z = %.7g" %\
                                                (y, x, z))
     def closeEvent(self, event):
         if self.__imageColormapDialog is not None:
@@ -437,9 +289,6 @@ def test():
     w.imageDict = imageDict 
     w.show()
     app.exec_()
-
-    
-
 
 if __name__ == "__main__":
     test()

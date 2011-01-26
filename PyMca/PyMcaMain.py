@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __revision__ = "$Revision: 2.02 $"
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -77,14 +77,14 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.4.1"
+__version__ = "4.4.2-snapshot20110126"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
                         fl=qt.Qt.WStyle_Customize  | qt.Qt.WDestructiveClose,
                         pixmap = None):
             qt.QWidget.__init__(self,parent,name,fl)
-            self.setCaption("PyMCA %s" % __version__)
+            self.setCaption("PyMca %s" % __version__)
             layout = qt.QVBoxLayout(self)
             layout.setAutoAdd(1)
             label = qt.QLabel(self)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         font = splash.font()
         font.setBold(1)
         splash.setFont(font)
-        splash.showMessage( 'PyMCA %s' % __version__, 
+        splash.showMessage( 'PyMca %s' % __version__, 
                 qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
                 qt.Qt.white)
         if sys.platform == "darwin":
@@ -519,10 +519,12 @@ class PyMca(PyMcaMdi.PyMca):
                     pass
                 if hkl:
                     imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(name = legend,
-                                correlator = self.imageWindowCorrelator)
+                                correlator = self.imageWindowCorrelator,
+                                scanwindow=self.scanwindow)
                 else:
                     imageWindow = PyMcaImageWindow.PyMcaImageWindow(name = legend,
-                                correlator = self.imageWindowCorrelator)
+                                correlator = self.imageWindowCorrelator,
+                                scanwindow=self.scanwindow)
                 self.imageWindowDict[legend] = imageWindow
                 if QTVERSION > '4.0.0':
                     self.connect(imageWindow, qt.SIGNAL("addImageClicked"),

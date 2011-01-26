@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -44,10 +44,12 @@ DEBUG = 0
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def __init__(self, parent = None,
                  name = "PyMca Image Window",
-                 correlator = None):
+                 correlator = None,
+                 scanwindow=None):
         RGBImageCalculator.RGBImageCalculator.__init__(self, parent,
                                                        math = False,
-                                                       replace = True)
+                                                       replace = True,
+                                                       scanwindow=scanwindow)
         self.setWindowTitle(name)
         self.correlator = correlator
         self.ownCorrelator = False
@@ -142,7 +144,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 self._nImages = 1
                 self._imageData = dataObject.data
                 self.slider.hide()
-                self.name.setText(legend)
+                self.setName(legend)
             else:
                 self._nImages = 1
                 for dimension in dataObject.data.shape[:-2]:
@@ -153,7 +155,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 self.slider.setRange(0, self._nImages - 1)
                 self.slider.setValue(0)
                 self.slider.show()
-                self.name.setText(legend+" 0")
+                self.setName(legend+" 0")
             if self._plotEnabled:
                 self.plotImage(True)
 
@@ -225,9 +227,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self._imageData = self._getImageDataFromSingleIndex(index)
         self.plotImage(True)
         txt = "%s %d" % (legend, index)
-        self.graphWidget.graph.setTitle(txt)
-        self.name.setText(txt)
-
+        self.setname(txt)
+        
         if moveslider:
             self.slider.setValue(index)
         
