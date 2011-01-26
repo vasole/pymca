@@ -9,6 +9,7 @@ These plugins will be compatible with any 1D-plot window that provides the funct
     addCurve
     getGraphXLimits
     getGraphYLimits
+    removeCurve
     
 """
 import weakref
@@ -76,6 +77,9 @@ class Plugin1DBase:
         """
         return self._plotWindow.getGraphYLimits()
 
+    def removeCurve(self, legend, **kw):
+        return self._plotWindow.removeCurve(legend, **kw) 
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
@@ -105,6 +109,8 @@ class Plugin1DBase:
         """
         print("applyMethod not implemented")
         return
+
+        
 
 def getPlugin1DInstance(plotWindow, **kw):
     ob = Plugin1DBase(plotWindow)
