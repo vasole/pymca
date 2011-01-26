@@ -28,6 +28,8 @@ __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import RGBCorrelatorGraph
 qt = RGBCorrelatorGraph.qt
+IconDict = RGBCorrelatorGraph.IconDict
+QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -43,7 +45,6 @@ if QTVERSION > '4.0.0':
         MATPLOTLIB = False
 else:
     qt.QIcon = qt.QIconSet
-from PyMca_Icons import IconDict
 import numpy
 import ColormapDialog
 import spslut
@@ -53,7 +54,6 @@ import ArraySave
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
-QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 
 if QWTVERSION4:
     raise ImportError("QImageFilterWidget needs Qwt5")
