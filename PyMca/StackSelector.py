@@ -298,10 +298,11 @@ class StackSelector(object):
                         return [], filterused
                     else:
                         return []
-        try:
-            filelist = [str(x) for x in filelist]
-        except UnicodeEncodeError:
-            filelist = [unicode(x) for x in filelist]
+        if sys.version < '3.0':
+            try:
+                filelist = [str(x) for x in filelist]
+            except UnicodeEncodeError:
+                filelist = [unicode(x) for x in filelist]
         if not(len(filelist)): return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.outputDir is None:

@@ -174,6 +174,11 @@ try:
     includes.append('PyMca.phynx.utils.sorting')
 except:
     includes = []
+
+#some standard encodings
+includes.append('encodings.ascii')
+includes.append('encodings.utf_8')
+includes.append('encodings.latin_1')
     
 if OBJECT3D:
     includes.append("logging")
