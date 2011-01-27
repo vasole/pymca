@@ -46,6 +46,18 @@ import PyMcaDirs
 import ScanWindowInfoWidget
 #implement the plugins interface
 import Plot1DBase
+try:
+    import QPyMcaMatplotlibSave1D
+    MATPLOTLIB = True
+    #force understanding of utf-8 encoding
+    #otherways it cannot generate svg output
+    try:
+        import encodings.utf_8
+    except:
+        #not a big problem
+        pass
+except:
+    MATPLOTLIB = False
 
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
@@ -60,6 +72,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         else:
             Plot1DBase.Plot1DBase.__init__(self)
             self.setWindowTitle(name)
+            self.matplotlibDialog = None
         self._initIcons()
         self._build()
         self.fig = None
@@ -1017,6 +1030,11 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                           'OMNIC CSV *.csv',
                           'Widget PNG *.png',
                           'Widget JPG *.jpg']
+            if MATPLOTLIB:
+                filterlist.append('Graphics PNG *.png')
+                filterlist.append('Graphics EPS *.eps')
+                filterlist.append('Graphics SVG *.svg')
+
             if self.outputFilter is None:
                 self.outputFilter = filterlist[0]
             outfile.setFilters(filterlist)
@@ -1168,13 +1186,24 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             if os.path.exists(filename):
                 os.remove(filename)
             if filterused[0].upper() == "WIDGET":
-                format = filename[-3:].upper()
+                fformat = filename[-3:].upper()
                 pixmap = qt.QPixmap.grabWidget(self.graph)
-                if not pixmap.save(filename, format):
+                if not pixmap.save(filename, fformat):
                     qt.QMessageBox.critical(self,
                                         "Save Error",
                                         "%s" % sys.exc_info()[1])
                 return
+            if MATPLOTLIB:
+                try:
+                    if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+                        self.graphicsSave(filename)
+                        return
+                except:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+                    msg.exec_()
+                    return
             systemline = os.linesep
             os.linesep = '\n'
             try:
@@ -1396,6 +1425,59 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                                 y=yplot,
                                 logfilter=self._logY)
         self.graph.replot()
+
+    def graphicsSave(self, filename):
+        #use the plugin interface
+        x, y, legend, info = self.getActiveCurve()
+        size = (6, 3) #in inches
+        bw = False
+        if len(self.graph.curves.keys()) > 1:
+            legends = True
+        else:
+            legends = False
+        if self.matplotlibDialog is None:
+            self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
+                                    QPyMcaMatplotlibSaveDialog(size=size,
+                                                        logx=self._logX,
+                                                        logy=self._logY,
+                                                        legends=legends,
+                                                        bw = bw)
+        mtplt = self.matplotlibDialog.plot
+        mtplt.setParameters({'logy':self._logY,
+                             'logx':self._logX,
+                             'legends':legends,
+                             'bw':bw})
+        xmin, xmax = self.getGraphXLimits()
+        ymin, ymax = self.getGraphYLimits()
+        mtplt.setLimits(xmin, xmax, ymin, ymax)
+
+        legend0 = legend
+        xdata = x
+        ydata = y
+        dataCounter = 1
+        alias = "%c" % (96+dataCounter)
+        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )
+        curveList = self.getAllCurves()
+        for curve in curveList:
+            xdata, ydata, legend, info = curve
+            if legend == legend0:
+                continue
+            dataCounter += 1
+            alias = "%c" % (96+dataCounter)
+            mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
+
+        if sys.version < '3.0':
+            self.matplotlibDialog.setXLabel(str(self.graph.x1Label()))
+            self.matplotlibDialog.setYLabel(str(self.graph.y1Label()))
+        else:
+            self.matplotlibDialog.setXLabel(self.graph.x1Label())
+            self.matplotlibDialog.setYLabel(self.graph.y1Label())
+        if legends:
+            mtplt.plotLegends()
+        ret = self.matplotlibDialog.exec_()
+        if ret == qt.QDialog.Accepted:
+            mtplt.saveFile(filename)
+        return
 
     def getActiveCurveLegend(self):
         #get active curve

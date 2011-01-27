@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Data Analysis"
 import PyMcaQt as qt
 from PyMca_Icons import IconDict
 import MaskImageWidget
@@ -98,14 +98,13 @@ class SNIP1DParametersWidget(qt.QWidget):
 
     def setParameters(self, ddict=None):
         if ddict is None:
-            return
-        
+            return        
         actualKeys = self.widgetDict.keys()
         for key in ddict.keys():
             if key in actualKeys:
                 w = self.widgetDict[key] 
-                w.setMaximum(max(ddict[key], w.value()))
-                w.setMinimum(min(ddict[key], w.value()))
+                #w.setMaximum(max(ddict[key], w.value()))
+                #w.setMinimum(min(ddict[key], w.value()))
                 w.setValue(ddict[key])
         self._updateParameters("dummy")
 
