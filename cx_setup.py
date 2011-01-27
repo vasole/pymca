@@ -75,12 +75,12 @@ if sys.platform == 'win32':
         # MinGW compiler needs two steps
         cmd = "python setup.py build -c mingw32"
         if os.system(cmd):
-            print "Error building PyMca"
+            print("Error building PyMca")
             sys.exit(1)
 
 cmd = "python setup.py install --install-lib %s" % PyMcaInstallationDir
 if os.system(cmd):
-    print "Error building PyMca"
+    print("Error building PyMca")
     sys.exit(1)
 
 include_files = []
@@ -141,7 +141,7 @@ try:
     import scipy
     SCIPY = True
     if DEBUG:
-        print "ADDING SciPy DOUBLES THE SIZE OF THE DOWNLOADABLE PACKAGE..."
+        print("ADDING SciPy DOUBLES THE SIZE OF THE DOWNLOADABLE PACKAGE...")
 except:
     SCIPY = False
 
@@ -179,6 +179,13 @@ except:
 includes.append('encodings.ascii')
 includes.append('encodings.utf_8')
 includes.append('encodings.latin_1')
+
+#make sure all PyMca modules are there
+for module in glob.glob(os.path.join('PyMca', '*.py')):
+    m = "PyMca."+os.path.basename(module)[:-3]
+    if DEBUG:
+        print("Adding %s" % m)
+    includes.append(m)
     
 if OBJECT3D:
     includes.append("logging")
@@ -249,16 +256,16 @@ if os.path.exists(install_dir):
                     try:
                         os.remove(f)
                     except:
-                        print "file ", f,  "not deleted"
+                        print("file <%s> not deleted" % f)
                 if os.path.isdir(f):
                     dir_cleaner(f)
             try:
                 os.rmdir(directory)
             except:
-                print "directory ", directory, "not deleted"
-        dir_cleaner(install_dir)        
+                print("directory ", directory, "not deleted")
+        dir_cleaner(install_dir)
     except:
-        print "Unexpected error:", sys.exc_info()
+        print("Unexpected error:", sys.exc_info())
         pass
         
 if os.path.exists('bin'):
@@ -376,13 +383,13 @@ if not sys.platform.startswith('win'):
     #end linux binary
 library = os.path.join(install_dir,"library.zip")
 if not os.path.exists(library):
-    print "PROBLEM"
-    print "Cannot find zipped library: "
-    print library
-    print "Please use python cx_setup.py install"
+    print("PROBLEM")
+    print("Cannot find zipped library: ")
+    print(library)
+    print("Please use python cx_setup.py install")
 else:
     if DEBUG:
-        print "NO PROBLEM"
+        print("NO PROBLEM")
 
 #Add modules to library.zip for easy access from Plugins directory
 import zipfile
@@ -396,7 +403,7 @@ def addToZip(zf, path, zippath, full=False):
     global PYC_COUNTER
     if os.path.basename(path).upper().endswith("HTML"):
         if DEBUG:
-            print "NOT ADDING", path
+            print("NOT ADDING", path)
         if not full:
             return
     if path.upper().endswith(".PYC"):
@@ -404,14 +411,14 @@ def addToZip(zf, path, zippath, full=False):
         if SKIP_PYC:
             if not full:
                 if DEBUG:
-                    print "NOT ADDING", path
+                    print("NOT ADDING", path)
                 return
     if path.upper().endswith(".PY"):
         PY_COUNTER += 1
         if SKIP_PY:
             if not full:
                 if DEBUG:
-                    print "NOT ADDING", path
+                    print("NOT ADDING", path)
                 return
     if os.path.isfile(path):
         zf.write(path, zippath, zipfile.ZIP_DEFLATED)
@@ -422,16 +429,24 @@ def addToZip(zf, path, zippath, full=False):
                     os.path.join(path, nm), os.path.join(zippath, nm))
         else:
             if DEBUG:
-                print "NOT ADDING", path
+                print("NOT ADDING", path)
 
 addToZip(zf, PyMcaDir, os.path.basename(PyMcaDir), full=False)
     
 #if PY_COUNTER > PYC_COUNTER:
 #    print "WARNING: More .py files than  .pyc files. Check cx_setup.py"
 if PY_COUNTER < PYC_COUNTER:
-    print "WARNING: More .pyc files than  .py files. Check cx_setup.py"
+    print("WARNING: More .pyc files than  .py files. Check cx_setup.py")
 
 if os.path.exists('bin'):
     for f in glob.glob(os.path.join('bin','*')):
         os.remove(f)
     os.rmdir('bin')
+
+if not SCIPY:
+    for f in ["SplinePlugins.py"]:
+        plugin = os.path.join(install_dir, "PyMcaPlugins", f)
+        if os.path.exists(plugin):
+            print("Deleting plugin %s" % plugin)
+            os.remove(plugin)
+
