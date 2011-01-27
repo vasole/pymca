@@ -51,6 +51,15 @@ import spslut
 import os
 import PyMcaDirs
 import ArraySave
+try:
+    from PyMca import ProfileScanWidget
+except ImportError:
+    import ProfileScanWidget
+try:
+    from PyMca import SpecfitFuns
+except:
+    import SpecfitFuns
+
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -300,8 +309,6 @@ class MaskImageWidget(qt.QWidget):
 
         #
         if self._profileSelectionWindow is None:
-            from PyMca import ProfileScanWidget
-            from PyMca import SpecfitFuns
             if self._profileScanWindow is None:
                 #identical to the standard scan window
                 self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=False)
