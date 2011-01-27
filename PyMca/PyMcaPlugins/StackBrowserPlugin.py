@@ -106,7 +106,8 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
                                                     selection=True,
                                                     colormap=True,
                                                     imageicons=True,
-                                                    standalonesave=True)
+                                                    standalonesave=True,
+                                                    profileselection=True)
             self.widget.setSelectionMode(True)
             qt = StackBrowser.qt
             qt.QObject.connect(self.widget,

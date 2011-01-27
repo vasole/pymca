@@ -105,7 +105,8 @@ class MedianFilterStackPlugin(StackPluginBase.StackPluginBase):
                                                     selection=True,
                                                     colormap=True,
                                                     imageicons=True,
-                                                    standalonesave=True)
+                                                    standalonesave=True,
+                                                    profileselection=True)
             self.widget.setKernelWidth(1)
             self.widget.setSelectionMode(True)
             qt = Median2DBrowser.qt
