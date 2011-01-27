@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -247,6 +247,23 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         self._lastGoodSize = None
+
+        self.axesLabelsWidget = qt.QWidget(self)
+        layout = qt.QHBoxLayout(self.axesLabelsWidget)
+        layout.setMargin(0)
+        layout.setSpacing(2)
+        xLabelLabel = qt.QLabel(self.axesLabelsWidget)
+        xLabelLabel.setText("X Axis Label: ")
+        self.xLabelLine = qt.QLineEdit(self.axesLabelsWidget)
+        yLabelLabel = qt.QLabel(self.axesLabelsWidget)
+        yLabelLabel.setText("Y Axis Label: ")
+        self.yLabelLine = qt.QLineEdit(self.axesLabelsWidget)
+        layout.addWidget(xLabelLabel)
+        layout.addWidget(self.xLabelLine)
+        layout.addWidget(yLabelLabel)
+        layout.addWidget(self.yLabelLine)
+
+
         self.curveTable = MatplotlibCurveTable(self)
         self.plot = QPyMcaMatplotlibSave(self, **kw)
         self.plot.setCurveTable(self.curveTable)
@@ -270,19 +287,31 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
         layout.addWidget(self.dismissButton)
         horizontal = False
         if horizontal:
-            self.mainLayout.addWidget(self.plot, 0, 0)
-            self.mainLayout.addWidget(self.curveTable, 0, 1)
-            self.mainLayout.addWidget(self.actionsWidget, 1, 0, 1, 2)
+            self.mainLayout.addWidget(self.axesLabelsWidget, 0, 0)
+            self.mainLayout.addWidget(self.plot, 1, 0)
+            self.mainLayout.addWidget(self.curveTable, 1, 1)
+            self.mainLayout.addWidget(self.actionsWidget, 2, 0, 1, 2)
             self.mainLayout.setColumnStretch(0, 1)
         else:
-            self.mainLayout.addWidget(self.curveTable, 0, 0)
-            self.mainLayout.addWidget(self.plot, 1, 0)
-            self.mainLayout.addWidget(self.actionsWidget, 2, 0)
+            self.mainLayout.addWidget(self.axesLabelsWidget, 0, 0)
+            self.mainLayout.addWidget(self.curveTable, 1, 0)
+            self.mainLayout.addWidget(self.plot, 2, 0)
+            self.mainLayout.addWidget(self.actionsWidget, 3, 0)
             self.mainLayout.setRowStretch(1, 1)
+
+        self.connect(self.xLabelLine,
+                     qt.SIGNAL("editingFinished()"),
+                     self._xLabelSlot)
+        
+        self.connect(self.yLabelLine,
+                     qt.SIGNAL("editingFinished()"),
+                     self._yLabelSlot)
+
 
         self.connect(self.acceptButton,
                      qt.SIGNAL("clicked()"),
                      self.accept)
+        
         self.connect(self.dismissButton,
                      qt.SIGNAL("clicked()"),
                      self.reject)
@@ -300,6 +329,27 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
         self._lastGoodSize = self.size()
         return qt.QDialog.accept(self)
 
+    def _xLabelSlot(self):
+        label = self.xLabelLine.text()
+        if sys.version < '3.0':
+            label = str(label)
+        self.plot.setXLabel(label)
+        self.plot.draw()
+
+    def _yLabelSlot(self):
+        label = self.yLabelLine.text()
+        if sys.version < '3.0':
+            label = str(label)
+        self.plot.setYLabel(label)
+        self.plot.draw()
+
+    def setXLabel(self, label):
+        self.xLabelLine.setText(label)
+        self.plot.setXLabel(label)
+
+    def setYLabel(self, label):
+        self.yLabelLine.setText(label)
+        self.plot.setYLabel(label)
 
 class QPyMcaMatplotlibSave(FigureCanvas):
     def __init__(self, parent=None,
@@ -443,7 +493,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         if n == 0:
             #nothing to plot
             if DEBUG:
-                print "nothing to plot"
+                print("nothing to plot")
             return
         
         style = None
@@ -603,15 +653,15 @@ if __name__ == "__main__":
         n = 14
     for i in range(n):
         y = x * i
-        w.addDataToPlot(x,y, legend="%d" % i)
+        w.addDataToPlot(x, y, legend="%d" % i)
     #w.setTitle('title')
-    w.setXLabel('Channel')
-    w.setYLabel('Counts')
+    w0.setXLabel('Channel')
+    w0.setYLabel('Counts')
     w.plotLegends()
     ret = w0.exec_()
     if ret:
         w.saveFile("filename.png")
-        print "Plot filename.png saved"
+        print("Plot filename.png saved")
     w.setParameters({'logy':True, 'bw':True})
     for i in range(n):
         y = x * i + 1
