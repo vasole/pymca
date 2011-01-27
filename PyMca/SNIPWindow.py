@@ -107,6 +107,7 @@ class SNIP1DParametersWidget(qt.QWidget):
                 w.setMaximum(max(ddict[key], w.value()))
                 w.setMinimum(min(ddict[key], w.value()))
                 w.setValue(ddict[key])
+        self._updateParameters("dummy")
 
 class SNIP2DParametersWidget(qt.QWidget):
     def __init__(self, parent = None, shape=(4000,4000)):
@@ -200,6 +201,9 @@ class SNIP2DParametersWidget(qt.QWidget):
     def getParameters(self):
         return self.parametersDict
 
+    def setParameters(self):
+        raise NotImplemented("Set parameters not implemented for SNIP 2D")
+
 class SNIPWindow(qt.QWidget):
     def __init__(self, parent, data, image=None, x=None, smooth=False):
         qt.QWidget.__init__(self, parent)
@@ -254,6 +258,7 @@ class SNIPWindow(qt.QWidget):
         self.xMarkers = []
         self.yMarkers = []
         self.getParameters = self.parametersWidget.getParameters
+        self.setParameters = self.parametersWidget.setParameters
         self.connect(self.parametersWidget,
                      qt.SIGNAL('SNIPParametersSignal'),
                      self.updateGraph)
@@ -369,7 +374,18 @@ class SNIPDialog(qt.QDialog):
                                        parametersDict['roi_min'],
                                        parametersDict['roi_max'],
                                        parametersDict['smoothing']]
-        return parametersDict                                       
+        return parametersDict
+
+    def setParameters(self, ddict0):
+        if 'arguments' in ddict0:
+            ddict = {}
+            ddict['width'] = ddict0['arguments'][0]
+            ddict['roi_min'] = ddict0['arguments'][1]
+            ddict['roi_max'] = ddict0['arguments'][2]
+            ddict['smoothing'] = ddict0['arguments'][3]
+            self.parametersWidget.setParameters(ddict)
+        else:
+            self.parametersWidget.setParameters(ddict0)
                  
 if __name__ == "__main__":
     import numpy
