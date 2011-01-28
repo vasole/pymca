@@ -57,7 +57,7 @@ except ImportError:
     import ProfileScanWidget
 try:
     from PyMca import SpecfitFuns
-except:
+except ImportError:
     import SpecfitFuns
 
 
@@ -65,7 +65,7 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 if QWTVERSION4:
-    raise ImportError("QImageFilterWidget needs Qwt5")
+    raise ImportError("MaskImageWidget needs Qwt5")
 
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt

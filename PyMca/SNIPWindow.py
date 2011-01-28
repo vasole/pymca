@@ -59,7 +59,7 @@ class SNIP1DParametersWidget(qt.QWidget):
         textLabels = ["SNIP background width (2 to 3 times fwhm) :",
                      "Minimum channel considered:",
                      "Maximum channel considered:",
-                     "Pleliminar smoothing level:"]
+                     "Preliminar smoothing level:"]
         if smooth:
             textLabels[0] = "SNIP width :"
             self.parametersDict['width'] = 3
