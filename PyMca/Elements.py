@@ -53,7 +53,7 @@ Speed of light                  c     299 792 458 m/s                defined
 Fine structure constant         α     7.297 352 5376(50) × 10–3     6.8 × 10–10
 Avogadro constant               NA    6.022 141 79(30) × 1023 mol–1 5.0 × 10–8
 """
-
+MINENERGY = 0.175
 AVOGADRO_NUMBER = 6.02214179E23
 
 ElementsInfo = [
@@ -2875,7 +2875,7 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
             shellrates = ElementShellRates[n][z-1]
         shelltransitions = ElementShellTransitions[n]
         ddict[rays] = []
-        minenergy = 0.200
+        minenergy = MINENERGY
         if 'TOTAL' in shelltransitions:
             indexoffset = 2
         else:
@@ -2904,7 +2904,7 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
     return ddict    
 
     
-def _updateElementDict(symbol, dict, energy=None, minenergy=0.200, minrate=0.0010,
+def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0.0010,
                                                      normalize = None, photoweights = None):
     if normalize   is None: normalize   = True
     if photoweights is None: photoweights = True
@@ -2968,7 +2968,7 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=0.200, minrate=0.001
     dict['buildparameters']['minenergy'] = minenergy
     dict['buildparameters']['minrate']   = minrate
     
-def updateDict(energy=None, minenergy=0.200, minrate=0.0010, cb=True):
+def updateDict(energy=None, minenergy=MINENERGY, minrate=0.0010, cb=True):
     for ele in ElementList:
         _updateElementDict(ele, Element[ele], energy=energy, minenergy=minenergy, minrate=minrate)
     if cb:
