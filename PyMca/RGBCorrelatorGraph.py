@@ -61,6 +61,9 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self.connect(self.graph,
                          qt.SIGNAL('PolygonSignal'),
                          self._graphPolygonSignalReceived)
+                self.connect(self._pickerSelectionWidthValue,
+                             qt.SIGNAL('valueChanged(int)'),
+                             self.setPickerSelectionWith)
         
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
@@ -254,7 +257,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self.toolBar.layout().addWidget(self._pickerSelectionWidthLabel)
                 self._pickerSelectionWidthValue = qt.QSpinBox(self.toolBar)
                 self._pickerSelectionWidthValue.setMinimum(1)
-                self._pickerSelectionWidthValue.setMaximum(100)
+                self._pickerSelectionWidthValue.setMaximum(1000)
                 self.toolBar.layout().addWidget(self._pickerSelectionWidthValue)
                 #tb = self._addToolButton(None,
                 #                     self._lineProfileClicked,
@@ -347,6 +350,24 @@ class RGBCorrelatorGraph(qt.QWidget):
             self._setPickerSelectionMode("LINE")
         else:
             self._setPickerSelectionMode(None)
+
+    def setPickerSelectionWith(self, intValue):
+        self._pickerSelectionWidthValue.setValue(intValue)
+        #get the current mode
+        mode = "NONE"
+        for button in self._pickerSelectionButtons:
+            if button.isChecked():
+                if button == self.hLineProfileButton:
+                    mode = "HORIZONTAL"
+                elif button == self.vLineProfileButton:
+                    mode = "VERTICAL"
+                elif button == self.lineProfileButton:
+                    mode = "LINE"        
+        ddict = {}
+        ddict['event'] = "PolygonWidthChanged"
+        ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
+        ddict['mode'] = mode
+        self.emit(qt.SIGNAL('PolygonSignal'), ddict)
 
     def hideProfileSelectionIcons(self):
         if not len(self._pickerSelectionButtons):

@@ -72,6 +72,11 @@ if QTVERSION > '4.0.0':
 else:
     import Qwt5 as Qwt
 
+try:
+    import QwtPlotItems
+    OVERLAY_DRAW = True
+except ImportError:
+    OVERLAY_DRAW = False
 
 DEBUG = 0
 
@@ -154,6 +159,11 @@ class MaskImageWidget(qt.QWidget):
         
         self._buildConnections()
         self._matplotlibSaveImage = None
+
+        #the overlay items to be drawn
+        self._overlayItemsDict = {}
+        #the last overlay legend used
+        self.__lastOverlayLegend = None
 
     def _build(self, standalonesave, profileselection=False):
         self.mainLayout = qt.QVBoxLayout(self)
@@ -302,12 +312,24 @@ class MaskImageWidget(qt.QWidget):
     def _polygonSignalSlot(self, ddict):
         if DEBUG:
             print("_polygonSignalSLot, event = %s" % ddict['event'])
+            print("Received ddict = ", ddict)
 
         if ddict['event'] in [None, "NONE"]:
             #Nothing to be made
             return
+        
+        if ddict['event'] == "PolygonWidthChanged":
+            if self.__lastOverlayLegend is not None:
+                legend = self.__lastOverlayLegend
+                if legend in self._overlayItemsDict:
+                    info = self._overlayItemsDict[legend]['info']
+                    if info['mode'] == ddict['mode']:
+                        newDict = {}
+                        newDict.update(info)
+                        newDict['pixelwidth'] = ddict['pixelwidth']
+                        self._polygonSignalSlot(newDict)
+            return
 
-        #
         if self._profileSelectionWindow is None:
             if self._profileScanWindow is None:
                 #identical to the standard scan window
@@ -348,6 +370,14 @@ class MaskImageWidget(qt.QWidget):
                     row = shape[0] - 1
                 ydata  = self.__imageData[row, :]
                 legend = "Row = %d"  % row
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([0.0, shape[1]],
+                                         [row, row],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             else:
                 row0 = int(ddict['y'][0]) - 0.5 * width
                 if row0 < 0:
@@ -360,6 +390,14 @@ class MaskImageWidget(qt.QWidget):
                     row0 = max(0, row1 - width)
                 ydata = self.__imageData[row0:int(row1+1), :].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
+                                         [row0, row1, row1, row0],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             xdata  = numpy.arange(shape[1]).astype(numpy.float)
         elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
             if width < 1:
@@ -370,6 +408,14 @@ class MaskImageWidget(qt.QWidget):
                     column = shape[1] - 1
                 ydata  = self.__imageData[:, column]
                 legend = "Column = %d"  % column
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([column, column],
+                                         [0, shape[0]],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             else:
                 col0 = int(ddict['x'][0]) - 0.5 * width
                 if col0 < 0:
@@ -382,6 +428,14 @@ class MaskImageWidget(qt.QWidget):
                     col0 = max(0, col1 - width)
                 ydata = self.__imageData[:, col0:int(col1+1)].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([col0, col0, col1, col1],
+                                         [0, shape[0], shape[0], 0.],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
         elif ddict['mode'].upper() in ["LINE"]:
             if len(ddict['x']) == 1:
@@ -407,6 +461,14 @@ class MaskImageWidget(qt.QWidget):
                 #perform the interpolation
                 ydata = self._interpolate((x0, y0), self.__imageData, x)
                 xdata = numpy.arange(float(npoints))
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([col0, col1],
+                                         [row0, row1],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             elif deltaCol == 0:
                 #vertical line
                 col0 = int(ddict['x'][0]) - 0.5 * width
@@ -418,10 +480,28 @@ class MaskImageWidget(qt.QWidget):
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
                     col0 = max(0, col1 - width)
-                ydata = self.__imageData[:, col0:int(col1+1)].sum(axis=1)
+                row0 = int(ddict['y'][0])
+                row1 = int(ddict['y'][1])
+                if row0 > row1:
+                    tmp = row0
+                    row0 = row1
+                    row1 = tmp
+                if row0 < 0:
+                    row0 = 0
+                if row1 >= shape[0]:
+                    row1 = shape[0] - 1                    
+                ydata = self.__imageData[row0:row1+1, col0:int(col1+1)].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([col0, col0, col1, col1],
+                                         [0, shape[0], shape[0], 0.],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             elif deltaRow == 0:
                 #horizontal line
                 row0 = int(ddict['y'][0]) - 0.5 * width
@@ -433,16 +513,39 @@ class MaskImageWidget(qt.QWidget):
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
                     row0 = max(0, row1 - width)
-                ydata = self.__imageData[row0:int(row1+1), :].sum(axis=0)
+                col0 = int(ddict['x'][0])
+                col1 = int(ddict['x'][1])
+                if col0 > col1:
+                    tmp = col0
+                    col0 = col1
+                    col1 = tmp
+                if col0 < 0:
+                    col0 = 0
+                if col1 >= shape[1]:
+                    col1 = shape[1] - 1                    
+                ydata = self.__imageData[row0:int(row1+1), col0:col1+1].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
+                                         [row0, row1, row1, row0],
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
             else:
+                #restore original value of width
+                width = ddict['pixelwidth']
                 #find m and b in the line y = mx + b
                 m = (row1 - row0) / float((col1 - col0))
                 b = row0 - m * col0
                 alpha = numpy.arctan(m)
-                npoints = deltaCol + 1
+                if deltaRow > deltaCol:
+                    npoints = deltaRow + 1
+                else:
+                    npoints = deltaCol + 1
                 #imagine the following sequence
                 # - change origin to the first point
                 # - clock-wise rotation to bring the line on the x axis of a new system
@@ -463,58 +566,93 @@ class MaskImageWidget(qt.QWidget):
                     print("new X0 Y0 = %f, %f  " % (newCol0, newRow0))
                     print("new X1 Y1 = %f, %f  " % (newCol1, newRow1))
 
-                tmpX   = numpy.linspace(newCol0, newCol1, npoints)
+                tmpX   = numpy.linspace(newCol0, newCol1, npoints).astype(numpy.float)
                 rotMatrix = numpy.zeros((2,2), numpy.float)
                 rotMatrix[0,0] =   cosalpha
-                rotMatrix[0,1] =   sinalpha
-                rotMatrix[1,0] =   cosalpha
-                rotMatrix[1,1] = - sinalpha
+                rotMatrix[0,1] = - sinalpha
+                rotMatrix[1,0] =   sinalpha
+                rotMatrix[1,1] =   cosalpha
                 if DEBUG:
                     #test if I recover the original points
-                    testX = numpy.zeros((1, 2) , numpy.float)
-                    xy = numpy.dot(testX, rotMatrix)
-                    print("Recovered X0 = %f" % (xy[0,0] + col0))
-                    print("Recovered Y0 = %f" % (xy[0,1] + row0))
+                    testX = numpy.zeros((2, 1) , numpy.float)
+                    colRow = numpy.dot(rotMatrix, testX)
+                    print("Recovered X0 = %f" % (colRow[0,0] + col0))
+                    print("Recovered Y0 = %f" % (colRow[1,0] + row0))
                     print("It should be = %f, %f" % (col0, row0))
                     testX[0,0] = newCol1
-                    testX[0,1] = newRow1
-                    xy = numpy.dot(testX, rotMatrix)
-                    print("Recovered X1 = %f" % (xy[0,0] + col0))
-                    print("Recovered Y1 = %f" % (xy[0,1] + row0))
+                    testX[1,0] = newRow1
+                    colRow = numpy.dot(rotMatrix, testX)
+                    print("Recovered X1 = %f" % (colRow[0,0] + col0))
+                    print("Recovered Y1 = %f" % (colRow[1,0] + row0))
                     print("It should be = %f, %f" % (col1, row1))
 
-                x = numpy.zeros((npoints, 2) , numpy.float)
+                #find the drawing limits
+                testX = numpy.zeros((2, 4) , numpy.float)
+                testX[0,0] = newCol0
+                testX[0,1] = newCol0
+                testX[0,2] = newCol1
+                testX[0,3] = newCol1
+                testX[1,0] = newRow0 - 0.5 * width
+                testX[1,1] = newRow0 + 0.5 * width
+                testX[1,2] = newRow1 + 0.5 * width
+                testX[1,3] = newRow1 - 0.5 * width
+                colRow = numpy.dot(rotMatrix, testX)
+                colLimits0 = colRow[0, :] + col0
+                rowLimits0 = colRow[1, :] + row0
+
+                for a in rowLimits0:
+                    if (a >= shape[0]) or (a < 0):
+                        print("outside row limits",a)
+                        return
+                for a in colLimits0:
+                    if (a >= shape[1]) or (a < 0):
+                        print("outside column limits",a)
+                        return
+
+                r0 = rowLimits0[0]
+                r1 = rowLimits0[1]
+
+                if r0 > r1:
+                    print("r0 > r1", r0, r1)
+                    raise ValueError("r0 > r1")                    
+
+                x = numpy.zeros((2, npoints) , numpy.float)
                 tmpMatrix = numpy.zeros((npoints, 2) , numpy.float)
-                ydata = numpy.zeros((npoints, ) , numpy.float)
-                #oversampling solves noise introduction issues
-                oversampling = (width+1)
-                ncontributors = int(width * oversampling)
-                if ncontributors == 0:
-                    x[:, 0] = tmpX
-                    #x[:, 1] = 0.0
-                    xy = numpy.dot(x, rotMatrix)
-                    tmpMatrix[:,1] = xy[:,0] + col0
-                    tmpMatrix[:,0] = xy[:,1] + row0
-                    rowLimits = [tmpMatrix[0,0], tmpMatrix[-1,0]]
-                    colLimits = [tmpMatrix[0,1], tmpMatrix[-1,1]]
-                    for a in rowLimits:
-                        if (a >= shape[0]) or (a < 0):
-                            print("outside row limits",a)
-                            return
-                    for a in colLimits:
-                        if (a >= shape[1]) or (a < 0):
-                            print("outside column limits",a)
-                            return
-                    ydata += self._interpolate((x0, y0), self.__imageData, tmpMatrix)
+
+                if 0:
+                    #take only the central point
+                    oversampling = 1
+                    x[0, :] = tmpX
+                    x[1, :] = 0.0
+                    colRow = numpy.dot(rotMatrix, x)
+                    colRow[0, :] += col0
+                    colRow[1, :] += row0
+                    tmpMatrix[:,0] = colRow[1,:]
+                    tmpMatrix[:,1] = colRow[0,:]
+                    ydataCentral = self._interpolate((x0, y0),\
+                                    self.__imageData, tmpMatrix)
+                    #multiply by width too have the equivalent scale
+                    ydata = ydataCentral
                 else:
-                    x[:, 0] = tmpX
-                    for i in range(ncontributors):
-                        x[:, 1] = (i - 0.5) * (width/oversampling)
-                        xy = numpy.dot(x, rotMatrix)
-                        tmpMatrix[:,1] = xy[:,0] + col0
-                        tmpMatrix[:,0] = xy[:,1] + row0
-                        rowLimits = [tmpMatrix[0,0], tmpMatrix[-1,0]]
-                        colLimits = [tmpMatrix[0,1], tmpMatrix[-1,1]]
+                    if ddict['event'] == "PolygonSelected":
+                        #oversampling solves noise introduction issues
+                        oversampling = width + 1
+                        oversampling = min(oversampling, 21) 
+                    else:
+                        oversampling = 1
+                    ncontributors = width * oversampling
+                    iterValues = numpy.linspace(-0.5*width, 0.5*width, ncontributors)
+                    tmpMatrix = numpy.zeros((npoints*len(iterValues), 2) , numpy.float)
+                    x[0, :] = tmpX
+                    offset = 0
+                    for i in iterValues:
+                        x[1, :] = i
+                        colRow = numpy.dot(rotMatrix, x)
+                        colRow[0, :] += col0
+                        colRow[1, :] += row0
+                        """
+                        colLimits = [colRow[0, 0], colRow[0, -1]]
+                        rowLimits = [colRow[1, 0], colRow[1, -1]]
                         for a in rowLimits:
                             if (a >= shape[0]) or (a < 0):
                                 print("outside row limits",a)
@@ -523,10 +661,29 @@ class MaskImageWidget(qt.QWidget):
                             if (a >= shape[1]) or (a < 0):
                                 print("outside column limits",a)
                                 return
-                        ydata += self._interpolate((x0, y0), self.__imageData, tmpMatrix)
+                        """
+                        #it is much faster to make one call to the interpolating
+                        #routine than making many calls
+                        tmpMatrix[offset:(offset+npoints),0] = colRow[1,:]
+                        tmpMatrix[offset:(offset+npoints),1] = colRow[0,:]                    
+                        offset += npoints
+                    ydata = self._interpolate((x0, y0),\
+                                   self.__imageData, tmpMatrix)
+                    ydata.shape = len(iterValues), npoints
+                    ydata = ydata.sum(axis=0)
+                    #deal with the oversampling
                     ydata /= oversampling
+                          
                 xdata = numpy.arange(float(npoints))
-                legend = "y = %f (x-%.1f) + %f ; width=%d" % (m, col0, b, width+1)
+                legend = "y = %f (x-%.1f) + %f ; width=%d" % (m, col0, b, width)
+                if OVERLAY_DRAW:
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    self.drawOverlayItem(colLimits0,
+                                         rowLimits0,
+                                         legend=ddict['mode'],
+                                         info=ddict,
+                                         replace=True,
+                                         replot=True)
         else:
             if DEBUG:
                 print("Mode %s not supported yet" % ddict['mode'])
@@ -535,7 +692,7 @@ class MaskImageWidget(qt.QWidget):
         info['xlabel'] = "Point"
         info['ylabel'] = "Z"
         self._profileSelectionWindow.addCurve(xdata, ydata, legend=legend, info=info,
-                                          replot=False, replace=True)
+                                          replot=True, replace=True)
 
     def _profileSelectionSlot(self, ddict):
         if DEBUG:
@@ -586,6 +743,35 @@ class MaskImageWidget(qt.QWidget):
                 else:
                     replot = False
                 self._profileScanWindow.removeCurve(legend, replot=replot)        
+
+    def drawOverlayItem(self, x, y, legend=None, info=None, replace=False, replot=True):
+        #same call as the plot1D addCurve command
+        if legend is None:
+            legend="UnnamedOverlayItem"
+        if legend not in self._overlayItemsDict:
+            overlayItem = QwtPlotItems.PolygonItem(legend)
+            overlayItem.attach(self.graphWidget.graph)
+            self._overlayItemsDict[legend] = {}
+            self._overlayItemsDict[legend]['item'] = overlayItem
+        else:
+            overlayItem = self._overlayItemsDict[legend]['item']
+        if replace:
+            iterKeys = list(self._overlayItemsDict.keys())
+            for name in iterKeys:
+                if name == legend:
+                    continue
+                self._overlayItemsDict[name]['item'].detach()
+                delKeys = list(self._overlayItemsDict[name].keys())
+                for key in delKeys:
+                    del self._overlayItemsDict[name][key]
+                del self._overlayItemsDict[name]
+        overlayItem.setData(x, y)
+        self._overlayItemsDict[legend]['x'] = x
+        self._overlayItemsDict[legend]['y'] = y
+        self._overlayItemsDict[legend]['info'] = info
+        if replot:
+            self.graphWidget.graph.replot()
+        self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
         if QWTVERSION4:
@@ -1342,6 +1528,7 @@ def test():
         container = MaskImageWidget(profileselection=True)
         data = numpy.arange(40000).astype(numpy.int32)
         data.shape = 200, 200
+        data = numpy.eye(200)
         container.setImageData(data)
         #data.shape = 100, 400
         #container.setImageData(None)
