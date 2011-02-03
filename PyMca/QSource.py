@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -39,7 +39,7 @@ if QTVERSION < '4.0.0':
 else:
     class SourceEvent(qt.QEvent):
         def __init__(self, ddict=None):
-            if dict is None: ddict = {}
+            if ddict is None: ddict = {}
             self.dict = ddict
             qt.QEvent.__init__(self, SOURCE_EVENT)
 
