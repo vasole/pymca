@@ -179,3 +179,17 @@ class Plot1DBase:
     def setGraphYTitle(self, title):
         print("setGraphYTitle not implemented")
 
+    def getGraphTitle(self):
+        print("getGraphTitle not implemented")
+        return "Title"
+
+    def getGraphXTitle(self):
+        print("getGraphXTitle not implemented")
+        return "X"
+
+    def getGraphYTitle(self):
+        print("getGraphYTitle not implemented")
+        return "Y"
+
+
+        

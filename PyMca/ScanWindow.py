@@ -1734,6 +1734,24 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def setGraphYTitle(self, title):
         self.graph.y1Label(title)
 
+    def getGraphTitle(self):
+        title = self.graph.title()
+        if sys.version < '3.0':
+            title = str(title)
+        return title
+
+    def getGraphXTitle(self):
+        title = self.graph.x1Label()
+        if sys.version < '3.0':
+            title = str(title)
+        return title
+
+    def getGraphYTitle(self):
+        title = self.graph.y1Label()
+        if sys.version < '3.0':
+            title = str(title)
+        return title
+
     #end of plugins interface
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
                  replace=False, replot=True, info=None, **kw):

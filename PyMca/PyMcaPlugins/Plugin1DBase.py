@@ -9,6 +9,8 @@ These plugins will be compatible with any 1D-plot window that provides the funct
     addCurve
     getGraphXLimits
     getGraphYLimits
+    getGraphXTitle
+    getGraphYTitle
     removeCurve
     
 """
@@ -79,6 +81,12 @@ class Plugin1DBase:
 
     def removeCurve(self, legend, **kw):
         return self._plotWindow.removeCurve(legend, **kw) 
+
+    def getGraphXTitle(self):
+        return self._plotWindow.getGraphXTitle()
+
+    def getGraphYTitle(self):
+        return self._plotWindow.getGraphYTitle()
 
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
