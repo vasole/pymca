@@ -66,10 +66,15 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
             except:
                 import sys
                 print(sys.exc_info())
+                raise
 
     def _convert(self):
         x, y, legend, info = self.getActiveCurve()
-        
+        self._x = x
+        self._y = y
+        if 'Header' not in info:
+            raise ValueError("This does not seem to be a mesh scan")
+            
         #print "INFO = ", info
         header = info['Header'][0]
         #print header
@@ -77,38 +82,62 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         if (item[2] != 'mesh'):
             raise ValueError("This does not seem to be a mesh scan")
 
-        #xLabel = self.getGraphXTitle()
-        motor0Mne = item[3]
-        motor1Mne = item[7]
+        self._xLabel = self.getGraphXTitle()
+        self._yLabel = self.getGraphYTitle()
+
+        self._motor0Mne = item[3]
+        self._motor1Mne = item[7]
 
         #print("Scanned motors are %s and %s" % (motor0Mne, motor1Mne))
         
         #Assume an EXACTLY regular mesh for both motors
-        motor0 = numpy.linspace(float(item[4]), float(item[5]), int(item[6])+1)
-        motor1 = numpy.linspace(float(item[8]), float(item[9]), int(item[10])+1)
+        self._motor0 = numpy.linspace(float(item[4]), float(item[5]), int(item[6])+1)
+        self._motor1 = numpy.linspace(float(item[8]), float(item[9]), int(item[10])+1)
 
-        """
-        if xLabel.upper() == motor0Mne.upper():
-            xDimension = len(motor0)
-        elif xLabel.upper() == motor1Mne.upper():
-            xDimension = len(motor1)
-        elif xLabel == info['selection']['cntlist'][0]:
-            xDimension = len(motor0)
-        elif xLabel == info['selection']['cntlist'][1]:
-            xDimension = len(motor1)
-        else:
-            raise ValueError("XLabel should be one of the scanned motors")
-        """
+        try:
+            if xLabel.upper() == motor0Mne.upper():
+                self._motor0 = self._x
+                self._motor0Mne = self._xLabel
+            elif xLabel.upper() == motor1Mne.upper():
+                self._motor1 = self._x
+                self._motor1Mne = self._xLabel
+            elif xLabel == info['selection']['cntlist'][0]:
+                self._motor0 = self._x
+                self._motor0Mne = self._xLabel
+            elif xLabel == info['selection']['cntlist'][1]:
+                self._motor1 = self._x
+                self._motor1Mne = self._xLabel
+        except:
+            if DEBUG:
+                print("XLabel should be one of the scanned motors")
 
-        y.shape = len(motor1), len(motor0)
+        self._legend = legend
+        self._info = info
+        y.shape = len(self._motor1), len(self._motor0)
         if self.stackWidget is None:
             self.stackWidget = MaskImageWidget.MaskImageWidget(\
                                         imageicons=False,
                                         selection=False,
                                         profileselection=True,
-                                        scanwindow=self._plotWindow)
+                                        scanwindow=self)
         self.stackWidget.setImageData(y)
         self.stackWidget.show()
+
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+        info['LabelNames'][1] = self._yLabel
+        if info['SourceName'].startswith('Row ='):
+            x = self._motor0
+            info['xlabel'] = self._motor0Mne
+        elif info['SourceName'].startswith('Column ='):
+            x = self._motor1
+            info['xlabel'] = self._motor1Mne
+        info['legend'] = info['selectionlegend']
+        info['ylabel'] = self._yLabel
+        legend = info['selectionlegend']
+        return self._plotWindow.addCurve(x, y, legend=legend,
+                                         info=info,
+                                         replace=replace,
+                                         replot=replot)
 
 MENU_TEXT = "RegularMeshPlugins"
 def getPlugin1DInstance(plotWindow, **kw):
