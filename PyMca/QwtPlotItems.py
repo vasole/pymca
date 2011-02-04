@@ -84,14 +84,127 @@ class PolygonItem(qwt.QwtPlotItem):
         painter.drawPolygon(polygon, qt.Qt.OddEvenFill)
         painter.setBrush(oldBrush)
 
+class QImageItem(PolygonItem):
+    def __init__(self, title="Unnamed ImageItem"):
+        self._title = title
+        PolygonItem.__init__(self, qwt.QwtText(self._title))
+        self._qImage = None
+        self._imageDict = {}
+        self.imageList = []
+        self._worldX = None
+        self._worldY = None
+        self._worldWidth  = None
+        self._worldHeight = None
+        
+
+    def setQImageList(self, images, width, height, imagenames = None):
+        nimages = len(images)
+        if imagenames is None:
+            self.imageNames = []
+            for i in range(nimages):
+                self.imageNames.append("%s %02d" % (self._title, i))
+        else:
+            self.imageNames = imagenames
+
+        i = 0
+        self._imageDict = {}
+        for label in self.imageNames:
+            self.setQImage(images[i], width, height)
+            self._imageDict[label] = self.getQImage()            
+            i += 1
+
+    def setQImage(self, qimage, width, height):
+        if (width != qimage.width()) or\
+           (height != qimage.height()):
+            self._qImage = qimage.scaled(qt.QSize(width, height),
+                                         qt.Qt.IgnoreAspectRatio,
+                                         qt.Qt.FastTransformation)
+        else:
+            self._qImage = qimage
+        if self._qImage.format() != qt.QImage.Format_ARGB32:
+            self._qImage = self._qImage.convertToFormat(qt.QImage.Format_ARGB32)
+        self._worldX = 0.0
+        self._worldY = 0.0
+        self._worldWidth  = width
+        self._worldHeight = height
+
+    def getQImage(self):
+        return self._qImage
+
+    def setCurrentIndex(self, index):
+        self._qImage = self._imageDict[self.imageNames[index]]
+
+    def draw(self, painter, xMap, yMap, canvasQRect):
+        if DEBUG:
+            print("%s.draw called" % self._title)
+
+        #xMap and yMap contain the world coordinates 
+        #one should deal with logarithmic axes?
+	#print "xlimits = ", xMap.s1(),xMap.s2()
+        #print "ylimits = ", yMap.s1(),yMap.s2()
+
+        #the canvasQRect contains the pixel coordinates to be drawn
+        #canvasQRect.x(), canvasQRect.y(), canvasQRect.width(), canvasQRect.height()
+        if self._qImage is None:
+            return
+
+        xMin = self._worldX
+        xMax = self._worldX + self._worldWidth
+        yMin = self._worldY
+        yMax = self._worldY + self._worldHeight
+
+        #get the plot instance
+        plot = self.plot()
+        
+        #get the destination area in pixel coordinates
+        x = plot.transform(qwt.QwtPlot.xBottom, xMin)
+        xmax = plot.transform(qwt.QwtPlot.xBottom, xMax)
+        y = plot.transform(qwt.QwtPlot.yLeft, yMin)
+        ymax = plot.transform(qwt.QwtPlot.yLeft, yMax)
+        width = xmax - x
+
+        #take care of y origin
+        height = y - ymax
+        destination = qt.QRectF(x, y, width, height)
+        
+        painter.drawRect(destination)
+        painter.drawImage(destination,
+                          self._qImage)
+        
+    def setData(self, x, y, width=None, height=None):
+        """
+        setData(self, x, y, width=None, height=None)
+
+        Set the set of points defining the square containing the image (in world coordinates)
+
+        """
+        if self._qImage is None:
+            return
+        if width is None:
+            width = self._qImage.width()
+        if height is None:
+            height = self._qImage.height()
+        self._worldX = x
+        self._worldY = y
+        self._worldWidth  = width
+        self._worldHeight = height
+
+
 if __name__ == "__main__":
     DEBUG = 1
+    import os
     from PyMca import QtBlissGraph
     app = qt.QApplication([])
     plot = QtBlissGraph.QtBlissGraph()
     item = PolygonItem("Dummy")
     item.setData(x=[10, 400, 600.], y=[200, 600, 800.])
     item.attach(plot)
+    image = QImageItem("Dummy2")
+    image.setData(x=10, y=[200, 600, 800.])
+    qImage = qt.QImage(os.path.join(os.path.dirname(__file__),"PyMcaSplashImage.png"))
+    image.setQImageList([qImage], qImage.width(), qImage.height())
+    image.setData(200, 600)
+    image.attach(plot)
     plot.replot()
     plot.show()
     app.exec_()
