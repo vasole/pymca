@@ -227,7 +227,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self._imageData = self._getImageDataFromSingleIndex(index)
         self.plotImage(True)
         txt = "%s %d" % (legend, index)
-        self.setname(txt)
+        self.setName(txt)
         
         if moveslider:
             self.slider.setValue(index)
