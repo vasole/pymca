@@ -95,6 +95,7 @@ class QImageItem(PolygonItem):
         self._worldY = None
         self._worldWidth  = None
         self._worldHeight = None
+        self._alpha = 1.0
         
 
     def setQImageList(self, images, width, height, imagenames = None):
@@ -166,10 +167,28 @@ class QImageItem(PolygonItem):
         #take care of y origin
         height = y - ymax
         destination = qt.QRectF(x, y, width, height)
-        
-        painter.drawRect(destination)
+
+        #with a brush I only get part of the image
+        #brush = qt.QBrush(painter.brush())
+        #brush.setTextureImage(self._qImage)
+        #transform = qt.QTransform(brush.transform())
+        #transform.map(int(x), int(y), 0, 0)
+        #transform.map(int(x+width), int(y+height),
+        #              self._qImage.width(), self._qImage.height())
+        #brush.setTransform(transform)
+        #the methods below give the same result 
+        #painter.drawRect(destination)
+        #painter.setBrush(brush)
+        #painter.fillRect(destination, brush)
+
+        #this works
+        painter.setOpacity(self._alpha)
+        if DEBUG:
+            #draw the rectangle around the image
+            #just for debugging purposes
+            painter.drawRect(destination)
         painter.drawImage(destination,
-                          self._qImage)
+                         self._qImage)
         
     def setData(self, x, y, width=None, height=None):
         """
@@ -189,6 +208,8 @@ class QImageItem(PolygonItem):
         self._worldWidth  = width
         self._worldHeight = height
 
+    def setAlpha(self, alpha):
+        self._alpha = alpha
 
 if __name__ == "__main__":
     DEBUG = 1
@@ -204,6 +225,7 @@ if __name__ == "__main__":
     qImage = qt.QImage(os.path.join(os.path.dirname(__file__),"PyMcaSplashImage.png"))
     image.setQImageList([qImage], qImage.width(), qImage.height())
     image.setData(200, 600)
+    image.setAlpha(0.5)
     image.attach(plot)
     plot.replot()
     plot.show()
