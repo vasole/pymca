@@ -1211,7 +1211,7 @@ class MaskImageWidget(qt.QWidget):
         if QTVERSION < '4.0.0':
             self.colormapDialog.raiseW()
         else:
-            self.colormapDialog.raise_()          
+            self.colormapDialog.raise_()
         self.colormapDialog.show()
 
     def __initColormapDialog(self):
@@ -1220,6 +1220,14 @@ class MaskImageWidget(qt.QWidget):
         self.colormapDialog = ColormapDialog.ColormapDialog()
         self.colormapDialog.colormapIndex  = self.colormapDialog.colormapList.index("Temperature")
         self.colormapDialog.colormapString = "Temperature"
+        self.colormapDialog.setDataMinMax(minData, maxData)
+        self.colormapDialog.setAutoscale(1)
+        self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
+        self.colormap = (self.colormapDialog.colormapIndex,
+                              self.colormapDialog.autoscale,
+                              self.colormapDialog.minValue, 
+                              self.colormapDialog.maxValue,
+                              minData, maxData)
         if QTVERSION < '4.0.0':
             self.colormapDialog.setCaption("Colormap Dialog")
             self.connect(self.colormapDialog,
@@ -1230,14 +1238,6 @@ class MaskImageWidget(qt.QWidget):
             self.connect(self.colormapDialog,
                          qt.SIGNAL("ColormapChanged"),
                          self.updateColormap)
-        self.colormapDialog.setDataMinMax(minData, maxData)
-        self.colormapDialog.setAutoscale(1)
-        self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
-        self.colormap = (self.colormapDialog.colormapIndex,
-                              self.colormapDialog.autoscale,
-                              self.colormapDialog.minValue, 
-                              self.colormapDialog.maxValue,
-                              minData, maxData)
         self.colormapDialog._update()
 
     def updateColormap(self, *var):
@@ -1502,6 +1502,8 @@ class MaskImageWidget(qt.QWidget):
     def closeEvent(self, event):
         if self._profileSelectionWindow is not None:
             self._profileSelectionWindow.close()
+        if self.colormapDialog is not None:
+            self.colormapDialog.close()
         qt.QWidget.closeEvent(self, event)
 
 

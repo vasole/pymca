@@ -394,7 +394,7 @@ def test():
                        app,
                        qt.SLOT('quit()'))
     if len(sys.argv) > 1:
-        if sys.argv[1][-3:].upper() == 'EDF':
+        if sys.argv[1][-3:].upper() in ['EDF', 'CCD']:
             container = ExternalImagesWindow(selection=False,
                                              colormap=True,
                                              imageicons=False,
