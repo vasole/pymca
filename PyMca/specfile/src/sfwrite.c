@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -55,7 +55,9 @@
  */
 #include <SpecFile.h>
 #include <SpecFileP.h>
-
+#ifndef WIN32 
+#include <unistd.h>
+#endif
 /*
  * Declarations
  */
