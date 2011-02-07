@@ -1005,9 +1005,10 @@ class MaskImageWidget(qt.QWidget):
     def _resetSelection(self, owncall=True):
         if DEBUG:
             print("_resetSelection")
+        self.__selectionMask = None
         if self.__imageData is None:
             return
-        self.__selectionMask = numpy.zeros(self.__imageData.shape, numpy.uint8)
+        #self.__selectionMask = numpy.zeros(self.__imageData.shape, numpy.uint8)
         self.plotImage(update = True)
 
         #inform the others
@@ -1023,6 +1024,10 @@ class MaskImageWidget(qt.QWidget):
             self.plotImage(update=False)
 
     def getSelectionMask(self):
+        if self.__imageData is None:
+            return None
+        if self.__selectionMask is None:
+            return numpy.zeros(self.__imageData.shape, numpy.uint8)
         return self.__selectionMask
 
     def setImageData(self, data, clearmask=False):
@@ -1094,10 +1099,7 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.graph.clear()
             self.graphWidget.picker.data = None
             return
-        
-        if self.__selectionMask is None:
-            self.__selectionMask = numpy.zeros(self.__imageData.shape,
-                                                 numpy.uint8)
+
         if update:
             self.getPixmapFromData()
             self.__pixmap0 = self.__pixmap.copy()
@@ -1120,6 +1122,7 @@ class MaskImageWidget(qt.QWidget):
             (self.__imageData.shape[1], self.__imageData.shape[0]),
                                         xmirror = 0,
                                         ymirror = not self._y1AxisInverted)
+
         if not self.graphWidget.graph.yAutoScale:
             self.graphWidget.graph.setY1AxisLimits(ylimits[0], ylimits[1],
                                                    replot=False)
@@ -1182,23 +1185,27 @@ class MaskImageWidget(qt.QWidget):
                     self.__pixmap[self.__selectionMask>0,3]    = 0x40
             else:
                 if self.__defaultColormap > 1:
-                    for i in range(4):
+                    tmp = 1 - 0.2 * self.__selectionMask
+                    for i in range(3):
                         self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
-                                (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+                                tmp)
                 else:
                     self.__pixmap = self.__pixmap0.copy()
                     self.__pixmap[self.__selectionMask>0,0]    = 0x40
                     self.__pixmap[self.__selectionMask>0,2]    = 0x70
                     self.__pixmap[self.__selectionMask>0,3]    = 0x40
         elif int(str(self.colormap[0])) > 1:     #color
-            for i in range(4):
+            tmp = 1 - 0.2 * self.__selectionMask
+            for i in range(3):
                 self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
-                        (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
+                        tmp)
         else:
             self.__pixmap = self.__pixmap0.copy()
-            self.__pixmap[self.__selectionMask>0,0]    = 0x40
-            self.__pixmap[self.__selectionMask>0,2]    = 0x70
-            self.__pixmap[self.__selectionMask>0,3]    = 0x40
+            tmp  = 1 - self.__selectionMask
+            self.__pixmap[:,:, 2] = (0x70 * self.__selectionMask) +\
+                                  tmp * self.__pixmap0[:,:,2]
+            self.__pixmap[:,:, 3] = (0x40 * self.__selectionMask) +\
+                                  tmp * self.__pixmap0[:,:,3]
         return
 
     def selectColormap(self):
@@ -1516,7 +1523,8 @@ def test():
     container = MaskImageWidget()
     if len(sys.argv) > 1:
         if sys.argv[1].endswith('edf') or\
-           sys.argv[1].endswith('cbf'):
+           sys.argv[1].endswith('cbf') or\
+           sys.argv[1].endswith('ccd'):
             container = MaskImageWidget(profileselection=True)
             import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
