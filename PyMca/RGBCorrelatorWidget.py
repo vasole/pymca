@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -37,6 +37,8 @@ from PyMca_Icons import IconDict
 import ArraySave
 import PyMcaDirs
 import EdfFileDataSource
+import ExternalImagesWindow
+
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
 qt = RGBCorrelatorSlider.qt
@@ -103,6 +105,11 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.calculationButton = qt.QToolButton(hbox)
         self.calculationButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["sigma"])))
         self.calculationButton.setToolTip("Operate with the images")
+        self.profileImageListWidget = None
+        self.profileButton = qt.QToolButton(hbox)
+        self.profileButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["diagonal"])))
+        self.profileButton.setToolTip("Show selected images profile")
+
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1.setAlignment(alignment)
@@ -123,6 +130,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         hbox.mainLayout.addWidget(self.removeButton)
         hbox.mainLayout.addWidget(self.toggleSlidersButton)
         hbox.mainLayout.addWidget(self.calculationButton)
+        hbox.mainLayout.addWidget(self.profileButton)
         hbox.mainLayout.addWidget(HorizontalSpacer(self.toolBar))
         
         #hbox.mainLayout.addWidget(label1)
@@ -213,6 +221,11 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.connect(self.calculationButton,
                      qt.SIGNAL("clicked()"),
                      self._showCalculationDialog)
+
+        self.connect(self.profileButton,
+                     qt.SIGNAL("clicked()"),
+                     self.profileSelectedImages)
+
         self._calculationMenu = None
         self.pcaDialog  = None
         self.nnmaDialog = None
@@ -1024,6 +1037,8 @@ class RGBCorrelatorWidget(qt.QWidget):
     def closeEvent(self, event):
         if self.calculationDialog is not None:
             self.calculationDialog.close()
+        if self.profileImageListWidget is not None:
+            self.profileImageListWidget.close()
         qt.QWidget.closeEvent(self, event)
 
     """
@@ -1042,7 +1057,40 @@ class RGBCorrelatorWidget(qt.QWidget):
         pilImage.save(filename)
     """
 
+    def profileSelectedImages(self):
+        itemList = self.tableWidget.selectedItems()
+        if len(itemList) < 1:
+            errorText = "Please select at least one row in the table"
+            qt.QMessageBox.critical(self,"ValueError", errorText)
+            return
+        profileList = []
+        imageList = []
+        imageNames = []
         
+        for item in itemList:
+            row = item.row()
+            profileList.append(row)
+
+        for index in profileList:
+            name = self._imageList[index]
+            imageList.append(self._imageDict[name]['image'])
+            imageNames.append(name)
+        self.profileImageList(imagelist=imageList,
+                           imagenames=imageNames)
+        
+
+    def profileImageList(self, imagelist=None, imagenames=None):
+        if imagelist in [None, []]:
+            return
+        if self.profileImageListWidget is None:
+             self.profileImageListWidget= ExternalImagesWindow.ExternalImagesWindow(None,\
+                                        crop=False,
+                                        imageicons=False,
+                                        profileselection=True,
+                                        depthselection=True)
+        self.profileImageListWidget.setImageList(imagelist=imagelist, imagenames=imagenames)
+        self.profileImageListWidget.show()
+                                                            
 
 class ImageShapeDialog(qt.QDialog):
     def __init__(self, parent = None, shape = None):

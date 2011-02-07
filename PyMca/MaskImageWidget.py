@@ -317,7 +317,7 @@ class MaskImageWidget(qt.QWidget):
         if ddict['event'] in [None, "NONE"]:
             #Nothing to be made
             return
-        
+
         if ddict['event'] == "PolygonWidthChanged":
             if self.__lastOverlayLegend is not None:
                 legend = self.__lastOverlayLegend
@@ -346,6 +346,29 @@ class MaskImageWidget(qt.QWidget):
                              qt.SIGNAL('replaceClicked'),
                              self._profileSelectionSlot)
             self._interpolate =  SpecfitFuns.interpol
+
+
+        self._updateProfileCurve(ddict)
+
+    def _updateProfileCurve(self, ddict):
+        curve = self._getProfileCurve(ddict)
+        if curve is None:
+            return
+        xdata, ydata, legend, info = curve            
+        replot=True
+        replace=True
+        self._profileSelectionWindow.addCurve(xdata, ydata,
+                                              legend=legend,
+                                              info=info,
+                                              replot=replot,
+                                              replace=replace)
+
+    def _getProfileCurve(self, ddict, image=None, overlay=OVERLAY_DRAW):
+        if image is None:
+            imageData = self.__imageData
+        else:
+            imageData = image
+
         try:
             title = self.graphWidget.graph.title().text()
             if sys.version < '3.0':
@@ -359,7 +382,7 @@ class MaskImageWidget(qt.QWidget):
         #self._profileSelectionWindow.raise_()
         if ddict['event'] == 'PolygonModeChanged':
             return
-        shape = self.__imageData.shape
+        shape = imageData.shape
         width = ddict['pixelwidth'] - 1
         if ddict['mode'].upper() in ["HLINE", "HORIZONTAL"]:
             if width < 1:
@@ -368,9 +391,9 @@ class MaskImageWidget(qt.QWidget):
                     row = 0
                 if row >= shape[0]:
                     row = shape[0] - 1
-                ydata  = self.__imageData[row, :]
+                ydata  = imageData[row, :]
                 legend = "Row = %d"  % row
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([0.0, shape[1]],
                                          [row, row],
@@ -388,9 +411,9 @@ class MaskImageWidget(qt.QWidget):
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
                     row0 = max(0, row1 - width)
-                ydata = self.__imageData[row0:int(row1+1), :].sum(axis=0)
+                ydata = imageData[row0:int(row1+1), :].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
-                if OVERLAY_DRAW:
+                if ovelay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
                                          [row0, row1, row1, row0],
@@ -406,9 +429,9 @@ class MaskImageWidget(qt.QWidget):
                     column = 0
                 if column >= shape[1]:
                     column = shape[1] - 1
-                ydata  = self.__imageData[:, column]
+                ydata  = imageData[:, column]
                 legend = "Column = %d"  % column
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([column, column],
                                          [0, shape[0]],
@@ -426,9 +449,9 @@ class MaskImageWidget(qt.QWidget):
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
                     col0 = max(0, col1 - width)
-                ydata = self.__imageData[:, col0:int(col1+1)].sum(axis=1)
+                ydata = imageData[:, col0:int(col1+1)].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([col0, col0, col1, col1],
                                          [0, shape[0], shape[0], 0.],
@@ -459,9 +482,9 @@ class MaskImageWidget(qt.QWidget):
                 x[:, 1] = numpy.linspace(col0, col1, npoints)
                 legend = "From (%.3f, %.3f) to (%.3f, %.3f)" % (col0, row0, col1, row1)
                 #perform the interpolation
-                ydata = self._interpolate((x0, y0), self.__imageData, x)
+                ydata = self._interpolate((x0, y0), imageData, x)
                 xdata = numpy.arange(float(npoints))
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([col0, col1],
                                          [row0, row1],
@@ -490,11 +513,11 @@ class MaskImageWidget(qt.QWidget):
                     row0 = 0
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1                    
-                ydata = self.__imageData[row0:row1+1, col0:int(col1+1)].sum(axis=1)
+                ydata = imageData[row0:row1+1, col0:int(col1+1)].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([col0, col0, col1, col1],
                                          [0, shape[0], shape[0], 0.],
@@ -523,11 +546,11 @@ class MaskImageWidget(qt.QWidget):
                     col0 = 0
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1                    
-                ydata = self.__imageData[row0:int(row1+1), col0:col1+1].sum(axis=0)
+                ydata = imageData[row0:int(row1+1), col0:col1+1].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
                                          [row0, row1, row1, row0],
@@ -630,7 +653,7 @@ class MaskImageWidget(qt.QWidget):
                     tmpMatrix[:,0] = colRow[1,:]
                     tmpMatrix[:,1] = colRow[0,:]
                     ydataCentral = self._interpolate((x0, y0),\
-                                    self.__imageData, tmpMatrix)
+                                    imageData, tmpMatrix)
                     #multiply by width too have the equivalent scale
                     ydata = ydataCentral
                 else:
@@ -668,7 +691,7 @@ class MaskImageWidget(qt.QWidget):
                         tmpMatrix[offset:(offset+npoints),1] = colRow[0,:]                    
                         offset += npoints
                     ydata = self._interpolate((x0, y0),\
-                                   self.__imageData, tmpMatrix)
+                                   imageData, tmpMatrix)
                     ydata.shape = len(iterValues), npoints
                     ydata = ydata.sum(axis=0)
                     #deal with the oversampling
@@ -676,7 +699,7 @@ class MaskImageWidget(qt.QWidget):
                           
                 xdata = numpy.arange(float(npoints))
                 legend = "y = %f (x-%.1f) + %f ; width=%d" % (m, col0, b, width)
-                if OVERLAY_DRAW:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem(colLimits0,
                                          rowLimits0,
@@ -691,8 +714,7 @@ class MaskImageWidget(qt.QWidget):
         info = {}
         info['xlabel'] = "Point"
         info['ylabel'] = "Z"
-        self._profileSelectionWindow.addCurve(xdata, ydata, legend=legend, info=info,
-                                          replot=True, replace=True)
+        return xdata, ydata, legend, info
 
     def _profileSelectionSlot(self, ddict):
         if DEBUG:

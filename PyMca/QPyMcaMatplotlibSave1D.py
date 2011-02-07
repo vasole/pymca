@@ -84,7 +84,7 @@ class HorizontalSpacer(qt.QWidget):
 class MatplotlibCurveTable(qt.QTableWidget):
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
-        labels = ["Curve", "Alias", "Color", "Line Style"]
+        labels = ["Curve", "Alias", "Color", "Line Style", "Line Symbol"]
         n = len(labels)
         self.setColumnCount(len(labels))
         for i in range(len(labels)):
@@ -169,7 +169,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
         #linestyle
         j = 3
         widget = self.cellWidget(i, j)
-        options = ['-','--','-.',':']
+        options = ['-','--','-.',':','']
         if widget is None:
             widget = ComboBoxItem(self, i, j, options=options)
             self.setCellWidget(i, j, widget)
@@ -179,6 +179,21 @@ class MatplotlibCurveTable(qt.QTableWidget):
 
         idx = widget.findText(ddict['linestyle'])
         widget.setCurrentIndex(idx)
+
+        #line marker
+        j = 4
+        widget = self.cellWidget(i, j)
+        options = ['','o','+','x','^']
+        if widget is None:
+            widget = ComboBoxItem(self, i, j, options=options)
+            self.setCellWidget(i, j, widget)
+            qt.QObject.connect(widget,
+                               qt.SIGNAL('ComboBoxItemSignal'),
+                               self._mySlot)
+
+        idx = widget.findText(ddict['linemarker'])
+        widget.setCurrentIndex(idx)
+
 
     def _mySlot(self, ddict):
         #if self.__disconnect:
@@ -204,6 +219,9 @@ class MatplotlibCurveTable(qt.QTableWidget):
             widget = self.cellWidget(i, 3)
             linestyle = str(widget.currentText())
             ddict['curvedict'][legend]['linestyle'] = linestyle
+            widget = self.cellWidget(i, 4)
+            linemarker = str(widget.currentText())
+            ddict['curvedict'][legend]['linemarker'] = linemarker
         self.emit(qt.SIGNAL("CurveTableSignal"), ddict)
 
 class ComboBoxItem(qt.QComboBox):
@@ -482,6 +500,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                       color = None,
                       linewidth = None,
                       linestyle = None,
+                      marker=None,
                       alias = None,**kw):
         if self.limitsSet is not None:
             n = self._filterData(x, y)
@@ -504,7 +523,8 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                 style = '-'
         else:
             style = linestyle
-
+        if marker is None:
+            marker = ''
         if linewidth is None:linewidth = 1.0
         self._axFunction( x, y, linestyle = style, color=color, linewidth = linewidth, **kw)
         self._dataCounter += 1
@@ -520,6 +540,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         self.curveDict[legend]['linestyle'] = style
         self.curveDict[legend]['color'] = color
         self.curveDict[legend]['linewidth'] = linewidth
+        self.curveDict[legend]['linemarker'] = marker
         if alias is not None:
             self.curveDict[legend]['alias'] = alias
             self._legendList[-1] = alias
@@ -614,8 +635,14 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                 color = ddict['curvedict'][legend]['color']
             linewidth = self.curveDict[legend]['linewidth']
             linestyle = ddict['curvedict'][legend]['linestyle']
+            linemarker = ddict['curvedict'][legend]['linemarker']
+            if linestyle in ['None', '']:
+                linestyle = ''
+            if linemarker in ['None', '']:
+                linemarker = ''
             self._axFunction( x, y,
                               linestyle=linestyle,
+                              marker=linemarker,
                               color=color,
                               linewidth=linewidth)
             legendList.append(alias)

@@ -60,6 +60,9 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             del ddict['dynamic']
         if 'crop' in kw:
             del ddict['crop']
+        if 'depthselection' in kw:
+            del ddict['depthselection']
+        self._depthSelection = kw.get('depthselection', False)
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
@@ -370,6 +373,39 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             self.showImage(current)
         else:
             self.showImage(0)
+
+    def _updateProfileCurve(self, ddict):
+        if not self._depthSelection:
+            return MaskImageWidget.MaskImageWidget._updateProfileCurve(self,
+                                                                       ddict)
+        nImages = len(self.imageNames)
+        for i in range(nImages):
+            image=self.imageList[i]
+            overlay = False
+            if i == 0:
+                overlay = MaskImageWidget.OVERLAY_DRAW
+                replace = True
+                if len(self.imageNames) == 1:
+                    replot = True
+                else:
+                    replot = False
+            elif i == (nImages -1):
+                replot = True
+                replace=False
+            else:
+                replot = False
+                replace= False
+            curve = self._getProfileCurve(ddict, image=image, overlay=overlay)
+            if curve is None:
+                return
+            xdata, ydata, legend, info = curve
+            newLegend = self.imageNames[i]+ " " + legend 
+            self._profileSelectionWindow.addCurve(xdata, ydata,
+                                                  legend=newLegend,
+                                                  info=info,
+                                                  replot=replot,
+                                                  replace=replace)
+
 
 def test2():
     app = qt.QApplication([])
