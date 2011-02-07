@@ -37,7 +37,6 @@ else:
     QString = str
 MATPLOTLIB = False
 if QTVERSION > '4.0.0':
-    import RGBCorrelator
     try:
         import QPyMcaMatplotlibSave
         MATPLOTLIB = True
