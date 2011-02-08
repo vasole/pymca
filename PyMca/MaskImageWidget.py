@@ -412,7 +412,7 @@ class MaskImageWidget(qt.QWidget):
                     row0 = max(0, row1 - width)
                 ydata = imageData[row0:int(row1+1), :].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
-                if ovelay:
+                if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
                                          [row0, row1, row1, row0],
