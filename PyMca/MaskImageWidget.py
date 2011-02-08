@@ -519,7 +519,7 @@ class MaskImageWidget(qt.QWidget):
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([col0, col0, col1, col1],
-                                         [0, shape[0], shape[0], 0.],
+                                         [row0, row1, row1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
                                          replace=True,
@@ -551,7 +551,7 @@ class MaskImageWidget(qt.QWidget):
                 xdata = numpy.arange(float(npoints))
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
-                    self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
+                    self.drawOverlayItem([col0, col0, col1, col1],
                                          [row0, row1, row1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
@@ -1534,6 +1534,8 @@ class MaskImageWidget(qt.QWidget):
             self.colormapDialog.close()
         qt.QWidget.closeEvent(self, event)
 
+    def setInfoText(self, text):
+        return self.graphWidget.setInfoText(text)
 
 def test():
     app = qt.QApplication([])
