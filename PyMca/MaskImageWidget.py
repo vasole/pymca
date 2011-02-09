@@ -1383,6 +1383,9 @@ class MaskImageWidget(qt.QWidget):
                 j2 = min(int(round(ymax)), r)
                 if i1 == i2: i2 = i1+1
                 if j1 == j2: j2 = j1+1
+                if self.__selectionMask is None:
+                    self.__selectionMask = numpy.zeros(self.__imageData.shape,
+                                     numpy.uint8)
                 if self.__eraseMode:
                     self.__selectionMask[j1:j2, i1:i2] = 0 
                 else:
