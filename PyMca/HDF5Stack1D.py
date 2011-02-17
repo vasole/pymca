@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -340,9 +340,14 @@ class HDF5Stack1D(DataObject.DataObject):
                                 if len(tmp.shape) == 3:
                                     i = int(n/dim1)
                                     j = n % dim1
-                                    for ii in range(tmp.shape[1]):
-                                        for jj in range(tmp.shape[2]):
-                                            self.data[i+ii, j+jj, nImage] = tmp[0, ii, jj]
+                                    if 0:
+                                        #this loop is extremely SLOW!!!(and useless)
+                                        for ii in range(tmp.shape[1]):
+                                            for jj in range(tmp.shape[2]):
+                                                self.data[i+ii, j+jj, nImage] = tmp[0, ii, jj]
+                                    else:
+                                        self.data[i:i+tmp.shape[1],
+                                                  j:j+tmp.shape[2], nImage] = tmp[0]
                             if mSelection is not None:
                                 for mca in range(nMcaInDataSet):
                                     i = int(n/dim1)
