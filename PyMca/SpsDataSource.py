@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2007 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################
 import DataObject
 import types
@@ -36,7 +36,7 @@ SOURCE_TYPE = 'SPS'
 class SpsDataSource:
     def __init__(self, name, object=None, copy = True):
         if type(name) != types.StringType:
-            raise TypeError,"Constructor needs string as first argument"
+            raise TypeError("Constructor needs string as first argument")
         self.name = name
         self.sourceName = name
         self.sourceType=SOURCE_TYPE
@@ -73,7 +73,7 @@ class SpsDataSource:
             for key in key_list:
                 #a key corresponds to an array name
                 if key not in sourcekeys:
-                    raise KeyError,"Key %s not in source keys" % key
+                    raise KeyError("Key %s not in source keys" % key)
                 #array = key
                 #create data object
                 data = DataObject.DataObject()
@@ -109,7 +109,7 @@ class SpsDataSource:
                                 for labelindex in selection['x']:
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
-                                        raise "ValueError", "Label %s not in scan labels" % label
+                                        raise ValueError("Label %s not in scan labels" % label)
                                     index = data.info['LabelNames'].index(label)
                                     if data.x is None: data.x = []
                                     data.x.append(data.data[:nopts, index])
@@ -117,7 +117,7 @@ class SpsDataSource:
                                 for labelindex in selection['y']:
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
-                                        raise "ValueError", "Label %s not in scan labels" % label
+                                        raise ValueError("Label %s not in scan labels" % label)
                                     index = data.info['LabelNames'].index(label)
                                     if data.y is None: data.y = []
                                     data.y.append(data.data[:nopts, index])
@@ -125,7 +125,7 @@ class SpsDataSource:
                                 for labelindex in selection['m']:
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
-                                        raise "ValueError", "Label %s not in scan labels" % label
+                                        raise ValueError("Label %s not in scan labels" % label)
                                     index = data.info['LabelNames'].index(label)
                                     if data.m is None: data.m = []
                                     data.m.append(data.data[:nopts, index])
@@ -164,7 +164,8 @@ class SpsDataSource:
                 if (arrayflag & sps.TAG_ARRAY) == sps.TAG_ARRAY:
                     arraylist.append(array)
                     continue
-            if DEBUG:print "array not added ", array
+            if DEBUG:
+                print("array not added %s" % array)
         source_info={}
         source_info["Size"]=len(arraylist)
         source_info["KeyList"]=arraylist
@@ -228,7 +229,7 @@ class SpsDataSource:
 
     def _buildLabelsList(self, instr):
        if DEBUG:
-           print 'SpsDataSource : building counter list'
+           print('SpsDataSource : building counter list')
        state = 0
        llist  = ['']
        for letter in instr:
@@ -283,7 +284,7 @@ def DataSource(name="", object=None, copy=True, source_type=SOURCE_TYPE):
      sourceClass = source_types[source_type]
   except KeyError:
      #ERROR invalid source type
-     raise TypeError,"Invalid Source Type, source type should be one of %s" % source_types.keys()
+     raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
   
   return sourceClass(name, object, copy)
 
@@ -299,8 +300,8 @@ if __name__ == "__main__":
         #while(1):
         #    time.sleep(1)
         #    print obj.RefreshPage(specname,arrayname)
-        print "info = ",data.info
+        print("info = ",data.info)
     except:
-        print "Usage: SpsDataSource <specversion> <arrayname>"
+        print("Usage: SpsDataSource <specversion> <arrayname>")
         sys.exit()
 

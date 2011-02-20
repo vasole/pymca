@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -116,7 +116,7 @@ class QSpsDataSource(QSource.QSource):
                 else:
                     self.emit(qt.SIGNAL("updated"), ddict)
             else:
-                print "No info????"
+                print("No info????")
         
 if __name__ == "__main__":
     import sys
@@ -124,12 +124,12 @@ if __name__ == "__main__":
         specname=sys.argv[1]
         arrayname=sys.argv[2]        
     except:
-        print "Usage: SpsDataSource <specversion> <arrayname>"
+        print("Usage: SpsDataSource <specversion> <arrayname>")
         sys.exit()
     app=qt.QApplication([])
     obj = QSpsDataSource(specname)    
-    def mytest(dict):
-        print dict['Key']
+    def mytest(ddict):
+        print(ddict['Key'])
     app.mytest = mytest
     data = obj.getDataObject(arrayname,poll=True)
     if QTVERSION < '4.0.0':

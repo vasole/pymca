@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1791,7 +1791,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.graph.symbol  = 0
                 #line type
                 self.graph.linetype= 0
-                for key in self.graph.curves.keys():
+                for key in list(self.graph.curves.keys()):
                     if key not in ["Data"]:
                         self.graph.delcurve(key)
                     else:
@@ -1846,7 +1846,7 @@ class McaAdvancedFit(qt.QWidget):
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
             for group in dict['result']['groups']:
                 keep += ['y'+group]
-            for key in self.graph.curves.keys():
+            for key in list(self.graph.curves.keys()):
                 if key not in keep:
                     self.graph.delcurve(key)
             for group in dict['result']['groups']:

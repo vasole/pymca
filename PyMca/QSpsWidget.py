@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -72,7 +72,6 @@ class SPSFramesMcaWidget(qt.QWidget):
         targetwidgetid = ddict.get('targetwidgetid', None)
         if targetwidgetid not in [None, id(self)]:
             return
-        print "RECEIVED KEYS = ", ddict.keys()
         dataObject = self._getDataObject(ddict['Key'],
                                         selection=None)
         if dataObject is not None:
@@ -113,14 +112,16 @@ class SPSFramesMcaWidget(qt.QWidget):
 class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
     def setInfo(self, info):
         if DEBUG: 
-            print "info = ", info
+            print("info = ", info)
         if info.has_key("envdict"):
             if len(info["envdict"].keys()):
                 #We have environment information
                 if info["envdict"].has_key("datafile"):
                     if info["envdict"]["datafile"] != "/dev/null":
-                        if DEBUG:print "I should send a signal, either from here or from the parent to the dispatcher"
-                        if DEBUG:print "SPEC data file = ", datafile
+                        if DEBUG:
+                            print("I should send a signal, either from here or from the parent to the dispatcher")
+                        if DEBUG:
+                            print("SPEC data file = %s" % datafile)
                 #usefull keys = ["datafile", "scantype", "axistitles","plotlist", "xlabel", "ylabel"]
                 #
                 #info = self.data.getKeyInfo(sel[0])
@@ -237,7 +238,8 @@ class SPSXiaArrayWidget(qt.QWidget):
             layout.addWidget(self.title, 0, 0)
             layout.setAlignment(self.title, qt.Qt.AlignCenter)
             ##layout.addRowSpacing(0, 40)
-            if DEBUG:print "row spacing"
+            if DEBUG:
+                print("row spacing")
             layout.addWidget(self.detList, 1, 0)
 
     def setTitle(self, title):
@@ -573,16 +575,16 @@ class QSpsWidget(qt.QWidget):
 
     def setData(self,data=None):
         if DEBUG:
-            print "setData(self, data) called"
-            print "spec data = ",data
+            print("setData(self, data) called")
+            print("spec data = ",data)
         self.data= data
         self.refreshSpecList()
         self.refreshDataSelection()
 
     def setDataSource(self,data=None):
         if DEBUG:
-            print "setData(self, data) called"
-            print "spec data = ",data
+            print("setDataSource(self, data) called")
+            print("spec data = ",data)
         self.data= data
         self.refreshSpecList()
         self.refreshDataSelection()
@@ -657,7 +659,10 @@ class QSpsWidget(qt.QWidget):
                     cols= info[1]
                     type= info[2]
                     flag= info[3]
-                    if DEBUG: print " array = ", array, " flag = ", flag, " type = ", type
+                    if DEBUG:
+                        print(" array = ", array)
+                        print(" flag = ", flag)
+                        print(" type = ", type)
                     if type!=sps.STRING:
                         if (flag & sps.TAG_ARRAY) == sps.TAG_ARRAY:
                             arraylist[array]= (rows, cols)
@@ -765,12 +770,12 @@ class QSpsWidget(qt.QWidget):
 
     def __replaceClicked(self):
         if DEBUG:
-            print "replace clicked"
+            print("replace clicked")
         selkeys= self.__getSelectedKeys()
         if len(selkeys):
             #self.eh.event(self.repEvent, selkeys)
             if DEBUG:
-                print "Replace event"
+                print("Replace event")
             sel = {}
             sel['SourceType'] = SOURCE_TYPE
             sellistsignal = []
@@ -867,14 +872,14 @@ class QSpsWidget(qt.QWidget):
 
     def __addClicked(self):
         if DEBUG:
-            print "select clicked"
+            print("select clicked")
         selkeys= self.__getSelectedKeys()
         if DEBUG:
-            print "selected keys = ",selkeys 
+            print("selected keys = ",selkeys )
         if len(selkeys):
             #self.eh.event(self.addEvent, selkeys)
             if DEBUG:
-                print "Select event"
+                print("Select event")
             sel = {}
             sel['SourceType'] = SOURCE_TYPE 
             sellistsignal = []           
@@ -991,13 +996,13 @@ class QSpsWidget(qt.QWidget):
 
     def __removeClicked(self):
         if DEBUG:
-            print "remove clicked"
+            print("remove clicked")
         selkeys= self.__getSelectedKeys()
         if len(selkeys):
             #self.eh.event(self.delEvent, selkeys)
             if DEBUG:
-                print "Remove Event"
-                print "self.selection before = ",self.selection
+                print("Remove Event")
+                print("self.selection before = ",self.selection)
             returnedselection=[]
             sellistsignal = []           
             for selection in selkeys:
@@ -1072,16 +1077,16 @@ class QSpsWidget(qt.QWidget):
                 returnedselection.append(sel)
                 if self.selection is not None:
                     if DEBUG:
-                        print "step 1"
+                        print("step 1")
                     if self.selection.has_key(sel['SourceName']):
                         if DEBUG:
-                            print "step 2"
+                            print("step 2")
                         if self.selection[sel['SourceName']].has_key(arrayname):
                             if DEBUG:
-                                print "step 3"
+                                print("step 3")
                             if self.selection[sel['SourceName']][arrayname].has_key('rows'):
                                 if DEBUG:
-                                    print "step 4"
+                                    print("step 4")
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -1108,16 +1113,16 @@ class QSpsWidget(qt.QWidget):
                 arrayname = sel['Key']                
                 if self.selection is not None:
                     if DEBUG:
-                        print "step 1"
+                        print("step 1")
                     if self.selection.has_key(sel['SourceName']):
                         if DEBUG:
-                            print "step 2"
+                            print("step 2")
                         if self.selection[sel['SourceName']].has_key(arrayname):
                             if DEBUG:
-                                print "step 3"
+                                print("step 3")
                             if self.selection[sel['SourceName']][arrayname].has_key('rows'):
                                 if DEBUG:
-                                    print "step 4"
+                                    print("step 4")
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -1139,10 +1144,10 @@ class QSpsWidget(qt.QWidget):
                              
     def setSelected(self,sellist,reset=1):
         if DEBUG:
-            print "setSelected(self,sellist,reset=1) called"
-            print "sellist = ",sellist
-            print "selection before = ",self.selection
-            print "reset = ",reset
+            print("setSelected(self,sellist,reset=1) called")
+            print("sellist = ",sellist)
+            print("selection before = ",self.selection)
+            print("reset = ",reset)
         if reset:
             self.selection = {}
         elif self.selection is None:
@@ -1167,7 +1172,7 @@ class QSpsWidget(qt.QWidget):
                     if rowsel not in self.selection[specname][selkey]['cols']:
                         self.selection[specname][selkey]['cols'].append(rowsel)   
         if DEBUG:
-            print "self.selection after = ",self.selection
+            print("self.selection after = ",self.selection)
         self.__refreshSelection()
 
     def getSelection(self):
@@ -1191,8 +1196,8 @@ class QSpsWidget(qt.QWidget):
     def __refreshSelection(self):
         return
         if DEBUG:
-            print "__refreshSelection(self) called"
-            print self.selection
+            print("__refreshSelection(self) called")
+            print(self.selection)
         if self.selection is not None:
             sel = self.selection.get(self.data.SourceName, {})
             selkeys = []
@@ -1200,8 +1205,9 @@ class QSpsWidget(qt.QWidget):
                 if (sel[key]['mca'] != []) or (sel[key]['scan']['Ycnt'] !=  []):
                     selkeys.append(key)
             if DEBUG:
-                print "selected scans =",selkeys,"but self.selection = ",self.selection
-                print "and self.selection.get(self.data.SourceName, {}) =",sel
+                print("selected scans =",selkeys)
+                print("but self.selection = ",self.selection)
+                print("and self.selection.get(self.data.SourceName, {}) =",sel)
             self.scanList.markScanSelected(selkeys)
             scandict = sel.get(self.currentScan, {})
             if scandict.has_key('mca'):
@@ -1253,14 +1259,15 @@ def test():
         import SPSLayer
     else:
         import QSpsDataSource
-    def repSelection(sel): print "repSelection", sel
-    def addSelection(sel): print "addSelection", sel
 
     a= qt.QApplication(sys.argv)
     a.connect(a, qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
-    def repSelection(sel): print "replaceSelection", sel
-    def removeSelection(sel): print "removeSelection", sel
-    def addSelection(sel): print "addSelection", sel
+    def repSelection(sel):
+        print("replaceSelection", sel)
+    def removeSelection(sel):
+        print("removeSelection", sel)
+    def addSelection(sel):
+        print("addSelection", sel)
 
     w= QSpsWidget()
     if QTVERSION < '4.0.0':

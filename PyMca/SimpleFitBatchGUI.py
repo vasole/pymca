@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -216,7 +216,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         self._outputDirectoryLine.setText(fname)
 
     def printSelection(self, ddict):
-        print "Received = ", ddict
+        print("Received = ", ddict)
 
     def getParameters(self):
         ddict = {}

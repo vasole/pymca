@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,14 +22,12 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 """
-    SPSData.py
+    SPSLayer.py
     Data derived class to access spec shared memory
 """
-
-#from PyDVT import __version__,__date__,__author__
 
 
 ################################################################################  
@@ -40,7 +38,7 @@ import spswrap as sps
 SOURCE_TYPE = "SPS"    
 
 
-class SPSLayer:
+class SPSLayer(object):
     """
     Specializes Data class to access Spec shared memory.
     Interface: Data class interface.
