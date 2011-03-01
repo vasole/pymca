@@ -145,6 +145,7 @@ class StackBase(object):
         #isinstance(stack, DataObject.DataObject) as false
         #for DataObject derived classes like OmnicMap!!!!
         if isinstance(stack, DataObject.DataObject) or\
+           ("DataObject.DataObject" in ("%s" % type(stack))) or\
            ("QStack" in ("%s" % type(stack))) or\
            ("Map" in ("%s" % type(stack))) :
             self._stack = stack

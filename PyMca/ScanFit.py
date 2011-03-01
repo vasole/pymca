@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -45,6 +45,7 @@ class ScanFit(qt.QWidget):
             self.specfit = Specfit.Specfit()
         else:
             self.specfit = specfit
+        self.info = None            
         layout = qt.QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
@@ -190,6 +191,8 @@ class ScanFit(qt.QWidget):
                     else:
                         self.emit(qt.SIGNAL('ScanFitSignal'), ndict)
             else:
+                if self.info is None:
+                    self.info = {}
                 ddict['info'] = {}
                 ddict['info'].update(self.info)
                 if QTVERSION < '4.0.0':
