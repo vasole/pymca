@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -372,10 +372,23 @@ class ColormapDialog(qt.QDialog):
         self.sendColormap()
 
     def buttonGroupChange(self, val):
-        self.colormapType = val
         if DEBUG:
             print("buttonGroup asking to update colormap")
+        self.setColormapType(val, update=True)
         self._update()
+
+    def setColormapType(self, val, update=False):
+        self.colormapType = val
+        if QTVERSION > '4.0.0':
+            if self.colormapType == 1:
+                self.buttonGroup.button(1).setChecked(True)
+            elif self.colormapType == 2:
+                self.buttonGroup.button(2).setChecked(True)
+            else:
+                self.colormapType = 0
+                self.buttonGroup.button(0).setChecked(True)
+        if update:
+            self._update()
 
     def chval(self, ddict):
         if ddict['event'] == 'markerMoving':

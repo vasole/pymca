@@ -394,8 +394,8 @@ class MaskImageWidget(qt.QWidget):
                 legend = "Row = %d"  % row
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
-                    self.drawOverlayItem([0.0, shape[1]],
-                                         [row, row],
+                    self.drawOverlayItem([0.0, shape[1], shape[1], 0.0],
+                                         [row, row, row+1, row+1],
                                          legend=ddict['mode'],
                                          info=ddict,
                                          replace=True,
@@ -432,8 +432,8 @@ class MaskImageWidget(qt.QWidget):
                 legend = "Column = %d"  % column
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
-                    self.drawOverlayItem([column, column],
-                                         [0, shape[0]],
+                    self.drawOverlayItem([column, column, column+1, column+1],
+                                         [0.0, shape[0], shape[0], 0.0],
                                          legend=ddict['mode'],
                                          info=ddict,
                                          replace=True,
@@ -945,6 +945,9 @@ class MaskImageWidget(qt.QWidget):
             self.setSelectionMode(True)
 
     def setSelectionMode(self, mode = None):
+        #does it have sense to enable the selection without the image selection icons?
+        #if not self.__imageIconsFlag:
+        #    mode = False
         if mode:
             self.graphWidget.graph.enableSelection(True)
             self.__brushMode  = False
@@ -956,8 +959,7 @@ class MaskImageWidget(qt.QWidget):
                 self.graphWidget.selectionToolButton.setChecked(True)
             self.graphWidget.graph.enableZoom(False)
             self.graphWidget.selectionToolButton.setDown(True)
-            self.graphWidget.showImageIcons()
-            
+            self.graphWidget.showImageIcons()            
         else:
             self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOff)
             self.graphWidget.showProfileSelectionIcons()
@@ -1246,11 +1248,17 @@ class MaskImageWidget(qt.QWidget):
         minData = self.__imageData.min()
         maxData = self.__imageData.max()
         self.colormapDialog = ColormapDialog.ColormapDialog()
-        self.colormapDialog.colormapIndex  = self.colormapDialog.colormapList.index("Temperature")
-        self.colormapDialog.colormapString = "Temperature"
+        colormapIndex = self.__defaultColormap
+        if colormapIndex == 1:
+            colormapIndex = 0
+        elif colormapIndex == 6:
+            colormapIndex = 1
+        self.colormapDialog.colormapIndex  = colormapIndex
+        self.colormapDialog.colormapString = self.colormapDialog.colormapList[colormapIndex]
         self.colormapDialog.setDataMinMax(minData, maxData)
         self.colormapDialog.setAutoscale(1)
         self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
+        self.colormapDialog.setColormapType(self.__defaultColormapType, update=False)
         self.colormap = (self.colormapDialog.colormapIndex,
                               self.colormapDialog.autoscale,
                               self.colormapDialog.minValue, 
