@@ -745,8 +745,9 @@ class RGBCorrelatorWidget(qt.QWidget):
                     source = DataReader(fname)
                     for key in source.getSourceInfo()['KeyList']:
                         dataObject = source.getDataObject(key)
+                        title = dataObject.info.get("Title", key)
                         self.addImage(dataObject.data,
-                                      os.path.basename(fname)+" "+key)
+                                    os.path.basename(fname)+" "+title)
                 elif fname.lower().split(".")[-1] in ["jpg","jpeg",
                                                       "tif","tiff",
                                                       "png"]:
@@ -926,7 +927,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         if filename[-4:].lower() == ".edf":
             if 'Float32'in self._saveFilter:
                 dtype = Numeric.Float32
-                ArraySave.save2DArrayListAsEDF(datalist, filename, labels, dtype)
+                ArraySave.save2DArrayListAsEDF(datalist,
+                                               filename,
+                                               labels, dtype)
             else:
                 ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
         elif filename[-4:].lower() == ".csv":
