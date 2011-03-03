@@ -28,6 +28,7 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
 import ExternalImagesWindow
+MaskImageWidget = ExternalImagesWindow.MaskImageWidget
 qt = ExternalImagesWindow.qt
 try:
     from PyMca.PyMcaSciPy.signal import median
@@ -138,3 +139,12 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
                 data = medfilt2d(data,[self._medianParameters['row_width'],
                                    self._medianParameters['column_width']])
         ExternalImagesWindow.ExternalImagesWindow.setImageData(self, data, **kw)
+
+
+    def saveImageList(self, filename=None, imagelist=None, labels=None):
+        if imagelist is None:
+            #only the seen image
+            return MaskImageWidget.MaskImageWidget.saveImageList(self,
+                                            filename=filename)
+        return ExternalImagesWindow.ExternalImagesWindow.saveImageList(\
+            filename=filename, imagelist=imagelist, labels=labels)

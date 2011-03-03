@@ -1514,9 +1514,9 @@ class MaskImageWidget(qt.QWidget):
             filename = self.getOutputFileName()
             if not len(filename):return
 
-        if filename[-4:].lower() == ".edf":
+        if filename.lower().endswith(".edf"):
             ArraySave.save2DArrayListAsEDF(imageList, filename, labels)
-        elif filename[-4:].lower() == ".csv":
+        elif filename.lower().endswith(".csv"):
             if "," in self._saveFilter:
                 csvseparator = ","
             elif ";" in self._saveFilter:
