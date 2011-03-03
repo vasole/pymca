@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -771,7 +771,7 @@ class McaAdvancedFitBatch:
                         print("I cannot delete output file")
                         print("trying to append image to the end")
                         Append = 1 
-                edfout   = EdfFile.EdfFile(edfname, access='wb')
+                edfout   = EdfFile.EdfFile(edfname, access='ab')
                 edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=Append)
                 edfout = None
                 self.savedImages.append(edfname)

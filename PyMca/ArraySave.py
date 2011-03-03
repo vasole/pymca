@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -118,7 +118,7 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
             labels.append("Array_%d" % i) 
     if len(labels) != ndata:
         raise ValueError("Incorrect number of labels")
-    edfout   = EdfFile.EdfFile(filename)
+    edfout   = EdfFile.EdfFile(filename, access="ab")
     for i in range(ndata):
         if dtype is None:
             edfout.WriteImage ({'Title':labels[i]} , datalist[i], Append=1)
