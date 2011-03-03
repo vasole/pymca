@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -186,7 +186,9 @@ class  EdfFile:
             if not os.path.isfile(self.FileName):
                 #write access
                 if access is None:
-                    access = "wb"
+                    #allow writing and reading
+                    access = "ab+"
+                    self.File.seek(0, 0)
                 elif access == 'w' and sys.platform == 'win32':
                     access = 'wb'
                 self.File = open(self.FileName, access)
