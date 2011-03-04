@@ -1328,12 +1328,33 @@ class MaskImageWidget(qt.QWidget):
         self._saveMenu.exec_(self.cursor().pos())
 
     def _saveMatplotlibImage(self):
+        imageData = self.__imageData
         if self._matplotlibSaveImage is None:
             self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
-                                                            self.__imageData)
-            self._matplotlibSaveImage.setWindowTitle("Matplotlib Image")
-        else:
-            self._matplotlibSaveImage.setImageData(self.__imageData)
+                                                            image=None)
+        title = "Matplotlib "+str(self.graphWidget.graph.title().text())
+        self._matplotlibSaveImage.setWindowTitle(title)        
+        if self.colormap is not None:
+            ddict = self._matplotlibSaveImage.getParameters()
+            colormapType = ddict['linlogcolormap']
+            try:
+                colormapIndex, autoscale, vmin, vmax,\
+                        dataMin, dataMax, colormapType = self.colormap
+                if colormapType == spslut.LOG:
+                    colormapType = 'logarithmic'
+                else:
+                    colormapType = 'linear'
+            except:
+                colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
+            ddict['linlogcolormap'] = colormapType
+            if not autoscale:
+                ddict['valuemin'] = vmin
+                ddict['valuemax'] = vmax
+            else:
+                ddict['valuemin'] = 0
+                ddict['valuemax'] = 0
+            self._matplotlibSaveImage.setParameters(ddict)
+        self._matplotlibSaveImage.setImageData(imageData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
 
@@ -1426,17 +1447,6 @@ class MaskImageWidget(qt.QWidget):
 
     def _saveToolButtonSignal(self):
         self._saveMenu.exec_(self.cursor().pos())
-
-    def _saveMatplotlibImage(self):
-        if self._matplotlibSaveImage is None:
-            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
-                                                            self.__imageData)
-            self._matplotlibSaveImage.setWindowTitle("Matplotlib Image")
-        else:
-            self._matplotlibSaveImage.setImageData(self.__imageData)
-        self._matplotlibSaveImage.show()
-        self._matplotlibSaveImage.raise_()    
-
 
     def _zoomResetSignal(self):
         if DEBUG:

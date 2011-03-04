@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -448,7 +448,14 @@ class RightWidget(qt.QWidget):
                     if ddict[label] is not None:
                         self.comboBoxList[i].setText("%f" % ddict[label])
                 else:
-                    self.comboBoxList[i].setCurrentText(ddict[label])
+                    txt = ddict[label]
+                    if ddict[label] is not None:
+                        try:
+                            txt = ddict[label][0].upper() +\
+                                  ddict[label][1:].lower()
+                        except:
+                            pass
+                    self.comboBoxList[i].setCurrentText(txt)
         return
 	
 class MyLineEdit(qt.QLineEdit):
