@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -76,8 +76,8 @@ if __name__ == "__main__":
             z = Elements.index(ele) + 1
             for shell in ElementShells:
                 i = ElementShells.index(shell)
-                if ElementBinding[z][i] > 0.0:                    
-                    print(shell, ElementBinding[z][i])
+                if ElementBinding[z-1][i] > 0.0:                    
+                    print(shell, ElementBinding[z-1][i])
             sys.exit()
     print("Usage:")
     print("python BindingEnergies.py [element]")
