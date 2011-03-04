@@ -209,18 +209,7 @@ class MaskImageWidget(qt.QWidget):
                          self._polygonSignalSlot)
 
         if standalonesave:
-            self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._saveToolButtonSignal)
-            self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(QString("Image Data"),
-                                     self.saveImageList)
-            self._saveMenu.addAction(QString("Standard Graphics"),
-                                     self.graphWidget._saveIconSignal)
-            if QTVERSION > '4.0.0':
-                if MATPLOTLIB:
-                    self._saveMenu.addAction(QString("Matplotlib") ,
-                                     self._saveMatplotlibImage)
+            self.buildStandaloneSaveMenu()
 
         self.connect(self.graphWidget.zoomResetToolButton,
                      qt.SIGNAL("clicked()"), 
@@ -244,6 +233,25 @@ class MaskImageWidget(qt.QWidget):
             self.mainLayout.addWidget(self.mainTab)
         else:
             self.mainLayout.addWidget(self.graphWidget)
+
+    def buildStandaloneSaveMenu(self):
+        self.connect(self.graphWidget.saveToolButton,
+                         qt.SIGNAL("clicked()"), 
+                         self._saveToolButtonSignal)
+        self._saveMenu = qt.QMenu()
+        self._saveMenu.addAction(QString("Image Data"),
+                                 self.saveImageList)
+        self._saveMenu.addAction(QString("Colormap Clipped Seen Image Data"),
+                                 self.saveClippedSeenImageList)
+        self._saveMenu.addAction(QString("Clipped and Subtracted Seen Image Data"),
+                                 self.saveClippedAndSubtractedSeenImageList)
+
+        self._saveMenu.addAction(QString("Standard Graphics"),
+                                 self.graphWidget._saveIconSignal)
+        if QTVERSION > '4.0.0':
+            if MATPLOTLIB:
+                self._saveMenu.addAction(QString("Matplotlib") ,
+                                 self._saveMatplotlibImage)
 
     def _buildConnections(self, widget = None):
         self.connect(self.graphWidget.hFlipToolButton,
@@ -362,18 +370,23 @@ class MaskImageWidget(qt.QWidget):
                                               replot=replot,
                                               replace=replace)
 
-    def _getProfileCurve(self, ddict, image=None, overlay=OVERLAY_DRAW):
-        if image is None:
-            imageData = self.__imageData
-        else:
-            imageData = image
-
+    def getGraphTitle(self):
         try:
             title = self.graphWidget.graph.title().text()
             if sys.version < '3.0':
                 title = str(title)
         except:
             title = ""
+        return title
+
+    def _getProfileCurve(self, ddict, image=None, overlay=OVERLAY_DRAW):
+        if image is None:
+            imageData = self.__imageData
+        else:
+            imageData = image
+
+        title = self.getGraphTitle()
+
         self._profileSelectionWindow.setTitle(title)
         if self._profileScanWindow is not None:
             self._profileSelectionWindow.label.setText(title)
@@ -1305,14 +1318,14 @@ class MaskImageWidget(qt.QWidget):
         ddict = {}
         ddict['event'] = "addImageClicked"
         ddict['image'] = self.__imageData
-        ddict['title'] = str(self.graphWidget.graph.title().text())
+        ddict['title'] = self.getGraphTitle()
         ddict['id'] = id(self)
         self.emitMaskImageSignal(ddict)
             
     def _removeImageClicked(self):
         ddict = {}
         ddict['event'] = "removeImageClicked"
-        ddict['title'] = str(self.graphWidget.graph.title().text())
+        ddict['title'] = self.getGraphTitle()
         ddict['id'] = id(self)
         self.emitMaskImageSignal(ddict)
 
@@ -1320,7 +1333,7 @@ class MaskImageWidget(qt.QWidget):
         ddict = {}
         ddict['event'] = "replaceImageClicked"
         ddict['image'] = self.__imageData
-        ddict['title'] = str(self.graphWidget.graph.title().text())
+        ddict['title'] = self.getGraphTitle()
         ddict['id'] = id(self)
         self.emitMaskImageSignal(ddict)
 
@@ -1332,7 +1345,7 @@ class MaskImageWidget(qt.QWidget):
         if self._matplotlibSaveImage is None:
             self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(None,
                                                             image=None)
-        title = "Matplotlib "+str(self.graphWidget.graph.title().text())
+        title = "Matplotlib " + self.getGraphTitle()
         self._matplotlibSaveImage.setWindowTitle(title)        
         if self.colormap is not None:
             ddict = self._matplotlibSaveImage.getParameters()
@@ -1503,7 +1516,7 @@ class MaskImageWidget(qt.QWidget):
         if imagelist is None:
             if self.__imageData is not None:
                 imageList.append(self.__imageData)
-                label = str(self.graphWidget.graph.title().text())
+                label = self.getGraphTitle()
                 label.replace(' ', '_')
                 labels.append(label)
                 if self.__selectionMask is not None:
@@ -1541,6 +1554,38 @@ class MaskImageWidget(qt.QWidget):
                                              csv=False)
 
 
+    def saveClippedSeenImageList(self):
+        return self.saveClippedAndSubtractedSeenImageList(subtract=False)
+
+
+    def saveClippedAndSubtractedSeenImageList(self, subtract=True):
+        imageData = self.__imageData
+        if imageData is None:
+            return
+        vmin = None
+        label = self.getGraphTitle()
+        if not len(label):
+            label = "Image01"
+        if self.colormap is not None:
+            colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
+            if not autoscale:
+                imageData = imageData.clip(vmin, vmax)
+                label += ".clip(%f,%f)" % (vmin, vmax)
+        if subtract:
+            if vmin is None:
+                vmin = imageData.min()
+            imageData = imageData-vmin
+            label += "-%f" % vmin
+        imageList = [imageData]
+        labelList = [label]
+        if self.__selectionMask is not None:
+            if self.__selectionMask.max() > 0:
+                imageList.append(self.__selectionMask)
+                labelList.append(label+"_Mask")
+        self.saveImageList(filename=None,
+                           imagelist=imageList,
+                           labels=labelList)
+
     def setDefaultColormap(self, colormapindex, logflag=False):
         self.__defaultColormap = COLORMAPLIST[min(colormapindex, len(COLORMAPLIST)-1)]
         if logflag:
@@ -1553,7 +1598,7 @@ class MaskImageWidget(qt.QWidget):
             self._profileSelectionWindow.close()
         if self.colormapDialog is not None:
             self.colormapDialog.close()
-        qt.QWidget.closeEvent(self, event)
+        return qt.QWidget.closeEvent(self, event)
 
     def setInfoText(self, text):
         return self.graphWidget.setInfoText(text)

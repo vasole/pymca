@@ -55,7 +55,12 @@ class MedianParameters(qt.QWidget):
 
 class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
     def __init__(self, *var, **kw):
+        original = kw['standalonesave']
+        kw['standalonesave'] = False
         ExternalImagesWindow.ExternalImagesWindow.__init__(self, *var, **kw)
+        standalonesave = original
+        if standalonesave:
+            MaskImageWidget.MaskImageWidget.buildStandaloneSaveMenu(self)
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         infotext  = 'Toggle background image subtraction from current image\n'
         infotext += 'No action if no background image available.'
