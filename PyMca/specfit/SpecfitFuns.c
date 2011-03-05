@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -2620,7 +2620,7 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
             if (st_term_flag){
                 if ((x5 != 0) && (x4 != 0)){
                     dhelp = (z0/z1) + 0.5 * z1/x5;
-                    if (dhelp <3){
+                    if (dhelp < 10){
                         dhelp = x4 * 0.5 * erfc(dhelp);
                         if (dhelp > 0){
                         if (fabs(z0/x5) <= 612){
@@ -2633,7 +2633,7 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
             if (lt_term_flag){
                 if ((x7 != 0) && (x6 != 0)){
                     dhelp = (z0/z1) + 0.5 * z1/x7;
-                    if (dhelp < 3){
+                    if (dhelp < 10){
                         dhelp = x6 * 0.5 * erfc(dhelp);
                     if (dhelp > 0){
                         if (fabs(z0/x7) <= 612){
