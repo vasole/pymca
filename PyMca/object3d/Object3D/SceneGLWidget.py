@@ -1322,7 +1322,6 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
 if __name__ == '__main__':
     import sys
     import Object3DBase
-    import spslut
     app = qt.QApplication(sys.argv)
     class MyObject(Object3DBase.Object3D):
         def drawObject(self):
