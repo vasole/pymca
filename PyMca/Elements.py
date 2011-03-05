@@ -1,4 +1,4 @@
-﻿#/*##########################################################################
+#/*##########################################################################
 # Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
