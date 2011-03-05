@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -463,7 +463,7 @@ class Specfit:
                 result = self.theoryfun(pars,t)
         else:
             nu=len(self.theorydict[self.fitconfig['fittheory']][1])
-            niter=(len(pars)-nb)/nu
+            niter=int((len(pars)-nb)/nu)
             u_term=Numeric.zeros(Numeric.shape(t),Numeric.Float)
             if niter > 0:
                 for i in range(niter):
@@ -741,19 +741,19 @@ class Specfit:
                     model_deriv=self.modelderiv)
         except:
         #except 'LinearAlgebraError' :
-           text = sys.exc_info()[1]
-           #if type(text) is not string._StringType: 
-           if type(text) is not type(" "): 
+            text = "%s" % sys.exc_info()[1]
+            #if type(text) is not string._StringType: 
+            if type(text) is not type(" "): 
               text = text.args
               if len(text):
                  text = text[0]
               else:
                  text = ''
-           self.state = 'Fit error : %s' %text
-           #print 'Fit error : %s' %text
-           self.eh.event(FitStatusChanged,data={'chisq':self.chisq,
+            self.state = 'Fit error : %s' %text
+            #print 'Fit error : %s' %text
+            self.eh.event(FitStatusChanged,data={'chisq':self.chisq,
                                              'status':self.state})
-           return
+            return
 
         i=0
         for param in self.paramlist:
@@ -969,26 +969,26 @@ class Specfit:
         result.update(self.fitconfig)
         return result 
 
-    def mcafit(self,*vars,**kw):
-        if (len(vars) > 0) or (len(kw.keys()) > 0):
+    def mcafit(self,*var,**kw):
+        if (len(var) > 0) or (len(kw.keys()) > 0):
             if 'x' in kw:
                 x=kw['x']
-            elif len(vars) >1:
-                x=vars[0]                    
+            elif len(var) >1:
+                x=var[0]                    
             else:
                 x=None
             if 'y' in kw:
                 y=kw['y']
-            elif len(vars) == 1:
-                y=vars[0]
-            elif len(vars) > 1:
-                y=vars[1]
+            elif len(var) == 1:
+                y=var[0]
+            elif len(var) > 1:
+                y=var[1]
             else:
                 y=self.ydata0
             if 'sigmay' in kw:
                 sigmay=kw['sigmay']
-            elif len(vars) >2:
-                sigmay=vars[2]                    
+            elif len(var) >2:
+                sigmay=var[2]                    
             else:
                 sigmay=None
             if x is None:

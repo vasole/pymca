@@ -2046,8 +2046,8 @@ class QtBlissGraph(qwt.QwtPlot):
                 for region in kw['regions']:
                     region0 = min(region[0], region[1])
                     region1 = max(region[0], region[1])
-                    i1 = min(numpy.nonzero(x>=region0),0)
-                    i2 = max(numpy.ravel(numpy.nonzero(x<=region1)))
+                    i1 = numpy.min(nonzero(x>=region0),0)
+                    i2 = numpy.max(numpy.ravel(nonzero(x<=region1)))
                     regions.append([int(i1),int(i2)])
                 if QWTVERSION4:
                     self.curve(self.curves[key]['curve']).setregions(regions)

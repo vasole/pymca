@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -38,6 +38,7 @@ import FitActionsGUI
 import FitStatusGUI
 import EventHandler
 import QScriptOption
+DEBUG = 0
 
 class SpecfitGUI(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
@@ -291,6 +292,8 @@ class SpecfitGUI(qt.QWidget):
                     self.emit(qt.PYSIGNAL('SpecfitGUISignal'),(ddict,))
                 else:
                     self.emit(qt.SIGNAL('SpecfitGUISignal'), ddict)
+                if DEBUG:
+                    raise
                 return
             self.guiparameters.fillfrommca(mcaresult)
             ddict={}
@@ -319,11 +322,15 @@ class SpecfitGUI(qt.QWidget):
                         msg.exec_()
                     return
             except:
+                if DEBUG:
+                    raise
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on estimate: %s" % sys.exc_info()[1])
-                if QTVERSION < '4.0.0':msg.exec_loop()
-                else: msg.exec_()
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
                 return
             self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
             self.guiparameters.removeallviews(keep='Fit')
@@ -351,8 +358,12 @@ class SpecfitGUI(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit: %s" % sys.exc_info()[1])
-                if QTVERSION < '4.0.0':msg.exec_loop()
-                else: msg.exec_()
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                if DEBUG:
+                    raise
                 return
             self.guiparameters.fillfrommca(mcaresult)
             ddict={}
@@ -367,16 +378,23 @@ class SpecfitGUI(qt.QWidget):
             #for param in self.specfit.paramlist:
             #    print param['name'],param['group'],param['estimation']
             self.specfit.paramlist=self.guiparameters.fillfitfromtable()
-            #for param in self.specfit.paramlist:
-            #    print param['name'],param['group'],param['estimation']
+            if DEBUG:
+                for param in self.specfit.paramlist:
+                    print(param['name'],param['group'],param['estimation'])
+                print("TESTING")
+                self.specfit.startfit()
             try:
                 self.specfit.startfit()
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on Fit")
-                if QTVERSION < '4.0.0':msg.exec_loop()
-                else: msg.exec_()
+                if QTVERSION < '4.0.0':
+                    msg.exec_loop()
+                else:
+                    msg.exec_()
+                if DEBUG:
+                    raise
                 return
             self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
             self.guiparameters.removeallviews(keep='Fit')

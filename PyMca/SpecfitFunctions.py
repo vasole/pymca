@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -306,7 +306,7 @@ class SpecfitFunctions:
         if npoints > (1.5)*search_fwhm:
             peaks=SpecfitFuns.seek(ysearch,0,npoints,
                                     search_fwhm,
-                                    search_sensitivity)       
+                                    search_sensitivity)
         else:
             peaks=[]
         
@@ -534,7 +534,7 @@ class SpecfitFunctions:
     def estimate_agauss(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
         fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
         #get the number of found peaks
-        npeaks=len(cons[0])/3
+        npeaks=int(len(cons[0])/3)
         for i in range(npeaks):
             height = fittedpar[3*i]
             fwhm = fittedpar[3*i+2]
@@ -544,7 +544,7 @@ class SpecfitFunctions:
     def estimate_alorentz(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
        #get the number of found peaks
-       npeaks=len(cons[0])/3
+       npeaks=int(len(cons[0])/3)
        for i in range(npeaks):
             height = fittedpar[3*i]
             fwhm = fittedpar[3*i+2]
@@ -553,7 +553,7 @@ class SpecfitFunctions:
        
     def estimate_pvoigt(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
-       npeaks=len(cons[0])/3
+       npeaks=int(len(cons[0])/3)
        newpar=[]
        newcons=zeros((3,4*npeaks),Float)
        #find out related parameters proper index
@@ -595,7 +595,7 @@ class SpecfitFunctions:
 
     def estimate_apvoigt(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
        fittedpar,cons = self.estimate_pvoigt(xx,yy,zzz,xscaling,yscaling)
-       npeaks=len(cons[0])/4
+       npeaks=int(len(cons[0])/4)
        for i in range(npeaks):
             height = fittedpar[4*i]
             fwhm = fittedpar[4*i+2]
@@ -614,7 +614,7 @@ class SpecfitFunctions:
             yscaling=1.0
        """ 
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
-       npeaks=len(cons[0])/3
+       npeaks=int(len(cons[0])/3)
        newpar=[]
        newcons=zeros((3,8*npeaks),Float)
        main_peak=0
@@ -778,7 +778,7 @@ class SpecfitFunctions:
             yy = yy * max(yyy)/max(yy)
         xx=xxx[2:-2]
         fittedpar,cons=self.estimate_agauss(xx,yy,zzz,xscaling,yscaling)
-        npeaks=len(cons[0])/4
+        npeaks=int(len(cons[0])/4)
         largest_index=0
         largest=[fittedpar[3*largest_index],
                  fittedpar[3*largest_index+1],
@@ -873,7 +873,7 @@ class SpecfitFunctions:
             yy = yy * max(yyy)/max(yy)
         xx=xxx[2:-2]
         fittedpar,cons=self.estimate_agauss(xx,yy,zzz,xscaling,yscaling)
-        npeaks=len(cons[0])/4
+        npeaks=int(len(cons[0])/4)
         largest_index=0
         largest=[fittedpar[3*largest_index],
                  fittedpar[3*largest_index+1],

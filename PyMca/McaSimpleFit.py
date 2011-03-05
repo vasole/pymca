@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -30,7 +30,6 @@ from SpecfitGUI import qt
 QTVERSION = qt.qVersion()
 import SpecfitGUI
 import Specfit
-import string
 
 class McaSimpleFit(qt.QWidget):
     def __init__(self, parent=None, name="McaSimpleFit", specfit=None,fl=0): 
@@ -156,7 +155,7 @@ class McaSimpleFit(qt.QWidget):
         if type(ddict) != type({}):
             return
         if 'event' in ddict:
-            if string.upper(ddict['event']) == "PRINT":
+            if ddict['event'].upper() == "PRINT":
                 h = self.__htmlheader()
                 if __name__ == "__main__":
                     self.__print(h+ddict['text'])

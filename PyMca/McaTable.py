@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,6 +26,10 @@
 #############################################################################*/
 import sys
 import PyMcaQt as qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
     
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
@@ -54,14 +58,11 @@ if QTVERSION < '4.0.0':
 else:
     QTable = qt.QTableWidget
     
-
-import string
-
 DEBUG=0
 
 class McaTable(QTable):
     def __init__(self, *args,**kw):
-        apply(QTable.__init__, (self, ) + args)
+        QTable.__init__(self, *args)
         if QTVERSION < '4.0.0':
             self.setNumRows(1)
             self.setNumCols(1)
@@ -120,12 +121,12 @@ class McaTable(QTable):
         for result in mcaresult:
             region=region+1
             if result['chisq'] is not None:
-                chisq=qt.QString("%6.2f" % (result['chisq']))
+                chisq=QString("%6.2f" % (result['chisq']))
             else:
-                chisq=qt.QString("Fit Error")
+                chisq=QString("Fit Error")
             if 1:
-                xbegin=qt.QString("%6g" % (result['xbegin']))
-                xend=qt.QString("%6g" % (result['xend']))
+                xbegin=QString("%6g" % (result['xbegin']))
+                xend=QString("%6g" % (result['xend']))
                 fitlabel,fitpars, fitsigmas = self.__getfitpar(result)
                 if QTVERSION < '4.0.0':
                     qt.QHeader.setLabel(self.horizontalHeader(),1,"Fit "+fitlabel)
@@ -148,15 +149,15 @@ class McaTable(QTable):
                     #area=QString(str(area))
                     #sigma=QString(str(sigma))
                     #fwhm=QString(str(fwhm))
-                    tregion=qt.QString(str(region))
-                    pos=qt.QString("%6g" % (pos))
-                    fitpar = qt.QString("%6g" % (fitpars[i]))
+                    tregion=QString(str(region))
+                    pos=QString("%6g" % (pos))
+                    fitpar = QString("%6g" % (fitpars[i]))
                     if fitlabel == 'Area':
                         sigma = max(sigma,fitsigmas[i])
-                    areastr=qt.QString("%6g" % (area))
-                    sigmastr=qt.QString("%6.3g" % (sigma))
-                    fwhm=qt.QString("%6g" % (fwhm))
-                    tregion=qt.QString("%6g" % (region))
+                    areastr=QString("%6g" % (area))
+                    sigmastr=QString("%6.3g" % (sigma))
+                    fwhm=QString("%6g" % (fwhm))
+                    tregion=QString("%6g" % (region))
                     fields=[pos,fitpar,areastr,sigmastr,fwhm,chisq,tregion,xbegin,xend]
                     col=0
                     recolor = 0
@@ -211,9 +212,9 @@ class McaTable(QTable):
 
     def __getfitpar(self,result):
         hypermet = 0
-        if  string.find(result['fitconfig']['fittheory'],"Area") != -1:
+        if  result['fitconfig']['fittheory'].find("Area") != -1:
             fitlabel='Area'
-        elif string.find(result['fitconfig']['fittheory'],"Hypermet") != -1:
+        elif result['fitconfig']['fittheory'].find("Hypermet") != -1:
             fitlabel='Area'
             hypermet = 1
         else:
@@ -222,13 +223,13 @@ class McaTable(QTable):
         sigmavalues = []
         i = 0
         for param in result['paramlist']:
-            if string.find(param['name'],'ST_Area')!= -1:
+            if param['name'].find('ST_Area')!= -1:
                 values[-1]      = value * (1.0 + param['fitresult'])
                 #just an approximation
                 sigmavalues[-1] = sigmavalue * (1.0 + param['fitresult'])
-            elif string.find(param['name'],'LT_Area')!= -1:
+            elif param['name'].find('LT_Area')!= -1:
                 pass
-            elif string.find(param['name'],fitlabel)!= -1:
+            elif param['name'].find(fitlabel)!= -1:
                 value      = param['fitresult']
                 sigmavalue = param['sigma'] 
                 values.append(value)
@@ -259,7 +260,7 @@ class McaTable(QTable):
                 else:
                     text = str(self.item(row, col).text())
                 try:
-                    ddict[label] = string.atof(text)
+                    ddict[label] = float(text)
                 except:
                     ddict[label] = text
                 col +=1

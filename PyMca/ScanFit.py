@@ -29,7 +29,6 @@ import os
 import SpecfitGUI
 from SpecfitGUI import qt
 import Specfit
-import string
 QTVERSION = qt.qVersion()
 
 class ScanFit(qt.QWidget):
@@ -176,7 +175,7 @@ class ScanFit(qt.QWidget):
         if type(ddict) != type({}):
             return
         if 'event' in ddict:
-            if string.upper(ddict['event']) == "PRINT":
+            if ddict['event'].upper() == "PRINT":
                 h = self.__htmlheader()
                 if __name__ == "__main__":
                     self.__print(h+ddict['text'])
