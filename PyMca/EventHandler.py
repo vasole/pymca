@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -196,7 +196,7 @@ class EventHandler(object):
       for fullev, oe in self.fulldict.items(): 
         events = fullev.split(".")
         self.events[events[-1]] = oe.event  # only for our callers
-        cbs = map(lambda x: x[0], self.fulldict[fullev].callbacks)
+        cbs = [x[0] for x in self.fulldict[fullev].callbacks]
         for i in range(len(events)):
           evname = ".".join(events[:i+1])
           ev = self.fulldict[evname].event
@@ -255,7 +255,7 @@ def test(eh = None):
 
     NewDataEvent = eh.create("NewDataEvent")
     XNewDataEvent = eh.create("NewDataEvent.XNewDataEvent")
-    XNewDataEvent = eh.create("NewDataEvent.YNewDataEvent")
+    YNewDataEvent = eh.create("NewDataEvent.YNewDataEvent")
     eh.register("NewDataEvent", callback1)
     eh.register("NewDataEvent.XNewDataEvent" , callback2)
     eh.register("NewDataEvent.YNewDataEvent" , callback3)
