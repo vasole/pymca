@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,7 +31,7 @@ DEBUG = 0
 class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
     def _addSelection(self, selectionlist, replot=True):
         if DEBUG:
-            print "addSelection(self, selectionlist)",selectionlist
+            print("addSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -59,7 +59,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                 numberOfXAxes = len(dataObject.x)
                 if numberOfXAxes > 1:
                     if DEBUG:
-                        print "Mesh plots"
+                        print("Mesh plots")
                 else:
                     xdata = dataObject.x[0]
 
@@ -84,7 +84,8 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
 
 
     def _removeSelection(self, selectionlist):
-        if DEBUG:print "_removeSelection(self, selectionlist)",selectionlist
+        if DEBUG:
+            print("_removeSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -107,7 +108,8 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
         
 
     def _replaceSelection(self, selectionlist):
-        if DEBUG:print "_replaceSelection(self, selectionlist)",selectionlist
+        if DEBUG:
+            print("_replaceSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -155,7 +157,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
             if ndim == ndata:
                 if len(data.shape) == 3:
                     if DEBUG:
-                        print "CASE 1"
+                        print("CASE 1")
                     if (xDimList[0] != data.shape[0]) or\
                        (xDimList[1] != data.shape[1]) or\
                        (xDimList[2] != data.shape[2]):
@@ -166,7 +168,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                                                data.shape[0],
                                                                data.shape[1],
                                                                data.shape[2])
-                        raise ValueError, text
+                        raise ValueError(text)
                     object3D = self.stack(data,
                                           x=dataObject.x[0],
                                           y=dataObject.x[1],
@@ -175,7 +177,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                           update_scene=update_scene)
                 elif len(data.shape) == 2:
                     if DEBUG:
-                        print "CASE 2"
+                        print("CASE 2")
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
                                          y=dataObject.x[1],
@@ -185,7 +187,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                          update_scene=update_scene)
                 elif len(data.shape) == 1:
                     if DEBUG:
-                        print "CASE 3"
+                        print("CASE 3")
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
                                          y=numpy.zeros((1,1), numpy.float32),
@@ -194,9 +196,9 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                          update_scene=update_scene)
                 return object3D
         elif (len(data.shape) == 3) and (len(xDimList) == 2):
-            print "WARNING Assuming last dimension"
+            print("WARNING Assuming last dimension")
             if DEBUG:
-                print "CASE 1.1"
+                print("CASE 1.1")
             if (xDimList[0] != data.shape[0]) or\
                (xDimList[1] != data.shape[1]):
                 text = "Wrong dimensions:"
@@ -205,7 +207,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                                     data.shape[0],
                                                     data.shape[1],
                                                     data.shape[2])
-                raise ValueError, text
+                raise ValueError(text)
             z = numpy.arange(data.shape[2])
             object3D = self.stack(data,
                                   x=dataObject.x[0],
@@ -237,7 +239,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
         if ndata < 200000:
             cfg = object3D.setConfiguration({'common':{'mode':3}})
         if DEBUG:
-            print "DEFAULT CASE"
+            print("DEFAULT CASE")
         object3D.setData(values, xyz=xyzData)
         self.addObject(object3D, legend, update_scene=update_scene)
         return object3D

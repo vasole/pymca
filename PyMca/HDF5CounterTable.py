@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -66,7 +66,7 @@ class HDF5CounterTable(QtGui.QTableWidget):
             for item in cntlist:
                 aliaslist.append(posixpath.basename(item))
         if len(cntlist) != len(aliaslist):
-            raise ValueError, "Alias list and counter list must have same length"
+            raise ValueError("Alias list and counter list must have same length")
         self.cntList = cntlist
         self.aliasList = aliaslist
         n = len(cntlist)

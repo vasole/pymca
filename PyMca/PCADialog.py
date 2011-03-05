@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -156,7 +156,7 @@ class PCADialog(qt.QDialog):
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
                             if threadResult[0] == "Exception":
-                                raise threadResult[1],threadResult[2]
+                                raise Exception(threadResult[1],threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                 except:
                     if isinstance(data, numpy.ndarray):
@@ -169,7 +169,7 @@ class PCADialog(qt.QDialog):
             if isinstance(self._data, numpy.ndarray):
                 self._data.shape = old_shape
             if DEBUG:
-                print "PCA Elapsed = ", time.time() - t0
+                print("PCA Elapsed = ", time.time() - t0)
             methodlabel = pcaParameters.get('methodlabel', "")
             imagenames=None
             vectornames=None
@@ -299,9 +299,9 @@ if __name__ == "__main__":
             fileList.append(sys.argv[i])
     imageList = []
     for fname in fileList:
-        print fname
+        print(fname)
         if not os.path.exists(fname):
-            print "File name %s does not exists" % fname
+            print("File name %s does not exists" % fname)
             break
         edf = EdfFile.EdfFile(fname)
         data = edf.GetData(0)

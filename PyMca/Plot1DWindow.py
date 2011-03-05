@@ -193,11 +193,13 @@ class Plot1DWindow(Plot1DQwt.Plot1DQwt):
         return tb
                 
     def _zoomReset(self):
-        if DEBUG:print "_zoomReset"
+        if DEBUG:
+            print("_zoomReset")
         self.graph.zoomReset()
 
     def _yAutoScaleToggle(self):
-        if DEBUG:print "_yAutoScaleToggle"
+        if DEBUG:
+            print("_yAutoScaleToggle")
         if self.graph.yAutoScale:
             self.graph.yAutoScale = False
             self.yAutoScaleButton.setDown(False)
@@ -218,7 +220,8 @@ class Plot1DWindow(Plot1DQwt.Plot1DQwt):
             self.graph.zoomReset()
                        
     def _xAutoScaleToggle(self):
-        if DEBUG:print "_xAutoScaleToggle"
+        if DEBUG:
+            print("_xAutoScaleToggle")
         if self.graph.xAutoScale:
             self.graph.xAutoScale = False
             self.xAutoScaleButton.setDown(False)
@@ -237,7 +240,8 @@ class Plot1DWindow(Plot1DQwt.Plot1DQwt):
             self.graph.zoomReset()
                        
     def _toggleLogY(self):
-        if DEBUG:print "_toggleLogY"
+        if DEBUG:
+            print("_toggleLogY")
         if self._logY:
             self._logY = False
         else:
@@ -264,28 +268,28 @@ class Plot1DWindow(Plot1DQwt.Plot1DQwt):
         self.graph.replot()
 
     def _fitIconSignal(self):
-        print "fit icon signal"
+        print("fit icon signal")
 
     def _averageIconSignal(self):
-        print "average icon signal"
+        print("average icon signal")
 
     def _deriveIconSignal(self):
-        print "deriveIconSignal"
+        print("deriveIconSignal")
 
     def _smoothIconSignal(self):
-        print "smoothIconSignal"
+        print("smoothIconSignal")
 
     def _swapSignIconSignal(self):
-        print "_swapSignIconSignal"
+        print("_swapSignIconSignal")
 
     def _yMinToZeroIconSignal(self):
-        print "_yMinToZeroIconSignal"
+        print("_yMinToZeroIconSignal")
 
     def _subtractIconSignal(self):
-        print "_subtractIconSignal"
+        print("_subtractIconSignal")
 
     def _saveIconSignal(self):
-        print "_saveIconSignal"
+        print("_saveIconSignal")
 
     def _pluginClicked(self):
         actionList = []
@@ -368,7 +372,7 @@ class Plot1DWindow(Plot1DQwt.Plot1DQwt):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     def printGraph(self):
-        print "prints the graph"
+        print("prints the graph")
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
@@ -388,13 +392,11 @@ if __name__ == "__main__":
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)
-    print "Active curve = ", plot.getActiveCurve()
-    print "X Limits = ",     plot.getGraphXLimits()
-    print "Y Limits = ",     plot.getGraphYLimits()
-    print "All curves = ",   plot.getAllCurves()
+    print("Active curve = ", plot.getActiveCurve())
+    print("X Limits = ",     plot.getGraphXLimits())
+    print("Y Limits = ",     plot.getGraphYLimits())
+    print("All curves = ",   plot.getAllCurves())
     plot.removeCurve("dummy")
     plot.addCurve(x, y, "dummy 2")
-    print "All curves = ",   plot.getAllCurves()
+    print("All curves = ",   plot.getAllCurves())
     app.exec_()
-
-    

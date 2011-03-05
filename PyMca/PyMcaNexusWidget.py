@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -87,12 +87,12 @@ class PyMcaNexusWidget(QNexusWidget):
 
     def _stack1DSignal(self):
         if DEBUG:
-            print "_stack1DSignal"
+            print("_stack1DSignal")
         self._stackSignal(index=-1)
 
     def _stack2DSignal(self):
         if DEBUG:
-            print "_stack1DSignal"
+            print("_stack2DSignal")
         self._stackSignal(index=0)
 
     def _stackSignal(self, index=-1):
@@ -149,11 +149,11 @@ if __name__ == "__main__":
         dataSource = NexusDataSource.NexusDataSource(sys.argv[1:])
         w.setDataSource(dataSource)
     def addSelection(sel):
-        print sel
+        print(sel)
     def removeSelection(sel):
-        print sel
+        print(sel)
     def replaceSelection(sel):
-        print sel
+        print(sel)
     w.show()
     QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
     QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)

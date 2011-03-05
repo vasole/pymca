@@ -1,7 +1,7 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
-# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
 # This toolkit is free software; you can redistribute it and/or modify it 
@@ -9,16 +9,16 @@
 # Software Foundation; either version 2 of the License, or (at your option) 
 # any later version.
 #
-# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 #
 # You should have received a copy of the GNU General Public License along with
-# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# PyMca; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
 # Suite 330, Boston, MA 02111-1307, USA.
 #
-# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
+# PyMca follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
@@ -383,7 +383,7 @@ class QNexusWidget(QtGui.QWidget):
                 try:
                     widget.w.setDataset(dataset)
                 except:
-                    print "Error filling table"
+                    print("Error filling table")
                 widget.addTab(widget.w, 'TableView')
         widget.show()
         return widget
@@ -487,7 +487,7 @@ class QNexusWidget(QtGui.QWidget):
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'] in ['Dataset']:
                 if ddict['dtype'].startswith('|S'):
-                    print "string"
+                    print("string")
                 else:
                     root = ddict['name'].split('/')
                     root = "/" + root[1]
@@ -524,7 +524,7 @@ class QNexusWidget(QtGui.QWidget):
                         cnt  = ddict['name'].split(root)[-1]
                         if cnt not in self._cntList:
                             if DEBUG:
-                                print "USING SECOND WAY"
+                                print("USING SECOND WAY")
                             self._cntList.append(cnt)
                             basename = posixpath.basename(cnt)
                             if basename not in self._aliasList:
@@ -534,7 +534,7 @@ class QNexusWidget(QtGui.QWidget):
                             self.cntTable.build(self._cntList, self._aliasList)
                         return
                 if DEBUG:
-                    print "Unhandled item type:", ddict['dtype']
+                    print("Unhandled item type: %s" % ddict['dtype'])
 
     def buttonsSlot(self, ddict):
         if self.data is None:
@@ -639,7 +639,7 @@ class QNexusWidget(QtGui.QWidget):
                         if DEBUG:
                             try:
                                 widget = self._widgetDict[ddict['id']] 
-                                print "DELETING ", widget.windowTitle()
+                                print("DELETING %s" % widget.windowTitle())
                             except:
                                 pass
                         del self._widgetDict[ddict['id']]
@@ -659,11 +659,11 @@ if __name__ == "__main__":
         dataSource = NexusDataSource.NexusDataSource(sys.argv[1:])
         w.setDataSource(dataSource)
     def addSelection(sel):
-        print sel
+        print(sel)
     def removeSelection(sel):
-        print sel
+        print(sel)
     def replaceSelection(sel):
-        print sel
+        print(sel)
     w.show()
     QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
     QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)

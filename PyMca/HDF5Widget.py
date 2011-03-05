@@ -546,17 +546,17 @@ if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) < 2:
-        print "Usage:"
-        print "python HDF5Widget.py path_to_hdf5_file_name"
+        print("Usage:")
+        print("python HDF5Widget.py path_to_hdf5_file_name")
         sys.exit(0)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
     #fileModel.openFile('/home/darren/temp/PSI.hdf')
     phynxFile = fileModel.openFile(sys.argv[1])
     def mySlot(ddict):
-        print ddict
+        print(ddict)
         if ddict['type'].lower() in ['dataset']:
-            print phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape
+            print(phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape)
     QtCore.QObject.connect(fileView, QtCore.SIGNAL("HDF5WidgetSignal"), mySlot)
     fileView.show()
     sys.exit(app.exec_())

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -166,7 +166,7 @@ class PyMcaMatplotlibSave(FigureCanvas):
         if n == 0:
             #nothing to plot
             if DEBUG:
-                print "nothing to plot"
+                print("nothing to plot")
             return
         style = None
         if color is None:
@@ -240,7 +240,7 @@ class PyMcaMatplotlibSave(FigureCanvas):
             format = filename[-3:]
 
         if format.upper() not in ['EPS', 'PNG', 'SVG']:
-            raise "Unknown format %s" % format
+            raise ValueError("Unknown format %s" % format)
 
         if os.path.exists(filename):
             os.remove(filename)
@@ -281,36 +281,36 @@ class PyMcaMatplotlibSaveImage:
 
         self.figure = Figure(figsize=size) #in inches
         self.canvas = FigureCanvas(self.figure)
-	self.imageData = imageData
-	self.pixmapImage = None
-	self.config={'xaxis':xaxis,
-		     'yaxis':yaxis,
-		     'title':title,
-		     'xlabel':xlabel,
-		     'ylabel':ylabel,
-		     'colorbar':colorbar,
-		     'colormap':colormap,
-                     'linlogcolormap':linlogcolormap,                     
-		     'interpolation':interpolation,
-		     'origin':origin,
-		     'contour':contour,
-		     'contourlabels':contourlabels,
-		     'contourlabelformat':contourlabelformat,
-                     'contourlevels':10,
-                     'xpixelsize':xpixelsize,
-                     'ypixelsize':ypixelsize,
-                     'xorigin':xorigin,
-                     'yorigin':yorigin,
-                     'zoomxmin':None,
-                     'zoomxmax':None,
-                     'zoomymin':None,
-                     'zoomymax':None,
-                     'valuemin':None,
-                     'valuemax':None,
-                     'xlimits':xlimits,
-                     'ylimits':ylimits,
-                     'vlimits':vlimits,
-                     'extent':extent}
+        self.imageData = imageData
+        self.pixmapImage = None
+        self.config={'xaxis':xaxis,
+                    'yaxis':yaxis,
+                    'title':title,
+                    'xlabel':xlabel,
+                    'ylabel':ylabel,
+                    'colorbar':colorbar,
+                    'colormap':colormap,
+                    'linlogcolormap':linlogcolormap,                     
+                    'interpolation':interpolation,
+                    'origin':origin,
+                    'contour':contour,
+                    'contourlabels':contourlabels,
+                    'contourlabelformat':contourlabelformat,
+                    'contourlevels':10,
+                    'xpixelsize':xpixelsize,
+                    'ypixelsize':ypixelsize,
+                    'xorigin':xorigin,
+                    'yorigin':yorigin,
+                    'zoomxmin':None,
+                    'zoomxmax':None,
+                    'zoomymin':None,
+                    'zoomymax':None,
+                    'valuemin':None,
+                    'valuemax':None,
+                    'xlimits':xlimits,
+                    'ylimits':ylimits,
+                    'vlimits':vlimits,
+                    'extent':extent}
 
         #generate own colormaps
         cdict = {'red': ((0.0, 0.0, 0.0),
@@ -376,10 +376,10 @@ class PyMcaMatplotlibSaveImage:
 
     def saveImage(self, filename):
         self.figure.clear()
-	if (self.imageData is None) and\
+        if (self.imageData is None) and\
            (self.pixmapImage is None):
-	    return
-	# The axes
+            return
+        # The axes
         self.axes = self.figure.add_axes([.15, .15, .75, .8])
         if self.config['xaxis'] == 'off':
             self.axes.xaxis.set_visible(False)
@@ -394,38 +394,38 @@ class PyMcaMatplotlibSaveImage:
             self._savePixmapFigure(filename)
             return
 
-	interpolation = self.config['interpolation']
-	origin = self.config['origin']
+        interpolation = self.config['interpolation']
+        origin = self.config['origin']
 
-	cmap = self.__temperatureCmap
-	ccmap = cm.gray
+        cmap = self.__temperatureCmap
+        ccmap = cm.gray
         if self.config['colormap'] in ['grey','gray']:
-	    cmap  = cm.gray
-	    ccmap = self.__temperatureCmap
+            cmap  = cm.gray
+            ccmap = self.__temperatureCmap
         elif self.config['colormap'] in ['yarg','yerg']:
-	    cmap  = self.__reversedGrayCmap
-	    ccmap = self.__temperatureCmap
-	elif self.config['colormap']=='jet':
-	    cmap = cm.jet
-	elif self.config['colormap']=='hot':
-	    cmap = cm.hot
-	elif self.config['colormap']=='cool':
-	    cmap = cm.cool
-	elif self.config['colormap']=='copper':
-	    cmap = cm.copper
-	elif self.config['colormap']=='spectral':
+            cmap  = self.__reversedGrayCmap
+            ccmap = self.__temperatureCmap
+        elif self.config['colormap']=='jet':
+            cmap = cm.jet
+        elif self.config['colormap']=='hot':
+            cmap = cm.hot
+        elif self.config['colormap']=='cool':
+            cmap = cm.cool
+        elif self.config['colormap']=='copper':
+            cmap = cm.copper
+        elif self.config['colormap']=='spectral':
             cmap = cm.spectral
-	elif self.config['colormap']=='hsv':
+        elif self.config['colormap']=='hsv':
             cmap = cm.hsv
-	elif self.config['colormap']=='rainbow':
+        elif self.config['colormap']=='rainbow':
             cmap = cm.gist_rainbow
-	elif self.config['colormap']=='red':
+        elif self.config['colormap']=='red':
             cmap = self.__redCmap
-	elif self.config['colormap']=='green':
+        elif self.config['colormap']=='green':
             cmap = self.__greenCmap
-	elif self.config['colormap']=='blue':
+        elif self.config['colormap']=='blue':
             cmap = self.__blueCmap
-	elif self.config['colormap']=='temperature':
+        elif self.config['colormap']=='temperature':
             cmap = self.__temperatureCmap
 
         if self.config['extent'] is None:
@@ -473,33 +473,33 @@ class PyMcaMatplotlibSaveImage:
                                         cmap=cmap,
                                         extent=extent,
                                         norm=Normalize(vmin, vmax))
-        
+
         ylim = self.axes.get_ylim()
 
         if self.config['colorbar'] is not None:
-	    barorientation = self.config['colorbar']
-	    self._colorbar = self.figure.colorbar(self._image,
-	                                orientation=barorientation)
+            barorientation = self.config['colorbar']
+            self._colorbar = self.figure.colorbar(self._image,
+                                        orientation=barorientation)
 
-	#contour plot
-	if self.config['contour'] != 'off':
-	    dataMin = imageData.min()
-	    dataMax = imageData.max()
-	    ncontours = int(self.config['contourlevels'])
-	    levels = (numpy.arange(ncontours)) *\
+        #contour plot
+        if self.config['contour'] != 'off':
+            dataMin = imageData.min()
+            dataMax = imageData.max()
+            ncontours = int(self.config['contourlevels'])
+            levels = (numpy.arange(ncontours)) *\
                      (dataMax - dataMin)/float(ncontours)
-	    if self.config['contour'] == 'filled':
-		self._contour = self.axes.contourf(imageData, levels,
-	             origin=origin,
+            if self.config['contour'] == 'filled':
+                self._contour = self.axes.contourf(imageData, levels,
+                     origin=origin,
                      cmap=ccmap,
                      extent=extent)
-	    else:
-		self._contour = self.axes.contour(imageData, levels,
-	             origin=origin,
+            else:
+                self._contour = self.axes.contour(imageData, levels,
+                     origin=origin,
                      cmap=ccmap,
-	             linewidths=2,
+                     linewidths=2,
                      extent=extent)
-	    if self.config['contourlabels'] != 'off':                
+            if self.config['contourlabels'] != 'off':                
                 self.axes.clabel(self._contour, fontsize=9,
                          inline=1, fmt=self.config['contourlabelformat'])
             if 0 and  self.config['colorbar'] is not None:
@@ -507,7 +507,7 @@ class PyMcaMatplotlibSaveImage:
                     barorientation = 'vertical'
                 else:
                     barorientation = 'horizontal'
-        	self._ccolorbar=self.figure.colorbar(self._contour,
+                self._ccolorbar=self.figure.colorbar(self._contour,
                                                      orientation=barorientation,
                                                      extend='both')
 
@@ -523,8 +523,8 @@ class PyMcaMatplotlibSaveImage:
             self.pixmapImage = image
 
     def _savePixmapFigure(self, filename):
-	interpolation = self.config['interpolation']
-	origin = self.config['origin']
+        interpolation = self.config['interpolation']
+        origin = self.config['origin']
         if self.config['extent'] is None:
             h= self.pixmapImage.shape[0]
             w= self.pixmapImage.shape[1]
@@ -610,7 +610,7 @@ if __name__ == "__main__":
         a=numpy.arange(1200.)
         a.shape = 20, 60
         PyMcaMatplotlibSaveImage(a, "filename.png", colormap="rainbow")
-        print "Image filename.png saved"
+        print("Image filename.png saved")
     else:
         w=PyMcaMatplotlibSave(legends=True)
         x = numpy.arange(1200.)
@@ -627,6 +627,6 @@ if __name__ == "__main__":
         w.setYLabel('Counts')
         w.plotLegends()
         w.saveFile("filename.png")
-        print "Plot filename.png saved"
+        print("Plot filename.png saved")
     sys.exit(0)
     

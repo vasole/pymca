@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -139,7 +139,7 @@ class NNMADialog(qt.QDialog):
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
                             if threadResult[0] == "Exception":
-                                raise threadResult[1],threadResult[2]
+                                raise Exception(threadResult[1],threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                 except:
                     if isinstance(data, numpy.ndarray):
@@ -152,7 +152,7 @@ class NNMADialog(qt.QDialog):
             if isinstance(self._data, numpy.ndarray):
                 self._data.shape = old_shape
             if DEBUG:
-                print "NNMA Elapsed = ", time.time() - t0
+                print("NNMA Elapsed = ", time.time() - t0)
             self.nnmaWindow.setPCAData(images,
                                        eigenvalues,
                                        eigenvectors)

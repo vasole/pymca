@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     w = QHDF5StackWizard()
     ret = w.exec_()
     if ret == QtGui.QDialog.Accepted:
-        print w.getParameters()
+        print(w.getParameters())
     #QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
     #QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)
     #QtCore.QObject.connect(w, QtCore.SIGNAL("replaceSelection"), replaceSelection)

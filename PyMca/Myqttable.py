@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -53,16 +53,16 @@ class QComboTableItem(qttable.QTableItem):
     def setCurrentItem(self,cur):
         if (type(cur) == type("")) or (type(cur) == type(qt.QString(""))):
             if DEBUG:
-                print "String type",cur
+                print("String type %s" % cur)
             for i in range (len(self.list)):
                 if str(cur)==str(self.list[i]):
                     self.cb.setCurrentItem(i)
                     return
             if DEBUG:
-                print "string",cur,"not in options list" 
+                print("string\n %s \nnot in options list" % cur) 
         else:
             if DEBUG:
-                print "int type"
+                print("int type")
             if cur in range(len(self.list)):
                 self.cb.setCurrentItem(cur)
                 
@@ -77,7 +77,7 @@ class QComboTableItem(qttable.QTableItem):
 
     def mySlot (self,index):
         if DEBUG:
-            print "passing mySlot(index), index = ",index
+            print("passing mySlot(index), index = %d " % index)
         self.table.setText(self.row(),self.col(),self.currentText())
         self.table.emit(qt.SIGNAL("valueChanged(int,int)"),(self.row(),self.col()))        
 
@@ -113,7 +113,7 @@ class QCheckTableItem(qttable.QTableItem):
 
     def mySlot (self,value):
         if DEBUG:
-            print "passing mySlot(index), value = ",value
+            print("passing mySlot(index), value = ", value)
         self.table.emit(qt.SIGNAL("valueChanged(int,int)"),(self.row(),self.col()))
         
     def isChecked(self):

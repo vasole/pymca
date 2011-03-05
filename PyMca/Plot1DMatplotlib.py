@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -30,7 +30,7 @@ import Plot1DWindowBase
 qt = Plot1DWindowBase.qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    raise ImportError, "This plotting module expects Qt4"
+    raise ImportError("This plotting module expects Qt4")
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -175,10 +175,10 @@ class MatplotlibGraph(FigureCanvas):
 
     def onMousePressed(self, event):
         if DEBUG:
-            print "onMousePressed, event = ",event.xdata, event.ydata
+            print("onMousePressed, event = ",event.xdata, event.ydata)
         if event.inaxes != self.ax:
             if DEBUG:
-                print "RETURNING"
+                print("RETURNING")
             return
         if event.button == 3:
             #right click
@@ -200,12 +200,12 @@ class MatplotlibGraph(FigureCanvas):
             
     def onMouseMoved(self, event):
         if DEBUG:
-            print "onMouseMoved, event = ",event.xdata, event.ydata
+            print("onMouseMoved, event = ",event.xdata, event.ydata)
         if (not self.__zooming) and (not self.__drawing):
             return
         elif event.inaxes != self.ax:
             if DEBUG:
-                print "RETURNING"
+                print("RETURNING")
             return
 
         if self._x0 is None:
@@ -274,7 +274,7 @@ class MatplotlibGraph(FigureCanvas):
         
     def onMouseReleased(self, event):
         if DEBUG:
-            print "onMouseReleased, event = ",event.xdata, event.ydata
+            print("onMouseReleased, event = ",event.xdata, event.ydata)
         if event.button == 3:
             #right click
             if self.__drawing:
@@ -335,13 +335,13 @@ class MatplotlibGraph(FigureCanvas):
 
     def getX1AxisLimits(self):
         if DEBUG:
-            print "getX1AxisLimitsCalled"
+            print("getX1AxisLimitsCalled")
         xlim = self.ax.get_xlim()
         return xlim
 
     def getY1AxisLimits(self):
         if DEBUG:
-            print "getY1AxisLimitsCalled"
+            print("getY1AxisLimitsCalled")
         ylim = self.ax.get_ylim()
 
     def _filterData(self, x, y):
@@ -378,7 +378,7 @@ class MatplotlibGraph(FigureCanvas):
             if n == 0:
                 #nothing to plot
                 if DEBUG:
-                    print "nothing to plot"
+                    print("nothing to plot")
                 return
         style = None
         if color is None:
@@ -658,8 +658,8 @@ if __name__ == "__main__":
         plot.graph.setZoomModeEnabled(True)
     else:
         def mySlot(ddict):
-            print ddict['event']
-            print ddict['data']
+            print(ddict['event'])
+            print(ddict['data'])
         qt.QObject.connect(plot.graph,
                            qt.SIGNAL('MatplotlibGraphSignal'),
                            mySlot)
@@ -668,16 +668,14 @@ if __name__ == "__main__":
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
-    print "Active curve = ", plot.getActiveCurve()
-    print "X Limits = ",     plot.getGraphXLimits()
-    print "Y Limits = ",     plot.getGraphYLimits()
-    print "All curves = ",   plot.getAllCurves()
+    print("Active curve = ", plot.getActiveCurve())
+    print("X Limits = ",     plot.getGraphXLimits())
+    print("Y Limits = ",     plot.getGraphYLimits())
+    print("All curves = ",   plot.getAllCurves())
     plot.removeCurve("dummy")
     plot.addCurve(x, y, "dummy2")
     plot.graph.setTitle('Title')
     plot.graph.x1Label('X')
     plot.graph.y1Label('Y')
-    print "All curves = ",   plot.getAllCurves()
+    print("All curves = ",   plot.getAllCurves())
     app.exec_()
-
-    

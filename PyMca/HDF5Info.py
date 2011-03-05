@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -337,7 +337,7 @@ class HDF5InfoWidget(QtGui.QTabWidget):
                 try:
                     QtGui.QApplication.postEvent(widget, newEvent)
                 except:
-                    print "Error notifying close event to widget", widget
+                    print("Error notifying close event to widget", widget)
             self._notifyCloseEventToWidget = []
         return QtGui.QWidget.closeEvent(self, event)
 
@@ -361,7 +361,7 @@ def getInfo(hdf5File, node):
                 elif shape[0] == 1:
                     ddict['general']['Value'] = "%s" % data.value[0]
                 else:
-                    print "Warning: Node %s not fully understood" % node
+                    print("Warning: Node %s not fully understood" % node)
                     ddict['general']['Value'] = "%s" % data.value
         elif hasattr(data, 'shape'):
             shape = data.shape
@@ -440,8 +440,8 @@ def getInfo(hdf5File, node):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 3:
-        print "Usage:"
-        print "python HDF5Info.py hdf5File node"
+        print("Usage:")
+        print("python HDF5Info.py hdf5File node")
         sys.exit(0)
     if 1:
         import h5py

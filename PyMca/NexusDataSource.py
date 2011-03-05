@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -177,7 +177,7 @@ class NexusDataSource:
                                                driver='family',
                                                lock=None)
                 else:
-                    raise IOError, "File %s does not exists" % name
+                    raise IOError("File %s does not exists" % name)
             try:
                 phynxInstance = phynx.File(name, 'r', lock=None,
                                            sorted_with=h5py_sorting)
@@ -195,7 +195,8 @@ class NexusDataSource:
                     else:
                         raise
             if FAMILY and (len(self._sourceObjectList) > 0):
-                raise IOError, "Mixing segmented and non-segmented HDF5 files not supported yet"
+                txt = "Mixing segmented and non-segmented HDF5 files not supported yet"
+                raise IOError(txt)
             elif FAMILY:
                 break
             phynxInstance._sourceName = name
@@ -212,7 +213,7 @@ class NexusDataSource:
                     phynxInstance = phynx.File(pattern, 'r', 
                                             driver='family',lock=None)
             else:
-                raise IOError, "Cannot set of HDF5 files"
+                raise IOError("Cannot read set of HDF5 files")
             self.sourceName   = [pattern]
             self.__sourceNameList = [pattern]
             self._sourceObjectList=[phynxInstance]
@@ -247,7 +248,7 @@ class NexusDataSource:
         else:
             #should we raise a KeyError?
             if DEBUG:
-                print "Error key not in list "
+                print("Error key not in list ")
             return {}
     
     def __getKeyInfo(self,key):
@@ -258,7 +259,7 @@ class NexusDataSource:
         except:
             #should we rise an error?
             if DEBUG:
-                print "Error trying to interpret key =",key
+                print("Error trying to interpret key = %s" % key)
             return {}
 
         sourceObject = self._sourceObjectList[index]
@@ -296,15 +297,15 @@ class NexusDataSource:
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
             if actual_key != key:
                 if entry != "/":
-                    print "Warning selection keys do not match"
+                    print("Warning selection keys do not match")
         else:
             sourcekeys = self.getSourceInfo()['KeyList']
             #a key corresponds to an image        
             key_split= key.split(".")
             actual_key= "%d.%d" % (int(key_split[0]), int(key_split[1]))
             if actual_key not in sourcekeys:
-                raise KeyError,"Key %s not in source keys" % actual_key
-            raise NotImplemented, "Direct NXdata plot not implemented yet"        
+                raise KeyError("Key %s not in source keys" % actual_key)
+            raise NotImplemented("Direct NXdata plot not implemented yet")        
         #create data object
         output = DataObject.DataObject()
         output.info = self.__getKeyInfo(actual_key)
@@ -317,7 +318,8 @@ class NexusDataSource:
             output.info['selectiontype'] = "2D"
             output.info['imageselection'] = True
         else:
-            raise TypeError, "Unsupported selection type %s" % selection['selectiontype']
+            raise TypeError("Unsupported selection type %s" %\
+                            selection['selectiontype'])
         if selection.has_key('LabelNames'):
             output.info['LabelNames'] = selection['LabelNames']
         elif selection.has_key('aliaslist'):
@@ -348,9 +350,9 @@ class NexusDataSource:
                     if min(data.shape) == 1:
                         data = numpy.ravel(data)
                     else:
-                        raise TypeError, "%s selection is not 1D" % cnt.upper()
+                        raise TypeError("%s selection is not 1D" % cnt.upper())
                 elif len(data.shape) > 2:
-                    raise TypeError, "%s selection is not 1D" % cnt.upper()                
+                    raise TypeError("%s selection is not 1D" % cnt.upper())            
             if cnt == 'y':
                 if output.info['selectiontype'] == "2D":
                     output.data = data
@@ -360,7 +362,7 @@ class NexusDataSource:
                 #there can be more than one X except for 1D
                 if output.info['selectiontype'] == "1D":
                     if len(selection[cnt]) > 1:
-                        raise TypeError, "%s selection is not 1D" % cnt.upper()
+                        raise TypeError("%s selection is not 1D" % cnt.upper())
                 if output.x is None:
                     output.x = [data]
                 if len(selection[cnt]) > 1:
@@ -434,8 +436,8 @@ def DataSource(name="", source_type=SOURCE_TYPE):
      sourceClass = source_types[source_type]
   except KeyError:
      #ERROR invalid source type
-     raise TypeError,"Invalid Source Type, source type should be one of %s" % source_types.keys()
-  
+     raise TypeError("Invalid Source Type, source type should be one of %s" %\
+                     source_types.keys())  
   return sourceClass(name)
 
         
@@ -445,25 +447,25 @@ if __name__ == "__main__":
         sourcename=sys.argv[1]
         key       =sys.argv[2]        
     except:
-        print "Usage: EdfFileDataSource <file> <key>"
+        print("Usage: NexusDataSource <file> <key>")
         sys.exit()
     #one can use this:
-    obj = EdfFileDataSource(sourcename)
+    obj = NexusDataSource(sourcename)
     #or this:
     obj = DataSource(sourcename)
     #data = obj.getData(key,selection={'pos':(10,10),'size':(40,40)})
     #data = obj.getDataObject(key,selection={'pos':None,'size':None})
     t0 = time.time()
     data = obj.getDataObject(key,selection=None)
-    print "elapsed = ",time.time() - t0
-    print "info = ",data.info
+    print("elapsed = ",time.time() - t0)
+    print("info = ",data.info)
     if data.data is not None:
-        print "data shape = ",data.data.shape
-        print Numeric.ravel(data.data)[0:10]
+        print("data shape = ",data.data.shape)
+        print(Numeric.ravel(data.data)[0:10])
     else:
-        print data.y[0].shape
-        print Numeric.ravel(data.y[0])[0:10]
+        print(data.y[0].shape)
+        print(Numeric.ravel(data.y[0])[0:10])
     data = obj.getDataObject('1.1',selection=None)
     r = int(key.split('.')[-1])
-    print " data[%d,0:10] = " % (r-1),data.data[r-1   ,0:10]
-    print " data[0:10,%d] = " % (r-1),data.data[0:10, r-1]        
+    print(" data[%d,0:10] = " % (r-1),data.data[r-1   ,0:10])
+    print(" data[0:10,%d] = " % (r-1),data.data[0:10, r-1])
