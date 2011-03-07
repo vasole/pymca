@@ -180,9 +180,7 @@ class  EdfFile:
             if access[0].upper() == "R":
                 if not os.path.isfile(self.FileName):
                     raise IOError("File %s not found" % FileName)
-                if access == 'r' and sys.platform == 'win32':
-                    access = 'r'
-            if (sys.platform == 'win32') and ('b' not in access):
+            if 'b' not in access:
                 access += 'b'
         try:
             if not os.path.isfile(self.FileName):
@@ -193,8 +191,8 @@ class  EdfFile:
                     self.File = open(self.FileName, access)
                     self.File.seek(0, 0)
                     return
-                elif access == 'w' and sys.platform == 'win32':
-                    access = 'wb'
+                if 'b' not in access:
+                    access += 'b'
                 self.File = open(self.FileName, access)
                 return
             else:
