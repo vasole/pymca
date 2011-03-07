@@ -181,14 +181,18 @@ class  EdfFile:
                 if not os.path.isfile(self.FileName):
                     raise IOError("File %s not found" % FileName)
                 if access == 'r' and sys.platform == 'win32':
-                    access = 'rb'
+                    access = 'r'
+            if (sys.platform == 'win32') and ('b' not in access):
+                access += 'b'
         try:
             if not os.path.isfile(self.FileName):
                 #write access
                 if access is None:
                     #allow writing and reading
                     access = "ab+"
+                    self.File = open(self.FileName, access)
                     self.File.seek(0, 0)
+                    return
                 elif access == 'w' and sys.platform == 'win32':
                     access = 'wb'
                 self.File = open(self.FileName, access)
@@ -1003,7 +1007,7 @@ if __name__ == "__main__":
         for i in range(5):
             for j in range(10):
                 a[i, j] = 10 * i + j
-        edf = EdfFile("armando.edf")
+        edf = EdfFile("armando.edf", access="ab+")
         edf.WriteImage({}, a)
         del edf #force to close the file
         inp = EdfFile("armando.edf")
