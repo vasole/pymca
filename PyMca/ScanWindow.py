@@ -1850,7 +1850,11 @@ class HorizontalSpacer(qt.QWidget):
                            qt.QSizePolicy.Fixed))
 
 def test():
+    import numpy
     w = ScanWindow()
+    x = numpy.arange(1000.)
+    y =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
+    w.addCurve(x, y, legend="dummy", replot=True, replace=True)
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
     w.show()

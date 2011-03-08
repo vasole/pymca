@@ -78,7 +78,7 @@ class ScanFit(qt.QWidget):
         #self.specfitGUI.updateGUI(configuration=fitconfig)
         #self.setdata = self.specfit.setdata
         
-        self.specfitGUI.guiconfig.MCACheckBox.setEnabled(0)
+        self.specfitGUI.guiconfig.MCACheckBox.setEnabled(1)
         palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
         if QTVERSION < '4.0.0':
             palette.setDisabled(palette.active())
