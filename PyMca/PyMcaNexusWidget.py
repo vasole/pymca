@@ -115,6 +115,10 @@ class PyMcaNexusWidget(QNexusWidget):
         sel['selection']['index'] = index
         self._checkWidgetDict()
         if 1:
+            #this way it is not loaded into memory
+            #and cannot crash because same instance is used
+            stack = phynxFile[name]            
+        elif 1:
             #this does not crash because
             #the same phynx instance is shared
             stack = HDF5Stack1D.HDF5Stack1D(phynxFile, sel['selection'],
@@ -128,7 +132,7 @@ class PyMcaNexusWidget(QNexusWidget):
         widget = QStackWidget.QStackWidget()
         widget.setWindowTitle(title)
         widget.notifyCloseEventToWidget(self)
-        widget.setStack(stack)
+        widget.setStack(stack, mcaindex=index)
         wid = id(widget)
         self._lastWidgetId = wid
         self._widgetDict[wid] = widget

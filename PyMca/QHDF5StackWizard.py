@@ -176,7 +176,7 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         
         #check if it is an NXentry
         entry = phynxFile[keys[0]] 
-        attr = entry.attrs.get('NX_class',None)
+        attr = entry.attrs.get('NX_class', None)
         if attr is None:
             return
         if attr != 'NXentry':
@@ -236,7 +236,7 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         for key in ['x', 'y', 'm']:
             if len(cntSelection[key]):
                 for idx in cntSelection[key]:
-                    selection[key].append(cntlist[idx])              
+                    selection[key].append(cntlist[idx])
         self.selection = selection
         return True
 
@@ -301,7 +301,9 @@ class QHDF5StackWizard(QtGui.QWizard):
             self._datasetSelection.setFileList(self._fileList.fileList)
 
     def getParameters(self):
-        return self._fileList.fileList, self._datasetSelection.selection
+        return self._fileList.fileList,\
+               self._datasetSelection.selection,\
+               [x[0] for x in self._datasetSelection.nexusWidget.getSelectedEntries()]
     
 if __name__ == "__main__":
     import sys

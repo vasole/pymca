@@ -540,7 +540,7 @@ class QNexusWidget(QtGui.QWidget):
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
-        entryList = self.getEntryList()
+        entryList = self.getSelectedEntries()
         if not len(entryList):
             return
         cntSelection = self.cntTable.getCounterSelection()
@@ -614,7 +614,7 @@ class QNexusWidget(QtGui.QWidget):
             if action.upper() == "REPLACE":
                 self.emit(QtCore.SIGNAL("replaceSelection"), selectionList)
 
-    def getEntryList(self):
+    def getSelectedEntries(self):
         return self.hdf5Widget.getSelectedEntries()
 
     def closeEvent(self, event):

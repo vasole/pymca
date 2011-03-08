@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -44,7 +44,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
             ret = wizard.exec_()
             if ret != QtGui.QDialog.Accepted:
                 raise ValueError("Incomplete selection")
-            filelist, selection = wizard.getParameters()
+            filelist, selection, scanlist = wizard.getParameters()
         HDF5Stack1D.HDF5Stack1D.__init__(self, filelist, selection,
                                 scanlist=scanlist,
                                 dtype=dtype)

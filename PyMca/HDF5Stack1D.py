@@ -140,15 +140,18 @@ class HDF5Stack1D(DataObject.DataObject):
                     scanlist.append("")
         else:
             try:
-                number, order = map(int, scanlist[0].split("."))
+                number, order = [int(x) for x in scanlist[0].split(".")]
                 JUST_KEYS = True
             except:
                 JUST_KEYS = False
             if not JUST_KEYS:
                 for scan in scanlist:
-                    if scan not in entryNames:
+                    if scan.startswith("/"):
+                        t = scan[1:]
+                    else:
+                        t = scan
+                    if t not in entryNames:
                         raise ValueError("Entry %s not in file" % scan)
-
         
         nFiles = len(filelist)
         nScans = len(scanlist)
@@ -163,9 +166,9 @@ class HDF5Stack1D(DataObject.DataObject):
             if mSelection is not None:
                 mpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + mSelection
         else:
-            path = "/" + scanlist[0] + ySelection
+            path = scanlist[0] +  ySelection
             if mSelection is not None:
-                mpath = "/" + scanlist[0] + mSelection
+                mpath = scanlist[0] + mSelection
         yDataset = tmpHdf[path]
 
         if self.__dtype is None:
