@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -338,6 +338,7 @@ else:
         def build(self, cntlist, nmca=None):
             if not OBJECT3D:
                 nmca = 0
+            nmca = 0
             if nmca is None:
                 nmca = 0 
             self.cntList = cntlist
