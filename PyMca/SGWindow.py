@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -75,6 +75,13 @@ class SGParametersWidget(qt.QWidget):
         self.widgetDict['order'].setValue(0)
         self.widgetDict['order'].setMaximum(4)
 
+    def setParameters(self, ddict):
+        for key in ddict:
+            if key in self._keyList:
+                self.widgetDict[key].setValue(ddict[key])
+        dummy = 0
+        self._updateParameters(dummy)
+
     def _updateParameters(self, val):
         for key in self._keyList:
             self.parametersDict[key] = self.widgetDict[key].value()
@@ -111,6 +118,7 @@ class SGWindow(qt.QWidget):
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graph)
         self.getParameters = self.parametersWidget.getParameters
+        self.setParameters = self.parametersWidget.setParameters
         self.connect(self.parametersWidget,
                      qt.SIGNAL('SGParametersSignal'),
                      self.updateGraph)
@@ -177,6 +185,10 @@ class SGDialog(qt.QDialog):
                                        parametersDict['degree'],
                                        parametersDict['order']]
         return parametersDict                                       
+
+    def setParameters(self, ddict):
+        return self.parametersWidget.setParameters(ddict)
+
                  
 if __name__ == "__main__":
     import numpy

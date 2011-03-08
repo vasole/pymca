@@ -9,6 +9,17 @@ except ImportError:
     #This happens in frozen versions
     import PyMca_Icons
 
+try:
+    from PyMca import SpecfitFuns
+    HAS_SPECFIT = True
+except ImportError:
+    #This happens in frozen versions
+    try:
+        import SpecfitFuns
+        HAS_SPECFIT = True
+    except:
+        HAS_SPECFIT = False
+
 
 class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -25,6 +36,10 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 '(y-min(y))/sum(max(y)-min(y))':[self.offsetAndCounts,
                        "Subtract offset and normalize to counts",
                                        None]}
+        if HAS_SPECFIT:
+            self.methodDict['y/yactive'] = [self.divideByActiveCurve,
+                       "Divide all curves by active curve",
+                                       None]
         
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
@@ -180,6 +195,80 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           replot=True,
                           replace=False)
 
+    def divideByActiveCurve(self):
+        #all curves
+        curves = self.getAllCurves()
+        nCurves = len(curves)
+        if nCurves < 2:
+            raise ValueError("At least two curves needed")
+            return
+        
+        #get active curve
+        activeCurve = self.getActiveCurve()
+        if activeCurve is None:
+            raise ValueError("Please select an active curve")
+            return
+        
+        x, y, legend0, info = activeCurve
+        xmin = x.min()
+        xmax = x.max()
+        y = y.astype(numpy.float)
+
+        #get the nonzero values
+        idx = numpy.nonzero(abs(y) != 0.0)[0]
+        if not len(idx):
+            raise ValueError("All divisor values are zero!")
+        x0 = numpy.take(x, idx)
+        y0 = numpy.take(y, idx)        
+
+        #sort the values
+        idx = numpy.argsort(x0, kind='mergesort')
+        x0 = numpy.take(x0, idx)
+        y0 = numpy.take(y0, idx)
+
+        i = 0
+        for curve in curves:            
+            x, y, legend, info = curve[0:4]
+            if legend == legend0:
+                continue
+            #take the portion ox x between limits
+            idx = numpy.nonzero((x>=xmin) & (x<=xmax))[0]
+            if not len(idx):
+                #no overlap
+                continue
+            x = numpy.take(x, idx)
+            y = numpy.take(y, idx)
+
+            idx = numpy.nonzero((x0>=x.min()) & (x0<=x.max()))[0]
+            if not len(idx):
+                #no overlap
+                continue
+            xi = numpy.take(x0, idx)
+            yi = numpy.take(y0, idx)
+            
+            #perform interpolation
+            xi.shape = -1, 1
+            yw = SpecfitFuns.interpol([x], y, xi, yi.min())
+            y = yw / yi
+            if i == 0:
+                replace = True
+                replot = True
+                i = 1
+            else:
+                replot = False
+                replace = False
+            self.addCurve(x, y,
+                          legend=legend,
+                          info=info,
+                          replot=replot,
+                          replace=replace)
+            lastCurve = [x, y, legend]
+        self.addCurve(lastCurve[0],
+                      lastCurve[1],
+                      legend=lastCurve[2],                      
+                      info=info,
+                      replot=True,
+                      replace=False)
 
 MENU_TEXT = "Normalization"
 def getPlugin1DInstance(plotWindow, **kw):
