@@ -44,14 +44,14 @@ import IncoherentScattering
 import PyMcaEPDL97
 
 """ 
-Constant                     Symbol      2006 CODATA value      Relative uncertainty 
-Electron relative atomic mass   Ar(e) 5.485 799 0943(23) × 10–4     4.2 × 10–10
+Constant                     Symbol      2006 CODATA value          Relative uncertainty
+Electron relative atomic mass   Ar(e) 5.485 799 0943(23) x 10-4     4.2 x 10-10
 Molar mass constant             Mu    0.001 kg/mol                   defined
-Rydberg constant                R∞    10 973 731.568 527(73) m–1    6.6 × 10–12
-Planck constant                 h     6.626 068 96(33) × 10–34 Js   5.0 × 10–8
+Rydberg constant                R    10 973 731.568 527(73) m-1      6.6 x 10-12
+Planck constant                 h     6.626 068 96(33) x 10-34 Js    5.0 x 10-8
 Speed of light                  c     299 792 458 m/s                defined
-Fine structure constant         α     7.297 352 5376(50) × 10–3     6.8 × 10–10
-Avogadro constant               NA    6.022 141 79(30) × 1023 mol–1 5.0 × 10–8
+Fine structure constant         alpha 7.297 352 5376(50) x 10-3      6.8 x 10-10
+Avogadro constant               NA    6.022 141 79(30) x 10+23 mol-1 5.0 x 10-8
 """
 MINENERGY = 0.175
 AVOGADRO_NUMBER = 6.02214179E23
