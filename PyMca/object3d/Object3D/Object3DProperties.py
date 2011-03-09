@@ -474,7 +474,10 @@ class Object3DProperties(qt.QWidget):
         ddict ={}
         ddict['common'] = self.drawingModeWidget.getParameters()
         ddict['common'].update(self.aspectWidget.getParameters())
-        ddict['private'] = self.privateWidget.getParameters()
+        if self.privateWidget is not None:
+            ddict['private'] = {'widget':None}
+        else:
+            ddict['private'] = self.privateWidget.getParameters()
         return ddict
 
     def setParameters(self, ddict):
@@ -482,20 +485,21 @@ class Object3DProperties(qt.QWidget):
             print "setParameters"
         self.drawingModeWidget.setParameters(ddict['common'])
         self.aspectWidget.setParameters(ddict['common'])
-        widget = ddict['private']['widget']
+        widget = ddict['private'].get('widget', None)
         if self.privateWidget is None:
             pass
         else:
             try:
-                if self.privateWidget != ddict['private']['widget']:
+                if self.privateWidget != widget:
                     self.privateWidget.close()
             except ReferenceError:
                 if DEBUG:
                     print "Reference error"
                 pass
-        self.privateWidget = ddict['private']['widget']
-        self.privateWidget.setCallBack(self._privateCallBack)
-        self.privateWidget.setParameters(ddict['private'])
+        self.privateWidget = widget
+        if widget is not None:
+            self.privateWidget.setCallBack(self._privateCallBack)
+            self.privateWidget.setParameters(ddict['private'])
 
 if __name__ == "__main__":
     import sys

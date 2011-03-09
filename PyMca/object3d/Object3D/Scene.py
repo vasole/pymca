@@ -22,7 +22,8 @@ class Scene:
                             'theta': 0.0,
                             'phi':0.0,
                             'view':__currentViewMatrix,
-                            'zoom':1.0} 
+                            'zoom':1.0,
+                            'widget':None} 
         self.__sceneObject.setConfiguration(ddict)
         self.tree = ObjectTree.ObjectTree(self.__sceneObject, name)
         self.__limits = [-100., -100., -100., 100., 100.0, 100.0]

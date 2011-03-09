@@ -553,13 +553,42 @@ class SceneGLWindow(qt.QWidget):
         if legend not in self.scene.getObjectList():
             self.selectedObjectControl.hide()
             return
-
         configDict = {'common':{}, 'private':{}}
         if ddict.has_key('private'):
 	    configDict['private'] = ddict['private']
         oldScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
         configDict['common'].update(ddict['common'])
         self.scene[legend].root[0].setConfiguration(configDict)
+        if 'common' in ddict:
+            if 'event' in ddict['common']:
+                if ddict['common']['event'] == 'ColormapChanged':
+                    if legend == self.scene.name():
+                        #print scene colormap changed
+                        newColormap = ddict['common']['colormap']
+                        objectList = self.scene.getObjectList()
+                        i = 0
+                        for o3dName in objectList:
+                            if o3dName == self.scene.name():
+                                continue
+                            o3d = self.scene.getObject3DProxy(o3dName)
+                            cfg = {}
+                            cfg['common'] = o3d.getConfiguration()['common']
+                            minCmap = cfg['common']['colormap'][4]
+                            maxCmap = cfg['common']['colormap'][5]
+                            if (i == 0) or (newColormap[4] > minCmap):
+                                newColormap[4] = minCmap
+                            if (i == 0) or (newColormap[5] > maxCmap):
+                                newColormap[5] = maxCmap
+                            i = 1
+                            cfg['common']['colormap'][0:4] = newColormap[0:4]
+                            cfg['common']['colormap'][-1]  = newColormap[-1]
+                            cfg['common']['event'] = ddict['common']['event']
+                            o3d.setConfiguration(cfg)
+                        #this is to get the proper limits
+                        configDict['common']['colormap'] = newColormap
+                        del configDict['common']['event']
+                        self.scene[legend].root[0].setConfiguration(configDict)
+                        self.selectedObjectControl.setConfiguration(configDict)                        
         if legend == self.scene.name() or self.scene.getAutoScale():
             newScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
             if newScale != oldScale:
@@ -570,7 +599,7 @@ class SceneGLWindow(qt.QWidget):
                 position=self.scene.applyCube()
                 self.glWidget.setCurrentViewPosition(position,
                                                      rotation_reset=False)
-                return
+                return            
         self.glWidget.cacheUpdateGL()
 	    
     def vertexSelectedSlot(self, ddict):
