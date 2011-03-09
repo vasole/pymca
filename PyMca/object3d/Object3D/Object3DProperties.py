@@ -474,7 +474,7 @@ class Object3DProperties(qt.QWidget):
         ddict ={}
         ddict['common'] = self.drawingModeWidget.getParameters()
         ddict['common'].update(self.aspectWidget.getParameters())
-        if self.privateWidget is not None:
+        if self.privateWidget is None:
             ddict['private'] = {'widget':None}
         else:
             ddict['private'] = self.privateWidget.getParameters()
