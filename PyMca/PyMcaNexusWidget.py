@@ -114,10 +114,39 @@ class PyMcaNexusWidget(QNexusWidget):
         sel['selection']['m'] = []
         sel['selection']['index'] = index
         self._checkWidgetDict()
+
+        widget = QStackWidget.QStackWidget()
+        widget.setWindowTitle(title)
+        widget.notifyCloseEventToWidget(self)
+
+        #different ways to fill the stack
         if 1:
             #this way it is not loaded into memory
             #and cannot crash because same instance is used
-            stack = phynxFile[name]            
+            stack = phynxFile[name]
+
+            #the only problem is that, if the shape is not of type (a, b, c),
+            #it will not be possible to reshape it. In that case I have to
+            #actually read the values
+            nDim = len(stack.shape)
+            if nDim != 3:
+                stack = stack.value
+                shape = stack.shape
+                if index == 0:
+                    #Stack of images
+                    n = 1
+                    for dim in shape[:-2]:
+                        n = n * dim
+                    stack.shape = n, shape[-2], shape[-1]
+                else:
+                    #stack of mca
+                    n = 1
+                    for dim in shape[:-1]:
+                        n = n * dim
+                    stack.shape = 1, n, shape[-1]
+                    #index equal -1 should be able to handle it
+                    #if not, one would have to uncomment next line
+                    #index = 2
         elif 1:
             #this does not crash because
             #the same phynx instance is shared
@@ -129,9 +158,6 @@ class PyMcaNexusWidget(QNexusWidget):
             stack = HDF5Stack1D.HDF5Stack1D([filename], sel['selection'],
                                 scanlist=scanlist,
                                 dtype=None)
-        widget = QStackWidget.QStackWidget()
-        widget.setWindowTitle(title)
-        widget.notifyCloseEventToWidget(self)
         widget.setStack(stack, mcaindex=index)
         wid = id(widget)
         self._lastWidgetId = wid

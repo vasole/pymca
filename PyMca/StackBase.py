@@ -199,7 +199,7 @@ class StackBase(object):
             if DEBUG:
                 t0 = time.time()
             shape = self._stack.data.shape
-            if self.mcaIndex == 2:
+            if self.mcaIndex in [2, -1]:
                 self._stackImageData = numpy.zeros((shape[0], shape[1]),
                                                 self._stack.data.dtype)
                 mcaData0 = numpy.zeros((shape[2],), numpy.float)
@@ -223,6 +223,8 @@ class StackBase(object):
                               tmpData,
                               self._stackImageData)
                     mcaData0[i] = tmpData.sum()
+            else:
+                raise ValueError("Unhandled case 1D index = %d" % self.mcaIndex)
             if DEBUG:
                 print("Print dynamic loading elapsed = %f" % (time.time() -t0))
 
