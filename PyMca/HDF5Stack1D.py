@@ -92,7 +92,7 @@ class HDF5Stack1D(DataObject.DataObject):
         else:
             mSelection = None
             
-        if scanlist is None:
+        if scanlist in [None, []]:
             #if the scanlist is None, it is assumed we are interested on all
             #the scans containing the selection, not that all the scans
             #contain the selection.
