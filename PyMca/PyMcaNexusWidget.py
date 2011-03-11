@@ -80,6 +80,8 @@ class PyMcaNexusWidget(QNexusWidget):
             if stack2D:
                 _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show as 2D Stack"),
                                     self._stack2DSignal)
+                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Load and show as 2D Stack"),
+                                    self._loadStack2DSignal)
             self._lastDatasetDict= ddict
             _hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
             self._lastDatasetDict= None
@@ -90,12 +92,17 @@ class PyMcaNexusWidget(QNexusWidget):
             print("_stack1DSignal")
         self._stackSignal(index=-1)
 
-    def _stack2DSignal(self):
+    def _loadStack2DSignal(self):
+        if DEBUG:
+            print("_loadStack2DSignal")
+        self._stackSignal(index=0, load=True)
+
+    def _stack2DSignal(self, load=False):
         if DEBUG:
             print("_stack2DSignal")
-        self._stackSignal(index=0)
+        self._stackSignal(index=0, load=False)
 
-    def _stackSignal(self, index=-1):
+    def _stackSignal(self, index=-1, load=False):
         ddict = self._lastDatasetDict
         filename = ddict['file']
         name = ddict['name']
@@ -121,7 +128,7 @@ class PyMcaNexusWidget(QNexusWidget):
 
         #different ways to fill the stack
         if 1:
-            #this way it is not loaded into memory
+            #this way it is not loaded into memory unless requested
             #and cannot crash because same instance is used
             stack = phynxFile[name]
 
@@ -129,7 +136,7 @@ class PyMcaNexusWidget(QNexusWidget):
             #it will not be possible to reshape it. In that case I have to
             #actually read the values
             nDim = len(stack.shape)
-            if nDim != 3:
+            if (load) or (nDim != 3):
                 stack = stack.value
                 shape = stack.shape
                 if index == 0:
