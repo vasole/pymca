@@ -31,6 +31,21 @@ import numpy.oldnumeric as Numeric
 import numpy
 import sys
 import os
+HDF5 = False
+try:
+    import h5py
+    import PyMca.phynx as phynx
+    HDF5 = True
+except ImportError:
+    try:
+        import phynx
+        HDF5 = True
+    except ImportError:
+        try:
+            from xpaxs.io import phynx
+            HDF5 = True
+        except ImportError:
+            pass
 SOURCE_TYPE = "SpecFileStack"
 DEBUG = 0
 
@@ -124,22 +139,98 @@ class SpecFileStack(DataObject.DataObject):
                         self.onProgress(self.incrProgressBar)
                 filecounter += 1
         elif shape is None:
-            self.data = Numeric.zeros((self.nbFiles,
+            #it can only be here if there is one scan per file
+            try:
+                self.data = Numeric.zeros((self.nbFiles,
                                    numberofmca/numberofdetectors,
                                    arrRet.shape[0]),
                                    arrRet.dtype.char)
-            filecounter         = 0
-            for tempFileName in filelist:
-                tempInstance=specfile.Specfile(tempFileName)
-                scan = tempInstance.select(keylist[-1])
-                for i in iterlist:
-                    #mcadata = scan_obj.mca(i)
-                    self.data[filecounter,
-                              0,
-                              :] = scan.mca(i)[:]
-                    self.incrProgressBar += 1
-                    self.onProgress(self.incrProgressBar)
-                filecounter += 1
+                filecounter         = 0
+                for tempFileName in filelist:
+                    tempInstance=specfile.Specfile(tempFileName)
+                    #it can only be here if there is one scan per file
+                    #prevent problems if the scan number is different
+                    #scan = tempInstance.select(keylist[-1])
+                    scan = tempInstance[0]
+                    for i in iterlist:
+                        #mcadata = scan_obj.mca(i)
+                        self.data[filecounter,
+                                  0,
+                                  :] = scan.mca(i)[:]
+                        self.incrProgressBar += 1
+                        self.onProgress(self.incrProgressBar)
+                    filecounter += 1
+            except MemoryError:
+                qtflag = False
+                if ('PyQt4.QtCore' in sys.modules) or\
+                   ('PyMcaQt' in sys.modules) or\
+                   ('PyMca.PyMcaQt' in sys.modules):
+                    qtflag = True
+                hdf5done = False
+                if HDF5 and qtflag:
+                    import PyMcaQt as qt
+                    import ArraySave
+                    msg=qt.QMessageBox.information( None,
+                      "Memory error\n",
+                      "Do you want to convert your data to HDF5?\n",
+                      qt.QMessageBox.Yes,qt.QMessageBox.No)
+                    if msg != qt.QMessageBox.No:
+                        hdf5file = qt.QFileDialog.getSaveFileName(None,
+                                    "Please select output file name",
+                                    os.path.dirname(filelist[0]),
+                                    "HDF5 files *.h5")
+                        if not len(hdf5file):
+                            raise IOError("Invalid output file")
+                        hdf5file = str(hdf5file)
+                        if not hdf5file.endswith(".h5"):
+                            hdf5file += ".h5"
+
+                        #get the final shape
+                        from PyMca.RGBCorrelatorWidget import ImageShapeDialog
+                        stackImageShape = self.nbFiles,\
+                                     int(numberofmca/numberofdetectors)
+                        dialog = ImageShapeDialog(None, shape =stackImageShape)
+                        dialog.setModal(True)
+                        ret = dialog.exec_()
+                        if ret:
+                            stackImageShape= dialog.getImageShape()
+                            dialog.close()
+                            del dialog
+                        hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
+                                       (stackImageShape[0],
+                                        stackImageShape[1],
+                                        arrRet.shape[0]),
+                                       compression=None,
+                                       interpretation="spectrum")
+                        nRow = 0
+                        nCol = 0
+                        for tempFileName in filelist:
+                            tempInstance=specfile.Specfile(tempFileName)
+                            #it can only be here if there is one scan per file
+                            #prevent problems if the scan number is different
+                            #scan = tempInstance.select(keylist[-1])
+                            scan = tempInstance[0]
+                            nRow = int(self.incrProgressBar/stackImageShape[1])
+                            nCol = self.incrProgressBar%stackImageShape[1]
+                            for i in iterlist:
+                                #mcadata = scan_obj.mca(i)
+                                self.data[nRow,
+                                          nCol,
+                                          :] = scan.mca(i)[:]
+                                self.incrProgressBar += 1
+                                self.onProgress(self.incrProgressBar)
+                        hdf5done = True
+                        hdf.flush()
+                    self.onEnd()
+                    self.info["SourceType"] = "HDF5Stack1D"
+                    self.info["McaIndex"] = 2
+                    self.info["FileIndex"] = 0
+                    self.info["SourceName"] = [hdf5file]
+                    self.info["NumberOfFiles"] = 1
+                    self.info["Size"]       = 1
+                    return
+                else:
+                    raise
         else:
             sampling_order = 1
             s0 = shape[0]

@@ -130,7 +130,9 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
 
 def getHDF5FileInstanceAndBuffer(filename, shape,
                                  buffername="data",
-                                 dtype=numpy.float32):
+                                 dtype=numpy.float32,
+                                 interpretation=None,
+                                 compression=None):
     if not HDF5:
         raise IOError('h5py does not seem to be installed in your system')
 
@@ -148,8 +150,11 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     data = nxData.require_dataset(buffername,
                            shape=shape,
                            dtype=dtype,
-                           chunks=(1, shape[1], shape[2]))
+                           chunks=(1, shape[1], shape[2]),
+                           compression=compression)
     data.attrs['signal'] = 1
+    if interpretation is not None:
+        data.attrs['interpretation'] = interpretation
     for i in range(len(shape)):
         dim = numpy.arange(shape[i]).astype(numpy.float32)
         dset = nxData.require_dataset('dim_%d' % i,
