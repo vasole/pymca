@@ -307,8 +307,9 @@ class StackSelector(object):
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.outputDir is None:
             PyMcaDirs.outputDir = os.path.dirname(filelist[0])
-            
-        filelist.sort()
+
+        #This should not be there in order to allow the user other choices
+        #filelist.sort()
         if getfilter:
             return filelist, filterused
         else:

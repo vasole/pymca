@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -228,7 +228,7 @@ class QSourceSelector(qt.QWidget):
                             fdialog.close()
                             del fdialog
                             return            
-                filelist.sort()
+                #filelist.sort()
                 filename=[]
                 for f in filelist:
                     filename.append(str(f))

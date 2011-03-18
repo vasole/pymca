@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -450,7 +450,9 @@ class McaBatchGUI(qt.QWidget):
         if True or self.__goodFileList(filelist):
             text = ""
             oldtype = None
-            filelist.sort()
+            #do not sort the file list
+            #respect user choice
+            #filelist.sort()
             for file in filelist:
                 filetype = self.__getFileType(file)
                 if filetype is None:return
@@ -539,7 +541,8 @@ class McaBatchGUI(qt.QWidget):
         if self.__goodConfigFile(configfile):
             self.configFile = configfile
             if type(configfile) == type([]):
-                self.configFile.sort()
+                #do not sort file list
+                #self.configFile.sort()
                 self.__configLine.setText(self.configFile[0])
                 self.lastInputDir = os.path.dirname(self.configFile[0])
             else:

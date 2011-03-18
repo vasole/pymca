@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1136,7 +1136,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             filelist, filefilter = self._getStackOfFiles(getfilter=True)
             if not(len(filelist)):
                 return
-            filelist.sort()
+            #filelist.sort()
             
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
             if PyMcaDirs.outputDir is None:
@@ -2403,7 +2403,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if PyMcaDirs.outputDir is None:
             PyMcaDirs.outputDir = os.path.dirname(filelist[0])
             
-        filelist.sort()
+        #filelist.sort()
         if getfilter:
             return filelist, filterused
         else:

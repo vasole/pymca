@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -151,7 +151,8 @@ class Mca2EdfGUI(qt.QWidget):
         if True or self.__goodFileList(filelist):
             text = ""
             oldtype = None
-            filelist.sort()
+            #respect initial file list choice
+            #filelist.sort()
             for file in filelist:
                 text += "%s\n" % file
             self.fileList = filelist

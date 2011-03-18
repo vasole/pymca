@@ -70,7 +70,7 @@ class FileListPage(QtGui.QWizardPage):
 
     def setFileList(self, filelist):
         text = ""
-        filelist.sort()
+        #filelist.sort()
         for ffile in filelist:
             text += "%s\n" % ffile
         self.fileList = filelist

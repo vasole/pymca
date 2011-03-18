@@ -204,8 +204,9 @@ def getFileList(parent=None, filetypelist=None, message=None,
     else:
         PyMcaDirs.outputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.inputDir is None:
-            PyMcaDirs.inputDir = os.path.dirname(filelist[0])        
-    filelist.sort()
+            PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+    #do not sort file list
+    #filelist.sort()
     if getfilter:
         return filelist, filterused
     else:
