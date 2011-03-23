@@ -358,6 +358,7 @@ class SPS_StandardArray(qt.QWidget):
             self.yList.setSelectionMode(qt.QListBox.Multi)
         else:
             self.yList= qt.QListWidget(self)
+            self.yList.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.plotCombo, 0, 1)
         layout.addWidget(self.xCombo, 1, 1)
