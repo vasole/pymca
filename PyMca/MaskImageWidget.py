@@ -353,6 +353,10 @@ class MaskImageWidget(qt.QWidget):
                              qt.SIGNAL('replaceClicked'),
                              self._profileSelectionSlot)
             self._interpolate =  SpecfitFuns.interpol
+            #if I do not return here and the user interacts with the graph while
+            #the profileSelectionWindow is not shown, I get crashes under Qt 4.5.3 and MacOS X
+            #when calling _getProfileCurve
+            return
 
 
         self._updateProfileCurve(ddict)
@@ -384,16 +388,27 @@ class MaskImageWidget(qt.QWidget):
             imageData = self.__imageData
         else:
             imageData = image
+        if imageData is None:
+            return None
 
         title = self.getGraphTitle()
 
         self._profileSelectionWindow.setTitle(title)
         if self._profileScanWindow is not None:
             self._profileSelectionWindow.label.setText(title)
+
+        #showing the profileSelectionWindow now can make the program crash if the workaround mentioned above
+        #is not implemented
         self._profileSelectionWindow.show()
         #self._profileSelectionWindow.raise_()
+
         if ddict['event'] == 'PolygonModeChanged':
             return
+
+        #if I show the image here it does not crash, but it is not nice because
+        #the user would get the profileSelectionWindow under his mouse
+        #self._profileSelectionWindow.show()
+
         shape = imageData.shape
         width = ddict['pixelwidth'] - 1
         if ddict['mode'].upper() in ["HLINE", "HORIZONTAL"]:
