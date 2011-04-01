@@ -59,10 +59,7 @@ else:
         return var[0]
 
 def Specfile(filename):
-    if os.path.exists(filename):
-        f = open(filename)
-    else:
-        return None
+    f = open(filename)
     line0  = f.readline()
     if filename.upper().endswith('DTA'):
         #TwinMic single column file
