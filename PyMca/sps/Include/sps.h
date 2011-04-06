@@ -1,6 +1,7 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2010 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2011 Certified Scientific Software (CSS)
+*   Copyright (c) 1998-2011 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps.h" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -642,6 +643,17 @@ int SPS_UpdateDone (char *fullname, char *array);
 int 
 SPS_GetArrayInfo (char * spec_version, char * array_name, int *rows, 
 		  int *cols, int *type, int *flag);
+ 
+/*
+  Retrieve and return the Shared Memory Id (as with ipcs)
+
+  Input: version : name of SPEC version.
+         array_name : Name of this spec array
+  Returns: shared memory identifier
+*/
+
+int
+SPS_GetShmId(char *spec_version, char *array_name);
 
 /* 
    Creates a shared memory array and the shared memory structure for

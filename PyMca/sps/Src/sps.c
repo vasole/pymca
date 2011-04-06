@@ -1,7 +1,7 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2010 European Synchrotron Radiation Facility (ESRF)
-*   Copyright (c) 1998-2010 Certified Scientific Software (CSS)
+*   Copyright (c) 1998-2011 Certified Scientific Software (CSS)
+*   Copyright (c) 1998-2011 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -2259,6 +2259,34 @@ SPS_GetArrayInfo(char *spec_version, char *array_name, int *rows,
   
   return 0;
 }
+
+
+/*
+  Input: version : name of SPEC version.
+         array_name : Name of this spec array
+  Returns: shared memory identifier
+*/
+
+int
+SPS_GetShmId(char *spec_version, char *array_name) {
+  int was_attached;
+  int shmid;
+  SPS_ARRAY private_shm;
+
+  if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
+    return -1;
+
+  was_attached = private_shm->attached;
+
+  shmid = (int) private_shm->id;
+
+
+  if (was_attached == 0 && private_shm->stay_attached == 0)
+    DeconnectArray(private_shm);
+
+  return shmid;
+}
+
 
 int 
 SPS_GetFrameSize(char *spec_version, char *array_name) {

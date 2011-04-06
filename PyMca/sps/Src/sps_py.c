@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2010 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2011 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps_py.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -344,6 +344,23 @@ static PyObject *sps_create(PyObject *self, PyObject *args)
   return (PyObject*) arrobj;
 }
 
+static PyObject *sps_getshmid(PyObject *self, PyObject *args)
+{
+  char *spec_version, *array_name;
+  int rows, cols, type, flag;
+  int shmid;
+  if (!PyArg_ParseTuple(args, "ss", &spec_version, &array_name)) {
+     return NULL;
+   }
+  if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
+    PyErr_SetString(SPSError, "Error getting array info");
+    return NULL;
+  }
+  shmid = SPS_GetShmId(spec_version, array_name);
+
+  return Py_BuildValue("i", shmid);
+}
+
 static PyObject *sps_getdata(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name;
@@ -603,6 +620,7 @@ static PyMethodDef SPSMethods[] = {
   { "getenv",        sps_getenvstr,  METH_VARARGS},
   { "putenv",        sps_putenvstr,  METH_VARARGS},
   { "getkeylist",    sps_getkeylist, METH_VARARGS},
+  { "getshmid",      sps_getshmid,   METH_VARARGS},
   { "getdata",       sps_getdata,    METH_VARARGS},
   { "getdatarow",    sps_getdatarow, METH_VARARGS},
   { "getdatacol",    sps_getdatacol, METH_VARARGS},
