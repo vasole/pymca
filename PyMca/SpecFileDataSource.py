@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,8 +26,8 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.3$"
 import sys
-import DataObject
-import specfilewrapper as specfile
+from PyMca import DataObject
+from PyMca import specfilewrapper as specfile
 import numpy
 import numpy.oldnumeric as Numeric
 import types
@@ -292,7 +292,8 @@ class SpecFileDataSource:
                     mcainfo["McaPresetTime"]= float(ctxt[1])
                     mcainfo["McaLiveTime"]= float(ctxt[2])
                     mcainfo["McaRealTime"]= float(ctxt[3])
-                except: pass
+                except:
+                    pass
                         
         chann = scandata.header("@CHANN")
         if len(chann):
@@ -618,6 +619,11 @@ class SpecFileDataSource:
                 scan_data= scan_obj.mca(1)
             except:
                 raise IOError("SF_MCA read failed")
+        elif scan_type&SF_NMCA:
+            try:
+                scan_data= scan_obj.mca(1)
+            except:
+                raise IOError("SF_NMCA read failed")
 
         if scan_data is not None:
             #create data object

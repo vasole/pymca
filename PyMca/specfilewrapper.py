@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,18 +24,19 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import specfile
 import os
 import sys
 import numpy
 import numpy.oldnumeric as Numeric
+import re
+from PyMca import specfile
 try:
-    import SPXFileParser
+    from PyMca import SPXFileParser
     SPX = True
 except:
     SPX = False
-import Fit2DChiFileParser
-import re
+from PyMca import Fit2DChiFileParser
+from PyMca import APSMEDFileParser
 DEBUG = 0
 
 if sys.version >= '2.6':
@@ -106,6 +107,8 @@ def Specfile(filename):
                 amptek = True
         if (not qxas) and (not amptek) and Fit2DChiFileParser.isFit2DChiFile(filename):
             return Fit2DChiFileParser.Fit2DChiFileParser(filename)
+        if (not qxas) and (not amptek) and APSMEDFileParser.isAPSMEDFile(filename):
+            return APSMEDFileParser.APSMEDFileParser(filename)
         output=specfilewrapper(filename, amptek=amptek, qxas = qxas)
     return output
 

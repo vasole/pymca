@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -33,7 +33,7 @@ It can be used to wrap other formats as specile
 import os
 import numpy
 DEBUG = 0
-class SpecFileAbstractClass:
+class SpecFileAbstractClass(object):
     def __init__(self, filename):
         if not os.path.exists(filename):
             return None
@@ -69,15 +69,16 @@ class SpecFileAbstractClass:
         """
         return 0
 
-class SpecFileAbstractScan:
+class SpecFileAbstractScan(object):
     def __init__(self, data, scantype=None, identification=None, scanheader=None, labels=None):
         if identification is None:identification='1.1'
         if scantype is None:scantype='SCAN'
         self.scanheader = scanheader
-        if len(data.shape) == 1:
-            data.shape = -1, 1
-        (rows, cols) = data.shape
+        if hasattr(data, "shape"):
+            if len(data.shape) == 1:
+                data.shape = -1, 1
         if scantype == 'SCAN':
+            (rows, cols) = data.shape
             self.__data = numpy.zeros((rows, cols +1 ), numpy.float32)
             self.__data[:,0] = numpy.arange(rows) * 1.0
             self.__data[:,1:] = data * 1
@@ -85,7 +86,13 @@ class SpecFileAbstractScan:
             self.labels = ['Point']
         else:
             self.__data = data
-            self.__cols = cols
+            if isinstance(self.__data, numpy.ndarray):
+                (rows, cols) = data.shape
+            else:
+                #we have a list of MCAs
+                rows = 0
+                cols = len(data)
+                self.__cols = cols
             self.labels = []
         self.scantype = scantype
         self.rows = rows
@@ -144,10 +151,10 @@ class SpecFileAbstractScan:
         for label in self.labels:
             labels += '  '+label
         if self.scantype == 'SCAN':
-            return ['#S1 Unknown command','#N %d' % self.cols,labels] 
+            return ['#S 1  Unknown command','#N %d' % self.cols,labels] 
         else:
             if self.scanheader is None:
-                return ['#S1 Unknown command']
+                return ['#S 1  Unknown command']
             else:
                 if DEBUG:
                     print("returning ",self.scanheader)
@@ -161,15 +168,22 @@ class SpecFileAbstractScan:
             output = []
             if self.scanheader is None: return output
             for line in self.scanheader:
-                if line.startswith("#@CALIB"):
-                    output = [line]
-                    break
+                if line.startswith(key) or\
+                   line.startswith('#'+key):
+                    output.append(line)
             return output
-        elif key == "" or key == " ":return self.fileheader()
-        else:
-            #print "requested key = ",key 
+        elif key == "" or key == " ":
+            return self.fileheader()
+        elif self.scanheader is None:
             return []
-    
+        else:
+            output = []
+            for line in self.scanheader:
+                if line.startswith("#"+key) or\
+                   line.startswith(key):
+                    output.append(line)
+            return output
+
     def order(self):
         return self.__order
         
@@ -189,7 +203,12 @@ class SpecFileAbstractScan:
             return self.__cols
         
     def mca(self,number):
-        return self.__data[:,number-1]
+        if number <= 0:
+            raise IndexError("Mca numbering starts at 1")
+        if hasattr(self.__data, "shape"):
+            return self.__data[:,number-1]
+        else:
+            return self.__data[number-1]
     
 def test():
     pass
