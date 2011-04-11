@@ -152,13 +152,13 @@ class MccdHeader:
         else:   self.datasetValue= None
 
     def getFormat(self):
-        format = {}
+        fformat = {}
         #for i in range(19, 30):
         #    print i, "VALUE =", self.__format[i]
-        format['nfast']  = self.__format[20] #n pixels in one line
-        format['nslow']  = self.__format[21] #n lines in image
-        format['depth']  = self.__format[22] #n bytes per pixel
-        return format
+        fformat['nfast']  = self.__format[20] #n pixels in one line
+        fformat['nslow']  = self.__format[21] #n lines in image
+        fformat['depth']  = self.__format[22] #n bytes per pixel
+        return fformat
 
     def getGonio(self):
         gonio= {}
