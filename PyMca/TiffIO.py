@@ -796,7 +796,7 @@ if __name__ == "__main__":
         data.shape = 100, 100
         tif.writeImage(data)
         tif = None
-        if 0 and os.path.exists(filename):
+        if os.path.exists(filename):
             print("Testing image appending")
             tif = TiffIO(filename, mode = 'rb+')
             tif.writeImage((data*2).astype(numpy.float32))
