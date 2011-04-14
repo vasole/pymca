@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -288,7 +288,7 @@ else:
 
         def build(self, info):
             if info['NbMca'] > 0:
-                ncol = info['NbMcaDet']
+                ncol = int(info['NbMcaDet'])
             else:
                 ncol = 1
             nrow = info['NbMca']/ncol
