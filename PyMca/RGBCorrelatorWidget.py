@@ -38,6 +38,7 @@ import ArraySave
 import PyMcaDirs
 import EdfFileDataSource
 import ExternalImagesWindow
+import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
@@ -707,7 +708,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             filename = ""
         return filename
 
-    def getInputFileName(self):
+    def getInputFileName(self, getfilter=False):
         initdir = PyMcaDirs.inputDir
         filedialog = qt.QFileDialog(self)
         filedialog.setFileMode(filedialog.ExistingFiles)
@@ -717,6 +718,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                       "EDF Files *edf",
                       "EDF Files *ccd",
                       "CSV Files *csv",
+                      "TIFF Files *tiff *tif",
+                      "TextImage Files *txt",
                       "All Files *"]
         strlist = QStringList()
         for f in formatlist:
@@ -724,20 +727,34 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setFilters(strlist)
         filedialog.setDirectory(initdir)
         ret = filedialog.exec_()
-        if not ret: return [""]
+        if not ret:
+            if getfilter:
+                return [""], None
+            else:
+                return [""]
         filename = filedialog.selectedFiles()
+        filterused = None
         if len(filename):
             filename = map(str, filename)
             self.outputDir = os.path.dirname(filename[0])
             PyMcaDirs.inputDir = os.path.dirname(filename[0])
+            if getfilter:
+                filterused = str(filedialog.selectedFilter())
         else:
             filename = [""]
-        return filename        
+        if getfilter:
+            return filename, filterused
+        else:
+            return filename
+    
 
-    def addFileList(self, filelist = None):
+    def addFileList(self, filelist = None, filterused=""):
         if filelist is None:
-            filelist = self.getInputFileName()
-        if not len(filelist[0]):return
+            filelist, filterused = self.getInputFileName(getfilter=True)
+            if filterused is None:
+                filterused = ""
+        if not len(filelist[0]):
+            return
         self.outputDir = os.path.dirname(filelist[0])
         try:
             for fname in filelist:
@@ -751,7 +768,23 @@ class RGBCorrelatorWidget(qt.QWidget):
                 elif fname.lower().split(".")[-1] in ["jpg","jpeg",
                                                       "tif","tiff",
                                                       "png"]:
-                    #try a pure image format
+                    if fname.lower().split(".")[-1] in ["tif", "tiff"]:
+                    #try the built in support
+                        try:
+                            tif = TiffIO.TiffIO(fname)
+                            nImages = tif.getNumberOfImages()
+                            if nImages > 0:
+                                for nImage in range(nImages):
+                                    imgData = tif.getImage(nImage)
+                                    title = "Image %04d"  % nImage
+                                    self.addImage(imgData,
+                                            os.path.basename(fname)+" "+title)
+                                continue
+                        except:
+                            if DEBUG:
+                                print("Built-in tif support unsuccessful")
+                            pass                        
+                    #try a pure image format from PyQt
                     qimage = qt.QImage(fname)
                     if qimage.isNull():
                         msg = qt.QMessageBox(self)
@@ -779,6 +812,9 @@ class RGBCorrelatorWidget(qt.QWidget):
                     data = pixmap[:,:,0] * 0.114 +\
                                 pixmap[:,:,1] * 0.587 +\
                                 pixmap[:,:,2] * 0.299
+                    self.addImage(data, os.path.basename(fname))
+                elif filterused.upper().startswith("TEXTIMAGE"):
+                    data = numpy.loadtxt(fname)
                     self.addImage(data, os.path.basename(fname))
                 else:
                     if len(fname) < 5:
@@ -882,6 +918,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         f.close()
         if len(line):
             if line[0] == "{":
+                return True
+            elif (line[0:2] in ["II", "MM"]) and filename.endswith('ccd'):
                 return True
         return False
 

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -102,9 +102,15 @@ def getSourceType(sourceName0):
             if not len(line.replace("\n","")):
                 line = f.readline()
         else:
-            line = str(f.readline().decode())
-            if not len(line.replace("\n","")):
+            try:
                 line = str(f.readline().decode())
+                if not len(line.replace("\n","")):
+                    line = str(f.readline().decode())
+            except UnicodeDecodeError:
+                line = str(f.readline().decode("latin-1"))
+                if not len(line.replace("\n","")):
+                    line = str(f.readline().decode("latin-1"))
+                
             
         f.close()
         if sourceName.lower().endswith('tiff') or\
