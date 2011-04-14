@@ -38,10 +38,10 @@ import sys
 import re
 import weakref
 import types
-import ConfigDict
-import CoherentScattering
-import IncoherentScattering
-import PyMcaEPDL97
+from PyMca import ConfigDict
+from PyMca import CoherentScattering
+from PyMca import IncoherentScattering
+from PyMca import PyMcaEPDL97
 
 """ 
 Constant                     Symbol      2006 CODATA value          Relative uncertainty
@@ -169,15 +169,15 @@ ElementsInfo = [
 ]
 ElementList= [ elt[0] for elt in ElementsInfo ]
 
-import BindingEnergies
+from PyMca import BindingEnergies
 ElementShells = BindingEnergies.ElementShells[1:]
 ElementBinding = BindingEnergies.ElementBinding
 
-import KShell
-import LShell
-import MShell
+from PyMca import KShell
+from PyMca import LShell
+from PyMca import MShell
 #Scofield's photoelectric dictionnary
-import Scofield1973
+from PyMca import Scofield1973
 
 ElementShellTransitions = [KShell.ElementKShellTransitions,
                            KShell.ElementKAlphaTransitions,
@@ -545,10 +545,21 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
 def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
     if normalize is None:normalize = True
     if cascade   is None:cascade   = False
-    if type(ele) == type(" "):
-        pass
+    if sys.version < '3.0':
+        if type(ele) in types.StringTypes:
+            pass
+        else:
+            ele = getsymbol(int(ele))
     else:
-        ele = getsymbol(int(ele))
+        #python 3
+        if type(ele) == type(" "):
+            #unicode, fine
+            pass
+        elif 'bytes' in str(type(ele)):
+            #bytes object, convert to unicode
+            ele = ele.decode()
+        else:
+            ele = getsymbol(int(ele))
     wall = getPhotoWeight(ele,['K','L1','L2','L3','M1','M2','M3','M4','M5','all other'],energy, normalize=True)
     #weights due to Coster - Kronig transitions
     #k shell is not affected

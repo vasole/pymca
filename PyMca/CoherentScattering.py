@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,10 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import ConfigDict
 import os
 import numpy.oldnumeric as Numeric
-import Scofield1973
+from PyMca import ConfigDict
+from PyMca import Scofield1973
 
 dirmod = os.path.dirname(Scofield1973.__file__) 
 ffile   = os.path.join(dirmod, "attdata")
