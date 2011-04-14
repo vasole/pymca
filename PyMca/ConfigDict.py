@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 import sys
 import string
@@ -162,30 +162,30 @@ class ConfigDict(dict):
         self.__write(fp, self, sections)
         fp.close()
 
-    def __write(self, fp, dict, sections=None, secthead=None):
+    def __write(self, fp, ddict, sections=None, secthead=None):
         retstring= ''
         dictkey= []
         listkey= []
         valkey= []
-        for key in dict.keys():
-            if type(dict[key]) == type([]):
+        for key in ddict.keys():
+            if type(ddict[key]) == type([]):
                 listkey.append(key)
-            elif type(dict[key]) == type({}):
+            elif type(ddict[key]) == type({}):
                 dictkey.append(key)
             else:
                 valkey.append(key)
 
         for key in valkey:
-            if type(dict[key])== Numeric.ArrayType:
-                fp.write('%s =' % key + ' [ '+ ' '.join([str(val) for val in dict[key]])+' ]\n')
+            if type(ddict[key])== Numeric.ArrayType:
+                fp.write('%s =' % key + ' [ '+ ' '.join([str(val) for val in ddict[key]])+' ]\n')
             else:
-                fp.write('%s = %s\n'%(key, dict[key]))
+                fp.write('%s = %s\n'%(key, ddict[key]))
 
         for key in listkey:
             fp.write('%s = '%key)
             llist= []
             sep= ', '
-            for item in dict[key]:
+            for item in ddict[key]:
                 if type(item)==type([]):
                     llist.append(', '.join([str(val) for val in item]))
                     sep= '\n\t'
@@ -203,18 +203,20 @@ class ConfigDict(dict):
                 newsecthead = '%s.%s'%(secthead, key.replace(".","_|_"))
             #print "newsecthead = ",newsecthead
             fp.write('\n[%s]\n'%newsecthead)
-            self.__write(fp, dict[key], key,newsecthead)
+            self.__write(fp, ddict[key], key,newsecthead)
 
 
-def prtdict(dict, lvl=0):
-        for key in dict.keys():
-            if type(dict[key])==type({}):
-                for i in range(lvl): print('\t'),
+def prtdict(ddict, lvl=0):
+        for key in ddict.keys():
+            if type(ddict[key])==type({}):
+                for i in range(lvl):
+                    print('\t'),
                 print('+',key)
-                prtdict(dict[key], lvl+1)
+                prtdict(ddict[key], lvl+1)
             else:
-                for i in range(lvl): print('\t'),
-                print('-', key, '=', dict[key])
+                for i in range(lvl):
+                    print('\t'),
+                print('-', key, '=', ddict[key])
 
 def test():
     import sys
