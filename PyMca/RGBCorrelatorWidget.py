@@ -48,7 +48,7 @@ if hasattr(qt, "QString"):
     QStringList = qt.QStringList
 else:
     QString = str
-    QStringList = []
+    QStringList = list
 
 QTVERSION = qt.qVersion()
 try:
@@ -828,6 +828,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error adding file: %s" % sys.exc_info()[1])
             msg.exec_()
+            if DEBUG:
+                raise
 
     def addBatchDatFile(self, filename, ignoresigma=None, csv=False):
         self.outputDir = os.path.dirname(filename)
@@ -911,16 +913,35 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
         
     def _isEdf(self, filename):
-        f = open(filename)
-        line = f.readline().replace('\n',"")
-        if not len(line):
+        if sys.version < '3.0':
+            f = open(filename)
             line = f.readline().replace('\n',"")
-        f.close()
-        if len(line):
-            if line[0] == "{":
+            if not len(line):
+                line = f.readline().replace('\n',"")
+            f.close()
+            if len(line):
+                if line[0] == "{":
+                    return True
+                elif (line[0:2] in ["II", "MM"]) and filename.endswith('ccd'):
+                    return True
+        else:
+            f = open(filename,'rb')
+            #10 characters should ne enough
+            line = f.read(10)
+            f.close()
+            #this eval is needed to support python 2.5
+            tst = eval('b"\\n"')
+            i = 0
+            while line[i] == tst:
+                i += 1
+                if i == len(line):
+                    return False
+            if line[i] == eval('b"{"'):
                 return True
-            elif (line[0:2] in ["II", "MM"]) and filename.endswith('ccd'):
-                return True
+            if i == 0:
+                if (line[i:(i+2)] in [eval('b"II"'), eval('b"MM"')]) and\
+                     filename.endswith('ccd'):
+                    return True
         return False
 
     def saveButtonClicked(self):

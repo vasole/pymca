@@ -219,7 +219,8 @@ class  EdfFile:
                         tiff = True
                 if tiff:
                     fileExtension = os.path.splitext(self.FileName)[-1]
-                    if fileExtension.lower() in [".tif", ".tiff"]:
+                    if fileExtension.lower() in [".tif", ".tiff"] or\
+                       sys.version > '2.9':
                         if not TIFF_SUPPORT:
                             raise IOError("TIFF support not implemented")
                         else:

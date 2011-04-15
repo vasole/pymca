@@ -31,6 +31,12 @@ import os
 import PyMcaDirs
 import RGBCorrelator
 qt = RGBCorrelator.qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+    QStringList = qt.QStringList
+else:
+    QString = str
+    QStringList = list
 import numpy.oldnumeric as Numeric
 QTVERSION = qt.qVersion()
 
@@ -76,6 +82,8 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         fileTypeList = ["Batch Result Files (*dat)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
+                        "TIFF Files (*tif *tiff *TIF *TIFF)",
+                        "Image Files (* jpg *jpeg *tif *tiff *png)",
                         "All Files (*)"]
         message = "Open ONE Batch result file or SEVERAL EDF files"
         #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
@@ -92,7 +100,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
             fdialog = qt.QFileDialog(self)
             fdialog.setModal(True)
             fdialog.setWindowTitle(message)
-            strlist = qt.QStringList()
+            strlist = QStringList()
             for filetype in fileTypeList:
                 strlist.append(filetype.replace("(","").replace(")",""))
             fdialog.setFilters(strlist)
@@ -107,8 +115,9 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                 fdialog.close()
                 del fdialog
                 return []
-        filelist = map(str, filelist)
-        if not len(filelist):return []
+        filelist = [str(x) for x in filelist]
+        if not len(filelist):
+            return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         filelist.sort()
         return filelist
@@ -150,9 +159,12 @@ def test():
         print("python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE")
         sys.exit(app.quit())        
     if len(filelist) == 1:
-        try:
-            w.addBatchDatFile(filelist[0])
-        except ValueError:
+        if filelist[0].lower().endswith("dat"):
+            try:
+                w.addBatchDatFile(filelist[0])
+            except ValueError:
+                w.addFileList(filelist)
+        else:
             w.addFileList(filelist)
     else:
         w.addFileList(filelist)
