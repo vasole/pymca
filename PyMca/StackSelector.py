@@ -36,6 +36,7 @@ from PyMca import OpusDPTMap
 from PyMca import LuciaMap
 from PyMca import SupaVisioMap
 from PyMca import AifiraMap
+from PyMca import TextImageStack
 from PyMca.QEDFStackWidget import QStack, QSpecFileStack
 try:
     from PyMca import QHDF5Stack1D
@@ -46,6 +47,8 @@ except ImportError:
     pass
 
 QTVERSION = qt.qVersion()
+DEBUG = 0
+
 class StackSelector(object):
     def __init__(self, parent=None):
         self.parent = parent
@@ -91,12 +94,18 @@ class StackSelector(object):
             elif filefilter.upper().startswith("SUPAVISIO"):
                 stack = SupaVisioMap.SupaVisioMap(filelist[0])
                 omnicfile = True
+            elif filefilter.upper().startswith("TEXTIMAGE"):
+                imagestack = True
+                fileindex  = 0
+                stack = TextImageStack.TextImageStack(imagestack=True)
             elif filefilter.upper().startswith("IMAGE"):
                 imagestack = True
                 fileindex  = 0
                 stack = QStack(imagestack=True)
             elif line[0] == "{":
                 stack = QStack(imagestack=imagestack)
+            elif line[0:2] in ["II", "MM"]:
+                stack = QStack(imagestack=True)
             elif line.startswith('Spectral'):
                 stack = OmnicMap.OmnicMap(filelist[0])
                 omnicfile = True
@@ -125,6 +134,8 @@ class StackSelector(object):
                         msg.exec_loop()
                     else:
                         msg.exec_()
+                    if DEBUG:
+                        raise
         elif len(filelist):
             if not omnicfile:
                 try:
@@ -137,6 +148,8 @@ class StackSelector(object):
                         msg.exec_loop()
                     else:
                         msg.exec_()
+                    if DEBUG:
+                        raise
         if aifirafile:
             masterStack = DataObject.DataObject()
             masterStack.info = copy.deepcopy(stack.info)
@@ -152,7 +165,7 @@ class StackSelector(object):
             return stack
     
     def getStackFromPattern(self, filepattern, begin, end, increment=None,
-                            imagestack=False, fileindex=0):
+                            imagestack=None, fileindex=0):
         #get the first filename
         filename =  filepattern % tuple(begin)
         if not os.path.exists(filename):
@@ -168,9 +181,15 @@ class StackSelector(object):
 
         specfile = False
         omnicfile = False
+        marCCD = False
+        if line.startswith("II") or line.startswith("MM"):
+            marCCD= True
         if line[0] == "\n":
             line = line[1:]
-        if line[0] == "{":
+        if (line[0] == "{") or marCCD:           
+            if imagestack is None:
+                if marCCD:
+                    imagestack = True
             if imagestack:
                 #prevent any modification
                 fileindex = 0
@@ -327,7 +346,9 @@ class StackSelector(object):
                         "HDF5 Files (*.nxs *.hdf *.h5)", 
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
-                        "Image Files (*edf)",
+                        "Image Files (*edf *ccd)",
+                        "Image Files (*tif *tiff *TIF *TIFF)",
+                        "TextImage Files (*txt)",
                         "All Files (*)"]
         if not HDF5:
             idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)") 

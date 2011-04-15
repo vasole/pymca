@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -47,6 +47,7 @@ class QDispatcher(qt.QWidget):
                         "SPE Files (*SPE *spe)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
+                        "TIFF Files (*.tif *.tiff *.TIF *.TIFF)",
                         "CSV Files (*csv)"]
         if QDataSource.NEXUS:
             fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")

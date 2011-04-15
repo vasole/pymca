@@ -102,26 +102,32 @@ def getSourceType(sourceName0):
             if not len(line.replace("\n","")):
                 line = f.readline()
         else:
+            tiff = False
             try:
-                line = str(f.readline().decode())
+                twoChars = f.read(2)
+                if twoChars in [eval("b'II'"), eval("b'MM'")]:
+                    f.close()
+                    return EdfFileDataSource.SOURCE_TYPE
+            except:
+                pass
+            f.seek(0)                
+            try:
+                line = str(readout.decode())
                 if not len(line.replace("\n","")):
                     line = str(f.readline().decode())
             except UnicodeDecodeError:
                 line = str(f.readline().decode("latin-1"))
                 if not len(line.replace("\n","")):
                     line = str(f.readline().decode("latin-1"))
-                
-            
+                            
         f.close()
-        if sourceName.lower().endswith('tiff') or\
-            sourceName.lower().endswith('tif'):
-            mccd = False
-        elif sourceName.lower().endswith('.cbf'):
+        if sourceName.lower().endswith('.cbf'):
             #pilatus CBF
             mccd = True
         elif len(line) < 2:
             mccd = False
         elif line[0:2] in ["II","MM"]:
+            #this also accounts for TIFF
             mccd = True
         else:
             mccd = False

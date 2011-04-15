@@ -115,6 +115,7 @@ class EDFStack(DataObject.DataObject):
             if len(singleImageShape) == 1:
                 #single line
                 #be ready for specfile stack?
+                self.onEnd()
                 raise IOError("Not implemented yet")
                 self.data = numpy.zeros((arrRet.shape[0],
                                            nImages,
@@ -221,7 +222,7 @@ class EDFStack(DataObject.DataObject):
                                                             ::samplingStep,::samplingStep]
                                 self.incrProgressBar += 1
                                 self.onProgress(self.incrProgressBar)
-                    self.onEnd()
+                self.onEnd()
         else:
             self.__imageStack = False
             if len(singleImageShape) == 1:

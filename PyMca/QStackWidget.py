@@ -910,7 +910,7 @@ if __name__ == "__main__":
     filepattern=None
     begin = None
     end = None
-    imagestack=False
+    imagestack=None
     increment=None
     for opt, arg in opts:
         if opt in '--begin':

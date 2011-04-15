@@ -92,20 +92,26 @@ DEBUG = 0
 ################################################################################  
 import sys
 import numpy
+import os.path #, tempfile, shutil
 try:
-    import MarCCD
+    from PyMca import MarCCD
     MARCCD_SUPPORT = True
 except ImportError:
     #MarCCD
     MARCCD_SUPPORT = False
 try:
-    import PilatusCBF
+    from PyMca import TiffIO
+    TIFF_SUPPORT = True
+except ImportError:
+    #MarCCD
+    TIFF_SUPPORT = False
+try:
+    from PyMca import PilatusCBF
     PILATUS_CBF_SUPPORT = True
 except ImportError:
     PILATUS_CBF_SUPPORT = False
-import os.path #, tempfile, shutil
 try:
-    from FastEdf import extended_fread
+    from PyMca.FastEdf import extended_fread
     CAN_USE_FASTEDF = 1
 except:
     CAN_USE_FASTEDF = 0
@@ -173,6 +179,7 @@ class  EdfFile:
         self.fastedf = fastedf
         self.ADSC = False
         self.MARCCD = False
+        self.TIFF = False
         self.PILATUS_CBF = False
         if sys.byteorder == "big": self.SysByteOrder = "HighByteFirst"
         else: self.SysByteOrder = "LowByteFirst"
@@ -204,10 +211,26 @@ class  EdfFile:
                 self.File = open(self.FileName, access)
                 self.File.seek(0, 0)
                 twoChars = self.File.read(2)
-                if twoChars in ["II", "MM"]:
-                    if not MARCCD_SUPPORT:
-                        raise IOError("MarCCD support not implemented")
-                    self.MARCCD = True
+                tiff = False
+                if sys.version < '3.0':
+                    if twoChars in ["II", "MM"]:
+                        tiff = True
+                elif twoChars in [eval('b"II"'), eval('b"MM"')]:
+                        tiff = True
+                if tiff:
+                    fileExtension = os.path.splitext(self.FileName)[-1]
+                    if fileExtension.lower() in [".tif", ".tiff"]:
+                        if not TIFF_SUPPORT:
+                            raise IOError("TIFF support not implemented")
+                        else:
+                            self.TIFF = True
+                    elif not MARCCD_SUPPORT:
+                        if not TIFF_SUPPORT:
+                            raise IOError("MarCCD support not implemented")
+                        else:
+                            self.TIFF = True
+                    else:
+                        self.MARCCD = True
                 if os.path.basename(FileName).upper().endswith('.CBF'):
                     if not PILATUS_CBF_SUPPORT:
                         raise IOError("CBF support not implemented")
@@ -221,6 +244,10 @@ class  EdfFile:
             raise IOError("EdfFile: Error opening file")
 
         self.File.seek(0, 0)
+        if self.TIFF:
+            self._wrapTIFF()
+            self.File.close()
+            return
         if self.MARCCD:
             self._wrapMarCCD()
             self.File.close()
@@ -366,6 +393,28 @@ class  EdfFile:
 
         self.__makeSureFileIsClosed()
 
+    def _wrapTIFF(self):
+        self._wrappedInstance = TiffIO.TiffIO(self.File)
+        self.NumImages = self._wrappedInstance.getNumberOfImages()
+        if self.NumImages < 1:
+            return
+        info0 = self._wrappedInstance.getInfo(0)
+        #for the time being I am going to assume all the images have the same shape
+        data = self._wrappedInstance.getData(0)
+        for Index in range(self.NumImages):
+            info = self._wrappedInstance.getInfo(Index)
+            self.Images.append(Image())
+            self.Images[Index].Dim1 = info['nRows']
+            self.Images[Index].Dim2 = info['nColumns']
+            self.Images[Index].NumDim = 2
+            self.Images[Index].DataType = self.__GetDefaultEdfType__(data.dtype)
+            self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
+            self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
+            self.Images[Index].StaticHeader['Offset_1'] = 0
+            self.Images[Index].StaticHeader['Offset_2'] = 0
+            self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
+            self.Images[Index].Header.update(info)
+
     def _wrapMarCCD(self):
         mccd = MarCCD.MarCCD(self.File)
         self.NumImages = 1
@@ -461,6 +510,9 @@ class  EdfFile:
         if Pos is None and Size is None:
             if self.ADSC or self.MARCCD or self.PILATUS_CBF:
                 return self.__data
+            elif self.TIFF:
+                data = self._wrappedInstance.getData(Index)
+                return data
             else:
                 self.File.seek(self.Images[Index].DataPosition, 0)
                 datatype = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
@@ -495,6 +547,10 @@ class  EdfFile:
                                 datatype)
         elif self.ADSC or self.MARCCD or self.PILATUS_CBF:
             return self.__data[Pos[1]:(Pos[1] + Size[1]),
+                               Pos[0]:(Pos[0] + Size[0])]
+        elif self.TIFF:
+            data = self._wrappedInstance.getData(Index)
+            return data[Pos[1]:(Pos[1] + Size[1]),
                                Pos[0]:(Pos[0] + Size[0])]
         elif fastedf and CAN_USE_FASTEDF:
             type = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
