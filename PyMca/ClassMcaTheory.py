@@ -100,6 +100,20 @@ class McaTheory:
     def disableOptimizedLinearFit(self):
         self._batchFlag = False
         self.linearMatrix = None
+
+    def setConfiguration(self, ddict):
+        """
+        The current fit configuration dictionary is updated, but not replaced,
+        by the input dictionary.
+        It returns a copy of the final fit configuration.
+        """
+        return self.configure(ddict)
+
+    def getConfiguration(self):
+        """
+        returns a copy of the current fit configuration parameters
+        """
+        return self.configure()
             
     def configure(self,newdict=None):
         if newdict is None:return copy.deepcopy(self.config)
@@ -881,8 +895,27 @@ class McaTheory:
                                 self.ydata, self.sigmay),1)
                 self.laststrip = 0
                          
+    def setdata(self, *var, **kw):
+        return self.setData(*var, **kw)
 
-    def setdata(self,*var,**kw):
+    def setData(self,*var,**kw):
+        """
+        Method to update the data to be fitted.
+        It accepts several combinations of input arguments, the simplest to
+        take into account is:
+        
+        setData(x, y sigmay=None, xmin=None, xmax=None)
+
+        x corresponds to the spectrum channels
+        y corresponds to the spectrum counts
+        sigmay is the uncertainty associated to the counts. If not given,
+               Poisson statistics will be assumed. If the fit configuration
+               is set to no weight, it will not be used. 
+        xmin and xmax define the limits to be considered for performing the fit.
+               If the fit configuration flag self.config['fit']['use_limit'] is
+               set, they will be ignored. If xmin and xmax are not given, the
+               whole given spectrum will be considered for fitting.
+        """
         if 'x' in kw:
             x=kw['x']
         elif len(var) >1:
