@@ -680,6 +680,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         formatlist = ["ASCII Files *.dat",
                       "EDF Files *.edf",
                       "EDF(Float32) Files *.edf",
+                      "TIFF(Mono) Files *.tif",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
@@ -982,8 +983,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         for label in imageList:
             datalist.append(self._imageDict[label]['image'])
             labels.append(label.replace(" ","_"))
-            
-        if filename[-4:].lower() == ".edf":
+
+        fileExtension = os.path.splitext(filename)[-1].lower()
+        if fileExtension in [".edf"]:
             if 'Float32'in self._saveFilter:
                 dtype = Numeric.Float32
                 ArraySave.save2DArrayListAsEDF(datalist,
@@ -991,7 +993,13 @@ class RGBCorrelatorWidget(qt.QWidget):
                                                labels, dtype)
             else:
                 ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
-        elif filename[-4:].lower() == ".csv":
+        elif fileExtension in [".tif", ".tiff"]:
+            dtype = None
+            ArraySave.save2DArrayListAsMonochromaticTiff(datalist,
+                                                         filename,
+                                                         labels=labels,
+                                                         dtype=dtype)
+        elif fileExtension in [".csv"]:
             if "," in self._saveFilter:
                 csvseparator = ","
             elif ";" in self._saveFilter:

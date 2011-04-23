@@ -25,9 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 import os
-import EdfFile
 import numpy
 import time
+
+try:
+    from PyMca import EdfFile
+    from PyMca import TiffIO
+except ImportError:
+    import EdfFile
+    import TiffIO
 
 HDF5 = True
 try:
@@ -43,15 +49,6 @@ try:
 except ImportError:
     HDF5 = False
 
-"""
-try:
-    from PyMca import phynx
-except ImportError:
-    try:
-        import phynx
-    except ImportError:
-        HDF5 = False
-"""
 
 def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvseparator=";"):
     if type(datalist) != type([]):
@@ -127,6 +124,43 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
                                datalist[i].astype(dtype),
                                Append=1)
     del edfout #force file close
+
+def save2DArrayListAsMonochromaticTiff(datalist, filename, labels = None, dtype=None):
+    if type(datalist) != type([]):
+        datalist = [datalist]
+    ndata = len(datalist)
+    if dtype is None:
+        dtype = datalist[0].dtype
+        for i in range(len(datalist)):
+            dtypeI = datalist[i].dtype
+            if dtypeI in [numpy.float32, numpy.float64] or\
+               dtypeI.str[-2] == 'f':
+                dtype = numpy.float32
+                break
+            elif dtypeI != dtype:
+                dtype = numpy.float32
+                break        
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+        except:
+            pass
+    if labels is None:
+        labels = []
+        for i in range(ndata):
+            labels.append("Array_%d" % i) 
+    if len(labels) != ndata:
+        raise ValueError("Incorrect number of labels")
+    outfileInstance   = TiffIO.TiffIO(filename, mode="wb+")
+    for i in range(ndata):
+        if i == 1:
+            outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+        if dtype is None:
+            data = datalist[i]
+        else:
+            data = datalist[i].astype(dtype)
+        outfileInstance.writeImage (data, info={'Title':labels[i]})
+    outFileInstance = None #force file close
 
 def getHDF5FileInstanceAndBuffer(filename, shape,
                                  buffername="data",

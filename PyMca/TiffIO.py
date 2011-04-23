@@ -553,8 +553,16 @@ class TiffIO:
         #and we can write at the end of the file, find out the file length
         fd.seek(0, os.SEEK_END)
 
-        #get the directory
-        outputIFD = self._getOutputIFD(image)
+        #get the description information from the input information
+        if info is None:
+            description = info
+        else:
+            description = "%s" % ""
+            for key in info.keys():
+                description += "%s=%s\r\n"  % (key, info[key])
+
+        #get the image file directory
+        outputIFD = self._getOutputIFD(image, description=description)
 
         #write the new IFD
         fd.write(outputIFD)
