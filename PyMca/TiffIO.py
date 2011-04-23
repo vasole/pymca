@@ -340,7 +340,7 @@ class TiffIO:
             if type(imageDescription) in [type([1]), type((1,))]:
                 imageDescription =helpString.join(imageDescription)
         else:
-            imageDescription = "Unnamed Image %04d" % nImage
+            imageDescription = "(%d/%d)" % (nImage+1, len(self._IFD))
 
         if TAG_SOFTWARE in tagIDList:
             software = self._readIFDEntry(TAG_SOFTWARE,
@@ -489,7 +489,12 @@ class TiffIO:
             self._imageDataCache = self._imageDataCache[:self._maxImageCacheLength]
         return image
 
-    def writeImage(self, image0, info=None):
+    def writeImage(self, image0, info=None, software=None, date=None):
+        if software is None:
+            software = 'PyMca.TiffIO'
+        #if date is None:
+        #    date = time.ctime()
+
         self.__makeSureFileIsOpen()
         fd = self.fd
         #prior to do anything, perform some tests
@@ -559,10 +564,12 @@ class TiffIO:
         else:
             description = "%s" % ""
             for key in info.keys():
-                description += "%s=%s\r\n"  % (key, info[key])
+                description += "%s=%s\n"  % (key, info[key])
 
         #get the image file directory
-        outputIFD = self._getOutputIFD(image, description=description)
+        outputIFD = self._getOutputIFD(image, description=description,
+                                              software=software,
+                                              date=date)
 
         #write the new IFD
         fd.write(outputIFD)
@@ -601,7 +608,7 @@ class TiffIO:
         fd.write(struct.pack(st+'I', 0))
         fd.flush()
 
-    def _getOutputIFD(self, image, description=None, date=None, software=None):
+    def _getOutputIFD(self, image, description=None, software=None, date=None):
         #the tags have to be in order
         #the very minimum is
         #256:"NumberOfColumns",           # S or L ImageWidth
@@ -616,7 +623,6 @@ class TiffIO:
         #305:"Software",                  # ASCII
         #306:"Date",                      # ASCII
         #339:"SampleFormat",              # SHORT Interpretation of data in each pixel
-        #Do not use Software
         nDirectoryEntries = 9
         imageDescription = None
         if description is not None:
@@ -627,7 +633,17 @@ class TiffIO:
             imageDescription = struct.pack("%ds" % descriptionLength, description)
             nDirectoryEntries += 1
 
-        #date = time.ctime()
+        #software
+        if software is not None:
+            softwareLength = len(software)
+            while softwareLength < 4:
+                software = software + " "
+                softwareLength = len(software)
+            softwarePackedString = struct.pack("%ds" % softwareLength, software)
+            nDirectoryEntries += 1
+        else:
+            softwareLength = 0
+
         if date is not None:
             dateLength = len(date)
             datePackedString = struct.pack("%ds" % dateLength, date)
@@ -661,12 +677,15 @@ class TiffIO:
             #empty file
             endOfFile = 8
         if descriptionLength > 4:
-            stripOffsets = [endOfFile + dateLength + descriptionLength +\
-                        2 + 12 * nDirectoryEntries + 4]
+            stripOffsets = endOfFile + dateLength + descriptionLength +\
+                        2 + 12 * nDirectoryEntries + 4
         else:
-            stripOffsets = [endOfFile + dateLength + \
-                        2 + 12 * nDirectoryEntries + 4]
+            stripOffsets = endOfFile + dateLength + \
+                        2 + 12 * nDirectoryEntries + 4
+        if softwareLength > 4:
+            stripOffsets += softwareLength
 
+        stripOffsets = [stripOffsets]
         if DEBUG:
             print("IMAGE WILL START AT %d" % stripOffsets[0])
 
@@ -769,6 +788,22 @@ class TiffIO:
                                          1,
                                          info["stripByteCounts"])
 
+        if software is not None:
+            if softwareLength > 4:
+                fmt = st + 'HHII'
+                outputIFD += struct.pack(fmt, TAG_SOFTWARE,
+                                         FIELD_TYPE_OUT['s'],
+                                         softwareLength,
+                                         info["stripOffsets"][0]-\
+                            descriptionLength-softwareLength-dateLength)
+            else:
+                #it has to have length 4
+                fmt = st + 'HHI%ds' % softwareLength
+                outputIFD += struct.pack(fmt, TAG_SOFTWARE,
+                                         FIELD_TYPE_OUT['s'],
+                                         softwareLength,
+                                         softwarePackedString)            
+
         if date is not None:
             fmt = st + 'HHII'
             outputIFD += struct.pack(fmt, TAG_DATE,
@@ -784,6 +819,9 @@ class TiffIO:
                                          info["sampleFormat"],0)
         fmt = st + 'I'
         outputIFD += struct.pack(fmt, 0)
+
+        if softwareLength > 4:
+            outputIFD += softwarePackedString
 
         if date is not None:
             outputIFD += datePackedString
