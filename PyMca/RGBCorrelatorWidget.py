@@ -770,16 +770,23 @@ class RGBCorrelatorWidget(qt.QWidget):
                                                       "tif","tiff",
                                                       "png"]:
                     if fname.lower().split(".")[-1] in ["tif", "tiff"]:
-                    #try the built in support
+                        #try the built in support
                         try:
                             tif = TiffIO.TiffIO(fname)
                             nImages = tif.getNumberOfImages()
                             if nImages > 0:
                                 for nImage in range(nImages):
+                                    info = tif.getInfo(nImage)['info']
                                     imgData = tif.getImage(nImage)
-                                    title = "Image %04d"  % nImage
-                                    self.addImage(imgData,
-                                            os.path.basename(fname)+" "+title)
+                                    title = "%04d/%d"  % (nImage+1, nImages)
+                                    if 'Title' in info:
+                                        title = info.get('Title')
+                                    elif nImages > 1:
+                                        title = "%04d/%d "  % (nImage+1, nImages)
+                                        title += os.path.basename(fname)
+                                    else:
+                                        title = os.path.basename(fname)
+                                    self.addImage(imgData, title)
                                 continue
                         except:
                             if DEBUG:

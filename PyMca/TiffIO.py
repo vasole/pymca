@@ -340,24 +340,31 @@ class TiffIO:
             if type(imageDescription) in [type([1]), type((1,))]:
                 imageDescription =helpString.join(imageDescription)
         else:
-            imageDescription = "(%d/%d)" % (nImage+1, len(self._IFD))
+            imageDescription = "%d/%d" % (nImage+1, len(self._IFD))
 
+        if sys.version < '3.0':
+            defaultSoftware = "Unknown Software"            
+        else:
+            defaultSoftware = bytes("Unknown Software",
+                                    encoding='utf-8')
         if TAG_SOFTWARE in tagIDList:
             software = self._readIFDEntry(TAG_SOFTWARE,
                     tagIDList, fieldTypeList, nValuesList, valueOffsetList)
             if type(software) in [type([1]), type((1,))]:
                 software =helpString.join(software)
         else:
-            software = "Unknown Software"
+            software = defaultSoftware
 
-        if software == "Unknown Software":
+        if software == defaultSoftware:
             try:
-                if sys.version > '2.6':
-                    if imageDescription.upper().decode().startswith("IMAGEJ"):
-                        software = imageDescription.decode().split("=")[0]
-                else:
+                if sys.version < '3.0':
                     if imageDescription.upper().startswith("IMAGEJ"):
                         software = imageDescription.split("=")[0]
+                else:
+                    tmpString = imageDescription.decode()
+                    if tmpString.upper().startswith("IMAGEJ"):
+                        software = bytes(tmpString.split("=")[0],
+                                         encoding='utf-8')
             except:
                 pass
 
@@ -391,6 +398,26 @@ class TiffIO:
         info["date"] = date
         info["sampleFormat"] = sampleFormat
         info["photometricInterpretation"] = interpretation
+        infoDict = {}
+        if sys.version < '3.0':
+            testString = 'PyMca'
+        else:
+            testString = eval('b"PyMca"')
+        if software.startswith(testString):
+            #str to make sure python 2.x sees it as string and not unicode
+            if sys.version < '3.0':
+                descriptionString = imageDescription
+            else:
+                descriptionString = str(imageDescription.decode())
+            #interpret the image description in terms of supplied
+            #information at writing time
+            items = descriptionString.split('=')
+            for i in range(int(len(items)/2)):
+                key = "%s" % items[i*2]
+                #get rid of the \n at the end of the value 
+                value = "%s" % items[i*2+1][:-1] 
+                infoDict[key] = value
+        info['info'] = infoDict
 
         self._imageInfoCacheIndex.insert(0,nImage)
         self._imageInfoCache.insert(0, info)
@@ -840,12 +867,12 @@ if __name__ == "__main__":
         tif = TiffIO(filename, mode = 'wb+')
         data = numpy.arange(10000).astype(numpy.float32)
         data.shape = 100, 100
-        tif.writeImage(data)
+        tif.writeImage(data, info={'Title':'1st'})
         tif = None
         if os.path.exists(filename):
             print("Testing image appending")
             tif = TiffIO(filename, mode = 'rb+')
-            tif.writeImage((data*2).astype(numpy.float32))
+            tif.writeImage((data*2).astype(numpy.float32), info={'Title':'2nd'})
             tif = None
     tif = TiffIO(filename)
     print("Number of images = %d" % tif.getNumberOfImages())
