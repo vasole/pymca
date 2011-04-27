@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -255,7 +255,7 @@ def characteristicEbel(target, e0, window = None,
     #stopping factor
     oneovers = (Numeric.sqrt(u0) * logu0 + 2 * (1.0 - Numeric.sqrt(u0)))
     oneovers = oneovers / (u0 * logu0 + 1.0 - u0)
-    oneovers = 1.0 + 16.05 * Numeric.sqrt(0.0137*z/energy) * oneovers
+    oneovers = 1.0 + 16.05 * Numeric.sqrt(0.0135*z/energy) * oneovers
     oneovers = (zk*bk/z) * (u0 * logu0 + 1.0 - u0) * oneovers
 
     #backscattering factor
