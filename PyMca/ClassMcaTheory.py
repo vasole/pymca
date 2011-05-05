@@ -1505,7 +1505,17 @@ class McaTheory:
             #print "f1,f2,delta = ",f1,f2,delta
             return (f1-f2) / (2.0 * delta)
 
-    def anal_deriv(self,param0,index,t0):
+    def anal_deriv(self, param0, index, t0):
+        print("anal_deriv deprecated. Please use analyticalDerivative")
+        return self.analyticalDerivative(param0, index, t0)
+
+    def analyticalDerivative(self, param0, index, t0):
+        """
+        analyticalDerivative(self, parameters, index, x)
+        Internal function to calculate the derivative of the fitting function
+        f(parameters, x) respect to the parameter given by the index at the
+        array of points x.
+        """
         NGLOBAL = self.NGLOBAL
         HYPERMET = self.__HYPERMET
         PARAMETERS = self.PARAMETERS
@@ -2027,7 +2037,7 @@ class McaTheory:
                                            constrains=self.codes,
                                            weightflag=self.config['fit']['fitweight'],
                                            maxiter=self.MAXITER,
-                                           model_deriv=self.anal_deriv,
+                                           model_deriv=self.analyticalDerivative,
                                            deltachi=self.config['fit']['deltachi'],
                                            fulloutput=1, linear=linear)
             if self.__SUM and linear:
@@ -2046,7 +2056,7 @@ class McaTheory:
                                            constrains=self.codes,
                                            weightflag=self.config['fit']['fitweight'],
                                            maxiter=self.MAXITER,
-                                           model_deriv=self.anal_deriv,
+                                           model_deriv=self.analyticalDerivative,
                                            deltachi=self.config['fit']['deltachi'],
                                            fulloutput=1, linear=linear)    
         self.fittedpar=fitresult[0]
