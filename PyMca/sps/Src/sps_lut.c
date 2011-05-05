@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -96,7 +96,7 @@
 #endif
 
 #ifndef FLT_MAX
-#define FLT_MAX 3.40282347e+38
+#define FLT_MAX 3.402823466e+38f
 #endif
 
 
@@ -230,11 +230,11 @@ void *SPS_PaletteArray (void *data, int type, int cols, int rows,
 	type == SPS_UCHAR) {
       *pal_return = (void *) (((unsigned char *)palette) +
 			      (int )(Xservinfo.pixel_size * *min));
-      *pal_entries = *max - *min + 1;
+      *pal_entries = (int) (*max - *min + 1);
     } else {
       *pal_return = (void *) (((unsigned char *)palette) + 
 			      (int )(Xservinfo.pixel_size * mapmin));
-      *pal_entries = mapmax - mapmin + 1;
+      *pal_entries = (int) (mapmax - mapmin + 1);
     }
   }
   
@@ -270,8 +270,8 @@ void *SPS_PaletteArray (void *data, int type, int cols, int rows,
        mmax = *c1;\
    }\
  } else if (dominplus) {\
-   if (mmin > 0) \
-     mminplus = mmin;\
+   if ((min != NULL) && (*min > 0)) \
+     mminplus = (ty) (*min);\
    else \
      for (i=size;i;i--,c1++) {\
        if ((*c1 < mminplus) && (*c1 > 0))\
@@ -289,7 +289,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
  int dominmax = flag & 1;
  int dominplus = flag & 2;
  double dmin,dmax,dminplus;
- 
+
  switch (type) {
    case SPS_DOUBLE :
      FINDMINMAX(double, DBL_MAX);
@@ -995,34 +995,34 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
    if (Xservinfo.byte_order == SPS_LSB) {
      if (Xservinfo.pixel_size == 3) {
        for (ptr=val+from,coef=0;coef<to-from;coef++) {
-         R = Rcst + rwidth * coef;
-         G = Gcst + gwidth * coef;
-         B = Bcst + bwidth * coef;
+         R = (unsigned int) (Rcst + rwidth * coef);
+         G = (unsigned int) (Gcst + gwidth * coef);
+         B = (unsigned int) (Bcst + bwidth * coef);
          value.p = (R << rshift) | (G << gshift) | (B << bshift);
          *ptr++ = value.c.b1 << 8 | value.c.b2 << 16 | value.c.b3 << 24;
        }
      } else {
        for (ptr=val+from,coef=0;coef<to-from;coef++) {
-         R = Rcst + rwidth * coef;
-         G = Gcst + gwidth * coef;
-         B = Bcst + bwidth * coef;
+         R = (unsigned int) (Rcst + rwidth * coef);
+         G = (unsigned int) (Gcst + gwidth * coef);
+         B = (unsigned int) (Bcst + bwidth * coef);
          *ptr++ = (R << rshift) | (G << gshift) | (B << bshift);
        }
      }
    } else {
      if (Xservinfo.pixel_size == 2) {
        for (ptr=val+from,coef=0;coef<to-from;coef++) {
-         R = Rcst + rwidth * coef;
-         G = Gcst + gwidth * coef;
-         B = Bcst + bwidth * coef;
+         R = (unsigned int) (Rcst + rwidth * coef);
+         G = (unsigned int) (Gcst + gwidth * coef);
+         B = (unsigned int) (Bcst + bwidth * coef);
          value.p = (R << rshift) | (G << gshift) | (B << bshift);
          *ptr++ = value.c.b1 << 8 | value.c.b2;
        }
      } else {
        for (ptr=val+from,coef=0;coef<to-from;coef++) {
-         R = Rcst + rwidth * coef;
-         G = Gcst + gwidth * coef;
-         B = Bcst + bwidth * coef;
+         R = (unsigned int) (Rcst + rwidth * coef);
+         G = (unsigned int) (Gcst + gwidth * coef);
+         B = (unsigned int) (Bcst + bwidth * coef);
          value.p = (R << rshift) | (G << gshift) | (B << bshift);
          *ptr++ = value.c.b1 << 24 | value.c.b2 << 16 | value.c.b3 << 8;
        }
@@ -1032,26 +1032,26 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
    if (Xservinfo.byte_order == SPS_LSB) {
      if (Xservinfo.pixel_size == 2) {
        for (ptr=val+from,coef=0;coef<to-from;coef++) {
-         R = Rcst + rwidth * coef;
-         G = Gcst + gwidth * coef;
-         B = Bcst + bwidth * coef;
+         R = (unsigned int) (Rcst + rwidth * coef);
+         G = (unsigned int) (Gcst + gwidth * coef);
+         B = (unsigned int) (Bcst + bwidth * coef);
          value.p = (R << rshift) | (G << gshift) | (B << bshift);
          *ptr++ = value.c.b4 << 8 | value.c.b3;
        }
      } else {
        for (ptr=val+from,coef=0;coef<to-from;coef++) {
-         R = Rcst + rwidth * coef;
-         G = Gcst + gwidth * coef;
-         B = Bcst + bwidth * coef;
+         R = (unsigned int) (Rcst + rwidth * coef);
+         G = (unsigned int) (Gcst + gwidth * coef);
+         B = (unsigned int) (Bcst + bwidth * coef);
          value.p = (R << rshift) | (G << gshift) | (B << bshift);
          *ptr++ = value.c.b4 << 16 | value.c.b3 << 8 | value.c.b2;
        }
      }
    } else {
      for (ptr=val+from,coef=0;coef<to-from;coef++) {
-       R = Rcst + rwidth * coef;
-       G = Gcst + gwidth * coef;
-       B = Bcst + bwidth * coef;
+       R = (unsigned int) (Rcst + rwidth * coef);
+       G = (unsigned int) (Gcst + gwidth * coef);
+       B = (unsigned int) (Bcst + bwidth * coef);
        *ptr++ = (R << rshift) | (G << gshift) | (B << bshift);
      }
    }
