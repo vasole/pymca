@@ -79,6 +79,9 @@ class ConfigDict(dict):
         return option
 
     def read(self, filelist, sections=None):
+        """
+        read the input filename into the internal dictionary
+        """
         filelist= self.__tolist(filelist)
         sections= self.__tolist(sections)
 
@@ -157,6 +160,9 @@ class ConfigDict(dict):
         return tmp.getvalue()
 
     def write(self, filename, sections=None):
+        """
+        Write the current dictionary to the given filename
+        """
         sections= self.__tolist(sections)
         fp= open(filename, "w")
         self.__write(fp, self, sections)
