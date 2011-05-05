@@ -147,7 +147,8 @@ class StackBase(object):
         if isinstance(stack, DataObject.DataObject) or\
            ("DataObject.DataObject" in ("%s" % type(stack))) or\
            ("QStack" in ("%s" % type(stack))) or\
-           ("Map" in ("%s" % type(stack))) :
+           ("Map" in ("%s" % type(stack)))or\
+           ("Stack" in ("%s" % type(stack))):
             self._stack = stack
             self._stack.info['SourceName'] = stack.info.get('SourceName',
                                                             "Data of unknown origin")
@@ -463,12 +464,14 @@ class StackBase(object):
                             print("Dynamic loading case 2")
                         #no other choice than to read all images
                         #for the time being, one by one
+                        rMin = cleanMask[0][0]
+                        rMax = cleanMask[-1][0]
+                        tmpData = numpy.zeros((1, self._stack.data.shape[1],self._stack.data.shape[2]))
                         for i in range(self._stack.data.shape[0]):
-                            tmpData = self._stack.data[i:i+1,:,:]
-                            tmpData.shape = tmpData.shape[1:]
+                            tmpData[0,rMin:(rMax+1),:] = self._stack.data[i:i+1,rMin:(rMax+1),:]
                             #multiplication is faster than selection
                             #tmpData[arrayMask].sum() in my machine
-                            mcaData[i] = (tmpData*arrayMask).sum()
+                            mcaData[i] = (tmpData[0]*arrayMask).sum()
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
