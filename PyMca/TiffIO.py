@@ -8,6 +8,7 @@ import numpy
 #import time
 
 DEBUG = 0
+ALLOW_MULTIPLE_STRIPS = False
 
 TAG_ID  = { 256:"NumberOfColumns",           # S or L ImageWidth
             257:"NumberOfRows",              # S or L ImageHeight
@@ -180,8 +181,8 @@ class TiffIO:
             self.fd = fd
         st = self._structChar
         fd.seek(4)
-        nImages = 0
         self._IFD = []
+        nImages = 0
         fmt = st + 'I'
         inStr = fd.read(struct.calcsize(fmt))
         if not len(inStr):
@@ -279,7 +280,7 @@ class TiffIO:
         if nImage >= len(self._IFD):
             #update prior to raise an index error error
             self._updateIFD()
-        return self._readImage(nImage)
+        return self._readImage(nImage, **kw)
 
     def getImage(self, nImage):
         return self.getData(nImage)
@@ -426,7 +427,15 @@ class TiffIO:
             self._imageInfoCache = self._imageInfoCache[:self._maxImageCacheLength]
         return info
 
-    def _readImage(self, nImage, close=True):
+    def _readImage(self, nImage, **kw):
+        if DEBUG:
+            print("Reading image %d" % nImage)
+        if 'close' in kw:
+            close = kw['close']
+        else:
+            close = True
+        rowMin = kw.get('rowMin', None)
+        rowMax = kw.get('rowMax', None)
         if nImage in self._imageDataCacheIndex:
             if DEBUG:
                 print("Reading image data from cache")
@@ -447,6 +456,28 @@ class TiffIO:
         nBits    = info["nBits"]
         sampleFormat   = info["sampleFormat"]
 
+        if rowMin is None:
+            rowMin = 0
+
+        if rowMax is None:
+            rowMax = nRows - 1
+
+        if rowMin < 0:
+            rowMin = nRows - rowMin
+
+        if rowMax < 0:
+            rowMax = nRows - rowMax
+
+        if rowMax < rowMin:
+            txt = "Max Row smaller than Min Row. Reverse selection not supported"
+            raise NotImplemented(txt)
+
+        if rowMin >= nRows:
+            raise IndexError("Image only has %d rows" % nRows)
+
+        if rowMax >= nRows:
+            raise IndexError("Image only has %d rows" % nRows)
+        
         if sampleFormat == SAMPLE_FORMAT_FLOAT:
             if nBits == 32:
                 dtype = numpy.float32
@@ -486,34 +517,51 @@ class TiffIO:
         rowsPerStrip = info["rowsPerStrip"]
         stripByteCounts = info["stripByteCounts"] #bytes in strip since I do not support compression
         rowStart = 0
-        for i in range(len(stripOffsets)):
-            #we are in position
-            fd.seek(stripOffsets[i])
-            #the amount of rows
-            nRowsToRead = rowsPerStrip
-            rowEnd = int(min(rowStart+nRowsToRead, nRows))
-            #the amount of bytes to read
-            nBytes = stripByteCounts[i]
-            if 1:
-                readout = numpy.fromstring(fd.read(nBytes), dtype)
-                readout.shape = -1, nColumns
-                if self._swap:
-                    image[rowStart:rowEnd, :] = readout.byteswap()
-                else:
-                    image[rowStart:rowEnd, :] = readout
+        if len(stripOffsets) == 1:
+            bytesPerRow = int(stripByteCounts[0]/rowsPerStrip)
+            fd.seek(stripOffsets[0] + rowMin * bytesPerRow)
+            nBytes = (rowMax-rowMin+1) * bytesPerRow
+            readout = numpy.fromstring(fd.read(nBytes), dtype)
+            readout.shape = -1, nColumns
+            if self._swap:
+                image[rowMin:rowMax+1, :] = readout.byteswap()
             else:
-                readout = numpy.array(struct.unpack(st+"%df" % int(nBytes/4), fd.read(nBytes)),
-                                      dtype=dtype)
-                readout.shape = -1, nColumns
-                image[rowStart:rowEnd, :] = readout
-            rowStart += nRowsToRead
+                image[rowMin:rowMax+1, :] = readout
+        else:
+            for i in range(len(stripOffsets)):
+                #the amount of rows
+                nRowsToRead = rowsPerStrip
+                rowEnd = int(min(rowStart+nRowsToRead, nRows))
+                if rowEnd < rowMin:
+                    rowStart += nRowsToRead
+                    continue
+                if (rowStart > rowMax):
+                    break
+                #we are in position
+                fd.seek(stripOffsets[i])
+                #the amount of bytes to read
+                nBytes = stripByteCounts[i]
+                if 1:
+                    readout = numpy.fromstring(fd.read(nBytes), dtype)
+                    readout.shape = -1, nColumns
+                    if self._swap:
+                        image[rowStart:rowEnd, :] = readout.byteswap()
+                    else:
+                        image[rowStart:rowEnd, :] = readout
+                else:
+                    readout = numpy.array(struct.unpack(st+"%df" % int(nBytes/4), fd.read(nBytes)),
+                                          dtype=dtype)
+                    readout.shape = -1, nColumns
+                    image[rowStart:rowEnd, :] = readout
+                rowStart += nRowsToRead
         if close:
             self.__makeSureFileIsClosed()
-        self._imageDataCacheIndex.insert(0,nImage)
-        self._imageDataCache.insert(0, image)
-        if len(self._imageDataCacheIndex) > self._maxImageCacheLength:
-            self._imageDataCacheIndex = self._imageDataCacheIndex[:self._maxImageCacheLength]
-            self._imageDataCache = self._imageDataCache[:self._maxImageCacheLength]
+        if (rowMin == 0) and (rowMax == (nRows-1)):
+            self._imageDataCacheIndex.insert(0,nImage)
+            self._imageDataCache.insert(0, image)
+            if len(self._imageDataCacheIndex) > self._maxImageCacheLength:
+                self._imageDataCacheIndex = self._imageDataCacheIndex[:self._maxImageCacheLength]
+                self._imageDataCache = self._imageDataCache[:self._maxImageCacheLength]
         return image
 
     def writeImage(self, image0, info=None, software=None, date=None):
@@ -650,6 +698,7 @@ class TiffIO:
         #305:"Software",                  # ASCII
         #306:"Date",                      # ASCII
         #339:"SampleFormat",              # SHORT Interpretation of data in each pixel
+    
         nDirectoryEntries = 9
         imageDescription = None
         if description is not None:
@@ -703,25 +752,65 @@ class TiffIO:
         if endOfFile == 0:
             #empty file
             endOfFile = 8
-        if descriptionLength > 4:
-            stripOffsets = endOfFile + dateLength + descriptionLength +\
-                        2 + 12 * nDirectoryEntries + 4
-        else:
-            stripOffsets = endOfFile + dateLength + \
-                        2 + 12 * nDirectoryEntries + 4
-        if softwareLength > 4:
-            stripOffsets += softwareLength
-
-        stripOffsets = [stripOffsets]
-        if DEBUG:
-            print("IMAGE WILL START AT %d" % stripOffsets[0])
 
         #rows per strip
-        rowsPerStrip = nRows
+        if ALLOW_MULTIPLE_STRIPS:
+            #try to segment the image in several pieces
+            if not (nRows % 4):
+                rowsPerStrip = int(nRows/4)
+            elif not (nRows % 10):
+                rowsPerStrip = int(nRows/10)
+            elif not (nRows % 8):
+                rowsPerStrip = int(nRows/8)
+            elif not (nRows % 4):
+                rowsPerStrip = int(nRows/4)
+            elif not (nRows % 2):
+                rowsPerStrip = int(nRows/2)
+            else:
+                rowsPerStrip = nRows
+        else:
+            rowsPerStrip = nRows
 
         #stripByteCounts
-        stripByteCounts = int(nColumns * nRows * bitsPerSample / 8)
-        
+        stripByteCounts = int(nColumns * rowsPerStrip * bitsPerSample / 8)
+
+        if descriptionLength > 4:
+            stripOffsets0 = endOfFile + dateLength + descriptionLength +\
+                        2 + 12 * nDirectoryEntries + 4
+        else:
+            stripOffsets0 = endOfFile + dateLength + \
+                        2 + 12 * nDirectoryEntries + 4
+
+        if softwareLength > 4:
+            stripOffsets0 += softwareLength
+
+        stripOffsets = [stripOffsets0]
+        stripOffsetsLength = 0
+        stripOffsetsString = None
+
+        st = self._structChar
+
+        if rowsPerStrip != nRows:
+            nStripOffsets = int(nRows/rowsPerStrip)
+            fmt = st + 'I'
+            stripOffsetsLength = struct.calcsize(fmt) * nStripOffsets 
+            stripOffsets0 += stripOffsetsLength
+            #the length for the stripByteCounts will be the same
+            stripOffsets0 += stripOffsetsLength
+            stripOffsets = []
+            for i in range(nStripOffsets):
+                value = stripOffsets0 + i * stripByteCounts
+                stripOffsets.append(value)
+                if i == 0:
+                    stripOffsetsString  = struct.pack(fmt, value)
+                    stripByteCountsString = struct.pack(fmt, stripByteCounts)
+                else:
+                    stripOffsetsString += struct.pack(fmt, value)
+                    stripByteCountsString += struct.pack(fmt, stripByteCounts)
+            
+        if DEBUG:
+            print("IMAGE WILL START AT %d" % stripOffsets[0])
+            
         #sample format
         if dtype in [numpy.float32, numpy.float64] or\
            dtype.str[-2] == 'f':
@@ -744,8 +833,6 @@ class TiffIO:
         info["stripByteCounts"] = stripByteCounts
         info["date"] = date
         info["sampleFormat"] = sampleFormat
-
-        st = self._structChar
         
         outputIFD = ""
         if sys.version > '2.6':
@@ -788,6 +875,7 @@ class TiffIO:
                                          FIELD_TYPE_OUT['s'],
                                          descriptionLength,
                                          info["stripOffsets"][0]-\
+                                         2*stripOffsetsLength-\
                                          descriptionLength)
             else:
                 #it has to have length 4
@@ -797,11 +885,18 @@ class TiffIO:
                                          descriptionLength,
                                          description)
 
-        fmt = st + 'HHII'
-        outputIFD += struct.pack(fmt, TAG_STRIP_OFFSETS,
-                                         FIELD_TYPE_OUT['I'],
-                                         1,
-                                         info["stripOffsets"][0])
+        if len(stripOffsets) == 1:
+            fmt = st + 'HHII'
+            outputIFD += struct.pack(fmt, TAG_STRIP_OFFSETS,
+                                             FIELD_TYPE_OUT['I'],
+                                             1,
+                                             info["stripOffsets"][0])
+        else:
+            fmt = st + 'HHII'
+            outputIFD += struct.pack(fmt, TAG_STRIP_OFFSETS,
+                                             FIELD_TYPE_OUT['I'],
+                                             len(stripOffsets),
+                    info["stripOffsets"][0]-2*stripOffsetsLength)
 
         fmt = st + 'HHII'
         outputIFD += struct.pack(fmt, TAG_ROWS_PER_STRIP,
@@ -809,11 +904,18 @@ class TiffIO:
                                          1,
                                          info["rowsPerStrip"])
 
-        fmt = st + 'HHII'
-        outputIFD += struct.pack(fmt, TAG_STRIP_BYTE_COUNTS,
-                                         FIELD_TYPE_OUT['I'],
-                                         1,
-                                         info["stripByteCounts"])
+        if len(stripOffsets) == 1:
+            fmt = st + 'HHII'
+            outputIFD += struct.pack(fmt, TAG_STRIP_BYTE_COUNTS,
+                                             FIELD_TYPE_OUT['I'],
+                                             1,
+                                             info["stripByteCounts"])
+        else:
+            fmt = st + 'HHII'
+            outputIFD += struct.pack(fmt, TAG_STRIP_BYTE_COUNTS,
+                                             FIELD_TYPE_OUT['I'],
+                                             len(stripOffsets),
+                    info["stripOffsets"][0]-stripOffsetsLength)
 
         if software is not None:
             if softwareLength > 4:
@@ -822,6 +924,7 @@ class TiffIO:
                                          FIELD_TYPE_OUT['s'],
                                          softwareLength,
                                          info["stripOffsets"][0]-\
+                                         2*stripOffsetsLength-\
                             descriptionLength-softwareLength-dateLength)
             else:
                 #it has to have length 4
@@ -837,6 +940,7 @@ class TiffIO:
                                       FIELD_TYPE_OUT['s'],
                                       dateLength,
                                       info["stripOffsets"][0]-\
+                                         2*stripOffsetsLength-\
                                       descriptionLength-dateLength)
 
         fmt = st + 'HHIHH'
@@ -857,22 +961,27 @@ class TiffIO:
             if descriptionLength > 4:
                 outputIFD += imageDescription
 
+        if stripOffsetsString is not None:
+            outputIFD += stripOffsetsString
+            outputIFD += stripByteCountsString
+
         return outputIFD
 
      
 if __name__ == "__main__":
     filename = sys.argv[1]
+    dtype = numpy.uint16
     if not os.path.exists(filename):
         print("Testing file creation")
         tif = TiffIO(filename, mode = 'wb+')
-        data = numpy.arange(10000).astype(numpy.float32)
+        data = numpy.arange(10000).astype(dtype)
         data.shape = 100, 100
         tif.writeImage(data, info={'Title':'1st'})
         tif = None
         if os.path.exists(filename):
             print("Testing image appending")
             tif = TiffIO(filename, mode = 'rb+')
-            tif.writeImage((data*2).astype(numpy.float32), info={'Title':'2nd'})
+            tif.writeImage((data*2).astype(dtype), info={'Title':'2nd'})
             tif = None
     tif = TiffIO(filename)
     print("Number of images = %d" % tif.getNumberOfImages())
