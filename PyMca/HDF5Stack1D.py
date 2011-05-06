@@ -46,7 +46,8 @@ class HDF5Stack1D(DataObject.DataObject):
         DataObject.DataObject.__init__(self)
 
         #the data type of the generated stack
-        self.__dtype = dtype
+        self.__dtype0 = dtype 
+        self.__dtype  = dtype
 
         if filelist is not None:
             if selection is not None:
@@ -185,14 +186,25 @@ class HDF5Stack1D(DataObject.DataObject):
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
                                                 index=mcaIndex)
         try:
-            if self.__dtype == numpy.float:
-                bytefactor = 8
-            else:
+            if self.__dtype in [numpy.float32, numpy.int32]:
                 bytefactor = 4
-                        
+            elif self.__dtype in [numpy.int16, numpy.uint16]:
+                bytefactor = 2
+            elif self.__dtype in [numpy.int8, numpy.uint8]:
+                bytefactor = 1
+            else:
+                bytefactor = 8
+
             neededMegaBytes = nFiles * dim0 * dim1 * mcaDim * bytefactor/(1024*1024.)
-            if (neededMegaBytes > 4000) and (nFiles == 1) and (len(shape) == 3):
-                raise MemoryError("Force dynamic loading")            
+            if (neededMegaBytes > 2000) and (nFiles == 1) and (len(shape) == 3):
+                if self.__dtype0 is None:
+                    if (bytefactor == 8) and (neededMegaBytes <4000):
+                        #try reading as float32
+                        self.__dtype = numpy.float32
+                    else:
+                        raise MemoryError("Force dynamic loading")
+                else:
+                    raise MemoryError("Force dynamic loading")
             self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
             DONE = False
         except (MemoryError, ValueError):

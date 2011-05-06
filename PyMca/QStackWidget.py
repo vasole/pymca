@@ -103,26 +103,32 @@ class QStackWidget(StackBase.StackBase,
         self.stackWindow.mainLayout.setMargin(0)
         self.stackWindow.mainLayout.setSpacing(0)
 
-        if HDF5:
+        #if HDF5:
+        if 1:
             self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
                                                         selection=False,
                                                         standalonesave=False,
                                                         imageicons=False)
             self._stackSaveMenu = qt.QMenu()
-            self._stackSaveMenu.addAction(QString("Stack as Spectra"),
+            if HDF5:
+                self._stackSaveMenu.addAction(QString("Stack as Spectra"),
                                                  self.saveStackAsNeXusSpectra)
-            self._stackSaveMenu.addAction(QString("Stack as Images"),
+                self._stackSaveMenu.addAction(QString("Stack as Images"),
                                                  self.saveStackAsNeXusImages)
-            self._stackSaveMenu.addAction(QString("Stack as Float32 Spectra"),
+                self._stackSaveMenu.addAction(QString("Stack as Float32 Spectra"),
                                                  self.saveStackAsFloat32NeXusSpectra)
-            self._stackSaveMenu.addAction(QString("Stack as Float64 Spectra"),
+                self._stackSaveMenu.addAction(QString("Stack as Float64 Spectra"),
                                                  self.saveStackAsFloat64NeXusSpectra)
-            self._stackSaveMenu.addAction(QString("Stack as Float32 Images"),
+                self._stackSaveMenu.addAction(QString("Stack as Float32 Images"),
                                                  self.saveStackAsFloat32NeXusImages)
-            self._stackSaveMenu.addAction(QString("Stack as Float64 Images"),
+                self._stackSaveMenu.addAction(QString("Stack as Float64 Images"),
                                                  self.saveStackAsFloat64NeXusImages)
-            self._stackSaveMenu.addAction(QString("Stack as HDF5 /data"),
+                self._stackSaveMenu.addAction(QString("Stack as HDF5 /data"),
                                                  self.saveStackAsSimplestHDF5)
+            self._stackSaveMenu.addAction(QString("Stack as Monochromatic TIFF Images"),
+                                                 self.saveStackAsMonochromaticTiffImages)
+            self._stackSaveMenu.addAction(QString("Stack as Float32 TIFF Images"),
+                                                 self.saveStackAsFloat32TiffImages)
             self._stackSaveMenu.addAction(QString("Standard Graphics"),
                                 self.stackWidget.graphWidget._saveIconSignal)
             self.connect(self.stackWidget.graphWidget.saveToolButton,
@@ -254,6 +260,48 @@ class QStackWidget(StackBase.StackBase,
                     msg.setText("Please use ASCII characters in file name and path")
                     msg.exec_()
         return ""
+
+    def _getOutputTiffFilename(self):
+        fileTypes = "TIFF Files (*.tif *.tiff *.TIF *.TIFF)"
+        message = "Enter output filename"
+        wdir = PyMcaDirs.outputDir
+        filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
+        if len(filename):
+            try:
+                return str(filename)
+            except UnicodeEncodeError:
+                if 0:
+                    return str(unicode(filename).encode('utf-8'))
+                else:
+                    msg = qt.QMessageBox(self)
+                    msg.setWindowTitle("Encoding error")
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Please use ASCII characters in file name and path")
+                    msg.exec_()
+        return ""
+
+    def saveStackAsMonochromaticTiffImages(self, dtype=None):
+        if dtype is None:
+            dtype = self._stack.data.dtype
+        if dtype in [numpy.uint32, numpy.uint64]:
+            dtype = numpy.float32
+        elif dtype in [numpy.int32, numpy.int64]:
+            dtype = numpy.float32
+
+        mcaIndex = self._stack.info.get('McaIndex', -1)
+
+        filename = self._getOutputTiffFilename()
+        if not len(filename):
+            return
+
+        ArraySave.save3DArrayAsMonochromaticTiff(self._stack.data,
+                                    filename,
+                                    labels = None,
+                                    dtype=dtype,
+                                    mcaindex=mcaIndex)
+
+    def saveStackAsFloat32TiffImages(self):
+        return self.saveStackAsMonochromaticTiffImages(dtype=numpy.float32)    
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None):
         mcaIndex = self._stack.info.get('McaIndex', -1)

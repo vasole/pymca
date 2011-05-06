@@ -185,7 +185,7 @@ class TiffStack(DataObject.DataObject):
             else:
                 self.loadFileList(filelist)
 
-    def loadFileList(self, filelist, dynamic=False):
+    def loadFileList(self, filelist, dynamic=False, fileindex=0):
         if type(filelist) != type([]):
             filelist = [filelist]
 
@@ -367,7 +367,7 @@ def test():
     stackData = TiffStack(imagestack=imagestack)
     stackData.loadFileList([testFileName], dynamic=True)
 
-    if 1:
+    if 0:
         stack = StackBase.StackBase()
         stack.setStack(stackData)
         print("This should be 0 = %f" %  stack.calculateROIImages(0, 0)['ROI'].sum())

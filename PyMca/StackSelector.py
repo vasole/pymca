@@ -37,6 +37,7 @@ from PyMca import LuciaMap
 from PyMca import SupaVisioMap
 from PyMca import AifiraMap
 from PyMca import TextImageStack
+#from PyMca import TiffStack
 from PyMca.QEDFStackWidget import QStack, QSpecFileStack
 try:
     from PyMca import QHDF5Stack1D
@@ -98,6 +99,10 @@ class StackSelector(object):
                 imagestack = True
                 fileindex  = 0
                 stack = TextImageStack.TextImageStack(imagestack=True)
+            #elif filefilter.upper().startswith("IMAGE") and\
+            #     (filelist[0].upper().endswith("TIF") or\
+            #      filelist[0].upper().endswith("TIFF")):
+            #    stack = TiffStack.TiffStack(imagestack=True)                
             elif filefilter.upper().startswith("IMAGE"):
                 imagestack = True
                 fileindex  = 0

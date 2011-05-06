@@ -200,6 +200,58 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     nxEntry['end_time'] = getDate()
     return hdf, data
 
+
+def save3DArrayAsMonochromaticTiff(data, filename, labels = None, dtype=None, mcaindex=-1):
+    ndata = data.shape[mcaindex]
+    if dtype is None:
+        dtype = numpy.float32
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+        except:
+            pass
+    if labels is None:
+        labels = []
+        for i in range(ndata):
+            labels.append("Array_%d" % i) 
+    if len(labels) != ndata:
+        raise ValueError("Incorrect number of labels")
+    outfileInstance   = TiffIO.TiffIO(filename, mode="wb+")
+    if mcaindex in [2, -1]:
+        for i in range(ndata):
+            if i == 1:
+                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+            if dtype is None:
+                tmpData = data[:,:,i]
+            else:
+                tmpData = data[:,:,i].astype(dtype)
+            outfileInstance.writeImage (tmpData, info={'Title':labels[i]})
+            if (ndata > 10):
+                print("Saved image %d of %d" % (i+1, ndata))
+    elif mcaindex == 1:
+        for i in range(ndata):
+            if i == 1:
+                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+            if dtype is None:
+                tmpData = data[:,i,:]
+            else:
+                tmpData = data[:,i,:].astype(dtype)
+            outfileInstance.writeImage (tmpData, info={'Title':labels[i]})        
+            if (ndata > 10):
+                print("Saved image %d of %d" % (i+1, ndata))
+    else:
+        for i in range(ndata):
+            if i == 1:
+                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+            if dtype is None:
+                tmpData = data[i]
+            else:
+                tmpData = data[i].astype(dtype)
+            outfileInstance.writeImage (tmpData, info={'Title':labels[i]})
+            if (ndata > 10):
+                print("Saved image %d of %d" % (i+1, ndata))
+    outFileInstance = None #force file close
+
 def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                       mcaindex=-1, interpretation=None):
     if not HDF5:
@@ -232,14 +284,23 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
         nxData = nxEntry.require_group('NXdata', type='Data')
         if modify:
             if interpretation in ["image"]:
+                #risk of taking a 10 % more space in disk
+                chunk1 = int(shape[1]/10)
+                if chunk1 == 0:
+                    chunk1 = shape[1]
+                for i in [16, 15, 11, 10, 8, 7, 5, 4]:
+                    if (shape[1] % i) == 0:
+                        chunk1 = int(shape[1]/i)
+                        break
                 dset = nxData.require_dataset('data',
                                    shape=shape,
                                    dtype=dtype,
-                                   chunks=(1, shape[1], shape[2]))
+                                   chunks=(1, chunk1, shape[2]))
                 for i in range(data.shape[-1]):
                     tmp = data[:,:, i:i+1]
                     tmp.shape = 1, shape[1], shape[2]
-                    dset[i, :, :] = tmp
+                    dset[i, 0:shape[1], :] = tmp
+                    print("Saved item %d of %d" % ( i, data.shape[-1]))
             elif 0:
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. However, it is much faster
@@ -265,7 +326,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
             else:
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. This is a very fast saving, but
-                #the perfromance is awful when reading.
+                #the performance is awful when reading.
                 dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
@@ -275,11 +336,23 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                     tmp.shape = shape[0], shape[1], 1
                     dset[:, :, i:(i+1)] = tmp
         else:
+            chunk1 = int(shape[1]/10)
+            if chunk1 == 0:
+                chunk1 = shape[1]
+            for i in [16, 15, 11, 10, 8, 7, 5, 4]:
+                if (shape[1] % i) == 0:
+                    chunk1 = int(shape[1]/i)
+                    break
             dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
-                               data=data,
-                               chunks=(1, shape[1], shape[2]))
+                               chunks=(1, chunk1, shape[2]))
+            tmpData = numpy.zeros((1,data.shape[1], data.shape[2]), data.dtype)
+            for i in range(data.shape[0]):
+                tmpData[0:1] = data[i:i+1]
+                dset[i:i+1] = tmpData[0:1]
+                print("Saved item %d of %d" % (i+1, data.shape[0]))
+
         dset.attrs['signal'] = "1"
         if interpretation is not None:
             dset.attrs['interpretation'] = interpretation
