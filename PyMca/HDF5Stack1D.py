@@ -25,8 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 import posixpath
-import DataObject
 import h5py
+try:
+    from PyMca import DataObject
+except:
+    import DataObject
 try:
     from PyMca import NexusDataSource
 except:
@@ -182,6 +185,14 @@ class HDF5Stack1D(DataObject.DataObject):
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
                                                 index=mcaIndex)
         try:
+            if self.__dtype == numpy.float:
+                bytefactor = 8
+            else:
+                bytefactor = 4
+                        
+            neededMegaBytes = nFiles * dim0 * dim1 * mcaDim * bytefactor/(1024*1024.)
+            if (neededMegaBytes > 4000) and (nFiles == 1) and (len(shape) == 3):
+                raise MemoryError("Force dynamic loading")            
             self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
             DONE = False
         except (MemoryError, ValueError):
