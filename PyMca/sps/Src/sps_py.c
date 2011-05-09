@@ -265,7 +265,7 @@ static PyObject *sps_attach(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if ((arrobj = (PyArrayObject*) PyArray_FromDimsAndData(2, dims, ptype, data))
+  if ((arrobj = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, ptype, data))
       == NULL) {
     SPS_ReturnDataPointer(data);
     PyErr_SetString(SPSError, "Could not create mathematical array");
@@ -334,7 +334,7 @@ static PyObject *sps_create(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if ((arrobj = (PyArrayObject*) PyArray_FromDimsAndData(2, dims, ptype, data))
+  if ((arrobj = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, ptype, data))
       == NULL) {
     /* Should delete the array  - don't have a lib function !!! FIXTHIS */
     PyErr_SetString(SPSError, "Could not create mathematical array");
@@ -465,7 +465,7 @@ static PyObject *sps_getdatacol(PyObject *self, PyObject *args)
   dims[0] = (in_row == 0) ? rows : in_row;
 
   ptype = sps_type2py(type);
-  if ((arrobj_nc = (PyArrayObject*) PyArray_FromDims(1, dims, ptype))
+  if ((arrobj_nc = (PyArrayObject*) PyArray_SimpleNew(1, dims, ptype))
       == NULL) {
     PyErr_SetString(SPSError, "Could not create mathematical array");
     return NULL;
