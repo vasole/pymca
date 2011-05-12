@@ -66,6 +66,10 @@ while 1:
     if resp == "l":
         os.system("more LICENSE.GPL")
 
+# The following is not supported by python-2.3:
+#package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
+packages = ['PyMca']
+py_modules = []
 
 # Specify all the required PyMca data
 data_files = [('PyMca', ['LICENSE.GPL',
@@ -96,21 +100,17 @@ if os.path.exists(os.path.join("PyMca", "EPDL97")):
 LOCAL_PHYNX =False
 if (sys.version < '3.0') and os.path.exists(os.path.join("PyMca", "phynx")):
     LOCAL_PHYNX = True
-    data_files.append(('PyMca/phynx', glob.glob('PyMca/phynx/*.py')))
-    data_files.append(('PyMca/phynx/utils', glob.glob('PyMca/phynx/utils/*.py')))
+    packages.append('PyMca.phynx')
+    packages.append('PyMca.phynx.utils')
 
-NNMA_PATH = os.path.join("PyMca", "nnma", "py_nnma")
+NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
-    NNMA_PATH = os.path.join(NNMA_PATH, "*.py")
-    data_files.append(('PyMca/py_nnma', glob.glob(NNMA_PATH)))
+    py_modules.append('PyMca.py_nnma.__init__')
+    py_modules.append('PyMca.py_nnma.nnma')
 
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca", "object3d")):
     LOCAL_OBJECT3D = True
-
-# The following is not supported by python-2.3:
-#package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca']
 
 sources = glob.glob('*.c')
 if sys.platform == "win32":
@@ -364,6 +364,7 @@ distrib = setup(name="PyMca",
                 cmdclass = {'install_data':smart_install_data}, 
 #                            'install_scripts':smart_install_scripts},
                 scripts=script_files,
+                py_modules=py_modules,
                 )
 
 
