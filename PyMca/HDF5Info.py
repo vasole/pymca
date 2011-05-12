@@ -353,7 +353,8 @@ def getInfo(hdf5File, node):
         ddict['general']['Name'] = data.file.filename
     ddict['general']['Type'] = str(data)
     if hasattr(data, 'dtype'):
-        if ("%s" % data.dtype).startswith("|S"):
+        if ("%s" % data.dtype).startswith("|S") or\
+           ("%s" % data.dtype).startswith("|O"):
             if hasattr(data, 'shape'):
                 shape = data.shape
                 if not len(shape):
@@ -368,6 +369,8 @@ def getInfo(hdf5File, node):
             if len(shape) == 1:
                 if shape[0] == 1:
                     ddict['general']['Value'] = "%s" % data.value[0]
+            elif len(shape) == 0:
+                ddict['general']['Value'] = "%s" % data.value
     if hasattr(data, "keys"):
         ddict['general']['members'] = data.keys()
     elif hasattr(data, "listnames"):
@@ -386,13 +389,18 @@ def getInfo(hdf5File, node):
             dtype = memberObject.dtype
             if hasattr(memberObject, 'shape'):
                 shape = memberObject.shape
-                if ("%s" % dtype).startswith("|S"):
+                if ("%s" % dtype).startswith("|S") or\
+                   ("%s" % dtype).startswith("|O"):
                     if not len(shape):
                         ddict['general'][member]['Shape'] = ""
                         ddict['general'][member]['Value'] = "%s" % memberObject.value
                     else:
                         ddict['general'][member]['Shape'] = shape[0]
                         ddict['general'][member]['Value'] = "%s" % memberObject.value[0]
+                    continue
+                if not len(shape):
+                    ddict['general'][member]['Shape'] = ""
+                    ddict['general'][member]['Value'] = "%s" % memberObject.value
                     continue
                 ddict['general'][member]['Shape'] = "%d" % shape[0]
                 for i in range(1, len(shape)):

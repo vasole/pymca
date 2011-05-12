@@ -43,7 +43,8 @@ class PyMcaNexusWidget(QNexusWidget):
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
         name = ddict['name']
-        if ddict['dtype'].startswith('|S'):
+        if ddict['dtype'].startswith('|S') or\
+           ddict['dtype'].startswith('|O'):
             #handle a right click on a dataset of string type
             return self.showInfoWidget(filename, name, False)
             pass

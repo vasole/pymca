@@ -379,12 +379,14 @@ class QNexusWidget(QtGui.QWidget):
         if dset:
             dataset = phynxFile[name]
             if isinstance(dataset, h5py.Dataset):
-                widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
-                try:
-                    widget.w.setDataset(dataset)
-                except:
-                    print("Error filling table")
-                widget.addTab(widget.w, 'TableView')
+                if len(dataset.shape):
+                    #0 length datasets do not need a table
+                    widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
+                    try:
+                        widget.w.setDataset(dataset)
+                    except:
+                        print("Error filling table")
+                    widget.addTab(widget.w, 'TableView')
         widget.show()
         return widget
 
