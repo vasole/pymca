@@ -208,8 +208,9 @@ def build_Object3DCTools(ext_modules):
         WindowsSDK = os.getenv('WindowsSdkDir')
         #if WindowsSDK is not None:
         #    includes.append(WindowsSDK)
+
     module  = Extension(name = 'PyMca.Object3D.Object3DCTools',
-                        sources = glob.glob('PyMca/object3d/Object3D/Object3DCTools/*.c'),
+                        sources = glob.glob('PyMca/Object3D/Object3DCTools/*.c'),
                         define_macros = define_macros,
                         libraries  = libraries,
                         include_dirs = includes)
@@ -221,7 +222,7 @@ def build_Object3DQhull(ext_modules):
     else:
         libraries = ['GL', 'GLU']        
     module  = Extension(name = 'PyMca.Object3D.Object3DQhull',
-                        sources = glob.glob('PyMca/object3d/Object3D/Object3DQhull/src/*.c'),
+                        sources = glob.glob('PyMca/Object3D/Object3DQhull/src/*.c'),
                         define_macros = define_macros,
                         include_dirs = [numpy.get_include()])
 
@@ -247,9 +248,15 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)
-        data_files.append(('PyMca/Object3D', glob.glob('PyMca/object3d/Object3D/*.py')))
-        data_files.append(('PyMca/Object3D/Object3DPlugins',
-                       glob.glob('PyMca/object3d/Object3D/Object3DPlugins/*.py')))
+        for python_file in glob.glob('PyMca/Object3d/*.py'):
+            if python_file in ['setup.py', 'cx_setup.py']:
+                continue
+            m = "PyMca.Object3D.%s" % os.path.basename(python_file)[:-3] 
+            py_modules.append(m)
+        for python_file in glob.glob('PyMca/Object3d/Object3DPlugins/*.py'):
+            m = "PyMca.Object3D.Object3DPlugins.%s" %\
+                                    os.path.basename(python_file)[:-3] 
+            py_modules.append(m)
     except:
         print("Object3D Module could not be built")
         print(sys.exc_info())
