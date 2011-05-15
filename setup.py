@@ -68,7 +68,7 @@ while 1:
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca']
+packages = ['PyMca','PyMca.PyMcaPlugins']
 py_modules = []
 
 # Specify all the required PyMca data
@@ -87,13 +87,12 @@ data_files = [('PyMca', ['LICENSE.GPL',
                          'PyMca/EADL97_MShellConstants.dat',
                          'PyMca/EPDL97_CrossSections.dat']),
               ('PyMca/attdata', glob.glob('PyMca/attdata/*')),
-              ('PyMca/PyMcaPlugins', glob.glob('PyMca/PyMcaPlugins/*')),
               ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
               ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
               ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
 
 if os.path.exists(os.path.join("PyMca", "EPDL97")):
-    data_files.append(('PyMca/EPDL97',glob.glob('PyMca/EPDL97/*.py')))
+    packages.append('PyMca.EPDL97')
     data_files.append(('PyMca/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
     data_files.append(('PyMca/EPDL97',['PyMca/EPDL97/LICENSE']))
 
@@ -229,9 +228,8 @@ def build_Object3DQhull(ext_modules):
     ext_modules.append(module)
 
 def build_PyMcaSciPy(ext_modules):
-    data_files.append(('PyMca/PyMcaSciPy', ['PyMca/PyMcaSciPy/__init__.py']))
-    data_files.append(('PyMca/PyMcaSciPy/signal', ['PyMca/PyMcaSciPy/signal/__init__.py',
-                                      'PyMca/PyMcaSciPy/signal/median.py']))                   
+    packages.append('PyMca.PyMcaSciPy')
+    packages.append('PyMca.PyMcaSciPy.signal')
     module = Extension(name = 'PyMca.PyMcaSciPy.signal.mediantools',
                        sources = glob.glob('PyMca/PyMcaSciPy/signal/*.c'),
                        define_macros = [],
