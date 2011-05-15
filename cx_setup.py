@@ -120,7 +120,7 @@ for pluginSet in glob.glob(os.path.join(pluginsDir,'*')):
                                  os.path.join(destination,os.path.basename(f))))
 
 #I should use somehow absolute import ...
-sys.path = [PyMcaDir] + sys.path
+sys.path = [PyMcaDir, os.path.dirname(PyMcaDir)] + sys.path
 try:
     import ctypes
     import OpenGL
