@@ -37,6 +37,7 @@ except:
     SPX = False
 from PyMca import Fit2DChiFileParser
 from PyMca import APSMEDFileParser
+from PyMca import SRSFileParser
 DEBUG = 0
 
 if sys.version >= '2.6':
@@ -109,6 +110,8 @@ def Specfile(filename):
             return Fit2DChiFileParser.Fit2DChiFileParser(filename)
         if (not qxas) and (not amptek) and APSMEDFileParser.isAPSMEDFile(filename):
             return APSMEDFileParser.APSMEDFileParser(filename)
+        if (not qxas) and (not amptek) and SRSFileParser.isSRSFile(filename):
+            return SRSFileParser.SRSFileParser(filename)
         output=specfilewrapper(filename, amptek=amptek, qxas = qxas)
     return output
 
@@ -483,7 +486,7 @@ class myscandata:
     def mca(self,number):
         return self.__data[:,number-1]
 
-class BufferedFile:
+class BufferedFile(object):
     def __init__(self, filename):
         f = open(filename, 'rb')
         self.__buffer = f.read()

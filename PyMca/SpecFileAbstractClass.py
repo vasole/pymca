@@ -37,6 +37,7 @@ class SpecFileAbstractClass(object):
     def __init__(self, filename):
         if not os.path.exists(filename):
             return None
+        self.motorNames = []
 
     def list(self):
         """
@@ -68,6 +69,9 @@ class SpecFileAbstractClass(object):
         Gives back the number of scans in the file
         """
         return 0
+
+    def allmotors(self):
+        return self.motorNames
 
 class SpecFileAbstractScan(object):
     def __init__(self, data, scantype=None, identification=None, scanheader=None, labels=None):
