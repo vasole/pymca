@@ -112,7 +112,7 @@ def getSourceType(sourceName0):
                 pass
             f.seek(0)                
             try:
-                line = str(readout.decode())
+                line = str(f.readline().decode())
                 if not len(line.replace("\n","")):
                     line = str(f.readline().decode())
             except UnicodeDecodeError:
