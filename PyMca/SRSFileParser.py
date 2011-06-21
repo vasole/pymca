@@ -60,18 +60,20 @@ class SRSFileParser(object):
         readingData = False
         data = []
         while len(line)>1:
-            header.append(line[:-1])
+            if not readingData:
+                header.append(line[:-1])
             if readingMetaData:
                 if '</MetaDataAtStart>' in line:
                     readingMetaData = False
-                else:
+                elif '=' in line:
                     key, value = line[:-1].split('=')
                     if 'datestring' in key:
                         header.append('#D %s' % value)
+                    elif 'scancommand' in key:
+                        header[0] = '#S 1 %s' % value
                     else:
                         self.motorNames.append(key)
                         self.motorValues.append(value)
-                        header.append('#'+line[:-1])
             elif '<MetaDataAtStart>' in line:
                 readingMetaData = True
             elif '&END' in line:
@@ -87,6 +89,11 @@ class SRSFileParser(object):
                 if DEBUG:
                     print("Unhandled line %s" % line[:-1])
             line = _fileObject.readline()
+        header.append("#N %d" % len(labels))
+        txt = "#L "
+        for label in labels:
+            txt += "  %s" % label
+        header.append(txt + "\n")
         data = numpy.array(data)
 
         #create an abstract scan object
@@ -94,7 +101,8 @@ class SRSFileParser(object):
                               scantype='SCAN',
                               scanheader=header,
                               labels=labels,
-                              motor_values=self.motorValues)]
+                              motor_values=self.motorValues,
+                              point=False)]
         _fileObject = None
         data = None
         
@@ -126,10 +134,10 @@ class SRSFileParser(object):
 class SRSScan(SpecFileAbstractClass.SpecFileAbstractScan):
     def __init__(self, data, scantype='MCA',
                  identification="1.1", scanheader=None, labels=None,
-                 motor_values=None):
+                 motor_values=None,point=False):
         SpecFileAbstractClass.SpecFileAbstractScan.__init__(self,
                     data, scantype=scantype, identification=identification,
-                    scanheader=scanheader, labels=labels)
+                    scanheader=scanheader, labels=labels,point=point)
         if motor_values is None:
             motor_values = []
         self.motorValues = motor_values

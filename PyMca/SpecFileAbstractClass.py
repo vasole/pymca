@@ -74,20 +74,27 @@ class SpecFileAbstractClass(object):
         return self.motorNames
 
 class SpecFileAbstractScan(object):
-    def __init__(self, data, scantype=None, identification=None, scanheader=None, labels=None):
+    def __init__(self, data, scantype=None, identification=None, scanheader=None, labels=None,point=True):
         if identification is None:identification='1.1'
         if scantype is None:scantype='SCAN'
         self.scanheader = scanheader
         if hasattr(data, "shape"):
             if len(data.shape) == 1:
                 data.shape = -1, 1
+        self.__point = point
         if scantype == 'SCAN':
             (rows, cols) = data.shape
-            self.__data = numpy.zeros((rows, cols +1 ), numpy.float32)
-            self.__data[:,0] = numpy.arange(rows) * 1.0
-            self.__data[:,1:] = data * 1
-            self.__cols = cols + 1
-            self.labels = ['Point']
+            if self.__point:
+                self.__data = numpy.zeros((rows, cols +1 ), numpy.float32)
+                self.__data[:,0] = numpy.arange(rows) * 1.0
+                self.__data[:,1:] = data * 1
+                self.__cols = cols + 1
+                self.labels = ['Point']
+            else:
+                self.__data = numpy.zeros((rows, cols), numpy.float32)
+                self.__data[:,0:] = data * 1
+                self.__cols = cols
+                self.labels = []
         else:
             self.__data = data
             if isinstance(self.__data, numpy.ndarray):
@@ -154,15 +161,15 @@ class SpecFileAbstractScan(object):
         labels = '#L '
         for label in self.labels:
             labels += '  '+label
-        if self.scantype == 'SCAN':
-            return ['#S 1  Unknown command','#N %d' % self.cols,labels] 
-        else:
-            if self.scanheader is None:
-                return ['#S 1  Unknown command']
+        if self.scanheader is None:
+            if self.scantype == 'SCAN':
+                return ['#S 1  Unknown command','#N %d' % self.cols(),labels]
             else:
-                if DEBUG:
-                    print("returning ",self.scanheader)
-                return self.scanheader
+                return ['#S 1  Unknown command']
+        else:
+            if DEBUG:
+                print("returning ",self.scanheader)
+            return self.scanheader
     
     def header(self,key):
         if   key == 'S': return self.fileheader()[0]
