@@ -311,7 +311,7 @@ class TiffIO:
         nBits = valueOffsetList[idx]
         if nValuesList[idx] != 1:
             #this happens with RGB and friends, nBits is not a single value
-            nBits = self._readIFDEntry(TAG__BITS_PER_SAMPLE,
+            nBits = self._readIFDEntry(TAG_BITS_PER_SAMPLE,
                                           tagIDList, fieldTypeList, nValuesList, valueOffsetList)
 
         #sample format
