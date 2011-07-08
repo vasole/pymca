@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1218,8 +1218,14 @@ class FitParamDialog(qt.QDialog):
         self.connect(accept, qt.SIGNAL("clicked()"), self.accept)
 
     def setParameters(self, pars):
-        self.fitparam.setParameters(pars)
-        #print "set",pars['fit']['energy']
+        actualPars = pars
+        if 'fit' not in pars:
+            if 'result' in pars:
+                if 'config' in pars['result']:
+                    #we are dealing with a .fit file ...
+                    if 'fit' in pars['result']['config']:
+                        actualPars = pars['result']['config']
+        return self.fitparam.setParameters(actualPars)
 
     def getParameters(self):
         return self.fitparam.getParameters()
