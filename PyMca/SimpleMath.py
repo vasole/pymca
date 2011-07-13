@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -131,7 +131,7 @@ class SimpleMath:
                 x.append(Numeric.take(x0,i1))
                 y.append(Numeric.take(Numeric.array(ydata[i]),i1))
                 if len(x0) < minimumLength:
-                    minumLength = len(x0)
+                    minimumLength = len(x0)
                 i=i+1
 
             if minimumLength < 2:
