@@ -348,7 +348,11 @@ class TiffIO:
                 compression = True
 
         #photometric interpretation
-        interpretation = valueOffsetList[tagIDList.index(TAG_PHOTOMETRIC_INTERPRETATION)]
+        interpretation = 1
+        if TAG_PHOTOMETRIC_INTERPRETATION in tagIDList:
+            interpretation = valueOffsetList[tagIDList.index(TAG_PHOTOMETRIC_INTERPRETATION)]
+        else:
+            print("WARNING: Non standard TIFF. Photometric interpretation TAG missing")
         helpString = ""
         if sys.version > '2.6':
             helpString = eval('b""')
@@ -397,8 +401,13 @@ class TiffIO:
         
         stripOffsets = self._readIFDEntry(TAG_STRIP_OFFSETS,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
-        rowsPerStrip = self._readIFDEntry(TAG_ROWS_PER_STRIP,
+        rowsPerStrip = nRows
+        if TAG_ROWS_PER_STRIP in tagIDList:
+            rowsPerStrip = self._readIFDEntry(TAG_ROWS_PER_STRIP,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)[0]
+        else:
+            print("WARNING: Non standard TIFF. Rows per strip TAG missing")
+            
         stripByteCounts = self._readIFDEntry(TAG_STRIP_BYTE_COUNTS,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
         if close:
