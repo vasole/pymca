@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 import PyMcaQt as qt
 import Plot1D
 from PyMca_Icons import IconDict
@@ -308,7 +309,13 @@ class Plot1DWindowBase(qt.QWidget, Plot1D.Plot1D):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.setText("%s" % sys.exc_info()[1])
+            else:
+                msg.setWindowTitle("Plugin error")
+                msg.setText("An error has occured while executing the plugin:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def _actionHovered(self, action):

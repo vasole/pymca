@@ -46,6 +46,7 @@ import PyMcaDirs
 import ScanWindowInfoWidget
 #implement the plugins interface
 import Plot1DBase
+import traceback
 try:
     import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
@@ -414,11 +415,17 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 if a.text() == action[0]:
                     idx = actionList.index(action)
         try:
-            self.pluginInstanceDict[key].applyMethod(methods[idx])    
+            self.pluginInstanceDict[key].applyMethod(methods[idx])
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.setText("%s" % sys.exc_info()[1])
+            else:
+                msg.setWindowTitle("Plugin error")
+                msg.setText("An error has occured while executing the plugin:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def _actionHovered(self, action):

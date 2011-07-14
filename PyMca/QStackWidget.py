@@ -27,6 +27,7 @@
 #############################################################################*/
 import sys
 import os
+import traceback
 import numpy
 import weakref
 
@@ -567,7 +568,13 @@ class QStackWidget(StackBase.StackBase,
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
+            if QTVERSION < '4.0.0':
+                msg.setText("%s" % sys.exc_info()[1])
+            else:
+                msg.setWindowTitle("Plugin error")
+                msg.setText("An error has occured while executing the plugin:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             if DEBUG:
                 raise
