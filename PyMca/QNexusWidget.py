@@ -28,6 +28,11 @@ import os
 import sys
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
+if hasattr(QtCore, 'QString'):
+    QString = QtCore.QString
+else:
+    QString = str
+
 import h5py
 import HDF5Widget
 import HDF5Info
@@ -126,16 +131,16 @@ class QNexusWidget(QtGui.QWidget):
         self.cntTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
         self._cntTableMenu = QtGui.QMenu(self)
-        self._cntTableMenu.addAction(QtCore.QString("Load"),
+        self._cntTableMenu.addAction(QString("Load"),
                                     self._loadCounterTableConfiguration)
-        self._cntTableMenu.addAction(QtCore.QString("Merge"),
+        self._cntTableMenu.addAction(QString("Merge"),
                                     self._mergeCounterTableConfiguration)
-        self._cntTableMenu.addAction(QtCore.QString("Save"),
+        self._cntTableMenu.addAction(QString("Save"),
                                     self._saveCounterTableConfiguration)
         self._cntTableMenu.addSeparator()
-        self._cntTableMenu.addAction(QtCore.QString("Delete All"),
+        self._cntTableMenu.addAction(QString("Delete All"),
                                     self._deleteAllCountersFromTable)
-        self._cntTableMenu.addAction(QtCore.QString("Delete Selected"),
+        self._cntTableMenu.addAction(QString("Delete Selected"),
                                     self._deleteSelectedCountersFromTable)
 
     def _counterTableCustomMenuSlot(self, qpoint):
@@ -407,17 +412,17 @@ class QNexusWidget(QtGui.QWidget):
         else:
             #handle a right click on a numeric dataset
             _hdf5WidgetDatasetMenu = QtGui.QMenu(self)
-            _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Add to selection table"),
+            _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
                                         self._addToSelectionTable)
 
             if 0:
                 #these two options can be combined into one for the time being
-                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Open"),
+                _hdf5WidgetDatasetMenu.addAction(QString("Open"),
                                             self._openDataset)
-                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Properties"),
+                _hdf5WidgetDatasetMenu.addAction(QString("Show Properties"),
                                             self._showDatasetProperties)
             else:
-                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Information"),
+                _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                         self._showInfoWidgetSlot)
                 self._lastDatasetDict= ddict
                 _hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
@@ -560,7 +565,7 @@ class QNexusWidget(QtGui.QWidget):
                 sel['SourceType'] = "HDF5"
                 fileIndex = self.data.sourceName.index(filename)
                 phynxFile  = self.data._sourceObjectList[fileIndex]
-                entryIndex = phynxFile["/"].keys().index(entry[1:])
+                entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
                 sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['legend']     = os.path.basename(sel['SourceName'][0])+\
                                     " " + sel['Key']
@@ -635,9 +640,9 @@ class QNexusWidget(QtGui.QWidget):
     def customEvent(self, event):
         if hasattr(event, 'dict'):
             ddict = event.dict
-            if ddict.has_key('event'):
+            if 'event' in ddict:
                 if ddict['event'] == "closeEventSignal":
-                    if self._widgetDict.has_key(ddict['id']):
+                    if ddict['id'] in self._widgetDict:
                         if DEBUG:
                             try:
                                 widget = self._widgetDict[ddict['id']] 

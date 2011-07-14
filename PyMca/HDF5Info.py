@@ -26,7 +26,7 @@
 #############################################################################*/
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
-
+import sys
 import copy
 import posixpath
 
@@ -78,7 +78,7 @@ class SimpleInfoGroupBox(QtGui.QGroupBox):
 
     def _fillInfo(self, ddict0):
         ddict = self._getMappedDict(ddict0)
-        actualKeys = ddict.keys()
+        actualKeys = list(ddict.keys())
         dictKeys = []
         for key in actualKeys:
             l = key.lower()
@@ -118,9 +118,9 @@ class NameGroupBox(SimpleInfoGroupBox):
                 self.mainLayout.addWidget(label, i, 0)
                 self.mainLayout.addWidget(line, i, 1)
                 self.keyDict[key] = (label, line)
-        if ddict.has_key('Path'):
+        if 'Path' in ddict:
             if ddict['Path'] == "/":
-                if ddict.has_key('Name'):
+                if 'Name' in ddict:
                     self.keyDict['Name'][0].setText("File")
         SimpleInfoGroupBox.setInfoDict(self, ddict)
 
@@ -189,7 +189,7 @@ class MembersGroupBox(QtGui.QGroupBox):
             else:
                 item.setText(key)
             for label in self._tableLabels[1:]:
-                if not ddict[key].has_key(label):
+                if not label in ddict[key]:
                     continue
                 col = self._tableLabels.index(label)
                 info = ddict[key][label]
@@ -224,7 +224,7 @@ class HDF5GeneralInfoWidget(QtGui.QWidget):
             self.setInfoDict(ddict)
 
     def setInfoDict(self, ddict):
-        if ddict.has_key('general'):
+        if 'general' in ddict:
             self._setInfoDict(ddict['general'])
         else:
             self._setInfoDict(ddict)
@@ -233,7 +233,7 @@ class HDF5GeneralInfoWidget(QtGui.QWidget):
         self.nameWidget.setInfoDict(ddict)
         self.membersWidget.setInfoDict(ddict)
         self.dimensionWidget.setInfoDict(ddict)
-        if ddict.has_key('members'):
+        if 'members' in ddict:
             if len(ddict['members']):
                 #it is a datagroup
                 self.dimensionWidget.hide()  
@@ -263,7 +263,7 @@ class HDF5AttributesInfoWidget(QtGui.QWidget):
         self.mainLayout.addWidget(self.table)
 
     def setInfoDict(self, ddict):
-        if ddict.has_key('attributes'):
+        if 'attributes' in ddict:
             self._setInfoDict(ddict['attributes'])
         else:
             self._setInfoDict(ddict)
@@ -282,7 +282,7 @@ class HDF5AttributesInfoWidget(QtGui.QWidget):
         row = 0
         for key in keylist:
             for label in self._tableLabels:
-                if not ddict[key].has_key(label):
+                if not label in ddict[key]:
                     continue
                 else:
                     text = ddict[key][label]
@@ -372,12 +372,12 @@ def getInfo(hdf5File, node):
             elif len(shape) == 0:
                 ddict['general']['Value'] = "%s" % data.value
     if hasattr(data, "keys"):
-        ddict['general']['members'] = data.keys()
+        ddict['general']['members'] = list(data.keys())
     elif hasattr(data, "listnames"):
-        ddict['general']['members'] = data.listnames()
+        ddict['general']['members'] = list(data.listnames())
     else:
         ddict['general']['members'] = []
-    for member in ddict['general']['members']:
+    for member in list(ddict['general']['members']):
         ddict['general'][member] = {}
         ddict['general'][member]['Name'] = str(member)
         if ddict['general']['Path'] == "/":
@@ -425,6 +425,8 @@ def getInfo(hdf5File, node):
         ddict['attributes']['names'] = data.attrs.listnames()
     else:
         ddict['attributes']['names'] = []
+    if sys.version >= '3.0.0':
+        ddict['attributes']['names'] = list(ddict['attributes']['names'])
     ddict['attributes']['names'].sort()
     for key in ddict['attributes']['names']:
         ddict['attributes'][key] = {}

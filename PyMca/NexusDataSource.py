@@ -33,14 +33,19 @@ import types
 import h5py
 import re
 import posixpath
-
-try:
-    import PyMca.phynx as phynx
-except ImportError:
+if h5py.version.version < '2.0.0':
     try:
-        import phynx
+        import PyMca.phynx as phynx
     except ImportError:
-        from xpaxs.io import phynx
+        try:
+            import phynx
+        except ImportError:
+            from xpaxs.io import phynx
+else:
+    phynx = h5py
+
+if sys.version > '2.9':
+    basestring = str
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
@@ -140,13 +145,13 @@ def get_family_pattern(filelist):
 
 class NexusDataSource:
     def __init__(self,nameInput):
-        if type(nameInput) == types.ListType:
+        if type(nameInput) == type([]):
             nameList = nameInput
         else:
             nameList = [nameInput]
         self.sourceName = []
         for name in nameList:
-            if type(name) != types.StringType:
+            if not isinstance(name, basestring):
                 if not isinstance(name, phynx.File):
                     text = "Constructor needs string as first argument"
                     raise TypeError(text)
@@ -279,7 +284,7 @@ class NexusDataSource:
         selection: a dictionnary generated via QNexusWidget
         """
         if selection is not None:
-            if selection.has_key('sourcename'):
+            if 'sourcename' in selection:
                 filename  = selection['sourcename']
                 entry     = selection['entry']
                 fileIndex  = self.__sourceNameList.index(filename)
@@ -287,7 +292,7 @@ class NexusDataSource:
                 if entry == "/":
                     entryIndex = 0
                 else:
-                    entryIndex = phynxFile["/"].keys().index(entry[1:])
+                    entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
             else:
                 key_split = key.split(".")
                 fileIndex = int(key_split[0])-1
@@ -320,9 +325,9 @@ class NexusDataSource:
         else:
             raise TypeError("Unsupported selection type %s" %\
                             selection['selectiontype'])
-        if selection.has_key('LabelNames'):
+        if 'LabelNames' in selection:
             output.info['LabelNames'] = selection['LabelNames']
-        elif selection.has_key('aliaslist'):
+        elif 'aliaslist' in selection:
             output.info['LabelNames'] = selection['aliaslist']
         else:
             output.info['LabelNames'] = selection['cntlist']
@@ -331,7 +336,7 @@ class NexusDataSource:
         output.m = None
         output.data = None
         for cnt in ['y', 'x', 'm']:
-            if not selection.has_key(cnt):
+            if not cnt in selection:
                 continue
             if not len(selection[cnt]):
                 continue
@@ -375,7 +380,7 @@ class NexusDataSource:
                 output.m = [data]
         # MCA specific
         if selection['selectiontype'].upper() == "MCA":
-            if not output.info.has_key('Channel0'):
+            if not 'Channel0' in output.info:
                 output.info['Channel0'] = 0
         """"
         elif selection['selectiontype'].upper() in ["BATCH"]:

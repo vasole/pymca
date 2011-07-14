@@ -9,15 +9,22 @@ import gc
 
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
+if hasattr(QtCore, 'QStringList'):
+    MyQVariant = QtCore.QVariant
+else:
+    def MyQVariant(x=None):
+        return x
 
-try:
-    import PyMca.phynx as phynx
-except:
-    #I should never reach here
+import h5py
+if h5py.version.version < '2.0.0':
     try:
-        from xpaxs.io import phynx
-    except ImportError:
-        import phynx
+        import PyMca.phynx as phynx
+    except:
+        #I should never reach here
+        try:
+            from xpaxs.io import phynx
+        except ImportError:
+            import phynx
 
 import weakref
 
@@ -90,7 +97,7 @@ class H5NodeProxy(object):
         if not self._children:
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
-            with self.file.plock:
+            if 1: #with self.file.plock:
                 self._children = [H5NodeProxy(self.file, i, self)
                                   for i in self.getNode(self.name).values()]
         return self._children
@@ -109,7 +116,7 @@ class H5NodeProxy(object):
 
     @property
     def row(self):
-        with self.file.plock:
+        if 1:#with self.file.plock:
             try:
                 return self.parent.children.index(self)
             except ValueError:
@@ -142,7 +149,7 @@ class H5NodeProxy(object):
 
 
     def __init__(self, ffile, node, parent=None):
-        with ffile.plock:
+        if 1:#with ffile.plock:
             self._file = ffile
             self._parent = parent
             self._name = node.name
@@ -153,7 +160,10 @@ class H5NodeProxy(object):
                 self._name = posixpath.basename(node.name)
             """
             self._type = type(node).__name__
-            self._hasChildren = isinstance(node, phynx.Group)
+            if h5py.version.version < '2.0.0':
+                self._hasChildren = isinstance(node, phynx.Group)
+            else:
+                self._hasChildren = isinstance(node, h5py.Group)
             self._children = []
             if hasattr(node, 'dtype'):
                 self._dtype = str(node.dtype)
@@ -229,7 +239,7 @@ class FileModel(QtCore.QAbstractItemModel):
 
     def data(self, index, role):
         if role != QtCore.Qt.DisplayRole:
-            return QtCore.QVariant()
+            return MyQVariant()
         item = self.getProxyFromIndex(index)
         column = index.column()
         if column == 0:
@@ -243,10 +253,10 @@ class FileModel(QtCore.QAbstractItemModel):
                     if "title" in names:
                         idx = names.index("title")
                         children[idx].getNode().value[0]
-                        return QtCore.QVariant(children[idx].getNode().value[0])
+                        return MyQVariant(children[idx].getNode().value[0])
             """
             if isinstance(item, H5FileProxy):
-                return QtCore.QVariant(os.path.basename(item.file.filename))
+                return MyQVariant(os.path.basename(item.file.filename))
             else:
                 showtitle = False
                 if showtitle:
@@ -257,16 +267,16 @@ class FileModel(QtCore.QAbstractItemModel):
                             if "title" in names:
                                 idx = names.index("title")
                                 children[idx].getNode().value[0]
-                                return QtCore.QVariant(children[idx].getNode().value[0])
-                    return QtCore.QVariant(posixpath.basename(item.name))
-                return QtCore.QVariant(posixpath.basename(item.name))
+                                return MyQVariant(children[idx].getNode().value[0])
+                    return MyQVariant(posixpath.basename(item.name))
+                return MyQVariant(posixpath.basename(item.name))
         if column == 1:
-            return QtCore.QVariant(item.type)
+            return MyQVariant(item.type)
         if column == 2:
-            return QtCore.QVariant(item.shape)
+            return MyQVariant(item.shape)
         if column == 3:
-            return QtCore.QVariant(item.dtype)
-        return QtCore.QVariant()
+            return MyQVariant(item.dtype)
+        return MyQVariant()
 
     def getNodeFromIndex(self, index):
         try:
@@ -290,9 +300,9 @@ class FileModel(QtCore.QAbstractItemModel):
     def headerData(self, section, orientation, role):
         if orientation == QtCore.Qt.Horizontal and \
                 role == QtCore.Qt.DisplayRole:
-            return QtCore.QVariant(self.rootItem.header[section])
+            return MyQVariant(self.rootItem.header[section])
 
-        return QtCore.QVariant()
+        return MyQVariant()
 
     def hasIndex(self, row, column, parent):
         parentItem = self.getProxyFromIndex(parent)
@@ -334,8 +344,10 @@ class FileModel(QtCore.QAbstractItemModel):
                 ddict['filename'] = filename
                 self.emit(QtCore.SIGNAL('fileUpdated'), ddict)
                 return item.file
-        #phynxFile = phynx.File(filename, 'a', lock=QRLock())
-        phynxFile = phynx.File(filename, 'r', lock=QRLock())
+        if h5py.version.version < '2.0.0':
+            phynxFile = phynx.File(filename, 'r', lock=QRLock())
+        else:
+            phynxFile = h5py.File(filename, 'r')
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
                 idx = self.rootItem._identifiers.index(id(weakrefObject))

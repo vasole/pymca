@@ -54,10 +54,10 @@ class PyMcaNexusWidget(QNexusWidget):
         else:
             #handle a right click on a numeric dataset
             _hdf5WidgetDatasetMenu = QtGui.QMenu(self)
-            _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Add to selection table"),
+            _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
                                         self._addToSelectionTable)
 
-            _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show Information"),
+            _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                     self._showInfoWidgetSlot)
             fileIndex = self.data.sourceName.index(filename)
             phynxFile  = self.data._sourceObjectList[fileIndex]
@@ -76,12 +76,12 @@ class PyMcaNexusWidget(QNexusWidget):
                 stack2D = False
                 
             if stack1D:
-                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show as 1D Stack"),
+                _hdf5WidgetDatasetMenu.addAction(QString("Show as 1D Stack"),
                                     self._stack1DSignal)
             if stack2D:
-                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Show as 2D Stack"),
+                _hdf5WidgetDatasetMenu.addAction(QString("Show as 2D Stack"),
                                     self._stack2DSignal)
-                _hdf5WidgetDatasetMenu.addAction(QtCore.QString("Load and show as 2D Stack"),
+                _hdf5WidgetDatasetMenu.addAction(QString("Load and show as 2D Stack"),
                                     self._loadStack2DSignal)
             self._lastDatasetDict= ddict
             _hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
