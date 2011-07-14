@@ -475,7 +475,8 @@ class ConcentrationsWidget(qt.QWidget):
         else:
             self.mMolarCheckBox.setChecked(False)
 
-        if ddict['usematrix']:
+        usematrix = ddict.get('usematrix', False)
+        if usematrix:
             self.fluxCheckBox.setChecked(False)
             self.matrixCheckBox.setChecked(True)
         else:    
