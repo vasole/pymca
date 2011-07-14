@@ -27,6 +27,10 @@
 import os.path
 import QtBlissGraph
 qt = QtBlissGraph.qt
+if not hasattr(qt, 'QString'):
+    QString = str
+else:
+    QString = qt.QString
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 if QTVERSION > '4.0.0':
@@ -431,8 +435,8 @@ class QEdfFileWidget(qt.QWidget):
                                  self.__saveIconSignal,
                                  'Export Graph')
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Standard"),    self._saveIconSignal)
-            self._saveMenu.addAction(qt.QString("Matplotlib") , self._saveMatplotlibImage)            
+            self._saveMenu.addAction(QString("Standard"),    self._saveIconSignal)
+            self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)            
         else:
             tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
