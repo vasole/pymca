@@ -2,6 +2,7 @@
 """
 from __future__ import with_statement
 import operator
+import sys
 import os
 import shutil
 import posixpath
@@ -164,6 +165,17 @@ class H5NodeProxy(object):
                 self._hasChildren = isinstance(node, phynx.Group)
             else:
                 self._hasChildren = isinstance(node, h5py.Group)
+                if hasattr(node, 'attrs'):
+                    attrs = list(node.attrs)
+                    for cname in ['class', 'NX_class']:
+                        if cname in attrs:
+                            if sys.version <'3.0':
+                                _type = "%s" % node.attrs[cname]
+                            else:
+                                _type = node.attrs[cname].decode('utf=8')
+                            self._type = _type
+                            break
+                            #self._type = _type[2].upper() + _type[3:]
             self._children = []
             if hasattr(node, 'dtype'):
                 self._dtype = str(node.dtype)

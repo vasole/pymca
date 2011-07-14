@@ -25,6 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 from PyQt4 import QtCore, QtGui
+if hasattr(QtCore, 'QStringList'):
+    MyQVariant = QtCore.QVariant
+else:
+    def MyQVariant(x=None):
+        return x
 import NumpyArrayTableModel
 import sys
 
@@ -37,8 +42,8 @@ class HorizontalHeader(QtCore.QAbstractItemModel):
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
-            return QtCore.QVariant("%d" % section)
-        return QtCore.QVariant()
+            return MyQVariant("%d" % section)
+        return MyQVariant()
 
 class VerticalHeader(QtCore.QAbstractItemModel):
     def __init__(self, parent=None):
@@ -49,8 +54,8 @@ class VerticalHeader(QtCore.QAbstractItemModel):
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
-            return QtCore.QVariant("%d" % section)
-        return QtCore.QVariant()
+            return MyQVariant("%d" % section)
+        return MyQVariant()
 
 class NumpyArrayTableView(QtGui.QTableView):
     def __init__(self, parent=None):

@@ -231,7 +231,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 self.onBegin(dim0)
             self.incrProgressBar=0
             for hdf in hdfStack._sourceObjectList:
-                entryNames = hdf["/"].keys()
+                entryNames = list(hdf["/"].keys())
                 for scan in scanlist:
                     if JUST_KEYS:
                         entryName = entryNames[int(scan.split(".")[-1])-1]

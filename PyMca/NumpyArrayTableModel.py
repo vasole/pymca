@@ -26,6 +26,11 @@
 #############################################################################*/
 import numpy
 from PyQt4 import QtCore, QtGui
+if hasattr(QtCore, 'QStringList'):
+    MyQVariant = QtCore.QVariant
+else:
+    def MyQVariant(x=None):
+        return x
 
 class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None, narray=None, fmt="%g", perspective=0):
@@ -57,8 +62,8 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
             if role == QtCore.Qt.DisplayRole:
                 row = 0
                 col = index.column()
-                return QtCore.QVariant(self._format % self._array[col])
-        return QtCore.QVariant()
+                return MyQVariant(self._format % self._array[col])
+        return MyQVariant()
 
     def _rowCount2D(self, parent=None):
         return self._array.shape[0]
@@ -71,8 +76,8 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
             if role == QtCore.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
-                return QtCore.QVariant(self._format % self._array[row, col])
-        return QtCore.QVariant()
+                return MyQVariant(self._format % self._array[row, col])
+        return MyQVariant()
 
         
     def _rowCount3DIndex0(self, parent=None):
@@ -98,30 +103,30 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
             if role == QtCore.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
-                return QtCore.QVariant(self._format % self._array[self._index,
+                return MyQVariant(self._format % self._array[self._index,
                                                                   row,
                                                                   col])
-        return QtCore.QVariant()
+        return MyQVariant()
 
     def _data3DIndex1(self, index, role=QtCore.Qt.DisplayRole):
         if index.isValid():
             if role == QtCore.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
-                return QtCore.QVariant(self._format % self._array[row,
+                return MyQVariant(self._format % self._array[row,
                                                                   self._index,
                                                                   col])
-        return QtCore.QVariant()
+        return MyQVariant()
 
     def _data3DIndex2(self, index, role=QtCore.Qt.DisplayRole):
         if index.isValid():
             if role == QtCore.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
-                return QtCore.QVariant(self._format % self._array[row,
+                return MyQVariant(self._format % self._array[row,
                                                                   col,
                                                                   self._index])
-        return QtCore.QVariant()
+        return MyQVariant()
 
     def setArrayData(self, data, perspective=0):
         """

@@ -175,8 +175,16 @@ class DatasetSelectionPage(QtGui.QWizardPage):
             return
         
         #check if it is an NXentry
-        entry = phynxFile[keys[0]] 
-        attr = entry.attrs.get('NX_class', None)
+        entry = phynxFile[keys[0]]
+        attrs = list(entry.attrs)
+        if 'NX_class' in attrs:
+            attr = entry.attrs['NX_class']
+            if sys.version > '2.9':
+                try:
+                    attr = attr.decode('utf-8')
+                except:
+                    print("WARNING: Cannot decode NX_class attribute")
+                    attr = None
         if attr is None:
             return
         if attr != 'NXentry':
@@ -186,6 +194,14 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         nxDataList = []
         for key in entry.keys():
             attr = entry[key].attrs.get('NX_class', None)
+            if attr is None:
+                continue
+            if sys.version > '2.9':
+                try:
+                    attr = attr.decode('utf-8')
+                except:
+                    print("WARNING: Cannot decode NX_class attribute")
+                    continue
             if attr in ['NXdata']:
                 nxDataList.append(key)
         if len(nxDataList) != 1:
@@ -200,7 +216,13 @@ class DatasetSelectionPage(QtGui.QWizardPage):
                     signalList.append(key)
                     if len(signalList) == 1:
                         if 'interpretation' in nxData[key].attrs.keys():
-                            if nxData[key].attrs['interpretation'] == "image":
+                            interpretation = nxData[key].attrs['interpretation']
+                            if sys.version > '2.9':
+                                try:
+                                    interpretation = interpretation.decode('utf-8')
+                                except:
+                                    print("WARNING: Cannot decode interpretation")
+                            if interpretation == "image":
                                 self.stackIndexWidget.setIndex(0)
 
         if not len(signalList):
