@@ -42,7 +42,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
 
         Plot type can be "SCAN", "MCA", None, ...        
         """
-        names = self.methodDict.keys()
+        names = list(self.methodDict.keys())
         names.sort()
         return names
 
