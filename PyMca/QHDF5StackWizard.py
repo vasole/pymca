@@ -170,7 +170,7 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         self.dataSource = NexusDataSource.NexusDataSource(filelist[0])
         self.nexusWidget.setDataSource(self.dataSource)
         phynxFile = self.dataSource._sourceObjectList[0]
-        keys = phynxFile.keys()
+        keys = list(phynxFile.keys())
         if len(keys) != 1:
             return
         

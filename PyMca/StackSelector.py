@@ -74,13 +74,15 @@ class StackSelector(object):
         aifirafile = False
         if len(filelist):
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-            f = open(filelist[0], 'rb')
-            #read 10 characters
-            if sys.version < '3.0':
-                line = f.read(10)
-            else:
-                line = str(f.read(10).decode())
-            f.close()
+            #if we are dealing with HDF5, no more tests needed
+            if not filefilter.upper().startswith('HDF5'):
+                f = open(filelist[0], 'rb')
+                #read 10 characters
+                if sys.version < '3.0':
+                    line = f.read(10)
+                else:
+                    line = str(f.read(10).decode())
+                f.close()
             omnicfile = False
             if filefilter.upper().startswith('HDF5'):
                 stack = QHDF5Stack1D.QHDF5Stack1D(filelist)
