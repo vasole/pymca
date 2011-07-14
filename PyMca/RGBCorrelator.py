@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -30,6 +30,10 @@ import sys
 import os
 import RGBCorrelatorWidget
 qt = RGBCorrelatorWidget.qt
+if hasattr(qt, 'QString'):
+    QString = qt.QString
+else:
+    QString = str
 import RGBCorrelatorGraph
 QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
 import numpy.oldnumeric as Numeric
@@ -65,8 +69,8 @@ class RGBCorrelator(qt.QWidget):
                          qt.SIGNAL("clicked()"), 
                          self._saveToolButtonSignal)
                 self._saveMenu = qt.QMenu()
-                self._saveMenu.addAction(qt.QString("Standard"),    self.graphWidget._saveIconSignal)
-                self._saveMenu.addAction(qt.QString("Matplotlib") , self._saveMatplotlibImage)
+                self._saveMenu.addAction(QString("Standard"),    self.graphWidget._saveIconSignal)
+                self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)
             self.graph = self.graphWidget.graph
             if not QWTVERSION4:
                 #add flip Icon

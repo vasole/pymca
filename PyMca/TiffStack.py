@@ -30,6 +30,8 @@ from PyMca import TiffIO
 import numpy
 import os
 import sys
+if sys.version > '2.9':
+    long = int
 
 SOURCE_TYPE = "TiffStack"
 
@@ -83,7 +85,7 @@ class TiffArray(object):
                     indices.append([int(x) for x in args[i]])
                 else:
                     stardardSlice = False
-            elif type(args[i]) in [type(1), type(1L)]:
+            elif type(args[i]) in [1, long(1)]:
                 start = args[i]
                 if start < 0:
                     start = self.__shape[i] - start
