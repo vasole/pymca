@@ -1,7 +1,11 @@
-import Plugin1DBase
 import numpy
 from numpy import cos, sin
 import sys
+try:
+    import Plugin1DBase
+except ImportError:
+    from . import Plugin1DBase
+
 import os
 try:
     from PyMca import PyMcaQt as qt
@@ -159,9 +163,9 @@ if __name__ == "__main__":
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():
-        print method, ":", plugin.getMethodToolTip(method)
+        print(method, ":", plugin.getMethodToolTip(method))
     plugin.applyMethod(plugin.getMethods()[1])
     curves = plugin.getAllCurves()
     for curve in curves:
-        print curve[2]
-    print "LIMITS = ", plugin.getGraphYLimits()
+        print(curve[2])
+    print("LIMITS = ", plugin.getGraphYLimits())
