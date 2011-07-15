@@ -259,7 +259,7 @@ class FileModel(QtCore.QAbstractItemModel):
             # I would expect the title to be the proper
             # thing to show ...
             if hasattr(item, 'type'):
-                if item.type == "Entry":
+                if item.type in ["Entry", "NXentry"]:
                     children = item.children
                     names = [posixpath.basename(o.name) for o in children]
                     if "title" in names:
@@ -273,7 +273,7 @@ class FileModel(QtCore.QAbstractItemModel):
                 showtitle = False
                 if showtitle:
                     if hasattr(item, 'type'):
-                        if item.type == "Entry":
+                        if item.type in ["Entry", "NXentry"]:
                             children = item.children
                             names = [posixpath.basename(o.name) for o in children]
                             if "title" in names:
