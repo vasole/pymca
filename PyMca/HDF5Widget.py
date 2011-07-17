@@ -7,9 +7,11 @@ import os
 import shutil
 import posixpath
 import gc
+from operator import itemgetter
 
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
+
 if hasattr(QtCore, 'QStringList'):
     MyQVariant = QtCore.QVariant
 else:
@@ -17,17 +19,55 @@ else:
         return x
 
 import h5py
-if h5py.version.version < '2.0.0':
-    try:
-        import PyMca.phynx as phynx
-    except:
-        #I should never reach here
-        try:
-            from xpaxs.io import phynx
-        except ImportError:
-            import phynx
-
+phynx = h5py
 import weakref
+
+DEBUG = 0
+
+#sorting method
+def h5py_sorting(object_list):
+    sorting_list = ['start_time', 'end_time', 'name']
+    n = len(object_list)
+    if n < 2:
+        return object_list
+
+    # This implementation only sorts entries
+    if posixpath.dirname(object_list[0].name) != "/":
+        return object_list
+
+    names = list(object_list[0].keys())
+
+    sorting_key = None
+    for key in sorting_list:
+        if key in names:
+            sorting_key = key
+            break
+        
+    if sorting_key is None:
+        if 'name' in sorting_list:
+            sorting_key = 'name'
+        else:
+            return object_list
+
+    try:
+        if sorting_key != 'name':
+            sorting_list = [(o[sorting_key].value, o)
+                           for o in object_list]
+            sorted_list = sorted(sorting_list, key=itemgetter(0))
+            return [x[1] for x in sorted_list]
+
+        if sorting_key == 'name':
+            sorting_list = [(_get_number_list(o.name),o)
+                           for o in object_list]
+            sorting_list.sort()
+            return [x[1] for x in sorting_list]
+    except:
+        #The only way to reach this point is to have different
+        #structures among the different entries. In that case
+        #defaults to the unfiltered case
+        print("WARNING: Default ordering")
+        print("Probably all entries do not have the key %s" % sorting_key)
+        return object_list
 
 class QRLock(QtCore.QMutex):
 
@@ -99,8 +139,17 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
+                tmpList = list(self.getNode(self.name).values())
+                try:
+                    finalList = h5py_sorting(tmpList)
+                except:
+                    #one cannot afford any error
+                    if DEBUG:
+                        raise
+                    else:
+                        finalList = tmpList
                 self._children = [H5NodeProxy(self.file, i, self)
-                                  for i in self.getNode(self.name).values()]
+                                  for i in finalList]
         return self._children
 
     @property
@@ -161,21 +210,18 @@ class H5NodeProxy(object):
                 self._name = posixpath.basename(node.name)
             """
             self._type = type(node).__name__
-            if h5py.version.version < '2.0.0':
-                self._hasChildren = isinstance(node, phynx.Group)
-            else:
-                self._hasChildren = isinstance(node, h5py.Group)
-                if hasattr(node, 'attrs'):
-                    attrs = list(node.attrs)
-                    for cname in ['class', 'NX_class']:
-                        if cname in attrs:
-                            if sys.version <'3.0':
-                                _type = "%s" % node.attrs[cname]
-                            else:
-                                _type = node.attrs[cname].decode('utf=8')
-                            self._type = _type
-                            break
-                            #self._type = _type[2].upper() + _type[3:]
+            self._hasChildren = isinstance(node, h5py.Group)
+            if hasattr(node, 'attrs'):
+                attrs = list(node.attrs)
+                for cname in ['class', 'NX_class']:
+                    if cname in attrs:
+                        if sys.version <'3.0':
+                            _type = "%s" % node.attrs[cname]
+                        else:
+                            _type = node.attrs[cname].decode('utf=8')
+                        self._type = _type
+                        break
+                        #self._type = _type[2].upper() + _type[3:]
             self._children = []
             if hasattr(node, 'dtype'):
                 self._dtype = str(node.dtype)
@@ -356,10 +402,7 @@ class FileModel(QtCore.QAbstractItemModel):
                 ddict['filename'] = filename
                 self.emit(QtCore.SIGNAL('fileUpdated'), ddict)
                 return item.file
-        if h5py.version.version < '2.0.0':
-            phynxFile = phynx.File(filename, 'r', lock=QRLock())
-        else:
-            phynxFile = h5py.File(filename, 'r')
+        phynxFile = phynx.File(filename, 'r')
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
                 idx = self.rootItem._identifiers.index(id(weakrefObject))

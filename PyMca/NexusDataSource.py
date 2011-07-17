@@ -33,16 +33,7 @@ import types
 import h5py
 import re
 import posixpath
-if h5py.version.version < '2.0.0':
-    try:
-        import PyMca.phynx as phynx
-    except ImportError:
-        try:
-            import phynx
-        except ImportError:
-            from xpaxs.io import phynx
-else:
-    phynx = h5py
+phynx = h5py
 
 if sys.version > '2.9':
     basestring = str
@@ -50,6 +41,7 @@ if sys.version > '2.9':
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
 
+#sorting method
 def h5py_sorting(object_list):
     sorting_list = ['start_time', 'end_time', 'name']
     n = len(object_list)
@@ -60,7 +52,7 @@ def h5py_sorting(object_list):
     if posixpath.dirname(object_list[0].name) != "/":
         return object_list
 
-    names = object_list[0].keys()
+    names = list(object_list[0].keys())
 
     sorting_key = None
     for key in sorting_list:
@@ -73,13 +65,13 @@ def h5py_sorting(object_list):
             sorting_key = 'name'
         else:
             return object_list
-        
+
     try:
         if sorting_key != 'name':
             sorting_list = [(o[sorting_key].value, o)
                            for o in object_list]
-            sorting_list.sort()
-            return [x[1] for x in sorting_list]
+            sorted_list = sorted(sorting_list, key=itemgetter(0))
+            return [x[1] for x in sorted_list]
 
         if sorting_key == 'name':
             sorting_list = [(_get_number_list(o.name),o)
@@ -93,7 +85,7 @@ def h5py_sorting(object_list):
         print("WARNING: Default ordering")
         print("Probably all entries do not have the key %s" % sorting_key)
         return object_list
-
+    
 def _get_number_list(txt):
     rexpr = '[/a-zA-Z:-]'
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
@@ -172,20 +164,12 @@ class NexusDataSource:
                 continue
             if not os.path.exists(name):
                 if '%' in name:
-                    try:
-                        phynxInstance = phynx.File(name, 'r',
-                           driver='family',
-                           lock=None,
-                           sorted_with=h5py_sorting)
-                    except TypeError:
-                        phynxInstance = phynx.File(name, 'r',
-                                               driver='family',
-                                               lock=None)
+                   phynxInstance = phynx.File(name, 'r',
+                                              driver='family')
                 else:
                     raise IOError("File %s does not exists" % name)
             try:
-                phynxInstance = phynx.File(name, 'r', lock=None,
-                                           sorted_with=h5py_sorting)
+                phynxInstance = phynx.File(name, 'r')
             except IOError:
                 if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
                     FAMILY = True
@@ -193,7 +177,7 @@ class NexusDataSource:
                     raise
             except TypeError:
                 try:
-                    phynxInstance = phynx.File(name, 'r', lock=None)
+                    phynxInstance = phynx.File(name, 'r')
                 except IOError:
                     if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
                         FAMILY = True
@@ -209,14 +193,8 @@ class NexusDataSource:
         if FAMILY:
             pattern = get_family_pattern(self.__sourceNameList)
             if '%' in pattern:
-                try:
-                    phynxInstance = phynx.File(pattern, 'r',
-                                            driver='family', 
-                                            lock=None,
-                                           sorted_with=h5py_sorting)
-                except TypeError:
-                    phynxInstance = phynx.File(pattern, 'r', 
-                                            driver='family',lock=None)
+                phynxInstance = phynx.File(pattern, 'r',
+                                            driver='family')
             else:
                 raise IOError("Cannot read set of HDF5 files")
             self.sourceName   = [pattern]
@@ -243,7 +221,7 @@ class NexusDataSource:
             i+=1
             nEntries = len(sourceObject["/"].keys())
             for n in range(nEntries):
-                SourceInfo["KeyList"].append("%d.%d" % (i,n+1))   
+                SourceInfo["KeyList"].append("%d.%d" % (i,n+1))
         SourceInfo["Size"]=len(SourceInfo["KeyList"])
         return SourceInfo
         
@@ -304,6 +282,8 @@ class NexusDataSource:
                 if entry != "/":
                     print("Warning selection keys do not match")
         else:
+            #Probably I should find the acual entry following h5py_ordering output
+            #and search for an NXdata plot.
             sourcekeys = self.getSourceInfo()['KeyList']
             #a key corresponds to an image        
             key_split= key.split(".")
