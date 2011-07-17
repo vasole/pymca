@@ -16,8 +16,8 @@ getTotalPairCrossSection = EPDLParser.getTotalPairCrossSection
 getTotalTripletCrossSection = EPDLParser.getTotalTripletCrossSection
 
 if len(sys.argv) < 3:
-    print "Usage:"
-    print "python EPDL97GenerateCrossSections SPEC_output_filename barns_flag"
+    print("Usage:")
+    print("python EPDL97GenerateCrossSections SPEC_output_filename barns_flag")
     sys.exit(0)
 
 def getHeader(filename):
@@ -41,7 +41,7 @@ if int(sys.argv[2]):
     BARNS = True
 else:
     BARNS = False
-print "BARNS = ", BARNS
+print("BARNS = %s" % BARNS)
 outfile = open(fname, 'wb')
 outfile.write(getHeader(fname))
 
@@ -55,7 +55,7 @@ bad_shells = ['L (', 'L23',
 LONG_LABELS = True
 for i in range(1, 101):
 #for i in range(82, 83):
-    print "i = ", i, "element = ", Elements[i-1]
+    print("i = %d element = %s" % (i, Elements[i-1]))
     #coherent
     energy_cohe, value_cohe, mode_cohe = getTotalCoherentCrossSection(i,
                                                             getmode=True)
@@ -162,8 +162,8 @@ for i in range(1, 101):
             j1 += 1
         j0 = j1 - 1
         if j0 < 0:
-            print x, energy_cohe[0]
-            raise ValueError, "coherent"
+            print(x, energy_cohe[0])
+            raise ValueError("coherent")
         x0 = energy_cohe[j0]
         x1 = energy_cohe[j1]
         y0 = value_cohe[j0]
@@ -181,8 +181,8 @@ for i in range(1, 101):
             j1 += 1
         j0 = j1 - 1
         if j0 < 0:
-            print x, energy_incohe[0]
-            raise ValueError, "compton"
+            print(x, energy_incohe[0])
+            raise ValueError("compton")
         x0 = energy_incohe[j0]
         x1 = energy_incohe[j1]
         y0 = value_incohe[j0]
