@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -34,18 +34,9 @@ import os
 HDF5 = False
 try:
     import h5py
-    import PyMca.phynx as phynx
     HDF5 = True
-except ImportError:
-    try:
-        import phynx
-        HDF5 = True
-    except ImportError:
-        try:
-            from xpaxs.io import phynx
-            HDF5 = True
-        except ImportError:
-            pass
+except:
+    pass
 SOURCE_TYPE = "SpecFileStack"
 DEBUG = 0
 

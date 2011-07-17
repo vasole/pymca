@@ -31,18 +31,9 @@ from PyMca import DataObject
 HDF5 = False
 try:
     import h5py
-    import PyMca.phynx as phynx
     HDF5 = True
-except ImportError:
-    try:
-        import phynx
-        HDF5 = True
-    except ImportError:
-        try:
-            from xpaxs.io import phynx
-            HDF5 = True
-        except ImportError:
-            pass
+except:
+    pass
         
 SOURCE_TYPE = "EdfFileStack"
 DEBUG = 0

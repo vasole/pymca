@@ -453,17 +453,8 @@ if __name__ == "__main__":
         print("Usage:")
         print("python HDF5Info.py hdf5File node")
         sys.exit(0)
-    if 1:
-        import h5py
-        h=h5py.File(sys.argv[1])
-    elif 0:
-        from PyMca import phynx
-        import NexusDataSource
-        h = phynx.File(sys.argv[1], 'r', lock=None,
-                                   sorted_with=NexusDataSource.h5py_sorting)        
-    else:
-        from PyMca import phynx
-        h = phynx.File(sys.argv[1])
+    import h5py
+    h=h5py.File(sys.argv[1])
     node = sys.argv[2]
     info = getInfo(h, node)
     app = QtGui.QApplication([])
