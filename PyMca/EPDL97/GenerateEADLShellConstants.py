@@ -41,7 +41,7 @@ outfile = open(fname, 'wb')
 outfile.write(getHeader(fname))
 for i in range(1,101):
 #for i in range(82,83):
-    print i, Elements[i-1]
+    print("%d %s" % (i, Elements[i-1]))
     if i == 1:
         text  = '#S 1 K Shell Fluorescence Yields\n'
         label_text = ""
@@ -72,7 +72,7 @@ for nshell in range(1,4):
     shell = shell_list[nshell-1]
     for i in range(1,101):
     #for i in range(82,83):
-        print i, Elements[i-1]
+        print("%d %s" % (i, Elements[i-1]))
         if i == 1:
             text  = '#S %s %s x-ray data\n' % (shell[1], shell[0:2])
             label_text = ""
@@ -122,7 +122,7 @@ for nshell in range(1,6):
     shell = shell_list[nshell-1]
     for i in range(1,101):
     #for i in range(82,83):
-        print i, Elements[i-1]
+        print("%d %s" % (i, Elements[i-1]))
         if i == 1:
             text  = '#S %s %s x-ray data\n' % (shell[1], shell[0:2])
             label_text = ""

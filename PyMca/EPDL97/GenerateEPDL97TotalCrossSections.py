@@ -14,8 +14,8 @@ getTotalPairCrossSection = EPDLParser.getTotalPairCrossSection
 getTotalTripletCrossSection = EPDLParser.getTotalTripletCrossSection
 
 if len(sys.argv) < 3:
-    print "Usage:"
-    print "python EPDLGenerateTotalCrossSections SPEC_output_filename barns_flag"
+    print("Usage:")
+    print("python EPDLGenerateTotalCrossSections SPEC_output_filename barns_flag")
     sys.exit(0)
 
 def getHeader(filename):
@@ -36,12 +36,12 @@ if int(sys.argv[2]):
     BARNS = True
 else:
     BARNS = False
-print "BARNS = ", BARNS
+print("BARNS = %s" % BARNS)
 outfile = open(fname, 'wb')
 outfile.write(getHeader(fname))
 
 for i in range(1, 101):
-    print "i = ", i, "element = ", Elements[i-1]
+    print("i = %d element = %s" % (i, Elements[i-1]))
     #coherent
     energy_cohe, value_cohe, mode_cohe = getTotalCoherentCrossSection(i,
                                                             getmode=True)
