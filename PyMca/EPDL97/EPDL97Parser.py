@@ -223,7 +223,7 @@ def getParticle(value):
         return 'electron'
     if value == 8:
         return 'positron'
-    raise ValueError, 'Invalid particle code'
+    raise ValueError('Invalid particle code')
 
 def getInterpolationType(value):
     """
@@ -242,7 +242,7 @@ def getInterpolationType(value):
         return 'lin-log'
     if value == 5:
         return 'log-log'
-    raise ValueError, 'Invalid interpolation flag'
+    raise ValueError('Invalid interpolation flag')
 
 def getReactionFromCode(value):
     """
@@ -266,7 +266,7 @@ def getReactionFromCode(value):
         return 'pair'
     if value == 75:
         return 'triplet'
-    raise ValueError, 'Invalid reaction descriptor code'
+    raise ValueError('Invalid reaction descriptor code')
 
 def getReactionPropertyFromCode(value):
     """
@@ -294,7 +294,7 @@ def getReactionPropertyFromCode(value):
         return 'imaginary_anomalous_scattering_factor'
     if value == 944:
         return 'real_anomalous_scattering_factor'
-    raise ValueError, 'Invalid reaction property descriptor code'
+    raise ValueError('Invalid reaction property descriptor code')
 
 def getCodeFromReaction(text):
     """
@@ -319,7 +319,7 @@ def getCodeFromReaction(text):
         return 74
     if 'triplet' in text:
         return 75
-    raise ValueError, 'Invalid reaction'
+    raise ValueError('Invalid reaction')
 
 
 def parseHeader0(line):
@@ -424,14 +424,14 @@ def parseHeader1(line):
         ddict['subshell_code'] = 0    
         ddict['subshell'] = 'none'
     else:
-        print "Inconsistent data"
-        print "X1 = ", X1, "S = ", S
+        print("Inconsistent data")
+        print("X1 = ", X1, "S = ", S)
         sys.exit(1) 
     return ddict
 
 def parseHeader(line0, line1):
-    #print "line0 = ", line0
-    #print "line1 = ", line1
+    #print("line0 = ", line0)
+    #print("line1 = ", line1)
     ddict = parseHeader0(line0)
     ddict.update(parseHeader1(line1))
     return ddict
@@ -439,18 +439,18 @@ def parseHeader(line0, line1):
 if 0:
     ddict = parseHeader0(EPDL97_DATA[0])
     for key in ddict.keys():
-        print key, ddict[key]
+        print(key, ddict[key])
 
 if 0:
     ddict = parseHeader1(EPDL97_DATA[1])
     for key in ddict.keys():
-        print key, ddict[key]
+        print (key, ddict[key])
 
 
 def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=True):
     global LAST_INDEX
     if (z < 1) or (z>100):
-        raise ValueError, "Invalid atomic number"
+        raise ValueError("Invalid atomic number")
     nlines = len(lines)
     i = LAST_INDEX
     while i < (nlines-1):
@@ -461,37 +461,37 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=True):
         try:
             ddict = parseHeader(lines[i], lines[i+1])
         except:
-            print "Error with lines"
-            print lines[i]
-            print lines[i+1]
-            print sys.exc_info()
+            print("Error with lines")
+            print(lines[i])
+            print(lines[i+1])
+            print(sys.exc_info())
             raise
         if 0:
-            print ddict['Z'], z
-            print ddict['Yi'], Yi
-            print ddict['C'], C
-            print ddict['S'], S
-            print ddict['X1'], X1
-            print ddict['Yo'], Yo
-            print ddict['I'], I
+            print(ddict['Z'], z)
+            print(ddict['Yi'], Yi)
+            print(ddict['C'], C)
+            print(ddict['S'], S)
+            print(ddict['X1'], X1)
+            print(ddict['Yo'], Yo)
+            print(ddict['I'], I)
         if DEBUG:
             if ddict['Z'] == z:
-                print "Z found"
+                print("Z found")
                 if ddict['Yi'] == Yi:
-                    print "Yi found"
+                    print("Yi found")
                     if ddict['C'] == C:
-                        print "C found"
+                        print("C found")
                         if ddict['S'] == S:
-                            print "S found with X1 = ", ddict['X1']
-                            print "Requested    X1 = ", X1
-                            print lines[i]
-                            print lines[i+1]
+                            print("S found with X1 = ", ddict['X1'])
+                            print("Requested    X1 = ", X1)
+                            print(lines[i])
+                            print(lines[i+1])
                             if ddict['X1'] == X1:
                                 if ddict['Yo'] == Yo:
                                     if ddict['I'] == I:
-                                        print "FOUND!"
-                                        print lines[i]
-                                        print lines[i+1]
+                                        print("FOUND!")
+                                        print(lines[i])
+                                        print(lines[i+1])
                                         LAST_INDEX = i - 1
                                         if getmode:
                                             return i, ddict['interpolation_type']
@@ -515,7 +515,7 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=True):
         i += 1
     if LAST_INDEX > 0:
         if DEBUG:
-            print "REPEATING"
+            print("REPEATING")
         LAST_INDEX = -1
         return getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=getmode)
     if getmode:
@@ -529,11 +529,11 @@ def getActualDataFromLinesAndOffset(lines, index):
     while len(lines[data_end].split()) == 2:
         data_end += 1
     if DEBUG:
-        print "COMPLETE DATA SET"
-        print lines[index:data_end]
-        print "END DATA SET"
-        print lines[data_end]
-        print "ADDITIONAL LINE"
+        print("COMPLETE DATA SET")
+        print(lines[index:data_end])
+        print("END DATA SET")
+        print(lines[data_end])
+        print("ADDITIONAL LINE")
     ndata = data_end - data_begin
     energy = numpy.zeros((ndata,), numpy.float)
     value  = numpy.zeros((ndata,), numpy.float)
@@ -566,7 +566,7 @@ def getTotalCoherentCrossSection(z, lines=None, getmode=False):
         lines = EPDL97_DATA
     index, mode = getDataLineIndex(lines, z, 7, 71, 0, 0., 0, 0, getmode=True)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     energy, value = getActualDataFromLinesAndOffset(lines, index)
     if getmode:
         return energy, value, mode
@@ -580,7 +580,7 @@ def getTotalIncoherentCrossSection(z, lines=None, getmode=False):
         lines = EPDL97_DATA
     index, mode = getDataLineIndex(lines, z, 7, 72, 0, 0., 0, 0, getmode=True)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     energy, value = getActualDataFromLinesAndOffset(lines, index)
     if getmode:
         return energy, value, mode
@@ -594,7 +594,7 @@ def getTotalPhotoelectricCrossSection(z, lines=None, getmode=False):
         lines = EPDL97_DATA
     index, mode = getDataLineIndex(lines, z, 7, 73, 0, 0., 0, 0, getmode=True)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     energy, value = getActualDataFromLinesAndOffset(lines, index)
     if getmode:
         return energy, value, mode
@@ -635,7 +635,7 @@ def getPartialPhotoelectricCrossSection(z, shell, lines=None, getmode=False):
         lines = EPDL97_DATA
     index, mode = getDataLineIndex(lines, z, 7, 73, 91, X1, 0, 0, getmode=True)
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     energy, value = getActualDataFromLinesAndOffset(lines, index)
     if getmode:
         return energy, value, mode
@@ -649,7 +649,7 @@ def getTotalPairCrossSection(z, lines=None, getmode=False):
     if lines is None:
         lines = EPDL97_DATA
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     energy, value = getActualDataFromLinesAndOffset(lines, index)
     if getmode:
         return energy, value, mode
@@ -663,7 +663,7 @@ def getTotalTripletCrossSection(z, lines=None, getmode=False):
     if lines is None:
         lines = EPDL97_DATA
     if index < 0:
-        raise IOError, "Requested data not found"
+        raise IOError("Requested data not found")
     energy, value = getActualDataFromLinesAndOffset(lines, index)
     if getmode:
         return energy, value, mode
@@ -672,46 +672,45 @@ def getTotalTripletCrossSection(z, lines=None, getmode=False):
 
 if __name__ == "__main__":
     energy, value, mode = getTotalCoherentCrossSection(82, EPDL97_DATA, getmode=True)
-    print "TOTAL COHERENT ", mode
+    print("TOTAL COHERENT ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print energy[i], value[i]
+                print(energy[i], value[i])
 
     energy, value, mode = getTotalIncoherentCrossSection(82, EPDL97_DATA , getmode=True)
-    print "TOTAL INCOHERENT ", mode
+    print("TOTAL INCOHERENT ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print energy[i], value[i]
+                print(energy[i], value[i])
 
     energy, value, mode = getTotalPhotoelectricCrossSection(82, EPDL97_DATA, getmode=True)
-    print "TOTAL PHOTOELECTRIC ", mode
+    print("TOTAL PHOTOELECTRIC ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print energy[i], value[i]
+                print(energy[i], value[i])
 
     energy, value, mode = getTotalPairCrossSection(82, EPDL97_DATA, getmode=True)
-    print " TOTAL PAIR ", mode
+    print(" TOTAL PAIR ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print energy[i], value[i]
+                print(energy[i], value[i])
             
     energy, value, mode = getPartialPhotoelectricCrossSection(82, 'L1', EPDL97_DATA, getmode=True)
-    print "L1 SHELL PARTIAL PHOTOELECTRIC IDX"
+    print("L1 SHELL PARTIAL PHOTOELECTRIC IDX")
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print energy[i], value[i], mode
+                print(energy[i], value[i], mode)
 
     energy, value, mode = getPartialPhotoelectricCrossSection(82, 'K', EPDL97_DATA, getmode=True)
-    print "K SHELL PARTIAL PHOTOELECTRIC"
+    print("K SHELL PARTIAL PHOTOELECTRIC")
     for i in range(len(energy)):
         if energy[i] > 0.088:
             if energy[i] < 0.090:
-                print energy[i], value[i], mode
+                print(energy[i], value[i], mode)
 
-    print "atomic weight = ", getAtomicWeights()[82-1]
-    print "atomic weight = ", getAtomicWeights()[82-1]
+    print("atomic weight = ", getAtomicWeights()[82-1])

@@ -47,7 +47,7 @@ outfile.write(getHeader(fname))
 shells = EADLParser.getBaseShellList()
 LONG_LABEL = True
 for i in range(1,101):
-    print i, Elements[i-1]
+    print(i, Elements[i-1])
     if i == 1:
         text  = '#S 1 Binding energies in keV\n'
         label_text = ""
