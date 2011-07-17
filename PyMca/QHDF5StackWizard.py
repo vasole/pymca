@@ -185,6 +185,8 @@ class DatasetSelectionPage(QtGui.QWizardPage):
                 except:
                     print("WARNING: Cannot decode NX_class attribute")
                     attr = None
+        else:
+            attr = None
         if attr is None:
             return
         if attr != 'NXentry':

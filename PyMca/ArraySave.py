@@ -242,17 +242,17 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
 
     #entry
     nxEntry = hdf.require_group(entryName)
-    if 'NXclass' not in nxEntry.attrs:
-        nxEntry.attrs['NXclass'] = 'NXentry'.encode('utf-8')
-    elif nxEntry.attrs['NXclass'] != 'NXentry'.encode('utf-8'):
+    if 'NX_class' not in nxEntry.attrs:
+        nxEntry.attrs['NX_class'] = 'NXentry'.encode('utf-8')
+    elif nxEntry.attrs['NX_class'] != 'NXentry'.encode('utf-8'):
         #should I raise an error?
         pass
     nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
     nxEntry['start_time'] = getDate().encode('utf-8')
     nxData = nxEntry.require_group('NXdata')
-    if 'NXclass' not in nxData.attrs:
-        nxData.attrs['NXclass'] = 'NXdata'.encode('utf-8')
-    elif nxData.attrs['NXclass'] == 'NXdata'.encode('utf-8'):
+    if 'NX_class' not in nxData.attrs:
+        nxData.attrs['NX_class'] = 'NXdata'.encode('utf-8')
+    elif nxData.attrs['NX_class'] == 'NXdata'.encode('utf-8'):
         #should I raise an error?
         pass
     if compression:
@@ -379,18 +379,18 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
         entryName = "data"
         #entry
         nxEntry = hdf.require_group(entryName)
-        if 'NXclass' not in nxEntry.attrs:
-            nxEntry.attrs['NXclass'] = 'NXentry'.encode('utf-8')
-        elif nxEntry.attrs['NXclass'] != 'NXentry'.encode('utf-8'):
+        if 'NX_class' not in nxEntry.attrs:
+            nxEntry.attrs['NX_class'] = 'NXentry'.encode('utf-8')
+        elif nxEntry.attrs['NX_class'] != 'NXentry'.encode('utf-8'):
             #should I raise an error?
             pass
         
         nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
         nxEntry['start_time'] = getDate().encode('utf-8')
         nxData = nxEntry.require_group('NXdata')
-        if ('NXclass' not in nxData.attrs):
-            nxData.attrs['NXclass'] = 'NXdata'.encode('utf-8')
-        elif nxData.attrs['NXclass'] != 'NXdata'.encode('utf-8'):
+        if ('NX_class' not in nxData.attrs):
+            nxData.attrs['NX_class'] = 'NXdata'.encode('utf-8')
+        elif nxData.attrs['NX_class'] != 'NXdata'.encode('utf-8'):
             #should I raise an error?
             pass
         if modify:
