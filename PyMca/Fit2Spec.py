@@ -319,7 +319,7 @@ class Fit2SpecWindow(qt.QWidget):
         elif event.dict['event'] == 'batchResumed':self.onResume()
 
         else:
-            print "Unhandled event",event 
+            print("Unhandled event",event)
                                                 
 
     def onNewFile(self, file, filelist):

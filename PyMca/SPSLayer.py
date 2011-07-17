@@ -103,9 +103,9 @@ class SPSLayer(object):
     def __GetSourceInfo(self):
         arraylist= []
         for array in sps.getarraylist(self.SourceName):
-	    arrayinfo= sps.getarrayinfo(self.SourceName, array)
-	    arraytype= arrayinfo[2]
-	    arrayflag= arrayinfo[3]
+            arrayinfo= sps.getarrayinfo(self.SourceName, array)
+            arraytype= arrayinfo[2]
+            arrayflag= arrayinfo[3]
             if arrayflag in (sps.IS_ARRAY, sps.IS_MCA, sps.IS_IMAGE) and arraytype!=sps.STRING:
                     arraylist.append(array)
         source_info={}
@@ -239,15 +239,15 @@ class SPSLayer(object):
                             else: data=sps.getdata (specname,arrayname)                            
                             self.Pages[page].Array=data
                             return 1
-	    infoname= self.GetItemPageInfo("EnvKey")
-	    infoupdc= self.GetItemPageInfo("env_updatecounter")
-	    if (infoupdc!=None) and (infoname!=None) and (specname!=None):
-		if infoname in sps.getarraylist(specname):
-			counter= sps.updatecounter(specname,infoname)
-			if (counter!=infoupdc):
-				info= self.GetPageInfo(page)
-				info.update(self.__GetArrayInfo(arrayname))
-				return 1
+            infoname= self.GetItemPageInfo("EnvKey")
+            infoupdc= self.GetItemPageInfo("env_updatecounter")
+            if (infoupdc!=None) and (infoname!=None) and (specname!=None):
+                if infoname in sps.getarraylist(specname):
+                    counter= sps.updatecounter(specname,infoname)
+                    if (counter!=infoupdc):
+                        info= self.GetPageInfo(page)
+                        info.update(self.__GetArrayInfo(arrayname))
+                        return 1
         return 0
 
     def RefreshPage(self,sourcename,key):
@@ -275,14 +275,14 @@ if __name__ == "__main__":
         obj.LoadSource(arrayname)
         while(1):
             time.sleep(1)
-            print obj.RefreshPage(specname,arrayname)
+            print(obj.RefreshPage(specname,arrayname))
     except:
-        print "Usage: SPSLayer.py <specversion> <specname>"
+        print("Usage: SPSLayer.py <specversion> <specname>")
         sys.exit()
 
     for i in range (obj.GetNumberPages()):
-        print obj.GetPageInfo(i)
-        print obj.GetPageArray(i)
+        print(obj.GetPageInfo(i))
+        print(obj.GetPageArray(i))
 
     
 

@@ -307,7 +307,7 @@ class XiaEdfScanFile:
                 raise XiaEdfError("Cannot read data on det #%02d"%detector)
 
     def getDetList(self):
-	return self.detList
+        return self.detList
 
     def getData(self, detector):
         self.__readData(detector)
@@ -323,11 +323,11 @@ class XiaEdfScanFile:
             return self.statArray[:,(idx*XiaStatNb):((idx+1)*XiaStatNb)]
 
     def correct(self, detector, deadtime=1, livetime=0):
-	message= []
+        message= []
         if detector!=self.detector:
             self.__readData(detector)
 
-	corrflag= int(self.header.get("xcorr", 0))
+        corrflag= int(self.header.get("xcorr", 0))
         if livetime and corrflag&2:
             raise XiaEdfError("det #%02d seems already livetime corrected"%detector)
 
@@ -336,15 +336,15 @@ class XiaEdfScanFile:
         
         self.data= self.data.astype(Numeric.Float)
         idx= self.detList.index(detector)
-	pts= self.statArray.shape[0]
+        pts= self.statArray.shape[0]
 
         if livetime:
             lvt= Numeric.zeros((pts, 1), Numeric.Float)
             lvt[:,0]= self.statArray[:,((XiaStatNb*idx)+XiaStatIndex["lt"])] / 1000.0
 
-	    perr= self.__checkNullLivetime(lvt, pts)
-	    if len(perr):
-		message.append("Null livetime on det #%02d points %s"%(detector, self.__pointRange(perr)))
+            perr= self.__checkNullLivetime(lvt, pts)
+            if len(perr):
+                message.append("Null livetime on det #%02d points %s"%(detector, self.__pointRange(perr)))
 
             self.data= self.data / lvt
             self.header["xcorr"]= corrflag|2
@@ -353,85 +353,85 @@ class XiaEdfScanFile:
             rate= Numeric.zeros((self.statArray.shape[0], 1), Numeric.Float)
             count= Numeric.zeros((self.statArray.shape[0], 2), Numeric.Float)
 
-	    count[:,0]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["ocr"]]
-	    count[:,1]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["icr"]]
+            count[:,0]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["ocr"]]
+            count[:,1]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["icr"]]
 
-	    perr= self.__checkNullCount(count, pts)
-	    if len(perr):
-		message.append("Null ICR|OCR on det #%02d points %s"%(detector, self.__pointRange(perr)))
+            perr= self.__checkNullCount(count, pts)
+            if len(perr):
+                message.append("Null ICR|OCR on det #%02d points %s"%(detector, self.__pointRange(perr)))
 
-	    perr= []
-	    for ipt in range(pts):
-		if count[ipt,0]>0 and count[ipt,1]>0:
-		    rate[ipt,0]= count[ipt,1]/count[ipt,0]
-	        else:
-		    rate[ipt,0]= 1.
-		    perr.append(ipt)
+            perr= []
+            for ipt in range(pts):
+                if count[ipt,0]>0 and count[ipt,1]>0:
+                    rate[ipt,0]= count[ipt,1]/count[ipt,0]
+                else:
+                    rate[ipt,0]= 1.
+                    perr.append(ipt)
 
-	    if len(perr):
-		message.append("No DeadTime correction perfomed on det #%02d points %s"%(detector, self.__pointRange(perr)))
+            if len(perr):
+                message.append("No DeadTime correction perfomed on det #%02d points %s"%(detector, self.__pointRange(perr)))
 
             self.data= self.data * rate
             self.header["xcorr"]= corrflag|1
 
-	return message
+        return message
 
     def __checkNullCount(self, count, pts):
-	perr= []
-	check= Numeric.sum(Numeric.greater(count,0.), 1)
-	for ipt in range(pts):
-	    if check[ipt]!=2:
-		perr.append(ipt)
-		if (ipt!=0 and check[ipt-1]==2) and (ipt!=pts-1 and check[ipt+1]==2):
-		    count[ipt,:]= (count[ipt-1,:]+count[ipt+1,:])/2.
-		elif (ipt!=0 and check[ipt-1]==2):
-		    count[ipt,:]= count[ipt-1,:]
+        perr= []
+        check= Numeric.sum(Numeric.greater(count,0.), 1)
+        for ipt in range(pts):
+            if check[ipt]!=2:
+                perr.append(ipt)
+                if (ipt!=0 and check[ipt-1]==2) and (ipt!=pts-1 and check[ipt+1]==2):
+                    count[ipt,:]= (count[ipt-1,:]+count[ipt+1,:])/2.
+                elif (ipt!=0 and check[ipt-1]==2):
+                    count[ipt,:]= count[ipt-1,:]
                 elif (ipt!=pts-1 and check[ipt+1]==2):
                     count[ipt,:]= count[ipt+1,:]
-	        else:
-		    count[ipt,:]= -1
-	return perr
+                else:
+                    count[ipt,:]= -1
+        return perr
 
     def __checkNullLivetime(self, lvt, pts):
-	perr= []
-	check= Numeric.greater(lvt, 0.)
-	for ipt in range(pts):
-	    if check[ipt]==0:
-		perr.append(ipt)
+        perr= []
+        check= Numeric.greater(lvt, 0.)
+        for ipt in range(pts):
+            if check[ipt]==0:
+                perr.append(ipt)
                 if (ipt!=0 and check[ipt-1]==1) and (ipt!=pts-1 and check[ipt+1]==1):
-		     lvt[ipt,0]= (lvt[ipt+1]+lvt[ipt-1])/2.
+                     lvt[ipt,0]= (lvt[ipt+1]+lvt[ipt-1])/2.
                 elif (ipt!=0 and check[ipt-1]==1):
                      lvt[ipt,0]= lvt[ipt-1,0]
                 elif (ipt!=pts-1 and check[ipt+1]==1):
-		     lvt[ipt,0]= lvt[ipt+1,0]
+                     lvt[ipt,0]= lvt[ipt+1,0]
                 else:
-		     lvt[ipt,0]= 1.
-	return perr
+                     lvt[ipt,0]= 1.
+        return perr
 
     def __pointRange(self, ptlist):
-	nb= len(ptlist)
-	ptdiff= []
-	for idx in range(nb-1):
-	    ptdiff.append(((ptlist[idx+1]-ptlist[idx])==1))
-	ptdiff.append(0)
+        nb= len(ptlist)
+        ptdiff= []
+        for idx in range(nb-1):
+            ptdiff.append(((ptlist[idx+1]-ptlist[idx])==1))
+        ptdiff.append(0)
 
-	ptrange= []
-	curr= None
-	for idx in range(nb):
-	    if ptdiff[idx]:
-		if curr is None:
-		    curr= ptlist[idx]
+        ptrange= []
+        curr= None
+        for idx in range(nb):
+            if ptdiff[idx]:
+                if curr is None:
+                    curr= ptlist[idx]
             else:
-		if curr is None:
-		    ptrange.append(str(ptlist[idx]))
+                if curr is None:
+                    ptrange.append(str(ptlist[idx]))
                 else:
-		    ptrange.append("%d-%d"%(curr,ptlist[idx]))
-		curr= None
+                    ptrange.append("%d-%d"%(curr,ptlist[idx]))
+                curr= None
 
-	return "["+string.join(ptrange, ",")+"]"
+        return "["+string.join(ptrange, ",")+"]"
 		
     def sum(self, detectors=[], deadtime=0, livetime=0, average=0):
-	message= []
+        message= []
         if not len(detectors):
             sumdet= self.detList
         else:
@@ -450,17 +450,17 @@ class XiaEdfScanFile:
             else:
                 sumdata= sumdata + self.data
 
-	if average:
-	    self.data= sumdata / len(sumdet)
-	else:
-	    self.data= sumdata
+        if average:
+            self.data= sumdata / len(sumdet)
+        else:
+            self.data= sumdata
 
-	dataflag= int(self.header.get("xdata", 0))
-	self.header["xdata"]= dataflag | (1<<2)
-	self.header["xnb"]= 1
-	self.header["xdet"]= string.join([str(det) for det in sumdet], " ")
+        dataflag= int(self.header.get("xdata", 0))
+        self.header["xdata"]= dataflag | (1<<2)
+        self.header["xnb"]= 1
+        self.header["xdet"]= string.join([str(det) for det in sumdet], " ")
 
-	return message
+        return message
         
     def save(self, filename, force=0):
         if self.data is None:
@@ -476,53 +476,53 @@ class XiaFilename:
             self.__parseFilename(filename)
 
     def setType(self, type, det=None):
-	self.type= type
-	self.det= det
+        self.type= type
+        self.det= det
 	
     def getType(self):
-	return self.type
+        return self.type
 
     def isValid(self):
         return self.type is not None 
 
     def isCount(self):
-	return (self.type=="ct" or (self.type=="sum" and self.det==-1))
+        return (self.type=="ct" or (self.type=="sum" and self.det==-1))
 
     def isScan(self):
         return (self.type=="det" or self.type=="st" or (self.type=="sum" and self.det>0))
 
     def isSum(self):
-	return (self.type=="sum")
+        return (self.type=="sum")
 
     def isStat(self):
         return (self.type=="st")
 
     def findStatFile(self):
-	xf= XiaFilename(self.get())
-	xf.setType("st")
-	if os.path.isfile(xf.get()):
-	    return xf
-	else:
-	    return None
+        xf= XiaFilename(self.get())
+        xf.setType("st")
+        if os.path.isfile(xf.get()):
+            return xf
+        else:
+            return None
 
     def isGroupedWith(self, other):
-	if (self.isScan() and other.isScan()) or (self.isCount() and other.isCount()): 
-	    file1= "%s/%s"%(self.dir is None and "." or self.dir, self.prefix is None and "" or self.prefix)
-	    file2= "%s/%s"%(other.dir is None and "." or other.dir, other.prefix is None and "" or other.prefix)
-	    res= cmp(file1, file2)
-	    if res!=0: return 0
+        if (self.isScan() and other.isScan()) or (self.isCount() and other.isCount()): 
+            file1= "%s/%s"%(self.dir is None and "." or self.dir, self.prefix is None and "" or self.prefix)
+            file2= "%s/%s"%(other.dir is None and "." or other.dir, other.prefix is None and "" or other.prefix)
+            res= cmp(file1, file2)
+            if res!=0: return 0
 
-	    res= cmp(self.index, other.index)
-	    if res!=0: return 0
+            res= cmp(self.index, other.index)
+            if res!=0: return 0
 
-	    file1= "%s.%s"%(self.suffix is None and "" or self.suffix, self.ext is None and "" or self.ext)
-	    file2= "%s.%s"%(other.suffix is None and "" or other.suffix, other.ext is None and "" or other.ext)
-	    res= cmp(file1, file2)
-	    if res!=0: return 0
+            file1= "%s.%s"%(self.suffix is None and "" or self.suffix, self.ext is None and "" or self.ext)
+            file2= "%s.%s"%(other.suffix is None and "" or other.suffix, other.ext is None and "" or other.ext)
+            res= cmp(file1, file2)
+            if res!=0: return 0
 
-	    return 1
-	else:
-	    return 0
+            return 1
+        else:
+            return 0
 
     def setDirectory(self, dirname):
         if dirname is None:
@@ -591,15 +591,15 @@ class XiaFilename:
             if type=="ct" or type=="st":
                 self.type= type
             elif type[0]=='S':
-		self.type= "sum"
-		if type[1]=='N':
-		    self.det= -1
-		else:
-		    try:
-			self.det= int(type[1])
-		    except:
-			self.type= None
-	    else:
+                self.type= "sum"
+                if type[1]=='N':
+                    self.det= -1
+                else:
+                    try:
+                        self.det= int(type[1])
+                    except:
+                        self.type= None
+            else:
                 try:
                     self.type= "det"
                     self.det= int(type)
@@ -616,25 +616,25 @@ class XiaFilename:
                 xia= "xiact"
             elif self.type=="st":
                 xia= "xiast"
-	    elif self.type=="sum":
-		if self.det==-1:
-		    xia= "xiaSN"
-		else:
-		    xia= "xiaS%01d"%self.det
+            elif self.type=="sum":
+                if self.det==-1:
+                    xia= "xiaSN"
+                else:
+                    xia= "xiaS%01d"%self.det
             elif self.type=="det":
                 xia= "xia%02d"%self.det
-	    elif self.type is not None:
-		xia= "xia%s"%self.type
-		
+            elif self.type is not None:
+                xia= "xia%s"%self.type
+                
             if xia is not None:
                 self.file= "%s_%s"%(self.file, xia)
-    
+
             for idx in self.index:
                 self.file= "%s_%04d"%(self.file, idx)
-    
+
             if self.suffix is not None:
                 self.file= "%s_%s"%(self.file, self.suffix)
-    
+
             if self.ext is not None:
                 self.file= "%s.%s"%(self.file, self.ext)
 

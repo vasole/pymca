@@ -69,8 +69,8 @@ class SPSMcaArrayWidget(qt.QWidget):
         self.setTitle(title)
         
     def setInfo(self, info):
-	self.setSize(info["rows"], info["cols"])
-	self.setTitle(info["Key"])
+        self.setSize(info["rows"], info["cols"])
+        self.setTitle(info["Key"])
 
     def setSize(self,rows,cols,selsize=None):
         self.rows= rows
@@ -120,7 +120,7 @@ class SPSXiaArrayWidget(qt.QWidget):
         self.title.setFont(font)
         self.title.setText(title)
 
-	self.detList= qt.QListBox(self)
+        self.detList= qt.QListBox(self)
         self.detList.setSelectionMode(qt.QListBox.Multi)
 
         layout.addWidget(self.title, 0, 0, qt.Qt.AlignCenter)
@@ -131,8 +131,8 @@ class SPSXiaArrayWidget(qt.QWidget):
         self.title.setText("%s"%title)
 
     def setInfo(self, info):
-	self.setSize(info["rows"], info["cols"], info.get("Detectors", None))
-	self.setTitle(info["Key"])
+        self.setSize(info["rows"], info["cols"], info.get("Detectors", None))
+        self.setTitle(info["Key"])
 
     def setSize(self, rows, cols, dets=None):
         self.rows= rows
@@ -323,8 +323,8 @@ class SPSSelector(qt.QWidget):
 
     def setData(self,data=None):
         if DEBUG:
-            print "setData(self, data) called"
-            print "spec data = ",data
+            print("setData(self, data) called")
+            print("spec data = ",data)
         self.data= data
         self.refreshSpecList()
         self.refreshDataSelection()
@@ -428,12 +428,12 @@ class SPSSelector(qt.QWidget):
 
     def __replaceClicked(self):
         if DEBUG:
-            print "replace clicked"
+            print("replace clicked")
         selkeys= self.__getSelectedKeys()
         if len(selkeys):
             #self.eh.event(self.repEvent, selkeys)
             if DEBUG:
-                print "Replace event"
+                print("Replace event")
             sel = {}
             sel['SourceType'] = SOURCE_TYPE            
             for selection in selkeys:
@@ -457,14 +457,14 @@ class SPSSelector(qt.QWidget):
 
     def __addClicked(self):
         if DEBUG:
-            print "select clicked"
+            print("select clicked")
         selkeys= self.__getSelectedKeys()
         if DEBUG:
-            print "selected keys = ",selkeys 
+            print("selected keys = ",selkeys )
         if len(selkeys):
             #self.eh.event(self.addEvent, selkeys)
             if DEBUG:
-                print "Select event"
+                print("Select event")
             sel = {}
             sel['SourceType'] = SOURCE_TYPE            
             for selection in selkeys:
@@ -498,13 +498,13 @@ class SPSSelector(qt.QWidget):
 
     def __removeClicked(self):
         if DEBUG:
-            print "remove clicked"
+            print("remove clicked")
         selkeys= self.__getSelectedKeys()
         if len(selkeys):
             #self.eh.event(self.delEvent, selkeys)
             if DEBUG:
-                print "Remove Event"
-                print "self.selection before = ",self.selection
+                print("Remove Event")
+                print("self.selection before = ",self.selection)
             returnedselection=[]
             for selection in selkeys:
                 sel = {}
@@ -520,16 +520,16 @@ class SPSSelector(qt.QWidget):
                 returnedselection.append(sel)
                 if self.selection is not None:
                     if DEBUG:
-                        print "step 1"
+                        print("step 1")
                     if self.selection.has_key(sel['SourceName']):
                         if DEBUG:
-                            print "step 2"
+                            print("step 2")
                         if self.selection[sel['SourceName']].has_key(arrayname):
                             if DEBUG:
-                                print "step 3"
+                                print("step 3")
                             if self.selection[sel['SourceName']][arrayname].has_key('rows'):
                                 if DEBUG:
-                                    print "step 4"
+                                    print("step 4")
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -553,16 +553,16 @@ class SPSSelector(qt.QWidget):
                 arrayname = sel['Key']                
                 if self.selection is not None:
                     if DEBUG:
-                        print "step 1"
+                        print("step 1")
                     if self.selection.has_key(sel['SourceName']):
                         if DEBUG:
-                            print "step 2"
+                            print("step 2")
                         if self.selection[sel['SourceName']].has_key(arrayname):
                             if DEBUG:
-                                print "step 3"
+                                print("step 3")
                             if self.selection[sel['SourceName']][arrayname].has_key('rows'):
                                 if DEBUG:
-                                    print "step 4"
+                                    print("step 4")
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -584,10 +584,10 @@ class SPSSelector(qt.QWidget):
                              
     def setSelected(self,sellist,reset=1):
         if DEBUG:
-            print "setSelected(self,sellist,reset=1) called"
-            print "sellist = ",sellist
-            print "selection before = ",self.selection
-            print "reset = ",reset
+            print("setSelected(self,sellist,reset=1) called")
+            print("sellist = ",sellist)
+            print("selection before = ",self.selection)
+            print("reset = ",reset)
         if reset:
             self.selection = {}
         elif self.selection is None:
@@ -612,7 +612,7 @@ class SPSSelector(qt.QWidget):
                     if rowsel not in self.selection[specname][selkey]['cols']:
                         self.selection[specname][selkey]['cols'].append(rowsel)   
         if DEBUG:
-            print "self.selection after = ",self.selection
+            print("self.selection after = ",self.selection)
         self.__refreshSelection()
 
     def getSelection(self):
@@ -636,8 +636,8 @@ class SPSSelector(qt.QWidget):
     def __refreshSelection(self):
         return
         if DEBUG:
-            print "__refreshSelection(self) called"
-            print self.selection
+            print("__refreshSelection(self) called")
+            print(self.selection)
         if self.selection is not None:
             sel = self.selection.get(self.data.SourceName, {})
             selkeys = []
@@ -645,8 +645,8 @@ class SPSSelector(qt.QWidget):
                 if (sel[key]['mca'] != []) or (sel[key]['scan']['Ycnt'] !=  []):
                     selkeys.append(key)
             if DEBUG:
-                print "selected scans =",selkeys,"but self.selection = ",self.selection
-                print "and self.selection.get(self.data.SourceName, {}) =",sel
+                print("selected scans =",selkeys,"but self.selection = ",self.selection)
+                print("and self.selection.get(self.data.SourceName, {}) =",sel)
             self.scanList.markScanSelected(selkeys)
             scandict = sel.get(self.currentScan, {})
             if scandict.has_key('mca'):
@@ -698,14 +698,14 @@ def test():
         import SPSData
     else:
         import SPSLayer
-    def repSelection(sel): print "repSelection", sel
-    def addSelection(sel): print "addSelection", sel
+    def repSelection(sel): print("repSelection", sel)
+    def addSelection(sel): print("addSelection", sel)
 
     a= qt.QApplication(sys.argv)
     a.connect(a, qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
-    def repSelection(sel): print "replaceSelection", sel
-    def removeSelection(sel): print "removeSelection", sel
-    def addSelection(sel): print "addSelection", sel
+    def repSelection(sel): print("replaceSelection", sel)
+    def removeSelection(sel): print("removeSelection", sel)
+    def addSelection(sel): print("addSelection", sel)
 
     w= SPSSelector()
     qt.QObject.connect(w,qt.PYSIGNAL("addSelection"),addSelection)

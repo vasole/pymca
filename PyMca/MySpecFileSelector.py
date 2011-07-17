@@ -823,7 +823,7 @@ class SpecFileSelector(qt.QWidget):
             self.selection= {}
         for sel in sellist:
             if DEBUG:
-                print sel.keys()
+                print(sel.keys())
             filename= sel["SourceName"]
             if type(sel["Key"]) == type([]):
                 selkey = sel["Key"][0]
