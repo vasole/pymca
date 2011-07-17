@@ -38,17 +38,26 @@ except ImportError:
 HDF5 = True
 try:
     import h5py
-    PHYNX=True
-    try:
-        from PyMca import phynx
-    except ImportError:
-        try:
-            import phynx
-        except ImportError:
-            PHYNX = False
 except ImportError:
     HDF5 = False
 
+
+DEBUG = 0
+
+def getDate():
+    localtime = time.localtime()
+    gtime = time.gmtime()
+    #year, month, day, hour, minute, second,\
+    #      week_day, year_day, delta = time.localtime()
+    year   = localtime[0]
+    month  = localtime[1]
+    day    = localtime[2]
+    hour   = localtime[3]
+    minute = localtime[4]
+    second = localtime[5]
+    #get the difference against Greenwich
+    delta  = hour - gtime[3]
+    return "%4d-%02d-%02dT%02d:%02d:%02d%+02d:00" % (year, month, day, hour, minute, second, delta)
 
 def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvseparator=";"):
     if type(datalist) != type([]):
@@ -162,6 +171,59 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename, labels = None, dtype=
         outfileInstance.writeImage (data, info={'Title':labels[i]})
     outFileInstance = None #force file close
 
+def openHDF5File(name, mode='a', **kwargs):
+        """
+        Open an HDF5 file.
+
+        Valid modes (like Python's file() modes) are:
+        - r   Readonly, file must exist
+        - r+  Read/write, file must exist
+        - w   Create file, truncate if exists
+        - w-  Create file, fail if exists
+        - a   Read/write if exists, create otherwise (default)
+
+        sorted_with is a callable function like python's builtin sorted, or
+        None.
+        """
+
+        h5file = h5py.File(name, mode, **kwargs)
+        if h5file.mode != 'r' and len(h5file) == 0:
+            if 'file_name' not in h5file.attrs:
+                attr  = 'file_name'
+                txt   = "%s" % name
+                dtype = '<S%d' % len(txt)
+                h5file.attrs.create(attr, txt, dtype=dtype)
+            if 'file_time' not in h5file.attrs:
+                attr  = 'file_time'
+                txt   = "%s" % getDate()
+                dtype = '<S%d' % len(txt)
+                h5file.attrs.create(attr, txt, dtype=dtype)
+            if 'HDF5_version' not in h5file.attrs:
+                attr  = 'HDF5_version'
+                txt   = "%s" % h5py.version.hdf5_version
+                dtype = '<S%d' % len(txt)
+                h5file.attrs.create(attr, txt, dtype=dtype)
+            if 'HDF5_API_version' not in h5file.attrs:
+                attr  = 'HDF5_API_version'
+                txt   = "%s" % h5py.version.api_version
+                dtype = '<S%d' % len(txt)
+                h5file.attrs.create(attr, txt, dtype=dtype)
+            if 'h5py_version' not in h5file.attrs:
+                attr  = 'h5py_version'
+                txt   = "%s" % h5py.version.version
+                dtype = '<S%d' % len(txt)
+                h5file.attrs.create(attr, txt, dtype=dtype)
+            if 'creator' not in h5file.attrs:
+                attr  = 'creator'
+                txt   = "%s" % 'PyMca'
+                dtype = '<S%d' % len(txt)
+                h5file.attrs.create(attr, txt, dtype=dtype)
+            #if 'format_version' not in self.attrs and len(h5file) == 0:
+            #    h5file.attrs['format_version'] = __format_version__
+
+        return h5file
+
+
 def getHDF5FileInstanceAndBuffer(filename, shape,
                                  buffername="data",
                                  dtype=numpy.float32,
@@ -175,20 +237,57 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
             os.remove(filename)
         except:
             raise IOError("Cannot overwrite existing file!")
-    hdf = phynx.File(filename, 'a')
+    hdf = openHDF5File(filename, 'a')
     entryName = "data"
-    nxEntry = hdf.require_group(entryName, type='Entry')
-    nxEntry.require_dataset('title', data = "PyMca saved 3D Array")
-    nxEntry['start_time'] = getDate()
-    nxData = nxEntry.require_group('NXdata', type='Data')
-    data = nxData.require_dataset(buffername,
+
+    #entry
+    nxEntry = hdf.require_group(entryName)
+    if 'NXclass' not in nxEntry.attrs:
+        nxEntry.attrs['NXclass'] = 'NXentry'.encode('utf-8')
+    elif nxEntry.attrs['NXclass'] != 'NXentry'.encode('utf-8'):
+        #should I raise an error?
+        pass
+    nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
+    nxEntry['start_time'] = getDate().encode('utf-8')
+    nxData = nxEntry.require_group('NXdata')
+    if 'NXclass' not in nxData.attrs:
+        nxData.attrs['NXclass'] = 'NXdata'.encode('utf-8')
+    elif nxData.attrs['NXclass'] == 'NXdata'.encode('utf-8'):
+        #should I raise an error?
+        pass
+    if compression:
+        if DEBUG:
+            print("Saving compressed and chunked dataset")
+        chunk1 = int(shape[1]/10)
+        if chunk1 == 0:
+            chunk1 = shape[1]
+        for i in [11, 10, 8, 7, 5, 4]:
+            if (shape[1] % i) == 0:
+                chunk1 = int(shape[1]/i)
+                break
+        chunk2 = int(shape[2]/10)
+        if chunk2 == 0:
+            chunk2 = shape[2]
+        for i in [11, 10, 8, 7, 5, 4]:
+            if (shape[2] % i) == 0:
+                chunk2 = int(shape[2]/i)
+                break
+        data = nxData.require_dataset(buffername,
                            shape=shape,
                            dtype=dtype,
-                           chunks=(1, shape[1], shape[2]),
+                           chunks=(1, chunk1, chunk2),
                            compression=compression)
-    data.attrs['signal'] = 1
+    else:
+        #no chunking
+        if DEBUG:
+            print("Saving not compressed and not chunked dataset")
+        data = nxData.require_dataset(buffername,
+                           shape=shape,
+                           dtype=dtype,
+                           compression=None)        
+    data.attrs['signal'] = "1".encode('utf-8')
     if interpretation is not None:
-        data.attrs['interpretation'] = interpretation
+        data.attrs['interpretation'] = interpretation.encode('utf-8')
     for i in range(len(shape)):
         dim = numpy.arange(shape[i]).astype(numpy.float32)
         dset = nxData.require_dataset('dim_%d' % i,
@@ -197,7 +296,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                dim,
                                chunks=dim.shape)
         dset.attrs['axis'] = i + 1
-    nxEntry['end_time'] = getDate()
+    nxEntry['end_time'] = getDate().encode('utf-8')
     return hdf, data
 
 
@@ -253,7 +352,7 @@ def save3DArrayAsMonochromaticTiff(data, filename, labels = None, dtype=None, mc
     outFileInstance = None #force file close
 
 def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
-                      mcaindex=-1, interpretation=None):
+                      mcaindex=-1, interpretation=None, compression=None):
     if not HDF5:
         raise IOError('h5py does not seem to be installed in your system')
     if (mcaindex == 0) and (interpretation in ["spectrum", None]):
@@ -276,26 +375,55 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                 os.remove(filename)
             except:
                 raise IOError("Cannot overwrite existing file!")
-        hdf = phynx.File(filename, 'a')
+        hdf = openHDF5File(filename, 'a')
         entryName = "data"
-        nxEntry = hdf.require_group(entryName, type='Entry')
-        nxEntry.require_dataset('title', data = "PyMca saved 3D Array")
-        nxEntry['start_time'] = getDate()
-        nxData = nxEntry.require_group('NXdata', type='Data')
+        #entry
+        nxEntry = hdf.require_group(entryName)
+        if 'NXclass' not in nxEntry.attrs:
+            nxEntry.attrs['NXclass'] = 'NXentry'.encode('utf-8')
+        elif nxEntry.attrs['NXclass'] != 'NXentry'.encode('utf-8'):
+            #should I raise an error?
+            pass
+        
+        nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
+        nxEntry['start_time'] = getDate().encode('utf-8')
+        nxData = nxEntry.require_group('NXdata')
+        if ('NXclass' not in nxData.attrs):
+            nxData.attrs['NXclass'] = 'NXdata'.encode('utf-8')
+        elif nxData.attrs['NXclass'] != 'NXdata'.encode('utf-8'):
+            #should I raise an error?
+            pass
         if modify:
-            if interpretation in ["image"]:
-                #risk of taking a 10 % more space in disk
-                chunk1 = int(shape[1]/10)
-                if chunk1 == 0:
-                    chunk1 = shape[1]
-                for i in [16, 15, 11, 10, 8, 7, 5, 4]:
-                    if (shape[1] % i) == 0:
-                        chunk1 = int(shape[1]/i)
-                        break
-                dset = nxData.require_dataset('data',
-                                   shape=shape,
-                                   dtype=dtype,
-                                   chunks=(1, chunk1, shape[2]))
+            if interpretation in ["image", "image".encode('utf-8')]:
+                if compression:
+                    if DEBUG:
+                        print("Saving compressed and chunked dataset")
+                    #risk of taking a 10 % more space in disk
+                    chunk1 = int(shape[1]/10)
+                    if chunk1 == 0:
+                        chunk1 = shape[1]
+                    for i in [11, 10, 8, 7, 5, 4]:
+                        if (shape[1] % i) == 0:
+                            chunk1 = int(shape[1]/i)
+                            break
+                    chunk2 = int(shape[2]/10)
+                    for i in [11, 10, 8, 7, 5, 4]:
+                        if (shape[2] % i) == 0:
+                            chunk2 = int(shape[2]/i)
+                            break
+                    dset = nxData.require_dataset('data',
+                                       shape=shape,
+                                       dtype=dtype,
+                                       chunks=(1, chunk1, chunk2),
+                                       compression=compression)
+                else:
+                    if DEBUG:
+                        print("Saving not compressed and not chunked dataset")
+                    #print not compressed -> Not chunked
+                    dset = nxData.require_dataset('data',
+                                       shape=shape,
+                                       dtype=dtype,
+                                       compression=None)
                 for i in range(data.shape[-1]):
                     tmp = data[:,:, i:i+1]
                     tmp.shape = 1, shape[1], shape[2]
@@ -327,48 +455,81 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. This is a very fast saving, but
                 #the performance is awful when reading.
-                dset = nxData.require_dataset('data',
+                if compression:
+                    if DEBUG:
+                        print("Saving compressed and chunked dataset")
+                    dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
-                               chunks=(shape[0], shape[1], 1))
+                               chunks=(shape[0], shape[1], 1),
+                               compression=compression)
+                else:
+                    if DEBUG:
+                        print("Saving not compressed and not chunked dataset")
+                    dset = nxData.require_dataset('data',
+                               shape=shape,
+                               dtype=dtype,
+                               compression=None)
                 for i in range(data.shape[0]):
                     tmp = data[i:(i+1),:,:]
                     tmp.shape = shape[0], shape[1], 1
                     dset[:, :, i:(i+1)] = tmp
         else:
-            chunk1 = int(shape[1]/10)
-            if chunk1 == 0:
-                chunk1 = shape[1]
-            for i in [16, 15, 11, 10, 8, 7, 5, 4]:
-                if (shape[1] % i) == 0:
-                    chunk1 = int(shape[1]/i)
-                    break
-            dset = nxData.require_dataset('data',
+            if compression:
+                if DEBUG:
+                    print("Saving compressed and chunked dataset")
+                chunk1 = int(shape[1]/10)
+                if chunk1 == 0:
+                    chunk1 = shape[1]
+                for i in [11, 10, 8, 7, 5, 4]:
+                    if (shape[1] % i) == 0:
+                        chunk1 = int(shape[1]/i)
+                        break
+                chunk2 = int(shape[2]/10)
+                if chunk2 == 0:
+                    chunk2 = shape[2]
+                for i in [11, 10, 8, 7, 5, 4]:
+                    if (shape[2] % i) == 0:
+                        chunk2 = int(shape[2]/i)
+                        break
+                if DEBUG:
+                    print("Used chunk size = (1, %d, %d)" % (chunk1, chunk2))
+                dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
-                               chunks=(1, chunk1, shape[2]))
+                               chunks=(1, chunk1, chunk2),
+                               compression=compression)
+            else:
+                if DEBUG:
+                    print("Saving not compressed and notchunked dataset")
+                dset = nxData.require_dataset('data',
+                               shape=shape,
+                               dtype=dtype,
+                               compression=None)
             tmpData = numpy.zeros((1,data.shape[1], data.shape[2]), data.dtype)
             for i in range(data.shape[0]):
                 tmpData[0:1] = data[i:i+1]
                 dset[i:i+1] = tmpData[0:1]
                 print("Saved item %d of %d" % (i+1, data.shape[0]))
 
-        dset.attrs['signal'] = "1"
+        dset.attrs['signal'] = "1".encode('utf-8')
         if interpretation is not None:
-            dset.attrs['interpretation'] = interpretation
+            dset.attrs['interpretation'] = interpretation.encode('utf-8')
         for i in range(len(shape)):
             dim = numpy.arange(shape[i]).astype(numpy.float32)
             dset = nxData.require_dataset('dim_%d' % i,
                                    dim.shape,
                                    dim.dtype,
                                    dim,
-                                   chunks=dim.shape)
+                                   compression=None)
             dset.attrs['axis'] = i + 1
-        nxEntry['end_time'] = getDate()
+        nxEntry['end_time'] = getDate().encode('utf-8')
         if mode.lower() == 'nexus+':
             #create link
-            g = h5py.h5g.open(hdf.fid, '/')
-            g.link('/data/NXdata/data', '/data/data', h5py.h5g.LINK_HARD)
+            g = h5py.h5g.open(hdf.fid, '/'.encode('utf-8'))
+            g.link('/data/NXdata/data'.encode('utf-8'),
+                   '/data/data'.encode('utf-8'),
+                   h5py.h5g.LINK_HARD)
         
     elif mode.lower() == 'simplest':
         if os.path.exists(filename):
@@ -377,11 +538,19 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
             except:
                 raise IOError("Cannot overwrite existing file!")
         hdf = h5py.File(filename, 'a')
-        hdf.require_dataset('data',
+        if compression:
+            hdf.require_dataset('data',
                            shape=shape,
                            dtype=dtype,
                            data=data,
-                           chunks=(1, shape[1], shape[2]))
+                           chunks=(1, shape[1], shape[2]),
+                           compression=compression)
+        else:
+            hdf.require_dataset('data',
+                           shape=shape,
+                           data=data,
+                           dtype=dtype,
+                           compression=None)
     else:
         if os.path.exists(filename):
             try:
@@ -400,20 +569,10 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
     hdf.flush()
     hdf.close()
 
-def getDate():
-    localtime = time.localtime()
-    #year, month, day, hour, minute, second,\
-    #      week_day, year_day, delta = time.localtime()
-    year   = localtime[0]
-    month  = localtime[1]
-    day    = localtime[2]
-    hour   = localtime[3]
-    minute = localtime[4]
-    second = localtime[5]
-    return "%4d-%02d-%02d %02d:%02d:%02d" % (year, month, day, hour, minute, second)
-
 
 if __name__ == "__main__":
     a=numpy.arange(1000000.)
     a.shape = 20, 50, 1000
-    save3DArrayAsHDF5(a, '/test.h5', mode='nexus')
+    save3DArrayAsHDF5(a, '/test.h5', mode='nexus+', interpretation='image')
+    b = getHDF5FileInstanceAndBuffer('/test2.h5', (100,100,100))
+    print("Date String = ", getDate())
