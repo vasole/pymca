@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1384
+__revision__ = 1406
 
 import sys
 import os
@@ -341,8 +341,10 @@ class TiffIO:
 
         # compression
         compression = False
+        compression_type = 1
         if TAG_COMPRESSION in tagIDList:
-            if valueOffsetList[tagIDList.index(TAG_COMPRESSION)] == 1:
+            compression_type = valueOffsetList[tagIDList.index(TAG_COMPRESSION)]
+            if compression_type == 1:
                 compression = False
             else:
                 compression = True
@@ -418,6 +420,7 @@ class TiffIO:
         info["nColumns"] = nColumns
         info["nBits"] = nBits
         info["compression"] = compression
+        info["compression_type"] = compression_type
         info["imageDescription"] = imageDescription
         info["stripOffsets"] = stripOffsets #This contains the file offsets to the data positions
         info["rowsPerStrip"] = rowsPerStrip
@@ -471,8 +474,14 @@ class TiffIO:
         self.__makeSureFileIsOpen()
         info = self._readInfo(nImage, close=False)
         compression = info['compression']
+        compression_type = info['compression_type']
         if compression:
-            raise IOError("Compressed TIFF images not supported")
+            if compression_type != 32773:
+                raise IOError("Compressed TIFF images not supported except packbits")
+            else:
+                #PackBits compression
+                if DEBUG:
+                    print("Using PackBits compression")
         
         interpretation = info["photometricInterpretation"]
         if interpretation > 2:
@@ -543,6 +552,7 @@ class TiffIO:
         stripOffsets = info["stripOffsets"] #This contains the file offsets to the data positions
         rowsPerStrip = info["rowsPerStrip"]
         stripByteCounts = info["stripByteCounts"] #bytes in strip since I do not support compression
+
         rowStart = 0
         if len(stripOffsets) == 1:
             bytesPerRow = int(stripByteCounts[0]/rowsPerStrip)
@@ -568,18 +578,42 @@ class TiffIO:
                 fd.seek(stripOffsets[i])
                 #the amount of bytes to read
                 nBytes = stripByteCounts[i]
-                if 1:
-                    readout = numpy.fromstring(fd.read(nBytes), dtype)
-                    readout.shape = -1, nColumns
-                    if self._swap:
-                        image[rowStart:rowEnd, :] = readout.byteswap()
-                    else:
-                        image[rowStart:rowEnd, :] = readout
+                if compression_type == 32773:
+                    try:
+                        bufferBytes = bytes()
+                    except:
+                        #hython 2.5 ...
+                        bufferBytes = ""
+                    #packBits
+                    readBytes = 0
+                    while readBytes < nBytes:
+                        n =struct.unpack('b',fd.read(1))[0]
+                        if n >= 0:
+                            bufferBytes +=  fd.read(n+1)
+                            readBytes += (n+1)
+                        else:
+                            bufferBytes += (-n+1) * fd.read(1)
+                            readBytes += (-n+1)
+                    readout = numpy.fromstring(bufferBytes, dtype)
+                    nGoodData = nRowsToRead * nColumns
+                    view = readout[:nGoodData]
+                    view.shape = nRowsToRead, nColumns
+                    image[rowStart:rowEnd, :] = view
                 else:
-                    readout = numpy.array(struct.unpack(st+"%df" % int(nBytes/4), fd.read(nBytes)),
-                                          dtype=dtype)
-                    readout.shape = -1, nColumns
-                    image[rowStart:rowEnd, :] = readout
+                    if 1:
+                        #use numpy
+                        readout = numpy.fromstring(fd.read(nBytes), dtype)
+                        readout.shape = -1, nColumns
+                        if self._swap:
+                            image[rowStart:rowEnd, :] = readout.byteswap()
+                        else:
+                            image[rowStart:rowEnd, :] = readout
+                    else:
+                        #using struct
+                        readout = numpy.array(struct.unpack(st+"%df" % int(nBytes/4), fd.read(nBytes)),
+                                              dtype=dtype)
+                        readout.shape = -1, nColumns
+                        image[rowStart:rowEnd, :] = readout
                 rowStart += nRowsToRead
         if close:
             self.__makeSureFileIsClosed()
