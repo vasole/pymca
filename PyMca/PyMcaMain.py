@@ -26,7 +26,8 @@ __revision__ = "$Revision: 2.02 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import sys, getopt, string
+import sys, getopt
+import traceback
 nativeFileDialogs = None
 DEBUG = 0
 if __name__ == '__main__':
@@ -77,7 +78,7 @@ QTVERSION = qt.qVersion()
 from PyMca_Icons import IconDict
 from PyMca_help import HelpDict
 import os
-__version__ = "4.4.2-snapshot20110622"
+__version__ = "4.4.2-snapshot20110719"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1882,15 +1883,16 @@ if __name__ == '__main__':
     if PROFILING:
         import profile
         import pstats
-    demo = PyMca(**keywords)
+    PyMcaMainWidgetInstance = PyMca(**keywords)
     if nativeFileDialogs is not None:
         PyMcaDirs.nativeFileDialogs = nativeFileDialogs
-    if debugreport:demo.onDebug()
+    if debugreport:PyMcaMainWidgetInstance.onDebug()
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                             app,qt.SLOT("quit()"))
+            
     if QTVERSION < '4.0.0':
-        app.setMainWidget(demo)
-        demo.show()
+        app.setMainWidget(PyMcaMainWidgetInstance)
+        PyMcaMainWidgetInstance.show()
         # --- close waiting widget
         splash.close()
         if PROFILING:
@@ -1900,8 +1902,21 @@ if __name__ == '__main__':
         else:
             app.exec_loop()
     else:
-        splash.finish(demo)
-        demo.show()
+        splash.finish(PyMcaMainWidgetInstance)
+        PyMcaMainWidgetInstance.show()
+        #try to interpret rest of command line arguments as data sources
+        try:
+            for source in args:
+                PyMcaMainWidgetInstance.sourceWidget.sourceSelector.openSource(source)
+        except:
+            msg = qt.QMessageBox(PyMcaMainWidgetInstance)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Error opening data source")
+            msg.setText("Cannot open data source %s" % source)
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+                    
         if PROFILING:
             profile.run('sys.exit(app.exec_())',"test")
             p=pstats.Stats("test")

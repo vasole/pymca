@@ -139,12 +139,12 @@ class QSourceSelector(qt.QWidget):
     def _openFileSlot(self):
         self.openFile(None, None)
     
-    def openSource(self, sourcename):
-        if not os.path.exists(sourcename):specsession=True
-        elif sourcename in sps.getspeclist():
-             specsession=True 
-        else:
-            specsession=False
+    def openSource(self, sourcename, specsession=None):
+        if specsession is None:
+            if sourcename in sps.getspeclist():
+                specsession=True 
+            else:
+                specsession=False
         self.openFile(sourcename, specsession=specsession)
 
     def openFile(self, filename=None,justloaded=None, specsession = False):

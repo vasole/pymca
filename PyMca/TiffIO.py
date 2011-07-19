@@ -582,7 +582,7 @@ class TiffIO:
                     try:
                         bufferBytes = bytes()
                     except:
-                        #hython 2.5 ...
+                        #python 2.5 ...
                         bufferBytes = ""
                     #packBits
                     readBytes = 0
