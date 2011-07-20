@@ -48,7 +48,7 @@ class HDF5Selection(QtGui.QWidget):
             row += 1
 
     def setSelection(self, selection):
-        if selection.has_key('cntlist'):
+        if 'cntlist' in selection:
             # "Raw" selection
             cntlist = selection['cntlist']
             for key in ['x', 'y', 'm']:
