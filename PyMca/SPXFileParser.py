@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -29,110 +29,52 @@ import sys
 import os
 import numpy
 import SpecFileAbstractClass
-
-#spx file format is based on XML
-import xml.sax
-from xml.sax.handler import ContentHandler
 import types
 
-class SpectrumReader(ContentHandler):
-    def __init__(self):
-        ContentHandler.__init__(self)
+#spx file format is based on XML
+import xml.etree.ElementTree as ElementTree
 
-        self._spectrum_list = []
-        self.__last_spectrum = None
-        self._axes = None
-        self.__parsed_keys = ['RealTime', 'LifeTime', 'DeadTime',
-                              'CalibAbs', 'CalibLin',
-                              'HighVoltage', 'TubeCurrent']
-
-        
-    def spectrum_list(self):
-        return self._spectrum_list
-
-
-    def startElement(self, name, attributes):
-        if name == 'ClassInstance':
-            if attributes['Type'] == 'TRTSpectrum':
-                # 'str' is used to decode from Unicode to normal ASCII
-                self.__last_spectrum = { 'name': str(attributes['Name']) }
-                self.__last_spectrum['CalibAbs'] = 0.0
-                self.__last_spectrum['CalibLin'] = 1.0
-                self._spectrum_list.append(self.__last_spectrum)
-        elif name == 'AxesParameter' and self.__last_spectrum is not None:
-                self._axes = []
-                self.__last_spectrum['axes'] = self._axes
-        elif name.startswith('Axis') and self._axes is not None:
-            pos = attributes['AxisPosition'].replace(',', '.')
-                        
-            self._axes.append({ 'name': str(attributes['AxisName']),
-                                 'pos': float(pos),
-                                 'unit': str(attributes['AxisUnit']) })
-        elif name == 'Channels' and self.__last_spectrum is not None:
-            self.__last_spectrum['channels']=True
-
-        self.__last_used_name = str(name)
-
-
-    def characters(self, content):
-        if self.__last_spectrum is None:
-            return
-
-        if self.__last_used_name.upper() == "CHANNELS":
-            add_channels = self.__last_spectrum.get('channels', False)
-
-            if add_channels and type(add_channels) != type([]):
-                self.__last_spectrum['channels']=[int(c) for c in str(content).split(",")]
-            
-        elif  self.__last_used_name in ['Date', 'Time']:
-            self.__last_spectrum[self.__last_used_name] = str(content)
-        elif  self.__last_used_name in self.__parsed_keys:
-            self.__last_spectrum[self.__last_used_name] = float(str(content).replace(',','.'))
-        self.__last_used_name = ""
-
-    def endElement(self, name):
-        pass
-
-
-class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass, SpectrumReader):
+class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename):
-        SpectrumReader.__init__(self)
         SpecFileAbstractClass.SpecFileAbstractClass.__init__(self, filename)
         if not os.path.exists(filename):
             raise IOError("File %s does not exists"  % filename)
-        f = open(filename)
-        info = f.readlines()
-        f.close()
-        if info[0].startswith('<?'):
-            del info[0]
-        info = "".join(info)
-        xml.sax.parseString(info, self)
-        info = self.spectrum_list()
-        # I've got all the spectrum information
-        # I have to leave it available in a way that
-        # looks as a specfile scan
+        f = ElementTree.parse(filename)
+        root = f.getroot()
+        info = {}
+        #I do not use find all, providing support for only one spectrum
+        infoKeys = ['HighVoltage', 'TubeCurrent',
+                    'RealTime', 'LifeTime', 'DeadTime',
+                    'ZeroPeakPosition', 'ZeroPeakFrequency', 'PulseDensity',
+                    'Amplification', 'ShapingTime',
+                    'Date','Time',
+                    'ChannelCount','CalibAbs', 'CalibLin']
 
-        #for the time being I consider only one spectrum
-        info = info[0]
-        data = numpy.array(info['channels'], numpy.float)
-        data.shape =len(data), 1
+        for key in infoKeys:
+            keyToSearch = './/ClassInstance/%s' % key
+            content = root.find(keyToSearch)
+            if content is not None:
+                info[key] = content.text
+        axes = root.find('.//ClassInstance/AxesParameter')
+        data = numpy.array([float(x) for x in root.find('.//Channels').text.split(',')])
+        data.shape = len(data), 1
+
         scanheader = ['#S 1  ' + info.get('name', "Unknown name")] 
-        axes = info.get('axes', [])
         i = 0
-        for axis in axes:
-            scanheader.append("#U%d %s  %f  %s" % (i,
-                                             axis['name'],
-                                             axis['pos'],
-                                             axis['unit']))
-            i += 1
-        for key in ['HighVoltage', 'TubeCurrent']:
+        if axes is not None:
+            for axis in axes:
+                scanheader.append("#U%d %s  %f  %s" % (i,
+                                                 axis.attrib['AxisName'],
+                                                 float(axis.attrib['AxisPosition']),
+                                                 axis.attrib['AxisUnit']))
+                i += 1
+        for key in infoKeys:
             scanheader.append("#U%d %s %s" % (i, key, info.get(key, "Unknown")))
             i += 1
 
-        scanheader.append("#@CALIB %f %f 0" % (info.get('CalibAbs', 0.0),
-                                               info.get('CalibLin', 1.0)))
-                                               
-            
+        scanheader.append("#@CALIB %f %f 0" % (float(info.get('CalibAbs', 0.0)),
+                                               float(info.get('CalibLin', 1.0))))
+        
         self.scandata = [SpecFileAbstractClass.SpecFileAbstractScan(data,
                                 scantype="MCA",
                                 scanheader=scanheader)]
