@@ -34,6 +34,23 @@ import types
 #spx file format is based on XML
 import xml.etree.ElementTree as ElementTree
 
+def myFloat(x):
+    try:
+        return float(x)
+    except ValueError:
+        if ',' in x:
+            try:
+                return float(x.replace(',','.'))
+            except:
+                return float(x)
+        elif '.' in x:
+            try:
+                return float(x.replace('.',','))
+            except:
+                return float(x)
+        else:
+            raise
+
 class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename):
         SpecFileAbstractClass.SpecFileAbstractClass.__init__(self, filename)
@@ -65,15 +82,15 @@ class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
             for axis in axes:
                 scanheader.append("#U%d %s  %f  %s" % (i,
                                                  axis.attrib['AxisName'],
-                                                 float(axis.attrib['AxisPosition']),
+                                                 myFloat(axis.attrib['AxisPosition']),
                                                  axis.attrib['AxisUnit']))
                 i += 1
         for key in infoKeys:
             scanheader.append("#U%d %s %s" % (i, key, info.get(key, "Unknown")))
             i += 1
 
-        scanheader.append("#@CALIB %f %f 0" % (float(info.get('CalibAbs', 0.0)),
-                                               float(info.get('CalibLin', 1.0))))
+        scanheader.append("#@CALIB %f %f 0" % (myFloat(info.get('CalibAbs', 0.0)),
+                                               myFloat(info.get('CalibLin', 1.0))))
         
         self.scandata = [SpecFileAbstractClass.SpecFileAbstractScan(data,
                                 scantype="MCA",
