@@ -103,7 +103,7 @@ class SpecFileAbstractScan(object):
                 #we have a list of MCAs
                 rows = 0
                 cols = len(data)
-                self.__cols = cols
+            self.__cols = cols
             self.labels = []
         self.scantype = scantype
         self.rows = rows
