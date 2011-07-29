@@ -83,7 +83,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         header = info['Header'][0]
         #print header
         item = header.split()
-        if (item[2] != 'mesh'):
+        if item[2] not in ['mesh', 'hklmesh']:
             raise ValueError("This does not seem to be a mesh scan")
 
         self._xLabel = self.getGraphXTitle()
