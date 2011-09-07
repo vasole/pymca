@@ -609,11 +609,13 @@ class SceneGLWindow(qt.QWidget):
                                 cfg['common']['colormap'][-1]  = newColormap[-1]
                                 cfg['common']['event'] = ddict['common']['event']
                                 o3d.setConfiguration(cfg)
-                            #this is to get the proper limits
+                            #this is to get the proper limits for the scene
                             configDict['common']['colormap'] = newColormap
-                            del configDict['common']['event']
-                            self.scene[legend].root[0].setConfiguration(configDict)
-                            self.selectedObjectControl.setConfiguration(configDict)
+                            del configDict['common']['event']                            
+                            cfg = self.scene[legend].root[0].getConfiguration()
+                            cfg['common']['colormap'] = newColormap
+                            self.scene[legend].root[0].setConfiguration(cfg)
+                            self.selectedObjectControl.setConfiguration(cfg)
                     
         if legend == self.scene.name() or self.scene.getAutoScale():
             newScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
