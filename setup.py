@@ -108,7 +108,7 @@ if os.path.exists(NNMA_PATH):
     py_modules.append('PyMca.py_nnma.nnma')
 
 LOCAL_OBJECT3D =False
-if os.path.exists(os.path.join("PyMca", "object3d")):
+if os.path.exists(os.path.join("PyMca", "Object3D")):
     LOCAL_OBJECT3D = True
 
 sources = glob.glob('*.c')
@@ -248,12 +248,12 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)
-        for python_file in glob.glob('PyMca/Object3d/*.py'):
+        for python_file in glob.glob('PyMca/Object3D/*.py'):
             if python_file in ['setup.py', 'cx_setup.py']:
                 continue
             m = "PyMca.Object3D.%s" % os.path.basename(python_file)[:-3] 
             py_modules.append(m)
-        for python_file in glob.glob('PyMca/Object3d/Object3DPlugins/*.py'):
+        for python_file in glob.glob('PyMca/Object3D/Object3DPlugins/*.py'):
             m = "PyMca.Object3D.Object3DPlugins.%s" %\
                                     os.path.basename(python_file)[:-3] 
             py_modules.append(m)
