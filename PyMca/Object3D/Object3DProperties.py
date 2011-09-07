@@ -39,7 +39,8 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
         self._signal()
 
     def _signal(self, event = None):
-        if DEBUG:print "emit Object3DDrawingModeSignal"
+        if DEBUG:
+            print("emit Object3DDrawingModeSignal")
         if event is None:
             event = 'DrawModeUpdated'
         ddict = self.getParameters()
@@ -54,8 +55,10 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict = None):
-        if DEBUG:print "setParameters"
-        if ddict is None:ddict = {}
+        if DEBUG:
+            print("setParameters")
+        if ddict is None:
+            ddict = {}
         mode = ddict.get('mode', 1)
         self.setDrawingMode(mode)
 
@@ -64,7 +67,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
             if mode.upper() in DRAW_MODES:
                 i = DRAW_MODES.index(mode)
             else:
-                raise ValueError, "Unknown drawing mode: %s "  % mode
+                raise ValueError("Unknown drawing mode: %s "  % mode)
         else:
             i = mode
         self.buttonGroup.button(i).setChecked(True)
@@ -75,7 +78,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
         if n >= 0:
             mode = n
         else:
-            print "WARNING: getAnchor -> Unselected button"
+            print("WARNING: getAnchor -> Unselected button")
         return mode
 
     def setSupportedModes(self, modes):
@@ -185,8 +188,10 @@ class Object3DAspect(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict = None):
-        if DEBUG: print "setParameters"
-        if ddict is None:ddict = {}
+        if DEBUG:
+            print("setParameters")
+        if ddict is None:
+            ddict = {}
         pointSize = ddict.get('pointsize', 1.0)
         pointSizeCapabilities = ddict.get('pointsizecapabilities',
                                           [1.0, 1.0, 1.0])
@@ -206,6 +211,8 @@ class Object3DAspect(qt.QGroupBox):
                                 lineWidthCapabilities[1],
                                 lineWidthCapabilities[2])
         self.lineWidth.setValue(lineWidth)
+        if lineWidth > lineWidthCapabilities[1]:
+            lineWidth = lineWidthCapabilities[1]
         self.transparency.setValue(transparency)
 
 
@@ -215,9 +222,10 @@ class Object3DAspect(qt.QGroupBox):
             self.showLimitsCheckBoxes[i].setChecked(showLimits[i])
 
     def _signal(self, event = None):
-        if DEBUG: print "emitting Object3DAspectSignal"
+        if DEBUG:
+            print("emitting Object3DAspectSignal")
         if event is None:
-            event = "ScaleUpdated"
+            event = "AspectUpdated"
         ddict = self.getParameters()
         ddict['event'] = event
         self.emit(qt.SIGNAL('Object3DAspectSignal'), ddict)
@@ -371,7 +379,8 @@ class Object3DScale(qt.QGroupBox):
             self._signal("zScaleUpdated")
 
     def _signal(self, event = None):
-        if DEBUG: print "emitting Object3DScaleSignal"
+        if DEBUG:
+            print("emitting Object3DScaleSignal")
         if self.__disconnect: return
         if event is None:
             event = "ScaleUpdated"
@@ -400,7 +409,8 @@ class Object3DScale(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict = None):
-        if DEBUG: print "setParameters"
+        if DEBUG:
+            print("setParameters", ddict)
         if ddict is None:ddict = {}
         scale = ddict.get('scale', [1.0, 1.0, 1.0])
         
@@ -450,10 +460,14 @@ class Object3DProperties(qt.QWidget):
     def _slot(self, ddict):
         self._signal(event = ddict['event'])
 
-    def _signal(self, event):
-        if DEBUG: print "emit Object3DPropertiesSignal"
+    def _signal(self, event=None):
+        if DEBUG:
+            print("emit Object3DPropertiesSignal")
         ddict = self.getParameters()
-        ddict['event'] = "PropertiesUpdated"
+        if event is None:
+            ddict['event'] = "PropertiesUpdated"
+        else:
+            ddict['event'] = event 
         self.emit(qt.SIGNAL('Object3DPropertiesSignal'), ddict)
 
     def _privateCallBack(self):
@@ -482,7 +496,7 @@ class Object3DProperties(qt.QWidget):
 
     def setParameters(self, ddict):
         if DEBUG:
-            print "setParameters"
+            print("setParameters", ddict)
         self.drawingModeWidget.setParameters(ddict['common'])
         self.aspectWidget.setParameters(ddict['common'])
         widget = ddict['private'].get('widget', None)
@@ -494,7 +508,7 @@ class Object3DProperties(qt.QWidget):
                     self.privateWidget.close()
             except ReferenceError:
                 if DEBUG:
-                    print "Reference error"
+                    print("Reference error")
                 pass
         self.privateWidget = widget
         if widget is not None:
@@ -505,8 +519,8 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def myslot(ddict):
-        print "Signal received"
-        print "ddict = ", ddict
+        print("Signal received")
+        print("ddict = ", ddict)
 
     if 1:
         w = Object3DProperties()

@@ -294,6 +294,9 @@ class SceneGLWidget(qt.QGLWidget):
         # get supported line width and step size
         self._lineWidths    = GL.glGetFloatv(GL.GL_LINE_WIDTH_RANGE)
         self._lineWidthStep = GL.glGetFloatv(GL.GL_LINE_WIDTH_GRANULARITY)
+        if not hasattr(self._lineWidths, '__iter__'):
+            #some versions give back a single value instead
+            self._lineWidths = [self._lineWidthStep, self._lineWidths] 
 
         #This should be at least 256
         self.__maximumTextureLength = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)

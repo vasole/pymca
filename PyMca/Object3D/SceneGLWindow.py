@@ -138,12 +138,11 @@ class SceneGLWindow(qt.QWidget):
 
         self.buildToolBar()
 
-        self.wheelSlider10  = WheelAndSpacer(self,
-					     orientation = qt.Qt.Vertical)
+        self.wheelSlider10  = WheelAndSpacer(self, orientation = qt.Qt.Vertical)
 
-	# Wheel
+        # Wheel
         self.__applyingCube = False
-	
+
         #self.wheelSlider10.wheel.setMass(0.5)
         self.wheelSlider10.wheel.setRange(-360., 360., 0.5)
         self.wheelSlider10.wheel.setValue(0.0)
@@ -174,7 +173,7 @@ class SceneGLWindow(qt.QWidget):
                      self.setZoomFactor)
         
         self.wheelSlider21  = WheelAndLineEdit(self, orientation = qt.Qt.Horizontal)
-	#wheel
+        #wheel
         #self.wheelSlider21.wheel.setMass(0.5)
         self.wheelSlider21.wheel.setRange(-360., 360., 0.5)
         self.wheelSlider21.wheel.setValue(0.0)
@@ -191,21 +190,21 @@ class SceneGLWindow(qt.QWidget):
         self.mainLayout.addWidget(self.wheelSlider12, 1, 2)
         self.mainLayout.addWidget(self.wheelSlider21, 2, 1)
 
-	if manager is None:
-	    self.manager = SceneManager.SceneManager(None, glwindow=self)
-	    self.sceneControl=self.manager.sceneControl
-	    #self.sceneControl = SceneControl.SceneControl(None, self.glWidget.scene)
-	    #self.manager.sceneControl
-	    self.connectSceneControl()
-	    #self.manager.show()
-	    #self.sceneControl.show()
-	    self.connect(self.manager,
-			 qt.SIGNAL('SceneManagerSignal'),
-			 self.sceneManagerSlot)
-	else:
-	    self.manager=weakref.proxy(manager)
-	    
-	self.activeObject = None
+        if manager is None:
+            self.manager = SceneManager.SceneManager(None, glwindow=self)
+            self.sceneControl=self.manager.sceneControl
+            #self.sceneControl = SceneControl.SceneControl(None, self.glWidget.scene)
+            #self.manager.sceneControl
+            self.connectSceneControl()
+            #self.manager.show()
+            #self.sceneControl.show()
+            self.connect(self.manager,
+                         qt.SIGNAL('SceneManagerSignal'),
+                         self.sceneManagerSlot)
+        else:
+            self.manager=weakref.proxy(manager)
+    
+        self.activeObject = None
 
         self.connect(self.glWidget,
                      qt.SIGNAL('objectSelected'),
@@ -218,7 +217,7 @@ class SceneGLWindow(qt.QWidget):
         self.setWindowTitle(self.tr("Object3D Scene"))
 
     def connectSceneControl(self):
-	self.selectedObjectControl = self.sceneControl.selectedObjectControl
+        self.selectedObjectControl = self.sceneControl.selectedObjectControl
         self.sceneControl.updateView()
         self.connect(self.sceneControl,
                      qt.SIGNAL('SceneControlSignal'),
@@ -229,100 +228,100 @@ class SceneGLWindow(qt.QWidget):
 
 
     def buildToolBar(self):
-	self.toolBar = GLToolBar.GLToolBar(self)
-	self.connect(self.toolBar,
-		     qt.SIGNAL('GLToolBarSignal'),
-		     self.applyCube)
+        self.toolBar = GLToolBar.GLToolBar(self)
+        self.connect(self.toolBar,
+                     qt.SIGNAL('GLToolBarSignal'),
+                     self.applyCube)
         IconDict = Object3DIcons.IconDict
         self.normalIcon = qt.QIcon(qt.QPixmap(IconDict["cursor_normal"]))
         self.sizeallIcon = qt.QIcon(qt.QPixmap(IconDict["cursor_sizeall"]))
         self.pointingHandIcon = qt.QIcon(qt.QPixmap(IconDict["cursor_pointinghand"]))
         self.whatIcon = qt.QIcon(qt.QPixmap(IconDict["cursor_what"]))
 
-	# the object selection toggle
-	text  = "Object selection Mode"
-	text += "\nIt may be faster to select objects\n"
-	text += "objects through the control window."
+        # the object selection toggle
+        text  = "Object selection Mode"
+        text += "\nIt may be faster to select objects\n"
+        text += "objects through the control window."
         tb = self._addToolButton(self.normalIcon,
-				 self.setObjectSelectionModeSlot,
-				 text,
-				 toggle = True,
-				 state = True)
+                                 self.setObjectSelectionModeSlot,
+                                 text,
+                                 toggle = True,
+                                 state = True)
         self.buttonObjectSelectionMode = tb
-	self.objectSelectionMode = False
+        self.objectSelectionMode = False
 
-	# the vertex toggle 
+        # the vertex toggle 
         tb = self._addToolButton(self.pointingHandIcon,
-				 self.setVertexSelectionModeSlot,
-				 "Vertex selection Mode",
-				 toggle = True,
-				 state = False)
+                                 self.setVertexSelectionModeSlot,
+                                 "Vertex selection Mode",
+                                 toggle = True,
+                                 state = False)
         self.buttonVertexSelectionMode = tb
-	self.vertexSelectionMode = False
+        self.vertexSelectionMode = False
 
-	# the panning toggle 
+        # the panning toggle 
         tb = self._addToolButton(self.sizeallIcon,
-				 self.setScenePanningModeSlot,
-				 "Scene panning Mode",
-				 toggle = True,
-				 state = False)
+                                 self.setScenePanningModeSlot,
+                                 "Scene panning Mode",
+                                 toggle = True,
+                                 state = False)
         self.buttonScenePanningMode = tb
-	self.scenePanningMode = False
+        self.scenePanningMode = False
 
         #give empty space
         spacer = HorizontalSpacer(self.toolBar)
         self.toolBar.layout().addWidget(spacer)
 
 
-	#the possibility to load an object from a file
-	self.controlIcon = qt.QIcon()
+        #the possibility to load an object from a file
+        self.controlIcon = qt.QIcon()
         tb = self._addToolButton(self.controlIcon,
-				 self.showSceneControlWindow,
-				 "Show control window")
+                                 self.showSceneControlWindow,
+                                 "Show control window")
 
 
-	#the possibility to load an object from a file
-	self.openIcon = qt.QIcon(qt.QPixmap(IconDict["file_open"]))
+        #the possibility to load an object from a file
+        self.openIcon = qt.QIcon(qt.QPixmap(IconDict["file_open"]))
         tb = self._addToolButton(self.openIcon,
-				 self.addObjectFromFileDialog,
-				 "Add 3DObject from file")
+                                 self.addObjectFromFileDialog,
+                                 "Add 3DObject from file")
 
 
-	#the possibility to save a "photo" of the 3D scene
-	self.saveIcon = qt.QIcon(qt.QPixmap(IconDict["file_save"]))
+        #the possibility to save a "photo" of the 3D scene
+        self.saveIcon = qt.QIcon(qt.QPixmap(IconDict["file_save"]))
         tb = self._addToolButton(self.saveIcon,
-				 self.saveImage,
-				 "Save 3DScene to a file")
-	
-	#print the 3D scene
-	self.printIcon = qt.QIcon(qt.QPixmap(IconDict["print"]))
+                                 self.saveImage,
+                                 "Save 3DScene to a file")
+
+        #print the 3D scene
+        self.printIcon = qt.QIcon(qt.QPixmap(IconDict["print"]))
         tb = self._addToolButton(self.printIcon,
-				 self.printWidget,
-				 "Print widget")
+                                 self.printWidget,
+                                 "Print widget")
 
     def applyCube(self, ddict):
         if ddict.has_key('face'):
-	    position = self.scene.applyCube(ddict['face'])
-	    self.glWidget.setCurrentViewPosition(position)
-	    self.__applyingCube = True
-	    self.wheelSlider10.wheel.setValue(0.0)
-	    self.wheelSlider21.wheel.setValue(0.0)
-   	    self.__applyingCube = False
+            position = self.scene.applyCube(ddict['face'])
+            self.glWidget.setCurrentViewPosition(position)
+            self.__applyingCube = True
+            self.wheelSlider10.wheel.setValue(0.0)
+            self.wheelSlider21.wheel.setValue(0.0)
+            self.__applyingCube = False
 
         
     def setObjectSelectionModeSlot(self):
         self.vertexSelectionMode = False
         self.objectSelectionMode = True
         self.scenePanningMode    = False
-	self.buttonVertexSelectionMode.setChecked(self.vertexSelectionMode)
-	self.buttonObjectSelectionMode.setChecked(self.objectSelectionMode)
-	self.buttonScenePanningMode.setChecked(self.scenePanningMode)
+        self.buttonVertexSelectionMode.setChecked(self.vertexSelectionMode)
+        self.buttonObjectSelectionMode.setChecked(self.objectSelectionMode)
+        self.buttonScenePanningMode.setChecked(self.scenePanningMode)
         self.glWidget.setObjectSelectionMode(self.objectSelectionMode)
         self.glWidget.setVertexSelectionMode(self.vertexSelectionMode)
-	self.glWidget.setCursor(qt.QCursor(qt.Qt.ArrowCursor))
-	text = "Scene is in object selection mode."
-	current = self.scene.getSelectedObject()
-	if current not in [None, self.scene.name()]:
+        self.glWidget.setCursor(qt.QCursor(qt.Qt.ArrowCursor))
+        text = "Scene is in object selection mode."
+        current = self.scene.getSelectedObject()
+        if current not in [None, self.scene.name()]:
             text += " Object %s currently selected." % current
         self.infoLine.setText(text)
 
@@ -330,36 +329,36 @@ class SceneGLWindow(qt.QWidget):
         self.vertexSelectionMode = True
         self.objectSelectionMode = False
         self.scenePanningMode    = False
-	self.buttonVertexSelectionMode.setChecked(self.vertexSelectionMode)
-	self.buttonObjectSelectionMode.setChecked(self.objectSelectionMode)
-	self.buttonScenePanningMode.setChecked(self.scenePanningMode)
+        self.buttonVertexSelectionMode.setChecked(self.vertexSelectionMode)
+        self.buttonObjectSelectionMode.setChecked(self.objectSelectionMode)
+        self.buttonScenePanningMode.setChecked(self.scenePanningMode)
         self.glWidget.setObjectSelectionMode(self.objectSelectionMode)
         self.glWidget.setVertexSelectionMode(self.vertexSelectionMode)
-	#self.glWidget.setCursor(qt.QCursor(qt.Qt.WhatsThisCursor))
-	self.glWidget.setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
-	current = self.scene.getSelectedObject()
-	o3d = self.scene.getObject3DProxy(current)
-	if current in [None, self.scene.name()]:
+        #self.glWidget.setCursor(qt.QCursor(qt.Qt.WhatsThisCursor))
+        self.glWidget.setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
+        current = self.scene.getSelectedObject()
+        o3d = self.scene.getObject3DProxy(current)
+        if current in [None, self.scene.name()]:
             text = ("Vertex selection mode is useless without a selected object.")
         elif not o3d.isVertexSelectionModeSupported():
-            	text = "Object %s does not support vertex selection mode." % current
-	else:
-	    text = ("Vertex selection mode for object %s." % current)
-	self.infoLine.setText(text)
+                text = "Object %s does not support vertex selection mode." % current
+        else:
+            text = ("Vertex selection mode for object %s." % current)
+        self.infoLine.setText(text)
         
     def setScenePanningModeSlot(self):
-	if self.scenePanningMode:
-	   # nothing to be done
-	   return
+        if self.scenePanningMode:
+           # nothing to be done
+           return
         self.vertexSelectionMode = False
         self.objectSelectionMode = False
         self.scenePanningMode    = True
-	self.buttonVertexSelectionMode.setChecked(self.vertexSelectionMode)
-	self.buttonObjectSelectionMode.setChecked(self.objectSelectionMode)
-	self.buttonScenePanningMode.setChecked(self.scenePanningMode)
+        self.buttonVertexSelectionMode.setChecked(self.vertexSelectionMode)
+        self.buttonObjectSelectionMode.setChecked(self.objectSelectionMode)
+        self.buttonScenePanningMode.setChecked(self.scenePanningMode)
         self.glWidget.setObjectSelectionMode(self.objectSelectionMode)
         self.glWidget.setVertexSelectionMode(self.vertexSelectionMode)
-	self.glWidget.setCursor(qt.QCursor(qt.Qt.SizeAllCursor))
+        self.glWidget.setCursor(qt.QCursor(qt.Qt.SizeAllCursor))
         self.infoLine.setText("Scene is in panning mode.")
 
     def saveImage(self):
@@ -382,15 +381,15 @@ class SceneGLWindow(qt.QWidget):
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
         tb      = qt.QToolButton(self.toolBar)            
         tb.setIcon(icon)
-	tb.setToolTip(tip)
+        tb.setToolTip(tip)
         if toggle is not None:
-	    if toggle:
-	        tb.setCheckable(1)
-	        if state is not None:
-		    if state:
-		        tb.setChecked(state)
-	        else:
-		    tb.setChecked(False)
+            if toggle:
+                tb.setCheckable(1)
+                if state is not None:
+                    if state:
+                        tb.setChecked(state)
+                else:
+                    tb.setChecked(False)
         if position is not None:
             self.toolBar.mainLayout.insertWidget(position, tb)
         else:
@@ -401,13 +400,13 @@ class SceneGLWindow(qt.QWidget):
 
     def sceneManagerSlot(self, ddict):
         if DEBUG:
-            print "sceneManagerSlot", ddict
+            print("sceneManagerSlot", ddict)
         if ddict['event'] == 'addObject':
             if ddict['object'] is not None:
                 self.addObject(ddict['object'], ddict['legend'])
             else:
-		self.addObjectFromFileDialog()
-	elif ddict['event'] == 'configurationLoaded':
+                self.addObjectFromFileDialog()
+        elif ddict['event'] == 'configurationLoaded':
             theta, phi = self.scene.getThetaPhi()
             self.__applyingCube = True
             self.wheelSlider10.wheel.setValue(theta)
@@ -417,7 +416,7 @@ class SceneGLWindow(qt.QWidget):
             self.__applyingCube = False
         else:
             if DEBUG:
-                print "DOING NOTHING"
+                print("DOING NOTHING")
 
     def showSceneControlWindow(self):
         if self.manager is not None:
@@ -466,11 +465,11 @@ class SceneGLWindow(qt.QWidget):
                     
 
     def sceneControlSlot(self, ddict):
-	if DEBUG:
-	    print "sceneControlSlot", ddict
+        if DEBUG:
+            print("sceneControlSlot", ddict)
         if ddict['event'] in ["objectSelected",
-			      "objectDeleted",
-			      "objectReplaced"]:
+                              "objectDeleted",
+                              "objectReplaced"]:
             ddict['legend'] = ddict['current']
             self.objectSelectedSlot(ddict, update_scene=False)
         elif ddict['event'] in ["SceneLimitsChanged"]:
@@ -480,16 +479,16 @@ class SceneGLWindow(qt.QWidget):
                 self.scene.getLimits()
                 self.sceneControl.updateView()
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-	    return
+            return
         #self.glWidget.updateGL()
-	self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-	    
+        self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
+    
     def setSelectedObject(self, name):
-	self.objectSelectedSlot({'legend':name})
+        self.objectSelectedSlot({'legend':name})
 
     def objectSelectedSlot(self, ddict, update_scene=True):
-	if DEBUG:
-	    print "objectSelectedSlot", ddict
+        if DEBUG:
+            print("objectSelectedSlot", ddict)
         if self.selectedObjectControl is None:
             self.selectedObjectControl = Object3DConfig.Object3DConfig()
             self.connect(self.selectedObjectControl,
@@ -505,24 +504,24 @@ class SceneGLWindow(qt.QWidget):
         #Should I deselect object?
         self.activeObject = legend
         if update_scene:
-	    self.scene.setSelectedObject(self.activeObject)
-    	    #print "BEFORE = ",self.scene.getSelectedObject()
+            self.scene.setSelectedObject(self.activeObject)
+            #print "BEFORE = ",self.scene.getSelectedObject()
             self.sceneControl.updateView()
-    	    #print "AFTER = ",self.scene.getSelectedObject()
+            #print "AFTER = ",self.scene.getSelectedObject()
         #self.glWidget.objectsDict[legend]['object3D'].setSelected(True)
 
         configDict = self.scene[legend].root[0].getConfiguration()
         try:
-	    ddict['pointsizecapabilities'] = [self.glWidget._pointSizes[0],
-                                          self.glWidget._pointSizes[-1],
-                                          self.glWidget._pointSizeStep]
-	    ddict['linewidthcapabilities'] = [self.glWidget._lineWidths[0],
-                                          self.glWidget._lineWidths[-1],
-                                          self.glWidget._lineWidthStep]
-	except:
-	    print "GL widget not initialized yet?"
-	    pass
-	
+            ddict['pointsizecapabilities'] = [self.glWidget._pointSizes[0],
+                                              self.glWidget._pointSizes[-1],
+                                              self.glWidget._pointSizeStep]
+            ddict['linewidthcapabilities'] = [self.glWidget._lineWidths[0],
+                                              self.glWidget._lineWidths[-1],
+                                              self.glWidget._lineWidthStep]
+        except:
+            print("Error reading point and line capabilities. GL widget not initialized yet?")
+            pass
+
 
         configDict['common'].update(ddict)
         self.selectedObjectControl.setWindowTitle(legend)
@@ -534,61 +533,88 @@ class SceneGLWindow(qt.QWidget):
             self.setObjectSelectionModeSlot()
         text = "Object %s selected." % self.activeObject
         if ddict.has_key('event'):
-	    if ddict['event'] == "objectDeleted":
-		text = ("Object %s deleted. " % ddict['previous']) + text
+            if ddict['event'] == "objectDeleted":
+                text = ("Object %s deleted. " % ddict['previous']) + text
         self.infoLine.setText(text)
         if DEBUG:
-	    print "WHAT IS SCENE SAYING?"
-	    print "ACTIVE IS ", self.scene.getSelectedObject()
+            print("WHAT IS SCENE SAYING?")
+            print("ACTIVE IS ", self.scene.getSelectedObject())
 
     def objectControlSlot(self, ddict):
-	if DEBUG:
-	    print "objectControlSlot", ddict
-	if self.activeObject is None:
-	    ndict = {}
-	    ndict['legend'] = self.scene.name()
-	    self.objectSelectedSlot(ndict, update_scene=True)
-	    self.activeObject = self.scene.name()
-	legend = self.activeObject
+        if DEBUG:
+            print("objectControlSlot", ddict)
+        if self.activeObject is None:
+            ndict = {}
+            ndict['legend'] = self.scene.name()
+            self.objectSelectedSlot(ndict, update_scene=True)
+            self.activeObject = self.scene.name()
+        legend = self.activeObject
         if legend not in self.scene.getObjectList():
             self.selectedObjectControl.hide()
             return
         configDict = {'common':{}, 'private':{}}
         if ddict.has_key('private'):
-	    configDict['private'] = ddict['private']
+            configDict['private'] = ddict['private']
         oldScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
         configDict['common'].update(ddict['common'])
         self.scene[legend].root[0].setConfiguration(configDict)
-        if 'common' in ddict:
-            if 'event' in ddict['common']:
-                if ddict['common']['event'] == 'ColormapChanged':
-                    if legend == self.scene.name():
-                        #print scene colormap changed
-                        newColormap = ddict['common']['colormap']
-                        objectList = self.scene.getObjectList()
-                        i = 0
-                        for o3dName in objectList:
-                            if o3dName == self.scene.name():
-                                continue
-                            o3d = self.scene.getObject3DProxy(o3dName)
-                            cfg = {}
-                            cfg['common'] = o3d.getConfiguration()['common']
-                            minCmap = cfg['common']['colormap'][4]
-                            maxCmap = cfg['common']['colormap'][5]
-                            if (i == 0) or (newColormap[4] > minCmap):
-                                newColormap[4] = minCmap
-                            if (i == 0) or (newColormap[5] > maxCmap):
-                                newColormap[5] = maxCmap
-                            i = 1
-                            cfg['common']['colormap'][0:4] = newColormap[0:4]
-                            cfg['common']['colormap'][-1]  = newColormap[-1]
-                            cfg['common']['event'] = ddict['common']['event']
-                            o3d.setConfiguration(cfg)
-                        #this is to get the proper limits
-                        configDict['common']['colormap'] = newColormap
-                        del configDict['common']['event']
-                        self.scene[legend].root[0].setConfiguration(configDict)
-                        self.selectedObjectControl.setConfiguration(configDict)                        
+        rootEvent = ddict.get('event', None)
+        if legend == self.scene.name():
+            sceneEventProcessed = False
+            if rootEvent is not None:
+                if rootEvent in ['AspectUpdated', 'DrawModeUpdated']:
+                    # only properties passed to all objects are those related to drawing
+                    objectList = self.scene.getObjectList()
+                    i = 0
+                    for o3dName in objectList:
+                        if o3dName == self.scene.name():
+                            continue
+                        o3d = self.scene.getObject3DProxy(o3dName)
+                        cfg = {}
+                        cfg['common'] = o3d.getConfiguration()['common']
+                        for key in ['pointsize', 'linewidth', 'transparency', 'mode']:
+                            if key in ['mode']:
+                                #drawing mode changed only if explicetly requested
+                                if rootEvent in ['DrawModeUpdated']:
+                                    cfg['common'][key] = ddict['common'][key]
+                            else:
+                                cfg['common'][key] = ddict['common'][key]
+                        o3d.setConfiguration(cfg)
+                    sceneEventProcessed = True
+                    #self.scene[legend].root[0].setConfiguration(configDict)
+                    #self.selectedObjectControl.setConfiguration(configDict)
+
+            if not sceneEventProcessed:
+                if 'common' in ddict:
+                    if 'event' in ddict['common']:
+                        if ddict['common']['event'] == 'ColormapChanged':
+                            #print scene colormap changed
+                            newColormap = ddict['common']['colormap']
+                            objectList = self.scene.getObjectList()
+                            i = 0
+                            for o3dName in objectList:
+                                if o3dName == self.scene.name():
+                                    continue
+                                o3d = self.scene.getObject3DProxy(o3dName)
+                                cfg = {}
+                                cfg['common'] = o3d.getConfiguration()['common']
+                                minCmap = cfg['common']['colormap'][4]
+                                maxCmap = cfg['common']['colormap'][5]
+                                if (i == 0) or (newColormap[4] > minCmap):
+                                    newColormap[4] = minCmap
+                                if (i == 0) or (newColormap[5] > maxCmap):
+                                    newColormap[5] = maxCmap
+                                i = 1
+                                cfg['common']['colormap'][0:4] = newColormap[0:4]
+                                cfg['common']['colormap'][-1]  = newColormap[-1]
+                                cfg['common']['event'] = ddict['common']['event']
+                                o3d.setConfiguration(cfg)
+                            #this is to get the proper limits
+                            configDict['common']['colormap'] = newColormap
+                            del configDict['common']['event']
+                            self.scene[legend].root[0].setConfiguration(configDict)
+                            self.selectedObjectControl.setConfiguration(configDict)
+                    
         if legend == self.scene.name() or self.scene.getAutoScale():
             newScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
             if newScale != oldScale:
@@ -601,12 +627,12 @@ class SceneGLWindow(qt.QWidget):
                                                      rotation_reset=False)
                 return            
         self.glWidget.cacheUpdateGL()
-	    
+    
     def vertexSelectedSlot(self, ddict):
         self.infoLine.setText(ddict['info'])
 
     def setZoomFactor(self, value):
-	if self.__applyingCube:
+        if self.__applyingCube:
             return
         self.glWidget.setZoomFactor(pow(2, value))
 
@@ -617,20 +643,20 @@ class SceneGLWindow(qt.QWidget):
         return angle
 
     def setPhi(self, value):
-	if self.__applyingCube:
-	    return
-	value = self.normalizeAngle(value)
-	theta, phi = self.scene.getThetaPhi()
-	if value != phi:
+        if self.__applyingCube:
+            return
+        value = self.normalizeAngle(value)
+        theta, phi = self.scene.getThetaPhi()
+        if value != phi:
             self.scene.setThetaPhi(theta, value)
             self.glWidget.cacheUpdateGL()
 
     def setTheta(self, value):
-	if self.__applyingCube:
-	    return
-	value = self.normalizeAngle(value)
-	theta, phi = self.scene.getThetaPhi()
-	if value != theta:
+        if self.__applyingCube:
+            return
+        value = self.normalizeAngle(value)
+        theta, phi = self.scene.getThetaPhi()
+        if value != theta:
             self.scene.setThetaPhi(value, phi)
             self.glWidget.cacheUpdateGL()
 
@@ -649,20 +675,20 @@ class SceneGLWindow(qt.QWidget):
     def setAlpha(self, value):
         self.glWidget.setSelectedObjectAlpha(value/10.)
         #self.glWidget.updateGL()
-	self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-	    
+        self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
+    
     def addObject(self, ob, legend = None, update_scene=True):
         self.sceneControl.scene.addObject(ob, legend)
         self.sceneControl.scene.getLimits()
         self.sceneControl.updateView()
         if self.activeObject in [None, 'None']:
-	    ndict = {}
-	    #ndict['legend'] = self.scene.name()
-	    ndict['legend'] = legend
-	    self.objectSelectedSlot(ndict, update_scene=update_scene)
-	    #self.activeObject = self.scene.name()
-	    self.activeObject = legend
-	if update_scene:
+            ndict = {}
+            #ndict['legend'] = self.scene.name()
+            ndict['legend'] = legend
+            self.objectSelectedSlot(ndict, update_scene=update_scene)
+            #self.activeObject = self.scene.name()
+            self.activeObject = legend
+        if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
     def removeObject(self, legend, update_scene=True):
@@ -671,7 +697,7 @@ class SceneGLWindow(qt.QWidget):
         self.sceneControl.scene.removeObject(legend)
         self.sceneControl.scene.getLimits()
         self.sceneControl.updateView()            
-	if update_scene:
+        if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
         
     def clear(self, update_scene=True):
@@ -679,16 +705,16 @@ class SceneGLWindow(qt.QWidget):
         self.sceneControl.scene.clearTree()
         self.sceneControl.scene.getLimits()
         self.sceneControl.updateView()            
-	if update_scene:
+        if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
     def closeEvent(self, event):
-	objectList = self.scene.getObjectList()
-	for object3D in objectList:
-	    if object3D == "Scene":
-		continue
-	    self.scene.removeObject(object3D)
-	self.manager.close()
+        objectList = self.scene.getObjectList()
+        for object3D in objectList:
+            if object3D == "Scene":
+                continue
+            self.scene.removeObject(object3D)
+        self.manager.close()
         self.glWidget.close()
         # This is needed to force the destruction of the Object3D(s)
         del self.manager
@@ -703,36 +729,36 @@ if __name__ == '__main__':
     window = SceneGLWindow()
     window.show()
     if 0:
-	    class MyObject(Object3DBase.Object3D):
-		def drawObject(self):
-		    #GL.glShadeModel(GL.GL_FLAT)  
-		    GL.glShadeModel(GL.GL_SMOOTH) #in order not to have just blue face
-		    GL.glBegin(GL.GL_TRIANGLE_STRIP)
-		    alpha = 1.0 - self._configuration['common']['transparency']
-		    GL.glColor4f(1., 0., 0., alpha)      # Red
-		    GL.glVertex3f(-25., 0., 0.)
-		    GL.glColor4f(0., 1., 0., alpha)      # Green
-		    GL.glVertex3f(25., 0., 0.)
-		    GL.glColor4f(0., 0., 1., alpha)      # Blue
-		    GL.glVertex3f(0, 25, 0.)
-		    GL.glEnd()
+        class MyObject(Object3DBase.Object3D):
+            def drawObject(self):
+                #GL.glShadeModel(GL.GL_FLAT)  
+                GL.glShadeModel(GL.GL_SMOOTH) #in order not to have just blue face
+                GL.glBegin(GL.GL_TRIANGLE_STRIP)
+                alpha = 1.0 - self._configuration['common']['transparency']
+                GL.glColor4f(1., 0., 0., alpha)      # Red
+                GL.glVertex3f(-25., 0., 0.)
+                GL.glColor4f(0., 1., 0., alpha)      # Green
+                GL.glVertex3f(25., 0., 0.)
+                GL.glColor4f(0., 0., 1., alpha)      # Blue
+                GL.glVertex3f(0, 25, 0.)
+                GL.glEnd()
 
-	    ob3D1 = MyObject(name="Object1")
-	    ob3D1.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
+        ob3D1 = MyObject(name="Object1")
+        ob3D1.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
 
-	    ob3D2 = MyObject(name="Object2")    
-	    ob3D2.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
+        ob3D2 = MyObject(name="Object2")    
+        ob3D2.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
 
 
-	    #translate
-	    config = ob3D2.getConfiguration()
-	    config['common']['translation'] = [0.0, 0.0, 0.0]
-	    ob3D2.setConfiguration(config)
+        #translate
+        config = ob3D2.getConfiguration()
+        config['common']['translation'] = [0.0, 0.0, 0.0]
+        ob3D2.setConfiguration(config)
 
-	    window.setWindowTitle('Object3D Window')
-	    window.addObject(ob3D1, "Object1")
-	    window.addObject(ob3D2, "Object2")
-	    window.glWidget.setObjectSelectionMode(True)
-	    window.show()
-	    window.glWidget.setZoomFactor(1.0)
+        window.setWindowTitle('Object3D Window')
+        window.addObject(ob3D1, "Object1")
+        window.addObject(ob3D2, "Object2")
+        window.glWidget.setObjectSelectionMode(True)
+        window.show()
+        window.glWidget.setZoomFactor(1.0)
     sys.exit(app.exec_())
