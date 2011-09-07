@@ -74,7 +74,6 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                             ilabel = sel['selection']['y'][ycounter]
                             ylegend = dataObject.info['LabelNames'][ilabel]
                 object3Dlegend = legend + " " + ylegend
-
                 ndata = len(ydata)
                 object3D = self.addDataObject(dataObject,
                                        legend=object3Dlegend,
