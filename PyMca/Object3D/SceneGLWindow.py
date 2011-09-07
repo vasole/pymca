@@ -483,8 +483,8 @@ class SceneGLWindow(qt.QWidget):
         #self.glWidget.updateGL()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
     
-    def setSelectedObject(self, name):
-        self.objectSelectedSlot({'legend':name})
+    def setSelectedObject(self, name, update_scene=True):
+        self.objectSelectedSlot({'legend':name}, update_scene=update_scene)
 
     def objectSelectedSlot(self, ddict, update_scene=True):
         if DEBUG:
@@ -683,11 +683,14 @@ class SceneGLWindow(qt.QWidget):
         self.sceneControl.updateView()
         if self.activeObject in [None, 'None']:
             ndict = {}
-            #ndict['legend'] = self.scene.name()
-            ndict['legend'] = legend
+            if 0:
+                #the default is the scene
+                ndict['legend'] = self.scene.name()
+            else:
+                #the default is the selected object
+                ndict['legend'] = legend
             self.objectSelectedSlot(ndict, update_scene=update_scene)
-            #self.activeObject = self.scene.name()
-            self.activeObject = legend
+            self.scene.setSelectedObject(self.activeObject)
         if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
