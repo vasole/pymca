@@ -158,6 +158,9 @@ class StackBase(object):
 
         info = self._stack.info
         mcaIndex  = info.get('McaIndex', mcaindex)
+        if (mcaIndex <0) and (len(self._stack.data.shape) == 3):
+            mcaIndex = len(self._stack.data.shape) + mcaIndex
+
         fileIndex = info.get('FileIndex', fileindex)
 
         if fileIndex is None:
@@ -442,10 +445,18 @@ class StackBase(object):
                             print("Dynamic loading case 0")
                         #no other choice than to read all images
                         #for the time being, one by one
+                        rMin = cleanMask[0][0]
+                        rMax = cleanMask[-1][0]
+                        cMin = cleanMask[:,1].min()
+                        cMax = cleanMask[:,1].max()
+                        #rMin, cMin = cleanMask.min(axis=0)
+                        #rMax, cMax = cleanMask.max(axis=0)
+                        tmpMask = arrayMask[rMin:(rMax+1),cMin:(cMax+1)]
+                        tmpData = numpy.zeros((1, rMax-rMin+1,cMax-cMin+1))
                         for i in range(self._stack.data.shape[0]):
-                            tmpData = self._stack.data[i:i+1,:,:]
-                            tmpData.shape = tmpData.shape[1:]
-                            mcaData[i] = (tmpData*arrayMask).sum()
+                            tmpData[0:1,:,:] = self._stack.data[i:i+1,rMin:(rMax+1),cMin:(cMax+1)]
+                            #multiplication is faster than selection
+                            mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float)
                 elif self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
@@ -464,14 +475,19 @@ class StackBase(object):
                             print("Dynamic loading case 2")
                         #no other choice than to read all images
                         #for the time being, one by one
-                        rMin = cleanMask[0][0]
-                        rMax = cleanMask[-1][0]
-                        tmpMask = arrayMask[rMin:(rMax+1),:]
-                        tmpData = numpy.zeros((1, rMax-rMin+1,self._stack.data.shape[2]))
-                        for i in range(self._stack.data.shape[0]):
-                            tmpData[0:1,:,:] = self._stack.data[i:i+1,rMin:(rMax+1),:]
-                            #multiplication is faster than selection
-                            mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float)
+                        if 1:
+                            rMin = cleanMask[0][0]
+                            rMax = cleanMask[-1][0]
+                            cMin = cleanMask[:,1].min()
+                            cMax = cleanMask[:,1].max()
+                            #rMin, cMin = cleanMask.min(axis=0)
+                            #rMax, cMax = cleanMask.max(axis=0)
+                            tmpMask = arrayMask[rMin:(rMax+1),cMin:(cMax+1)]
+                            tmpData = numpy.zeros((1, rMax-rMin+1,cMax-cMin+1))
+                            for i in range(self._stack.data.shape[0]):
+                                tmpData[0:1,:,:] = self._stack.data[i:i+1,rMin:(rMax+1),cMin:(cMax+1)]
+                                #multiplication is faster than selection
+                                mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float)
                         if 0:
                             tmpData = numpy.zeros((1, self._stack.data.shape[1],self._stack.data.shape[2]))
                             for i in range(self._stack.data.shape[0]):
