@@ -27,7 +27,7 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 from PyMca_Icons import IconDict
-import numpy.oldnumeric as Numeric
+import numpy
 import time
 import RGBImageCalculator
 from RGBImageCalculator import qt
@@ -143,6 +143,10 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             if len(shape) == 2:
                 self._nImages = 1
                 self._imageData = dataObject.data
+                if hasattr(dataObject, 'm'):
+                    if dataObject.m is None:
+                        for m in dataObject.m:
+                            self._imageData = self._imageData / float(m)
                 self.slider.hide()
                 self.setName(legend)
             else:
@@ -166,10 +170,20 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         if len(shape) == 2:
             if index > 0:
                 raise IndexError("Only one image in stack")
-            return dataObject.data
+            data = dataObject.data
+            if hasattr(dataObject, 'm'):
+                if dataObject.m is not None:
+                    #is a list
+                    for m in dataObject.m:
+                        data = data / float(m)
+            return data
         if len(shape) == 3:
             data = dataObject.data[index:index+1,:,:]
             data.shape = data.shape[1:]
+            if hasattr(dataObject, 'm'):
+                if dataObject.m is not None:
+                    for m in dataObject.m:
+                        data = data / m[index].astype(numpy.float)
             return data
 
         #I have to deduce the appropriate indices from the given index
@@ -178,7 +192,14 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         if len(shape) == 4:
             j = index % acquisitionShape[-1]
             i = int(index/(acquisitionShape[-1]*acquisitionShape[-2]))
-            return dataObject.data[i, j]
+            data = dataObject.data[i, j]
+            if hasattr(dataObject, 'm'):
+                if dataObject.m is not None:
+                    for m0 in dataObject.m:
+                         m = numpy.array(m0).astype(numpy.float)
+                         m.shape = -1
+                         data = data / m[index]
+            return data
 
         raise IndexError("Unhandled dimension")
 
@@ -279,9 +300,9 @@ if __name__ == "__main__":
     a = 1000
     b = 1000
     period = 1000
-    x1 = Numeric.arange(a * b).astype(Numeric.Float)
+    x1 = numpy.arange(a * b).astype(numpy.float)
     x1.shape= [a, b]
-    x2 = Numeric.transpose(x1)
+    x2 = numpy.transpose(x1)
 
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
