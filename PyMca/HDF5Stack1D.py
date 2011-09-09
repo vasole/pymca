@@ -95,6 +95,13 @@ class HDF5Stack1D(DataObject.DataObject):
                 mSelection = None
         else:
             mSelection = None
+
+        #deal with the pathological case where the scanlist corresponds to a selected top level dataset
+        if len(entryNames) == 0:
+            if scanlist is not None:
+                if len(scanlist) == 1:
+                    if scanlist[0] == ySelection:
+                        scanlist = None
             
         if scanlist in [None, []]:
             #if the scanlist is None, it is assumed we are interested on all
@@ -328,7 +335,10 @@ class HDF5Stack1D(DataObject.DataObject):
                             nMonitorData = 1
                             for  v in mDataset.shape:
                                 nMonitorData *= v
-                            if nMonitorData == nMcaInYDataset:
+                            if nMonitorData == yDataset.shape[0]:
+                                case = 3
+                                mDataset.shape = yDataset.shape[0]
+                            elif nMonitorData == nMcaInYDataset:
                                 mDataset.shape = nMcaInYDataset
                                 case = 0
                             #elif nMonitorData == (yDataset.shape[1] * yDataset.shape[2]):
@@ -356,6 +366,8 @@ class HDF5Stack1D(DataObject.DataObject):
                                         self.data[i, j, :] = yData/mDataset[mca]
                                     elif case == 1:
                                         self.data[i, j, :]  = yData/mDataset[:, mca]
+                                    elif case == 3:
+                                        self.data[i, j, :]  = yData/mDataset
                                 else:
                                     self.data[i, j, :] = yData
                                 n += 1
