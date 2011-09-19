@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1421
+__revision__ = 1422
 
 import sys
 import os
@@ -587,9 +587,9 @@ class TiffIO:
                     #packBits
                     readBytes = 0
                     #intermediate buffer
-                    tmpBuffer = fd.read(nBytes)                    
+                    tmpBuffer = fd.read(nBytes)
                     while readBytes < nBytes:
-                        n =struct.unpack('b',tmpBuffer[readBytes])[0]
+                        n = struct.unpack('b', tmpBuffer[readBytes:(readBytes+1)])[0]
                         readBytes += 1
                         if n >= 0:
                             #should I prevent reading more than the
@@ -600,7 +600,7 @@ class TiffIO:
                             readBytes += (n+1)
                         elif n > -128:
                             readBytes += 1
-                            bufferBytes += (-n+1) * tmpBuffer[readBytes]
+                            bufferBytes += (-n+1) * tmpBuffer[readBytes:(readBytes+1)]
                         else:
                             #if read -128 ignore the byte
                             continue
@@ -747,9 +747,14 @@ class TiffIO:
         else:
             self._swap = True
         fd.seek(0)
-        fd.write(struct.pack(st+'2s', order))
-        fd.write(struct.pack(st+'H', 42))
-        fd.write(struct.pack(st+'I', 0))
+        if sys.version < '3.0': 
+            fd.write(struct.pack(st+'2s', order))
+            fd.write(struct.pack(st+'H', 42))
+            fd.write(struct.pack(st+'I', 0))
+        else:
+            fd.write(struct.pack(st+'2s', bytes(order,'utf-8')))
+            fd.write(struct.pack(st+'H', 42))
+            fd.write(struct.pack(st+'I', 0))            
         fd.flush()
 
     def _getOutputIFD(self, image, description=None, software=None, date=None):
@@ -775,6 +780,8 @@ class TiffIO:
             while descriptionLength < 4:
                 description = description + " "
                 descriptionLength = len(description)
+            if sys.version >= '3.0':
+                description = bytes(description, 'utf-8')
             imageDescription = struct.pack("%ds" % descriptionLength, description)
             nDirectoryEntries += 1
 
@@ -784,6 +791,8 @@ class TiffIO:
             while softwareLength < 4:
                 software = software + " "
                 softwareLength = len(software)
+            if sys.version >= '3.0':
+                software = bytes(software, 'utf-8')
             softwarePackedString = struct.pack("%ds" % softwareLength, software)
             nDirectoryEntries += 1
         else:
@@ -791,6 +800,8 @@ class TiffIO:
 
         if date is not None:
             dateLength = len(date)
+            if sys.version >= '3.0':
+                date = bytes(date, 'utf-8')
             datePackedString = struct.pack("%ds" % dateLength, date)
             dateLength = len(datePackedString)
             nDirectoryEntries += 1
