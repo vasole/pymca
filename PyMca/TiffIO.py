@@ -4,7 +4,7 @@
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This file is free software; you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2 of the License, or (at your option) 
 # any later version.
@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1406
+__revision__ = 1421
 
 import sys
 import os
@@ -586,19 +586,27 @@ class TiffIO:
                         bufferBytes = ""
                     #packBits
                     readBytes = 0
+                    #intermediate buffer
+                    tmpBuffer = fd.read(nBytes)                    
                     while readBytes < nBytes:
-                        n =struct.unpack('b',fd.read(1))[0]
+                        n =struct.unpack('b',tmpBuffer[readBytes])[0]
+                        readBytes += 1
                         if n >= 0:
-                            bufferBytes +=  fd.read(n+1)
+                            #should I prevent reading more than the
+                            #length of the chain? Let's python raise
+                            #the exception...
+                            bufferBytes +=  tmpBuffer[readBytes:\
+                                                      readBytes+(n+1)]
                             readBytes += (n+1)
+                        elif n > -128:
+                            readBytes += 1
+                            bufferBytes += (-n+1) * tmpBuffer[readBytes]
                         else:
-                            bufferBytes += (-n+1) * fd.read(1)
-                            readBytes += (-n+1)
+                            #if read -128 ignore the byte
+                            continue
                     readout = numpy.fromstring(bufferBytes, dtype)
-                    nGoodData = nRowsToRead * nColumns
-                    view = readout[:nGoodData]
-                    view.shape = nRowsToRead, nColumns
-                    image[rowStart:rowEnd, :] = view
+                    readout.shape = -1, nColumns
+                    image[rowStart:rowEnd, :] = readout
                 else:
                     if 1:
                         #use numpy
