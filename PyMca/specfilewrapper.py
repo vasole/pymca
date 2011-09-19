@@ -150,7 +150,7 @@ class specfilewrapper:
         ncol0 = -1
         nlines= 0
         if amptek:
-            if sys.platform < '3.0':
+            if sys.version < '3.0':
                 while "<<DATA>>" not in line:
                     self.header.append(line.replace("\n",""))
                     line = f.readline()
