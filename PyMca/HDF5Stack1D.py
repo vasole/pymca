@@ -222,6 +222,10 @@ class HDF5Stack1D(DataObject.DataObject):
                 if mSelection is not None:
                     mDataset = tmpHdf[mpath]
                     self.monitor = mDataset
+                if h5py.version.version < '2.0':
+                    #prevent automatic closing keeping a reference
+                    #to the open file
+                    self._fileReference = hdfStack
                 DONE = True
             else:
                 #what to do if the number of dimensions is only 2?
