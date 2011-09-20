@@ -164,7 +164,12 @@ class Object3D:
         if ddict.has_key('common'):
             self._configuration['common'].update(ddict['common'])
         if ddict.has_key('private'):
+            #do not overwrite widget!!!
+            widget = self._configuration['private']['widget']
             self._configuration['private'].update(ddict['private'])
+            if widget is not None:
+                #restore former widget
+                self._configuration['private']['widget'] = widget
 
     def setSelected(self, flag = True):
         self._selected = flag
