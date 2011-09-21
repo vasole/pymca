@@ -31,6 +31,12 @@ class Scene:
         self.__autoScale = True
         self.__sceneObject.setLimits(-100., -100., -100., 100., 100.0, 100.0)
         self.__transformationMatrix = __currentViewMatrix * 1
+
+        #axes handling
+        self.__u = [1.0, 0.0, 0.0]
+        self.__v = [0.0, 1.0, 0.0]
+        self.__w = [0.0, 0.0, 1.0]
+        self.__uvw = False
         
     def __getitem__(self, name):
         return self.tree.find(name)
@@ -214,7 +220,11 @@ class Scene:
                     __currentViewMatrix[:,:]
 
     def getTransformationMatrix(self):
-        return self.__transformationMatrix
+        if not self.__uvw:
+            return self.__transformationMatrix
+        else:
+            return numpy.dot(self.__uvwMatrix,
+                             self.__transformationMatrix).astype(numpy.float32)
 
     def gluLookAt(self, eyeX, eyeY, eyeZ,
 			centerX, centerY, centerZ,
@@ -326,7 +336,29 @@ class Scene:
 
     def getAutoScale(self):
         return self.__autoScale
-
+    
+    def setAxesVectors(self, u, v, w, use=True):
+        tmpMatrix = numpy.zeros((4,4), numpy.float64)
+        tmpMatrix [0,0] = u[0]
+        tmpMatrix [0,1] = u[1]
+        tmpMatrix [0,2] = u[2]
+        tmpMatrix [1,0] = v[0]
+        tmpMatrix [1,1] = v[1]
+        tmpMatrix [1,2] = v[2]
+        tmpMatrix [2,0] = w[0]
+        tmpMatrix [2,1] = w[1]
+        tmpMatrix [2,2] = w[2]
+        tmpMatrix [3,3] = 1.0
+        try:
+            inverseMatrix = numpy.linalg.inv(tmpMatrix)
+        except:
+            raise
+        self.__u   = u
+        self.__v   = v
+        self.__w   = w
+        self.__uvw = use
+        self.__uvwMatrix = tmpMatrix
+  
     def setObserverPosition(self, position):
         self.__observerPosition = position
 
@@ -351,6 +383,42 @@ class Scene:
             a = t
         return a, b
 
+    def _updateObjectLimits(self, xmin, ymin, zmin, xmax, ymax, zmax):
+        if not self.__uvw:
+            return xmin, ymin, zmin, xmax, ymax, zmax
+        u = self.__u
+        v = self.__v
+        w = self.__w
+
+        x0 = xmin * u[0] + ymin * v[0] + zmin * w[0]
+        y0 = xmin * u[1] + ymin * v[1] + zmin * w[1]
+        z0 = xmin * u[2] + ymin * v[2] + zmin * w[2]
+
+        x1 = xmax * u[0] + ymax * v[0] + zmax * w[0]
+        y1 = xmax * u[1] + ymax * v[1] + zmax * w[1]
+        z1 = xmax * u[2] + ymax * v[2] + zmax * w[2]
+        if x1 < x0:
+            xmin = x1
+            xmax = x0
+        else:
+            xmin = x0
+            xmax = x1
+
+        if y1 < y0:
+            ymin = y1
+            ymax = y0
+        else:
+            ymin = y0
+            ymax = y1
+
+        if z1 < z0:
+            zmin = z1
+            zmax = z0
+        else:
+            zmin = z0
+            zmax = z1
+        return xmin, ymin, zmin, xmax, ymax, zmax
+
     def getLimits(self):
         if not self.__autoScale:
             return self.__limits
@@ -365,6 +433,8 @@ class Scene:
             limits = ob.getLimits()
             xmin0, ymin0, zmin0 = limits[0]
             xmax0, ymax0, zmax0 = limits[1]
+            xmin0, ymin0, zmin0, xmax0, ymax0, zmax0 = self._updateObjectLimits(\
+                            xmin0, ymin0, zmin0, xmax0, ymax0, zmax0)
             xScale, yScale,zScale = ob.getConfiguration()['common']['scale']
             xmin0 *= xScale
             ymin0 *= yScale
@@ -390,6 +460,8 @@ class Scene:
                     limits = ob.getLimits()
                     xmin, ymin, zmin = limits[0]
                     xmax, ymax, zmax = limits[1]
+                    xmin, ymin, zmin, xmax, ymax, zmax = self._updateObjectLimits(\
+                            xmin, ymin, zmin, xmax, ymax, zmax)
                     #correct for scale
                     xScale, yScale,zScale = ob.getConfiguration()['common']['scale']
                     xmin *= xScale

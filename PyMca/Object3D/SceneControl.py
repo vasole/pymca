@@ -62,33 +62,39 @@ class SceneControl(qt.QWidget):
         self.emitSignal(ddict['event'], ddict)
 
     def _sceneCoordinatesSlot(self, ddict):
-        objectList = self.scene.tree.getList()
         event = ddict['event']
-        xmin, ymin, zmin, xmax, ymax, zmax = self.scene.getLimits()
-        self.scene.setAutoScale(ddict['autoscale'])
-        if ddict['autoscale']:
-            ddict['xmin'] = xmin
-            ddict['ymin'] = ymin
-            ddict['zmin'] = zmin
-            ddict['xmax'] = xmax
-            ddict['ymax'] = ymax
-            ddict['zmax'] = zmax
-            self.coordinatesWidget.setParameters(ddict)
-        else:
-            xmin = ddict['xmin']
-            ymin = ddict['ymin']
-            zmin = ddict['zmin']
-            xmax = ddict['xmax']
-            ymax = ddict['ymax']
-            zmax = ddict['zmax']
-        self.scene.setLimits([xmin, ymin, zmin, xmax, ymax, zmax])
-        if ddict['autolocate']:
-            diagonal2 = pow((xmax - xmin), 2) + pow((ymax - ymin), 2) + pow((zmax - zmin), 2)
-            position = [xmin + diagonal2,
-                        ymin + diagonal2,
-                        zmin + diagonal2]
-            ddict['observer'] = position
-            self.coordinatesWidget.setParameters(ddict)                        
+        if event == 'SceneAxesVectorsChanged':
+            self.scene.setAxesVectors(ddict['u'],
+                                      ddict['v'],
+                                      ddict['w'],
+                                      use=ddict['uvw'])
+        if 1:
+            objectList = self.scene.tree.getList()
+            xmin, ymin, zmin, xmax, ymax, zmax = self.scene.getLimits()
+            self.scene.setAutoScale(ddict['autoscale'])
+            if ddict['autoscale']:
+                ddict['xmin'] = xmin
+                ddict['ymin'] = ymin
+                ddict['zmin'] = zmin
+                ddict['xmax'] = xmax
+                ddict['ymax'] = ymax
+                ddict['zmax'] = zmax
+                self.coordinatesWidget.setParameters(ddict)
+            else:
+                xmin = ddict['xmin']
+                ymin = ddict['ymin']
+                zmin = ddict['zmin']
+                xmax = ddict['xmax']
+                ymax = ddict['ymax']
+                zmax = ddict['zmax']
+            self.scene.setLimits([xmin, ymin, zmin, xmax, ymax, zmax])
+            if ddict['autolocate']:
+                diagonal2 = pow((xmax - xmin), 2) + pow((ymax - ymin), 2) + pow((zmax - zmin), 2)
+                position = [xmin + diagonal2,
+                            ymin + diagonal2,
+                            zmin + diagonal2]
+                ddict['observer'] = position
+                self.coordinatesWidget.setParameters(ddict)                        
         self.emitSignal(ddict['event'], ddict)
 
     def emitSignal(self, event=None, ddict = None):

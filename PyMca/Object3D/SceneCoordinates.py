@@ -13,10 +13,12 @@ class SceneCoordinates(qt.QWidget):
         self.mainLayout.setSpacing(0)
         self.limitsWidget = SceneLimitsWidget(self)
         self.observerWidget = ObserverPositionWidget(self)
+        self.axesVectorsWidget = SceneAxesVectorsWidget(self)
         #self.viewOrientationWidget = ViewOrientationWidget(self)
         self.mainLayout.addWidget(self.limitsWidget, 0, 0)
         self.mainLayout.addWidget(self.observerWidget, 0, 1)
-        self.mainLayout.addWidget(HorizontalSpacer(self), 0, 2, 1, 2)
+        self.mainLayout.addWidget(self.axesVectorsWidget, 1, 0)
+        self.mainLayout.addWidget(HorizontalSpacer(self), 1, 2, 1, 2)
         #self.mainLayout.addWidget(self.viewOrientationWidget, 1, 0)
         #self.mainLayout.addWidget(HorizontalSpacer(self), 0, 1, 1, 3)
         #self.mainLayout.addWidget(VerticalSpacer(self), 1, 0, 1, 3)
@@ -33,15 +35,20 @@ class SceneCoordinates(qt.QWidget):
         self.connect(self.observerWidget,
                      qt.SIGNAL('ObserverPositionSignal'),
                      self._emitSignal)
+        self.connect(self.axesVectorsWidget,
+                     qt.SIGNAL('SceneAxesVectorsSignal'),
+                     self._emitSignal)
 
     def getParameters(self):
         ddict = self.limitsWidget.getParameters()
         ddict.update(self.observerWidget.getParameters())
+        ddict.update(self.axesVectorsWidget.getParameters())
         return ddict
 
     def setParameters(self, ddict):
         self.limitsWidget.setParameters(ddict)
         self.observerWidget.setParameters(ddict)
+        self.axesVectorsWidget.setParameters(ddict)
 
     def _emitSignal(self, ddict=None):
         if ddict is None:
@@ -51,6 +58,104 @@ class SceneCoordinates(qt.QWidget):
         ddict = self.getParameters()
         ddict['event'] = event
         self.emit(qt.SIGNAL('SceneCoordinatesSignal'), ddict)
+
+class SceneAxesVectorsWidget(qt.QGroupBox):
+    def __init__(self, parent = None):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Axes Vectors')
+        self.mainLayout = qt.QGridLayout(self)
+        self.mainLayout.setMargin(4)
+        self.mainLayout.setSpacing(4)
+        self.build()
+        ddict = {'u':[1.0, 0.0, 0.0],
+                 'v':[0.0, 1.0, 0.0],
+                 'w':[0.0, 0.0, 1.0],
+                 'uvw':False}
+        self.setParameters(ddict)
+
+        
+    def build(self):
+        self._entryDict = {'u':[],'v':[],'w':[]}
+        alignment = qt.Qt.AlignCenter
+        i = 0
+        c = 0
+        for t in ["i", "j", "k"]:
+            c += 1
+            l = qt.QLabel(self)
+            l.setAlignment(alignment)
+            l.setText("%s" % t)
+            self.mainLayout.addWidget(l, i, c)
+            
+        i = 0
+        for t in ["u", "v", "w"]:
+            i += 1
+            l = qt.QLabel(self)
+            l.setText("%s" % t)
+            self.mainLayout.addWidget(l, i, 0)
+            for c in range(3):
+                l = qt.QLineEdit(self)
+                l._v = qt.QDoubleValidator(l)
+                l.setValidator(l._v)
+                self._entryDict[t].append(l)
+                self.mainLayout.addWidget(l, i, c + 1)
+
+        self.buildActions()
+
+    def buildActions(self):
+        self._useCheckBox = qt.QCheckBox(self)
+        self._useCheckBox.setText('Use Transformation')
+        self._useCheckBox.setChecked(True)
+        self.mainLayout.addWidget(self._useCheckBox, 4, 0,
+                                                     1, 2,
+                                                     qt.Qt.AlignCenter)
+
+        self._updateButton = qt.QPushButton(self)
+        self._updateButton.setText('Update')
+        self.mainLayout.addWidget(self._updateButton, 4, 2,
+                                                     1, 2,
+                                                     qt.Qt.AlignCenter)
+
+        
+        self.connect(self._useCheckBox,
+                     qt.SIGNAL('clicked()'),
+                     self._emitSignal)
+
+        self.connect(self._updateButton,
+                     qt.SIGNAL('clicked()'),
+                     self._emitSignal)
+
+    def _emitSignal(self):
+        ddict = self.getParameters()
+        ddict['event'] = 'SceneAxesVectorsChanged'               
+        self.emit(qt.SIGNAL('SceneAxesVectorsSignal'), ddict)
+
+    def getParameters(self):
+        ddict = {}
+        for t in ["u", "v", "w"]:
+            ddict[t] = []
+            entryList = self._entryDict[t]
+            for i in range(3):
+                ddict[t].append(float(entryList[i].text()))
+        if self._useCheckBox.isChecked():
+            ddict['uvw'] = True
+        else:
+            ddict['uvw'] = False
+        return ddict
+
+    def setParameters(self, ddict):
+        for t in ["u", "v", "w"]:
+            if t in ddict:
+                if len(ddict[t]) == 3:
+                    entryList = self._entryDict[t]
+                    for i in range(3):
+                       entryList[i].setText("%f" % ddict[t][i])
+        if 'uvw' in ddict:
+            if ddict['uvw']:
+                self._useCheckBox.setChecked(True)
+            else:
+                self._useCheckBox.setChecked(False)
+        return
+
 
 class SceneLimitsWidget(qt.QGroupBox):
     def __init__(self, parent = None):
@@ -418,4 +523,8 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     w = SceneCoordinates()
     w.show()
+    def slot(ddict):
+        for key in ddict:
+            print("Key = %s key Content = %s" % (key, ddict[key]))
+    qt.QObject.connect(w, qt.SIGNAL('SceneCoordinatesSignal'),slot)
     app.exec_()
