@@ -129,6 +129,29 @@ class SpecFileStack(DataObject.DataObject):
                         self.incrProgressBar += 1
                         self.onProgress(self.incrProgressBar)
                 filecounter += 1
+        elif shape is None and (self.nbFiles == 1) and (iterlist == [1]):
+            #it can only be here if there is one file
+            #it can only be here if there is only one scan
+            #it can only be here if there is only one detector
+            self.data = Numeric.zeros((1,
+                               numberofmca,
+                               arrRet.shape[0]),
+                               arrRet.dtype.char)
+            for tempFileName in filelist:
+                tempInstance=specfile.Specfile(tempFileName)
+                #it can only be here if there is one scan per file
+                #prevent problems if the scan number is different
+                #scan = tempInstance.select(keylist[-1])
+                scan = tempInstance[0]
+                iterationList = range(scan.nbmca()) 
+                for i in iterationList:
+                    #mcadata = scan_obj.mca(i)
+                    self.data[0,
+                              i,
+                              :] = scan.mca(i+1)[:]
+                    self.incrProgressBar += 1
+                    self.onProgress(self.incrProgressBar)
+                filecounter = 1
         elif shape is None:
             #it can only be here if there is one scan per file
             try:
