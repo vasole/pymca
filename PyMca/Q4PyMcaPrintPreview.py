@@ -337,7 +337,10 @@ class PyMcaPrintPreview(qt.QDialog):
             x = 0.5 * pixmap.width() - offset
         commentItem.moveBy(x, pixmap.height()+20) 
         commentItem.setZValue(2)
-        
+
+        #I should adjust text size here
+        #textItem.scale(2,2)
+        #commentItem.scale(2,2)
         rectItem.scale(scale, scale)
         rectItem.moveBy(20 , 40)
 
