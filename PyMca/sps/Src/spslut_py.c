@@ -173,7 +173,7 @@ static PyObject *spslut_transform(PyObject *self, PyObject *args)
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 2, 2))) {
-    onError("Input Array could is not a 2x2 array");
+    onError("Input Array is not a 2x2 array");
   }
 
   switch (src->descr->type_num) {
@@ -308,7 +308,7 @@ static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 2, 2))) {
-		onError("Input Array could is not a 2x2 array");
+		onError("spslut.transformarray: Input Array is not a 2x2 array");
   }
 
   switch (src->descr->type_num) {
