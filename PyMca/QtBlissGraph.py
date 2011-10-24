@@ -1656,7 +1656,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY1(keyorindex)
 
     def mapToY1(self, keyorindex):
-        if type(keyorindex) == type(" "):
+        if type(keyorindex) in [type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -1677,7 +1677,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY2(keyorindex)
 
     def mapToY2(self, keyorindex):
-        if type(keyorindex) == type(" "):
+        if type(keyorindex) in [type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -2215,7 +2215,7 @@ class QtBlissGraph(qwt.QwtPlot):
             return (marker, distance)
 
     def toggleCurve(self, keyorindex):
-        if type(keyorindex) == type(" "):
+        if type(keyorindex) in [type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -2284,10 +2284,12 @@ class QtBlissGraph(qwt.QwtPlot):
             return None,None,None
 
     def getcurveinfo(self,legend):
-        if legend is None:return {}
-        dict={}
-        if legend in self.curves.keys():dict=copy.deepcopy(self.curves[legend]['curveinfo'].copy())
-        return dict
+        if legend is None:
+            return {}
+        ddict={}
+        if legend in self.curves.keys():
+            ddict=copy.deepcopy(self.curves[legend]['curveinfo'].copy())
+        return ddict
         
     def setactivecurve(self,keyorindex):
         if DEBUG: print("Deprecation warning: QtBlissGraph setactivecurve")
@@ -2296,7 +2298,7 @@ class QtBlissGraph(qwt.QwtPlot):
     def setActiveCurve(self,keyorindex):
         if keyorindex is None:
             return -1
-        if type(keyorindex) == type(" "):
+        if type(keyorindex) in [type(" "),type(str(" "))]:
             if keyorindex in self.curves.keys():
                 #index = self.curveslist.index(keyorindex) + 1
                 index = self.curves[keyorindex]['curve']
