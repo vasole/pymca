@@ -11,7 +11,6 @@ SOURCE_TYPE="EdfFileStack"
 class OmnicMap(DataObject.DataObject):
     def __init__(self, filename):
         DataObject.DataObject.__init__(self)
-        
         fileSize = os.path.getsize(filename)
         if sys.platform == 'win32':
             fid = open(filename, 'rb')
@@ -26,9 +25,9 @@ class OmnicMap(DataObject.DataObject):
             omnicInfo = None
         self.sourceName = [filename]
         if sys.version < '3.0':
-            searchedChain = "Spectrum position"
+            searchedChain = "Spectrum "
         else:
-            searchedChain = bytes("Spectrum position", 'utf-8')
+            searchedChain = bytes("Spectrum ", 'utf-8')
         firstByte = data.index(searchedChain)
         s = data[firstByte:(firstByte+100-16)]
         if sys.version >= '3.0':
@@ -37,18 +36,24 @@ class OmnicMap(DataObject.DataObject):
             print("firstByte = %d" % firstByte)
             print("s1 = %s " % s)
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')
-        spectrumIndex, nSpectra, xPosition, yPosition = exp.findall(s)[0:4]
-        spectrumIndex = int(spectrumIndex)
-        self.nSpectra = int(nSpectra)
-        xPosition = float(xPosition)
-        yPosition = float(yPosition)
+        tmpValues= exp.findall(s)
+        spectrumIndex = int(tmpValues[0])
+        self.nSpectra = int(tmpValues[1])
+        if "X = " in s:
+            xPosition = float(tmpValues[2])
+            yPosition = float(tmpValues[3])
+        else:
+            #I have to calculate them from the scan
+            xPosition, yPosition = self.getPositionFromIndexAndInfo(0, omnicInfo)
         if DEBUG:
             print("spectrumIndex, nSpectra, xPosition, yPosition = %d %d %f %f" %\
                     (spectrumIndex, self.nSpectra, xPosition, yPosition))
         if sys.version < '3.0':
-            secondByte = data.index("Spectrum position %d" % (spectrumIndex+1))
+            chain = "Spectrum"
         else:
-            secondByte = data.index(bytes("Spectrum position %d" % (spectrumIndex+1), 'utf-8'))
+            chain = bytes("Spectrum", 'utf-8')
+        secondByte = data[(firstByte+1):].index(chain)
+        secondByte += firstByte + 1
         if DEBUG:
             print("secondByte = ", secondByte)
         self.nChannels = int((secondByte - firstByte - 100)/4)
@@ -67,9 +72,15 @@ class OmnicMap(DataObject.DataObject):
                 s = data[offset:(offset+100-16)]
             else:
                 s = str(data[offset:(offset+100-16)])
-            spectrumIndex, nSpectra, xPosition, yPosition = exp.findall(s)[0:4]
-            xPosition = float(xPosition)
-            yPosition = float(yPosition)
+            tmpValues= exp.findall(s)
+            spectrumIndex = int(tmpValues[0])
+            self.nSpectra = int(tmpValues[1])
+            if "X = " in s:
+                xPosition = float(tmpValues[2])
+                yPosition = float(tmpValues[3])
+            else:
+                #I have to calculate them from the scan
+                xPosition, yPosition = self.getPositionFromIndexAndInfo(i, omnicInfo)                
             if (abs(yPosition-oldYPosition)>1.0e-6) and\
                (abs(xPosition-oldXPosition)<1.0e-6):
                 break
@@ -149,17 +160,69 @@ class OmnicMap(DataObject.DataObject):
         if DEBUG:
             for key in ddict.keys():
                 print(key, ddict[key])
+        ddict.update(self.getMapInformation(data))
         return ddict
+
+    def getMapInformation(self, data):
+        #look for the chain 'Position'
+        if sys.version < '3.0':
+            chain = 'Position'
+        else:
+            chain = bytes('Position', 'utf-8')
+        offset = data.index(chain)
+        positions = [offset]
+        while True:
+            try:
+                a = data[(offset+1):].index(chain)
+                offset = a + offset + 1
+                positions.append(offset)
+            except ValueError:
+                break
+
+        ddict = {}
+        #map description position
+        if (positions[1] - positions[0]) == 66: #reverse engineered magic number :-)
+            mapDescriptionOffset = positions[0] - 90
+            mapDescription = struct.unpack('6f', data[mapDescriptionOffset:mapDescriptionOffset+24])
+            y0, y1, deltaY, x0, x1, deltaX = mapDescription
+            ddict['First map location'] = [x0, y0]
+            ddict['Last map location'] = [x1, y1]
+            ddict['Mapping stage X step size'] = deltaX
+            ddict['Mapping stage Y step size'] = deltaY
+            ddict['Number of spectra'] = abs((1+((y1-y0)/deltaY)) * (1+((x1 - x0) /deltaX)))
+        if DEBUG:
+            for key in ddict.keys():
+                print(key, ddict[key])
+        return ddict
+            
+    def getPositionFromIndexAndInfo(self, index, info=None):
+        if info is None:
+            return 0.0, 0.0
+        ddict= info
+        #first variation on X and then on Y
+        try:
+            x0, y0 = ddict['First map location']
+        except KeyError:
+            return 0.0, 0.0
+        x1, y1 = ddict['Last map location']
+        deltaX = ddict['Mapping stage X step size']
+        deltaY = ddict['Mapping stage Y step size']
+        nX = int(1+((x1 - x0) /deltaX))
+        x = x0 + (index % nX) * deltaX
+        y = y0 + int(index/nX) * deltaY
+        return x, y
+
         
         
 if __name__ == "__main__":
     filename = None
     if len(sys.argv) > 1:
+        DEBUG = 1
+    if len(sys.argv) > 1:
         filename = sys.argv[1]
     elif os.path.exists("SambaPhg_IR.map"):
         filename = "SambaPhg_IR.map"
     if filename is not None:
-        DEBUG = 1   
         w = OmnicMap(filename)
         print(type(w))
         print(type(w.data[0:10]))
