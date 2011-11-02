@@ -144,7 +144,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 self._nImages = 1
                 self._imageData = dataObject.data
                 if hasattr(dataObject, 'm'):
-                    if dataObject.m is None:
+                    if dataObject.m is not None:
                         for m in dataObject.m:
                             self._imageData = self._imageData / float(m)
                 self.slider.hide()
