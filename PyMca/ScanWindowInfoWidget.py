@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -40,7 +40,7 @@ import numpy.oldnumeric as Numeric
 
 DEBUG=0
 STATISTICS=1
-class SpecArithmetic:
+class SpecArithmetic(object):
     """
     This class tries to mimic SPEC operations.
     Correct peak positions and fwhm information
@@ -93,10 +93,10 @@ class SpecArithmetic:
         try:
             while ydata[idx] >= hm:
                idx = idx-1
-            x0 = xdata[idx]
-            x1 = xdata[idx+1]
-            y0 = ydata[idx]
-            y1 = ydata[idx+1]
+            x0 = float(xdata[idx])
+            x1 = float(xdata[idx+1])
+            y0 = float(ydata[idx])
+            y1 = float(ydata[idx+1])
         
             lhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
         except ZeroDivisionError:
@@ -109,10 +109,10 @@ class SpecArithmetic:
             while ydata[idx] >= hm:
                 idx = idx+1
         
-            x0 = xdata[idx-1]
-            x1 = xdata[idx]
-            y0 = ydata[idx-1]
-            y1 = ydata[idx]
+            x0 = float(xdata[idx-1])
+            x1 = float(xdata[idx])
+            y0 = float(ydata[idx-1])
+            y1 = float(ydata[idx])
         
             uhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
         except ZeroDivisionError:
