@@ -125,6 +125,11 @@ class StackSelector(object):
             elif filelist[0][-3:].upper() in ["RBS"]:
                 stack = SupaVisioMap.SupaVisioMap(filelist[0])
                 omnicfile = True
+            elif filelist[0][-3:].upper() in ["SPE"] and\
+                 (line[0] not in ['$']):
+                #Roper Scientific format
+                #handle it as MarCCD stack
+                stack = QStack(imagestack=True)
             else:
                 stack = QSpecFileStack()
 

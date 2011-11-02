@@ -135,7 +135,7 @@ KEYS = 1
 VALUES = 2
 
 ###############################################################################
-class Image:
+class Image(object):
     """
     """
     def __init__(self):
@@ -155,7 +155,7 @@ class Image:
 
 ################################################################################
 
-class  EdfFile:
+class  EdfFile(object):
     """
     """
     ############################################################################
@@ -181,6 +181,7 @@ class  EdfFile:
         self.MARCCD = False
         self.TIFF = False
         self.PILATUS_CBF = False
+        self.SPE = False
         if sys.byteorder == "big": self.SysByteOrder = "HighByteFirst"
         else: self.SysByteOrder = "LowByteFirst"
         if access is not None:
@@ -237,6 +238,9 @@ class  EdfFile:
                         raise IOError("CBF support not implemented")
                     if twoChars[0] != "{":
                         self.PILATUS_CBF = True
+                elif os.path.basename(FileName).upper().endswith('.SPE'):
+                    if twoChars[0] != "$":
+                        self.SPE = True
         except:
             try:
                 self.File.close()
@@ -255,6 +259,10 @@ class  EdfFile:
             return
         if self.PILATUS_CBF:
             self._wrapPilatusCBF()
+            self.File.close()
+            return
+        if self.SPE:
+            self._wrapSPE()
             self.File.close()
             return
 
@@ -462,6 +470,39 @@ class  EdfFile:
         self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
         self.Images[Index].Header.update(self.__info)
 
+    def _wrapSPE(self):
+        if 0 and sys.version < '3.0':
+            self.File.seek(42)
+            xdim = numpy.int64(numpy.fromfile(self.File, numpy.int16, 1)[0])
+            self.File.seek(656)
+            ydim = numpy.int64(numpy.fromfile(self.File, numpy.int16, 1))
+            self.File.seek(4100)
+            self.__data = numpy.fromfile(self.File, numpy.uint16, int(xdim * ydim))
+        else:
+            import struct
+            self.File.seek(0)
+            a = self.File.read()
+            xdim = numpy.int64(struct.unpack('<h', a[42:44])[0])
+            ydim = numpy.int64(struct.unpack('<h', a[656:658])[0])
+            fmt = '<%dH' % int(xdim * ydim)
+            self.__data = numpy.array(struct.unpack(fmt, a[4100:int(4100+ int(2 * xdim * ydim))])).astype(numpy.uint16)
+        self.__data.shape = ydim, xdim
+        Index = 0
+        self.Images.append(Image())
+        self.NumImages = 1
+        self.Images[Index].Dim1 = ydim
+        self.Images[Index].Dim2 = xdim
+        self.Images[Index].NumDim = 2
+        self.Images[Index].DataType = 'UnsignedShort'
+        self.Images[Index].ByteOrder = 'LowByteFirst'
+        if self.SysByteOrder.upper() != self.Images[Index].ByteOrder.upper():
+            self.__data = self.__data.byteswap()
+        self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
+        self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
+        self.Images[Index].StaticHeader['Offset_1'] = 0
+        self.Images[Index].StaticHeader['Offset_2'] = 0
+        self.Images[Index].StaticHeader['DataType'] = self.Images[Index].DataType
+
     def GetNumImages(self):
         """ Returns number of images of the object (and associated file)
         """
@@ -509,7 +550,7 @@ class  EdfFile:
             raise ValueError("EdfFile: Index out of limit")
         if fastedf is None:fastedf = 0
         if Pos is None and Size is None:
-            if self.ADSC or self.MARCCD or self.PILATUS_CBF:
+            if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
                 return self.__data
             elif self.TIFF:
                 data = self._wrappedInstance.getData(Index)
@@ -546,7 +587,7 @@ class  EdfFile:
                     sizeToRead = self.Images[Index].Dim1 * datasize
                     Data = numpy.fromstring(self.File.read(sizeToRead),
                                 datatype)
-        elif self.ADSC or self.MARCCD or self.PILATUS_CBF:
+        elif self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
             return self.__data[Pos[1]:(Pos[1] + Size[1]),
                                Pos[0]:(Pos[0] + Size[0])]
         elif self.TIFF:
@@ -830,7 +871,7 @@ class  EdfFile:
     def __makeSureFileIsOpen(self):
         if DEBUG:
             print("Making sure file is open")
-        if self.ADSC or self.MARCCD or self.PILATUS_CBF:
+        if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
             if DEBUG:
                 print("Special case. Image is buffered")
             return
@@ -849,7 +890,7 @@ class  EdfFile:
     def __makeSureFileIsClosed(self):
         if DEBUG:
             print("Making sure file is closed")
-        if self.ADSC or self.MARCCD or self.PILATUS_CBF:
+        if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
             if DEBUG:
                 print("Special case. Image is buffered")
             return

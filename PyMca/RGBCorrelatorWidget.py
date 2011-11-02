@@ -930,7 +930,9 @@ class RGBCorrelatorWidget(qt.QWidget):
             if len(line):
                 if line[0] == "{":
                     return True
-                elif (line[0:2] in ["II", "MM"]) and filename.endswith('ccd'):
+                elif (line[0:2] in ["II", "MM"]) and filename.lower().endswith('ccd'):
+                    return True
+                elif (line[0] not in ["$"]) and filename.lower().endswith('spe'):
                     return True
         else:
             f = open(filename,'rb')
@@ -944,11 +946,15 @@ class RGBCorrelatorWidget(qt.QWidget):
                 i += 1
                 if i == len(line):
                     return False
+                print(2+i)
             if line[i] == eval('b"{"'):
                 return True
             if i == 0:
                 if (line[i:(i+2)] in [eval('b"II"'), eval('b"MM"')]) and\
-                     filename.endswith('ccd'):
+                     filename.lower().endswith('ccd'):
+                    return True
+                if (line[i:(i+1)] not in [eval('b"$"')]) and\
+                     filename.lower().endswith('spe'):
                     return True
         return False
 

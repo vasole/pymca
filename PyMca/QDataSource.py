@@ -129,6 +129,9 @@ def getSourceType(sourceName0):
         elif line[0:2] in ["II","MM"]:
             #this also accounts for TIFF
             mccd = True
+        elif sourceName.lower().endswith('.spe') and (line[0:1] != '$'):
+            #Roper images
+            mccd = True
         else:
             mccd = False
         if (line.startswith("{")) or mccd:
