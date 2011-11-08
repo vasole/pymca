@@ -1087,12 +1087,12 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         for idx in range(0, length, 16):
             if idx+15 < length:
                 for i in range(0,16):
-                    tmpstr += "%.4f " % data[idx+i]
+                    tmpstr += "%.7g " % data[idx+i]
                 if idx+16 != length:
                     tmpstr += "\\"
             else:
                 for i in range(idx, length):
-                    tmpstr += "%.4f " % data[i]
+                    tmpstr += "%.7g " % data[i]
             tmpstr += "\n"
         return tmpstr
         
