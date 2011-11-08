@@ -1236,7 +1236,11 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                     ffile.write("\n")
                     if filetype == 'MultiScan':
                         scan_n  = 1
+                        keylist = list(self.dataObjectsList)
                         for key in self.graph.curves.keys():
+                            if key not in keylist:
+                                keylist.append(key)        
+                        for key in keylist:
                             if key not in self.dataObjectsDict.keys():
                                 continue
                             if key == legend: continue
@@ -1671,7 +1675,11 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         output = []
         i = 0
         ndata = 0
+        keylist = list(self.dataObjectsList)
         for key in self.graph.curves.keys():
+            if key not in keylist:
+                keylist.append(key)        
+        for key in keylist:
             if key not in self.dataObjectsDict.keys():
                 continue
             if just_legend:
