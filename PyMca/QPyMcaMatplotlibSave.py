@@ -276,7 +276,8 @@ class SaveImageSetup(qt.QWidget):
             self.imageWidget.print_figure(finalFile,
                                           edgecolor='w',
                                           facecolor='w',
-                                          format=finalFile[-3:])
+                                          format=finalFile[-3:],
+                                          dpi=self.imageWidget.config['outputdpi'])
         except:
             print("WARNING: trying to save using obsolete method")
             config = self.imageWidget.getParameters()
@@ -340,7 +341,8 @@ class RightWidget(qt.QWidget):
                         'Zoom Y Min',
                         'Zoom Y Max',
                         'Value Min',
-                        'Value Max']
+                        'Value Max',
+                        'Output dpi']
         self.keyList = []
         for label in self.labelList:
             self.keyList.append(label.lower().replace(' ','').replace('/',""))
@@ -398,6 +400,10 @@ class RightWidget(qt.QWidget):
                     tip += "limits to the same value."
                     line.setToolTip(tip)
                     line.setText('0.0')
+                elif 'Output dpi' in self.labelList[i]:
+                    tip  = "=Output file resolution."
+                    line.setToolTip(tip)
+                    line.setText("%d" % 100)
                 else:
                     line.setText('1.0')
             self.gridLayout.addWidget(label, i, 0)
@@ -430,7 +436,10 @@ class RightWidget(qt.QWidget):
             if i > self.labelList.index('Image Background'):
                 text = str(self.comboBoxList[i].text())
                 if len(text):
-                    ddict[label] = float(text)
+                    if label == 'Output dpi':
+                        ddict[label] = int(text)
+                    else:
+                        ddict[label] = float(text)
                 else:
                     ddict[label] = None
             else:
@@ -446,7 +455,10 @@ class RightWidget(qt.QWidget):
                 i = self.keyList.index(label)
                 if i > self.labelList.index('Image Background'):
                     if ddict[label] is not None:
-                        self.comboBoxList[i].setText("%f" % ddict[label])
+                        if label == 'Output dpi':
+                            self.comboBoxList[i].setText("%d" % int(ddict[label]))
+                        else:
+                            self.comboBoxList[i].setText("%f" % ddict[label])
                 else:
                     txt = ddict[label]
                     if ddict[label] is not None:
@@ -531,7 +543,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      'valuemax':None,
                      'xlimits':xlimits,
                      'ylimits':ylimits,
-                     'vlimits':vlimits}
+                     'vlimits':vlimits,
+                     'outputdpi':dpi}
 
         #generate own colormaps
         cdict = {'red': ((0.0, 0.0, 0.0),
