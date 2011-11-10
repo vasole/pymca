@@ -1628,7 +1628,10 @@ def test():
     if len(sys.argv) > 1:
         if sys.argv[1].endswith('edf') or\
            sys.argv[1].endswith('cbf') or\
-           sys.argv[1].endswith('ccd'):
+           sys.argv[1].endswith('ccd') or\
+           sys.argv[1].endswith('spe') or\
+           sys.argv[1].endswith('tif') or\
+           sys.argv[1].endswith('tiff'):
             container = MaskImageWidget(profileselection=True)
             import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
