@@ -410,8 +410,13 @@ class TiffIO:
         else:
             print("WARNING: Non standard TIFF. Rows per strip TAG missing")
             
-        stripByteCounts = self._readIFDEntry(TAG_STRIP_BYTE_COUNTS,
+        stripByteCounts = [int(nRows * nColumns * nBits / 8)]
+        if TAG_STRIP_BYTE_COUNTS in tagIDList:
+            stripByteCounts = self._readIFDEntry(TAG_STRIP_BYTE_COUNTS,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+        else:
+            print("WARNING: Non standard TIFF. Strip byte counts TAG missing")
+
         if close:
             self.__makeSureFileIsClosed()
 
