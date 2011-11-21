@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -48,10 +48,14 @@ class PyMcaPrintPreview(qt.QDialog):
         self.setWindowTitle(name)
         self.setModal(modal)
         self.resize(400, 500)
-
+        self.printDialog = None
         if printer is None:
             printer = qt.QPrinter(qt.QPrinter.HighResolution)
             printer.setPageSize(qt.QPrinter.A4)
+            printerName = "%s"  % printer.printerName()            
+            if printerName in ['id24b2u']:
+                #id24 printer very slow in color mode
+                printer.setColorMode(qt.QPrinter.GrayScale)
             printer.setFullPage(True)
             if (printer.width() <= 0) or (printer.height() <= 0):
                 if QTVERSION < '4.2.0':         #this is impossible (no QGraphicsView)
@@ -348,9 +352,11 @@ class PyMcaPrintPreview(qt.QDialog):
     def __setup(self):
         """
         """
-        self.printer = qt.QPrinter()
-        printDialog = qt.QPrintDialog(self.printer, self)
-        if printDialog.exec_():
+        if self.printer is None:
+            self.printer = qt.QPrinter()
+        if self.printDialog is None:
+            self.printDialog = qt.QPrintDialog(self.printer, self)
+        if self.printDialog.exec_():
              self.printer.setFullPage(True)
              self.updatePrinter()
 
@@ -572,7 +578,6 @@ def testSimple():
 
 
     printer = qt.QPrinter(qt.QPrinter.HighResolution)
-    printer.setPageSize(qt.QPrinter.A4)
     printer.setFullPage(True)
     printer.setOutputFileName(os.path.splitext(filename)[0]+".ps")
 
