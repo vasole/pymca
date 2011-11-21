@@ -680,6 +680,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         formatlist = ["ASCII Files *.dat",
                       "EDF Files *.edf",
                       "EDF(Float32) Files *.edf",
+                      "TIFF(Float32 Mono) Files *.tif",
                       "TIFF(Mono) Files *.tif",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
@@ -704,7 +705,11 @@ class RGBCorrelatorWidget(qt.QWidget):
             if len(filename) < 4:
                 filename = filename+ filterused
             elif filename[-4:] != filterused :
-                filename = filename+ filterused
+                if filterused in ['.tif'] and filename[-4:] == 'tiff':
+                    #do not append .tif to the file name
+                    pass
+                else:
+                    filename = filename+ filterused
         else:
             filename = ""
         return filename
@@ -1007,7 +1012,10 @@ class RGBCorrelatorWidget(qt.QWidget):
             else:
                 ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
         elif fileExtension in [".tif", ".tiff"]:
-            dtype = None
+            if 'Float32'in self._saveFilter:
+                dtype = numpy.float32
+            else:
+                dtype = None
             ArraySave.save2DArrayListAsMonochromaticTiff(datalist,
                                                          filename,
                                                          labels=labels,
