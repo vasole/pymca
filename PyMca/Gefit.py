@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -444,6 +444,11 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
                     derivfactor.append(B*cos(help0))
                 free_index.append(i)
                 n_free += 1
+            elif (pmax-pmin) > 0:
+                print("WARNING: Quoted parameter outside boundaries")
+                print("Initial value = %f" % parameters[i])
+                print("Limits are %f and %f" % (pmax, pmin))
+                print("Parameter will be kept at its starting value")
     fitparam = array(fitparam, Float)
     alpha = zeros((n_free, n_free),Float)
     beta = zeros((1,n_free),Float)
