@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1446
+__revision__ = 1447
 
 import sys
 import os
@@ -39,6 +39,7 @@ TAG_ID  = { 256:"NumberOfColumns",           # S or L ImageWidth
             279:"StripByteCounts",           # S or L, The number of bytes in the strip AFTER any compression
             305:"Software",                  # ASCII
             306:"Date",                      # ASCII
+            320:"Colormap",                  # Colormap of Palette-color Images 
             339:"SampleFormat",              # SHORT Interpretation of data in each pixel
             }
 
@@ -54,6 +55,7 @@ TAG_ROWS_PER_STRIP     = 278
 TAG_STRIP_BYTE_COUNTS  = 279
 TAG_SOFTWARE           = 305
 TAG_DATE               = 306
+TAG_COLORMAP           = 320   
 TAG_SAMPLE_FORMAT      = 339   
 
 FIELD_TYPE  = {1:('BYTE', "B"),
@@ -332,6 +334,23 @@ class TiffIO:
             nBits = self._readIFDEntry(TAG_BITS_PER_SAMPLE,
                                           tagIDList, fieldTypeList, nValuesList, valueOffsetList)
 
+
+        if TAG_COLORMAP in tagIDList:
+            idx = tagIDList.index(TAG_COLORMAP)
+            tmpColormap = self._readIFDEntry(TAG_COLORMAP,
+                                          tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+            if max(tmpColormap) > 255:
+                tmpColormap = numpy.array(tmpColormap, dtype=numpy.uint16)
+                tmpColormap = (tmpColormap/256.).astype(numpy.uint8)
+            else:
+                tmpColormap = numpy.array(tmpColormap, dtype=numpy.uint8)
+            tmpColormap.shape = 3, -1
+            colormap = numpy.zeros((tmpColormap.shape[-1], 3), tmpColormap.dtype)
+            colormap[:,:] = tmpColormap.T
+            tmpColormap = None
+        else:
+            colormap = None
+            
         #sample format
         if TAG_SAMPLE_FORMAT in tagIDList:
             sampleFormat = valueOffsetList[tagIDList.index(TAG_SAMPLE_FORMAT)]
@@ -415,7 +434,7 @@ class TiffIO:
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
         else:
             print("WARNING: Non standard TIFF. Strip byte counts TAG missing")
-            if hasattr(nBits, index):
+            if hasattr(nBits, 'index'):
                 expectedSum = 0
                 for n in nBits:
                     expectedSum += int(nRows * nColumns * n / 8)
@@ -438,6 +457,7 @@ class TiffIO:
         info["stripByteCounts"] = stripByteCounts #bytes in strip since I do not support compression
         info["software"] = software
         info["date"] = date
+        info["colormap"] = colormap
         info["sampleFormat"] = sampleFormat
         info["photometricInterpretation"] = interpretation
         infoDict = {}
@@ -501,7 +521,8 @@ class TiffIO:
             #raise IOError("RGB Image. Only grayscale images supported")
         elif interpretation == 3:
             #Palette Color Image
-            raise IOError("Palette-color Image. Only grayscale images supported")
+            pass
+            #raise IOError("Palette-color Image. Only grayscale images supported")
         elif interpretation > 2:
             #Palette Color Image
             raise IOError("Only grayscale images supported")
@@ -509,7 +530,8 @@ class TiffIO:
         nRows    = info["nRows"]
         nColumns = info["nColumns"]
         nBits    = info["nBits"]
-        sampleFormat   = info["sampleFormat"]
+        colormap = info["colormap"]
+        sampleFormat = info["sampleFormat"]
 
         if rowMin is None:
             rowMin = 0
@@ -566,6 +588,9 @@ class TiffIO:
             raise ValueError("Unsupported combination. Bits = %s  Format = %d" % (nBits, sampleFormat))
         if hasattr(nBits, 'index'):
             image = numpy.zeros((nRows, nColumns, len(nBits)), dtype=dtype)
+        elif colormap is not None:
+            #should I use colormap dtype?
+            image = numpy.zeros((nRows, nColumns, 3), dtype=dtype)
         else:
             image = numpy.zeros((nRows, nColumns), dtype=dtype)
 
@@ -580,15 +605,17 @@ class TiffIO:
             bytesPerRow = int(stripByteCounts[0]/rowsPerStrip)
             fd.seek(stripOffsets[0] + rowMin * bytesPerRow)
             nBytes = (rowMax-rowMin+1) * bytesPerRow
-            readout = numpy.fromstring(fd.read(nBytes), dtype)
+            if self._swap:
+                readout = numpy.fromstring(fd.read(nBytes), dtype).byteswap()
+            else:
+                readout = numpy.fromstring(fd.read(nBytes), dtype)
             if hasattr(nBits, 'index'):
                 readout.shape = -1, nColumns, len(nBits)
+            elif info['colormap'] is not None:
+                readout = colormap[readout]
             else:
                 readout.shape = -1, nColumns
-            if self._swap:
-                image[rowMin:rowMax+1, :] = readout.byteswap()
-            else:
-                image[rowMin:rowMax+1, :] = readout
+            image[rowMin:rowMax+1, :] = readout
         else:
             for i in range(len(stripOffsets)):
                 #the amount of rows
@@ -624,14 +651,20 @@ class TiffIO:
                                                       readBytes+(n+1)]
                             readBytes += (n+1)
                         elif n > -128:
-                            readBytes += 1
                             bufferBytes += (-n+1) * tmpBuffer[readBytes:(readBytes+1)]
+                            readBytes += 1
                         else:
                             #if read -128 ignore the byte
                             continue
-                    readout = numpy.fromstring(bufferBytes, dtype)
+                    if self._swap:
+                        readout = numpy.fromstring(bufferBytes, dtype).byteswap()
+                    else:
+                        readout = numpy.fromstring(bufferBytes, dtype)
                     if hasattr(nBits, 'index'):
                         readout.shape = -1, nColumns, len(nBits)
+                    elif info['colormap'] is not None:
+                        readout = colormap[readout]
+                        readout.shape = -1, nColumns, 3
                     else:
                         readout.shape = -1, nColumns
                     image[rowStart:rowEnd, :] = readout
@@ -639,20 +672,26 @@ class TiffIO:
                     if 1:
                         #use numpy
                         readout = numpy.fromstring(fd.read(nBytes), dtype)
-                        if hasattr(nBits, 'index'):
-                            readout.shape = -1, nColumns, len(nBits)
-                        else:
-                            readout.shape = -1, nColumns
                         if self._swap:
                             image[rowStart:rowEnd, :] = readout.byteswap()
                         else:
                             image[rowStart:rowEnd, :] = readout
+                        if hasattr(nBits, 'index'):
+                            readout.shape = -1, nColumns, len(nBits)
+                        elif colormap is not None:
+                            readout = colormap[readout]
+                            readout.shape = -1, nColumns, 3
+                        else:
+                            readout.shape = -1, nColumns
                     else:
                         #using struct
                         readout = numpy.array(struct.unpack(st+"%df" % int(nBytes/4), fd.read(nBytes)),
                                               dtype=dtype)
                         if hasattr(nBits, 'index'):
                             readout.shape = -1, nColumns, len(nBits)
+                        elif colormap is not None:
+                            readout = colormap[readout]
+                            readout.shape = -1, nColumns, 3
                         else:
                             readout.shape = -1, nColumns
                         image[rowStart:rowEnd, :] = readout
@@ -1102,7 +1141,12 @@ if __name__ == "__main__":
     for i in range(tif.getNumberOfImages()):
         info = tif.getInfo(i)
         for key in info:
-            print("%s = %s" % (key, info[key]))
+            if key not in ["colormap"]:
+                print("%s = %s" % (key, info[key]))
+            elif info['colormap'] is not None:
+                print("RED   %s = %s" % (key, info[key][0:10, 0]))
+                print("GREEN %s = %s" % (key, info[key][0:10, 1]))
+                print("BLUE  %s = %s" % (key, info[key][0:10, 2]))
         data = tif.getImage(i)[0, 0:10]
-        print ("data [0, 0:10] = ", data)
+        print("data [0, 0:10] = ", data)
     
