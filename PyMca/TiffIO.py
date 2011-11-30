@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1422
+__revision__ = 1446
 
 import sys
 import os
@@ -403,19 +403,25 @@ class TiffIO:
         
         stripOffsets = self._readIFDEntry(TAG_STRIP_OFFSETS,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
-        rowsPerStrip = nRows
         if TAG_ROWS_PER_STRIP in tagIDList:
             rowsPerStrip = self._readIFDEntry(TAG_ROWS_PER_STRIP,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)[0]
         else:
+            rowsPerStrip = nRows
             print("WARNING: Non standard TIFF. Rows per strip TAG missing")
-            
-        stripByteCounts = [int(nRows * nColumns * nBits / 8)]
+
         if TAG_STRIP_BYTE_COUNTS in tagIDList:
             stripByteCounts = self._readIFDEntry(TAG_STRIP_BYTE_COUNTS,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
         else:
             print("WARNING: Non standard TIFF. Strip byte counts TAG missing")
+            if hasattr(nBits, index):
+                expectedSum = 0
+                for n in nBits:
+                    expectedSum += int(nRows * nColumns * n / 8)
+            else:
+                expectedSum = int(nRows * nColumns * nBits / 8)
+            stripByteCounts = [expectedSum]
 
         if close:
             self.__makeSureFileIsClosed()
@@ -489,8 +495,16 @@ class TiffIO:
                     print("Using PackBits compression")
         
         interpretation = info["photometricInterpretation"]
-        if interpretation > 2:
-            raise IOError("Only grey scale images supported")
+        if interpretation == 2:
+            #RGB
+            pass
+            #raise IOError("RGB Image. Only grayscale images supported")
+        elif interpretation == 3:
+            #Palette Color Image
+            raise IOError("Palette-color Image. Only grayscale images supported")
+        elif interpretation > 2:
+            #Palette Color Image
+            raise IOError("Only grayscale images supported")
 
         nRows    = info["nRows"]
         nColumns = info["nColumns"]
@@ -527,30 +541,33 @@ class TiffIO:
             else:
                 raise ValueError("Unsupported number of bits for a float: %d" % nBits)
         elif sampleFormat in [SAMPLE_FORMAT_UINT, SAMPLE_FORMAT_VOID]:
-            if nBits == 8:
+            if nBits in [8, (8, 8, 8), [8, 8, 8]]:
                 dtype = numpy.uint8
-            elif nBits == 16:
+            elif nBits in [16, (16, 16, 16), [16, 16, 16]]:
                 dtype = numpy.uint16
-            elif nBits == 32:
+            elif nBits in [32, (32, 32, 32), [32, 32, 32]]:
                 dtype = numpy.uint32
-            elif nBits == 64:
+            elif nBits in [64, (64, 64, 64), [64, 64, 64]]:
                 dtype = numpy.uint64
             else:
-                raise ValueError("Unsupported number of bits for unsigned int: %d" % nBits)
+                raise ValueError("Unsupported number of bits for unsigned int: %s" % (nBits,))
         elif sampleFormat == SAMPLE_FORMAT_INT:
-            if nBits == 8:
+            if nBits in [8, (8, 8, 8), [8, 8, 8]]:
                 dtype = numpy.int8
-            elif nBits == 16:
+            elif nBits in [16, (16, 16, 16), [16, 16, 16]]:
                 dtype = numpy.int16
-            elif nBits == 32:
+            elif nBits in [32, (32, 32, 32), [32, 32, 32]]:
                 dtype = numpy.int32
-            elif nBits == 64:
+            elif nBits in [64, (64, 64, 64), [64, 64, 64]]:
                 dtype = numpy.int64
             else:
-                raise ValueError("Unsupported number of bits for signed int: %d" % nBits)
+                raise ValueError("Unsupported number of bits for signed int: %s" % (nBits,))
         else:
-            raise ValueError("Unsupported combination. Bits = %d  Format = %d" % (nBits, sampleFormat))
-        image = numpy.zeros((nRows, nColumns), dtype=dtype)
+            raise ValueError("Unsupported combination. Bits = %s  Format = %d" % (nBits, sampleFormat))
+        if hasattr(nBits, 'index'):
+            image = numpy.zeros((nRows, nColumns, len(nBits)), dtype=dtype)
+        else:
+            image = numpy.zeros((nRows, nColumns), dtype=dtype)
 
         fd = self.fd
         st = self._structChar
@@ -564,7 +581,10 @@ class TiffIO:
             fd.seek(stripOffsets[0] + rowMin * bytesPerRow)
             nBytes = (rowMax-rowMin+1) * bytesPerRow
             readout = numpy.fromstring(fd.read(nBytes), dtype)
-            readout.shape = -1, nColumns
+            if hasattr(nBits, 'index'):
+                readout.shape = -1, nColumns, len(nBits)
+            else:
+                readout.shape = -1, nColumns
             if self._swap:
                 image[rowMin:rowMax+1, :] = readout.byteswap()
             else:
@@ -610,13 +630,19 @@ class TiffIO:
                             #if read -128 ignore the byte
                             continue
                     readout = numpy.fromstring(bufferBytes, dtype)
-                    readout.shape = -1, nColumns
+                    if hasattr(nBits, 'index'):
+                        readout.shape = -1, nColumns, len(nBits)
+                    else:
+                        readout.shape = -1, nColumns
                     image[rowStart:rowEnd, :] = readout
                 else:
                     if 1:
                         #use numpy
                         readout = numpy.fromstring(fd.read(nBytes), dtype)
-                        readout.shape = -1, nColumns
+                        if hasattr(nBits, 'index'):
+                            readout.shape = -1, nColumns, len(nBits)
+                        else:
+                            readout.shape = -1, nColumns
                         if self._swap:
                             image[rowStart:rowEnd, :] = readout.byteswap()
                         else:
@@ -625,7 +651,10 @@ class TiffIO:
                         #using struct
                         readout = numpy.array(struct.unpack(st+"%df" % int(nBytes/4), fd.read(nBytes)),
                                               dtype=dtype)
-                        readout.shape = -1, nColumns
+                        if hasattr(nBits, 'index'):
+                            readout.shape = -1, nColumns, len(nBits)
+                        else:
+                            readout.shape = -1, nColumns
                         image[rowStart:rowEnd, :] = readout
                 rowStart += nRowsToRead
         if close:
