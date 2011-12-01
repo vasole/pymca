@@ -791,7 +791,18 @@ class RGBCorrelatorWidget(qt.QWidget):
                                         title += os.path.basename(fname)
                                     else:
                                         title = os.path.basename(fname)
-                                    self.addImage(imgData, title)
+                                    if len(imgData.shape) == 3:
+                                        #color image
+                                        colorIndex = 0
+                                        for component in ['R', 'G', 'B']:
+                                            self.addImage(imgData[:,:,colorIndex].astype(numpy.float), title + '_' + component)
+                                            colorIndex += 1
+                                        data = imgData[:,:,0] * 0.114 +\
+                                               imgData[:,:,1] * 0.587 +\
+                                               imgData[:,:,2] * 0.299
+                                        self.addImage(data, title)
+                                    else:                                            
+                                        self.addImage(imgData, title)
                                 continue
                         except:
                             if DEBUG:
