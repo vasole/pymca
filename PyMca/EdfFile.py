@@ -403,13 +403,14 @@ class  EdfFile(object):
         self.__makeSureFileIsClosed()
 
     def _wrapTIFF(self):
-        self._wrappedInstance = TiffIO.TiffIO(self.File)
+        self._wrappedInstance = TiffIO.TiffIO(self.File, cache_length = 0, mono_output=True)
         self.NumImages = self._wrappedInstance.getNumberOfImages()
         if self.NumImages < 1:
             return
         info0 = self._wrappedInstance.getInfo(0)
         #for the time being I am going to assume all the images have the same shape
         data = self._wrappedInstance.getData(0)
+
         for Index in range(self.NumImages):
             info = self._wrappedInstance.getInfo(Index)
             self.Images.append(Image())
