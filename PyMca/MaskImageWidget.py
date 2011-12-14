@@ -1645,7 +1645,7 @@ def test():
         container = MaskImageWidget(profileselection=True)
         data = numpy.arange(40000).astype(numpy.int32)
         data.shape = 200, 200
-        data = numpy.eye(200)
+        #data = numpy.eye(200)
         container.setImageData(data)
         #data.shape = 100, 400
         #container.setImageData(None)
