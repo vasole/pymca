@@ -66,10 +66,10 @@ class Fit2DChiFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
             if self.__currentLine < lenBuffer:
                 line = self.__buffer[self.__currentLine]
                 try:
-                    data[i,:] = map(float, line.split())
+                    data[i,:] = [float(x) for x in line.split()]
                 except ValueError:
                     if i == 0:
-                        values = map(float, line.split())
+                        values = [float(x) for x in line.split()]
                         nActualValues = len(values)
                         if nActualValues < len(labels):
                             labels = labels[-nActualValues:]
