@@ -288,7 +288,10 @@ class QSourceSelector(qt.QWidget):
                 self.fileCombo.insertItem(nitems, key)
                 self.fileCombo.setCurrentIndex(nitems)
         else:
-            nitem = self.fileCombo.findText(qt.QString(key))
+            if hasattr(qt, "QString"):
+                nitem = self.fileCombo.findText(qt.QString(key))
+            else:
+                nitem = self.fileCombo.findText(key)
             self.fileCombo.setCurrentIndex(nitem)
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("SourceSelectorSignal"), (ddict,))        
@@ -306,7 +309,10 @@ class QSourceSelector(qt.QWidget):
         ddict["event"] = "SourceClosed"
         ddict["combokey"] = key
         ddict["sourcelist"] = self.mapCombo[key] * 1
-        nitem = self.fileCombo.findText(qt.QString(key))
+        if hasattr(qt, "QString"):
+            nitem = self.fileCombo.findText(qt.QString(key))
+        else:
+            nitem = self.fileCombo.findText(key)
         self.fileCombo.removeItem(nitem)
         del self.mapCombo[key]
         if QTVERSION < '4.0.0':
@@ -326,7 +332,11 @@ class QSourceSelector(qt.QWidget):
             return
         menu = qt.QMenu()
         for spec in speclist:
-            menu.addAction(qt.QString(spec), 
+            if hasattr(qt, "QString"):
+                menu.addAction(qt.QString(spec), 
+                        lambda i=spec:self.openFile(i, specsession=True))
+            else:
+                menu.addAction(spec, 
                         lambda i=spec:self.openFile(i, specsession=True))
         menu.exec_(self.cursor().pos())
 
