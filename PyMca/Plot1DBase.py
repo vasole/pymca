@@ -37,7 +37,7 @@ except:
     pass
 DEBUG = 0
 
-class Plot1DBase:
+class Plot1DBase(object):
     def __init__(self):
         self.__pluginDirList = []
         self.pluginList = []

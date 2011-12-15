@@ -16,7 +16,7 @@ These plugins will be compatible with any 1D-plot window that provides the funct
 """
 import weakref
 
-class Plugin1DBase:
+class Plugin1DBase(object):
     def __init__(self, plotWindow, **kw):
         """
         plotWindow is the object instantiating the plugin.
