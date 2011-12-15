@@ -41,9 +41,11 @@ CIGNORED    = 7
 
 ONED = 0
 
-def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=[],
+def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None,
                         weightflag = 0,model_deriv=None,deltachi=None,fulloutput=0,
                         xdata=None,ydata=None,sigmadata=None,linear=None):
+    if constrains is None:
+        constrains = []
     parameters = array(parameters0).astype(Float)
     if linear is None:linear=0
     if deltachi is None:
@@ -55,7 +57,7 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=[],
     #SimplePlot.plot([data[:,0],data[:,1]],yname='Received data')
     else:
         if xdata is None:
-            x=array(map(lambda y:y[0],data))
+            x=array([y[0] for y in data])
         else:
             x=xdata
     if linear:
@@ -629,7 +631,15 @@ def test(npoints):
     data = concatenate((xx, yy, sy),1)
     parameters = [0.0,1.0,900.0, 25., 10]
     stime = time.time()
-    fittedpar, chisq, sigmapar = LeastSquaresFit(gauss,parameters,data)
+    if 0:
+        #old fashion
+        fittedpar, chisq, sigmapar = LeastSquaresFit(gauss,parameters,data)
+    else:
+        #easier to handle
+        fittedpar, chisq, sigmapar = LeastSquaresFit(gauss,parameters,
+                                                     xdata=xx.reshape((-1,)),
+                                                     ydata=yy.reshape((-1,)),
+                                                     sigmadata=sy.reshape((-1,)))
     etime = time.time()
     print("Took ",etime - stime, "seconds")
     print("chi square  = ",chisq)
