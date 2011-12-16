@@ -209,7 +209,10 @@ class SaveImageSetup(qt.QWidget):
             self.lastOutputDir = PyMcaDirs.outputDir
 
         outfile.setWindowTitle("Output File Selection")
-        strlist = qt.QStringList()
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
+        else:
+            strlist = []
         format_list = []
         format_list.append('Graphics PNG *.png')
         format_list.append('Graphics EPS *.eps')
