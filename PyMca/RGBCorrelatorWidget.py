@@ -27,6 +27,7 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
+import traceback
 import RGBCorrelatorSlider
 import RGBCorrelatorTable
 import RGBImageCalculator
@@ -764,14 +765,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.outputDir = os.path.dirname(filelist[0])
         try:
             for fname in filelist:
-                if self._isEdf(fname):
-                    source = DataReader(fname)
-                    for key in source.getSourceInfo()['KeyList']:
-                        dataObject = source.getDataObject(key)
-                        title = dataObject.info.get("Title", key)
-                        self.addImage(dataObject.data,
-                                    os.path.basename(fname)+" "+title)
-                elif fname.lower().split(".")[-1] in ["jpg","jpeg",
+                if fname.lower().split(".")[-1] in ["jpg","jpeg",
                                                       "tif","tiff",
                                                       "png"]:
                     if fname.lower().split(".")[-1] in ["tif", "tiff"]:
@@ -837,6 +831,13 @@ class RGBCorrelatorWidget(qt.QWidget):
                                 pixmap[:,:,1] * 0.587 +\
                                 pixmap[:,:,2] * 0.299
                     self.addImage(data, os.path.basename(fname))
+                elif self._isEdf(fname):
+                    source = DataReader(fname)
+                    for key in source.getSourceInfo()['KeyList']:
+                        dataObject = source.getDataObject(key)
+                        title = dataObject.info.get("Title", key)
+                        self.addImage(dataObject.data,
+                                    os.path.basename(fname)+" "+title)
                 elif filterused.upper().startswith("TEXTIMAGE"):
                     data = numpy.loadtxt(fname)
                     self.addImage(data, os.path.basename(fname))
@@ -851,6 +852,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error adding file: %s" % sys.exc_info()[1])
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             if DEBUG:
                 raise
@@ -937,41 +940,22 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
         
     def _isEdf(self, filename):
+        f = open(filename, 'rb')
+        twoBytes = f.read(2)
+        f.close()
         if sys.version < '3.0':
-            f = open(filename)
-            line = f.readline().replace('\n',"")
-            if not len(line):
-                line = f.readline().replace('\n',"")
-            f.close()
-            if len(line):
-                if line[0] == "{":
-                    return True
-                elif (line[0:2] in ["II", "MM"]) and filename.lower().endswith('ccd'):
-                    return True
-                elif (line[0] not in ["$"]) and filename.lower().endswith('spe'):
-                    return True
+            twoChar = twoBytes
         else:
-            f = open(filename,'rb')
-            #10 characters should ne enough
-            line = f.read(10)
-            f.close()
-            #this eval is needed to support python 2.5
-            tst = eval('b"\\n"')
-            i = 0
-            while line[i] == tst:
-                i += 1
-                if i == len(line):
-                    return False
-                print(2+i)
-            if line[i] == eval('b"{"'):
-                return True
-            if i == 0:
-                if (line[i:(i+2)] in [eval('b"II"'), eval('b"MM"')]) and\
-                     filename.lower().endswith('ccd'):
-                    return True
-                if (line[i:(i+1)] not in [eval('b"$"')]) and\
-                     filename.lower().endswith('spe'):
-                    return True
+            try:
+                twoChar = twoBytes.decode('utf-8')
+            except:
+                twoChar = "__dummy__"
+        if twoChar in ["II", "MM", "\n{"] or\
+           twoChar[0] in ["{"] or\
+           filename.lower().endswith('cbf')or\
+           (filename.lower().endswith('spe') and twoChar[0] not in ["$"]):
+            #very likely wrapped as EDF
+            return True
         return False
 
     def saveButtonClicked(self):

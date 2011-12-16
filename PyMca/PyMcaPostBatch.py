@@ -43,12 +43,27 @@ QTVERSION = qt.qVersion()
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
     def addBatchDatFile(self, filename, ignoresigma=None):
         #test if filename is an EDF ...
-        f = open(filename)
-        line = f.readline()
-        if not len(line.replace("\n","")):
-            line = f.readline()
+        #this is a more complete test
+        #but it would rewire to import too many things
+        #import QDataSource
+        #sourceType = QDataSource.getSourceType(filename)
+        #if sourceType.upper().startswith("EDFFILE"):
+        #    return self.addFileList([filename])
+        f = open(filename, 'rb')
+        twoBytes = f.read(2)
         f.close()
-        if line[0] == "{":
+        if sys.version < '3.0':
+            twoChar = twoBytes
+        else:
+            try:
+                twoChar = twoBytes.decode('utf-8')
+            except:
+                twoChar = "__dummy__"
+        if twoChar in ["II", "MM", "\n{"] or\
+           twoChar[0] in ["{"] or\
+           filename.lower().endswith('cbf')or\
+           (filename.lower().endswith('spe') and twoChar[0] not in ['$']):
+            #very likely wrapped as EDF
             return self.addFileList([filename])
         
         text = str(self.windowTitle())
