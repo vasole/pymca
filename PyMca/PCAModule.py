@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -40,6 +40,7 @@ except ImportError:
     MDP = False
 
 import Lanczos
+import PCATools
 import os
 DEBUG = 0
 import time
@@ -388,6 +389,10 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
     """
     This is a covariance method using numpy numpy.linalg.eigh
     """
+    return PCATools.numpyPCA(stack,
+                             ncomponents=ncomponents,
+                             binning=binning,
+                             **kw)
     #This part is common to all ...
     if binning is None:
         binning = 1
@@ -849,7 +854,6 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
         if data.shape != oldShape:
             data.shape = oldShape        
     return images, eigenvalues, vectors
-
 
 if __name__ == "__main__":
     import EDFStack

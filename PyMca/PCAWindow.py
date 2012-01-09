@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -58,7 +58,7 @@ class PCAParametersDialog(qt.QDialog):
         self.methodOptions = qt.QGroupBox(self)
         self.methodOptions.setTitle('PCA Method to use')
         self.methods = ['Covariance', 'Expectation Max.', 'Cov. Multiple Arrays']
-        self.functions = [PCAModule.lanczosPCA,
+        self.functions = [PCAModule.numpyPCA,
                           PCAModule.expectationMaximizationPCA,
                           PCAModule.multipleArrayPCA]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
