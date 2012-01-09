@@ -77,11 +77,14 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         nCurves = len(curves)
         if not nCurves:
             return
+        xmin, xmax = self.getGraphXLimits()
         i = 0
         for curve in curves:
             x, y, legend, info = curve[0:4]
+            i1 = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
+            yMax = numpy.take(y, i1).max()
             try:
-                y = y/y.max()
+                y = y/yMax
             except:
                 continue
             if i == 0:
@@ -107,9 +110,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         nCurves = len(curves)
         if not nCurves:
             return
+        xmin, xmax = self.getGraphXLimits()
         i = 0
         for curve in curves:
             x, y, legend, info = curve[0:4]
+            i1 = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
+            x = numpy.take(x, i1)
+            y = numpy.take(y, i1)
             try:
                 y = y - y.min()
                 y = y/y.max()
@@ -138,9 +145,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         nCurves = len(curves)
         if not nCurves:
             return
+        xmin, xmax = self.getGraphXLimits()
         i = 0
         for curve in curves:
             x, y, legend, info = curve[0:4]
+            i1 = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
+            x = numpy.take(x, i1)
+            y = numpy.take(y, i1)
             try:
                 y = y - y.min()
                 y = y/y.sum()
@@ -169,9 +180,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         nCurves = len(curves)
         if not nCurves:
             return
+        xmin, xmax = self.getGraphXLimits()
         i = 0
         for curve in curves:
             x, y, legend, info = curve[0:4]
+            i1 = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
+            x = numpy.take(x, i1)
+            y = numpy.take(y, i1)
             try:
                 y = y - y.min()
                 y = y/numpy.trapz(y, x)
@@ -210,8 +225,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             return
         
         x, y, legend0, info = activeCurve
-        xmin = x.min()
-        xmax = x.max()
+        xmin, xmax = self.getGraphXLimits()
         y = y.astype(numpy.float)
 
         #get the nonzero values
