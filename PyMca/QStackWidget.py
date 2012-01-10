@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -112,23 +112,23 @@ class QStackWidget(StackBase.StackBase,
                                                         imageicons=False)
             self._stackSaveMenu = qt.QMenu()
             if HDF5:
-                self._stackSaveMenu.addAction(QString("Stack as Spectra"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Spectra"),
                                                  self.saveStackAsNeXusSpectra)
-                self._stackSaveMenu.addAction(QString("Stack as Images"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Images"),
                                                  self.saveStackAsNeXusImages)
-                self._stackSaveMenu.addAction(QString("Stack as Float32 Spectra"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Spectra"),
                                                  self.saveStackAsFloat32NeXusSpectra)
-                self._stackSaveMenu.addAction(QString("Stack as Float64 Spectra"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Spectra"),
                                                  self.saveStackAsFloat64NeXusSpectra)
-                self._stackSaveMenu.addAction(QString("Stack as Float32 Images"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Images"),
                                                  self.saveStackAsFloat32NeXusImages)
-                self._stackSaveMenu.addAction(QString("Stack as Float64 Images"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Images"),
                                                  self.saveStackAsFloat64NeXusImages)
-                self._stackSaveMenu.addAction(QString("Stack as HDF5 /data"),
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as HDF5 /data"),
                                                  self.saveStackAsSimplestHDF5)
-            self._stackSaveMenu.addAction(QString("Stack as Monochromatic TIFF Images"),
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Monochromatic TIFF Images"),
                                                  self.saveStackAsMonochromaticTiffImages)
-            self._stackSaveMenu.addAction(QString("Stack as Float32 TIFF Images"),
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 TIFF Images"),
                                                  self.saveStackAsFloat32TiffImages)
             self._stackSaveMenu.addAction(QString("Standard Graphics"),
                                 self.stackWidget.graphWidget._saveIconSignal)
@@ -307,16 +307,29 @@ class QStackWidget(StackBase.StackBase,
     def saveStackAsNeXus(self, dtype=None, interpretation=None):
         mcaIndex = self._stack.info.get('McaIndex', -1)
         if interpretation is None:
-            if mcaIndex in [0, -1]:
-                interpretation = "spectrum"
-            else:
+            if mcaIndex in [0]:
                 interpretation = "image"
+            else:
+                interpretation = "spectrum"
         if interpretation not in ["spectrum", "image"]:
             raise ValueError("Unknown data interpretation %s" % interpretation)
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self._stack.data,
+        #get limits
+        row0, row1 = self.stackWidget.graph.getY1AxisLimits()
+        col0, col1 = self.stackWidget.graph.getX1AxisLimits()
+        #this should go to array save ...
+        shape = self._stack.data.shape
+        row0 = int(max([row0+0.5, 0]))
+        row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
+        col0 = int(max([col0+0.5, 0]))
+        col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
+        if mcaIndex in [0]:
+            view = self._stack.data[:, row0:row1+1, col0:col1+1]
+        else:
+            view = self._stack.data[row0:row1+1, col0:col1+1,:]
+        ArraySave.save3DArrayAsHDF5(view,
                                     filename,
                                     labels = None,
                                     dtype=dtype,
