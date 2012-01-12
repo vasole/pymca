@@ -391,7 +391,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                         self.data[i:i+tmp.shape[1],
                                                   j:j+tmp.shape[2], nImage] = tmp[0]
                             if mSelection is not None:
-                                for mca in range(yDataset.shape[0])):
+                                for mca in range(yDataset.shape[0]):
                                     i = int(n/dim1)
                                     j = n % dim1
                                     yData = self.data[i, j, :]
