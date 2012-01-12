@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -550,9 +550,11 @@ class ColormapDialog(qt.QDialog):
     change only the displayed min value
     """
     def setDisplayedMinValue(self, val):
+        val = float(val)
         self.minValue = val
         self.minText.setText("%g"%val)
         self.__x[1] = val
+        self.c.setMarkerXPos(self.c.markersdict[self.markers[1]]['marker'], val)
         self.c.newCurve("ConstrainedCurve", self.__x, self.__y)
 
     # MAXIMUM
@@ -583,6 +585,7 @@ class ColormapDialog(qt.QDialog):
     change only the displayed max value
     """
     def setDisplayedMaxValue(self, val):
+        val = float(val)
         self.maxValue = val
         self.maxText.setText("%g"%val)
         self.__x[2] = val
@@ -613,19 +616,21 @@ class ColormapDialog(qt.QDialog):
         #prevent unexpected behaviour because of bad limits
         if self.minValue > self.maxValue:
             vmax = self.minValue
+            vmin = self.maxValue
         else:
             vmax = self.maxValue
+            vmin = self.minValue
         try:
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL("ColormapChanged"),
                         (self.colormapIndex, self.autoscale,
-                         self.minValue, vmax,
+                         vmin, vmax,
                          self.dataMin, self.dataMax,
                          self.colormapType))
             else:
                 self.emit(qt.SIGNAL("ColormapChanged"),
                         self.colormapIndex, self.autoscale,
-                        self.minValue, vmax,
+                        vmin, vmax,
                         self.dataMin, self.dataMax,
                         self.colormapType)
             
