@@ -690,7 +690,20 @@ class QStackWidget(StackBase.StackBase,
         self.stackWidget.setImageData(self._stackImageData)
 
     def showOriginalMca(self):
-        self.sendMcaSelection(self._mcaData0, action="ADD")
+        goodData = numpy.isfinite(self._mcaData0.y[0].sum())
+        if goodData:
+            self.sendMcaSelection(self._mcaData0, action="ADD")
+
+    def handleNonFiniteData(self):
+        self._addMcaClicked(action="ADD")
+        msg = qt.QMessageBox(self)
+        msg.setIcon(qt.QMessageBox.Information)
+        msg.setWindowTitle("Non finite data")
+        text  = "Your data contain infinite values or nans.\n"
+        text += "Pixels containing those values will be ignored."
+        msg.setText(text)
+        msg.exec_()
+        return
 
     def showROIImageList(self, imageList, image_names=None):
         if self.roiBackgroundButton.isChecked():

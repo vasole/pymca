@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -208,6 +208,11 @@ class StackBase(object):
                                                 self._stack.data.dtype)
                 mcaData0 = numpy.zeros((shape[2],), numpy.float)
                 step = 1
+                if hasattr(self._stack, "monitor"):
+                    monitor = self._stack.monitor[:]
+                    monitor.shape = shape[2]
+                else:
+                    monitor = numpy.ones((shape[2],), numpy.float)
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
                     numpy.add(self._stackImageData[i:i+step,:],
@@ -253,7 +258,11 @@ class StackBase(object):
         self.showOriginalImage()
 
         #add the mca
-        self.showOriginalMca()
+        goodData = numpy.isfinite(self._mcaData0.y[0].sum())
+        if goodData:
+            self.showOriginalMca()
+        else:
+            self.handleNonFiniteData()
 
         #calculate the ROIs
         self._ROIDict = {'name': "ICR",
@@ -265,6 +274,9 @@ class StackBase(object):
         self.updateROIImages()
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackUpdated()
+
+    def handleNonFiniteData(self):
+        pass
 
     def updateROIImages(self, ddict=None):
         if ddict is None:
@@ -396,7 +408,8 @@ class StackBase(object):
         if self._stackImageData is None:
             return
         mcaData = None
-        if self._selectionMask is None:
+        goodData = numpy.isfinite(self._mcaData0.y[0].sum())
+        if (self._selectionMask is None) and goodData:
             if normalize:
                 npixels = self._stackImageData.shape[0] *\
                           self._stackImageData.shape[1] * 1.0
@@ -407,8 +420,15 @@ class StackBase(object):
             else:
                 dataObject = self._mcaData0
             return dataObject
-        npixels = self._selectionMask.sum()
-        if npixels == 0:
+
+        #deal with NaN and inf values
+        if self._selectionMask is None:
+            actualSelectionMask = numpy.isfinite(self._stackImageData)
+        else:
+            actualSelectionMask = self._selectionMask * numpy.isfinite(self._stackImageData)
+
+        npixels = actualSelectionMask.sum()
+        if (npixels == 0) and goodData:
             if normalize:
                 npixels = self._stackImageData.shape[0] * self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
@@ -423,10 +443,14 @@ class StackBase(object):
 
         n_nonselected = self._stackImageData.shape[0] *\
                         self._stackImageData.shape[1] - npixels
-        if n_nonselected < npixels:
-            arrayMask = (self._selectionMask == 0)
+        if goodData:
+            if n_nonselected < npixels:
+                arrayMask = (actualSelectionMask == 0)
+            else:
+                arrayMask = (actualSelectionMask > 0)
         else:
-            arrayMask = (self._selectionMask > 0)
+                arrayMask = (actualSelectionMask > 0)
+            
         cleanMask = numpy.nonzero(arrayMask)
         if DEBUG:
             print("self.fileIndex, self.mcaIndex = %d , %d" %\
@@ -548,8 +572,9 @@ class StackBase(object):
                 raise IndexError("File index undefined")
         if DEBUG:
             print("Mca sum elapsed = %f" % (time.time() - t0))
-        if n_nonselected < npixels:
-            mcaData = self._mcaData0.y[0] - mcaData
+        if goodData:
+            if n_nonselected < npixels:
+                mcaData = self._mcaData0.y[0] - mcaData
 
         if normalize:
             mcaData = mcaData/npixels
@@ -573,7 +598,7 @@ class StackBase(object):
             imiddle = int(0.5 * (i1 + i2))
 
         if i1 == i2:
-            dummy = self._stackImageData * 0.0
+            dummy = numpy.zeros(self._stackImageData.shape, numpy.float)
             imageDict = {'ROI': dummy,
                       'Maximum': dummy,
                       'Minimum': dummy,
@@ -582,7 +607,7 @@ class StackBase(object):
                       'Right': dummy,
                       'Background':dummy}
             return imageDict
-
+        
         if self.fileIndex == 0:
             if self.mcaIndex == 1:
                 leftImage = self._stack.data[:,i1,:]
@@ -753,13 +778,20 @@ class StackBase(object):
     def setSelectionMask(self, mask):
         if DEBUG:
             print("setSelectionMask called")
-        self._selectionMask = mask
+        goodData = numpy.isfinite(self._mcaData0.y[0].sum())
+
+        if goodData:
+            self._selectionMask = mask
+        else:
+            self._selectionMask = mask * numpy.isfinite(self._stackImageData)
+            
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].selectionMaskUpdated()
 
     def getSelectionMask(self):
         if DEBUG:
             print("getSelectionMask called")
+        return self._selectionMask
 
     def addImage(self, image, name, info=None, replace=False, replot=True):
         """

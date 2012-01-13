@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1009,8 +1009,9 @@ class MaskImageWidget(qt.QWidget):
 
     def _getSelectionMinMax(self):
         if self.colormap is None:
-            maxValue = self.__imageData.max()
-            minValue = self.__imageData.min()
+            goodData = self.__imageData[numpy.isfinite(self.__imageData)]
+            maxValue = goodData.max()
+            minValue = goodData.min()
         else:
             minValue = self.colormap[2]
             maxValue = self.colormap[3]
@@ -1018,27 +1019,36 @@ class MaskImageWidget(qt.QWidget):
         return minValue, maxValue
 
     def _selectMax(self):
-        self.__selectionMask = numpy.zeros(self.__imageData.shape,
+        selectionMask = numpy.zeros(self.__imageData.shape,
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
-        self.__selectionMask[self.__imageData >= maxValue] = 1
+        tmpData = numpy.array(self.__imageData, copy=True)
+        tmpData[numpy.isfinite(self.__imageData)] = minValue
+        selectionMask[tmpData >= maxValue] = 1
+        self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
         self._emitMaskChangedSignal()
         
     def _selectMiddle(self):
-        self.__selectionMask = numpy.ones(self.__imageData.shape,
+        selectionMask = numpy.zeros(self.__imageData.shape,
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
-        self.__selectionMask[self.__imageData >= maxValue] = 0
-        self.__selectionMask[self.__imageData <= minValue] = 0
+        tmpData = numpy.array(self.__imageData, copy=True)
+        tmpData[numpy.isfinite(self.__imageData)] = maxValue
+        selectionMask[tmpData >= maxValue] = 0
+        selectionMask[tmpData <= minValue] = 0
+        self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
         self._emitMaskChangedSignal()        
 
     def _selectMin(self):
-        self.__selectionMask = numpy.zeros(self.__imageData.shape,
+        selectionMask = numpy.zeros(self.__imageData.shape,
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
-        self.__selectionMask[self.__imageData <= minValue] = 1
+        tmpData = numpy.array(self.__imageData, copy=True)
+        tmpData[numpy.isfinite(self.__imageData)] = maxValue
+        selectionMask[tmpData <= minValue] = 1
+        self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
         self._emitMaskChangedSignal()
         
@@ -1070,6 +1080,9 @@ class MaskImageWidget(qt.QWidget):
             self.emitMaskImageSignal(ddict)
             
     def setSelectionMask(self, mask, plot=True):
+        if mask is not None:
+            if self.__imageData is not None:
+                mask *=  numpy.isfinite(self.__imageData)
         self.__selectionMask = mask
         if plot:
             self.plotImage(update=False)
@@ -1093,8 +1106,12 @@ class MaskImageWidget(qt.QWidget):
         if clearmask:
             self.__selectionMask = None
         if self.colormapDialog is not None:
-            minData = self.__imageData.min()
-            maxData = self.__imageData.max()
+            goodData = self.__imageData[numpy.isfinite(self.__imageData)]
+            minData = goodData.min()
+            maxData = goodData.max()
+            if self.colormapDialog.autoscale:
+                self.colormapDialog.setDisplayedMinValue(minData) 
+                self.colormapDialog.setDisplayedMaxValue(maxData) 
             self.colormapDialog.setDataMinMax(minData, maxData, update=True)
         else:
             self.plotImage(update = True)
@@ -1188,6 +1205,22 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap = self.__pixmap0.copy()
             return
 
+        tmpData = numpy.isfinite(self.__imageData)
+        goodData = tmpData.min()
+        
+        if self.colormapDialog is not None:
+            minData = self.colormapDialog.dataMin
+            maxData = self.colormapDialog.dataMax
+        else:
+            if goodData:
+                minData = self.__imageData.min()
+                maxData = self.__imageData.max()
+            else:
+                tmpData = self.__imageData[tmpData]
+                minData = tmpData.min()
+                maxData = tmpData.max()
+        tmpData = None
+                
         if colormap is None:
             (self.__pixmap,size,minmax)= spslut.transform(\
                                 self.__imageData,
@@ -1195,12 +1228,35 @@ class MaskImageWidget(qt.QWidget):
                                 (self.__defaultColormapType,3.0),
                                 "BGRX",
                                 self.__defaultColormap,
-                                1,
-                                (0,1),
+                                0,
+                                (minData,maxData),
                                 (0, 255), 1)
         else:
-            if len(colormap) < 7: colormap.append(spslut.LINEAR)
-            (self.__pixmap,size,minmax)= spslut.transform(\
+            if len(colormap) < 7:
+                colormap.append(spslut.LINEAR)
+            if goodData:
+                (self.__pixmap,size,minmax)= spslut.transform(\
+                                self.__imageData,
+                                (1,0),
+                                (colormap[6],3.0),
+                                "BGRX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                colormap[1],
+                                (colormap[2],colormap[3]),
+                                (0,255), 1)                
+            elif colormap[1]:
+                #autoscale
+                (self.__pixmap,size,minmax)= spslut.transform(\
+                                self.__imageData,
+                                (1,0),
+                                (colormap[6],3.0),
+                                "BGRX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                0,
+                                (minData,maxData),
+                                (0,255), 1)
+            else:
+                (self.__pixmap,size,minmax)= spslut.transform(\
                                 self.__imageData,
                                 (1,0),
                                 (colormap[6],3.0),
@@ -1240,16 +1296,39 @@ class MaskImageWidget(qt.QWidget):
                     for i in range(3):
                         self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
                                 tmp)
+                    if 0:
+                        #this is to recolor non finite points
+                        tmpMask = numpy.isfinite(self.__imageData)
+                        goodData = numpy.isfinite(self.__imageData).min()
+                        if not goodData:
+                            for i in range(3):
+                                self.__pixmap[:,:,i] *= tmpMask
                 else:
                     self.__pixmap = self.__pixmap0.copy()
                     self.__pixmap[self.__selectionMask>0,0]    = 0x40
                     self.__pixmap[self.__selectionMask>0,2]    = 0x70
                     self.__pixmap[self.__selectionMask>0,3]    = 0x40
+                    if 0:
+                        #this is to recolor non finite points
+                        tmpMask = ~numpy.isfinite(self.__imageData)
+                        badData = numpy.isfinite(self.__imageData).max()
+                        if badData:
+                            self.__pixmap[tmpMask,0]    = 0x00
+                            self.__pixmap[tmpMask,1]    = 0xff
+                            self.__pixmap[tmpMask,2]    = 0xff
+                            self.__pixmap[tmpMask,3]    = 0xff
         elif int(str(self.colormap[0])) > 1:     #color
             tmp = 1 - 0.2 * self.__selectionMask
             for i in range(3):
                 self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
                         tmp)
+            if 0:
+                tmpMask = numpy.isfinite(self.__imageData)
+                goodData = numpy.isfinite(self.__imageData).min()
+                if not goodData:
+                    if not goodData:
+                        for i in range(3):
+                            self.__pixmap[:,:,i] *= tmpMask                
         else:
             self.__pixmap = self.__pixmap0.copy()
             tmp  = 1 - self.__selectionMask
@@ -1257,6 +1336,14 @@ class MaskImageWidget(qt.QWidget):
                                   tmp * self.__pixmap0[:,:,2]
             self.__pixmap[:,:, 3] = (0x40 * self.__selectionMask) +\
                                   tmp * self.__pixmap0[:,:,3]
+            if 0:
+                tmpMask = ~numpy.isfinite(self.__imageData)
+                badData = numpy.isfinite(self.__imageData).max()
+                if badData:
+                    self.__pixmap[tmpMask,0]    = 0x00
+                    self.__pixmap[tmpMask,1]    = 0xff
+                    self.__pixmap[tmpMask,2]    = 0xff
+                    self.__pixmap[tmpMask,3]    = 0xff
         return
 
     def selectColormap(self):
@@ -1273,8 +1360,9 @@ class MaskImageWidget(qt.QWidget):
         self.colormapDialog.show()
 
     def __initColormapDialog(self):
-        minData = self.__imageData.min()
-        maxData = self.__imageData.max()
+        goodData = self.__imageData[numpy.isfinite(self.__imageData)]
+        maxData = goodData.max()
+        minData = goodData.min()
         self.colormapDialog = ColormapDialog.ColormapDialog()
         colormapIndex = self.__defaultColormap
         if colormapIndex == 1:
