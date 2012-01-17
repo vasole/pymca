@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1656,7 +1656,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY1(keyorindex)
 
     def mapToY1(self, keyorindex):
-        if type(keyorindex) in [type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -1677,7 +1677,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY2(keyorindex)
 
     def mapToY2(self, keyorindex):
-        if type(keyorindex) in [type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -2215,7 +2215,7 @@ class QtBlissGraph(qwt.QwtPlot):
             return (marker, distance)
 
     def toggleCurve(self, keyorindex):
-        if type(keyorindex) in [type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -2298,7 +2298,7 @@ class QtBlissGraph(qwt.QwtPlot):
     def setActiveCurve(self,keyorindex):
         if keyorindex is None:
             return -1
-        if type(keyorindex) in [type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
             if keyorindex in self.curves.keys():
                 #index = self.curveslist.index(keyorindex) + 1
                 index = self.curves[keyorindex]['curve']
