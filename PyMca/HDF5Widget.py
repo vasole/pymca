@@ -69,6 +69,11 @@ def h5py_sorting(object_list):
         print("Probably all entries do not have the key %s" % sorting_key)
         return object_list
 
+def _get_number_list(txt):
+    rexpr = '[/a-zA-Z:-]'
+    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
+    return nbs
+
 class QRLock(QtCore.QMutex):
 
     """
