@@ -306,33 +306,20 @@ class FileModel(QtCore.QAbstractItemModel):
         item = self.getProxyFromIndex(index)
         column = index.column()
         if column == 0:
-            """
-            # I would expect the title to be the proper
-            # thing to show ...
-            if hasattr(item, 'type'):
-                if item.type in ["Entry", "NXentry"]:
-                    children = item.children
-                    names = [posixpath.basename(o.name) for o in children]
-                    if "title" in names:
-                        idx = names.index("title")
-                        children[idx].getNode().value[0]
-                        return MyQVariant(children[idx].getNode().value[0])
-            """
             if isinstance(item, H5FileProxy):
                 return MyQVariant(os.path.basename(item.file.filename))
             else:
-                showtitle = False
-                if showtitle:
-                    if hasattr(item, 'type'):
-                        if item.type in ["Entry", "NXentry"]:
-                            children = item.children
-                            names = [posixpath.basename(o.name) for o in children]
-                            if "title" in names:
-                                idx = names.index("title")
-                                return MyQVariant("%s" % children[idx].getNode().value[0])
-                    return MyQVariant(posixpath.basename(item.name))
                 return MyQVariant(posixpath.basename(item.name))
         if column == 1:
+            showtitle = True
+            if showtitle:
+                if hasattr(item, 'type'):
+                    if item.type in ["Entry", "NXentry"]:
+                        children = item.children
+                        names = [posixpath.basename(o.name) for o in children]
+                        if "title" in names:
+                            idx = names.index("title")
+                            return MyQVariant("%s" % children[idx].getNode().value[0])
             return MyQVariant(item.type)
         if column == 2:
             return MyQVariant(item.shape)
