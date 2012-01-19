@@ -26,6 +26,8 @@
 #############################################################################*/
 import copy
 import sys
+if sys.version > '3.0':
+    unicode = str
 import string
 import PyMcaQt as qt
 if not hasattr(qt, 'QString'):
@@ -1656,7 +1658,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY1(keyorindex)
 
     def mapToY1(self, keyorindex):
-        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(unicode(" ")),type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -1677,7 +1679,7 @@ class QtBlissGraph(qwt.QwtPlot):
         self.mapToY2(keyorindex)
 
     def mapToY2(self, keyorindex):
-        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(unicode(" ")),type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -2215,7 +2217,7 @@ class QtBlissGraph(qwt.QwtPlot):
             return (marker, distance)
 
     def toggleCurve(self, keyorindex):
-        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(unicode(" ")),type(" "),type(str(" "))]:
             if keyorindex in self.curveslist:
                 index = self.curveslist.index(keyorindex) + 1
                 key   = keyorindex
@@ -2298,7 +2300,7 @@ class QtBlissGraph(qwt.QwtPlot):
     def setActiveCurve(self,keyorindex):
         if keyorindex is None:
             return -1
-        if type(keyorindex) in [type(u" "),type(" "),type(str(" "))]:
+        if type(keyorindex) in [type(unicode(" ")),type(" "),type(str(" "))]:
             if keyorindex in self.curves.keys():
                 #index = self.curveslist.index(keyorindex) + 1
                 index = self.curves[keyorindex]['curve']
