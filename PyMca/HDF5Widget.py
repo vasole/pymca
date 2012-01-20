@@ -319,7 +319,13 @@ class FileModel(QtCore.QAbstractItemModel):
                         names = [posixpath.basename(o.name) for o in children]
                         if "title" in names:
                             idx = names.index("title")
-                            return MyQVariant("%s" % children[idx].getNode().value[0])
+                            if len(children[idx].getNode().shape):
+                                #stored as an array of strings!!!
+                                #return just the first item
+                                return MyQVariant("%s" % children[idx].getNode().value[0])
+                            else:
+                                #stored as a string
+                                return MyQVariant("%s" % children[idx].getNode().value)
             return MyQVariant(item.type)
         if column == 2:
             return MyQVariant(item.shape)
