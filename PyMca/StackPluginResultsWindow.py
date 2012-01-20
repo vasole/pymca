@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -141,10 +141,12 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.imageList = [0] * nimages
             for i in range(nimages):
                 self.imageList[i] = images[i,:]
-                if self.imageList[i].max() < 0:
-                    self.imageList[i] *= -1
-                    if self.spectrumList is not None:
-                        self.spectrumList [i] *= -1
+                if 0:
+                    #leave the data as they originally come
+                    if self.imageList[i].max() < 0:
+                        self.imageList[i] *= -1
+                        if self.spectrumList is not None:
+                            self.spectrumList [i] *= -1
             if image_names is None:
                 self.imageNames = []
                 for i in range(nimages):
