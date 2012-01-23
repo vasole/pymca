@@ -285,7 +285,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                            shape=shape,
                            dtype=dtype,
                            compression=None)        
-    data.attrs['signal'] = "1".encode('utf-8')
+    data.attrs['signal'] = numpy.int32(1)
     if interpretation is not None:
         data.attrs['interpretation'] = interpretation.encode('utf-8')
     for i in range(len(shape)):
@@ -295,7 +295,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                dim.dtype,
                                dim,
                                chunks=dim.shape)
-        dset.attrs['axis'] = i + 1
+        dset.attrs['axis'] = numpy.int32(i + 1)
     nxEntry['end_time'] = getDate().encode('utf-8')
     return hdf, data
 
