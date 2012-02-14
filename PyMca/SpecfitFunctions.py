@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.14 $"
+__revision__ = "$Revision: 1.15 $"
 import numpy
 from numpy.oldnumeric import *
 arctan = numpy.arctan
@@ -156,6 +156,24 @@ class SpecfitFunctions:
        """
        return SpecfitFuns.apvoigt(pars,x)
        #return pars[0] + pars [1] * x + SpecfitFuns.apvoigt(pars[2:len(pars)],x)
+
+    def splitgauss(self,pars,x):
+       """
+       Asymmetric gaussian.
+       """
+       return SpecfitFuns.splitgauss(pars,x)
+
+    def splitlorentz(self,pars,x):
+       """
+       Asymmetric lorentz.
+       """
+       return SpecfitFuns.splitlorentz(pars,x)
+
+    def splitpvoigt(self,pars,x):
+       """
+       Asymmetric pseudovoigt.
+       """
+       return SpecfitFuns.splitpvoigt(pars,x)
 
     def stepdown(self,pars,x):
         """
@@ -542,14 +560,70 @@ class SpecfitFunctions:
         return fittedpar,cons
 
     def estimate_alorentz(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
-       fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
-       #get the number of found peaks
-       npeaks=int(len(cons[0])/3)
-       for i in range(npeaks):
+        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
+        #get the number of found peaks
+        npeaks=int(len(cons[0])/3)
+        for i in range(npeaks):
             height = fittedpar[3*i]
             fwhm = fittedpar[3*i+2]
             fittedpar[3*i] = (height * fwhm * 0.5 *pi)
-       return fittedpar,cons
+        return fittedpar,cons
+
+    def estimate_splitgauss(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
+        fittedpar, cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
+        #get the number of found peaks
+        npeaks=int(len(cons[0])/3)
+        estimated_parameters = []
+        estimated_constraints = zeros((3, 4*npeaks),Float)
+        for i in range(npeaks):
+            for j in range(3):
+                estimated_parameters.append(fittedpar[3*i+j])
+            estimated_parameters.append(fittedpar[3*i+2])
+            estimated_constraints[0][4*i]   = cons [0][3*i]
+            estimated_constraints[0][4*i+1] = cons [0][3*i+1]
+            estimated_constraints[0][4*i+2] = cons [0][3*i+2]
+            estimated_constraints[0][4*i+3] = cons [0][3*i+2]
+            estimated_constraints[1][4*i]   = cons [1][3*i]
+            estimated_constraints[1][4*i+1] = cons [1][3*i+1]
+            estimated_constraints[1][4*i+2] = cons [1][3*i+2]
+            estimated_constraints[1][4*i+3] = cons [1][3*i+2]
+            estimated_constraints[2][4*i]   = cons [2][3*i]
+            estimated_constraints[2][4*i+1] = cons [2][3*i+1]
+            estimated_constraints[2][4*i+2] = cons [2][3*i+2]
+            estimated_constraints[2][4*i+3] = cons [2][3*i+2]
+            if cons[0][3*i+2] == 4:
+                #same FWHM case
+                estimated_constraints[1][4*i+2] = int(cons[1][3*i+2]/3) * 4 + 2
+                estimated_constraints[1][4*i+3] = int(cons[1][3*i+2]/3) * 4 + 3         
+        return estimated_parameters, estimated_constraints
+        
+    def estimate_splitlorentz(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
+        fittedpar, cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
+        #get the number of found peaks
+        npeaks=int(len(cons[0])/3)
+        estimated_parameters = []
+        estimated_constraints = zeros((3, 4*npeaks),Float)
+        for i in range(npeaks):
+            for j in range(3):
+                estimated_parameters.append(fittedpar[3*i+j])
+            estimated_parameters.append(fittedpar[3*i+2])
+            estimated_constraints[0][4*i]   = cons [0][3*i]
+            estimated_constraints[0][4*i+1] = cons [0][3*i+1]
+            estimated_constraints[0][4*i+2] = cons [0][3*i+2]
+            estimated_constraints[0][4*i+3] = cons [0][3*i+2]
+            estimated_constraints[1][4*i]   = cons [1][3*i]
+            estimated_constraints[1][4*i+1] = cons [1][3*i+1]
+            estimated_constraints[1][4*i+2] = cons [1][3*i+2]
+            estimated_constraints[1][4*i+3] = cons [1][3*i+2]
+            estimated_constraints[2][4*i]   = cons [2][3*i]
+            estimated_constraints[2][4*i+1] = cons [2][3*i+1]
+            estimated_constraints[2][4*i+2] = cons [2][3*i+2]
+            estimated_constraints[2][4*i+3] = cons [2][3*i+2]
+            if cons[0][3*i+2] == 4:
+                #same FWHM case
+                estimated_constraints[1][4*i+2] = int(cons[1][3*i+2]/3) * 4 + 2
+                estimated_constraints[1][4*i+3] = int(cons[1][3*i+2]/3) * 4 + 3         
+        return estimated_parameters, estimated_constraints
        
     def estimate_pvoigt(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
@@ -591,6 +665,59 @@ class SpecfitFunctions:
                       newcons[0][4*i+3]=2
                       newcons[1][4*i+3]=0.0              
                       newcons[2][4*i+3]=1.0
+       return  newpar,newcons
+
+    def estimate_splitpvoigt(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
+       fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
+       npeaks=int(len(cons[0])/3)
+       newpar=[]
+       newcons=zeros((3,5*npeaks),Float)
+       #find out related parameters proper index
+       if self.config['NoConstrainsFlag'] == 0:
+            if self.config['SameFwhmFlag']:
+                j=0
+                #get the index of the free FWHM
+                for i in range(npeaks):
+                    if cons[0][3*i+2] != 4:
+                        j=i
+                for i in range(npeaks):
+                    if i != j:
+                       cons[1][3*i+2] = 4*j+2 
+       for i in range(npeaks):
+            #height
+            newpar.append(fittedpar[3*i])
+            #position
+            newpar.append(fittedpar[3*i+1])
+            #fwhm1
+            newpar.append(fittedpar[3*i+2])
+            #fwhm2 equal to the first
+            newpar.append(fittedpar[3*i+2])
+            #eta
+            newpar.append(0.5)
+            newcons[0][5*i]=cons[0][3*i]
+            newcons[0][5*i+1]=cons[0][3*i+1]
+            newcons[0][5*i+2]=cons[0][3*i+2]
+            newcons[0][5*i+3]=cons[0][3*i+2]
+            newcons[1][5*i]=cons[1][3*i]
+            newcons[1][5*i+1]=cons[1][3*i+1]
+            newcons[1][5*i+2]=cons[1][3*i+2]
+            newcons[1][5*i+3]=cons[1][3*i+2]
+            newcons[2][5*i]=cons[2][3*i]
+            newcons[2][5*i+1]=cons[2][3*i+1]
+            newcons[2][5*i+2]=cons[2][3*i+2]
+            newcons[2][5*i+3]=cons[2][3*i+2]
+            if cons[0][3*i+2] == 4:
+                newcons[1][5*i+3] = newcons[1][5*i+2]+1                
+            #Eta constrains
+            newcons[0][5*i+4]=0
+            newcons[1][5*i+4]=0
+            newcons[2][5*i+4]=0
+            if self.config['NoConstrainsFlag'] == 0:
+                if self.config['EtaFlag']:
+                      #QUOTED=2
+                      newcons[0][5*i+4]=2
+                      newcons[1][5*i+4]=0.0              
+                      newcons[2][5*i+4]=1.0
        return  newpar,newcons
 
     def estimate_apvoigt(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
@@ -1039,6 +1166,9 @@ FUNCTION=[fitfuns.gauss,
           fitfuns.alorentz,
           fitfuns.pvoigt,
           fitfuns.apvoigt,
+          fitfuns.splitgauss,
+          fitfuns.splitlorentz,
+          fitfuns.splitpvoigt,
           fitfuns.stepdown,
           fitfuns.stepup,
           fitfuns.slit,
@@ -1052,6 +1182,9 @@ PARAMETERS=[['Height','Position','FWHM'],
             ['Area','Position','Fwhm'],
             ['Height','Position','Fwhm','Eta'],
             ['Area','Position','Fwhm','Eta'],
+            ['Height','Position','LowFWHM', 'HighFWHM'],
+            ['Height','Position','LowFWHM', 'HighFWHM'],
+            ['Height','Position','LowFWHM', 'HighFWHM', 'Eta'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM'],
             ['Height','Position','FWHM','BeamFWHM'],
@@ -1066,6 +1199,9 @@ THEORY=['Gaussians',
         'Area Lorentz',
         'Pseudo-Voigt Line',
         'Area Pseudo-Voigt',
+        'Split Gaussian',
+        'Split Lorentz',
+        'Split Pseudo-Voigt',
         'Step Down',
         'Step Up',
         'Slit',
@@ -1079,6 +1215,9 @@ ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_alorentz,
           fitfuns.estimate_pvoigt,
           fitfuns.estimate_apvoigt,
+          fitfuns.estimate_splitgauss,
+          fitfuns.estimate_splitlorentz,
+          fitfuns.estimate_splitpvoigt,
           fitfuns.estimate_stepdown,
           fitfuns.estimate_stepup,
           fitfuns.estimate_slit,
@@ -1087,6 +1226,9 @@ ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_periodic_gauss]
 
 CONFIGURE=[fitfuns.configure,
+           fitfuns.configure,
+           fitfuns.configure,
+           fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,

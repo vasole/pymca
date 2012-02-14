@@ -904,6 +904,151 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     return PyArray_Return(ret);
 }
 
+static PyObject *
+SpecfitFuns_splitgauss(PyObject *self, PyObject *args)
+{
+    PyObject *input1, *input2;
+    int debug=0;
+    PyArrayObject   *param, *x;
+    PyArrayObject   *ret;
+    int nd_param, nd_x, npars;
+    npy_intp dim_param[2];
+    npy_intp dim_x[2];
+    int i, j, k;
+    double  dhelp, log2;
+    double  *px, *pret;
+    const char *tpe;
+    typedef struct {
+        double  height;
+        double  centroid;
+        double  fwhm1;
+        double  fwhm2;
+    } gaussian;
+    gaussian *pgauss;
+
+    /** statements **/
+    if (!PyArg_ParseTuple(args, "OO|i", &input1,&input2,&debug))
+        return NULL;
+
+    if (debug == 1){
+        tpe = input1->ob_type->tp_name;
+            printf("C(iotest): input1 type of object = %s\n",tpe);
+    }
+
+    param = (PyArrayObject *)
+             PyArray_ContiguousFromObject(input1, PyArray_DOUBLE,0,0);
+    if (param == NULL)
+        return NULL;
+    x = (PyArrayObject *)
+             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+    if (x == NULL){
+        Py_DECREF(param);
+        return NULL;
+    }
+
+    nd_param = param->nd;
+    nd_x = x->nd;
+    if(debug !=0) {
+        printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
+    }
+
+    if (nd_param == 1) {
+        dim_param [0] = param->dimensions[0];
+        dim_param [1] = 0;
+    }else{
+        dim_param [0] = param->dimensions[0];
+        dim_param [1] = param->dimensions[1];
+    }
+
+    if (nd_x == 1) {
+        dim_x [0] = x->dimensions[0];
+        dim_x [1] = 0;
+    }else{
+        if (nd_x == 0) {
+            dim_x [0] = 0;
+            dim_x [1] = 0;
+        }else{
+            dim_x [0] = x->dimensions[0];
+            dim_x [1] = x->dimensions[1];
+        }
+    }
+
+    if (nd_param == 1) {
+        npars = (int) dim_param[0];
+    }else{
+        npars = (int) (dim_param[0] * dim_param[1]);
+    }
+    if ((npars%4) != 0) {
+        printf("Incorrect number of parameters\n");
+        Py_DECREF(param);
+        Py_DECREF(x);
+        return NULL;
+    }
+
+    if(debug !=0) {
+        printf("parameters %d rows and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
+        printf("nparameters = %d\n",npars);
+        printf("x %d rows and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
+    }
+
+    /* Create the output array */
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    if (ret == NULL){
+        Py_DECREF(param);
+        Py_DECREF(x);
+        return NULL;
+    }
+    PyArray_FILLWBYTE(ret, 0);
+
+    log2 = 0.69314718055994529;
+    /* the pointer to the starting position of par data */
+    px = (double *) x->data;
+    pret = (double *) ret->data;
+
+    if (nd_x == 0){
+       *pret = 0;
+        pgauss = (gaussian *) param->data;
+        for (i=0;i<(npars/4);i++){
+			dhelp = (*px - pgauss[i].centroid) * (2.0*sqrt(2.0*log2));
+			if (dhelp > 0)
+			{
+				dhelp = dhelp/pgauss[i].fwhm2;
+			}else{
+				dhelp = dhelp/pgauss[i].fwhm1;
+			}
+            if (dhelp <= 20) {
+                *pret += pgauss[i].height * exp (-0.5 * dhelp * dhelp);
+            }
+		}
+    }else{
+        k = 1;
+        for (j=0;j<nd_x;j++){
+            k = (int) (dim_x [j] * k);
+        }
+        for (j=0;j<k;j++){
+            *pret = 0;
+            pgauss = (gaussian *) param->data;
+            for (i=0;i<(npars/4);i++){
+				dhelp = (*px - pgauss[i].centroid) * (2.0*sqrt(2.0*log2));
+				if (dhelp > 0)
+				{
+					dhelp = dhelp /pgauss[i].fwhm2;
+				}else{
+					dhelp = dhelp /pgauss[i].fwhm1;
+				}
+                if (dhelp <= 20) {
+					*pret += pgauss[i].height * exp (-0.5 * dhelp * dhelp);
+                }
+            }
+            pret++;
+            px++;
+        }
+    }
+
+    Py_DECREF(param);
+    Py_DECREF(x);
+    return PyArray_Return(ret);
+}
 
 static PyObject *
 SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
@@ -1246,6 +1391,191 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
+{
+    PyObject *input1, *input2;
+    int debug=0;
+    PyArrayObject   *param, *x;
+    PyArrayObject   *ret;
+    int nd_param, nd_x, npars;
+    npy_intp dim_param[2];
+    npy_intp dim_x[2];
+    int i, j, k;
+    double  dhelp, log2;
+    double  *px, *pret;
+    typedef struct {
+        double  height;
+        double  centroid;
+        double  fwhm1;
+        double  fwhm2;
+        double  eta;
+    } pvoigtian;
+    pvoigtian *ppvoigt;
+
+    /** statements **/
+    if (!PyArg_ParseTuple(args, "OO|i", &input1,&input2,&debug))
+        return NULL;
+
+    param = (PyArrayObject *)
+             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+    if (param == NULL)
+        return NULL;
+    x = (PyArrayObject *)
+             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+    if (x == NULL){
+        Py_DECREF(param);
+        return NULL;
+    }
+
+    nd_param = param->nd;
+    nd_x = x->nd;
+    if(debug !=0) {
+        printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
+    }
+
+    if (nd_param == 1) {
+        dim_param [0] = param->dimensions[0];
+        dim_param [1] = 0;
+    }else{
+        dim_param [0] = param->dimensions[0];
+        dim_param [1] = param->dimensions[1];
+    }
+
+    if (nd_x == 1) {
+        dim_x [0] = x->dimensions[0];
+        dim_x [1] = 0;
+    }else{
+        if (nd_x == 0) {
+            dim_x [0] = 0;
+            dim_x [1] = 0;
+        }else{
+            dim_x [0] = x->dimensions[0];
+            dim_x [1] = x->dimensions[1];
+        }
+    }
+
+    if (nd_param == 1) {
+        npars = (int) dim_param[0];
+    }else{
+        npars = (int) (dim_param[0] * dim_param[1]);
+    }
+    if ((npars%5) != 0) {
+        printf("Incorrect number of parameters\n");
+        Py_DECREF(param);
+        Py_DECREF(x);
+        return NULL;
+    }
+
+    if(debug !=0) {
+        printf("parameters %d rows and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
+        printf("nparameters = %d\n",npars);
+        printf("x %d rows and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
+    }
+
+    /* Create the output array */
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    if (ret == NULL){
+        Py_DECREF(param);
+        Py_DECREF(x);
+        return NULL;
+    }
+    PyArray_FILLWBYTE(ret, 0);
+
+    /* the pointer to the starting position of par data */
+    px = (double *) x->data;
+    pret = (double *) ret->data;
+
+    if (nd_x == 0){
+       *pret = 0;
+        ppvoigt = (pvoigtian *) param->data;
+        for (i=0;i<(npars/5);i++){
+            dhelp = (*px - ppvoigt[i].centroid);
+			if (dhelp > 0){
+				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm2);
+			}else{
+				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm1);
+			}
+            dhelp = 1.0 + (dhelp * dhelp);
+            *pret += ppvoigt[i].eta * (ppvoigt[i].height / dhelp);
+        }
+    }else{
+        k = 1;
+        for (j=0;j<nd_x;j++){
+            k = (int) (dim_x [j] * k);
+        }
+        for (j=0;j<k;j++){
+            *pret = 0;
+            ppvoigt = (pvoigtian *) param->data;
+            for (i=0;i<(npars/5);i++){
+            dhelp = (*px - ppvoigt[i].centroid);
+			if (dhelp > 0){
+				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm2);
+			}else{
+				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm1);
+			}
+            dhelp = 1.0 + (dhelp * dhelp);
+            *pret += ppvoigt[i].eta * (ppvoigt[i].height / dhelp);
+            }
+            pret++;
+            px++;
+        }
+    }
+
+    /* The lorentzian term is calculated */
+    /* Now it has to calculate the gaussian term */
+    log2 = 0.69314718055994529;
+
+    /* the pointer to the starting position of par data */
+    px = (double *) x->data;
+    pret = (double *) ret->data;
+
+    if (nd_x == 0){
+        ppvoigt = (pvoigtian *) param->data;
+        for (i=0;i<(npars/5);i++){
+			dhelp = (*px - ppvoigt[i].centroid);
+			if (dhelp >0){
+				dhelp = dhelp /(ppvoigt[i].fwhm2/(2.0*sqrt(2.0*log2)));
+			}else{
+				dhelp = dhelp /(ppvoigt[i].fwhm1/(2.0*sqrt(2.0*log2)));
+			}
+            if (dhelp <= 35) {
+                *pret += (1.0 - ppvoigt[i].eta) * ppvoigt[i].height \
+                        * exp (-0.5 * dhelp * dhelp);
+            }
+        }
+    }else{
+        k = 1;
+        for (j=0;j<nd_x;j++){
+            k = (int) (dim_x [j] * k);
+        }
+        for (j=0;j<k;j++){
+            ppvoigt = (pvoigtian *) param->data;
+            for (i=0;i<(npars/5);i++){
+				dhelp = (*px - ppvoigt[i].centroid);
+				if (dhelp > 0){
+					dhelp = dhelp /(ppvoigt[i].fwhm2/(2.0*sqrt(2.0*log2)));
+				}else{
+					dhelp = dhelp /(ppvoigt[i].fwhm1/(2.0*sqrt(2.0*log2)));
+				}
+                if (dhelp <= 35) {
+                *pret += (1.0 - ppvoigt[i].eta) * ppvoigt[i].height \
+                        * exp (-0.5 * dhelp * dhelp);
+                }
+        }
+            pret++;
+            px++;
+        }
+    }
+
+
+
+    /* word done */
+    Py_DECREF(param);
+    Py_DECREF(x);
+    return PyArray_Return(ret);
+}
+
+static PyObject *
 SpecfitFuns_lorentz(PyObject *self, PyObject *args)
 {
     PyObject *input1, *input2;
@@ -1483,6 +1813,141 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += plorentz[i].area /(0.5 * M_PI * plorentz[i].fwhm * dhelp);
+            }
+            pret++;
+            px++;
+        }
+    }
+
+    Py_DECREF(param);
+    Py_DECREF(x);
+    return PyArray_Return(ret);
+}
+
+static PyObject *
+SpecfitFuns_splitlorentz(PyObject *self, PyObject *args)
+{
+    PyObject *input1, *input2;
+    int debug=0;
+    PyArrayObject   *param, *x;
+    PyArrayObject   *ret;
+    int nd_param, nd_x, npars;
+    npy_intp dim_param[2];
+    npy_intp dim_x[2];
+    int i, j, k;
+    double  dhelp;
+    double  *px, *pret;
+    typedef struct {
+        double  height;
+        double  centroid;
+        double  fwhm1;
+        double  fwhm2;
+    } lorentzian;
+    lorentzian *plorentz;
+
+    /** statements **/
+    if (!PyArg_ParseTuple(args, "OO|i", &input1,&input2,&debug))
+        return NULL;
+
+    param = (PyArrayObject *)
+             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+    if (param == NULL)
+        return NULL;
+    x = (PyArrayObject *)
+             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+    if (x == NULL){
+        Py_DECREF(param);
+        return NULL;
+    }
+
+    nd_param = param->nd;
+    nd_x = x->nd;
+    if(debug !=0) {
+        printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
+    }
+
+    if (nd_param == 1) {
+        dim_param [0] = param->dimensions[0];
+        dim_param [1] = 0;
+    }else{
+        dim_param [0] = param->dimensions[0];
+        dim_param [1] = param->dimensions[1];
+    }
+
+    if (nd_x == 1) {
+        dim_x [0] = x->dimensions[0];
+        dim_x [1] = 0;
+    }else{
+        if (nd_x == 0) {
+            dim_x [0] = 0;
+            dim_x [1] = 0;
+        }else{
+            dim_x [0] = x->dimensions[0];
+            dim_x [1] = x->dimensions[1];
+        }
+    }
+
+    if (nd_param == 1) {
+        npars = (int) dim_param[0];
+    }else{
+        npars = (int) (dim_param[0] * dim_param[1]);
+    }
+    if ((npars%4) != 0) {
+        printf("Incorrect number of parameters\n");
+        Py_DECREF(param);
+        Py_DECREF(x);
+        return NULL;
+    }
+
+    if(debug !=0) {
+        printf("parameters %d rows and %d cols\n", (int)dim_param[0], (int)dim_param[1]);
+        printf("nparameters = %d\n",npars);
+        printf("x %d rows and %d cols\n", (int)dim_x[0], (int)dim_x[1]);
+    }
+
+    /* Create the output array */
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    if (ret == NULL){
+        Py_DECREF(param);
+        Py_DECREF(x);
+        return NULL;
+    }
+    PyArray_FILLWBYTE(ret, 0);
+
+    /* the pointer to the starting position of par data */
+    px = (double *) x->data;
+    pret = (double *) ret->data;
+
+    if (nd_x == 0){
+       *pret = 0;
+        plorentz = (lorentzian *) param->data;
+        for (i=0;i<(npars/4);i++){
+            dhelp = *px - plorentz[i].centroid;
+			if (dhelp > 0){
+				dhelp = dhelp /(0.5 * plorentz[i].fwhm2);
+			}else{
+				dhelp = dhelp /(0.5 * plorentz[i].fwhm1);
+			}
+            dhelp = 1.0 + (dhelp * dhelp);
+            *pret += (plorentz[i].height / dhelp);
+        }
+    }else{
+        k = 1;
+        for (j=0;j<nd_x;j++){
+            k = (int) (dim_x [j] * k);
+        }
+        for (j=0;j<k;j++){
+            *pret = 0;
+            plorentz = (lorentzian *) param->data;
+            for (i=0;i<(npars/4);i++){
+            dhelp = *px - plorentz[i].centroid;
+				if (dhelp > 0){
+					dhelp = dhelp /(0.5 * plorentz[i].fwhm2);
+				}else{
+					dhelp = dhelp /(0.5 * plorentz[i].fwhm1);
+				}
+			    dhelp = 1.0 + (dhelp * dhelp);
+				*pret += (plorentz[i].height / dhelp);
             }
             pret++;
             px++;
@@ -3894,6 +4359,9 @@ static PyMethodDef SpecfitFuns_methods[] = {
     {"SavitskyGolay",   SpecfitFuns_SavitskyGolay,   METH_VARARGS},
     {"spline",      SpecfitFuns_spline,   METH_VARARGS},
     {"_splint",     SpecfitFuns_splint,   METH_VARARGS},
+    {"splitgauss",  SpecfitFuns_splitgauss,   METH_VARARGS},
+    {"splitlorentz",SpecfitFuns_splitlorentz, METH_VARARGS},
+    {"splitpvoigt", SpecfitFuns_splitpvoigt, METH_VARARGS},
     {NULL,        NULL}        /* sentinel */
 };
 
