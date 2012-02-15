@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -166,29 +166,35 @@ class QImageItem(PolygonItem):
 
         #take care of y origin
         height = y - ymax
-        destination = qt.QRectF(x, y, width, height)
+        if height < 0:
+            destination = qt.QRectF(x, y+height, width, -height)
+        else:
+            destination = qt.QRectF(x, y, width, height)
 
         #with a brush I only get part of the image
         #brush = qt.QBrush(painter.brush())
         #brush.setTextureImage(self._qImage)
         #transform = qt.QTransform(brush.transform())
-        #transform.map(int(x), int(y), 0, 0)
-        #transform.map(int(x+width), int(y+height),
+        #transform.map(x, y, 0, 0)
+        #transform.map(x+width, y+height,
         #              self._qImage.width(), self._qImage.height())
         #brush.setTransform(transform)
         #the methods below give the same result 
         #painter.drawRect(destination)
         #painter.setBrush(brush)
         #painter.fillRect(destination, brush)
-
         #this works
         painter.setOpacity(self._alpha)
         if DEBUG:
             #draw the rectangle around the image
             #just for debugging purposes
             painter.drawRect(destination)
-        painter.drawImage(destination,
-                         self._qImage)
+        if height < 0:
+            painter.drawImage(destination,
+                             self._qImage.mirrored(0,1))
+        else:
+            painter.drawImage(destination,
+                             self._qImage)
         
     def setData(self, x, y, width=None, height=None):
         """
@@ -217,16 +223,21 @@ if __name__ == "__main__":
     from PyMca import QtBlissGraph
     app = qt.QApplication([])
     plot = QtBlissGraph.QtBlissGraph()
+    rescaler = qwt.QwtPlotRescaler(plot.canvas())
+    rescaler.setEnabled(True)
+   
     item = PolygonItem("Dummy")
     item.setData(x=[10, 400, 600.], y=[200, 600, 800.])
     item.attach(plot)
     image = QImageItem("Dummy2")
-    image.setData(x=10, y=[200, 600, 800.])
     qImage = qt.QImage(os.path.join(os.path.dirname(__file__),"PyMcaSplashImage.png"))
     image.setQImageList([qImage], qImage.width(), qImage.height())
     image.setData(200, 600)
     image.setAlpha(0.5)
     image.attach(plot)
-    plot.replot()
+    if 0:
+        plot.setY1AxisLimits(1000,0)
+    else:
+        plot.setY1AxisLimits(0, 1000)        
     plot.show()
     app.exec_()
