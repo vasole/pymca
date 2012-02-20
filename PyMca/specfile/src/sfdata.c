@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -395,7 +395,8 @@ if(0){
         rows++;
         /*cols++;*/
         if (cols >= maxcol) return(-1);            
-       /* printf("Adding a new row, nrows = %ld, ncols= %ld\n",rows,cols);*/
+        /* printf("Adding a new row, nrows = %ld, ncols= %ld\n",rows,cols);*/
+        /*printf("info col = %d cols = %d\n", dinfo[COL], cols);*/ 
         if (dinfo[COL] != 0 && cols != dinfo[COL]) {
                     ;
                     /*diffract31 crash -> nextline uncommented */
@@ -409,13 +410,16 @@ if(0){
               data = (double **) realloc ( data, sizeof(double) * (rows+1));
               data[rows] = dataline;
               dinfo[ROW]=rows+1;
+        }else{
+              printf("Error on scan %d line %d\n", index, rows+1);
+              break;
         }
         }
     }
 
 #ifndef _GNU_SOURCE
 #ifdef PYMCA_POSIX
-	setlocale(LC_NUMERIC, localeBuffer);
+    setlocale(LC_NUMERIC, localeBuffer);
 #endif
 #endif
     /* 
