@@ -412,7 +412,9 @@ if(0){
               dinfo[ROW]=rows+1;
         }else{
               printf("Error on scan %d line %d\n", index, rows+1);
-              break;
+              /* just ignore the line instead of stopping there with a
+              break; */
+              rows--;
         }
         }
     }
