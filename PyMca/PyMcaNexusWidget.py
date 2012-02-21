@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -32,7 +32,7 @@ except:
     from QNexusWidget import *
     import QStackWidget
     import HDF5Stack1D
-
+import h5py
 
 DEBUG=0
 
@@ -128,44 +128,41 @@ class PyMcaNexusWidget(QNexusWidget):
         widget.notifyCloseEventToWidget(self)
 
         #different ways to fill the stack
-        if 1:
+        if h5py.version.version < '2.0':
+            useInstance = True
+        else:
+            useInstance = False
+        if useInstance:
+            #this crashes with h5py 1.x
             #this way it is not loaded into memory unless requested
             #and cannot crash because same instance is used
             stack = phynxFile[name]
-
-            #the only problem is that, if the shape is not of type (a, b, c),
-            #it will not be possible to reshape it. In that case I have to
-            #actually read the values
-            nDim = len(stack.shape)
-            if (load) or (nDim != 3):
-                stack = stack.value
-                shape = stack.shape
-                if index == 0:
-                    #Stack of images
-                    n = 1
-                    for dim in shape[:-2]:
-                        n = n * dim
-                    stack.shape = n, shape[-2], shape[-1]
-                else:
-                    #stack of mca
-                    n = 1
-                    for dim in shape[:-1]:
-                        n = n * dim
-                    stack.shape = 1, n, shape[-1]
-                    #index equal -1 should be able to handle it
-                    #if not, one would have to uncomment next line
-                    #index = 2
-        elif 1:
-            #this does not crash because
-            #the same phynx instance is shared
-            stack = HDF5Stack1D.HDF5Stack1D(phynxFile, sel['selection'],
-                                scanlist=scanlist,
-                                dtype=None)
         else:
-            #this crashes
-            stack = HDF5Stack1D.HDF5Stack1D([filename], sel['selection'],
-                                scanlist=scanlist,
-                                dtype=None)
+            #create a new instance
+            stack = h5py.File(filename, 'r')[name]
+
+        #the only problem is that, if the shape is not of type (a, b, c),
+        #it will not be possible to reshape it. In that case I have to
+        #actually read the values
+        nDim = len(stack.shape)
+        if (load) or (nDim != 3):
+            stack = stack.value
+            shape = stack.shape
+            if index == 0:
+                #Stack of images
+                n = 1
+                for dim in shape[:-2]:
+                    n = n * dim
+                stack.shape = n, shape[-2], shape[-1]
+            else:
+                #stack of mca
+                n = 1
+                for dim in shape[:-1]:
+                    n = n * dim
+                stack.shape = 1, n, shape[-1]
+                #index equal -1 should be able to handle it
+                #if not, one would have to uncomment next line
+                #index = 2
         widget.setStack(stack, mcaindex=index)
         wid = id(widget)
         self._lastWidgetId = wid

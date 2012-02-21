@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -135,7 +135,7 @@ def get_family_pattern(filelist):
     return rootname
 
 
-class NexusDataSource:
+class NexusDataSource(object):
     def __init__(self,nameInput):
         if type(nameInput) == type([]):
             nameList = nameInput
@@ -153,9 +153,12 @@ class NexusDataSource:
             self.sourceName.append(name)
         self.sourceType = SOURCE_TYPE
         self.__sourceNameList = self.sourceName
+        self._sourceObjectList=[]
         self.refresh()
         
     def refresh(self):
+        for instance in self._sourceObjectList:
+            instance.close()
         self._sourceObjectList=[]
         FAMILY = False
         for name in self.__sourceNameList:

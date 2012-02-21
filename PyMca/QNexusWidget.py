@@ -344,11 +344,12 @@ class QNexusWidget(QtGui.QWidget):
             self.hdf5Widget.collapseAll()
             self.hdf5Widget.setModel(self._defaultModel)
             return
-        def dataSourceDistroyed(weakrefReference):
+        def dataSourceDestroyed(weakrefReference):
             idx = self._dataSourceList.index(weakrefReference)
             del self._dataSourceList[idx]
             del self._modelDict[weakrefReference]
-        ref = weakref.ref(dataSource, dataSourceDistroyed)
+            return
+        ref = weakref.ref(dataSource, dataSourceDestroyed)
         if ref not in self._dataSourceList:
             self._dataSourceList.append(ref)
             self._modelDict[ref] = HDF5Widget.FileModel()
@@ -362,8 +363,19 @@ class QNexusWidget(QtGui.QWidget):
 
     def showInfoWidget(self, filename, name, dset=False):
         self._checkWidgetDict()
-        fileIndex = self.data.sourceName.index(filename)
-        phynxFile  = self.data._sourceObjectList[fileIndex]
+        #this solution seems more robust
+        if 1:
+            useInstance = True
+        else:
+            if h5py.version.version < '2.0':
+                useInstance = True
+            else:
+                useInstance = False
+        if useInstance:
+            fileIndex = self.data.sourceName.index(filename)
+            phynxFile  = self.data._sourceObjectList[fileIndex]
+        else:
+            phynxFile  = h5py.File(filename, 'r')
         info = self.getInfo(phynxFile, name)
         widget = HDF5Info.HDF5InfoWidget()
         widget.notifyCloseEventToWidget(self)
@@ -380,6 +392,14 @@ class QNexusWidget(QtGui.QWidget):
                 pass
         self._lastWidgetId = wid
         self._widgetDict[wid] = widget
+        if useInstance:
+            def sourceObjectDestroyed(weakrefReference):
+                if wid == self._lastWidgetId:
+                    self._latWidgetId = None
+                if wid in self._widgetDict:
+                    del self._widgetDict[wid]
+            widget._sourceObjectWeakReference = weakref.ref(phynxFile,
+                                                 sourceObjectDestroyed)
         widget.setInfoDict(info)
         if dset:
             dataset = phynxFile[name]
