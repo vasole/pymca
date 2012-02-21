@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -531,6 +531,7 @@ class QNexusWidget(QtGui.QWidget):
                             self._aliasList.append(cnt)
                         self.cntTable.build(self._cntList, self._aliasList)
             elif ddict['type'] in ['NXentry', 'Entry']:
+                print "IT IS AN ENTRY!"
                 if self._lastAction is None:
                     return
                 action, selectionType = self._lastAction.split()
@@ -588,7 +589,7 @@ class QNexusWidget(QtGui.QWidget):
                 entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
                 sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['legend']     = os.path.basename(sel['SourceName'][0])+\
-                                    " " + sel['Key']
+                                    " " + posixpath.basename(entry) #it was sel['Key']
                 sel['selection'] = {}
                 sel['selection']['sourcename'] = filename
                 #deal with the case the "entry" is a dataset hunging at root level
