@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,48 +26,46 @@
 #############################################################################*/
 import numpy.oldnumeric as Numeric
 import numpy
-
-class SimpleMath:
+try:
+    from PyMca import SGModule
+except ImportError:
+    import SGModule
+    
+class SimpleMath(object):
     def derivate(self,xdata,ydata, xlimits=None):
-        if xlimits is None:
-            x=Numeric.array(xdata)
-            y=Numeric.array(ydata)
+        x=numpy.array(xdata, copy=False, dtype=numpy.float)
+        y=numpy.array(ydata, copy=False, dtype=numpy.float)
+        if xlimits is not None:
+            i1=numpy.nonzero((xdata>=xlimits[0])&\
+                               (xdata<=xlimits[1]))[0]
+            x=numpy.take(x,i1)
+            y=numpy.take(y,i1)
+        i1 = numpy.argsort(x)
+        x=numpy.take(x,i1)
+        y=numpy.take(y,i1)  
+        deltax=x[1:] - x[:-1]
+        i1=numpy.nonzero(abs(deltax)>0.0000001)[0]
+        x=numpy.take(x, i1)
+        y=numpy.take(y, i1)
+        minDelta = deltax.min()
+        xInter = numpy.arange(x[0]-minDelta,x[-1]+minDelta,minDelta)
+        yInter = numpy.interp(xInter, x, y, left=y[0], right=y[-1])
+        if len(yInter) > 50:
+            npoints = 5
         else:
-            i1=Numeric.nonzero((xdata>=xlimits[0])&\
-                               (xdata<=xlimits[1])) 
-            x=Numeric.take(xdata,i1)
-            y=Numeric.take(ydata,i1)
-        f=[1,-1]
-        deltax=Numeric.convolve(x,f,mode=0)
-        i1=Numeric.nonzero(abs(deltax)>0.0000001)
-        deltay=Numeric.convolve(y,f,mode=0)
-        deno=Numeric.take(deltax,i1)
-        num=Numeric.take(deltay,i1)
-        #Still what to do with the first and last point ...
-        try:
-            derivfirst=numpy.array([(y[1]-y[0])/(x[1]-x[0])])
-        except:
-            derivfirst=numpy.array([])            
-        try:
-            derivlast= numpy.array([(y[-1]-y[-2])/(x[-1]-x[-2])])       
-        except:
-            derivlast=numpy.array([])
-        result=Numeric.zeros(len(i1)+1, Numeric.Float)
-        xplot=Numeric.zeros(len(i1)+1, Numeric.Float)
-        result[1:len(i1)]=0.5*((num[0:-1]/deno[0:-1])+\
-                                     (num[1:]/deno[1:]))
-        if len(derivfirst):
-            result[0]=derivfirst
-        else:
-            result[0]=result[1]*1.0
-        if len(derivlast):
-            result[-1]=derivlast
-        else:
-            result[-1]=result[-2]*1.0
-        xplot[0]=x[0]
-        xplot[-1]=x[-1]
-        xplot[1:(len(i1)+1)]=Numeric.take(x,i1)
-        return xplot,result
+            npoints = 3
+        degree = 1
+        order = 1
+        coeff = SGModule.calc_coeff(npoints, degree, order)
+        N = int(numpy.size(coeff-1)/2)
+        yInterPrime = numpy.convolve(yInter, coeff, mode='valid')/minDelta
+        i1 = numpy.nonzero((x>=xInter[N+1]) & (x <= xInter[-N]))[0]
+        x = numpy.take(x, i1)
+        result = numpy.interp(x, xInter[(N+1):-N],
+                              yInterPrime[1:],
+                              left=yInterPrime[1],
+                              right=yInterPrime[-1])
+        return x, result
 
     def average(self,xdata0,ydata0):
         #check if all the x axis are identical (no interpolation needed)
@@ -189,7 +187,7 @@ class SimpleMath:
         else:
             ydata=self.y
         f=[0.25,0.5,0.25]
-        result=Numeric.array(ydata)
+        result=numpy.array(ydata, copy=False, dtype=numpy.float)
         if len(result) > 1:
             result[1:-1]=Numeric.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])
@@ -197,10 +195,12 @@ class SimpleMath:
         return result
         
 if __name__ == "__main__":
-    x = Numeric.arange(10.)
-    xlist = [x-0.5 , x+0.5]
-    y     = [2 * x, -2*x]
+    x = numpy.arange(100.)*0.25
+    y = x*x + 2 * x
     a = SimpleMath()
-    print(a.average(xlist,y))
-    print(a.derivate(x, 2*x))
+    #print(a.average(x,y))
+    xplot, yprime = a.derivate(x, y)
+    print("Found:")
+    for i in range(0,10):
+        print("x = %f  y'= %f expected = %f" % (xplot[i], yprime[i], 2*xplot[i]+2))
 
