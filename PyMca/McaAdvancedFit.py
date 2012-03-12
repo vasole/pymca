@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -35,6 +35,7 @@ else:
     QString = str
 
 QTVERSION = qt.qVersion()
+import traceback
 
 try:
     import PyMcaMatplotlibSave
@@ -527,10 +528,13 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("%s" % sys.exc_info()[1])
                 if QTVERSION < '4.0.0':
+                    msg.setText("%s" % sys.exc_info()[1])
                     msg.exec_loop()
                 else:
+                    msg.setText("Error occured getting parameters:")
+                    msg.setInformativeText(str(sys.exc_info()[1]))
+                    msg.setDetailedText(traceback.format_exc())
                     msg.exec_()
                 return
             config.update(npar)
@@ -572,10 +576,14 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("%s" % sys.exc_info()[1])
                 if QTVERSION < '4.0.0':
+                    msg.setText("%s" % sys.exc_info()[1])
                     msg.exec_loop()
                 else:
+                    msg.setWindowTitle("Configuration error")
+                    msg.setText("Error configuring fit:")
+                    msg.setInformativeText(str(sys.exc_info()[1]))
+                    msg.setDetailedText(traceback.format_exc())
                     msg.exec_()
                 return
 
@@ -1646,10 +1654,15 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error on fit: %s" % (sys.exc_info()[1]))
                 if QTVERSION < '4.0.0':
+                    msg.setText("Error on fit: %s" % (sys.exc_info()[1]))
                     msg.exec_loop()
                 else:
+                    msg.setWindowTitle("Fit error")
+                    msg.setText("Error on fit:")
+                    msg.setInformativeText(str(sys.exc_info()[1]))
+                    msg.setDetailedText(traceback.format_exc())
+                    msg.exec_()
                     msg.exec_()
                 return
             try:
