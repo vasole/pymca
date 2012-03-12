@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,7 +31,8 @@ import PyMcaQt as qt
 if hasattr(qt, "QStringList"):
     QStringList = qt.QStringList
 else:
-    QStringList = []
+    def QStringList():
+        return []
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
