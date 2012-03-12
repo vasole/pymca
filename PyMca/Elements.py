@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -1122,7 +1122,8 @@ def getMultilayerFluorescence(multilayer0,
         energyList = [energyList]
         
     energyList = Numeric.array(energyList)
-    if layerList is None:layerList = range(len(multilayer))
+    if layerList is None:
+        layerList = list(range(len(multilayer)))
     if type(layerList) != type([]):
         layerList = [layerList]
     if elementsList is not None:
@@ -1167,7 +1168,7 @@ def getMultilayerFluorescence(multilayer0,
     origattenuators = attenuators * 1
     newbeamfilters  = beamfilters * 1
     if alphain < 0:
-        ilayerindexes = range(len(multilayer))
+        ilayerindexes = list(range(len(multilayer)))
         ilayerindexes.reverse()
         for ilayer in ilayerindexes:
             newbeamfilters.append(multilayer[ilayer] * 1)
@@ -1219,14 +1220,14 @@ def getMultilayerFluorescence(multilayer0,
         if forcepresent:
             forcedElementsList = elementsList * 1
             keys = []            
-            for ilayer in range(len(multilayer)):
+            for ilayer in list(range(len(multilayer))):
                 pseudomatrix = multilayer[ilayer] * 1
                 eleDict = getMaterialMassFractions([pseudomatrix[0]], [1.0])
                 keys += eleDict.keys()
 
             for ele in keys:
                 todelete = []
-                for i in range(len(forcedElementsList)):
+                for i in list(range(len(forcedElementsList))):
                     group = forcedElementsList[i]
                     if optimized: groupElement = group[1] * 1
                     else: groupElement = group * 1
@@ -1244,7 +1245,7 @@ def getMultilayerFluorescence(multilayer0,
     result       = []
     dictListList = []
     elementsListFinal = []
-    for ilayer in range(len(multilayer)):
+    for ilayer in list(range(len(multilayer))):
         dictList     = []
         if ilayer > 0:
             #arrange attenuators
