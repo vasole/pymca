@@ -96,12 +96,6 @@ if os.path.exists(os.path.join("PyMca", "EPDL97")):
     data_files.append(('PyMca/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
     data_files.append(('PyMca/EPDL97',['PyMca/EPDL97/LICENSE']))
 
-LOCAL_PHYNX =False
-if (sys.version < '3.0') and os.path.exists(os.path.join("PyMca", "phynx")):
-    LOCAL_PHYNX = True
-    packages.append('PyMca.phynx')
-    packages.append('PyMca.phynx.utils')
-
 NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
     py_modules.append('PyMca.py_nnma.__init__')
