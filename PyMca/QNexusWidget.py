@@ -531,7 +531,6 @@ class QNexusWidget(QtGui.QWidget):
                             self._aliasList.append(cnt)
                         self.cntTable.build(self._cntList, self._aliasList)
             elif ddict['type'] in ['NXentry', 'Entry']:
-                print "IT IS AN ENTRY!"
                 if self._lastAction is None:
                     return
                 action, selectionType = self._lastAction.split()
