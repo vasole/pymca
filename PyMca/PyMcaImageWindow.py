@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -130,7 +130,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             dataObject = sel['dataobject']
 
             #only two-dimensional selections considered            
-            if dataObject.info.get("selectiontype", "1D") != "2D": continue
+            if dataObject.info.get("selectiontype", "1D") != "2D":
+                continue
             if dataObject.data is None:
                 if hasattr(dataObject, "y"):
                     if dataObject.y is not None:

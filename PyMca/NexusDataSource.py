@@ -328,10 +328,11 @@ class NexusDataSource(object):
             totalElements = 1
             for dim in data.shape:
                 totalElements *= dim
-            if totalElements < 1.0E8:
+            if totalElements < 2.0E7:
                 try:
                     data = phynxFile[path].value
                 except MemoryError:
+                    data = phynxFile[path]
                     pass
             if output.info['selectiontype'] == "1D":
                 if len(data.shape) == 2:
