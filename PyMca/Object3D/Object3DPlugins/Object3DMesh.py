@@ -119,7 +119,7 @@ class Object3DMesh(Object3DBase.Object3D):
         self.vertexColors[:, 3] = self._alpha
 
     def setData(self, data, x=None, y=None, z=None, xyz=None):
-        self.values = data
+        self.values = data[:]
         self._configuration['private']['useminmax'] = [0, self.values.min(), self.values.max()]
         if (xyz is not None) and (x is None) and (y is None):
             arr = Object3DCTools.getVertexArrayMeshAxes(xyz)
