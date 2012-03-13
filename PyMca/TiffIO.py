@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2011 European Synchrotron Radiation Facility
+# Copyright (C) 2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+# the ESRF by the Software group.
 #
 # This file is free software; you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1451
+__revision__ = 1490
 
 import sys
 import os
@@ -93,7 +93,7 @@ SAMPLE_FORMAT_COMPLEXIEEEFP = 6
 
 
 
-class TiffIO:
+class TiffIO(object):
     def __init__(self, filename, mode=None, cache_length=20, mono_output=False):
         if mode is None:
             mode = 'rb'

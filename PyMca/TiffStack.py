@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -223,7 +223,7 @@ class TiffStack(DataObject.DataObject):
                                    self.__dtype)
             except (MemoryError, ValueError):
                 dynamic = True
-
+        if not dynamic:
             imageIndex = 0
             self.onBegin(nbFiles * nImagesPerFile)
             for i in range(nbFiles):
