@@ -140,13 +140,13 @@ class Object3DStack(Object3DBase.Object3D):
         if hasattr(data, "info") and hasattr(data, "data"):
             #It is an actual stack
             self._actualStack = True
-            self.values = data.data
+            self.values = data.data[:]
         else:
             self._actualStack = False
-            self.values = data
+            self.values = data[:]
 
         if self.values.dtype != numpy.float32:
-            print "WARNING: Converting to float32"
+            print("WARNING: Converting to float32")
             self.values = self.values.astype(numpy.float32)
         if (x is None) and (y is None) and (xyz is None):
             xsize, ysize, zsize = self.values.shape
