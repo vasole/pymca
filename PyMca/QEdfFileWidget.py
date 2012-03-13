@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -29,8 +29,10 @@ import QtBlissGraph
 qt = QtBlissGraph.qt
 if not hasattr(qt, 'QString'):
     QString = str
+    QStringList = list
 else:
     QString = qt.QString
+    QStringList = qt.QStringList
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 if QTVERSION > '4.0.0':
@@ -525,6 +527,7 @@ class QEdfFileWidget(qt.QWidget):
         self.lastInputDir = PyMcaDirs.outputDir
 
         fileTypeList = ["Data *.dat",
+                        "ImageData *.tif",
                         "Image *.png",
                         "Image *.jpg",
                         "ZoomedImage *.png",
@@ -545,7 +548,7 @@ class QEdfFileWidget(qt.QWidget):
             ret = outfile.exec_loop()
         else:
             outfile.setWindowTitle("Output File Selection")
-            strlist = qt.QStringList()
+            strlist = QStringList()
             for f in fileTypeList:
                 strlist.append(f)
             outfile.setFilters(strlist)
@@ -583,7 +586,11 @@ class QEdfFileWidget(qt.QWidget):
                 qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
                 return
 
-        if filetype.upper() == "DATA":
+
+        tiff = False
+        if filetype.upper() == "IMAGEDATA":
+            tiff = True
+        if (filetype.upper() == "DATA") or tiff:
             if (self.data is None) or \
                (self.currentArray is None):
                 qt.QMessageBox.information(self, "No data",\
@@ -599,9 +606,15 @@ class QEdfFileWidget(qt.QWidget):
             key = self.data.getSourceInfo()['KeyList'][self.currentArray]
             label = selfdatasourceName +"_"+"Key"+"_"+key
             try:
-                ArraySave.save2DArrayListAsASCII([self.lastData],
-                                             outputFile,
-                                             labels = [label])
+                if tiff:
+                    ArraySave.save2DArrayListAsMonochromaticTiff([self.lastData],
+                                                                 outputFile,
+                                                                 labels = [label],
+                                                                 dtype=None)
+                else:
+                    ArraySave.save2DArrayListAsASCII([self.lastData],
+                                                     outputFile,
+                                                     labels = [label])
             except:
                 qt.QMessageBox.critical(self, "Save Error", "%s" % \
                                         sys.exc_info()[1])
@@ -614,7 +627,7 @@ class QEdfFileWidget(qt.QWidget):
             self.saveGraphWidget(outputFile)
 
     def saveGraphImage(self, filename,original=True):
-        format = filename[-3:].upper()
+        fformat = filename[-3:].upper()
         if original:
             if QTVERSION < '4.0.0':
                 pixmap = qt.QPixmap(self.graph.plotImage.image)
@@ -622,16 +635,16 @@ class QEdfFileWidget(qt.QWidget):
                 pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
         else:
             pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
-        if pixmap.save(filename, format):
+        if pixmap.save(filename, fformat):
             return
         else:
             qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
             return
 
     def saveGraphWidget(self, filename):
-        format = filename[-3:].upper()
+        fformat = filename[-3:].upper()
         pixmap = qt.QPixmap.grabWidget(self.graph)
-        if pixmap.save(filename, format):
+        if pixmap.save(filename, fformat):
             return
         else:
             qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
@@ -887,9 +900,9 @@ class QEdfFileWidget(qt.QWidget):
                 fdialog = qt.QFileDialog(self)
                 fdialog.setModal(True)
                 fdialog.setWindowTitle("Open a new EdfFile")
-                strlist = qt.QStringList()
-                strlist.append("Config Files *edf")
-                strlist.append("Config Files *ccd")
+                strlist = QStringList()
+                strlist.append("EDF Files *edf")
+                strlist.append("EDF Files *ccd")
                 strlist.append("All Files *")
                 fdialog.setFilters(strlist)
                 fdialog.setFileMode(fdialog.ExistingFiles)
