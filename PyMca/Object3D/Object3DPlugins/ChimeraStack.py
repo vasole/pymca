@@ -45,7 +45,7 @@ def getObject3DInstance(config=None):
     stack = f['Image']['data'].value
     f = None
     if stack is None:
-        raise IOError, "Problem reading stack."
+        raise IOError("Problem reading stack.")
     object3D = ChimeraStack(name=legend)
     object3D.setStack(stack)
     return object3D

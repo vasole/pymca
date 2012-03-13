@@ -484,11 +484,14 @@ def getObject3DInstance(config=None):
     #this method
     try:
         from PyMca import EDFStack
+        from PyMca import TiffStack
     except ImportError:
         import EDFStack
+        import TiffStack
 
     fileTypeList = ['EDF Z Stack (*edf *ccd)',
-                    'EDF X Stack (*edf *ccd)']
+                    'EDF X Stack (*edf *ccd)',
+                    'TIFF Stack (*tif *tiff)']
     old = Object3DFileDialogs.Object3DDirs.nativeFileDialogs * 1
     Object3DFileDialogs.Object3DDirs.nativeFileDialogs = False
     fileList, filterUsed = Object3DFileDialogs.getFileList(None, fileTypeList,
@@ -505,14 +508,18 @@ def getObject3DInstance(config=None):
     #file index is irrelevant in case of an actual 3D stack.
     filename = fileList[0]
     legend = os.path.basename(filename)
-    if len(fileList) == 1:
+    if filterUsed == fileTypeList[2]:
+        #TIFF
+        stack = TiffStack.TiffStack(dtype=numpy.float32, imagestack=False)
+        stack.loadFileList(fileList, fileindex=1)
+    elif len(fileList) == 1:
         stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
         stack.loadIndexedStack(filename, fileindex=fileindex)
     else:
         stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
         stack.loadFileList(fileList, fileindex=fileindex)
     if stack is None:
-        raise IOError, "Problem reading stack."
+        raise IOError("Problem reading stack.")
     object3D = Object3DStack(name=legend)
     object3D.setStack(stack)
     return object3D
