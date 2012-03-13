@@ -36,7 +36,7 @@ except ImportError:
 try:
     import mdp
     MDP = True
-except ImportError:
+except:
     MDP = False
 
 import Lanczos
