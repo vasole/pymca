@@ -162,15 +162,19 @@ try:
 except ImportError:
     MDP = False
 
+H5PY_SPECIAL = False
 try:
     import h5py
     if h5py.version.version < '1.2.0':
         includes = ['h5py._extras']
     elif h5py.version.version < '1.3.0':
         includes = ['h5py._stub', 'h5py._sync', 'h5py.utils']
-    else:
+    elif h5py.version.version < '2.0.0':
         includes = ['h5py._extras', 'h5py._stub', 'h5py.utils',
                     'h5py._conv', 'h5py._proxy']
+    else:
+        H5PY_SPECIAL = True
+        includes = []        
 except:
     includes = []
 
@@ -195,6 +199,8 @@ if OBJECT3D:
     special_modules =[os.path.dirname(ctypes.__file__),
                   os.path.dirname(OpenGL.__file__),
                   os.path.dirname(Object3D.__file__)]
+    if H5PY_SPECIAL:
+        special_modules.append(os.path.dirname(h5py.__file__))
     if MDP:
         #mdp versions above 2.5 need special treatment
         if mdp.__version__  > '2.5':
@@ -215,6 +221,8 @@ if OBJECT3D:
 else:
     excludes = ["Tkinter", "PyMcaPlugins", "scipy", "Numeric","numarray"]
     special_modules = [os.path.dirname(ctypes.__file__)]
+    if H5PY_SPECIAL:
+        special_modules.append(os.path.dirname(h5py.__file__))
     if MDP:
         #mdp versions above 2.5 need special treatment
         if mdp.__version__  > '2.5':
