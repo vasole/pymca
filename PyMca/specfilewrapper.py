@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -29,15 +29,19 @@ import sys
 import numpy
 import numpy.oldnumeric as Numeric
 import re
-from PyMca import specfile
+try:
+    from PyMca import specfile
+except ImportError:
+    import specfile
+from PyMca import Fit2DChiFileParser
+from PyMca import APSMEDFileParser
+from PyMca import SRSFileParser
 try:
     from PyMca import SPXFileParser
     SPX = True
 except:
     SPX = False
-from PyMca import Fit2DChiFileParser
-from PyMca import APSMEDFileParser
-from PyMca import SRSFileParser
+
 DEBUG = 0
 
 if sys.version >= '2.6':
