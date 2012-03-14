@@ -1,3 +1,36 @@
+VERSION 4.5.0
+
+Support h5py version 2.x
+
+Support OMNIC 8.x .map file format
+
+Support TIFF format. Uncompressed and packbits.
+
+Support a couple of ASCII based file formats of beamlines of Diamond and APS.
+
+Preliminary Python 3.2 support.
+
+Support principal components analysis of dynamically loaded stacks.
+
+Improved HDF5 file format handling.
+
+Possibility to visualize variable width line profiles on images.
+
+Add split Gauss, split Lorentz and split Pseudo-Voigt as fitting functions.
+
+Do not automatically sort the list of files to be treated in batch mode. The
+program will respect the order provided by the user. 
+
+Allow visualized 3D objects to share the same colormap.
+
+Lower the energy threshold in order to consider Boron K X rays.
+
+Correct Arsenic density.
+
+Allow to customize the saving of Scan window curves using matplotlib.
+
+Allow multiple processes in MacOS X when using a non frozen PyMca version.
+
 VERSION 4.4.1
 
 Allow detailed customization of 1D output.
