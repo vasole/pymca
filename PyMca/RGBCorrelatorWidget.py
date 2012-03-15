@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -698,9 +698,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         if not ret: return ""
         filename = filedialog.selectedFiles()[0]
         if len(filename):
-            filename = str(filename)
+            filename = "%s" % filename
             self.outputDir = os.path.dirname(filename)
-            self._saveFilter = str(filedialog.selectedFilter())
+            self._saveFilter = "%s" % filedialog.selectedFilter()
             filterused = "."+self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
@@ -742,11 +742,11 @@ class RGBCorrelatorWidget(qt.QWidget):
         filename = filedialog.selectedFiles()
         filterused = None
         if len(filename):
-            filename = map(str, filename)
+            filename = ["%s" % fname for fname in filename]
             self.outputDir = os.path.dirname(filename[0])
             PyMcaDirs.inputDir = os.path.dirname(filename[0])
             if getfilter:
-                filterused = str(filedialog.selectedFilter())
+                filterused = "%s" % filedialog.selectedFilter()
         else:
             filename = [""]
         if getfilter:
@@ -1235,10 +1235,10 @@ class ImageShapeDialog(qt.QDialog):
             self.rows.setText("%g" % (self._size/float(ncolumns)))
 
     def getImageShape(self):
-        text = str(self.rows.text())
+        text = "%s" % self.rows.text()
         if len(text): nrows = int(float(text))
         else: nrows = 0
-        text = str(self.columns.text())
+        text = "%s" % self.columns.text()
         if len(text): ncolumns = int(float(text))
         else: ncolumns = 0
         return nrows, ncolumns

@@ -890,6 +890,17 @@ class TiffIO(object):
                 descriptionLength = len(description)
             if sys.version >= '3.0':
                 description = bytes(description, 'utf-8')
+            else:
+                try:
+                    description = description.decode('utf-8')
+                except UnicodeDecodeError:
+                    try:
+                        description = description.decode('latin-1')
+                    except UnicodeDecodeError:
+                        description = "%s" % description
+                description=description.encode('utf-8', errors="ignore")
+                description = "%s" % description
+            descriptionLength = len(description)
             imageDescription = struct.pack("%ds" % descriptionLength, description)
             nDirectoryEntries += 1
 

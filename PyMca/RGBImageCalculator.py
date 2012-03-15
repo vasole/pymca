@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -167,7 +167,7 @@ class RGBImageCalculator(qt.QWidget):
     def _calculateClicked(self):
         if DEBUG:
             print("Calculate clicked")
-        text = str(self.mathExpression.text())
+        text = "%s" % self.mathExpression.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Calculation Error",
                                     "Empty expression")
@@ -178,9 +178,22 @@ class RGBImageCalculator(qt.QWidget):
         i = 1
         for label in self.imageList:
             item = "{%d}" % i
-            expression = expression.replace(item,
-                            "self.imageDict['%s']['image']" % label)
-            name = name.replace(item,label)
+            replacingChain ="self.imageDict[self.imageList[%d]]['image']" % (i-1)
+            expression = expression.replace(item, replacingChain)
+            if sys.version < '3.0':
+                try:
+                    tmpLabel = label.decode()
+                except UnicodeDecodeError:
+                    try:
+                        tmpLabel = label.decode('utf-8')
+                    except UnicodeDecodeError:
+                        try:
+                            tmpLabel = label.decode('latin-1')
+                        except UnicodeDecodeError:
+                            tmpLabel = "image_%0d" % i
+            else:
+                tmpLabel = label
+            name = name.replace(item, tmpLabel)
             i = i + 1
         try:
             self._imageData = 1 * eval(expression)
@@ -205,7 +218,7 @@ class RGBImageCalculator(qt.QWidget):
             return
         if self._imageData == []:
             return
-        text = str(self.name.text())
+        text = "%s" % self.name.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
                                     "Please give a name to the image")
@@ -219,7 +232,7 @@ class RGBImageCalculator(qt.QWidget):
     def _removeImageClicked(self):
         if DEBUG:
             print("remove image clicked")
-        text = str(self.name.text())
+        text = "%s" % self.name.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
                                     "Please enter the image name")
@@ -230,7 +243,7 @@ class RGBImageCalculator(qt.QWidget):
     def _replaceImageClicked(self):
         if DEBUG:
             print("replace image clicked")
-        text = str(self.name.text())
+        text = "%s" % self.name.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
                                     "Please enter the image name")

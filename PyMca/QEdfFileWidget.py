@@ -1297,7 +1297,7 @@ class QEdfFileWidget(qt.QWidget):
         f, i = sel['Key'].split(".")
         f = int(f) - 1
         sel['legend'] = os.path.basename(self.data.sourceName[f]) +\
-                        " "+ str(self.paramWidget.iCombo.currentText())
+                        " "+ ("%s" % self.paramWidget.iCombo.currentText())
         sel['selectiontype'] = '2D' 
         sel['imageselection']  = True
         sel['mcaselection']  = False

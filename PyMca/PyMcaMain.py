@@ -419,9 +419,9 @@ class PyMca(PyMcaMdi.PyMca):
         if QTVERSION < '4.0.0':
             #is not an index but a widget
             index = self.mainTabWidget.indexOf(index)
-            legend = str(self.mainTabWidget.label(index))
+            legend = "%s" % self.mainTabWidget.label(index)
         else:
-            legend = str(self.mainTabWidget.tabText(index))
+            legend = "%s" % self.mainTabWidget.tabText(index)
             for key in self.imageWindowDict.keys():
                 if key == legend:value = True
                 else: value = False

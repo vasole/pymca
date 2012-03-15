@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -274,7 +274,20 @@ class  EdfFile(object):
         while line not in selectedLines:
             #decode to make sure I have character string
             #str to make sure python 2.x sees it as string and not unicode
-            line = str(line.decode())
+            if sys.version < '3.0':
+                if type(line) != type(str("")):
+                    line = "%s" % line
+            else:
+                try:
+                    line = str(line.decode())
+                except UnicodeDecodeError:
+                    try:
+                        line = str(line.decode('utf-8'))
+                    except UnicodeDecodeError:
+                        try:
+                            line = str(line.decode('latin-1'))
+                        except UnicodeDecodeError:
+                            line = "%s" % line
             if (line.count("{\n") >= 1) or (line.count("{\r\n") >= 1):
                 Index = self.NumImages
                 self.NumImages = self.NumImages + 1
