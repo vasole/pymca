@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1490
+__revision__ = 1500
 
 import sys
 import os
@@ -898,7 +898,8 @@ class TiffIO(object):
                         description = description.decode('latin-1')
                     except UnicodeDecodeError:
                         description = "%s" % description
-                description=description.encode('utf-8', errors="ignore")
+                if sys.version > '2.6:
+                    description=description.encode('utf-8', errors="ignore")
                 description = "%s" % description
             descriptionLength = len(description)
             imageDescription = struct.pack("%ds" % descriptionLength, description)
