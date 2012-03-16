@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1500
+__revision__ = 1501
 
 import sys
 import os
@@ -890,7 +890,7 @@ class TiffIO(object):
                 descriptionLength = len(description)
             if sys.version >= '3.0':
                 description = bytes(description, 'utf-8')
-            else:
+            elif type(description) != type(""):
                 try:
                     description = description.decode('utf-8')
                 except UnicodeDecodeError:
@@ -898,7 +898,7 @@ class TiffIO(object):
                         description = description.decode('latin-1')
                     except UnicodeDecodeError:
                         description = "%s" % description
-                if sys.version > '2.6:
+                if sys.version > '2.6':
                     description=description.encode('utf-8', errors="ignore")
                 description = "%s" % description
             descriptionLength = len(description)
