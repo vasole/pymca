@@ -1,0 +1,44 @@
+.\" 
+.\" Man page for pymca 
+.\" 
+
+
+.TH pymca 1 "March 2012" "ESRF" "PyMca X-Ray Fluorescence Toolkit"
+
+.SH NAME
+
+pymca - PyMca X-Ray Fluorescence Toolkit main application
+
+.SH SYNOPSIS
+
+pymca [OPTION]... [FILE]
+
+.SH DESCRIPTION
+
+.P
+Start the graphical user interface of the PyMca X-Ray 
+Fluorescence Toolkit main window using latest user defined default settings.
+
+.P
+If FILE is given, it will be opened in the program provided 
+its format is supported.
+
+.B -f 
+bypass user defined default settings
+
+.SH EXAMPLES
+
+.B pymca -f
+.P
+Start the program bypassing user defined default settings.
+
+.B pymca -f LShellConstants.dat
+.P
+Open the LShellConstants.dat and list its contents in the source browser.
+
+.B pymca -f your_HDF5_file.h5
+.P
+Allows to browse the HDF5 file your_HDF5_file.h5 in PyMca if the Python module h5py is installed.
+
+.SH SEE ALSO
+HDF5, h5py

@@ -1,0 +1,42 @@
+.TH rgbcorrelator 1 "March 2012" "ESRF" "PyMca X-Ray Fluorescence Toolkit"
+
+.SH NAME
+
+rgbcorrelator - PyMca image correlation analysis application
+
+.SH SYNOPSIS
+
+rgbcorrelator [FILE1] [FILE2] ...
+
+.SH DESCRIPTION
+
+.P
+This an alias to pymcapostbatch
+
+Start the graphical user interface of the PyMca X-Ray 
+Fluorescence Toolkit rgbcorrelator tool.
+
+It allows to superpose up to three images in RED, GREEN and BLUE in 
+order to investigate correlations among them. All the images have to 
+be of the same dimension.
+
+The program builds a table with all the input images but only three 
+of them can be superposed at the same time.
+
+This program also offers the possibility to perform mathematical operations 
+among the images and simple multivariate analysis.
+
+
+.SH EXAMPLES
+
+.B rgbcorrelator
+.P
+Start the program with a file browser to select the input files.
+
+.B rgbcorrelator file1.tif file2.tif file3.tif file4.tif
+.P
+Tries to open the files named file1.tif, file2.tif, file3.tif and 
+file4.tif.
+
+.SH SEE ALSO
+ImageJ
