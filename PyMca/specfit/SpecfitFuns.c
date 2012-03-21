@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -387,7 +387,7 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
     PyObject *anchors0 = NULL;
     int i, j, k, l, deltai = 1,niter = 5000;
     double  t_mean, c = 1.000;
-    double  *data, *retdata;
+    double  *retdata;
     int     *anchordata;
     int nanchors, notdoit;
 
@@ -415,7 +415,6 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
         return PyArray_Return(ret);
     }
     /* do the job */
-    data   = (double *) iarray->data;
     retdata   = (double *) ret->data;
     if (PySequence_Check(anchors0)){
         anchors = (PyArrayObject *)
@@ -3258,12 +3257,10 @@ long SpecfitFuns_seek2(long BeginChannel, long EndChannel,
     long    cch;
     long    cfac, cfac2;
     long    ihelp1, ihelp2;
-    double  distance;
     long    i, j;
     double  peakstarted = 0;
 
     /* statements */
-    distance=MAX(LowDistance, HighDistance);
 
     /* Make sure the peaks matrix is filled with zeros */
     for (i=0;i<max_npeaks;i++){
@@ -3577,7 +3574,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
             break;
         }
         if (xdata[i]->dimensions[0] != ydata->dimensions[i]){
-            printf("xdata[%ld] does not have appropriate dimension\n",i);
+            printf("xdata[%d] does not have appropriate dimension\n", (int) i);
             j++;
             break;
         }
@@ -3696,7 +3693,8 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                             k++;
                         }
                         if (ju != index1){
-                            printf("i = %ld, j= %ld, value = %.5f indexvalue = %ld, newvalue = %ld\n",i,j,value,ju, index1);
+                            printf("i = %d, j= %d, value = %.5f indexvalue = %d, newvalue = %d\n",\
+					    (int) i, (int) j,value, (int) ju, (int) index1);
                         }
                     }
                     if (index1 < 0){
@@ -4131,210 +4129,12 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
 
 }
 
-
-static PyObject *
-SpecfitFuns_spline(PyObject *self, PyObject *args)
-{
-    /* required input parameters */
-    PyObject *xinput;        /* The tuple containing the xdata arrays */
-    PyObject *yinput;        /* The array containing the ydata values */
-    PyObject *xinter0;       /* The array containing the x values */
-
-    /* local variables */
-    PyArrayObject    *xdata, *ydata, *result, *uarray;
-    npy_intp dim_x[2];
-    int nd_x, nd_y;
-    double *u, *y2, *x, *y;
-
-    /* statements */
-    if (!PyArg_ParseTuple(args, "OO|O", &xinput, &yinput,&xinter0)){
-        printf("Parsing error\n");
-        return NULL;
-    }
-    xdata = (PyArrayObject *)
-             PyArray_CopyFromObject(xinput, PyArray_DOUBLE,0,0);
-    if (xdata == NULL){
-        printf("Copy from X Object error!\n");
-        return NULL;
-    }
-    nd_x = xdata->nd;
-    if (nd_x != 1) {
-        printf("I need a X vector!\n");
-        Py_DECREF(xdata);
-        return NULL;
-    }
-    ydata = (PyArrayObject *)
-             PyArray_CopyFromObject(yinput, PyArray_DOUBLE,0,0);
-    if (ydata == NULL){
-        printf("Copy from Y Object error!\n");
-        return NULL;
-    }
-    nd_y = ydata->nd;
-    if (nd_y != 1) {
-        printf("I need a Y vector!\n");
-        Py_DECREF(ydata);
-        return NULL;
-    }
-    if (xdata->dimensions[0] != ydata->dimensions[0]){
-        printf("X and Y do not have same dimension!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        return NULL;
-    }
-    /* build the output array */
-    dim_x [0] = xdata->dimensions[0];
-    dim_x [1] = 0;
-    result = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
-    if (result == NULL){
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        return NULL;
-    }
-    PyArray_FILLWBYTE(result, 0);
-
-    /* build the temporary array */
-    uarray = (PyArrayObject *)
-             PyArray_Copy(result);
-    if (uarray == NULL){
-        printf("Copy from result Object error!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        Py_DECREF(result);
-        return NULL;
-    }
-
-    /* the pointer to the starting position of par data */
-    x   = (double *) ( xdata->data);
-    y   = (double *) ( ydata->data);
-    y2  = (double *) (result->data);
-    u   = (double *) (uarray->data);
-    Py_DECREF(xdata);
-    Py_DECREF(ydata);
-    Py_DECREF(uarray);
-
-	printf("Not implemented (yet)!\n");
-
-    return PyArray_Return(result);
-}
-
-static PyObject *
-SpecfitFuns_splint(PyObject *self, PyObject *args)
-{
-    /* required input parameters */
-    PyObject *xinput ;        /* The tuple containing the xdata arrays */
-    PyObject *yinput ;        /* The array containing the ydata values */
-    PyObject *y2input;        /* The array containing the y2data values */
-    PyObject *xinter0;        /* The array containing the x values */
-
-    /* local variables */
-    PyArrayObject    *xdata, *ydata,  *y2data, *xinter, *result;
-    int nd_x, nd_y;
-    int n;
-    double *xa, *ya, *y2a, *x, *y;
-
-    /* statements */
-    if (!PyArg_ParseTuple(args, "OOOO", &xinput, &yinput, &y2input,&xinter0)){
-        printf("Parsing error\n");
-        return NULL;
-    }
-    xdata = (PyArrayObject *)
-             PyArray_CopyFromObject(xinput, PyArray_DOUBLE,0,0);
-    if (xdata == NULL){
-        printf("Copy from X Object error!\n");
-        return NULL;
-    }
-    nd_x = xdata->nd;
-    if (nd_x != 1) {
-        printf("I need a X vector!\n");
-        Py_DECREF(xdata);
-        return NULL;
-    }
-    ydata = (PyArrayObject *)
-             PyArray_CopyFromObject(yinput, PyArray_DOUBLE,0,0);
-    if (ydata == NULL){
-        printf("Copy from Y Object error!\n");
-        return NULL;
-    }
-    nd_y = ydata->nd;
-    if (nd_y != 1) {
-        printf("I need a Y vector!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        return NULL;
-    }
-    y2data = (PyArrayObject *)
-             PyArray_CopyFromObject(y2input, PyArray_DOUBLE,0,0);
-    if (y2data == NULL){
-        printf("Copy from Y2 Object error!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        return NULL;
-    }
-    if (y2data->nd != 1) {
-        printf("I need a Y2 vector!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        Py_DECREF(y2data);
-        return NULL;
-    }
-    if (xdata->dimensions[0] != ydata->dimensions[0]){
-        printf("X and Y do not have same dimension!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        Py_DECREF(y2data);
-        return NULL;
-    }
-    if (xdata->dimensions[0] != y2data->dimensions[0]){
-        printf("X and Y2 do not have same dimension!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        Py_DECREF(y2data);
-        return NULL;
-    }
-
-
-    xinter =  (PyArrayObject *) PyArray_ContiguousFromObject(xinter0, PyArray_DOUBLE,0,0);
-    if (xinter == NULL){
-        printf("Copy from x error!\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        Py_DECREF(y2data);
-        return NULL;
-    }
-
-    /* Create the output array */
-    result = (PyArrayObject *) PyArray_Copy(xinter);
-    if (result == NULL){
-        printf("Cannot build result array\n");
-        Py_DECREF(xdata);
-        Py_DECREF(ydata);
-        Py_DECREF(y2data);
-        Py_DECREF(xinter);
-        return NULL;
-    }
-    xa  = (double *)    xdata->data;
-    ya  = (double *)    ydata->data;
-    y2a = (double *)   y2data->data;
-    x   = (double *)   xinter->data;
-    y   = (double *)   result->data;
-    n = (int) xdata->dimensions[0];
-
-	printf("Not implemented (yet)!\n");
-
-    Py_DECREF(xdata);
-    Py_DECREF(ydata);
-    Py_DECREF(y2data);
-    Py_DECREF(xinter);
-
-    return PyArray_Return(result);
-}
-
 /* List of functions defined in the module */
 
 static PyMethodDef SpecfitFuns_methods[] = {
     {"snip1d",      SpecfitFuns_snip1d,     METH_VARARGS},
     {"snip2d",      SpecfitFuns_snip2d,     METH_VARARGS},
-    {"snip3d",      SpecfitFuns_snip2d,     METH_VARARGS},
+    {"snip3d",      SpecfitFuns_snip3d,     METH_VARARGS},
     {"subacold",    SpecfitFuns_subacold,   METH_VARARGS},
     {"subac",       SpecfitFuns_subac,      METH_VARARGS},
     {"subacfast",   SpecfitFuns_subacfast,  METH_VARARGS},
@@ -4357,8 +4157,6 @@ static PyMethodDef SpecfitFuns_methods[] = {
     {"voxelize",    SpecfitFuns_voxelize,   METH_VARARGS},
     {"pileup",      SpecfitFuns_pileup,   METH_VARARGS},
     {"SavitskyGolay",   SpecfitFuns_SavitskyGolay,   METH_VARARGS},
-    {"spline",      SpecfitFuns_spline,   METH_VARARGS},
-    {"_splint",     SpecfitFuns_splint,   METH_VARARGS},
     {"splitgauss",  SpecfitFuns_splitgauss,   METH_VARARGS},
     {"splitlorentz",SpecfitFuns_splitlorentz, METH_VARARGS},
     {"splitpvoigt", SpecfitFuns_splitpvoigt, METH_VARARGS},
