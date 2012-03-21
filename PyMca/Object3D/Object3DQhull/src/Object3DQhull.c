@@ -62,12 +62,12 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 
 	/* local variables */
 	PyArrayObject	*pointArray, *inner_pointArray=NULL;
-	PyArrayObject	*result, *inner_result ;
+	PyArrayObject	*result, *inner_result=NULL ;
 
 	coordT	*points;	/* Qhull */
 	int		dimension;	/* Qhull */
 	int		nPoints;	/* Qhull */
-	int		inner_nPoints;	/* Qhull */
+	int		inner_nPoints = 0;	/* Qhull */
 
 	int		qhullResult;		/* Qhull exit code, 0 means no error */
 	boolT ismalloc = False;		/* True if Qhull should free points in
