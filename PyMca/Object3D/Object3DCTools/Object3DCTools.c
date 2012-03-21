@@ -2246,7 +2246,6 @@ static PyObject *drawXYZPoints(PyObject *self, PyObject *args)
 	npy_intp	    i, j;
 	float			*pxyz, *pv;
 	GLubyte			*pc=NULL;
-	unsigned int	*pf=NULL;
 	GLsizei			nVertices;
 
 	/* statements */
@@ -2905,7 +2904,7 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
 				pv = (float *) PyArray_GETPTR2(vertexArray, i * ySize + j, 1);
 				if (fabs(*(yBuffer+j) - *pv) > delta)
 				{
-					printf("Y reason i = % d x = %f y = %f\n", i, *(xBuffer+i), *(yBuffer+i));
+					printf("Y reason i = % d x = %f y = %f\n", (int) i, *(xBuffer+i), *(yBuffer+i));
 					notAMesh = 1;
 					break;
 				}
@@ -2919,7 +2918,7 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
 				pv = (float *) PyArray_GETPTR2(vertexArray, i * ySize + j, 1);
 				if (fabs(*(yBuffer+i) - *pv) > delta)
 				{
-					printf("Y reason i = % d x = %f y = %f\n", i, *(xBuffer+i), *(yBuffer+i));
+					printf("Y reason i = % d x = %f y = %f\n", (int) i, *(xBuffer+i), *(yBuffer+i));
 					notAMesh = 1;
 					break;
 				}
@@ -2960,6 +2959,7 @@ static PyObject *draw3DGridTexture(PyObject *dummy, PyObject *args)
     glDisable(GL_TEXTURE_3D);
   }
   */
+        printf("Not implementedi yet\n");
 	Py_INCREF(Py_None);
 	return(Py_None);
 }
@@ -3005,7 +3005,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
 	extern void vSetDataSizes(int , int , int);
 	extern void vSetColor(float , float , float, float);
 	extern void vSetStepIncrements(int , int , int);
-	extern void vMarchingCubes();
+	extern void vMarchingCubes(void);
 
 	/* local variables */
 	PyArrayObject *xArray, *yArray, *zArray, *valuesArray;
@@ -3188,7 +3188,7 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
 	extern void vSetDataSizes(int , int , int);
 	extern void vSetColor(float , float , float, float);
 	extern void vSetStepIncrements(int , int , int);
-	extern void vMarchingCubes();
+	extern void vMarchingCubes(void);
 
     /* ------------- statements ---------------*/
     if (!PyArg_ParseTuple(args, "OOiiif|O(iii)i", &input1, &input2, &xSize, &ySize, &zSize, &isoValue, \
@@ -3420,6 +3420,7 @@ static PyMethodDef Object3DCToolsMethods[] = {
 	{"draw3DGridPoints", draw3DGridPoints, METH_VARARGS},
 	{"draw3DGridLines",  draw3DGridLines,  METH_VARARGS},
 	{"draw3DGridQuads",  draw3DGridQuads,  METH_VARARGS},
+	{"draw3DGridTexture",  draw3DGridTexture,  METH_VARARGS},
 	{"drawXYZPoints",    drawXYZPoints,	   METH_VARARGS},
 	{"drawXYZLines",     drawXYZLines,     METH_VARARGS},
 	{"drawXYZTriangles", drawXYZTriangles, METH_VARARGS},

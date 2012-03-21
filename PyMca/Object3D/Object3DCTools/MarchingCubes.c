@@ -90,7 +90,7 @@ float   fTargetValue = 0.0;
 
 GLfloat fSample(int iX, int iY, int iZ);
 
-void vMarchingCubes();
+void vMarchingCubes(void);
 void vMarchCube(int iX, int iY, int iZ);
 GLvector *fSourceDataVerticesPointer = NULL;
 float *fSourceXPointer = NULL;
