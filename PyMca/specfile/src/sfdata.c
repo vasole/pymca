@@ -411,7 +411,7 @@ if(0){
               data[rows] = dataline;
               dinfo[ROW]=rows+1;
         }else{
-              printf("Error on scan %d line %d\n", index, rows+1);
+              printf("Error on scan %d line %d\n", (int) index, (int) (rows+1));
               /* just ignore the line instead of stopping there with a
               break; */
               rows--;

@@ -593,4 +593,5 @@ sfoWriteOne(SpecFileOut *sfo,int output,long index,int *error)
        *error = SF_ERR_FILE_WRITE;
         return(-1);
    }
+   return(0);
 }

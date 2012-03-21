@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2006 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -22,7 +22,7 @@
 # and cannot be used as a free plugin for a non-free program. 
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
-# is a problem to you.
+# is a problem for you.
 #############################################################################*/
 /*char RcsId[] = "$Header: /segfs/bliss/source/python/specfile/specfile-3.1/src/RCS/sfinit.c,v 1.5 2005/05/25 13:01:32 sole Exp $"; */
 /************************************************************************
@@ -163,9 +163,11 @@ static void  sfSaveScan    ( SpecFile *sf, SfCursor *cursor, int *error);
 static void  sfAssignScanNumbers (SpecFile *sf);
 static void  sfReadFile    ( SpecFile *sf, SfCursor *cursor, int *error);
 static void  sfResumeRead  ( SpecFile *sf, SfCursor *cursor, int *error);
+#ifdef SPECFILE_USE_INDEX_FILE
 static short sfOpenIndex   ( SpecFile *sf, SfCursor *cursor, int *error);
 static short sfReadIndex   ( int sfi, SpecFile *sf, SfCursor *cursor, int *error);
 static void  sfWriteIndex  ( SpecFile *sf, SfCursor *cursor, int *error);
+#endif
 
 /* 
  * errors
@@ -313,13 +315,17 @@ SfOpen2(int fd, char *name,int *error) {
    cursor.data         = 0;
    cursor.file_header  = 0;
 
+
+#ifdef SPECFILE_USE_INDEX_FILE
   /*
    * Check if index file
    *   open it and continue from there
    */
-   /*idxret = sfOpenIndex(sf,&cursor,error);*/
+   idxret = sfOpenIndex(sf,&cursor,error);
+#else
    idxret = SF_INIT;
-
+#endif
+   
    switch(idxret) {
       case SF_MODIFIED:
           sfResumeRead(sf,&cursor,error);
@@ -344,8 +350,9 @@ SfOpen2(int fd, char *name,int *error) {
    */
    sfAssignScanNumbers(sf);
 
-/*   if (idxret != SF_READY) sfWriteIndex(sf,&cursor,error);*/
-
+#ifdef SPECFILE_USE_INDEX_FILE
+   if (idxret != SF_READY) sfWriteIndex(sf,&cursor,error);
+#endif
    return(sf);
 }
 
@@ -436,8 +443,9 @@ SfUpdate ( SpecFile *sf, int *error )
        
        sf->m_time = mtime;        
        sfAssignScanNumbers(sf);
-
-       /*sfWriteIndex (sf,&(sf->cursor),error);*/
+#ifdef SPECFILE_USE_INDEX_FILE
+       sfWriteIndex (sf,&(sf->cursor),error);
+#endif
        return(1);
     }else{
        return(0);
@@ -543,6 +551,7 @@ sfResumeRead  ( SpecFile *sf, SfCursor *cursor, int *error) {
 }
 
 
+#ifdef SPECFILE_USE_INDEX_FILE
 static short 
 sfOpenIndex ( SpecFile *sf, SfCursor *cursor, int *error) {
     char *idxname;
@@ -639,6 +648,7 @@ sfWriteIndex  ( SpecFile *sf, SfCursor *cursor, int *error) {
         return; 
     }
 }
+#endif
 
 
 /*****************************************************************************
