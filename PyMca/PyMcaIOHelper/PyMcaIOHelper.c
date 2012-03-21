@@ -29,7 +29,7 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
     unsigned short *dataPointer, x, y, ch;
     int i;
     npy_intp dimensions[3];
-    int maxx, maxy, maxch;
+    int maxy, maxch;
     unsigned int *outputPointer;
 
     if (!PyArg_ParseTuple(args, "O|d", &input, &nChannels))
@@ -51,7 +51,7 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
     outputArray = (PyArrayObject *) PyArray_SimpleNew(3, dimensions, PyArray_UINT);
     PyArray_FILLWBYTE(outputArray, 0);
     /* Do the job */
-    maxx=maxy=maxch=0;
+    maxy=maxch=0;
     outputPointer = (unsigned int *) outputArray->data; 
     for (i=3; i<inputArray->dimensions[0]; i++)
     {
