@@ -1,6 +1,7 @@
 import sys,os
 import glob
 import platform
+import time
 from distutils.core import Extension, setup
 try:
     import numpy
@@ -11,6 +12,11 @@ except ImportError:
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
+
+#package maintainers customization
+# Dear (Debian, RPM, ...) package makers, please feel free to customize the
+# following path to the directory containing module's data:
+PYMCA_DATA_DIR = 'PyMca/PyMcaData'
 
 SPECFILE_USE_GNU_SOURCE = os.getenv("SPECFILE_USE_GNU_SOURCE")
 if SPECFILE_USE_GNU_SOURCE is None:
@@ -24,10 +30,11 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
-ffile = open(os.path.join('PyMca', 'PyMcaMain.py'),'r').readlines()
+ffile = open(os.path.join('PyMca', 'PyMcaMain.py'),'rb').readlines()
 for line in ffile:
-    if line[:11] == '__version__':
-        exec(line)
+    if line.startswith('__version__'):
+        #remove spaces and split
+        __version__ = line.replace(' ','').split("=")[-1][:-1]
         # Append cvs tag if working from cvs tree
         if os.path.isdir('.svn') and os.path.isfile(os.sep.join(['.svn', 'entries'])):
             import re
@@ -72,30 +79,35 @@ packages = ['PyMca','PyMca.PyMcaPlugins']
 py_modules = []
 
 # Specify all the required PyMca data
-data_files = [('PyMca', ['LICENSE.GPL',
-                         'PyMca/Scofield1973.dict',
-                         'PyMca/changelog.txt',
-                         'PyMca/McaTheory.cfg',
-                         'PyMca/PyMcaSplashImage.png',
-                         'PyMca/BindingEnergies.dat',
-                         'PyMca/KShellRates.dat','PyMca/KShellRatesScofieldHS.dat','PyMca/KShellConstants.dat',
-                         'PyMca/LShellRates.dat','PyMca/LShellConstants.dat',
-                         'PyMca/LShellRatesCampbell.dat','PyMca/LShellRatesScofieldHS.dat',
-                         'PyMca/MShellRates.dat','PyMca/MShellConstants.dat',
-                         'PyMca/EADL97_BindingEnergies.dat',
-                         'PyMca/EADL97_KShellConstants.dat',
-                         'PyMca/EADL97_LShellConstants.dat',
-                         'PyMca/EADL97_MShellConstants.dat',
-                         'PyMca/EPDL97_CrossSections.dat']),
-              ('PyMca/attdata', glob.glob('PyMca/attdata/*')),
-              ('PyMca/HTML', glob.glob('PyMca/HTML/*.*')),
-              ('PyMca/HTML/IMAGES', glob.glob('PyMca/HTML/IMAGES/*')),
-              ('PyMca/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
+data_files = [(PYMCA_DATA_DIR, ['LICENSE.GPL',
+                         'PyMca/PyMcaData/Scofield1973.dict',
+                         'changelog.txt',
+                         'PyMca/PyMcaData/McaTheory.cfg',
+                         'PyMca/PyMcaData/PyMcaSplashImage.png',
+                         'PyMca/PyMcaData/BindingEnergies.dat',
+                         'PyMca/PyMcaData/KShellRates.dat',
+                         'PyMca/PyMcaData/KShellRatesScofieldHS.dat',
+                         'PyMca/PyMcaData/KShellConstants.dat',
+                         'PyMca/PyMcaData/LShellRates.dat',
+                         'PyMca/PyMcaData/LShellConstants.dat',
+                         'PyMca/PyMcaData/LShellRatesCampbell.dat',
+                         'PyMca/PyMcaData/LShellRatesScofieldHS.dat',
+                         'PyMca/PyMcaData/MShellRates.dat',
+                         'PyMca/PyMcaData/MShellConstants.dat',
+                         'PyMca/PyMcaData/EADL97_BindingEnergies.dat',
+                         'PyMca/PyMcaData/EADL97_KShellConstants.dat',
+                         'PyMca/PyMcaData/EADL97_LShellConstants.dat',
+                         'PyMca/PyMcaData/EADL97_MShellConstants.dat',
+                         'PyMca/PyMcaData/EPDL97_CrossSections.dat']),
+              (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca/PyMcaData/attdata/*')),
+              (PYMCA_DATA_DIR+'/HTML', glob.glob('PyMca/PyMcaData/HTML/*.*')),
+              (PYMCA_DATA_DIR+'/HTML/IMAGES', glob.glob('PyMca/PyMcaData/HTML/IMAGES/*')),
+              (PYMCA_DATA_DIR+'/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
 
 if os.path.exists(os.path.join("PyMca", "EPDL97")):
     packages.append('PyMca.EPDL97')
-    data_files.append(('PyMca/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
-    data_files.append(('PyMca/EPDL97',['PyMca/EPDL97/LICENSE']))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca/EPDL97/LICENSE']))
 
 NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
@@ -262,6 +274,7 @@ from distutils.command.install_data import install_data
 class smart_install_data(install_data):
     def run(self):
         global PYMCA_INSTALL_DIR
+        global PYMCA_DATA_DIR
         #need to change self.install_dir to the library dir
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
@@ -285,10 +298,27 @@ class smart_install_data(install_data):
         if os.path.exists(pymcaOld):
             print("Removing previously installed file %s" % pymcaOld)
             os.remove(pymcaOld)
+        #create file with package data information destination
+        pymca_directory = os.path.join(PYMCA_INSTALL_DIR, "PyMca")
+        if not os.path.exists(pymca_directory):
+            os.mkdir(pymca_directory)
+        tmpName = os.path.join(pymca_directory, 'PyMcaDataDir.py')
+        if os.path.exists(tmpName):
+            print("Removing previously installed file %s" % tmpName)
+            os.remove(tmpName)
+        f = open(tmpName, 'wb')
+        if PYMCA_DATA_DIR == 'PyMca/PyMcaData':
+            #default, just make sure the complete path is there
+            PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                          PYMCA_DATA_DIR)
+            #packager should have given the complete path
+            #in other cases
+        f.write("PYMCA_DATA_DIR = '%s'\n" % PYMCA_DATA_DIR)
+        f.close()
         return install_data.run(self)
 
-from distutils.command.install_scripts import install_scripts
 """
+from distutils.command.install_scripts import install_scripts
 class smart_install_scripts(install_scripts):
     def run (self):
         global PYMCA_SCRIPTS_DIR
@@ -306,9 +336,11 @@ class smart_install_scripts(install_scripts):
             self.install_dir = os.path.join(self.install_dir, 'bin')        
         else:
             self.install_dir = getattr(install_cmd, 'install_scripts')
+        self.install_data = getattr(install_cmd, 'install_data')
         PYMCA_SCRIPTS_DIR = self.install_dir        
+        PYMCA_DATA_DIR = self.install_data
         if sys.platform != "win32":
-            print "PyMca scripts to be installed in %s" %  self.install_dir
+            print("PyMca scripts to be installed in %s" %  self.install_dir)
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
         self.outfiles = []
         for filein in glob.glob('PyMca/scripts/*'):
@@ -316,9 +348,32 @@ class smart_install_scripts(install_scripts):
             if os.path.exists(filedest):
                 os.remove(filedest)
             moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca")
-            f = open(filein, 'r')
-            modfile = f.readline().replace("\n","")
-            f.close()
+            if 0:
+                f = open(filein, 'r')
+                modfile = f.readline().replace("\n","")
+                f.close()
+            else:
+                basename = os.path.basename(filein) 
+                if basename.startswith('pymcabatch'):
+                    modfile = 'PyMcaBatch.py'
+                elif basename.startswith('pymcapostbatch') or\
+                     basename.startswith('rgbcorrelator'):
+                    modfile = 'PyMcaPostBatch.py' 
+                elif basename.startswith('pymcaroitool'):
+                    modfile = 'QStackWidget.py'
+                elif basename.startswith('mca2edf'):
+                    modfile = 'Mca2Edf.py'
+                elif basename.startswith('edfviewer'):
+                    modfile = 'EdfFileSimpleViewer.py'
+                elif basename.startswith('peakidentifier'):
+                    modfile = 'PeakIdentifier.py'
+                elif basename.startswith('elementsinfo'):
+                    modfile = 'ElementsInfo.py'
+                elif basename.startswith('pymca'):
+                    modfile = 'PyMcaMain.py'
+                else:
+                    print " ignored" , filein
+                    continue                
             text  = "#!/bin/bash\n"
             text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
             #deal with sys.executables not named python
@@ -342,7 +397,7 @@ class smart_install_scripts(install_scripts):
                     mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
                     log.info("changing mode of %s to %o", file, mode)
                     os.chmod(file, mode)
-"""   
+""" 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
 """
@@ -384,6 +439,7 @@ badtext += "small subset of PyMca."
 
 try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
+    print("PyMca data files are installed in %s " % PYMCA_DATA_DIR)
 except NameError:
     #I really do not see how this may happen but ...
     pass
@@ -463,8 +519,6 @@ if SIP:
                 print("and try the scripts:")
                 for script in script_files:
                     s = os.path.basename(script)
-                    #if s.upper() == "PYMCA":continue
-                    #if s.upper() == "MCA2EDF":continue
                     print(s)
         except NameError:
             pass

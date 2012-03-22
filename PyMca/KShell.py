@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,14 +26,17 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.5 $"
 
+import os
 import numpy.oldnumeric as Numeric
 try:
     from PyMca import specfile
 except ImportError:
+    #this is needed for frozen versions
+    print("KShell.py is importing specfile from local directory")
     import specfile
-import os
+from PyMca import PyMcaDataDir
 
-dirname   = os.path.dirname(__file__)
+dirname   = PyMcaDataDir.PYMCA_DATA_DIR
 inputfile = os.path.join(dirname, "KShellRates.dat")
 if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)

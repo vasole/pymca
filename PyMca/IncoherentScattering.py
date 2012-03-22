@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,7 +27,8 @@
 import os
 import numpy.oldnumeric as Numeric
 from PyMca import ConfigDict
-from PyMca import Scofield1973
+from PyMca import PyMcaDataDir
+
 ElementList= ['H','He','Li','Be','B','C','N','O','F','Ne',
               'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
      'Ga','Ge','As','Se','Br','Kr',
@@ -38,7 +39,7 @@ ElementList= ['H','He','Li','Be','B','C','N','O','F','Ne',
      'Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am','Cm','Bk','Cf',
      'Es','Fm','Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt']
 
-dirmod = os.path.dirname(Scofield1973.__file__) 
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR
 ffile   = os.path.join(dirmod,"attdata")
 ffile   = os.path.join(ffile,"incoh.dict")
 if not os.path.exists(ffile):

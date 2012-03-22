@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,10 +31,10 @@ try:
     from PyMca import specfile
 except ImportError:
     #this is needed for frozen versions
-    #print "Importing specfile from local directory"
+    print("PyMcaEPDL97.py is importing specfile from local directory")
     import specfile
+from PyMca import PyMcaDataDir
 import numpy
-#import copy
 log = numpy.log
 exp = numpy.exp
 ElementList = ['H', 'He', 
@@ -53,7 +53,7 @@ ElementList = ['H', 'He',
             'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
             'Bh', 'Hs', 'Mt']
 
-dirmod = os.path.dirname(__file__)
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
 EPDL97_FILE = os.path.join(dirmod,"EPDL97_CrossSections.dat")
 if not os.path.exists(EPDL97_FILE):
     #freeze does bad things with the path ...

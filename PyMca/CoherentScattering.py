@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,11 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import ConfigDict
-from PyMca import Scofield1973
+from PyMca import PyMcaDataDir
 
-dirmod = os.path.dirname(Scofield1973.__file__) 
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
 ffile   = os.path.join(dirmod, "attdata")
 ffile   = os.path.join(ffile, "atomsf.dict")
 if not os.path.exists(ffile):
@@ -63,22 +63,22 @@ def getElementFormFactor(ele, theta, energy):
     a four gaussians approximation
     """
     wavelength = KEVTOANG / energy
-    x = Numeric.sin(theta*(Numeric.pi/360.0)) /wavelength
+    x = numpy.sin(theta*(numpy.pi/360.0)) / wavelength
     x = x * x
     c0= COEFFICIENTS[ele]['c'][0]
     c = COEFFICIENTS[ele]['c'][1:]
     b = COEFFICIENTS[ele]['b']
-    return c0 + (c[0] * Numeric.exp(-b[0]*x)) + \
-                  (c[1] * Numeric.exp(-b[1]*x)) + \
-                  (c[2] * Numeric.exp(-b[2]*x)) + \
-                  (c[3] * Numeric.exp(-b[3]*x))
+    return c0 + (c[0] * numpy.exp(-b[0]*x)) + \
+                  (c[1] * numpy.exp(-b[1]*x)) + \
+                  (c[2] * numpy.exp(-b[2]*x)) + \
+                  (c[3] * numpy.exp(-b[3]*x))
 
 def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
     if p1 is None:p1=0.0
     if (p1 > 1.0) or (p1 < -1):
         raise ValueError(\
         "Invalid degree of linear polarization respect to the scattering plane")
-    thetasin2 = pow(Numeric.sin(theta*Numeric.pi/180.0),2)
+    thetasin2 = pow(numpy.sin(theta*numpy.pi/180.0),2)
     return (1.0+ 0.5 *(p1-1.0) * thetasin2) * \
            pow(R0*getElementFormFactor(ele, theta, energy),2)
 
@@ -89,14 +89,7 @@ if __name__ == "__main__":
         theta = float(sys.argv[2])
         energy= float(sys.argv[3])
         print(getElementFormFactor(ele, theta, energy))
-        import Tkinter
-        import SimplePlot
-        root = Tkinter.Tk()
-        e=range(int(energy+1))[1:]
-        y=[getElementFormFactor(ele, theta, x) for x in e]
-        SimplePlot.plot([e,y])        
-        root.mainloop()
     else:
         print("Usage:")
-        print("python FormFactor.py Element Theta(deg) Energy(kev)")
+        print("python CoherentScattering.py Element Theta(deg) Energy(kev)")
     

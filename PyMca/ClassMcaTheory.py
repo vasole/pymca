@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,14 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 ___revision__ = "$Revision: 1.77 $"
-import Elements
-import SpecfitFuns
-import ConfigDict
 import os
 import sys
-import Gefit
 import numpy.oldnumeric as Numeric
 import copy
+from PyMca import Elements
+from PyMca import SpecfitFuns
+from PyMca import ConfigDict
+from PyMca import Gefit
+from PyMca import PyMcaDataDir
 DEBUG = 0
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
 CONTINUUM_LIST = [None,'Constant','Linear','Parabolic','Linear Polynomial','Exp. Polynomial']
@@ -45,7 +46,7 @@ class McaTheory:
         self.sigmay0 = None
         
         if initdict is None:
-            dirname = os.path.dirname(__file__)
+            dirname = PyMcaDataDir.PYMCA_DATA_DIR
             initdict = os.path.join(dirname, "McaTheory.cfg")
             if not os.path.exists(initdict):
                 #Frozen version deals differently with the path

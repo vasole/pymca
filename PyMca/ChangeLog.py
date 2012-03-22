@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,7 +26,8 @@
 #############################################################################*/
 import sys
 import os
-import PyMcaQt as qt
+from PyMca import PyMcaDataDir
+from PyMca import PyMcaQt as qt
 
 class ChangeLog(qt.QTextDocument):
     def __init__(self, parent=None, textfile = None):
@@ -36,7 +37,7 @@ class ChangeLog(qt.QTextDocument):
 
     def setTextFile(self, textfile):
         if not os.path.exists(textfile):
-            textfile = os.path.join(os.path.dirname(__file__), textfile)
+            textfile = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, textfile)
         f = open(textfile)
         lines = f.readlines()
         f.close()

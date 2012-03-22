@@ -42,6 +42,7 @@ from PyMca import ConfigDict
 from PyMca import CoherentScattering
 from PyMca import IncoherentScattering
 from PyMca import PyMcaEPDL97
+from PyMca import PyMcaDataDir
 
 """ 
 Constant                     Symbol      2006 CODATA value          Relative uncertainty
@@ -2631,7 +2632,7 @@ def getelementmassattcoef(ele,energy=None):
             dict['total']      = [total cross section]
     """
     if 'xcom' not in Element[ele].keys():
-        dirmod = os.path.dirname(Scofield1973.__file__) 
+        dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
         #read xcom file
         #print dirmod+"/"+ele+".mat"
         xcomfile = os.path.join(dirmod, "attdata")
@@ -2989,7 +2990,7 @@ def updateDict(energy=None, minenergy=MINENERGY, minrate=0.0010, cb=True):
 
 def _getMaterialDict():
     cDict = ConfigDict.ConfigDict()
-    dirmod  = os.path.dirname(Scofield1973.__file__) 
+    dirmod = PyMcaDataDir.PYMCA_DATA_DIR
     matdict = os.path.join(dirmod,"attdata")
     matdict = os.path.join(matdict,"MATERIALS.DICT")
     if not os.path.exists(matdict):

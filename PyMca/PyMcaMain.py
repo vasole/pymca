@@ -65,8 +65,8 @@ if __name__ == '__main__':
     if qtversion == '3':
         import qt
 
-import PyMcaMdi
-from PyMcaMdi import qt
+from PyMca import PyMcaMdi
+from PyMca.PyMcaMdi import qt
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -75,8 +75,9 @@ else:
 
 QTVERSION = qt.qVersion()
 
-from PyMca_Icons import IconDict
-from PyMca_help import HelpDict
+from PyMca.PyMca_Icons import IconDict
+from PyMca.PyMca_help import HelpDict
+from PyMca import PyMcaDataDir
 import os
 __version__ = "4.5.0"
 if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
@@ -122,7 +123,7 @@ if __name__ == "__main__":
         palette.setColor(role, qt.QColor(238,234,238))
         app.setPalette(palette)
 
-    mpath = os.path.dirname(PyMcaMdi.__file__)
+    mpath = PyMcaDataDir.PYMCA_DATA_DIR
     if mpath[-3:] == "exe":
         mpath = os.path.dirname(mpath)
     if QTVERSION < '4.0.0':
@@ -166,47 +167,47 @@ if __name__ == "__main__":
         if sys.platform == "darwin":
             qt.qApp.processEvents()
 
-import McaWindow
-import ScanWindow
+from PyMca import McaWindow
+from PyMca import ScanWindow
 OBJECT3D = False
 if QTVERSION > '4.0.0':
-    import PyMcaImageWindow
-    import PyMcaHKLImageWindow
+    from PyMca import PyMcaImageWindow
+    from PyMca import PyMcaHKLImageWindow
     try:
         #This is to make sure it is properly frozen
         #and that Object3D is fully supported
         import OpenGL.GL
         import PyQt4.QtOpenGL
         #import Object3D.SceneGLWindow as SceneGLWindow
-        import PyMcaGLWindow as SceneGLWindow
+        import PyMca.PyMcaGLWindow as SceneGLWindow
         OBJECT3D = True
     except:
         OBJECT3D = False
-import QDispatcher
-import ElementsInfo
-import PeakIdentifier
-import PyMcaBatch
+from PyMca import QDispatcher
+from PyMca import ElementsInfo
+from PyMca import PeakIdentifier
+from PyMca import PyMcaBatch
 ###########import Fit2Spec
-import Mca2Edf
+from PyMca import Mca2Edf
 STACK = False
 if QTVERSION > '4.0.0':
     try:
-        import QStackWidget
-        import StackSelector
+        from PyMca import QStackWidget
+        from PyMca import StackSelector
         STACK = True
     except:
         STACK = False
-    import PyMcaPostBatch
-    import RGBCorrelator
-    import MaterialEditor
+    from PyMca import PyMcaPostBatch
+    from PyMca import RGBCorrelator
+    from PyMca import MaterialEditor
 
-import ConfigDict
-import PyMcaDirs
+from PyMca import ConfigDict
+from PyMca import PyMcaDirs
 
 XIA_CORRECT = False
 if QTVERSION > '4.3.0':
     try:
-        import XiaCorrect
+        from PyMca import XiaCorrect
         XIA_CORRECT = True
     except:
         pass
@@ -1657,14 +1658,14 @@ class PyMca(PyMcaMdi.PyMca):
                 self.menuBrowser.setCaption(QString("Main Menu Help"))
             else:
                 self.menuBrowser.setWindowTitle(QString("Main Menu Help"))
-            dir=os.path.dirname(PyMcaMdi.__file__)
-            if not os.path.exists(os.path.join(dir,"HTML","Menu.html")):
-                dir = os.path.dirname(dir)
+            ddir=PyMcaDataDir.PYMCA_DATA_DIR
+            if not os.path.exists(os.path.join(ddir,"HTML","Menu.html")):
+                ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
-                self.menuBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
+                self.menuBrowser.mimeSourceFactory().addFilePath(QString(ddir+"/HTML"))
                 self.menuBrowser.setSource(QString("Menu.html"))
             else:
-                self.menuBrowser.setSearchPaths([os.path.join(dir,"HTML")])
+                self.menuBrowser.setSearchPaths([os.path.join(ddir,"HTML")])
                 self.menuBrowser.setSource(qt.QUrl(QString("Menu.html")))
             self.menuBrowser.show()
         if self.menuBrowser.isHidden():self.menuBrowser.show()
@@ -1678,14 +1679,14 @@ class PyMca(PyMcaMdi.PyMca):
                 self.displayBrowser.setCaption(QString("Data Display HOWTO"))
             else:
                 self.displayBrowser.setWindowTitle(QString("Data Display HOWTO"))                
-            dir=os.path.dirname(PyMcaMdi.__file__)
-            if not os.path.exists(os.path.join(dir,"HTML","Display-HOWTO.html")):
-                dir = os.path.dirname(dir)
+            ddir=PyMcaDataDir.PYMCA_DATA_DIR
+            if not os.path.exists(os.path.join(ddir,"HTML","Display-HOWTO.html")):
+                ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
                 self.displayBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
                 self.displayBrowser.setSource(QString("Display-HOWTO.html"))
             else:
-                self.displayBrowser.setSearchPaths([os.path.join(dir,"HTML")])
+                self.displayBrowser.setSearchPaths([os.path.join(ddir,"HTML")])
                 self.displayBrowser.setSource(qt.QUrl(QString("Display-HOWTO.html")))
             self.displayBrowser.show()
         if self.displayBrowser.isHidden():self.displayBrowser.show()
@@ -1699,14 +1700,14 @@ class PyMca(PyMcaMdi.PyMca):
                 self.mcaBrowser.setCaption(QString("MCA HOWTO"))
             else:
                 self.mcaBrowser.setWindowTitle(QString("MCA HOWTO"))
-            dir=os.path.dirname(PyMcaMdi.__file__)
-            if not os.path.exists(dir+"/HTML"+"/MCA-HOWTO.html"):
-                dir = os.path.dirname(dir)
+            ddir=PyMcaDataDir.PYMCA_DATA_DIR
+            if not os.path.exists(ddir+"/HTML"+"/MCA-HOWTO.html"):
+                ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
-                self.mcaBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
+                self.mcaBrowser.mimeSourceFactory().addFilePath(QString(ddir+"/HTML"))
                 self.mcaBrowser.setSource(QString("MCA-HOWTO.html"))
             else:
-                self.mcaBrowser.setSearchPaths([os.path.join(dir,"HTML")])
+                self.mcaBrowser.setSearchPaths([os.path.join(ddir,"HTML")])
                 self.mcaBrowser.setSource(qt.QUrl(QString("MCA-HOWTO.html")))
                 #f = open(os.path.join(dir,"HTML","MCA-HOWTO.html"))
                 #self.mcaBrowser.setHtml(f.read())
@@ -1727,7 +1728,7 @@ class PyMca(PyMcaMdi.PyMca):
             self.changeLog.setCursor(self.cursor())
             self.changeLog.setWindowTitle("PyMCA %s Changes" % __version__)
             self.changeLog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
-            mpath = os.path.dirname(PyMcaMdi.__file__)
+            mpath = PyMcaDataDir.PYMCA_DATA_DIR
             fname = os.path.join(mpath,'changelog.txt')
             if not os.path.exists(fname):
                while len(mpath) > 3:
@@ -1768,8 +1769,8 @@ class PyMca(PyMcaMdi.PyMca):
             else:self.mcawindow.raise_()
             self.mcawindow.graph.printps()    
 
-    def __McaWindowSignal(self,dict):
-        if dict['event'] == 'NewScanCurve':
+    def __McaWindowSignal(self, ddict):
+        if ddict['event'] == 'NewScanCurve':
             if self.mcawindow.scanwindow.isHidden():
                 self.mcawindow.scanwindow.show()
             self.mcawindow.scanwindow.setFocus()   
@@ -1837,10 +1838,10 @@ class MyQTextBrowser(qt.QTextBrowser):
     def  setSource(self,name):
         if name == QString("./PyMCA.html"):
             if sys.platform == 'win32':
-                dir=os.path.dirname(PyMcaMdi.__file__)
-                if not os.path.exists(dir+"/HTML"+"/PyMCA.html"):
-                    dir = os.path.dirname(dir)
-                cmd = dir+"/HTML/PyMCA.pdf"
+                ddir=PyMcaDataDir.PYMCA_DATA_DIR
+                if not os.path.exists(ddir+"/HTML"+"/PyMCA.html"):
+                    ddir = os.path.dirname(ddir)
+                cmd = ddir+"/HTML/PyMCA.pdf"
                 os.system('"%s"' % cmd)
                 return
             try:
@@ -1848,8 +1849,9 @@ class MyQTextBrowser(qt.QTextBrowser):
             except:
                 self.report = qt.QTextBrowser()
                 self.report.setCaption(QString("PyMca Report"))
-                self.report.mimeSourceFactory().addFilePath(QString(os.path.dirname(PyMcaMdi.__file__)+"/HTML"))
-                self.report.mimeSourceFactory().addFilePath(QString(os.path.dirname(PyMcaMdi.__file__)+"/HTML/PyMCA_files"))
+                ddir=PyMcaDataDir.PYMCA_DATA_DIR
+                self.report.mimeSourceFactory().addFilePath(QString(ddir+"/HTML"))
+                self.report.mimeSourceFactory().addFilePath(QString(ddir+"/HTML/PyMCA_files"))
                 self.report.setSource(name)
             if self.report.isHidden():self.report.show()
             self.report.raiseW()

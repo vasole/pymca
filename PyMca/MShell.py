@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,13 +24,16 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
+import os
 import numpy.oldnumeric as Numeric
 try:
     from PyMca import specfile
 except ImportError:
+    print("MShell.py is importing specfile from local directory")
     import specfile
-import os
-dirname   = os.path.dirname(__file__)
+from PyMca import PyMcaDataDir
+    
+dirname   = PyMcaDataDir.PYMCA_DATA_DIR
 inputfile = os.path.join(dirname, "MShellRates.dat")
 if not os.path.exists(inputfile):
     dirname = os.path.dirname(dirname)

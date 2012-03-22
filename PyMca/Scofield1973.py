@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,11 +25,12 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import imp
 import os
 from PyMca import ConfigDict
+from PyMca import PyMcaDataDir
+
 dict = ConfigDict.ConfigDict()
-dirmod = os.path.dirname(__file__) 
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
 dictfile = os.path.join(dirmod, "Scofield1973.dict")
 if not os.path.exists(dictfile):
     dirmod = os.path.dirname(dirmod)
