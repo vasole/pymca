@@ -1683,15 +1683,18 @@ class PyMca(PyMcaMdi.PyMca):
             if not os.path.exists(os.path.join(ddir,"HTML","Display-HOWTO.html")):
                 ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
-                self.displayBrowser.mimeSourceFactory().addFilePath(QString(dir+"/HTML"))
+                self.displayBrowser.mimeSourceFactory().addFilePath(QString(ddir+"/HTML"))
                 self.displayBrowser.setSource(QString("Display-HOWTO.html"))
             else:
                 self.displayBrowser.setSearchPaths([os.path.join(ddir,"HTML")])
                 self.displayBrowser.setSource(qt.QUrl(QString("Display-HOWTO.html")))
             self.displayBrowser.show()
-        if self.displayBrowser.isHidden():self.displayBrowser.show()
-        if QTVERSION < '4.0.0':self.displayBrowser.raiseW()
-        else:self.displayBrowser.raise_()
+        if self.displayBrowser.isHidden():
+            self.displayBrowser.show()
+        if QTVERSION < '4.0.0':
+            self.displayBrowser.raiseW()
+        else:
+            self.displayBrowser.raise_()
     
     def onMcaHowto(self):
         if self.mcaBrowser is None:
