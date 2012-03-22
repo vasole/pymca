@@ -1,0 +1,110 @@
+<html>
+<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc 
+marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
+<p><H3>MCA HOWTOs</H3>
+<a HREF=#Energy>HOWTO - Display MCA spectra in energy instead of channels&nbsp;</a><br>
+<a HREF=#Calibration>HOWTO - Calibrate MCA spectra&nbsp;</a><br>
+<a HREF=#Roi>HOWTO - Define a ROI&nbsp;</a><br>
+<a HREF=#Fit>HOWTO - Fit MCA Spectra&nbsp;</a><br>
+<a HREF=#Simple>HOWTO - Simple fit&nbsp;</a><br>
+<a HREF=#Advanced>HOWTO - Advanced fit&nbsp;</a><br>
+<br>
+<br>
+<H3><a NAME=#Energy>Display MCA spectra in energy instead of channels&nbsp;</a></H3><br>
+<br>
+At the calibration combo box below the Mca graphics window, select Internal.
+If the spectra in the graphics window have an energy calibration associated
+(either they were already calibrated or they have been calibrated by PyMca),
+each spectrum will be shown with its corresponding calibration.&nbsp;<br>
+<br>
+The default options of the calibration combo box are:&nbsp;<br>
+None - Spectra are shown against channel number.&nbsp;<br>
+Original - Each spectrum is shown with the energy calibration it came with.&nbsp;<br>
+Internal - Each spectrum is shown with the energy calibration it came with
+unless it has been recalibrated in PyMca.&nbsp;<br>
+<br>
+Other options will be present in case the user has previously decided to
+perform an energy calibration. Selecting any of these non default options
+will plot all the spectra with the same selected energy calibration.&nbsp;<br>
+<br>
+<H3><a NAME=#Calibration>Calibrate MCA spectra&nbsp;</a></H3><br>
+Select the spectrum to calibrate by clicking on its legend.&nbsp;<br>
+Click on calibrate.&nbsp;<br>
+If you want to enter a calibration by hand or to copy a calibration from
+other curve, click edit. The rest should be more or less self-explanatory.&nbsp;<br>
+If you want to calculate a new calibration from the data themselves, click
+compute. You will be presented a new graph window with the selected spectrum.&nbsp;<br>
+The program offers to you the possibility to search automatically for peaks
+(you should give an estimation of the FWHM of the peaks) or to enter a
+peak with the mouse by selecting the manual search icon.&nbsp;<br>
+Found or entered peaks will be denoted by vertical markers on the graph.
+To enter the associated energy to that peak just click on the marker. Do
+that for all the peaks you would like to use.&nbsp;<br>
+Once you have finished click OK to validate the calibration or Cancel to
+disregard it. Back to the main application, select the appropriate option
+in the calibration combo box.&nbsp;<br>
+<br>
+<H3><a NAME=#Roi>Define a ROI&nbsp;</a></H3><br>
+A table of Regions of Interest (ROIs) may be seen below the MCA graph.
+A default ROI named ICR is always present.&nbsp;<br>
+The Raw counts contains the total counts between the markers.&nbsp;<br>
+The Net counts contains the Raw counts minus the counts under an imaginary
+background line going from the spectrum point at the beginning of the ROI
+to the spectrum point at the ending of the ROI. To define a new ROI just
+click the "ADD ROI" button and move the blue markers (click and move) to
+the appropriate position(s).&nbsp;<br>
+<br>
+<H3><a NAME=#Fit>Fit MCA Spectra&nbsp;</a></H3><br>
+Select the spectrum to be fitted by clicking on its legend.&nbsp;<br>
+Select the region to be fitted by zooming with the mouse.&nbsp;<br>
+Click on the Fit Icon. Select "Simple" or "Advanced" depending on the type
+of fit to be performed.&nbsp;<br>
+<br>
+<H3><a NAME=#Simple>Simple Fit&nbsp;</a></H3><br>
+PyMca automatically searches for peaks in the spectrum, divides the spectrum
+in several regions depending on the separation among peaks and on the FWHM
+specified in the configuration and presents all the results in a table.&nbsp;<br>
+Peaks for which the calculated area presents potential problems are underlined
+in red.&nbsp;<br>
+WARNING:
+<br>If you are interested on the peak areas, the fit has to be made with
+the calibration set to None. If not, the calculated areas need to be divided
+by the value shown besides
+<b>B:</b> of the used energy calibration in
+order to get the actual areas.&nbsp;<br>
+If you are interested on peak FWHM in energy, the fit has to be made with
+the calibration set to an option different from None.&nbsp;<br>
+<br>
+<H3><a NAME=#Advanced>Advanced Fit&nbsp;</a></H3><br>
+This is PyMca main reason of being. The initial goal of PyMca was to supply
+an interactive tool to set up the configuration file of a program for batch
+fitting of multiple spectra.&nbsp;<br>
+<br>
+The expected procedure is:&nbsp;<br>
+- select an active curve&nbsp;<br>
+- calibrate it if not already calibrated&nbsp;<br>
+- select internal calibration&nbsp;<br>
+- zoom to the desired fitting region&nbsp;<br>
+- click fit icon&nbsp;<br>
+- select advanced&nbsp;<br>
+- configure&nbsp;<br>
+- fit&nbsp;<br>
+<br>
+The "Configure" button opens a dialog box with several tabs.&nbsp;<br>
+The FIT tab allows to specify convergence criteria.&nbsp;<br>
+The PEAKS tab allows the user to select the elements and lines (K, L1,
+L2, L3) to be considered. Elements with selected lines are shown in yellow.&nbsp;<br>
+The PEAKS SHAPE allows fine tuning of the HYPERMET function describing
+the peaks.&nbsp;<br>
+The ATTENUATORS tab allows to take into account absorbers that could modify
+the peak ratios of the elements as seen by the detector.&nbsp;<br>
+<br>
+It is convenient to SAVE the final configuration in a file for using it
+in other session or in batch mode.&nbsp;<br>
+<br>
+The "Tools" button shows a popup menu offering to print the table or to
+generate a detailed HTML report. The report can be visualized by any web
+browser. A detailed description of the fitting function(s) and most of
+the algorithms used can be found <a HREF=./PyMCA.html>here</a>
+</body>
+</html>

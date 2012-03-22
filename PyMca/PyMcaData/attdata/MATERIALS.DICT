@@ -1,0 +1,46 @@
+[Air]
+Comment             = Dry Air (Near sea level) density=0.001204790 g/cm3
+CompoundList     = C1, N1, O1, Ar1, Kr1
+CompoundFraction = 0.0001240, 0.755267, 0.231780, 0.012827, 3.2E-6
+Density          = 0.001204790
+Thickness        = 1.0
+
+[Goethite]
+Comment          = Mineral FeO(OH) density from 3.3 to 4.3 density=4.3 g/cm3
+CompoundList     = Fe1O2H1
+CompoundFraction = 1.0
+Density          = 4.3
+Thickness        = 0.1
+
+
+[Mylar]
+Comment             = Mylar (Polyethylene Terephthalate) density=1.40 g/cm3
+CompoundList     = H1, C1, O1
+CompoundFraction = 0.0419590, 0.625017, 0.333025
+Density          = 1.40
+
+[Kapton]
+Comment             = Kapton 100 HN 25 micron density=1.42 g/cm3
+CompoundList     = C1, N1, O1
+CompoundFraction = 0.628772, 0.066659, 0.304569
+Density          = 1.42
+Thickness        = 0.0025
+
+[Teflon]
+Comment             = Teflon density=2.2 g/cm3
+CompoundList     = C1,F1
+CompoundFraction = 0.240183, 0.759817
+Density          = 2.2
+
+[Viton]
+Comment             = Viton Fluoroelastomer density=1.8 g/cm3
+CompoundList     = H1,C1,F1
+CompoundFraction = 0.0094170, 0.2805550, 0.7100280
+Density          = 1.8
+
+[Water]
+Comment             = Water density=1.0 g/cm3
+CompoundList     = H2O1
+CompoundFraction = 1.0
+Density          = 1.0
+

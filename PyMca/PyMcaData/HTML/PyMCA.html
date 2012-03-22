@@ -1,0 +1,575 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 9">
+<meta name=Originator content="Microsoft Word 9">
+<link rel=File-List href="./PyMCA_files/filelist.xml">
+<link rel=Edit-Time-Data href="./PyMCA_files/editdata.mso">
+<link rel=OLE-Object-Data href="./PyMCA_files/oledata.mso">
+<!--[if !mso]>
+<style>
+v\:* {behavior:url(#default#VML);}
+o\:* {behavior:url(#default#VML);}
+w\:* {behavior:url(#default#VML);}
+.shape {behavior:url(#default#VML);}
+</style>
+<![endif]-->
+<title>Continuum/background Models</title>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author>Name</o:Author>
+  <o:LastAuthor>V.A. SOLE</o:LastAuthor>
+  <o:Revision>2</o:Revision>
+  <o:TotalTime>135</o:TotalTime>
+  <o:Created>2004-11-03T11:31:00Z</o:Created>
+  <o:LastSaved>2004-11-03T11:31:00Z</o:LastSaved>
+  <o:Pages>5</o:Pages>
+  <o:Words>1474</o:Words>
+  <o:Characters>8405</o:Characters>
+  <o:Company>Organization</o:Company>
+  <o:Lines>70</o:Lines>
+  <o:Paragraphs>16</o:Paragraphs>
+  <o:CharactersWithSpaces>10321</o:CharactersWithSpaces>
+  <o:Version>9.4402</o:Version>
+ </o:DocumentProperties>
+</xml><![endif]-->
+<style>
+<!--
+ /* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	mso-ansi-language:EN-US;}
+@page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;
+	mso-header-margin:36.0pt;
+	mso-footer-margin:36.0pt;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext="edit" spidmax="2050"/>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext="edit">
+  <o:idmap v:ext="edit" data="1"/>
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=EN-GB style='tab-interval:36.0pt'>
+
+<div class=Section1>
+
+<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:
+normal'><span lang=EN-US>PyMCA – X-Ray Spectrum Analysis in Python<o:p></o:p></span></b></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=FR style='mso-ansi-language:
+FR'>V. A. Solé and E. Papillon.<o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>European
+Syncrothon Radiation Facility (ESRF), 38043 Grenoble Cedex.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:
+normal'><span lang=EN-US>1. Introduction<o:p></o:p></span></b></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>Up to date most, if not all, spectrum fitting for X-ray fluorescence
+measurements at the ESRF (ID13, ID18F, ID21, ID22) has been performed using
+externally supplied software (generally based on the AXIL software developed at
+the University of Antwerp, Belgium). Whilst this software is fairly robust and
+reliable, we have very little influence over its development and consequently
+its direct integration into our control system and subsequent data analysis
+routines is not straightforward. A further limitation is that we can not
+distribute that software to our user community.</span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>A versatile non-linear least-squares fitting application had been
+already developed as part of the tools of the BLISS group at the ESRF and had
+been used among others by the NewPlot visualization package. That fitting
+application, based on the Levenberg-Marquardt algorithm, is implemented
+entirely in Python, thus ensuring a high level of platform compatibility and
+straightforward integration with the ESRF control system. The logical step to
+follow was to write a dedicated function to describe the x-ray fluorescence
+spectra and feed that function to the fitting module.</span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The need to have an easy way to setup the configuration parameters
+of the fit, led to the development of a complete visualization and data
+analysis tool, PyMCA, that relies on Qt and Qwt to build its graphical
+interface and plotting routines. Nevertheless, the fitting code can run in
+prompt/batch mode fully independent of any graphical package, and its output
+file, can be used by other python module (also GUI independent) to
+automatically generate a fully detailed HTML report that can be visualized by
+any browser.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:
+normal'><span lang=EN-US>2. Algorithms</span></b></p>
+
+<p class=MsoNormal style='text-align:justify'><i style='mso-bidi-font-style:
+normal'><span lang=EN-US>2.1 Continuum/background Models<o:p></o:p></span></i></p>
+
+<p class=MsoNormal style='text-align:justify'><u><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></u></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The continuum is modeled in two possible ways: estimation or
+fitting. In the former the estimated background is subtracted from the
+experimental data prior to the least-squares fitting of the fluorescence peaks.
+In the fitting mode the continuum is described by an analytical function which
+enters into the least-squares fitting algorithm. </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>For the time being PyMCA implements one of each of the models.
+Background can be estimated thru an iterative smoothing procedure in which the
+content of each channel is compared against the average of the content of its</span><span
+style='mso-ansi-language:EN-GB'> neighbours at a distance of <i
+style='mso-bidi-font-style:normal'>i</i> channels</span><span lang=EN-US>. If
+the content is above the average, it is replaced by the average. In order to
+speed up the procedure, <i style='mso-bidi-font-style:normal'>i</i> can be
+taken as a fraction of the peaks full-width-half-maximum (FWHM) at the
+beginning of the iterative process, being one at the end of it. The only
+analytical function currently supported to describe the background is a linear
+polynomial that can also be used in conjunction with the stripping procedure.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><i style='mso-bidi-font-style:
+normal'><span lang=EN-US>2.2 Peak Shape Model<o:p></o:p></span></i></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The following is drawn primarily from a description of Least-Squares
+fitting of XRF spectra in <b style='mso-bidi-font-weight:normal'>[1]</b></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The response function of most solid-state detectors is predominantly
+Gaussian. In certain instances it may be necessary to resort to more
+complicated models such as Voigt or Hypermet <b style='mso-bidi-font-weight:
+normal'>[2]</b> functions.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>A Gaussian peak is characterized by three parameters: the position,
+width, and height or area. It is desirable to describe the peak in terms of its
+area rather than its height because the area is directly related to the number
+of x-ray photons detected, while the height depends on the spectrometer
+resolution. The first approximation to the profile of a single peak is then
+given by:</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><sub><!--[if gte vml 1]><v:shapetype
+ id="_x0000_t75" coordsize="21600,21600" o:spt="75" o:preferrelative="t"
+ path="m@4@5l@4@11@9@11@9@5xe" filled="f" stroked="f">
+ <v:stroke joinstyle="miter"/>
+ <v:formulas>
+  <v:f eqn="if lineDrawn pixelLineWidth 0"/>
+  <v:f eqn="sum @0 1 0"/>
+  <v:f eqn="sum 0 0 @1"/>
+  <v:f eqn="prod @2 1 2"/>
+  <v:f eqn="prod @3 21600 pixelWidth"/>
+  <v:f eqn="prod @3 21600 pixelHeight"/>
+  <v:f eqn="sum @0 0 1"/>
+  <v:f eqn="prod @6 1 2"/>
+  <v:f eqn="prod @7 21600 pixelWidth"/>
+  <v:f eqn="sum @8 21600 0"/>
+  <v:f eqn="prod @7 21600 pixelHeight"/>
+  <v:f eqn="sum @10 21600 0"/>
+ </v:formulas>
+ <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
+ <o:lock v:ext="edit" aspectratio="t"/>
+</v:shapetype><v:shape id="_x0000_i1031" type="#_x0000_t75" style='width:9pt;
+ height:17.25pt' o:ole="">
+ <v:imagedata src="./PyMCA_files/image001.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=12 height=23
+src="./PyMCA_files/image002.gif" v:shapes="_x0000_i1031"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.3" ShapeID="_x0000_i1031"
+  DrawAspect="Content" ObjectID="_1160990284">
+ </o:OLEObject>
+</xml><![endif]--></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1032" type="#_x0000_t75" style='width:122.25pt;height:44.25pt'
+ o:ole="">
+ <v:imagedata src="./PyMCA_files/image003.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=163 height=59
+src="./PyMCA_files/image004.gif" v:shapes="_x0000_i1032"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1032"
+  DrawAspect="Content" ObjectID="_1160990285">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:1'>       </span>(1)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>where A is the
+peak area (counts ), </span><span lang=EN-US style='font-family:Symbol'>s</span><span
+lang=EN-US> the width of the Gaussian expressed in channels and x<sub>0</sub>
+the location of the peak maximum. The FWHM is related to </span><span
+lang=EN-US style='font-family:Symbol'>s</span><span lang=EN-US> by FWHM = 2.355
+</span><span lang=EN-US style='font-family:Symbol'>s</span><span lang=EN-US>.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>In Equation (1) the peak area is a linear parameter; the width and
+position are non-linear parameters. This implies that a nonlinear least-squares
+procedure is required to find optimum values for the latter two parameters.
+Linear least-squares fitting method can be used assuming the position and width
+of the peak are know with high accuracy from calibration.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>To describe part of a measured spectrum, the fitting function must
+contain a number of such functions, one for each peak. For 10 elements and 2
+peaks (K</span><span lang=EN-US style='font-family:Symbol'>a</span><span
+lang=EN-US> and K</span><span lang=EN-US style='font-family:Symbol'>b</span><span
+lang=EN-US>) per element we would need to optimize 60 parameters. It is highly
+unlikely that such a nonlinear least-squares fit will terminate successfully at
+the global minimum. To overcome this problem the fitting function can be
+written in a different way as shown in the next paragraph.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><i style='mso-bidi-font-style:
+normal'><span lang=EN-US>2.3 FWHM and Position of peaks<o:p></o:p></span></i></p>
+
+<p class=MsoNormal style='text-align:justify'><u><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></u></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The first step is to abandon the idea of optimizing peak and
+position of all peaks independently. The energies of the X-ray fluorescence
+lines are typically known with an accuracy of l eV or better. The pattern of
+peaks observed in the spectrum is directly related to the elements present in
+the sample.</span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>Based on these elements we can predict all of the X-ray lines that
+constitute the spectrum and their energies. The peak fitting function is therefore
+written in terms of energy rather than channel number.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>Defining ZERO as the energy of channel 0 and expressing the spectrum
+GAIN in eV/channel, the energy of channel <i style='mso-bidi-font-style:normal'>i</i>
+is given by:</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1025" type="#_x0000_t75" style='width:140.25pt;height:20.25pt'
+ o:ole="">
+ <v:imagedata src="./PyMCA_files/image005.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=187 height=27
+src="./PyMCA_files/image006.gif" v:shapes="_x0000_i1025"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1025"
+  DrawAspect="Content" ObjectID="_1160990287">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:3'>                         </span>(2)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>and the
+normalized Gaussian peak can be written as:</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1026" type="#_x0000_t75" style='width:185.25pt;height:50.25pt'
+ o:ole="">
+ <v:imagedata src="./PyMCA_files/image007.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=247 height=67
+src="./PyMCA_files/image008.gif" v:shapes="_x0000_i1026"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1026"
+  DrawAspect="Content" ObjectID="_1160990288">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:1'>          </span>(3)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>with <i
+style='mso-bidi-font-style:normal'>E<sub>j</sub></i> the energy (in eV) of the
+x-ray line and<i style='mso-bidi-font-style:normal'> s</i> the peak width given
+by:</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1027" type="#_x0000_t75" style='width:200.25pt;height:36.75pt'
+ o:ole="">
+ <v:imagedata src="./PyMCA_files/image009.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=267 height=49
+src="./PyMCA_files/image010.gif" v:shapes="_x0000_i1027"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1027"
+  DrawAspect="Content" ObjectID="_1160990289">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:1'>     </span>(4)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>In this equation
+NOISE is the electronic contribution to the peak width (typical 80-100 eV FWHM)
+with the factor 2.3548 to convert to </span><span lang=EN-US style='font-family:
+Symbol'>s</span><span lang=EN-US> units, FANO is the Fano factor (~0.114) and
+3.85 the energy required to produce an electron-hole pair in silicon. </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The least squares fit optimizes ZERO, GAIN, NOISE and FANO for the
+entire spectrum (fitting region), thus for all peaks simultaneously. One can,
+after the fit, calculate the position of the peak (using eq. 2) and the width
+of the peak using eq. 4. (s in sigma of the peak in eV!!!), convert to channels
+via the factor GAIN and to FWHM via the factor 2.3548. </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><i style='mso-bidi-font-style:
+normal'><span lang=EN-US>2.4 Element Line Groups<o:p></o:p></span></i></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>A further simplification that can be applied to reduce the number of
+fitting parameters is to model entire elements rather than single peaks. Some
+lines can be considered as being grouped together such as the K</span><span
+lang=EN-US style='font-family:Symbol'>a</span><sub><span lang=EN-US>1</span></sub><span
+lang=EN-US>, K</span><span lang=EN-US style='font-family:Symbol'>a</span><sub><span
+lang=EN-US>2</span></sub><span lang=EN-US> doublets or even all K lines of an
+element. A single area parameter A representing the total number of counts in
+the line group can then be fitted. </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The spectrum of an element can then be represented by:</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1033" type="#_x0000_t75" style='width:114pt;height:36.75pt' o:ole="">
+ <v:imagedata src="./PyMCA_files/image011.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=152 height=49
+src="./PyMCA_files/image012.gif" v:shapes="_x0000_i1033"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1033"
+  DrawAspect="Content" ObjectID="_1160990290">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:2'>                      </span>(5)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>where G are the
+Gaussians for the various lines with energy <i style='mso-bidi-font-style:normal'>E<sub>j</sub></i>
+and <i style='mso-bidi-font-style:normal'>R<sub>j</sub></i> the relative
+intensities of the lines. The summation runs over all lines in the group (<i
+style='mso-bidi-font-style:normal'>N<sub>p</sub></i> ) with </span><span
+lang=EN-US style='font-family:Symbol'>S</span><i style='mso-bidi-font-style:
+normal'><span lang=EN-US>R<sub>j</sub></span></i><span lang=EN-US>=1. The
+transition probabilities of all lines originating from a vacancy in the same
+(sub-)shell (K, L<i style='mso-bidi-font-style:normal'><sub>I</sub></i> , L<i
+style='mso-bidi-font-style:normal'><sub>II</sub></i> ...) are constants,
+independent of the excitation. However, the relative intensities depend on the
+absorption in the sample and in the detector windows. To take this into
+account, the x-ray attenuation must be included in Equation (5). The relative
+intensity ratios are obtained by multiplying the transition probabilities with
+an </span><span style='mso-ansi-language:EN-GB'>absorption correction term:</span><span
+lang=EN-US> </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1034" type="#_x0000_t75" style='width:95.25pt;height:48.75pt'
+ o:ole="">
+ <v:imagedata src="./PyMCA_files/image013.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=127 height=65
+src="./PyMCA_files/image014.gif" v:shapes="_x0000_i1034"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1034"
+  DrawAspect="Content" ObjectID="_1160990291">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:3'>                            </span>(6)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The absorption correction term<i style='mso-bidi-font-style:normal'>
+T<sub>a</sub></i> (E), used in the equation (6) includes the x-ray attenuation
+in all layers and windows between the sample surface and the active area of the
+detector. </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><i style='mso-bidi-font-style:
+normal'><span lang=EN-US>2.5 Sum and Escape Peaks<o:p></o:p></span></i></p>
+
+<p class=MsoNormal style='text-align:justify'><i style='mso-bidi-font-style:
+normal'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></i></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>The escape fraction <i style='mso-bidi-font-style:normal'>f</i> is
+defined as the number of counts in the escape peak <i style='mso-bidi-font-style:
+normal'>N<sub>e</sub></i> divided by the number of detected counts (escape +
+parent). Assuming normal incidence to the detector and escape only from the
+front surface, the following formula can be derived for the escape fraction
+(Reed S.J.B., Ware N.G., .J. Phys. E 5 (1972) 582)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1035" type="#_x0000_t75" style='width:234pt;height:39.75pt' o:ole="">
+ <v:imagedata src="./PyMCA_files/image015.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=312 height=53
+src="./PyMCA_files/image016.gif" v:shapes="_x0000_i1035"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1035"
+  DrawAspect="Content" ObjectID="_1160990292">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:1'>      </span>(7)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>where </span><span
+lang=EN-US style='font-family:Symbol'>m</span><sub><span lang=EN-US>I</span></sub><span
+lang=EN-US> and </span><span lang=EN-US style='font-family:Symbol'>m</span><sub><span
+lang=EN-US>K</span></sub><span lang=EN-US> are the mass attenuation
+coefficients of silicon for the impinging and the Si K x-ray fluorescence
+radiation respectively.; </span><span lang=EN-US style='font-family:Symbol'>w</span><sub><span
+lang=EN-US>K</span></sub><span lang=EN-US> is the K-shell fluorescence yield
+and r the K-shell jump ratio of silicon. The calculated escape fraction is in
+very good agreement with the experimentally determined values for impinging
+photons up to 15keV. The area, relative to the area of the parent peak can be
+calculated from the escape fraction: </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1036" type="#_x0000_t75" style='width:75.75pt;height:35.25pt'
+ o:ole="">
+ <v:imagedata src="./PyMCA_files/image017.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=101 height=47
+src="./PyMCA_files/image018.gif" v:shapes="_x0000_i1036"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1036"
+  DrawAspect="Content" ObjectID="_1160990293">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:5'>                                                           </span>(8)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>Si escape peaks can be modeled by a Gaussian at energy 1.742 keV
+below the parent peak. Including the escape peaks, the description of the
+fluorescence of element becomes</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span lang=EN-US><sub><!--[if gte vml 1]><v:shape
+ id="_x0000_i1037" type="#_x0000_t75" style='width:210pt;height:36.75pt' o:ole="">
+ <v:imagedata src="./PyMCA_files/image019.wmz" o:title=""/>
+</v:shape><![endif]--><![if !vml]><img width=280 height=49
+src="./PyMCA_files/image020.gif" v:shapes="_x0000_i1037"><![endif]></sub><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Equation.DSMT4" ShapeID="_x0000_i1037"
+  DrawAspect="Content" ObjectID="_1160990294">
+ </o:OLEObject>
+</xml><![endif]--><span style='mso-tab-count:2'>              </span>(9)</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>where G
+represents the Gaussian fitting function and <i style='mso-bidi-font-style:
+normal'>N<sub>esc</sub></i> the energy of the escaped photon. </span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>So they are not fitted as truly independent peak, but they are part
+of the multiplet. For spectra obtained with a Ge detector one needs to account
+in a similar way for both the Ge-K</span><span lang=EN-US style='font-family:
+Symbol'>a</span><span lang=EN-US> and the Ge-K</span><span lang=EN-US
+style='font-family:Symbol'>b</span><span lang=EN-US><span style="mso-spacerun:
+yes">  </span>escape peaks for elements above arsenic.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>Summing correction is performed by using a very intuitive approach.
+Since any of the peaks can be detected simultaneously with any of the other
+peaks, one can calculate the summing contribution of channel <i
+style='mso-bidi-font-style:normal'>i</i>, simply shifting the whole calculated
+spectrum by i channels and multiplying it by the calculated content of the
+channel times a fitted parameter. This is then repeated for all the points of
+the spectrum. The physical meaning of that parameter, for a time acquisition of
+one second, could be interpreted as the minimum time, measured in seconds,
+needed by the acquisition system to distinguish two photons individually and
+not consider them as simultaneous.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:
+normal'><span lang=EN-US>3. Conclusion<o:p></o:p></span></b></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify;text-indent:36.0pt'><span
+lang=EN-US>Despite being at its early stages, PyMca and its fitting engine
+already implement most of the needs of x-ray fluorescence spectroscopy. It is
+fast (~1 second per complex spectrum with &lt; 1 GHz processors), portable (it
+already runs on Solaris, Linux and Windows) and can be freely distributed.
+Current developments are focused on the implementation of alternative continuum
+algorithms.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:
+normal'><span lang=EN-US>References<o:p></o:p></span></b></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>[1] R.E. Van
+Grieken, A.A. Markowicz. Handbook of X-ray Spectrometry, Chapter 4: Spectrum
+Evaluation,<span style="mso-spacerun: yes">  </span>Ed. Marcel Dekker, New York
+1993.</span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal style='text-align:justify'><span lang=EN-US>[2]<span
+style="mso-spacerun: yes">  </span>G.W. Phillips and K.W. Marlow, NIM 137
+(1976) 525 – 536.</span></p>
+
+</div>
+
+</body>
+
+</html>
