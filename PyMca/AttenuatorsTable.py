@@ -1,70 +1,71 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
-# This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
-# the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
-# PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
+# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 #
 # You should have received a copy of the GNU General Public License along with
-# PyMCA; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA 02111-1307, USA.
+# PyMca; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
+# used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.26 $"
 import sys
-import PyMcaQt as qt    
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 if QTVERSION < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif QTVERSION < '4.0.0':
-    import qttable
+    from PyMca import qttable
 
 if QTVERSION > '4.0.0':
-    qt.QLabel.AlignRight  = qt.Qt.AlignRight
+    qt.QLabel.AlignRight = qt.Qt.AlignRight
     qt.QLabel.AlignCenter = qt.Qt.AlignCenter
-    qt.QLabel.AlignVCenter= qt.Qt.AlignVCenter
+    qt.QLabel.AlignVCenter = qt.Qt.AlignVCenter
 
     class Q3GridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
-import Elements
-import MaterialEditor
-import MatrixEditor
+from PyMca import Elements
+from PyMca import MaterialEditor
+from PyMca import MatrixEditor
 import re
-DEBUG=0
+DEBUG = 0
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
 
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, 
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                                           qt.QSizePolicy.Fixed))
 
 class MyQLabel(qt.QLabel):
-    def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
-        qt.QLabel.__init__(self,parent)
+    def __init__(self, parent=None, name=None, fl=0, bold=True,
+                 color= qt.Qt.red):
+        qt.QLabel.__init__(self, parent)
         if QTVERSION <'4.0.0':
             self.color = color
-            self.bold  = bold
+            self.bold = bold
         else:
             palette = self.palette()
             role = self.foregroundRole()
-            palette.setColor(role,color)
+            palette.setColor(role, color)
             self.setPalette(palette)
             self.font().setBold(bold)
 
@@ -72,14 +73,15 @@ class MyQLabel(qt.QLabel):
     if QTVERSION < '4.0.0':
         def drawContents(self, painter):
             painter.font().setBold(self.bold)
-            pal =self.palette()
-            pal.setColor(qt.QColorGroup.Foreground,self.color)
+            pal = self.palette()
+            pal.setColor(qt.QColorGroup.Foreground, self.color)
             self.setPalette(pal)
-            qt.QLabel.drawContents(self,painter)
+            qt.QLabel.drawContents(self, painter)
             painter.font().setBold(0)
 
 class AttenuatorsTab(qt.QWidget):
-    def __init__(self,parent=None, name="Attenuators Tab",attenuators=None, graph=None):
+    def __init__(self, parent=None, name="Attenuators Tab",
+                 attenuators=None, graph=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
         if QTVERSION > '4.0.0':
@@ -87,59 +89,62 @@ class AttenuatorsTab(qt.QWidget):
             if maxheight < 800:
                 layout.setMargin(0)
                 layout.setSpacing(2)
-        self.table  = AttenuatorsTableWidget(self,name,attenuators, funnyfilters=True)
+        self.table  = AttenuatorsTableWidget(self, name, attenuators,
+                                             funnyfilters=True)
         layout.addWidget(self.table)
         spacer = MaterialEditor.VerticalSpacer(self)
         layout.addWidget(spacer)
         if QTVERSION < '4.0.0':
-            self.mainTab = qt.QTabWidget(self,"mainTab")
+            self.mainTab = qt.QTabWidget(self, "mainTab")
             layout.addWidget(self.mainTab)
-            self.editor = MaterialEditor.MaterialEditor(self.mainTab, "tabEditor")
-            self.mainTab.insertTab(self.editor,str("Material Editor"))
-            self.table.setMinimumHeight(1.1*self.table.sizeHint().height())
+            self.editor = MaterialEditor.MaterialEditor(self.mainTab,
+                                                        "tabEditor")
+            self.mainTab.insertTab(self.editor, str("Material Editor"))
+            self.table.setMinimumHeight(1.1 * self.table.sizeHint().height())
             self.table.setMaximumHeight(1.1*self.table.sizeHint().height())
         else:
             self.mainTab = qt.QTabWidget(self)
             layout.addWidget(self.mainTab)
             rheight = self.table.horizontalHeader().sizeHint().height()
             if maxheight < 800:
-                self.editor = MaterialEditor.MaterialEditor(height=5, graph=graph)
-                self.table.setMinimumHeight(7*rheight)
-                self.table.setMaximumHeight(13*rheight)
+                self.editor = MaterialEditor.MaterialEditor(height=5,
+                                                            graph=graph)
+                self.table.setMinimumHeight(7 * rheight)
+                self.table.setMaximumHeight(13 * rheight)
             else:
                 self.editor = MaterialEditor.MaterialEditor(graph=graph)
                 self.table.setMinimumHeight(13*rheight)
                 self.table.setMaximumHeight(13*rheight)
             self.mainTab.addTab(self.editor, "Material Editor")
-        
+
 class MultilayerTab(qt.QWidget):
-    def __init__(self,parent=None, name="Multilayer Tab",matrixlayers=None):
+    def __init__(self,parent=None, name="Multilayer Tab", matrixlayers=None):
         if matrixlayers is None:
-            matrixlayers=["Layer0","Layer1","Layer2","Layer3",
-                          "Layer4","Layer5","Layer6","Layer7",
-                          "Layer8","Layer9"]
+            matrixlayers=["Layer0", "Layer1", "Layer2", "Layer3",
+                          "Layer4", "Layer5", "Layer6", "Layer7",
+                          "Layer8", "Layer9"]
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
 
-        self.matrixGeometry = MatrixEditor.MatrixEditor(self,"tabMatrix",
+        self.matrixGeometry = MatrixEditor.MatrixEditor(self, "tabMatrix",
                                    table=False, orientation="horizontal",
                                    density=False, thickness=False,
                                    size="image2")
         layout.addWidget(self.matrixGeometry)
 
-        text  ="This matrix definition will only be "
-        text +="considered if Matrix is selected and material is set to "
-        text +="MULTILAYER in the ATTENUATORS tab.\n  "
+        text = "This matrix definition will only be "
+        text += "considered if Matrix is selected and material is set to "
+        text += "MULTILAYER in the ATTENUATORS tab.\n  "
         self.matrixInfo  = qt.QLabel(self)
         layout.addWidget(self.matrixInfo)
-        self.matrixInfo.setText(text) 
-        self.matrixTable = AttenuatorsTableWidget(self,name,
+        self.matrixInfo.setText(text)
+        self.matrixTable = AttenuatorsTableWidget(self, name,
                                                   attenuators=matrixlayers,
                                                   matrixmode=True)
         layout.addWidget(self.matrixTable)
 
 class CompoundFittingTab(qt.QWidget):
-    def __init__(self,parent=None, name="Compound Tab",
+    def __init__(self, parent=None, name="Compound Tab",
                     layerlist=None):
         qt.QWidget.__init__(self, parent)
         if layerlist is None:
@@ -150,21 +155,21 @@ class CompoundFittingTab(qt.QWidget):
         hbox = qt.QWidget(self)
         hboxlayout  = qt.QHBoxLayout(hbox)
         #hboxlayout.addWidget(HorizontalSpacer(hbox))
-        self._compoundFittingLabel = MyQLabel(hbox, color = qt.Qt.red)
+        self._compoundFittingLabel = MyQLabel(hbox, color=qt.Qt.red)
         self._compoundFittingLabel.setText("Compound Fitting Mode is OFF")
         self._compoundFittingLabel.setAlignment(qt.QLabel.AlignCenter)
         hboxlayout.addWidget(self._compoundFittingLabel)
         #hboxlayout.addWidget(HorizontalSpacer(hbox))
         layout.addWidget(hbox)
-        
+
         grid = qt.QWidget(self)
         if QTVERSION < '4.0.0':
-            glt = qt.QGridLayout(grid,1,1,11,2,"gridlayout")
+            glt = qt.QGridLayout(grid, 1, 1, 11, 2, "gridlayout")
         else:
             glt = Q3GridLayout(grid)
             glt.setMargin(11)
             glt.setSpacing(2)
-        
+
         self._layerFlagWidgetList = []
         options = ["FREE", "FIXED", "IGNORED"]
         for i in range(self.nlayers):
@@ -172,7 +177,7 @@ class CompoundFittingTab(qt.QWidget):
             c = 3 * (i % 5)
             label = qt.QLabel(grid)
             label.setText("Layer%d" % i)
-            cbox  = qt.QComboBox(grid)
+            cbox = qt.QComboBox(grid)
             if QTVERSION < '4.0.0':
                 cbox.insertStrList(options)
                 if i == 0:
@@ -187,8 +192,8 @@ class CompoundFittingTab(qt.QWidget):
                 else:
                     cbox.setCurrentIndex(1)
             glt.addWidget(label, r, c)
-            glt.addWidget(cbox, r, c+1)
-            glt.addWidget(qt.QWidget(grid), r, c+2)
+            glt.addWidget(cbox, r, c + 1)
+            glt.addWidget(qt.QWidget(grid), r, c + 2)
         
         layout.addWidget(grid)
         if QTVERSION < '4.0.0':
@@ -197,7 +202,7 @@ class CompoundFittingTab(qt.QWidget):
             self._editorList = []
             for i in range(self.nlayers):
                 editor = CompoundFittingTab0(self.mainTab, layerindex=i)
-                self.mainTab.insertTab(editor,str("Layer%d" % i))
+                self.mainTab.insertTab(editor, str("Layer%d" % i))
                 self._editorList.append(editor)
         else:
             self.mainTab = qt.QTabWidget(self)
@@ -207,34 +212,35 @@ class CompoundFittingTab(qt.QWidget):
                 editor = CompoundFittingTab0(layerindex=i)
                 self.mainTab.addTab(editor, "layer Editor")
                 self._editorList.append(editor)
-                
+
+
 class CompoundFittingTab0(qt.QWidget):
-    def __init__(self,parent=None, name="Compound Tab",
+    def __init__(self, parent=None, name="Compound Tab",
                     layerindex=None, compoundlist=None):
-        if layerindex is None:layerindex = 0
+        if layerindex is None:
+            layerindex = 0
         if compoundlist is None:
-            compoundlist=[]
+            compoundlist = []
             for i in range(10):
                 compoundlist.append("Compound%d%d" % (layerindex, i))
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
-        
+
         grid = qt.QWidget(self)
         if QTVERSION < '4.0.0':
-            gl = qt.QGridLayout(grid,1,1,11,2,"gridlayout")
+            gl = qt.QGridLayout(grid, 1, 1, 11, 2, "gridlayout")
         else:
             gl = Q3GridLayout(grid)
             gl.setMargin(11)
             gl.setSpacing(2)
-        
 
         # Layer name
         nameLabel = qt.QLabel(grid)
         nameLabel.setText("Name")
-        
+
         self.nameLine = qt.QLineEdit(grid)
         self.nameLine.setText("Compound fitting layer %d" % layerindex)
-        
+
         gl.addWidget(nameLabel, 0, 0)
         gl.addMultiCellWidget(self.nameLine, 0, 0, 1, 5)
 
@@ -242,9 +248,8 @@ class CompoundFittingTab0(qt.QWidget):
         Line.setFrameShape(qt.QFrame.HLine)
         Line.setFrameShadow(qt.QFrame.Sunken)
         Line.setFrameShape(qt.QFrame.HLine)
-        gl.addMultiCellWidget(Line,1,1,0,5)
-        
-        
+        gl.addMultiCellWidget(Line, 1, 1, 0, 5)
+
         #labels
         fixedLabel = qt.QLabel(grid)
         fixedLabel_font = qt.QFont(fixedLabel.font())
@@ -256,7 +261,6 @@ class CompoundFittingTab0(qt.QWidget):
             fixedLabel.setAlignment(qt.QLabel.AlignHCenter)
         else:
             fixedLabel.setAlignment(qt.Qt.AlignVCenter)
-
 
         valueLabel = qt.QLabel(grid)
         valueLabel_font = qt.QFont(valueLabel.font())
@@ -273,9 +277,9 @@ class CompoundFittingTab0(qt.QWidget):
         errorLabel.setText(str("Error"))
         errorLabel.setAlignment(qt.QLabel.AlignCenter)
 
-        gl.addWidget(fixedLabel,2,2)
-        gl.addWidget(valueLabel,2,3)
-        gl.addWidget(errorLabel,2,5)
+        gl.addWidget(fixedLabel, 2, 2)
+        gl.addWidget(valueLabel, 2, 3)
+        gl.addWidget(errorLabel, 2, 5)
         
         #density
         densityLabel = qt.QLabel(grid)
@@ -290,7 +294,7 @@ class CompoundFittingTab0(qt.QWidget):
         densitySepLabel_font.setBold(1)
         densitySepLabel.setFont(densitySepLabel_font)
         densitySepLabel.setText(str("+/-"))
-        
+
         self.densityError = qt.QLineEdit(grid)
 
         gl.addWidget(densityLabel, 3, 0)
@@ -313,7 +317,7 @@ class CompoundFittingTab0(qt.QWidget):
         thicknessSepLabel_font.setBold(1)
         thicknessSepLabel.setFont(thicknessSepLabel_font)
         thicknessSepLabel.setText(str("+/-"))
-        
+
         self.thicknessError = qt.QLineEdit(grid)
 
         gl.addWidget(thicknessLabel, 4, 0)
@@ -326,7 +330,7 @@ class CompoundFittingTab0(qt.QWidget):
         Line.setFrameShape(qt.QFrame.HLine)
         Line.setFrameShadow(qt.QFrame.Sunken)
         Line.setFrameShape(qt.QFrame.HLine)
-        gl.addMultiCellWidget(Line,5,5,0,5)
+        gl.addMultiCellWidget(Line, 5, 5, 0, 5)
         
         layout.addWidget(grid)
         """
@@ -343,7 +347,7 @@ class CompoundFittingTab0(qt.QWidget):
         layout.addWidget(self.matrixInfo)
         self.matrixInfo.setText(text)
         """ 
-        self.matrixTable = AttenuatorsTableWidget(self,name,
+        self.matrixTable = AttenuatorsTableWidget(self, name,
                                                   attenuators=compoundlist,
                                                   matrixmode=False,
                                                   compoundmode=True,
@@ -351,13 +355,11 @@ class CompoundFittingTab0(qt.QWidget):
         layout.addWidget(self.matrixTable)
 
 
-
-
 if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
-            self.rowCount    = self.numRows
+            self.rowCount = self.numRows
             self.columnCount = self.numCols
             self.setRowCount = self.setNumRows
             self.setColumnCount = self.setNumCols
@@ -365,13 +367,14 @@ if QTVERSION < '4.0.0':
 else:
     QTable = qt.QTableWidget
 
+
 class AttenuatorsTableWidget(QTable):
     def __init__(self, parent=None, name="Attenuators Table",
                  attenuators=None, matrixmode=None, compoundmode=None,
                  layerindex=0, funnyfilters=False):
-        attenuators0= ["Atmosphere", "Air", "Window", "Contact", "DeadLayer",
-                       "Filter5", "Filter6","Filter7","BeamFilter1",
-                       "BeamFilter2","Detector", "Matrix"]
+        attenuators0 = ["Atmosphere", "Air", "Window", "Contact", "DeadLayer",
+                       "Filter5", "Filter6", "Filter7", "BeamFilter1",
+                       "BeamFilter2", "Detector", "Matrix"]
 
         if QTVERSION < '4.0.0':
             QTable.__init__(self, parent, name)
@@ -380,8 +383,10 @@ class AttenuatorsTableWidget(QTable):
             QTable.__init__(self, parent)
             self.setWindowTitle(name)
 
-        if attenuators is None:attenuators = attenuators0
-        if matrixmode is None:matrixmode = False
+        if attenuators is None:
+            attenuators = attenuators0
+        if matrixmode is None:
+            matrixmode = False
         if matrixmode:
             self.compoundMode = False
         elif compoundmode is None:
@@ -393,12 +398,14 @@ class AttenuatorsTableWidget(QTable):
         self.funnyFiltersMode = funnyfilters
         if self.compoundMode:
             self.funnyFiltersMode = False
-            labels = ["Compound","Name", "Material","Initial Amount"]        
+            labels = ["Compound", "Name", "Material", "Initial Amount"]        
         else:
             if self.funnyFiltersMode:
-                labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)", "Funny Factor"]
+                labels = ["Attenuator", "Name", "Material",
+                          "Density (g/cm3)", "Thickness (cm)", "Funny Factor"]
             else:
-                labels = ["Attenuator","Name", "Material","Density (g/cm3)","Thickness (cm)"]
+                labels = ["Attenuator", "Name", "Material",
+                          "Density (g/cm3)", "Thickness (cm)"]
         self.layerindex = layerindex
         self.matrixMode = matrixmode
         self.attenuators = attenuators
@@ -410,9 +417,9 @@ class AttenuatorsTableWidget(QTable):
             self.setSelectionMode(qttable.QTable.Single)
             if QTVERSION >= '3.0.0':
                 self.setFocusStyle(qttable.QTable.FollowStyle)
-            self.setNumCols(len(labels))                
+            self.setNumCols(len(labels))
             for label in labels:
-                self.horizontalHeader().setLabel(labels.index(label),label)
+                self.horizontalHeader().setLabel(labels.index(label), label)
         else:
             if DEBUG:
                 print("margin to adjust")
@@ -430,17 +437,17 @@ class AttenuatorsTableWidget(QTable):
         if self.matrixMode:
             self.__build(len(attenuators))
         elif self.compoundMode:
-            self.__build(len(attenuators))        
+            self.__build(len(attenuators))
         else:
             self.__build(len(attenuators0))
             #self.adjustColumn(0)
         if self.matrixMode:
             if QTVERSION < '4.0.0':
-                self.horizontalHeader().setLabel(0,'Layer')
+                self.horizontalHeader().setLabel(0, 'Layer')
             else:
                 item = self.horizontalHeaderItem(0)
                 item.setText('Layer')
-                self.setHorizontalHeaderItem(0,item)
+                self.setHorizontalHeaderItem(0, item)
         if self.compoundMode:
             if QTVERSION < '4.0.0':
                 self.adjustColumn(0)
@@ -449,16 +456,11 @@ class AttenuatorsTableWidget(QTable):
                 self.resizeColumnToContents(0)
                 self.resizeColumnToContents(1)
                                            
-        self.connect(self, qt.SIGNAL("valueChanged(int,int)"),self.mySlot)
-        
+        self.connect(self, qt.SIGNAL("valueChanged(int,int)"), self.mySlot)
 
-    def __build(self,nfilters=12):
+    def __build(self, nfilters=12):
         n = 0
         if (not self.matrixMode) and (not self.compoundMode):
-            if "Matrix"      not in self.attenuators: n += 1
-            if "Detector"    not in self.attenuators: n += 1
-            if "BeamFilter1" not in self.attenuators: n += 1
-            if "BeamFilter2" not in self.attenuators: n += 1
             n = 4
             #self.setNumRows(nfilters+n)
             if QTVERSION < '4.0.0':
@@ -475,28 +477,31 @@ class AttenuatorsTableWidget(QTable):
             for idx in range(self.rowCount()):
                 self.setRowHeight(idx, rheight)
 
-        self.comboList=[]
+        self.comboList = []
         matlist = list(Elements.Material.keys())
         matlist.sort()
         if self.matrixMode or self.compoundMode:
-            if self.matrixMode:roottext = "Layer"
-            else: roottext = "Compound%d" % self.layerindex
+            if self.matrixMode:
+                roottext = "Layer"
+            else:
+                roottext = "Compound%d" % self.layerindex
             a = []
-            #a.append('')            
+            #a.append('')
             for key in matlist:
                 a.append(key)
             if QTVERSION < '4.0.0':
                 for idx in range(self.numRows()):
-                    item= qttable.QCheckTableItem(self, roottext+"%d" % idx)
+                    item= qttable.QCheckTableItem(self, roottext + "%d" % idx)
                     self.setItem(idx, 0, item)
-                    item.setText(roottext+"%d" % idx)
-                    #item= qttable.QTableItem(self, qttable.QTableItem.OnTyping,
+                    item.setText(roottext + "%d" % idx)
+                    #item= qttable.QTableItem(self,
+                    #                         qttable.QTableItem.OnTyping,
                     item= qttable.QTableItem(self, qttable.QTableItem.Never,
                                              self.attenuators[idx])
-                    self.setItem(idx, 1,item)
+                    self.setItem(idx, 1, item)
                     combo = MyQComboBox(options=a)
                     combo.setEditable(True)
-                    self.setCellWidget(idx,2,combo)
+                    self.setCellWidget(idx, 2, combo)
                     qt.QObject.connect(combo,
                                        qt.PYSIGNAL("MaterialComboBoxSignal"),
                                        self._comboSlot)
@@ -506,7 +511,7 @@ class AttenuatorsTableWidget(QTable):
                     self.setCellWidget(idx, 0, item)
                     text = roottext+"%d" % idx
                     item.setText(text)
-                    item = self.item(idx,1)
+                    item = self.item(idx, 1)
                     if item is None:
                         item = qt.QTableWidgetItem(text,
                                                    qt.QTableWidgetItem.Type)
@@ -515,9 +520,9 @@ class AttenuatorsTableWidget(QTable):
                         item.setText(text)
                     item.setFlags(qt.Qt.ItemIsSelectable|
                                   qt.Qt.ItemIsEnabled)
-                    combo = MyQComboBox(self,options=a, row = idx, col = 2)
+                    combo = MyQComboBox(self, options=a, row = idx, col = 2)
                     combo.setEditable(True)
-                    self.setCellWidget(idx,2,combo)
+                    self.setCellWidget(idx, 2, combo)
                     qt.QObject.connect(combo,
                                        qt.SIGNAL("MaterialComboBoxSignal"),
                                        self._comboSlot)
@@ -527,10 +532,10 @@ class AttenuatorsTableWidget(QTable):
         else:
             selfnumRows = self.rowCount()
             
-        for idx in range(selfnumRows-n):
+        for idx in range(selfnumRows - n):
             text = "Filter% 2d" % idx
             if QTVERSION < '4.0.0':
-                item= qttable.QCheckTableItem(self, text)
+                item = qttable.QCheckTableItem(self, text)
                 self.setItem(idx, 0, item)
                 item.setText(text)
                 if idx < len(self.attenuators):
@@ -540,50 +545,53 @@ class AttenuatorsTableWidget(QTable):
             else:
                 item = qt.QCheckBox(self)
                 self.setCellWidget(idx, 0, item)
-                item.setText(text) 
+                item.setText(text)
                 if idx < len(self.attenuators):
                     text = self.attenuators[idx]
 
-                item = self.item(idx,1)
+                item = self.item(idx, 1)
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
                     self.setItem(idx, 1, item)
                 else:
                     item.setText(text)
-            
 
             #a = qt.QStringList()
             a = []
             #a.append('')            
             for key in matlist:
                 a.append(key)
-            combo = MyQComboBox(self, options=a, row = idx, col = 2)
+            combo = MyQComboBox(self, options=a, row=idx, col = 2)
             combo.setEditable(True)
-            self.setCellWidget(idx,2,combo)
+            self.setCellWidget(idx, 2, combo)
             #self.setItem(idx,2,combo)
             if QTVERSION < '4.0.0':
-                qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+                qt.QObject.connect(combo,
+                                   qt.PYSIGNAL("MaterialComboBoxSignal"),
                                    self._comboSlot)
             else:
-                qt.QObject.connect(combo, qt.SIGNAL("MaterialComboBoxSignal"),
+                qt.QObject.connect(combo,
+                                   qt.SIGNAL("MaterialComboBoxSignal"),
                                    self._comboSlot)
-            
+
         for i in range(2):
             #BeamFilter(i)
             if QTVERSION < '4.0.0':
-                item= qttable.QCheckTableItem(self, "BeamFilter%d" % i)
+                item = qttable.QCheckTableItem(self, "BeamFilter%d" % i)
                 #,color=qt.Qt.red)
-                idx = self.numRows()-(4-i)
+                idx = self.numRows() - (4 - i)
                 self.setItem(idx, 0, item)
                 item.setText("BeamFilter%d" % i)
-                item= qttable.QTableItem(self, qttable.QTableItem.Never,"BeamFilter%d" % i)
-                self.setItem(idx, 1,item)
-                item= qttable.QTableItem(self, qttable.QTableItem.Never,"1.0")
+                item= qttable.QTableItem(self, qttable.QTableItem.Never,
+                                         "BeamFilter%d" % i)
+                self.setItem(idx, 1, item)
+                item= qttable.QTableItem(self, qttable.QTableItem.Never,
+                                         "1.0")
                 self.setItem(idx, 5,item)
             else:
                 item = qt.QCheckBox(self)
-                idx = self.rowCount() - (4-i)
+                idx = self.rowCount() - (4 - i)
                 self.setCellWidget(idx, 0, item)
                 text = "BeamFilter%d" % i
                 item.setText(text)
@@ -599,7 +607,7 @@ class AttenuatorsTableWidget(QTable):
                               qt.Qt.ItemIsEnabled)
 
                 text = "1.0"
-                item = self.item(idx,5)
+                item = self.item(idx, 5)
                 if item is None:
                     item = qt.QTableWidgetItem(text,
                                                qt.QTableWidgetItem.Type)
@@ -609,14 +617,16 @@ class AttenuatorsTableWidget(QTable):
                 item.setFlags(qt.Qt.ItemIsSelectable|
                               qt.Qt.ItemIsEnabled)
 
-            combo = MyQComboBox(self, options=a, row = idx, col = 2)
+            combo = MyQComboBox(self, options=a, row=idx, col=2)
             combo.setEditable(True)
-            self.setCellWidget(idx,2,combo)
+            self.setCellWidget(idx, 2, combo)
             if QTVERSION < '4.0.0':
-                qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+                qt.QObject.connect(combo,
+                                   qt.PYSIGNAL("MaterialComboBoxSignal"),
                                    self._comboSlot)
             else:
-                qt.QObject.connect(combo, qt.SIGNAL("MaterialComboBoxSignal"),
+                qt.QObject.connect(combo,
+                                   qt.SIGNAL("MaterialComboBoxSignal"),
                                    self._comboSlot)
             
         if QTVERSION < '4.0.0':
@@ -626,10 +636,14 @@ class AttenuatorsTableWidget(QTable):
             idx = self.numRows()-2
             self.setItem(idx, 0, item)
             item.setText("Detector")
-            item= qttable.QTableItem(self, qttable.QTableItem.Never,"Detector")
-            self.setItem(idx, 1,item)
-            item= qttable.QTableItem(self, qttable.QTableItem.Never,"1.0")
-            self.setItem(idx, 5,item)
+            item= qttable.QTableItem(self,
+                                     qttable.QTableItem.Never,
+                                     "Detector")
+            self.setItem(idx, 1, item)
+            item= qttable.QTableItem(self,
+                                     qttable.QTableItem.Never,
+                                     "1.0")
+            self.setItem(idx, 5, item)
         else:
             item = qt.QCheckBox(self)
             idx = self.rowCount() - 2
@@ -644,105 +658,108 @@ class AttenuatorsTableWidget(QTable):
                 self.setItem(idx, 1, item)
             else:
                 item.setText(text)
-            item.setFlags(qt.Qt.ItemIsSelectable|
-                          qt.Qt.ItemIsEnabled)
+            item.setFlags(qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
             text = "1.0"
-            item = self.item(idx,5)
+            item = self.item(idx, 5)
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
                 self.setItem(idx, 5, item)
             else:
                 item.setText(text)
-            item.setFlags(qt.Qt.ItemIsSelectable|
-                          qt.Qt.ItemIsEnabled)
+            item.setFlags(qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
             
-        combo = MyQComboBox(self, options=a, row = idx, col = 2)
+        combo = MyQComboBox(self, options=a, row=idx, col=2)
         combo.setEditable(True)
-        self.setCellWidget(idx,2,combo)
+        self.setCellWidget(idx, 2, combo)
         if QTVERSION < '4.0.0':
             #Matrix            
             item= qttable.QCheckTableItem(self, "Matrix")
             #,color=qt.Qt.red)
-            idx = self.numRows()-1
+            idx = self.numRows() - 1
             self.setItem(idx, 0, item)
             item.setText("Matrix")
-            item= qttable.QTableItem(self, qttable.QTableItem.Never,"Matrix")
-            self.setItem(idx, 1,item)
-            item= qttable.QTableItem(self, qttable.QTableItem.Never,"1.0")
-            self.setItem(idx, 5,item)
+            item= qttable.QTableItem(self,
+                                     qttable.QTableItem.Never,
+                                     "Matrix")
+            self.setItem(idx, 1, item)
+            item= qttable.QTableItem(self,
+                                     qttable.QTableItem.Never,
+                                     "1.0")
+            self.setItem(idx, 5, item)
         else:
             item = qt.QCheckBox(self)
             idx = self.rowCount() - 1
             self.setCellWidget(idx, 0, item)
             text = "Matrix"
             item.setText(text)
-            item = self.item(idx,1)
+            item = self.item(idx, 1)
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
                 self.setItem(idx, 1, item)
             else:
                 item.setText(text)
-            item.setFlags(qt.Qt.ItemIsSelectable|
-                          qt.Qt.ItemIsEnabled)
+            item.setFlags(qt.Qt.ItemIsSelectable |qt.Qt.ItemIsEnabled)
 
             text = "1.0"
-            item = self.item(idx,5)
+            item = self.item(idx, 5)
             if item is None:
                 item = qt.QTableWidgetItem(text,
                                            qt.QTableWidgetItem.Type)
                 self.setItem(idx, 5, item)
             else:
                 item.setText(text)
-            item.setFlags(qt.Qt.ItemIsSelectable|
-                          qt.Qt.ItemIsEnabled)
+            item.setFlags(qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
         if QTVERSION < '4.0.0':
-            qt.QObject.connect(combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
-                              self._comboSlot)
+            qt.QObject.connect(combo,
+                               qt.PYSIGNAL("MaterialComboBoxSignal"),
+                               self._comboSlot)
         else:
-            qt.QObject.connect(combo, qt.SIGNAL("MaterialComboBoxSignal"),
-                              self._comboSlot)
-
+            qt.QObject.connect(combo,
+                               qt.SIGNAL("MaterialComboBoxSignal"),
+                               self._comboSlot)
 
         #a = qt.QStringList()
         a = []
-        #a.append('')            
+        #a.append('')
         for key in matlist:
             a.append(key)
         #combo = qttable.QComboTableItem(self,a)
-        self.combo = MyQComboBox(self, options=a, row = idx, col = 2)
-        self.setCellWidget(idx,2,self.combo)
+        self.combo = MyQComboBox(self, options=a, row=idx, col=2)
+        self.setCellWidget(idx, 2, self.combo)
         if QTVERSION < '4.0.0':
-            self.connect(self.combo, qt.PYSIGNAL("MaterialComboBoxSignal"),
+            self.connect(self.combo,
+                         qt.PYSIGNAL("MaterialComboBoxSignal"),
                          self._comboSlot)
         else:
-            self.connect(self.combo, qt.SIGNAL("MaterialComboBoxSignal"),
+            self.connect(self.combo,
+                         qt.SIGNAL("MaterialComboBoxSignal"),
                          self._comboSlot)
             
     def mySlot(self,row,col):
         if DEBUG:
             print("Value changed row = %d cole = &d" % (row, col))
-            print("Text = %s" % self.text(row,col))
-        
+            print("Text = %s" % self.text(row, col))
+
     def _comboSlot(self, ddict):
         if DEBUG:
             print("_comboSlot", ddict)
-        row  = ddict['row']
-        col  = ddict['col']
+        row = ddict['row']
+        col = ddict['col']
         text = ddict['text']
         self.setCurrentCell(row, col)
-        self._checkDensityThickness(text,row)
+        self._checkDensityThickness(text, row)
         if QTVERSION < '4.0.0':
-            self.emit(qt.SIGNAL("valueChanged(int,int)"),(row,col))
+            self.emit(qt.SIGNAL("valueChanged(int,int)"), (row, col))
         else:
             self.emit(qt.SIGNAL("valueChanged(int,int)"), row, col)
 
     def text(self, row, col):
         if col == 2:
-            return self.cellWidget(row,col).currentText()
+            return self.cellWidget(row, col).currentText()
         else:
             if QTVERSION < '4.0.0':
                 return qttable.QTable.text(self, row, col)
@@ -772,23 +789,22 @@ class AttenuatorsTableWidget(QTable):
             else:
                 item.setText(text)
 
-
     def setCellWidget(self, row, col, w):
         if QTVERSION < '4.0.0':
             w.row = row
             w.col = col
         QTable.setCellWidget(self, row, col, w)
 
-    def _checkDensityThickness(self,text, row):
+    def _checkDensityThickness(self, text, row):
         try:
-            currentDensity   = float(str(self.text(row,3)))
+            currentDensity = float(str(self.text(row, 3)))
         except:
-            currentDensity   = 0.0
+            currentDensity = 0.0
         try:
-            currentThickness = float(str(self.text(row,4)))
+            currentThickness = float(str(self.text(row, 4)))
         except:
             currentThickness = 0.0
-        defaultDensity   = -1.0
+        defaultDensity = -1.0
         defaultThickness = -0.1
         #check if default density is there
         if Elements.isValidFormula(text):
@@ -796,30 +812,28 @@ class AttenuatorsTableWidget(QTable):
             if text in Elements.Element.keys():
                 defaultDensity = Elements.Element[text]['density']
             else: 
-                elts= [ w for w in re.split('[0-9]', text) if w != '' ]
-                nbs= [ int(w) for w in re.split('[a-zA-Z]', text) if w != '' ]
-                if len(elts)==1 and len(nbs)==1:
+                elts = [ w for w in re.split('[0-9]', text) if w != '']
+                nbs = [ int(w) for w in re.split('[a-zA-Z]', text) if w != '']
+                if len(elts) == 1 and len(nbs) == 1:
                     defaultDensity = Elements.Element[elts[0]]['density']
         elif Elements.isValidMaterial(text):
             key = Elements.getMaterialKey(text)
             if key is not None:
                 if 'Density' in Elements.Material[key]:
-                    defaultDensity   = Elements.Material[key]['Density']
+                    defaultDensity = Elements.Material[key]['Density']
                 if 'Thickness' in Elements.Material[key]:
-                    defaultThickness =  Elements.Material[key]['Thickness'] 
+                    defaultThickness = Elements.Material[key]['Thickness'] 
         if defaultDensity >= 0.0:
             self.setText(row, 3, "%g" % defaultDensity)
         if defaultThickness >= 0.0:
             self.setText(row, 4, "%g" % defaultThickness)
         elif currentThickness <= 0.0:
             self.setText(row, 4, "%g" % 0.1)
-                
-        
 
 class MyQComboBox(MaterialEditor.MaterialComboBox):
     def _mySignal(self, qstring0):
         qstring = qstring0
-        (result, index) = self.ownValidator.validate(qstring,0)
+        (result, index) = self.ownValidator.validate(qstring, 0)
         if result != self.ownValidator.Valid:
             qstring = self.ownValidator.fixup(qstring)
             (result, index) = self.ownValidator.validate(qstring,0)
@@ -827,10 +841,10 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
             text = str(qstring)
             if text.upper() != "MULTILAYER":
                 qt.QMessageBox.critical(self, "Invalid Material '%s'" % text,
-                                          "The material '%s' is not a valid Formula " \
-                                          "nor a valid Material.\n" \
-                                          "Please define the material %s or correct the formula\n" % \
-                                          (text, text))
+                                        "The material '%s' is not a valid Formula " \
+                                        "nor a valid Material.\n" \
+                                        "Please define the material %s or correct the formula\n" % \
+                                        (text, text))
                 if QTVERSION < '4.0.0':
                     self.setCurrentItem(0)
                 else:
@@ -846,16 +860,16 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
                 return
         text = str(qstring)
         self.setCurrentText(text)
-        dict = {}
-        dict['event'] = 'activated'
-        dict['row']   = self.row
-        dict['col']   = self.col
-        dict['text']  = text
+        ddict = {}
+        ddict['event'] = 'activated'
+        ddict['row'] = self.row
+        ddict['col'] = self.col
+        ddict['text'] = text
         if qstring0 != qstring:
-            self.removeItem(self.count()-1)
+            self.removeItem(self.count() - 1)
         insert = True
         for i in range(self.count()):
-            if QTVERSION <'4.0.0':
+            if QTVERSION < '4.0.0':
                 selftext = self.text(i)
             else:
                 selftext = self.itemText(i)
@@ -864,18 +878,18 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
         if insert:
             self.insertItem(-1, qstring)
         if QTVERSION < '3.0.0':
-            pass        
+            pass
         else:
             if self.lineEdit() is not None:
                 if QTVERSION < '4.0.0':
                     self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'), (dict,))
+            self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('MaterialComboBoxSignal'), dict)
+            self.emit(qt.SIGNAL('MaterialComboBoxSignal'), ddict)
 
 def main(args):
-    app=qt.QApplication(args)
+    app = qt.QApplication(args)
     #tab = AttenuatorsTableWidget(None)
     if len(args) < 2:
         tab = AttenuatorsTab(None)
@@ -885,14 +899,13 @@ def main(args):
         tab = MultilayerTab(None)
     if QTVERSION < '4.0.0':
         tab.show()
-        app.setMainWidget( tab )
+        app.setMainWidget(tab)
         app.exec_loop()
     else:
         tab.show()
         app.exec_()
-        
 
-                            
 
 if __name__=="__main__":
-    main(sys.argv)	
+    main(sys.argv)
+
