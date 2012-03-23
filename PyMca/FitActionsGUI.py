@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
@@ -47,7 +47,7 @@ class FitActionsGUI(qt.QWidget):
             qt.QWidget.__init__(self,parent,name,fl)
             if name == None:
                 self.setName("FitActionsGUI")
-            self.setCaption(str("FitActionsGUI"))
+            self.setCaption("FitActionsGUI")
         else:
             qt.QWidget.__init__(self,parent)
 
@@ -66,7 +66,7 @@ class FitActionsGUI(qt.QWidget):
             Layout9.setSpacing(6)
 
         self.EstimateButton = qt.QPushButton(self)
-        self.EstimateButton.setText(str("Estimate"))
+        self.EstimateButton.setText("Estimate")
         Layout9.addWidget(self.EstimateButton)
         spacer = qt.QSpacerItem(20,20,
                                 qt.QSizePolicy.Expanding,
@@ -74,7 +74,7 @@ class FitActionsGUI(qt.QWidget):
         Layout9.addItem(spacer)
 
         self.StartfitButton = qt.QPushButton(self)
-        self.StartfitButton.setText(str("Start Fit"))
+        self.StartfitButton.setText("Start Fit")
         Layout9.addWidget(self.StartfitButton)
         spacer_2 = qt.QSpacerItem(20,20,
                                   qt.QSizePolicy.Expanding,
@@ -82,7 +82,7 @@ class FitActionsGUI(qt.QWidget):
         Layout9.addItem(spacer_2)
 
         self.DismissButton = qt.QPushButton(self)
-        self.DismissButton.setText(str("Dismiss"))
+        self.DismissButton.setText("Dismiss")
         Layout9.addWidget(self.DismissButton)
 
         FitActionsGUILayout.addLayout(Layout9,0,0)

@@ -28,18 +28,23 @@
 __revision__ = "$Revision: 1.65 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
-import PyMcaQt as qt
+import types
+import copy
+import os
+import time
+import traceback
+import numpy.oldnumeric as Numeric
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
 
 QTVERSION = qt.qVersion()
-import traceback
 
 try:
-    import PyMcaMatplotlibSave
-    import QPyMcaMatplotlibSave1D
+    from PyMca import PyMcaMatplotlibSave
+    from PyMca import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -51,26 +56,21 @@ try:
 except:
     MATPLOTLIB = False
 
-import ClassMcaTheory
-import FitParam
-import McaAdvancedTable
-import QtMcaAdvancedFitReport
-import ConcentrationsWidget
-import ConcentrationsTool
-import types
-import copy
-import os
-import QtBlissGraph
-from PyMca_Icons import IconDict
-import time
-import McaCalWidget
-import PeakIdentifier
-import ElementsInfo
+from PyMca import ClassMcaTheory
+from PyMca import FitParam
+from PyMca import McaAdvancedTable
+from PyMca import QtMcaAdvancedFitReport
+from PyMca import ConcentrationsWidget
+from PyMca import ConcentrationsTool
+from PyMca import QtBlissGraph
+from PyMca.PyMca_Icons import IconDict
+from PyMca import McaCalWidget
+from PyMca import PeakIdentifier
+from PyMca import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-import numpy.oldnumeric as Numeric
-import PyMcaPrintPreview
-import PyMcaDirs
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
 USE_BOLD_FONT = True
 DEBUG = 0
 if DEBUG:

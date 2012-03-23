@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,28 +26,28 @@
 #############################################################################*/
 __revision__ = "$Revision: 2.01 $"
 import sys
-import PyMcaQt as qt
+import os
+import types
 import copy
+import numpy
+from PyMca import PyMcaQt as qt
 
 DEBUG = 0
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif QTVERSION < '4.0.0':
-    import qttable
+    from PyMca import qttable
 
-import Elements
-import ConfigDict
-import os
-import types
+from PyMca import Elements
+from PyMca import ConfigDict
 if QTVERSION > '4.0.0':
     try:
-        import ScanWindow
+        from PyMca import ScanWindow
         SCANWINDOW = True
     except ImportError:
-        import Plot1DMatplotlib
+        from PyMca import Plot1DMatplotlib
         SCANWINDOW = False
-    import numpy
 
 class MaterialEditor(qt.QWidget):
     def __init__(self, parent=None, name="Material Editor",

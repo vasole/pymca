@@ -26,7 +26,9 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
-import RGBCorrelatorGraph
+import os
+import numpy
+from PyMca import RGBCorrelatorGraph
 qt = RGBCorrelatorGraph.qt
 IconDict = RGBCorrelatorGraph.IconDict
 QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
@@ -38,25 +40,25 @@ else:
 MATPLOTLIB = False
 if QTVERSION > '4.0.0':
     try:
-        import QPyMcaMatplotlibSave
+        from PyMca import QPyMcaMatplotlibSave
         MATPLOTLIB = True
     except ImportError:
         MATPLOTLIB = False
 else:
     qt.QIcon = qt.QIconSet
-import numpy
-import ColormapDialog
-import spslut
-import os
-import PyMcaDirs
-import ArraySave
+from PyMca import ColormapDialog
+from PyMca import spslut
+from PyMca import PyMcaDirs
+from PyMca import ArraySave
 try:
     from PyMca import ProfileScanWidget
 except ImportError:
+    print("MaskImageWidget importing ProfileScanWidget directly")
     import ProfileScanWidget
 try:
     from PyMca import SpecfitFuns
 except ImportError:
+    print("MaskImageWidget importing SpecfitFuns directly")
     import SpecfitFuns
 
 
@@ -72,7 +74,7 @@ else:
     import Qwt5 as Qwt
 
 try:
-    import QwtPlotItems
+    from PyMca import QwtPlotItems
     OVERLAY_DRAW = True
 except ImportError:
     OVERLAY_DRAW = False

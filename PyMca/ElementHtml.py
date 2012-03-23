@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,9 +25,9 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.9 $"
-import Elements
+from PyMca import Elements
 
-class ElementHtml:
+class ElementHtml(object):
     def __init__(self,element=None):
         self.element = None
         
@@ -218,9 +218,6 @@ class ElementHtml:
                     text+="</td>"
                     text+="</tr>"
                 text+="</table>"
-
-
-        
         
         hcolor = 'white'
         finalcolor = 'white'
@@ -291,7 +288,7 @@ class ElementHtml:
         
 if __name__ == "__main__":
     import sys
-    import PyMcaQt as qt
+    from PyMca import PyMcaQt as qt
     app  = qt.QApplication(sys.argv)
     if len(sys.argv) > 1:
         ele = sys.argv[1]
@@ -315,6 +312,3 @@ if __name__ == "__main__":
         app.exec_loop()
     else:
         app.exec_()
-    
-
-    

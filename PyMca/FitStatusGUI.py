@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
@@ -47,7 +47,7 @@ class FitStatusGUI(qt.QWidget):
             if name == None:
                 self.setName("FitStatusGUI")
 
-            self.setCaption(str("FitStatusGUI"))
+            self.setCaption("FitStatusGUI")
         else:
             qt.QWidget.__init__(self,parent)
 
@@ -61,21 +61,21 @@ class FitStatusGUI(qt.QWidget):
             FitStatusGUILayout.setSpacing(6)
 
         self.StatusLabel = qt.QLabel(self)
-        self.StatusLabel.setText(str("Status:"))
+        self.StatusLabel.setText("Status:")
         FitStatusGUILayout.addWidget(self.StatusLabel)
 
         self.StatusLine = qt.QLineEdit(self)
-        self.StatusLine.setText(str("Ready"))
+        self.StatusLine.setText("Ready")
         self.StatusLine.setReadOnly(1)
         FitStatusGUILayout.addWidget(self.StatusLine)
 
         self.ChisqLabel = qt.QLabel(self)
-        self.ChisqLabel.setText(str("Chisq:"))
+        self.ChisqLabel.setText("Chisq:")
         FitStatusGUILayout.addWidget(self.ChisqLabel)
 
         self.ChisqLine = qt.QLineEdit(self)
         #self.ChisqLine.setSizePolicy(QSizePolicy(1,0,0,0,self.ChisqLine.sizePolicy().hasHeightForWidth()))
         self.ChisqLine.setMaximumSize(qt.QSize(16000,32767))
-        self.ChisqLine.setText(str(""))
+        self.ChisqLine.setText("")
         self.ChisqLine.setReadOnly(1)
         FitStatusGUILayout.addWidget(self.ChisqLine)

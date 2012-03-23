@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __revision__ = "$Revision: 1.7 $"
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,14 +27,14 @@ __revision__ = "$Revision: 1.7 $"
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
     
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
-import QSourceSelector
-import QDataSource
-import QEdfFileWidget
+from PyMca import QSourceSelector
+from PyMca import QDataSource
+from PyMca import QEdfFileWidget
 class EdfFileSimpleViewer(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)

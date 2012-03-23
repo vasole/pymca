@@ -26,10 +26,10 @@
 #############################################################################*/
 import os
 import sys
-import PyMcaLogo
 import time
+from PyMca import PyMcaLogo
 
-class HtmlIndex:
+class HtmlIndex(object):
     def __init__(self, htmldir):
         if htmldir is None:htmldir = "/tmp/HTML"
         self.htmldir = htmldir

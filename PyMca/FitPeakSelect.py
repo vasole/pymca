@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,10 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 from EnergyTable import qt
-from QPeriodicTable import QPeriodicTable
+from PyMca.QPeriodicTable import QPeriodicTable
 #from QPeriodicTable import ElementList
-import EnergyTable
-import Elements
+from PyMca import EnergyTable
+from PyMca import Elements
 import copy
 DEBUG = 0
 QTVERSION = qt.qVersion()

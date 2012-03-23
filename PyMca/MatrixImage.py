@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
-import ElementHtml
+from PyMca import PyMcaQt as qt
+from PyMca import ElementHtml
 image2=["312 177 16 1",
 "  c black",
 ". c maroon",

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -24,9 +24,9 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import DataObject
-import EdfFile
-import EdfFileDataSource
+from PyMca import DataObject
+from PyMca import EdfFile
+from PyMca import EdfFileDataSource
 import numpy.oldnumeric as Numeric
 import numpy
 import sys

@@ -25,10 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
-import ElementHtml
-import Elements
-from QPeriodicTable import QPeriodicTable
+from PyMca import PyMcaQt as qt
+from PyMca import ElementHtml
+from PyMca import Elements
+from PyMca.QPeriodicTable import QPeriodicTable
 
 __revision__ = "$Revision: 1.15 $"
 

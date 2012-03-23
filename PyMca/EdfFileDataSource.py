@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,10 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.6 $"
-import DataObject
+from PyMca import DataObject
+from PyMca import EdfFile
 import types
 import copy
-import EdfFile
 import string
 import sys
 import os
@@ -37,7 +37,7 @@ import numpy.oldnumeric as Numeric
 SOURCE_TYPE = "EdfFile"
 DEBUG = 0
 
-class EdfFileDataSource:
+class EdfFileDataSource(object):
     def __init__(self,nameInput, fastedf=False):
         if type(nameInput) == list:
             nameList = nameInput

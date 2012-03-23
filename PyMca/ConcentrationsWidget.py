@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.21 $"
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
@@ -35,9 +35,9 @@ else:
 QTVERSION = qt.qVersion()
 
 if QTVERSION < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif QTVERSION < '4.0.0':
-    import qttable
+    from PyMca import qttable
 
 if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
@@ -52,8 +52,8 @@ if QTVERSION < '4.0.0':
 else:
     QTable = qt.QTableWidget
 
-import ConcentrationsTool
-import Elements
+from PyMca import ConcentrationsTool
+from PyMca import Elements
 import time
 DEBUG=0
 if DEBUG:
@@ -905,9 +905,9 @@ class MyQComboBox(qt.QComboBox):
         
 if __name__ == "__main__":
     import sys
-    import ConfigDict
+    from PyMca import ConfigDict
     import getopt
-    import ConcentrationsTool
+    from PyMca import ConcentrationsTool
     import copy
     if len(sys.argv) > 1:
         options = ''

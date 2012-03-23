@@ -3,7 +3,7 @@ import struct
 import string
 import numpy
 
-class MarCCD:
+class MarCCD(object):
     def __init__(self, filename):
         if isinstance(filename, file):
             fd = filename
@@ -52,7 +52,7 @@ class MarCCD:
     def getInfo(self, *var, **kw):
         return self.__info
 
-class MccdHeader:
+class MccdHeader(object):
     formatHead = ["nfast",
                   "nslow",
                   "depth"]

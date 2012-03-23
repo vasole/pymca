@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,16 +28,16 @@ __revision__ = "$Revision: 1.16 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
 import numpy.oldnumeric as Numeric
-import QXTube
+from PyMca import QXTube
 import os
-import PyMcaDirs
-import PyMca_Icons as Icons
+from PyMca import PyMcaDirs
+from PyMca import PyMca_Icons as Icons
 qt = QXTube.qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif QTVERSION < '4.0.0':
-    import qttable
+    from PyMca import qttable
 
 DEBUG=0
 class EnergyTab(qt.QWidget):

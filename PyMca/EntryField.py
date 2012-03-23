@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
@@ -47,14 +47,14 @@ class EntryField(qt.QWidget):
             if name == None:
                 self.setName("EntryField")
 
-            self.setCaption(str("EntryField"))
+            self.setCaption("EntryField")
         else:
             qt.QWidget.__init__(self,parent)
 
         Layout1 = qt.QHBoxLayout(self)
         
         self.TextLabel = qt.QLabel(self)
-        self.TextLabel.setText(str("TextLabel"))
+        self.TextLabel.setText("TextLabel")
         
         self.Entry = qt.QLineEdit(self)
         Layout1.addWidget(self.TextLabel)

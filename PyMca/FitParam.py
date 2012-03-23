@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,27 +26,27 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.45 $"
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-import ConfigDict
-import PyMca_Icons as Icons
+from PyMca import ConfigDict
+from PyMca import PyMca_Icons as Icons
 import os.path
 import copy
-import Elements
-from FitParamForm import FitParamForm
-from FitPeakSelect import FitPeakSelect
-import AttenuatorsTable
-import ConcentrationsWidget
-import EnergyTable
-import PyMcaDirs
+from PyMca import Elements
+from PyMca.FitParamForm import FitParamForm
+from PyMca.FitPeakSelect import FitPeakSelect
+from PyMca import AttenuatorsTable
+from PyMca import ConcentrationsWidget
+from PyMca import EnergyTable
+from PyMca import PyMcaDirs
 if QTVERSION > '4.0.0':
-    import StripBackgroundWidget
+    from PyMca import StripBackgroundWidget
     SCANWINDOW = StripBackgroundWidget.SCANWINDOW
     if SCANWINDOW:
-        import ScanWindow
+        from PyMca import ScanWindow
     else:
-        import Plot1DMatplotlib
+        from PyMca import Plot1DMatplotlib
     import numpy
 
 

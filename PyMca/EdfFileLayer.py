@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -34,13 +34,13 @@ __revision__ = "$Revision: 1.8 $"
 
 ################################################################################  
 #import fast_EdfFile as EdfFile
-import EdfFile
+from PyMca import EdfFile
 ################################################################################
 
 SOURCE_TYPE = "EdfFile"
 DEBUG = 0
 
-class EdfFileLayer:
+class EdfFileLayer(object):
     """
     Specializes Data class in order to access Edf files.    
     Interface: Data class interface.
@@ -431,7 +431,7 @@ class EdfFileLayer:
         #AS if invalidate: self.Invalidate()
 
 ################################################################################
-#EXEMPLE CODE:
+#EXAMPLE CODE:
     
 if __name__ == "__main__":
     import sys,time

@@ -25,10 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import QtBlissGraph
+from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
 qwt = QtBlissGraph.qwt
-import DoubleSlider
+from PyMca import DoubleSlider
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 

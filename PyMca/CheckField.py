@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
@@ -33,7 +33,6 @@ def uic_load_pixmap_FitActionsGUI(name):
     pix = qt.QPixmap()
     if QTVERSION < '4.0.0':
         m = qt.QMimeSourceFactory.defaultFactory().data(name)
-
         if m:
             qt.QImageDrag.decode(m,pix)
 
@@ -47,14 +46,15 @@ class CheckField(qt.QWidget):
             if name == None:
                 self.setName("CheckField")
 
-            self.setCaption(str("CheckField"))
+            self.setCaption("CheckField")
         else:
             qt.QWidget.__init__(self,parent)
         self.resize(321,45)
 
 
         if QTVERSION < '4.0.0':
-            CheckFieldLayout = qt.QHBoxLayout(self,11,6,"CheckFieldLayout")
+            CheckFieldLayout = qt.QHBoxLayout(self, 11, 6,
+                                              "CheckFieldLayout")
         else:
             CheckFieldLayout = qt.QHBoxLayout(self)
             CheckFieldLayout.setMargin(11)
@@ -62,5 +62,5 @@ class CheckField(qt.QWidget):
 
 
         self.CheckBox = qt.QCheckBox(self)
-        self.CheckBox.setText(str("CheckBox"))
+        self.CheckBox.setText("CheckBox")
         CheckFieldLayout.addWidget(self.CheckBox)

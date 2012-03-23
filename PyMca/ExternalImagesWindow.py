@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,18 +25,18 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-from PyMca_Icons import IconDict
-import MaskImageWidget
+from PyMca.PyMca_Icons import IconDict
+from PyMca import MaskImageWidget
 import sys
 import os
 import numpy
 try:
-    import EdfFile
+    from PyMca import EdfFile
     EDF = True
 except ImportError:
     EDF = False

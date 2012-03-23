@@ -26,8 +26,8 @@
 #############################################################################*/
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
-import CloseEventNotifyingWidget
-import NumpyArrayTableWidget
+from PyMca import CloseEventNotifyingWidget
+from PyMca import NumpyArrayTableWidget
 
 class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent=None):

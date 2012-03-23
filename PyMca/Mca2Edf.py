@@ -28,17 +28,17 @@
 __revision__ = "$Revision: 1.13 $"
 import sys
 import os
-import PyMcaQt as qt
+import time
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
     qt.Qt.WDestructiveClose = "TO BE DONE"
-import time
-from PyMca_Icons import IconDict
+from PyMca.PyMca_Icons import IconDict
 import numpy.oldnumeric as Numeric
-import McaCustomEvent
-import EdfFile
-import SpecFileLayer
-import PyMcaDirs
+from PyMca import McaCustomEvent
+from PyMca import EdfFile
+from PyMca import SpecFileLayer
+from PyMca import PyMcaDirs
 
 
 class Mca2EdfGUI(qt.QWidget):
