@@ -32,6 +32,7 @@ try:
     from PyMca import EdfFile
     from PyMca import TiffIO
 except ImportError:
+    print("ArraySave.py is importing EdfFile and TiffIO from local directory")
     import EdfFile
     import TiffIO
 
