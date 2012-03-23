@@ -25,15 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMcaQt import *
+from PyMca.PyMcaQt import *
 
 QTVERSION = qVersion()
 if QTVERSION < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
     QComboTableItem = qttable.QComboTableItem
     MyQListView = QListView
 elif QTVERSION < '4.0.0':
-    import qttable
+    from PyMca import qttable
     QComboTableItem = qttable.QComboTableItem
     MyQListView = QListView
 else:
@@ -585,8 +585,6 @@ class QPeriodicList(MyQListView):
 
 
 def testwidget():
-    import sys
-
     def change(list):
         print("New selection:", list)
 
@@ -659,9 +657,12 @@ def testwidget():
         QObject.connect(l, SIGNAL("selectionChanged"), change)
         QObject.connect(c, SIGNAL("selectionChanged"), change)
 
-    if QTVERSION < '4.0.0': a.setMainWidget(w)
+    if QTVERSION < '4.0.0':
+        a.setMainWidget(w)
     w.show()
-    if QTVERSION < '4.0.0':a.exec_loop()
-    else:a.exec_()
+    if QTVERSION < '4.0.0':
+        a.exec_loop()
+    else:
+        a.exec_()
 if __name__ == "__main__":
     testwidget()

@@ -27,8 +27,8 @@
 import sys
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
-import HDF5Stack1D
-import QHDF5StackWizard
+from PyMca import HDF5Stack1D
+from PyMca import QHDF5StackWizard
 DEBUG = 0
 
 class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):

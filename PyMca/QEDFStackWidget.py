@@ -26,49 +26,49 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import McaWindow
+import os
+import numpy.oldnumeric as Numeric
+import numpy
+import copy
+import time
+from PyMca import McaWindow
 qt = McaWindow.qt
 QTVERSION = qt.qVersion()
 MATPLOTLIB = False
 if QTVERSION > '4.0.0':
-    import RGBCorrelator
-    from RGBCorrelatorWidget import ImageShapeDialog
+    from PyMca import RGBCorrelator
+    from PyMca.RGBCorrelatorWidget import ImageShapeDialog
     try:
-        import QPyMcaMatplotlibSave
+        from PyMca import QPyMcaMatplotlibSave
         MATPLOTLIB = True
     except ImportError:
         MATPLOTLIB = False
-import RGBCorrelatorGraph
-from PyMca_Icons import IconDict
-import DataObject
-import EDFStack
-import SpecFileStack
-import numpy.oldnumeric as Numeric
-import numpy
-import ColormapDialog
-import spslut
-import os
-import PyMcaDirs
-import SpecfitFuns
-import time
-import OmnicMap
-import OpusDPTMap
-import LuciaMap
-import SupaVisioMap
-import AifiraMap
-import ArraySave
+from PyMca import RGBCorrelatorGraph
+from PyMca.PyMca_Icons import IconDict
+from PyMca import DataObject
+from PyMca import EDFStack
+from PyMca import SpecFileStack
+from PyMca import ColormapDialog
+from PyMca import spslut
+from PyMca import PyMcaDirs
+from PyMca import SpecfitFuns
+from PyMca import OmnicMap
+from PyMca import OpusDPTMap
+from PyMca import LuciaMap
+from PyMca import SupaVisioMap
+from PyMca import AifiraMap
+from PyMca import ArraySave
 try:
-    import QHDF5Stack1D
+    from PyMca import QHDF5Stack1D
     HDF5 = True
 except ImportError:
     HDF5 = False
     pass
-import MaskImageWidget
-import ExternalImagesWindow
-import StackROIWindow
-import copy
-import CloseEventNotifyingWidget
-import StackSimpleFitWindow
+from PyMca import MaskImageWidget
+from PyMca import ExternalImagesWindow
+from PyMca import StackROIWindow
+from PyMca import CloseEventNotifyingWidget
+from PyMca import StackSimpleFitWindow
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -80,7 +80,7 @@ if QWTVERSION4:
 PCA = False
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
-    import PCAWindow
+    from PyMca import PCAWindow
     PCA = True
 else:
     import Qwt5 as Qwt
@@ -88,15 +88,15 @@ else:
 NNMA = False
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
-    import NNMAWindow
+    from PyMca import NNMAWindow
     NNMA = True
 else:
     import Qwt5 as Qwt
 
 SNIP = False
 if QTVERSION > '4.0.0':
-    import SNIPWindow
-    import SGWindow
+    from PyMca import SNIPWindow
+    from PyMca import SGWindow
     SNIP = True
     
 

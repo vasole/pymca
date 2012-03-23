@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import numpy
-from PyMca import Object3D.Object3DScene
+from PyMca.Object3D import Object3DScene
 DEBUG = 0
 
 class SceneGLWindow(Object3D.Object3DScene.Object3DScene):

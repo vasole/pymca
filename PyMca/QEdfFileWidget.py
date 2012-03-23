@@ -24,8 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
+import sys
 import os.path
-import QtBlissGraph
+import numpy.oldnumeric as Numeric
+from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
 if not hasattr(qt, 'QString'):
     QString = str
@@ -38,21 +40,19 @@ QWTVERSION4 = QtBlissGraph.QWTVERSION4
 if QTVERSION > '4.0.0':
     QT4 = True
     try:
-        import QPyMcaMatplotlibSave
+        from PyMca import QPyMcaMatplotlibSave
         MATPLOTLIB = True
     except ImportError:
         MATPLOTLIB = False
 else:
     QT4 = False
     MATPLOTLIB = False
-import numpy.oldnumeric as Numeric
-import sys
-from PyMca_Icons import IconDict
-import ColormapDialog
-import PyMcaPrintPreview
-import ArraySave
-import PyMcaDirs
-import SpecFileDataInfo
+from PyMca.PyMca_Icons import IconDict
+from PyMca import ColormapDialog
+from PyMca import PyMcaPrintPreview
+from PyMca import ArraySave
+from PyMca import PyMcaDirs
+from PyMca import SpecFileDataInfo
 
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
@@ -1727,7 +1727,7 @@ def test2():
         
 def test():
     import sys
-    import EdfFileDataSource
+    from PyMca import EdfFileDataSource
     def repSelection(sel):    print("replaceSelection", sel)
     def removeSelection(sel): print("removeSelection", sel)
     def addSelection(sel):    print("addSelection", sel)

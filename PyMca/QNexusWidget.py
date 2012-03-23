@@ -24,8 +24,12 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import os
 import sys
+import os
+import posixpath
+import weakref
+import gc
+import h5py
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 if hasattr(QtCore, 'QString'):
@@ -33,17 +37,13 @@ if hasattr(QtCore, 'QString'):
 else:
     QString = str
 
-import h5py
-import HDF5Widget
-import HDF5Info
-import HDF5CounterTable
-import HDF5DatasetTable
-import posixpath
-import weakref
-import gc
-import ConfigDict
+from PyMca import HDF5Widget
+from PyMca import HDF5Info
+from PyMca import HDF5CounterTable
+from PyMca import HDF5DatasetTable
+from PyMca import ConfigDict
 if "PyMcaDirs" in sys.modules:
-    import PyMcaDirs
+    from PyMca import PyMcaDirs
 
 DEBUG=0
 
@@ -675,14 +675,14 @@ if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
     try:
-        import Object3D
+        from PyMca import Object3D
     except:
         pass
     w = QNexusWidget()
     if 0:
         w.setFile(sys.argv[1])
     else:
-        import NexusDataSource
+        from PyMca import NexusDataSource
         dataSource = NexusDataSource.NexusDataSource(sys.argv[1:])
         w.setDataSource(dataSource)
     def addSelection(sel):

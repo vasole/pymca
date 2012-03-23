@@ -24,14 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import os
 import sys
+import os
+import posixpath
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
-import QNexusWidget
-import NexusDataSource
-import PyMcaDirs
-import posixpath
+from PyMca import QNexusWidget
+from PyMca import NexusDataSource
+from PyMca import PyMcaDirs
 
 class IntroductionPage(QtGui.QWizardPage):
     def __init__(self, parent):
