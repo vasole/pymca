@@ -1,4 +1,3 @@
-import sys
 #/*##########################################################################
 # Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
@@ -26,6 +25,7 @@ import sys
 # is a problem for you.
 #############################################################################*/
 import os
+import sys
 import numpy
 from PyMca import MEDFile
 from PyMca import SpecFileAbstractClass
@@ -53,14 +53,14 @@ class APSMEDFileParser(object):
                                                 mca.cal_quad))
             data.append(mca.data)
 
-        self.motorNames  = []
+        self.motorNames = []
         motorValues = []
         for item in self._medFileObject.env:
-            name, value  = item.split("=")
+            name, value = item.split("=")
             self.motorNames.append(name)
             motorValues.append(value)
-            header.append('#'+item)
-                    
+            header.append('#' + item)
+
         #create an abstract scan object
         self._scan = [APSMEDScan(data, scanheader=header,
                                  motor_values=motorValues)]
@@ -85,7 +85,7 @@ class APSMEDFileParser(object):
         scan number, scan order
         """
         n = key.split(".")
-        return self.__getitem__(int(n[0])-1)
+        return self.__getitem__(int(n[0]) - 1)
 
     def allmotors(self):
         return self.motorNames
@@ -114,7 +114,7 @@ def test(filename):
     if isAPSMEDFile(filename):
         sf=APSMEDFileParser(filename)
     else:
-        print("Not a Fit2D .Chi File")
+        print("Not an APS Multi-element detector file")
     print(sf[0].header('S'))
     print(sf[0].header('D'))
     print(sf[0].header('ID13ds'))
@@ -124,7 +124,7 @@ def test(filename):
     try:
         import pylab
         for i in range(sf[0].nbmca()):
-            pylab.plot(sf[0].mca(i+1))
+            pylab.plot(sf[0].mca(i + 1))
         pylab.show()
     except ImportError:
         pass
