@@ -30,7 +30,7 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
-ffile = open(os.path.join('PyMca', 'PyMcaMain.py'),'rb').readlines()
+ffile = open(os.path.join('PyMca', 'PyMcaMain.py'), 'r').readlines()
 for line in ffile:
     if line.startswith('__version__'):
         #remove spaces and split
@@ -306,7 +306,7 @@ class smart_install_data(install_data):
         if os.path.exists(tmpName):
             print("Removing previously installed file %s" % tmpName)
             os.remove(tmpName)
-        f = open(tmpName, 'wb')
+        f = open(tmpName, 'w')
         if PYMCA_DATA_DIR == 'PyMca/PyMcaData':
             #default, just make sure the complete path is there
             PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
