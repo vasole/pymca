@@ -25,11 +25,11 @@
 # is a problem for you.
 #############################################################################
 import sys
-from QSourceSelector import qt
-QTVERSION = qt.qVersion()
-import QSourceSelector
-import QDataSource
 import os
+from PyMca import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+from PyMca import QSourceSelector
+from PyMca import QDataSource
 #import weakref
 
 DEBUG = 0

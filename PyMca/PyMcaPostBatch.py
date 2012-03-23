@@ -25,11 +25,11 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import PyMcaDirs
-import RGBCorrelator
+from PyMca import PyMcaDirs
+from PyMca import RGBCorrelator
 qt = RGBCorrelator.qt
 if hasattr(qt, "QString"):
     QString = qt.QString

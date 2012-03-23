@@ -24,16 +24,16 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
-from PyMca_Icons import IconDict
 import numpy
 import time
-import RGBImageCalculator
-from RGBImageCalculator import qt
+from PyMca.PyMca_Icons import IconDict
+from PyMca import RGBImageCalculator
+qt = RGBImageCalculator.qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
-    import RGBCorrelator
+    from PyMca import RGBCorrelator
 try:
     from PyMca import FrameBrowser
     USE_BROWSER = True
@@ -273,7 +273,7 @@ class TimerLoop:
         print("Test function called")
 
 if __name__ == "__main__":
-    import DataObject
+    from PyMca import DataObject
     import weakref
     import time
     def buildDataObject(arrayData):

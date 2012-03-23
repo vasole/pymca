@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,33 +27,33 @@
 #############################################################################
 __revision__ = "$Revision: 4.12$"
 import sys
-import PyMcaQt as qt
+import os
+import time
+import subprocess
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     try:
         import h5py
-        import NexusDataSource
-        import QNexusWidget
-        import HDF5Selection
+        from PyMca import NexusDataSource
+        from PyMca import QNexusWidget
+        from PyMca import HDF5Selection
         HDF5SUPPORT = True
     except ImportError:
         HDF5SUPPORT = False
 else:
     HDF5SUPPORT = False
-import ConfigDict
-import os
-import McaAdvancedFitBatch
-import EdfFileLayer
-import SpecFileLayer
-import time
-from PyMca_Icons import IconDict
-import McaCustomEvent
-import EdfFileSimpleViewer
-import QtMcaAdvancedFitReport
-import HtmlIndex
-import PyMcaDirs
-import subprocess
-import PyMcaBatchBuildOutput
+from PyMca import ConfigDict
+from PyMca import McaAdvancedFitBatch
+from PyMca import EdfFileLayer
+from PyMca import SpecFileLayer
+from PyMca.PyMca_Icons import IconDict
+from PyMca import McaCustomEvent
+from PyMca import EdfFileSimpleViewer
+from PyMca import QtMcaAdvancedFitReport
+from PyMca import HtmlIndex
+from PyMca import PyMcaDirs
+from PyMca import PyMcaBatchBuildOutput
 
 ROIWIDTH = 100.
 DEBUG = 0

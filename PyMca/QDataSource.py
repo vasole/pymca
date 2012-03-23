@@ -29,21 +29,21 @@ Demo example of generic access to data sources.
 
 """
 import sys
-import PyMcaQt as qt
+import os
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 #import QSPSDataSource
 #import QSpecFileDataSource
 #import QEdfFileDataSource
-import SpecFileDataSource
-import EdfFileDataSource
-import QEdfFileWidget
-import os
+from PyMca import SpecFileDataSource
+from PyMca import EdfFileDataSource
+from PyMca import QEdfFileWidget
 if 0 and QTVERSION < '4.0.0':
-    import MySpecFileSelector as QSpecFileWidget
+    from PyMca import MySpecFileSelector as QSpecFileWidget
     QSpecFileWidget.QSpecFileWidget = QSpecFileWidget.SpecFileSelector
 else:
-    import QSpecFileWidget
+    from PyMca import QSpecFileWidget
 
 if (sys.platform == "win32") or (sys.platform == "darwin"):
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
@@ -54,9 +54,9 @@ if (sys.platform == "win32") or (sys.platform == "darwin"):
     sps = None 
 else:
     #import SpsDataSource
-    import QSpsDataSource
+    from PyMca import QSpsDataSource
     sps = QSpsDataSource.SpsDataSource.sps
-    import QSpsWidget
+    from PyMca import QSpsWidget
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource,
                      QSpsDataSource.SOURCE_TYPE: QSpsDataSource.QSpsDataSource}
@@ -67,8 +67,8 @@ else:
 
 NEXUS = True
 try:
-    import NexusDataSource
-    import PyMcaNexusWidget
+    from PyMca import NexusDataSource
+    from PyMca import PyMcaNexusWidget
     import h5py
 except:
     NEXUS = False
@@ -165,7 +165,6 @@ def QDataSource(name=None, source_type=None):
   
   
 if __name__ == "__main__":
-    import sys,time
     try:
         sourcename=sys.argv[1]
         key       =sys.argv[2]        

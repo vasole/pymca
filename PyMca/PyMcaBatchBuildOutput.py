@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,17 +26,17 @@
 # is a problem for you.
 #############################################################################
 import os
-import EdfFile
 import numpy
+from PyMca import EdfFile
 
 DEBUG = 0
 
-class PyMcaBatchBuildOutput:
-    def __init__(self, inputdir = None, outputdir = None):
+class PyMcaBatchBuildOutput(object):
+    def __init__(self, inputdir=None, outputdir=None):
         self.inputDir  = inputdir
         self.outputDir = outputdir
 
-    def buildOutput(self, inputdir=None, outputdir=None, delete = None):
+    def buildOutput(self, inputdir=None, outputdir=None, delete=None):
         if inputdir is None:inputdir = self.inputDir
         if inputdir is None:inputdir = os.getcwd()
         if outputdir is None: outputdir = self.outputDir

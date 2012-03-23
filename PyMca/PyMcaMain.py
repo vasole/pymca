@@ -66,7 +66,7 @@ if __name__ == '__main__':
         import qt
 
 from PyMca import PyMcaMdi
-from PyMca.PyMcaMdi import qt
+from PyMca import PyMcaQt as qt
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         else:
             splash = qt.QSplashScreen()
         splash.show()
-        import ChangeLog
+        from PyMca import ChangeLog
         font = splash.font()
         font.setBold(1)
         splash.setFont(font)
@@ -227,17 +227,17 @@ if (sys.platform != 'win32') and (sys.platform != 'darwin'):
     SOURCESLIST.append("SPS")
 """
 
-class PyMca(PyMcaMdi.PyMca):
+class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def __init__(self, parent=None, name="PyMca", fl=None,**kw):
             if QTVERSION < '4.0.0':
                 if fl is None:qt.Qt.WDestructiveClose
-                PyMcaMdi.PyMca.__init__(self, parent, name, fl)
+                PyMcaMdi.PyMcaMdi.__init__(self, parent, name, fl)
                 self.setCaption(name)
                 self.setIcon(qt.QPixmap(IconDict['gioconda16']))
                 self.menuBar().setIcon(qt.QPixmap(IconDict['gioconda16']))            
             else:
                 if fl is None: fl = qt.Qt.WA_DeleteOnClose
-                PyMcaMdi.PyMca.__init__(self, parent, name, fl)
+                PyMcaMdi.PyMcaMdi.__init__(self, parent, name, fl)
                 maxheight = qt.QDesktopWidget().height()
                 if maxheight < 799:
                     self.setMinimumHeight(int(0.8*maxheight))
@@ -1890,7 +1890,7 @@ if __name__ == '__main__':
     if PROFILING:
         import profile
         import pstats
-    PyMcaMainWidgetInstance = PyMca(**keywords)
+    PyMcaMainWidgetInstance = PyMcaMain(**keywords)
     if nativeFileDialogs is not None:
         PyMcaDirs.nativeFileDialogs = nativeFileDialogs
     if debugreport:PyMcaMainWidgetInstance.onDebug()

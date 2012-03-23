@@ -29,6 +29,7 @@ try:
     from PyMca import QStackWidget
     from PyMca import HDF5Stack1D
 except:
+    print("PyMcaNexusWidget importing from directory")
     from QNexusWidget import *
     import QStackWidget
     import HDF5Stack1D
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
     try:
-        import Object3D
+        from PyMca import Object3D
     except:
         pass
     w = PyMcaNexusWidget()

@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys, getopt, string
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -33,13 +33,13 @@ else:
     
 QTVERSION = qt.qVersion()
 
-from PyMca_Icons import IconDict
-from PyMca_help  import HelpDict
+from PyMca.PyMca_Icons import IconDict
+from PyMca.PyMca_help  import HelpDict
 DEBUG = 0
 
 __version__ = "1.5"
 
-class PyMca(qt.QMainWindow):
+class PyMcaMdi(qt.QMainWindow):
     def __init__(self, parent=None, name="PyMca Mdi", fl=None, options={}):
         if QTVERSION < '4.0.0':
             if fl is None: fl=qt.Qt.WDestructiveClose

@@ -25,14 +25,14 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
 if QTVERSION < '4.0.0':
-    from Q3PyMcaPrintPreview import PrintPreview
+    from PyMca.Q3PyMcaPrintPreview import PrintPreview
 else:
-    from Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
+    from PyMca.Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
     
 #SINGLETON
 if 0:
