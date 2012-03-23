@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,12 +25,12 @@
 # is a problem for you.
 #############################################################################*/
 __revision__= "$Revision: 1.11 $"
-__author__="V.A. Sole - ESRF BLISS Group"
+__author__="V.A. Sole - ESRF Software Group"
 import sys
-import PyMcaQt as qt
-import Elements
-from QPeriodicTable import QPeriodicTable
-from PyMca_Icons import IconDict
+from PyMca import PyMcaQt as qt
+from PyMca import Elements
+from PyMca.QPeriodicTable import QPeriodicTable
+from PyMca.PyMca_Icons import IconDict
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
@@ -319,7 +319,6 @@ class MyQLineEdit(qt.QLineEdit):
         #self.emit(qt.SIGNAL("returnPressed()"),())
 
 def main():
-    import sys
     app  = qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)

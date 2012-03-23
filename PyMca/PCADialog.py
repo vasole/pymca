@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -27,18 +27,18 @@
 #############################################################################*/
 import sys
 import time
-import PyMcaQt as qt
+import numpy
+from PyMca import PyMcaQt as qt
 PCA = False
 MDP = False
 if qt.qVersion() > '4.0.0':
     try:
         import PyQt4.Qwt5 as Qwt
-        import PCAWindow
+        from PyMca import PCAWindow
         PCA = True
         MDP = PCAWindow.MDP
     except ImportError:
         pass
-import numpy
 DEBUG = 0
 
 class SimpleThread(qt.QThread):
@@ -284,7 +284,7 @@ class PCADialog(qt.QDialog):
 if __name__ == "__main__":
     DEBUG = 1
     import os
-    import EdfFile
+    from PyMca import EdfFile
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

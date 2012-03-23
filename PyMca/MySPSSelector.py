@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,11 +25,9 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.4 $"
-#import EventHandler
-import spswrap as sps
-#from qt import *
-import qt
-import PyMca_Icons as icons
+from PyMca import spswrap as sps
+from PyMca import PyMcaQt as qt
+import PyMca.PyMca_Icons as icons
 DEBUG = 0
 PYDVT = 0
 SOURCE_TYPE = 'SPS'
@@ -695,9 +693,9 @@ class SPSSelector(qt.QWidget):
 def test():
     import sys
     if PYDVT:
-        import SPSData
+        from PyMca import SPSData
     else:
-        import SPSLayer
+        from PyMca import SPSLayer
     def repSelection(sel): print("repSelection", sel)
     def addSelection(sel): print("addSelection", sel)
 

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     #m = NumpyArrayTableModel(fmt="%.5f")
     #m = NumpyArrayTableModel(None, numpy.arange(100.), fmt="%.5f")
     #m = NumpyArrayTableModel(None, numpy.ones((100,20)), fmt="%.5f")
-    m = NumpyArrayTableModel(None, d, fmt="%.5f")
+    m = NumpyArrayTableModel(None, d, fmt = "%.5f")
     w.setModel(m)
     m.setCurrentArrayIndex(4)
     #m.setArrayData(numpy.ones((100,)))

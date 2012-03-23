@@ -25,10 +25,9 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.1 $"
-import numpy
-import DataObject
 import sys
 import os
+import numpy
 import types
 import h5py
 import re
@@ -37,6 +36,8 @@ phynx = h5py
 
 if sys.version > '2.9':
     basestring = str
+
+from PyMca import DataObject
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0

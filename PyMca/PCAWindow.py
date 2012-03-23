@@ -24,18 +24,17 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
-import PyMcaQt as qt
-from PyMca_Icons import IconDict
-import MaskImageWidget
-import ScanWindow
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
-import PCAModule
 import numpy
+from PyMca import PyMcaQt as qt
+from PyMca.PyMca_Icons import IconDict
+from PyMca import MaskImageWidget
+from PyMca import ScanWindow
+from PyMca import PCAModule
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
-
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
@@ -604,6 +603,5 @@ def test():
         app.exec_()
 
 if __name__ == "__main__":
-    import numpy
     test()
         

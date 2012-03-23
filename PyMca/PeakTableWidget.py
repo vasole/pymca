@@ -27,7 +27,7 @@
 __revision__ = "$Revision: 1.8 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QStringList"):
     QStringList = qt.QStringList
 else:
@@ -38,11 +38,10 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 if qt.qVersion() < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
-    import qttable
-import string
-import Elements
+    from PyMca import qttable
+from PyMca import Elements
 
 DEBUG=0
 
@@ -664,9 +663,6 @@ def main(args):
         app.exec_loop()
     else:
         app.exec_()
-        
-
-                            
 
 if __name__=="__main__":
     main(sys.argv)

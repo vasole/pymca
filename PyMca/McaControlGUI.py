@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,16 +25,16 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+import os
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
 
-import McaROIWidget
-import os
-import PyMcaDirs
+from PyMca import McaROIWidget
+from PyMca import PyMcaDirs
 
 DEBUG = 0
 class McaControlGUI(qt.QWidget):

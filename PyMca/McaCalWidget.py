@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -28,7 +28,12 @@ __revision__ = "$Revision: 1.21 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
-import QtBlissGraph
+import os
+import numpy.oldnumeric as Numeric
+from numpy.oldnumeric.linear_algebra import inverse
+import copy
+
+from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -36,17 +41,13 @@ else:
     QString = str
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
-import os
-import numpy.oldnumeric as Numeric
-from numpy.oldnumeric.linear_algebra import inverse
-import Gefit
-import Specfit
-import SpecfitFuns
-from PyMca_Icons import IconDict
-import PeakTableWidget
+from PyMca import Gefit
+from PyMca import Specfit
+from PyMca import SpecfitFuns
+from PyMca.PyMca_Icons import IconDict
+from PyMca import PeakTableWidget
 if 0:
-    import XRDPeakTableWidget
-import copy
+    from PyMca import XRDPeakTableWidget
 DEBUG = 0
 
 LOW_HEIGHT_THRESHOLD = 660
@@ -1722,7 +1723,7 @@ def test(x,y,legend):
 
 if __name__ == '__main__':
     import getopt
-    import specfile
+    from PyMca import specfile
     options     = 'f:s:o'
     longoptions = ['file=','scan=','pkm=',
                     'output=','linear=','strip=',

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -33,9 +33,9 @@ else:
     
 QTVERSION = qt.qVersion()
 if QTVERSION < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif QTVERSION < '4.0.0':
-    import qttable
+    from PyMca import qttable
 
 if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
@@ -237,7 +237,7 @@ class McaTable(QTable):
         return fitlabel, values, sigmavalues
 
 
-    def __myslot(self,*var):
+    def __myslot(self, *var):
         ddict={}
         if len(var) == 0:
             #selection changed event

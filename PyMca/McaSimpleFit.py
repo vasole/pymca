@@ -26,10 +26,10 @@
 #############################################################################*/
 import sys
 import os
-from SpecfitGUI import qt
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-import SpecfitGUI
-import Specfit
+from PyMca import SpecfitGUI
+from PyMca import Specfit
 
 class McaSimpleFit(qt.QWidget):
     def __init__(self, parent=None, name="McaSimpleFit", specfit=None,fl=0): 

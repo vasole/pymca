@@ -3446,29 +3446,29 @@ IconDict= {
 }
 
 def showIcons():
-        import sys
-        import PyMcaQt as qt
-        a= qt.QApplication(sys.argv)
-        a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
-        w= qt.QWidget()
-        g= qt.QGridLayout(w)
+    import sys
+    from PyMca import PyMcaQt as qt
+    a= qt.QApplication(sys.argv)
+    a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
+    w= qt.QWidget()
+    g= qt.QGridLayout(w)
 
-        idx= 0
-        for name,icon in IconDict.items():
-                #print "name",name
-                lab= qt.QLabel(w)
-                lab.setText(str(name))
-                g.addWidget(lab, idx, 0)
-                lab= qt.QLabel(w)
-                lab.setPixmap(qt.QPixmap(icon))
-                g.addWidget(lab, idx, 1)
-                idx+= 1
+    idx= 0
+    for name,icon in IconDict.items():
+        #print "name",name
+        lab= qt.QLabel(w)
+        lab.setText(str(name))
+        g.addWidget(lab, idx, 0)
+        lab= qt.QLabel(w)
+        lab.setPixmap(qt.QPixmap(icon))
+        g.addWidget(lab, idx, 1)
+        idx+= 1
 
-        w.show()
-        if qt.qVersion () < '4.0.0':
-            a.exec_loop()
-        else:
-            a.exec_()
+    w.show()
+    if qt.qVersion () < '4.0.0':
+        a.exec_loop()
+    else:
+        a.exec_()
 
 if __name__=='__main__':
-        showIcons()
+    showIcons()

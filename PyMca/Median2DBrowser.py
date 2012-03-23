@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -31,6 +31,7 @@ try:
     from PyMca import StackBrowser
     from PyMca.PyMcaSciPy.signal import median
 except ImportError:
+    print("Median2DBrowser importing directly!")
     import StackBrowser
     from PyMcaSciPy.signal import median
 

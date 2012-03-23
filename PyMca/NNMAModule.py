@@ -152,7 +152,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-import py_nnma
 import numpy
 try:
     import mdp
@@ -162,6 +161,8 @@ try:
         MDP = False
 except:
     MDP = False
+
+from PyMca import py_nnma
 DEBUG = 0
 
 function_list = ['FNMAI', 'ALS', 'FastHALS', 'GDCLS']
@@ -332,8 +333,8 @@ def nnma(stack, ncomponents, binning=None,
     return new_images, values, new_vectors        
 
 if __name__ == "__main__":
-    import EDFStack
-    import EdfFile
+    from PyMca import EDFStack
+    from PyMca import EdfFile
     import os
     import sys
     import time

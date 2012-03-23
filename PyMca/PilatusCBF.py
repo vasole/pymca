@@ -659,5 +659,5 @@ if __name__ == "__main__":
     if os.path.exists(edfFile):
         os.remove(edfFile)
     edf = EdfFile.EdfFile(edfFile)
-    edf.WriteImage(cbf.getInfo(),cbf.getData())
+    edf.WriteImage(cbf.getInfo(), cbf.getData())
     edf = None

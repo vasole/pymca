@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,16 +25,16 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.14 $"
+import sys
+import os
+import types
 import qt
 if qt.qVersion() < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 else:
-    import qttable
-import types, os.path
-import sys
-import PyMca_Icons as icons
-import string
-import SpecFileDataInfo
+    from PyMca import qttable
+import PyMca.PyMca_Icons as icons
+from PyMca import SpecFileDataInfo
 
 DEBUG = 0
 PYDVT = 0
@@ -263,7 +263,7 @@ class McaTable(qt.QWidget):
         scankey = ""
         if mcalist != []:
             if len(mcalist):
-                stringsplit=string.split(mcalist[0],".")
+                stringsplit = mcalist[0].split(".")
                 if len(stringsplit) == 2:
                     scankey = ""
                 else:
@@ -829,7 +829,7 @@ class SpecFileSelector(qt.QWidget):
                 selkey = sel["Key"][0]
             else:
                 selkey = sel["Key"]
-            stringsplit = string.split(selkey,".")
+            stringsplit = selkey.split(".")
             scan = stringsplit[0]
             order= stringsplit[1]
             if len(stringsplit) < 3:
@@ -991,7 +991,7 @@ class SpecFileSelector(qt.QWidget):
                 selkey = sel["Key"][0]
             else:
                 selkey = sel["Key"]
-            stringsplit = string.split(selkey,".") 
+            stringsplit = selkey.split(".") 
             scan = stringsplit[0]
             order= stringsplit[1]
             """

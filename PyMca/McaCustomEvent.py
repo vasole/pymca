@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,25 +25,21 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-if 'qt' not in sys.modules:
-    try:
-        from PyQt4 import QtCore
-        QT4 = True
-    except:    
-        import qt
-        QT4 = False
-else:
-    import qt
+from PyMca import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+if QTVERSION < '4.0':
     QT4 = False
+else:
+    QT4 = True
 
 if QT4:
-    MCAEVENT = QtCore.QEvent.User
+    MCAEVENT = qt.QEvent.User
     #MCAEVENT = 12345
 
-    class McaCustomEvent(QtCore.QEvent):
+    class McaCustomEvent(qt.QEvent):
         def __init__(self, ddict={}):
             self.dict = ddict
-            QtCore.QEvent.__init__(self, MCAEVENT)
+            qt.QEvent.__init__(self, MCAEVENT)
 
         def type(self):
             return MCAEVENT
@@ -52,8 +48,8 @@ else:
     MCAEVENT = 12345
 
     class McaCustomEvent(qt.QCustomEvent):
-        def __init__(self,dict={}):
-            qt.QCustomEvent.__init__(self,MCAEVENT)
+        def __init__(self, dict={}):
+            qt.QCustomEvent.__init__(self, CAEVENT)
             self.dict = dict
         
         

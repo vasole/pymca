@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,11 +26,14 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-import Plot1DWindowBase
+from PyMca import Plot1DWindowBase
 qt = Plot1DWindowBase.qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    raise ImportError("This plotting module expects Qt4")
+    raise ImportError("Plot1DMatplotlib.py plotting module expects Qt4")
+from PyMca.PyMca_Icons import IconDict
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -39,9 +42,6 @@ from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import matplotlib.patches as patches
 Rectangle = patches.Rectangle
 Polygon = patches.Polygon
-from PyMca_Icons import IconDict
-import PyMcaPrintPreview
-import PyMcaDirs
 import numpy
 
 DEBUG = 0
@@ -649,7 +649,6 @@ class Plot1DMatplotlibDialog(qt.QDialog):
 
 
 if __name__ == "__main__":
-    import numpy
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])

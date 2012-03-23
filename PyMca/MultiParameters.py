@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2010 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,11 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from Parameters import qt
-import Parameters
+from PyMca import PyMcaQt as qt
+from PyMca import Parameters
 QTVERSION = qt.qVersion()
-import McaTable
-import string
+from PyMca import McaTable
 
 DEBUG = 0
 
@@ -193,23 +192,25 @@ class ParametersTab(qt.QTabWidget):
         else:
             name = self.current
         table = self.tables[name]
-        lemon=string.upper("#%x%x%x" % (255,250,205))
+        lemon = ("#%x%x%x" % (255,250,205)).upper()
         if QTVERSION < '4.0.0':
             if QTVERSION < '3.0.0':
-                hcolor = string.upper("#%x%x%x" % (230,240,249))
+                hcolor = ("#%x%x%x" % (230,240,249)).upper()
             else:
                 hb = table.horizontalHeader().paletteBackgroundColor()
-                hcolor = string.upper("#%x%x%x" % (hb.red(),hb.green(),hb.blue()))
+                hcolor = ("#%x%x%x" % (hb.red(), hb.green(), hb.blue())).upper()
         else:
             if DEBUG:
                 print("Actual color to ge got")
-            hcolor = string.upper("#%x%x%x" % (230,240,249))
+            hcolor = ("#%x%x%x" % (230,240,249)).upper()
         text=""
         text+=("<nobr>")
         text+=( "<table>")
         text+=( "<tr>")
-        if QTVERSION < '4.0.0': ncols = table.numCols()
-        else:  ncols = table.columnCount()
+        if QTVERSION < '4.0.0':
+            ncols = table.numCols()
+        else:
+            ncols = table.columnCount()
         for l in range(ncols):
             text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
             if QTVERSION < '4.0.0':
@@ -238,7 +239,7 @@ class ParametersTab(qt.QTabWidget):
             try:
                 #MyQTable item has color defined
                 cc = table.item(r,0).color
-                cc = string.upper("#%x%x%x" % (cc.red(),cc.green(),cc.blue()))
+                cc = ("#%x%x%x" % (cc.red(),cc.green(),cc.blue())).upper()
                 color = cc
             except:
                 pass
@@ -339,7 +340,6 @@ def test():
     if 1:
         import specfile
         import Specfit
-        import string
         from numpy.oldnumeric import sqrt,equal,array,Float,concatenate,arange,take,nonzero
         sf=specfile.Specfile('02021201.dat')
         scan=sf.select('14')

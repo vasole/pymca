@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,28 +25,28 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.32 $"
-import ClassMcaTheory
-import SpecFileLayer
-import EdfFileLayer
-import EdfFile
-import LuciaMap
-import AifiraMap
-import EDFStack
+import sys
+import os
+import numpy
+import numpy.oldnumeric as Numeric
+from PyMca import ClassMcaTheory
+from PyMca import SpecFileLayer
+from PyMca import EdfFileLayer
+from PyMca import EdfFile
+from PyMca import LuciaMap
+from PyMca import AifiraMap
+from PyMca import EDFStack
 try:
     import h5py
-    import HDF5Stack1D
+    from PyMca import HDF5Stack1D
     HDF5SUPPORT = True
 except ImportError:
     HDF5SUPPORT = False
-import numpy
-import numpy.oldnumeric as Numeric
-import os
-import sys
-import ConfigDict
-import ConcentrationsTool
+from PyMca import ConfigDict
+from PyMca import ConcentrationsTool
 
 
-class McaAdvancedFitBatch:
+class McaAdvancedFitBatch(object):
     def __init__(self,initdict,filelist=None,outputdir=None,
                     roifit=None,roiwidth=None,
                     overwrite=1, filestep=1, mcastep=1,

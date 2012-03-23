@@ -2,8 +2,8 @@ import os
 import sys
 import re
 import struct
-import DataObject
 import numpy
+from PyMca import DataObject
 
 DEBUG = 0
 SOURCE_TYPE="EdfFileStack"

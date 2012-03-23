@@ -25,6 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole & A. Mirone - ESRF Data Analysis"
+import os
+import time
 import numpy
 import numpy.linalg
 try:
@@ -39,11 +41,9 @@ try:
 except:
     MDP = False
 
-import Lanczos
-import PCATools
-import os
+from PyMca import Lanczos
+from PyMca import PCATools
 DEBUG = 0
-import time
 
 def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
     if DEBUG:
@@ -856,8 +856,8 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True', mas
     return images, eigenvalues, vectors
 
 if __name__ == "__main__":
-    import EDFStack
-    import EdfFile
+    from PyMca import EDFStack
+    from PyMca import EdfFile
     import os
     import sys
     import time

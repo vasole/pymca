@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -26,17 +26,17 @@
 # is a problem for you.
 #############################################################################*/
 import sys
+import numpy
 import time
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 NNMA = False
 if qt.qVersion() > '4.0.0':
     try:
         import PyQt4.Qwt5 as Qwt
-        import NNMAWindow
+        from PyMca import NNMAWindow
         NNMA = True
     except ImportError:
         pass
-import numpy
 DEBUG = 0
 
 class SimpleThread(qt.QThread):
@@ -246,7 +246,7 @@ class NNMADialog(qt.QDialog):
 
 if __name__ == "__main__":
     import os
-    import EdfFile
+    from PyMca import EdfFile
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

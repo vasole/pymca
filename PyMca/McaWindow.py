@@ -26,8 +26,10 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.56 $"
 import sys
+import os
+import copy
 import time
-import QtBlissGraph
+from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -35,22 +37,20 @@ else:
     QString = str
 
 qwt = QtBlissGraph.qwt
-from PyMca_Icons import IconDict
-import McaControlGUI
-import ConfigDict
+from PyMca.PyMca_Icons import IconDict
+from PyMca import McaControlGUI
+from PyMca import ConfigDict
 import numpy.oldnumeric as Numeric
-import McaAdvancedFit
-import DataObject
-import copy
-import McaCalWidget
-import Elements
-import McaSimpleFit
-import Specfit
-import PyMcaPrintPreview
-import os
-import PyMcaDirs
+from PyMca import McaAdvancedFit
+from PyMca import DataObject
+from PyMca import McaCalWidget
+from PyMca import Elements
+from PyMca import McaSimpleFit
+from PyMca import Specfit
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
 try:
-    import QPyMcaMatplotlibSave1D
+    from PyMca import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -2352,7 +2352,7 @@ def finish():
     qt.qApp.quit()    
 """    
 def main(args):
-    import QDispatcher
+    from PyMca import QDispatcher
     app = qt.QApplication(args)
     #demo = make()
     if sys.platform == 'win32':
