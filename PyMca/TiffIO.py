@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-__revision__ = 1501
+__revision__ = 1517
 
 import sys
 import os
@@ -184,6 +184,9 @@ class TiffIO(object):
         
         if not self.fd.closed:
             self.fd.close()
+
+    def close(self):
+        return self.__makeSureFileIsClosed()
 
     def getNumberOfImages(self):
         #update for the case someone has done anything?

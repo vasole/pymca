@@ -4,9 +4,9 @@
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -19,9 +19,9 @@
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
 import os
@@ -44,22 +44,26 @@ except ImportError:
 
 DEBUG = 0
 
+
 def getDate():
     localtime = time.localtime()
     gtime = time.gmtime()
     #year, month, day, hour, minute, second,\
     #      week_day, year_day, delta = time.localtime()
-    year   = localtime[0]
-    month  = localtime[1]
-    day    = localtime[2]
-    hour   = localtime[3]
+    year = localtime[0]
+    month = localtime[1]
+    day = localtime[2]
+    hour = localtime[3]
     minute = localtime[4]
     second = localtime[5]
     #get the difference against Greenwich
-    delta  = hour - gtime[3]
-    return "%4d-%02d-%02dT%02d:%02d:%02d%+02d:00" % (year, month, day, hour, minute, second, delta)
+    delta = hour - gtime[3]
+    return "%4d-%02d-%02dT%02d:%02d:%02d%+02d:00" % (year, month, day, hour,
+                                                     minute, second, delta)
 
-def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvseparator=";"):
+
+def save2DArrayListAsASCII(datalist, filename,
+                           labels=None, csv=False, csvseparator=";"):
     if type(datalist) != type([]):
         datalist = [datalist]
     r, c = datalist[0].shape
@@ -78,38 +82,39 @@ def save2DArrayListAsASCII(datalist, filename, labels = None, csv=False, csvsepa
     if csv:
         header = '"row"%s"column"' % csvseparator
         for label in labels:
-            header +='%s"%s"' % (csvseparator,label)
+            header += '%s"%s"' % (csvseparator, label)
     else:
         header = "row  column"
         for label in labels:
-            header +="  %s" % label
-    filehandle=open(filename,'w+')
+            header += "  %s" % label
+    filehandle = open(filename, 'w+')
     filehandle.write('%s\n' % header)
-    fileline=""
+    fileline = ""
     if csv:
         for row in range(r):
             for col in range(c):
                 fileline += "%d" % row
-                fileline += "%s%d" % (csvseparator,col)
+                fileline += "%s%d" % (csvseparator, col)
                 for i in range(ndata):
-                    fileline +="%s%g" % (csvseparator, datalist[i][row, col])
+                    fileline += "%s%g" % (csvseparator, datalist[i][row, col])
                 fileline += "\n"
                 filehandle.write("%s" % fileline)
-                fileline =""
+                fileline = ""
     else:
         for row in range(r):
             for col in range(c):
                 fileline += "%d" % row
                 fileline += "  %d" % col
                 for i in range(ndata):
-                    fileline +="  %g" % datalist[i][row, col]
+                    fileline += "  %g" % datalist[i][row, col]
                 fileline += "\n"
                 filehandle.write("%s" % fileline)
-                fileline =""
-    filehandle.write("\n") 
+                fileline = ""
+    filehandle.write("\n")
     filehandle.close()
 
-def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
+
+def save2DArrayListAsEDF(datalist, filename, labels=None, dtype=None):
     if type(datalist) != type([]):
         datalist = [datalist]
     ndata = len(datalist)
@@ -121,20 +126,23 @@ def save2DArrayListAsEDF(datalist, filename, labels = None, dtype=None):
     if labels is None:
         labels = []
         for i in range(ndata):
-            labels.append("Array_%d" % i) 
+            labels.append("Array_%d" % i)
     if len(labels) != ndata:
         raise ValueError("Incorrect number of labels")
-    edfout   = EdfFile.EdfFile(filename, access="ab")
+    edfout = EdfFile.EdfFile(filename, access="ab")
     for i in range(ndata):
         if dtype is None:
-            edfout.WriteImage ({'Title':labels[i]} , datalist[i], Append=1)
+            edfout.WriteImage({'Title': labels[i]},
+                                datalist[i], Append=1)
         else:
-            edfout.WriteImage ({'Title':labels[i]} ,
+            edfout.WriteImage({'Title': labels[i]},
                                datalist[i].astype(dtype),
                                Append=1)
-    del edfout #force file close
+    del edfout  # force file close
 
-def save2DArrayListAsMonochromaticTiff(datalist, filename, labels = None, dtype=None):
+
+def save2DArrayListAsMonochromaticTiff(datalist, filename,
+                                       labels=None, dtype=None):
     if type(datalist) != type([]):
         datalist = [datalist]
     ndata = len(datalist)
@@ -148,7 +156,7 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename, labels = None, dtype=
                 break
             elif dtypeI != dtype:
                 dtype = numpy.float32
-                break        
+                break
     if os.path.exists(filename):
         try:
             os.remove(filename)
@@ -157,19 +165,20 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename, labels = None, dtype=
     if labels is None:
         labels = []
         for i in range(ndata):
-            labels.append("Array_%d" % i) 
+            labels.append("Array_%d" % i)
     if len(labels) != ndata:
         raise ValueError("Incorrect number of labels")
-    outfileInstance   = TiffIO.TiffIO(filename, mode="wb+")
+    outfileInstance = TiffIO.TiffIO(filename, mode="wb+")
     for i in range(ndata):
         if i == 1:
-            outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+            outfileInstance = TiffIO.TiffIO(filename, mode="rb+")
         if dtype is None:
             data = datalist[i]
         else:
             data = datalist[i].astype(dtype)
-        outfileInstance.writeImage (data, info={'Title':labels[i]})
-    outFileInstance = None #force file close
+        outfileInstance.writeImage(data, info={'Title': labels[i]})
+    outfileInstance.close()  # force file close
+
 
 def openHDF5File(name, mode='a', **kwargs):
         """
@@ -189,33 +198,33 @@ def openHDF5File(name, mode='a', **kwargs):
         h5file = h5py.File(name, mode, **kwargs)
         if h5file.mode != 'r' and len(h5file) == 0:
             if 'file_name' not in h5file.attrs:
-                attr  = 'file_name'
-                txt   = "%s" % name
+                attr = 'file_name'
+                txt = "%s" % name
                 dtype = '<S%d' % len(txt)
                 h5file.attrs.create(attr, txt, dtype=dtype)
             if 'file_time' not in h5file.attrs:
-                attr  = 'file_time'
-                txt   = "%s" % getDate()
+                attr = 'file_time'
+                txt = "%s" % getDate()
                 dtype = '<S%d' % len(txt)
                 h5file.attrs.create(attr, txt, dtype=dtype)
             if 'HDF5_version' not in h5file.attrs:
-                attr  = 'HDF5_version'
-                txt   = "%s" % h5py.version.hdf5_version
+                attr = 'HDF5_version'
+                txt = "%s" % h5py.version.hdf5_version
                 dtype = '<S%d' % len(txt)
                 h5file.attrs.create(attr, txt, dtype=dtype)
             if 'HDF5_API_version' not in h5file.attrs:
-                attr  = 'HDF5_API_version'
-                txt   = "%s" % h5py.version.api_version
+                attr = 'HDF5_API_version'
+                txt = "%s" % h5py.version.api_version
                 dtype = '<S%d' % len(txt)
                 h5file.attrs.create(attr, txt, dtype=dtype)
             if 'h5py_version' not in h5file.attrs:
-                attr  = 'h5py_version'
-                txt   = "%s" % h5py.version.version
+                attr = 'h5py_version'
+                txt = "%s" % h5py.version.version
                 dtype = '<S%d' % len(txt)
                 h5file.attrs.create(attr, txt, dtype=dtype)
             if 'creator' not in h5file.attrs:
-                attr  = 'creator'
-                txt   = "%s" % 'PyMca'
+                attr = 'creator'
+                txt = "%s" % 'PyMca'
                 dtype = '<S%d' % len(txt)
                 h5file.attrs.create(attr, txt, dtype=dtype)
             #if 'format_version' not in self.attrs and len(h5file) == 0:
@@ -258,19 +267,19 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     if compression:
         if DEBUG:
             print("Saving compressed and chunked dataset")
-        chunk1 = int(shape[1]/10)
+        chunk1 = int(shape[1] / 10)
         if chunk1 == 0:
             chunk1 = shape[1]
         for i in [11, 10, 8, 7, 5, 4]:
             if (shape[1] % i) == 0:
-                chunk1 = int(shape[1]/i)
+                chunk1 = int(shape[1] / i)
                 break
-        chunk2 = int(shape[2]/10)
+        chunk2 = int(shape[2] / 10)
         if chunk2 == 0:
             chunk2 = shape[2]
         for i in [11, 10, 8, 7, 5, 4]:
             if (shape[2] % i) == 0:
-                chunk2 = int(shape[2]/i)
+                chunk2 = int(shape[2] / i)
                 break
         data = nxData.require_dataset(buffername,
                            shape=shape,
@@ -284,7 +293,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
         data = nxData.require_dataset(buffername,
                            shape=shape,
                            dtype=dtype,
-                           compression=None)        
+                           compression=None)
     data.attrs['signal'] = numpy.int32(1)
     if interpretation is not None:
         data.attrs['interpretation'] = interpretation.encode('utf-8')
@@ -300,7 +309,8 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     return hdf, data
 
 
-def save3DArrayAsMonochromaticTiff(data, filename, labels = None, dtype=None, mcaindex=-1):
+def save3DArrayAsMonochromaticTiff(data, filename,
+                                   labels=None, dtype=None, mcaindex=-1):
     ndata = data.shape[mcaindex]
     if dtype is None:
         dtype = numpy.float32
@@ -312,54 +322,55 @@ def save3DArrayAsMonochromaticTiff(data, filename, labels = None, dtype=None, mc
     if labels is None:
         labels = []
         for i in range(ndata):
-            labels.append("Array_%d" % i) 
+            labels.append("Array_%d" % i)
     if len(labels) != ndata:
         raise ValueError("Incorrect number of labels")
-    outfileInstance   = TiffIO.TiffIO(filename, mode="wb+")
+    outfileInstance = TiffIO.TiffIO(filename, mode="wb+")
     if mcaindex in [2, -1]:
         for i in range(ndata):
             if i == 1:
-                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")
             if dtype is None:
-                tmpData = data[:,:,i]
+                tmpData = data[:, :, i]
             else:
-                tmpData = data[:,:,i].astype(dtype)
-            outfileInstance.writeImage (tmpData, info={'Title':labels[i]})
+                tmpData = data[:, :, i].astype(dtype)
+            outfileInstance.writeImage(tmpData, info={'Title': labels[i]})
             if (ndata > 10):
-                print("Saved image %d of %d" % (i+1, ndata))
+                print("Saved image %d of %d" % (i + 1, ndata))
     elif mcaindex == 1:
         for i in range(ndata):
             if i == 1:
-                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")
             if dtype is None:
-                tmpData = data[:,i,:]
+                tmpData = data[:, i, :]
             else:
-                tmpData = data[:,i,:].astype(dtype)
-            outfileInstance.writeImage (tmpData, info={'Title':labels[i]})        
+                tmpData = data[:, i, :].astype(dtype)
+            outfileInstance.writeImage(tmpData, info={'Title': labels[i]})
             if (ndata > 10):
-                print("Saved image %d of %d" % (i+1, ndata))
+                print("Saved image %d of %d" % (i + 1, ndata))
     else:
         for i in range(ndata):
             if i == 1:
-                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")    
+                outfileInstance = TiffIO.TiffIO(filename, mode="rb+")
             if dtype is None:
                 tmpData = data[i]
             else:
                 tmpData = data[i].astype(dtype)
-            outfileInstance.writeImage (tmpData, info={'Title':labels[i]})
+            outfileInstance.writeImage(tmpData, info={'Title': labels[i]})
             if (ndata > 10):
-                print("Saved image %d of %d" % (i+1, ndata))
-    outFileInstance = None #force file close
+                print("Saved image %d of %d" % (i + 1, ndata))
+    outfileInstance.close()  # force file close
 
-def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
+
+def save3DArrayAsHDF5(data, filename, labels=None, dtype=None, mode='nexus',
                       mcaindex=-1, interpretation=None, compression=None):
     if not HDF5:
         raise IOError('h5py does not seem to be installed in your system')
     if (mcaindex == 0) and (interpretation in ["spectrum", None]):
         #stack of images to be saved as stack of spectra
         modify = True
-        shape  = [data.shape[1], data.shape[2], data.shape[0]]
-    elif (mcaindex != 0 ) and (interpretation in ["image"]):
+        shape = [data.shape[1], data.shape[2], data.shape[0]]
+    elif (mcaindex != 0) and (interpretation in ["image"]):
         #stack of spectra to be saved as stack of images
         modify = True
         shape = [data.shape[2], data.shape[0], data.shape[1]]
@@ -367,7 +378,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
         modify = False
         shape = data.shape
     if dtype is None:
-        dtype =data.dtype
+        dtype = data.dtype
     if mode.lower() in ['nexus', 'nexus+']:
         #raise IOError, 'NeXus data saving not implemented yet'
         if os.path.exists(filename):
@@ -384,7 +395,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
         elif nxEntry.attrs['NX_class'] != 'NXentry'.encode('utf-8'):
             #should I raise an error?
             pass
-        
+
         nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
         nxEntry['start_time'] = getDate().encode('utf-8')
         nxData = nxEntry.require_group('NXdata')
@@ -399,17 +410,17 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                     if DEBUG:
                         print("Saving compressed and chunked dataset")
                     #risk of taking a 10 % more space in disk
-                    chunk1 = int(shape[1]/10)
+                    chunk1 = int(shape[1] / 10)
                     if chunk1 == 0:
                         chunk1 = shape[1]
                     for i in [11, 10, 8, 7, 5, 4]:
                         if (shape[1] % i) == 0:
-                            chunk1 = int(shape[1]/i)
+                            chunk1 = int(shape[1] / i)
                             break
-                    chunk2 = int(shape[2]/10)
+                    chunk2 = int(shape[2] / 10)
                     for i in [11, 10, 8, 7, 5, 4]:
                         if (shape[2] % i) == 0:
-                            chunk2 = int(shape[2]/i)
+                            chunk2 = int(shape[2] / i)
                             break
                     dset = nxData.require_dataset('data',
                                        shape=shape,
@@ -425,10 +436,10 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                                        dtype=dtype,
                                        compression=None)
                 for i in range(data.shape[-1]):
-                    tmp = data[:,:, i:i+1]
+                    tmp = data[:, :, i:i + 1]
                     tmp.shape = 1, shape[1], shape[2]
                     dset[i, 0:shape[1], :] = tmp
-                    print("Saved item %d of %d" % ( i, data.shape[-1]))
+                    print("Saved item %d of %d" % (i, data.shape[-1]))
             elif 0:
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. However, it is much faster
@@ -437,19 +448,20 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                                shape=shape,
                                dtype=dtype,
                                chunks=(1, shape[1], shape[2]))
-                for i in range(data.shape[1]): #shape[0]
-                    chunk = numpy.zeros((1, data.shape[2], data.shape[0]), dtype)
-                    for k in range(data.shape[0]): #shape[2]
+                for i in range(data.shape[1]):  # shape[0]
+                    chunk = numpy.zeros((1, data.shape[2], data.shape[0]),
+                                        dtype)
+                    for k in range(data.shape[0]):  # shape[2]
                         if 0:
-                            tmpData = data[k:k+1]
-                            for j in range(data.shape[2]): #shape[1]
+                            tmpData = data[k:k + 1]
+                            for j in range(data.shape[2]):  # shape[1]
                                 tmpData.shape = data.shape[1], data.shape[2]
                                 chunk[0, j, k] = tmpData[i, j]
                         else:
-                            tmpData = data[k:k+1, i, :]
+                            tmpData = data[k:k + 1, i, :]
                             tmpData.shape = -1
                             chunk[0, :, k] = tmpData
-                    print("Saving item %d of %d" % ( i, data.shape[1]))
+                    print("Saving item %d of %d" % (i, data.shape[1]))
                     dset[i, :, :] = chunk
             else:
                 #if I do not match the input and output shapes it takes ages
@@ -471,26 +483,26 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                                dtype=dtype,
                                compression=None)
                 for i in range(data.shape[0]):
-                    tmp = data[i:(i+1),:,:]
+                    tmp = data[i:i + 1, :, :]
                     tmp.shape = shape[0], shape[1], 1
-                    dset[:, :, i:(i+1)] = tmp
+                    dset[:, :, i:i + 1] = tmp
         else:
             if compression:
                 if DEBUG:
                     print("Saving compressed and chunked dataset")
-                chunk1 = int(shape[1]/10)
+                chunk1 = int(shape[1] / 10)
                 if chunk1 == 0:
                     chunk1 = shape[1]
                 for i in [11, 10, 8, 7, 5, 4]:
                     if (shape[1] % i) == 0:
-                        chunk1 = int(shape[1]/i)
+                        chunk1 = int(shape[1] / i)
                         break
-                chunk2 = int(shape[2]/10)
+                chunk2 = int(shape[2] / 10)
                 if chunk2 == 0:
                     chunk2 = shape[2]
                 for i in [11, 10, 8, 7, 5, 4]:
                     if (shape[2] % i) == 0:
-                        chunk2 = int(shape[2]/i)
+                        chunk2 = int(shape[2] / i)
                         break
                 if DEBUG:
                     print("Used chunk size = (1, %d, %d)" % (chunk1, chunk2))
@@ -506,11 +518,12 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
                                shape=shape,
                                dtype=dtype,
                                compression=None)
-            tmpData = numpy.zeros((1,data.shape[1], data.shape[2]), data.dtype)
+            tmpData = numpy.zeros((1, data.shape[1], data.shape[2]),
+                                  data.dtype)
             for i in range(data.shape[0]):
-                tmpData[0:1] = data[i:i+1]
-                dset[i:i+1] = tmpData[0:1]
-                print("Saved item %d of %d" % (i+1, data.shape[0]))
+                tmpData[0:1] = data[i:i + 1]
+                dset[i:i + 1] = tmpData[0:1]
+                print("Saved item %d of %d" % (i + 1, data.shape[0]))
 
         dset.attrs['signal'] = "1".encode('utf-8')
         if interpretation is not None:
@@ -530,7 +543,7 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
             g.link('/data/NXdata/data'.encode('utf-8'),
                    '/data/data'.encode('utf-8'),
                    h5py.h5g.LINK_HARD)
-        
+
     elif mode.lower() == 'simplest':
         if os.path.exists(filename):
             try:
@@ -571,8 +584,8 @@ def save3DArrayAsHDF5(data, filename, labels = None, dtype=None, mode='nexus',
 
 
 if __name__ == "__main__":
-    a=numpy.arange(1000000.)
+    a = numpy.arange(1000000.)
     a.shape = 20, 50, 1000
     save3DArrayAsHDF5(a, '/test.h5', mode='nexus+', interpretation='image')
-    b = getHDF5FileInstanceAndBuffer('/test2.h5', (100,100,100))
+    b = getHDF5FileInstanceAndBuffer('/test2.h5', (100, 100, 100))
     print("Date String = ", getDate())
