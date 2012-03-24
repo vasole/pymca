@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import numpy
-import SpecfitFuns
+from PyMca import SpecfitFuns
 arctan = numpy.arctan
 pi = numpy.pi
 

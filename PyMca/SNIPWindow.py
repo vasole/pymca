@@ -25,16 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-import PyMcaQt as qt
-from PyMca_Icons import IconDict
-import MaskImageWidget
-#RGBCorrelatorGraph
-import ScanWindow
 import sys
-import SNIPModule
+from PyMca import PyMcaQt as qt
+from PyMca.PyMca_Icons import IconDict
+from PyMca import MaskImageWidget
+from PyMca import ScanWindow
+from PyMca import SNIPModule
 OBJECT3D = False
 try:
-    from Object3D import Object3DScene
+    from PyMca.Object3D import Object3DScene
     OBJECT3D = True
 except:
     OBJECT3D = False
@@ -394,7 +393,7 @@ if __name__ == "__main__":
         y=numpy.arange(1000.)
         w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     elif len(sys.argv) > 1:
-        import EdfFile
+        from PyMca import EdfFile
         edf = EdfFile.EdfFile(sys.argv[1])
         data = edf.GetData(0)
         w = SNIPDialog(None, data)    

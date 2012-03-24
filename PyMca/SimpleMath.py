@@ -29,6 +29,7 @@ import numpy
 try:
     from PyMca import SGModule
 except ImportError:
+    print("SimpleMath importing SGModule directly")
     import SGModule
     
 class SimpleMath(object):

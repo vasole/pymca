@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import Elements
+from PyMca import Elements
 import numpy.oldnumeric as Numeric
 
 DEBUG = 0

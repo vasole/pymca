@@ -32,6 +32,7 @@ import re
 try:
     from PyMca import specfile
 except ImportError:
+    print("specfilewrapper importting specfile directly")
     import specfile
 from PyMca import Fit2DChiFileParser
 from PyMca import APSMEDFileParser
@@ -119,7 +120,7 @@ def Specfile(filename):
         output=specfilewrapper(filename, amptek=amptek, qxas = qxas)
     return output
 
-class specfilewrapper:
+class specfilewrapper(object):
     def __init__(self,filename,amptek=None, qxas = None, dta = None):
         if amptek is None: amptek = False
         if qxas   is None: qxas   = False
@@ -311,7 +312,7 @@ class specfilewrapper:
         else:
             return 2
 
-class myscandata:
+class myscandata(object):
     def __init__(self,data,scantype=None,identification=None, scanheader=None, qxas=None, labels=None):
         if identification is None:identification='1.1'
         if scantype is None:scantype='SCAN'

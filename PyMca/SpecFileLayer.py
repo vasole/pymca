@@ -32,8 +32,8 @@
 
 
 ################################################################################  
-import specfilewrapper as specfile
 import numpy.oldnumeric as Numeric
+from PyMca import specfilewrapper as specfile
 import string
 ################################################################################
 
@@ -49,7 +49,7 @@ SF_NMCA        = 8        # multi mca (more than 1 mca per acq)
 SF_UMCA        = 16 # mca number does not match pts number
 
 
-class SpecFileLayer:
+class SpecFileLayer(object):
     """
     Specializes Data class to access Spec files.
     Interface: Data class interface.

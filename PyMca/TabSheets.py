@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 def uic_load_pixmap_FitActionsGUI(name):

@@ -25,14 +25,14 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.26 $"
-import numpy.oldnumeric as Numeric
 import sys
 import os
-import SpecfitFuns
-from Gefit import LeastSquaresFit
-import EventHandler
+import numpy.oldnumeric as Numeric
+from PyMca import SpecfitFuns
+from PyMca.Gefit import LeastSquaresFit
+from PyMca import EventHandler
 DEBUG = 0
-class Specfit:
+class Specfit(object):
     #def __init__(self,x=None,y=None,sigmay=None):
     def __init__(self,parent=None,*vars,**kw):
         self.fitconfig={}
@@ -1682,7 +1682,7 @@ class Specfit:
    		
        
 def test():
-    import SpecfitFunctions
+    from PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = Numeric.arange(1000).astype(Numeric.Float)
     p1 = Numeric.array([1500,100.,50.0])
@@ -1707,7 +1707,7 @@ def test():
     print("chisq = ",fit.chisq)
     print("Attempting a plot")
     import PyQt4.Qt as qt
-    import ScanWindow
+    from PyMca import ScanWindow
     qtApp = qt.QApplication([])
     sw = ScanWindow.ScanWindow()
     sw.addCurve(x, y, legend="Data")

@@ -24,16 +24,16 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################
-import DataObject
 import types
 import copy
-import spswrap as sps
+from PyMca import DataObject
+from PyMca import spswrap as sps
 import string
 DEBUG = 0
 
 SOURCE_TYPE = 'SPS'
 
-class SpsDataSource:
+class SpsDataSource(object):
     def __init__(self, name, object=None, copy = True):
         if type(name) != types.StringType:
             raise TypeError("Constructor needs string as first argument")

@@ -25,15 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+import numpy
+from PyMca import PyMcaQt as qt
 try:
-    import ScanWindow
+    from PyMca import ScanWindow
     SCANWINDOW = True
 except ImportError:
-    import Plot1DMatplotlib
+    from PyMca import Plot1DMatplotlib
     SCANWINDOW = False
-import numpy
-import SpecfitFuns
+from PyMca import SpecfitFuns
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):

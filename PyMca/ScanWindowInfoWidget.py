@@ -26,15 +26,17 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
-QTVERSION = qt.qVersion()
 import numpy.oldnumeric as Numeric
-"""This module implements an info widget containing :
-       - source name, scan name
-       - h,k,l infos
-       - peak, peak position
-       - fwhm, center of fwhm
-       - center of mass
+from PyMca import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+
+"""
+This module implements an info widget containing :
+    - source name, scan name
+    - h,k,l infos
+    - peak, peak position
+    - fwhm, center of fwhm
+    - center of mass
 """
 
 

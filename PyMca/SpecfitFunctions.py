@@ -25,16 +25,14 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.15 $"
+import os
 import numpy
 from numpy.oldnumeric import *
 arctan = numpy.arctan
-import SpecfitFuns
-import os
-from Gefit import LeastSquaresFit
+from PyMca import SpecfitFuns
+from PyMca.Gefit import LeastSquaresFit
 
 DEBUG=0
-if DEBUG:
-    import SimplePlot
 
 try:
     HOME=os.getenv('HOME')
@@ -105,7 +103,7 @@ CSUM        = 6
 CIGNORED    = 7
 
 
-class SpecfitFunctions:
+class SpecfitFunctions(object):
     def __init__(self,config=None):
         if config is None:
             self.config=SPECFITFUNCTIONS_DEFAULTS
@@ -387,8 +385,6 @@ class SpecfitFunctions:
             yscaling=1.0
        fittedpar=[]
        zz=SpecfitFuns.subac(yy,1.000,10000)
-       if DEBUG:
-            SimplePlot.plot([xx,yy-zz])
        
        npoints = len(zz)
        if self.config['AutoFwhm']:
@@ -1242,9 +1238,9 @@ CONFIGURE=[fitfuns.configure,
            fitfuns.configure]
 
 def test(a):
-    import PyMcaQt as qt
-    import Specfit
-    import ScanWindow
+    from PyMca import PyMcaQt as qt
+    from PyMca import Specfit
+    from PyMca import ScanWindow
     #print dir(a)
     x = arange(1000).astype(Float)
     p1 = array([1500,100.,50.0])

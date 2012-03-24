@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -25,13 +25,12 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-import PyMcaQt as qt
-from PyMca_Icons import IconDict
-import MaskImageWidget
-#RGBCorrelatorGraph
-import ScanWindow
 import sys
-import SGModule
+from PyMca import PyMcaQt as qt
+from PyMca.PyMca_Icons import IconDict
+from PyMca import MaskImageWidget
+from PyMca import ScanWindow
+from PyMca import SGModule
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):

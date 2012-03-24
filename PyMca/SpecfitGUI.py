@@ -24,20 +24,19 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import EventHandler
-import Specfit
 import sys
 import os
-
-import PyMcaQt as qt
+from PyMca import EventHandler
+from PyMca import Specfit
+from PyMca import PyMcaQt as qt
     
 QTVERSION = qt.qVersion()
-import FitConfigGUI
-import MultiParameters
-import FitActionsGUI
-import FitStatusGUI
-import EventHandler
-import QScriptOption
+from PyMca import FitConfigGUI
+from PyMca import MultiParameters
+from PyMca import FitActionsGUI
+from PyMca import FitStatusGUI
+from PyMca import EventHandler
+from PyMca import QScriptOption
 DEBUG = 0
 
 class SpecfitGUI(qt.QWidget):
@@ -627,7 +626,7 @@ class SpecfitGUI(qt.QWidget):
         
 if __name__ == "__main__":
     import numpy.oldnumeric as Numeric
-    import SpecfitFunctions
+    from PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = Numeric.arange(2000).astype(Numeric.Float)
     p1 = Numeric.array([1500,100.,30.0])

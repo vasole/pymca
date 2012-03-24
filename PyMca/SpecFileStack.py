@@ -24,13 +24,13 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import DataObject
-import specfilewrapper as specfile
-import SpecFileDataSource
-import numpy.oldnumeric as Numeric
-import numpy
 import sys
 import os
+from PyMca import DataObject
+from PyMca import specfilewrapper as specfile
+from PyMca import SpecFileDataSource
+import numpy.oldnumeric as Numeric
+import numpy
 HDF5 = False
 try:
     import h5py
@@ -502,16 +502,16 @@ if __name__ == "__main__":
     print("getZSelectionArray  shape = ", stack.getZSelectionArray().shape)
     print("getXYSelectionArray shape = ", stack.getXYSelectionArray().shape)
 
-    import PyMcaQt as qt
+    from PyMca import PyMcaQt as qt
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
     if 1:
-        import RGBCorrelatorGraph
+        from PyMca import RGBCorrelatorGraph
         w = RGBCorrelatorGraph.RGBCorrelatorGraph()
         graph = w.graph
     else:
-        import QtBlissGraph
+        from PyMca import QtBlissGraph
         w = QtBlissGraph.QtBlissGraph()
         graph = w
     print("shape sum 0 = ",Numeric.sum(stack.data, 0).shape)
@@ -539,7 +539,7 @@ if __name__ == "__main__":
     else:
         mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),0)
 
-    import McaWindow
+    from PyMca import McaWindow
     mca = McaWindow.McaWidget()
     sel = {}
     sel['SourceName'] = "Specfile Stack"

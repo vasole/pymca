@@ -29,6 +29,7 @@ import numpy
 try:
     import PyMca.SpecfitFuns as SpecfitFuns
 except ImportError:
+    print("SNIPModule importing SpecfitFuns directly")
     import SpecfitFuns
 
 snip1d = SpecfitFuns.snip1d

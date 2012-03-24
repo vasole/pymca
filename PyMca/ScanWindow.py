@@ -26,29 +26,29 @@
 #############################################################################*/
 import sys
 import os
+import numpy.oldnumeric as Numeric
 import time
-from QtBlissGraph import qt
+import traceback
+from PyMca import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = str
 if __name__ == "__main__":
     app = qt.QApplication([])
-import QtBlissGraph
-from PyMca_Icons import IconDict
-import numpy.oldnumeric as Numeric
-import ScanFit
-import SimpleMath
-import DataObject
+from PyMca import QtBlissGraph
+from PyMca.PyMca_Icons import IconDict
+from PyMca import ScanFit
+from PyMca import SimpleMath
+from PyMca import DataObject
 import copy
-import PyMcaPrintPreview
-import PyMcaDirs
-import ScanWindowInfoWidget
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
+from PyMca import ScanWindowInfoWidget
 #implement the plugins interface
-import Plot1DBase
-import traceback
+from PyMca import Plot1DBase
 try:
-    import QPyMcaMatplotlibSave1D
+    from PyMca import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -62,7 +62,7 @@ except:
 
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
-    import SimpleFitGUI
+    from PyMca import SimpleFitGUI
 
 DEBUG = 0
 class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):

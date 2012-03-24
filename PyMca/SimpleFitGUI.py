@@ -26,23 +26,24 @@
 #############################################################################*/
 import sys
 import os
-import SimpleFitModule
-import SimpleFitConfigurationGUI
-import SimpleFitUserEstimatedFunctions
-import Parameters
-qt = Parameters.qt
+from PyMca import PyMcaQt as qt
+from PyMca import SimpleFitModule
+from PyMca import SimpleFitConfigurationGUI
+from PyMca import SimpleFitUserEstimatedFunctions
+from PyMca import Parameters
 if qt.qVersion() < '4.0.0':
     raise ImportError("This module requires PyQt4")
 try:
+    #For resting purposes testing 
     #raise ImportError
     if 0:
-        from QtBlissGraph import QtBlissGraph as GraphWindow
+        from PyMca.QtBlissGraph import QtBlissGraph as GraphWindow
     elif 1:
-        from Plot1DQwt import Plot1DQwt as GraphWindow
+        from PyMca.Plot1DQwt import Plot1DQwt as GraphWindow
     else:
-        from ScanWindow import ScanWindow as GraphWindow
+        from PyMca.ScanWindow import ScanWindow as GraphWindow
 except ImportError:
-    from Plot1DMatplotlib import Plot1DMatplotlib as GraphWindow
+    from PyMca.Plot1DMatplotlib import Plot1DMatplotlib as GraphWindow
 
 DEBUG = 0
 
@@ -414,7 +415,7 @@ class SimpleFitGUI(qt.QWidget):
 def test():
     import numpy
     #import DefaultFitFunctions as SpecfitFunctions
-    import SpecfitFunctions
+    from PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])

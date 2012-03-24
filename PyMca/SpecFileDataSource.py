@@ -26,12 +26,12 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.3$"
 import sys
-from PyMca import DataObject
-from PyMca import specfilewrapper as specfile
+import os
 import numpy
 import numpy.oldnumeric as Numeric
 import types
-import os
+from PyMca import DataObject
+from PyMca import specfilewrapper as specfile
 
 SOURCE_TYPE = "SpecFile"
 DEBUG = 0

@@ -29,7 +29,7 @@ if sys.platform in ['win32']:
     def getspeclist():
         return []
 try:
-    import sps
+    from PyMca import sps
     STRING=sps.STRING
     CHAR=sps.CHAR
     DOUBLE=sps.DOUBLE

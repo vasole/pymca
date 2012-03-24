@@ -25,20 +25,20 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import SimpleFitControlWidget
+import os.path
+import numpy
+from PyMca import SimpleFitControlWidget
 qt = SimpleFitControlWidget.qt
 HorizontalSpacer = SimpleFitControlWidget.HorizontalSpacer
 VerticalSpacer = SimpleFitControlWidget.VerticalSpacer
-import ConfigDict
-import PyMca_Icons as Icons
-import os.path
-import PyMcaDirs
+from PyMca import ConfigDict
+from PyMca import PyMca_Icons as Icons
+from PyMca import PyMcaDirs
 
 #strip background handling
-import StripBackgroundWidget
-import numpy
+from PyMca import StripBackgroundWidget
+from PyMca import Parameters
 
-import Parameters
 DEBUG = 0
 
 class DummyWidget(qt.QWidget):

@@ -25,13 +25,13 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()    
 if 0 and qt.qVersion() < '3.0.0':
-    import Myqttable as qttable
+    from PyMca import Myqttable as qttable
 elif qt.qVersion() < '4.0.0':
-    import qttable
+    from PyMca import qttable
 if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
@@ -62,8 +62,6 @@ else:
             self.dict = ddict
             qt.QEvent.__init__(self, qt.QEvent.User)
 
-    
-import string
 
 class SpecFileDataInfo(qt.QTabWidget):
     InfoTableItems= [
@@ -301,7 +299,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         return qt.QTabWidget.closeEvent(self, event)
 
 def test():
-    import SpecFileLayer
+    from PyMca import SpecFileLayer
 
     if len(sys.argv) < 3:
         print("USAGE: %s <filename> <key>" % sys.argv[0])

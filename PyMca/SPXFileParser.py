@@ -28,11 +28,11 @@
 import sys
 import os
 import numpy
-import SpecFileAbstractClass
 import types
 
 #spx file format is based on XML
 import xml.etree.ElementTree as ElementTree
+from PyMca import SpecFileAbstractClass
 
 def myFloat(x):
     try:

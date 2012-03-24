@@ -27,14 +27,14 @@
 #############################################################################
 import sys
 import os
-import PyMcaQt as qt
-from PyMca_Icons import IconDict
-import PyMcaDirs
-import PyMcaFileDialogs
+from PyMca import PyMcaQt as qt
+from PyMca.PyMca_Icons import IconDict
+from PyMca import PyMcaDirs
+from PyMca import PyMcaFileDialogs
 PyMcaDirs.nativeFileDialogs = False
 QTVERSION = qt.qVersion()
 HDF5SUPPORT = True
-import QDataSource
+from PyMca import QDataSource
 
 class SimpleFitBatchParameters(qt.QWidget):
     def __init__(self, parent=None, file_browser=True):

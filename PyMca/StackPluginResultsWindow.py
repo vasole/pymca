@@ -24,18 +24,18 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
-import PyMcaQt as qt
+__author__ = "V.A. Sole - ESRF Software Group"
+import sys
+import numpy
+from PyMca import PyMcaQt as qt
 HorizontalSpacer = qt.HorizontalSpacer
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-from PyMca_Icons import IconDict
-import MaskImageWidget
-import ScanWindow
-import sys
-import numpy
+from PyMca.PyMca_Icons import IconDict
+from PyMca import MaskImageWidget
+from PyMca import ScanWindow
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
 

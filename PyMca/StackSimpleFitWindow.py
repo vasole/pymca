@@ -27,12 +27,12 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import PyMcaDirs
-import SimpleFitGUI
-qt = SimpleFitGUI.qt
-from PyMca_Icons import IconDict
-import StackSimpleFit
-import ArraySave
+from PyMca import PyMcaQt as qt
+from PyMca import PyMcaDirs
+from PyMca import SimpleFitGUI
+from PyMca.PyMca_Icons import IconDict
+from PyMca import StackSimpleFit
+from PyMca import ArraySave
 
 class CalculationThread(qt.QThread):
     def __init__(self, parent=None, calculation_method=None):
@@ -208,8 +208,8 @@ class StackSimpleFitWindow(qt.QWidget):
 
 if __name__ == "__main__":
     import numpy
-    import SpecfitFuns
-    import DefaultFitFunctions as Functions
+    from PyMca import SpecfitFuns
+    from PyMca import DefaultFitFunctions as Functions
     x = numpy.arange(1000.)
     data = numpy.zeros((50, 1000), numpy.float)
 

@@ -1,3 +1,4 @@
+#/*##########################################################################
 # Copyright (C) 2004-2011 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
@@ -24,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
@@ -32,9 +33,9 @@ DEBUG = 0
 
 if QTVERSION < '4.0.0':
     if qt.qVersion() < '3.0.0':
-        import Myqttable as qttable
+        from PyMca import Myqttable as qttable
     else:
-        import qttable
+        from PyMca import qttable
 
     class SpecFileMcaTable(qt.QWidget):
         def __init__(self, parent=None, name=None, fl=0):
@@ -383,7 +384,7 @@ else:
 
 def test():
     import sys
-    import SpecFileLayer
+    from PyMca import SpecFileLayer
     app = qt.QApplication([])
     tab = SpecFileMcaTable()
     d = SpecFileLayer.SpecFileLayer()

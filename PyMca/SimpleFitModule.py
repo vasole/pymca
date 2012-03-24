@@ -24,13 +24,13 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import numpy
 import sys
 import os
-import types
-import Gefit
-import SpecfitFuns
+import numpy
 import copy
+import types
+from PyMca import Gefit
+from PyMca import SpecfitFuns
 
 DEBUG = 0
 
@@ -759,7 +759,7 @@ class SimpleFit(object):
         return y 
 
 def test():
-    import SpecfitFunctions
+    from PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
@@ -775,8 +775,8 @@ def test():
     fit.setData(x, y)
     fit.fit()
     print("Expected parameters 1500,100.,50.0, 1500,700.,50.0")
-    import PyMcaQt as qt
-    import Parameters
+    from PyMca import PyMcaQt as qt
+    from PyMca import Parameters
     a = qt.QApplication(sys.argv)
     qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
     w =Parameters.Parameters()

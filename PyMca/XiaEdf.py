@@ -1,9 +1,32 @@
-#!/usr/bin/env python
-
-import EdfFile
+#/*##########################################################################
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMca; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
+# used as a free plugin for a non-free program.
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
+# is a problem for you.
+#############################################################################*/
+from PyMca import EdfFile
 import numpy.oldnumeric as Numeric
 import os, os.path
-import string
 
 __version__="$Revision: 1.15 $"
 
@@ -153,7 +176,7 @@ class XiaEdfCountFile:
                     lvt[idx]= 1.
                     derr.append("#%02d"%self.detList[idx])
             if len(derr):
-                message.append("Null livetime on det %s"%string.join(derr))
+                message.append("Null livetime on det %s"% " ".join(derr))
 
             self.data[1:,:]= self.data[1:,:] / lvt
             self.header["xcorr"]= corrflag|2
@@ -169,7 +192,7 @@ class XiaEdfCountFile:
                     rate[idx]= 1.
                     derr.append("#%02d"%idx)
             if len(derr):
-                message.append("Null OCR on det %s"%string.join(derr))
+                message.append("Null OCR on det %s" % " ".join(derr))
                 
             self.data[1:,:]= self.data[1:,:] * rate
             self.header["xcorr"]= corrflag|1
@@ -204,8 +227,8 @@ class XiaEdfCountFile:
                         xdet.append(det)
                 sumdata[idx,:]= Numeric.sum(self.data*mask, 0)
 
-            self.header["xcorr%d"%idx]= self.header.get("xcorr", 0)
-            self.header["xdet%d"%idx]= string.join([str(det) for det in xdet], " ")
+            self.header["xcorr%d"%idx] = self.header.get("xcorr", 0)
+            self.header["xdet%d"%idx] = " ".join([str(det) for det in xdet])
 
         if average:
             self.data= sumdata / len(xdet)
@@ -428,7 +451,7 @@ class XiaEdfScanFile:
                     ptrange.append("%d-%d"%(curr,ptlist[idx]))
                 curr= None
 
-        return "["+string.join(ptrange, ",")+"]"
+        return "["+ ",".join(ptrange)+"]"
 		
     def sum(self, detectors=[], deadtime=0, livetime=0, average=0):
         message= []
@@ -458,7 +481,7 @@ class XiaEdfScanFile:
         dataflag= int(self.header.get("xdata", 0))
         self.header["xdata"]= dataflag | (1<<2)
         self.header["xnb"]= 1
-        self.header["xdet"]= string.join([str(det) for det in sumdet], " ")
+        self.header["xdet"]= " ".join([str(det) for det in sumdet])
 
         return message
         
@@ -581,11 +604,11 @@ class XiaFilename:
             self.type= None
             self.prefix= fileext[0]
         else:
-            self.prefix= string.join(filelist[0:xiaidx], "_")
+            self.prefix= "_".join(filelist[0:xiaidx])
             try:
                 self.index= map(int, filelist[xiaidx+1:])
             except:
-                self.suffix= string.join(filelist[xiaidx+1:], "_")
+                self.suffix= "_".join(filelist[xiaidx+1:])
 
             type= filelist[xiaidx][3:]
             if type=="ct" or type=="st":

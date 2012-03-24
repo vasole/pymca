@@ -394,7 +394,7 @@ class StackSimpleFit(object):
 
 def test():
     import numpy
-    import SpecfitFuns
+    from PyMca import SpecfitFuns
     x = numpy.arange(1000.)
     data = numpy.zeros((50, 1000), numpy.float)
 

@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
@@ -36,9 +36,9 @@ else:
 
 if QTVERSION < '4.0.0':
     if QTVERSION < '3.0.0':
-        import Myqttable as qttable
+        from PyMca import Myqttable as qttable
     else:
-        import qttable
+        from PyMca import qttable
     
     class SpecFileCntTable(qt.QWidget):
         def __init__(self, parent=None, name=None, fl=0):

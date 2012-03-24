@@ -23,7 +23,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 import os.path
 
 __revision__="$Revision: 1.9 $"

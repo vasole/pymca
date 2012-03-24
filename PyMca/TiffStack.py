@@ -24,12 +24,11 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-
+import sys
+import os
+import numpy
 from PyMca import DataObject
 from PyMca import TiffIO
-import numpy
-import os
-import sys
 if sys.version > '2.9':
     long = int
 

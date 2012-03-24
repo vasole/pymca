@@ -27,15 +27,16 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
-import ExternalImagesWindow
+from PyMca import PyMcaQt as qt
+from PyMca import ExternalImagesWindow
 MaskImageWidget = ExternalImagesWindow.MaskImageWidget
-qt = ExternalImagesWindow.qt
 try:
     from PyMca.PyMcaSciPy.signal import median
 except:
+    print("StackEOIWindow importing PyMcaSciPy.signal directly")
     from PyMcaSciPy.signal import median
 medfilt2d = median.medfilt2d
-from PyMca_Icons import IconDict
+from PyMca.PyMca_Icons import IconDict
 
 class MedianParameters(qt.QWidget):
     def __init__(self, parent=None):
