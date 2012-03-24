@@ -29,7 +29,7 @@ import sys
 if sys.version > '3.0':
     unicode = str
 import string
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 if not hasattr(qt, 'QString'):
     QString = str
 else:
@@ -67,6 +67,7 @@ else:
 try:
     from PyMca.PyMca_Icons import IconDict
 except ImportError:
+    print("QtBlissGraph importing PyMcaIcons directly")
     try:
        from PyMca_Icons import IconDict
     except ImportError:
@@ -82,6 +83,7 @@ if USE_SPS_LUT:
         COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                         spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
     except ImportError:
+        print("QtBlissGraph importing spslut directly")
         try:
             import spslut
             COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,

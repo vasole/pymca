@@ -26,8 +26,9 @@
 #############################################################################*/
 import os
 import sys
+import time
 MATPLOTLIB = False
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 try:
     #this is installation dependent I guess
@@ -39,13 +40,11 @@ try:
     from matplotlib.figure import Figure
     MATPLOTLIB = True
 except:
-    import QtBlissGraph
+    from PyMca import QtBlissGraph
 
-import ConfigDict
-import time
-import string
-import PyMcaLogo
-from ConcentrationsTool import ConcentrationsConversion
+from PyMca import ConfigDict
+from PyMca import PyMcaLogo
+from PyMca.ConcentrationsTool import ConcentrationsConversion
 
 class QtMcaAdvancedFitReport:
     def __init__(self, fitfile = None, outfile = None, outdir = None,
@@ -79,9 +78,9 @@ class QtMcaAdvancedFitReport:
             if (self.outfile is None) or (self.outfile == 'Unknown Origin'):
                 if sourcename is not None:
                     self.outfile = os.path.basename(sourcename)
-        self.outfile = string.replace(self.outfile," ","_")
-        self.outfile = string.replace(self.outfile,"/","_over_")
-        self.graph = None            
+        self.outfile = self.outfile.replace(" ","_")
+        self.outfile = self.outfile.replace("/","_over_")
+        self.graph = None
         if htmltext is None:
             htmltext={}
         self.otherhtmltext=htmltext
@@ -133,9 +132,10 @@ class QtMcaAdvancedFitReport:
             elif 'Key' in d['info']:
                 selection=d['info']['Key']            
             for key in d['info'].keys():
-                if string.upper(key) == 'SOURCENAME':
+                if key.upper() == 'SOURCENAME':
                     sourcename = d['info'][key]
-                elif (string.upper(key) == 'SELECTION') or (string.upper(key) == 'LEGEND'):
+                elif (key.upper() == 'SELECTION') or\
+                     (key.upper() == 'LEGEND'):
                     selection = d['info'][key]
         self.sourcename = sourcename
         self.selection  = selection
@@ -710,12 +710,12 @@ class QtMcaAdvancedFitReport:
             labels=['Element','Group','Fit&nbsp; Area','Sigma']
         else:
             labels=['Element','Group','Fit&nbsp; Area','Sigma','Energy','Ratio','FWHM','Chi&nbsp; square']
-        lemmon=string.upper("#%x%x%x" % (255,250,205))
-        hcolor = string.upper("#%x%x%x" % (230,240,249))       
-        text+="<CENTER>"
-        text+=("<nobr>")
-        text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
-        text+=( "<tr><b>")
+        lemmon = ("#%x%x%x" % (255,250,205)).upper()
+        hcolor = ("#%x%x%x" % (230,240,249)).upper()
+        text += "<CENTER>"
+        text += ("<nobr>")
+        text += '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
+        text += ( "<tr><b>")
         for l in range(len(labels)):
             if l < 2:
                 text += '<td align="left" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
@@ -727,7 +727,7 @@ class QtMcaAdvancedFitReport:
         
         for group in result['groups']:
             text+=("<tr>")
-            ele,group0 = string.split(group)
+            ele,group0 = group.split()
             text += '<td align="left"><b>%s</b></td>' % ele
             text += '<td align="left"><b>%s</b></td>' % group0
             fitarea    = "%.6e" % result[group]['fitarea']

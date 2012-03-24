@@ -26,12 +26,12 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.3 $"
 import sys
-import spswrap as sps
-import PyMcaQt as qt
-import SpecFileCntTable
-import MaskImageWidget
+from PyMca import spswrap as sps
+from PyMca import PyMcaQt as qt
+from PyMca import SpecFileCntTable
+from PyMca import MaskImageWidget
 QTVERSION = qt.qVersion()
-import PyMca_Icons as icons
+import PyMca.PyMca_Icons as icons
 DEBUG = 0
 SOURCE_TYPE = 'SPS'
 SCAN_MODE = True
@@ -1257,9 +1257,9 @@ class QSpsWidget(qt.QWidget):
 def test():
     import sys
     if 0:
-        import SPSLayer
+        from PyMca import SPSLayer
     else:
-        import QSpsDataSource
+        from PyMca import QSpsDataSource
 
     a= qt.QApplication(sys.argv)
     a.connect(a, qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))

@@ -26,9 +26,9 @@
 #############################################################################*/
 import sys
 import os
-import SpecfitGUI
-from SpecfitGUI import qt
-import Specfit
+from PyMca import PyMcaQt as qt
+from PyMca import SpecfitGUI
+from PyMca import Specfit
 QTVERSION = qt.qVersion()
 
 class ScanFit(qt.QWidget):

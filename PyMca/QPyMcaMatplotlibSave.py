@@ -26,19 +26,19 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-import PyMcaQt as qt
 import sys
 import os
 import numpy
+from PyMca import PyMcaQt as qt
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
-import PyMcaMatplotlibSave
-from PyMca_Icons import IconDict
-import PyMcaPrintPreview
-import PyMcaDirs
+from PyMca import PyMcaMatplotlibSave
+from PyMca.PyMca_Icons import IconDict
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
 
 DEBUG = 0
 

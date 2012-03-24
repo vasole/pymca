@@ -24,22 +24,22 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import traceback
-import RGBCorrelatorSlider
-import RGBCorrelatorTable
-import RGBImageCalculator
 import numpy.oldnumeric as Numeric
 import numpy
-import spslut
-from PyMca_Icons import IconDict
-import ArraySave
-import PyMcaDirs
-import EdfFileDataSource
-import ExternalImagesWindow
-import TiffIO
+import traceback
+from PyMca import RGBCorrelatorSlider
+from PyMca import RGBCorrelatorTable
+from PyMca import RGBImageCalculator
+from PyMca import spslut
+from PyMca.PyMca_Icons import IconDict
+from PyMca import ArraySave
+from PyMca import PyMcaDirs
+from PyMca import EdfFileDataSource
+from PyMca import ExternalImagesWindow
+from PyMca import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
@@ -53,9 +53,9 @@ else:
 
 QTVERSION = qt.qVersion()
 try:
-    import NNMADialog
+    from PyMca import NNMADialog
     NNMA = NNMADialog.NNMA
-    import PCADialog
+    from PyMca import PCADialog
     PCA = PCADialog.PCA
 except:
     NNMA = False
@@ -1289,7 +1289,7 @@ class MyQLabel(qt.QLabel):
             painter.font().setBold(0)
 
 def test():
-    import RGBCorrelatorGraph
+    from PyMca import RGBCorrelatorGraph
     app = qt.QApplication([])
     qt.QObject.connect(app,
                        qt.SIGNAL("lastWindowClosed()"),

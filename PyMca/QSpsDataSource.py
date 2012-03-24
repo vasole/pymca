@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import QSource
-import SpsDataSource
+from PyMca import QSource
+from PyMca import SpsDataSource
 qt = QSource.qt
 QTVERSION = qt.qVersion()
 
@@ -119,7 +119,6 @@ class QSpsDataSource(QSource.QSource):
                 print("No info????")
         
 if __name__ == "__main__":
-    import sys
     try:
         specname=sys.argv[1]
         arrayname=sys.argv[2]        

@@ -24,8 +24,8 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
-import PyMcaQt as qt
+__author__ = "V.A. Sole - ESRF Software Group"
+from PyMca import PyMcaQt as qt
 DEBUG = 0
 
 class RGBCorrelatorTable(qt.QTableWidget):

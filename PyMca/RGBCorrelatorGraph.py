@@ -27,11 +27,11 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
-import QtBlissGraph
+from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
-from PyMca_Icons import IconDict
-import PyMcaPrintPreview
-import PyMcaDirs
+from PyMca.PyMca_Icons import IconDict
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
 
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4

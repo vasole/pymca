@@ -24,14 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################
-from QSelectorWidget import qt
-import QSelectorWidget
-import SpecFileDataInfo
-import SpecFileCntTable
-OBJECT3D = SpecFileCntTable.OBJECT3D
-import SpecFileMcaTable
 import sys
 import os
+from PyMca import PyMcaQt as qt
+from PyMca import QSelectorWidget
+from PyMca import SpecFileDataInfo
+from PyMca import SpecFileCntTable
+OBJECT3D = SpecFileCntTable.OBJECT3D
+from PyMca import SpecFileMcaTable
 
 QTVERSION = qt.qVersion()
 
@@ -820,7 +820,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.emit(qt.SIGNAL("otherSignals"), ddict)
 
 def test():
-    import QDataSource
+    from PyMca import QDataSource
     a = qt.QApplication(sys.argv)
     w = QSpecFileWidget()
     if len(sys.argv) > 1:
@@ -842,8 +842,6 @@ def test():
         a.exec_loop()
     else:
         a.exec_()
-
-
 
 
 if __name__=="__main__":

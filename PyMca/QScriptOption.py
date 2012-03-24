@@ -25,14 +25,14 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-import CheckField
-import EntryField
-import TextField
+from PyMca import CheckField
+from PyMca import EntryField
+from PyMca import TextField
 #import RadioField
 
-import TabSheets
+from PyMca import TabSheets
 
 TupleType=type(())
 

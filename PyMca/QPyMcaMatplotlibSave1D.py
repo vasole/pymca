@@ -28,16 +28,16 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import PyMcaQt as qt
 import numpy
+from PyMca import PyMcaQt as qt
 from matplotlib import cm
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyMca_Icons import IconDict
-import PyMcaPrintPreview
-import PyMcaDirs
+from PyMca.PyMca_Icons import IconDict
+from PyMca import PyMcaPrintPreview
+from PyMca import PyMcaDirs
 
 DEBUG = 0
 
@@ -668,7 +668,6 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         return
 
 if __name__ == "__main__":
-    import sys
     app = qt.QApplication([])
     w0=QPyMcaMatplotlibSaveDialog(legends=True)
     w=w0.plot

@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
 #############################################################################*/
-import PyMcaQt as qt
+from PyMca import PyMcaQt as qt
 
 class RenameCurveDialog(qt.QDialog):
     def __init__(self, parent = None, current="", curves = []):

@@ -24,15 +24,15 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import Elements
-import XRayTubeEbel
+from PyMca import Elements
+from PyMca import XRayTubeEbel
 import numpy.oldnumeric as Numeric
 try:
-    import QtBlissGraph
+    from PyMca import QtBlissGraph
     qt = QtBlissGraph.qt
     HAS_QWT = True
 except ImportError:
-    import PyMcaQt as qt
+    from PyMca import PyMcaQt as qt
     HAS_QWT = False
 
 DEBUG = 0
