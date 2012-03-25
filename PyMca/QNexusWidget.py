@@ -107,7 +107,8 @@ class QNexusWidget(QtGui.QWidget):
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
-        if 'Object3D' in sys.modules:
+        if ('PyMca.Object3D' in sys.modules) or \
+           ('Object3D' in sys.modules):
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
             self.cntTable.set3DEnabled(True)
         else:

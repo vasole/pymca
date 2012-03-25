@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import numpy
+from PyMca import Object3D
 from PyMca.Object3D import Object3DScene
 DEBUG = 0
 
