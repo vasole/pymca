@@ -23,8 +23,9 @@
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
 # is a problem for you.
-#############################################################################*import os
+#############################################################################*/
 import sys
+import os
 import numpy
 from PyMca import DataObject
 from PyMca import PyMcaIOHelper
