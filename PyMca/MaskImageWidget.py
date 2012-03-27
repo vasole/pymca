@@ -414,6 +414,7 @@ class MaskImageWidget(qt.QWidget):
         shape = imageData.shape
         width = ddict['pixelwidth'] - 1
         if ddict['mode'].upper() in ["HLINE", "HORIZONTAL"]:
+            deltaDistance = 1.0
             if width < 1:
                 row = int(ddict['y'][0])
                 if row < 0:
@@ -452,6 +453,7 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             xdata  = numpy.arange(shape[1]).astype(numpy.float)
         elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
+            deltaDistance = 1.0
             if width < 1:
                 column = int(ddict['x'][0])
                 if column < 0:
@@ -505,6 +507,9 @@ class MaskImageWidget(qt.QWidget):
                 npoints = deltaCol+1
             else:    
                 npoints = deltaRow+1
+            #get the abscisa in distance units
+            deltaDistance = numpy.sqrt(float(deltaCol)*deltaCol +
+                                       float(deltaRow)*deltaRow)/(npoints-1.0)
             if width < 1:
                 x = numpy.zeros((npoints, 2), numpy.float)
                 x[:, 0] = numpy.linspace(row0, row1, npoints)
@@ -513,6 +518,7 @@ class MaskImageWidget(qt.QWidget):
                 #perform the interpolation
                 ydata = self._interpolate((x0, y0), imageData, x)
                 xdata = numpy.arange(float(npoints))
+                
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([col0, col1],
@@ -741,9 +747,14 @@ class MaskImageWidget(qt.QWidget):
                 print("Mode %s not supported yet" % ddict['mode'])
             return
         info = {}
-        info['xlabel'] = "Point"
         info['ylabel'] = "Z"
-        return xdata, ydata, legend, info
+        if 0:
+            info['xlabel'] = "Point"
+            return xdata, ydata, legend, info
+        else:
+            #users prefer to work with distance
+            info['xlabel'] = "Distance"
+            return xdata * deltaDistance, ydata, legend, info
 
     def _profileSelectionSlot(self, ddict):
         if DEBUG:
