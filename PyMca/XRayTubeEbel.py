@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -220,7 +220,7 @@ def characteristicEbel(target, e0, window = None,
             lpeaks.append([lines[label]['energy'],
                               lines[label]['rate'], 
                               element+' '+label])
-        lfluo = Elements._filterPeaks(peaklist, ethreshold = 0.020,
+        lfluo = Elements._filterPeaks(lpeaks, ethreshold = 0.020,
                                             ithreshold = 0.001,
                                             nthreshold = 6,
                                             absoluteithreshold = False,
