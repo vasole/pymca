@@ -20,6 +20,7 @@ import sys
 import re
 import struct
 import numpy
+import copy
 from PyMca import DataObject
 
 DEBUG = 0
@@ -51,7 +52,7 @@ class OmnicMap(DataObject.DataObject):
         fid.close()
 
         try:
-            omnicInfo = self.getOmnicInfo(data)
+            omnicInfo = self._getOmnicInfo(data)
         except:
             omnicInfo = None
         self.sourceName = [filename]
@@ -153,7 +154,7 @@ class OmnicMap(DataObject.DataObject):
             self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info['OmnicInfo'] = omnicInfo
 
-    def getOmnicInfo(self, data):
+    def _getOmnicInfo(self, data):
         '''
         Parameters:
         -----------
@@ -208,7 +209,7 @@ class OmnicMap(DataObject.DataObject):
             
         Returns:
         --------
-            Dictionnay with map gemoetrical acquisition parameters
+            Dictionnary with map gemoetrical acquisition parameters
         '''
         #look for the chain 'Position'
         if sys.version < '3.0':
@@ -241,6 +242,12 @@ class OmnicMap(DataObject.DataObject):
                 print(key, ddict[key])
         return ddict
 
+    def getOmnicInfo(self):
+        """
+        Returns a dictionnary with the parsed OMNIC information
+        """
+        return copy.deepcopy(self.info['OmnicInfo'])
+
     def getPositionFromIndexAndInfo(self, index, info=None):
         '''
         Internal method to obtain the position at which a spectrum
@@ -250,7 +257,7 @@ class OmnicMap(DataObject.DataObject):
         index : int
             Index of spectrum
         info : Dictionnary
-            Information recovered with getOmnicInfo
+            Information recovered with _getOmnicInfo
         Returns:
         --------
         x, y : floats
@@ -274,8 +281,8 @@ class OmnicMap(DataObject.DataObject):
 
 if __name__ == "__main__":
     filename = None
-    if len(sys.argv) > 1:
-        DEBUG = 1
+    if len(sys.argv) > 2:
+        DEBUG = int(sys.argv[2])
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     elif os.path.exists("SambaPhg_IR.map"):
@@ -286,5 +293,6 @@ if __name__ == "__main__":
         print(type(w.data[0:10]))
         print("shape = ", w.data.shape)
         print(type(w.info))
+        print("INFO = ", w.info['OmnicInfo'])
     else:
         print("Please supply input filename")
