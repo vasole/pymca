@@ -94,11 +94,9 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
             return
         
         if mode.upper() == 'ADD':
-            currentCurves = self.graph.curves.keys()
             for curve in self.curveList:
-                if curve not in currentCurves:
-                    x, y, legend, info = self.curveDict[curve] 
-                    self.graph.newCurve(curve, x, y, logfilter=self._logY)
+                x, y, legend, info = self.curveDict[curve] 
+                self.graph.newCurve(curve, x, y, logfilter=self._logY)
             self._updateActiveCurve()
             self.graph.replot()
             return
