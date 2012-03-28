@@ -37,7 +37,7 @@ import glob
 DEBUG = 0
 PLUGINS_DIR = None
 try:
-    if os.path.exists(os.path.join(os.path.dirname(__file__),"PyMcaPlugins")):
+    if os.path.exists(os.path.join(os.path.dirname(__file__), "PyMcaPlugins")):
         import PyMcaPlugins
         PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
     else:
@@ -57,10 +57,10 @@ class StackBase(object):
     def __init__(self):
         self._stack = DataObject.DataObject()
         self._stackImageData = None
-        self._selectionMask  = None
+        self._selectionMask = None
         self._ROIDict = {'name': "ICR",
                          'type': "CHANNEL",
-                         'calibration':[0, 1.0, 0.0],
+                         'calibration': [0, 1.0, 0.0],
                          'from': 0,
                          'to': -1}
 
@@ -70,7 +70,7 @@ class StackBase(object):
                               'Left': None,
                               'Middle': None,
                               'Right': None,
-                              'Background':None}
+                              'Background': None}
 
         self._ROIImageList = []
         self._ROIImageNames = []
@@ -83,7 +83,7 @@ class StackBase(object):
     def setPluginDirectoryList(self, dirlist):
         for directory in dirlist:
             if not os.path.exists(directory):
-                raise IOError("Directory:\n%s\ndoes not exist." % directory)                
+                raise IOError("Directory:\n%s\ndoes not exist." % directory)
 
         self.__pluginDirList = dirlist
 
@@ -97,14 +97,14 @@ class StackBase(object):
         """
 
         if self.__pluginDirList == []:
-           self.__pluginDirList = [PLUGINS_DIR] 
+            self.__pluginDirList = [PLUGINS_DIR]
         self.pluginList = []
         for directory in self.__pluginDirList:
             if directory is None:
                 continue
             if not os.path.exists(directory):
                 raise IOError("Directory:\n%s\ndoes not exist." % directory)
-            
+
             fileList = glob.glob(os.path.join(directory, "*.py"))
             targetMethod = 'getStackPluginInstance'
             for module in fileList:
@@ -127,7 +127,7 @@ class StackBase(object):
                                 reload(sys.modules[plugin])
                             else:
                                 import imp
-                                imp.reload(sys.modules[plugin])                            
+                                imp.reload(sys.modules[plugin])
                     else:
                         __import__(plugin)
                     if hasattr(sys.modules[plugin], targetMethod):
@@ -157,8 +157,8 @@ class StackBase(object):
             self._stack.info['SourceName'] = "Data of unknown origin"
 
         info = self._stack.info
-        mcaIndex  = info.get('McaIndex', mcaindex)
-        if (mcaIndex <0) and (len(self._stack.data.shape) == 3):
+        mcaIndex = info.get('McaIndex', mcaindex)
+        if (mcaIndex < 0) and (len(self._stack.data.shape) == 3):
             mcaIndex = len(self._stack.data.shape) + mcaIndex
 
         fileIndex = info.get('FileIndex', fileindex)
@@ -170,7 +170,7 @@ class StackBase(object):
                 fileIndex = 1
             else:
                 fileIndex = 0
-                
+
         for i in range(3):
             if i not in [mcaIndex, fileIndex]:
                 otherIndex = i
@@ -178,7 +178,7 @@ class StackBase(object):
         self.mcaIndex = mcaIndex
         self.fileIndex = fileIndex
         self.otherIndex = otherIndex
-        
+
         self._stack.info['McaCalib'] = info.get('McaCalib', [0.0, 1.0, 0.0])
         self._stack.info['Channel0'] = info.get('Channel0', 0.0)
         self._stack.info['McaIndex'] = mcaIndex
@@ -197,7 +197,7 @@ class StackBase(object):
                 print("(self.otherIndex, self.fileIndex) = (%d, %d)" %\
                       (self.otherIndex, self.fileIndex))
             i = max(self.otherIndex, self.fileIndex)
-            j = min(self.otherIndex, self.fileIndex)                
+            j = min(self.otherIndex, self.fileIndex)
             mcaData0 = numpy.sum(numpy.sum(self._stack.data, i), j) * 1.0
         else:
             if DEBUG:
@@ -235,16 +235,16 @@ class StackBase(object):
             else:
                 raise ValueError("Unhandled case 1D index = %d" % self.mcaIndex)
             if DEBUG:
-                print("Print dynamic loading elapsed = %f" % (time.time() -t0))
+                print("Print dynamic loading elapsed = %f" % (time.time() - t0))
 
         if DEBUG:
-            print("__stackImageData.shape = ",  self._stackImageData.shape)               
+            print("__stackImageData.shape = ",  self._stackImageData.shape)
         calib = self._stack.info.get('McaCalib', [0.0, 1.0, 0.0])
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
-                           "selectiontype":"1D",
-                           "SourceName":"Stack",
-                           "Key":"SUM"}
+                           "selectiontype": "1D",
+                           "SourceName": "Stack",
+                           "Key": "SUM"}
 
         dataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)
                         + self._stack.info.get('Channel0', 0.0)]
@@ -267,10 +267,10 @@ class StackBase(object):
         #calculate the ROIs
         self._ROIDict = {'name': "ICR",
                          'type': "CHANNEL",
-                         'calibration':calib,
+                         'calibration': calib,
                          'from': dataObject.x[0][0],
                          'to': dataObject.x[0][-1]}
-        
+
         self.updateROIImages()
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackUpdated()
@@ -284,15 +284,14 @@ class StackBase(object):
             ddict = self._ROIDict
         else:
             updateROIDict = True
-            
-        xw =  ddict['calibration'][0] + \
-              ddict['calibration'][1] * self._mcaData0.x[0] + \
-              ddict['calibration'][2] * self._mcaData0.x[0] * \
-                                        self._mcaData0.x[0]
+
+        xw = ddict['calibration'][0] + \
+             ddict['calibration'][1] * self._mcaData0.x[0] + \
+             ddict['calibration'][2] * (self._mcaData0.x[0] ** 2)
         if ddict["name"] == "ICR":
             i1 = 0
             i2 = self._stack.data.shape[self.mcaIndex]
-            imiddle = int(0.5 * (i1+i2))
+            imiddle = int(0.5 * (i1 + i2))
             pos = 0.5 * (ddict['from'] + ddict['to'])
             if ddict["type"].upper() != "CHANNEL":
                 imiddle = max(numpy.nonzero(xw <= pos)[0])
@@ -316,7 +315,7 @@ class StackBase(object):
                 pos = 0.5 * (ddict['from'] + ddict['to'])
                 imiddle = max(numpy.nonzero(xw <= pos)[0])
             else:
-                i2 = numpy.nonzero(ddict['from']<= xw)[0]
+                i2 = numpy.nonzero(ddict['from'] <= xw)[0]
                 if len(i2):
                     i2 = max(i2)
                 else:
@@ -345,18 +344,18 @@ class StackBase(object):
                 i2 = max(i2)
             else:
                 i2 = 0
-            i2 = min(i2+1, self._stack.data.shape[self.mcaIndex])
+            i2 = min(i2 + 1, self._stack.data.shape[self.mcaIndex])
             pos = 0.5 * (ddict['from'] + ddict['to'])
             imiddle = max(numpy.nonzero(self._mcaData0.x[0] <= pos)[0])
             xw = self._mcaData0.x[0]
-            
+
         self._ROIImageDict = self.calculateROIImages(i1, i2, imiddle)
         if updateROIDict:
             self._ROIDict.update(ddict)
 
         roiKeys = ['ROI', 'Maximum', 'Minimum', 'Left', 'Middle', 'Right', 'Background']
         nImages = len(roiKeys)
-        imageList  = [None] * nImages
+        imageList = [None] * nImages
         for i in range(nImages):
             key = roiKeys[i]
             imageList[i] = self._ROIImageDict[key]
@@ -365,7 +364,7 @@ class StackBase(object):
         if ddict["name"] == "ICR":
             cursor = "Energy"
             if abs(ddict['calibration'][0]) < 1.0e-5:
-                if abs(ddict['calibration'][1]-1) < 1.0e-5:
+                if abs(ddict['calibration'][1] - 1) < 1.0e-5:
                     if abs(ddict['calibration'][2]) < 1.0e-5:
                         cursor = "Channel"
         elif ddict["type"].upper() == "CHANNEL":
@@ -373,16 +372,16 @@ class StackBase(object):
         else:
             cursor = ddict["type"]
 
-        imageNames=[title,
-                 '%s Maximum' % title,
-                 '%s Minimum' % title,
-                 '%s %.6g' % (cursor, xw[i1]),
-                 '%s %.6g' % (cursor, xw[imiddle]),
-                 '%s %.6g' % (cursor, xw[(i2-1)]),
-                 '%s Background' %title]
+        imageNames = [title,
+                      '%s Maximum' % title,
+                      '%s Minimum' % title,
+                      '%s %.6g' % (cursor, xw[i1]),
+                      '%s %.6g' % (cursor, xw[imiddle]),
+                      '%s %.6g' % (cursor, xw[(i2 - 1)]),
+                      '%s Background' % title]
 
         self.showROIImageList(imageList, image_names=imageNames)
-                    
+
     def showOriginalImage(self):
         if DEBUG:
             print("showOriginalImage to be implemented")
@@ -392,7 +391,7 @@ class StackBase(object):
             print("showOriginalMca to be implemented")
 
     def showROIImageList(self, imageList, image_names=None):
-        self._ROIImageList  = imageList
+        self._ROIImageList = imageList
         self._ROIImageNames = image_names
         self._stackROIImageListUpdated()
 
@@ -415,8 +414,8 @@ class StackBase(object):
                           self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self._mcaData0.info)
-                dataObject.x  = [self._mcaData0.x[0]]
-                dataObject.y =  [self._mcaData0.y[0] / npixels];
+                dataObject.x = [self._mcaData0.x[0]]
+                dataObject.y = [self._mcaData0.y[0] / npixels];
             else:
                 dataObject = self._mcaData0
             return dataObject
@@ -433,8 +432,8 @@ class StackBase(object):
                 npixels = self._stackImageData.shape[0] * self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self._mcaData0.info)
-                dataObject.x  = [self._mcaData0.x[0]]
-                dataObject.y =  [self._mcaData0.y[0] / npixels];
+                dataObject.x = [self._mcaData0.x[0]]
+                dataObject.y = [self._mcaData0.y[0] / npixels]
             else:
                 dataObject = self._mcaData0
             return dataObject
@@ -450,20 +449,20 @@ class StackBase(object):
                 arrayMask = (actualSelectionMask > 0)
         else:
                 arrayMask = (actualSelectionMask > 0)
-            
+
         cleanMask = numpy.nonzero(arrayMask)
         if DEBUG:
             print("self.fileIndex, self.mcaIndex = %d , %d" %\
                   (self.fileIndex, self.mcaIndex))
         if DEBUG:
-            t0 = time.time()            
+            t0 = time.time()
         if len(cleanMask[0]) and len(cleanMask[1]):
             cleanMask = numpy.array(cleanMask).transpose()
             if self.fileIndex == 2:
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[:,r,c]
+                            mcaData += self._stack.data[:, r, c]
                     else:
                         if DEBUG:
                             print("Dynamic loading case 0")
@@ -471,8 +470,8 @@ class StackBase(object):
                         #for the time being, one by one
                         rMin = cleanMask[0][0]
                         rMax = cleanMask[-1][0]
-                        cMin = cleanMask[:,1].min()
-                        cMax = cleanMask[:,1].max()
+                        cMin = cleanMask[:, 1].min()
+                        cMax = cleanMask[:, 1].max()
                         #rMin, cMin = cleanMask.min(axis=0)
                         #rMax, cMax = cleanMask.max(axis=0)
                         tmpMask = arrayMask[rMin:(rMax+1),cMin:(cMax+1)]
@@ -493,7 +492,7 @@ class StackBase(object):
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[:,r,c]
+                            mcaData += self._stack.data[:, r, c]
                     else:
                         if DEBUG:
                             print("Dynamic loading case 2")
@@ -502,27 +501,27 @@ class StackBase(object):
                         if 1:
                             rMin = cleanMask[0][0]
                             rMax = cleanMask[-1][0]
-                            cMin = cleanMask[:,1].min()
-                            cMax = cleanMask[:,1].max()
+                            cMin = cleanMask[:, 1].min()
+                            cMax = cleanMask[:, 1].max()
                             #rMin, cMin = cleanMask.min(axis=0)
                             #rMax, cMax = cleanMask.max(axis=0)
-                            tmpMask = arrayMask[rMin:(rMax+1),cMin:(cMax+1)]
-                            tmpData = numpy.zeros((1, rMax-rMin+1,cMax-cMin+1))
+                            tmpMask = arrayMask[rMin:(rMax + 1), cMin:(cMax + 1)]
+                            tmpData = numpy.zeros((1, rMax - rMin + 1, cMax - cMin + 1))
                             for i in range(self._stack.data.shape[0]):
-                                tmpData[0:1,:,:] = self._stack.data[i:i+1,rMin:(rMax+1),cMin:(cMax+1)]
+                                tmpData[0:1, :, :] = self._stack.data[i:i + 1, rMin:(rMax + 1), cMin:(cMax + 1)]
                                 #multiplication is faster than selection
-                                mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float)
+                                mcaData[i] = (tmpData[0] * tmpMask).sum(dtype=numpy.float)
                         if 0:
-                            tmpData = numpy.zeros((1, self._stack.data.shape[1],self._stack.data.shape[2]))
+                            tmpData = numpy.zeros((1, self._stack.data.shape[1], self._stack.data.shape[2]))
                             for i in range(self._stack.data.shape[0]):
-                                tmpData[0, :, :] = self._stack.data[i:i+1,:,:]
+                                tmpData[0:1, :, :] = self._stack.data[i:i + 1,:,:]
                                 #multiplication is faster than selection
                                 #tmpData[arrayMask].sum() in my machine
-                                mcaData[i] = (tmpData[0]*arrayMask).sum(dtype=numpy.float)                        
+                                mcaData[i] = (tmpData[0] * arrayMask).sum(dtype=numpy.float)
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r,c,:]
+                            mcaData += self._stack.data[r, c, :]
                     else:
                         if DEBUG:
                             print("Dynamic loading case 3")
@@ -535,22 +534,22 @@ class StackBase(object):
                             row_dict[key].append(c)
                         for key in row_dict.keys():
                             r = int(key)
-                            tmpMcaData = self._stack.data[r:r+1, row_dict[key],:]
+                            tmpMcaData = self._stack.data[r:r + 1, row_dict[key], :]
                             tmpMcaData.shape = 1, -1
-                            mcaData += numpy.sum(tmpMcaData,axis=0,dtype=numpy.float)
+                            mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float)
                 else:
                     raise IndexError("Wrong combination of indices. Case 1")
             elif self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r,:,c]
+                            mcaData += self._stack.data[r, :, c]
                     else:
                         raise IndexError("Dynamic loading case 4")
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r,c,:]
+                            mcaData += self._stack.data[r, c, :]
                     else:
                         if DEBUG:
                             print("Dynamic loading case 5")
@@ -563,9 +562,9 @@ class StackBase(object):
                             row_dict[key].append(c)
                         for key in row_dict.keys():
                             r = int(key)
-                            tmpMcaData = self._stack.data[r:r+1, row_dict[key],:]
+                            tmpMcaData = self._stack.data[r:r + 1, row_dict[key], :]
                             tmpMcaData.shape = 1, -1
-                            mcaData += numpy.sum(tmpMcaData,axis=0,dtype=numpy.float)
+                            mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float)
                 else:
                     raise IndexError("Wrong combination of indices. Case 2")
             else:
@@ -577,14 +576,14 @@ class StackBase(object):
                 mcaData = self._mcaData0.y[0] - mcaData
 
         if normalize:
-            mcaData = mcaData/npixels
+            mcaData = mcaData / npixels
 
         calib = self._stack.info['McaCalib']
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
-                           "selectiontype":"1D",
-                           "SourceName":"Stack",
-                           "Key":"Selection"}
+                           "selectiontype": "1D",
+                           "SourceName": "Stack",
+                           "Key": "Selection"}
         dataObject.x = [numpy.arange(len(mcaData)).astype(numpy.float)
                         + self._stack.info['Channel0']]
         dataObject.y = [mcaData]
@@ -592,8 +591,8 @@ class StackBase(object):
         return dataObject
 
     def calculateROIImages(self, index1, index2, imiddle=None):
-        i1  = min(index1, index2)
-        i2  = max(index1, index2)
+        i1 = min(index1, index2)
+        i2 = max(index1, index2)
         if imiddle is None:
             imiddle = int(0.5 * (i1 + i2))
 
@@ -605,30 +604,30 @@ class StackBase(object):
                       'Left': dummy,
                       'Middle': dummy,
                       'Right': dummy,
-                      'Background':dummy}
+                      'Background': dummy}
             return imageDict
-        
+
         if self.fileIndex == 0:
             if self.mcaIndex == 1:
-                leftImage = self._stack.data[:,i1,:]
-                middleImage = self._stack.data[:,imiddle,:]
-                rightImage = self._stack.data[:,i2-1,:]
-                dataImage = self._stack.data[:,i1:i2,:]
+                leftImage = self._stack.data[:, i1, :]
+                middleImage = self._stack.data[:, imiddle, :]
+                rightImage = self._stack.data[:, i2 - 1, :]
+                dataImage = self._stack.data[:, i1:i2, :]
                 maxImage = numpy.max(dataImage, 1)
                 minImage = numpy.min(dataImage, 1)
-                background =  0.5 * (i2-i1) * (leftImage+rightImage)                    
+                background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float)
             else:
                 if DEBUG:
                     t0 = time.time()
                 if isinstance(self._stack.data, numpy.ndarray):
-                    leftImage = self._stack.data[:,:,i1]
-                    middleImage = self._stack.data[:,:,imiddle]
-                    rightImage = self._stack.data[:,:,i2-1]
-                    dataImage = self._stack.data[:,:,i1:i2]
+                    leftImage = self._stack.data[:, :, i1]
+                    middleImage = self._stack.data[:, :, imiddle]
+                    rightImage = self._stack.data[:, :, i2 - 1]
+                    dataImage = self._stack.data[:, :, i1:i2]
                     maxImage = numpy.max(dataImage, 2)
                     minImage = numpy.min(dataImage, 2)
-                    background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                    background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float)
                 else:
                     shape = self._stack.data.shape
@@ -647,27 +646,27 @@ class StackBase(object):
                               roiImage[i:i+step,:])
                         numpy.add(minImage[i:i+step,:],
                                   numpy.min(tmpData, 2),
-                                  minImage[i:i+step,:])
-                        numpy.add(maxImage[i:i+step,:],
+                                  minImage[i:i + step, :])
+                        numpy.add(maxImage[i:i + step, :],
                                   numpy.max(tmpData, 2),
-                                  maxImage[i:i+step,:])                            
-                        leftImage[i:i+step, :]   += tmpData[:, :, 0]
-                        middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
-                        rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                   
-                    background = 0.5*(i2-i1)*(leftImage+rightImage)
+                                  maxImage[i:i + step, :])
+                        leftImage[i:i + step, :] += tmpData[:, :, 0]
+                        middleImage[i:i + step, :] += tmpData[:, :, imiddle - i1]
+                        rightImage[i:i + step, :] += tmpData[:, :, -1]
+                    background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 if DEBUG:
-                    print("ROI image calculation elapsed = %f "%\
+                    print("ROI image calculation elapsed = %f " %\
                           (time.time() - t0))
         elif self.fileIndex == 1:
             if self.mcaIndex == 0:
                 if isinstance(self._stack.data, numpy.ndarray):
-                    leftImage  = self._stack.data[i1,:,:]
-                    middleImage= self._stack.data[imiddle,:,:]
-                    rightImage = self._stack.data[i2-1,:,:]
-                    dataImage = self._stack.data[i1:i2,:,:]
+                    leftImage = self._stack.data[i1, :, :]
+                    middleImage= self._stack.data[imiddle, :, :]
+                    rightImage = self._stack.data[i2 - 1, :, :]
+                    dataImage = self._stack.data[i1:i2, :, :]
                     maxImage = numpy.max(dataImage, 0)
                     minImage = numpy.min(dataImage, 0)
-                    background =  0.5 * (i2-i1) * (leftImage+rightImage)
+                    background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
                 else:
                     shape = self._stack.data.shape
@@ -682,11 +681,9 @@ class StackBase(object):
                         t0 = time.time()
                     istep = 1
                     for i in range(i1, i2):
-                        tmpData = self._stack.data[i:i+istep,:,:]
+                        tmpData = self._stack.data[i:i + istep]
                         tmpData.shape = roiImage.shape
-                        numpy.add(roiImage,
-                                  tmpData,
-                                  roiImage)
+                        numpy.add(roiImage, tmpData, roiImage)
                         if i == i1:
                             minImage = tmpData * 1
                             maxImage = tmpData * 1
@@ -696,26 +693,26 @@ class StackBase(object):
                         if (i == i1):
                             leftImage = tmpData
                         elif (i == imiddle):
-                            middleImage = tmpData                            
-                        elif i == (i2-1):
+                            middleImage = tmpData
+                        elif i == (i2 - 1):
                             rightImage = tmpData
                     if DEBUG:
                         print("Dynamic ROI elapsed = %f" %\
                               (time.time() - t0))
                     if i2 > i1:
-                        background = (leftImage + rightImage) * 0.5 * (i2-i1)
+                        background = (leftImage + rightImage) * 0.5 * (i2 - i1)
             else:
                 if DEBUG:
                     t0 = time.time()
                 if isinstance(self._stack.data, numpy.ndarray):
-                    leftImage = self._stack.data[:,:,i1]
-                    middleImage= self._stack.data[:,:,imiddle]
-                    rightImage = self._stack.data[:,:,i2-1]
-                    dataImage = self._stack.data[:,:,i1:i2]
+                    leftImage = self._stack.data[:, :, i1]
+                    middleImage = self._stack.data[:, :, imiddle]
+                    rightImage = self._stack.data[:, :, i2 - 1]
+                    dataImage = self._stack.data[:, :, i1:i2]
                     maxImage = numpy.max(dataImage, 2)
                     minImage = numpy.min(dataImage, 2)
-                    background =  0.5 * (i2-i1) * (leftImage+rightImage)
-                    roiImage = numpy.sum(dataImage, axis=2,dtype=numpy.float)
+                    background = 0.5 * (i2 - i1) * (leftImage + rightImage)
+                    roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float)
                 else:
                     shape = self._stack.data.shape
                     roiImage = self._stackImageData * 0
@@ -747,20 +744,20 @@ class StackBase(object):
         else:
             #self.fileIndex = 2
             if self.mcaIndex == 0:
-                leftImage = self._stack.data[i1,:,:]
-                middleImage= self._stack.data[imiddle,:,:]
-                rightImage = self._stack.data[i2-1,:,:]
-                background =  0.5 * (i2-i1) * (leftImage+rightImage)
-                dataImage = self._stack.data[i1:i2,:,:]
+                leftImage = self._stack.data[i1]
+                middleImage = self._stack.data[imiddle]
+                rightImage = self._stack.data[i2 - 1]
+                background = 0.5 * (i2 - i1) * (leftImage + rightImage)
+                dataImage = self._stack.data[i1:i2]
                 minImage = numpy.min(dataImage, 0)
                 maxImage = numpy.max(dataImage, 0)
                 roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
             else:
-                leftImage = self._stack.data[:,i1,:]
-                middleImage = self._stack.data[:,imidle,:]
-                rightImage = self._stack.data[:,i2-1,:]
-                background =  0.5 * (i2-i1) * (leftImage+rightImage)
-                dataImage = self._stack.data[:,i1:i2,:]
+                leftImage = self._stack.data[:, i1, :]
+                middleImage = self._stack.data[:, imiddle, :]
+                rightImage = self._stack.data[:, i2 - 1, :]
+                background = 0.5 * (i2 - i1) * (leftImage + rightImage)
+                dataImage = self._stack.data[:, i1:i2, :]
                 minImage = numpy.min(dataImage, 1)
                 maxImage = numpy.max(dataImage, 1)
                 roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float)
@@ -771,7 +768,7 @@ class StackBase(object):
                      'Left': leftImage,
                      'Middle': middleImage,
                      'Right': rightImage,
-                     'Background':background}
+                     'Background': background}
 
         return imageDict
 
@@ -784,7 +781,7 @@ class StackBase(object):
             self._selectionMask = mask
         else:
             self._selectionMask = mask * numpy.isfinite(self._stackImageData)
-            
+
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].selectionMaskUpdated()
 
@@ -820,7 +817,7 @@ class StackBase(object):
         """
         print("removeCurve not implemented")
         return None
-    
+
     def getActiveCurve(self):
         """
         Function to access the currently active curve.
@@ -841,7 +838,7 @@ class StackBase(object):
         info['xlabel'] = 'Channel'
         info['ylabel'] = 'Counts'
         legend = 'ICR Spectrum'
-        return self._mcaData0.x[0], self._mcaData0.y[0], legend , info
+        return self._mcaData0.x[0], self._mcaData0.y[0], legend, info
 
     def getGraphXLimits(self):
         if DEBUG:
@@ -861,7 +858,8 @@ class StackBase(object):
 
     def getStackInfo(self):
         return self._stack.info
-    
+
+
 def test():
     #create a dummy stack
     nrows = 100
@@ -872,14 +870,13 @@ def test():
     for i in range(nchannels):
         stackData[:, :, i] = a * i
     stack = StackBase()
-    
+
     stack.setStack(stackData, mcaindex=2)
-    print("This should be 0 = %f" %  stack.calculateROIImages(0, 0)['ROI'].sum())
+    print("This should be 0 = %f" % stack.calculateROIImages(0, 0)['ROI'].sum())
     print("This should be 0 = %f" % stack.calculateROIImages(0, 1)['ROI'].sum())
     print("%f should be = %f" %\
-          (stackData[:,:,0:10].sum(),
+          (stackData[:, :, 0:10].sum(),
            stack.calculateROIImages(0, 10)['ROI'].sum()))
 
 if __name__ == "__main__":
     test()
-    
