@@ -1,9 +1,10 @@
 """
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+A Stack plugin is a module that will be automatically added to the PyMca
+stack windows in order to perform user defined operations on the data stack.
 
-These plugins will be compatible with any stack window that provides the functions:
+These plugins will be compatible with any stack window that provides the
+functions:
     #data related
     getStackDataObject
     getStackData
@@ -44,45 +45,40 @@ except ImportError:
 
 DEBUG = 0
 
+
 class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.DEBUG = DEBUG
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
-        SGtext  = "Replace current stack by a\n"
+        SGtext = "Replace current stack by a\n"
         SGtext += "Savitsky-Golay treated one."
-        SNIP1Dtext  = "Replace current stack by a\n"
+        SNIP1Dtext = "Replace current stack by a\n"
         SNIP1Dtext += "SNIP1D treated one."
-        SNIP2Dtext  = "Replace current stack by a\n"
+        SNIP2Dtext = "Replace current stack by a\n"
         SNIP2Dtext += "SNIP2D treated one."
         self.methodDict = {}
         function = self.replaceStackWithSavitzkyGolayFiltering
         info = SGtext
         icon = PyMca_Icons.substract
-        self.methodDict["Savitzky-Golay Filtering"] =[function,
-                                                      info,
-                                                      icon]
+        self.methodDict["Savitzky-Golay Filtering"] = [function, info, icon]
         function = self.subtract1DSnipBackground
         info = SNIP1Dtext
-        self.methodDict["Subtract SNIP 1D Background"] =[function,
-                                                      info,
-                                                      icon]
+        self.methodDict["Subtract SNIP 1D Background"] = [function, info, icon]
         function = self.replaceWith1DSnipBackground
-        info  = "Smooth and replace current stack\n"
+        info = "Smooth and replace current stack\n"
         info += "by its SNIP1D background."
-        self.methodDict["Deglitch with SNIP 1D Background"] =[function,
+        self.methodDict["Deglitch with SNIP 1D Background"] = [function,
                                                               info,
                                                               PyMca_Icons.smooth]
         function = self.subtract2DSnipBackground
         info = SNIP2Dtext
-        self.methodDict["Subtract SNIP 2D Background"] =[function,
-                                                      info,
-                                                      icon]
+        self.methodDict["Subtract SNIP 2D Background"] = [function, info, icon]
 
         self.__methodKeys = ["Savitzky-Golay Filtering",
                              "Deglitch with SNIP 1D Background",
                              "Subtract SNIP 1D Background",
                              "Subtract SNIP 2D Background"]
-                                     
+
     def stackUpdated(self):
         self.dialogWidget = None
 
@@ -152,7 +148,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         if not len(imageList):
             return
         snipWindow = SNIPWindow.SNIPDialog(None,
-                                           imageList[0]*1)
+                                           imageList[0] * 1)
         #snipWindow.setModal(True)
         snipWindow.show()
         ret = snipWindow.exec_()
@@ -165,8 +161,9 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
             function(stack, *arguments)
             self.setStack(stack)
 
-
 MENU_TEXT = "Stack Filtering Options"
+
+
 def getStackPluginInstance(stackWindow, **kw):
     ob = BackgroundStackPlugin(stackWindow)
     return ob

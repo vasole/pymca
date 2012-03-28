@@ -1,9 +1,10 @@
 """
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+A Stack plugin is a module that will be automatically added to the PyMca
+stack windows in order to perform user defined operations on the data stack.
 
-These plugins will be compatible with any stack window that provides the functions:
+These plugins will be compatible with any stack window that provides the
+functions:
     #data related
     getStackDataObject
     getStackData
@@ -38,7 +39,7 @@ except ImportError:
     from . import CalculationThread
 try:
     from PyMca.PCAWindow import PCAParametersDialog
-    from PyMca import StackPluginResultsWindow    
+    from PyMca import StackPluginResultsWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("PCAStackPlugin importing from somewhere else")
@@ -49,16 +50,15 @@ except ImportError:
 qt = StackPluginResultsWindow.qt
 DEBUG = 0
 
+
 class PCAStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.DEBUG = DEBUG
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
-        self.methodDict = {'Calculate':[self.calculate,
-                                        "Perform PCA",
-                                        None],
-                           'Show':[self._showWidget,
-                                   "Show last results",
-                                   PyMca_Icons.brushselect]}
+        self.methodDict = {'Calculate': [self.calculate, "Perform PCA", None],
+                           'Show': [self._showWidget,
+                                    "Show last results",
+                                    PyMca_Icons.brushselect]}
         self.__methodKeys = ['Calculate', 'Show']
         self.configurationWidget = None
         self.widget = None
@@ -121,7 +121,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             self.configurationWidget.layout().addWidget(self._status)
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
-            #I could get some defaults from the stack itslef 
+            #I could get some defaults from the stack itslef
             raise ValueError("Please select an active curve")
             return
         x, spectrum, legend, info = activeCurve
@@ -129,11 +129,13 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         oldValue = self.configurationWidget.nPC.value()
         self.configurationWidget.nPC.setMaximum(spectrumLength)
         self.configurationWidget.nPC.setValue(min(oldValue, spectrumLength))
-        binningOptions=[1]
+        binningOptions = [1]
         for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
             if (spectrumLength % number) == 0:
                 binningOptions.append(number)
-        ddict = {'options':binningOptions, 'binning': 1, 'method': 0}
+        ddict = {'options': binningOptions,
+                 'binning': 1,
+                 'method': 0}
         self.configurationWidget.setParameters(ddict)
         y = spectrum
         self.configurationWidget.setSpectrum(x, y)
@@ -153,25 +155,24 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         message = "Please wait. PCA Calculation going on."
         CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
-                                parent=self.configurationWidget) 
+                                parent=self.configurationWidget)
 
-    def actualCalculation(self):        
+    def actualCalculation(self):
         pcaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
-        self.configurationWidget.setEnabled(False)        
+        self.configurationWidget.setEnabled(False)
         #self.configurationWidget.close()
-        method = pcaParameters['method']
         self.__methodlabel = pcaParameters.get('methodlabel', "")
         function = pcaParameters['function']
         pcaParameters['ncomponents'] = pcaParameters['npc']
-        #At some point I should make sure I get directly the
-        #function and the parameters from the configuration widget
+        # At some point I should make sure I get directly the
+        # function and the parameters from the configuration widget
         del pcaParameters['npc']
         del pcaParameters['method']
         del pcaParameters['function']
         del pcaParameters['methodlabel']
-        binning = pcaParameters['binning']
-        mask = pcaParameters['mask']
+        # binning = pcaParameters['binning']
+        # mask = pcaParameters['mask']
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
             if stack.data.dtype not in [numpy.float, numpy.float32]:
@@ -181,7 +182,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                 self._status.setText(text)
 
         oldShape = stack.data.shape
-        result =  function(stack, **pcaParameters)
+        result = function(stack, **pcaParameters)
         if stack.data.shape != oldShape:
             stack.data.shape = oldShape
         return result
@@ -199,24 +200,24 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                     return
         self._status.setText("Ready")
         self.configurationWidget.setEnabled(True)
-        self.configurationWidget.close()        
+        self.configurationWidget.close()
         images, eigenValues, eigenVectors = result
         methodlabel = self.__methodlabel
-        imageNames=None
-        vectorNames=None
+        imageNames = None
+        vectorNames = None
         nimages = images.shape[0]
         imageNames = []
         vectorNames = []
         itmp = nimages
         if " ICA " in methodlabel:
-            itmp = nimages/2
+            itmp = nimages / 2
             for i in range(itmp):
                 imageNames.append("ICAimage %02d" % i)
                 vectorNames.append("ICAvector %02d" % i)
         for i in range(itmp):
             imageNames.append("Eigenimage %02d" % i)
             vectorNames.append("Eigenvector %02d" % i)
-                
+
         self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=True)
         self.widget.buildAndConnectImageButtonBox()
@@ -229,8 +230,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                           spectra=eigenVectors,
                                           image_names=imageNames,
                                           spectra_names=vectorNames)
-        self._showWidget()        
-    
+        self._showWidget()
+
     def _showWidget(self):
         if self.widget is None:
             return
@@ -242,6 +243,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.selectionMaskUpdated()
 
 MENU_TEXT = "PyMca PCA"
+
+
 def getStackPluginInstance(stackWindow, **kw):
     ob = PCAStackPlugin(stackWindow)
     return ob

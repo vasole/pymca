@@ -1,9 +1,10 @@
 """
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+A Stack plugin is a module that will be automatically added to the PyMca
+stack windows in order to perform user defined operations on the data stack.
 
-These plugins will be compatible with any stack window that provides the functions:
+These plugins will be compatible with any stack window that provides the
+functions:
     #data related
     getStackDataObject
     getStackData
@@ -38,7 +39,7 @@ except ImportError:
     from . import CalculationThread
 try:
     from PyMca.NNMAWindow import NNMAParametersDialog
-    from PyMca import StackPluginResultsWindow    
+    from PyMca import StackPluginResultsWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("NNMAStackPlugin importing from somewhere else")
@@ -49,16 +50,17 @@ except ImportError:
 qt = StackPluginResultsWindow.qt
 DEBUG = 0
 
+
 class NNMAStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.DEBUG = DEBUG
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
-        self.methodDict = {'Calculate':[self.calculate,
-                                        "Perform NNMA",
-                                        None],
-                           'Show':[self._showWidget,
-                                   "Show last results",
-                                   PyMca_Icons.brushselect]}
+        self.methodDict = {'Calculate': [self.calculate,
+                                         "Perform NNMA",
+                                         None],
+                           'Show': [self._showWidget,
+                                    "Show last results",
+                                    PyMca_Icons.brushselect]}
         self.__methodKeys = ['Calculate', 'Show']
         self.configurationWidget = None
         self.widget = None
@@ -121,7 +123,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             self.configurationWidget.layout().addWidget(self._status)
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
-            #I could get some defaults from the stack itslef 
+            #I could get some defaults from the stack itslef
             raise ValueError("Please select an active curve")
             return
         x, spectrum, legend, info = activeCurve
@@ -129,11 +131,13 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         oldValue = self.configurationWidget.nPC.value()
         self.configurationWidget.nPC.setMaximum(spectrumLength)
         self.configurationWidget.nPC.setValue(min(oldValue, spectrumLength))
-        binningOptions=[1]
+        binningOptions = [1]
         for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
             if (spectrumLength % number) == 0:
                 binningOptions.append(number)
-        ddict = {'options':binningOptions, 'binning': 1, 'method': 0}
+        ddict = {'options': binningOptions,
+                 'binning': 1,
+                 'method': 0}
         self.configurationWidget.setParameters(ddict)
         #y = spectrum
         #self.configurationWidget.setSpectrum(x, y)
@@ -161,7 +165,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             print("NNMAStackPlugin waitingMessageDialog")
         CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
-                                parent=self.configurationWidget) 
+                                parent=self.configurationWidget)
         if DEBUG:
             print("NNMAStackPlugin waitingMessageDialog passed")
 
@@ -170,7 +174,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             print("NNMAStackPlugin actualCalculation")
         nnmaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
-        self.configurationWidget.setEnabled(False)        
+        self.configurationWidget.setEnabled(False)
         #self.configurationWidget.close()
         #At some point I should make sure I get directly the
         #function and the parameters from the configuration widget
@@ -190,7 +194,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                 self._status.setText(text)
 
         oldShape = stack.data.shape
-        result =  function(stack, **ddict)
+        result = function(stack, **ddict)
         if stack.data.shape != oldShape:
             stack.data.shape = oldShape
         return result
@@ -210,11 +214,11 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                     return
         self._status.setText("Ready")
         self.configurationWidget.setEnabled(True)
-        self.configurationWidget.close()        
+        self.configurationWidget.close()
 
         images, eigenValues, eigenVectors = result
-        imageNames=None
-        vectorNames=None
+        imageNames = None
+        vectorNames = None
         nimages = images.shape[0]
         imageNames = []
         vectorNames = []
@@ -243,7 +247,6 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                                           spectra_titles=vectorTitles)
         self._showWidget()
 
-    
     def _showWidget(self):
         if self.widget is None:
             return
@@ -255,6 +258,8 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.selectionMaskUpdated()
 
 MENU_TEXT = "PyMca NNMA"
+
+
 def getStackPluginInstance(stackWindow, **kw):
     ob = NNMAStackPlugin(stackWindow)
     return ob

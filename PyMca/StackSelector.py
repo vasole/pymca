@@ -50,10 +50,11 @@ except ImportError:
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
+
 class StackSelector(object):
     def __init__(self, parent=None):
         self.parent = parent
-        
+
     def getStack(self, filelist=None, imagestack=False):
         if filelist in [None, []]:
             filelist, filefilter = self._getStackOfFiles(getfilter=True)
@@ -99,19 +100,19 @@ class StackSelector(object):
                 omnicfile = True
             elif filefilter.upper().startswith("TEXTIMAGE"):
                 imagestack = True
-                fileindex  = 0
+                fileindex = 0
                 stack = TextImageStack.TextImageStack(imagestack=True)
             elif filefilter.upper().startswith("IMAGE") and\
                  (filelist[0].upper().endswith("TIF") or\
                   filelist[0].upper().endswith("TIFF")):
-                stack = TiffStack.TiffStack(imagestack=True)                
+                stack = TiffStack.TiffStack(imagestack=True)
             elif filefilter == "" and\
                  (filelist[0].upper().endswith("TIF") or\
                   filelist[0].upper().endswith("TIFF")):
-                stack = TiffStack.TiffStack(imagestack=True)                
+                stack = TiffStack.TiffStack(imagestack=True)
             elif filefilter.upper().startswith("IMAGE"):
                 imagestack = True
-                fileindex  = 0
+                fileindex = 0
                 stack = QStack(imagestack=True)
             elif line[0] == "{":
                 stack = QStack(imagestack=imagestack)
@@ -169,25 +170,26 @@ class StackSelector(object):
         if aifirafile:
             masterStack = DataObject.DataObject()
             masterStack.info = copy.deepcopy(stack.info)
-            masterStack.data = stack.data[:,:,0:1024]
+            masterStack.data = stack.data[:, :, 0:1024]
             masterStack.info['Dim_2'] = int(masterStack.info['Dim_2'] / 2)
 
             slaveStack = DataObject.DataObject()
             slaveStack.info = copy.deepcopy(stack.info)
-            slaveStack.data = stack.data[:,:, 1024:]
+            slaveStack.data = stack.data[:, :, 1024:]
             slaveStack.info['Dim_2'] = int(slaveStack.info['Dim_2'] / 2)
             return [masterStack, slaveStack]
         else:
             return stack
-    
+
     def getStackFromPattern(self, filepattern, begin, end, increment=None,
                             imagestack=None, fileindex=0):
         #get the first filename
-        filename =  filepattern % tuple(begin)
+        filename = filepattern % tuple(begin)
         if not os.path.exists(filename):
             raise IOError("Filename %s does not exist." % filename)
         #get the file list
-        args = self.getFileListFromPattern(filepattern, begin, end, increment=increment)
+        args = self.getFileListFromPattern(filepattern, begin, end,
+                                           increment=increment)
 
         #get the file type
         f = open(args[0], 'rb')
@@ -196,13 +198,12 @@ class StackSelector(object):
         f.close()
 
         specfile = False
-        omnicfile = False
         marCCD = False
         if line.startswith("II") or line.startswith("MM"):
-            marCCD= True
+            marCCD = True
         if line[0] == "\n":
             line = line[1:]
-        if (line[0] == "{") or marCCD:           
+        if (line[0] == "{") or marCCD:
             if imagestack is None:
                 if marCCD:
                     imagestack = True
@@ -217,39 +218,33 @@ class StackSelector(object):
             stack = QStack(imagestack=imagestack)
         elif line.startswith('Spectral'):
             stack = OmnicMap.OmnicMap(args[0])
-            omnicfile = True
         elif line.startswith('#\tDate:'):
             stack = LuciaMap.LuciaMap(args[0])
-            omnicfile = True
         elif args[0][-4:].upper() in ["PIGE", "PIXE"]:
             stack = SupaVisioMap.SupaVisioMap(args[0])
-            omnicfile = True
         elif args[0][-3:].upper() in ["RBS"]:
             stack = SupaVisioMap.SupaVisioMap(args[0])
-            omnicfile = True
         elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
             if not HDF5:
                 raise IOError(\
-                    "No HDF5 support while trying to read an HDF5 file")  
+                    "No HDF5 support while trying to read an HDF5 file")
             stack = QHDF5Stack1D.QHDF5Stack1D(args)
-            omnicfile = True
         else:
             if HDF5:
                 if h5py.is_hdf5(args[0]):
                     stack = QHDF5Stack1D.QHDF5Stack1D(args)
-                    omnicfile = True
-                else:                    
+                else:
                     stack = QSpecFileStack()
                     specfile = True
-            else:                    
+            else:
                 stack = QSpecFileStack()
                 specfile = True
 
         if specfile and (len(begin) == 2):
             if increment is None:
                 increment = [1] * len(begin)
-            shape = (len(range(begin[0], end[0]+1, increment[0])),
-                     len(range(begin[1], end[1]+1, increment[1])))
+            shape = (len(range(begin[0], end[0] + 1, increment[0])),
+                     len(range(begin[1], end[1] + 1, increment[1])))
             stack.loadFileList(args, fileindex=fileindex, shape=shape)
         else:
             stack.loadFileList(args, fileindex=fileindex)
@@ -266,7 +261,7 @@ class StackSelector(object):
             if sys.platform != 'darwin':
                 filetypes = ""
                 for filetype in fileTypeList:
-                    filetypes += filetype+"\n"
+                    filetypes += filetype + "\n"
                 filelist = qt.QFileDialog.getOpenFileNames(filetypes,
                             wdir,
                             self.parent,
@@ -282,7 +277,7 @@ class StackSelector(object):
             if (PyMcaDirs.nativeFileDialogs) and (not getfilter):
                 filetypes = ""
                 for filetype in fileTypeList:
-                    filetypes += filetype+"\n"
+                    filetypes += filetype + "\n"
                 filelist = qt.QFileDialog.getOpenFileNames(self.parent,
                         message,
                         wdir,
@@ -293,7 +288,7 @@ class StackSelector(object):
                     else:
                         return []
                 else:
-                    sample  = str(filelist[0])
+                    sample = str(filelist[0])
                     for filetype in fileTypeList:
                         ftype = filetype.replace("(", "")
                         ftype = ftype.replace(")", "")
@@ -301,7 +296,7 @@ class StackSelector(object):
                         for extension in extensions:
                             if sample.endswith(extension[-3:]):
                                 filterused = filetype
-                                break                                
+                                break
             else:
                 fdialog = qt.QFileDialog(self.parent)
                 fdialog.setModal(True)
@@ -323,9 +318,9 @@ class StackSelector(object):
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
                     if getfilter:
-                        filterused = str(fdialog.selectedFilter())                    
+                        filterused = str(fdialog.selectedFilter())
                     fdialog.close()
-                    del fdialog                        
+                    del fdialog
                 else:
                     fdialog.close()
                     del fdialog
@@ -338,7 +333,8 @@ class StackSelector(object):
                 filelist = [str(x) for x in filelist]
             except UnicodeEncodeError:
                 filelist = [unicode(x) for x in filelist]
-        if not(len(filelist)): return []
+        if not(len(filelist)):
+            return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.outputDir is None:
             PyMcaDirs.outputDir = os.path.dirname(filelist[0])
@@ -359,7 +355,7 @@ class StackSelector(object):
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
-                        "HDF5 Files (*.nxs *.hdf *.h5)", 
+                        "HDF5 Files (*.nxs *.hdf *.h5)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "Image Files (*edf *ccd)",
@@ -367,10 +363,11 @@ class StackSelector(object):
                         "TextImage Files (*txt)",
                         "All Files (*)"]
         if not HDF5:
-            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)") 
-            del fileTypeList[idx]           
+            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)")
+            del fileTypeList[idx]
         message = "Open ONE indexed stack or SEVERAL files"
-        return self._getFileList(fileTypeList, message=message, getfilter=getfilter)
+        return self._getFileList(fileTypeList, message=message,
+                                 getfilter=getfilter)
 
     def getFileListFromPattern(self, pattern, begin, end, increment=None):
         if type(begin) == type(1):
@@ -389,17 +386,17 @@ class StackSelector(object):
                 "Increment list and begin list do not have same length")
         fileList = []
         if len(begin) == 1:
-            for j in range(begin[0], end[0]+increment[0], increment[0]):
+            for j in range(begin[0], end[0] + increment[0], increment[0]):
                 fileList.append(pattern % (j))
         elif len(begin) == 2:
-            for j in range(begin[0], end[0]+increment[0], increment[0]):
-                for k in range(begin[1], end[1]+increment[1], increment[1]):
+            for j in range(begin[0], end[0] + increment[0], increment[0]):
+                for k in range(begin[1], end[1] + increment[1], increment[1]):
                     fileList.append(pattern % (j, k))
         elif len(begin) == 3:
             raise ValueError("Cannot handle three indices yet.")
-            for j in range(begin[0], end[0]+increment[0], increment[0]):
-                for k in range(begin[1], end[1]+increment[1], increment[1]):
-                    for l in range(begin[2], end[2]+increment[2], increment[2]):
+            for j in range(begin[0], end[0] + increment[0], increment[0]):
+                for k in range(begin[1], end[1] + increment[1], increment[1]):
+                    for l in range(begin[2], end[2] + increment[2], increment[2]):
                         fileList.append(pattern % (j, k, l))
         else:
             raise ValueError("Cannot handle more than three indices.")
@@ -422,15 +419,15 @@ if __name__ == "__main__":
         print(sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
-    filepattern=None
+    filepattern = None
     begin = None
     end = None
-    imagestack=False
-    increment=None
+    imagestack = False
+    increment = None
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
-                begin = [int (x) for x in arg.split(",")]
+                begin = [int(x) for x in arg.split(",")]
             else:
                 begin = [int(arg)]
         elif opt in '--end':
@@ -444,17 +441,17 @@ if __name__ == "__main__":
             else:
                 increment = int(arg)
         elif opt in '--filepattern':
-            filepattern = arg.replace('"','')
-            filepattern = filepattern.replace("'","")
+            filepattern = arg.replace('"', '')
+            filepattern = filepattern.replace("'", "")
         elif opt in '--fileindex':
             fileindex = int(arg)
         elif opt in '--imagestack':
             imagestack = int(arg)
         elif opt in '--nativefiledialogs':
             if int(arg):
-                PyMcaDirs.nativeFileDialogs=True
+                PyMcaDirs.nativeFileDialogs = True
             else:
-                PyMcaDirs.nativeFileDialogs=False
+                PyMcaDirs.nativeFileDialogs = False
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError(\
@@ -464,7 +461,8 @@ if __name__ == "__main__":
     w = StackSelector(widget)
     if filepattern is not None:
         #ignore the args even if present
-        stack = w.getStackFromPattern(filepattern, begin, end, increment=increment,
+        stack = w.getStackFromPattern(filepattern, begin, end,
+                                      increment=increment,
                                       imagestack=imagestack)
     else:
         stack = w.getStack(args, imagestack=imagestack)
@@ -480,4 +478,3 @@ if __name__ == "__main__":
         widget.setStack(stack)
     widget.show()
     app.exec_()
-
