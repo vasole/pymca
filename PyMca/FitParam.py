@@ -42,13 +42,19 @@ from PyMca import EnergyTable
 from PyMca import PyMcaDirs
 if QTVERSION > '4.0.0':
     from PyMca import StripBackgroundWidget
-    SCANWINDOW = StripBackgroundWidget.SCANWINDOW
-    if SCANWINDOW:
+    # This strange looking import is to workaround an endless import
+    SCANWINDOW = False
+    QWT = False
+    try:
         from PyMca import ScanWindow
-    else:
-        from PyMca import Plot1DMatplotlib
+        SCANWINDOW = True
+    except:
+        try:
+            from PyMca import Plot1DQwt
+            QWT = True
+        except ImportError:
+            from PyMca import Plot1DMatplotlib
     import numpy
-
 
 DEBUG = 0
 
@@ -91,6 +97,17 @@ class FitParamWidget(FitParamForm):
                 self.graphDialog.mainLayout.setMargin(0)
                 self.graphDialog.mainLayout.setSpacing(0)
                 self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graph = self.graphDialog.graph
+                self.graph._togglePointsSignal()
+                self.graph.graph.crossPicker.setEnabled(False)
+                self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+                                                        graph=self.graphDialog)
+            elif QWT:
+                self.graphDialog = qt.QDialog(self)
+                self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
+                self.graphDialog.mainLayout.setMargin(0)
+                self.graphDialog.mainLayout.setSpacing(0)
+                self.graphDialog.graph = Plot1DQwt.Plot1DQwt(self.graphDialog)                
                 self.graph = self.graphDialog.graph
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)

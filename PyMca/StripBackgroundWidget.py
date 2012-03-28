@@ -27,12 +27,18 @@
 import sys
 import numpy
 from PyMca import PyMcaQt as qt
+SCANWINDOW = False
+QWT = False
+# This strange looking import is to workaround an endless import
 try:
     from PyMca import ScanWindow
     SCANWINDOW = True
-except ImportError:
-    from PyMca import Plot1DMatplotlib
-    SCANWINDOW = False
+except:
+    try:
+        from PyMca import Plot1DQwt
+        QWT = True
+    except ImportError:
+        from PyMca import Plot1DMatplotlib
 from PyMca import SpecfitFuns
 
 class HorizontalSpacer(qt.QWidget):
@@ -263,6 +269,8 @@ class StripBackgroundWidget(qt.QWidget):
         self.parametersWidget = StripParametersWidget(self)
         if SCANWINDOW:
             self.graphWidget = ScanWindow.ScanWindow(self)
+        elif QWT:
+            self.graphWidget = Plot1DQwt.Plot1DQwt(self)
         else:
             self.graphWidget = Plot1DMatplotlib.Plot1DMatplotlib(self)
         try:
@@ -298,9 +306,9 @@ class StripBackgroundWidget(qt.QWidget):
         y = numpy.ravel(numpy.array(self._y)).astype(numpy.float)
         ysmooth = SpecfitFuns.SavitskyGolay(y, pars['stripfilterwidth'])        
         f=[0.25,0.5,0.25]
-        ysmooth[1:-1]=numpy.convolve(ysmooth,f,mode=0)
-        ysmooth[0]=0.5*(ysmooth[0]+ysmooth[1])
-        ysmooth[-1]=0.5*(ysmooth[-1]+ysmooth[-2])
+        ysmooth[1:-1] = numpy.convolve(ysmooth,f,mode=0)
+        ysmooth[0] = 0.5 *(ysmooth[0] + ysmooth[1])
+        ysmooth[-1] = 0.5 * (ysmooth[-1] + ysmooth[-2])
 
         #loop for anchors
         x = self._x
@@ -351,9 +359,17 @@ class StripBackgroundWidget(qt.QWidget):
             snipBackground[lastAnchor:] =\
                             SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
 
-        self.graphWidget.newCurve(x, y, 'Input Data')
-        self.graphWidget.newCurve(x, stripBackground, 'Strip Background')
-        self.graphWidget.newCurve(x, snipBackground, 'SNIP Background')
+        print "adding curves"
+        self.graphWidget.addCurve(x, y, \
+                                  legend='Input Data',\
+                                  replace=True,
+                                  replot=False)
+        self.graphWidget.addCurve(x, stripBackground,\
+                                  legend='Strip Background',\
+                                  replot=False)
+        self.graphWidget.addCurve(x, snipBackground,\
+                                  legend='SNIP Background',
+                                  replot=True)
         
 class StripBackgroundDialog(qt.QDialog):
     def __init__(self, parent=None):
