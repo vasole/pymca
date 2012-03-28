@@ -359,7 +359,6 @@ class StripBackgroundWidget(qt.QWidget):
             snipBackground[lastAnchor:] =\
                             SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
 
-        print "adding curves"
         self.graphWidget.addCurve(x, y, \
                                   legend='Input Data',\
                                   replace=True,
