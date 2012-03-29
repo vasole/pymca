@@ -148,7 +148,13 @@ Elements = ['H', 'He',
             'Bh', 'Hs', 'Mt']
 
 #Read the EPDL library
-EADL = os.path.join(os.path.dirname(__file__),'EADL.DAT')
+# Try to find it in the local directory
+EADL = os.path.join(os.path.dirname(__file__), 'EADL.DAT')
+
+if not os.path.exists(EADL):
+    from PyMca import PyMcaDataDir
+    EADL = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'EPDL97', 'EADL.DAT')
+
 infile = open(EADL, 'rb')
 if sys.version < '3.0':
     EADL97_DATA = infile.read()

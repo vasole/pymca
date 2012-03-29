@@ -185,7 +185,14 @@ DEBUG = 0
 AVOGADRO_NUMBER = 6.02214179E23
 
 #Read the EPDL library
-EPDL = os.path.join(os.path.dirname(__file__),'EPDL97.DAT')
+# Try to find it in the local directory
+EPDL = os.path.join(os.path.dirname(__file__), 'EPDL97.DAT')
+
+if not os.path.exists(EPDL):
+    from PyMca import PyMcaDataDir
+    EPDL = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'EPDL97', 'EPDL97.DAT')
+
+
 infile = open(EPDL, 'rb')
 EPDL97_DATA = infile.read()
 infile.close()
