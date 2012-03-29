@@ -304,6 +304,7 @@ class smart_install_data(install_data):
         f.close()
         return install_data.run(self)
 
+# smart_install_scripts disabled for the time being.
 """
 from distutils.command.install_scripts import install_scripts
 class smart_install_scripts(install_scripts):
@@ -384,7 +385,8 @@ class smart_install_scripts(install_scripts):
                     mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
                     log.info("changing mode of %s to %o", file, mode)
                     os.chmod(file, mode)
-""" 
+"""
+
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
 """
@@ -409,119 +411,9 @@ distrib = setup(name="PyMca",
                 py_modules=py_modules,
                 )
 
-
-
-#post installation checks
-try:
-    import sip
-    SIP = True
-except ImportError:
-    SIP = False
-    print("sip must be installed for full pymca functionality.")
-
-badtext  = "No valid PyQt  with PyQwt4 or PyQwt5 installation found.\n"
-badtext += "No valid PyQt4 with PyQwt5 installation found.\n"
-badtext += "You will only be able to develop applications using  a very \n"
-badtext += "small subset of PyMca."
-
 try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
     print("PyMca data files are installed in %s " % PYMCA_DATA_DIR)
-except NameError:
+except:
     #I really do not see how this may happen but ...
     pass
-    
-if SIP:
-    try:
-        import PyQt4.QtCore
-        QT4 = True
-    except ImportError:
-        QT4 = False
-    except:
-        QT4 = True
-
-    try:        
-        from PyQt4 import Qwt5
-        QWT5 = True        
-    except ImportError:
-        QWT5 = False
-
-    QT3  = False
-    QWT4 = False
-    if not QT4:
-        try:
-            import qt
-            QT3 = True
-        except ImportError:
-            QT3 = False
-        except:
-            pass
-
-        try:
-            import Qwt5 as qwt
-            QWT5 = True
-        except ImportError:
-            QWT5 = False
-        except:
-            pass
-
-        if not QWT5:
-            try:
-                import Qwt4 as qwt
-                QWT4 = True        
-            except ImportError:
-                QWT4 = False
-
-            if not QWT4:
-                try:
-                    import qwt
-                    QWT4 = True        
-                except ImportError:
-                    QWT4 = False
-
-    if QT4 and QT3:
-        #print "PyMca does not work in a mixed Qt4 and qt installation (yet)"
-        if QWT5:
-            print("You have PyQt4 and PyQwt5 installed.")
-            print("PyMca is fully functional under PyQt4 with PyQwt5.")
-            print("You can easily embed PyMca fitting in your Qt4 graphical ")
-            print("applications using McaAdvancedFit.py")
-        else:
-            print(badtext)
-    elif QT3 and QWT5:
-        print("PyMca PyQt installations tested with PyQwt4")
-        print("You have PyQwt5 installed. It should also work.")
-        print("PyMca installation successfully completed.")
-    elif QT3 and not QWT4:
-        print("PyMca PyQt installations need PyQwt5 or PyQwt4")
-        print(badtext)
-    elif QT4 and QWT5:
-        print("You have PyQt4 and PyQwt5 installed.")
-        print("PyMca is fully functional under PyQt4 with PyQwt5.")
-        print("You can easily embed PyMca fitting in your Qt4 graphical ")
-        print("applications using McaAdvancedFit.py")
-        try:
-            if sys.platform != 'win32':
-                print("Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR)
-                print("and try the scripts:")
-                for script in script_files:
-                    s = os.path.basename(script)
-                    print(s)
-        except NameError:
-            pass
-    elif QT3 and QWT4:
-        print("PyMca installation successfully completed.")
-        try:
-            if sys.platform != 'win32':
-                print("Please make sure %s is in your path" % PYMCA_SCRIPTS_DIR)
-                print("and try the scripts:")
-                for script in script_files:
-                    print(os.path.basename(script))
-        except NameError:
-            pass
-    else:
-        print(badtext)
-else:
-    print("No valid PyQt with qwt or PyQt4 with PyQwt5 installation found.")
-    print("You will only be able to develop applications using  a very ")
-    print("small subset of PyMca.")
