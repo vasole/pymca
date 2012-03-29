@@ -47,32 +47,6 @@ for line in ffile:
 
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
-print("Type 'L' to view the license.")
-print("Type 'yes' to accept the terms of the license.")
-print("Type 'no' to decline the terms of the license.\n")
-
-while 1:
-    try:
-        if sys.version_info < (3, 0):
-            resp = raw_input("Do you accept the terms of the license? ")
-        else:
-            resp = input("Do you accept the terms of the license? ")
-    except KeyboardInterrupt:
-        raise SystemExit
-    except:
-        resp = ""
-
-    resp = resp.strip().lower()
-
-    if resp == "yes":
-        break
-
-    if resp == "no":
-        sys.exit(1)
-
-    if resp == "l":
-        os.system("more LICENSE.GPL")
-
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
 packages = ['PyMca','PyMca.PyMcaPlugins']
