@@ -2,7 +2,8 @@ import sys,os
 import glob
 import platform
 import time
-from distutils.core import Extension, setup
+from distutils.core import Extension, setup, Command
+from distutils.command.install import install as dftinstall
 try:
     import numpy
 except ImportError:
@@ -12,11 +13,17 @@ except ImportError:
 import distutils.sysconfig
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
+global USE_SMART_INSTALL_SCRIPTS 
+
 
 #package maintainers customization
 # Dear (Debian, RPM, ...) package makers, please feel free to customize the
 # following path to the directory containing module's data:
 PYMCA_DATA_DIR = 'PyMca/PyMcaData'
+
+USE_SMART_INSTALL_SCRIPTS = False
+if "--install-scripts" in sys.argv:
+    USE_SMART_INSTALL_SCRIPTS = True
 
 SPECFILE_USE_GNU_SOURCE = os.getenv("SPECFILE_USE_GNU_SOURCE")
 if SPECFILE_USE_GNU_SOURCE is None:
@@ -304,88 +311,185 @@ class smart_install_data(install_data):
         f.close()
         return install_data.run(self)
 
-# smart_install_scripts disabled for the time being.
-"""
-from distutils.command.install_scripts import install_scripts
-class smart_install_scripts(install_scripts):
-    def run (self):
-        global PYMCA_SCRIPTS_DIR
-        #I prefer not to translate the python used during the build
-        #process for the case of having an installation on a disk shared
-        #by different machines and starting python from a shell script
-        #that positions the environment
-        from distutils import log
-        from stat import ST_MODE
-        install_cmd = self.get_finalized_command('install')
-        #This is to ignore the --install-scripts keyword
-        #I do not know if to leave it optional ...
-        if False:
-            self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca')
-            self.install_dir = os.path.join(self.install_dir, 'bin')        
-        else:
-            self.install_dir = getattr(install_cmd, 'install_scripts')
-        self.install_data = getattr(install_cmd, 'install_data')
-        PYMCA_SCRIPTS_DIR = self.install_dir        
-        PYMCA_DATA_DIR = self.install_data
-        if sys.platform != "win32":
-            print("PyMca scripts to be installed in %s" %  self.install_dir)
-        self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
-        self.outfiles = []
-        for filein in glob.glob('PyMca/scripts/*'):
-            filedest = os.path.join(self.install_dir, os.path.basename(filein))
-            if os.path.exists(filedest):
-                os.remove(filedest)
-            moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca")
-            if 0:
-                f = open(filein, 'r')
-                modfile = f.readline().replace("\n","")
-                f.close()
+
+# smart_install_scripts
+if USE_SMART_INSTALL_SCRIPTS:
+    from distutils.command.install_scripts import install_scripts
+    class smart_install_scripts(install_scripts):
+        def run (self):
+            global PYMCA_SCRIPTS_DIR
+            #I prefer not to translate the python used during the build
+            #process for the case of having an installation on a disk shared
+            #by different machines and starting python from a shell script
+            #that positions the environment
+            from distutils import log
+            from stat import ST_MODE
+            install_cmd = self.get_finalized_command('install')
+            #This is to ignore the --install-scripts keyword
+            #I do not know if to leave it optional ...
+            if False:
+                self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca')
+                self.install_dir = os.path.join(self.install_dir, 'bin')        
             else:
-                basename = os.path.basename(filein) 
-                if basename.startswith('pymcabatch'):
-                    modfile = 'PyMcaBatch.py'
-                elif basename.startswith('pymcapostbatch') or\
-                     basename.startswith('rgbcorrelator'):
-                    modfile = 'PyMcaPostBatch.py' 
-                elif basename.startswith('pymcaroitool'):
-                    modfile = 'QStackWidget.py'
-                elif basename.startswith('mca2edf'):
-                    modfile = 'Mca2Edf.py'
-                elif basename.startswith('edfviewer'):
-                    modfile = 'EdfFileSimpleViewer.py'
-                elif basename.startswith('peakidentifier'):
-                    modfile = 'PeakIdentifier.py'
-                elif basename.startswith('elementsinfo'):
-                    modfile = 'ElementsInfo.py'
-                elif basename.startswith('pymca'):
-                    modfile = 'PyMcaMain.py'
+                self.install_dir = getattr(install_cmd, 'install_scripts')
+            self.install_data = getattr(install_cmd, 'install_data')
+            PYMCA_SCRIPTS_DIR = self.install_dir        
+            PYMCA_DATA_DIR = self.install_data
+            if sys.platform != "win32":
+                print("PyMca scripts to be installed in %s" %  self.install_dir)
+            self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
+            self.outfiles = []
+            for filein in glob.glob('PyMca/scripts/*'):
+                filedest = os.path.join(self.install_dir, os.path.basename(filein))
+                if os.path.exists(filedest):
+                    os.remove(filedest)
+                moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca")
+                if 0:
+                    f = open(filein, 'r')
+                    modfile = f.readline().replace("\n","")
+                    f.close()
                 else:
-                    print " ignored" , filein
-                    continue                
-            text  = "#!/bin/bash\n"
-            text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
-            #deal with sys.executables not named python
-            text += "exec %s %s $*\n" %  (
-                sys.executable,
-                os.path.join(moddir, modfile)
-                )
-            
-            f=open(filedest, 'w')
-            f.write(text)
-            f.close()
-            #self.copy_file(filein, filedest)
-            self.outfiles.append(filedest)
-        if os.name == 'posix':
-            # Set the executable bits (owner, group, and world) on
-            # all the scripts we just installed.
-            for file in self.get_outputs():
-                if self.dry_run:
-                    log.info("changing mode of %s", file)
-                else:
-                    mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
-                    log.info("changing mode of %s to %o", file, mode)
-                    os.chmod(file, mode)
-"""
+                    basename = os.path.basename(filein) 
+                    if basename.startswith('pymcabatch'):
+                        modfile = 'PyMcaBatch.py'
+                    elif basename.startswith('pymcapostbatch') or\
+                         basename.startswith('rgbcorrelator'):
+                        modfile = 'PyMcaPostBatch.py' 
+                    elif basename.startswith('pymcaroitool'):
+                        modfile = 'QStackWidget.py'
+                    elif basename.startswith('mca2edf'):
+                        modfile = 'Mca2Edf.py'
+                    elif basename.startswith('edfviewer'):
+                        modfile = 'EdfFileSimpleViewer.py'
+                    elif basename.startswith('peakidentifier'):
+                        modfile = 'PeakIdentifier.py'
+                    elif basename.startswith('elementsinfo'):
+                        modfile = 'ElementsInfo.py'
+                    elif basename.startswith('pymca'):
+                        modfile = 'PyMcaMain.py'
+                    else:
+                        print " ignored" , filein
+                        continue                
+                text  = "#!/bin/bash\n"
+                text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
+                #deal with sys.executables not named python
+                text += "exec %s %s $*\n" %  (
+                    sys.executable,
+                    os.path.join(moddir, modfile)
+                    )
+                
+                f=open(filedest, 'w')
+                f.write(text)
+                f.close()
+                #self.copy_file(filein, filedest)
+                self.outfiles.append(filedest)
+            if os.name == 'posix':
+                # Set the executable bits (owner, group, and world) on
+                # all the scripts we just installed.
+                for file in self.get_outputs():
+                    if self.dry_run:
+                        log.info("changing mode of %s", file)
+                    else:
+                        mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
+                        log.info("changing mode of %s to %o", file, mode)
+                        os.chmod(file, mode)
+
+# man pages handling
+def abspath(*path):
+    """A method to determine absolute path for a given relative path to the
+    directory where this setup.py script is located"""
+    setup_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(setup_dir, *path)
+
+
+class install_man(Command):
+
+    user_options = [
+        ('install-dir=', 'd', 'base directory for installing man page files')]
+
+    def initialize_options(self):
+        self.install_dir = None
+
+    def finalize_options(self):
+        self.set_undefined_options('install',
+                                   ('install_man', 'install_dir'))
+
+    def run(self):
+        src_man_dir = abspath('doc', 'man')
+        man_elems = os.listdir(src_man_dir)
+        man_pages = []
+        for f in man_elems:
+            f = os.path.join(src_man_dir,f)
+            if not os.path.isfile(f):
+                continue
+            if not f.endswith(".1"):
+                continue
+            man_pages.append(f)
+
+        install_dir = os.path.join(self.install_dir, 'man1')
+
+        if not os.path.isdir(install_dir):
+            os.makedirs(install_dir)
+
+        for man_page in man_pages:
+            self.copy_file(man_page, install_dir)
+
+class install(dftinstall):
+
+    user_options = list(dftinstall.user_options)
+    user_options.extend([
+        ('install-man=', None, 'installation directory for Unix man pages')])
+
+    def initialize_options(self):
+        self.install_man = None
+        dftinstall.initialize_options(self)
+
+    def finalize_options(self):
+        # We do a hack here. We cannot trust the 'install_base' value because it
+        # is not always the final target. For example, in unix, the install_base
+        # is '/usr' and all other install_* are directly relative to it. However,
+        # in unix-local (like ubuntu) install_base is still '/usr' but, for
+        # example, install_data, is '$install_base/local' which breaks everything.
+        #
+        # The hack consists in using install_data instead of install_base since
+        # install_data seems to be, in practice, the proper install_base on all
+        # different systems.
+        global USE_SMART_INSTALL_SCRIPTS
+        dftinstall.finalize_options(self)
+        if os.name != "posix":
+            if self.install_man is not None:
+                self.warn("install-man option ignored on this platform")
+                self.install_man = None
+        else:
+            if self.install_man is None:
+                if not USE_SMART_INSTALL_SCRIPTS:
+                    # if one is installing the scripts somewhere else
+                    # he can be smart enough to pass install_man
+                    self.install_man = os.path.join(self.install_data,\
+                                                    'share', 'man')
+        self.dump_dirs("Installation directories")
+
+    def expand_dirs(self):
+        dftinstall.expand_dirs(self)
+        self._expand_attrs(['install_man'])
+
+    def has_man(self):
+        return os.name == "posix"
+
+    sub_commands = list(dftinstall.sub_commands)
+    sub_commands.append(('install_man', has_man))
+
+
+# end of man pages handling
+cmdclass = {'install_data':smart_install_data}
+
+if USE_SMART_INSTALL_SCRIPTS:
+    # typical use of user without superuser privileges
+    cmdclass['install_scripts'] = smart_install_scripts
+
+if os.name == "posix":
+    cmdclass['install'] = install
+    cmdclass['install_man'] = install_man
 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
@@ -405,8 +509,7 @@ distrib = setup(name="PyMca",
                 data_files = data_files,
 ##                package_data = package_data,
 ##                package_dir = {'': 'lib'},
-                cmdclass = {'install_data':smart_install_data}, 
-#                            'install_scripts':smart_install_scripts},
+                cmdclass = cmdclass,
                 scripts=script_files,
                 py_modules=py_modules,
                 )
