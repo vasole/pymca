@@ -25,9 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 import numpy
-from PyMca import Object3D
-from PyMca.Object3D import Object3DScene
 DEBUG = 0
+try:
+    from PyMca import Object3D
+    from PyMca.Object3D import Object3DScene
+except ImportError:
+    if DEBUG:
+        print("PyMcaGLWindow imports Object3D direcly. Frozen version?")
+    import Object3D
+    from Object3D import Object3DScene    
 
 class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
     def _addSelection(self, selectionlist, replot=True):

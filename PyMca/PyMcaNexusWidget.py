@@ -172,11 +172,12 @@ class PyMcaNexusWidget(QNexusWidget):
 
 if __name__ == "__main__":
     import sys
-    app = QtGui.QApplication(sys.argv)
     try:
+        #this is to add the 3D buttons ...
         from PyMca import Object3D
     except:
         pass
+    app = QtGui.QApplication(sys.argv)
     w = PyMcaNexusWidget()
     if 0:
         w.setFile(sys.argv[1])

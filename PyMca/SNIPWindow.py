@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
@@ -36,7 +36,12 @@ try:
     from PyMca.Object3D import Object3DScene
     OBJECT3D = True
 except:
-    OBJECT3D = False
+    try:
+        # Frozen version handling
+        from Object3D import Object3DScene
+        OBJECT3D = True
+    except:
+        OBJECT3D = False
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):

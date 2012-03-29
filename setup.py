@@ -313,7 +313,20 @@ class smart_install_data(install_data):
                                           PYMCA_DATA_DIR)
             #packager should have given the complete path
             #in other cases
-        f.write("PYMCA_DATA_DIR = '%s'\n" % PYMCA_DATA_DIR)
+        f.write("import os\nPYMCA_DATA_DIR = '%s'\n" % PYMCA_DATA_DIR)
+        f.write("# what follows is only used in frozen versions\n")
+        f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
+        f.write("    tmp_dir = os.path.dirname(__file__)\n")
+        f.write("    basename = os.path.basename(PYMCA_DATA_DIR)\n")
+        f.write("    PYMCA_DATA_DIR = os.path.join(tmp_dir,basename)\n")
+        f.write("    while len(PYMCA_DATA_DIR) > 14:\n")
+        f.write("        if os.path.exists(PYMCA_DATA_DIR):\n")
+        f.write("            break\n")
+        f.write("        tmp_dir = os.path.dirname(tmp_dir)\n")
+        f.write("        PYMCA_DATA_DIR = os.path.join(tmp_dir, basename)\n")
+        f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
+        f.write("    raise IOError('%s directory not found' % basename)\n")
+        f.write("print('Using: %s' % PYMCA_DATA_DIR)\n")
         f.close()
         return install_data.run(self)
 

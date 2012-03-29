@@ -5,10 +5,11 @@
 # It expects a properly configured compiler.
 #
 # Under windows you may need to set MINGW = True (untested) if you are
-# not using VS2003 (python 2.5) or VS2008 (python 2.6)
+# not using VS2003 (python 2.5) or VS2008 (python > 2.5)
 #
 # If everything works well one should find a directory in the build
 # directory that contains the files needed to run the PyMca without Python
+#
 from cx_Freeze import setup, Executable
 import sys
 import os
@@ -84,20 +85,15 @@ if os.system(cmd):
     sys.exit(1)
 
 include_files = []
-flist = ["attdata",
-         "HTML",
-         "Scofield1973.dict",
-         "changelog.txt",
-         "McaTheory.cfg",
-         "PyMcaSplashImage.png"]
-for f in flist:
-    include_files.append((os.path.join(PyMcaDir, f), f))
 
-flist = glob.glob(os.path.join(PyMcaDir, "*.dat"))
-for f in flist:
-    include_files.append((f, os.path.basename(f)))
-
+# this is critical for Qt to find image format plugins
 include_files.append(("qtconffile", "qt.conf"))
+
+# PyMca data
+include_files.append(("changelog.txt", os.path.join("PyMcaData", "changelog.txt")))
+include_files.append((os.path.join("PyMca", "PyMcaData"), "PyMcaData"))
+
+# put the PyMca plugins as "data" to allow the user to add his own plugins
 include_files.append((os.path.join("PyMca", "PyMcaPlugins"), "PyMcaPlugins"))
 
 # Add the qt plugins directory
@@ -145,7 +141,7 @@ try:
 except:
     SCIPY = False
 
-#For the time being I leave it out
+# For the time being I leave SciPy out
 SCIPY = False
 
 import PyMcaMain
@@ -192,7 +188,8 @@ for module in glob.glob(os.path.join('PyMca', '*.py')):
     
 if OBJECT3D:
     includes.append("logging")
-    excludes = ["OpenGL", "Tkinter", "PyMca.Object3D", "Object3D", "PyMcaPlugins",
+    excludes = ["OpenGL", "Tkinter", "PyMca.Object3D", "Object3D",
+                "PyMca.PyMcaPlugins", "PyMcaPlugins",
                 "scipy", "Numeric", "numarray"] 
     #This requieres the use of the environmental variable MATPLOTLIBDATA
     #pointing to mpl-data directory to work
@@ -219,7 +216,8 @@ if OBJECT3D:
             include_files.append((f, 
                             os.path.join(os.path.basename(o3ddir), os.path.basename(f))))
 else:
-    excludes = ["Tkinter", "PyMcaPlugins", "scipy", "Numeric","numarray"]
+    excludes = ["Tkinter", "PyMca.PyMcaPlugins",
+                "PyMcaPlugins", "scipy", "Numeric", "numarray"]
     special_modules = [os.path.dirname(ctypes.__file__)]
     if H5PY_SPECIAL:
         special_modules.append(os.path.dirname(h5py.__file__))
@@ -236,7 +234,6 @@ else:
     
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
-
 
 #Next line was for the plugins in frozen but now is in shared zip library
 #include_files.append((PyMcaDir, "PyMca"))
@@ -388,6 +385,8 @@ if not sys.platform.startswith('win'):
         os.remove(fname)
 
     #end linux binary
+
+# check if the library has been created
 library = os.path.join(install_dir,"library.zip")
 if not os.path.exists(library):
     print("PROBLEM")
@@ -398,7 +397,29 @@ else:
     if DEBUG:
         print("NO PROBLEM")
 
-#Add modules to library.zip for easy access from Plugins directory
+if os.path.exists('bin'):
+    for f in glob.glob(os.path.join('bin','*')):
+        os.remove(f)
+    os.rmdir('bin')
+
+if not SCIPY:
+    for f in ["SplinePlugins.py"]:
+        plugin = os.path.join(install_dir, "PyMcaPlugins", f)
+        if os.path.exists(plugin):
+            print("Deleting plugin %s" % plugin)
+            os.remove(plugin)
+
+sys.exit(0)
+
+########################## WHAT FOLLOWS IS UNUSED CODE ################
+#                                                                     #               
+# I was using it to add undetected modules to library.zip             #
+#                                                                     #               
+# It might be needed in the future. Code kept here as "backup".       #
+#                                                                     #               
+#######################################################################
+
+#Add modules to library.zip
 import zipfile
 zf = zipfile.ZipFile(library, mode='a')
 PY_COUNTER = 0
@@ -445,15 +466,4 @@ addToZip(zf, PyMcaDir, os.path.basename(PyMcaDir), full=False)
 if PY_COUNTER < PYC_COUNTER:
     print("WARNING: More .pyc files than  .py files. Check cx_setup.py")
 
-if os.path.exists('bin'):
-    for f in glob.glob(os.path.join('bin','*')):
-        os.remove(f)
-    os.rmdir('bin')
-
-if not SCIPY:
-    for f in ["SplinePlugins.py"]:
-        plugin = os.path.join(install_dir, "PyMcaPlugins", f)
-        if os.path.exists(plugin):
-            print("Deleting plugin %s" % plugin)
-            os.remove(plugin)
 
