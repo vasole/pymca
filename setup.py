@@ -326,7 +326,7 @@ class smart_install_data(install_data):
         f.write("        PYMCA_DATA_DIR = os.path.join(tmp_dir, basename)\n")
         f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
         f.write("    raise IOError('%s directory not found' % basename)\n")
-        f.write("print('Using: %s' % PYMCA_DATA_DIR)\n")
+        #f.write("print('Using: %s' % PYMCA_DATA_DIR)\n")
         f.close()
         return install_data.run(self)
 
