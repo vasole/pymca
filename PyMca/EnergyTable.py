@@ -562,6 +562,8 @@ class EnergyTable(QTable):
             try:
                 s = str(self.text(row, col))
                 s=s.replace(" ","")
+                if len(s):
+                    float(s)
             except:
                 msg = qt.QMessageBox(self)       
                 msg.setIcon(qt.QMessageBox.Critical)
