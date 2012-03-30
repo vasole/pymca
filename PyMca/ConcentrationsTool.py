@@ -31,7 +31,7 @@ import copy
 import numpy.oldnumeric as Numeric
 import string
 
-class ConcentrationsConversion:
+class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations = None):
         text = ""
         if concentrations is None:return text
@@ -177,7 +177,7 @@ class ConcentrationsConversion:
                 line +=1
         return text
 
-class ConcentrationsTool:
+class ConcentrationsTool(object):
     def __init__(self, config = None, fitresult=None):
         self.config = {}
         self.config ['usematrix'] = 0
