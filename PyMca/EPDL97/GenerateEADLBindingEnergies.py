@@ -1,7 +1,6 @@
 __doc__= "Generate specfile with EADL97 binding energies in keV" 
 import os
 import sys
-import EADLSubshells
 import EADLParser
 
 Elements = ['H', 'He', 

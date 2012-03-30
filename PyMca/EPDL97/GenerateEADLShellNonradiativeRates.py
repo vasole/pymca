@@ -1,7 +1,6 @@
 __doc__= "Generate specfiles with EADL97 shell transition probabilities" 
 import os
 import sys
-import EADLSubshells
 import EADLParser
 
 Elements = ['H', 'He', 
