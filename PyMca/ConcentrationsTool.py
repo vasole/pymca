@@ -28,7 +28,6 @@ __revision__ = "$Revision: 1.26 $"
 __author__ = "V.A. Sole - ESRF Software Group"
 from PyMca import Elements
 import copy
-import types
 import numpy.oldnumeric as Numeric
 import string
 
@@ -267,7 +266,6 @@ class ConcentrationsTool:
         else:
             flagList   = fitresult['result']['config']['fit']['energyflag']
             weightList = fitresult['result']['config']['fit']['energyweight']
-        maxenergy = None
         finalEnergy = []
         finalWeight =[]
         finalFlag   = []

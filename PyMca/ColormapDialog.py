@@ -32,8 +32,6 @@ from PyMca import DoubleSlider
 QTVERSION = qt.qVersion()
 QWTVERSION4 = QtBlissGraph.QWTVERSION4
 
-import os
-import numpy.oldnumeric as Numeric
 DEBUG = 0
 
 class MyQLineEdit(qt.QLineEdit):

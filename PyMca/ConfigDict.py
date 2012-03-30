@@ -25,7 +25,6 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import string
 if sys.version < '3.0':
     import ConfigParser
 else:
@@ -169,7 +168,6 @@ class ConfigDict(dict):
         fp.close()
 
     def __write(self, fp, ddict, sections=None, secthead=None):
-        retstring= ''
         dictkey= []
         listkey= []
         valkey= []

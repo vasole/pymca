@@ -26,7 +26,6 @@
 #############################################################################*/
 import os
 import sys
-import numpy
 from PyMca import MEDFile
 from PyMca import SpecFileAbstractClass
 
@@ -74,7 +73,7 @@ class APSMEDFileParser(object):
         """
         Gives back the number of scans in the file
         """
-        return len(self_scan)
+        return len(self._scan)
         
     def list(self):
         return "1:1"

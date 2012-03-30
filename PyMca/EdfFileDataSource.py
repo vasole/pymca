@@ -28,8 +28,6 @@ __revision__ = "$Revision: 1.6 $"
 from PyMca import DataObject
 from PyMca import EdfFile
 import types
-import copy
-import string
 import sys
 import os
 import numpy.oldnumeric as Numeric
@@ -222,7 +220,7 @@ class EdfFileDataSource(object):
                 elif key_split[2].upper() == 'R':
                     data.y=[data.data[int(key_split[3])-1, :].astype(Numeric.Float)]
                 else:
-                    raise ValueError("Unknown key %s" % Key)
+                    raise ValueError("Unknown key %s" % key)
             ch0 = int(data.info['Channel0'])
             data.x = [ch0+Numeric.arange(len(data.y[0])).astype(Numeric.Float)]
             data.m = None
@@ -256,7 +254,7 @@ def DataSource(name="", source_type=SOURCE_TYPE):
 
         
 if __name__ == "__main__":
-    import sys,time
+    import time
     try:
         sourcename=sys.argv[1]
         key       =sys.argv[2]        

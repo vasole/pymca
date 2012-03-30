@@ -34,12 +34,8 @@ else:
 
 QTVERSION = qt.qVersion()
 
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif QTVERSION < '4.0.0':
-    from PyMca import qttable
-
 if QTVERSION < '4.0.0':
+    from PyMca import qttable
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -188,7 +184,6 @@ class Concentrations(qt.QWidget):
         layout.addWidget(l3)
         msg.show()
         qt.qApp.processEvents()
-        t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
         if QTVERSION < '4.0.0':
@@ -670,7 +665,7 @@ class ConcentrationsTable(QTable):
         line = 0
         for group in groupsList:
             element, group0 = group.split()
-            transitions = group0 + " xrays"
+            # transitions = group0 + " xrays"
             fitarea    = QString("%.6e" % (result['fitarea'][group]))
             sigmaarea  = QString("%.2e" % (result['sigmaarea'][group]))
             area       = QString("%.6e" % (result['area'][group]))
@@ -904,11 +899,11 @@ class MyQComboBox(qt.QComboBox):
 
         
 if __name__ == "__main__":
-    import sys
-    from PyMca import ConfigDict
     import getopt
-    from PyMca import ConcentrationsTool
     import copy
+    # import sys
+    # from PyMca import ConcentrationsTool
+    from PyMca import ConfigDict
     if len(sys.argv) > 1:
         options = ''
         longoptions = ['flux=','time=','area=','distance=','attenuators=','usematrix=']

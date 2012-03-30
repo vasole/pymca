@@ -347,7 +347,6 @@ class McaTheory:
           for item in data:
             newpeaks      = []
             newpeaksnames = []
-            z   = item[0]
             element = item[1]
             if len(element) > 1:
                     ele = element[0:1].upper()+element[1:2].lower()
@@ -472,7 +471,6 @@ class McaTheory:
                 for item in data:
                     newpeaks      = []
                     newpeaksnames = []
-                    z   = item[0]
                     element = item[1]
                     if len(element) > 1:
                         ele = element[0:1].upper()+element[1:2].lower()
@@ -648,8 +646,6 @@ class McaTheory:
                         if len(tojoint):
                             mix=[]
                             mixname=[]
-                            newpeaksbuffer=newpeaks[:]
-                            newpeaksnamesbuffer=newpeaksnames[:]
                             for _group in tojoint:
                                 rate = 0.0
                                 for i in _group:
@@ -1225,7 +1221,6 @@ class McaTheory:
                         else:
                             result += SpecfitFuns.apvoigt(PEAKSW[i],energy)            
             else:
-                area = param[self.NGLOBAL+i]
                 PEAKSW[i][:,0] = PEAKS0[i][:,0] * param[self.NGLOBAL+i] * gain
                 PEAKSW[i][:,1] = PEAKS0[i][:,1] * 1.0
                 PEAKSW[i][:,2] = Numeric.sqrt(noise + PEAKS0[i][:,1] * fano)
@@ -1366,7 +1361,6 @@ class McaTheory:
                         else:
                             result += SpecfitFuns.apvoigt(PEAKSW[i],energy)            
             else:
-                area = param[self.NGLOBAL+i]
                 PEAKSW[i][:,0] = PEAKS0[i][:,0] * param[self.NGLOBAL+i] * gain
                 PEAKSW[i][:,1] = PEAKS0[i][:,1] * 1.0
                 PEAKSW[i][:,2] = Numeric.sqrt(noise + PEAKS0[i][:,1] * fano)
@@ -1417,7 +1411,6 @@ class McaTheory:
           if 0:
             pileup = Numeric.arange(3*len(x))*0.0
             sumfactor = param[4]
-            xmax=int(x[-1])
             xmin=int(x[0])
             offset = zero / gain
             for i in range(len(result)):
@@ -1678,9 +1671,7 @@ class McaTheory:
         if self.PARAMETERS is None:
             self.__configure()
         PARAMETERS = self.PARAMETERS
-        PEAKS0     = self.PEAKS0
         HYPERMET   = self.__HYPERMET
-        SUM        = self.__SUM
         NGLOBAL    = self.NGLOBAL
         CONTINUUM     = self.__CONTINUUM
         #linear fit flag
@@ -1746,7 +1737,7 @@ class McaTheory:
         #initial areas
         if HYPERMET:
             hypermetflag = HYPERMET
-            g_term    = hypermetflag  & 1
+            # g_term   = hypermetflag & 1
             st_term   = (hypermetflag >>1) & 1
             lt_term   = (hypermetflag >>2) & 1
             step_term = (hypermetflag >>3) & 1
@@ -1860,9 +1851,9 @@ class McaTheory:
         fano = self.config['detector']['fano'] * 2.3548*2.3548*0.00385
         if not linearfit:
          for i in range(len(PARAMETERS)-NGLOBAL):
-            rates     =  self.PEAKS0[i][:,0]
-            positions = (self.PEAKS0[i][:,1] - zero)/gain
-            fwhms     = (self.PEAKS0[i][:,2])/gain
+            rates     =  self.PEAKS0[i][:, 0]
+            positions = (self.PEAKS0[i][:, 1] - zero)/gain
+            # fwhms   = (self.PEAKS0[i][:, 2])/gain
             i1 = Numeric.nonzero((positions >= x[0]) & (positions <= x[-1]))
             inpeaks = Numeric.take(self.PEAKS0[i],i1)
 
@@ -2082,8 +2073,8 @@ class McaTheory:
         result["chisq"] = self.chisq
         n= self.NGLOBAL
         for group in self.PARAMETERS[n:]:
-            fitarea   = self.fittedpar[n+i]
-            sigmaarea = self.sigmapar[n+i]
+            # fitatea = self.fittedpar[n + i]
+            sigmaarea = self.sigmapar[n + i]
             [ele, group0] = group.split()
             result['groups'].append(group)
             result[group]     = {}            
@@ -2113,8 +2104,6 @@ class McaTheory:
         gain = param[1]
         energyw=zero + gain * xw
         #print energy
-        noise = param[2] * param[2]
-        fano  = param[3] * 2.3548*2.3548*0.00385
         yfitw = self.mcatheory(param,xw,summing=0)
         pileup= param[4]*SpecfitFuns.pileup(yfitw,int(xw[0]), zero, gain)
         yfitw += pileup
@@ -2157,7 +2146,6 @@ class McaTheory:
         result['config']['fit']['continuum_name']=CONTINUUM_LIST[self.__CONTINUUM]
         result['groups'] = []
 
-        mcaindex = 0
         PEAKSW = copy.deepcopy(self.getpeaksw(self.fittedpar))
         
         """
@@ -2175,7 +2163,6 @@ class McaTheory:
         i = 0        
         for group in self.PARAMETERS[n:]:
             fitarea   = self.fittedpar[n+i]
-            mcaarea   = self.fittedpar[n+i]
             sigmaarea = self.sigmapar[n+i]
             [ele, group0] = group.split()
             result['groups'].append(group)
@@ -2377,7 +2364,7 @@ class McaTheory:
             continuum = self.__CONTINUUM
         if hypermet is None:
             hypermet = self.__HYPERMET
-        zero = param[0]
+        # zero = param[0]
         gain = param[1]
         #energy=zero + gain * x
         #print energy
@@ -2388,7 +2375,6 @@ class McaTheory:
         PEAKS0ESCAPE = self.PEAKS0ESCAPE
         PEAKSW = self.PEAKSW
         PARAMETERS = self.PARAMETERS
-        FASTER = self.FASTER
         for i in range(len(param[self.NGLOBAL:])):
             if self.ESCAPE:
                 #area = param[NGLOBAL+i]
@@ -2426,7 +2412,7 @@ class McaTheory:
                     PEAKSW[i] [r:,5] = 0.0 
                     PEAKSW[i] [r:,7] = 0.0 
             else:
-                area = param[self.NGLOBAL+i]
+                # area = param[self.NGLOBAL + i]
                 PEAKSW[i][:,0] = PEAKS0[i][:,0] * param[self.NGLOBAL+i] * gain
                 PEAKSW[i][:,1] = PEAKS0[i][:,1] * 1.0
                 PEAKSW[i][:,2] = Numeric.sqrt(noise + PEAKS0[i][:,1] * fano)
@@ -2587,7 +2573,6 @@ class McaTheory:
         return y
 
     def linpol_deriv(self,p0,index,x):
-        p=Numeric.array(p0)
         xw=Numeric.array(x)
         if index==0:
             return Numeric.ones(len(x)).astype(Numeric.Float)
@@ -2721,7 +2706,6 @@ def test(inputfile=None,scankey=None,pkm=None,
             scan=sf[0]
         else:
             scan=sf.select(scankey)
-        nbmca=scan.nbmca()
         mcadata=scan.mca(1)
         y0= Numeric.array(mcadata)
         x = Numeric.arange(len(y0))*1.0
@@ -2729,8 +2713,6 @@ def test(inputfile=None,scankey=None,pkm=None,
         try:
             edf   = EdfFileLayer.EdfFileLayer(inputfile)
             edf.SetSource(inputfile)
-            edfinfo = edf.GetSourceInfo()
-            nimages = len(edfinfo['KeyList'])       
             if scankey is None:
                 image = 0
                 rc    = 0
@@ -2753,7 +2735,6 @@ def test(inputfile=None,scankey=None,pkm=None,
                 scan=sf[0]
             else:
                 scan=sf.select(scankey)
-            nbmca=scan.nbmca()
             mcadata=scan.mca(1)
             y0= Numeric.array(mcadata)
             x = Numeric.arange(len(y0))*1.0
@@ -2843,19 +2824,6 @@ def test(inputfile=None,scankey=None,pkm=None,
             app.setMainWidget(container)
             container.show()
             app.exec_loop()
-        output = 0
-        if output:
-            import Fit2Spec
-            a = Fit2Spec.Fit2Spec()
-            peakgroups = [self.PEAKS0,self.PEAKS0NAMES,ESCAPE,NGLOBAL]
-            a.setfitdata(indict,PARAMETERS,fitresult,peakgroups)
-            toheader   = a.tospecUF()+a.tospecUP()
-            y0string   = a.Array2SpecMca(Numeric.ravel(mcafit.ydata))
-            yfitstring = a.Array2SpecMca(yfit)
-            ybckstring = a.Array2SpecMca(Numeric.ravel(mcafit.zz))
-            root.mainloop()
-
-            
 
 PROFILING = 0        
 if __name__ == "__main__":
@@ -2868,7 +2836,6 @@ if __name__ == "__main__":
         p=pstats.Stats("test")
         p.strip_dirs().sort_stats(-1).print_stats()
     else:
-        import sys
         import getopt
         if 1:
         #try:

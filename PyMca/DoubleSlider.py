@@ -25,7 +25,6 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
-import sys
 
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -121,7 +120,6 @@ class MySlider(qt.QWidget):
         self.label.setAlignment(alignment)
         self.label.setFixedWidth(self.label.fontMetrics().width('100.99'))
 
-        
         layout.addWidget(self.slider)
         layout.addWidget(self.label)
         self.connect(self.slider,
@@ -130,7 +128,6 @@ class MySlider(qt.QWidget):
 
     def setNum(self, value):
         self.label.setText('%s' % value)
-        
 
 def test():
     app = qt.QApplication([])
@@ -148,4 +145,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+ 

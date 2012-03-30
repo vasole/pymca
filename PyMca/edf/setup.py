@@ -2,7 +2,8 @@
 
 """Setup script for the EDFFILE module distribution."""
 
-import os, sys, glob
+import sys
+import glob
 try:
     import numpy
 except ImportError:
