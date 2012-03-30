@@ -27,10 +27,8 @@
 import sys
 from PyMca import PyMcaQt as qt
 
-QTVERSION = qt.qVersion()    
-if 0 and qt.qVersion() < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif qt.qVersion() < '4.0.0':
+QTVERSION = qt.qVersion()
+if qt.qVersion() < '4.0.0':
     from PyMca import qttable
 if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):

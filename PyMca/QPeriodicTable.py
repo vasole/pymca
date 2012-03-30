@@ -28,11 +28,7 @@ import sys
 from PyMca.PyMcaQt import *
 
 QTVERSION = qVersion()
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-    QComboTableItem = qttable.QComboTableItem
-    MyQListView = QListView
-elif QTVERSION < '4.0.0':
+if QTVERSION < '4.0.0':
     from PyMca import qttable
     QComboTableItem = qttable.QComboTableItem
     MyQListView = QListView

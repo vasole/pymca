@@ -37,9 +37,7 @@ else:
     QStringList = qt.QStringList
     
 QTVERSION = qt.qVersion()
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif QTVERSION < '4.0.0':
+if QTVERSION < '4.0.0':
     from PyMca import qttable
 
 if QTVERSION < '4.0.0':
