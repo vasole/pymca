@@ -344,6 +344,8 @@ class MaterialComboBox(qt.QComboBox):
                 msg = qt.QMessageBox.No
             else:
                 try:
+                    # this test is needed even if pyflakes complains
+                    float(text)
                     msg =  qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Invalid Material Name %s\n" % text + \
@@ -458,7 +460,6 @@ class MaterialValidator(qt.QValidator):
         if QTVERSION >= '4.0.0':
             self.Valid = self.Acceptable
 
-        
     def fixup(self, qstring):
         if qstring is None:
             return None
@@ -474,6 +475,8 @@ class MaterialValidator(qt.QValidator):
         if text == '-':
             return (self.Valid, pos)
         try:
+            # this test is needed even if pyflakes complains!
+            float(text)
             return (self.Invalid, pos)
         except:
             pass
