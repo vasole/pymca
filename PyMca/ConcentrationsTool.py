@@ -189,7 +189,8 @@ class ConcentrationsTool(object):
         self.config ['distance'] = 10.0
         self.config ['reference'] = "Auto"
         self.config ['mmolarflag'] = 0
-        if config is not None: self.configure(config)
+        if config is not None:
+            self.configure(config)
         self.fitresult = fitresult
     
     
