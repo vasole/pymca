@@ -1,12 +1,10 @@
 """
 """
 from __future__ import with_statement
-import operator
-import sys
 import os
-import shutil
 import posixpath
 import gc
+import re
 from operator import itemgetter
 
 import PyQt4.QtCore as QtCore

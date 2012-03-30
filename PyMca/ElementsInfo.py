@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 from PyMca import PyMcaQt as qt
 from PyMca import ElementHtml
 from PyMca import Elements
@@ -336,14 +335,9 @@ class MyQLineEdit(qt.QLineEdit):
             self.emit(qt.SIGNAL("focusOut"),())
 
 def main():
-    import sys
-    app  = qt.QApplication(sys.argv)
+    app  = qt.QApplication([])
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
-    if len(sys.argv) > 1:
-        ele = sys.argv[1]
-    else:
-        ele = "Fe"
     w= ElementsInfo()
     if qt.qVersion() < '4.0.0':
         app.setMainWidget(w)

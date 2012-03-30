@@ -26,7 +26,6 @@
 #############################################################################*/
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
-import sys
 import copy
 import posixpath
 

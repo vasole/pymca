@@ -249,7 +249,6 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                 self.graphWidget.graph.setTitle(self.imageNames[index])
         else:
             qimage = self._imageDict[self.imageNames[index]]
-            data = self.imageList[index]
             self.setQImage(qimage,
                        qimage.width(),
                        qimage.height(),
@@ -419,6 +418,7 @@ def test2():
                        app,
                        qt.SLOT('quit()'))
 
+    # TODO fred PCAParametersDialog is unknown
     dialog = PCAParametersDialog()
     dialog.setParameters({'options':[1,3,5,7,9],'method':1, 'npc':8,'binning':3})
     dialog.setModal(True)
@@ -460,7 +460,7 @@ def test():
     if QTVERSION < '4.0.0':
         qt.QObject.connect(container,
                        qt.PYSIGNAL("MaskImageWidgetSignal"),
-                       updateMask)
+                       theSlot)
         app.setMainWidget(container)
         app.exec_loop()
     else:
@@ -471,6 +471,4 @@ def test():
         app.exec_()
 
 if __name__ == "__main__":
-    import numpy
     test()
-        

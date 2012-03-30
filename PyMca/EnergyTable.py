@@ -33,10 +33,9 @@ import os
 from PyMca import PyMcaDirs
 from PyMca import PyMca_Icons as Icons
 qt = QXTube.qt
+
 QTVERSION = qt.qVersion()
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif QTVERSION < '4.0.0':
+if QTVERSION < '4.0.0':
     from PyMca import qttable
 
 DEBUG=0
@@ -157,7 +156,6 @@ class EnergyTab(qt.QWidget):
         lines = lines.replace("\t","  ")
         lines = lines.replace('"',"")
         lines = lines.split("\n")
-        labels = lines[0].replace("\n","").split("  ")
         if (len(lines) == 1) or\
            ((len(lines) == 2) and (len(lines[1])==0)):
             #clear table
@@ -235,8 +233,6 @@ class EnergyTab(qt.QWidget):
             return
         self.outputFilter = str(outfile.selectedFilter())
         filterused = self.outputFilter.split()
-        filetype  = filterused[1]
-        extension = filterused[2]
         outputFile=str(outfile.selectedFiles()[0])
         try:            
             self.outputDir  = os.path.dirname(outputFile)
@@ -566,8 +562,6 @@ class EnergyTable(QTable):
             try:
                 s = str(self.text(row, col))
                 s=s.replace(" ","")
-                if len(s):
-                    v=float(s)
             except:
                 msg = qt.QMessageBox(self)       
                 msg.setIcon(qt.QMessageBox.Critical)

@@ -30,9 +30,7 @@
 #
 __revision__ = "$Revision: 2.00 $"
 LOGLOG = True
-import string
 import numpy.oldnumeric as Numeric
-import imp
 import os
 import sys
 import re
@@ -583,7 +581,6 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
         else:
             cor = 0.3 * wall[0]
             w = [wall[1]+cor, wall[2]+cor, wall[3]+cor]
-        mbuffer = sum(w)/5.0
     else:
         #l shell (neglecting holes due to k shell transitions)
         w = [wall[1], wall[2], wall[3]]
@@ -910,9 +907,6 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
                             tojoint.append([i,j])
         if len(tojoint):
             mix=[]
-            mixname=[]
-            newpeaksbuffer=newpeaks[:]
-            newpeaksnamesbuffer=newpeaksnames[:]
             iDelete = []
             for _group in tojoint:
                 rate = 0.0
@@ -1037,7 +1031,7 @@ def _getAttFilteredElementDict(elementsList,
                 if funnyfactor is None:
                     funnyfactor = attenuator[3]
                 else:
-                    if abs(attenuator[3]-freefraction) > 0.0001:
+                    if abs(attenuator[3]-funnyfactor) > 0.0001:
                         raise ValueError("All funny type filters must have same openning fraction")
                 coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
             if funnyfactor is None:
@@ -1458,7 +1452,6 @@ def getMultilayerFluorescence(multilayer0,
                     if not len(escape):continue
                     energyList2 = [x[0] for x in escape]
                     weightList2 = Numeric.array([x[1] for x in escape]) * newweightlist2[iene]
-                    flagList2   = Numeric.ones(weightList2.shape,Numeric.Float)
                     #correct for attenuation in intermediate layers!!!
                     weightList3 = 1.0 * weightList2
                     for ilayer3 in range(len(multilayer)):
@@ -1627,7 +1620,6 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
     
     #do the job
     outputDict = {}
-    shelllist = ['Coherent', 'Compton']
     for z,ele in elementsList:
         outputDict[ele] ={}
         outputDict[ele]['mass fraction'] = eleDict[ele]
@@ -1890,7 +1882,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 if funnyfactor is None:
                     funnyfactor = attenuator[3]
                 else:
-                    if abs(attenuator[3]-freefraction) > 0.0001:
+                    if abs(attenuator[3] - funnyfactor) > 0.0001:
                         raise ValueError(\
                             "All funny type filters must have same openning fraction")
                 coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
@@ -3109,7 +3101,6 @@ updateDict()
 
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) > 1:
         ele = sys.argv[1]
         if ele in Element.keys():

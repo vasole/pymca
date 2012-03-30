@@ -31,6 +31,9 @@ import numpy.oldnumeric as Numeric
 import numpy
 import sys
 import os
+
+# Offer automatic conversion to HDF5 in case of lacking
+# memory to hold the Stack.
 HDF5 = False
 try:
     import h5py
@@ -434,8 +437,6 @@ class EDFStack(DataObject.DataObject):
         name = os.path.basename(filename)
         n = len(name)
         i = 1
-        numbers = ['0', '1', '2', '3', '4', '5',
-                   '6', '7', '8','9']
         while (i <= n):
             c = name[n-i:n-i+1]
             if c in ['0', '1', '2',

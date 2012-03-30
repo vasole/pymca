@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 DEBUG = 0
@@ -59,7 +58,6 @@ class HDF5CounterTable(QtGui.QTableWidget):
 
     def build(self, cntlist, aliaslist=None):
         self.__building = True
-        nmca = 0
         if aliaslist is None:
             import posixpath
             aliaslist = []
@@ -229,12 +227,15 @@ class HDF5CounterTable(QtGui.QTableWidget):
         else:
             cntlist = self.cntList * 1
 
-        if 'aliaslist' in keys:
-            aliaslist = ddict['aliaslist']
-        elif len(self.aliasList) == len(cntlist):
-            aliaslist = self.aliasList * 1
-        else:            
-            aliaslist = self.cntList * 1
+
+        # no selection based on aliaslist or counterlist (yet?)
+        if 0:
+            if 'aliaslist' in keys:
+                aliaslist = ddict['aliaslist']
+            elif len(self.aliasList) == len(cntlist):
+                aliaslist = self.aliasList * 1
+            else:            
+                aliaslist = self.cntList * 1
 
         if 'x' in keys:
             x = ddict['x']

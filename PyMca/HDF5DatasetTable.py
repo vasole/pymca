@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 from PyMca import CloseEventNotifyingWidget
 from PyMca import NumpyArrayTableWidget
@@ -42,4 +41,3 @@ class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def setDataset(self, dataset):
         self.arrayTableWidget.setArrayData(dataset)
 
-        

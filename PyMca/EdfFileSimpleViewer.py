@@ -26,7 +26,6 @@ __revision__ = "$Revision: 1.7 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 from PyMca import PyMcaQt as qt
     
 QTVERSION = qt.qVersion()

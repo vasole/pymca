@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import posixpath
+import numpy
 import h5py
 try:
     from PyMca import DataObject
@@ -36,8 +37,7 @@ try:
 except:
     print("HDF5Stack1D importing NexusDataSource from local directory!")
     import NexusDataSource
-import posixpath
-import numpy
+
 DEBUG = 0    
 SOURCE_TYPE = "HDF5Stack1D"
 
@@ -236,7 +236,6 @@ class HDF5Stack1D(DataObject.DataObject):
         if not DONE:
             self.info["McaIndex"] = 2
             n = 0
-            i_idx = dim0 * dim1
 
             if dim0 == 1:
                 self.onBegin(dim1)
@@ -546,6 +545,3 @@ class HDF5Stack1D(DataObject.DataObject):
 
     def onEnd(self):
         pass
-
-if __name__ == "__main__":
-    import sys

@@ -74,9 +74,6 @@ Full event names: A string with the event name fully specified (i.e. a.b.c)
 """
 __version__ = '0.1Beta'
 
-#import new, string,
-import os.path
-
 class Event(object):
   pass
 

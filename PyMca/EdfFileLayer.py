@@ -176,7 +176,6 @@ class EdfFileLayer(object):
                 source_info["KeyList"]=range(NumImages)
             return source_info
         else:
-            source_info0=[]
             if key is None:
                 source_info={}
                 self.SourceInfo={}
@@ -450,7 +449,6 @@ if __name__ == "__main__":
     print(obj.GetSourceInfo())
     for i in range(1):
         #this works obj.LoadSource("%d" % i)
-        import time
         print("Full")
         e=time.time()
         info,data = obj.LoadSource(key)
