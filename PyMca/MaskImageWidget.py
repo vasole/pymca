@@ -1574,9 +1574,6 @@ class MaskImageWidget(qt.QWidget):
                         qt.SIGNAL('MaskImageWidgetSignal'),
                         ddict)
 
-    def _saveToolButtonSignal(self):
-        self._saveMenu.exec_(self.cursor().pos())
-
     def _zoomResetSignal(self):
         if DEBUG:
             print("_zoomResetSignal")
@@ -1757,8 +1754,8 @@ def test():
 
     if QTVERSION < '4.0.0':
         qt.QObject.connect(container,
-                       qt.PYSIGNAL("MaskImageWidgetSignal"),
-                       updateMask)
+                           qt.PYSIGNAL("MaskImageWidgetSignal"),
+                           theSlot)
         app.setMainWidget(container)
         app.exec_loop()
     else:
@@ -1769,4 +1766,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+

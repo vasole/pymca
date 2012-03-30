@@ -27,8 +27,6 @@
 
 __revision__ = "$Revision: 1.65 $"
 __author__="V.A. Sole - ESRF BLISS Group"
-import sys
-import types
 import copy
 import os
 import time
@@ -43,7 +41,6 @@ else:
 QTVERSION = qt.qVersion()
 
 try:
-    from PyMca import PyMcaMatplotlibSave
     from PyMca import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
@@ -420,7 +417,6 @@ class McaAdvancedFit(qt.QWidget):
         l3.setFixedWidth(l3.fontMetrics().width('##'))
         msg.show()
         qt.qApp.processEvents()
-        t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
         if QTVERSION < '4.0.0':
@@ -963,7 +959,6 @@ class McaAdvancedFit(qt.QWidget):
                self.connect(self.concentrationsWidget,qt.SIGNAL("ConcentrationsSignal"),
                                     self.__configureFromConcentrations)
         tool = self.concentrationsWidget
-        toolconfig = tool.getParameters()
         dict = {}
         dict.update(config['concentrations'])
         tool.setParameters(dict, signal=False)
@@ -1037,7 +1032,6 @@ class McaAdvancedFit(qt.QWidget):
         fitresult = self.dict
         config = self.mcafit.configure()
         tool   = ConcentrationsTool.ConcentrationsTool()
-        toolconfig = tool.configure()
         dict = {}
         dict.update(config['concentrations'])
         tool.configure(dict)
@@ -1085,7 +1079,7 @@ class McaAdvancedFit(qt.QWidget):
             if len(element) >2:
                 areas.append(0.0)
             else:
-                transitions = item[1] + " xrays"
+                # transitions = item[1] + " xrays"
                 areas.append(dict['area'][group])
 
         nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
@@ -1145,7 +1139,6 @@ class McaAdvancedFit(qt.QWidget):
             return
         #fitresult = self.dict['result']
         fitresult = self.dict
-        config = self.mcafit.configure()
         groupsList = fitresult['result']['groups']
         if type(groupsList) != type([]):
             groupsList = [groupsList]
@@ -1226,7 +1219,7 @@ class McaAdvancedFit(qt.QWidget):
                 return
             if self.outdir[-1]=="/":self.outdir=self.outdir[0:-1]
         try:
-            report = self.__htmlReport()
+            self.__htmlReport()
         except IOError:
             self.outdir = None
             if oldoutdir is not None:
@@ -1296,8 +1289,8 @@ class McaAdvancedFit(qt.QWidget):
             self.browsertext.mimeSourceFactory().addFilePath(QString(os.path.dirname(self.__lastreport)))
             self.browsertext.setText(text)
         else:
-            dirname  = os.path.dirname(self.__lastreport)
-            basename = os.path.basename(self.__lastreport)
+            dirname = os.path.dirname(self.__lastreport)
+            # basename = os.path.basename(self.__lastreport)
             #self.browsertext.setMimeSourceFactory(qt.QMimeFactory.defaultFactory())
             #self.browsertext.mimeSourceFactory().addFilePath(QString(dirname))
             self.browsertext.setSearchPaths([QString(dirname)])
@@ -1322,17 +1315,16 @@ class McaAdvancedFit(qt.QWidget):
         text = "<CENTER>"+self.concentrationsWidget.concentrationsTable.getHtmlText()+"</CENTER>"
         if (__name__ == "__main__") or (doit):
             self.__print(text)
-            #print h+text
         else:
             ddict={}
             ddict['event'] = "McaAdvancedFitPrint"
-            ddict['text' ] = h+text
+            ddict['text' ] = text
             if QTVERSION < '4.0.0':
                 self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
             else:
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
-    def printps(self,doit=0):
+    def printps(self, doit=0):
         h = self.__htmlheader()
         text = "<CENTER>"+self.mcatable.gettext()+"</CENTER>"
         #text = self.mcatable.gettext()
@@ -1371,7 +1363,7 @@ class McaAdvancedFit(qt.QWidget):
         bkg    = "%s" % str(self.top.BkgComBox.currentText())
         theory = "%s" % str(self.top.FunComBox.currentText())
         hypermetflag=self.mcafit.config['fit']['hypermetflag']
-        g_term    = hypermetflag  & 1
+        # g_term  = hypermetflag & 1
         st_term   = (hypermetflag >>1) & 1
         lt_term   = (hypermetflag >>2) & 1
         step_term = (hypermetflag >>3) & 1
@@ -1905,15 +1897,16 @@ class McaAdvancedFit(qt.QWidget):
         else:
             fitresult = dict
         xdata     = fitresult['result']['xdata']
-        energy    = fitresult['result']['energy']
-        ydata     = fitresult['result']['ydata']
-        yfit      = fitresult['result']['yfit']
-        continuum = fitresult['result']['continuum']
-        pileup    = fitresult['result']['pileup']
-        savelist  = ['xdata', 'energy','ydata','yfit','continuum','pileup']
-        parNames  = fitresult['result']['parameters']
-        parFit    = fitresult['result']['fittedpar']
-        parSigma  = fitresult['result']['sigmapar']
+        # energy    = fitresult['result']['energy']
+        # ydata     = fitresult['result']['ydata']
+        # yfit      = fitresult['result']['yfit']
+        # continuum = fitresult['result']['continuum']
+        # pileup    = fitresult['result']['pileup']
+        # savelist  = ['xdata', 'energy','ydata','yfit','continuum','pileup']
+        # parNames  = fitresult['result']['parameters']
+        # parFit    = fitresult['result']['fittedpar']
+        # parSigma  = fitresult['result']['sigmapar']
+
         #still to add the matrix spectrum
 
         #get outputfile
@@ -2394,7 +2387,7 @@ class Top(qt.QWidget):
         if 'hypermetflag' in ddict:
             hypermetflag = ddict['hypermetflag']
             if ddict['fitfunction'] == 0:
-                g_term    =  hypermetflag & 1
+                # g_term  = hypermetflag & 1
                 st_term   = (hypermetflag >>1) & 1
                 lt_term   = (hypermetflag >>2) & 1
                 step_term = (hypermetflag >>3) & 1
@@ -2818,35 +2811,38 @@ class McaGraphWindow(qt.QWidget):
 
     def _energyIconSignal(self):
         legend = self.graph.getactivecurve(justlegend=1)
-        dict={}
-        dict['event']  = 'EnergyClicked'
-        dict['active'] = legend
+        ddict={}
+        ddict['event']  = 'EnergyClicked'
+        ddict['active'] = legend
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
+            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
 
     def _logIconSignal(self):
         legend = self.graph.getactivecurve(justlegend=1)
-        dict={}
-        dict['event']  = 'LogClicked'
-        dict['active'] = legend
+        ddict={}
+        ddict['event']  = 'LogClicked'
+        ddict['active'] = legend
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
+            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
 
     def _fitIconSignal(self):
         legend = self.graph.getactivecurve(justlegend=1)
-        dict={}
-        dict['event']  = 'FitClicked'
-        dict['active'] = legend
+        ddict={}
+        ddict['event']  = 'FitClicked'
+        ddict['active'] = legend
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('McaGraphSignal'),(ddict,))
         else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
+            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
 
     def _initRoi(self):
+        raise NotImplemented("ROIs not implemented in this module (yet?)")
+        # McaROIwidget is unknown: This method is part of a not finished
+        # project of adding ROI selection capabilities to this module.
         self.roiwidget = McaROIWidget.McaROIWidget(None)
         if QTVERSION < '4.0.0':
             self.connect(self.roiwidget,qt.PYSIGNAL("McaROIWidgetSignal"),
@@ -2933,8 +2929,6 @@ class McaGraphWindow(qt.QWidget):
                             self.roidict[key]['netcounts'] = 0
                         self.roidict[key]['from'  ] = fromdata
                         self.roidict[key]['to'    ] = todata
-                xlabel = self.graph.xlabel()
-                #self.roiwidget.setheader(text="%s ROIs of %s" % (xlabel,legend))
                 self.roiwidget.setHeader(text="ROIs of %s" % (legend))
                 self.roiwidget.fillfromroidict(roilist=self.roilist,
                                                 roidict=self.roidict)

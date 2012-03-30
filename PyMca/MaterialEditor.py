@@ -27,7 +27,6 @@
 __revision__ = "$Revision: 2.01 $"
 import sys
 import os
-import types
 import copy
 import numpy
 from PyMca import PyMcaQt as qt
@@ -40,7 +39,6 @@ elif QTVERSION < '4.0.0':
     from PyMca import qttable
 
 from PyMca import Elements
-from PyMca import ConfigDict
 if QTVERSION > '4.0.0':
     try:
         from PyMca import ScanWindow
@@ -147,18 +145,17 @@ class MaterialEditor(qt.QWidget):
             return 1
         Elements.Material.read(filename)
         error = 0
-        for material in Element.Material.keys():
-            keys = Element.Material[material].keys()
+        for material in list(Elements.Material.keys()):
+            keys = list(Elements.Material[material].keys())
             compoundList = []
-            fractionList = []
             if "CompoundList" in  keys:
-                compoundList = Element.Material[material]["CompoundList"]
+                compoundList = Elements.Material[material]["CompoundList"]
             if "CompoundFraction" in  keys:
-                compoundFraction = Element.Material[material]["CompoundFraction"]
+                compoundFraction = Elements.Material[material]["CompoundFraction"]
             if  (compoundList == []) or (compoundFraction == []):
                 #no message?
                 error = 1
-                del Element.Material[material]
+                del Elements.Material[material]
                 continue
             #I should try to calculate the attenuation at one energy ...
             try:
@@ -168,7 +165,7 @@ class MaterialEditor(qt.QWidget):
             except:
                 #no message?
                 error = 1
-                del Element.Material[material]
+                del Elements.Material[material]
                 continue
         return error
 
@@ -347,7 +344,6 @@ class MaterialComboBox(qt.QComboBox):
                 msg = qt.QMessageBox.No
             else:
                 try:
-                    numberTest = float(text)
                     msg =  qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Invalid Material Name %s\n" % text + \
@@ -478,7 +474,6 @@ class MaterialValidator(qt.QValidator):
         if text == '-':
             return (self.Valid, pos)
         try:
-            number = float(text)
             return (self.Invalid, pos)
         except:
             pass
@@ -913,6 +908,7 @@ class MaterialGUI(qt.QWidget):
             if DEBUG:
                 print("self._current after = ", self._current)
     else:
+        # TODO fred faux positif pour pyflakes
         def _updateCurrent(self):
             if DEBUG:
                 print("updateCurrent(self)")
@@ -1079,7 +1075,7 @@ class MaterialGUI(qt.QWidget):
                     return
         else:
             try:
-                value = float(str(qstring))
+                float(str(qstring))
             except:
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1147,7 +1143,7 @@ class MaterialGUI(qt.QWidget):
                     return
         else:
             try:
-                value = float(str(qstring))
+                float(str(qstring))
             except:
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)

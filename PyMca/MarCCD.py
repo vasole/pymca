@@ -17,7 +17,6 @@
 #############################################################################*/
 import sys
 import struct
-import string
 import numpy
 
 class MarCCD(object):

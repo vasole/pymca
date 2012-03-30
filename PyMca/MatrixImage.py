@@ -26,7 +26,6 @@
 #############################################################################*/
 import sys
 from PyMca import PyMcaQt as qt
-from PyMca import ElementHtml
 image2=["312 177 16 1",
 "  c black",
 ". c maroon",

@@ -34,7 +34,6 @@
 ## **************************************************************************/
 __author__ = "A. Mirone - ESRF SciSoft Group"
 import math
-import time
 sparsamodulo=0
 PARALLEL=0
 
@@ -102,7 +101,6 @@ class LanczosNumericVector:
         return res
 
     def mat_mult(self, evect , q):
-        N=len(evect)            
         self.vr[:evect.shape[0]]=dotblas.dot(evect.astype(self.tipo),q.vr[:evect.shape[1]])
 
     def dividebyarray(self,prec):
@@ -237,8 +235,6 @@ class Lanczos:
         sn   = math.sqrt(float(self.dim))
         eu   = 1.1e-16
         eusn = eu*sn
-        eq   = math.sqrt(eu)
-
 
         if k==0:
 

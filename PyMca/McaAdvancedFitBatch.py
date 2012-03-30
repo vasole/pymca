@@ -27,7 +27,6 @@
 __revision__ = "$Revision: 1.32 $"
 import sys
 import os
-import numpy
 import numpy.oldnumeric as Numeric
 from PyMca import ClassMcaTheory
 from PyMca import SpecFileLayer
@@ -321,18 +320,13 @@ class McaAdvancedFitBatch(object):
     def __processOneFile(self):
         ffile=self.file
         fileinfo = ffile.GetSourceInfo()
-        nimages = nscans = len(fileinfo['KeyList'])
         if 1:
             i = 0
             for scankey in  fileinfo['KeyList']:
                 if self.pleaseBreak: break
                 self.onImage(scankey, fileinfo['KeyList'])
-                if 0:
-                    scan,rc   = string.split(scankey,".")
-                    info,data  = ffile.LoadSource({'Key':int(image)-1})
-                else:
-                    scan,order = scankey.split(".")
-                    info,data  = ffile.LoadSource(scankey)
+                scan,order = scankey.split(".")
+                info,data  = ffile.LoadSource(scankey)
                 if info['SourceType'] == "EdfFile":
                     nrows = int(info['Dim_1'])
                     ncols = int(info['Dim_2'])
@@ -344,25 +338,15 @@ class McaAdvancedFitBatch(object):
                         if self.pleaseBreak: break
                         self.__col += 1
                         if int(nrows) > int(ncols):
-                            row=mca
-                            col=0
                             mcadata = data[mca,:]
                         else:
-                            col=mca
-                            row=0
                             mcadata = data[:,mca]
                         if 'MCA start ch' in info:
                             xmin = float(info['MCA start ch'])
                         else:
                             xmin = 0.0
-                        #key = "%s.%s.%02d.%02d" % (scan,order,row,col)
                         key = "%s.%s.%04d" % (scan,order,mca)
-                        if 0:
-                            #slow
-                            y0  = Numeric.array(mcadata.tolist())
-                        else:
-                            #fast
-                            y0  = Numeric.array(mcadata)
+                        y0  = Numeric.array(mcadata)
                         x = Numeric.arange(len(y0))*1.0 + xmin
                         filename = os.path.basename(info['SourceName'])
                         infoDict = {}

@@ -24,21 +24,16 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
 QTVERSION = qt.qVersion()
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif QTVERSION < '4.0.0':
-    from PyMca import qttable
-
 DEBUG=0
 
 if QTVERSION < '4.0.0':
+    from PyMca import qttable
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -93,7 +88,6 @@ class McaTable(QTable):
                 
     def fillfrommca(self,result,diag=1):
         line=0
-        region=0
         #calculate the number of rows
         nrows = 0
         for group in result['groups']:
@@ -105,7 +99,6 @@ class McaTable(QTable):
                 if result[group][peak]['ratio'] > 0.0:
                     nrows += 1
         self.setRowCount(nrows)
-        alreadyforced = 0
         for group in result['groups']:
             ele,group0 = group.split()
             fitarea    = QString("%.4e" % (result[group]['fitarea']))
@@ -215,19 +208,17 @@ class McaTable(QTable):
                 self.resizeColumnToContents(i)
 
     def __getfitpar(self,result):
-        hypermet = 0
         if  result['fitconfig']['fittheory'].find("Area") != -1:
             fitlabel='Area'
         elif result['fitconfig']['fittheory'].find("Hypermet") != -1:
             fitlabel='Area'
-            hypermet = 1
         else:
             fitlabel='Height'
         values = []
         sigmavalues = []
-        i = 0
         for param in result['paramlist']:
             if param['name'].find('ST_Area') != -1:
+                # value and sigmavalue defined via fitlabel
                 values[-1]      = value * (1.0 + param['fitresult'])
                 #just an approximation
                 sigmavalues[-1] = sigmavalue * (1.0 + param['fitresult'])
@@ -242,32 +233,32 @@ class McaTable(QTable):
 
 
     def __myslot(self,*var):
-        dict={}
+        ddict={}
         if len(var) == 0:
             #selection changed event
             #get the current selection
-            dict['event']       = 'McaTableClicked'
+            ddict['event'] = 'McaTableClicked'
             row = self.currentRow()
         else:
             #Header click
-            dict['event']       = 'McaTableRowHeaderClicked'
+            ddict['event'] = 'McaTableRowHeaderClicked'
             row = var[0]
         ccol = self.currentColumn()
-        dict['row'  ]       = row
-        dict['col']         = ccol
-        dict['labelslist']  = self.labels
+        ddict['row'  ]       = row
+        ddict['col']         = ccol
+        ddict['labelslist']  = self.labels
         if row >= 0:
             col = 0
             for label in self.labels:
                 try:
-                    dict[label] = float(str(self.text(row,col)))
+                    ddict[label] = float(str(self.text(row,col)))
                 except:
-                    dict[label] = str(self.text(row,col))
+                    ddict[label] = str(self.text(row,col))
                 col +=1
         if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaTableSignal'),(dict,))
+            self.emit(qt.PYSIGNAL('McaTableSignal'), (ddict,))
         else:
-            self.emit(qt.SIGNAL('McaTableSignal'), dict)
+            self.emit(qt.SIGNAL('McaTableSignal'), ddict)
 
     def gettext(self):
         lemon= ("#%x%x%x" % (255,250,205)).upper()
@@ -280,11 +271,11 @@ class McaTable(QTable):
         else:
             if DEBUG:
                 print("color background to implement")
-            hcolor = upper("#%x%x%x" % (230,240,249)).upper()
-        text=""
-        text+=("<nobr>")
-        text+=( "<table>")
-        text+=( "<tr>")
+            hcolor = ("#%x%x%x" % (230,240,249)).upper()
+        text = ""
+        text += ("<nobr>")
+        text += ("<table>")
+        text += ("<tr>")
         if QTVERSION < '4.0.0':
             ncols = self.numCols()
         else:
@@ -365,13 +356,13 @@ class McaTable(QTable):
 
 if QTVERSION < '4.0.0':
     class ColorQTableItem(qttable.QTableItem):
-             def __init__(self, table, edittype, text,color=qt.Qt.white,bold=0):
-                     qttable.QTableItem.__init__(self, table, edittype, text)
-                     self.color = color
-                     self.bold  = bold
-             def paint(self, painter, colorgroup, rect, selected):
-                painter.font().setBold(self.bold)
-                cg = qt.QColorGroup(colorgroup)
-                cg.setColor(qt.QColorGroup.Base, self.color)
-                qttable.QTableItem.paint(self,painter, cg, rect, selected)
-                painter.font().setBold(0)
+         def __init__(self, table, edittype, text,color=qt.Qt.white,bold=0):
+            qttable.QTableItem.__init__(self, table, edittype, text)
+            self.color = color
+            self.bold  = bold
+         def paint(self, painter, colorgroup, rect, selected):
+            painter.font().setBold(self.bold)
+            cg = qt.QColorGroup(colorgroup)
+            cg.setColor(qt.QColorGroup.Base, self.color)
+            qttable.QTableItem.paint(self,painter, cg, rect, selected)
+            painter.font().setBold(0)
