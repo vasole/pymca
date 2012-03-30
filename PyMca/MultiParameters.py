@@ -340,12 +340,11 @@ def test():
     if 1:
         import specfile
         import Specfit
-        from numpy.oldnumeric import sqrt,equal,array,Float,concatenate,arange,take,nonzero
+        from numpy.oldnumeric import array,Float,concatenate,arange
         sf=specfile.Specfile('02021201.dat')
         scan=sf.select('14')
         #sf=specfile.Specfile('02022101.dat')
         #scan=sf.select('11')
-        nbmca=scan.nbmca()
         mcadata=scan.mca(1)
         y=array(mcadata)
         #x=arange(len(y))

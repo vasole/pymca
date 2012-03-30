@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 import os
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()

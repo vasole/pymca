@@ -44,9 +44,9 @@ import numpy.oldnumeric as Numeric
 from PyMca import McaAdvancedFit
 from PyMca import DataObject
 from PyMca import McaCalWidget
-from PyMca import Elements
 from PyMca import McaSimpleFit
 from PyMca import Specfit
+from PyMca import SpecfitFuns
 from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
 try:
@@ -899,7 +899,7 @@ class McaWidget(qt.QWidget):
                msg.setWindowTitle('MCA Window')
                msg.exec_()
            return
-        info,x,y = self.getinfodatafromlegend(legend)
+        info, x, y = self.getinfodatafromlegend(legend)
         self.advancedfit.hide()
         self.simplefit.show()
         self.simplefit.setFocus()
@@ -921,7 +921,7 @@ class McaWidget(qt.QWidget):
             self.__simplefitcalibration = calib
             calibrationOrder = curveinfo.get('McaCalibOrder',2)
             if calibrationOrder == 'TOF':
-                x = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                x = calib[2] + calib[0] / pow(x-calib[1],2)
             else:
                 x = calib[0] + calib[1] * x + calib[2] * x * x
             self.simplefit.setdata(x=x,y=y,
@@ -1803,8 +1803,6 @@ class McaWidget(qt.QWidget):
                         else:
                             self.roidict[key]['netcounts'] = 0
                     self.emitCurrentROISignal()
-                xlabel = self.graph.xlabel()
-                #self.roiwidget.setheader(text="%s ROIs of %s" % (xlabel,legend))
                 self.roiwidget.setheader(text="ROIs of %s" % (legend))
                 self.roiwidget.fillfromroidict(roilist=self.roilist,
                                                 roidict=self.roidict)
@@ -1923,6 +1921,7 @@ class McaWidget(qt.QWidget):
             sellist = [selection]
 
         for sel in sellist:
+            # force the selections to include their source for completeness
             source = sel['SourceName']
             key    = sel['Key']
             if "scanselection" in sel:
@@ -1931,7 +1930,6 @@ class McaWidget(qt.QWidget):
             mcakeys    = [key]
             for mca in mcakeys:
                 curveinfo={}
-                curvesel={}
                 legend = sel['legend']
                 dataObject = sel['dataobject']
                 info = dataObject.info
@@ -2152,7 +2150,6 @@ class McaWidget(qt.QWidget):
 
         legendlist = []
         for sel in sellist:
-            source = sel['SourceName']
             key    = sel['Key']
             if "scanselection" in sel:
                 if sel["scanselection"] not in [False, "MCA"]:
@@ -2175,7 +2172,6 @@ class McaWidget(qt.QWidget):
             sellist = selection
         else:
             sellist = [selection]
-        legendlist = []
         doit = False
         for sel in sellist:
             if "scanselection" in sel:
@@ -2283,14 +2279,6 @@ class McaWidget(qt.QWidget):
             return info,None
         else:
             return info,xdata,ydata 
-        
-    def getinfo(self,info):
-        sourcetype = info['SourceType']
-        if  sourcetype == 'SpecFile':
-            nbmca      = info['NbMcaDet']
-            mcacurrent = info['McaDet']
-            header     = info['Header']
-            calib      = info['McaCalib']
 
     def setMiddleROIMarkerFlag(self, flag=None):
         if flag is None:
@@ -2328,7 +2316,7 @@ class McaWidget(qt.QWidget):
                     calib = [0.0, 1.0, 0.0]
             calibrationOrder = curveinfo.get('McaCalibOrder',2)
             if calibrationOrder == 'TOF':
-                x = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                x = calib[2] + calib[0] / pow(x - calib[1],2)
             else:
                 x = calib[0] + calib[1] * x + calib[2] * x * x
         else:

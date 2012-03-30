@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0':
@@ -49,7 +48,7 @@ else:
 
     class McaCustomEvent(qt.QCustomEvent):
         def __init__(self, dict={}):
-            qt.QCustomEvent.__init__(self, CAEVENT)
+            qt.QCustomEvent.__init__(self, MCAEVENT)
             self.dict = dict
         
         

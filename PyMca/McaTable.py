@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -32,12 +31,9 @@ else:
     QString = str
     
 QTVERSION = qt.qVersion()
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif QTVERSION < '4.0.0':
-    from PyMca import qttable
 
 if QTVERSION < '4.0.0':
+    from PyMca import qttable
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -211,19 +207,17 @@ class McaTable(QTable):
 
 
     def __getfitpar(self,result):
-        hypermet = 0
         if  result['fitconfig']['fittheory'].find("Area") != -1:
             fitlabel='Area'
         elif result['fitconfig']['fittheory'].find("Hypermet") != -1:
             fitlabel='Area'
-            hypermet = 1
         else:
             fitlabel='Height'
         values = []
         sigmavalues = []
-        i = 0
         for param in result['paramlist']:
             if param['name'].find('ST_Area')!= -1:
+                # value and sigmavalue known via fitlabel
                 values[-1]      = value * (1.0 + param['fitresult'])
                 #just an approximation
                 sigmavalues[-1] = sigmavalue * (1.0 + param['fitresult'])

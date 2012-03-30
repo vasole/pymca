@@ -28,7 +28,6 @@ __revision__ = "$Revision: 1.21 $"
 __author__="V.A. Sole - ESRF BLISS Group"
 
 import sys
-import os
 import numpy.oldnumeric as Numeric
 from numpy.oldnumeric.linear_algebra import inverse
 import copy
@@ -74,7 +73,6 @@ class McaCalWidget(qt.QDialog):
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
             self.setWindowTitle(self.name)
             maxheight = qt.QDesktopWidget().height()
-            maxwidth  = qt.QDesktopWidget().width()
             if maxheight < 768:
                 self.setMinimumHeight(int(0.9*(maxheight)))
                 self.setMaximumHeight(int(1.0*(maxheight)))
@@ -821,7 +819,6 @@ class McaCalWidget(qt.QDialog):
     def functionTOFDerivative(self, param, index, x):
         A = param[0]
         B = param[1]
-        C = param[2]
         if index == 0:
             return self.functionTOF([1.0, B, 0.0], x)
         if index == 1:
@@ -830,7 +827,7 @@ class McaCalWidget(qt.QDialog):
             return Numeric.ones(x.shape, Numeric.Float)
             
 
-    def calculate(self,usedpeaks,order=1):
+    def calculate(self, usedpeaks, order=1):
         """
         used peaks has the form [[x0,e0],[x1,e1],...]
         """
@@ -843,9 +840,6 @@ class McaCalWidget(qt.QDialog):
                 if DEBUG:
                     print("Division by zero")
                 current = self.current
-                self.caldict[current]['A'] = newcal[0]
-                self.caldict[current]['B'] = newcal[1]
-                self.caldict[current]['C'] = newcal[2]
                 return [self.caldict[current]['A'],
                         self.caldict[current]['B'],
                         self.caldict[current]['C']]
@@ -1622,7 +1616,7 @@ class McaCalCopy(qt.QDialog):
     def _Aslot(self):
         qstring = self.AText.text()
         try:
-            value = float(str(qstring))
+            float(str(qstring))
         except:
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -1636,7 +1630,7 @@ class McaCalCopy(qt.QDialog):
     def _Bslot(self):
         qstring = self.BText.text()
         try:
-            value = float(str(qstring))
+            float(str(qstring))
         except:
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -1650,7 +1644,7 @@ class McaCalCopy(qt.QDialog):
     def _Cslot(self):
         qstring = self.CText.text()
         try:
-            value = float(str(qstring))
+            float(str(qstring))
         except:
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)

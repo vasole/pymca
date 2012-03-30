@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
 import os
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -58,27 +57,9 @@ class McaControlGUI(qt.QWidget):
         layout.setMargin(0)
         layout.setSpacing(0)
 
-        # control
-        control = 0
-        if control:
-             controlbox  = McaControlWidget.McaControlWidget(self)
-             self.sourcebox = controlbox.sourcebox
-             self.sourcebut = controlbox.sourcebut
-             self.calbox = controlbox.calbox
-             self.calbut = controlbox.calbut
-             self.fitbox = controlbox.fitbox
-             self.fitbut = controlbox.fitbut
-             self.controlbox = controlbox
-             layout.addWidget(controlbox)
-        else:
-             self.controlbox= None
-             self.sourcebox = None
-             self.sourcebox = None
-             self.sourcebut = None
-             self.calbox =    None
-             self.calbut =    None
-             self.fitbox =    None
-             self.fitbut =    None
+        self.calbox =    None
+        self.calbut =    None
+
         calibration  = McaCalControlLine(self)
         self.calbox  = calibration.calbox
         self.calbut  = calibration.calbut
@@ -101,10 +82,6 @@ class McaControlGUI(qt.QWidget):
 
         layout.addWidget(calibration)
         layout.addWidget(self.calinfo)
-
-        #self.mousezoombox = controlbox.mousezoombox
-        #self.mouseroibox  = controlbox.mouseroibox
-        #a = HorizontalSpacer(self)
 
         # ROI
         #roibox = qt.QHGroupBox(self)
@@ -129,13 +106,6 @@ class McaControlGUI(qt.QWidget):
     def connections(self):
         #QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"
         #selection changed
-        if self.controlbox is not None:
-            self.connect(self.sourcebox,qt.SIGNAL("activated(const QString &)"),
-                        self.__sourceboxactivated)
-            self.connect(self.fitbox,qt.SIGNAL("activated(const QString &)"),
-                        self.__fitboxactivated)
-            self.connect(self.sourcebut,qt.SIGNAL("clicked()"),self.__sourcebuttonclicked)
-            self.connect(self.fitbut,qt.SIGNAL("clicked()"),self.__fitbuttonclicked)
         self.connect(self.calbox,qt.SIGNAL("activated(const QString &)"),
                     self.__calboxactivated)
         self.connect(self.calbut,qt.SIGNAL("clicked()"),self.__calbuttonclicked)
@@ -160,7 +130,7 @@ class McaControlGUI(qt.QWidget):
             
     def __updateroibox(self):
         options = []
-        for i in range(len(roilist)):
+        for i in range(len(self.roilist)):
             options.append("%d" % i)
         options.append('Add')
         options.append('Del')
@@ -175,30 +145,6 @@ class McaControlGUI(qt.QWidget):
 
     def getroilist(self):
         return self.roilist
-            
-    def __mousezoomcheck(self):
-        if self.mousezoombox.isChecked():
-            self.mouseroibox.setChecked(0)
-            self.__emitpysignal(event='checked',checkbox='mousezoom')
-        else:
-            self.mouseroibox.setChecked(1)
-            self.__emitpysignal(event='checked',checkbox='mouseroi')
-        
-    def __mouseroicheck(self):
-        if self.mouseroibox.isChecked():
-            self.mousezoombox.setChecked(0)
-            self.__emitpysignal(event='checked',checkbox='mouseroi')
-        else:
-            self.mousezoombox.setChecked(1)
-            self.__emitpysignal(event='checked',checkbox='mousezoom')
-
-    def __sourceboxactivated(self,item):
-        item = str(item)
-        if DEBUG:
-            print("Source box activated %s" % item)
-        comboitem,combotext = self.sourcebox.getcurrent()
-        self.__emitpysignal(box=[comboitem,combotext],boxname='Source',
-                           event='activated')
 
     def _calboxactivated(self, item):
         self.__calboxactivated(item)
@@ -211,35 +157,12 @@ class McaControlGUI(qt.QWidget):
         self.__emitpysignal(box=[comboitem,combotext],boxname='Calibration',
                             event='activated')
 
-    def __fitboxactivated(self,item):
-        item = str(item)
-        if DEBUG:
-            print("Fit box activated %s" % item)
-        comboitem,combotext = self.fitbox.getcurrent()
-        self.__emitpysignal(box=[comboitem,combotext],boxname='Fit',
-                            event='activated')
-
-    """
-    def __roiboxactivated(self,item):
-        item = str(item)
-        if DEBUG:
-            print "Roi box activated ",item
-        comboitem,combotext = self.roibox.getcurrent()
-        self.__emitpysignal(box=[comboitem,combotext],boxname='ROI',
-                            event='activated')
-    """
     def __forward(self,dict):
         if qt.qVersion() < '4.0.0':
             self.emit(qt.PYSIGNAL("McaControlGUISignal"), (dict,))    
         else:
             self.emit(qt.SIGNAL("McaControlGUISignal"), dict)  
 
-    def __sourcebuttonclicked(self):
-        if DEBUG:
-            print("Source button clicked")
-        comboitem,combotext = self.sourcebox.getcurrent()
-        self.__emitpysignal(button="Source",
-                            box=[comboitem,combotext],event='clicked')
         
     def __calbuttonclicked(self):
         if DEBUG:
@@ -398,12 +321,6 @@ class McaControlGUI(qt.QWidget):
                             box=[comboitem,combotext],
                             line_edit = filename,
                             event='clicked')
-
-    def __fitbuttonclicked(self):
-        if DEBUG:
-            print("Fit button clicked")
-        comboitem,combotext = self.fitbox.getcurrent()
-        self.__emitpysignal(button="Fit",box=[comboitem,combotext],event='clicked')
 
     def __roiresetbuttonclicked(self):
         if DEBUG:

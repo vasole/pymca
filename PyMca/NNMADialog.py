@@ -32,7 +32,6 @@ from PyMca import PyMcaQt as qt
 NNMA = False
 if qt.qVersion() > '4.0.0':
     try:
-        import PyQt4.Qwt5 as Qwt
         from PyMca import NNMAWindow
         NNMA = True
     except ImportError:
@@ -199,7 +198,6 @@ class NNMADialog(qt.QDialog):
         if self.nnmaParametersDialog is not None:
             self.nnmaParametersDialog.nPC.setMaximum(self._spectrumLength)
             self.nnmaParametersDialog.nPC.setValue(min(10, self._spectrumLength))
-            ddict = {'options':self._binningOptions, 'binning': 1, 'method': 0}
 
     def _submitThread(self, function, *var, **kw):
         message = "Please Wait: NNMA Going On"
@@ -229,7 +227,6 @@ class NNMADialog(qt.QDialog):
         layout.addWidget(l3)
         msg.show()
         qt.qApp.processEvents()
-        t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
         while (sthread.isRunning()):

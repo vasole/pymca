@@ -35,14 +35,11 @@ else:
     
 QTVERSION = qt.qVersion()
 
-if QTVERSION < '3.0.0':
-    from PyMca import Myqttable as qttable
-elif QTVERSION < '4.0.0':
-    from PyMca import qttable
 from PyMca import PyMcaDirs
 from PyMca import ConfigDict
 
 if QTVERSION < '4.0.0':
+    from PyMca import qttable
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -305,6 +302,7 @@ class McaROIWidget(qt.QWidget):
         else:
             self.info['xlabel'] = 'X'
         if 'rois' in kw:
+            rois = kw['rois']
             self.mcaROITable.fillfromrois(rois)
         self.setheader(text="%s ROIs of %s" % (self.info['xlabel'],
                                                self.info['legend']))

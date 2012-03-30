@@ -27,12 +27,8 @@
 __revision__ = "$Revision: 1.14 $"
 import sys
 import os
-import types
 import qt
-if qt.qVersion() < '3.0.0':
-    from PyMca import Myqttable as qttable
-else:
-    from PyMca import qttable
+from PyMca import qttable
 import PyMca.PyMca_Icons as icons
 from PyMca import SpecFileDataInfo
 
@@ -473,7 +469,6 @@ class CntTable(qt.QWidget):
     def refresh(self):
         #self.cntlist= self.info["AllLabels"] or []
         self.cntlist= self.info["LabelNames"] or []
-        pts= self.info["Lines"] or 0
 
         if self.cntlist==[]: 
             self.reset()
@@ -577,7 +572,6 @@ class CntTable(qt.QWidget):
             pass
         elif col==1:
             #xclick
-            maxclicked=1
             for i in range(self.cnt):
                 if i != row:
                     self.table.xcheck[i].setChecked(0)                
@@ -1042,6 +1036,7 @@ class SpecFileSelector(qt.QWidget):
         if DEBUG:
             print("__cntDoubleClicked(self, cntkeys) called")
         sel= {"SourceName":self.data.SourceName, "Key":cntkeys}
+        # one day I may recover this signal ...
         #self.eh.event(self.addEvent, [sel])
 
     def __OLDmcaDoubleClicked(self, mcakeys):

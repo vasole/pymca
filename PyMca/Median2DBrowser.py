@@ -25,7 +25,6 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF BLISS Group"
-import sys
 import numpy
 try:
     from PyMca import StackBrowser
