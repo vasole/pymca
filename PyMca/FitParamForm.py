@@ -26,16 +26,19 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.19 $"
 import sys
-from PyMca.PyMcaQt import *
+from PyMca import PyMcaQt as qt
 
-QTVERSION = qVersion()
+QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    Q3SpinBox = QSpinBox
+    Q3SpinBox = qt.QSpinBox
+    QLabelAlignRight = qt.QLabel.AlignRight
+    QLabelAlignCenter = qt.QLabel.AlignCenter
+    QLabelAlignVCenter = qt.QLabel.AlignVCenter
 else:
-    QLabel.AlignRight = Qt.AlignRight
-    QLabel.AlignCenter = Qt.AlignCenter
-    QLabel.AlignVCenter= Qt.AlignVCenter
-    class Q3SpinBox(QSpinBox):
+    QLabelAlignRight = qt.Qt.AlignRight
+    QLabelAlignCenter = qt.Qt.AlignCenter
+    QLabelAlignVCenter= qt.Qt.AlignVCenter
+    class Q3SpinBox(qt.QSpinBox):
         def setMinValue(self, v):
             self.setMinimum(v)
 
@@ -45,46 +48,50 @@ else:
         def setLineStep(self, v):
             self.setSingleStep(v)
         
-    class Q3GridLayout(QGridLayout):
+    class Q3GridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
         
-class HorizontalSpacer(QWidget):
+class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
-        QWidget.__init__(self, *args)
+        qt.QWidget.__init__(self, *args)
 
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed))
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,\
+                                          qt.QSizePolicy.Fixed))
 
-class VerticalSpacer(QWidget):
+class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
-        QWidget.__init__(self, *args)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Expanding))
+        qt.QWidget.__init__(self, *args)
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,\
+                                          qt.QSizePolicy.Expanding))
         
-class FitParamForm(QWidget):
+class FitParamForm(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        if qVersion() < '4.0.0':
-            QWidget.__init__(self,parent,name,fl)
+        if QTVERSION < '4.0.0':
+            qt.QWidget.__init__(self,parent,name,fl)
 
             if name == None:
                 self.setName("FitParamForm")
             self.setCaption(str("FIT Parameters"))
         else:
-            QWidget.__init__(self,parent)
+            qt.QWidget.__init__(self,parent)
 
-        if qVersion() < '4.0.0':
-            FitParamFormLayout = QVBoxLayout(self,11,6,"FitParamFormLayout")
-            self.mainTab = QTabWidget(self,"mainTab")
-            self.tabFit = QWidget(self.mainTab,"tabFit")
-            tabFitLayout = QVBoxLayout(self.tabFit,11,6,"tabFitLayout")
+        if QTVERSION < '4.0.0':
+            FitParamFormLayout = qt.QVBoxLayout(self, 11, 6,
+                                                "FitParamFormLayout")
+            self.mainTab = qt.QTabWidget(self, "mainTab")
+            self.tabFit = qt.QWidget(self.mainTab, "tabFit")
+            tabFitLayout = qt.QVBoxLayout(self.tabFit, 11, 6,
+                                       "tabFitLayout")
 
-            layout5 = QGridLayout(None,1,1,12,6,"layout5")
+            layout5 = qt.QGridLayout(None, 1, 1, 12, 6, "layout5")
         else:
-            FitParamFormLayout = QVBoxLayout(self)
+            FitParamFormLayout = qt.QVBoxLayout(self)
             FitParamFormLayout.setMargin(11)
             FitParamFormLayout.setSpacing(6)
-            self.mainTab = QTabWidget(self)
-            self.tabFit = QWidget()
-            tabFitLayout = QVBoxLayout(self.tabFit)
+            self.mainTab = qt.QTabWidget(self)
+            self.tabFit = qt.QWidget()
+            tabFitLayout = qt.QVBoxLayout(self.tabFit)
             tabFitLayout.setMargin(11)
             tabFitLayout.setSpacing(6)
             layout5 = Q3GridLayout(None)
@@ -92,59 +99,59 @@ class FitParamForm(QWidget):
             layout5.setMargin(11)
             layout5.setSpacing(6)
 
-        if qVersion() < '4.0.0':
-            self.functionCombo = QComboBox(0,self.tabFit)
+        if QTVERSION < '4.0.0':
+            self.functionCombo = qt.QComboBox(0, self.tabFit)
         else:
-            self.functionCombo = QComboBox(self.tabFit)
+            self.functionCombo = qt.QComboBox(self.tabFit)
             self.functionCombo.insertItem = self.functionCombo.addItem
 
-        self.functionLabel = QLabel(self.tabFit)
+        self.functionLabel = qt.QLabel(self.tabFit)
         self.functionLabel.setText("Fit Function")
         self.functionCombo.insertItem(str("Mca Hypermet"))
         self.functionCombo.insertItem(str("Mca Pseudo-Voigt"))
 
 
-        self.snipWidthLabel = QLabel(self.tabFit)
+        self.snipWidthLabel = qt.QLabel(self.tabFit)
         self.snipWidthLabel.setText(str("SNIP Background Width"))
 
-        self.stripWidthLabel = QLabel(self.tabFit)
+        self.stripWidthLabel = qt.QLabel(self.tabFit)
         self.stripWidthLabel.setText(str("Strip Background Width"))
-        self.stripIterValue = QLineEdit(self.tabFit)
+        self.stripIterValue = qt.QLineEdit(self.tabFit)
 
 
-        self.chi2Label = QLabel(self.tabFit)
+        self.chi2Label = qt.QLabel(self.tabFit)
         self.chi2Label.setText(str("Minimum chi^2 difference (%)"))
 
-        self.chi2Value = QLineEdit(self.tabFit)
+        self.chi2Value = qt.QLineEdit(self.tabFit)
 
-        self.linearFitFlagCheck = QCheckBox(self.tabFit)
+        self.linearFitFlagCheck = qt.QCheckBox(self.tabFit)
         self.linearFitFlagCheck.setText(str("Perform a Linear Fit Fixing non-linear Parameters to Initial Values"))
 
         self.mainTab.addTab(self.tabFit,str("FIT"))
 
-        self.lastLabel = QLabel(self.tabFit)
-        lastLabel_font = QFont(self.lastLabel.font())
+        self.lastLabel = qt.QLabel(self.tabFit)
+        lastLabel_font = qt.QFont(self.lastLabel.font())
         lastLabel_font.setItalic(1)
         self.lastLabel.setFont(lastLabel_font)
         self.lastLabel.setText(str("Last channel :"))
-        self.lastLabel.setAlignment(QLabel.AlignVCenter | QLabel.AlignRight)
+        self.lastLabel.setAlignment(QLabelAlignVCenter | QLabelAlignRight)
 
-        self.regionCheck = QCheckBox(self.tabFit)
+        self.regionCheck = qt.QCheckBox(self.tabFit)
         self.regionCheck.setText(str("Limit fitting region to :"))
 
-        self.topLine = QFrame(self.tabFit)
-        self.topLine.setFrameShape(QFrame.HLine)
-        self.topLine.setFrameShadow(QFrame.Sunken)
-        self.topLine.setFrameShape(QFrame.HLine)
+        self.topLine = qt.QFrame(self.tabFit)
+        self.topLine.setFrameShape(qt.QFrame.HLine)
+        self.topLine.setFrameShadow(qt.QFrame.Sunken)
+        self.topLine.setFrameShape(qt.QFrame.HLine)
 
 
         ##########
-        self.weightLabel = QLabel(self.tabFit)
+        self.weightLabel = qt.QLabel(self.tabFit)
         self.weightLabel.setText("Statistical weighting of data")
-        if qVersion() < '4.0.0':
-            self.weightCombo = QComboBox(0,self.tabFit)
+        if QTVERSION < '4.0.0':
+            self.weightCombo = qt.QComboBox(0, self.tabFit)
         else:
-            self.weightCombo = QComboBox(self.tabFit)
+            self.weightCombo = qt.QComboBox(self.tabFit)
             self.weightCombo.insertItem = self.weightCombo.addItem
         
         self.weightCombo.insertItem(str("NO Weight"))
@@ -153,14 +160,14 @@ class FitParamForm(QWidget):
 
 
         ##########
-        self.iterLabel = QLabel(self.tabFit)
+        self.iterLabel = qt.QLabel(self.tabFit)
         self.iterLabel.setText(str("Number of fit iterations"))
 
 
-        if qVersion() < '4.0.0':
-            self.contCombo = QComboBox(0,self.tabFit)
+        if QTVERSION < '4.0.0':
+            self.contCombo = qt.QComboBox(0, self.tabFit)
         else:
-            self.contCombo = QComboBox(self.tabFit)
+            self.contCombo = qt.QComboBox(self.tabFit)
             self.contCombo.insertItem = self.contCombo.addItem
         
         self.contCombo.insertItem(str("NO Continuum"))
@@ -170,18 +177,18 @@ class FitParamForm(QWidget):
         self.contCombo.insertItem(str("Linear Polynomial"))
         self.contCombo.insertItem(str("Exp. Polynomial"))
 
-        if qVersion() < '4.0.0':
-            self.stripCombo = QComboBox(0,self.tabFit)
+        if QTVERSION < '4.0.0':
+            self.stripCombo = qt.QComboBox(0, self.tabFit)
         else:
-            self.stripCombo = QComboBox(self.tabFit)
+            self.stripCombo = qt.QComboBox(self.tabFit)
             self.stripCombo.insertItem = self.stripCombo.addItem
         
-        self.stripComboLabel = QLabel(self.tabFit)
+        self.stripComboLabel = qt.QLabel(self.tabFit)
         self.stripComboLabel.setText("Non-analytical (or estimation) background algorithm")
         self.stripCombo.insertItem(str("Strip"))
         self.stripCombo.insertItem(str("SNIP"))
         self.connect(self.stripCombo,
-                     SIGNAL("activated(int)"),
+                     qt.SIGNAL("activated(int)"),
                      self._stripComboActivated)
 
         self.snipWidthSpin = Q3SpinBox(self.tabFit)
@@ -207,13 +214,13 @@ class FitParamForm(QWidget):
         self.minSpin.setMaxValue(maxnchannel)
         self.minSpin.setLineStep(128)
 
-        self.stripIterLabel = QLabel(self.tabFit)
+        self.stripIterLabel = qt.QLabel(self.tabFit)
         self.stripIterLabel.setText(str("Strip Background Iterations"))
 
         self.iterSpin = Q3SpinBox(self.tabFit)
         self.iterSpin.setMinValue(1)
 
-        self.stripFilterLabel = QLabel(self.tabFit)
+        self.stripFilterLabel = qt.QLabel(self.tabFit)
         self.stripFilterLabel.setText(str("Strip Background Smoothing Width (Savitsky-Golay)"))
 
         self.stripFilterSpin = Q3SpinBox(self.tabFit)
@@ -222,11 +229,11 @@ class FitParamForm(QWidget):
         self.stripFilterSpin.setLineStep(2)
 
         ########
-        self.anchorsContainer = QWidget(self.tabFit)
-        anchorsContainerLayout = QHBoxLayout(self.anchorsContainer)
+        self.anchorsContainer = qt.QWidget(self.tabFit)
+        anchorsContainerLayout = qt.QHBoxLayout(self.anchorsContainer)
         anchorsContainerLayout.setMargin(0)
         anchorsContainerLayout.setSpacing(2)
-        self.stripAnchorsFlagCheck = QCheckBox(self.anchorsContainer)
+        self.stripAnchorsFlagCheck = qt.QCheckBox(self.anchorsContainer)
         self.stripAnchorsFlagCheck.setText(str("Strip Background use Anchors"))
         anchorsContainerLayout.addWidget(self.stripAnchorsFlagCheck)
 
@@ -239,27 +246,27 @@ class FitParamForm(QWidget):
             self.stripAnchorsList.append(anchorSpin)
         #######
 
-        self.firstLabel = QLabel(self.tabFit)
-        firstLabel_font = QFont(self.firstLabel.font())
+        self.firstLabel = qt.QLabel(self.tabFit)
+        firstLabel_font = qt.QFont(self.firstLabel.font())
         firstLabel_font.setItalic(1)
         self.firstLabel.setFont(firstLabel_font)
         self.firstLabel.setText(str("First channel :"))
-        if qVersion() < '4.0.0':
-            self.firstLabel.setAlignment(QLabel.AlignVCenter | QLabel.AlignRight)
+        if QTVERSION < '4.0.0':
+            self.firstLabel.setAlignment(QLabelAlignVCenter | QLabelAlignRight)
         else:
-            self.firstLabel.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+            self.firstLabel.setAlignment(qt.Qt.AlignVCenter | qt.Qt.AlignRight)
 
 
-        self.typeLabel = QLabel(self.tabFit)
+        self.typeLabel = qt.QLabel(self.tabFit)
         self.typeLabel.setText(str("Continuum type"))
 
-        self.orderLabel = QLabel(self.tabFit)
+        self.orderLabel = qt.QLabel(self.tabFit)
         self.orderLabel.setText(str("Polynomial order"))
 
-        self.bottomLine = QFrame(self.tabFit)
-        self.bottomLine.setFrameShape(QFrame.HLine)
-        self.bottomLine.setFrameShadow(QFrame.Sunken)
-        self.bottomLine.setFrameShape(QFrame.HLine)
+        self.bottomLine = qt.QFrame(self.tabFit)
+        self.bottomLine.setFrameShape(qt.QFrame.HLine)
+        self.bottomLine.setFrameShadow(qt.QFrame.Sunken)
+        self.bottomLine.setFrameShape(qt.QFrame.HLine)
 
         layout5.addMultiCellWidget(self.functionLabel,0,0,0,1)
         layout5.addMultiCellWidget(self.functionCombo,0,0,3,4)
@@ -274,7 +281,7 @@ class FitParamForm(QWidget):
 
         layout5.addMultiCellWidget(self.stripComboLabel, 3, 3, 0, 1)
         if QTVERSION > '4.0.0':
-            self.stripSetupButton = QPushButton(self.tabFit)
+            self.stripSetupButton = qt.QPushButton(self.tabFit)
             self.stripSetupButton.setText('SETUP')
             self.stripSetupButton.setAutoDefault(False)
             layout5.addWidget(self.stripCombo, 3, 3)
@@ -300,8 +307,10 @@ class FitParamForm(QWidget):
         layout5.addMultiCellWidget(self.weightCombo,9,9,3,4)
 
         layout5.addWidget(self.iterLabel,10,0)
-        if qVersion() < '4.0.0':
-            spacer = QSpacerItem(185,16,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        if QTVERSION < '4.0.0':
+            spacer = qt.QSpacerItem(185, 16,\
+                                    qt.QSizePolicy.Expanding,
+                                    qt.QSizePolicy.Minimum)
             layout5.addMultiCell(spacer,10,10,1,2)
         else:
             layout5.addWidget(HorizontalSpacer(self.tabFit),10,1)
@@ -325,83 +334,85 @@ class FitParamForm(QWidget):
 
         tabFitLayout.addLayout(layout5)
 
-        includeWidget = QWidget(self.tabFit)
+        includeWidget = qt.QWidget(self.tabFit)
         
-        if qVersion() < '4.0.0':
-            includeLayout = QGridLayout(includeWidget,1,1,0,3,"includeLayout")
+        if QTVERSION < '4.0.0':
+            includeLayout = qt.QGridLayout(includeWidget,1,1,0,3,"includeLayout")
         else:
             includeLayout = Q3GridLayout(includeWidget)
             includeLayout.setMargin(0)
             includeLayout.setSpacing(3)
 
-        self.stepCheck = QCheckBox(includeWidget)
+        self.stepCheck = qt.QCheckBox(includeWidget)
         self.stepCheck.setText(str("Step tail"))
 
         includeLayout.addWidget(self.stepCheck,2,2)
 
-        self.escapeCheck = QCheckBox(includeWidget)
+        self.escapeCheck = qt.QCheckBox(includeWidget)
         self.escapeCheck.setText(str("Escape peaks"))
 
         includeLayout.addWidget(self.escapeCheck,1,1)
 
-        self.includeLabel = QLabel(includeWidget)
-        includeLabel_font = QFont(self.includeLabel.font())
+        self.includeLabel = qt.QLabel(includeWidget)
+        includeLabel_font = qt.QFont(self.includeLabel.font())
         includeLabel_font.setBold(1)
         self.includeLabel.setFont(includeLabel_font)
         self.includeLabel.setText(str("Include:"))
 
         includeLayout.addWidget(self.includeLabel,0,0)
 
-        self.sumCheck = QCheckBox(includeWidget)
+        self.sumCheck = qt.QCheckBox(includeWidget)
         self.sumCheck.setText(str("Pile-up peaks"))
 
         includeLayout.addWidget(self.sumCheck,1,2)
 
-        self.scatterCheck = QCheckBox(includeWidget)
+        self.scatterCheck = qt.QCheckBox(includeWidget)
         self.scatterCheck.setText(str("Scattering peaks"))
 
         includeLayout.addWidget(self.scatterCheck,1,3)
 
-        self.stripCheck = QCheckBox(includeWidget)
+        self.stripCheck = qt.QCheckBox(includeWidget)
         self.stripCheck.setText(str("Stripping"))
 
         includeLayout.addWidget(self.stripCheck,1,0)
 
-        self.longCheck = QCheckBox(includeWidget)
+        self.longCheck = qt.QCheckBox(includeWidget)
         self.longCheck.setText(str("Long tail"))
 
         includeLayout.addWidget(self.longCheck,2,1)
 
-        self.shortCheck = QCheckBox(includeWidget)
+        self.shortCheck = qt.QCheckBox(includeWidget)
         self.shortCheck.setText(str("Short tail"))
 
         includeLayout.addWidget(self.shortCheck,2,0)
         #tabFitLayout.addLayout(includeLayout)
         layout5.addMultiCellWidget(includeWidget,18,19,0,4)
 
-        spacer_2 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacer_2 = qt.QSpacerItem(20, 40,\
+                                  qt.QSizePolicy.Minimum,\
+                                  qt.QSizePolicy.Expanding)
         tabFitLayout.addItem(spacer_2)
 
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             #self.mainTab.insertTab(self.tabFit,str("FIT"))
-            self.tabDetector = QWidget(self.mainTab,"tabDetector")
-            tabDetectorLayout = QVBoxLayout(self.tabDetector,11,6,"tabDetectorLayout")
+            self.tabDetector = qt.QWidget(self.mainTab,"tabDetector")
+            tabDetectorLayout = qt.QVBoxLayout(self.tabDetector,11,6,"tabDetectorLayout")
 
-            detLayout = QGridLayout(None,1,1,0,2,"detLayout")
-            self.elementCombo = QComboBox(0,self.tabDetector,"elementCombo")
+            detLayout = qt.QGridLayout(None,1,1,0,2,"detLayout")
+            self.elementCombo = qt.QComboBox(0,self.tabDetector,"elementCombo")
         else:
             #self.mainTab.addTab(self.tabFit,str("FIT"))
-            self.tabDetector = QWidget()
-            tabDetectorLayout = QVBoxLayout(self.tabDetector)
+            self.tabDetector = qt.QWidget()
+            tabDetectorLayout = qt.QVBoxLayout(self.tabDetector)
             tabDetectorLayout.setMargin(11)
             tabDetectorLayout.setSpacing(6)
 
             detLayout = Q3GridLayout(None)
             detLayout.setMargin(0)
             detLayout.setSpacing(2)
-            self.elementCombo = QComboBox(self.tabDetector)
+            self.elementCombo = qt.QComboBox(self.tabDetector)
 
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.elementCombo.insertItem(str("Si"))
             self.elementCombo.insertItem(str("Ge"))
             self.elementCombo.insertItem(str("Cd1Te1"))
@@ -418,11 +429,11 @@ class FitParamForm(QWidget):
 
         detLayout.addWidget(self.elementCombo,0,3)
 
-        self.elementLabel = QLabel(self.tabDetector)
+        self.elementLabel = qt.QLabel(self.tabDetector)
         self.elementLabel.setText(str("Detector Composition"))
 
         detLayout.addWidget(self.elementLabel,0,0)
-        self.escapeLabel = QLabel(self.tabDetector)
+        self.escapeLabel = qt.QLabel(self.tabDetector)
         self.escapeLabel.setText(str("Maximum Number of Escape energies"))
         detLayout.addMultiCellWidget(self.escapeLabel,3,4,0,0)
 
@@ -435,410 +446,420 @@ class FitParamForm(QWidget):
         self.nEscapeThreshold.setValue(4)
         #detLayout.addWidget(self.intensityValue0,3,3)
         detLayout.addWidget(self.nEscapeThreshold,3,3)
-        spacer_4 = QSpacerItem(89,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacer_4 = qt.QSpacerItem(89, 20,\
+                                  qt.QSizePolicy.Expanding,
+                                  qt.QSizePolicy.Minimum)
         detLayout.addItem(spacer_4,3,1)
         tabDetectorLayout.addLayout(detLayout)
 
-        self.calibLine = QFrame(self.tabDetector)
-        self.calibLine.setFrameShape(QFrame.HLine)
-        self.calibLine.setFrameShadow(QFrame.Sunken)
-        self.calibLine.setFrameShape(QFrame.HLine)
+        self.calibLine = qt.QFrame(self.tabDetector)
+        self.calibLine.setFrameShape(qt.QFrame.HLine)
+        self.calibLine.setFrameShadow(qt.QFrame.Sunken)
+        self.calibLine.setFrameShape(qt.QFrame.HLine)
         tabDetectorLayout.addWidget(self.calibLine)
 
-        if qVersion() < '4.0.0':
-            layout5_2 = QGridLayout(None,1,1,11,2,"layout5_2")
+        if QTVERSION < '4.0.0':
+            layout5_2 = qt.QGridLayout(None,1,1,11,2,"layout5_2")
         else:
             layout5_2 = Q3GridLayout(None)
             layout5_2.setMargin(11)
             layout5_2.setSpacing(2)
 
-        self.zeroError = QLineEdit(self.tabDetector)
+        self.zeroError = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.zeroError,1,5)
 
-        self.sumfacSepLabel = QLabel(self.tabDetector)
-        sumfacSepLabel_font = QFont(self.sumfacSepLabel.font())
+        self.sumfacSepLabel = qt.QLabel(self.tabDetector)
+        sumfacSepLabel_font = qt.QFont(self.sumfacSepLabel.font())
         sumfacSepLabel_font.setBold(1)
         self.sumfacSepLabel.setFont(sumfacSepLabel_font)
         self.sumfacSepLabel.setText(str("+/-"))
 
         layout5_2.addWidget(self.sumfacSepLabel,5,4)
 
-        self.noiseLabel = QLabel(self.tabDetector)
+        self.noiseLabel = qt.QLabel(self.tabDetector)
         self.noiseLabel.setText(str("Detector noise (keV)"))
 
         layout5_2.addWidget(self.noiseLabel,3,0)
 
-        self.gainCheck = QCheckBox(self.tabDetector)
+        self.gainCheck = qt.QCheckBox(self.tabDetector)
         self.gainCheck.setText(str(""))
 
         layout5_2.addWidget(self.gainCheck,2,2)
 
-        self.gainLabel = QLabel(self.tabDetector)
+        self.gainLabel = qt.QLabel(self.tabDetector)
         self.gainLabel.setText(str("Spectrometer gain (keV/ch)"))
 
         layout5_2.addWidget(self.gainLabel,2,0)
 
-        self.sumfacLabel = QLabel(self.tabDetector)
+        self.sumfacLabel = qt.QLabel(self.tabDetector)
         self.sumfacLabel.setText(str("Pile-up Factor"))
 
         layout5_2.addWidget(self.sumfacLabel,5,0)
 
-        self.noiseError = QLineEdit(self.tabDetector)
+        self.noiseError = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.noiseError,3,5)
 
-        self.zeroValue = QLineEdit(self.tabDetector)
+        self.zeroValue = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.zeroValue,1,3)
 
-        self.fanoSepLabel = QLabel(self.tabDetector)
-        fanoSepLabel_font = QFont(self.fanoSepLabel.font())
+        self.fanoSepLabel = qt.QLabel(self.tabDetector)
+        fanoSepLabel_font = qt.QFont(self.fanoSepLabel.font())
         fanoSepLabel_font.setBold(1)
         self.fanoSepLabel.setFont(fanoSepLabel_font)
         self.fanoSepLabel.setText(str("+/-"))
 
         layout5_2.addWidget(self.fanoSepLabel,4,4)
 
-        self.fanoError = QLineEdit(self.tabDetector)
+        self.fanoError = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.fanoError,4,5)
 
-        self.zeroSepLabel = QLabel(self.tabDetector)
-        zeroSepLabel_font = QFont(self.zeroSepLabel.font())
+        self.zeroSepLabel = qt.QLabel(self.tabDetector)
+        zeroSepLabel_font = qt.QFont(self.zeroSepLabel.font())
         zeroSepLabel_font.setBold(1)
         self.zeroSepLabel.setFont(zeroSepLabel_font)
         self.zeroSepLabel.setText(str("+/-"))
 
         layout5_2.addWidget(self.zeroSepLabel,1,4)
 
-        self.valueLabel = QLabel(self.tabDetector)
-        valueLabel_font = QFont(self.valueLabel.font())
+        self.valueLabel = qt.QLabel(self.tabDetector)
+        valueLabel_font = qt.QFont(self.valueLabel.font())
         valueLabel_font.setItalic(1)
         self.valueLabel.setFont(valueLabel_font)
         self.valueLabel.setText(str("Value"))
-        if qVersion() < '4.0.0':
-            self.valueLabel.setAlignment(QLabel.AlignCenter)
+        if QTVERSION < '4.0.0':
+            self.valueLabel.setAlignment(QLabelAlignCenter)
         else:
-            self.valueLabel.setAlignment(Qt.AlignCenter)
+            self.valueLabel.setAlignment(qt.Qt.AlignCenter)
 
         layout5_2.addWidget(self.valueLabel,0,3)
-        if qVersion() < '4.0.0':
-            spacer_5 = QSpacerItem(44,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        if QTVERSION < '4.0.0':
+            spacer_5 = qt.QSpacerItem(44, 20,\
+                                      qt.QSizePolicy.Expanding,\
+                                      qt.QSizePolicy.Minimum)
             layout5_2.addItem(spacer_5,1,1)
         else:
             layout5_2.addWidget(HorizontalSpacer(self.tabDetector),1,1)
 
-        self.noiseValue = QLineEdit(self.tabDetector)
+        self.noiseValue = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.noiseValue,3,3)
 
-        self.fanoValue = QLineEdit(self.tabDetector)
+        self.fanoValue = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.fanoValue,4,3)
 
-        self.zeroLabel = QLabel(self.tabDetector)
+        self.zeroLabel = qt.QLabel(self.tabDetector)
         self.zeroLabel.setText(str("Spectrometer zero (keV)"))
 
         layout5_2.addWidget(self.zeroLabel,1,0)
 
-        self.sumfacError = QLineEdit(self.tabDetector)
+        self.sumfacError = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.sumfacError,5,5)
 
-        self.noiseSepLabel = QLabel(self.tabDetector)
-        noiseSepLabel_font = QFont(self.noiseSepLabel.font())
+        self.noiseSepLabel = qt.QLabel(self.tabDetector)
+        noiseSepLabel_font = qt.QFont(self.noiseSepLabel.font())
         noiseSepLabel_font.setBold(1)
         self.noiseSepLabel.setFont(noiseSepLabel_font)
         self.noiseSepLabel.setText(str("+/-"))
 
         layout5_2.addWidget(self.noiseSepLabel,3,4)
 
-        self.sumfacCheck = QCheckBox(self.tabDetector)
+        self.sumfacCheck = qt.QCheckBox(self.tabDetector)
         self.sumfacCheck.setText(str(""))
 
         layout5_2.addWidget(self.sumfacCheck,5,2)
 
-        self.noiseCheck = QCheckBox(self.tabDetector)
+        self.noiseCheck = qt.QCheckBox(self.tabDetector)
         self.noiseCheck.setText(str(""))
 
         layout5_2.addWidget(self.noiseCheck,3,2)
 
-        self.errorLabel = QLabel(self.tabDetector)
-        errorLabel_font = QFont(self.errorLabel.font())
+        self.errorLabel = qt.QLabel(self.tabDetector)
+        errorLabel_font = qt.QFont(self.errorLabel.font())
         errorLabel_font.setItalic(1)
         self.errorLabel.setFont(errorLabel_font)
         self.errorLabel.setText(str("Delta "))
-        self.errorLabel.setAlignment(QLabel.AlignCenter)
+        self.errorLabel.setAlignment(QLabelAlignCenter)
 
         layout5_2.addWidget(self.errorLabel,0,5)
 
-        self.fixedLabel = QLabel(self.tabDetector)
-        fixedLabel_font = QFont(self.fixedLabel.font())
+        self.fixedLabel = qt.QLabel(self.tabDetector)
+        fixedLabel_font = qt.QFont(self.fixedLabel.font())
         fixedLabel_font.setItalic(1)
         self.fixedLabel.setFont(fixedLabel_font)
         self.fixedLabel.setText(str("Fixed "))
-        if qVersion() < '4.0.0':
-            self.fixedLabel.setAlignment(QLabel.AlignVCenter)
+        if QTVERSION < '4.0.0':
+            self.fixedLabel.setAlignment(QLabelAlignVCenter)
         else:
-            self.fixedLabel.setAlignment(Qt.AlignVCenter)
+            self.fixedLabel.setAlignment(qt.Qt.AlignVCenter)
 
         layout5_2.addWidget(self.fixedLabel,0,2)
 
-        self.zeroCheck = QCheckBox(self.tabDetector)
+        self.zeroCheck = qt.QCheckBox(self.tabDetector)
         self.zeroCheck.setText(str(""))
 
         layout5_2.addWidget(self.zeroCheck,1,2)
 
-        self.sumfacValue = QLineEdit(self.tabDetector,)
+        self.sumfacValue = qt.QLineEdit(self.tabDetector,)
 
         layout5_2.addWidget(self.sumfacValue,5,3)
 
-        self.fanoLabel = QLabel(self.tabDetector)
+        self.fanoLabel = qt.QLabel(self.tabDetector)
         self.fanoLabel.setText(str("Fano factor (Si ~ 0.12, Ge ~ 0.1)"))
 
         layout5_2.addWidget(self.fanoLabel,4,0)
 
-        self.gainValue = QLineEdit(self.tabDetector)
+        self.gainValue = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.gainValue,2,3)
 
-        self.gainSepLabel = QLabel(self.tabDetector)
-        gainSepLabel_font = QFont(self.gainSepLabel.font())
+        self.gainSepLabel = qt.QLabel(self.tabDetector)
+        gainSepLabel_font = qt.QFont(self.gainSepLabel.font())
         gainSepLabel_font.setBold(1)
         self.gainSepLabel.setFont(gainSepLabel_font)
         self.gainSepLabel.setText(str("+/-"))
 
-        layout5_2.addWidget(self.gainSepLabel,2,4)
+        layout5_2.addWidget(self.gainSepLabel, 2, 4)
 
-        self.fanoCheck = QCheckBox(self.tabDetector)
+        self.fanoCheck = qt.QCheckBox(self.tabDetector)
         self.fanoCheck.setText(str(""))
 
-        layout5_2.addWidget(self.fanoCheck,4,2)
+        layout5_2.addWidget(self.fanoCheck, 4, 2)
 
-        self.gainError = QLineEdit(self.tabDetector)
+        self.gainError = qt.QLineEdit(self.tabDetector)
 
-        layout5_2.addWidget(self.gainError,2,5)
+        layout5_2.addWidget(self.gainError, 2, 5)
         tabDetectorLayout.addLayout(layout5_2)
-        spacer_6 = QSpacerItem(20,2,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacer_6 = qt.QSpacerItem(20, 2,\
+                                  qt.QSizePolicy.Minimum,\
+                                  qt.QSizePolicy.Expanding)
         tabDetectorLayout.addItem(spacer_6)
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mainTab.insertTab(self.tabDetector,str("DETECTOR"))
-            self.TabBeam = QWidget(self.mainTab,"TabBeam")
+            self.TabBeam = qt.QWidget(self.mainTab,"TabBeam")
             self.mainTab.insertTab(self.TabBeam,str("BEAM"))
 
-            self.TabPeaks = QWidget(self.mainTab,"TabPeaks")
+            self.TabPeaks = qt.QWidget(self.mainTab,"TabPeaks")
             self.mainTab.insertTab(self.TabPeaks,str("PEAKS"))
         else:
             self.mainTab.addTab(self.tabDetector,str("DETECTOR"))
-            self.TabBeam = QWidget()
+            self.TabBeam = qt.QWidget()
             self.mainTab.addTab(self.TabBeam,str("BEAM"))
 
-            self.TabPeaks = QWidget()
+            self.TabPeaks = qt.QWidget()
             self.mainTab.addTab(self.TabPeaks,str("PEAKS"))
 
-        if qVersion() < '4.0.0':
-            self.tabPeakShape = QWidget(self.mainTab)
-            tabPeakShapeLayout = QGridLayout(self.tabPeakShape,1,1,11,2,
+        if QTVERSION < '4.0.0':
+            self.tabPeakShape = qt.QWidget(self.mainTab)
+            tabPeakShapeLayout = qt.QGridLayout(self.tabPeakShape,1,1,11,2,
                                              "tabPeakShapeLayout")
         else:
-            self.tabPeakShape = QWidget()
+            self.tabPeakShape = qt.QWidget()
             tabPeakShapeLayout = Q3GridLayout(self.tabPeakShape)
             tabPeakShapeLayout.setMargin(11)
             tabPeakShapeLayout.setSpacing(2)
             
-        spacer_7 = QSpacerItem(20,90,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacer_7 = qt.QSpacerItem(20, 90,\
+                                  qt.QSizePolicy.Minimum,\
+                                  qt.QSizePolicy.Expanding)
         tabPeakShapeLayout.addItem(spacer_7,8,0)
 
-        self.staLabel = QLabel(self.tabPeakShape)
+        self.staLabel = qt.QLabel(self.tabPeakShape)
         self.staLabel.setText(str("Short Tail Area"))
 
         tabPeakShapeLayout.addWidget(self.staLabel,2,0)
-        spacer_8 = QSpacerItem(59,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacer_8 = qt.QSpacerItem(59, 20,\
+                                  qt.QSizePolicy.Expanding,\
+                                  qt.QSizePolicy.Minimum)
         tabPeakShapeLayout.addItem(spacer_8,1,1)
 
-        self.fixedLabel_2 = QLabel(self.tabPeakShape)
-        fixedLabel_2_font = QFont(self.fixedLabel_2.font())
+        self.fixedLabel_2 = qt.QLabel(self.tabPeakShape)
+        fixedLabel_2_font = qt.QFont(self.fixedLabel_2.font())
         fixedLabel_2_font.setItalic(1)
         self.fixedLabel_2.setFont(fixedLabel_2_font)
         self.fixedLabel_2.setText(str("Fixed"))
-        self.fixedLabel_2.setAlignment(QLabel.AlignVCenter)
+        self.fixedLabel_2.setAlignment(QLabelAlignVCenter)
 
         tabPeakShapeLayout.addWidget(self.fixedLabel_2, 1, 2)
 
-        self.staCheck = QCheckBox(self.tabPeakShape)
+        self.staCheck = qt.QCheckBox(self.tabPeakShape)
         self.staCheck.setText(str(""))
 
         tabPeakShapeLayout.addWidget(self.staCheck,2,2)
 
-        self.valueLabel_2 = QLabel(self.tabPeakShape)
-        valueLabel_2_font = QFont(self.valueLabel_2.font())
+        self.valueLabel_2 = qt.QLabel(self.tabPeakShape)
+        valueLabel_2_font = qt.QFont(self.valueLabel_2.font())
         valueLabel_2_font.setItalic(1)
         self.valueLabel_2.setFont(valueLabel_2_font)
         self.valueLabel_2.setText(str("Value"))
-        self.valueLabel_2.setAlignment(QLabel.AlignCenter)
+        self.valueLabel_2.setAlignment(QLabelAlignCenter)
 
         tabPeakShapeLayout.addWidget(self.valueLabel_2,1,3)
 
-        self.staValue = QLineEdit(self.tabPeakShape)
+        self.staValue = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.staValue,2,3)
 
-        self.staSep = QLabel(self.tabPeakShape)
-        staSep_font = QFont(self.staSep.font())
+        self.staSep = qt.QLabel(self.tabPeakShape)
+        staSep_font = qt.QFont(self.staSep.font())
         staSep_font.setBold(1)
         self.staSep.setFont(staSep_font)
         self.staSep.setText(str("+/-"))
 
         tabPeakShapeLayout.addWidget(self.staSep,2,4)
 
-        self.errorLabel_2 = QLabel(self.tabPeakShape)
-        errorLabel_2_font = QFont(self.errorLabel_2.font())
+        self.errorLabel_2 = qt.QLabel(self.tabPeakShape)
+        errorLabel_2_font = qt.QFont(self.errorLabel_2.font())
         errorLabel_2_font.setItalic(1)
         self.errorLabel_2.setFont(errorLabel_2_font)
         self.errorLabel_2.setText(str("Error"))
-        self.errorLabel_2.setAlignment(QLabel.AlignCenter)
+        self.errorLabel_2.setAlignment(QLabelAlignCenter)
 
         tabPeakShapeLayout.addWidget(self.errorLabel_2,1,5)
 
-        self.staError = QLineEdit(self.tabPeakShape)
+        self.staError = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.staError,2,5)
 
-        self.stsError = QLineEdit(self.tabPeakShape)
+        self.stsError = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.stsError,3,5)
 
-        self.stsSep = QLabel(self.tabPeakShape)
-        stsSep_font = QFont(self.stsSep.font())
+        self.stsSep = qt.QLabel(self.tabPeakShape)
+        stsSep_font = qt.QFont(self.stsSep.font())
         stsSep_font.setBold(1)
         self.stsSep.setFont(stsSep_font)
         self.stsSep.setText(str("+/-"))
 
         tabPeakShapeLayout.addWidget(self.stsSep,3,4)
 
-        self.stsValue = QLineEdit(self.tabPeakShape)
+        self.stsValue = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.stsValue,3,3)
 
-        self.stsCheck = QCheckBox(self.tabPeakShape)
+        self.stsCheck = qt.QCheckBox(self.tabPeakShape)
         self.stsCheck.setText(str(""))
 
         tabPeakShapeLayout.addWidget(self.stsCheck,3,2)
 
-        self.stsLabel = QLabel(self.tabPeakShape)
+        self.stsLabel = qt.QLabel(self.tabPeakShape)
         self.stsLabel.setText(str("Short Tail Slope"))
 
         tabPeakShapeLayout.addWidget(self.stsLabel,3,0)
 
-        self.ltaLabel = QLabel(self.tabPeakShape)
+        self.ltaLabel = qt.QLabel(self.tabPeakShape)
         self.ltaLabel.setText(str("Long Tail Area"))
 
         tabPeakShapeLayout.addWidget(self.ltaLabel,4,0)
 
-        self.ltaCheck = QCheckBox(self.tabPeakShape)
+        self.ltaCheck = qt.QCheckBox(self.tabPeakShape)
         self.ltaCheck.setText(str(""))
 
         tabPeakShapeLayout.addWidget(self.ltaCheck,4,2)
 
-        self.ltaValue = QLineEdit(self.tabPeakShape)
+        self.ltaValue = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.ltaValue,4,3)
 
-        self.ltaSep = QLabel(self.tabPeakShape)
-        ltaSep_font = QFont(self.ltaSep.font())
+        self.ltaSep = qt.QLabel(self.tabPeakShape)
+        ltaSep_font = qt.QFont(self.ltaSep.font())
         ltaSep_font.setBold(1)
         self.ltaSep.setFont(ltaSep_font)
         self.ltaSep.setText(str("+/-"))
 
         tabPeakShapeLayout.addWidget(self.ltaSep,4,4)
 
-        self.ltaError = QLineEdit(self.tabPeakShape)
+        self.ltaError = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.ltaError,4,5)
 
-        self.ltsError = QLineEdit(self.tabPeakShape)
+        self.ltsError = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.ltsError,5,5)
 
-        self.ltsSep = QLabel(self.tabPeakShape)
-        ltsSep_font = QFont(self.ltsSep.font())
+        self.ltsSep = qt.QLabel(self.tabPeakShape)
+        ltsSep_font = qt.QFont(self.ltsSep.font())
         ltsSep_font.setBold(1)
         self.ltsSep.setFont(ltsSep_font)
         self.ltsSep.setText(str("+/-"))
 
         tabPeakShapeLayout.addWidget(self.ltsSep,5,4)
 
-        self.ltsValue = QLineEdit(self.tabPeakShape)
+        self.ltsValue = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.ltsValue,5,3)
 
-        self.ltsCheck = QCheckBox(self.tabPeakShape)
+        self.ltsCheck = qt.QCheckBox(self.tabPeakShape)
         self.ltsCheck.setText(str(""))
 
         tabPeakShapeLayout.addWidget(self.ltsCheck,5,2)
 
-        self.ltsLabel = QLabel(self.tabPeakShape)
+        self.ltsLabel = qt.QLabel(self.tabPeakShape)
         self.ltsLabel.setText(str("Long Tail Slope"))
 
         tabPeakShapeLayout.addWidget(self.ltsLabel,5,0)
 
         # Step Height
-        self.shLabel = QLabel(self.tabPeakShape)
+        self.shLabel = qt.QLabel(self.tabPeakShape)
         self.shLabel.setText(str("Step Height"))
 
         tabPeakShapeLayout.addWidget(self.shLabel,6,0)
 
-        self.shCheck = QCheckBox(self.tabPeakShape)
+        self.shCheck = qt.QCheckBox(self.tabPeakShape)
         self.shCheck.setText(str(""))
 
         tabPeakShapeLayout.addWidget(self.shCheck,6,2)
 
-        self.shValue = QLineEdit(self.tabPeakShape)
+        self.shValue = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.shValue,6,3)
 
-        self.shSep = QLabel(self.tabPeakShape)
-        shSep_font = QFont(self.shSep.font())
+        self.shSep = qt.QLabel(self.tabPeakShape)
+        shSep_font = qt.QFont(self.shSep.font())
         shSep_font.setBold(1)
         self.shSep.setFont(shSep_font)
         self.shSep.setText(str("+/-"))
 
         tabPeakShapeLayout.addWidget(self.shSep,6,4)
 
-        self.shError = QLineEdit(self.tabPeakShape)
+        self.shError = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.shError,6,5)
 
         # Pseudo-Voigt Eta Factor
-        self.etaLabel = QLabel(self.tabPeakShape)
+        self.etaLabel = qt.QLabel(self.tabPeakShape)
         self.etaLabel.setText(str("Pseudo-Voigt Eta"))
 
         tabPeakShapeLayout.addWidget(self.etaLabel,7,0)
 
-        self.etaCheck = QCheckBox(self.tabPeakShape)
+        self.etaCheck = qt.QCheckBox(self.tabPeakShape)
         self.etaCheck.setText(str(""))
 
         tabPeakShapeLayout.addWidget(self.etaCheck,7,2)
 
-        self.etaValue = QLineEdit(self.tabPeakShape)
+        self.etaValue = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.etaValue,7,3)
 
-        self.etaSep = QLabel(self.tabPeakShape)
-        etaSep_font = QFont(self.etaSep.font())
+        self.etaSep = qt.QLabel(self.tabPeakShape)
+        etaSep_font = qt.QFont(self.etaSep.font())
         etaSep_font.setBold(1)
         self.etaSep.setFont(etaSep_font)
         self.etaSep.setText(str("+/-"))
 
         tabPeakShapeLayout.addWidget(self.etaSep,7,4)
 
-        self.etaError = QLineEdit(self.tabPeakShape)
+        self.etaError = qt.QLineEdit(self.tabPeakShape)
 
         tabPeakShapeLayout.addWidget(self.etaError,7,5)
 
         
-        if qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.mainTab.insertTab(self.tabPeakShape,str("PEAK SHAPE"))
         else:
             self.mainTab.addTab(self.tabPeakShape,str("PEAK SHAPE"))
@@ -916,10 +937,11 @@ class FitParamForm(QWidget):
 
 
 if __name__ == "__main__":
-    a = QApplication(sys.argv)
-    QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"))
+    a = qt.QApplication(sys.argv)
+    qt.QObject.connect(a, qt.SIGNAL("lastWindowClosed()"),
+                       a, qt.SLOT("quit()"))
     w = FitParamForm()
-    if qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         a.setMainWidget(w)
         w.show()
         a.exec_loop()
