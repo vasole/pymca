@@ -909,7 +909,7 @@ class MaterialGUI(qt.QWidget):
             if DEBUG:
                 print("self._current after = ", self._current)
     else:
-        # TODO fred faux positif pour pyflakes
+        # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
         def _updateCurrent(self):
             if DEBUG:
                 print("updateCurrent(self)")

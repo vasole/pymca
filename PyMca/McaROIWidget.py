@@ -220,6 +220,7 @@ class McaROIWidget(qt.QWidget):
             outfile.close()
             del outfile
             return
+        # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
         outputFile = str(outfile.selectedFiles()[0])
         outfile.close()
         del outfile
@@ -261,6 +262,7 @@ class McaROIWidget(qt.QWidget):
             outfile.close()
             del outfile
             return
+        # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
         outputFile = str(outfile.selectedFiles()[0])
         extension = ".ini"
         outfile.close()

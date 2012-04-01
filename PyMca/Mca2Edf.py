@@ -263,6 +263,7 @@ class Mca2EdfGUI(qt.QWidget):
             del outfile
             self.setOutputDir(outdir)
         else:
+            # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
             outfile.close()
             del outfile
         if QTVERSION < '4.0.0':

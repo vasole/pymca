@@ -598,6 +598,7 @@ class McaWidget(qt.QWidget):
             outfile.close()
             del outfile
         else:
+            # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
             outfile.close()
             del outfile
             return
@@ -2247,6 +2248,7 @@ class McaWidget(qt.QWidget):
                         msg.setWindowTitle('MCA Window')
                         msg.exec_()
     else:
+        # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
         def printHtml(self,text):
             printer = qt.QPrinter()
             printDialog = qt.QPrintDialog(printer, self)

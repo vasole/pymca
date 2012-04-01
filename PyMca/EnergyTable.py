@@ -231,6 +231,7 @@ class EnergyTab(qt.QWidget):
             outfile.close()
             del outfile
             return
+        # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
         self.outputFilter = str(outfile.selectedFilter())
         filterused = self.outputFilter.split()
         outputFile=str(outfile.selectedFiles()[0])

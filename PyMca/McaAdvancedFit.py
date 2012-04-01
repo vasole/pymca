@@ -1220,6 +1220,7 @@ class McaAdvancedFit(qt.QWidget):
                 outfile.close()
                 del outfile
             else:
+                # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
                 outfile.close()
                 del outfile
                 return
@@ -1487,6 +1488,7 @@ class McaAdvancedFit(qt.QWidget):
                 #painter.flush()
                 painter.end()
     else:
+        # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
         def __print(self,text):
             printer = qt.QPrinter()
             printDialog = qt.QPrintDialog(printer, self)
@@ -1978,6 +1980,7 @@ class McaAdvancedFit(qt.QWidget):
             outfile.close()
             del outfile
         else:
+            # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
             outfile.close()
             del outfile
             return
