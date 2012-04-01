@@ -60,7 +60,7 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def _data1D(self, index, role=QtCore.Qt.DisplayRole):
         if index.isValid():
             if role == QtCore.Qt.DisplayRole:
-                row = 0
+                # row = 0
                 col = index.column()
                 return MyQVariant(self._format % self._array[col])
         return MyQVariant()
