@@ -411,23 +411,6 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                                                   replace=replace)
 
 
-def test2():
-    app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
-
-    # TODO fred PCAParametersDialog is unknown
-    dialog = PCAParametersDialog()
-    dialog.setParameters({'options':[1,3,5,7,9],'method':1, 'npc':8,'binning':3})
-    dialog.setModal(True)
-    ret = dialog.exec_()
-    if ret:
-        dialog.close()
-        print(dialog.getParameters())
-    #app.exec_()
-
 def test():
     app = qt.QApplication([])
     qt.QObject.connect(app,
