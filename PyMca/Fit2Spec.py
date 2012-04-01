@@ -148,15 +148,16 @@ class Fit2SpecGUI(qt.QWidget):
 
     def browseConfig(self):
         filename= qt.QFileDialog(self,"Open a new fit config file",1)
-        filename.setMode(filedialog.ExistingFiles)
+        filename.setMode(filename.ExistingFiles)
         filename.setFilters("Config Files (*.cfg)\nAll files (*)")
         if filename.exec_loop() == qt.QDialog.Accepted:
             filename = filename.selectedFile()
         else:
             self.raiseW()
             return                
-        filename= str(filename)
-        if len(filename):self.setConfigFile(filename)  
+        filename = str(filename)
+        if len(filename):
+            self.setConfigFile(filename)
         self.raiseW()
 
     def browseOutputDir(self):

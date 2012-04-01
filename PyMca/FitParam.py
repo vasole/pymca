@@ -352,7 +352,7 @@ class FitParamWidget(FitParamForm):
                     if funnyfactor is None:
                         funnyfactor = attenuator[3]
                     else:
-                        if abs(attenuator[3]-freefraction) > 0.0001:
+                        if abs(attenuator[3]-funnyfactor) > 0.0001:
                             raise ValueError("All funny type filters must have same openning fraction")
                     coeffs +=  thickness *\
                               numpy.array(massatt(formula,1.0,energies)['total'])

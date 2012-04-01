@@ -277,7 +277,7 @@ class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
         if value == 1:
             self._browser.setNFrames(maximum)
         else:
-            self._browser.setRange(minimum, maximum)
+            self._browser.setRange(value, maximum)
 
     def setMaximum(self, value):
         self._slider.setMaximum(value)

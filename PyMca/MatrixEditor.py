@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.10 $"
+import copy
 from PyMca import MaterialEditor
 qt = MaterialEditor.qt
 from PyMca import MatrixImage
@@ -218,7 +219,7 @@ class MatrixEditor(qt.QWidget):
         
     def getParameters(self, param = None):
         if param is None:
-            return copy(self._current)
+            return copy.deepcopy(self._current)
         elif param in self._current.keys():
             return self._current[param]
         else:
