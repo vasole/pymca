@@ -157,9 +157,9 @@ class MaterialEditor(qt.QWidget):
                 continue
             #I should try to calculate the attenuation at one energy ...
             try:
-                d= Elements.getMaterialMassAttenuationCoefficients(compoundList,
-                                                                   compoundFraction,
-                                                                   energy = 10.0)
+                Elements.getMaterialMassAttenuationCoefficients(compoundList,
+                                                                compoundFraction,
+                                                                energy = 10.0)
             except:
                 #no message?
                 error = 1

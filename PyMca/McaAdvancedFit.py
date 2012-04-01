@@ -960,7 +960,7 @@ class McaAdvancedFit(qt.QWidget):
                                     self.__configureFromConcentrations)
         tool = self.concentrationsWidget
         #this forces update
-        toolconfig = tool.getParameters()
+        tool.getParameters()
         dict = {}
         dict.update(config['concentrations'])
         tool.setParameters(dict, signal=False)
@@ -1035,7 +1035,7 @@ class McaAdvancedFit(qt.QWidget):
         config = self.mcafit.configure()
         tool   = ConcentrationsTool.ConcentrationsTool()
         #this forces update
-        toolconfig = tool.getParameters()
+        tool.getParameters()
         dict = {}
         dict.update(config['concentrations'])
         tool.configure(dict)
@@ -1144,7 +1144,7 @@ class McaAdvancedFit(qt.QWidget):
         #fitresult = self.dict['result']
         fitresult = self.dict
         # force update
-        config = self.mcafit.configure()
+        self.mcafit.configure()
         groupsList = fitresult['result']['groups']
         if type(groupsList) != type([]):
             groupsList = [groupsList]
