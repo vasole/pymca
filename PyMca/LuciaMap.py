@@ -37,8 +37,7 @@ SOURCE_TYPE="EdfFileStack"
 class LuciaMap(DataObject.DataObject):
     def __init__(self, filename, infofile=None):
         DataObject.DataObject.__init__(self)
-        
-        fileSize = os.path.getsize(filename)
+
         fid = open(filename, 'r')
         data=fid.read()
         fid.close()

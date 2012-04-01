@@ -1347,9 +1347,9 @@ class FitParamDialog(qt.QDialog):
                 deltaeta = min(value, float(self.fitparam.etaError.text()))
                 self.fitparam.etaError.setText("%.6g" % deltaeta)
         elif hypermetflag > 1:
-            hypermetnames = ['ST AreaR', 'ST SlopeR',
-                             'LT AreaR', 'LT SlopeR',
-                             'STEP HeightR']
+            # hypermetnames = ['ST AreaR', 'ST SlopeR',
+            #                 'LT AreaR', 'LT SlopeR',
+            #                 'STEP HeightR']
             name = 'ST AreaR' 
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \

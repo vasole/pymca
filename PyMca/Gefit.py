@@ -159,7 +159,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
         selfx = xdata
         selfy = ydata
     selfweight = ones(selfy.shape,Float)
-    nr0 = len(selfy)
+    # nr0 = len(selfy)
     if data0 is not None:
         nc =  len(data0[0])
     else:
@@ -178,7 +178,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
             selfweight = selfweight * selfweight
         else:
             selfweight = 1.0 / (abs(selfy) + equal(abs(selfy),0))
-    n_param = len(parameters)
+
     #linear fit, use at own risk since there is no check for the
     #function being linear on its parameters.
     #Only the fixed constrains are handled properly
@@ -311,8 +311,6 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
             else:
                 selfweight = 1.0 / (abs(selfy) + equal(abs(selfy),0))
     n_param = len(parameters)
-    selfalphazeros = zeros((n_param, n_param),Float)
-    selfbetazeros = zeros((1,n_param),Float)
     index = arange(0,nr0,2)
     while (iter > 0):
         niter = niter + 1
@@ -575,10 +573,10 @@ def getsigmaparameters(parameters,sigma0,constrains):
         elif constrains[0][i] == CQUOTED:
             pmax = max(constrains [1] [i], constrains [2] [i])
             pmin = min(constrains [1] [i], constrains [2] [i])
-            A = 0.5 * (pmax + pmin)
+            # A = 0.5 * (pmax + pmin)
             B = 0.5 * (pmax - pmin)
             if (B > 0) & (parameters [i] < pmax) & (parameters [i] > pmin):
-                sigma_par [i] = abs(B) * cos(parameters[i]) * sigma0[n_free]
+                sigma_par [i] = abs(B * cos(parameters[i]) * sigma0[n_free])
                 n_free += 1
             else:
                 sigma_par [i] = parameters[i]

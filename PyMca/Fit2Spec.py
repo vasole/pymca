@@ -99,17 +99,16 @@ class Fit2SpecGUI(qt.QWidget):
         self.connect(self.__startButton,qt.SIGNAL("clicked()"),self.start)
 
     def setFileList(self,filelist=None):
-        if filelist is None:filelist = []
+        if filelist is None:
+            filelist = []
         if True or self.__goodFileList(filelist):
             text = ""
-            oldtype = None
             filelist.sort()
-            for file in filelist:
-                text += "%s\n" % file
+            for ffile in filelist:
+                text += "%s\n" % ffile
             self.fileList = filelist
             self.__listView.setText(text)
-        
-        
+
     def setOutputDir(self,outputdir=None):
         if outputdir is None:return
         if self.__goodOutputDir(outputdir):

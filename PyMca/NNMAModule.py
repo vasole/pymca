@@ -254,7 +254,6 @@ def nnma(stack, ncomponents, binning=None,
     #Start tolerance
     #1E+3 is conservative/fast
     #1E-3 is probably slow
-    start_ncomponents = min(3, ncomponents)
     Astart = None
     Xstart = None
     #for i in range(start_ncomponents, ncomponents):

@@ -1921,8 +1921,8 @@ class McaWidget(qt.QWidget):
             sellist = [selection]
 
         for sel in sellist:
-            # force the selections to include their source for completeness
-            source = sel['SourceName']
+            # force the selections to include their source for completeness?
+            # source = sel['SourceName']
             key    = sel['Key']
             if "scanselection" in sel:
                 if sel["scanselection"] not in [False, "MCA"]:

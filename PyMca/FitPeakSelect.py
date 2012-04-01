@@ -433,7 +433,6 @@ class FitPeakSelect(qt.QWidget):
         
     def __updateSelection(self):
         if self.energyValue is not None:
-            changed = 0
             for ele in list(self.peakdict.keys()):
                 for peak in self.peakdict[ele]:
                     if   peak in self.peakdict[ele]:

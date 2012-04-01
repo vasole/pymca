@@ -150,11 +150,10 @@ class Mca2EdfGUI(qt.QWidget):
         if filelist is None:filelist = []
         if True or self.__goodFileList(filelist):
             text = ""
-            oldtype = None
             #respect initial file list choice
             #filelist.sort()
-            for file in filelist:
-                text += "%s\n" % file
+            for ffile in filelist:
+                text += "%s\n" % ffile
             self.fileList = filelist
             self.__listView.setText(text)
             if len(filelist):
@@ -337,7 +336,7 @@ class Mca2EdfBatch(qt.QThread):
             self.onNewFile(fitfile, self._filelist) 
             ffile.SetSource(fitfile)
             fileinfo = ffile.GetSourceInfo()
-            nscans = len(fileinfo['KeyList'])
+            # nscans = len(fileinfo['KeyList'])
             for scankey in  fileinfo['KeyList']:
                 scan,order = scankey.split(".")
                 info,data  = ffile.LoadSource(scankey)

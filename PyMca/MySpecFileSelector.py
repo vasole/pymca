@@ -1035,9 +1035,9 @@ class SpecFileSelector(qt.QWidget):
     def __cntDoubleClicked(self, cntkeys):
         if DEBUG:
             print("__cntDoubleClicked(self, cntkeys) called")
-        sel= {"SourceName":self.data.SourceName, "Key":cntkeys}
         # one day I may recover this signal ...
-        #self.eh.event(self.addEvent, [sel])
+        # sel= {"SourceName":self.data.SourceName, "Key":cntkeys}
+        # self.eh.event(self.addEvent, [sel])
 
     def __OLDmcaDoubleClicked(self, mcakeys):
         self.emit(qt.PYSIGNAL("newSelection"), (mcakeys,))

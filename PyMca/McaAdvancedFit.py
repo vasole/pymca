@@ -1878,15 +1878,10 @@ class McaAdvancedFit(qt.QWidget):
         if not len(curves):return
         if not self.__fitdone:
             if False:
-                #just the data
-                xdata  = self.mcafit.xdata
-                config = self.mcafit.configure()
-                energy = config['detector'] ['zero'] + config['detector'] ['gain'] * xdata
-                if self.mcafit.STRIP:
-                    ydata  = self.mcafit.ydata + self.mcafit.zz
-                else:
-                    ydata  = self.mcafit.ydata
-                savelist = ['xdata', 'energy','ydata']
+                # just save the data ?
+                # just save data plus strip background if any?
+                # for the time being just force to have the fit
+                pass
             else:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
