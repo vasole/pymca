@@ -1262,9 +1262,7 @@ class MyQLineEdit(qt.QLineEdit):
             self.setAutoFillBackground(True)
 
     def setPaletteBackgroundColor(self, color):
-        if QTVERSION < '3.0.0':
-            pass
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,color)
         else:
             palette = qt.QPalette()

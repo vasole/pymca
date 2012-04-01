@@ -582,11 +582,10 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
     def __startThread(self, sthread, message):
         sthread.start()
-        if QTVERSION < '3.0.0':
-            msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             msg = qt.QDialog(self, "Please Wait", 1,qt.Qt.WStyle_NoBorder)
         else:
+            # TODO why this strange test
             if 0:
                 msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
                 msg.setModal(0)

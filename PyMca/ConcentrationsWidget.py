@@ -162,9 +162,7 @@ class Concentrations(qt.QWidget):
                                 *var, **kw)
         
         sthread.start()
-        if QTVERSION < '3.0.0':
-            msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)            
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             msg = qt.QDialog(self, "Please Wait", 1,qt.Qt.WStyle_NoBorder)
         else:
             msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
@@ -724,9 +722,7 @@ class ConcentrationsTable(QTable):
     def getHtmlText(self):
         lemon=("#%x%x%x" % (255,250,205)).upper()
         white = "#FFFFFF"
-        if QTVERSION < '3.0.0':
-            hcolor = ("#%x%x%x" % (230,240,249)).upper()
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             hb = self.horizontalHeader().paletteBackgroundColor()
             hcolor = ("#%x%x%x" % (hb.red(),hb.green(),hb.blue())).upper()
         else:
@@ -822,15 +818,8 @@ class MyQLineEdit(qt.QLineEdit):
             self.emit(qt.SIGNAL("returnPressed()"),())
         
     def setPaletteBackgroundColor(self, qcolor):
-        if QTVERSION < '3.0.0':
-            palette = self.palette()
-            palette.setColor(qt.QColorGroup.Base,qcolor)
-            self.setPalette(palette)
-            text = self.text()
-            self.setText(text)
-        else:
-            if QTVERSION < '4.0.0':
-                qt.QLineEdit.setPaletteBackgroundColor(self,qcolor)
+        if QTVERSION < '4.0.0':
+            qt.QLineEdit.setPaletteBackgroundColor(self,qcolor)
             
     def _mySignal(self):
         self.setPaletteBackgroundColor(qt.QColor('white'))

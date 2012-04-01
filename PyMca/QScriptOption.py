@@ -59,20 +59,13 @@ class QScriptOption(TabSheets.TabSheets):
         self.default=default
         self.output={}
         self.output.update(self.default)
-        if QTVERSION >= '3.0.0':
-            ntabs=self.tabWidget.count()
-        else:
-            ntabs = 2
+        ntabs=self.tabWidget.count()
 
         #remove anything not having to do with my sheets
         for i in range(ntabs):
             if QTVERSION < '4.0.0':
-                if QTVERSION >= '3.0.0':
-                    page=self.tabWidget.page(0)
-                    self.tabWidget.removePage(page)
-                else:
-                    self.tabWidget.setCurrentPage(i)
-                    self.tabWidget.removePage(self.tabWidget.currentPage())
+                page = self.tabWidget.page(0)
+                self.tabWidget.removePage(page)
             else:
                 self.tabWidget.setCurrentIndex(0)
                 self.tabWidget.removeTab(self.tabWidget.currentIndex())            

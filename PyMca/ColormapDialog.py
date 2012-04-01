@@ -49,13 +49,7 @@ class MyQLineEdit(qt.QLineEdit):
             self.emit(qt.SIGNAL("returnPressed()"))
         
     def setPaletteBackgroundColor(self, qcolor):
-        if qt.qVersion() < '3.0.0':
-            palette = self.palette()
-            palette.setColor(qt.QColorGroup.Base,qcolor)
-            self.setPalette(palette)
-            text = self.text()
-            self.setText(text)
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,qcolor)
         else:
             pass

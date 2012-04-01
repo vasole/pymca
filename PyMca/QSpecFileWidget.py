@@ -144,14 +144,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
             # --- signal handling
             self.connect(self.list, qt.SIGNAL("selectionChanged()"), self.__selectionChanged)
-            if QTVERSION > '3.0.0':
-                self.connect(self.list,
-                    qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"),
-                    self.__contextMenu)
-            else:
-                self.connect(self.list,
-                    qt.SIGNAL("rightButtonPressed(QListViewItem *, const QPoint &, int)"),
-                    self.__contextMenu)
+            self.connect(self.list,
+                qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"),
+                self.__contextMenu)
             self.connect(self.list, qt.SIGNAL("doubleClicked(QListViewItem *)"),
                     self.__doubleClicked)
             """
@@ -359,22 +354,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.scans= []
 
     def markScanSelected(self, scanlist):
-        if QTVERSION > '3.0.0':
-            for sn in self.scans:
-                item= self.list.findItem(sn, 1)
-                if item is not None:
-                    if sn in scanlist:
-                        item.setText(0, "X")
-                    else:
-                        item.setText(0, "")
-        else:
-            item = self.list.firstChild()
-            while item:
-                    if str(item.text(1)) in scanlist:
-                        item.setText(0, "X")
-                    else:
-                        item.setText(0, "")
-                    item = item.nextSibling()
+        for sn in self.scans:
+            item= self.list.findItem(sn, 1)
+            if item is not None:
+                if sn in scanlist:
+                    item.setText(0, "X")
+                else:
+                    item.setText(0, "")
 
     def _autoReplace(self, scanlist):
         if DEBUG:
@@ -391,30 +377,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         """
         def _cntSignal(self, ddict):
             if ddict["event"] == " updated":
-                if QTVERSION > '3.0.0':
-                    sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-                else:
-                    sel = []
-                    item = self.list.firstChild()
-                    while item:
-                        if item.isSelected():
-                            sel.append(str(item.text(1)))
-                        item=item.nextSibling()
+                sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
                 self._autoReplace(sel)
         """
 
         def __selectionChanged(self):
             if DEBUG:
                 print("__selectionChanged")
-            if QTVERSION > '3.0.0':
-                sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-            else:
-                sel = []
-                item = self.list.firstChild()
-                while item:
-                    if item.isSelected():
-                        sel.append(str(item.text(1)))
-                    item=item.nextSibling()
+            sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
             info = self.data.getKeyInfo(sel[0])
             self.cntTable.info = info
             self.cntTable.refresh()
@@ -607,15 +577,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
-            if QTVERSION > '3.0.0':
-                scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-            else:
-                scan_sel = []
-                item = self.list.firstChild()
-                while item:
-                    if item.isSelected():
-                        scan_sel.append(str(item.text(1)))
-                    item=item.nextSibling()
+            scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
         else:
             itemlist = self.list.selectedItems()
             scan_sel = [str(item.text(1)) for item in itemlist]
@@ -676,15 +638,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
-            if QTVERSION > '3.0.0':
-                scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-            else:
-                scan_sel = []
-                item = self.list.firstChild()
-                while item:
-                    if item.isSelected():
-                        scan_sel.append(str(item.text(1)))
-                    item=item.nextSibling()
+            scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
         else:
             itemlist = self.list.selectedItems()
             scan_sel = [str(item.text(1)) for item in itemlist]
@@ -735,15 +689,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             print("Overwritten _replaceClicked method")
         #get selected scan keys
         if QTVERSION < '4.0.0':
-            if QTVERSION > '3.0.0':
-                scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-            else:
-                scan_sel = []
-                item = self.list.firstChild()
-                while item:
-                    if item.isSelected():
-                        scan_sel.append(str(item.text(1)))
-                    item=item.nextSibling()
+            scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
         else:
             itemlist = self.list.selectedItems()
             scan_sel = [str(item.text(1)) for item in itemlist]

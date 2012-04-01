@@ -281,16 +281,8 @@ class ScanFit(qt.QWidget):
                 richtext.setWidth(painter,view.width())
                 page = 1                
                 while(1):
-                    if qt.qVersion() < '3.0.0':
-                        richtext.draw(painter,body.left(),body.top(),
-                                    qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
-                                    qt.QColorGroup())
-                        #richtext.draw(painter,body.left(),body.top(),
-                        #            qt.QRegion(view),
-                        #            qt.QColorGroup())
-                    else:
-                        richtext.draw(painter,body.left(),body.top(),
-                                    view,qt.QColorGroup())
+                    richtext.draw(painter,body.left(),body.top(),
+                                  view,qt.QColorGroup())
                     view.moveBy(0, body.height())
                     painter.translate(0, -body.height())
                     painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),

@@ -302,13 +302,10 @@ class MaterialComboBox(qt.QComboBox):
                          self._mySlot)
 
     def setCurrentText(self, qstring):
-        if QTVERSION < '3.0.0':
-           self.lineEdit().setText(qstring)
+        if QTVERSION < '4.0.0':
+           qt.QComboBox.setCurrentText(self, qstring)
         else:
-            if QTVERSION < '4.0.0':
-               qt.QComboBox.setCurrentText(self, qstring)
-            else:
-               qt.QComboBox.setEditText(self, qstring)
+           qt.QComboBox.setEditText(self, qstring)
 
     def setOptions(self,options=['1','2','3']):
         self.clear()
@@ -424,32 +421,23 @@ class MaterialComboBox(qt.QComboBox):
             else:
                 self.insertItem(self.count(), qstring)
                 
-        if QTVERSION < '3.0.0':
-            pass
-        else:
-            if self.lineEdit() is not None:
-                if QTVERSION < '4.0.0':
-                    self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
+        if self.lineEdit() is not None:
+            if QTVERSION < '4.0.0':
+                self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'),(dict,))
         else:
             self.emit(qt.SIGNAL('MaterialComboBoxSignal'), (dict))
 
     def focusInEvent(self,event):
-        if QTVERSION < '3.0.0':
-            pass
-        else:
-            if self.lineEdit() is not None:
-                if QTVERSION < '4.0.0':
-                    self.lineEditBackgroundColor = self.lineEdit().paletteBackgroundColor()
-                    self.lineEdit().setPaletteBackgroundColor(qt.QColor('yellow'))
-    
-    def _mySlot(self):
-        if QTVERSION < '3.0.0':
-            pass
-        else:
+        if self.lineEdit() is not None:
             if QTVERSION < '4.0.0':
-                self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
+                self.lineEditBackgroundColor = self.lineEdit().paletteBackgroundColor()
+                self.lineEdit().setPaletteBackgroundColor(qt.QColor('yellow'))
+
+    def _mySlot(self):
+        if QTVERSION < '4.0.0':
+            self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
         self._mySignal(self.currentText())
 
 class MaterialValidator(qt.QValidator):
@@ -1166,6 +1154,7 @@ class MyQLineEdit(qt.QLineEdit):
             self.setPaletteBackgroundColor(qt.QColor('yellow'))
 
     def focusOutEvent(self,event):
+        # TODO remove ?
         if 0:
             self.setPaletteBackgroundColor(qt.QColor('white'))       
             if QTVERSION < '4.0.0':
@@ -1174,15 +1163,10 @@ class MyQLineEdit(qt.QLineEdit):
                 self.emit(qt.SIGNAL("returnPressed()"))
         
     def setPaletteBackgroundColor(self, qcolor):
-        if QTVERSION < '3.0.0':
-            palette = self.palette()
-            palette.setColor(qt.QColorGroup.Base,qcolor)
-            self.setPalette(palette)
-            text = self.text()
-            self.setText(text)
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,qcolor)
         else:
+            # TODO remove ?
             if 0:
                 palette = self.palette()
                 role = self.backgroundRole()

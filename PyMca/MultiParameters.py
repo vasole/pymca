@@ -194,11 +194,8 @@ class ParametersTab(qt.QTabWidget):
         table = self.tables[name]
         lemon = ("#%x%x%x" % (255,250,205)).upper()
         if QTVERSION < '4.0.0':
-            if QTVERSION < '3.0.0':
-                hcolor = ("#%x%x%x" % (230,240,249)).upper()
-            else:
-                hb = table.horizontalHeader().paletteBackgroundColor()
-                hcolor = ("#%x%x%x" % (hb.red(), hb.green(), hb.blue())).upper()
+            hb = table.horizontalHeader().paletteBackgroundColor()
+            hcolor = ("#%x%x%x" % (hb.red(), hb.green(), hb.blue())).upper()
         else:
             if DEBUG:
                 print("Actual color to ge got")

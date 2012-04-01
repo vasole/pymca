@@ -129,12 +129,11 @@ class SpecFileDataInfo(qt.QTabWidget):
             table= QTable()
         table.setColumnCount(2)
         table.setRowCount(rows)
-        if qt.qVersion() > '3.0.0':
-            if qt.qVersion() < '4.0.0':
-                table.setReadOnly(1)
-                table.setSelectionMode(QTable.SingleRow)
-            else:
-                table.setSelectionMode(qt.QTableWidget.NoSelection)
+        if qt.qVersion() < '4.0.0':
+            table.setReadOnly(1)
+            table.setSelectionMode(QTable.SingleRow)
+        else:
+            table.setSelectionMode(qt.QTableWidget.NoSelection)
         table.verticalHeader().hide()
         if qt.qVersion() < '4.0.0':            
             table.setLeftMargin(0)
@@ -225,20 +224,14 @@ class SpecFileDataInfo(qt.QTabWidget):
             return
         text= self.info.get("Header", None)
         if text is not None:
-            if qt.qVersion() < '3.0.0':
-                wid = qt.QTextView(self)
-            elif qt.qVersion() < '4.0.0':
+            if qt.qVersion() < '4.0.0':
                 wid = qt.QTextEdit(self)
-                wid.setReadOnly(1)
+                wid.setText("\n".join(text))
             else:
                 wid = qt.QTextEdit()
-                wid.setReadOnly(1)
-            if qt.qVersion() < '4.0.0':
-                wid.setText("\n".join(text))
-                self.addTab(wid, "Scan Header")
-            else:
                 wid.insertHtml("<BR>".join(text))
-                self.addTab(wid, "Scan Header")
+            wid.setReadOnly(1)
+            self.addTab(wid, "Scan Header")
 
     def __createEDFHeaderText(self):
         text = self.info.get("SourceType","")
@@ -265,20 +258,14 @@ class SpecFileDataInfo(qt.QTabWidget):
     def __createFileHeaderText(self):
         text= self.info.get("FileHeader", None)
         if text not in [None, []]:
-            if qt.qVersion() < '3.0.0':
-                wid = qt.QTextView(self)
-            elif qt.qVersion() < '4.0.0':
+            if qt.qVersion() < '4.0.0':
                 wid = qt.QTextEdit(self)
-                wid.setReadOnly(1)
+                wid.setText("\n".join(text))
             else:
                 wid = qt.QTextEdit()
-                wid.setReadOnly(1)
-            if qt.qVersion() < '4.0.0':
-                wid.setText("\n".join(text))
-                self.addTab(wid, "File Header")
-            else:
                 wid.insertHtml("<BR>".join(text))
-                self.addTab(wid, "File Header")
+            wid.setReadOnly(1)
+            self.addTab(wid, "File Header")
 
     def closeEvent(self, event):
         ddict = {}

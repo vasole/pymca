@@ -324,8 +324,7 @@ class EnergyTable(QTable):
             #self.setFrameShadow(qttable.QTable.Sunken)
             self.setSelectionMode(qttable.QTable.Single)
             self.setNumCols(3 * self.dataColumns)
-            if QTVERSION > '3.0.0':
-                self.setFocusStyle(qttable.QTable.FollowStyle)
+            self.setFocusStyle(qttable.QTable.FollowStyle)
         else:
                 if DEBUG:
                     print("margin")
@@ -403,11 +402,7 @@ class EnergyTable(QTable):
                 color = qt.QColor(255, 20, 147)
             if QTVERSION < '4.0.0':
                 #item= qttable.QCheckTableItem(self, text)
-                if QTVERSION < '3.0.0':
-                    if DEBUG:
-                        print("background  color to implement in qt 2.3.0")
-                else:
-                    self.viewport().setPaletteBackgroundColor(color)
+                self.viewport().setPaletteBackgroundColor(color)
                 item= ColorQTableItem(self, text, color)                
                 self.setItem(r, 0+coloffset, item)
             else:

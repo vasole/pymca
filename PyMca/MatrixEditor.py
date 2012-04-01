@@ -328,27 +328,15 @@ class MyQLineEdit(qt.QLineEdit):
 
     if QTVERSION < '4.0.0':
         def focusInEvent(self,event):
-            if QTVERSION < '3.0.0':
-                pass
-            else:
-                if QTVERSION < '4.0.0':
-                    self.backgroundcolor = self.paletteBackgroundColor()
-                    self.setPaletteBackgroundColor(qt.QColor('yellow'))
+            self.backgroundcolor = self.paletteBackgroundColor()
+            self.setPaletteBackgroundColor(qt.QColor('yellow'))
 
         def focusOutEvent(self,event):
-            if QTVERSION < '3.0.0':
-                pass
-            else:
-                self.setPaletteBackgroundColor(qt.QColor('white'))
+            self.setPaletteBackgroundColor(qt.QColor('white'))
             self.__mySlot()
 
         def setPaletteBackgroundColor(self, color):
-            if QTVERSION < '3.0.0':
-                pass
-            elif QTVERSION < '4.0.0':
-                qt.QLineEdit.setPaletteBackgroundColor(self, color)
-            else:
-                pass
+            qt.QLineEdit.setPaletteBackgroundColor(self, color)
 
     def __mySlot(self):
         qstring = self.text()

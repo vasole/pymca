@@ -288,9 +288,7 @@ class MyQLineEdit(qt.QLineEdit):
             self.setAutoFillBackground(True)
         
     def setPaletteBackgroundColor(self, color):
-        if QTVERSION < '3.0.0':
-            pass
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QLineEdit.setPaletteBackgroundColor(self,color)
         else:
             palette = qt.QPalette()
@@ -300,22 +298,17 @@ class MyQLineEdit(qt.QLineEdit):
             
 
     def focusInEvent(self,event):
-        if QTVERSION < '3.0.0':
-            pass        
-        elif QTVERSION < '4.0.0 ':
-            #self.backgroundcolor = self.paletteBackgroundColor()
-            self.setPaletteBackgroundColor(qt.QColor('yellow'))
-        else:
-            self.setPaletteBackgroundColor(qt.QColor('yellow'))
-    
+        self.setPaletteBackgroundColor(qt.QColor('yellow'))
+        # TODO not like focusOutEvent ?
+        '''
+        if QTVERSION > '4.0.0':
+            qt.QLineEdit.focusInEvent(self, event)
+        '''
+
     def focusOutEvent(self,event):
-        if QTVERSION < '3.0.0':
-            pass        
-        else:
-            pass
-            self.setPaletteBackgroundColor(qt.QColor('white'))
-            if QTVERSION > '4.0.0':
-                qt.QLineEdit.focusOutEvent(self, event)
+        self.setPaletteBackgroundColor(qt.QColor('white'))
+        if QTVERSION > '4.0.0':
+            qt.QLineEdit.focusOutEvent(self, event)
         #self.emit(qt.SIGNAL("returnPressed()"),())
 
 def main():

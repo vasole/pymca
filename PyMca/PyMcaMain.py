@@ -80,7 +80,7 @@ from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
 __version__ = "4.5.0"
-if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0')):
+if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
                         fl=qt.Qt.WStyle_Customize  | qt.Qt.WDestructiveClose,
@@ -105,15 +105,15 @@ if (QTVERSION < '4.0.0') and ((sys.platform == 'darwin') or (QTVERSION < '3.0.0'
 
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
-    if QTVERSION >= '3.0.0':
-        strlist = qt.QStyleFactory.keys()
-        if sys.platform == "win32":
-            for item in strlist:
-                text = str(item)
-                if text == "WindowsXP":
-                    style = qt.QStyleFactory.create(item)
-                    app.setStyle(style)
-                    break
+    strlist = qt.QStyleFactory.keys()
+    if sys.platform == "win32":
+        for item in strlist:
+            text = str(item)
+            if text == "WindowsXP":
+                style = qt.QStyleFactory.create(item)
+                app.setStyle(style)
+                break
+    # TODO why this strange test
     if 1 or QTVERSION < '4.0.0':
         winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
         app.setPalette(winpalette)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         mpath = os.path.dirname(mpath)
     if QTVERSION < '4.0.0':
         qt.QMimeSourceFactory.defaultFactory().addFilePath(mpath)
-        if (sys.platform == 'darwin') or (qt.qVersion() < '3.0.0'):
+        if (sys.platform == 'darwin'):
             pixmap = qt.QPixmap('PyMcaSplashImage.png')    
             splash  = SplashScreen(pixmap=pixmap)
             splash.message( 'PyMCA version %s\n' % __version__)     

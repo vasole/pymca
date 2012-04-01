@@ -231,10 +231,7 @@ class Parameters(QTable):
         for option in self.code_options:
             a.append(option)
         if QTVERSION < '4.0.0':
-            if QTVERSION >='3.0.0':
-                self.parameters[param]['code_item']=qttable.QComboTableItem(self,a)
-            else:
-                self.parameters[param]['code_item']=qt.QComboTableItem(self,a)
+            self.parameters[param]['code_item']=qttable.QComboTableItem(self,a)
             self.setItem(linew,
                          self.parameters[param]['fields'].index('code'),
                          self.parameters[param]['code_item'])

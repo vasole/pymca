@@ -42,12 +42,8 @@ if QTVERSION < '4.0.0':
 
             self.table= qttable.QTable(self)
             self.table.setSelectionMode(qttable.QTable.Multi)
-            if qt.qVersion() >= '3.0.0':
-                self.table.setFocusStyle(qttable.QTable.FollowStyle)
-                self.table.setReadOnly(1)
-            else:
-                if DEBUG:
-                    print("Methods to be implemented")
+            self.table.setFocusStyle(qttable.QTable.FollowStyle)
+            self.table.setReadOnly(1)
             self.table.verticalHeader().setResizeEnabled(0, -1)
             self.table.horizontalHeader().setResizeEnabled(0, -1)
 

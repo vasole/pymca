@@ -188,16 +188,13 @@ class ElementsInfo(qt.QWidget):
         else:
             self.connect(self.energy,qt.SIGNAL('focusOut'),self._energySlot)
         
-        if qt.qVersion() < '3.0.0':
-            self.infoText = qt.QTextView(w)
+        self.infoText = qt.QTextEdit(w)
+        self.infoText.setReadOnly(1)
+        if qt.qVersion() < '4.0.0':
+            self.infoText.setText(self.html.gethtml(symbol))
         else:
-            self.infoText = qt.QTextEdit(w)
-            self.infoText.setReadOnly(1)
-            if qt.qVersion() < '4.0.0':
-                self.infoText.setText(self.html.gethtml(symbol))
-            else:
-                self.infoText.clear()
-                self.infoText.insertHtml(self.html.gethtml(symbol))
+            self.infoText.clear()
+            self.infoText.insertHtml(self.html.gethtml(symbol))
         l.addWidget(self.infoText)
         w.show()
         self.infoWidget=frame
@@ -254,10 +251,7 @@ class ElementsInfo(qt.QWidget):
             else:
                 self.energyValue = value
                 Elements.updateDict(energy=value)
-            if qt.qVersion() < '3.0.0':
-                pass
-            else:
-                self.energy.setPaletteBackgroundColor(qt.QColor('white'))
+            self.energy.setPaletteBackgroundColor(qt.QColor('white'))
             self.infoWidget.setFocus()
         else:
             self.energyValue = None
@@ -315,9 +309,7 @@ class MyQLineEdit(qt.QLineEdit):
             self.setPalette(palette)
 
     def focusInEvent(self,event):
-        if qt.qVersion() < '3.0.0':
-            pass        
-        elif qt.qVersion() < '4.0.0 ':
+        if qt.qVersion() < '4.0.0 ':
             self.backgroundcolor = self.paletteBackgroundColor()
             self.setPaletteBackgroundColor(qt.QColor('yellow'))
         else:
@@ -325,10 +317,7 @@ class MyQLineEdit(qt.QLineEdit):
 
 
     def focusOutEvent(self,event):
-        if qt.qVersion() < '3.0.0':
-            pass
-        else:
-            self.setPaletteBackgroundColor(qt.QColor('white'))
+        self.setPaletteBackgroundColor(qt.QColor('white'))
         if qt.qVersion() <'4.0.0':
             self.emit(qt.PYSIGNAL("focusOut"),())
         else:

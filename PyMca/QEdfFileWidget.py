@@ -338,7 +338,7 @@ class QEdfFileWidget(qt.QWidget):
                 self.applygroup.insert(self.applytoall,1)
                 self.applygroup.setExclusive(1)
                 self.__dummyW.layout.addWidget(self.applygroup)            
-                if qt.qVersion() > '3.0.0': self.applygroup.setFlat(1)
+                self.applygroup.setFlat(1)
                 self.applygroup.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.MinimumExpanding,
                                                              qt.QSizePolicy.Fixed))
                 self.connect(self.applygroup,qt.SIGNAL("clicked(int)"),self.groupSignal)

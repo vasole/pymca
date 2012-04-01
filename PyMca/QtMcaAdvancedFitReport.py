@@ -668,9 +668,8 @@ class QtMcaAdvancedFitReport:
         graph.setY1AxisLimits(ymin,ymax)
         graph.setY2AxisLimits(ymin,ymax)
         graph.show()
-        if True or qt.qVersion() < '3.0.0':
-            widget.resize(450,300)
-            #widget.show()
+        widget.resize(450,300)
+        #widget.show()
         
         qt.qApp.processEvents()
         outfile = self.outdir+"/"+self.outfile+".png"

@@ -44,7 +44,7 @@ class PeakButton(qt.QPushButton):
         font.setBold(1)
         self.setText(peak)
         self.setFlat(1)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.setToggleButton(0)
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Expanding))
 
@@ -77,13 +77,13 @@ class PeakButton(qt.QPushButton):
 
     def clickedSlot(self):
         self.toggle()
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("peakClicked"), (self.peak,))
         else:
             self.emit(qt.SIGNAL("peakClicked(QString)"), self.peak)
 
     def paintEvent(self, pEvent):
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             qt.QPushButton.paintEvent(self, pEvent)
         else:
             p = qt.QPainter(self)
@@ -103,10 +103,7 @@ class PeakButton(qt.QPushButton):
                 p.fillRect(pr, self.brush)
         qt.QPushButton.drawButtonLabel(self, p)
         p.setPen(qt.Qt.black)
-        if qt.qVersion() < '3.0.0':        
-            p.drawRoundRect(pr,25,25)
-        else:
-            p.drawRoundRect(pr)
+        p.drawRoundRect(pr)
 
 class PeakButtonList(qt.QWidget):
     def __init__(self, parent=None, name="PeakButtonList",
@@ -115,7 +112,7 @@ class PeakButtonList(qt.QWidget):
         qt.QWidget.__init__(self,parent)
         self.peaklist = peaklist
 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             layout= qt.QHBoxLayout(self, 0, 5)
         else:
             layout= qt.QHBoxLayout(self)
@@ -129,7 +126,7 @@ class PeakButtonList(qt.QWidget):
         for key in peaklist:
             self.buttondict[key] = PeakButton(self, key)
             layout.addWidget(self.buttondict[key])
-            if qt.qVersion() < '4.0.0':
+            if QTVERSION < '4.0.0':
                 self.connect(self.buttondict[key],
                              qt.PYSIGNAL("peakClicked"), self.__selection)
             else:
@@ -149,7 +146,7 @@ class PeakButtonList(qt.QWidget):
     def __resetBut(self):
         for key in self.peaklist:
                     self.buttondict[key].setSelected(0)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('selectionChanged'),([],))
         else:
             self.emit(qt.SIGNAL('selectionChanged'),([]))
@@ -159,7 +156,7 @@ class PeakButtonList(qt.QWidget):
         for key in self.peaklist:
                 if self.buttondict[key].isSelected():
                         selection.append(key)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("selectionChanged"), (selection,))
         else:
             self.emit(qt.SIGNAL("selectionChanged"), (selection))
@@ -234,7 +231,7 @@ class FitPeakSelect(qt.QWidget):
         self.peaks = PeakButtonList(self)
         self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
 
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.connect(self.energyTable, qt.PYSIGNAL("EnergyTableSignal"),
                          self._energyTableAction)
             self.connect(self.table, qt.PYSIGNAL("elementClicked"),
@@ -310,13 +307,13 @@ class FitPeakSelect(qt.QWidget):
             self.table.setElementSelected(self.current,0)
         sel= self.getSelection()
         sel['current'] = self.current
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("FitPeakSelect"), (sel,))
         else:
             self.emit(qt.SIGNAL("FitPeakSelect"), (sel))
 
     def elementClicked(self,symbol):
-        if qt.qVersion() > '4.0.0':symbol = str(symbol)
+        if QTVERSION > '4.0.0':symbol = str(symbol)
         if not (symbol in self.peakdict):
             self.peakdict[symbol] = []
         self.current = symbol
@@ -331,7 +328,7 @@ class FitPeakSelect(qt.QWidget):
         sel= self.getSelection()
         sel['current'] = self.current
         self.setPeaksDisabled(symbol)
-        if qt.qVersion() < '4.0.0':
+        if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("FitPeakSelect"), (sel,))
         else:
             self.emit(qt.SIGNAL("FitPeakSelect"),(sel))
@@ -476,20 +473,10 @@ class MyQLineEdit(qt.QLineEdit):
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
 
-    def setPaletteBackgroundColor(self, qcolor):
-        if qt.qVersion() < '3.0.0':
-            palette = self.palette()
-            palette.setColor(qt.QColorGroup.Base,qcolor)
-            self.setPalette(palette)
-            text = self.text()
-            self.setText(text)
-        else:
-            qt.QLineEdit.setPaletteBackgroundColor(self,qcolor)
-
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
         qt.QLabel.__init__(self,parent)
-        if qt.qVersion() <'4.0.0':
+        if QTVERSION <'4.0.0':
             self.color = color
             self.bold  = bold
         else:
@@ -500,7 +487,7 @@ class MyQLabel(qt.QLabel):
             self.font().setBold(bold)
 
 
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         def drawContents(self, painter):
             painter.font().setBold(self.bold)
             pal =self.palette()
@@ -519,7 +506,7 @@ def testwidget():
 
     w = qt.QTabWidget()
 
-    if qt.qVersion() < '4.0.0':
+    if QTVERSION < '4.0.0':
         f = FitPeakSelect(w)
         w.addTab(f, "QPeriodicTable")
         qt.QObject.connect(f, qt.PYSIGNAL("FitPeakSelect"), change)

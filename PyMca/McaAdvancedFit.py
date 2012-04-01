@@ -134,12 +134,6 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.mainTab = qt.QTabWidget(self)
             self.mainLayout.addWidget(self.mainTab)
-            if  QTVERSION < '3.0.0':
-                self.mainTab.label = self.__mainTabPatch
-                self.mainTab.tabText = self.mainTab.label
-                self.mainTab.currentIndex = self.mainTab.currentPageIndex
-                self.mainTab.setCurrentIndex = self.mainTab.setCurrentPage
-                self.mainTabLabels = ["GRAPH", "TABLE", "CONCENTRATIONS", "DIAGNOSTICS"]
             #graph
             if QTVERSION < '4.0.0':
                 self.mainTab.tabText = self.mainTab.label
@@ -249,11 +243,8 @@ class McaAdvancedFit(qt.QWidget):
             tabDiagnosticsLayout.setMargin(margin)
             tabDiagnosticsLayout.setSpacing(spacing)
             w = self.tabDiagnostics
-            if  QTVERSION < '3.0.0':
-                self.diagnosticsWidget = qt.QTextView(w)
-            else:
-                self.diagnosticsWidget = qt.QTextEdit(w)
-                self.diagnosticsWidget.setReadOnly(1)
+            self.diagnosticsWidget = qt.QTextEdit(w)
+            self.diagnosticsWidget.setReadOnly(1)
 
             tabDiagnosticsLayout.addWidget(self.diagnosticsWidget)
             if QTVERSION < '4.0.0':
@@ -395,9 +386,7 @@ class McaAdvancedFit(qt.QWidget):
         sthread.start()
         #except:
         #    raise "ThreadError",sys.exc_info()
-        if QTVERSION < '3.0.0':
-            msg = qt.QDialog(self, "Please Wait", False,qt.Qt.WStyle_NoBorder)
-        elif QTVERSION < '4.0.0':
+        if QTVERSION < '4.0.0':
             msg = qt.QDialog(self, "Please Wait",
                              1,
                              qt.Qt.WStyle_NoBorder)
@@ -553,14 +542,6 @@ class McaAdvancedFit(qt.QWidget):
 
         if DEBUG:
             self.mcafit.configure(config)
-        elif (QTVERSION < '3.0.0'):
-            try:
-                self.mcafit.configure(config)
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("%s" % sys.exc_info()[1])
-                msg.exec_loop()
         else:
             try:
                 threadResult=self._submitThread(self.mcafit.configure, config,
@@ -689,7 +670,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.delcurve(key)
         self.plot()
 
-        if DEBUG or (QTVERSION < '3.0.0'):
+        if DEBUG:
             self.mcafit.configure(config)
         else:
             threadResult=self._submitThread(self.mcafit.configure, config,
@@ -1042,16 +1023,6 @@ class McaAdvancedFit(qt.QWidget):
         if DEBUG:
             dict = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True)
-        elif (QTVERSION < '3.0.0'):
-            try:
-                dict = tool.processFitResult(fitresult=fitresult,
-                                         elementsfrommatrix=True)
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error: %s" % (sys.exc_info()[1]))
-                msg.exec_loop()
-                return
         else:
             try:
                 threadResult = self._submitThread(tool.processFitResult,
@@ -1466,16 +1437,8 @@ class McaAdvancedFit(qt.QWidget):
                 richtext.setWidth(painter,view.width())
                 page = 1
                 while(1):
-                    if QTVERSION < '3.0.0':
-                        richtext.draw(painter,body.left(),body.top(),
-                                    qt.QRegion(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin),
-                                    qt.QColorGroup())
-                        #richtext.draw(painter,body.left(),body.top(),
-                        #            qt.QRegion(view),
-                        #            qt.QColorGroup())
-                    else:
-                        richtext.draw(painter,body.left(),body.top(),
-                                    view,qt.QColorGroup())
+                    richtext.draw(painter,body.left(),body.top(),
+                                view,qt.QColorGroup())
                     view.moveBy(0, body.height())
                     painter.translate(0, -body.height())
                     painter.drawText(view.right()  - painter.fontMetrics().width(QString.number(page)),
@@ -1626,7 +1589,7 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 msg.exec_()
             return
-        if DEBUG or (QTVERSION < '3.0.0'):
+        if DEBUG:
             if DEBUG:
                 print("calling estimate")
             self.mcafit.estimate()

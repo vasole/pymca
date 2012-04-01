@@ -413,8 +413,7 @@ class AttenuatorsTableWidget(QTable):
             self.setFrameShape(qttable.QTable.NoFrame)
             #self.setFrameShadow(qttable.QTable.Sunken)
             self.setSelectionMode(qttable.QTable.Single)
-            if QTVERSION >= '3.0.0':
-                self.setFocusStyle(qttable.QTable.FollowStyle)
+            self.setFocusStyle(qttable.QTable.FollowStyle)
             self.setNumCols(len(labels))
             for label in labels:
                 self.horizontalHeader().setLabel(labels.index(label), label)
@@ -881,12 +880,10 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
                 insert = False
         if insert:
             self.insertItem(-1, qstring)
-        if QTVERSION < '3.0.0':
-            pass
-        else:
-            if self.lineEdit() is not None:
-                if QTVERSION < '4.0.0':
-                    self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
+
+        if self.lineEdit() is not None:
+            if QTVERSION < '4.0.0':
+                self.lineEdit().setPaletteBackgroundColor(qt.QColor("white"))
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL('MaterialComboBoxSignal'), (ddict,))
         else:

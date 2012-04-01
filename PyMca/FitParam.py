@@ -266,15 +266,12 @@ class FitParamWidget(FitParamForm):
 
         self.prevTabIdx= None
         self.tabLabel= []
-        if QTVERSION < '3.0.0':
-            n = 1 + len(FitParamHeaders)
-        else:
-            n = self.mainTab.count()
-            for idx in range(n):
-                if QTVERSION < '4.0.0':
-                    self.tabLabel.append(self.mainTab.label(idx))
-                else:
-                    self.tabLabel.append(str(self.mainTab.tabText(idx)))
+        n = self.mainTab.count()
+        for idx in range(n):
+            if QTVERSION < '4.0.0':
+                self.tabLabel.append(self.mainTab.label(idx))
+            else:
+                self.tabLabel.append(str(self.mainTab.tabText(idx)))
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
         self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
@@ -471,10 +468,7 @@ class FitParamWidget(FitParamForm):
             
 
     def __tabChanged(self, wid):
-        if QTVERSION < '3.0.0':
-            idx= self.mainTab.currentPageIndex()
-        else:
-            idx= self.mainTab.indexOf(wid)
+        idx= self.mainTab.indexOf(wid)
 
         if self.prevTabIdx is None:
             self.prevTabIdx= idx
@@ -484,10 +478,7 @@ class FitParamWidget(FitParamForm):
                 self.prevTabIdx= idx
             
     def __tabCheck(self, tabIdx):
-        if QTVERSION < '3.0.0':
-            label=FitParamHeaders[tabIdx]
-        else:
-            label= self.tabLabel[tabIdx]
+        label= self.tabLabel[tabIdx]
         if self.__getPar(label) is None:
             return 0
         return 1

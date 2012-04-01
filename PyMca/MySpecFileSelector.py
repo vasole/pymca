@@ -76,10 +76,7 @@ class ScanList(qt.QWidget):
 
         # --- signal handling
         self.connect(self.list, qt.SIGNAL("selectionChanged()"), self.__selectionChanged)
-        if qt.qVersion() > '3.0.0':
-            self.connect(self.list, qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
-        else:
-            self.connect(self.list, qt.SIGNAL("rightButtonPressed(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
+        self.connect(self.list, qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"), self.__contextMenu)
         self.connect(self.list, qt.SIGNAL("doubleClicked(QListViewItem *)"), self.__doubleClicked)
 
 
@@ -144,35 +141,18 @@ class ScanList(qt.QWidget):
         self.scans= []
 
     def markScanSelected(self, scanlist):
-        if qt.qVersion() > '3.0.0':
-            for sn in self.scans:
-                item= self.list.findItem(sn, 1)
-                if item is not None:
-                    if sn in scanlist:
-                        item.setText(0, "X")
-                    else:
-                        item.setText(0, "")
-        else:
-            item = self.list.firstChild()
-            while item:
-                    if str(item.text(1)) in scanlist:
-                        item.setText(0, "X")
-                    else:
-                        item.setText(0, "")
-                    item = item.nextSibling()
+        for sn in self.scans:
+            item= self.list.findItem(sn, 1)
+            if item is not None:
+                if sn in scanlist:
+                    item.setText(0, "X")
+                else:
+                    item.setText(0, "")
     #
     # signal/slot handling
     #
     def __selectionChanged(self):
-        if qt.qVersion() > '3.0.0':
-            sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-        else:
-            sel = []
-            item = self.list.firstChild()
-            while item:
-                if item.isSelected():
-                    sel.append(str(item.text(1)))
-                item=item.nextSibling()
+        sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
         self.emit(qt.PYSIGNAL("scanSelection"), (sel,))
 
     def __doubleClicked(self, item):
@@ -210,12 +190,8 @@ class McaTable(qt.QWidget):
 
         self.table= qttable.QTable(self)
         self.table.setSelectionMode(qttable.QTable.Multi)
-        if qt.qVersion() >= '3.0.0':
-            self.table.setFocusStyle(qttable.QTable.FollowStyle)
-            self.table.setReadOnly(1)
-        else:
-            if DEBUG:
-                print("Methods to be implemented")
+        self.table.setFocusStyle(qttable.QTable.FollowStyle)
+        self.table.setReadOnly(1)
         self.table.verticalHeader().setResizeEnabled(0, -1)
         self.table.horizontalHeader().setResizeEnabled(0, -1)
 
@@ -379,12 +355,11 @@ class CntTable(qt.QWidget):
 
         self.table= qttable.QTable(self)
         self.table.setSelectionMode(qttable.QTable.Multi)
-        if qt.qVersion() > '3.0.0':
-            self.table.setFocusStyle(qttable.QTable.FollowStyle)
-            #self.table.setFocusStyle(qttable.QTable.SpreadSheet)
-            #self.table.setReadOnly(1)
-            self.table.setColumnReadOnly(0,1)
-            self.table.setColumnReadOnly(2,1)
+        self.table.setFocusStyle(qttable.QTable.FollowStyle)
+        #self.table.setFocusStyle(qttable.QTable.SpreadSheet)
+        #self.table.setReadOnly(1)
+        self.table.setColumnReadOnly(0,1)
+        self.table.setColumnReadOnly(2,1)
         self.table.verticalHeader().setResizeEnabled(0, -1)
         self.table.horizontalHeader().setResizeEnabled(0, -1)
         self.cnt=0

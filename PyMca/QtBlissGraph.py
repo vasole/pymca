@@ -91,16 +91,7 @@ if USE_SPS_LUT:
         except ImportError:
             USE_SPS_LUT = 0
 #import arrayfns
-if QTVERSION < '3.0.0':
-    qt.QCursor.ArrowCursor   = qt.ArrowCursor
-    qt.QCursor.UpArrowCursor = qt.UpArrowCursor
-    qt.QCursor.WaitCursor    = qt.WaitCursor
-    qt.QCursor.CrossCursor   = qt.CrossCursor
-    qt.QCursor.SizeVerCursor = qt.SizeVerCursor
-    qt.QCursor.SizeHorCursor = qt.SizeHorCursor
-    qt.QCursor.PointingHandCursor = qt.ArrowCursor
-
-elif QTVERSION > '4.0.0':
+if QTVERSION > '4.0.0':
     qt.QCursor.ArrowCursor   = qt.Qt.ArrowCursor
     qt.QCursor.UpArrowCursor = qt.Qt.UpArrowCursor
     qt.QCursor.WaitCursor    = qt.Qt.WaitCursor
