@@ -316,15 +316,15 @@ def getCodeFromReaction(text):
                     93 <-> whole atom parameters
     """
     tmp = text.lower()
-    if 'coherent' in text:
+    if 'coherent' in tmp:
         return 71
-    if 'incoherent' in text:
+    if 'incoherent' in tmp:
         return 72
-    if 'photo' in text:
+    if 'photo' in tmp:
         return 73
-    if 'pair' in text:
+    if 'pair' in tmp:
         return 74
-    if 'triplet' in text:
+    if 'triplet' in tmp:
         return 75
     raise ValueError('Invalid reaction')
 
