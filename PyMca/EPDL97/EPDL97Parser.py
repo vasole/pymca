@@ -557,7 +557,6 @@ def getAtomicWeights():
     if EPDL97_ATOMIC_WEIGHTS is None:
         lines = EPDL97_DATA
         i = 1
-        ele = Elements[0]
         EPDL97_ATOMIC_WEIGHTS = numpy.zeros((len(Elements),), numpy.float)
         for line in lines:
             if line.startswith('%3d000 ' % i):
