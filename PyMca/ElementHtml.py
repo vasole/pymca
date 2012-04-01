@@ -121,7 +121,7 @@ class ElementHtml(object):
             text+="</td>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
             text+="<b><font size=3>%.5f g/cm3</font></b>"  % Elements.Element[ele]['density']
-            text+="</td>"            
+            text+="</td>"
             text+="</tr>"
             text+="</table>"
 
@@ -144,7 +144,7 @@ class ElementHtml(object):
             text+="<b><font size=3>%s </font></b>"  % "K"
             text+="</td>"
             text+='<td align="right" bgcolor="%s">' % finalcolor
-            text+="<b><font size=3>%.3e </font></b>"  % Elements.Element[ele]['omegak']
+            text+="<b><font size=3>%.3e </font></b>"  % omegak
             text+="</td>"
         for i in range(len(omegal)):
             if omegal[i] > 0.0:
