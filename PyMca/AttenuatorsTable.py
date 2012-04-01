@@ -823,9 +823,15 @@ class AttenuatorsTableWidget(QTable):
                     defaultThickness = Elements.Material[key]['Thickness'] 
         if defaultDensity >= 0.0:
             self.setText(row, 3, "%g" % defaultDensity)
+        elif currentDensity <= 0:
+            # should not be better to raise an exception if the
+            # entered density or thickness were negative?
+            self.setText(row, 3, "%g" % 1.0)
         if defaultThickness >= 0.0:
             self.setText(row, 4, "%g" % defaultThickness)
         elif currentThickness <= 0.0:
+            # should not be better to raise an exception if the
+            # entered density or thickness were negative?
             self.setText(row, 4, "%g" % 0.1)
 
 class MyQComboBox(MaterialEditor.MaterialComboBox):

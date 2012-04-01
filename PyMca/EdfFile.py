@@ -420,16 +420,22 @@ class  EdfFile(object):
         self.NumImages = self._wrappedInstance.getNumberOfImages()
         if self.NumImages < 1:
             return
-        info0 = self._wrappedInstance.getInfo(0)
-        #for the time being I am going to assume all the images have the same shape
-        data = self._wrappedInstance.getData(0)
-
+        
+        # wrapped image objects have to provide getInfo and getData
+        # info = self._wrappedInstance.getInfo( index)
+        # data = self._wrappedInstance.getData( index)
+        # for the time being I am going to assume all the images
+        # in the file have the same data type type
+        data = None
+        
         for Index in range(self.NumImages):
             info = self._wrappedInstance.getInfo(Index)
             self.Images.append(Image())
             self.Images[Index].Dim1 = info['nRows']
             self.Images[Index].Dim2 = info['nColumns']
             self.Images[Index].NumDim = 2
+            if data is None:
+                data = self._wrappedInstance.getData(0)
             self.Images[Index].DataType = self.__GetDefaultEdfType__(data.dtype)
             self.Images[Index].StaticHeader['Dim_1'] = self.Images[Index].Dim1
             self.Images[Index].StaticHeader['Dim_2'] = self.Images[Index].Dim2
