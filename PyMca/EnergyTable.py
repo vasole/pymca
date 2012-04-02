@@ -25,11 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.16 $"
-__author__="V.A. Sole - ESRF BLISS Group"
+__author__="V.A. Sole - ESRF Software Group"
 import sys
-import numpy.oldnumeric as Numeric
-from PyMca import QXTube
 import os
+import numpy
+from PyMca import QXTube
 from PyMca import PyMcaDirs
 from PyMca import PyMca_Icons as Icons
 qt = QXTube.qt
@@ -434,21 +434,21 @@ class EnergyTable(QTable):
                 self.setText(r, 2+coloffset,"")
 
     def setParameters(self, energylist, weightlist, flaglist, scatterlist=None):
-        if isinstance(energylist, Numeric.ArrayType):
+        if isinstance(energylist, numpy.ndarray):
             self.energyList=energylist.tolist()
         elif type(energylist) != type([]):
             self.energyList=[energylist]
         else:
             self.energyList =energylist
 
-        if   isinstance(weightlist, Numeric.ArrayType):
+        if   isinstance(weightlist, numpy.ndarray):
             self.weightList=weightlist.tolist()
         elif type(weightlist) != type([]):
             self.energyList=[weightlist]
         else:
             self.weightList =weightlist
         
-        if   isinstance(flaglist, Numeric.ArrayType):
+        if   isinstance(flaglist, numpy.ndarray):
             self.flagList=flaglist.tolist()
         elif type(flaglist) != type([]):
             self.flagList=[flaglist]
@@ -457,9 +457,9 @@ class EnergyTable(QTable):
 
         
         if scatterlist is None:
-            scatterlist = Numeric.zeros(len(self.energyList)).tolist()
+            scatterlist = numpy.zeros(len(self.energyList)).tolist()
             scatterlist[0] = 1
-        if isinstance(scatterlist, Numeric.ArrayType):
+        if isinstance(scatterlist, numpy.ndarray):
             self.scatterList=scatterlist.tolist()
         elif type(scatterlist) != type([]):
             self.scatterList=[scatterlist]
@@ -708,10 +708,10 @@ def main(args):
     def dummy(ddict):
         print("dict =",ddict)
     tab = EnergyTable(None)
-    energy = Numeric.arange(100.).astype(Numeric.Float)+ 1.5
-    weight = Numeric.ones(len(energy), Numeric.Float)
-    flag  = Numeric.zeros(len(energy)).tolist()
-    scatterlist = Numeric.zeros(len(energy))
+    energy = numpy.arange(100.).astype(Float)+ 1.5
+    weight = numpy.ones(len(energy), Float)
+    flag  = numpy.zeros(len(energy)).tolist()
+    scatterlist = numpy.zeros(len(energy))
     scatterlist[0:10] = 1
     tab.setParameters(energy, weight, flag, scatterlist)
     if QTVERSION < '4.0.0':
