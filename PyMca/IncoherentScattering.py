@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import ConfigDict
 from PyMca import PyMcaDataDir
 
@@ -59,7 +59,7 @@ if not os.path.exists(ffile):
 COEFFICIENTS = ConfigDict.ConfigDict()
 COEFFICIENTS.read(ffile)
 xvalues = COEFFICIENTS['ISCADT']['XSVAL']
-svalues = Numeric.reshape(COEFFICIENTS['ISCADT']['SCATF'], (100,len(xvalues)))
+svalues = numpy.reshape(COEFFICIENTS['ISCADT']['SCATF'], (100, len(xvalues)))
 #svalues = COEFFICIENTS['ISCADT']['SCATF']
 #print svalues[100:110]
 KEVTOANG = 12.39852000
@@ -77,7 +77,7 @@ def getElementComptonFormFactor(ele, theta, energy):
 
 def getComptonScatteringEnergy(energy, theta):
     return energy/(1.0 + \
-            (energy/511.) * (1 - Numeric.cos(theta*(Numeric.pi/180.0))))
+            (energy/511.) * (1 - numpy.cos(theta*(numpy.pi / 180.0))))
 
 def getElementIncoherentScatteringFunction(ele, theta, energy):
     """
@@ -96,14 +96,14 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
     else:
         z = float(ele)
     wavelength = KEVTOANG / energy
-    sinhalftheta=Numeric.sin(theta*(Numeric.pi/360.0))
+    sinhalftheta = numpy.sin(theta * (numpy.pi / 360.0))
     #Hubbel just give this term
     x =  sinhalftheta / wavelength
     
     #print "x old = ",x
     e = energy/511.0
     #Fajardo uses:
-    x = x * Numeric.sqrt(1.0 + e* (e+2.0)* pow(sinhalftheta, 2))/ \
+    x = x * numpy.sqrt(1.0 + e* (e+2.0)* pow(sinhalftheta, 2))/ \
             (1.0 + 2.0 * e * pow(sinhalftheta, 2))
     #print "x new = ",x
     
@@ -140,8 +140,8 @@ def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
     if (p1 > 1.0) or (p1 < -1):
         raise ValueError(\
         "Invalid degree of linear polarization respect to the scattering plane")
-    thetasin2 = pow(Numeric.sin(theta*Numeric.pi/180.0),2)
-    thetacos  =  Numeric.cos(theta*Numeric.pi/180.0)
+    thetasin2 = pow(numpy.sin(theta * numpy.pi / 180.0), 2)
+    thetacos  =  numpy.cos(theta * numpy.pi/180.0)
     e = energy/(1.0 + (energy/511.) * (1.0 - thetacos))
     return 0.5 * ((e/energy) + (energy/e) + (p1-1.0) * thetasin2) * \
            pow(R0*(e/energy)*getElementIncoherentScatteringFunction(ele, theta, energy),2)
