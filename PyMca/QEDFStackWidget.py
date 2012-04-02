@@ -27,7 +27,6 @@
 #############################################################################*/
 import sys
 import os
-import numpy.oldnumeric as Numeric
 import numpy
 import copy
 import time
@@ -553,7 +552,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     if threadResult[0] == "Exception":
                         raise Exception(threadResult[1],threadResult[2])
             self.originalPlot()
-            #self.mcaWidget.graph.newcurve("background", Numeric.arange(len(self.b)), self.b)
+            #self.mcaWidget.graph.newcurve("background", numpy.arange(len(self.b)), self.b)
             #self.mcaWidget.graph.replot()
         except:
             msg = qt.QMessageBox(self)
@@ -1305,7 +1304,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             #self.plotROIImage(update = True)
         if self.__stackImageData is None: return
         #do not reset the selection
-        #self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
+        #self.__selectionMask = numpy.zeros(self.__stackImageData.shape, numpy.uint8)
             
     def _buildAndConnectButtonBox(self):
         #the MCA selection
@@ -1477,14 +1476,14 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def originalPlot(self):        
         #original image
         if isinstance(self.stack.data, numpy.ndarray):
-            self.__stackImageData = Numeric.sum(self.stack.data, self.mcaIndex)
+            self.__stackImageData = numpy.sum(self.stack.data, self.mcaIndex)
             #original ICR mca
             if DEBUG:
                 print("(self.otherIndex, self.fileIndex) = (5d, %d)" %\
                       (self.otherIndex, self.fileIndex))
             i = max(self.otherIndex, self.fileIndex)
             j = min(self.otherIndex, self.fileIndex)                
-            mcaData0 = Numeric.sum(Numeric.sum(self.stack.data, i), j) * 1.0
+            mcaData0 = numpy.sum(numpy.sum(self.stack.data, i), j) * 1.0
         else:
             if DEBUG:
                 t0 = time.time()
@@ -1526,7 +1525,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                            "SourceName":"EDF Stack",
                            "Key":"SUM"}
 
-        dataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)
+        dataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)
                         + self.stack.info['Channel0']]
 
         dataObject.y = [mcaData0]
@@ -1586,7 +1585,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 self.stackGraphWidget.graph.replot() #I need it to update the canvas
             self.plotStackImage(update=True)
 
-        self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
+        self.__selectionMask = numpy.zeros(self.__stackImageData.shape, numpy.uint8)
 
         #init the ROI
         self.roiWindow.graphWidget.graph.setTitle("ICR ROI")
@@ -1653,7 +1652,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                                                 self.__mcaData0.x[0]
                 imiddle = int(0.5 * (i1+i2))
                 pos = 0.5 * (ddict['from'] + ddict['to'])
-                imiddle = max(Numeric.nonzero(xw <= pos))
+                imiddle = max(numpy.nonzero(xw <= pos)[0])
             elif (ddict["type"]).upper() != "CHANNEL":
                 #energy roi
                 xw =  ddict['calibration'][0] + \
@@ -1661,47 +1660,47 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                       ddict['calibration'][2] * self.__mcaData0.x[0] * \
                                                 self.__mcaData0.x[0]
                 if xw[0] < xw[-1]:
-                    i1 = Numeric.nonzero(ddict['from'] <= xw)
+                    i1 = numpy.nonzero(ddict['from'] <= xw)[0]
                     if len(i1):
                         i1 = min(i1)
                     else:
                         return
-                    i2 = Numeric.nonzero(xw <= ddict['to'])
+                    i2 = numpy.nonzero(xw <= ddict['to'])[0]
                     if len(i2):
                         i2 = max(i2) + 1
                     else:
                         return
                     pos = 0.5 * (ddict['from'] + ddict['to'])
-                    imiddle = max(Numeric.nonzero(xw <= pos))
+                    imiddle = max(numpy.nonzero(xw <= pos)[0])
                 else:
-                    i2 = Numeric.nonzero(ddict['from']<= xw)
+                    i2 = numpy.nonzero(ddict['from']<= xw)[0]
                     if len(i2):
                         i2 = max(i2)
                     else:
                         return
-                    i1 = Numeric.nonzero(xw <= ddict['to'])
+                    i1 = numpy.nonzero(xw <= ddict['to'])[0]
                     if len(i1):
                         i1 = min(i1) + 1
                     else:
                         return
                     pos = 0.5 * (ddict['from'] + ddict['to'])
-                    imiddle = min(Numeric.nonzero(xw <= pos))
+                    imiddle = min(numpy.nonzero(xw <= pos)[0])
             else:
-                i1 = Numeric.nonzero(ddict['from'] <= self.__mcaData0.x[0])
+                i1 = numpy.nonzero(ddict['from'] <= self.__mcaData0.x[0])[0]
                 if len(i1):
                     i1 = min(i1)
                 else:
                     i1 = 0
                 i1 = max(i1, 0)
 
-                i2 = Numeric.nonzero(self.__mcaData0.x[0] <= ddict['to'])
+                i2 = numpy.nonzero(self.__mcaData0.x[0] <= ddict['to'])[0]
                 if len(i2):
                     i2 = max(i2)
                 else:
                     i2 = 0
                 i2 = min(i2+1, self.stack.data.shape[self.mcaIndex])
                 pos = 0.5 * (ddict['from'] + ddict['to'])
-                imiddle = max(Numeric.nonzero(self.__mcaData0.x[0] <= pos))
+                imiddle = max(numpy.nonzero(self.__mcaData0.x[0] <= pos)[0])
                 xw = self.__mcaData0.x[0]
             if self.fileIndex == 0:
                 if self.mcaIndex == 1:
@@ -1712,7 +1711,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     maxImage   = numpy.max(dataImage, 1)
                     minImage   = numpy.min(dataImage, 1)
                     background =  0.5 * (i2-i1) * (leftImage+rightImage)                    
-                    self.__ROIImageData = Numeric.sum(dataImage,1)
+                    self.__ROIImageData = numpy.sum(dataImage,1)
                 else:
                     if DEBUG:
                         t0 = time.time()
@@ -1724,7 +1723,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         maxImage   = numpy.max(dataImage, 2)
                         minImage   = numpy.min(dataImage, 2)
                         background =  0.5 * (i2-i1) * (leftImage+rightImage)
-                        self.__ROIImageData = Numeric.sum(dataImage,2)
+                        self.__ROIImageData = numpy.sum(dataImage,2)
                     else:
                         shape = self.stack.data.shape
                         self.__ROIImageData[:,:] = 0
@@ -1763,7 +1762,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         maxImage   = numpy.max(dataImage, 0)
                         minImage   = numpy.min(dataImage, 0)
                         background =  0.5 * (i2-i1) * (leftImage+rightImage)
-                        self.__ROIImageData = Numeric.sum(dataImage, 0)
+                        self.__ROIImageData = numpy.sum(dataImage, 0)
                     else:
                         shape = self.stack.data.shape                        
                         self.__ROIImageData[:,:] = 0
@@ -1812,7 +1811,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                         maxImage   = numpy.max(dataImage, 2)
                         minImage   = numpy.min(dataImage, 2)
                         background =  0.5 * (i2-i1) * (leftImage+rightImage)
-                        self.__ROIImageData = Numeric.sum(dataImage,2)
+                        self.__ROIImageData = numpy.sum(dataImage,2)
                     else:
                         shape = self.stack.data.shape
                         self.__ROIImageData[:,:] = 0
@@ -1851,7 +1850,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     dataImage  = self.stack.data[i1:i2,:,:]
                     minImage   = numpy.min(dataImage, 0)
                     maxImage   = numpy.max(dataImage, 0)
-                    self.__ROIImageData = Numeric.sum(dataImage,0)
+                    self.__ROIImageData = numpy.sum(dataImage,0)
                 else:
                     leftImage  = self.stack.data[:,i1,:]
                     middleImage= self.stack.data[:,imidle,:]
@@ -1860,7 +1859,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     dataImage  = self.stack.data[:,i1:i2,:]
                     minImage   = numpy.min(dataImage, 1)
                     maxImage   = numpy.max(dataImage, 1)
-                    self.__ROIImageData = Numeric.sum(dataImage,1)
+                    self.__ROIImageData = numpy.sum(dataImage,1)
             self.__ROIImageBackground     = background
             try:
                 if ddict["name"] == "ICR":
@@ -1917,11 +1916,11 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if self.__stackColormap is None:
             for i in range(4):
                 self.__stackPixmap[:,:,i]  = (self.__stackPixmap0[:,:,i] *\
-                      (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
+                      (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
         elif int(str(self.__stackColormap[0])) > 1:     #color
             for i in range(4):
                 self.__stackPixmap[:,:,i]  = (self.__stackPixmap0[:,:,i] *\
-                      (1 - (0.2 * self.__selectionMask))).astype(Numeric.UInt8)
+                      (1 - (0.2 * self.__selectionMask))).astype(numpy.uint8)
         else:
             self.__stackPixmap[self.__selectionMask>0,0]    = 0x40
             self.__stackPixmap[self.__selectionMask>0,2]    = 0x70
@@ -2120,7 +2119,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             else:
                 dataObject = self.__mcaData0
             return self.sendMcaSelection(dataObject, action = action)
-        npixels = len(Numeric.nonzero(Numeric.ravel(self.__selectionMask)>0)) * 1.0
+        npixels = len(numpy.nonzero(numpy.ravel(self.__selectionMask)>0)[0]) * 1.0
         if npixels == 0:
             if self.normalizeButton.isChecked():
                 npixels = self.__stackImageData.shape[0] * self.__stackImageData.shape[1]
@@ -2251,7 +2250,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                            "selectiontype":"1D",
                            "SourceName":"EDF Stack",
                            "Key":"Selection"}
-        dataObject.x = [Numeric.arange(len(mcaData)).astype(Numeric.Float)
+        dataObject.x = [numpy.arange(len(mcaData)).astype(numpy.float)
                         + self.stack.info['Channel0']]
         dataObject.y = [mcaData]
 
@@ -2317,7 +2316,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
             print("_resetSelection")
         if self.__stackImageData is None:
             return
-        self.__selectionMask = Numeric.zeros(self.__stackImageData.shape, Numeric.UInt8)
+        self.__selectionMask = numpy.zeros(self.__stackImageData.shape, numpy.uint8)
         self.plotStackImage(update = True)
         self.roiWindow.setSelectionMask(self.__selectionMask)
 
