@@ -480,7 +480,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             for value in image.shape:
                 self.__imageLength *= value
             if len(image.shape) == 1:
-                image.shape = image.shape[0], 1
+                image = numpy.resize(image, (image.shape[0], 1))
             self.__imageShape = image.shape
             self._updateSizeLabel()
             firstTime = True
@@ -490,7 +490,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             for value in image.shape:
                 length *= value
             if length == self.__imageLength:
-                image.shape = self.__imageShape[0], self.__imageShape[1]
+                image = numpy.resize(image,
+                          (self.__imageShape[0], self.__imageShape[1]))
             else:
                 raise ValueError("Image cannot be reshaped to %d x %d" % \
                           (self.__imageShape[0], self.__imageShape[1]))
