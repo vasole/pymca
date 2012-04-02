@@ -118,8 +118,10 @@ class SpecfitGUI(qt.QWidget):
             if specfit is not None:
                 configuration = specfit.configure()
                 if configuration['fittheory'] is None:
-                    if QTVERSION < '4.0.0': self.guiconfig.FunComBox.setCurrentItem(1)
-                    else:  self.guiconfig.FunComBox.setCurrentIndex(1)
+                    if QTVERSION < '4.0.0':
+                        self.guiconfig.FunComBox.setCurrentItem(1)
+                    else:
+                        self.guiconfig.FunComBox.setCurrentIndex(1)
                     self.funevent(self.specfit.theorylist[0])
                 else:
                     self.funevent(configuration['fittheory'])
@@ -617,20 +619,20 @@ class SpecfitGUI(qt.QWidget):
         return
         
 if __name__ == "__main__":
-    import numpy.oldnumeric as Numeric
+    import numpy
     from PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
-    x = Numeric.arange(2000).astype(Numeric.Float)
-    p1 = Numeric.array([1500,100.,30.0])
-    p2 = Numeric.array([1500,300.,30.0])
-    p3 = Numeric.array([1500,500.,30.0])
-    p4 = Numeric.array([1500,700.,30.0])
-    p5 = Numeric.array([1500,900.,30.0])
-    p6 = Numeric.array([1500,1100.,30.0])
-    p7 = Numeric.array([1500,1300.,30.0])
-    p8 = Numeric.array([1500,1500.,30.0])
-    p9 = Numeric.array([1500,1700.,30.0])
-    p10 = Numeric.array([1500,1900.,30.0])
+    x = numpy.arange(2000).astype(numpy.float)
+    p1 = numpy.array([1500,100.,30.0])
+    p2 = numpy.array([1500,300.,30.0])
+    p3 = numpy.array([1500,500.,30.0])
+    p4 = numpy.array([1500,700.,30.0])
+    p5 = numpy.array([1500,900.,30.0])
+    p6 = numpy.array([1500,1100.,30.0])
+    p7 = numpy.array([1500,1300.,30.0])
+    p8 = numpy.array([1500,1500.,30.0])
+    p9 = numpy.array([1500,1700.,30.0])
+    p10 = numpy.array([1500,1900.,30.0])
     y = a.gauss(p1,x)+1
     y = y + a.gauss(p2,x)
     y = y + a.gauss(p3,x)
