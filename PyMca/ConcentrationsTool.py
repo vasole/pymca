@@ -28,8 +28,7 @@ __revision__ = "$Revision: 1.26 $"
 __author__ = "V.A. Sole - ESRF Software Group"
 from PyMca import Elements
 import copy
-import numpy.oldnumeric as Numeric
-import string
+import numpy
 
 class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations = None):
@@ -63,9 +62,9 @@ class ConcentrationsConversion(object):
                     result['layerlist'] = [result['layerlist']]
                 for label in result['layerlist']:
                     labels += [label]
-            lemmon=string.upper("#%x%x%x" % (255,250,205))
+            lemmon = ("#%x%x%x" % (255,250,205)).upper()
             white ='#FFFFFF' 
-            hcolor = string.upper("#%x%x%x" % (230,240,249))       
+            hcolor = ("#%x%x%x" % (230,240,249)).upper()       
             text+="<CENTER>"
             text+= "<nobr>"
             text+= '<table width="80%" border="0" cellspacing="1" cellpadding="1" >'
@@ -81,7 +80,7 @@ class ConcentrationsConversion(object):
             line = 0
             for group in result['groups']:
                 text+=("<tr>")
-                element,group0 = string.split(group)
+                element, group0 = group.split()
                 fitarea    = "%.6e" % result['fitarea'][group]
                 sigmaarea  = "%.2e" % result['sigmaarea'][group]
                 area       = "%.6e" % result['area'][group]
@@ -147,7 +146,7 @@ class ConcentrationsConversion(object):
             text+=("\n")
             line = 0
             for group in result['groups']:
-                element,group0 = string.split(group)
+                element, group0 = group.split()
                 fitarea    = "%.6e" % result['fitarea'][group]
                 sigmaarea  = "%.2e" % result['sigmaarea'][group]
                 area       = "%.6e" % result['area'][group]
@@ -467,14 +466,14 @@ class ConcentrationsTool(object):
             else:
                 flux = fitresult['result'][group]['fitarea'] / theoretical
         else:
-            #solidangle = config['area']/(4.0 * Numeric.pi * pow(config['distance'],2))
-            radius2 = config['area']/Numeric.pi
-            solidangle = 0.5 * (1.0 -  (config['distance']/Numeric.sqrt(pow(config['distance'],2)+ radius2)))
+            #solidangle = config['area']/(4.0 * numpy.pi * pow(config['distance'],2))
+            radius2 = config['area']/numpy.pi
+            solidangle = 0.5 * (1.0 -  (config['distance']/numpy.sqrt(pow(config['distance'],2)+ radius2)))
             flux       = config['flux'] * config['time']
         
         #print "OBTAINED FLUX * SOLID ANGLE= ",flux * solidangle
         #print "flux * time = ",flux
-        #print "actual solid angle = ",0.5 * (1.0 -  (config['distance']/Numeric.sqrt(pow(config['distance'],2)+ config['area']/Numeric.pi)))
+        #print "actual solid angle = ",0.5 * (1.0 -  (config['distance']/sqrt(pow(config['distance'],2)+ config['area']/pi)))
         #print "solid angle factor= ",solidangle
         #ele  = 'Pb'
         #rays = "L xrays"
