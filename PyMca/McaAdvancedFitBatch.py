@@ -27,7 +27,7 @@
 __revision__ = "$Revision: 1.32 $"
 import sys
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import ClassMcaTheory
 from PyMca import SpecFileLayer
 from PyMca import EdfFileLayer
@@ -305,8 +305,8 @@ class McaAdvancedFitBatch(object):
                     xmin = 0.0
                 #key = "%s.%s.%02d.%02d" % (scan,order,row,col)
                 key = "%s.%04d" % (keylist[i], mca)
-                y0  = Numeric.array(mcadata)
-                x = Numeric.arange(len(y0))*1.0 + xmin
+                y0  = numpy.array(mcadata)
+                x = numpy.arange(len(y0))*1.0 + xmin
                 #I only process the first file of the stack?
                 filename = os.path.basename(info['SourceName'][0])
                 infoDict = {}
@@ -346,8 +346,8 @@ class McaAdvancedFitBatch(object):
                         else:
                             xmin = 0.0
                         key = "%s.%s.%04d" % (scan,order,mca)
-                        y0  = Numeric.array(mcadata)
-                        x = Numeric.arange(len(y0))*1.0 + xmin
+                        y0  = numpy.array(mcadata)
+                        x = numpy.arange(len(y0))*1.0 + xmin
                         filename = os.path.basename(info['SourceName'])
                         infoDict = {}
                         infoDict['SourceName'] = info['SourceName']
@@ -371,7 +371,7 @@ class McaAdvancedFitBatch(object):
                         #situations
                         #if self.__row == 0:
                         if self.counter == 0:
-                            self.__chann0List = Numeric.zeros(info['NbMcaDet'])
+                            self.__chann0List = numpy.zeros(info['NbMcaDet'])
                             chan0list = scan_obj.header('@CHANN')
                             if len(chan0list):
                                 for i in range(info['NbMcaDet']):
@@ -388,8 +388,8 @@ class McaAdvancedFitBatch(object):
                             #get rid of slow info reading methods
                             #mcainfo,mcadata = ffile.LoadSource(key)
                             mcadata = scan_obj.mca(i+1)
-                            y0  = Numeric.array(mcadata)
-                            x = Numeric.arange(len(y0))*1.0 + \
+                            y0  = numpy.array(mcadata)
+                            x = numpy.arange(len(y0))*1.0 + \
                                 self.__chann0List[mca-1]
                             filename = os.path.basename(info['SourceName'])
 
@@ -615,9 +615,15 @@ class McaAdvancedFitBatch(object):
                             self.__nrows   = len(range(0,len(self._filelist),self.fileStep))
                         for group in result['groups']:
                             self.__peaks.append(group)
-                            self.__images[group]=Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
-                            self.__sigmas[group]=Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
-                        self.__images['chisq']  = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float) - 1.
+                            self.__images[group]= numpy.zeros((self.__nrows,
+                                                               self.__ncols),
+                                                               numpy.float)
+                            self.__sigmas[group]= numpy.zeros((self.__nrows,
+                                                               self.__ncols),
+                                                               numpy.float)
+                        self.__images['chisq']  = numpy.zeros((self.__nrows,
+                                                               self.__ncols),
+                                                               numpy.float) - 1.
                         if self._concentrations:
                             layerlist = concentrations['layerlist']
                             if 'mmolar' in concentrations:
@@ -629,14 +635,16 @@ class McaAdvancedFitBatch(object):
                             for group in concentrations['groups']:
                                 key = group+self.__conLabel
                                 self.__concentrationsKeys.append(key)
-                                self.__images[key] = Numeric.zeros((self.__nrows,self.__ncols),
-                                                                                      Numeric.Float)
+                                self.__images[key] = numpy.zeros((self.__nrows,
+                                                                  self.__ncols),
+                                                                  numpy.float)
                                 if len(layerlist) > 1:
                                     for layer in layerlist:
                                         key = group+" "+layer
                                         self.__concentrationsKeys.append(key)                                        
-                                        self.__images[key] = Numeric.zeros((self.__nrows,self.__ncols),
-                                                                                      Numeric.Float)
+                                        self.__images[key] = numpy.zeros((self.__nrows,
+                                                                    self.__ncols),
+                                                                    numpy.float)
                 for peak in self.__peaks:
                     try:
                         self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
@@ -685,8 +693,9 @@ class McaAdvancedFitBatch(object):
                             self.__ROIpeaks.append(group)
                             self._ROIimages[group]={}
                             for roi in dict[group].keys():
-                                self._ROIimages[group][roi]=Numeric.zeros((self.__nrows,
-                                                                            self.__ncols),Numeric.Float)
+                                self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
+                                                                   self.__ncols),
+                                                                   numpy.float)
                                 
                 if not hasattr(self, "_ROIimages"):
                     print("ROI fitting only supported on EDF")
