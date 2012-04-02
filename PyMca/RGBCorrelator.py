@@ -25,9 +25,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
+import numpy
 from PyMca import RGBCorrelatorWidget
 qt = RGBCorrelatorWidget.qt
 if hasattr(qt, 'QString'):
@@ -36,7 +37,6 @@ else:
     QString = str
 from PyMca import RGBCorrelatorGraph
 QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
-import numpy.oldnumeric as Numeric
 try:
     from PyMca import QPyMcaMatplotlibSave
     MATPLOTLIB = True
@@ -210,9 +210,9 @@ def test():
     else:
         print("This is a just test method using 100 x 100 matrices.")
         print("Run PyMcaPostBatch to have file loading capabilities.") 
-        array1 = Numeric.arange(10000)
-        array2 = Numeric.resize(Numeric.arange(10000), (100, 100))
-        array2 = Numeric.transpose(array2)
+        array1 = numpy.arange(10000)
+        array2 = numpy.resize(numpy.arange(10000), (100, 100))
+        array2 = numpy.transpose(array2)
         array3 = array1 * 1
         w.addImage(array1)
         w.addImage(array2)
