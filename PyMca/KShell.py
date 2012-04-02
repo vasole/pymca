@@ -27,7 +27,7 @@
 __revision__ = "$Revision: 1.5 $"
 
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 try:
     from PyMca import specfile
 except ImportError:
@@ -51,7 +51,7 @@ if not os.path.exists(inputfile):
 
 sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
 ElementKShellTransitions = sf[0].alllabels()
-ElementKShellRates = Numeric.transpose(sf[0].data()).tolist()
+ElementKShellRates = numpy.transpose(sf[0].data()).tolist()
 
 ElementKAlphaTransitions = []
 ElementKBetaTransitions = []
@@ -78,14 +78,14 @@ for transition in ElementKAlphaTransitions:
     if transition[0] != 'Z':
         data = filedata[ElementKShellTransitions.index(transition)] * 1
         data.shape = [ndata, 1]
-        ElementKAlphaRates = Numeric.concatenate((ElementKAlphaRates, data),
+        ElementKAlphaRates = numpy.concatenate((ElementKAlphaRates, data),
                                                  axis = 1)
 
 for transition in ElementKBetaTransitions:
     if transition[0] != 'Z':
         data = filedata[ElementKShellTransitions.index(transition)] * 1
         data.shape = [ndata, 1] 
-        ElementKBetaRates = Numeric.concatenate((ElementKBetaRates, data),
+        ElementKBetaRates = numpy.concatenate((ElementKBetaRates, data),
                                                 axis = 1)
 for i in range(len(ElementKAlphaTransitions)):
     if ElementKAlphaTransitions[i] != 'Z':
@@ -100,7 +100,7 @@ ElementKBetaRates  = ElementKBetaRates.tolist()
 
 sf=specfile.Specfile(os.path.join(dirname, "KShellConstants.dat"))
 ElementKShellConstants = sf[0].alllabels()
-ElementKShellValues = Numeric.transpose(sf[0].data()).tolist()
+ElementKShellValues = numpy.transpose(sf[0].data()).tolist()
 sf=None
 
 Elements = ['H', 'He', 

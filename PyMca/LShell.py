@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.6 $"
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 try:
     from PyMca import specfile
 except ImportError:
@@ -49,17 +49,17 @@ sf=specfile.Specfile(os.path.join(dirname, "LShellRates.dat"))
 ElementL1ShellTransitions = sf[0].alllabels()
 ElementL2ShellTransitions = sf[1].alllabels()
 ElementL3ShellTransitions = sf[2].alllabels()
-ElementL1ShellRates = Numeric.transpose(sf[0].data()).tolist()
-ElementL2ShellRates = Numeric.transpose(sf[1].data()).tolist()
-ElementL3ShellRates = Numeric.transpose(sf[2].data()).tolist()
+ElementL1ShellRates = numpy.transpose(sf[0].data()).tolist()
+ElementL2ShellRates = numpy.transpose(sf[1].data()).tolist()
+ElementL3ShellRates = numpy.transpose(sf[2].data()).tolist()
 
 sf=specfile.Specfile(os.path.join(dirname, "LShellConstants.dat"))
 ElementL1ShellConstants = sf[0].alllabels()
 ElementL2ShellConstants = sf[1].alllabels()
 ElementL3ShellConstants = sf[2].alllabels()
-ElementL1ShellValues = Numeric.transpose(sf[0].data()).tolist()
-ElementL2ShellValues = Numeric.transpose(sf[1].data()).tolist()
-ElementL3ShellValues = Numeric.transpose(sf[2].data()).tolist()
+ElementL1ShellValues = numpy.transpose(sf[0].data()).tolist()
+ElementL2ShellValues = numpy.transpose(sf[1].data()).tolist()
+ElementL3ShellValues = numpy.transpose(sf[2].data()).tolist()
 sf=None
 
 EADL97 = False
@@ -69,9 +69,9 @@ if os.path.exists(fname):
     EADL97_ElementL1ShellConstants = sf[0].alllabels()
     EADL97_ElementL2ShellConstants = sf[1].alllabels()
     EADL97_ElementL3ShellConstants = sf[2].alllabels()
-    EADL97_ElementL1ShellValues = Numeric.transpose(sf[0].data()).tolist()
-    EADL97_ElementL2ShellValues = Numeric.transpose(sf[1].data()).tolist()
-    EADL97_ElementL3ShellValues = Numeric.transpose(sf[2].data()).tolist()
+    EADL97_ElementL1ShellValues = numpy.transpose(sf[0].data()).tolist()
+    EADL97_ElementL2ShellValues = numpy.transpose(sf[1].data()).tolist()
+    EADL97_ElementL3ShellValues = numpy.transpose(sf[2].data()).tolist()
     EADL97 = True
     sf = None
 
@@ -259,17 +259,22 @@ elements = range(1,nele+1)
 weights = []
 for ele in elements:
     weights.append(getweights(ele))
-weights = Numeric.array(weights).astype(Numeric.Float)
-ElementLShellRates = Numeric.zeros((len(ElementL1ShellRates),len(ElementLShellTransitions)),Numeric.Float)
-ElementLShellRates[:,0]     = Numeric.arange(len(ElementL1ShellRates)) + 1 
+weights = numpy.array(weights).astype(numpy.float)
+ElementLShellRates = numpy.zeros((len(ElementL1ShellRates),
+                                  len(ElementLShellTransitions)),
+                                  numpy.float)
+ElementLShellRates[:,0]     = numpy.arange(len(ElementL1ShellRates)) + 1 
 n1 = len(ElementL1ShellTransitions)
 lo = labeloffset
-ElementLShellRates[:,lo:n1] = Numeric.array(ElementL1ShellRates).astype(Numeric.Float)[:,lo:] * Numeric.resize(weights[:,0],(nele,1))
+ElementLShellRates[:,lo:n1] = numpy.array(ElementL1ShellRates).astype(numpy.float)[:,lo:] * \
+                              numpy.resize(weights[:,0],(nele,1))
 n2 = n1 + len(ElementL2ShellTransitions) - lo
-ElementLShellRates[:,n1:n2] = Numeric.array(ElementL2ShellRates).astype(Numeric.Float)[:,lo:]* Numeric.resize(weights[:,1],(nele,1))
+ElementLShellRates[:,n1:n2] = numpy.array(ElementL2ShellRates).astype(numpy.float)[:,lo:]* \
+                              numpy.resize(weights[:,1],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementL3ShellTransitions) - lo
-ElementLShellRates[:,n1:n2] = Numeric.array(ElementL3ShellRates).astype(Numeric.Float)[:,lo:]* Numeric.resize(weights[:,2],(nele,1))
+ElementLShellRates[:,n1:n2] = numpy.array(ElementL3ShellRates).astype(numpy.float)[:,lo:]* \
+                              numpy.resize(weights[:,2],(nele,1))
 
 if __name__ == "__main__":
     import sys

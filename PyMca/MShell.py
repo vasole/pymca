@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 try:
     from PyMca import specfile
 except ImportError:
@@ -52,11 +52,11 @@ ElementM2ShellTransitions = sf[1].alllabels()
 ElementM3ShellTransitions = sf[2].alllabels()
 ElementM4ShellTransitions = sf[3].alllabels()
 ElementM5ShellTransitions = sf[4].alllabels()
-ElementM1ShellRates = Numeric.transpose(sf[0].data()).tolist()
-ElementM2ShellRates = Numeric.transpose(sf[1].data()).tolist()
-ElementM3ShellRates = Numeric.transpose(sf[2].data()).tolist()
-ElementM4ShellRates = Numeric.transpose(sf[3].data()).tolist()
-ElementM5ShellRates = Numeric.transpose(sf[4].data()).tolist()
+ElementM1ShellRates = numpy.transpose(sf[0].data()).tolist()
+ElementM2ShellRates = numpy.transpose(sf[1].data()).tolist()
+ElementM3ShellRates = numpy.transpose(sf[2].data()).tolist()
+ElementM4ShellRates = numpy.transpose(sf[3].data()).tolist()
+ElementM5ShellRates = numpy.transpose(sf[4].data()).tolist()
 
 sf=specfile.Specfile(os.path.join(dirname, "MShellConstants.dat"))
 ElementM1ShellConstants = sf[0].alllabels()
@@ -64,11 +64,11 @@ ElementM2ShellConstants = sf[1].alllabels()
 ElementM3ShellConstants = sf[2].alllabels()
 ElementM4ShellConstants = sf[3].alllabels()
 ElementM5ShellConstants = sf[4].alllabels()
-ElementM1ShellValues = Numeric.transpose(sf[0].data()).tolist()
-ElementM2ShellValues = Numeric.transpose(sf[1].data()).tolist()
-ElementM3ShellValues = Numeric.transpose(sf[2].data()).tolist()
-ElementM4ShellValues = Numeric.transpose(sf[3].data()).tolist()
-ElementM5ShellValues = Numeric.transpose(sf[4].data()).tolist()
+ElementM1ShellValues = numpy.transpose(sf[0].data()).tolist()
+ElementM2ShellValues = numpy.transpose(sf[1].data()).tolist()
+ElementM3ShellValues = numpy.transpose(sf[2].data()).tolist()
+ElementM4ShellValues = numpy.transpose(sf[3].data()).tolist()
+ElementM5ShellValues = numpy.transpose(sf[4].data()).tolist()
 sf=None
 
 EADL97 = False
@@ -80,11 +80,11 @@ if os.path.exists(fname):
     EADL97_ElementM3ShellConstants = sf[2].alllabels()
     EADL97_ElementM4ShellConstants = sf[3].alllabels()
     EADL97_ElementM5ShellConstants = sf[4].alllabels()
-    EADL97_ElementM1ShellValues = Numeric.transpose(sf[0].data()).tolist()
-    EADL97_ElementM2ShellValues = Numeric.transpose(sf[1].data()).tolist()
-    EADL97_ElementM3ShellValues = Numeric.transpose(sf[2].data()).tolist()
-    EADL97_ElementM4ShellValues = Numeric.transpose(sf[3].data()).tolist()
-    EADL97_ElementM5ShellValues = Numeric.transpose(sf[4].data()).tolist()
+    EADL97_ElementM1ShellValues = numpy.transpose(sf[0].data()).tolist()
+    EADL97_ElementM2ShellValues = numpy.transpose(sf[1].data()).tolist()
+    EADL97_ElementM3ShellValues = numpy.transpose(sf[2].data()).tolist()
+    EADL97_ElementM4ShellValues = numpy.transpose(sf[3].data()).tolist()
+    EADL97_ElementM5ShellValues = numpy.transpose(sf[4].data()).tolist()
     EADL97 = True
     sf = None
 
@@ -307,22 +307,27 @@ elements = range(1,nele+1)
 weights = []
 for ele in elements:
     weights.append(getweights(ele))
-weights = Numeric.array(weights).astype(Numeric.Float)
-ElementMShellRates = Numeric.zeros((len(ElementM1ShellRates),len(ElementMShellTransitions)),Numeric.Float)
-ElementMShellRates[:,0]     = Numeric.arange(len(ElementM1ShellRates)) + 1 
+weights = numpy.array(weights).astype(numpy.float)
+ElementMShellRates = numpy.zeros((len(ElementM1ShellRates),len(ElementMShellTransitions)),numpy.float)
+ElementMShellRates[:,0]     = numpy.arange(len(ElementM1ShellRates)) + 1 
 n1 = len(ElementM1ShellTransitions)
-ElementMShellRates[:,2:n1] = Numeric.array(ElementM1ShellRates).astype(Numeric.Float)[:,2:] * Numeric.resize(weights[:,0],(nele,1))
+ElementMShellRates[:,2:n1] = numpy.array(ElementM1ShellRates).astype(numpy.float)[:,2:] * \
+                             numpy.resize(weights[:,0],(nele,1))
 n2 = n1 + len(ElementM2ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = Numeric.array(ElementM2ShellRates).astype(Numeric.Float)[:,2:]* Numeric.resize(weights[:,1],(nele,1))
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM2ShellRates).astype(numpy.float)[:,2:] * \
+                              numpy.resize(weights[:,1],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementM3ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = Numeric.array(ElementM3ShellRates).astype(Numeric.Float)[:,2:]* Numeric.resize(weights[:,2],(nele,1))
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM3ShellRates).astype(numpy.float)[:,2:] * \
+                              numpy.resize(weights[:,2],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementM4ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = Numeric.array(ElementM4ShellRates).astype(Numeric.Float)[:,2:]* Numeric.resize(weights[:,3],(nele,1))
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM4ShellRates).astype(numpy.float)[:,2:] * \
+                              numpy.resize(weights[:,3],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementM5ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = Numeric.array(ElementM5ShellRates).astype(Numeric.Float)[:,2:]* Numeric.resize(weights[:,4],(nele,1))
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM5ShellRates).astype(numpy.float)[:,2:] * \
+                              numpy.resize(weights[:,4],(nele,1))
 
 if __name__ == "__main__":
     import sys
