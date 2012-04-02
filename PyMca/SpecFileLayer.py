@@ -32,9 +32,8 @@
 
 
 ################################################################################  
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import specfilewrapper as specfile
-import string
 ################################################################################
 
 SOURCE_TYPE = "SpecFile"
@@ -211,17 +210,17 @@ class SpecFileLayer(object):
 
         if scan_type&SF_SCAN:
             try:
-                scan_data= Numeric.transpose(scan_obj.data()).copy()
+                scan_data= numpy.transpose(scan_obj.data()).copy()
             except:
                 raise IOError("SF_SCAN read failed")
         elif scan_type&SF_MESH:
             try:
                 scan_array= scan_obj.data()
                 (mot1,mot2,cnts)= self.__GetMeshSize(scan_array)
-                scan_data= Numeric.zeros((mot1,mot2,cnts), Numeric.Float)
+                scan_data= numpy.zeros((mot1,mot2,cnts), numpy.float)
                 for idx in range(mot2):
-                    scan_data[:,idx,:]= Numeric.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
-                scan_data= Numeric.transpose(scan_data).copy()
+                    scan_data[:,idx,:]= numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
+                scan_data= numpy.transpose(scan_data).copy()
             except:
                 raise IOError("SF_MESH read failed")
         elif scan_type&SF_MCA:
@@ -269,7 +268,7 @@ class SpecFileLayer(object):
             if scan_type==SF_SCAN+SF_MCA or scan_type==SF_MCA:
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
-                    scan_data= Numeric.zeros((scan_info["NbMca"], mca_length), Numeric.Float)
+                    scan_data= numpy.zeros((scan_info["NbMca"], mca_length), numpy.float)
                     for idx in range(scan_info["NbMca"]):
                         scan_data[idx]= scan_obj.mca(idx+1)
                     idx= 0
@@ -285,7 +284,7 @@ class SpecFileLayer(object):
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
                     mca_det= scan_info["NbMcaDet"]
-                    scan_data= Numeric.zeros((mca_det, mca_length), Numeric.Float)
+                    scan_data= numpy.zeros((mca_det, mca_length), numpy.float)
                     for idx in range(mca_det):
                          scan_data[idx]= scan_obj.mca(idx+1)
                     mca_range[0]= ("McaDet", mca_det, None)
@@ -299,7 +298,7 @@ class SpecFileLayer(object):
                     scan_array= scan_obj.data()
                     (mot1,mot2,cnts)= self.__GetMeshSize(scan_array)
                     mca_length= scan_obj.mca(1).shape[0]
-                    scan_data= Numeric.zeros((mot1,mot2,mca_length), Numeric.Float)
+                    scan_data= numpy.zeros((mot1,mot2,mca_length), numpy.float)
                     for idx1 in range(mot1):
                         for idx2 in range(mot2):
                             mca_no= 1 + idx1 + idx2*mot1
@@ -312,7 +311,7 @@ class SpecFileLayer(object):
                     mca_length= scan_obj.mca(1).shape[0]
                     nbdet= scan_info["NbMcaDet"]
                     nbpts= scan_info["Lines"]
-                    scan_data= Numeric.zeros((nbpts, nbdet, mca_length), Numeric.Float)
+                    scan_data= numpy.zeros((nbpts, nbdet, mca_length), numpy.float)
                     for idx in range(nbpts):
                             for idy in range(nbdet):
                                     scan_data[idx,idy,:]= scan_obj.mca(1+idx*nbdet+idy)
@@ -422,34 +421,37 @@ class SpecFileLayer(object):
     def __GetScanType(self, num_pts, num_mca, command):
         type= SF_EMPTY
         if num_pts>0:
-                if command is None:type= SF_SCAN
-                elif string.find(command, "mesh")!=-1:
-                        type= SF_MESH
-                else:   type= SF_SCAN
-                if num_mca%num_pts:
-                        type+= SF_UMCA
-                elif num_mca==num_pts:
-                        type+= SF_MCA
-                elif num_mca>0:
-                        type+= SF_NMCA
+            if command is None:
+                type= SF_SCAN
+            elif command.find("mesh") != -1:
+                type= SF_MESH
+            else:
+                type= SF_SCAN
+            if num_mca%num_pts:
+                    type += SF_UMCA
+            elif num_mca==num_pts:
+                    type += SF_MCA
+            elif num_mca>0:
+                    type += SF_NMCA
         else:
-                if num_mca==1:
-                        type= SF_MCA
-                elif num_mca>1:
-                        type= SF_NMCA
+            if num_mca==1:
+                    type = SF_MCA
+            elif num_mca>1:
+                    type = SF_NMCA
         return type
 
     def __GetScanList(self):
-        aux= string.split(self.Source.list(),",")
+        aux = self.Source.list().split(",")
         newlistcount=[]
         newlist=[]
         for i in aux:
-            if string.find(i,":")== -1:  start_index=end_index=int(i)
+            if i.find(":") == -1:
+                start_index = end_index = int(i)
             else:
-                s= string.split(i,":")
-                start_index=int(s[0])
-                end_index=int(s[1])
-            for j in range(start_index,end_index+1):
+                s = i.split(":")
+                start_index = int(s[0])
+                end_index = int(s[1])
+            for j in range(start_index, end_index+1):
                 newlist.append(j)
                 newlistcount.append(newlist.count(j))
         for i in range(len(newlist)):
@@ -458,14 +460,18 @@ class SpecFileLayer(object):
  
 
     def __GetKeyType (self,key):
-        count= string.count(key, '.')
-        if (count==1): return "scan"
-        elif (count==2) or (count==3): return "mca"
-        else: raise KeyError("SpecFileData: Invalid key %s" % key)
+        count = key.count('.')
+        if (count==1):
+            return "scan"
+        elif (count==2) or (count==3):
+            return "mca"
+        else:
+            raise KeyError("SpecFileData: Invalid key %s" % key)
 
 
     def __GetScanInfo(self, scankey, scandata=None):
-        if scandata is None: scandata= self.Source.select(scankey)
+        if scandata is None:
+            scandata = self.Source.select(scankey)
 
         info={}
         info["SourceType"]= SOURCE_TYPE
@@ -552,18 +558,23 @@ class SpecFileLayer(object):
 
 
     def __GetMcaPars(self,key):
-        nums= string.split(key,'.')
+        nums = key.split('.')
         size = len(nums)
         sel_key = nums[0] + "." + nums[1]
-        if size==3:
-            mca_no=int(nums[2])
-        elif size==4:
-            sel=self.Source.select(sel_key)
-            try: lines = sel.lines()
-            except: lines=0
-            if nums[3]==0: mca_no=int(nums[2])
-            else:          mca_no=((int(nums[3])-1)*lines)+int(nums[2])
-        else: raise KeyError("SpecFileData: Invalid key %s" % key)
+        if size == 3:
+            mca_no = int(nums[2])
+        elif size == 4:
+            sel = self.Source.select(sel_key)
+            try:
+                lines = sel.lines()
+            except:
+                lines=0
+            if nums[3]==0:
+                mca_no = int(nums[2])
+            else:
+                mca_no=((int(nums[3]) - 1) * lines) + int(nums[2])
+        else:
+            raise KeyError("SpecFileData: Invalid key %s" % key)
         return (sel_key,mca_no)
 
 
