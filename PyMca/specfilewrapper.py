@@ -27,7 +27,6 @@
 import os
 import sys
 import numpy
-import numpy.oldnumeric as Numeric
 import re
 try:
     from PyMca import specfile
@@ -218,7 +217,7 @@ class specfilewrapper(object):
             outdata = [float(x) for x in f.read().split()]
             nlines = len(outdata)
             f.close()
-            self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,1))
+            self.data = numpy.resize(numpy.array(outdata).astype(numpy.float),(nlines,1))
         else:
             if sys.version < '3.0':
                 line = line.replace(",","  ")
@@ -279,7 +278,7 @@ class specfilewrapper(object):
                     line = line.replace(bytes('"',"utf-8"), bytes("", "utf-8"))
                     line = line.replace(bytes('\n\n',"utf-8"), tmpBytes)
             f.close()
-            self.data=Numeric.resize(Numeric.array(outdata).astype(Numeric.Float),(nlines,ncol0))
+            self.data = numpy.resize(numpy.array(outdata).astype(numpy.float),(nlines,ncol0))
         if self.amptek:
             self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header)]
         elif self.qxas:
@@ -318,11 +317,11 @@ class myscandata(object):
         if scantype is None:scantype='SCAN'
         self.qxas = qxas
         self.scanheader = scanheader
-        #print Numeric.shape(data)
-        (rows, cols) = Numeric.shape(data)
+        #print shape(data)
+        (rows, cols) = numpy.shape(data)
         if scantype == 'SCAN':
-            self.__data = Numeric.zeros((rows, cols +1 ), Numeric.Float)
-            self.__data[:,0] = Numeric.arange(rows) * 1.0
+            self.__data = numpy.zeros((rows, cols +1 ), numpy.float)
+            self.__data[:,0] = numpy.arange(rows) * 1.0
             self.__data[:,1:] = data * 1
             self.__cols = cols + 1
             self.labels = ['Point']
@@ -366,7 +365,7 @@ class myscandata(object):
         return text
         
     def data(self):
-        return Numeric.transpose(self.__data)
+        return numpy.transpose(self.__data)
     
     def datacol(self,col):
         return self.__data[:,col]
