@@ -24,9 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import sys
-if 'PyQt4.QtGui' in sys.modules:
-    raise ImportError("PyMcaNexusWidget only works under PyQt4")
 try:
     from PyMca.QNexusWidget import *
     from PyMca import QStackWidget
@@ -174,6 +171,7 @@ class PyMcaNexusWidget(QNexusWidget):
         widget.show()
 
 if __name__ == "__main__":
+    import sys
     try:
         #this is to add the 3D buttons ...
         from PyMca import Object3D
