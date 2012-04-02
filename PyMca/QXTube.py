@@ -26,7 +26,7 @@
 #############################################################################*/
 from PyMca import Elements
 from PyMca import XRayTubeEbel
-import numpy.oldnumeric as Numeric
+import numpy
 try:
     from PyMca import QtBlissGraph
     qt = QtBlissGraph.qt
@@ -132,7 +132,7 @@ class QXTube(qt.QWidget):
         alphax          = d["alphax"]
 
         delta           = d["deltaplotting"]
-        e = Numeric.arange(1, voltage, delta)
+        e = numpy.arange(1, voltage, delta)
 
         if self.graph is None:
             self.graph = QtBlissGraph.QtBlissGraph(self)
@@ -196,7 +196,7 @@ class QXTube(qt.QWidget):
         alphax          = d["alphax"]
         delta           = d["deltaplotting"]
 
-        e = Numeric.arange(1, voltage, delta)
+        e = numpy.arange(1, voltage, delta)
 
         d["event"]      = "TubeUpdated"
         d["energyplot"] = e
@@ -237,7 +237,7 @@ class QXTube(qt.QWidget):
         d["energylist"]        = energy
         d["weightlist"]  = energyweight
         d["scatterlist"] = energyscatter
-        d["flaglist"]    = Numeric.ones(len(energy))
+        d["flaglist"]    = numpy.ones(len(energy))
 
         if qt.qVersion() < '4.0.0':
             self.emit(qt.PYSIGNAL("QXTubeSignal"), (d,))
