@@ -28,7 +28,6 @@ __revision__ = "$Revision: 1.3$"
 import sys
 import os
 import numpy
-import numpy.oldnumeric as Numeric
 import types
 from PyMca import DataObject
 from PyMca import specfilewrapper as specfile
@@ -463,8 +462,8 @@ class SpecFileDataSource:
             output.info['selectiontype'] = selectiontype
             if output.info['selectiontype'] not in ['2D', '3D', 'STACK']:
                 ch0 =  int(output.info['Channel0'])
-                output.x = [Numeric.arange(ch0, ch0 + len(output.data)).astype(Numeric.Float)]
-                output.y = [output.data[:].astype(Numeric.Float)]
+                output.x = [numpy.arange(ch0, ch0 + len(output.data)).astype(numpy.float)]
+                output.y = [output.data[:].astype(numpy.float)]
                 output.m = None
                 output.data = None
             else:
@@ -595,23 +594,23 @@ class SpecFileDataSource:
 
         if scan_type&SF_SCAN:
             try:
-                scan_data= Numeric.transpose(scan_obj.data()).copy()
+                scan_data= numpy.transpose(scan_obj.data()).copy()
             except:
                 raise IOError("SF_SCAN read failed")
         elif scan_type&SF_MESH:
             try:
                 if raw:
                     try:
-                        scan_data= Numeric.transpose(scan_obj.data()).copy()
+                        scan_data= numpy.transpose(scan_obj.data()).copy()
                     except:
                         raise IOError("SF_MESH read failed")
                 else:
                     scan_array= scan_obj.data()
                     (mot1,mot2,cnts)= self.__getMeshSize(scan_array)
-                    scan_data= Numeric.zeros((mot1,mot2,cnts), Numeric.Float)
+                    scan_data= numpy.zeros((mot1,mot2,cnts), numpy.float)
                     for idx in range(mot2):
-                        scan_data[:,idx,:]= Numeric.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
-                    scan_data= Numeric.transpose(scan_data).copy()
+                        scan_data[:,idx,:]= numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
+                    scan_data= numpy.transpose(scan_data).copy()
             except:
                 raise IOError("SF_MESH read failed")
         elif scan_type&SF_MCA:
