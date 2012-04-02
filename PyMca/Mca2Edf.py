@@ -28,13 +28,13 @@
 __revision__ = "$Revision: 1.13 $"
 import sys
 import os
+import numpy
 import time
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
     qt.Qt.WDestructiveClose = "TO BE DONE"
 from PyMca.PyMca_Icons import IconDict
-import numpy.oldnumeric as Numeric
 from PyMca import McaCustomEvent
 from PyMca import EdfFile
 from PyMca import SpecFileLayer
@@ -350,11 +350,12 @@ class Mca2EdfBatch(qt.QThread):
                         if i == 0:
                             mcainfo,mcadata = ffile.LoadSource(key)
                         mcadata = scan_obj.mca(i+1)
-                        y0 = Numeric.array(mcadata, Numeric.Float)
+                        y0 = numpy.array(mcadata, numpy.float)
                         if counter == 0:
                             key0 = "%s key %s" % (os.path.basename(fitfile), key)
                             self.__ncols = len(y0)
-                            image = Numeric.zeros((self.__nrows,self.__ncols),Numeric.Float)
+                            image = numpy.zeros((self.__nrows,self.__ncols), \
+                                                numpy.float)
                         if self.__ncols !=  len(y0):
                             print("spectrum has different number of columns")
                             print("skipping it")
