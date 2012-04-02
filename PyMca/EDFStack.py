@@ -27,7 +27,6 @@
 from PyMca import DataObject
 from PyMca import EdfFile
 from PyMca import EdfFileDataSource
-import numpy.oldnumeric as Numeric
 import numpy
 import sys
 import os
@@ -554,10 +553,10 @@ if __name__ == "__main__":
         import QtBlissGraph
         w = QtBlissGraph.QtBlissGraph()
         graph = w
-    print("shape sum 0 = ",Numeric.sum(stack.data, 0).shape)
-    print("shape sum 1 = ",Numeric.sum(stack.data, 1).shape)
-    print("shape sum 2 = ",Numeric.sum(stack.data, 2).shape)
-    a = Numeric.sum(stack.data, imax)
+    print("shape sum 0 = ",numpy.sum(stack.data, 0).shape)
+    print("shape sum 1 = ",numpy.sum(stack.data, 1).shape)
+    print("shape sum 2 = ",numpy.sum(stack.data, 2).shape)
+    a = numpy.sum(stack.data, imax)
     print(a.shape)
     graph.setX1AxisLimits(0, a.shape[0])
     if 0:
@@ -575,9 +574,9 @@ if __name__ == "__main__":
     w.show()
 
     if imax == 0:
-        mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),1)
+        mcaData0 = numpy.sum(numpy.sum(stack.data, 2),1)
     else:
-        mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),0)
+        mcaData0 = numpy.sum(numpy.sum(stack.data, 2),0)
 
     import McaWindow
     mca = McaWindow.McaWidget()
@@ -603,9 +602,9 @@ if __name__ == "__main__":
             iy1 = int(ddict['xmin'])
             iy2 = int(ddict['xmax'])+1
             if imax == 0:
-                selectedData = Numeric.sum(Numeric.sum(stack.data[:,ix1:ix2, iy1:iy2], 2),1)
+                selectedData = numpy.sum(numpy.sum(stack.data[:,ix1:ix2, iy1:iy2], 2),1)
             else:
-                selectedData = Numeric.sum(Numeric.sum(stack.data[ix1:ix2,:, iy1:iy2], 2),0)
+                selectedData = numpy.sum(numpy.sum(stack.data[ix1:ix2,:, iy1:iy2], 2),0)
             sel = {}
             sel['SourceName'] = "EDF Stack"
             sel['Key'] = "Selection"
