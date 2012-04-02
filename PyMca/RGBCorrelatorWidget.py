@@ -27,7 +27,6 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import numpy.oldnumeric as Numeric
 import numpy
 import traceback
 from PyMca import RGBCorrelatorSlider
@@ -316,21 +315,21 @@ class RGBCorrelatorWidget(qt.QWidget):
         if ddict['b'] == []:ddict['b'] = None
 
         if ddict['r'] is None:
-            self.__redImageData = Numeric.zeros(self.__imageShape).astype(Numeric.Float)
+            self.__redImageData = numpy.zeros(self.__imageShape).astype(numpy.float)
             self.__redLabel = None
         else:
             self.__redLabel = ddict['elementlist'][ddict['r'][0]]
             self.__redImageData = self._imageDict[self.__redLabel]['image']
 
         if ddict['g'] is None:
-            self.__greenImageData = Numeric.zeros(self.__imageShape).astype(Numeric.Float)
+            self.__greenImageData = numpy.zeros(self.__imageShape).astype(numpy.float)
             self.__greenLabel = None
         else:
             self.__greenLabel = ddict['elementlist'][ddict['g'][0]]
             self.__greenImageData = self._imageDict[self.__greenLabel]['image']
 
         if ddict['b'] is None:
-            self.__blueImageData = Numeric.zeros(self.__imageShape).astype(Numeric.Float)
+            self.__blueImageData = numpy.zeros(self.__imageShape).astype(numpy.float)
             self.__blueLabel = None
         else:
             self.__blueLabel = ddict['elementlist'][ddict['b'][0]]
@@ -360,7 +359,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                      spslut.RED,
                                      valmin,
                                      valmax, 0)
-                self.__redImage = Numeric.array(red).astype(Numeric.UInt8)
+                self.__redImage = numpy.array(red).astype(numpy.uint8)
                 ddict['red'] = red
             else:
                 red, size, minmax = self.getColorImage(self.__redImageData,
@@ -388,7 +387,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                      spslut.GREEN,
                                      valmin,
                                      valmax)
-                self.__greenImage = Numeric.array(green).astype(Numeric.UInt8)
+                self.__greenImage = numpy.array(green).astype(numpy.uint8)
                 ddict['green'] = green
             else:
                 green, size, minmax = self.getColorImage(self.__greenImageData,
@@ -417,7 +416,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                          spslut.BLUE,
                                          valmin,
                                          valmax)
-                self.__blueImage = Numeric.array(blue).astype(Numeric.UInt8)
+                self.__blueImage = numpy.array(blue).astype(numpy.uint8)
                 ddict['blue'] = blue
             else:
                 blue, size, minmax = self.getColorImage(self.__blueImageData,
@@ -446,7 +445,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         if (datamin is None) or (datamax is None):
             #spslut already calculates min and max
-            #tmp = Numeric.ravel(image)
+            #tmp = numpy.ravel(image)
             (image_buffer, size, minmax)= spslut.transform(image,
                                      (1,0),
                                      (self.colormapType,3.0),
@@ -466,7 +465,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         return image_buffer, size, minmax
 
     def addImage(self, image0, label = None):
-        image = Numeric.array(image0).astype(Numeric.Float)
+        image = numpy.array(image0).astype(numpy.float)
         if label is None:
             label = "Unnamed 00"
             i = 0
@@ -481,7 +480,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             for value in image.shape:
                 self.__imageLength *= value
             if len(image.shape) == 1:
-                image = Numeric.resize(image, (image.shape[0], 1))
+                image.shape = image.shape[0], 1
             self.__imageShape = image.shape
             self._updateSizeLabel()
             firstTime = True
@@ -491,8 +490,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             for value in image.shape:
                 length *= value
             if length == self.__imageLength:
-                image = Numeric.resize(image,
-                         (self.__imageShape[0], self.__imageShape[1]))
+                image.shape = self.__imageShape[0], self.__imageShape[1]
             else:
                 raise ValueError("Image cannot be reshaped to %d x %d" % \
                           (self.__imageShape[0], self.__imageShape[1]))
@@ -501,7 +499,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             self._imageList.append(label)
         self._imageDict[label] = {}
         self._imageDict[label]['image'] = image
-        tmp = Numeric.ravel(image)
+        tmp = numpy.ravel(image)
         self._imageDict[label]['min'] = min(tmp)
         self._imageDict[label]['max'] = max(tmp)
 
@@ -928,16 +926,16 @@ class RGBCorrelatorWidget(qt.QWidget):
                 iterationList = range(2, nlabels)
         else:
             iterationList = range(2, nlabels)
-        totalArray = Numeric.zeros((nrows, nlabels), Numeric.Float)
+        totalArray = numpy.zeros((nrows, nlabels), numpy.float)
         for i in range(nrows):
             totalArray[i, :] = [float(x) for x in lines[i+1].split()]
 
         nrows = int(max(totalArray[:,0]) + 1)
         ncols = int(max(totalArray[:,1]) + 1)
-        singleArray = Numeric.zeros((nrows* ncols, 1), Numeric.Float)
+        singleArray = numpy.zeros((nrows* ncols, 1), numpy.float)
         for i in iterationList:
             singleArray[:, 0] = totalArray[:,i] * 1
-            self.addImage(Numeric.resize(singleArray, (nrows, ncols)), labels[i])
+            self.addImage(numpy.resize(singleArray, (nrows, ncols)), labels[i])
         
     def _isEdf(self, filename):
         f = open(filename, 'rb')
@@ -1000,7 +998,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         fileExtension = os.path.splitext(filename)[-1].lower()
         if fileExtension in [".edf"]:
             if 'Float32'in self._saveFilter:
-                dtype = Numeric.Float32
+                dtype = numpy.float32
                 ArraySave.save2DArrayListAsEDF(datalist,
                                                filename,
                                                labels, dtype)
@@ -1330,9 +1328,9 @@ def test():
                 dataObject = source.getDataObject(key)
                 w.addImage(dataObject.data, os.path.basename(fname)+" "+key)
     else:
-        array1 = Numeric.arange(10000)
-        array2 = Numeric.resize(Numeric.arange(10000), (100, 100))
-        array2 = Numeric.transpose(array2)
+        array1 = numpy.arange(10000)
+        array2 = numpy.resize(numpy.arange(10000), (100, 100))
+        array2 = numpy.transpose(array2)
         array3 = array1 * 1
         w.addImage(array1)
         w.addImage(array2)
