@@ -38,7 +38,7 @@ else:
     
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    from PyMca import qttable
+    import qttable
 
 if QTVERSION < '4.0.0':
     class QTable(qttable.QTable):

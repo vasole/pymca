@@ -39,7 +39,7 @@ from PyMca import PyMcaDirs
 from PyMca import ConfigDict
 
 if QTVERSION < '4.0.0':
-    from PyMca import qttable
+    import qttable
     class QTable(qttable.QTable):
         def __init__(self, parent=None, name=""):
             qttable.QTable.__init__(self, parent, name)
@@ -421,12 +421,13 @@ class McaROITable(QTable):
                 for field in fields:
                     if QTVERSION < '4.0.0':
                         if (ROI.upper() == 'ICR') or (ROI.upper() == 'DEFAULT'):
-                            key2=qttable.QTableItem(self,qttable.QTableItem.Never,field)
+                            key2=qttable.QTableItem(self,qttable.QTableItem.Never, field)
                         else:
                             if col == 0:
-                                key2=qttable.QTableItem(self,qttable.QTableItem.OnTyping,field)                        
+                                key2=qttable.QTableItem(self,qttable.QTableItem.OnTyping,field)
                             else:
                                 key2=qttable.QTableItem(self,qttable.QTableItem.Never,field)
+                        self.setItem(line, col, key2)
                     else:
                         key2 = self.item(line, col)
                         if key2 is None:
@@ -455,13 +456,12 @@ class McaROITable(QTable):
         if QTVERSION < '4.0.0':
             self.sortColumn(2,1,1)
         else:
-            self.sortByColumn(2,qt.Qt.AscendingOrder)
+            self.sortByColumn(2, qt.Qt.AscendingOrder)
         for i in range(len(self.roilist)):
             if QTVERSION < '4.0.0':
                 key = str(self.text(i, 0))
             else:
                 key = str(self.item(i, 0).text())
-                
             self.roilist[i] = key
             self.roidict[key]['line'] = i
         if len(self.roilist) == 1:

@@ -38,7 +38,7 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 if qt.qVersion() < '4.0.0':
-    from PyMca import qttable
+    import qttable
 from PyMca import Elements
 
 DEBUG=0

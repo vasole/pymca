@@ -34,7 +34,7 @@ from PyMca import PyMcaQt as qt
 DEBUG = 0
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    from PyMca import qttable
+    import qttable
 
 from PyMca import Elements
 if QTVERSION > '4.0.0':

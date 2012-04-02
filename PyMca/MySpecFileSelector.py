@@ -28,7 +28,7 @@ __revision__ = "$Revision: 1.14 $"
 import sys
 import os
 import qt
-from PyMca import qttable
+import qttable
 import PyMca.PyMca_Icons as icons
 from PyMca import SpecFileDataInfo
 

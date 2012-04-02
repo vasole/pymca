@@ -32,7 +32,7 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 
 if QTVERSION < '4.0.0':
-    from PyMca import qttable
+    import qttable
 
     class SpecFileMcaTable(qt.QWidget):
         def __init__(self, parent=None, name=None, fl=0):

@@ -36,7 +36,7 @@ qt = QXTube.qt
 
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
-    from PyMca import qttable
+    import qttable
 
 DEBUG=0
 class EnergyTab(qt.QWidget):

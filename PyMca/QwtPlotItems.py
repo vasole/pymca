@@ -24,7 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+import sys
 from PyMca import PyMcaQt as qt
+if 'PyQt4.QtGui' in sys.modules:
+    raise ImportError("QwtPlotItems only works under PyQt4")
 from PyQt4 import Qwt5 as qwt
 
 DEBUG = 0

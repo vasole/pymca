@@ -35,7 +35,7 @@ else:
     OBJECT3D = False
 
 if QTVERSION < '4.0.0':
-    from PyMca import qttable
+    import qttable
     
     class SpecFileCntTable(qt.QWidget):
         def __init__(self, parent=None, name=None, fl=0):

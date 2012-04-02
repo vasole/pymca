@@ -669,7 +669,7 @@ class QEdfFileWidget(qt.QWidget):
 
     def _buildActions(self):
         if QTVERSION < '4.0.0':
-            return self._buildActionsQt3(self)
+            return self._buildActionsQt3()
         self.buttonBox = qt.QWidget(self)
         buttonBox = self.buttonBox
         self.buttonBoxLayout = qt.QGridLayout(buttonBox)
