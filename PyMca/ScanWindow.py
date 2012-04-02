@@ -26,7 +26,7 @@
 #############################################################################*/
 import sys
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 import time
 import traceback
 from PyMca import PyMcaQt as qt
@@ -510,14 +510,14 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             if not hasattr(dataObject, 'x'):
                 ylen = len(dataObject.y[0]) 
                 if ylen:
-                    xdata = Numeric.arange(ylen).astype(Numeric.Float)
+                    xdata = numpy.arange(ylen).astype(numpy.float)
                 else:
                     #nothing to be plot
                     continue
             if dataObject.x is None:
                 ylen = len(dataObject.y[0]) 
                 if ylen:
-                    xdata = Numeric.arange(ylen).astype(Numeric.Float)
+                    xdata = numpy.arange(ylen).astype(numpy.float)
                 else:
                     #nothing to be plot
                     continue                    
@@ -538,20 +538,21 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 for ydata in dataObject.y:
                     ycounter += 1
                     if dataObject.m is None:
-                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                        mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
                     elif len(dataObject.m[0]) > 0:
                         if len(dataObject.m[0]) == len(ydata):
-                            index = Numeric.nonzero(dataObject.m[0])
-                            if not len(index): continue
-                            xdata = Numeric.take(xdata, index)
-                            ydata = Numeric.take(ydata, index)
-                            mdata = Numeric.take(dataObject.m[0], index)
+                            index = numpy.nonzero(dataObject.m[0])[0]
+                            if not len(index):
+                                continue
+                            xdata = numpy.take(xdata, index)
+                            ydata = numpy.take(ydata, index)
+                            mdata = numpy.take(dataObject.m[0], index)
                             #A priori the graph only knows about plots
                             ydata = ydata/mdata
                         else:
                             raise ValueError("Monitor data length different than counter data")
                     else:
-                        mdata = [Numeric.ones(len(ydata)).astype(Numeric.Float)]
+                        mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
                     ylegend = 'y%d' % ycounter
                     if sel['selection'] is not None:
                         if type(sel['selection']) == type({}):
@@ -581,8 +582,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                                                             (dataObject)
                         else:
                             dummyDataObject = DataObject.DataObject()
-                            dummyDataObject.y=[Numeric.array([])]
-                            dummyDataObject.x=[Numeric.array([])]
+                            dummyDataObject.y=[numpy.array([])]
+                            dummyDataObject.x=[numpy.array([])]
                             self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)                            
             else:
                 #we have to loop for all y values
@@ -591,37 +592,39 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                     ylen = len(ydata)
                     if ylen == 1:
                         if len(xdata) > 1:
-                            ydata = ydata[0] * Numeric.ones(len(xdata)).astype(Numeric.Float)
+                            ydata = ydata[0] * numpy.ones(len(xdata)).astype(numpy.float)
                     elif len(xdata) == 1:
-                        xdata = xdata[0] * Numeric.ones(ylen).astype(Numeric.Float)
+                        xdata = xdata[0] * numpy.ones(ylen).astype(numpy.float)
                     ycounter += 1
                     newDataObject   = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
                     if dataObject.m is None:
-                        mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
+                        mdata = numpy.ones(len(ydata)).astype(numpy.float)
                     elif len(dataObject.m[0]) > 0:
                         if len(dataObject.m[0]) == len(ydata):
-                            index = Numeric.nonzero(dataObject.m[0])
-                            if not len(index): continue
-                            xdata = Numeric.take(xdata, index)
-                            ydata = Numeric.take(ydata, index)
-                            mdata = Numeric.take(dataObject.m[0], index)
+                            index = numpy.nonzero(dataObject.m[0])[0]
+                            if not len(index):
+                                continue
+                            xdata = numpy.take(xdata, index)
+                            ydata = numpy.take(ydata, index)
+                            mdata = numpy.take(dataObject.m[0], index)
                             #A priori the graph only knows about plots
                             ydata = ydata/mdata
                         elif len(dataObject.m[0]) == 1:
-                            mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
+                            mdata = numpy.ones(len(ydata)).astype(numpy.float)
                             mdata *= dataObject.m[0][0]
-                            index = Numeric.nonzero(dataObject.m[0])
-                            if not len(index): continue
-                            xdata = Numeric.take(xdata, index)
-                            ydata = Numeric.take(ydata, index)
-                            mdata = Numeric.take(dataObject.m[0], index)
+                            index = numpy.nonzero(dataObject.m[0])[0]
+                            if not len(index):
+                                continue
+                            xdata = numpy.take(xdata, index)
+                            ydata = numpy.take(ydata, index)
+                            mdata = numpy.take(dataObject.m[0], index)
                             #A priori the graph only knows about plots
                             ydata = ydata/mdata
                         else:
                             raise ValueError("Monitor data length different than counter data")
                     else:
-                        mdata = Numeric.ones(len(ydata)).astype(Numeric.Float)
+                        mdata = numpy.ones(len(ydata)).astype(numpy.float)
                     newDataObject.x = [xdata]
                     newDataObject.y = [ydata]
                     newDataObject.m = [mdata]
@@ -816,7 +819,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             yplot = ddict['yfit']
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]            
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]            
 
             #here I should check the log or linear status
             self.graph.newcurve(newDataObject.info['legend'],
@@ -841,7 +844,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             yplot = self.scanFit.specfit.gendata(parameters=ddict['data'])
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]            
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]            
 
             #here I should check the log or linear status
             self.graph.newcurve(newDataObject.info['legend'],
@@ -1135,7 +1138,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             if dataObject.x is not None:
                 x = dataObject.x[0]
             else:
-                x = Numeric.arange(len(y)).astype(Numeric.Float)
+                x = numpy.arange(len(y)).astype(numpy.float)
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             if len(dataObject.info['selection']['x']):
@@ -1249,7 +1252,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                             if dataObject.x is not None:
                                 x = dataObject.x[0]
                             else:
-                                x = Numeric.arange(len(y)).astype(Numeric.Float)
+                                x = numpy.arange(len(y)).astype(numpy.float)
                             ilabel = dataObject.info['selection']['y'][0]
                             ylabel = dataObject.info['LabelNames'][ilabel]
                             if len(dataObject.info['selection']['x']):
@@ -1405,7 +1408,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         if operation not in ["fit", "custom_fit"]:
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [Numeric.ones(len(yplot)).astype(Numeric.Float)]
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
         #and add it to the plot
         if True and (operation not in ['fit', 'custom_fit']):
@@ -1657,7 +1660,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         if dataObject.x is not None:
             x = dataObject.x[0]
         else:
-            x = Numeric.arange(len(y)).astype(Numeric.Float)
+            x = numpy.arange(len(y)).astype(numpy.float)
 
         ilabel = dataObject.info['selection']['y'][0]
         ylabel = dataObject.info['LabelNames'][ilabel]
@@ -1690,7 +1693,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             if dataObject.x is not None:
                 x = dataObject.x[0]
             else:
-                x = Numeric.arange(len(y)).astype(Numeric.Float)
+                x = numpy.arange(len(y)).astype(numpy.float)
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             if len(dataObject.info['selection']['x']):
@@ -1865,7 +1868,6 @@ class HorizontalSpacer(qt.QWidget):
                            qt.QSizePolicy.Fixed))
 
 def test():
-    import numpy
     w = ScanWindow()
     x = numpy.arange(1000.)
     y =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
