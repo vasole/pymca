@@ -37,7 +37,6 @@ if hasattr(qt, "QString"):
 else:
     QString = str
     QStringList = list
-import numpy.oldnumeric as Numeric
 QTVERSION = qt.qVersion()
 
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
