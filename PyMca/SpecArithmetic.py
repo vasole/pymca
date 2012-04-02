@@ -33,9 +33,9 @@ This module implements several mathematical functions:
 WARNING : array are Numeric.array objects.
 """
 
-import numpy.oldnumeric as Numeric
+import numpy
 
-def search_peak(xdata,ydata):
+def search_peak(xdata, ydata):
      """
      Search a peak and its position in arrays xdata ad ydata. 
      Return three integer:
@@ -53,8 +53,8 @@ def search_com(xdata,ydata):
     """
     Return the center of mass in arrays xdata and ydata
     """
-    num    = Numeric.sum(xdata*ydata)
-    denom  = Numeric.sum(ydata)
+    num    = numpy.sum(xdata*ydata)
+    denom  = numpy.sum(ydata).astype(numpy.float)
     try:
        result = num/denom
     except ZeroDivisionError:
