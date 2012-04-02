@@ -30,7 +30,7 @@ if sys.version < '3.0':
 else:
     import configparser as ConfigParser
 try:
-    import numpy.oldnumeric as Numeric
+    import numpy
 except:
     pass
 
@@ -118,13 +118,13 @@ class ConfigDict(dict):
                 if (data[0] == '[') and (data[-1] == ']'):
                     #this looks as an array
                     try:
-                        return Numeric.array([float(x) for x in data[1:-1].split()])
+                        return numpy.array([float(x) for x in data[1:-1].split()])
                     except:
                         try:
                             if (data[2] == '[') and (data[-3] == ']'):
                                 nrows = len(data[3:-3].split('] ['))
                                 indata = data[3:-3].replace('] [',' ')
-                                indata = Numeric.array([float(x) for x in \
+                                indata = numpy.array([float(x) for x in \
                                                            indata.split()])
                                 indata.shape = nrows,-1
                                 return indata
@@ -180,7 +180,7 @@ class ConfigDict(dict):
                 valkey.append(key)
 
         for key in valkey:
-            if type(ddict[key])== Numeric.ArrayType:
+            if type(ddict[key])== numpy.ndarray:
                 fp.write('%s =' % key + ' [ '+ ' '.join([str(val) for val in ddict[key]])+' ]\n')
             else:
                 fp.write('%s = %s\n'%(key, ddict[key]))
