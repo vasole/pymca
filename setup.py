@@ -415,6 +415,8 @@ class install_man(Command):
                                    ('install_man', 'install_dir'))
 
     def run(self):
+        if self.install_dir is None:
+            return
         src_man_dir = abspath('doc', 'man')
         man_elems = os.listdir(src_man_dir)
         man_pages = []
@@ -467,6 +469,15 @@ class install(dftinstall):
                     # he can be smart enough to pass install_man
                     self.install_man = os.path.join(self.install_data,\
                                                     'share', 'man')
+        if self.install_man is not None:
+            #check if we can write
+            if not os.access(self.install_man, os.W_OK):
+                print("********************************")
+                print("")
+                print("No permission to write man pages")
+                print("")
+                print("********************************")
+                self.install_man = None
         self.dump_dirs("Installation directories")
 
     def expand_dirs(self):
