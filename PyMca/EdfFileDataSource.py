@@ -30,7 +30,7 @@ from PyMca import EdfFile
 import types
 import sys
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 
 SOURCE_TYPE = "EdfFile"
 DEBUG = 0
@@ -213,16 +213,16 @@ class EdfFileDataSource(object):
         data.info['rows'], data.info['cols'] = data.data.shape[0:2]
         if data.info['selectiontype'] == "1D":
             if MCAIMP:
-                data.y = [Numeric.ravel(data.data[:]).astype(Numeric.Float)]
+                data.y = [numpy.ravel(data.data[:]).astype(numpy.float)]
             else:
                 if key_split[2].upper() == 'C':
-                    data.y=[data.data[:,int(key_split[3])-1].astype(Numeric.Float)]
+                    data.y=[data.data[:,int(key_split[3])-1].astype(numpy.float)]
                 elif key_split[2].upper() == 'R':
-                    data.y=[data.data[int(key_split[3])-1, :].astype(Numeric.Float)]
+                    data.y=[data.data[int(key_split[3])-1, :].astype(numpy.float)]
                 else:
                     raise ValueError("Unknown key %s" % key)
             ch0 = int(data.info['Channel0'])
-            data.x = [ch0+Numeric.arange(len(data.y[0])).astype(Numeric.Float)]
+            data.x = [ch0+numpy.arange(len(data.y[0])).astype(numpy.float)]
             data.m = None
             data.data = None
             #print "data.x.shape ", data.x[0].shape
@@ -273,10 +273,10 @@ if __name__ == "__main__":
     print("info = ",data.info)
     if data.data is not None:
         print("data shape = ",data.data.shape)
-        print(Numeric.ravel(data.data)[0:10])
+        print(numpy.ravel(data.data)[0:10])
     else:
         print(data.y[0].shape)
-        print(Numeric.ravel(data.y[0])[0:10])
+        print(numpy.ravel(data.y[0])[0:10])
     data = obj.getDataObject('1.1',selection=None)
     r = int(key.split('.')[-1])
     print(" data[%d,0:10] = " % (r-1),data.data[r-1   ,0:10])
