@@ -26,11 +26,11 @@
 #############################################################################*/
 import sys
 import os
+import numpy
 from PyMca import DataObject
 from PyMca import specfilewrapper as specfile
 from PyMca import SpecFileDataSource
-import numpy.oldnumeric as Numeric
-import numpy
+
 HDF5 = False
 try:
     import h5py
@@ -104,7 +104,7 @@ class SpecFileStack(DataObject.DataObject):
         else:
             iterlist = [1]
         if SLOW_METHOD and shape is None:
-            self.data = Numeric.zeros((self.nbFiles,
+            self.data = numpy.zeros((self.nbFiles,
                                    nmca/numberofdetectors,
                                    arrRet.shape[0]),
                                    arrRet.dtype.char)
@@ -133,7 +133,7 @@ class SpecFileStack(DataObject.DataObject):
             #it can only be here if there is one file
             #it can only be here if there is only one scan
             #it can only be here if there is only one detector
-            self.data = Numeric.zeros((1,
+            self.data = numpy.zeros((1,
                                numberofmca,
                                arrRet.shape[0]),
                                arrRet.dtype.char)
@@ -155,7 +155,7 @@ class SpecFileStack(DataObject.DataObject):
         elif shape is None:
             #it can only be here if there is one scan per file
             try:
-                self.data = Numeric.zeros((self.nbFiles,
+                self.data = numpy.zeros((self.nbFiles,
                                    numberofmca/numberofdetectors,
                                    arrRet.shape[0]),
                                    arrRet.dtype.char)
@@ -251,7 +251,7 @@ class SpecFileStack(DataObject.DataObject):
             s1 = shape[1]
             MEMORY_ERROR = False
             try:
-                self.data = Numeric.zeros((shape[0],
+                self.data = numpy.zeros((shape[0],
                                    shape[1],
                                    arrRet.shape[0]),
                                    arrRet.dtype.char)
@@ -474,11 +474,11 @@ class SpecFileStack(DataObject.DataObject):
         return self.__indexedStack
     
     def getZSelectionArray(self,z=0):
-        return (self.data[:,:,z]).astype(Numeric.Float)
+        return (self.data[:,:,z]).astype(numpy.float)
         
     def getXYSelectionArray(self,coord=(0,0)):
         x,y=coord    
-        return (self.data[y,x,:]).astype(Numeric.Float)
+        return (self.data[y,x,:]).astype(numpy.float)
 
 if __name__ == "__main__":
     import time
@@ -514,10 +514,10 @@ if __name__ == "__main__":
         from PyMca import QtBlissGraph
         w = QtBlissGraph.QtBlissGraph()
         graph = w
-    print("shape sum 0 = ",Numeric.sum(stack.data, 0).shape)
-    print("shape sum 1 = ",Numeric.sum(stack.data, 1).shape)
-    print("shape sum 2 = ",Numeric.sum(stack.data, 2).shape)
-    a = Numeric.sum(stack.data, imax)
+    print("shape sum 0 = ", numpy.sum(stack.data, 0).shape)
+    print("shape sum 1 = ", numpy.sum(stack.data, 1).shape)
+    print("shape sum 2 = ", numpy.sum(stack.data, 2).shape)
+    a = numpy.sum(stack.data, imax)
     print(a.shape)
     graph.setX1AxisLimits(0, a.shape[0])
     if 0:
@@ -535,9 +535,9 @@ if __name__ == "__main__":
     w.show()
 
     if imax == 0:
-        mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),1)
+        mcaData0 = numpy.sum(numpy.sum(stack.data, 2),1)
     else:
-        mcaData0 = Numeric.sum(Numeric.sum(stack.data, 2),0)
+        mcaData0 = numpy.sum(numpy.sum(stack.data, 2),0)
 
     from PyMca import McaWindow
     mca = McaWindow.McaWidget()
@@ -550,7 +550,7 @@ if __name__ == "__main__":
                     "selectiontype":"1D",
                     "SourceName":"Specfile Stack",
                     "Key":"SUM"}
-    mcaData.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)]
+    mcaData.x = [numpy.arange(len(mcaData0)).astype(numpy.float)]
     mcaData.y = [mcaData0]
     sel['dataobject'] = mcaData
     mca.show()
@@ -563,9 +563,9 @@ if __name__ == "__main__":
             iy1 = int(ddict['xmin'])
             iy2 = int(ddict['xmax'])+1
             if imax == 0:
-                selectedData = Numeric.sum(Numeric.sum(stack.data[:,ix1:ix2, iy1:iy2], 2),1)
+                selectedData = numpy.sum(numpy.sum(stack.data[:,ix1:ix2, iy1:iy2], 2),1)
             else:
-                selectedData = Numeric.sum(Numeric.sum(stack.data[ix1:ix2,:, iy1:iy2], 2),0)
+                selectedData = numpy.sum(numpy.sum(stack.data[ix1:ix2,:, iy1:iy2], 2),0)
             sel = {}
             sel['SourceName'] = "Specfile Stack"
             sel['Key'] = "Selection"
@@ -576,7 +576,7 @@ if __name__ == "__main__":
                                 "selectiontype":"1D",
                                 "SourceName":"EDF Stack Selection",
                                 "Key":"Selection"}
-            selDataObject.x = [Numeric.arange(len(mcaData0)).astype(Numeric.Float)]
+            selDataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)]
             selDataObject.y = [selectedData]
             sel['dataobject'] = selDataObject
             mca._addSelection([sel])
