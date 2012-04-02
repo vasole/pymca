@@ -26,7 +26,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
@@ -66,8 +66,8 @@ class SpecArithmetic(object):
         """
         Return the center of mass in arrays xdata and ydata
         """
-        num    = Numeric.sum(xdata*ydata)
-        denom  = Numeric.sum(ydata)
+        num    = numpy.sum(xdata*ydata)
+        denom  = numpy.sum(ydata)
         if abs(denom) > 0:
            result = num/denom
         else:
@@ -279,15 +279,15 @@ class GraphInfoWidget(qt.QWidget):
         self.specArithmetic = SpecArithmetic()
 
     def updateFromDataObject(self, dataObject):
-        ydata = Numeric.ravel(dataObject.y[0])
+        ydata = numpy.ravel(dataObject.y[0])
         ylen = len(ydata) 
         if ylen:
             if dataObject.x is None:
-                xdata = Numeric.arange(ylen).astype(Numeric.Float)
+                xdata = numpy.arange(ylen).astype(numpy.float)
             elif not len(dataObject.x):
-                xdata = Numeric.arange(ylen).astype(Numeric.Float)
+                xdata = numpy.arange(ylen).astype(numpy.float)
             else:
-                xdata = Numeric.ravel(dataObject.x[0])
+                xdata = numpy.ravel(dataObject.x[0])
         else:
             xdata = None
         self.updateFromXY(xdata, ydata)
@@ -303,22 +303,22 @@ class GraphInfoWidget(qt.QWidget):
             ymin  = min(ydata)
             ymean = sum(ydata) / len(ydata)
             if len(ydata) > 1:
-                ystd  = Numeric.sqrt(sum((ydata-ymean)*(ydata-ymean))/len(ydata))
+                ystd  = numpy.sqrt(sum((ydata-ymean)*(ydata-ymean))/len(ydata))
             else:
                 ystd = 0
             delta   = ymax - ymin
-            format = "%.7g"
-            peakpos = format % peakpos
-            peak    = format % peak
+            fformat = "%.7g"
+            peakpos = fformat % peakpos
+            peak    = fformat % peak
             myidx   = "%d" % myidx 
-            com     = format % com
-            fwhm    = format % fwhm
-            cfwhm   = format % cfwhm
-            ymean   = format % ymean
-            ystd    = format % ystd
-            ymax    = format % ymax
-            ymin    = format % ymin
-            delta   = format % delta         
+            com     = fformat % com
+            fwhm    = fformat % fwhm
+            cfwhm   = fformat % cfwhm
+            ymean   = fformat % ymean
+            ystd    = fformat % ystd
+            ymax    = fformat % ymax
+            ymin    = fformat % ymin
+            delta   = fformat % delta         
         else:
             peakpos = "----"
             peak    = "----"
