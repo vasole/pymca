@@ -24,9 +24,9 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import EdfFile
-import numpy.oldnumeric as Numeric
 import os, os.path
+import numpy
+from PyMca import EdfFile
 
 __version__="$Revision: 1.15 $"
 
@@ -110,7 +110,7 @@ class XiaEdfCountFile:
             if len(dets)==self.nbDet:
                 self.detList= map(int, dets)
 
-        self.statArray= Numeric.zeros(XiaStatNb*self.nbDet, Numeric.Int)
+        self.statArray = numpy.zeros(XiaStatNb*self.nbDet, numpy.int)
         idx= 0
         for det in self.detList:
             self.statArray[idx+XiaStatIndex["det"]]= int(self.header.get("xdet%02d"%det, det))
@@ -165,10 +165,10 @@ class XiaEdfCountFile:
             raise XiaEdfError("<%s> seems already deadtime corrected"%self.filename)
 
         self.__readData()
-        self.data= self.data.astype(Numeric.Float)
+        self.data= self.data.astype(numpy.float)
 
         if livetime:
-            lvt= Numeric.zeros((self.nbDet,1), Numeric.Float)
+            lvt= numpy.zeros((self.nbDet,1), numpy.float)
             derr= []
             for idx in range(len(self.detList)):
                 lvt[idx]= self.statArray[idx*XiaStatNb + XiaStatIndex["lt"]] / 1000.0
@@ -182,7 +182,7 @@ class XiaEdfCountFile:
             self.header["xcorr"]= corrflag|2
 
         if deadtime:
-            rate= Numeric.zeros((self.nbDet,1), Numeric.Float)
+            rate= numpy.zeros((self.nbDet,1), numpy.float)
             for idx in range(len(self.detList)):
                 derr= []
                 try:
@@ -209,23 +209,23 @@ class XiaEdfCountFile:
         if deadtime or livetime:
             message+= self.correct(deadtime, livetime)
         else:
-            self.data= self.data.astype(Numeric.Float)
+            self.data= self.data.astype(numpy.float)
 
-        sumdata= Numeric.zeros((len(sums), self.data.shape[1]), Numeric.Float)
+        sumdata= numpy.zeros((len(sums), self.data.shape[1]), numpy.float)
 
         for idx in range(len(sums)):
             if not len(sums[idx]):
-                sumdata[idx,:]= Numeric.sum(self.data[1:,], 0)
+                sumdata[idx,:] = numpy.sum(self.data[1:,], 0)
                 xdet= self.detList
             else:
-                mask= Numeric.zeros((self.nbDet+1,1), Numeric.Int)
+                mask= numpy.zeros((self.nbDet+1,1), numpy.int)
                 xdet= []
                 for det in sums[idx]:
                     if det in self.detList:
                         detidx= self.detList.index(det)
                         mask[detidx+1]= 1
                         xdet.append(det)
-                sumdata[idx,:]= Numeric.sum(self.data*mask, 0)
+                sumdata[idx,:]= numpy.sum(self.data*mask, 0)
 
             self.header["xcorr%d"%idx] = self.header.get("xcorr", 0)
             self.header["xdet%d"%idx] = " ".join([str(det) for det in xdet])
@@ -357,12 +357,12 @@ class XiaEdfScanFile:
         if deadtime and corrflag&1:
             raise XiaEdfError("det #%02d seems already deadtime corrected"%detector)
         
-        self.data= self.data.astype(Numeric.Float)
+        self.data= self.data.astype(numpy.float)
         idx= self.detList.index(detector)
         pts= self.statArray.shape[0]
 
         if livetime:
-            lvt= Numeric.zeros((pts, 1), Numeric.Float)
+            lvt= numpy.zeros((pts, 1), numpy.float)
             lvt[:,0]= self.statArray[:,((XiaStatNb*idx)+XiaStatIndex["lt"])] / 1000.0
 
             perr= self.__checkNullLivetime(lvt, pts)
@@ -373,8 +373,8 @@ class XiaEdfScanFile:
             self.header["xcorr"]= corrflag|2
 
         if deadtime:
-            rate= Numeric.zeros((self.statArray.shape[0], 1), Numeric.Float)
-            count= Numeric.zeros((self.statArray.shape[0], 2), Numeric.Float)
+            rate= numpy.zeros((self.statArray.shape[0], 1), numpy.float)
+            count= numpy.zeros((self.statArray.shape[0], 2), numpy.float)
 
             count[:,0]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["ocr"]]
             count[:,1]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["icr"]]
@@ -401,7 +401,7 @@ class XiaEdfScanFile:
 
     def __checkNullCount(self, count, pts):
         perr= []
-        check= Numeric.sum(Numeric.greater(count,0.), 1)
+        check= numpy.sum(numpy.greater(count,0.), 1)
         for ipt in range(pts):
             if check[ipt]!=2:
                 perr.append(ipt)
@@ -417,7 +417,7 @@ class XiaEdfScanFile:
 
     def __checkNullLivetime(self, lvt, pts):
         perr= []
-        check= Numeric.greater(lvt, 0.)
+        check= numpy.greater(lvt, 0.)
         for ipt in range(pts):
             if check[ipt]==0:
                 perr.append(ipt)
@@ -466,7 +466,7 @@ class XiaEdfScanFile:
                 message+= self.correct(det, deadtime, livetime)
             else:
                 self.__readData(det)
-                self.data= self.data.astype(Numeric.Float)
+                self.data= self.data.astype(numpy.float)
 
             if sumdata is None:
                 sumdata= self.data * 1.0
