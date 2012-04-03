@@ -31,7 +31,7 @@ import copy
 import os
 import time
 import traceback
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -852,7 +852,7 @@ class McaAdvancedFit(qt.QWidget):
         noise= param[i] * param[i]
         i    = fitresult['result']['parameters'].index('Fano')
         fano = param[i] * 2.3548*2.3548*0.00385
-        meanfwhm = Numeric.sqrt(noise + 0.5 * (energy[0] + energy[-1]) * fano)
+        meanfwhm = numpy.sqrt(noise + 0.5 * (energy[0] + energy[-1]) * fano)
         i = fitresult['result']['parameters'].index('Gain')
         gain = fitresult['result']['fittedpar'][i]
         meanfwhm = int(meanfwhm/gain) + 1
@@ -1995,36 +1995,36 @@ class McaAdvancedFit(qt.QWidget):
                     xmin, xmax = self.graph.getx1axislimits()
                     ymin, ymax = self.graph.gety1axislimits()
                     mtplt.setLimits(xmin, xmax, ymin, ymax)
-                    index = Numeric.nonzero((xmin <= x) & (x <= xmax))
-                    x = Numeric.take(x, index)
+                    index = numpy.nonzero((xmin <= x) & (x <= xmax))[0]
+                    x = numpy.take(x, index)
                     if bw:
                         mtplt.addDataToPlot( x,
-                                Numeric.take(fitresult['result']['ydata'],index),
+                                numpy.take(fitresult['result']['ydata'],index),
                                 legend='data',
                                 color='k',linestyle=':', linewidth=1.5, markersize=3)
                     else:
                         mtplt.addDataToPlot( x,
-                                Numeric.take(fitresult['result']['ydata'],index),
+                                numpy.take(fitresult['result']['ydata'],index),
                                 legend='data',
                                 linewidth=1)
 
                     mtplt.addDataToPlot( x,
-                                Numeric.take(fitresult['result']['yfit'],index),
+                                numpy.take(fitresult['result']['yfit'],index),
                                 legend='fit',
                                 linewidth=1.5)
                     if not self.peaksSpectrumButton.isChecked():
                         mtplt.addDataToPlot( x,
-                                    Numeric.take(fitresult['result']['continuum'],index),
+                                    numpy.take(fitresult['result']['continuum'],index),
                                     legend='bck', linewidth=1.5)
                     if self.top.sumbox.isChecked():
                         mtplt.addDataToPlot( x,
-                                Numeric.take(fitresult['result']['pileup']+\
+                                numpy.take(fitresult['result']['pileup']+\
                                              fitresult['result']['continuum'],index),
                                              legend="pile up",
                                              linewidth=1.5)
                     if 'ymatrix' in fitresult['result'].keys():
                         mtplt.addDataToPlot( x,
-                                Numeric.take(fitresult['result']['ymatrix'],index),
+                                numpy.take(fitresult['result']['ymatrix'],index),
                                 legend='matrix',
                                 linewidth=1.5)
                     if self.peaksSpectrumButton.isChecked():
@@ -2032,7 +2032,7 @@ class McaAdvancedFit(qt.QWidget):
                             label = 'y'+group
                             if label in fitresult['result'].keys():
                                 mtplt.addDataToPlot( x,
-                                    Numeric.take(fitresult['result'][label],index),
+                                    numpy.take(fitresult['result'][label],index),
                                                 legend=group,
                                                 linewidth=1.5)
                     if self._energyAxis:
@@ -2881,13 +2881,13 @@ class McaGraphWindow(qt.QWidget):
                         else:
                             fromdata = self.roidict[key]['from']
                             todata   = self.roidict[key]['to']
-                        i1 = Numeric.nonzero(x>=fromdata)
-                        xw = Numeric.take(x,i1)
-                        yw = Numeric.take(y,i1)
-                        i1 = Numeric.nonzero(xw<=todata)
-                        xw = Numeric.take(xw,i1)
-                        yw = Numeric.take(yw,i1)
-                        counts = Numeric.sum(yw)
+                        i1 = numpy.nonzero(x>=fromdata)[0]
+                        xw = numpy.take(x,i1)
+                        yw = numpy.take(y,i1)
+                        i1 = numpy.nonzero(xw<=todata)[0]
+                        xw = numpy.take(xw,i1)
+                        yw = numpy.take(yw,i1)
+                        counts = numpy.sum(yw)
                         self.roidict[key]['rawcounts'] = counts
                         if len(yw):
                             self.roidict[key]['netcounts'] = counts - \
@@ -2910,8 +2910,8 @@ def test(file='03novs060sum.mca'):
     sf=specfile.Specfile(file)
     scan=sf[0]
     mcadata=scan.mca(1)
-    y0= Numeric.array(mcadata)
-    x = Numeric.arange(len(y0))*1.0
+    y0= numpy.array(mcadata)
+    x = numpy.arange(len(y0))*1.0
     demo = McaAdvancedFit()
     xmin = demo.mcafit.config['fit']['xmin']
     xmax = demo.mcafit.config['fit']['xmax']
