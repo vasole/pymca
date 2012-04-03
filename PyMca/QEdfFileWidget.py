@@ -26,7 +26,6 @@
 #############################################################################*/
 import sys
 import os.path
-import numpy.oldnumeric as Numeric
 from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
 if not hasattr(qt, 'QString'):
@@ -1168,7 +1167,7 @@ class QEdfFileWidget(qt.QWidget):
             if DEBUG:
                 print("Image size = %d x %d" % (int(info["Dim_2"]),
                                                 int(info["Dim_1"])))
-                print("data  size = ",Numeric.shape(data))
+                print("data  size = ", data.shape)
 
             if self.graph.isHidden():
                 self.graph.show()
@@ -1177,8 +1176,8 @@ class QEdfFileWidget(qt.QWidget):
             self._x1Limit = int(info["Dim_1"])
             self._y1Limit = int(info["Dim_2"])
             self.graph.clear()
-            minData = Numeric.minimum.reduce(Numeric.minimum.reduce(data))
-            maxData = Numeric.maximum.reduce(Numeric.maximum.reduce(data))
+            minData = data.min()
+            maxData = data.max()
             wasnone = 0
             self.lastData = data
             if self.colormapDialog is None:
