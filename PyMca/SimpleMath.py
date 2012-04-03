@@ -24,7 +24,6 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import numpy.oldnumeric as Numeric
 import numpy
 try:
     from PyMca import SGModule
@@ -88,14 +87,14 @@ class SimpleMath(object):
             ydata=[]
             i=0
             for x0 in xdata0:
-                x=Numeric.array(x0)
+                x=numpy.array(x0)
                 xdata.append(x)
-                ydata.append(Numeric.array(ydata0[i]))
+                ydata.append(numpy.array(ydata0[i]))
                 i=i+1
                 
-            finalx=Numeric.array(x0)
+            finalx=numpy.array(x0)
             finalx=xdata0[0]
-            finaly=Numeric.zeros(Numeric.shape(finalx),Numeric.Float)
+            finaly=numpy.zeros(finalx.shape ,numpy.float)
             i = 0
             for x0 in xdata0:
                 finaly += ydata[i]
@@ -106,10 +105,10 @@ class SimpleMath(object):
             ydata=[]
             i=0
             for x0 in xdata0:
-                x=Numeric.array(x0)
-                i1=Numeric.argsort(x)
-                xdata.append(Numeric.take(x,i1))
-                ydata.append(Numeric.take(Numeric.array(ydata0[i]),i1))
+                x=numpy.array(x0)
+                i1=numpy.argsort(x)
+                xdata.append(numpy.take(x,i1))
+                ydata.append(numpy.take(numpy.array(ydata0[i]),i1))
                 i=i+1         
             
             #get the max and the min x axis
@@ -126,9 +125,9 @@ class SimpleMath(object):
             i=0
             minimumLength = len(xdata[0])
             for x0 in xdata:
-                i1=Numeric.nonzero((x0>=xmin) & (x0<=xmax))
-                x.append(Numeric.take(x0,i1))
-                y.append(Numeric.take(Numeric.array(ydata[i]),i1))
+                i1=numpy.nonzero((x0>=xmin) & (x0<=xmax))[0]
+                x.append(numpy.take(x0,i1))
+                y.append(numpy.take(numpy.array(ydata[i]),i1))
                 if len(x0) < minimumLength:
                     minimumLength = len(x0)
                 i=i+1
@@ -140,7 +139,7 @@ class SimpleMath(object):
             for i in range(len(x)):
                 if x[i][0] > finalx[0]:
                     finalx = x[i] 
-            finaly=Numeric.zeros(Numeric.shape(finalx),Numeric.Float)
+            finaly=numpy.zeros(finalx.shape, numpy.float)
             j=-1
             allthesamex=0
             for p in range(len(finalx)):
@@ -152,8 +151,8 @@ class SimpleMath(object):
                     if allthesamex:
                         finaly[p]+=y[i][p]
                     else:
-                        i1=max(Numeric.nonzero(x0<=point))
-                        i2=min(Numeric.nonzero(x0>=point))
+                        i1=max(numpy.nonzero(x0<=point)[0])
+                        i2=min(numpy.nonzero(x0>=point)[0])
                         if i1 >= i2:
                             #take the point as it is
                             finaly[p]+=y[i][i1]
@@ -190,7 +189,7 @@ class SimpleMath(object):
         f=[0.25,0.5,0.25]
         result=numpy.array(ydata, copy=False, dtype=numpy.float)
         if len(result) > 1:
-            result[1:-1]=Numeric.convolve(result,f,mode=0)
+            result[1:-1]=numpy.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])
             result[-1]=0.5*(result[-1]+result[-2])
         return result
