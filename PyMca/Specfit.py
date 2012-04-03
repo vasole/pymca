@@ -27,7 +27,7 @@
 __revision__ = "$Revision: 1.26 $"
 import sys
 import os
-import numpy.oldnumeric as Numeric
+import numpy
 from PyMca import SpecfitFuns
 from PyMca.Gefit import LeastSquaresFit
 from PyMca import EventHandler
@@ -106,17 +106,17 @@ class Specfit(object):
             for key in self.bkgdict.keys():
                 self.bkglist.append(key)
         self.fitconfig['fitbkg']='No Background'
-        self.bkg_internal_oldx=Numeric.array([])
-        self.bkg_internal_oldy=Numeric.array([])
+        self.bkg_internal_oldx=numpy.array([])
+        self.bkg_internal_oldy=numpy.array([])
         self.bkg_internal_oldpars=[0,0]
-        self.bkg_internal_oldbkg=Numeric.array([])
+        self.bkg_internal_oldbkg=numpy.array([])
         self.fitconfig['fittheory']=None
-        self.xdata0=Numeric.array([],Numeric.Float)       
-        self.ydata0=Numeric.array([],Numeric.Float)
-        self.sigmay0=Numeric.array([],Numeric.Float)       
-        self.xdata=Numeric.array([],Numeric.Float)       
-        self.ydata=Numeric.array([],Numeric.Float)
-        self.sigmay=Numeric.array([],Numeric.Float)       
+        self.xdata0=numpy.array([],numpy.float)       
+        self.ydata0=numpy.array([],numpy.float)
+        self.sigmay0=numpy.array([],numpy.float)       
+        self.xdata=numpy.array([],numpy.float)       
+        self.ydata=numpy.array([],numpy.float)
+        self.sigmay=numpy.array([],numpy.float)       
         #if (y is not None):
         #    self.setdata(x,y,sigmay)
         self.setdata(*vars,**kw)
@@ -145,23 +145,23 @@ class Specfit(object):
         if y is None:
             return 1
         else:
-            self.ydata0=Numeric.array(y)
-            self.ydata=Numeric.array(y)
+            self.ydata0=numpy.array(y)
+            self.ydata=numpy.array(y)
             
         if x is None:
-            self.xdata0=Numeric.arange(len(self.ydata0))
-            self.xdata=Numeric.arange(len(self.ydata0))            
+            self.xdata0=numpy.arange(len(self.ydata0))
+            self.xdata=numpy.arange(len(self.ydata0))            
         else:
-            self.xdata0=Numeric.array(x)
-            self.xdata=Numeric.array(x)
+            self.xdata0=numpy.array(x)
+            self.xdata=numpy.array(x)
         
         if sigmay is None:
-            dummy = Numeric.sqrt(abs(self.ydata0))
-            self.sigmay0=Numeric.reshape(dummy + Numeric.equal(dummy,0),self.ydata0.shape)
-            self.sigmay=Numeric.reshape(dummy + Numeric.equal(dummy,0),self.ydata0.shape)
+            dummy = numpy.sqrt(abs(self.ydata0))
+            self.sigmay0=numpy.reshape(dummy + numpy.equal(dummy,0),self.ydata0.shape)
+            self.sigmay=numpy.reshape(dummy + numpy.equal(dummy,0),self.ydata0.shape)
         else:
-            self.sigmay0=Numeric.array(sigmay)
-            self.sigmay=Numeric.array(sigmay)
+            self.sigmay0=numpy.array(sigmay)
+            self.sigmay=numpy.array(sigmay)
 
         if 'xmin' in kw:
             xmin=kw['xmin']
@@ -176,16 +176,16 @@ class Specfit(object):
 
         if len(self.xdata):
             #sort the data
-            i1=Numeric.argsort(self.xdata)
-            self.xdata=Numeric.take(self.xdata,i1)
-            self.ydata=Numeric.take(self.ydata,i1)
-            self.sigmay=Numeric.take(self.sigmay,i1)
+            i1=numpy.argsort(self.xdata)
+            self.xdata=numpy.take(self.xdata,i1)
+            self.ydata=numpy.take(self.ydata,i1)
+            self.sigmay=numpy.take(self.sigmay,i1)
 
             #take the data between limits
-            i1=Numeric.nonzero((self.xdata >=xmin) & (self.xdata<=xmax))
-            self.xdata=Numeric.take(self.xdata,i1)
-            self.ydata=Numeric.take(self.ydata,i1)
-            self.sigmay=Numeric.take(self.sigmay,i1)
+            i1=numpy.nonzero((self.xdata >=xmin) & (self.xdata<=xmax))[0]
+            self.xdata=numpy.take(self.xdata,i1)
+            self.ydata=numpy.take(self.ydata,i1)
+            self.sigmay=numpy.take(self.sigmay,i1)
         
         return 0
     
@@ -464,7 +464,7 @@ class Specfit(object):
         else:
             nu=len(self.theorydict[self.fitconfig['fittheory']][1])
             niter=int((len(pars)-nb)/nu)
-            u_term=Numeric.zeros(Numeric.shape(t),Numeric.Float)
+            u_term=numpy.zeros(numpy.shape(t),numpy.float)
             if niter > 0:
                 for i in range(niter):
                     u_term= u_term+ \
@@ -512,9 +512,9 @@ class Specfit(object):
         bkg_esti_parameters = esti_bkg[0]
         bkg_esti_constrains = esti_bkg[1]
         try:
-            zz = Numeric.array(esti_bkg[2])
+            zz = numpy.array(esti_bkg[2])
         except:
-            zz = Numeric.zeros(Numeric.shape(yy),Numeric.Float)
+            zz = numpy.zeros(numpy.shape(yy),numpy.float)
         #added scaling support
         yscaling=1.0
         if 'AutoScaling' in self.fitconfig:
@@ -783,8 +783,8 @@ class Specfit(object):
 
     def num_deriv(self,param0,index,t0):
         #numerical derivative
-        x=Numeric.array(t0)
-        delta = (param0[index] + Numeric.equal(param0[index],0.0)) * 0.00001
+        x=numpy.array(t0)
+        delta = (param0[index] + numpy.equal(param0[index],0.0)) * 0.00001
         newpar = param0.__copy__()
         newpar[index] = param0[index] + delta
         f1 = self.fitfunction(newpar, x)
@@ -813,16 +813,16 @@ class Specfit(object):
               noigno.append(param['fitresult'])
 
         #next two lines gave problems with internal background after a zoom
-        #newdata = self.fit_fun0(take(found[0],noigno).tolist(),Numeric.array(self.xdata0))
+        #newdata = self.fit_fun0(take(found[0],noigno).tolist(),numpy.array(self.xdata0))
         #newdata = newdata * self.mondata0
-        newdata = self.fitfunction(noigno,Numeric.array(x))
+        newdata = self.fitfunction(noigno,numpy.array(x))
         return newdata
         
     def bkg_constant(self,pars,x):
         """
         Constant background
         """
-        return pars[0]  * Numeric.ones(Numeric.shape(x),Numeric.Float)
+        return pars[0]  * numpy.ones(numpy.shape(x),numpy.float)
 
     def bkg_linear(self,pars,x):
         """
@@ -844,40 +844,40 @@ class Specfit(object):
             if (len(x) == len(self.bkg_internal_oldx)) & \
                (len(self.ydata) == len(self.bkg_internal_oldy)):
                     #same parameters
-                    if Numeric.sum(self.bkg_internal_oldx == x) == len(x):
-                        if Numeric.sum(self.bkg_internal_oldy == self.ydata) == len(self.ydata):
-                            return self.bkg_internal_oldbkg + pars[2] * Numeric.ones(Numeric.shape(x),Numeric.Float)                            
+                    if numpy.sum(self.bkg_internal_oldx == x) == len(x):
+                        if numpy.sum(self.bkg_internal_oldy == self.ydata) == len(self.ydata):
+                            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)                            
         self.bkg_internal_oldy=self.ydata
         self.bkg_internal_oldx=x
         self.bkg_internal_oldpars=pars
         try:
-            idx = Numeric.nonzero((self.xdata>=x[0]) & (self.xdata<=x[-1]))
+            idx = numpy.nonzero((self.xdata>=x[0]) & (self.xdata<=x[-1]))[0]
         except:
             print("ERROR ",x)
-        yy=Numeric.take(self.ydata,idx)
-        nrx=Numeric.shape(x)[0]
-        nry=Numeric.shape(yy)[0]
+        yy=numpy.take(self.ydata,idx)
+        nrx=numpy.shape(x)[0]
+        nry=numpy.shape(yy)[0]
         if nrx == nry:
             self.bkg_internal_oldbkg=SpecfitFuns.subac(yy,pars[0],pars[1]) 
-            return self.bkg_internal_oldbkg + pars[2] * Numeric.ones(Numeric.shape(x),Numeric.Float)                            
+            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)                            
 
         else:
-            self.bkg_internal_oldbkg=SpecfitFuns.subac(Numeric.take(yy,Numeric.arange(0,nry,2)),
+            self.bkg_internal_oldbkg=SpecfitFuns.subac(numpy.take(yy,numpy.arange(0,nry,2)),
                                     pars[0],pars[1])
-            return self.bkg_internal_oldbkg + pars[2] * Numeric.ones(Numeric.shape(x),Numeric.Float)                            
+            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)                            
 
     def bkg_squarefilter(self,pars,x):
         """
         Square filter Background
         """
         #yy=self.squarefilter(self.ydata,pars[0])
-        return pars[1]  * Numeric.ones(Numeric.shape(x),Numeric.Float)
+        return pars[1]  * numpy.ones(numpy.shape(x),numpy.float)
             
     def bkg_none(self,pars,x):
         """
         Internal Background
         """       
-        return Numeric.zeros(x.shape,Numeric.Float)
+        return numpy.zeros(x.shape,numpy.float)
 
     def estimate_builtin_bkg(self,xx,yy):
        self.zz=SpecfitFuns.subac(yy,1.0001,1000)
@@ -888,18 +888,18 @@ class Specfit(object):
             S = float(npoints)
             Sy = min(zz)
             fittedpar=[Sy]
-            cons = Numeric.zeros((3,len(fittedpar)),Numeric.Float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
        elif self.fitconfig['fitbkg'] == 'Internal':
             #Internal
             fittedpar=[1.000,10000,0.0]
-            cons = Numeric.zeros((3,len(fittedpar)),Numeric.Float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
             cons[0][0]= 3
             cons[0][1]= 3
             cons[0][2]= 3
        elif self.fitconfig['fitbkg'] == 'No Background':
             #None
             fittedpar=[]
-            cons = Numeric.zeros((3,len(fittedpar)),Numeric.Float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
        elif self.fitconfig['fitbkg'] == 'Square Filter':
             fwhm=5
             if 'AutoFwhm' in self.fitconfig:
@@ -917,15 +917,15 @@ class Specfit(object):
                 fittedpar=[fwhm,0.0]
             else:
                 fittedpar=[fwhm+1,0.0]
-            cons = Numeric.zeros((3,len(fittedpar)),Numeric.Float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
             cons[0][0]= 3
             cons[0][1]= 3
        else:
             S = float(npoints)
-            Sy = Numeric.sum(zz)
-            Sx = float(Numeric.sum(xx))
-            Sxx = float(Numeric.sum(xx * xx))            
-            Sxy = float(Numeric.sum(xx * zz))
+            Sy = numpy.sum(zz)
+            Sx = float(numpy.sum(xx))
+            Sxx = float(numpy.sum(xx * xx))            
+            Sxy = float(numpy.sum(xx * zz))
                                 
             deno = S * Sxx - (Sx * Sx)
             if (deno != 0):
@@ -935,7 +935,7 @@ class Specfit(object):
                 bg = 0.0
                 slop = 0.0        
             fittedpar=[bg/1.0,slop/1.0]
-            cons = Numeric.zeros((3,len(fittedpar)),Numeric.Float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
        return fittedpar,cons,zz
 
     def configure(self,**kw):
@@ -992,7 +992,7 @@ class Specfit(object):
             else:
                 sigmay=None
             if x is None:
-                x=Numeric.arange(len(y)).astype(Numeric.Float)
+                x=numpy.arange(len(y)).astype(numpy.float)
             if sigmay is None:
                 self.setdata(x,y,**kw)
             else:
@@ -1075,19 +1075,20 @@ class Specfit(object):
         xmax0 = self.xdata[-1]        
         for region in regions:
             if(0):
-                idx=Numeric.argsort(self.xdata0)
-                self.xdata=Numeric.take(self.xdata0,idx)
-                self.ydata=Numeric.take(self.ydata0,idx)
-                #self.sigmay=Numeric.take(self.sigmay0,idx)
-                idx = Numeric.nonzero((self.xdata>=region[0]) & (self.xdata<=region[1]))
-                self.xdata=Numeric.take(self.xdata,idx)
-                self.ydata=Numeric.take(self.ydata,idx)
+                idx=numpy.argsort(self.xdata0)
+                self.xdata=numpy.take(self.xdata0,idx)
+                self.ydata=numpy.take(self.ydata0,idx)
+                #self.sigmay=numpy.take(self.sigmay0,idx)
+                idx = numpy.nonzero((self.xdata>=region[0]) &\
+                                    (self.xdata<=region[1]))[0]
+                self.xdata=numpy.take(self.xdata,idx)
+                self.ydata=numpy.take(self.ydata,idx)
             self.setdata(self.xdata0,self.ydata0,self.sigmay0,xmin=region[0],xmax=region[1])
             #SimplePlot.plot([self.xdata,self.ydata],yname='region to fit')
             if 0:
                 #the calling program shoudl take care of sigma
-                self.sigmay=Numeric.sqrt(self.ydata/yscaling)
-                self.sigmay=self.sigmay+Numeric.equal(self.sigmay,0)
+                self.sigmay=numpy.sqrt(self.ydata/yscaling)
+                self.sigmay=self.sigmay+numpy.equal(self.sigmay,0)
             self.estimate(mcafit=1)
             if self.state == 'Ready to Fit':
               self.startfit(mcafit=1)
@@ -1225,21 +1226,21 @@ class Specfit(object):
             xmax = min(pos+3.99*sigma,max(x))
             #xmin=min(x)
             #xmax=max(x)
-            idx = Numeric.nonzero((x>=xmin) & (x<=xmax))
-            x_around=Numeric.take(x,idx)
-            y_around=Numeric.take(y,idx)
-            ybkg_around=Numeric.take(self.fitfunction(noigno,x),idx)
+            idx = numpy.nonzero((x>=xmin) & (x<=xmax))[0]
+            x_around=numpy.take(x,idx)
+            y_around=numpy.take(y,idx)
+            ybkg_around=numpy.take(self.fitfunction(noigno,x),idx)
             if 0:
                 #only valid for MCA's!!!
-                area=(Numeric.sum(y_around-ybkg_around))
+                area=(numpy.sum(y_around-ybkg_around))
             else:
                 neto = y_around-ybkg_around
                 deltax = x_around[1:] - x_around[0:-1]
-                area=Numeric.sum(neto[0:-1]*deltax)
-            sigma_area=(Numeric.sqrt(Numeric.sum(y_around)))
+                area=numpy.sum(neto[0:-1]*deltax)
+            sigma_area=(numpy.sqrt(numpy.sum(y_around)))
             result.append([pos,area,sigma_area,fwhm])           
             #import SimplePlot
-            #SimplePlot.plot([Numeric.take(x,idx),y_around,ybkg_around])
+            #SimplePlot.plot([numpy.take(x,idx),y_around,ybkg_around])
             #SimplePlot.plot([x,y,self.fitfunction(noigno,x)],yname='Peak Area')
 
         return result
@@ -1254,22 +1255,22 @@ class Specfit(object):
             
         zz=SpecfitFuns.subac(y,1.0,10)        
         if 0:
-            idx=Numeric.nonzero(zz>(min(y/100.)))
-            yy=Numeric.take(y,idx)
-            yfit=Numeric.take(zz,idx)
+            idx=numpy.nonzero(zz>(min(y/100.)))[0]
+            yy=numpy.take(y,idx)
+            yfit=numpy.take(zz,idx)
         elif 1:
-                zz=Numeric.convolve(y,[1.,1.,1.])/3.0
+                zz=numpy.convolve(y,[1.,1.,1.])/3.0
                 yy=y[1:-1]
                 yfit=zz
-                idx=Numeric.nonzero(Numeric.fabs(yy)>0.0)
-                yy=Numeric.take(yy,idx)
-                yfit=Numeric.take(yfit,idx)
+                idx=numpy.nonzero(numpy.fabs(yy)>0.0)[0]
+                yy=numpy.take(yy,idx)
+                yfit=numpy.take(yfit,idx)
         else:
             yy=y
             yfit=zz
         #avoid case of dividing by 0
         try:
-            chisq=Numeric.sum(((yy-yfit)*(yy-yfit))/(Numeric.fabs(yy)*len(yy)))
+            chisq=numpy.sum(((yy-yfit)*(yy-yfit))/(numpy.fabs(yy)*len(yy)))
             scaling=1./chisq
         except:
             scaling=1.0
@@ -1292,8 +1293,8 @@ class Specfit(object):
         
         #now I should do some sort of peak search ...
         maximum=max(yfit)
-        idx=Numeric.nonzero(yfit == maximum)
-        pos=Numeric.take(x,idx)[-1]
+        idx=numpy.nonzero(yfit == maximum)[0]
+        pos=numpy.take(x,idx)[-1]
         posindex=idx[-1]
         height=yfit[posindex]
         imin=posindex
@@ -1366,11 +1367,11 @@ class Specfit(object):
         #calculate the residuals
         yfit = self.gendata(x=x,paramlist=paramlist)
             
-        residuals=(y-yfit)/(sigmay+Numeric.equal(sigmay,0.0))
+        residuals=(y-yfit)/(sigmay+numpy.equal(sigmay,0.0))
 
         #set to zero all the residuals around peaks
         for peak in peaks:
-            idx=Numeric.less(x,peak-0.8*fwhm)+Numeric.greater(x,peak+0.8*fwhm)
+            idx=numpy.less(x,peak-0.8*fwhm)+numpy.greater(x,peak+0.8*fwhm)
             yfit=yfit*idx
             y=y*idx
             residuals=residuals*idx
@@ -1378,11 +1379,11 @@ class Specfit(object):
         
         #estimate the position
         maxres=max(residuals)
-        idx=Numeric.nonzero(residuals == maxres)
-        pos=Numeric.take(x,idx)[-1]
+        idx=numpy.nonzero(residuals == maxres)[0]
+        pos=numpy.take(x,idx)[-1]
         
         #estimate the height!
-        height=Numeric.take(y-yfit,idx)[-1]
+        height=numpy.take(y-yfit,idx)[-1]
         if (height <= 0):
             return newpar,newcodes
         
@@ -1396,8 +1397,8 @@ class Specfit(object):
             elif pname.find('Area')!= -1:
                 if areanotdone:                    
                     areanotdone=0
-                    area=(height * fwhm / (2.0*Numeric.sqrt(2*Numeric.log(2))))* \
-                                Numeric.sqrt(2*Numeric.pi)
+                    area=(height * fwhm / (2.0*numpy.sqrt(2*numpy.log(2))))* \
+                                numpy.sqrt(2*numpy.pi)
                     if area <= 0:
                         return [],[[],[],[]]
                     estimation=area
@@ -1483,11 +1484,11 @@ class Specfit(object):
 
         #calculate the residuals
         yfit = self.gendata(x=x,paramlist=paramlist)
-        residuals=(y-yfit)/(sigmay+Numeric.equal(sigmay,0.0))
+        residuals=(y-yfit)/(sigmay + numpy.equal(sigmay,0.0))
 
         #set to zero all the residuals around peaks
         for peak in peaks:
-            idx=Numeric.less(x,peak-0.8*fwhm)+Numeric.greater(x,peak+0.8*fwhm)
+            idx=numpy.less(x,peak-0.8*fwhm)+numpy.greater(x,peak+0.8*fwhm)
             yfit=yfit*idx
             y=y*idx
             residuals=residuals*idx
@@ -1495,13 +1496,11 @@ class Specfit(object):
         
         #estimate the position
         maxres=max(residuals)
-        idx=Numeric.nonzero(residuals == maxres)
-        pos=Numeric.take(x,idx)[-1]
+        idx=numpy.nonzero(residuals == maxres)[0]
+        pos=numpy.take(x,idx)[-1]
 
-
-        
         #estimate the height!
-        height=Numeric.take(y-yfit,idx)[-1]
+        height=numpy.take(y-yfit,idx)[-1]
         
         for pname in self.theorydict[self.fitconfig['fittheory']][1]:
             estimation=0.0
@@ -1515,8 +1514,8 @@ class Specfit(object):
             elif pname.find('Area')!= -1:
                 if areanotdone:                    
                     areanotdone=0
-                    estimation=(height * fwhm / (2.0*Numeric.sqrt(2*Numeric.log(2))))* \
-                                Numeric.sqrt(2*Numeric.pi)
+                    estimation=(height * fwhm / (2.0*numpy.sqrt(2*numpy.log(2))))* \
+                                numpy.sqrt(2*numpy.pi)
                     code='POSITIVE'
                     cons1=0.0
                     cons2=0.0
@@ -1567,24 +1566,24 @@ class Specfit(object):
         else:
             xdata=self.x
         f=[1,-1]
-        x=Numeric.array(xdata)
-        y=Numeric.array(ydata)
+        x=numpy.array(xdata)
+        y=numpy.array(ydata)
         x,y = self.pretreat(x,y)
-        deltax=Numeric.convolve(x,f,mode=0)
-        i1=Numeric.nonzero(abs(deltax)>0.0000001)
-        deltay=Numeric.convolve(y,f,mode=0)
-        deno=Numeric.take(deltax,i1)
-        num=Numeric.take(deltay,i1)
+        deltax=numpy.convolve(x,f,mode=0)
+        i1=numpy.nonzero(abs(deltax)>0.0000001)[0]
+        deltay=numpy.convolve(y,f,mode=0)
+        deno=numpy.take(deltax,i1)
+        num=numpy.take(deltay,i1)
         #Still what to do with the first and last point ...
         try:
-            derivfirst=Numeric.array((y[1]-y[0])/(x[1]-x[0]))
+            derivfirst=numpy.array((y[1]-y[0])/(x[1]-x[0]))
         except:
-            derivfirst=Numeric.array([])
+            derivfirst=numpy.array([])
         try:
-            derivlast= Numeric.array((y[-1]-y[-2])/(x[-1]-x[-2]))
+            derivlast= numpy.array((y[-1]-y[-2])/(x[-1]-x[-2]))
         except:
-            derivlast=Numeric.array([])
-        result=Numeric.zeros(len(i1)+1,Numeric.Float)
+            derivlast=numpy.array([])
+        result=numpy.zeros(len(i1)+1,numpy.float)
         result[1:len(i1)]=0.5*((num[0:-1]/deno[0:-1])+\
                                      (num[1:]/deno[1:]))
         if len(derivfirst):
@@ -1596,7 +1595,7 @@ class Specfit(object):
         else:
             result[-1]=result[-2]*1.0
 
-        if type(ydata) == type(Numeric.array([])):
+        if type(ydata) == type(numpy.array([])):
             return result
         else:
             return result.list
@@ -1607,18 +1606,18 @@ class Specfit(object):
         if xmin is None:
             xmin = min(xdata)
         #sort data
-        i1=Numeric.argsort(xdata)
-        xdata=Numeric.take(xdata,i1)
-        ydata=Numeric.take(ydata,i1)
+        i1=numpy.argsort(xdata)
+        xdata=numpy.take(xdata,i1)
+        ydata=numpy.take(ydata,i1)
 
         #take values between limits
-        i1 =  Numeric.nonzero(xdata<=xmax)
-        xdata = Numeric.take(xdata,i1)
-        ydata = Numeric.take(ydata,i1)
+        i1 =  numpy.nonzero(xdata<=xmax)[0]
+        xdata = numpy.take(xdata,i1)
+        ydata = numpy.take(ydata,i1)
 
-        i1 =  Numeric.nonzero(xdata>=xmin)
-        xdata = Numeric.take(xdata,i1)
-        ydata = Numeric.take(ydata,i1)
+        i1 =  numpy.nonzero(xdata>=xmin)[0]
+        xdata = numpy.take(xdata,i1)
+        ydata = numpy.take(ydata,i1)
         #OK with the pre-treatment
         return xdata,ydata
 
@@ -1636,12 +1635,12 @@ class Specfit(object):
         else:
             ydata=self.y
         f=[0.25,0.5,0.25]
-        result=Numeric.array(ydata)
+        result=numpy.array(ydata)
         if len(result) > 1:
-            result[1:-1]=Numeric.convolve(result,f,mode=0)
+            result[1:-1]=numpy.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])
             result[-1]=0.5*(result[-1]+result[-2])
-        if type(ydata) == type(Numeric.array([])):
+        if type(ydata) == type(numpy.array([])):
             return result
         else:
             return result.list
@@ -1659,7 +1658,7 @@ class Specfit(object):
          	width=5
         w = int(width) + ((int(width)+1) % 2)
         u = int(w/2)
-        coef=Numeric.zeros((2*u+w),Numeric.Float)
+        coef=numpy.zeros((2*u+w),numpy.float)
         coef[0:u]=-0.5/float(u)
         coef[u:(u+w)]=1.0/float(w)
         coef[(u+w):len(coef)]=-0.5/float(u)
@@ -1667,13 +1666,13 @@ class Specfit(object):
             if type(y) == type([]):
         	    return []
             else:
-         	    return Numeric.array([])
+         	    return numpy.array([])
         else:
             if len(y) < len(coef):
           	    return y
             else:
-                result=Numeric.zeros(len(y),Numeric.Float)
-                result[(w-1):-(w-1)]=Numeric.convolve(y,coef,0)
+                result=numpy.zeros(len(y),numpy.float)
+                result[(w-1):-(w-1)]=numpy.convolve(y,coef,0)
                 result[0:w-1]=result[w-1]
                 result[-(w-1):]=result[-(w+1)]
                 #import SimplePlot
@@ -1684,9 +1683,9 @@ class Specfit(object):
 def test():
     from PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
-    x = Numeric.arange(1000).astype(Numeric.Float)
-    p1 = Numeric.array([1500,100.,50.0])
-    p2 = Numeric.array([1500,700.,50.0])
+    x = numpy.arange(1000).astype(numpy.float)
+    p1 = numpy.array([1500,100.,50.0])
+    p2 = numpy.array([1500,700.,50.0])
     y = a.gauss(p1,x)+1
     y = y + a.gauss(p2,x)
     fit=Specfit()
