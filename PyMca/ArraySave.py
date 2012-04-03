@@ -182,56 +182,56 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename,
 
 
 def openHDF5File(name, mode='a', **kwargs):
-        """
-        Open an HDF5 file.
+    """
+    Open an HDF5 file.
 
-        Valid modes (like Python's file() modes) are:
-        - r   Readonly, file must exist
-        - r+  Read/write, file must exist
-        - w   Create file, truncate if exists
-        - w-  Create file, fail if exists
-        - a   Read/write if exists, create otherwise (default)
+    Valid modes (like Python's file() modes) are:
+    - r   Readonly, file must exist
+    - r+  Read/write, file must exist
+    - w   Create file, truncate if exists
+    - w-  Create file, fail if exists
+    - a   Read/write if exists, create otherwise (default)
 
-        sorted_with is a callable function like python's builtin sorted, or
-        None.
-        """
+    sorted_with is a callable function like python's builtin sorted, or
+    None.
+    """
 
-        h5file = h5py.File(name, mode, **kwargs)
-        if h5file.mode != 'r' and len(h5file) == 0:
-            if 'file_name' not in h5file.attrs:
-                attr = 'file_name'
-                txt = "%s" % name
-                dtype = '<S%d' % len(txt)
-                h5file.attrs.create(attr, txt, dtype=dtype)
-            if 'file_time' not in h5file.attrs:
-                attr = 'file_time'
-                txt = "%s" % getDate()
-                dtype = '<S%d' % len(txt)
-                h5file.attrs.create(attr, txt, dtype=dtype)
-            if 'HDF5_version' not in h5file.attrs:
-                attr = 'HDF5_version'
-                txt = "%s" % h5py.version.hdf5_version
-                dtype = '<S%d' % len(txt)
-                h5file.attrs.create(attr, txt, dtype=dtype)
-            if 'HDF5_API_version' not in h5file.attrs:
-                attr = 'HDF5_API_version'
-                txt = "%s" % h5py.version.api_version
-                dtype = '<S%d' % len(txt)
-                h5file.attrs.create(attr, txt, dtype=dtype)
-            if 'h5py_version' not in h5file.attrs:
-                attr = 'h5py_version'
-                txt = "%s" % h5py.version.version
-                dtype = '<S%d' % len(txt)
-                h5file.attrs.create(attr, txt, dtype=dtype)
-            if 'creator' not in h5file.attrs:
-                attr = 'creator'
-                txt = "%s" % 'PyMca'
-                dtype = '<S%d' % len(txt)
-                h5file.attrs.create(attr, txt, dtype=dtype)
-            #if 'format_version' not in self.attrs and len(h5file) == 0:
-            #    h5file.attrs['format_version'] = __format_version__
+    h5file = h5py.File(name, mode, **kwargs)
+    if h5file.mode != 'r' and len(h5file) == 0:
+        if 'file_name' not in h5file.attrs:
+            attr = 'file_name'
+            txt = "%s" % name
+            dtype = '<S%d' % len(txt)
+            h5file.attrs.create(attr, txt, dtype=dtype)
+        if 'file_time' not in h5file.attrs:
+            attr = 'file_time'
+            txt = "%s" % getDate()
+            dtype = '<S%d' % len(txt)
+            h5file.attrs.create(attr, txt, dtype=dtype)
+        if 'HDF5_version' not in h5file.attrs:
+            attr = 'HDF5_version'
+            txt = "%s" % h5py.version.hdf5_version
+            dtype = '<S%d' % len(txt)
+            h5file.attrs.create(attr, txt, dtype=dtype)
+        if 'HDF5_API_version' not in h5file.attrs:
+            attr = 'HDF5_API_version'
+            txt = "%s" % h5py.version.api_version
+            dtype = '<S%d' % len(txt)
+            h5file.attrs.create(attr, txt, dtype=dtype)
+        if 'h5py_version' not in h5file.attrs:
+            attr = 'h5py_version'
+            txt = "%s" % h5py.version.version
+            dtype = '<S%d' % len(txt)
+            h5file.attrs.create(attr, txt, dtype=dtype)
+        if 'creator' not in h5file.attrs:
+            attr = 'creator'
+            txt = "%s" % 'PyMca'
+            dtype = '<S%d' % len(txt)
+            h5file.attrs.create(attr, txt, dtype=dtype)
+        #if 'format_version' not in self.attrs and len(h5file) == 0:
+        #    h5file.attrs['format_version'] = __format_version__
 
-        return h5file
+    return h5file
 
 
 def getHDF5FileInstanceAndBuffer(filename, shape,
