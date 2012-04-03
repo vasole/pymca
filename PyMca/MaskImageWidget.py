@@ -31,7 +31,6 @@ import numpy
 from PyMca import RGBCorrelatorGraph
 qt = RGBCorrelatorGraph.qt
 IconDict = RGBCorrelatorGraph.IconDict
-QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -64,9 +63,6 @@ except ImportError:
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
-
-if QWTVERSION4:
-    raise ImportError("MaskImageWidget needs Qwt5")
 
 if QTVERSION > '4.0.0':
     import PyQt4.Qwt5 as Qwt
@@ -836,9 +832,6 @@ class MaskImageWidget(qt.QWidget):
         self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
-        if QWTVERSION4:
-            qt.QMessageBox.information(self, "Flip Image", "Not available under PyQwt4")
-            return
         if not self.graphWidget.graph.yAutoScale:
             qt.QMessageBox.information(self, "Open",
                     "Please set Y Axis to AutoScale first")

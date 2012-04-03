@@ -39,7 +39,6 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 QTVERSION = qt.qVersion()
-QWTVERSION4 = QtBlissGraph.QWTVERSION4
 from PyMca import Gefit
 from PyMca import Specfit
 from PyMca import SpecfitFuns
@@ -519,16 +518,13 @@ class McaCalWidget(qt.QDialog):
             name   = "Peak %d" % marker
             number = marker
             #channel= dict['x']
-            if QWTVERSION4:
-                channel=self.foundpeaks[marker-1]
-            else:
-                #The marker does not correspond to the peak number
-                channel=ddict['x']
-                number = 0
-                for m in self.graph.markersdict.keys():
-                    if self.graph.markersdict[m]['marker'].xValue() < channel:
-                        number += 1
-                name = "Peak %d" % number
+            #The marker does not correspond to the peak number
+            channel=ddict['x']
+            number = 0
+            for m in self.graph.markersdict.keys():
+                if self.graph.markersdict[m]['marker'].xValue() < channel:
+                    number += 1
+            name = "Peak %d" % number
             self.graph.setmarkercolor(marker,'red')
             self.graph.replot()
             current = self.current

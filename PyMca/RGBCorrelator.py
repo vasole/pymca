@@ -36,7 +36,6 @@ if hasattr(qt, 'QString'):
 else:
     QString = str
 from PyMca import RGBCorrelatorGraph
-QWTVERSION4 = RGBCorrelatorGraph.QWTVERSION4
 try:
     from PyMca import QPyMcaMatplotlibSave
     MATPLOTLIB = True
@@ -72,14 +71,11 @@ class RGBCorrelator(qt.QWidget):
                 self._saveMenu.addAction(QString("Standard"),    self.graphWidget._saveIconSignal)
                 self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)
             self.graph = self.graphWidget.graph
-            if not QWTVERSION4:
-                #add flip Icon
-                self.connect(self.graphWidget.hFlipToolButton,
-                             qt.SIGNAL("clicked()"),
-                             self._hFlipIconSignal)
-                self._handleGraph    = True
-            else:
-                self._handleGraph = False
+            #add flip Icon
+            self.connect(self.graphWidget.hFlipToolButton,
+                         qt.SIGNAL("clicked()"),
+                         self._hFlipIconSignal)
+            self._handleGraph    = True
         else:
             self.graph = graph
             self._handleGraph = False 
@@ -100,25 +96,24 @@ class RGBCorrelator(qt.QWidget):
                      qt.SIGNAL("RGBCorrelatorWidgetSignal"),
                      self.correlatorSignalSlot)
 
-    if not QWTVERSION4:
-        def _hFlipIconSignal(self):
-            if self._handleGraph:
-                if not self.graph.yAutoScale:
-                    qt.QMessageBox.information(self, "Open",
-                            "Please set Y Axis to AutoScale first")
-                    return
-                if not self.graph.xAutoScale:
-                    qt.QMessageBox.information(self, "Open",
-                            "Please set X Axis to AutoScale first")
-                    return
-                if self._y1AxisInverted:
-                    self._y1AxisInverted = False
-                else:
-                    self._y1AxisInverted = True
-                self.graph.setY1AxisInverted(self._y1AxisInverted)
-                self.graph.zoomReset()
-                self.controller.update()
+    def _hFlipIconSignal(self):
+        if self._handleGraph:
+            if not self.graph.yAutoScale:
+                qt.QMessageBox.information(self, "Open",
+                        "Please set Y Axis to AutoScale first")
                 return
+            if not self.graph.xAutoScale:
+                qt.QMessageBox.information(self, "Open",
+                        "Please set X Axis to AutoScale first")
+                return
+            if self._y1AxisInverted:
+                self._y1AxisInverted = False
+            else:
+                self._y1AxisInverted = True
+            self.graph.setY1AxisInverted(self._y1AxisInverted)
+            self.graph.zoomReset()
+            self.controller.update()
+            return
 
     def correlatorSignalSlot(self, ddict):
         if 'image' in ddict:

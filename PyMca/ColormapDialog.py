@@ -30,7 +30,6 @@ qt = QtBlissGraph.qt
 qwt = QtBlissGraph.qwt
 from PyMca import DoubleSlider
 QTVERSION = qt.qVersion()
-QWTVERSION4 = QtBlissGraph.QWTVERSION4
 
 DEBUG = 0
 
@@ -261,14 +260,7 @@ class ColormapDialog(qt.QDialog):
 
         self.c.setx1axislimits(self.minmd, self.maxpd)
         self.c.sety1axislimits(-11.5, 11.5)
-        if QWTVERSION4:
-            self.c.setAutoLegend(0)
-            self.c.enableLegend(0)
-            self.c.enableXTopAxis(0)
-            self.c.enableYLeftAxis(0)
-            self.c.enableYRightAxis(0)
-        else:
-            self.c.picker.setSelectionFlags(qwt.QwtPicker.NoSelection)
+        self.c.picker.setSelectionFlags(qwt.QwtPicker.NoSelection)
 
         x = [self.minmd, self.dataMin, self.dataMax, self.maxpd]
         y = [-10, -10, 10, 10 ]
@@ -281,15 +273,8 @@ class ColormapDialog(qt.QDialog):
             marker = self.c.markersdict[index]['marker']
             if i in [1,2]:
                 self.c.setmarkerfollowmouse(index, 1)
-            if QWTVERSION4:
-                self.c.setMarkerPen(marker,qt.QPen(qt.Qt.green, 2, qt.Qt.DashDotLine))
-                self.c.setMarkerSymbol(marker,qwt.QwtSymbol(qwt.QwtSymbol.Diamond, 
-                                           qt.QBrush(qt.Qt.blue),
-                                           qt.QPen(qt.Qt.red), qt.QSize(15,15)))
-
-            else:
-                marker.setLinePen(qt.QPen(qt.Qt.green, 2, qt.Qt.DashDotLine))
-                marker.setSymbol(qwt.QwtSymbol(qwt.QwtSymbol.Diamond, 
+            marker.setLinePen(qt.QPen(qt.Qt.green, 2, qt.Qt.DashDotLine))
+            marker.setSymbol(qwt.QwtSymbol(qwt.QwtSymbol.Diamond, 
                                            qt.QBrush(qt.Qt.blue),
                                            qt.QPen(qt.Qt.red), qt.QSize(15,15)))
             self.markers.append(index)

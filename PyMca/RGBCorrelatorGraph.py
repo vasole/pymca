@@ -34,7 +34,6 @@ from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
 
 QTVERSION = qt.qVersion()
-QWTVERSION4 = QtBlissGraph.QWTVERSION4
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
@@ -94,8 +93,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.rectSelectionIcon      = qt.QIconSet(qt.QPixmap(IconDict["boxselect"]))
             self.brushSelectionIcon     = qt.QIconSet(qt.QPixmap(IconDict["brushselect"]))
             self.brushIcon              = qt.QIconSet(qt.QPixmap(IconDict["brush"]))
-            if not QWTVERSION4:
-                self.hFlipIcon	= qt.QIconSet(qt.QPixmap(IconDict["gioconda16mirror"]))
+            self.hFlipIcon	= qt.QIconSet(qt.QPixmap(IconDict["gioconda16mirror"]))
         else:
             self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
             self.selectionIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
@@ -156,12 +154,12 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      None,
                                     'Change Colormap')
             self.colormapToolButton = tb
+
         #flip
-        if not QWTVERSION4:
-            tb = self._addToolButton(self.hFlipIcon,
-                                     None,
-                                     'Flip Horizontal')
-            self.hFlipToolButton = tb
+        tb = self._addToolButton(self.hFlipIcon,
+                                 None,
+                                 'Flip Horizontal')
+        self.hFlipToolButton = tb
 
 
         #save

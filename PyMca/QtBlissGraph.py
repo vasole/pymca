@@ -36,35 +36,20 @@ if not hasattr(qt, 'QString'):
     QString = str
 else:
     QString = qt.QString
+
 QTVERSION = qt.qVersion()
+
 if QTVERSION >= '4.0.0':
     from PyQt4 import Qwt5 as qwt
 else:
-    if 'Qwt5' in sys.modules:
-        import Qwt5 as qwt
-    elif 'Qwt4' in sys.modules:
-        import Qwt4 as qwt
-    elif 'qwt' in sys.modules:
-        import qwt
-    else:
-        try:
-            # import qwt
-            import Qwt5 as qwt
-        except:
-            try:
-                import Qwt4 as qwt
-            except:
-                import qwt
+    import Qwt5 as qwt
 
-QTVERSION = qt.qVersion()
-
+# left over from the time qwt4 was also present
+# everything should be in capitals now ...
 if qwt.QWT_VERSION_STR[0] > '4':
     Qwt = qwt
     qwt.QwtPlotMappedItem = Qwt.QwtPlotItem
     qwt.QwtCurve          = Qwt.QwtPlotCurve
-    QWTVERSION4 = False
-else:
-    QWTVERSION4 = True
 
 try:
     from PyMca.PyMca_Icons import IconDict
@@ -337,10 +322,9 @@ class QtBlissGraph(qwt.QwtPlot):
         self.plotLayout().setCanvasMargin(0)
         if QTVERSION < '4.0.0':
             self._selectedPrintDefaults = None
-        if not QWTVERSION4:
-            self.setAutoReplot(False)
-            if QTVERSION > '4.0.0':
-                self.plotLayout().setAlignCanvasToScales(True)
+        self.setAutoReplot(False)
+        if QTVERSION > '4.0.0':
+            self.plotLayout().setAlignCanvasToScales(True)
         #self.setCanvasLineWidth(0)
         #self.setTitle('QtBlissGraph')
         self.setTitle('   ')
@@ -350,28 +334,12 @@ class QtBlissGraph(qwt.QwtPlot):
         self.__firstplot = 1
         self.__timer      = time.time()
         #legend
-        if qwt.QWT_VERSION_STR[0] < '5':
-            self.enableLegend(1)
-            # font needed for Q.. version
-            if sys.platform == "win32":
-                if qt.qVersion() > "3.3.2":  #I have that commercial version
-                    oqtFont = qt.QFont( 'MS Sans Serif', 8)
-                    if oqtFont.exactMatch():
-                       self.setLegendFont( oqtFont )
-                       self.setLegendFrameStyle( 2 );
-            self.setAutoLegend(1)
-
-            if 'LegendPos' in kw:
-                self.setLegendPos(kw['LegendPos'])
-            else:
-                self.setLegendPos(qwt.Qwt.Bottom)
+        legend = Qwt.QwtLegend()
+        legend.setItemMode(Qwt.QwtLegend.ClickableItem)
+        if 'LegendPos'in kw:
+            self.insertLegend(legend, kw['LegendPos'])
         else:
-            legend = Qwt.QwtLegend()
-            legend.setItemMode(Qwt.QwtLegend.ClickableItem)
-            if 'LegendPos'in kw:
-                self.insertLegend(legend, kw['LegendPos'])
-            else:
-                self.insertLegend(legend, Qwt.QwtPlot.BottomLegend)
+            self.insertLegend(legend, Qwt.QwtPlot.BottomLegend)
         usecrosscursor = kw.get('usecrosscursor', False)
         self.__uselegendmenu    = 0
         self.__legendrename     = False
@@ -387,8 +355,6 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             self.__keepimageratio = 0
         self.legendmenu    = None
-        if qwt.QWT_VERSION_STR[0] < '5':
-            self.setLegendFrameStyle(qt.QFrame.Box | qt.QFrame.Sunken)
         self.enableZoom(True)
         self.__defaultPlotPoints = False
         self.__defaultPlotLines = True
@@ -490,10 +456,7 @@ class QtBlissGraph(qwt.QwtPlot):
         #connections and functions
         self.zoomStack  = []
         self.zoomStack2 = []
-        if qwt.QWT_VERSION_STR[0] < '5':
-            self.connect(self, qt.SIGNAL("legendClicked(long)"), self._legendClicked)
-        else:
-            self.connect(self, qt.SIGNAL("legendClicked(QwtPlotItem *)"), self._legendClicked)
+        self.connect(self, qt.SIGNAL("legendClicked(QwtPlotItem *)"), self._legendClicked)
 
         #replot
         self.__logx1 = 0
@@ -504,76 +467,63 @@ class QtBlissGraph(qwt.QwtPlot):
 
         self.selectionPicker = None
 
-        #if QTVERSION < '4.0.0':
-        if QWTVERSION4:
-            self.connect(self,
-                     qt.SIGNAL('plotMouseMoved(const QMouseEvent&)'),
-                     self.onMouseMoved)
-            self.connect(self,
-                     qt.SIGNAL('plotMousePressed(const QMouseEvent&)'),
-                     self.onMousePressed)
-            self.connect(self,
-                     qt.SIGNAL('plotMouseReleased(const QMouseEvent&)'),
-                     self.onMouseReleased)
-            self.picker = None
+        if QTVERSION < '4.0.0':
+            self.picker = MyPicker(self.canvas())
+            self.connect(self.picker,
+                 qt.PYSIGNAL('MouseMoved(const QMouseEvent&)'),
+                 self.onMouseMoved)
+            self.connect(self.picker,
+                 qt.PYSIGNAL('MousePressed(const QMouseEvent&)'),
+                 self.onMousePressed)
+            self.connect(self.picker,
+                 qt.PYSIGNAL('MouseReleased(const QMouseEvent&)'),
+                 self.onMouseReleased)
+            self.connect(self.picker,
+                 qt.PYSIGNAL('PanningSignal'),
+                 self.onPanningSignal)
+            self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                          Qwt.QwtPicker.RectSelection)
+
+            self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+            self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
+            self.picker.setEnabled(1)
         else:
-            if QTVERSION < '4.0.0':
-                self.picker = MyPicker(self.canvas())
-                self.connect(self.picker,
-                     qt.PYSIGNAL('MouseMoved(const QMouseEvent&)'),
-                     self.onMouseMoved)
-                self.connect(self.picker,
-                     qt.PYSIGNAL('MousePressed(const QMouseEvent&)'),
-                     self.onMousePressed)
-                self.connect(self.picker,
-                     qt.PYSIGNAL('MouseReleased(const QMouseEvent&)'),
-                     self.onMouseReleased)
-                self.connect(self.picker,
-                     qt.PYSIGNAL('PanningSignal'),
-                     self.onPanningSignal)
-                self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
-                                              Qwt.QwtPicker.RectSelection)
+            if sys.platform == "win32":
+                #self.canvas().setPaintAttribute(Qwt.QwtPlotCanvas.PaintPacked,
+                #                                False)
+                #this get rid of ugly black rectangles during painting
+                self.canvas().setAttribute(qt.Qt.WA_PaintOnScreen, False)
+            self.picker = MyPicker(self.canvas())
+            self.connect(self.picker,
+                 qt.SIGNAL('MouseMoved(const QMouseEvent&)'),
+                 self.onMouseMoved)
+            self.connect(self.picker,
+                 qt.SIGNAL('MousePressed(const QMouseEvent&)'),
+                 self.onMousePressed)
+            self.connect(self.picker,
+                 qt.SIGNAL('MouseReleased(const QMouseEvent&)'),
+                 self.onMouseReleased)
+            self.connect(self.picker,
+                 qt.SIGNAL('PanningSignal'),
+                 self.onPanningSignal)
+            self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
+                                          Qwt.QwtPicker.RectSelection)
 
-                self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
-                self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
-                self.picker.setEnabled(1)
-            else:
-                if sys.platform == "win32":
-                    #self.canvas().setPaintAttribute(Qwt.QwtPlotCanvas.PaintPacked,
-                    #                                False)
-                    #this get rid of ugly black rectangles during painting
-                    self.canvas().setAttribute(qt.Qt.WA_PaintOnScreen, False)
-                self.picker = MyPicker(self.canvas())
-                self.connect(self.picker,
-                     qt.SIGNAL('MouseMoved(const QMouseEvent&)'),
-                     self.onMouseMoved)
-                self.connect(self.picker,
-                     qt.SIGNAL('MousePressed(const QMouseEvent&)'),
-                     self.onMousePressed)
-                self.connect(self.picker,
-                     qt.SIGNAL('MouseReleased(const QMouseEvent&)'),
-                     self.onMouseReleased)
-                self.connect(self.picker,
-                     qt.SIGNAL('PanningSignal'),
-                     self.onPanningSignal)
-                self.picker.setSelectionFlags(Qwt.QwtPicker.DragSelection  |
-                                              Qwt.QwtPicker.RectSelection)
+            self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+            self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
+            self.picker.setEnabled(1)
 
-                self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
-                self.picker.setRubberBandPen(qt.QPen(qt.Qt.green))
-                self.picker.setEnabled(1)
-
-                if usecrosscursor:
-                    self.crossPicker = Qwt.QwtPlotPicker(
-                            Qwt.QwtPlot.xBottom,
-                            Qwt.QwtPlot.yLeft,
-                            Qwt.QwtPicker.PointSelection,
-                            Qwt.QwtPlotPicker.CrossRubberBand,
-                            Qwt.QwtPicker.AlwaysOff,
-                            self.canvas())
-                    self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
-                    self.crossPicker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
-                    self.crossPicker.setEnabled(1)
+            if usecrosscursor:
+                self.crossPicker = Qwt.QwtPlotPicker(
+                        Qwt.QwtPlot.xBottom,
+                        Qwt.QwtPlot.yLeft,
+                        Qwt.QwtPicker.PointSelection,
+                        Qwt.QwtPlotPicker.CrossRubberBand,
+                        Qwt.QwtPicker.AlwaysOff,
+                        self.canvas())
+                self.crossPicker.setRubberBandPen(qt.QPen(qt.Qt.red))
+                self.crossPicker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
+                self.crossPicker.setEnabled(1)
 
     def setPickerSelectionModeOn(self, mode, max_points=0):
         if self._zooming:
@@ -756,39 +706,24 @@ class QtBlissGraph(qwt.QwtPlot):
     def toggleLogY(self):
         if self.__logy1:
             #get the current limits
-            if QWTVERSION4:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-            else:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+            xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+            ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+            ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             self.__logy1 =0
             self.__logy2 =0
             if self.yAutoScale:
                 self.setAxisAutoScale(qwt.QwtPlot.yLeft)
                 self.setAxisAutoScale(qwt.QwtPlot.yRight)
-            if QWTVERSION4:
-                self.setAxisMargins(qwt.QwtPlot.yRight,0,0)
-            else:
-                self.setAxisScaleEngine(Qwt.QwtPlot.yLeft, Qwt.QwtLinearScaleEngine())
-                self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLinearScaleEngine())
+            self.setAxisScaleEngine(Qwt.QwtPlot.yLeft, Qwt.QwtLinearScaleEngine())
+            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLinearScaleEngine())
         else:
             #get current margins
             #get the current limits
-            if QWTVERSION4:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-            else:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+            xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+            ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+            ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             self.__logy1 =1
             self.__logy2 =1
             self.enableAxis(qwt.QwtPlot.yLeft)
@@ -796,12 +731,8 @@ class QtBlissGraph(qwt.QwtPlot):
             if self.yAutoScale:
                 self.setAxisAutoScale(qwt.QwtPlot.yLeft)
                 self.setAxisAutoScale(qwt.QwtPlot.yRight)
-            if QWTVERSION4:
-                self.setAxisOptions(qwt.QwtPlot.yLeft ,qwt.QwtAutoScale.Logarithmic)
-                self.setAxisOptions(qwt.QwtPlot.yRight,qwt.QwtAutoScale.Logarithmic)
-            else:
-                self.setAxisScaleEngine(Qwt.QwtPlot.yLeft, Qwt.QwtLog10ScaleEngine())
-                self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLog10ScaleEngine())
+            self.setAxisScaleEngine(Qwt.QwtPlot.yLeft, Qwt.QwtLog10ScaleEngine())
+            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLog10ScaleEngine())
         self.replot()
         if self.checky1scale() or self.checky2scale():
             self.replot()
@@ -809,16 +740,10 @@ class QtBlissGraph(qwt.QwtPlot):
     def toggleLogX(self):
         if self.__logx1:
             #get the current limits
-            if QWTVERSION4:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-            else:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+            xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+            ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+            ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             self.__logx1 =0
             if self.xAutoScale:
                 self.setAxisAutoScale(qwt.QwtPlot.xBottom)
@@ -826,16 +751,10 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             #get current margins
             #get the current limits
-            if QWTVERSION4:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-            else:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+            xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+            ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+            ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             self.__logx1 =1
             self.enableAxis(qwt.QwtPlot.xBottom)
             if self.xAutoScale:
@@ -864,20 +783,14 @@ class QtBlissGraph(qwt.QwtPlot):
                 if self.xAutoScale:
                     self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
                 if self.yAutoScale:
-                    if QWTVERSION4:
-                        self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
-                    else:
-                        self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
+                    self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
                 xmin, xmax, ymin, ymax = self.zoomStack2[0]
                 if self.axisEnabled(qwt.QwtPlot.xTop):
                     if self.xAutoScale:
                         self.setAxisScale(qwt.QwtPlot.xTop, xmin, xmax)
                 if self.axisEnabled(qwt.QwtPlot.yRight):
                     if self.yAutoScale:
-                        if QWTVERSION4:
-                            self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
-                        else:
-                            self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
+                        self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
             self.setAutoReplot(autoreplot)
 
         self.zoomStack =  []
@@ -920,15 +833,9 @@ class QtBlissGraph(qwt.QwtPlot):
                     flag = 0
                     break
             if flag:
-                if QWTVERSION4:
-                    ymin = self.axisScale(qwt.QwtPlot.yLeft).lBound()
-                    ymax = self.axisScale(qwt.QwtPlot.yLeft).hBound()
-                    self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
-                else:
-                    if 1:
-                        ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
-                        ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                        self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
+                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+                self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
         return flag
 
     def checky1scale(self):
@@ -940,25 +847,16 @@ class QtBlissGraph(qwt.QwtPlot):
                     flag = 0
                     break
             if flag:
-                if QWTVERSION4:
-                    ymin = self.axisScale(qwt.QwtPlot.yRight).lBound()
-                    ymax = self.axisScale(qwt.QwtPlot.yRight).hBound()
-                    self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
-                else:
-                    if 1:
-                        ymax = self.canvasMap(qwt.QwtPlot.yRight).s2()
-                        ymin = self.canvasMap(qwt.QwtPlot.yRight).s1()
-                        self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
+                ymax = self.canvasMap(qwt.QwtPlot.yRight).s2()
+                ymin = self.canvasMap(qwt.QwtPlot.yRight).s1()
+                self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
         return flag
 
     def pixmapPlot(self, pixmap, size, xmirror = None, ymirror = None):
         if xmirror is None: xmirror = self._xImageMirror
         if ymirror is None: ymirror = self._yImageMirror
         if self.plotImage is None:
-            if QWTVERSION4:
-                self.plotImage=QwtPlotImage(self)
-            else:
-                self.plotImage=Qwt5PlotImage(self)
+            self.plotImage=Qwt5PlotImage(self)
         self.plotImage.setPixmap(pixmap, size,
                                  xmirror = xmirror, ymirror=ymirror)
 
@@ -966,21 +864,12 @@ class QtBlissGraph(qwt.QwtPlot):
                 xmirror=None, ymirror=None):
         if data is not None:
             #get the current limits
-            if QWTVERSION4:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-            else:
-                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
-                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+            xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+            xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+            ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+            ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             if self.plotImage is None:
-                if QWTVERSION4:
-                    self.plotImage=QwtPlotImage(self)
-                else:
-                    self.plotImage=Qwt5PlotImage(self)
+                self.plotImage=Qwt5PlotImage(self)
             if xmirror is None: xmirror = self._xImageMirror
             if ymirror is None: ymirror = self._yImageMirror
             if len(self.curveslist):
@@ -996,16 +885,10 @@ class QtBlissGraph(qwt.QwtPlot):
                                    xmirror = xmirror,
                                    ymirror = ymirror)
                 self.replot()
-                if QWTVERSION4:
-                    xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-                    xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-                    ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-                    ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-                else:
-                    xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-                    xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
-                    ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-                    ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+                xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+                xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+                ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+                ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
             self.imageratio = (ymax - ymin)/(xmax - xmin)
 
 
@@ -1023,8 +906,7 @@ class QtBlissGraph(qwt.QwtPlot):
         qwt.QwtPlot.drawCanvasItems(self, painter, rectangle, maps, filter)
 
     def removeImage(self, legend=None):
-        if not QWTVERSION4:
-            self.plotImage.detach()
+        self.plotImage.detach()
         self.plotImage = None
 
     def onPanningSignal(self, ddict):
@@ -1086,15 +968,9 @@ class QtBlissGraph(qwt.QwtPlot):
             if self.__markermoving in self.markersdict.keys():
                 xmarker = self.markersdict[self.__markermoving]['xmarker']
                 if xmarker:
-                    if QWTVERSION4:
-                        self.setMarkerXPos(self.__markermoving, x)
-                    else:
-                        self.setMarkerXPos(self.markersdict[self.__markermoving]['marker'], x)
+                    self.setMarkerXPos(self.markersdict[self.__markermoving]['marker'], x)
                 else:
-                    if QWTVERSION4:
-                        self.setMarkerYPos(self.__markermoving, y)
-                    else:
-                        self.setMarkerYPos(self.markersdict[self.__markermoving]['marker'], y)
+                    self.setMarkerYPos(self.markersdict[self.__markermoving]['marker'], y)
                 ddict ={}
                 ddict['event']    = "markerMoving"
                 ddict['marker']   = self.__markermoving
@@ -1145,16 +1021,16 @@ class QtBlissGraph(qwt.QwtPlot):
               'ypixel':ypixel,
               'xcurve':None,
               'ycurve':None}
-        if not QWTVERSION4:
-            if self.__activecurves is not None:
-                if len(self.__activecurves):
-                    if self.__activecurves[0] in self.curves.keys():
-                        curve = self.curves[self.__activecurves[0]]["curve"]
-                        p = curve.closestPoint(qt.QPoint(xpixel, ypixel))
-                        ddict['xcurve'] = curve.x(p[0])
-                        ddict['ycurve'] = curve.y(p[0])
-                        ddict['point']    = p[0]
-                        ddict['distance'] = p[1]
+
+        if self.__activecurves is not None:
+            if len(self.__activecurves):
+                if self.__activecurves[0] in self.curves.keys():
+                    curve = self.curves[self.__activecurves[0]]["curve"]
+                    p = curve.closestPoint(qt.QPoint(xpixel, ypixel))
+                    ddict['xcurve'] = curve.x(p[0])
+                    ddict['ycurve'] = curve.y(p[0])
+                    ddict['point']    = p[0]
+                    ddict['distance'] = p[1]
 
 
         if qt.qVersion() < '4.0.0':
@@ -1191,62 +1067,34 @@ class QtBlissGraph(qwt.QwtPlot):
                                 xmarker = self.markersdict[marker]['xmarker']
                             if self.markersdict[marker]['followmouse']:
                                 self.__markermoving = marker
-                                if  QWTVERSION4:
-                                    if xmarker:
-                                        self.setMarkerXPos(marker, x)
-                                    else:
-                                        self.setMarkerYPos(marker, y)
-                                else:
-                                    if xmarker:
-                                        self.setMarkerXPos(self.markersdict[marker]['marker'],
+                                if xmarker:
+                                    self.setMarkerXPos(self.markersdict[marker]['marker'],
                                                        x)
-                                    else:
-                                        self.setMarkerYPos(self.markersdict[marker]['marker'],
+                                else:
+                                    self.setMarkerYPos(self.markersdict[marker]['marker'],
                                                        y)
                         self._zooming = 0
 
             if self._zooming:
                 self.enableOutline(1)
                 self.setOutlinePen(qt.QPen(qt.Qt.black))
-                if  QWTVERSION4:
-                    self.setOutlineStyle(qwt.Qwt.Rect)
-                else:
-                    self.picker.setRubberBand(Qwt.QwtPicker.RectRubberBand)
+                self.picker.setRubberBand(Qwt.QwtPicker.RectRubberBand)
                 if self.zoomStack == []:
-                    if QWTVERSION4:
-                        self.zoomState = (
-                            self.axisScale(qwt.QwtPlot.xBottom).lBound(),
-                            self.axisScale(qwt.QwtPlot.xBottom).hBound(),
-                            self.axisScale(qwt.QwtPlot.yLeft).lBound(),
-                            self.axisScale(qwt.QwtPlot.yLeft).hBound(),
-                            )
-                    else:
-                        self.zoomState = (
-                                self.canvasMap(qwt.QwtPlot.xBottom).s1(),
-                                self.canvasMap(qwt.QwtPlot.xBottom).s2(),
-                                self.canvasMap(qwt.QwtPlot.yLeft).s2(),
-                                self.canvasMap(qwt.QwtPlot.yLeft).s1())
+                    self.zoomState = (
+                            self.canvasMap(qwt.QwtPlot.xBottom).s1(),
+                            self.canvasMap(qwt.QwtPlot.xBottom).s2(),
+                            self.canvasMap(qwt.QwtPlot.yLeft).s2(),
+                            self.canvasMap(qwt.QwtPlot.yLeft).s1())
                 if self.zoomStack2 == []:
-                    if QWTVERSION4:
-                        self.zoomState2 = (
-                            self.axisScale(qwt.QwtPlot.xTop).lBound(),
-                            self.axisScale(qwt.QwtPlot.xTop).hBound(),
-                            self.axisScale(qwt.QwtPlot.yRight).lBound(),
-                            self.axisScale(qwt.QwtPlot.yRight).hBound(),
-                            )
-                    else:
-                        self.zoomState2 = (
-                                self.canvasMap(qwt.QwtPlot.xTop).s1(),
-                                self.canvasMap(qwt.QwtPlot.xTop).s2(),
-                                self.canvasMap(qwt.QwtPlot.yRight).s2(),
-                                self.canvasMap(qwt.QwtPlot.yRight).s1())
+                    self.zoomState2 = (
+                            self.canvasMap(qwt.QwtPlot.xTop).s1(),
+                            self.canvasMap(qwt.QwtPlot.xTop).s2(),
+                            self.canvasMap(qwt.QwtPlot.yRight).s2(),
+                            self.canvasMap(qwt.QwtPlot.yRight).s1())
             elif self._selecting:
                 self.enableOutline(1)
                 self.setOutlinePen(qt.QPen(qt.Qt.black))
-                if  QWTVERSION4:
-                    self.setOutlineStyle(qwt.Qwt.Rect)
-                else:
-                    self.picker.setRubberBand(Qwt.QwtPicker.RectRubberBand)
+                self.picker.setRubberBand(Qwt.QwtPicker.RectRubberBand)
         elif qt.Qt.RightButton == e.button():
             self._zooming = 0
             """
@@ -1309,10 +1157,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 xmax0 = max(self.xpos, e.pos().x())
                 ymin0 = min(self.ypos, e.pos().y())
                 ymax0 = max(self.ypos, e.pos().y())
-                if QWTVERSION4:
-                    self.setOutlineStyle(qwt.Qwt.Cross)
-                else:
-                    self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+                self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
                 xmin = self.invTransform(qwt.QwtPlot.xBottom, xmin0)
                 xmax = self.invTransform(qwt.QwtPlot.xBottom, xmax0)
                 ymin = self.invTransform(qwt.QwtPlot.yLeft, ymin0)
@@ -1355,10 +1200,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 autoreplot = self.autoReplot()
                 self.setAutoReplot(False)
                 self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
-                if QWTVERSION4:
-                    self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
-                else:
-                    self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
+                self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
                 if self.axisEnabled(qwt.QwtPlot.xTop):
                     xmin = self.invTransform(qwt.QwtPlot.xTop, xmin0)
                     xmax = self.invTransform(qwt.QwtPlot.xTop, xmax0)
@@ -1366,10 +1208,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 if self.axisEnabled(qwt.QwtPlot.yRight):
                     ymin = self.invTransform(qwt.QwtPlot.yRight, ymin0)
                     ymax = self.invTransform(qwt.QwtPlot.yRight, ymax0)
-                    if QWTVERSION4:
-                        self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
-                    else:
-                        self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
+                    self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
                 self.zoomStack2.append(self.zoomState2)
                 self.zoomState2 = (xmin, xmax, ymin, ymax)
                 self.setAutoReplot(autoreplot)
@@ -1396,10 +1235,7 @@ class QtBlissGraph(qwt.QwtPlot):
                 xmax0 = max(self.xpos, e.pos().x())
                 ymin0 = min(self.ypos, e.pos().y())
                 ymax0 = max(self.ypos, e.pos().y())
-                if QWTVERSION4:
-                    self.setOutlineStyle(qwt.Qwt.Cross)
-                else:
-                    self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
+                self.picker.setRubberBand(Qwt.QwtPicker.NoRubberBand)
                 xmin = self.invTransform(qwt.QwtPlot.xBottom, xmin0)
                 xmax = self.invTransform(qwt.QwtPlot.xBottom, xmax0)
                 ymin = self.invTransform(qwt.QwtPlot.yLeft, ymin0)
@@ -1438,12 +1274,8 @@ class QtBlissGraph(qwt.QwtPlot):
                                 ddict['event']    = "markerSelected"
                             ddict['distance'] = distance
                             ddict['marker']   = marker
-                            if QWTVERSION4:
-                                x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
-                                y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
-                            else:
-                                x = self.markersdict[marker]['marker'].xValue()
-                                y = self.markersdict[marker]['marker'].yValue()
+                            x = self.markersdict[marker]['marker'].xValue()
+                            y = self.markersdict[marker]['marker'].yValue()
                             ddict['x']        = x
                             ddict['xpixel']   = xpixel
                             ddict['y']        = y
@@ -1467,18 +1299,12 @@ class QtBlissGraph(qwt.QwtPlot):
                 if len(self.zoomStack):
                     xmin, xmax, ymin, ymax = self.zoomStack.pop()
                     self.setAxisScale(qwt.QwtPlot.xBottom, xmin, xmax)
-                    if QWTVERSION4:
-                        self.setAxisScale(qwt.QwtPlot.yLeft, ymin, ymax)
-                    else:
-                        self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
+                    self.setAxisScale(qwt.QwtPlot.yLeft, ymax, ymin)
                     xmin, xmax, ymin, ymax = self.zoomStack2.pop()
                     if self.axisEnabled(qwt.QwtPlot.xTop):
                         self.setAxisScale(qwt.QwtPlot.xTop, xmin, xmax)
                     if self.axisEnabled(qwt.QwtPlot.yRight):
-                        if QWTVERSION4:
-                            self.setAxisScale(qwt.QwtPlot.yRight, ymin, ymax)
-                        else:
-                            self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
+                        self.setAxisScale(qwt.QwtPlot.yRight, ymax, ymin)
                     self.replot()
                 self.setAutoReplot(autoreplot)
             return
@@ -1562,7 +1388,6 @@ class QtBlissGraph(qwt.QwtPlot):
                 self.setDefaultPlotPoints(True)
 
     def togglePoints(self, key):
-        if QWTVERSION4:return
         if key not in self.curves.keys():
             if DEBUG:print("curve %s does not exists" % key)
             return
@@ -1590,7 +1415,6 @@ class QtBlissGraph(qwt.QwtPlot):
         curve.setSymbol(newsymbol)
 
     def toggleLine(self, key):
-        if QWTVERSION4:return
         if key not in self.curves.keys():
             if DEBUG:print("curve %s does not exists" % key)
             return
@@ -1687,37 +1511,15 @@ class QtBlissGraph(qwt.QwtPlot):
         self.curves[key]["maptoy2"] = 1
         self.setCurveYAxis(index,qwt.QwtPlot.yRight)
 
-    if not QWTVERSION4:
-        def setCurveYAxis(self, index, axis):
-            self.curves[self.curveslist[index-1]]['curve'].setYAxis(axis)
+    def setCurveYAxis(self, index, axis):
+        self.curves[self.curveslist[index-1]]['curve'].setYAxis(axis)
 
 
     def _legendClicked(self, itemorindex):
-        if QWTVERSION4:
-            index = itemorindex
-            self.legendClicked
-            listindex = 0
-            legendtext = None
-            for curve in self.curveslist:
-                if self.curves[curve]['curve'] == index:
-                    legendtext= curve
-                    listindex = self.curveslist.index(legendtext) + 1
-                    if DEBUG:
-                        print("legend clicked with name = ",legendtext)
-                    break
-            if legendtext is not  None:
-                item = self.curves[curve]['curve']
-            else:
-                item = None
-            self.legendClicked(item, index)
-        else:
-            self.legendClicked(itemorindex)
+        self.legendClicked(itemorindex)
 
 
     def legendClicked(self, item, index=None):
-        if QWTVERSION4:
-            self.legendclicked(index)
-            return
         legendtext = str(item.title().text())
         if self.onlyoneactive:
             self.setactivecurve(legendtext)
@@ -1780,10 +1582,7 @@ class QtBlissGraph(qwt.QwtPlot):
     def x1Label(self,label=None):
         # set axis titles
         if label is None:
-            if qwt.QWT_VERSION_STR[0] > '4':
-                return self.axisTitle(qwt.QwtPlot.xBottom).text()
-            else:
-                return self.axisTitle(qwt.QwtPlot.xBottom)
+            return self.axisTitle(qwt.QwtPlot.xBottom).text()
         else:
             return self.setAxisTitle(qwt.QwtPlot.xBottom, label)
 
@@ -1794,184 +1593,97 @@ class QtBlissGraph(qwt.QwtPlot):
     def y1Label(self,label=None):
         # set axis titles
         if label is None:
-            if qwt.QWT_VERSION_STR[0] > '4':
-                return self.axisTitle(qwt.QwtPlot.yLeft).text()
-            else:
-                return self.axisTitle(qwt.QwtPlot.yLeft)
+            return self.axisTitle(qwt.QwtPlot.yLeft).text()
         else:
             return self.setAxisTitle(qwt.QwtPlot.yLeft, label)
 
 
+    # TODO fred still necessary ?
     def enableOutline(self, value):
-        if QWTVERSION4:
-            qwt.QwtPlot.enableOutline(self, value)
+        pass
 
+    # TODO fred still necessary ?
     def setOutlinePen(self, value):
-        if QWTVERSION4:
-            qwt.QwtPlot.setOutlinePen(self, value)
+        pass
 
+    # TODO fred still necessary ?
     def setOutlineStyle(self, value):
-        if QWTVERSION4:
-            qwt.QwtPlot.setOutlineStyle(self, value)
+        pass
 
+    def removeCurve(self, key):
+        return self.delcurve(key)
 
-    if QWTVERSION4:
-        def eventFilter(self,object,event):
-            if object == self.canvas():
-                if qt.qVersion() < '4.0.0':return 0
-                if event.type() == qt.QEvent.MouseMove:
-                    e = GraphCustomEvent()
-                    e.dict['event']  = qt.QEvent.MouseMove
-                    e.dict['x']      = event.pos().x()
-                    e.dict['y']      = event.pos().y()
-                    e.dict['button'] = event.button()
-                    qt.QApplication.postEvent(self, e)
-                elif event.type() == qt.QEvent.MouseButtonPress:
-                    e = GraphCustomEvent()
-                    e.dict['event']  = qt.QEvent.MouseButtonPress
-                    e.dict['x']      = event.pos().x()
-                    e.dict['y']      = event.pos().y()
-                    e.dict['button'] = event.button()
-                    qt.QApplication.postEvent(self, e)
-                elif event.type() == qt.QEvent.MouseButtonRelease:
-                    e = GraphCustomEvent()
-                    e.dict['event']  = qt.QEvent.MouseButtonRelease
-                    e.dict['x']      = event.pos().x()
-                    e.dict['y']      = event.pos().y()
-                    e.dict['button'] = event.button()
-                    qt.QApplication.postEvent(self, e)
-                else:return 0
-                return 1
-            elif event.type() == qt.QEvent.MouseButtonRelease:
-                #if event.button() == qt.Qt.LeftButton:
-                #    if qt.qVersion() > '4.0.0':
-                #        legendname = str(object.text().text())
-                #        self.setactivecurve(legendname)
-                #        return 1
-                if event.button() == qt.Qt.RightButton:
-                    if QWTVERSION4:
-                        self.__activelegendname = str(object.text())
-                    else:
-                        #print type(object.text())
-                        #print type(object.text().text())
-                        self.__activelegendname = str(object.text().text())
-                    if not self.__uselegendmenu:
-                            return 0
-                    self.__event = None
-                    if self.legendmenu is None:
-                        if qt.qVersion() < '4.0.0':
-                             self.legendmenu = qt.QPopupMenu()
-                             self.legendmenu.insertItem(QString("Set Active"),self.__legendsetactive)
-                             self.legendmenu.insertSeparator()
-                             self.legendmenu.insertItem(QString("Map to y1") ,self.__legendmaptoy1)
-                             self.legendmenu.insertItem(QString("Map to y2") ,self.__legendmaptoy2)
-                             self.legendmenu.insertSeparator()
-                             self.legendmenu.insertItem(QString("Remove curve") ,self.__legendremovesignal)
-                        else:
-                             self.legendmenu = qt.QMenu()
-                             self.legendmenu.addAction(QString("Set Active"),self.__legendsetactive)
-                             self.legendmenu.addSeparator()
-                             self.legendmenu.addAction(QString("Map to y1") ,self.__legendmaptoy1)
-                             self.legendmenu.addAction(QString("Map to y2") ,self.__legendmaptoy2)
-                             self.legendmenu.addSeparator()
-                             self.legendmenu.addAction(QString("Remove curve") ,self.__legendremovesignal)
-                    if qt.qVersion() < '4.0.0':
-                        self.legendmenu.exec_loop(self.cursor().pos())
-                    else:
-                        self.legendmenu.exec_(self.cursor().pos())
-                    if self.__removecurveevent is not None:
-                        if 0:
-                            #This crashes windows Qt 3.3.2
-                            if qt.qVersion() < '4.0.0':
-                                self.emit(qt.PYSIGNAL('QtBlissGraphSignal'),
-                                                   (self.__removecurveevent,))
-                            else:
-                                self.emit(qt.SIGNAL('QtBlissGraphSignal'),
-                                                    self.__removecurveevent)
-                        else:
-                            #This does not crash Qt 3.3.2
-                            event = GraphCustomEvent()
-                            event.dict['event' ]  = "RemoveCurveEvent"
-                            event.dict['legend']  = self.__removecurveevent['legend']
-                            qt.QApplication.postEvent(self, event)
-                    return 1
-            return 0
-    else:
-        def removeCurve(self, key):
-            return self.delcurve(key)
+    def setAutoLegend(self, value):
+        print("setAutoLegend: Not available in QWT5, use setDisplayPolicy)")
+        return
 
-        def setAutoLegend(self, value):
-            print("setAutoLegend: Not available in QWT5, use setDisplayPolicy)")
+    # TODO fred there is return and useless code in this method
+    def enableLegend(self, value):
+        #print "Not available in QWT5, use setDisplayPolicy)"
+        if value:
+            self.legend().show()
             return
+            self.legend().setDisplayPolicy(self.legend().AutoIdentifier, 3)
+        else:
+            self.legend().hide()
+            return
+            self.legend().setDisplayPolicy(self.legend().NoIdentifier, 3)
 
-        def enableLegend(self, value):
-            #print "Not available in QWT5, use setDisplayPolicy)"
-            if value:
-                self.legend().show()
-                return
-                self.legend().setDisplayPolicy(self.legend().AutoIdentifier,
-                                3)
-            else:
-                self.legend().hide()
-                return
-                self.legend().setDisplayPolicy(self.legend().NoIdentifier,
-                                3)
-
-        def legendItemSlot(self, ddict):
-            if ddict['event'] == "leftMousePressed": return self.setactivecurve(ddict['legend'])
-            if ddict['event'] != "rightMouseReleased": return
-            if not self.__uselegendmenu: return
-            self.__activelegendname = ddict['legend']
-            self.__event = None
-            self.__removecurveevent = None
-            self.__renamecurveevent = None
-            if self.legendmenu is None:
-                if QTVERSION < '4.0.0':
-                     self.legendmenu = qt.QPopupMenu()
-                     self.legendmenu.insertItem(QString("Set Active"),self.__legendsetactive)
-                     self.legendmenu.insertSeparator()
-                     self.legendmenu.insertItem(QString("Map to y1") ,self.__legendmaptoy1)
-                     self.legendmenu.insertItem(QString("Map to y2") ,self.__legendmaptoy2)
-                     self.legendmenu.insertSeparator()
-                     self.legendmenu.insertItem(QString("Toggle Points") ,
-                                           self.__legendTogglePoints)
-                     self.legendmenu.insertItem(QString("Toggle Line") ,
-                                           self.__legendToggleLine)
-                     self.legendmenu.insertSeparator()
-                     self.legendmenu.insertItem(QString("Remove curve") ,self.__legendremovesignal)
-                else:
-                     self.legendmenu = qt.QMenu()
-                     self.legendmenu.addAction(QString("Set Active"),self.__legendsetactive)
-                     self.legendmenu.addSeparator()
-                     self.legendmenu.addAction(QString("Map to y1") ,self.__legendmaptoy1)
-                     self.legendmenu.addAction(QString("Map to y2") ,self.__legendmaptoy2)
-                     self.legendmenu.addSeparator()
-                     self.legendmenu.addAction(QString("Toggle Points") ,
-                                           self.__legendTogglePoints)
-                     self.legendmenu.addAction(QString("Toggle Line") ,
-                                           self.__legendToggleLine)
-                     self.legendmenu.addSeparator()
-                     self.legendmenu.addAction(QString("Remove curve") ,self.__legendremovesignal)
-                     if self.__legendrename:
-                         self.legendmenu.addAction(QString("Rename curve") ,
-                                                   self.__legendrenamesignal)
+    def legendItemSlot(self, ddict):
+        if ddict['event'] == "leftMousePressed": return self.setactivecurve(ddict['legend'])
+        if ddict['event'] != "rightMouseReleased": return
+        if not self.__uselegendmenu: return
+        self.__activelegendname = ddict['legend']
+        self.__event = None
+        self.__removecurveevent = None
+        self.__renamecurveevent = None
+        if self.legendmenu is None:
             if QTVERSION < '4.0.0':
-                self.legendmenu.exec_loop(self.cursor().pos())
+                 self.legendmenu = qt.QPopupMenu()
+                 self.legendmenu.insertItem(QString("Set Active"),self.__legendsetactive)
+                 self.legendmenu.insertSeparator()
+                 self.legendmenu.insertItem(QString("Map to y1") ,self.__legendmaptoy1)
+                 self.legendmenu.insertItem(QString("Map to y2") ,self.__legendmaptoy2)
+                 self.legendmenu.insertSeparator()
+                 self.legendmenu.insertItem(QString("Toggle Points") ,
+                                       self.__legendTogglePoints)
+                 self.legendmenu.insertItem(QString("Toggle Line") ,
+                                       self.__legendToggleLine)
+                 self.legendmenu.insertSeparator()
+                 self.legendmenu.insertItem(QString("Remove curve") ,self.__legendremovesignal)
             else:
-                self.legendmenu.exec_(self.cursor().pos())
+                 self.legendmenu = qt.QMenu()
+                 self.legendmenu.addAction(QString("Set Active"),self.__legendsetactive)
+                 self.legendmenu.addSeparator()
+                 self.legendmenu.addAction(QString("Map to y1") ,self.__legendmaptoy1)
+                 self.legendmenu.addAction(QString("Map to y2") ,self.__legendmaptoy2)
+                 self.legendmenu.addSeparator()
+                 self.legendmenu.addAction(QString("Toggle Points") ,
+                                       self.__legendTogglePoints)
+                 self.legendmenu.addAction(QString("Toggle Line") ,
+                                       self.__legendToggleLine)
+                 self.legendmenu.addSeparator()
+                 self.legendmenu.addAction(QString("Remove curve") ,self.__legendremovesignal)
+                 if self.__legendrename:
+                     self.legendmenu.addAction(QString("Rename curve") ,
+                                               self.__legendrenamesignal)
+        if QTVERSION < '4.0.0':
+            self.legendmenu.exec_loop(self.cursor().pos())
+        else:
+            self.legendmenu.exec_(self.cursor().pos())
 
-            if self.__removecurveevent is not None:
-                event = GraphCustomEvent()
-                event.dict['event' ]  = "RemoveCurveEvent"
-                event.dict['legend']  = self.__removecurveevent['legend']
-                qt.QApplication.postEvent(self, event)
+        if self.__removecurveevent is not None:
+            event = GraphCustomEvent()
+            event.dict['event' ]  = "RemoveCurveEvent"
+            event.dict['legend']  = self.__removecurveevent['legend']
+            qt.QApplication.postEvent(self, event)
 
-            if self.__renamecurveevent is not None:
-                event = GraphCustomEvent()
-                event.dict['event' ]  = "RenameCurveEvent"
-                event.dict['legend']  = self.__renamecurveevent['legend']
-                event.dict['newlegend']  = self.__renamecurveevent['newlegend']
-                qt.QApplication.postEvent(self, event)
+        if self.__renamecurveevent is not None:
+            event = GraphCustomEvent()
+            event.dict['event' ]  = "RenameCurveEvent"
+            event.dict['legend']  = self.__renamecurveevent['legend']
+            event.dict['newlegend']  = self.__renamecurveevent['newlegend']
+            qt.QApplication.postEvent(self, event)
 
     def newcurve(self,*var,**kw):
         if DEBUG: print("newcurve obsolete, use newCurve instead")
@@ -1983,21 +1695,13 @@ class QtBlissGraph(qwt.QwtPlot):
             self.curveinit(key,**kw)
             n = self.legend().itemCount()
             if n > 0:
-                if QWTVERSION4:
-                    #do it only for the last curve
-                    item=self.legend().findItem(self.curves[key]['curve'])
-                    item.setFocusPolicy(qt.QWidget.ClickFocus)
-                    if self.__uselegendmenu:
-                        item.installEventFilter(self)
+                item = self.legend().find(self.curves[key]['curve'])
+                if QTVERSION < '4.0.0':
+                    self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
+                                 self.legendItemSlot)
                 else:
-                    #if self.__uselegendmenu:
-                    item = self.legend().find(self.curves[key]['curve'])
-                    if QTVERSION < '4.0.0':
-                        self.connect(item,qt.PYSIGNAL("MyQwtLegendItemSignal"),
-                                     self.legendItemSlot)
-                    else:
-                        self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
-                                     self.legendItemSlot)
+                    self.connect(item,qt.SIGNAL("MyQwtLegendItemSignal"),
+                                 self.legendItemSlot)
         else:
             #curve already exists
             pass
@@ -2033,10 +1737,7 @@ class QtBlissGraph(qwt.QwtPlot):
                         ybase[i] = ymin
                 else:
                     ybase = kw['baseline']
-                if QWTVERSION4:
-                    self.curve(self.curves[key]['curve']).setbaseline(ybase)
-                else:
-                    self.curves[key]['curve'].setbaseline(ybase)
+                self.curves[key]['curve'].setbaseline(ybase)
             if 'regions' in kw:
                 regions = []
                 for region in kw['regions']:
@@ -2045,10 +1746,7 @@ class QtBlissGraph(qwt.QwtPlot):
                     i1 = numpy.min(numpy.nonzero(x>=region0)[0],0)
                     i2 = numpy.max(numpy.ravel(numpy.nonzero(x<=region1)[0]))
                     regions.append([int(i1),int(i2)])
-                if QWTVERSION4:
-                    self.curve(self.curves[key]['curve']).setregions(regions)
-                else:
-                    self.curves[key]['curve'].setregions(regions)
+                self.curves[key]['curve'].setregions(regions)
             if maptoy2:
                 self.mapToY2(key)
             if len(self.curves.keys()) == 1:
@@ -2078,10 +1776,7 @@ class QtBlissGraph(qwt.QwtPlot):
             del self.curveslist[index]
         if index is not None:
             try:
-                if QWTVERSION4:
-                    self.removeCurve(del_index)
-                else:
-                    del_index.detach()
+                del_index.detach()
             except:
                 print("del_index = ",del_index,"error")
         if not len(self.curves.keys()):
@@ -2122,93 +1817,83 @@ class QtBlissGraph(qwt.QwtPlot):
         self.symbol  = 0
         #line type
         self.linetype= 0
-        if QWTVERSION4: self.removeCurves()
+        # TODO fred this code is useless
         if 0:
             self.removeMarkers() #necessary because clear() will get rid of them
             self.clear()         #this deletes also plot items in Qwt5!
         else:                    #try to remove just the curves
             self.replot()
 
-    if QWTVERSION4:
-        def hideGrid(self):
-            self.removeGrid()
+    def hideGrid(self):
+        self.removeGrid()
 
-        def removeGrid(self):
-            pass
+    def removeGrid(self):
+        if self.grid is not None:
+            self.grid.detach()
 
-        def showGrid(self):
-            pass
-    else:
-        def hideGrid(self):
-            self.removeGrid()
+    def showGrid(self):
+        if self.grid is None:
+            self.grid = qwt.QwtPlotGrid()
+            self.grid.enableYMin(False)
+            self.grid.setMajPen(qt.QPen(qt.Qt.black,
+                                0,
+                                self.linetypes['dot']))
+            self.grid.setMinPen(qt.QPen(qt.Qt.gray,
+                                0,
+                                self.linetypes['dot']))
+        self.grid.attach(self)
 
-        def removeGrid(self):
-            if self.grid is not None:
-                self.grid.detach()
+    def removeCurves(self):
+        for key in self.curves.keys():
+            self.delcurve(key)
 
-        def showGrid(self):
-            if self.grid is None:
-                self.grid = qwt.QwtPlotGrid()
-                self.grid.enableYMin(False)
-                self.grid.setMajPen(qt.QPen(qt.Qt.black,
-                                    0,
-                                    self.linetypes['dot']))
-                self.grid.setMinPen(qt.QPen(qt.Qt.gray,
-                                    0,
-                                    self.linetypes['dot']))
-            self.grid.attach(self)
+    def removeMarkers(self):
+        keylist = list(self.markersdict.keys())
+        for key in keylist:
+            try:
+                self.markersdict[key]['marker'].detach()
+            except:
+                if DEBUG:print("It had been already destroyed")
+            del self.markersdict[key]
 
-        def removeCurves(self):
-            for key in self.curves.keys():
-                self.delcurve(key)
-
-        def removeMarkers(self):
-            keylist = list(self.markersdict.keys())
-            for key in keylist:
-                try:
-                    self.markersdict[key]['marker'].detach()
-                except:
-                    if DEBUG:print("It had been already destroyed")
-                del self.markersdict[key]
-
-        def closestMarker(self, xpixel, ypixel):
-            x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
-            y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
-            (marker, distance) = (None, None)
-            xmarker = True
-            for key in list(self.markersdict.keys()):
-                if marker is None:
+    def closestMarker(self, xpixel, ypixel):
+        x = self.invTransform(qwt.QwtPlot.xBottom, xpixel)
+        y = self.invTransform(qwt.QwtPlot.yLeft, ypixel)
+        (marker, distance) = (None, None)
+        xmarker = True
+        for key in list(self.markersdict.keys()):
+            if marker is None:
+                marker   = key
+                if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:
+                    #ymarker
+                    distance = abs(y - self.markersdict[key]['marker'].yValue())
+                    xmarker = False
+                else:
+                    #xmarker
+                    distance = abs(x - self.markersdict[key]['marker'].xValue())
+                    xmarker = True
+            else:
+                if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:
+                    #ymarker
+                    distancew = abs(y - self.markersdict[key]['marker'].yValue())
+                    xmarker = False
+                else:
+                    #xmarker
+                    distancew = abs(x - self.markersdict[key]['marker'].xValue())
+                    xmarker = True
+                if distancew < distance:
+                    distance = distancew
                     marker   = key
-                    if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:
-                        #ymarker
-                        distance = abs(y - self.markersdict[key]['marker'].yValue())
-                        xmarker = False
-                    else:
-                        #xmarker
-                        distance = abs(x - self.markersdict[key]['marker'].xValue())
-                        xmarker = True
-                else:
-                    if self.markersdict[key]['marker'].lineStyle() == Qwt.QwtPlotMarker.HLine:
-                        #ymarker
-                        distancew = abs(y - self.markersdict[key]['marker'].yValue())
-                        xmarker = False
-                    else:
-                        #xmarker
-                        distancew = abs(x - self.markersdict[key]['marker'].xValue())
-                        xmarker = True
-                    if distancew < distance:
-                        distance = distancew
-                        marker   = key
-            #this distance is in x coordenates
-            #but I decide on distance in pixels ...
-            if distance is not None:
-                if xmarker:
-                    x1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, xpixel+4)-x)/4.0
-                    distance = distance / x1pixel
-                else:
-                    y1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, ypixel+4)-y)/4.0
-                    distance = distance / y1pixel
-            return (marker, distance)
+        #this distance is in x coordenates
+        #but I decide on distance in pixels ...
+        if distance is not None:
+            if xmarker:
+                x1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, xpixel+4)-x)/4.0
+                distance = distance / x1pixel
+            else:
+                y1pixel = abs(self.invTransform(qwt.QwtPlot.xBottom, ypixel+4)-y)/4.0
+                distance = distance / y1pixel
+        return (marker, distance)
 
     def toggleCurve(self, keyorindex):
         if type(keyorindex) in [type(unicode(" ")),type(" "),type(str(" "))]:
@@ -2269,12 +1954,7 @@ class QtBlissGraph(qwt.QwtPlot):
             index     = self.curves[legend]['curve']
             x=[]
             y=[]
-            if QWTVERSION4:
-                for i in range(self.curve(index).dataSize()):
-                    x.append(self.curve(index).x(i))
-                    y.append(self.curve(index).y(i))
-            else:
-                print("QtBlissGraph: get curve data to be implemented")
+            print("QtBlissGraph: get curve data to be implemented")
             return legend,numpy.array(x).astype(numpy.float),numpy.array(y).astype(numpy.float)
         else:
             return None,None,None
@@ -2312,11 +1992,11 @@ class QtBlissGraph(qwt.QwtPlot):
                 color = self.curves[ckey] ["pen"]
                 linetype = self.curves[ckey] ["linetype"]
                 pen = qt.QPen(color,self.linewidth,linetype)
-                if QWTVERSION4 or (self.curves[ckey]['curve'].pen().style() != qt.Qt.NoPen):
+                if (self.curves[ckey]['curve'].pen().style() != qt.Qt.NoPen):
                     self.setCurvePen(self.curves[ckey]['curve'],pen )
         linetype = self.curves[key] ["linetype"]
         pen = qt.QPen(self.__activecolor,self.__activelinewidth,linetype)
-        if QWTVERSION4 or (self.curves[key]['curve'].pen().style() != qt.Qt.NoPen):
+        if (self.curves[key]['curve'].pen().style() != qt.Qt.NoPen):
             self.setCurvePen(self.curves[key]['curve'],pen )
         self.__activecurves.append(key)
 
@@ -2329,12 +2009,8 @@ class QtBlissGraph(qwt.QwtPlot):
                         item.setFocusPolicy(qt.QWidget.ClickFocus)
             else:
                 for curve in self.curves.keys():
-                    if QWTVERSION4:
-                        item=self.legend().findItem(self.curves[curve] ["curve"])
-                        item.setFocusPolicy(qt.QWidget.ClickFocus)
-                    else:
-                        if DEBUG:
-                            print("findItem also missing")
+                    if DEBUG:
+                        print("findItem also missing")
 
         #self.legend().findItem(index).setFocus()
         self.replot()
@@ -2356,18 +2032,9 @@ class QtBlissGraph(qwt.QwtPlot):
             pen = self.colors[color]
         else:
             pen = self.colors[self.colorslist[0]]
-        #self.setMarkerPen(self.markerKeys()[marker-1],pen)
-        if QWTVERSION4:
-            self.setMarkerPen(self.markersdict[marker]['marker'],
-                              qt.QPen(pen,0,qt.Qt.SolidLine))
-        else:
-            self.markersdict[marker]['marker'].setLinePen(qt.QPen(pen,0,qt.Qt.SolidLine))
+        self.markersdict[marker]['marker'].setLinePen(qt.QPen(pen,0,qt.Qt.SolidLine))
         if label is not None:
-            if QWTVERSION4:
-                self.setMarkerLabel(self.markersdict[marker]['marker'],
-                                    QString(label) )
-            else:
-                self.markersdict[marker]['marker'].setLabel(Qwt.QwtText(label))
+            self.markersdict[marker]['marker'].setLabel(Qwt.QwtText(label))
 
         return 0
 
@@ -2375,13 +2042,9 @@ class QtBlissGraph(qwt.QwtPlot):
         self.curves[key] =  {}
         #self.curves[key] =  self.insertCurve(key)
         if len(kw.keys()):
-            if QWTVERSION4:
-                curve = BlissCurve(self,key,**kw)
-                self.curves[key] ["curve"] = self.insertCurve(curve)
-            else:
-                curve = BlissCurve(key,**kw)
-                curve.attach(self)
-                self.curves[key] ["curve"] = curve
+            curve = BlissCurve(key,**kw)
+            curve.attach(self)
+            self.curves[key] ["curve"] = curve
             blissCurve = True
         else:
             curve = self.insertCurve(key)
@@ -2433,69 +2096,50 @@ class QtBlissGraph(qwt.QwtPlot):
 
         if blissCurve:
             return
-        if not QWTVERSION4:
-            if line is None:
-                if self.__defaultPlotLines:
-                    curve.setStyle(qwt.QwtPlotCurve.Lines)
-                else:
-                    curve.setStyle(qwt.QwtPlotCurve.NoCurve)
+
+        if line is None:
+            if self.__defaultPlotLines:
+                curve.setStyle(qwt.QwtPlotCurve.Lines)
+            else:
+                curve.setStyle(qwt.QwtPlotCurve.NoCurve)
 
 
     def insertCurve(self, key):
-        if QWTVERSION4:
-            return qwt.QwtPlot.insertCurve(self, key)
-        else:
-            #curve = qwt.Qwt.QwtPlotCurve(key)
-            curve = MyQwtPlotCurve(key)
-            curve.attach(self)
-            return curve
+        curve = MyQwtPlotCurve(key)
+        curve.attach(self)
+        return curve
 
     def setCurvePen(self, curve, pen):
-        if QWTVERSION4:
-            qwt.QwtPlot.setCurvePen(self, curve, pen)
-        else:
-            symbol = curve.symbol()
-            symbol.setPen(pen)
-            brush = symbol.brush()
-            brush.setColor(pen.color())
-            curve.symbol().setBrush(brush)
-            curve.setPen(pen)
+        symbol = curve.symbol()
+        symbol.setPen(pen)
+        brush = symbol.brush()
+        brush.setColor(pen.color())
+        curve.symbol().setBrush(brush)
+        curve.setPen(pen)
 
     def setCurveData(self, curve, x, y):
-        if QWTVERSION4:
-            qwt.QwtPlot.setCurveData(self, curve, x, y)
-        else:
-            curve.setData(x, y)
+        curve.setData(x, y)
 
     def insertLineMarker(self, key, position):
-        if QWTVERSION4:
-            return qwt.QwtPlot.insertLineMarker(self, key, position)
-        else:
-            m = Qwt.QwtPlotMarker()
-            m.setLabel(Qwt.QwtText(key))
-            try:
-                m.setLabelAlignment(position)
-            except:
-                #print "marker label error"
-                m.setLabelAlignment(qt.Qt.AlignLeft | qt.Qt.AlignTop)
-            m.attach(self)
-            return m
+        m = Qwt.QwtPlotMarker()
+        m.setLabel(Qwt.QwtText(key))
+        try:
+            m.setLabelAlignment(position)
+        except:
+            #print "marker label error"
+            m.setLabelAlignment(qt.Qt.AlignLeft | qt.Qt.AlignTop)
+        m.attach(self)
+        return m
 
     def setMarkerYPos(self, m, value):
-        if QWTVERSION4:
-            return qwt.QwtPlot.setMarkerYPos(self, m, value)
-        else:
-            if m in self.markersdict.keys():
-                m = self.markersdict[m]['marker']
-            return m.setYValue(value)
+        if m in self.markersdict.keys():
+            m = self.markersdict[m]['marker']
+        return m.setYValue(value)
 
     def setMarkerXPos(self, m, value):
-        if QWTVERSION4:
-            return qwt.QwtPlot.setMarkerXPos(self, m, value)
-        else:
-            if m in self.markersdict.keys():
-                m = self.markersdict[m]['marker']
-            return m.setXValue(value)
+        if m in self.markersdict.keys():
+            m = self.markersdict[m]['marker']
+        return m.setXValue(value)
 
     def getnewpen(self):
         self.color = self.color + 1
@@ -2528,12 +2172,8 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def getX1AxisLimits(self):
         #get the current limits
-        if QWTVERSION4:
-            xmin = self.canvasMap(qwt.QwtPlot.xBottom).d1()
-            xmax = self.canvasMap(qwt.QwtPlot.xBottom).d2()
-        else:
-            xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
-            xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
+        xmin = self.canvasMap(qwt.QwtPlot.xBottom).s1()
+        xmax = self.canvasMap(qwt.QwtPlot.xBottom).s2()
         return xmin,xmax
 
     def getx1axislimits(self):
@@ -2543,24 +2183,16 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def getY1AxisLimits(self):
         #get the current limits
-        if QWTVERSION4:
-            ymin = self.canvasMap(qwt.QwtPlot.yLeft).d1()
-            ymax = self.canvasMap(qwt.QwtPlot.yLeft).d2()
-        else:
-            ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
-            ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
+        ymin = self.canvasMap(qwt.QwtPlot.yLeft).s1()
+        ymax = self.canvasMap(qwt.QwtPlot.yLeft).s2()
         return ymin,ymax
 
     def getY2AxisLimits(self):
         if not self.axisEnabled(qwt.QwtPlot.yRight):
             return self.getY1AxisLimits()
         #get the current limits
-        if QWTVERSION4:
-            ymin = self.canvasMap(qwt.QwtPlot.yRight).d1()
-            ymax = self.canvasMap(qwt.QwtPlot.yRight).d2()
-        else:
-            ymin = self.canvasMap(qwt.QwtPlot.yRight).s1()
-            ymax = self.canvasMap(qwt.QwtPlot.yRight).s2()
+        ymin = self.canvasMap(qwt.QwtPlot.yRight).s1()
+        ymax = self.canvasMap(qwt.QwtPlot.yRight).s2()
         return ymin,ymax
 
     def gety1axislimits(self):
@@ -2671,34 +2303,21 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             noline = False
 
-        if QWTVERSION4:
-            if not noline:
-                marker = self.insertLineMarker(label,qwt.QwtPlot.xBottom)
-            else:
-                marker = self.insertMarker()
-            mX = marker
-        else:
-            mX = Qwt.QwtPlotMarker()
-            mX.setLabel(Qwt.QwtText(label))
-            mX.setLabelAlignment(qt.Qt.AlignRight | qt.Qt.AlignTop)
-            if not noline:
-                mX.setLineStyle(Qwt.QwtPlotMarker.VLine)
-            marker = id(mX)
+        mX = Qwt.QwtPlotMarker()
+        mX.setLabel(Qwt.QwtText(label))
+        mX.setLabelAlignment(qt.Qt.AlignRight | qt.Qt.AlignTop)
+        if not noline:
+            mX.setLineStyle(Qwt.QwtPlotMarker.VLine)
+        marker = id(mX)
 
         if marker == 0:
             print("Error inserting marker!!!!")
             return -1
         if y is None:
-            if QWTVERSION4:
-                self.setMarkerXPos(marker,x)
-            else:
-                mX.setXValue(x)
+            mX.setXValue(x)
         else:
-            if QWTVERSION4:
-                self.setMarkerPos(marker, x,y)
-            else:
-                mX.setXValue(x)
-                mX.setYValue(y)
+            mX.setXValue(x)
+            mX.setYValue(y)
         if marker in self.markersdict.keys():
             self.markersdict[marker]['marker'] = mX
         else:
@@ -2706,7 +2325,7 @@ class QtBlissGraph(qwt.QwtPlot):
             self.markersdict[marker]['marker']      = mX
             self.markersdict[marker]['followmouse'] = 0
         self.markersdict[marker]['xmarker'] = True
-        if not QWTVERSION4:    mX.attach(self)
+        mX.attach(self)
         return marker
 
     def insertY1Marker(self,*var,**kw):
@@ -2723,30 +2342,20 @@ class QtBlissGraph(qwt.QwtPlot):
         else:
             label = ""
 
-        if QWTVERSION4:
-            marker = self.insertLineMarker(label,qwt.QwtPlot.yLeft)
-            mX = marker
-        else:
-            mX = Qwt.QwtPlotMarker()
-            mX.setLabel(Qwt.QwtText(label))
-            mX.setLabelAlignment(qt.Qt.AlignRight | qt.Qt.AlignTop)
-            mX.setLineStyle(Qwt.QwtPlotMarker.HLine)
-            marker = id(mX)
+        mX = Qwt.QwtPlotMarker()
+        mX.setLabel(Qwt.QwtText(label))
+        mX.setLabelAlignment(qt.Qt.AlignRight | qt.Qt.AlignTop)
+        mX.setLineStyle(Qwt.QwtPlotMarker.HLine)
+        marker = id(mX)
 
         if marker == 0:
             print("Error inserting marker!!!!")
             return -1
         if x is None:
-            if QWTVERSION4:
-                self.setMarkerYPos(marker,y)
-            else:
-                mX.setYValue(y)
+            mX.setYValue(y)
         else:
-            if QWTVERSION4:
-                self.setMarkerPos(marker, x,y)
-            else:
-                mX.setXValue(x)
-                mX.setYValue(y)
+            mX.setXValue(x)
+            mX.setYValue(y)
         if marker in self.markersdict.keys():
             self.markersdict[marker]['marker'] = mX
         else:
@@ -2754,23 +2363,17 @@ class QtBlissGraph(qwt.QwtPlot):
             self.markersdict[marker]['marker']      = mX
             self.markersdict[marker]['followmouse'] = 0
         self.markersdict[marker]['xmarker'] = False
-        if not QWTVERSION4:    mX.attach(self)
+        mX.attach(self)
         return marker
 
     def setx1markerpos(self,marker,x,y=None):
-        if QWTVERSION4:
-            if y is None:
-                self.setMarkerXPos(marker, x)
-            else:
-                self.setMarkerPos(marker, x,y)
-        else:
-            if marker in self.markersdict.keys():
-                marker = self.markersdict[marker]['marker']
+        if marker in self.markersdict.keys():
+            marker = self.markersdict[marker]['marker']
 
-            if y is None:
-                self.setMarkerXPos(marker, x)
-            else:
-                self.setMarkerPos(marker, x,y)
+        if y is None:
+            self.setMarkerXPos(marker, x)
+        else:
+            self.setMarkerPos(marker, x,y)
 
     def clearmarkers(self):
         if DEBUG:print("Deprecation warning: use clearMarkers instead")
@@ -2782,12 +2385,8 @@ class QtBlissGraph(qwt.QwtPlot):
 
     def removeMarker(self,marker):
         if marker in self.markersdict.keys():
-            if QWTVERSION4:
-                qwt.QwtPlot.removeMarker(self,marker)
-                del self.markersdict[marker]
-            else:
-                self.markersdict[marker]['marker'].detach()
-                del self.markersdict[marker]
+            self.markersdict[marker]['marker'].detach()
+            del self.markersdict[marker]
         else:
             for m in self.markersdict.keys():
                 if id(self.markersdict[m]) == id(marker):
@@ -2936,14 +2535,9 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
 
         if not USE_SPS_LUT:
             #calculated palette
-            if QWTVERSION4:
-                self.image = qwt.toQImage(bytescale(self.xyzs)).mirror(xmirror, ymirror)
-                for i in range(0, 256):
-                    self.image.setColor(i, self.palette[i])
-            else:
-                self.image = qwt.toQImage(bytescale(self.xyzs)).mirrored(xmirror, ymirror)
-                for i in range(0, 256):
-                    self.image.setColor(i, self.palette[i])
+            self.image = qwt.toQImage(bytescale(self.xyzs)).mirrored(xmirror, ymirror)
+            for i in range(0, 256):
+                self.image.setColor(i, self.palette[i])
 
         else:
             if colormap is None:
@@ -3033,325 +2627,164 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
                                                                     ymirror)
         self.image_buffer = pixmap
 
-class QwtPlotImage(qwt.QwtPlotMappedItem):
-    def __init__(self, parent, palette=None):
-        qwt.QwtPlotItem.__init__(self, parent)
-        self.xyzs = None
-        self.plot = parent
-        self.image = None
-        if not USE_SPS_LUT:
-            if palette is None:
-                self.palette = fuzzypalette()
-            else:
-                self.palette = palette
 
-    def drawImage(self, painter, xMap, yMap,lgx1=0,lgy1=0):
-        """Paint image to zooming to xMap, yMap
+class MyPicker(Qwt.QwtPicker):
+    def __init__(self, parent):
+        self._keyPressed = None
+        self.__mouseToBeMoved = True
+        Qwt.QwtPicker.__init__(self, parent)
 
-        Calculate (x1, y1, x2, y2) so that it contains at least 1 pixel,
-        and copy the visible region to scale it to the canvas.
-        """
+    def widgetMousePressEvent(self, event):
         if DEBUG:
-            print("drawImage xMap,yMap",\
-			   xMap.d1(),xMap.d2(), yMap.d1(),yMap.d2())
-            print("drawImage self.xMap,yMap",self.xMap.d1(),self.xMap.d2(), self.yMap.d1(),self.yMap.d2())
-            print("drawImage xMap,yMap",\
-			  xMap.i1(),xMap.i2(), yMap.i1(),yMap.i2())
-        # calculate y1, y2
-        if self.image is None:
-            return
-        if lgy1:
-            if yMap.d1() <= 1:
-                yMapd1 = 0.0
-            else:
-                yMapd1 = pow(10.,yMap.d1())
-            yMapd2 = pow(10.,yMap.d2())
+            print ("mouse press")
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("MousePressed(const QMouseEvent&)"),
+                      (event,))
         else:
-            yMapd2 = yMap.d2()
-            yMapd1 = yMap.d1()
+            self.emit(qt.SIGNAL("MousePressed(const QMouseEvent&)"), event)
+        Qwt.QwtPicker.widgetMousePressEvent(self, event)
+
+    def widgetMouseReleaseEvent(self, event):
         if DEBUG:
-            print("working drawImage xMap,yMap",\
-			   xMap.d1(),xMap.d2(), yMapd1,yMapd2)
-        y1 = y2 = self.image.height()
-        y1 *= (self.yMap.d2() - yMapd2)
-        y1 /= (self.yMap.d2() - self.yMap.d1())
-        y1 = max(0, int(y1-0.5))
-        y2 *= (self.yMap.d2() - yMapd1)
-        y2 /= (self.yMap.d2() - self.yMap.d1())
-        y2 = min(self.image.height(), int(y2+0.5))
-        # calculate x1, x1
-        x1 = x2 = self.image.width()
-        #x1 *= (self.xMap.d2() - xMap.d2())
-        x1 *= (xMap.d1() - self.xMap.d1())
-        x1 /= (self.xMap.d2() - self.xMap.d1())
-        x1 = max(0, int(x1-0.5))
-        x2 *= (xMap.d2()-self.xMap.d1())
-        x2 /= (self.xMap.d2() - self.xMap.d1())
-        x2 = min(self.image.width(), int(x2+0.5))
-        #print x1,x2,y1,y2
-        # copy
-        image = self.image.copy(x1, y1, x2-x1, y2-y1)
-        # zoom
-        #print "zoom = ",xMap.i2()-xMap.i1()+1, yMap.i1()-yMap.i2()+1
-        image = image.smoothScale(xMap.i2()-xMap.i1()+1, yMap.i1()-yMap.i2()+1)
-        # draw
-        painter.drawImage(xMap.i1(), yMap.i2(), image)
+            print ("mouse release")
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("MouseReleased(const QMouseEvent&)"),
+                      (event,))
+        else:
+            self.emit(qt.SIGNAL("MouseReleased(const QMouseEvent&)"), event)
+        Qwt.QwtPicker.widgetMouseReleaseEvent(self, event)
 
-    def setData(self, xyzs, xScale = None, yScale = None, colormap=None,
-                xmirror=0, ymirror=1):
-        self.xyzs = xyzs
-        shape = xyzs.shape
-        if colormap is not None:
-            if len(colormap) < 7:
-                colormap.append(spslut.LINEAR)
-        if xScale is not None:
-            self.xMap = qwt.QwtDiMap(0, shape[0], xScale[0], xScale[1])
-            self.plot.setAxisScale(qwt.QwtPlot.xBottom, *xScale)
+    def widgetMouseDoubleClickEvent(self, event):
+        if DEBUG:
+            print ("mouse doubleclick")
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("MouseDoubleClicked(const QMouseEvent&)"),
+                      (event,))
         else:
-            self.xMap = qwt.QwtDiMap(0, shape[0], 0, shape[0])
-        if yScale is not None:
-            self.yMap = qwt.QwtDiMap(0, shape[1], yScale[0], yScale[1])
-            self.plot.setAxisScale(qwt.QwtPlot.yLeft, *yScale)
-        else:
-            self.yMap = qwt.QwtDiMap(0, shape[1], 0, shape[1])
-        if not USE_SPS_LUT:
-            #calculated palette
-            self.image = qwt.toQImage(bytescale(self.xyzs)).mirror(xmirror, ymirror)
-            for i in range(0, 255):
-                self.image.setColor(i, self.palette[i])
-        else:
-            if colormap is None:
-                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
-                                         (spslut.LINEAR,3.0), "BGRX", spslut.TEMP,
-                                          1, (min(numpy.ravel(self.xyzs)),max(numpy.ravel(self.xyzs))))
-            else:
-                (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
-                                         (colormap[6],3.0), "BGRX", COLORMAPLIST[colormap[0]],
-                                          colormap[1], (colormap[2],colormap[3]))
-            self.image=qt.QImage(self.image_buffer,size[0], size[1],32, None, 0,
-                                 qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
+            self.emit(qt.SIGNAL("MouseDoubleClicked(const QMouseEvent&)"), event)
+        Qwt.QwtPicker.widgetMouseDoubleClickEvent(self, event)
 
-    def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
-                  xmirror = 0, ymirror=1):
-        #I have to receive an array
-        selectedTypes = [type("")]
-        if sys.version > '2.6':
-            selectedTypes.append(type(eval('b""')))
-        if type(pixmap) in selectedTypes:
-            shape = size
+    def widgetMouseMoveEvent(self, event):
+        if DEBUG:
+            print ("mouse move")
+        self.__mouseToBeMoved = False
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("MouseMoved(const QMouseEvent&)"), (event,))
         else:
-            shape = size
-       #     shape = pixmap.shape
-       #     if len(shape) == 1:
-       #         shape = (shape[0], 1)
-        if xScale is None:
-            xRange = (0, shape[0])
-        else:
-            xRange = xScale * 1
+            self.emit(qt.SIGNAL("MouseMoved(const QMouseEvent&)"), event)
+        Qwt.QwtPicker.widgetMouseMoveEvent(self, event)
 
-        if yScale is None:
-            yRange = (0, shape[1])
-        else:
-            yRange = yScale * 1
-
-        self.xMap = Qwt.QwtScaleMap(0, shape[0], *xRange)
-        self.plot().setAxisScale(Qwt.QwtPlot.xBottom, *xRange)
-        self.yMap = Qwt.QwtScaleMap(0, shape[1], *yRange)
-        self.plot().setAxisScale(Qwt.QwtPlot.yLeft, *yRange)
-        if type(pixmap) in selectedTypes:
-            self.image=qt.QImage(pixmap,
-                                 size[0],
-                                 size[1],
-                                 32, None, 0,
-                                 qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
-        else:
-            self.image=qt.QImage(pixmap.tostring(),
-                                 size[0],
-                                 size[1],
-                                 32, None, 0,
-                                 qt.QImage.IgnoreEndian).mirror(xmirror,ymirror)
-
-if qwt.QWT_VERSION_STR[0] > '4':
-    class MyPicker(Qwt.QwtPicker):
-        def __init__(self, parent):
-            self._keyPressed = None
+    def widgetKeyPressEvent(self, event):
+        if DEBUG:
+            print ("Key Pressed")
+        self._keyPressed = event.key()
+        if self._keyPressed in [qt.Qt.Key_Left,
+                                qt.Qt.Key_Right,
+                                qt.Qt.Key_Up,
+                                qt.Qt.Key_Down]:
             self.__mouseToBeMoved = True
-            Qwt.QwtPicker.__init__(self, parent)
+        Qwt.QwtPicker.widgetKeyPressEvent(self, event)
 
-        def widgetMousePressEvent(self, event):
-            if DEBUG:
-                print ("mouse press")
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("MousePressed(const QMouseEvent&)"),
-                          (event,))
-            else:
-                self.emit(qt.SIGNAL("MousePressed(const QMouseEvent&)"), event)
-            Qwt.QwtPicker.widgetMousePressEvent(self, event)
+    def widgetKeyReleaseEvent(self, event):
+        if DEBUG:
+            print ("Key Released")
 
-        def widgetMouseReleaseEvent(self, event):
-            if DEBUG:
-                print ("mouse release")
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("MouseReleased(const QMouseEvent&)"),
-                          (event,))
-            else:
-                self.emit(qt.SIGNAL("MouseReleased(const QMouseEvent&)"), event)
-            Qwt.QwtPicker.widgetMouseReleaseEvent(self, event)
-
-        def widgetMouseDoubleClickEvent(self, event):
-            if DEBUG:
-                print ("mouse doubleclick")
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("MouseDoubleClicked(const QMouseEvent&)"),
-                          (event,))
-            else:
-                self.emit(qt.SIGNAL("MouseDoubleClicked(const QMouseEvent&)"), event)
-            Qwt.QwtPicker.widgetMouseDoubleClickEvent(self, event)
-
-        def widgetMouseMoveEvent(self, event):
-            if DEBUG:
-                print ("mouse move")
-            self.__mouseToBeMoved = False
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("MouseMoved(const QMouseEvent&)"), (event,))
-            else:
-                self.emit(qt.SIGNAL("MouseMoved(const QMouseEvent&)"), event)
-            Qwt.QwtPicker.widgetMouseMoveEvent(self, event)
-
-        def widgetKeyPressEvent(self, event):
-            if DEBUG:
-                print ("Key Pressed")
-            self._keyPressed = event.key()
+        if self.__mouseToBeMoved:
             if self._keyPressed in [qt.Qt.Key_Left,
                                     qt.Qt.Key_Right,
                                     qt.Qt.Key_Up,
                                     qt.Qt.Key_Down]:
-                self.__mouseToBeMoved = True
-            Qwt.QwtPicker.widgetKeyPressEvent(self, event)
-
-        def widgetKeyReleaseEvent(self, event):
-            if DEBUG:
-                print ("Key Released")
-
-            if self.__mouseToBeMoved:
-                if self._keyPressed in [qt.Qt.Key_Left,
-                                        qt.Qt.Key_Right,
-                                        qt.Qt.Key_Up,
-                                        qt.Qt.Key_Down]:
-                    ddict = {}
-                    ddict['event'] = 'PanningSignal'
-                    if self._keyPressed == qt.Qt.Key_Left:
-                        ddict['direction'] = 'left'
-                    elif self._keyPressed == qt.Qt.Key_Right:
-                        ddict['direction'] = 'right'
-                    elif self._keyPressed == qt.Qt.Key_Up:
-                        ddict['direction'] = 'up'
-                    elif self._keyPressed == qt.Qt.Key_Down:
-                        ddict['direction'] = 'down'
-                    if QTVERSION < '4.0.0':
-                        self.emit(qt.PYSIGNAL("PanningSignal"), (ddict,))
-                    else:
-                        self.emit(qt.SIGNAL("PanningSignal"), ddict)
-            self._keyPressed = None
-            self.__mouseToBeMoved = False
-            Qwt.QwtPicker.widgetKeyReleaseEvent(self, event)
-
-    class MyQwtPlotCurve(Qwt.QwtPlotCurve):
-        def __init__(self, key):
-            Qwt.QwtPlotCurve.__init__(self, key)
-
-        #These two methods to be overloaded to use ANY widget as legend item.
-        #Default implementation is a QwtLegendItem
-        def legendItem(self):
-            if DEBUG:print("in legend item")
-            #return Qwt.QwtPlotCurve.legendItem(self)
-            return MyQwtLegendItem(self.plot().legend())
-
-        def updateLegend(self, legend):
-            if DEBUG:print("in update legend!")
-            return Qwt.QwtPlotCurve.updateLegend(self, legend)
-
-    class MyQwtLegendItem(Qwt.QwtLegendItem):
-        def __init__(self, *var):
-            Qwt.QwtLegendItem.__init__(self, *var)
-            self.legendMenu = None
-
-        def mousePressEvent(self, event):
-            if DEBUG:print("MyQwtLegendItem mouse pressed")
-            if event.button() == qt.Qt.LeftButton:
-                text = "leftMousePressed"
-            elif event.button() == qt.Qt.RightButton:
-                text = "rightMousePressed"
-            else:
-                text = "centralMousePressed"
-            self.__emitSignal(text)
-
-        def mouseReleaseEvent(self, event):
-            if DEBUG:print("MyQwtLegendItem mouse released")
-            if event.button() == qt.Qt.LeftButton:
-                text = "leftMouseReleased"
-            elif event.button() == qt.Qt.RightButton:
-                text = "rightMouseReleased"
-            else:
-                text = "centralMouseReleased"
-            self.__emitSignal(text)
-
-        def __emitSignal(self, eventText):
-            ddict = {}
-            ddict['legend'] = str(self.text().text())
-            ddict['event']  = eventText
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("MyQwtLegendItemSignal"), (ddict,))
-            else:
-                self.emit(qt.SIGNAL("MyQwtLegendItemSignal"), ddict)
-if QWTVERSION4:
-    class BlissCurve(qwt.QwtPlotCurve):
-        def __init__(self,parent=None,name="",regions=[[0,-1]],baseline=[]):
-            qwt.QwtPlotCurve.__init__(self,parent,name)
-            self.regions = regions
-            self.setStyle(qwt.QwtCurve.Sticks)
-            self.baselinedata = baseline
-            #self.setOptions(qwt.QwtCurve.Xfy)
-
-        def draw(self,painter,xMap,yMap,a,b):
-            for region in self.regions:
-                if len(self.baselinedata):
-                    for i in range(int(region[0]),int(region[1])):
-                        #get the point
-                        self.setBaseline(self.baselinedata[i])
-                        qwt.QwtCurve.draw(self,painter,xMap,yMap,i,i)
+                ddict = {}
+                ddict['event'] = 'PanningSignal'
+                if self._keyPressed == qt.Qt.Key_Left:
+                    ddict['direction'] = 'left'
+                elif self._keyPressed == qt.Qt.Key_Right:
+                    ddict['direction'] = 'right'
+                elif self._keyPressed == qt.Qt.Key_Up:
+                    ddict['direction'] = 'up'
+                elif self._keyPressed == qt.Qt.Key_Down:
+                    ddict['direction'] = 'down'
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL("PanningSignal"), (ddict,))
                 else:
-                    qwt.QwtCurve.draw(self,painter,xMap,yMap,region[0],region[1])
+                    self.emit(qt.SIGNAL("PanningSignal"), ddict)
+        self._keyPressed = None
+        self.__mouseToBeMoved = False
+        Qwt.QwtPicker.widgetKeyReleaseEvent(self, event)
 
-        def setregions(self,regions):
-            self.regions = regions
+class MyQwtPlotCurve(Qwt.QwtPlotCurve):
+    def __init__(self, key):
+        Qwt.QwtPlotCurve.__init__(self, key)
 
-        def setbaseline(self,baseline):
-            self.baselinedata = baseline
-else:
-    class BlissCurve(MyQwtPlotCurve):
-        def __init__(self,name="",regions=[[0,-1]],baseline=[]):
-            MyQwtPlotCurve.__init__(self,name)
-            self.regions = regions
-            self.setStyle(qwt.QwtCurve.Sticks)
-            self.baselinedata = baseline
-            #self.setOptions(qwt.QwtCurve.Xfy)
+    #These two methods to be overloaded to use ANY widget as legend item.
+    #Default implementation is a QwtLegendItem
+    def legendItem(self):
+        if DEBUG:print("in legend item")
+        #return Qwt.QwtPlotCurve.legendItem(self)
+        return MyQwtLegendItem(self.plot().legend())
 
-        def drawFromTo(self,painter,xMap,yMap,a,b):
-            for region in self.regions:
-                if len(self.baselinedata):
-                    for i in range(int(region[0]),int(region[1])):
-                        #get the point
-                        self.setBaseline(self.baselinedata[i])
-                        MyQwtPlotCurve.drawFromTo(self,painter,xMap,yMap,i,i)
-                else:
-                    MyQwtPlotCurve.drawFromTo(self,painter,xMap,yMap,region[0],region[1])
+    def updateLegend(self, legend):
+        if DEBUG:print("in update legend!")
+        return Qwt.QwtPlotCurve.updateLegend(self, legend)
 
-        def setregions(self,regions):
-            self.regions = regions
+class MyQwtLegendItem(Qwt.QwtLegendItem):
+    def __init__(self, *var):
+        Qwt.QwtLegendItem.__init__(self, *var)
+        self.legendMenu = None
 
-        def setbaseline(self,baseline):
-            self.baselinedata = baseline
+    def mousePressEvent(self, event):
+        if DEBUG:print("MyQwtLegendItem mouse pressed")
+        if event.button() == qt.Qt.LeftButton:
+            text = "leftMousePressed"
+        elif event.button() == qt.Qt.RightButton:
+            text = "rightMousePressed"
+        else:
+            text = "centralMousePressed"
+        self.__emitSignal(text)
+
+    def mouseReleaseEvent(self, event):
+        if DEBUG:print("MyQwtLegendItem mouse released")
+        if event.button() == qt.Qt.LeftButton:
+            text = "leftMouseReleased"
+        elif event.button() == qt.Qt.RightButton:
+            text = "rightMouseReleased"
+        else:
+            text = "centralMouseReleased"
+        self.__emitSignal(text)
+
+    def __emitSignal(self, eventText):
+        ddict = {}
+        ddict['legend'] = str(self.text().text())
+        ddict['event']  = eventText
+        if QTVERSION < '4.0.0':
+            self.emit(qt.PYSIGNAL("MyQwtLegendItemSignal"), (ddict,))
+        else:
+            self.emit(qt.SIGNAL("MyQwtLegendItemSignal"), ddict)
+
+
+class BlissCurve(MyQwtPlotCurve):
+    def __init__(self,name="",regions=[[0,-1]],baseline=[]):
+        MyQwtPlotCurve.__init__(self,name)
+        self.regions = regions
+        self.setStyle(qwt.QwtCurve.Sticks)
+        self.baselinedata = baseline
+        #self.setOptions(qwt.QwtCurve.Xfy)
+
+    def drawFromTo(self,painter,xMap,yMap,a,b):
+        for region in self.regions:
+            if len(self.baselinedata):
+                for i in range(int(region[0]),int(region[1])):
+                    #get the point
+                    self.setBaseline(self.baselinedata[i])
+                    MyQwtPlotCurve.drawFromTo(self,painter,xMap,yMap,i,i)
+            else:
+                MyQwtPlotCurve.drawFromTo(self,painter,xMap,yMap,region[0],region[1])
+
+    def setregions(self,regions):
+        self.regions = regions
+
+    def setbaseline(self,baseline):
+        self.baselinedata = baseline
 
 class TimeScaleDraw(qwt.QwtScaleDraw):
     def label(self, value):
@@ -3363,28 +2796,16 @@ class TimeScaleDraw(qwt.QwtScaleDraw):
 
             if h == 0 and m == 0:
                 r='%ds' % s
-                if QWTVERSION4:
-                  return r
-                else:
-                  return qwt.QwtText(r)
+                return qwt.QwtText(r)
             else:
                 if h == 0:
                     r='%dm%02ds' % (m, s)
-                    if QWTVERSION4:
-                      return r
-                    else:
-                      return qwt.QwtText(r)
+                    return qwt.QwtText(r)
                 else:
                     r = '%dh%02dm%02ds' % (h, m, s)
-                    if QWTVERSION4:
-                      return r
-                    else:
-                      return qwt.QwtText(r)
+                    return qwt.QwtText(r)
         else:
-            if QWTVERSION4:
-              return ''
-            else:
-              return qwt.QwtText('')
+            return qwt.QwtText('')
 
 
 def make0():

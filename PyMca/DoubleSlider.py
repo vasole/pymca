@@ -30,13 +30,7 @@ from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 if QTVERSION < '4.0.0':
-    try:
-        import Qwt5 as qwt
-    except:
-        try:
-            import Qwt4 as qwt 
-        except:
-            import qwt
+    import Qwt5 as qwt
 else:
     from PyQt4 import Qwt5 as qwt
 

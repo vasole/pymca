@@ -39,7 +39,6 @@ except ImportError:
 qt = MaskImageWidget.qt
 IconDict = MaskImageWidget.IconDict
 QTVERSION   = qt.qVersion()
-QWTVERSION4 = MaskImageWidget.QWTVERSION4
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 

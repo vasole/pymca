@@ -71,10 +71,6 @@ from PyMca import StackSimpleFitWindow
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
-QWTVERSION4 = RGBCorrelatorGraph.QtBlissGraph.QWTVERSION4
-
-if QWTVERSION4:
-    raise ImportError("QEDFStackWidget needs Qwt5")
 
 PCA = False
 if QTVERSION > '4.0.0':
@@ -1985,9 +1981,6 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.plotStackImage(True)
 
     def _hFlipIconSignal(self):
-        if QWTVERSION4:
-            qt.QMessageBox.information(self, "Flip Image", "Not available under PyQwt4")
-            return
         if not self.stackGraphWidget.graph.yAutoScale:
             qt.QMessageBox.information(self, "Flip Image",
                     "Please set stack Y Axis to AutoScale first")

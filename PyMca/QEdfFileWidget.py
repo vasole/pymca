@@ -35,7 +35,7 @@ else:
     QString = qt.QString
     QStringList = qt.QStringList
 QTVERSION = qt.qVersion()
-QWTVERSION4 = QtBlissGraph.QWTVERSION4
+
 if QTVERSION > '4.0.0':
     QT4 = True
     try:
@@ -1013,15 +1013,11 @@ class QEdfFileWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        if QWTVERSION4:
-            self.graph.imagePlot(self.lastData,
-                             colormap = self.colormap)
-        else:
-            self.graph.setY1AxisInverted(True)
-            self.graph.imagePlot(self.lastData,
-                             colormap = self.colormap,
-                             xmirror = False,
-                             ymirror = False)
+        self.graph.setY1AxisInverted(True)
+        self.graph.imagePlot(self.lastData,
+                         colormap = self.colormap,
+                         xmirror = False,
+                         ymirror = False)
         self.graph.replot()
 
     def closeFile(self, filename=None):
@@ -1204,14 +1200,10 @@ class QEdfFileWidget(qt.QWidget):
                              minData, maxData)
             #self.graph.imagePlot(data=data, colormap = self.colormap)
             self.colormapDialog._update()
-            if QWTVERSION4:
-                self.graph.imagePlot(data=data,
-                                     colormap = self.colormap)
-            else:
-                self.graph.setY1AxisInverted(True)
-                self.graph.imagePlot(data=data,
-                                     colormap = self.colormap,
-                                     ymirror = False)
+            self.graph.setY1AxisInverted(True)
+            self.graph.imagePlot(data=data,
+                                 colormap = self.colormap,
+                                 ymirror = False)
             
         self.__refreshSelection()
         self.graph.replot()
