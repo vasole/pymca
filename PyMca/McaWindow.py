@@ -27,6 +27,7 @@
 __revision__ = "$Revision: 1.56 $"
 import sys
 import os
+import numpy
 import copy
 import time
 from PyMca import QtBlissGraph
@@ -40,7 +41,6 @@ qwt = QtBlissGraph.qwt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import McaControlGUI
 from PyMca import ConfigDict
-import numpy.oldnumeric as Numeric
 from PyMca import McaAdvancedFit
 from PyMca import DataObject
 from PyMca import McaCalWidget
@@ -976,8 +976,8 @@ class McaWidget(qt.QWidget):
                 calib = curveinfo['McaCalib']
                 xmin,xmax = self.graph.getx1axislimits()
                 energy = calib[0] + calib[1] * x + calib[2] * x * x
-                i1 = min(Numeric.nonzero(energy >= xmin))
-                i2 = max(Numeric.nonzero(energy <= xmax))
+                i1 = min(numpy.nonzero(energy >= xmin)[0])
+                i2 = max(numpy.nonzero(energy <= xmax)[0])
                 xmin = x[i1] * 1.0
                 xmax = x[i2] * 1.0
 
@@ -1332,7 +1332,7 @@ class McaWidget(qt.QWidget):
                 newDataObject.info['legend'] = legend
                 newDataObject.info['Key']  = legend
                 newDataObject.info['McaCalib']  = fitcalibration * 1
-                newDataObject.data = Numeric.reshape(Numeric.concatenate((x,yfit,yb),0),(3,len(x)))
+                newDataObject.data = numpy.reshape(numpy.concatenate((x,yfit,yb),0),(3,len(x)))
                 newDataObject.x = [x]
                 newDataObject.y = [yfit]
                 newDataObject.m = None
@@ -1411,13 +1411,13 @@ class McaWidget(qt.QWidget):
                 i += 1
                 if result['chisq'] is not None:
                      mcamode = result['fitconfig']['McaMode']                         
-                     idx=Numeric.nonzero((self.specfit.xdata0>=result['xbegin']) & \
-                                         (self.specfit.xdata0<=result['xend']))
-                     x=Numeric.take(self.specfit.xdata0,idx)
+                     idx=numpy.nonzero((self.specfit.xdata0>=result['xbegin']) & \
+                                    (self.specfit.xdata0<=result['xend']))[0]
+                     x=numpy.take(self.specfit.xdata0,idx)
                      y=self.specfit.gendata(x=x,parameters=result['paramlist'])
                      nparb= len(self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1])
                      yb   = self.specfit.gendata(x=x,parameters=result['paramlist'][0:nparb])
-                     xtoadd = Numeric.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
+                     xtoadd = numpy.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
                      if not len(xtoadd): continue
                      xfinal = xfinal + xtoadd
                      regions.append([xtoadd[0],xtoadd[-1]])
@@ -1442,12 +1442,12 @@ class McaWidget(qt.QWidget):
             newDataObject.info['Key']       = legend
             newDataObject.info['CalMode']   = self.__simplefitcalmode
             newDataObject.info['McaCalib']  = self.__simplefitcalibration
-            x    = Numeric.array(xfinal)
-            yfit = Numeric.array(yfinal)
-            yb = Numeric.array(ybfinal)
+            x    = numpy.array(xfinal)
+            yfit = numpy.array(yfinal)
+            yb = numpy.array(ybfinal)
             newDataObject.x = [x]
             newDataObject.y = [yfit]
-            newDataObject.m = [Numeric.ones(len(yfit)).astype(Numeric.Float)]
+            newDataObject.m = [numpy.ones(len(yfit)).astype(numpy.float)]
             if mcamode:
                 newDataObject.info['regions']   = regions
                 newDataObject.info['baseline'] = yb
@@ -1787,16 +1787,16 @@ class McaWidget(qt.QWidget):
                             fromdata = self.roidict[key]['from']
                             todata   = self.roidict[key]['to']
                         if self.roidict[key]['type'].upper() != "CHANNEL":
-                            i1 = Numeric.nonzero(x>=fromdata)
-                            xw = Numeric.take(x,i1)
+                            i1 = numpy.nonzero(x>=fromdata)[0]
+                            xw = numpy.take(x,i1)
                         else:
-                            i1 = Numeric.nonzero(x0>=fromdata)
-                            xw = Numeric.take(x0,i1)
-                        yw = Numeric.take(y, i1)
-                        i1 = Numeric.nonzero(xw<=todata)
-                        xw = Numeric.take(xw,i1)
-                        yw = Numeric.take(yw,i1)
-                        counts = Numeric.sum(yw)
+                            i1 = numpy.nonzero(x0>=fromdata)[0]
+                            xw = numpy.take(x0,i1)
+                        yw = numpy.take(y, i1)
+                        i1 = numpy.nonzero(xw<=todata)[0]
+                        xw = numpy.take(xw,i1)
+                        yw = numpy.take(yw,i1)
+                        counts = yw.sum()
                         self.roidict[key]['rawcounts'] = counts
                         if len(yw):
                             self.roidict[key]['netcounts'] = counts - \
@@ -1943,16 +1943,16 @@ class McaWidget(qt.QWidget):
                     xhelp = dataObject.x[0]
 
                 if xhelp is None:
-                    xhelp =info['Channel0'] + Numeric.arange(len(data)).astype(Numeric.Float)
+                    xhelp =info['Channel0'] + numpy.arange(len(data)).astype(numpy.float)
                     dataObject.x = [xhelp]
 
                 ylen = len(data)
                 if ylen == 1:
                     if len(xhelp) > 1:
-                        data = data[0] * Numeric.ones(len(xhelp)).astype(Numeric.Float)
+                        data = data[0] * numpy.ones(len(xhelp)).astype(numpy.float)
                         dataObject.y = [data]
                 elif len(xhelp) == 1:
-                    xhelp = xhelp[0] * Numeric.ones(ylen).astype(Numeric.Float)
+                    xhelp = xhelp[0] * numpy.ones(ylen).astype(numpy.float)
                     dataObject.x = [xhelp]
 
                 if not hasattr(dataObject, 'm'):
@@ -1963,14 +1963,15 @@ class McaWidget(qt.QWidget):
                         mdata = dataObject.m[0]
                         if len(mdata) == len(data):
                             mdata[data == 0] += 0.00000001
-                            index = Numeric.nonzero(mdata)
-                            if not len(index): continue
-                            xhelp = Numeric.take(xhelp, index)
-                            data = Numeric.take(data, index)
-                            mdata = Numeric.take(mdata, index)
+                            index = numpy.nonzero(mdata)[0]
+                            if not len(index):
+                                continue
+                            xhelp = numpy.take(xhelp, index)
+                            data = numpy.take(data, index)
+                            mdata = numpy.take(mdata, index)
                             data = data/mdata
                             dataObject.x = [xhelp * 1]
-                            dataObject.m = [Numeric.ones(len(data)).astype(Numeric.Float)]
+                            dataObject.m = [numpy.ones(len(data)).astype(numpy.float)]
                         elif (len(mdata) == 1) or (ylen == 1):
                             if mdata[0] == 0.0:
                                 continue
