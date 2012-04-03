@@ -24,9 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from numpy.oldnumeric import array, Float, ones, equal, dot, sqrt, diagonal,\
-    zeros, arange, take, identity, sin, arcsin, cos, concatenate, resize,\
-    innerproduct, exp, less, greater_equal
+from numpy.oldnumeric import *
 from numpy.oldnumeric.linear_algebra import inverse
 import time
 __author__ = "V.A. Sole <sole@esrf.fr>"
