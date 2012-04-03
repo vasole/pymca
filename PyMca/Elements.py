@@ -30,9 +30,9 @@
 #
 __revision__ = "$Revision: 2.00 $"
 LOGLOG = True
-import numpy.oldnumeric as Numeric
-import os
 import sys
+import os
+import numpy
 import re
 import weakref
 import types
@@ -461,8 +461,8 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
                                                    totals=False)
     elif totals:
         totalPhoto = []
-    logf = Numeric.log
-    expf = Numeric.exp
+    logf = numpy.log
+    expf = numpy.exp
     for key in shelllist:
         wi = 0.0
         totalPhotoi = 0.0
@@ -742,7 +742,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
     """
     if alphain  is None: alphain  = 90.0
     if fluorescencemode is None:fluorescencemode = False
-    sinAlphaIn   = Numeric.sin(alphain * (Numeric.pi)/180.)
+    sinAlphaIn   = numpy.sin(alphain * (numpy.pi)/180.)
     sinAlphaOut  = 1.0
     elementsList = None
     if cascade is None:cascade=False
@@ -812,7 +812,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
             for transition in transitions:
                 trans = (mutotal[i]/sinAlphaOut)/(mutotal[-1]/sinAlphaIn)
                 trans = notalone * \
-                        (1.0 - trans * Numeric.log(1.0 + 1.0/trans)) 
+                        (1.0 - trans * numpy.log(1.0 + 1.0/trans)) 
                 if thickness > 0.0:
                     #extremely thin case
                     trans0 = notalone * thickness * mutotal[-1]/sinAlphaIn
@@ -1001,29 +1001,29 @@ def _getAttFilteredElementDict(elementsList,
             #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)    
 
             #attenuators
-            coeffs = Numeric.zeros(len(energies), Numeric.Float)
+            coeffs = numpy.zeros(len(energies), numpy.float)
             for attenuator in attenuators:
                 formula   = attenuator[0]
                 thickness = attenuator[1] * attenuator[2]
-                coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs +=  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
             try:
-                trans = Numeric.exp(-coeffs)
+                trans = numpy.exp(-coeffs)
             except OverflowError:
                 #deal with underflows reported as overflows
-                trans = Numeric.zeros(len(energies), Numeric.Float)
+                trans = numpy.zeros(len(energies), numpy.float)
                 for i in range(len(energies)):
                     coef = coeffs[i]
                     if coef < 0.0:
                         raise ValueError("Positive exponent in attenuators transmission term")
                     else:
                         try:
-                            trans[i] = Numeric.exp(-coef)
+                            trans[i] = numpy.exp(-coef)
                         except OverflowError:
                             #if we are here we know it is not an overflow and trans[i] has the proper value
                             pass
 
             #funnyfilters (only make sense to have more than one if same opening and aligned)
-            coeffs = Numeric.zeros(len(energies), Numeric.Float)
+            coeffs = numpy.zeros(len(energies), numpy.float)
             funnyfactor = None
             for attenuator in funnyfilters:
                 formula   = attenuator[0]
@@ -1033,24 +1033,24 @@ def _getAttFilteredElementDict(elementsList,
                 else:
                     if abs(attenuator[3]-funnyfactor) > 0.0001:
                         raise ValueError("All funny type filters must have same openning fraction")
-                coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs +=  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
             if funnyfactor is None:
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             else:
                 try:
-                    transFunny = funnyfactor * Numeric.exp(-coeffs) +\
+                    transFunny = funnyfactor * numpy.exp(-coeffs) +\
                                  (1.0 - funnyfactor)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    transFunny = Numeric.zeros(len(energies), Numeric.Float)
+                    transFunny = numpy.zeros(len(energies), numpy.float)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
                             raise ValueError("Positive exponent in funnyfilters transmission term")
                         else:
                             try:
-                                transFunny[i] = Numeric.exp(-coef)
+                                transFunny[i] = numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1063,19 +1063,19 @@ def _getAttFilteredElementDict(elementsList,
             if detector is not None:
                 formula   = detector[0]
                 thickness = detector[1] * detector[2]
-                coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
                 try:
-                    trans = (1.0 - Numeric.exp(-coeffs))
+                    trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = Numeric.ones(len(energies), Numeric.Float)
+                    trans = numpy.ones(len(energies), numpy.float)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
                             raise ValueError("Positive exponent in detector transmission term")
                         else:
                             try:
-                                trans[i] = 1.0 - Numeric.exp(-coef)
+                                trans[i] = 1.0 - numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1113,10 +1113,10 @@ def getMultilayerFluorescence(multilayer0,
             multilayer=multilayer0 * 1
     if fulloutput  is None:fulloutput  = 0
     if (type(energyList) != type([])) and \
-       (type(energyList) != Numeric.ArrayType):
+       (type(energyList) != numpy.ndarray):
         energyList = [energyList]
         
-    energyList = Numeric.array(energyList)
+    energyList = numpy.array(energyList, dtype=numpy.float)
     if layerList is None:
         layerList = list(range(len(multilayer)))
     if type(layerList) != type([]):
@@ -1127,18 +1127,18 @@ def getMultilayerFluorescence(multilayer0,
 
     if weightList is not None:
         if (type(weightList) != type([])) and \
-           (type(weightList) != Numeric.ArrayType):
+           (type(weightList) != numpy.ndarray):
             weightList = [weightList]
-        weightList = Numeric.array(weightList)
+        weightList = numpy.array(weightList, dtype=numpy.float)
     else:
-        weightList = Numeric.ones(len(energyList)).astype(Numeric.Float)
+        weightList = numpy.ones(len(energyList)).astype(numpy.float)
     if flagList is not None:
         if (type(flagList) != type([])) and \
-           (type(flagList) != Numeric.ArrayType):
+           (type(flagList) != numpy.ndarray):
             flagList = [flagList]
-        flagList   = Numeric.array(flagList)
+        flagList   = numpy.array(flagList)
     else:
-        flagList = Numeric.ones(len(energyList)).astype(Numeric.Float)
+        flagList = numpy.ones(len(energyList)).astype(numpy.float)
             
     optimized = 0
     if beamfilters is None:beamfilters = []
@@ -1156,10 +1156,10 @@ def getMultilayerFluorescence(multilayer0,
     if alphain  is None: alphain =  45.0
     if alphaout is None: alphaout = 45.0
     if alphain >= 0:
-        sinAlphaIn  = Numeric.sin(alphain  * Numeric.pi / 180.)
+        sinAlphaIn  = numpy.sin(alphain  * numpy.pi / 180.)
     else:
-        sinAlphaIn  = Numeric.sin(-alphain  * Numeric.pi / 180.)
-    sinAlphaOut = Numeric.sin(alphaout * Numeric.pi / 180.)
+        sinAlphaIn  = numpy.sin(-alphain  * numpy.pi / 180.)
+    sinAlphaOut = numpy.sin(alphaout * numpy.pi / 180.)
     origattenuators = attenuators * 1
     newbeamfilters  = beamfilters * 1
     if alphain < 0:
@@ -1171,10 +1171,10 @@ def getMultilayerFluorescence(multilayer0,
         del newbeamfilters[-1]
 
     #normalize incoming beam
-    i0 = Numeric.nonzero(flagList>0)
-    weightList = Numeric.take(weightList, i0).astype(Numeric.Float)
-    energyList = Numeric.take(energyList, i0).astype(Numeric.Float)
-    flagList   = Numeric.take(flagList, i0).astype(Numeric.Float)
+    i0 = numpy.nonzero(flagList>0)[0]
+    weightList = numpy.take(weightList, i0).astype(numpy.float)
+    energyList = numpy.take(energyList, i0).astype(numpy.float)
+    flagList   = numpy.take(flagList, i0).astype(numpy.float)
     #normalize selected weights
     total = sum(weightList)
     if 0:
@@ -1182,9 +1182,9 @@ def getMultilayerFluorescence(multilayer0,
         for beamfilter in beamfilters:
             formula   = beamfilter[0]
             thickness = beamfilter[1] * beamfilter[2]
-            coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
+            coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
             try:
-                trans = Numeric.exp(-coeffs)
+                trans = numpy.exp(-coeffs)
             except OverflowError:
                 for coef in coeffs:
                     if coef < 0.0:
@@ -1314,25 +1314,25 @@ def getMultilayerFluorescence(multilayer0,
             else:
                 workfunnyfilters = None
 
-        newweightlist = Numeric.ones(weightList.shape,Numeric.Float)
+        newweightlist = numpy.ones(weightList.shape,numpy.float)
         if len(newbeamfilters):
-            coeffs = Numeric.zeros(len(energyList), Numeric.Float)
+            coeffs = numpy.zeros(len(energyList), numpy.float)
             for beamfilter in newbeamfilters:
                 formula   = beamfilter[0]
                 thickness = beamfilter[1] * beamfilter[2]
-                coeffs   +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
+                coeffs   +=  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
             try:
-                trans = Numeric.exp(-coeffs)
+                trans = numpy.exp(-coeffs)
             except OverflowError:
                 #deal with underflows reported as overflows
-                trans = Numeric.zeros(len(energyList), Numeric.Float)
+                trans = numpy.zeros(len(energyList), numpy.float)
                 for i in range(len(energyList)):
                     coef = coeffs[i]
                     if coef < 0.0:
                         raise ValueError("Positive exponent in attenuators transmission term")
                     else:
                         try:
-                            trans[i] = Numeric.exp(-coef)
+                            trans[i] = numpy.exp(-coef)
                         except OverflowError:
                             #if we are here we know it is not an overflow and trans[i] has the proper value
                             pass
@@ -1361,7 +1361,7 @@ def getMultilayerFluorescence(multilayer0,
                 else:
                     raise ValueError("Unknown Element shell %s" % justone[2])
                 bindingEnergy = Element[justone[1]]['binding'][shellIdent]
-                nrgi = Numeric.nonzero(energyList >= bindingEnergy)
+                nrgi = numpy.nonzero(energyList >= bindingEnergy)[0]
                 if len(nrgi) == 0:nrgi=[0]
                 justoneList = [justone]
                 matrixmutotalfluorescence = None
@@ -1420,19 +1420,19 @@ def getMultilayerFluorescence(multilayer0,
                 beamfilter    = multilayer[ilayer2-1] * 1
                 formula   = beamfilter[0]
                 thickness = beamfilter[1] * beamfilter[2]
-                coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
+                coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
                 try:
-                    trans = Numeric.exp(-coeffs)
+                    trans = numpy.exp(-coeffs)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = Numeric.zeros(len(energyList), Numeric.Float)
+                    trans = numpy.zeros(len(energyList), numpy.float)
                     for i in range(len(energyList)):
                         coef = coeffs[i]
                         if coef < 0.0:
                             raise ValueError("Positive exponent in attenuators transmission term")
                         else:
                             try:
-                                trans[i] = Numeric.exp(-coef)
+                                trans[i] = numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1451,7 +1451,7 @@ def getMultilayerFluorescence(multilayer0,
                                        fluorescencemode=True)
                     if not len(escape):continue
                     energyList2 = [x[0] for x in escape]
-                    weightList2 = Numeric.array([x[1] for x in escape]) * newweightlist2[iene]
+                    weightList2 = numpy.array([x[1] for x in escape]) * newweightlist2[iene]
                     #correct for attenuation in intermediate layers!!!
                     weightList3 = 1.0 * weightList2
                     for ilayer3 in range(len(multilayer)):
@@ -1461,19 +1461,19 @@ def getMultilayerFluorescence(multilayer0,
                         beamfilter = multilayer[ilayer3] * 1
                         formula   = beamfilter[0]
                         thickness = beamfilter[1] * beamfilter[2]
-                        coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList2)['total'])
+                        coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList2)['total'])
                         try:
-                            trans = Numeric.exp(-coeffs)
+                            trans = numpy.exp(-coeffs)
                         except OverflowError:
                             #deal with underflows reported as overflows
-                            trans = Numeric.zeros(len(energyList2), Numeric.Float)
+                            trans = numpy.zeros(len(energyList2), numpy.float)
                             for i in range(len(energyList2)):
                                 coef = coeffs[i]
                                 if coef < 0.0:
                                     raise ValueError("Positive exponent in attenuators transmission term")
                                 else:
                                     try:
-                                        trans[i] = Numeric.exp(-coef)
+                                        trans[i] = numpy.exp(-coef)
                                     except OverflowError:
                                         #if we are here we know it is not an overflow and trans[i] has the proper value
                                         pass
@@ -1583,8 +1583,8 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                                                 detector=None):
     if alphain  is None: alphain  = 45.0
     if alphaout is None: alphaout = 45.0
-    sinAlphaIn   = Numeric.sin(alphain * (Numeric.pi)/180.)
-    sinAlphaOut  = Numeric.sin(alphaout * (Numeric.pi)/180.)
+    sinAlphaIn   = numpy.sin(alphain * (numpy.pi)/180.)
+    sinAlphaOut  = numpy.sin(alphaout * (numpy.pi)/180.)
     if attenuators is None: attenuators = []
     if len(attenuators):
         if type(attenuators[0]) != type([]):
@@ -1643,19 +1643,19 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
             for attenuator in attenuators:
                 formula   = attenuator[0]
                 thickness = attenuator[1] * attenuator[2]
-                coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
                 try:
-                    trans = Numeric.exp(-coeffs)
+                    trans = numpy.exp(-coeffs)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = Numeric.zeros(len(energies), Numeric.Float)
+                    trans = numpy.zeros(len(energies), numpy.float)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
                             raise ValueError("Positive exponent in attenuators transmission term")
                         else:
                             try:
-                                trans[i] = Numeric.exp(-coef)
+                                trans[i] = numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1667,19 +1667,19 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
             if detector is not None:
                 formula   = detector[0]
                 thickness = detector[1] * detector[2]
-                coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
                 try:
-                    trans = (1.0 - Numeric.exp(-coeffs))
+                    trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = Numeric.ones(len(rates), Numeric.Float) 
+                    trans = numpy.ones(len(rates), numpy.float) 
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
                             raise ValueError("Positive exponent in attenuators transmission term")
                         else:
                             try:
-                                trans[i] = 1.0 - Numeric.exp(-coef)
+                                trans[i] = 1.0 - numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1700,7 +1700,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                 if thickness > 0.0:
                     if abs(sinAlphaIn) > 0.0:
                         try:
-                            expterm = Numeric.exp(-((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness)
+                            expterm = numpy.exp(-((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness)
                         except OverflowError:
                             if -((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness > 0.0:
                                 raise ValueError("Positive exponent in transmission term")
@@ -1748,17 +1748,17 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
     bottomExcitation = False
     if   (alphain < 0.0) and (alphaout < 0.0):
         #it is the same
-        sinAlphaIn   = Numeric.sin(-alphain  * (Numeric.pi)/180.)
-        sinAlphaOut  = Numeric.sin(-alphaout * (Numeric.pi)/180.)
+        sinAlphaIn   = numpy.sin(-alphain  * (numpy.pi)/180.)
+        sinAlphaOut  = numpy.sin(-alphaout * (numpy.pi)/180.)
     elif (alphain < 0.0) and (alphaout > 0.0):
         #bottom excitation
         #print "bottom excitation case"
         bottomExcitation = True
-        sinAlphaIn   = Numeric.sin(-alphain * (Numeric.pi)/180.)
-        sinAlphaOut  = Numeric.sin(alphaout * (Numeric.pi)/180.)
+        sinAlphaIn   = numpy.sin(-alphain * (numpy.pi)/180.)
+        sinAlphaOut  = numpy.sin(alphaout * (numpy.pi)/180.)
     else:
-        sinAlphaIn   = Numeric.sin(alphain * (Numeric.pi)/180.)
-        sinAlphaOut  = Numeric.sin(alphaout * (Numeric.pi)/180.)
+        sinAlphaIn   = numpy.sin(alphain * (numpy.pi)/180.)
+        sinAlphaOut  = numpy.sin(alphaout * (numpy.pi)/180.)
     if cascade is None:cascade=False
     if attenuators is None:
         attenuators = []
@@ -1859,14 +1859,14 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 
             #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)    
             #attenuators
-            coeffs = Numeric.zeros(len(energies), Numeric.Float)
+            coeffs = numpy.zeros(len(energies), numpy.float)
             for attenuator in attenuators:
                 formula   = attenuator[0]
                 thickness = attenuator[1] * attenuator[2]
-                coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs +=  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
 
             try:
-                trans = Numeric.exp(-coeffs)
+                trans = numpy.exp(-coeffs)
             except OverflowError:
                 for coef in coeffs:
                     if coef < 0.0:
@@ -1874,7 +1874,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 trans = 0.0 * coeffs
 
             #funnyfilters
-            coeffs = Numeric.zeros(len(energies), Numeric.Float)
+            coeffs = numpy.zeros(len(energies), numpy.float)
             funnyfactor = None
             for attenuator in funnyfilters:
                 formula   = attenuator[0]
@@ -1885,17 +1885,17 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                     if abs(attenuator[3] - funnyfactor) > 0.0001:
                         raise ValueError(\
                             "All funny type filters must have same openning fraction")
-                coeffs +=  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs +=  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
             if funnyfactor is None:
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
             else:
                 try:
-                    transFunny = funnyfactor * Numeric.exp(-coeffs) +\
+                    transFunny = funnyfactor * numpy.exp(-coeffs) +\
                                  (1.0 - funnyfactor)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    transFunny = Numeric.zeros(len(energies), Numeric.Float)
+                    transFunny = numpy.zeros(len(energies), numpy.float)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1903,7 +1903,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                 "Positive exponent in funnyfilters transmission term")
                         else:
                             try:
-                                transFunny[i] = Numeric.exp(-coef)
+                                transFunny[i] = numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1916,12 +1916,12 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             if detector is not None:
                 formula   = detector[0]
                 thickness = detector[1] * detector[2]
-                coeffs   =  thickness * Numeric.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
+                coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energies)['total'])
                 try:
-                    trans = (1.0 - Numeric.exp(-coeffs))
+                    trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = Numeric.ones(len(rates), Numeric.Float) 
+                    trans = numpy.ones(len(rates), numpy.float) 
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1929,7 +1929,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                 "Positive exponent in attenuators transmission term")
                         else:
                             try:
-                                trans[i] = 1.0 - Numeric.exp(-coef)
+                                trans[i] = 1.0 - numpy.exp(-coef)
                             except OverflowError:
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
@@ -1964,15 +1964,15 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                             trans = thickness/sinAlphaIn
                             trans = -outputDict[ele]['mass fraction'] *\
                                      muphoto[-1] * trans *\
-                                     Numeric.exp(-trans*mutotal[-1])
+                                     numpy.exp(-trans*mutotal[-1])
                         else:
                             trans = -outputDict[ele]['mass fraction'] *\
                                      muphoto[-1]/denominator
                             #correction term
                             if thickness > 0.0:
                                 try:
-                                    expterm = Numeric.exp(-(mutotal[-1]/sinAlphaIn) * thickness) -\
-                                              Numeric.exp(-(mutotal[i]/sinAlphaOut) * thickness)
+                                    expterm = numpy.exp(-(mutotal[-1]/sinAlphaIn) * thickness) -\
+                                              numpy.exp(-(mutotal[i]/sinAlphaOut) * thickness)
                                 except OverflowError:
                                     #print "overflow"
                                     if ((-(mutotal[-1]/sinAlphaIn) * thickness) > 0.0) or\
@@ -1993,7 +1993,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                         if thickness > 0.0:
                             if abs(sinAlphaIn) > 0.0:
                                 try:
-                                    expterm = Numeric.exp(-((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness)
+                                    expterm = numpy.exp(-((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness)
                                 except OverflowError:
                                     #print "overflow"
                                     if -((mutotal[-1]/sinAlphaIn) +(mutotal[i]/sinAlphaOut)) * thickness > 0.0:
@@ -2237,8 +2237,8 @@ def getmassattcoef(compound,energy=None):
                 photo = tmpDict['photo'][0]
                 pair  = 0.0
             else:
-                i0=max(Numeric.nonzero((xcom_data['energy'] <= ene)))
-                i1=min(Numeric.nonzero((xcom_data['energy'] >= ene)))
+                i0=max(numpy.nonzero(xcom_data['energy'] <= ene)[0])
+                i1=min(numpy.nonzero(xcom_data['energy'] >= ene)[0])
                 if (i1 == i0) or (i0>i1):
                     cohe=xcom_data['coherent'][i1]
                     comp=xcom_data['compton'][i1]
@@ -2248,7 +2248,7 @@ def getmassattcoef(compound,energy=None):
                     if LOGLOG:
                         A=xcom_data['energylog10'][i0]
                         B=xcom_data['energylog10'][i1]
-                        logene = Numeric.log10(ene)
+                        logene = numpy.log10(ene)
                         c2=(logene-A)/(B-A)
                         c1=(B-logene)/(B-A)
                     else:
@@ -2263,9 +2263,9 @@ def getmassattcoef(compound,energy=None):
                     photo=pow(10.0,c2*xcom_data['photolog10'][i1]+\
                                    c1*xcom_data['photolog10'][i0])
                     if xcom_data['pair'][i1] > 0.0:
-                        c2 = c2*Numeric.log10(xcom_data['pair'][i1])
+                        c2 = c2*numpy.log10(xcom_data['pair'][i1])
                         if xcom_data['pair'][i0] > 0.0:
-                            c1 = c1*Numeric.log10(xcom_data['pair'][i0])
+                            c1 = c1*numpy.log10(xcom_data['pair'][i0])
                             pair = pow(10.0,c1+c2)
                         else:
                             pair =0.0
@@ -2319,8 +2319,8 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
     if thickness is None: thickness = 1.0
     dict = getMaterialMassAttenuationCoefficients(compoundList0,
                                                  fractionList0, energy0)
-    energy = Numeric.array(dict['energy'],Numeric.Float)
-    mu     = Numeric.array(dict['total'],Numeric.Float) * density * thickness
+    energy = numpy.array(dict['energy'],numpy.float)
+    mu     = numpy.array(dict['total'],numpy.float) * density * thickness
     if energy0 is not None:
         if type(energy0) != type([]):
             listoutput = False    
@@ -2328,12 +2328,12 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
         dict['energy']   = energy.tolist()
         dict['density']  = density
         dict['thickness'] = thickness
-        dict['transmission'] = Numeric.exp(-mu).tolist()
+        dict['transmission'] = numpy.exp(-mu).tolist()
     else:
         dict['energy']   = energy
         dict['density']  = density
         dict['thickness'] = thickness
-        dict['transmission'] = Numeric.exp(-mu)    
+        dict['transmission'] = numpy.exp(-mu)    
     return dict
     
 def getMaterialMassFractions(compoundList0, fractionList0):
@@ -2353,7 +2353,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
         compoundList = [compoundList0]
     else:
         compoundList = compoundList0
-    if type(fractionList0) == Numeric.ArrayType:
+    if type(fractionList0) == numpy.ndarray:
         fractionList = fractionList0.tolist()
     elif type(fractionList0) != type([]):
         fractionList = [fractionList0]
@@ -2401,7 +2401,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
             energy = [energy0]
         elif type(energy0) == type(1):
             energy = [1.0 * energy0]
-        elif type(energy0) == Numeric.ArrayType:
+        elif type(energy0) == numpy.ndarray:
             energy = energy0.tolist()
 
     for compound in compoundList:
@@ -2475,8 +2475,8 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                 photo = tmpDict['photo'][0]
                 pair  = 0.0
             else:
-                i0=max(Numeric.nonzero((xcom_data['energy'] <= ene)))
-                i1=min(Numeric.nonzero((xcom_data['energy'] >= ene)))
+                i0=max(numpy.nonzero(xcom_data['energy'] <= ene)[0])
+                i1=min(numpy.nonzero(xcom_data['energy'] >= ene)[0])
                 if (i1 == i0) or (i0>i1):
                     cohe=xcom_data['coherent'][i1]
                     comp=xcom_data['compton'][i1]
@@ -2486,7 +2486,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                     if LOGLOG:
                         A=xcom_data['energylog10'][i0]
                         B=xcom_data['energylog10'][i1]
-                        logene = Numeric.log10(ene)
+                        logene = numpy.log10(ene)
                         c2=(logene-A)/(B-A)
                         c1=(B-logene)/(B-A)
                     else:
@@ -2501,9 +2501,9 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                     photo=pow(10.0,c2*xcom_data['photolog10'][i1]+\
                                    c1*xcom_data['photolog10'][i0])
                     if xcom_data['pair'][i1] > 0.0:
-                        c2 = c2*Numeric.log10(xcom_data['pair'][i1])
+                        c2 = c2*numpy.log10(xcom_data['pair'][i1])
                         if xcom_data['pair'][i0] > 0.0:
-                            c1 = c1*Numeric.log10(xcom_data['pair'][i0])
+                            c1 = c1*numpy.log10(xcom_data['pair'][i0])
                             pair = pow(10.0,c1+c2)
                         else:
                             pair =0.0
@@ -2658,21 +2658,21 @@ def getelementmassattcoef(ele,energy=None):
             for value in line:
                 Element[ele]['xcom']['energy'].append(float(value)*1000.)   
             line = f.readline()
-        Element[ele]['xcom']['energy']=Numeric.array(Element[ele]['xcom']['energy'])
+        Element[ele]['xcom']['energy']=numpy.array(Element[ele]['xcom']['energy'])
         line = f.readline()
         while (line.split('INCOHERENT')[0] == line):
             line = line.split()
             for value in line:
                 Element[ele]['xcom']['coherent'].append(float(value))
             line = f.readline()
-        Element[ele]['xcom']['coherent']=Numeric.array(Element[ele]['xcom']['coherent'])
+        Element[ele]['xcom']['coherent']=numpy.array(Element[ele]['xcom']['coherent'])
         line = f.readline()
         while (line.split('PHOTO')[0] == line):
             line = line.split()
             for value in line:
                 Element[ele]['xcom']['compton'].append(float(value))   
             line = f.readline()
-        Element[ele]['xcom']['compton']=Numeric.array(Element[ele]['xcom']['compton'])
+        Element[ele]['xcom']['compton']=numpy.array(Element[ele]['xcom']['compton'])
         line = f.readline()
         while (line.split('PAIR')[0] == line):
             line = line.split()
@@ -2695,25 +2695,25 @@ def getelementmassattcoef(ele,energy=None):
             line = f.readline()
         if sys.version >= '3.0':
             #next line gave problems under under windows
-            #just try Numeric.argsort([1,1,1,1,1]) under linux and windows to see
+            #just try numpy.argsort([1,1,1,1,1]) under linux and windows to see
             #what I mean
-            i1=Numeric.argsort(Element[ele]['xcom']['energy'])
+            i1=numpy.argsort(Element[ele]['xcom']['energy'])
         else:
             set = map(None,Element[ele]['xcom']['energy'],range(len(Element[ele]['xcom']['energy'])))
             set.sort()
-            i1=Numeric.array(map(lambda x:x[1],set))
-        Element[ele]['xcom']['energy']=Numeric.take(Element[ele]['xcom']['energy'],i1)
-        Element[ele]['xcom']['coherent']=Numeric.take(Element[ele]['xcom']['coherent'],i1)
-        Element[ele]['xcom']['compton']=Numeric.take(Element[ele]['xcom']['compton'],i1)
-        Element[ele]['xcom']['photo']=Numeric.take(Element[ele]['xcom']['photo'],i1)
-        Element[ele]['xcom']['pair']=Numeric.take(Element[ele]['xcom']['pair'],i1)
+            i1=numpy.array(map(lambda x:x[1],set))
+        Element[ele]['xcom']['energy']=numpy.take(Element[ele]['xcom']['energy'],i1)
+        Element[ele]['xcom']['coherent']=numpy.take(Element[ele]['xcom']['coherent'],i1)
+        Element[ele]['xcom']['compton']=numpy.take(Element[ele]['xcom']['compton'],i1)
+        Element[ele]['xcom']['photo']=numpy.take(Element[ele]['xcom']['photo'],i1)
+        Element[ele]['xcom']['pair']=numpy.take(Element[ele]['xcom']['pair'],i1)
         if Element[ele]['xcom']['coherent'][0] <= 0:
            Element[ele]['xcom']['coherent'][0] = Element[ele]['xcom']['coherent'][1] * 1.0
         try:
-            Element[ele]['xcom']['energylog10']=Numeric.log10(Element[ele]['xcom']['energy'])
-            Element[ele]['xcom']['coherentlog10']=Numeric.log10(Element[ele]['xcom']['coherent'])
-            Element[ele]['xcom']['comptonlog10']=Numeric.log10(Element[ele]['xcom']['compton'])
-            Element[ele]['xcom']['photolog10']=Numeric.log10(Element[ele]['xcom']['photo'])
+            Element[ele]['xcom']['energylog10']=numpy.log10(Element[ele]['xcom']['energy'])
+            Element[ele]['xcom']['coherentlog10']=numpy.log10(Element[ele]['xcom']['coherent'])
+            Element[ele]['xcom']['comptonlog10']=numpy.log10(Element[ele]['xcom']['compton'])
+            Element[ele]['xcom']['photolog10']=numpy.log10(Element[ele]['xcom']['photo'])
         except:
             raise ValueError("Problem calculating logaritm of %s.mat file data" % ele)
         for i in range(0,len(Element[ele]['xcom']['energy'])):
@@ -2745,8 +2745,8 @@ def getelementmassattcoef(ele,energy=None):
             photo = tmpDict['photo'][0]
             pair  = 0.0
         else:
-            i0=max(Numeric.nonzero((Element[ele]['xcom']['energy'] <= ene)))
-            i1=min(Numeric.nonzero((Element[ele]['xcom']['energy'] >= ene)))
+            i0=max(numpy.nonzero(Element[ele]['xcom']['energy'] <= ene)[0])
+            i1=min(numpy.nonzero(Element[ele]['xcom']['energy'] >= ene)[0])
             if i1 <= i0:
                 cohe=Element[ele]['xcom']['coherent'][i1]
                 comp=Element[ele]['xcom']['compton'][i1]
@@ -2756,7 +2756,7 @@ def getelementmassattcoef(ele,energy=None):
                 if LOGLOG:
                     A=Element[ele]['xcom']['energylog10'][i0]
                     B=Element[ele]['xcom']['energylog10'][i1]
-                    logene = Numeric.log10(ene)
+                    logene = numpy.log10(ene)
                     c2=(logene-A)/(B-A)
                     c1=(B-logene)/(B-A)
                 else:
@@ -2772,9 +2772,9 @@ def getelementmassattcoef(ele,energy=None):
                 photo=pow(10.0,c2*Element[ele]['xcom']['photolog10'][i1]+\
                                c1*Element[ele]['xcom']['photolog10'][i0])
                 if Element[ele]['xcom']['pair'][i1] > 0.0:
-                    c2 = c2*Numeric.log10(Element[ele]['xcom']['pair'][i1])
+                    c2 = c2*numpy.log10(Element[ele]['xcom']['pair'][i1])
                     if Element[ele]['xcom']['pair'][i0] > 0.0:
-                        c1 = c1*Numeric.log10(Element[ele]['xcom']['pair'][i0])
+                        c1 = c1*numpy.log10(Element[ele]['xcom']['pair'][i0])
                         pair = pow(10.0,c1+c2)
                     else:
                         pair =0.0
@@ -2803,21 +2803,21 @@ def getElementLShellRates(symbol,energy=None,photoweights = None):
         weights = [1.0, 1.0, 1.0] 
     z = getz(symbol)
     index = z-1
-    shellrates = Numeric.arange(len(LShell.ElementLShellTransitions)).astype(Numeric.Float)
+    shellrates = numpy.arange(len(LShell.ElementLShellTransitions)).astype(numpy.float)
     shellrates[0] = z
     shellrates[1] = 0
     lo = 0
     if 'Z' in LShell.ElementL1ShellTransitions[0:2]:lo=1
     if 'TOTAL' in LShell.ElementL1ShellTransitions[0:2]:lo=lo+1
     n1 = len(LShell.ElementL1ShellTransitions)
-    rates = Numeric.array(LShell.ElementL1ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(LShell.ElementL1ShellRates[index]).astype(numpy.float)
     shellrates[lo:n1] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[0]
     n2 = n1 + len(LShell.ElementL2ShellTransitions) - lo
-    rates = Numeric.array(LShell.ElementL2ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(LShell.ElementL2ShellRates[index]).astype(numpy.float)
     shellrates[n1:n2] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[1]
     n1 = n2
     n2 = n1 + len(LShell.ElementL3ShellTransitions) - lo
-    rates = Numeric.array(LShell.ElementL3ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(LShell.ElementL3ShellRates[index]).astype(numpy.float)
     shellrates[n1:n2] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[2]
     return shellrates
 
@@ -2836,26 +2836,26 @@ def getElementMShellRates(symbol,energy=None, photoweights = None):
         weights = [1.0, 1.0, 1.0, 1.0, 1.0] 
     z = getz(symbol)
     index = z-1
-    shellrates = Numeric.arange(len(MShell.ElementMShellTransitions)).astype(Numeric.Float)
+    shellrates = numpy.arange(len(MShell.ElementMShellTransitions)).astype(numpy.float)
     shellrates[0] = z
     shellrates[1] = 0
     n1 = len(MShell.ElementM1ShellTransitions)
-    rates = Numeric.array(MShell.ElementM1ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(MShell.ElementM1ShellRates[index]).astype(numpy.float)
     shellrates[2:n1] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[0]
     n2 = n1 + len(MShell.ElementM2ShellTransitions) - 2
-    rates = Numeric.array(MShell.ElementM2ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(MShell.ElementM2ShellRates[index]).astype(numpy.float)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[1]
     n1 = n2
     n2 = n1 + len(MShell.ElementM3ShellTransitions) - 2
-    rates = Numeric.array(MShell.ElementM3ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(MShell.ElementM3ShellRates[index]).astype(numpy.float)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[2]
     n1 = n2
     n2 = n1 + len(MShell.ElementM4ShellTransitions) - 2
-    rates = Numeric.array(MShell.ElementM4ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(MShell.ElementM4ShellRates[index]).astype(numpy.float)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0)))* weights[3]
     n1 = n2
     n2 = n1 + len(MShell.ElementM5ShellTransitions) - 2
-    rates = Numeric.array(MShell.ElementM5ShellRates[index]).astype(Numeric.Float)
+    rates = numpy.array(MShell.ElementM5ShellRates[index]).astype(numpy.float)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0)))* weights[4]
     return shellrates
 
