@@ -27,11 +27,12 @@
 
 __revision__ = "$Revision: 1.65 $"
 __author__="V.A. Sole - ESRF BLISS Group"
-import copy
+import sys
 import os
-import time
-import traceback
 import numpy
+import time
+import copy
+import traceback
 from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -2937,7 +2938,6 @@ def main():
 
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) >1:
         ffile = sys.argv[1]
     else:
