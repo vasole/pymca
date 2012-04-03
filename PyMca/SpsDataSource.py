@@ -84,10 +84,10 @@ class SpsDataSource(object):
                 info["col"]=col
                 if info["row"]!="ALL":
                     data= sps.getdatarow(self.SourceName,array,info["row"])
-                    if data is not None: data=Numeric.reshape(data,(1,data.shape[0]))
+                    if data is not None: data=numpy.reshape(data,(1,data.shape[0]))
                 elif info["col"]!="ALL":
                     data= sps.getdatacol(self.SourceName,array,info["col"])
-                    if data is not None: data=Numeric.reshape(data,(data.shape[0],1))
+                    if data is not None: data=numpy.reshape(data,(data.shape[0],1))
                 else: data=sps.getdata (self.SourceName,array)
                 """
                 data.data=sps.getdata (self.name,key)

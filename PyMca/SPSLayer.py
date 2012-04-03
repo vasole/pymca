@@ -29,7 +29,7 @@
     Data derived class to access spec shared memory
 """
 
-
+import numpy
 ################################################################################  
 #from Data import *
 from PyMca import spswrap as sps
@@ -181,19 +181,23 @@ class SPSLayer(object):
         if type(key_list) == type(" "): key_list=(key_list,)
         output =[]
         if self.SourceName in sps.getspeclist():
-            if key_list == "ALL": key_list=sps.getarraylist(self.SourceName)
+            if key_list == "ALL":
+                key_list = sps.getarraylist(self.SourceName)
             for array in key_list:
                 if array in sps.getarraylist(self.SourceName):
-                    info=self.__GetArrayInfo(array)
-                    info["row"]=row
-                    info["col"]=col
+                    info = self.__GetArrayInfo(array)
+                    info["row"] = row
+                    info["col"] = col
                     if info["row"]!="ALL":
-                        data= sps.getdatarow(self.SourceName,array,info["row"])
-                        if data is not None: data=Numeric.reshape(data,(1,data.shape[0]))
+                        data= sps.getdatarow(self.SourceName, array,info["row"])
+                        if data is not None:
+                            data=numpy.reshape(data,(1, data.shape[0]))
                     elif info["col"]!="ALL":
-                        data= sps.getdatacol(self.SourceName,array,info["col"])
-                        if data is not None: data=Numeric.reshape(data,(data.shape[0],1))
-                    else: data=sps.getdata (self.SourceName,array)
+                        data= sps.getdatacol(self.SourceName, array, info["col"])
+                        if data is not None:
+                            data=numpy.reshape(data, (data.shape[0], 1))
+                    else:
+                        data=sps.getdata (self.SourceName, array)
                     #self.AppendPage(info,data)
                     output.append([info,data])
         if len(output) == 1:

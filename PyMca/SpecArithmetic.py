@@ -30,7 +30,7 @@ This module implements several mathematical functions:
     - peak search
     - center of mass search
     - fwhm search
-WARNING : array are Numeric.array objects.
+WARNING : array are numpy.ndarray objects.
 """
 
 import numpy

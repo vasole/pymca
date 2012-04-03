@@ -394,7 +394,7 @@ class SimpleFit(object):
                     result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float), 
                                     self._fitConfiguration['fit']['stripfilterwidth'])
             else:
-                result=SpecfitFuns.SavitskyGolay(Numeric.array(y).astype(Numeric.Float), 
+                result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
         except:
             err = sys.exc_info()[1]

@@ -127,9 +127,6 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
             "lanczosPCA2 is only supported when using numpy arrays")
     r, c, N = data.shape
 
-    #data=Numeric.fromstring(data.tostring(),"f")
-
-
     npixels = r * c 		#number of pixels
     data.shape = r*c, N
 
@@ -188,16 +185,9 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
     newmat = numpy.zeros([ r*c, neig ], numpy.float64   )
     dumadd = numpy.zeros([ r*c, neig ], numpy.float64   )
 
-    #datadiff = Numeric.array(data)
-    #print " CHI = " , Numeric.sum(Numeric.sum(datadiff*datadiff))
-
     data=data.astype(tipo)
 
     numpy.add(data,mediadata,data)
-
-    # print " add " 
-    # ??????????????????//  Numeric.add(data, mediadata, data)
-    # print " add OK "
 
     for i in range(neig):
         newmat[:,i] = dotblas.dot(dataorig, (eve[i].vr).astype(dataorig.dtype))
