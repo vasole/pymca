@@ -25,11 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.21 $"
-__author__="V.A. Sole - ESRF BLISS Group"
+__author__="V.A. Sole - ESRF Software Group"
 
 import sys
-import numpy.oldnumeric as Numeric
-from numpy.oldnumeric.linear_algebra import inverse
+import numpy
+from numpy.linalg import inv as inverse
 import copy
 
 from PyMca import QtBlissGraph
@@ -87,7 +87,7 @@ class McaCalWidget(qt.QDialog):
         self.dict = {}
         if x is None:
             if len(y):
-                x = Numeric.arange(len(y)).astype(Numeric.Float)
+                x = numpy.arange(len(y)).astype(numpy.float)
         self.dict ['x']        = x
         self.dict ['y']        = y
         self.dict ['legend']   = legend
@@ -776,21 +776,21 @@ class McaCalWidget(qt.QDialog):
 
         # I should check if b^2 - 4ac is less than zero
         # and I have to choose the appropriate sign
-        B = 0.5 * (-b + Numeric.sqrt(b * b - 4.0 * a * c))/a
+        B = 0.5 * (-b + numpy.sqrt(b * b - 4.0 * a * c))/a
 
         #calculate A
         A = (e0 - Vret) * (ch0 - B) * (ch0 - B)
 
         #refine if more than three peaks
         if npeaks > 3:
-            parameters = Numeric.array([A, B, Vret])
-            x = Numeric.arange(npeaks * 1.0)
-            y = Numeric.arange(npeaks * 1.0)
+            parameters = numpy.array([A, B, Vret])
+            x = numpy.arange(npeaks * 1.0)
+            y = numpy.arange(npeaks * 1.0)
             for i in range(npeaks):
                 x[i] = usedpeaks[i][0]
                 y[i] = usedpeaks[i][1]
             try:
-                codes = Numeric.zeros((3,3), Numeric.Float)
+                codes = numpy.zeros((3,3), numpy.float)
                 if fixed:
                     codes[0,2] = Gefit.CFIXED
                 fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF, 
@@ -824,7 +824,7 @@ class McaCalWidget(qt.QDialog):
         if index == 1:
             return A * pow((x-B), -3)
         if index == 2:
-            return Numeric.ones(x.shape, Numeric.Float)
+            return numpy.ones(x.shape, numpy.float)
             
 
     def calculate(self, usedpeaks, order=1):
@@ -845,23 +845,24 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['C']]
         if (order > 1) and (len(usedpeaks) == 2):
             usedpeaks.append([0.0,0.0])            
-        usedarray = Numeric.array(usedpeaks).astype(Numeric.Float)
+        usedarray = numpy.array(usedpeaks).astype(numpy.float)
         energy = usedarray[:,1]
         channel= usedarray[:,0]
         
         if order < 2:
-            X = Numeric.array([Numeric.ones(len(channel)), channel])        
+            X = numpy.array([numpy.ones(len(channel)), channel])        
         else:
-            X= Numeric.array([Numeric.ones(len(channel)), channel, channel*channel])
-        TX = Numeric.transpose(X)
-        XTX= Numeric.dot(X, TX)
+            X= numpy.array([numpy.ones(len(channel)), channel, channel*channel])
+        TX = numpy.transpose(X)
+        XTX= numpy.dot(X, TX)
         INV= inverse(XTX)
-        PC = Numeric.dot(energy, TX)
-        C  = Numeric.dot(PC, INV)
+        PC = numpy.dot(energy, TX)
+        C  = numpy.dot(PC, INV)
 
         if order==1:
-                result= tuple(C.tolist())+(0.,)
-        else:   result= tuple(C.tolist())
+            result= tuple(C.tolist())+(0.,)
+        else:
+            result= tuple(C.tolist())
         return result
 
 
@@ -1759,7 +1760,7 @@ if __name__ == '__main__':
         scan=sf.select(scankey)
     nbmca=scan.nbmca()
     mcadata=scan.mca(1)
-    y=Numeric.array(mcadata).astype(Numeric.Float)
-    x=Numeric.arange(len(y)).astype(Numeric.Float)
+    y=numpy.array(mcadata).astype(numpy.float)
+    x=numpy.arange(len(y)).astype(numpy.float)
     test(x,y,inputfile)
 
