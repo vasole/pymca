@@ -337,15 +337,15 @@ def test():
     if 1:
         import specfile
         import Specfit
-        from numpy.oldnumeric import array,Float,concatenate,arange
+        import numpy
         sf=specfile.Specfile('02021201.dat')
         scan=sf.select('14')
         #sf=specfile.Specfile('02022101.dat')
         #scan=sf.select('11')
         mcadata=scan.mca(1)
-        y=array(mcadata)
-        #x=arange(len(y))
-        x=arange(len(y))*0.0200511-0.003186
+        y=numpy.array(mcadata)
+        #x=numpy.arange(len(y))
+        x=numpy.arange(len(y))*0.0200511-0.003186
         fit=Specfit.Specfit()
         fit.setdata(x=x,y=y)
         fit.importfun("SpecfitFunctions.py")
@@ -361,14 +361,14 @@ def test():
         if 0:
             # build a spectrum array
             f=open("spec.arsp",'r')
-            #read the spectrum datas
-            x=array([],Float)
-            y=array([],Float)
+            #read the spectrum data
+            x=numpy.array([], numpy.float)
+            y=numpy.array([], numpy.float)
             tmp=f.readline()[:-1]
             while (tmp != ""):
                 tmpSeq=tmp.split()
-                x=concatenate((x,[float(tmpSeq[0])]))
-                y=concatenate((y,[float(tmpSeq[1])]))
+                x=numpy.concatenate((x,[float(tmpSeq[0])]))
+                y=numpy.concatenate((y,[float(tmpSeq[1])]))
                 tmp=f.readline()[:-1]
             fit.setdata(x=x,y=y)
         if 1:
