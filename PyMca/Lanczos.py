@@ -38,8 +38,7 @@ sparsamodulo=0
 PARALLEL=0
 
 import numpy
-import numpy.oldnumeric as Numeric
-import numpy.oldnumeric.linear_algebra as LinearAlgebra
+import numpy.linalg
 try:
     import numpy.core._dotblas as dotblas
 except ImportError:
@@ -61,7 +60,7 @@ import random
 # object.set_value(n,v)
 # object.set_all_random(v)
 
-class LanczosNumericMatrix:
+class LanczosNumericMatrix(object):
     tipo=numpy.float64
     def __init__(self, mR):
         self.mR=mR
@@ -87,7 +86,7 @@ class LanczosNumericMatrix:
         return LanczosNumericVector
 
 
-class LanczosNumericVector:
+class LanczosNumericVector(object):
     tipo=numpy.float64
     def __init__(self, *dim):
         if( dim!=(0,) ):
@@ -494,12 +493,12 @@ class Lanczos:
 
 
     def allocaMemory(self):
-        self.alpha = Numeric.zeros(self.nsteps,Numeric.Float64)
-        self.beta  = Numeric.zeros(self.nsteps,Numeric.Float64)
-        self.omega = Numeric.zeros((self.nsteps+1,self.nsteps+1),Numeric.Float64)
-        self.evect = Numeric.zeros((self.nsteps,self.nsteps),Numeric.Float64)
-        self.eval  = Numeric.zeros((self.nsteps),Numeric.Float64)
-        self.oldalpha = Numeric.zeros((self.nsteps),Numeric.Float64)
+        self.alpha = numpy.zeros(self.nsteps,numpy.float64)
+        self.beta  = numpy.zeros(self.nsteps,numpy.float64)
+        self.omega = numpy.zeros((self.nsteps+1,self.nsteps+1),numpy.float64)
+        self.evect = numpy.zeros((self.nsteps,self.nsteps),numpy.float64)
+        self.eval  = numpy.zeros((self.nsteps),numpy.float64)
+        self.oldalpha = numpy.zeros((self.nsteps),numpy.float64)
         
         self.q=self.class4vect(self.nsteps+1,self.dim)
         if self.metrica is not None:
@@ -539,7 +538,7 @@ class Lanczos:
         
             nc = self.converged(m)
 
-            if k and not Numeric.sometrue(abs(self.beta[:k])>self.tol) :
+            if k and not numpy.sometrue(abs(self.beta[:k])>self.tol) :
                 break
 
             if (nc+2*nd) >= m:
@@ -616,7 +615,7 @@ class Lanczos:
         o = self.omega[0:m,0:m].copy() 
 
 
-        o = dotblas.dot(o,Numeric.transpose(self.evect))
+        o = dotblas.dot(o, numpy.transpose(self.evect))
 
 
         for i in range(k):
@@ -629,7 +628,7 @@ class Lanczos:
         self.omega[0:k,0:k]=o[0:k,0:k]
          
     def diago(self, k, m):
-        mat = Numeric.zeros([m,m],"d")
+        mat = numpy.zeros([m,m], numpy.float)
         mat.shape=[m*m]
         mat[0:m*m:m+1] = self.alpha
         mat[k*m+k+1:m*m:m+1] =self.beta[k:m-1]
@@ -637,7 +636,7 @@ class Lanczos:
         mat.shape=[m,m]
         mat[   k     ,0:k  ] = self.beta[:k]
         mat[   0:k, k ] = self.beta[:k]
-        self.eval,self.evect = LinearAlgebra.Heigenvectors(mat)
+        self.eval,self.evect = numpy.linalg.eigh(mat)
 
 
 def solveEigenSystem( S_base , nsearchedeigen, shift=None, metrica=None,  tol=1.0e-15): 
