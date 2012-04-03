@@ -2027,11 +2027,13 @@ class QtBlissGraph(qwt.QwtPlot):
                 #    return                    
             self.setCurveData(self.curves[key]['curve'], x, y)
             if 'baseline' in kw:
-                ybase = take(kw['baseline'],i1)
                 if logfilter:
+                    ybase = take(kw['baseline'],i1)
                     i1 = nonzero(ybase<=0)
                     for i in i1:
                         ybase[i] = ymin
+                else:
+                    ybase = kw['baseline']
                 if QWTVERSION4:
                     self.curve(self.curves[key]['curve']).setbaseline(ybase)
                 else:
