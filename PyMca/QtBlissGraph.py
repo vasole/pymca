@@ -26,6 +26,8 @@
 #############################################################################*/
 import copy
 import sys
+import time
+import numpy
 if sys.version > '3.0':
     unicode = str
 import string
@@ -72,9 +74,6 @@ except ImportError:
        from PyMca_Icons import IconDict
     except ImportError:
         pass
-import time
-import numpy
-from numpy.oldnumeric import *
 DEBUG = 0
 USE_SPS_LUT = 1
 if USE_SPS_LUT:
@@ -107,12 +106,12 @@ if not USE_SPS_LUT:
             return data
         high = high - low
         if cmin is None:
-            cmin = min(ravel(data))
+            cmin = min(numpy.ravel(data))
         if cmax is None:
-            cmax = max(ravel(data))
+            cmax = max(numpy.ravel(data))
         scale = high *1.0 / (cmax-cmin or 1)
-        bytedata = ((data*1.0-cmin)*scale + 0.4999).astype(UInt8)
-        return bytedata + asarray(low).astype(UInt8)
+        bytedata = ((data*1.0-cmin)*scale + 0.4999).astype(numpy.uint8)
+        return bytedata + numpy.asarray(low).astype(numpy.uint8)
 
     def fuzzypalette():
         #calculare bit mapdef
@@ -2008,15 +2007,15 @@ class QtBlissGraph(qwt.QwtPlot):
             self.curves[key]['curveinfo'] = copy.deepcopy(curveinfo)
         if y is not None:
             if len(y):
-                if isinstance(y, ArrayType):
+                if isinstance(y, numpy.ndarray):
                     if y.shape == (len(y), 1):
                        y.shape =  [len(y),] 
                 if x is None:
-                    x=arange(len(y))
+                    x=numpy.arange(len(y))
                 if logfilter:
-                    i1=nonzero(y>0.0)
-                    x= take(x,i1)
-                    y= take(y,i1)
+                    i1=numpy.nonzero(y>0.0)[0]
+                    x= numpy.take(x,i1)
+                    y= numpy.take(y,i1)
             if len(y):
                 ymin = min(y)
             else:
@@ -2028,8 +2027,8 @@ class QtBlissGraph(qwt.QwtPlot):
             self.setCurveData(self.curves[key]['curve'], x, y)
             if 'baseline' in kw:
                 if logfilter:
-                    ybase = take(kw['baseline'],i1)
-                    i1 = nonzero(ybase<=0)
+                    ybase = numpy.take(kw['baseline'],i1)
+                    i1 = numpy.nonzero(ybase<=0)[0]
                     for i in i1:
                         ybase[i] = ymin
                 else:
@@ -2043,8 +2042,8 @@ class QtBlissGraph(qwt.QwtPlot):
                 for region in kw['regions']:
                     region0 = min(region[0], region[1])
                     region1 = max(region[0], region[1])
-                    i1 = numpy.min(nonzero(x>=region0),0)
-                    i2 = numpy.max(numpy.ravel(nonzero(x<=region1)))
+                    i1 = numpy.min(numpy.nonzero(x>=region0)[0],0)
+                    i2 = numpy.max(numpy.ravel(numpy.nonzero(x<=region1)[0]))
                     regions.append([int(i1),int(i2)])
                 if QWTVERSION4:
                     self.curve(self.curves[key]['curve']).setregions(regions)
@@ -2276,7 +2275,7 @@ class QtBlissGraph(qwt.QwtPlot):
                     y.append(self.curve(index).y(i))
             else:
                 print("QtBlissGraph: get curve data to be implemented")
-            return legend,array(x).astype(Float),array(y).astype(Float)
+            return legend,numpy.array(x).astype(numpy.float),numpy.array(y).astype(numpy.float)
         else:
             return None,None,None
 
@@ -2950,7 +2949,7 @@ class Qwt5PlotImage(qwt.QwtPlotItem):
             if colormap is None:
                 (image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0), "BGRX", spslut.TEMP,
-                                          1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
+                                          1, (min(numpy.ravel(self.xyzs)),max(numpy.ravel(self.xyzs))))
             else:
                 (image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (colormap[6],3.0),
@@ -3124,7 +3123,7 @@ class QwtPlotImage(qwt.QwtPlotMappedItem):
             if colormap is None:
                 (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (spslut.LINEAR,3.0), "BGRX", spslut.TEMP,
-                                          1, (min(ravel(self.xyzs)),max(ravel(self.xyzs))))
+                                          1, (min(numpy.ravel(self.xyzs)),max(numpy.ravel(self.xyzs))))
             else:
                 (self.image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (colormap[6],3.0), "BGRX", COLORMAPLIST[colormap[0]],
@@ -3401,9 +3400,9 @@ def make0():
     nplots=10
     for i in range(nplots):
         # calculate 3 NumPy arrays
-        x = arange(0.0, 10.0, 0.1)
-        y = 10*sin(x+(i/10.0) * 3.14)
-        z = cos(x+(i/10.0) * 3.14)
+        x = numpy.arange(0.0, 10.0, 0.1)
+        y = 10*numpy.sin(x+(i/10.0) * 3.14)
+        z = numpy.cos(x+(i/10.0) * 3.14)
         #build a key
         a="%d" % i
         #plot the data
@@ -3413,7 +3412,7 @@ def make0():
     mY = demo.graph.inserty1marker(0.0, 0.0, 'y = 0')
     demo.graph.setmarkerfollowmouse(mY,True)
     # insert a vertical marker at x = 2 pi
-    mX = demo.graph.insertx1marker(2*pi, 0.0, label='x = 2 pi')
+    mX = demo.graph.insertx1marker(2 * numpy.pi, 0.0, label='x = 2 pi')
     demo.graph.setmarkerfollowmouse(mX,True)
     demo.graph.enablemarkermode()
     demo.graph.canvas().setMouseTracking(True)
@@ -3436,7 +3435,7 @@ def make0():
             print(demo.graph.curve(1).x(i))
     
     demo.graph.replot()
-    idata = arange(10000.)
+    idata = numpy.arange(10000.)
     idata.shape = [100,100]
     demo.graph.imagePlot(idata)
     demo.graph.replot()
