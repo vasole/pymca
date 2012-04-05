@@ -1,6 +1,7 @@
 """
 """
 from __future__ import with_statement
+import sys
 import os
 import posixpath
 import gc
@@ -605,7 +606,6 @@ class HDF5Widget(FileView):
 
 
 if __name__ == "__main__":
-    import sys
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) < 2:
         print("Usage:")
