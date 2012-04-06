@@ -107,7 +107,20 @@ class StackBase(object):
 
             fileList = glob.glob(os.path.join(directory, "*.py"))
             targetMethod = 'getStackPluginInstance'
-            for module in fileList:
+            # prevent unnecessary imports
+            moduleList = []
+            for fname in fileList:
+                # in Python 3, rb implies bytes and not strings
+                f = open(fname, 'r')
+                lines = f.readlines()
+                f.close()
+                f = None
+                for line in lines:
+                    if line.startswith("def"):
+                        if line.split(" ")[1].startswith(targetMethod):
+                            moduleList.append(fname)
+                            break
+            for module in moduleList:
                 try:
                     pluginName = os.path.basename(module)[:-3]
                     if directory == PLUGINS_DIR:

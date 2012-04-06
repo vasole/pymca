@@ -48,7 +48,7 @@ import sys
 import glob
 PLUGINS_DIR = None
 try:
-    if os.path.exists(os.path.join(os.path.dirname(__file__),"PyMcaPlugins")):
+    if os.path.exists(os.path.join(os.path.dirname(__file__), "PyMcaPlugins")):
         from PyMca import PyMcaPlugins
         PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
     else:
@@ -97,7 +97,20 @@ class Plot1DBase(object):
 
             fileList = glob.glob(os.path.join(directory, "*.py"))
             targetMethod = 'getPlugin1DInstance'
-            for module in fileList:
+            # prevent unnecessary imports
+            moduleList = []
+            for fname in fileList:
+                # in Python 3, rb implies bytes and not strings
+                f = open(fname, 'r')
+                lines = f.readlines()
+                f.close()
+                f = None
+                for line in lines:
+                    if line.startswith("def"):
+                        if line.split(" ")[1].startswith(targetMethod):
+                            moduleList.append(fname)
+                            break
+            for module in moduleList:
                 try:
                     pluginName = os.path.basename(module)[:-3]
                     if directory == PLUGINS_DIR:
@@ -217,6 +230,3 @@ class Plot1DBase(object):
     def getGraphYTitle(self):
         print("getGraphYTitle not implemented")
         return "Y"
-
-
-        
