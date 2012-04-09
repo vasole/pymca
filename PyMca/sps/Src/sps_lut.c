@@ -339,8 +339,8 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
  register ty val;\
  register mapty *Xptr;\
  register ty *ptr;\
- register mty Au = A;\
- register mty Bu = B;\
+ register mty Au = (mty) A;\
+ register mty Bu = (mty) B;\
  register mapty cmin = (mapty) mapmin, cmax = (mapty) mapmax;\
  int size;\
  vmin = (ty)Xmin;\
@@ -521,8 +521,8 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
  mapty *fb;\
  int lval;\
  register ty *ptr;\
- register mty Au = A;\
- register mty Bu = B;\
+ register mty Au = (mty) A;\
+ register mty Bu = (mty) B;\
  mapty cmin=mapmin, cmax=mapmax;\
  register mapty *Xend; \
  vmin = (ty)Xmin;\
