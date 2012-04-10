@@ -74,19 +74,19 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 
 PCA = False
 if QTVERSION > '4.0.0':
-    import PyQt4.Qwt5 as Qwt
+    from PyQt4 import Qwt5
     from PyMca import PCAWindow
     PCA = True
 else:
-    import Qwt5 as Qwt
+    import Qwt5
 
 NNMA = False
 if QTVERSION > '4.0.0':
-    import PyQt4.Qwt5 as Qwt
+    from PyQt4 import Qwt5
     from PyMca import NNMAWindow
     NNMA = True
 else:
-    import Qwt5 as Qwt
+    import Qwt5
 
 SNIP = False
 if QTVERSION > '4.0.0':
@@ -1279,7 +1279,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if mode:
             self.roiGraphWidget.graph.enableSelection(True)
             self.__ROIBrushMode  = False
-            self.roiGraphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.roiGraphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
             self.roiGraphWidget.graph.enableZoom(False)
             if QTVERSION < '4.0.0':
                 self.roiGraphWidget.selectionToolButton.setState(qt.QButton.On)

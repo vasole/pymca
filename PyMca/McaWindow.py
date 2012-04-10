@@ -31,13 +31,13 @@ import numpy
 import copy
 import time
 from PyMca import QtBlissGraph
+
 qt = QtBlissGraph.qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
 
-qwt = QtBlissGraph.qwt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import McaControlGUI
 from PyMca import ConfigDict

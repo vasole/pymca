@@ -33,7 +33,6 @@ PCA = False
 MDP = False
 if qt.qVersion() > '4.0.0':
     try:
-        import PyQt4.Qwt5 as Qwt
         from PyMca import PCAWindow
         PCA = True
         MDP = PCAWindow.MDP

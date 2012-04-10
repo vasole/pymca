@@ -1,6 +1,6 @@
 import sys
 import Object3DQt   as qt
-import PyQt4.Qwt5 as Qwt
+import PyQt4.Qwt5 as Qwt5
 
 DEBUG = 0
 
@@ -123,7 +123,7 @@ class Object3DColormap(qt.QGroupBox):
         self.sliderList = []
         delta =  (self.dataMax-self.dataMin) / 200.
         for i in [0, 1]:
-            slider = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+            slider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
             slider.setRange(self.dataMin, self.dataMax, delta)
             if i == 0:
                 slider.setValue(self.maxValue)

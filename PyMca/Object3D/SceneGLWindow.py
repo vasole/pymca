@@ -29,7 +29,7 @@ qt=SceneGLWidget.qt
 import Object3DIcons
 import Object3DFileDialogs
 #import Object3D
-import PyQt4.Qwt5 as Qwt
+import PyQt4.Qwt5 as Qwt5
 import SceneControl
 from HorizontalSpacer import HorizontalSpacer
 from VerticalSpacer import VerticalSpacer
@@ -80,12 +80,12 @@ class WheelAndSlider(qt.QWidget):
                 orientation = qt.Qt.Vertical
                 self.mainLayout = qt.QVBoxLayout(self)
             self.mainLayout.setMargin(0)
-            self.wheel  = Qwt.QwtWheel(self)
+            self.wheel  = Qwt5.QwtWheel(self)
             self.wheel.setOrientation(orientation)
-            self.slider = Qwt.QwtSlider(self,
-                                        orientation,
-                                        Qwt.QwtSlider.NoScale,
-                                        Qwt.QwtSlider.BgSlot)
+            self.slider = Qwt5.QwtSlider(self,
+                                         orientation,
+                                         Qwt5.QwtSlider.NoScale,
+                                         Qwt5.QwtSlider.BgSlot)
 
             if orientation == qt.Qt.Horizontal:
                 self.mainLayout.addWidget(self.wheel)
@@ -99,7 +99,7 @@ class WheelAndLineEdit(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.mainLayout = qt.QHBoxLayout(self)
             self.mainLayout.setMargin(0)
-            self.wheel  = Qwt.QwtWheel(self)
+            self.wheel  = Qwt5.QwtWheel(self)
             self.wheel.setOrientation(orientation)
             self.lineEdit = qt.QLineEdit(self)
             self.lineEdit.setText("")
@@ -118,7 +118,7 @@ class WheelAndSpacer(qt.QWidget):
                 self.mainLayout = qt.QVBoxLayout(self)
                 self.spacer = VerticalSpacer(self)
             self.mainLayout.setMargin(0)
-            self.wheel  = Qwt.QwtWheel(self)
+            self.wheel  = Qwt5.QwtWheel(self)
             self.wheel.setOrientation(orientation)
             if orientation == qt.Qt.Horizontal:
                 self.mainLayout.addWidget(self.wheel)
@@ -155,14 +155,14 @@ class SceneGLWindow(qt.QWidget):
         self.glWidget = SceneGLWidget.SceneGLWidget(self)
         self.scene = weakref.proxy(self.glWidget.scene)
         self.glWidget.setObjectSelectionMode(True)
-        self.wheelSlider12  = Qwt.QwtSlider(self,
-                                            qt.Qt.Vertical,
-                                            Qwt.QwtSlider.NoScale,
-                                            Qwt.QwtSlider.BgSlot)
+        self.wheelSlider12  = Qwt5.QwtSlider(self,
+                                             qt.Qt.Vertical,
+                                             Qwt5.QwtSlider.NoScale,
+                                             Qwt5.QwtSlider.BgSlot)
 
         #self.axesObject = BlissGLAxesObject.BlissGLAxesObject("3D Axes")
         #self.glWidget.addObject3D(self.axesObject)
-        #self.wheelSlider12.setScaleEngine(Qwt.QwtLog10ScaleEngine())
+        #self.wheelSlider12.setScaleEngine(Qwt5.QwtLog10ScaleEngine())
         #self.wheelSlider12.setThumbWidth(20)
         self.wheelSlider12.setRange(-10, 10, 0.05)
         #self.wheelSlider12.setScale(0.01, 100)

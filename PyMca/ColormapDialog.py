@@ -25,12 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import QtBlissGraph
-qt = QtBlissGraph.qt
-qwt = QtBlissGraph.qwt
-from PyMca import DoubleSlider
-QTVERSION = qt.qVersion()
 
+from PyMca import DoubleSlider
+from PyMca.QtBlissGraph import QtBlissGraph, Qwt5, qt
+
+QTVERSION = qt.qVersion()
 DEBUG = 0
 
 class MyQLineEdit(qt.QLineEdit):
@@ -246,13 +245,13 @@ class ColormapDialog(qt.QDialog):
 
 
         # Graph widget for color curve...
-        self.c = QtBlissGraph.QtBlissGraph(self)
+        self.c = QtBlissGraph(self)
         self.c.xlabel("Data Values")
         self.c.enableZoom(False)
         self.c.setCanvasBackground(qt.Qt.white)
         self.c.canvas().setMouseTracking(1)
 
-        self.c.enableAxis(qwt.QwtPlot.xBottom)
+        self.c.enableAxis(Qwt5.Qwt5Plot.xBottom)
         
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
@@ -260,7 +259,7 @@ class ColormapDialog(qt.QDialog):
 
         self.c.setx1axislimits(self.minmd, self.maxpd)
         self.c.sety1axislimits(-11.5, 11.5)
-        self.c.picker.setSelectionFlags(qwt.QwtPicker.NoSelection)
+        self.c.picker.setSelectionFlags(Qwt5.QwtPicker.NoSelection)
 
         x = [self.minmd, self.dataMin, self.dataMax, self.maxpd]
         y = [-10, -10, 10, 10 ]
@@ -274,9 +273,9 @@ class ColormapDialog(qt.QDialog):
             if i in [1,2]:
                 self.c.setmarkerfollowmouse(index, 1)
             marker.setLinePen(qt.QPen(qt.Qt.green, 2, qt.Qt.DashDotLine))
-            marker.setSymbol(qwt.QwtSymbol(qwt.QwtSymbol.Diamond, 
-                                           qt.QBrush(qt.Qt.blue),
-                                           qt.QPen(qt.Qt.red), qt.QSize(15,15)))
+            marker.setSymbol(Qwt5.QwtSymbol(Qwt5.QwtSymbol.Diamond,
+                                            qt.QBrush(qt.Qt.blue),
+                                            qt.QPen(qt.Qt.red), qt.QSize(15,15)))
             self.markers.append(index)
             
         #self.c.enablemarkermode()

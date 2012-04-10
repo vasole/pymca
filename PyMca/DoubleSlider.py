@@ -30,9 +30,9 @@ from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 if QTVERSION < '4.0.0':
-    import Qwt5 as qwt
+    import Qwt5
 else:
-    from PyQt4 import Qwt5 as qwt
+    from PyQt4 import Qwt5
 
 DEBUG = 0
     
@@ -47,7 +47,7 @@ class DoubleSlider(qt.QWidget):
         self.minSliderContainer = MySlider(self, orientation)
         self.minSlider = self.minSliderContainer.slider
         if scale:
-            self.minSlider.setScalePosition(qwt.QwtSlider.BottomScale)
+            self.minSlider.setScalePosition(Qwt5.QwtSlider.BottomScale)
         self.minSlider.setRange(0.0, 100.0, 0.01)
         self.minSlider.setValue(0.0)
         self.maxSliderContainer = MySlider(self, orientation)
@@ -109,7 +109,7 @@ class MySlider(qt.QWidget):
             layout = qt.QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
-        self.slider = qwt.QwtSlider(self, orientation)
+        self.slider = Qwt5.QwtSlider(self, orientation)
         self.label  = qt.QLabel("0", self)
         self.label.setAlignment(alignment)
         self.label.setFixedWidth(self.label.fontMetrics().width('100.99'))

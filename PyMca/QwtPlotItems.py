@@ -28,14 +28,14 @@ import sys
 from PyMca import PyMcaQt as qt
 if 'PyQt4.QtGui' in sys.modules:
     raise ImportError("QwtPlotItems only works under PyQt4")
-from PyQt4 import Qwt5 as qwt
+from PyQt4 import Qwt5
 
 DEBUG = 0
 
-class PolygonItem(qwt.QwtPlotItem):
+class PolygonItem(Qwt5.QwtPlotItem):
     def __init__(self, title="Unnamed PolygonItem"):
         self._title = title
-        qwt.QwtPlotItem.__init__(self, qwt.QwtText(self._title))
+        Qwt5.QwtPlotItem.__init__(self, Qwt5.QwtText(self._title))
         self._x = []
         self._y = []
 
@@ -50,7 +50,7 @@ class PolygonItem(qwt.QwtPlotItem):
         self._y = y
 
     def rtti(self):
-        return qwt.QwtPlotItem.Rtti_PlotUserItem
+        return Qwt5.QwtPlotItem.Rtti_PlotUserItem
 
     def draw(self, painter, xMap, yMap, canvasQRect):
         if DEBUG:
@@ -66,8 +66,8 @@ class PolygonItem(qwt.QwtPlotItem):
             xPixel = [0] * nPoints
             yPixel = [0] * nPoints
             for i in range(nPoints):
-                xPixel[i] = plot.transform(qwt.QwtPlot.xBottom, self._x[i])
-                yPixel[i] = plot.transform(qwt.QwtPlot.yLeft, self._y[i])
+                xPixel[i] = plot.transform(Qwt5.QwtPlot.xBottom, self._x[i])
+                yPixel[i] = plot.transform(Qwt5.QwtPlot.yLeft, self._y[i])
             line = qt.QLineF(xPixel[0], yPixel[0],\
                              xPixel[1], yPixel[1])         
             painter.drawLine(line)
@@ -77,8 +77,8 @@ class PolygonItem(qwt.QwtPlotItem):
         qPoints = [0] * nPoints
         for i in range(nPoints):
             qPoints[i] = qt.QPointF(\
-                        plot.transform(qwt.QwtPlot.xBottom, self._x[i]),
-                        plot.transform(qwt.QwtPlot.yLeft, self._y[i]))
+                        plot.transform(Qwt5.QwtPlot.xBottom, self._x[i]),
+                        plot.transform(Qwt5.QwtPlot.yLeft, self._y[i]))
         polygon = qt.QPolygonF(qPoints)
         oldBrush = painter.brush()
         brush = qt.QBrush(oldBrush)
@@ -90,7 +90,7 @@ class PolygonItem(qwt.QwtPlotItem):
 class QImageItem(PolygonItem):
     def __init__(self, title="Unnamed ImageItem"):
         self._title = title
-        PolygonItem.__init__(self, qwt.QwtText(self._title))
+        PolygonItem.__init__(self, Qwt5.QwtText(self._title))
         self._qImage = None
         self._imageDict = {}
         self.imageList = []
@@ -161,10 +161,10 @@ class QImageItem(PolygonItem):
         plot = self.plot()
         
         #get the destination area in pixel coordinates
-        x = plot.transform(qwt.QwtPlot.xBottom, xMin)
-        xmax = plot.transform(qwt.QwtPlot.xBottom, xMax)
-        y = plot.transform(qwt.QwtPlot.yLeft, yMin)
-        ymax = plot.transform(qwt.QwtPlot.yLeft, yMax)
+        x = plot.transform(Qwt5.QwtPlot.xBottom, xMin)
+        xmax = plot.transform(Qwt5.QwtPlot.xBottom, xMax)
+        y = plot.transform(Qwt5.QwtPlot.yLeft, yMin)
+        ymax = plot.transform(Qwt5.QwtPlot.yLeft, yMax)
         width = xmax - x
 
         #take care of y origin
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     from PyMca import QtBlissGraph
     app = qt.QApplication([])
     plot = QtBlissGraph.QtBlissGraph()
-    rescaler = qwt.QwtPlotRescaler(plot.canvas())
+    rescaler = Qwt5.QwtPlotRescaler(plot.canvas())
     rescaler.setEnabled(True)
    
     item = PolygonItem("Dummy")

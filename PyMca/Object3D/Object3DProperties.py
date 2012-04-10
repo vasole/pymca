@@ -1,5 +1,5 @@
 import Object3DQt   as qt
-import PyQt4.Qwt5 as Qwt
+import PyQt4.Qwt5 as Qwt5
 from VerticalSpacer import VerticalSpacer
 
 DEBUG = 0
@@ -106,7 +106,7 @@ class Object3DAspect(qt.QGroupBox):
         i = 0
         # point size
         label = qt.QLabel('Point size')
-        self.pointSize = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+        self.pointSize = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
         self.pointSize.setRange(1.0, 1.0, 1.0)
         self.pointSize.setValue(1.0)
         self.l.addWidget(label, i, 0)
@@ -118,7 +118,7 @@ class Object3DAspect(qt.QGroupBox):
         # line width
         i += 1
         label = qt.QLabel('Line width')
-        self.lineWidth = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+        self.lineWidth = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
         self.lineWidth.setRange(1.0, 1.0, 1.0)
         self.lineWidth.setValue(1.0)
         self.l.addWidget(label, i, 0)
@@ -130,7 +130,7 @@ class Object3DAspect(qt.QGroupBox):
         # transparency
         i += 1
         label = qt.QLabel('Transparency')
-        self.transparency = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+        self.transparency = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
         self.transparency.setRange(0.0, 1.0, 0.01)
         self.transparency.setValue(0.0)
         self.l.addWidget(label, i, 0)
@@ -263,7 +263,7 @@ class Object3DScale(qt.QGroupBox):
 
         # xScaling
         i = 0
-        self.xScaleSlider = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+        self.xScaleSlider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
         self.xScaleSlider.setScale(-10.0, 10.0, 0.001)
         self.xScaleSlider.setValue(1.0)
         self.l.addWidget(self.xScaleSlider, i, 2)
@@ -273,7 +273,7 @@ class Object3DScale(qt.QGroupBox):
 
         # yScaling
         i += 1
-        self.yScaleSlider = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+        self.yScaleSlider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
         self.yScaleSlider.setRange(-100.0, 100.0, 0.01)
         self.yScaleSlider.setValue(1.0)
         self.l.addWidget(self.yScaleSlider, i, 2)
@@ -283,7 +283,7 @@ class Object3DScale(qt.QGroupBox):
 
         # zScaling
         i += 1
-        self.zScaleSlider = Qwt.QwtSlider(self, qt.Qt.Horizontal)
+        self.zScaleSlider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
         self.zScaleSlider.setRange(-100.0, 100.0, 0.01)
         self.zScaleSlider.setValue(1.0)
         self.l.addWidget(self.zScaleSlider, i, 2)

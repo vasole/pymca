@@ -65,9 +65,9 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 if QTVERSION > '4.0.0':
-    import PyQt4.Qwt5 as Qwt
+    from PyQt4 import Qwt5
 else:
-    import Qwt5 as Qwt
+    import Qwt5
 
 try:
     from PyMca import QwtPlotItems
@@ -81,10 +81,10 @@ if QTVERSION < '4.6.0':
     USE_PICKER = True
 else:
     USE_PICKER = False
-class MyPicker(Qwt.QwtPlotPicker):
+class MyPicker(Qwt5.QwtPlotPicker):
     def __init__(self, *var):
-        Qwt.QwtPlotPicker.__init__(self, *var)
-        self.__text = Qwt.QwtText()
+        Qwt5.QwtPlotPicker.__init__(self, *var)
+        self.__text = Qwt5.QwtText()
         self.data = None
 
     if USE_PICKER:
@@ -212,11 +212,11 @@ class MaskImageWidget(qt.QWidget):
         self.connect(self.graphWidget.zoomResetToolButton,
                      qt.SIGNAL("clicked()"), 
                      self._zoomResetSignal)
-        self.graphWidget.picker = MyPicker(Qwt.QwtPlot.xBottom,
-                           Qwt.QwtPlot.yLeft,
-                           Qwt.QwtPicker.NoSelection,
-                           Qwt.QwtPlotPicker.CrossRubberBand,
-                           Qwt.QwtPicker.AlwaysOn,
+        self.graphWidget.picker = MyPicker(Qwt5.QwtPlot.xBottom,
+                           Qwt5.QwtPlot.yLeft,
+                           Qwt5.QwtPicker.NoSelection,
+                           Qwt5.QwtPlotPicker.CrossRubberBand,
+                           Qwt5.QwtPicker.AlwaysOn,
                            self.graphWidget.graph.canvas())
         self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
         self.graphWidget.graph.enableSelection(False)
@@ -898,7 +898,7 @@ class MaskImageWidget(qt.QWidget):
             print("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
-        self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
+        self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
         self.graphWidget.graph.enableSelection(False)
 
     def _setRectSelectionMode(self):
@@ -906,7 +906,7 @@ class MaskImageWidget(qt.QWidget):
             print("_setRectSelectionMode")
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+        self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
         self.graphWidget.graph.enableSelection(True)
         
     def _setBrushSelectionMode(self):
@@ -914,7 +914,7 @@ class MaskImageWidget(qt.QWidget):
             print("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
-        self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.ActiveOnly)
+        self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
         self.graphWidget.graph.enableSelection(False)
         
     def _setBrush(self):
@@ -985,7 +985,7 @@ class MaskImageWidget(qt.QWidget):
         if mode:
             self.graphWidget.graph.enableSelection(True)
             self.__brushMode  = False
-            self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOn)
+            self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
             if QTVERSION < '4.0.0':
                 self.graphWidget.selectionToolButton.setState(qt.QButton.On)
             else:
@@ -995,7 +995,7 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()            
         else:
-            self.graphWidget.picker.setTrackerMode(Qwt.QwtPicker.AlwaysOff)
+            self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOff)
             self.graphWidget.showProfileSelectionIcons()
             self.graphWidget.graph.enableZoom(True)
             if QTVERSION < '4.0.0':
