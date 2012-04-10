@@ -251,7 +251,7 @@ class ColormapDialog(qt.QDialog):
         self.c.setCanvasBackground(qt.Qt.white)
         self.c.canvas().setMouseTracking(1)
 
-        self.c.enableAxis(Qwt5.Qwt5Plot.xBottom)
+        self.c.enableAxis(Qwt5.QwtPlot.xBottom)
         
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
