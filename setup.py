@@ -102,7 +102,8 @@ if os.path.exists(os.path.join("PyMca", "Object3D")):
 sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]
-    script_files = []
+    script_files = glob.glob('PyMca/scripts/*')
+    script_files += glob.glob('scripts/*.bat')
     script_files.append('scripts/pymca_win_post_install.py')
 else:
     define_macros = []
