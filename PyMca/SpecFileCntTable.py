@@ -29,7 +29,7 @@ from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
-if 'Object3D' in sys.modules:
+if ('Object3D' in sys.modules) or ('PyMca.Object3D' in sys.modules):
     OBJECT3D = True
 else:
     OBJECT3D = False
