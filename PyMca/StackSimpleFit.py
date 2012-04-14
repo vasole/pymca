@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+import sys
 import os
 import numpy
 try:
@@ -47,12 +48,14 @@ class StackSimpleFit(object):
             fit = SimpleFitModule.SimpleFit()
         self.fit = fit    
         self.stack_y = None
-        #self.configuration = None
         self.outputDir = PyMcaDirs.outputDir
         self.outputFile = None
         self.fixedLenghtOutput = True
         self.progressCallback = None
         self.dataIndex = None
+        # optimization variables
+        self.mask = None
+        self.__ALWAYS_ESTIMATE = True
 
     def setProgressCallback(self, method):
         """
@@ -81,14 +84,13 @@ class StackSimpleFit(object):
             raise IOError("File %s does not exist" % fname)
         w = ConfigDict.ConfigDict()
         w.read(fname)
-        self.configuration = w
         self.setConfiguration(w)        
 
     def setConfiguration(self, ddict):
-        self.configuration = ddict
         self.fit.setConfiguration(ddict, try_import=True)
         
-    def processStack(self):
+    def processStack(self, mask=None):
+        self.mask = mask
         data_index = self.dataIndex
         if data_index == None:
             data_index = -1
@@ -134,9 +136,25 @@ class StackSimpleFit(object):
             self._nRows = outputDimension[0]
             self._nColumns = 1
 
-        #self.fit.setConfiguration(self.configuration, try_import=True)
-        self._parameters = None
+        if self.mask is not None:
+            if (self.mask.shape[0] != self._nRows) or\
+               (self.mask.shape[1] != self._nColumns):
+                raise ValueError("Invalid mask shape for stack")
+        else:
+            self.mask = numpy.ones((self._nRows, self._nColumns),
+                                   numpy.uint8)
 
+        # optimization
+        self.__ALWAYS_ESTIMATE = True
+        backgroundPolicy = self.fit._fitConfiguration['fit'] \
+                           ['background_estimation_policy']
+        functionPolicy = self.fit._fitConfiguration['fit'] \
+                         ['function_estimation_policy']
+        if "Estimate always" not in [functionPolicy, backgroundPolicy]:
+            self.__ALWAYS_ESTIMATE = False
+
+        # initialize control variables
+        self._parameters = None
         self._row = 0
         self._column = -1
         for i in range(nPixels):
@@ -146,10 +164,11 @@ class StackSimpleFit(object):
             else:
                 self._column += 1
             try:
-                self.processStackData(i)
+                if self.mask[self._row, self._column]:
+                    self.processStackData(i)
             except:
-                print("Error processing index = %d, row = %d column = %d" %\
-                          (i, self._row, self._column))
+                print("Error %s processing index = %d, row = %d column = %d" %\
+                        (sys.exc_info()[1], i, self._row, self._column))
                 if DEBUG:
                     raise
         self.onProcessStackFinished()
@@ -160,7 +179,14 @@ class StackSimpleFit(object):
         self.aboutToGetStackData(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
-        self.fit.estimate()
+        if self._parameters is None:
+            if DEBUG:
+                print("First estimation")
+            self.fit.estimate()
+        elif self.__ALWAYS_ESTIMATE:
+            if DEBUG:
+                print("Estimation due to settings")
+            self.fit.estimate()
         self.estimateFinished()
         values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
         self.fitFinished()
@@ -169,8 +195,6 @@ class StackSimpleFit(object):
         """
         Returns the fit parameters x, y, sigma, xmin, xmax
         """
-
-
         row    = self._row
         column = self._column
         data_index = self.stackDataIndexList[0]
@@ -319,11 +343,10 @@ class StackSimpleFit(object):
                                         result['sigma_values'][i]
                 i += 1
             self._images['chisq'][row, column] = result['chisq']
-
-        #specfile output always available
-        specfile = self.getOutputFileNames()['specfile']
-        
-        self._appendOneResultToSpecfile(specfile, result=fitOutput)
+        else:   
+            #specfile output always available
+            specfile = self.getOutputFileNames()['specfile']
+            self._appendOneResultToSpecfile(specfile, result=fitOutput)
 
     def _appendOneResultToSpecfile(self, filename, result=None):
         if result is None:

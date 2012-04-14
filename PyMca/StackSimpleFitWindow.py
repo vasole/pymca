@@ -117,7 +117,8 @@ class StackSimpleFitWindow(qt.QWidget):
         self.mainLayout.addWidget(self.fitSetupWindow)
         self.fitInstance = self.fitSetupWindow.fitModule
         self.stackFitInstance = StackSimpleFit.StackSimpleFit(fit=self.fitInstance)
-        
+        self.__mask = None
+
         self.importFunctions = self.fitSetupWindow.importFunctions
 
         self.outputParameters = OutputParameters(self)
@@ -131,18 +132,21 @@ class StackSimpleFitWindow(qt.QWidget):
 
         #progress handling
         self.stackFitInstance.setProgressCallback(self.progressBarUpdate)
-        self.thread = CalculationThread(self, calculation_method=self.stackFitInstance.processStack)
-        self.progressBar = qt.QProgressBar(self)
-        self.mainLayout.addWidget(self.progressBar)
+        self.thread = CalculationThread(self,
+                                        calculation_method=self.processStack)
+        #TODO Restore a working progress bar
+        #self.progressBar = qt.QProgressBar(self)
+        #self.mainLayout.addWidget(self.progressBar)
         self.connect(self.thread, qt.SIGNAL('finished()'), self.threadFinished)
 
     #def setSpectrum(self, x, y, sigma=None, xmin=None, xmax=None):
     def setSpectrum(self, *var, **kw):
         self.fitSetupWindow.setData(*var, **kw)
 
-    def setData(self, x, stack, data_index=-1):
+    def setData(self, x, stack, data_index=-1, mask=None):
         self.stack_x = x
         self.stack_y = stack
+        self.__mask = mask
         if hasattr(stack, "data") and\
            hasattr(stack, "info"):
             data = stack.data
@@ -151,6 +155,12 @@ class StackSimpleFitWindow(qt.QWidget):
         if data_index < 0:
             data_index = range(len(data.shape))[data_index]
         self.data_index = data_index
+
+    def setMask(self, mask):
+        self.__mask = mask
+
+    def processStack(self):
+        self.stackFitInstance.processStack(mask=self.__mask)
 
     def startStackFit(self):
         xmin = self.fitInstance._fitConfiguration['fit']['xmin']
@@ -199,9 +209,10 @@ class StackSimpleFitWindow(qt.QWidget):
         self.setEnabled(False)
 
     def progressBarUpdate(self, idx, total):
-        self.progressBar.show()
-        self.progressBar.setMaximum(total)
-        self.progressBar.setValue(idx)
+        #self.progressBar.show()
+        #self.progressBar.setMaximum(total)
+        #self.progressBar.setValue(idx)
+        print("Fit %d of %d" % (idx, total))
 
     def threadFinished(self):
         self.setEnabled(True)

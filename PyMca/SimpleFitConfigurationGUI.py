@@ -348,6 +348,10 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                         self.simpleFitInstance.importFunctions(fileName)
                         currentFiles.append(fileName)
                     except:
+                        if "library.zip" in fileName:
+                            if DEBUG:
+                                print("Assuming PyMca supplied fit function")
+                            continue
                         print("Cannot import file %s" % fileName)
                         print(sys.exc_info()[1])
             

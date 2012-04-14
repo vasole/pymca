@@ -173,6 +173,8 @@ class SimpleFit(object):
         return ddict
 
     def setData(self, x, y, sigma=None, xmin=None, xmax=None, **kw):
+        # make sure last fit result is not used
+        self._fitResult = None
         idx = numpy.argsort(x)
         if sigma is not None:
             self._sigma = sigma[idx]

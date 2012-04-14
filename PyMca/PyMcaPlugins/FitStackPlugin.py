@@ -61,6 +61,11 @@ class FitStackPlugin(StackPluginBase.StackPluginBase):
             return
         self.__updateOwnData()
 
+    def selectionMaskUpdated(self):
+        if self.simpleFitWindow is None:
+            return
+        self.simpleFitWindow.setMask(self.getStackSelectionMask())
+    
     #Methods implemented by the plugin
     def getMethods(self):
         return self.__methodKeys
@@ -91,7 +96,8 @@ class FitStackPlugin(StackPluginBase.StackPluginBase):
                                          xmax=xmax)
         self.simpleFitWindow.setData(x,
                                      self.getStackData(),
-                                     data_index=mcaIndex)
+                                     data_index=mcaIndex,
+                                     mask=self.getStackSelectionMask())
 
     def fitStack(self):
         if self.simpleFitWindow is None:
