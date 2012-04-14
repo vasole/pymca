@@ -40,23 +40,26 @@ if qt.qVersion() > '4.0.0':
         pass
 DEBUG = 0
 
+
 class SimpleThread(qt.QThread):
     def __init__(self, function, *var, **kw):
-        if kw is None:kw={}
+        if kw is None:
+            kw = {}
         qt.QThread.__init__(self)
         self._function = function
-        self._var      = var
-        self._kw       = kw
-        self._result   = None
-    
+        self._var = var
+        self._kw = kw
+        self._result = None
+
     def run(self):
         if DEBUG:
-            self._result = self._function(*self._var, **self._kw )
+            self._result = self._function(*self._var, **self._kw)
         else:
             try:
-                self._result = self._function(*self._var, **self._kw )
+                self._result = self._function(*self._var, **self._kw)
             except:
                 self._result = ("Exception",) + sys.exc_info()
+
 
 class PCADialog(qt.QDialog):
     def __init__(self, parent=None, rgbwidget=None, selection=False):
@@ -72,15 +75,14 @@ class PCADialog(qt.QDialog):
         self.mainLayout.addWidget(self.calculateButton)
         self.mainLayout.addWidget(self.showLastButton)
         self._data = None
-        
-        self.pcaWindow = PCAWindow.PCAWindow(parent = None,
-                                            rgbwidget=rgbwidget,
-                                            #selection=True,
-                                            selection=selection,
-                                            colormap=True,
-                                            #imageicons=True,
-                                            imageicons=selection,
-                                            standalonesave=True)
+        self.pcaWindow = PCAWindow.PCAWindow(parent=None,
+                                             rgbwidget=rgbwidget,
+                                             #selection=True,
+                                             selection=selection,
+                                             colormap=True,
+                                             #imageicons=True,
+                                             imageicons=selection,
+                                             standalonesave=True)
         self.pcaWindow.setDefaultColormap(0, logflag=False)
         self.pcaParametersDialog = PCAWindow.PCAParametersDialog(self)
         self.pcaParametersDialog.nPC.setMaximum(11)
@@ -99,9 +101,9 @@ class PCADialog(qt.QDialog):
                      self._showLastSlot)
 
     def sizeHint(self):
-        return qt.QSize(int(4*qt.QDialog.sizeHint(self).width()),
+        return qt.QSize(int(4 * qt.QDialog.sizeHint(self).width()),
                         qt.QDialog.sizeHint(self).height())
-        
+
     def _calculateSlot(self):
         if self._data is None:
             msg = qt.QMessageBox(self)
@@ -113,8 +115,11 @@ class PCADialog(qt.QDialog):
 
         if not self.pcaParametersDialogInitialized:
             self.pcaParametersDialog.nPC.setMaximum(self._spectrumLength)
-            self.pcaParametersDialog.nPC.setValue(min(10, self._spectrumLength))
-            ddict = {'options':self._binningOptions, 'binning': 1, 'method': 0}
+            self.pcaParametersDialog.nPC.setValue(
+                min(10, self._spectrumLength))
+            ddict = {'options': self._binningOptions,
+                     'binning': 1,
+                     'method': 0}
             self.pcaParametersDialog.setParameters(ddict)
             self.pcaParametersDialogInitialized = True
         ret = self.pcaParametersDialog.exec_()
@@ -155,7 +160,8 @@ class PCADialog(qt.QDialog):
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
                             if threadResult[0] == "Exception":
-                                raise Exception(threadResult[1],threadResult[2])
+                                raise Exception(threadResult[1],
+                                                threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                 except:
                     if isinstance(data, numpy.ndarray):
@@ -170,13 +176,13 @@ class PCADialog(qt.QDialog):
             if DEBUG:
                 print("PCA Elapsed = ", time.time() - t0)
             methodlabel = pcaParameters.get('methodlabel', "")
-            imagenames=None
-            vectornames=None
+            imagenames = None
+            vectornames = None
             if " ICA " in methodlabel:
                 nimages = images.shape[0]
                 imagenames = []
                 vectornames = []
-                itmp = nimages/2
+                itmp = int(nimages / 2)
                 for i in range(itmp):
                     imagenames.append("ICAimage %02d" % i)
                     vectornames.append("ICAvector %02d" % i)
@@ -190,7 +196,6 @@ class PCADialog(qt.QDialog):
                                       vectornames=vectornames)
             self.pcaWindow.show()
             self.pcaWindow.raise_()
-
 
     def _showLastSlot(self):
         self.pcaWindow.show()
@@ -219,20 +224,20 @@ class PCADialog(qt.QDialog):
                                           self._shape[1],
                                           self._spectrumLength), dtype)
                 for i in range(self._spectrumLength):
-                    self._data[:, :, i] = data[i][:,:]
+                    self._data[:, :, i] = data[i][:, :]
         else:
             self._shape = data.shape
             self._data = data
             self._spectrumLength = self._shape[spectrumindex]
-            self._binningOptions=[1]
+            self._binningOptions = [1]
             for number in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19]:
                 if (self._spectrumLength % number) == 0:
                     self._binningOptions.append(number)
         if self.pcaParametersDialog is not None:
             value = self.pcaParametersDialog.nPC.value()
             self.pcaParametersDialog.nPC.setMaximum(self._spectrumLength)
-            self.pcaParametersDialog.nPC.setValue(min(value, self._spectrumLength))
-
+            self.pcaParametersDialog.nPC.setValue(min(value,
+                                                      self._spectrumLength))
 
     def setSpectrum(self, x, y, legend=None):
         return self.pcaParametersDialog.setSpectrum(x, y, legend=legend)
@@ -244,12 +249,8 @@ class PCADialog(qt.QDialog):
 
     def _startThread(self, sthread, message):
         sthread.start()
-        if 0:
-            msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
-            msg.setModal(0)
-        else:
-            msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
-            msg.setModal(1)
+        msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
+        msg.setModal(1)
         msg.setWindowTitle("Please Wait")
         layout = qt.QHBoxLayout(msg)
         layout.setMargin(0)
@@ -265,13 +266,12 @@ class PCADialog(qt.QDialog):
         layout.addWidget(l3)
         msg.show()
         qt.qApp.processEvents()
-        t0 = time.time()
         i = 0
-        ticks = ['-','\\', "|", "/","-","\\",'|','/']
+        ticks = ['-', '\\', "|", "/", "-", "\\", '|', '/']
         while (sthread.isRunning()):
-            i = (i+1) % 8
+            i = (i + 1) % 8
             l1.setText(ticks[i])
-            l3.setText(" "+ticks[i])
+            l3.setText(" " + ticks[i])
             qt.qApp.processEvents()
             time.sleep(2)
         msg.close()
