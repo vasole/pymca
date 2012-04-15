@@ -24,169 +24,165 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyQt4 import QtCore, QtGui
+
+from PyMca import PyMcaQt as qt
 
 icon_first = ["22 22 2 1",
-". c None",
-"# c #000000",
-"......................",
-"......................",
-".#.................##.",
-".#...............####.",
-".#.............######.",
-".#...........########.",
-".#.........##########.",
-".#.......############.",
-".#.....##############.",
-".#...################.",
-".#.##################.",
-".#.##################.",
-".#...################.",
-".#.....##############.",
-".#.......############.",
-".#.........##########.",
-".#...........########.",
-".#.............######.",
-".#...............####.",
-".#.................##.",
-"......................",
-"......................"]
+              ". c None",
+              "# c #000000",
+              "......................",
+              "......................",
+              ".#.................##.",
+              ".#...............####.",
+              ".#.............######.",
+              ".#...........########.",
+              ".#.........##########.",
+              ".#.......############.",
+              ".#.....##############.",
+              ".#...################.",
+              ".#.##################.",
+              ".#.##################.",
+              ".#...################.",
+              ".#.....##############.",
+              ".#.......############.",
+              ".#.........##########.",
+              ".#...........########.",
+              ".#.............######.",
+              ".#...............####.",
+              ".#.................##.",
+              "......................",
+              "......................"]
 
 icon_previous = ["22 22 2 1",
-". c None",
-"# c #000000",
-"......................",
-"......................",
-"...................##.",
-".................####.",
-"...............######.",
-".............########.",
-"...........##########.",
-".........############.",
-".......##############.",
-".....################.",
-"...##################.",
-"...##################.",
-".....################.",
-".......##############.",
-".........############.",
-"...........##########.",
-".............########.",
-"...............######.",
-".................####.",
-"...................##.",
-"......................",
-"......................"]
+                 ". c None",
+                 "# c #000000",
+                 "......................",
+                 "......................",
+                 "...................##.",
+                 ".................####.",
+                 "...............######.",
+                 ".............########.",
+                 "...........##########.",
+                 ".........############.",
+                 ".......##############.",
+                 ".....################.",
+                 "...##################.",
+                 "...##################.",
+                 ".....################.",
+                 ".......##############.",
+                 ".........############.",
+                 "...........##########.",
+                 ".............########.",
+                 "...............######.",
+                 ".................####.",
+                 "...................##.",
+                 "......................",
+                 "......................"]
 
 icon_next = ["22 22 2 1",
-". c None",
-"# c #000000",
-"......................",
-"......................",
-".##...................",
-".####.................",
-".######...............",
-".########.............",
-".##########...........",
-".############.........",
-".##############.......",
-".################.....",
-".##################...",
-".##################...",
-".################.....",
-".##############.......",
-".############.........",
-".##########...........",
-".########.............",
-".######...............",
-".####.................",
-".##...................",
-"......................",
-"......................"]
+             ". c None",
+             "# c #000000",
+             "......................",
+             "......................",
+             ".##...................",
+             ".####.................",
+             ".######...............",
+             ".########.............",
+             ".##########...........",
+             ".############.........",
+             ".##############.......",
+             ".################.....",
+             ".##################...",
+             ".##################...",
+             ".################.....",
+             ".##############.......",
+             ".############.........",
+             ".##########...........",
+             ".########.............",
+             ".######...............",
+             ".####.................",
+             ".##...................",
+             "......................",
+             "......................"]
 
 icon_last = ["22 22 2 1",
-". c None",
-"# c #000000",
-"......................",
-"......................",
-".##.................#.",
-".####...............#.",
-".######.............#.",
-".########...........#.",
-".##########.........#.",
-".############.......#.",
-".##############.....#.",
-".################...#.",
-".##################.#.",
-".##################.#.",
-".################...#.",
-".##############.....#.",
-".############.......#.",
-".##########.........#.",
-".########...........#.",
-".######.............#.",
-".####...............#.",
-".##.................#.",
-"......................",
-"......................"]
+             ". c None",
+             "# c #000000",
+             "......................",
+             "......................",
+             ".##.................#.",
+             ".####...............#.",
+             ".######.............#.",
+             ".########...........#.",
+             ".##########.........#.",
+             ".############.......#.",
+             ".##############.....#.",
+             ".################...#.",
+             ".##################.#.",
+             ".##################.#.",
+             ".################...#.",
+             ".##############.....#.",
+             ".############.......#.",
+             ".##########.........#.",
+             ".########...........#.",
+             ".######.............#.",
+             ".####...............#.",
+             ".##.................#.",
+             "......................",
+             "......................"]
 
-class HorizontalSpacer(QtGui.QWidget):
-    def __init__(self, *args):
-        QtGui.QWidget.__init__(self, *args)
-        self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-                                          QtGui.QSizePolicy.Fixed))
 
-class FrameBrowser(QtGui.QWidget):
+class FrameBrowser(qt.QWidget):
     def __init__(self, parent=None, n=1):
-        QtGui.QWidget.__init__(self, parent)
-        self.mainLayout=QtGui.QHBoxLayout(self)
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout=qt.QHBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        self.firstButton = QtGui.QPushButton(self)
-        self.firstButton.setIcon(QtGui.QIcon(QtGui.QPixmap(icon_first)))
-        self.previousButton = QtGui.QPushButton(self)
-        self.previousButton.setIcon(QtGui.QIcon(QtGui.QPixmap(icon_previous)))
-        self.lineEdit = QtGui.QLineEdit(self)
+        self.firstButton = qt.QPushButton(self)
+        self.firstButton.setIcon(qt.QIcon(qt.QPixmap(icon_first)))
+        self.previousButton = qt.QPushButton(self)
+        self.previousButton.setIcon(qt.QIcon(qt.QPixmap(icon_previous)))
+        self.lineEdit = qt.QLineEdit(self)
         self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().width('%05d' % n))        
-        validator = QtGui.QIntValidator(1, n, self.lineEdit)
+        validator = qt.QIntValidator(1, n, self.lineEdit)
         self.lineEdit.setText("1")
         self._oldIndex = 0
         self.lineEdit.setValidator(validator)
-        self.label = QtGui.QLabel(self)
+        self.label = qt.QLabel(self)
         self.label.setText("of %d" % n)
-        self.nextButton = QtGui.QPushButton(self)
-        self.nextButton.setIcon(QtGui.QIcon(QtGui.QPixmap(icon_next)))
-        self.lastButton = QtGui.QPushButton(self)
-        self.lastButton.setIcon(QtGui.QIcon(QtGui.QPixmap(icon_last)))
+        self.nextButton = qt.QPushButton(self)
+        self.nextButton.setIcon(qt.QIcon(qt.QPixmap(icon_next)))
+        self.lastButton = qt.QPushButton(self)
+        self.lastButton.setIcon(qt.QIcon(qt.QPixmap(icon_last)))
 
-        self.mainLayout.addWidget(HorizontalSpacer(self))
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self))
         self.mainLayout.addWidget(self.firstButton)
         self.mainLayout.addWidget(self.previousButton)
         self.mainLayout.addWidget(self.lineEdit)
         self.mainLayout.addWidget(self.label)
         self.mainLayout.addWidget(self.nextButton)
         self.mainLayout.addWidget(self.lastButton)
-        self.mainLayout.addWidget(HorizontalSpacer(self))
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self))
 
         self.connect(self.firstButton,
-                     QtCore.SIGNAL("clicked()"),
+                     qt.SIGNAL("clicked()"),
                      self._firstClicked)
 
         self.connect(self.previousButton,
-                     QtCore.SIGNAL("clicked()"),
+                     qt.SIGNAL("clicked()"),
                      self._previousClicked)
 
         self.connect(self.nextButton,
-                     QtCore.SIGNAL("clicked()"),
+                     qt.SIGNAL("clicked()"),
                      self._nextClicked)
 
 
         self.connect(self.lastButton,
-                     QtCore.SIGNAL("clicked()"),
+                     qt.SIGNAL("clicked()"),
                      self._lastClicked)
 
         self.connect(self.lineEdit,
-                     QtCore.SIGNAL("editingFinished()"),
+                     qt.SIGNAL("editingFinished()"),
                      self._textChangedSlot)
 
     def _firstClicked(self):
@@ -220,7 +216,7 @@ class FrameBrowser(QtGui.QWidget):
         ddict["old"]   = self._oldIndex + 1
         self._oldIndex = newValue
         ddict["new"]   = self._oldIndex + 1
-        self.emit(QtCore.SIGNAL("indexChanged"), ddict)
+        self.emit(qt.SIGNAL("indexChanged"), ddict)
 
     def setRange(self, first, last):
         return self.setLimits(first, last)
@@ -251,23 +247,23 @@ class FrameBrowser(QtGui.QWidget):
         self.lineEdit.setText("%d" % value)
         self._textChangedSlot()
 
-class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
+class HorizontalSliderWithBrowser(qt.QAbstractSlider):
     def __init__(self, *var):
-        QtGui.QAbstractSlider.__init__(self, *var)
-        self.setOrientation(QtCore.Qt.Horizontal)
-        self.mainLayout = QtGui.QHBoxLayout(self)
+        qt.QAbstractSlider.__init__(self, *var)
+        self.setOrientation(qt.Qt.Horizontal)
+        self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        self._slider  = QtGui.QSlider(self)
-        self._slider.setOrientation(QtCore.Qt.Horizontal)
+        self._slider  = qt.QSlider(self)
+        self._slider.setOrientation(qt.Qt.Horizontal)
         self._browser = FrameBrowser(self)
         self.mainLayout.addWidget(self._slider)
         self.mainLayout.addWidget(self._browser)
         self.connect(self._slider,
-                     QtCore.SIGNAL("valueChanged(int)"),
+                     qt.SIGNAL("valueChanged(int)"),
                      self._sliderSlot)
         self.connect(self._browser,
-                     QtCore.SIGNAL("indexChanged"),
+                     qt.SIGNAL("indexChanged"),
                      self._browserSlot)
 
 
@@ -293,7 +289,7 @@ class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
 
     def _sliderSlot(self, value):
         self._browser.setValue(value)
-        self.emit(QtCore.SIGNAL("valueChanged(int)"), value)
+        self.emit(qt.SIGNAL("valueChanged(int)"), value)
 
     def _browserSlot(self, ddict):
         self._slider.setValue(ddict['new'])
@@ -306,12 +302,12 @@ class HorizontalSliderWithBrowser(QtGui.QAbstractSlider):
         return self._slider.value()
     
 def test1(args):
-    app=QtGui.QApplication(args)
+    app=qt.QApplication(args)
     w=HorizontalSliderWithBrowser()
     def slot(ddict):
         print(ddict)
-    QtCore.QObject.connect(w,
-                       QtCore.SIGNAL("valueChanged(int)"),
+    qt.QObject.connect(w,
+                       qt.SIGNAL("valueChanged(int)"),
                        slot)
     w.setRange(8, 20)
     w.show()
@@ -319,18 +315,18 @@ def test1(args):
 
 
 def test2(args):
-    app=QtGui.QApplication(args)
+    app=qt.QApplication(args)
     w=FrameBrowser()
     def slot(ddict):
         print(ddict)
-    QtCore.QObject.connect(w,
-                       QtCore.SIGNAL("indexChanged"),
+    qt.QObject.connect(w,
+                       qt.SIGNAL("indexChanged"),
                        slot)
     if len(args) > 1:
         w.setLimits(8, 20)
     w.show()
     app.exec_()
-                                    
+    
 
 if __name__=="__main__":
     import sys
