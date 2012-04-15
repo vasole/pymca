@@ -173,7 +173,7 @@ class ElementsInfo(qt.QWidget):
         hbox.layout.setMargin(0)
         hbox.layout.setSpacing(0)
         l.addWidget(hbox)
-        hbox.layout.addWidget(qt.horizontalSpacer(hbox))
+        hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
         l1=qt.QLabel(hbox)
         l1.setText('<b><nobr>Excitation Energy (keV)</nobr></b>')
         self.energy=MyQLineEdit(hbox)
@@ -181,7 +181,7 @@ class ElementsInfo(qt.QWidget):
         self.energy.setText("")
         hbox.layout.addWidget(l1)
         hbox.layout.addWidget(self.energy)
-        hbox.layout.addWidget(qt.horizontalSpacer(hbox))
+        hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
         self.connect(self.energy,qt.SIGNAL('returnPressed()'),self._energySlot)
         if qt.qVersion() < '4.0.0':
             self.connect(self.energy,qt.PYSIGNAL('focusOut'),self._energySlot)
