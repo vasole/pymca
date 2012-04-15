@@ -28,27 +28,32 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 import numpy.linalg
 try:
+    # make a explicit import to warn about missing optimized libraries
     import numpy.core._dotblas as dotblas
 except ImportError:
-    print("WARNING: Not using BLAS, PCA calculation will be slower")
+    print("WARNING: Not using BLAS/ATLAS, PCA calculation will be slower")
     dotblas = numpy
 
 DEBUG = 0
+
+
 def getCovarianceMatrix(stack,
                         index=-1,
                         binning=None,
-                        dtype='float64',
+                        dtype=numpy.float64,
                         force=True,
                         center=True,
                         weights=None,
                         spatial_mask=None):
-    #the 1D mask should correspond to the values, before or after sampling?
-    #it could be handled as weigths to be applied to the spectra. That would
-    #allow two uses, as mask and as weights, at the cost of a multiplication.
+    #the 1D mask should correspond to the values, before or after
+    #sampling?  it could be handled as weigths to be applied to the
+    #spectra. That would allow two uses, as mask and as weights, at
+    #the cost of a multiplication.
 
-    #the spatial_mask accounts for pixels to be considered. It allows to calculate the covariance matrix
-    #of a subset or to deal with non finite data (NaN, +inf, -inf, ...). The calling program should set
-    #the mask.
+    #the spatial_mask accounts for pixels to be considered. It allows
+    #to calculate the covariance matrix of a subset or to deal with
+    #non finite data (NaN, +inf, -inf, ...). The calling program
+    #should set the mask.
 
     #recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
@@ -56,9 +61,9 @@ def getCovarianceMatrix(stack,
         data = stack.data
     else:
         data = stack
-        
+
     oldShape = data.shape
-    if index not in [0, -1, len(oldShape)-1]:
+    if index not in [0, -1, len(oldShape) - 1]:
         data = None
         raise IndexError("1D index must be one of 0, -1 or %d" % len(oldShape))
 
@@ -73,16 +78,16 @@ def getCovarianceMatrix(stack,
         if i != actualIndex:
             nPixels *= oldShape[i]
 
-
     #remove inf or nan
     #image_data = data.sum(axis=actualIndex)
     #spatial_mask = numpy.isfinite(image_data)
     #
-    
-    #the starting number of channels or of images
-    N=oldShape[index]
 
-    #our binning (better said sampling) is spectral, in order not to affect the spatial resolution
+    #the starting number of channels or of images
+    N = oldShape[index]
+
+    # our binning (better said sampling) is spectral, in order not to
+    # affect the spatial resolution
     if binning is None:
         binning = 1
 
@@ -93,12 +98,12 @@ def getCovarianceMatrix(stack,
         cleanMask = spatial_mask[:].reshape(nPixels)
         usedPixels = cleanMask.sum()
         badMask = ~spatial_mask
-        badMask.shape =nPixels
+        badMask.shape = nPixels
     else:
         cleanMask = None
         usedPixels = nPixels
 
-    nChannels = int(N/binning)
+    nChannels = int(N / binning)
     cleanWeights = weights[::binning]
 
     #end of checking part
@@ -114,39 +119,42 @@ def getCovarianceMatrix(stack,
             cleanWeights.shape = -1, 1
             dataView = dataView[::binning] * cleanWeights
             if cleanMask is not None:
-                dataView[:,badMask] = 0
+                dataView[:, badMask] = 0
             sumSpectrum = dataView.sum(axis=1, dtype=numpy.float64)
             #and return the standard covariance matrix as a matrix product
-            covMatrix = dotblas.dot(dataView, dataView.T)/float(usedPixels-1)
+            covMatrix = dotblas.dot(dataView, dataView.T)\
+                / float(usedPixels - 1)
         else:
             #the last index
             dataView.shape = nPixels, -1
             cleanWeights.shape = 1, -1
-            dataView = dataView[:,::binning] * cleanWeights
+            dataView = dataView[:, ::binning] * cleanWeights
             if cleanMask is not None:
                 cleanMask.shape = -1
                 if 0:
                     for i in range(dataView.shape[-1]):
-                        dataView[badMask,i] = 0
+                        dataView[badMask, i] = 0
                 else:
                     dataView[badMask] = 0
             sumSpectrum = dataView.sum(axis=0, dtype=numpy.float64)
             #and return the standard covariance matrix as a matrix product
-            covMatrix = dotblas.dot(dataView.T, dataView)/ float(usedPixels-1)
+            covMatrix = dotblas.dot(dataView.T, dataView )\
+                / float(usedPixels - 1)
         if center:
-            averageMatrix = numpy.outer(sumSpectrum, sumSpectrum)/(usedPixels * (usedPixels - 1))
+            averageMatrix = numpy.outer(sumSpectrum, sumSpectrum)\
+                / (usedPixels * (usedPixels - 1))
             covMatrix -= averageMatrix
             averageMatrix = None
-        return covMatrix, sumSpectrum/usedPixels, usedPixels
+        return covMatrix, sumSpectrum / usedPixels, usedPixels
 
     #we are dealing with dynamically loaded data
     if DEBUG:
         print("DYNAMICALLY LOADED DATA")
     #create the needed storage space for the covariance matrix
     try:
-        covMatrix = numpy.zeros((eigenvectorLength, eigenvectorLength), numpy.float64)
+        covMatrix = numpy.zeros((eigenvectorLength, eigenvectorLength),
+                                dtype=dtype)
         sumSpectrum = numpy.zeros((eigenvectorLength,), numpy.float64)
-        nSpectra = nPixels
     except:
         #make sure no reference to the original input data is kept
         cleanWeights = None
@@ -166,7 +174,7 @@ def getCovarianceMatrix(stack,
         step = 0
         divider = 10
         while step < 1:
-            step = int(oldShape[index]/divider)
+            step = int(oldShape[index] / divider)
             divider -= 2
             if divider <= 0:
                 step = oldShape[index]
@@ -182,18 +190,18 @@ def getCovarianceMatrix(stack,
                 cleanMask.shape = -1
             i = 0
             while i < N:
-                iToRead = min(step, N - i)                
+                iToRead = min(step, N - i)
                 #get step images for the first chunk
-                chunk1[0:iToRead] = data[i:i+iToRead].reshape(iToRead, -1)
+                chunk1[0:iToRead] = data[i:i + iToRead].reshape(iToRead, -1)
                 if spatial_mask is not None:
-                    chunk1[0:iToRead,badMask] = 0
-                sumSpectrum[i:(i+iToRead)] = chunk1[0:iToRead].sum(axis=1)
+                    chunk1[0:iToRead, badMask] = 0
+                sumSpectrum[i:i + iToRead] = chunk1[0:iToRead].sum(axis=1)
                 if center:
-                    average = sumSpectrum[i:(i+iToRead)]/usedPixels
+                    average = sumSpectrum[i:i + iToRead] / usedPixels
                     average.shape = iToRead, 1
                     chunk1[0:iToRead] -= average
                 if spatial_mask is not None:
-                    chunk1[0:iToRead,badMask] = 0
+                    chunk1[0:iToRead, badMask] = 0
                 nImagesRead += iToRead
                 j = 0
                 while j <= i:
@@ -202,46 +210,47 @@ def getCovarianceMatrix(stack,
                         jToRead = iToRead
                         if 0:
                             for k in range(0, jToRead):
-                                chunk2[:,k] = chunk1[k]
+                                chunk2[:, k] = chunk1[k]
                         else:
-                            chunk2[:,0:jToRead] = chunk1[0:jToRead,:].T
+                            chunk2[:, 0:jToRead] = chunk1[0:jToRead, :].T
                     else:
                         #get step images for the second chunk
-                        jToRead = min(step, nChannels-j)
+                        jToRead = min(step, nChannels - j)
 
-                        if 0:
-                            for k in range(0, jToRead):
-                                chunk2[:,k] = data[(j+k):(j+k+1)].reshape(1,-1)
-                                if spatial_mask is not None:
-                                    chunk2[badMask[(j+k):(j+k+1),k]] = 0
-                        else:
-                            #equivalent without loop
-                            chunk2[:,0:jToRead]=data[j:(j+jToRead)].reshape(jToRead,-1).T
-                            if spatial_mask is not None:
-                                chunk2[badMask, 0:jToRead] = 0
+                        #with loop:
+                        #for k in range(0, jToRead):
+                        #    chunk2[:,k] = data[(j+k):(j+k+1)].reshape(1,-1)
+                        #    if spatial_mask is not None:
+                        #        chunk2[badMask[(j+k):(j+k+1),k]] = 0
+                        #equivalent without loop:
+                        chunk2[:, 0:jToRead] =\
+                            data[j:(j + jToRead)].reshape(jToRead, -1).T
+                        if spatial_mask is not None:
+                            chunk2[badMask, 0:jToRead] = 0
                         nImagesRead += jToRead
                         if center:
-                            average = chunk2[:,0:jToRead].sum(axis=0)/usedPixels
+                            average = \
+                                chunk2[:, 0:jToRead].sum(axis=0) / usedPixels
                             average.shape = 1, jToRead
-                            chunk2[:,0:jToRead] -= average
+                            chunk2[:, 0:jToRead] -= average
                             if spatial_mask is not None:
                                 chunk2[badMask, 0:jToRead] = 0
 
                     #dot product
                     if (iToRead != step) or (jToRead != step):
-                        covMatrix[i:(i+iToRead), j:(j+jToRead)] =\
-                                         dotblas.dot(chunk1[:iToRead,:nPixels],
-                                                     chunk2[:nPixels,:jToRead])
+                        covMatrix[i: (i + iToRead), j: (j + jToRead)] =\
+                                        dotblas.dot(chunk1[:iToRead, :nPixels],
+                                                    chunk2[:nPixels, :jToRead])
                     else:
-                        covMatrix[i:(i+iToRead), j:(j+jToRead)] =\
-                                                 dotblas.dot(chunk1, chunk2)
+                        covMatrix[i: (i + iToRead), j: (j + jToRead)] =\
+                                        dotblas.dot(chunk1, chunk2)
 
                     if i != j:
-                        covMatrix[j:(j+jToRead), i:(i+iToRead)] =\
-                                    covMatrix[i:(i+iToRead), j:(j+jToRead)].T
+                        covMatrix[j: (j + jToRead), i: (i + iToRead)] =\
+                                covMatrix[i: (i + iToRead), j: (j + jToRead)].T
 
                     #increment j
-                    j+= jToRead                
+                    j += jToRead
                 i += iToRead
             chunk1 = None
             chunk2 = None
@@ -251,19 +260,23 @@ def getCovarianceMatrix(stack,
             chunk1 = numpy.zeros((step, nPixels), numpy.float64)
             chunk2 = numpy.zeros((nPixels, step), numpy.float64)
             #one by one reading till we fill the chunks
-            imagesToRead = numpy.arange(0,oldShape[index],binning)
-            i = int(imagesToRead[weights>0][0])
+            imagesToRead = numpy.arange(0, oldShape[index], binning)
+            i = int(imagesToRead[weights > 0][0])
             spectrumIndex = 0
             nImagesRead = 0
             while i < N:
                 #fill chunk1
                 jj = 0
-                for iToRead in range(0, int(min(step*binning, N - i)),binning):
-                    chunk1[jj] = data[i+iToRead].reshape(1,-1) * weights[i+iToRead]
+                for iToRead in range(0, int(min(step * binning, N - i)),
+                                     binning):
+                    chunk1[jj] = data[i + iToRead].reshape(1, -1) * \
+                                 weights[i + iToRead]
                     jj += 1
-                sumSpectrum[spectrumIndex:spectrumIndex+jj] = chunk1[0:jj].sum(axis=1)
+                sumSpectrum[spectrumIndex:(spectrumIndex + jj)] = \
+                                                    chunk1[0:jj].sum(axis=1)
                 if center:
-                    average = sumSpectrum[spectrumIndex:spectrumIndex+jj]/nPixels
+                    average = \
+                        sumSpectrum[spectrumIndex:(spectrumIndex + jj)] / nPixels
                     average.shape = jj, 1
                     chunk1[0:jj] -= average
                 nImagesRead += jj
@@ -273,42 +286,46 @@ def getCovarianceMatrix(stack,
                     #get step images for the second chunk
                     if j == i:
                         jToRead = iToRead
-                        chunk2[:,0:jToRead] = chunk1[0:jToRead,:].T
+                        chunk2[:, 0:jToRead] = chunk1[0:jToRead, :].T
                     else:
                         #get step images for the second chunk
                         jj = 0
-                        for jToRead in range(0, int(min(step*binning, N - j)),binning):
-                            chunk2[:,jj] = data[j+jToRead].reshape(1,-1) * weights[j+jToRead]
+                        for jToRead in range(0,
+                                             int(min(step * binning, N - j)),
+                                             binning):
+                            chunk2[:, jj] =\
+                                data[j + jToRead].reshape(1, -1)\
+                                * weights[j + jToRead]
                             jj += 1
                         nImagesRead += jj
                         if center:
-                            average = chunk2[:,0:jj].sum(axis=0)/nPixels
+                            average = chunk2[:, 0:jj].sum(axis=0) / nPixels
                             average.shape = 1, jj
                             chunk2 -= average
                         jToRead = jj
                     #dot product
                     if (iToRead != step) or (jToRead != step):
-                        covMatrix[i:(i+iToRead), j:(j+jToRead)] =\
-                                         dotblas.dot(chunk1[:iToRead,:nPixels],
-                                                     chunk2[:nPixels,:jToRead])
+                        covMatrix[i:(i + iToRead), j:(j + jToRead)] =\
+                                dotblas.dot(chunk1[:iToRead, :nPixels],
+                                            chunk2[:nPixels, :jToRead])
                     else:
-                        covMatrix[i:(i+iToRead), j:(j+jToRead)] =\
-                                                 dotblas.dot(chunk1, chunk2)
+                        covMatrix[i:(i + iToRead), j:(j + jToRead)] =\
+                                dotblas.dot(chunk1, chunk2)
 
                     if i != j:
-                        covMatrix[j:(j+jToRead), i:(i+iToRead)] =\
-                                    covMatrix[i:(i+iToRead), j:(j+jToRead)].T
+                        covMatrix[j:(j + jToRead), i:(i + iToRead)] =\
+                                covMatrix[i:(i + iToRead), j:(j + jToRead)].T
 
                     #increment j
-                    j+= jToRead * step                
+                    j += jToRead * step
                 i += iToRead * step
             chunk1 = None
             chunk2 = None
         else:
             raise ValueError("Unhandled case")
-            
-        #should one divide by N or by N-1 ??
-        #if we use images, we assume the observables are the images, not the spectra!!!
+
+        #should one divide by N or by N-1 ??  if we use images, we
+        #assume the observables are the images, not the spectra!!!
         #so, covMatrix /= nChannels is wrong and one has to use:
         covMatrix /= usedPixels
     else:
@@ -321,8 +338,7 @@ def getCovarianceMatrix(stack,
         step = 0
         divider = 10
         while step < 1:
-            step = int(nPixels/divider)
-            #divider = int(divider/2)
+            step = int(nPixels / divider)
             divider -= 1
             if divider <= 0:
                 step = nPixels
@@ -338,10 +354,10 @@ def getCovarianceMatrix(stack,
             tmpData = numpy.zeros((step, nChannels), numpy.float64)
             k = 0
             while k < nPixels:
-                kToRead = min(step, nPixels-k)
-                tmpData[0:kToRead] = data[k:k+kToRead,::binning]
+                kToRead = min(step, nPixels - k)
+                tmpData[0:kToRead] = data[k: k + kToRead, ::binning]
                 if cleanMask is not None:
-                    tmpData[badMask[k:k+kToRead]] = 0
+                    tmpData[badMask[k: k + kToRead]] = 0
                 a = tmpData[0:kToRead] * cleanWeights
                 sumSpectrum += a.sum(axis=0)
                 covMatrix += dotblas.dot(a.T, a)
@@ -357,10 +373,11 @@ def getCovarianceMatrix(stack,
                 for i in range(oldShape[0]):
                     k = 0
                     while k < oldShape[1]:
-                        kToRead = min(step, oldShape[1]-k)
-                        tmpData[0:kToRead] = data[i,k:k+kToRead,::binning] * cleanWeights
+                        kToRead = min(step, oldShape[1] - k)
+                        tmpData[0:kToRead] = data[i, k:k + kToRead, ::binning]\
+                                             * cleanWeights
                         if cleanMask is not None:
-                            tmpData[0:kToRead][badMask[i,k:k+kToRead]] = 0
+                            tmpData[0:kToRead][badMask[i, k: k + kToRead]] = 0
                         a = tmpData[0:kToRead]
                         sumSpectrum += a.sum(axis=0)
                         covMatrix += dotblas.dot(a.T, a)
@@ -371,16 +388,17 @@ def getCovarianceMatrix(stack,
                 #almost identical to the previous case
                 tmpData = numpy.zeros((step, nChannels), numpy.float64)
                 if cleanMask is not None:
-                    badMask.shape = data.shape[0], data.shape[1]                                
+                    badMask.shape = data.shape[0], data.shape[1]
                 for i in range(oldShape[1]):
                     k = 0
                     while k < oldShape[0]:
-                        kToRead = min(step, oldShape[0]-k)
-                        tmpData[0:kToRead] = data[k:k+kToRead,i,::binning] * cleanWeights
+                        kToRead = min(step, oldShape[0] - k)
+                        tmpData[0:kToRead] = data[k: k + kToRead, i, ::binning]\
+                                             * cleanWeights
                         if cleanMask is not None:
-                            tmpData[0:kToRead][badMask[k:k+kToRead,i]] = 0
+                            tmpData[0:kToRead][badMask[k: k + kToRead, i]] = 0
                         a = tmpData[0:kToRead]
-                        sumSpectrum +=  a.sum(axis=0)
+                        sumSpectrum += a.sum(axis=0)
                         covMatrix += dotblas.dot(a.T, a)
                         a = None
                         k += kToRead
@@ -395,11 +413,12 @@ def getCovarianceMatrix(stack,
                     k = 0
                     while k < oldShape[1]:
                         kToRead = min(step, oldShape[1] - k)
-                        tmpData[0:kToRead] = data[i,k:k+kToRead,::binning] * cleanWeights
+                        tmpData[0:kToRead] = data[i, k: k + kToRead, ::binning]\
+                                             * cleanWeights
                         if cleanMask is not None:
-                            tmpData[0:kToRead][badMask[i,k:k+kToRead]] = 0
+                            tmpData[0:kToRead][badMask[i, k: k + kToRead]] = 0
                         a = tmpData[0:kToRead]
-                        sumSpectrum +=  a.sum(axis=0)
+                        sumSpectrum += a.sum(axis=0)
                         covMatrix += dotblas.dot(a.T, a)
                         a = None
                         k += kToRead
@@ -415,7 +434,7 @@ def getCovarianceMatrix(stack,
                     deltaRow = 10
                 else:
                     #take pieces of one tenth
-                    deltaRow = int(oldShape[0]/10)
+                    deltaRow = int(oldShape[0] / 10)
                 deltaCol = oldShape[1]
                 tmpData = numpy.zeros((deltaRow, deltaCol, nChannels),
                                       numpy.float64)
@@ -425,28 +444,29 @@ def getCovarianceMatrix(stack,
                 while i < oldShape[0]:
                     iToRead = min(deltaRow, oldShape[0] - i)
                     kToRead = iToRead * oldShape[1]
-                    tmpData[:iToRead] = data[i:(i+iToRead),:,::binning]
+                    tmpData[:iToRead] = data[i:(i + iToRead), :, ::binning]
                     if cleanMask is not None:
-                        tmpData[0:kToRead][badMask[i:(i+iToRead),:]] = 0
+                        tmpData[0:kToRead][badMask[i:(i + iToRead), :]] = 0
                     a = tmpData[:iToRead]
                     a.shape = kToRead, nChannels
                     a *= cleanWeights
                     if 0:
                         #weight each spectrum
                         a /= (a.sum(axis=1).reshape(-1, 1))
-                    sumSpectrum +=  a.sum(axis=0)
+                    sumSpectrum += a.sum(axis=0)
                     covMatrix += dotblas.dot(a.T, a)
                     a = None
                     i += iToRead
         #should one divide by N or by N-1 ??
-        covMatrix /= (usedPixels-1)
+        covMatrix /= usedPixels - 1
         if center:
             #the n-1 appears again here
-            averageMatrix = numpy.outer(sumSpectrum, sumSpectrum)/(usedPixels * (usedPixels - 1))
+            averageMatrix = numpy.outer(sumSpectrum, sumSpectrum)\
+                            / (usedPixels * (usedPixels - 1))
             covMatrix -= averageMatrix
             averageMatrix = None
-    return covMatrix, sumSpectrum/usedPixels, usedPixels
-        
+    return covMatrix, sumSpectrum / usedPixels, usedPixels
+
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
     #recover the actual data to work with
@@ -455,11 +475,12 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
         data = stack.data
     else:
         data = stack
-        
+
     oldShape = data.shape
-    if index not in [0, -1, len(oldShape)-1]:
+    if index not in [0, -1, len(oldShape) - 1]:
         data = None
-        raise IndexError("1D index must be one of 0, -1 or %d, got %d" % (len(oldShape)-1, index))
+        raise IndexError("1D index must be one of 0, -1 or %d, got %d" %\
+                             (len(oldShape) - 1, index))
 
     if index < 0:
         actualIndex = len(oldShape) + index
@@ -477,8 +498,9 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
     if binning is None:
         binning = 1
 
-    N = int(nChannels/binning)
+    N = int(nChannels / binning)
 
+    # sumSpectrum is unused, but it makes the code readable
     cov, sumSpectrum, calculatedPixels = getCovarianceMatrix(stack,
                                                              index=index,
                                                              binning=binning,
@@ -494,7 +516,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
     if normalizeToUnitStandardDeviation:
         for i in range(cov.shape[0]):
             if totalVariance[i] != 0:
-                cov[i] = cov[i]/totalVariance[i]
+                cov[i] /= totalVariance[i]
 
     if DEBUG:
         import time
@@ -507,7 +529,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
     dtype = numpy.float32
     images = numpy.zeros((ncomponents, nPixels), dtype)
     eigenvectors = numpy.zeros((ncomponents, N), dtype)
-    eigenvalues = numpy.zeros((ncomponents,), type)
+    eigenvalues = numpy.zeros((ncomponents,), dtype)
     #sort eigenvalues
     if 1:
         a = [(evalues[i], i) for i in range(len(evalues))]
@@ -517,21 +539,22 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
             i = a[i0][1]
             eigenvalues[i0] = evalues[i]
             if normalizeToUnitStandardDeviation:
-                print("Explained variance = ", i, evalues[i]/totalVariance) 
+                print("Explained variance = ", i, evalues[i] / totalVariance)
             else:
-                print("Explained variance = ", i, evalues[i]/totalVariance.shape[0])
-            eigenvectors[i0,:] = evectors[:,i]
+                print("Explained variance = ", i,
+                      evalues[i] / totalVariance.shape[0])
+            eigenvectors[i0, :] = evectors[:, i]
     else:
         idx = numpy.argsort(evalues)
         eigenvalues[:]  = evalues[idx]
-        eigenvectors[:,:] = evectors[:,idx].T 
+        eigenvectors[:, :] = evectors[:, idx].T
 
     #calculate the projections
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
-            tmpData = data[i].reshape(1,-1)
+            tmpData = data[i].reshape(1, -1)
             for j in range(ncomponents):
-                images[j:j+1,:] += tmpData * eigenvectors[j, i]
+                images[j:j + 1, :] += tmpData * eigenvectors[j, i]
         if len(oldShape) == 3:
             #reshape the images
             images.shape = ncomponents, oldShape[1], oldShape[2]
@@ -542,7 +565,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
                 #print i
                 tmpData = data[i, :]
                 tmpData.shape = 1, nChannels
-                tmpData = tmpData[:,::binning]
+                tmpData = tmpData[:, ::binning]
                 for j in range(ncomponents):
                     images[j, i] = numpy.dot(tmpData, eigenvectors[j])
             #reshape the images
@@ -554,29 +577,30 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
                     #print i
                     tmpData = data[r, c, :]
                     tmpData.shape = 1, nChannels
-                    tmpData = tmpData[:,::binning]
+                    tmpData = tmpData[:, ::binning]
                     for j in range(ncomponents):
                         images[j, i] = numpy.dot(tmpData, eigenvectors[j])
                     i += 1
             #reshape the images
             images.shape = ncomponents, oldShape[0], oldShape[1]
-    
+
     return images, eigenvalues, eigenvectors
 
+
 def test():
-    x = numpy.array([[0.0, 2.0,  3.0],
-                     [3.0, 0.0, -1.0],
-                     [4.0, -4.0, 4.0],
-                     [4.0, 4.0,  4.0]])
+    x = numpy.array([[0.0,  2.0,  3.0],
+                     [3.0,  0.0, -1.0],
+                     [4.0, -4.0,  4.0],
+                     [4.0,  4.0,  4.0]])
     shape0 = x.shape
     print("x:")
     print(x)
     print("Numpy covariance matrix. It uses (n-1)")
     print(numpy.cov(x.T))
-    avg = x.sum(axis=0).reshape(-1,1)/x.shape[0]
+    avg = x.sum(axis=0).reshape(-1, 1) / x.shape[0]
     print("Average = ", avg)
     print("OPERATION")
-    print(numpy.dot((x.T-avg), (x.T-avg).T)/(x.shape[0]-1))
+    print(numpy.dot((x.T - avg), (x.T - avg).T) / (x.shape[0] - 1))
 
     print("PCATools.getCovarianceMatrix(x, force=True)")
     x.shape = 1, shape0[0], shape0[1]
@@ -587,13 +611,13 @@ def test():
 
     print("PCATools.getCovarianceMatrix(x, force=True) using spatial_mask")
     x.shape = 1, shape0[0], shape0[1]
-    dataSum = x.sum(axis=-1)    
+    dataSum = x.sum(axis=-1)
     spatial_mask = numpy.isfinite(dataSum)
-    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x, force=True, spatial_mask=spatial_mask)
+    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x, force=True,
+                                                    spatial_mask=spatial_mask)
     print("PyMca covariance matrix. It uses (n-1)")
     print(pymcaCov)
     print("Average = ", pymcaAvg)
-
 
     print("PCATools.getCovarianceMatrix(x, force=False)")
     x.shape = 1, shape0[0], shape0[1]
@@ -606,30 +630,27 @@ def test():
     x.shape = 1, shape0[0], shape0[1]
     y = numpy.zeros((2, shape0[0], shape0[1]))
     y[0] = x[0]
-    y[1,:,:] = numpy.nan
-    #y.shape = 2 * shape0[0], shape0[1] 
-    dataSum = y.sum(axis=-1)    
+    y[1, :, :] = numpy.nan
+    dataSum = y.sum(axis=-1)
     spatial_mask = numpy.isfinite(dataSum)
-    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(y, force=False, spatial_mask=spatial_mask)
+    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(y, force=False,
+                                                    spatial_mask=spatial_mask)
     print("PyMca covariance matrix. It uses (n-1)")
     print(pymcaCov)
     print("Average = ", pymcaAvg)
 
     print("PCATools.getCovarianceMatrix(x, force=True) using spatial_mask")
-    #x.shape = 1, shape0[0], shape0[1]
-    #y = numpy.zeros((2, shape0[0], shape0[1]))
-    #y[0] = x[0]
-    y[1,:,:] = numpy.nan
-    #y.shape = 2 * shape0[0], shape0[1] 
+    y[1, :, :] = numpy.nan
     dataSum = y.sum(axis=-1)
     spatial_mask = numpy.isfinite(dataSum)
-    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(y, force=True, spatial_mask=spatial_mask)
+    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(y, force=True,
+                                                    spatial_mask=spatial_mask)
     print("PyMca covariance matrix. It uses (n-1)")
     print(pymcaCov)
     print("Average = ", pymcaAvg)
 
     print("PCATools.getCovarianceMatrix(x)")
-    x.shape = shape0[0], 1,  shape0[1]
+    x.shape = shape0[0], 1, shape0[1]
     pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x)
     print("PyMca covariance matrix. It uses (n-1)")
     print(pymcaCov)
@@ -640,17 +661,18 @@ def test():
     pca = mdp.nodes.PCANode(dtype=numpy.float)
     x.shape = shape0
     pca.train(x)
+    # access to a protected member to prevent
+    # deletion of the covariance matrix when using
+    # stop_training.
     pca._stop_training(debug=True)
     print("MDP covariance matrix. It uses (n-1)")
     print(pca.cov_mtx)
     print("Average = ", pca.avg)
 
     print("TEST AS IMAGES")
-    stack = numpy.zeros((shape0[-1], shape0[0],1), numpy.float)
+    stack = numpy.zeros((shape0[-1], shape0[0], 1), numpy.float)
     for i in range(stack.shape[0]):
-        stack[i,:,0] = x[:,i]
-    #print stack[0]
-    #print "x = ", x
+        stack[i, :, 0] = x[:, i]
     x = stack
     print("PCATools.getCovarianceMatrix(x) force=True")
     pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x, index=0, force=True)
@@ -659,16 +681,16 @@ def test():
     print("Average = ", pymcaAvg)
 
     print("PCATools.getCovarianceMatrix(x) force=True) use_spatialMask")
-    y = numpy.zeros((shape0[-1], shape0[0],2), numpy.float)
-    y[:,:,0] = x[:,:,0]
-    y[:,:,1] = numpy.nan
+    y = numpy.zeros((shape0[-1], shape0[0], 2), numpy.float)
+    y[:, :, 0] = x[:, :, 0]
+    y[:, :, 1] = numpy.nan
     dataSum = y.sum(axis=0)
     spatial_mask = numpy.isfinite(dataSum)
-    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(y, index=0, force=True,spatial_mask=spatial_mask)
+    pymcaCov, pymcaAvg, nData = getCovarianceMatrix(y, index=0, force=True,
+                                                    spatial_mask=spatial_mask)
     print("PyMca covariance matrix. It uses (n-1)")
     print(pymcaCov)
     print("Average = ", pymcaAvg)
-
 
     print("PCATools.getCovarianceMatrix(x), force=False")
     pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x, index=0, force=False)
@@ -821,5 +843,3 @@ if __name__ == "__main__":
                 edf = EdfFile.EdfFile(fname,'wb')
                 edf.WriteImage({},a)
                 edf = None
-
-    
