@@ -45,7 +45,7 @@ class TiffArray(object):
         else:
             self.__nImagesPerFile = int(shape[-1]/len(filelist))
         self.__oldFileNumber = -1
-        
+
     def __getitem__(self, args0):
         standardSlice = True
         indices = []
@@ -83,7 +83,7 @@ class TiffArray(object):
                 if len(args[i]):
                     indices.append([int(x) for x in args[i]])
                 else:
-                    stardardSlice = False
+                    standardSlice = False
             elif type(args[i]) in [1, long(1)]:
                 start = args[i]
                 if start < 0:
@@ -108,9 +108,9 @@ class TiffArray(object):
             raise NotImplemented("__getitem__(self, args) only works on slices")
         outputShape = [len(indices[0]), len(indices[1]), len(indices[2])]
         outputArray = numpy.zeros(outputShape, dtype=self.__dtype)
-        nbFiles = len(self.__fileList)
+        # nbFiles = len(self.__fileList)
         nImagesPerFile = self.__nImagesPerFile
-        
+
         if self.__imageStack:
             i = 0
             rowMin = min(indices[1])
@@ -192,7 +192,7 @@ class TiffStack(DataObject.DataObject):
 
         #retain the file list
         self.sourceName = filelist
-        
+
         #the number of files
         nbFiles=len(filelist)
 
@@ -273,10 +273,7 @@ class TiffStack(DataObject.DataObject):
                    '6', '7', '8','9']
         while (i <= n):
             c = name[n-i:n-i+1]
-            if c in ['0', '1', '2',
-                                '3', '4', '5',
-                                '6', '7', '8',
-                                '9']:
+            if c in numbers:
                 break
             i += 1
         suffix = name[n-i+1:]
@@ -288,10 +285,7 @@ class TiffStack(DataObject.DataObject):
             nchain = []
             while (i<=n):
                 c = name[n-i:n-i+1]
-                if c not in ['0', '1', '2',
-                                    '3', '4', '5',
-                                    '6', '7', '8',
-                                    '9']:
+                if c not in numbers:
                     break
                 else:
                     nchain.append(c)
@@ -343,7 +337,7 @@ class TiffStack(DataObject.DataObject):
 
     def onEnd(self):
         pass
-            
+
 def test():
     from PyMca import StackBase
     testFileName = "TiffTest.tif"
@@ -400,4 +394,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-    
+
