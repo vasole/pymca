@@ -1532,9 +1532,11 @@ class McaAdvancedFit(qt.QWidget):
 
         if 'calibration' in kw:
             if kw['calibration'] is not None:
-                if kw['calibration'] != [0.0,1.0,0.0]:
-                    self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
-                    self.mcafit.config['detector']['gain']=kw['calibration'][1] * 1
+                # The condition below gave troubles because it was using the
+                # current calibration even if the x data where actual energies.
+                # if (kw['calibration'] != [0.0,1.0,0.0]):
+                self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
+                self.mcafit.config['detector']['gain']=kw['calibration'][1] * 1
 
         self.setHeader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
                                                             self.info['xlabel'],
