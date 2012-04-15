@@ -200,7 +200,7 @@ class Plot1DWindowBase(qt.QWidget, Plot1D.Plot1D):
                                  self._pluginClicked,
                                  infotext)
 
-        self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
+        self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
@@ -353,14 +353,6 @@ class Plot1DWindowBase(qt.QWidget, Plot1D.Plot1D):
     def printGraph(self):
         print("prints the graph")
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                           qt.QSizePolicy.Fixed))
-
-    
 
 if __name__ == "__main__":
     import numpy

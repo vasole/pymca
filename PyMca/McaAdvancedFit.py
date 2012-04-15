@@ -33,6 +33,7 @@ import numpy
 import time
 import copy
 import traceback
+
 from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -301,7 +302,7 @@ class McaAdvancedFit(qt.QWidget):
             self.toolsButton.setText("Tools")
             hboxLayout.addWidget(self.configureButton)
             hboxLayout.addWidget(self.toolsButton)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.fitButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.fitButton)
         #font = self.fitButton.font()
@@ -328,11 +329,11 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.matrixSpectrumButton.setCheckable(1)
             self.peaksSpectrumButton.setCheckable(1)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.dismissButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.dismissButton)
         self.dismissButton.setText("Dismiss")
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
 
         self.mainLayout.addWidget(hbox)
         if QTVERSION < '4.0.0':
@@ -2279,7 +2280,7 @@ class Top(qt.QWidget):
         dummy = qt.QWidget(self)
         dummy.setMinimumSize(20,0)
         self.mainLayout.addWidget(dummy)
-        self.mainLayout.addWidget(HorizontalSpacer(self))
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self))
 
         #the checkboxes
         if 0:
@@ -2324,7 +2325,7 @@ class Top(qt.QWidget):
         f.layout.addWidget(self.escapebox,flagsoffset+2,coffset +0)
         f.layout.addWidget(self.sumbox,flagsoffset+2,coffset +1)
         f.layout.addWidget(self.stripbox,flagsoffset+2,coffset +2)
-        self.mainLayout.addWidget(HorizontalSpacer(self))
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self))
 
         #buttons
         g = qt.QWidget(self)
@@ -2461,11 +2462,6 @@ class Top(qt.QWidget):
         else:
             self.emit(qt.SIGNAL('TopSignal'),(ddict))
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
 
 class Line(qt.QFrame):
     def __init__(self, parent=None, name="Line", fl=0, info=None):
@@ -2687,7 +2683,7 @@ class McaGraphWindow(qt.QWidget):
         self.connect(self.markerButton,qt.SIGNAL('clicked()'),self.__peakmarkermode)
         qt.QToolTip.add(self.markerButton,'Allow Right-Click Peak Selection from Graph')
         """
-        self.toolbar.layout.addWidget(HorizontalSpacer(toolbar))
+        self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
         #label.setText('<b>Channel:</b>')
         label.setText('<b>X:</b>')
@@ -2715,7 +2711,7 @@ class McaGraphWindow(qt.QWidget):
         self.epos.setReadOnly(1)
         self.epos.setFixedWidth(self.epos.fontMetrics().width('########'))
         """
-        self.toolbar.layout.addWidget(HorizontalSpacer(toolbar))
+        self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
         # ---print
         if 0:
             self._addToolButton(self.printIcon,

@@ -30,6 +30,7 @@ import sys
 import os
 import numpy
 import time
+
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
@@ -133,14 +134,14 @@ class Mca2EdfGUI(qt.QWidget):
     def __buildActions(self):
         box = qt.QWidget(self)
         boxLayout = qt.QHBoxLayout(box)
-        boxLayout.addWidget(HorizontalSpacer(box))
+        boxLayout.addWidget(qt.HorizontalSpacer(box))
         self.__dismissButton = qt.QPushButton(box)
         boxLayout.addWidget(self.__dismissButton)
-        boxLayout.addWidget(HorizontalSpacer(box))
+        boxLayout.addWidget(qt.HorizontalSpacer(box))
         self.__dismissButton.setText("Close")
         self.__startButton   = qt.QPushButton(box)
         boxLayout.addWidget(self.__startButton)
-        boxLayout.addWidget(HorizontalSpacer(box))
+        boxLayout.addWidget(qt.HorizontalSpacer(box))
         self.__startButton.setText("Start")
         self.mainLayout.addWidget(box)
         self.connect(self.__dismissButton,qt.SIGNAL("clicked()"),self.close)
@@ -312,13 +313,8 @@ class Mca2EdfGUI(qt.QWidget):
         self.__b      = b
         window.show()
         b.start()
-    
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
-        
+
+
 class Mca2EdfBatch(qt.QThread):
     def __init__(self, parent, filelist=None, outputdir = None, filestep = 1):
         self._filelist  = filelist
@@ -453,14 +449,14 @@ class Mca2EdfWindow(qt.QWidget):
         self.actions = 1
         self.buttonsBox = qt.QWidget(self)
         l = qt.QHBoxLayout(self.buttonsBox)
-        l.addWidget(HorizontalSpacer(self.buttonsBox))        
+        l.addWidget(qt.HorizontalSpacer(self.buttonsBox))        
         self.pauseButton = qt.QPushButton(self.buttonsBox)
         l.addWidget(self.pauseButton)
-        l.addWidget(HorizontalSpacer(self.buttonsBox))
+        l.addWidget(qt.HorizontalSpacer(self.buttonsBox))
         self.pauseButton.setText("Pause")
         self.abortButton   = qt.QPushButton(self.buttonsBox)
         l.addWidget(self.abortButton)
-        l.addWidget(HorizontalSpacer(self.buttonsBox))
+        l.addWidget(qt.HorizontalSpacer(self.buttonsBox))
         self.abortButton.setText("Abort")
         self.l.addWidget(self.buttonsBox)
         self.update()

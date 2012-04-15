@@ -26,8 +26,10 @@
 #############################################################################*/
 import sys
 import os.path
+
 from PyMca import QtBlissGraph
-qt = QtBlissGraph.qt
+from PyMca import PyMcaQt as qt
+
 if not hasattr(qt, 'QString'):
     QString = str
     QStringList = list
@@ -448,7 +450,7 @@ class QEdfFileWidget(qt.QWidget):
         self.infoText.setText("    X = ???? Y = ???? Z = ????")
         self.toolBarLayout.addWidget(self.infoText)
 
-        self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
+        self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
@@ -1697,13 +1699,6 @@ class QEdfFileWidget(qt.QWidget):
             self._matplotlibSaveImage.close()
         qt.QWidget.closeEvent(self, event)
 
-
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                           qt.QSizePolicy.Fixed))
 
 def test2():
     a= qt.QApplication(sys.argv)

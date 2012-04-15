@@ -27,8 +27,9 @@
 __author__ = "V.A. Sole - ESRF BLISS Group"
 import sys
 import os
+
 from PyMca import QtBlissGraph
-qt = QtBlissGraph.qt
+from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
@@ -282,7 +283,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.toolBarLayout.addWidget(self.infoWidget)
         self.infoWidget.hide()
 
-        self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
+        self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
@@ -598,14 +599,7 @@ class RGBCorrelatorGraph(qt.QWidget):
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                           qt.QSizePolicy.Fixed))
 
-    
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
         qt.QLabel.__init__(self,parent)

@@ -24,7 +24,12 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
+
+import sys
+import os
+import numpy
+
 from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -32,23 +37,14 @@ else:
     QString = str
 from PyMca.PyMca_Icons import IconDict
 from PyMca import MaskImageWidget
-import sys
-import os
-import numpy
 try:
     from PyMca import EdfFile
     EDF = True
 except ImportError:
     EDF = False
+
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
-
-
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
 
 class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):

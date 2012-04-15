@@ -71,7 +71,7 @@ class McaSimpleFit(qt.QWidget):
         hboxLayout = qt.QHBoxLayout(hbox)
         self.estimatebutton = qt.QPushButton(hbox)
         self.estimatebutton.setText("Estimate")            
-        hs1 = HorizontalSpacer(hbox)
+        hs1 = qt.HorizontalSpacer(hbox)
         self.fitbutton = qt.QPushButton(hbox)
         self.fitbutton.setText("Fit Again!")
         self.dismissbutton = qt.QPushButton(hbox)
@@ -87,7 +87,7 @@ class McaSimpleFit(qt.QWidget):
             self.connect(self.specfitGUI,
                          qt.SIGNAL('SpecfitGUISignal') ,
                          self.__anasignal)
-        hs2 = HorizontalSpacer(hbox)
+        hs2 = qt.HorizontalSpacer(hbox)
         hboxLayout.addWidget(hs1)
         hboxLayout.addWidget(self.estimatebutton)
         hboxLayout.addWidget(self.fitbutton)
@@ -295,13 +295,7 @@ class McaSimpleFit(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
                 msg.exec_loop()
-       
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
-      
+
 
 if __name__ == "__main__":
     import sys

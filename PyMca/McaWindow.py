@@ -31,8 +31,8 @@ import numpy
 import copy
 import time
 from PyMca import QtBlissGraph
+from PyMca import PyMcaQt as qt
 
-qt = QtBlissGraph.qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -305,7 +305,7 @@ class McaWidget(qt.QWidget):
                                  self._saveIconSignal,
                                  infotext)
          
-        toolbar.layout.addWidget(HorizontalSpacer(toolbar))
+        toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
         #label.setText('<b>Channel:</b>')
         label.setText('<b>X:</b>')
@@ -335,7 +335,7 @@ class McaWidget(qt.QWidget):
         self.epos.setReadOnly(1)
         self.epos.setFixedWidth(self.epos.fontMetrics().width('########'))
         """
-        toolbar.layout.addWidget(HorizontalSpacer(toolbar))
+        toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
 
         # ---print
         if 0:
@@ -2319,21 +2319,8 @@ class McaWidget(qt.QWidget):
         info['xlabel'] = self.graph.x1Label()
         info['ylabel'] = self.graph.y1Label()
         return x, y, legend, info
-    
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                           qt.QSizePolicy.Fixed))
-      
-"""
-def finish():
-    print "finish"
-    while qt.qApp.hasPendingEvents():
-        qt.qApp.processEvents()
-    qt.qApp.quit()    
-"""    
+
+
 def main(args):
     from PyMca import QDispatcher
     app = qt.QApplication(args)

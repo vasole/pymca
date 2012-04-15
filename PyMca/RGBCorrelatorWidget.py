@@ -42,7 +42,8 @@ from PyMca import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
-qt = RGBCorrelatorSlider.qt
+
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
     QStringList = qt.QStringList
@@ -61,13 +62,8 @@ except:
     PCA  = False
 
 DEBUG = 0
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                           qt.QSizePolicy.Fixed))
-    
+
+
 class RGBCorrelatorWidget(qt.QWidget):
     def __init__(self, parent = None, bgrx = True, replace = False):
         qt.QWidget.__init__(self, parent)
@@ -132,7 +128,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         hbox.mainLayout.addWidget(self.toggleSlidersButton)
         hbox.mainLayout.addWidget(self.calculationButton)
         hbox.mainLayout.addWidget(self.profileButton)
-        hbox.mainLayout.addWidget(HorizontalSpacer(self.toolBar))
+        hbox.mainLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
         
         #hbox.mainLayout.addWidget(label1)
         self.labelWidget.mainLayout.addWidget(label1, 0, 0)

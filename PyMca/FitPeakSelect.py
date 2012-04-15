@@ -24,16 +24,22 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from EnergyTable import qt
-from PyMca.QPeriodicTable import QPeriodicTable
-#from QPeriodicTable import ElementList
+
+import copy
+
 from PyMca import EnergyTable
 from PyMca import Elements
-import copy
+from PyMca.QPeriodicTable import QPeriodicTable
+
+from PyMca import PyMcaQt as qt
+
+
 DEBUG = 0
 QTVERSION = qt.qVersion()
 ElementList = Elements.ElementList
 __revision__ = "$Revision: 1.12 $"
+
+
 class PeakButton(qt.QPushButton):
     def __init__(self, parent, peak):
         qt.QPushButton.__init__(self, parent)
@@ -190,7 +196,7 @@ class FitPeakSelect(qt.QWidget):
         hboxLayout = qt.QHBoxLayout(hbox)
         hboxLayout.setMargin(0)
         hboxLayout.setSpacing(20)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         l1=MyQLabel(hbox, bold=True, color=qt.QColor(0,0,0))
         hboxLayout.addWidget(l1)
 
@@ -219,7 +225,7 @@ class FitPeakSelect(qt.QWidget):
             self.connect(self.energyButton, qt.SIGNAL('clicked()'),
                          self._energyClicked)
 
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         layout.addSpacing(20)
         layout.addWidget(hbox)
 
@@ -457,11 +463,7 @@ class FitPeakSelect(qt.QWidget):
                 if not len(self.peakdict[ele]): del self.peakdict[ele]
         dict = copy.deepcopy(self.peakdict)
         self.setSelection(dict)
-        
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
+
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):

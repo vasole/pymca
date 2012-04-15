@@ -644,7 +644,7 @@ class MaterialGUI(qt.QWidget):
                              self.__transmissionSlot)
                 self.connect(self.__massAttButton, qt.SIGNAL('clicked()'),
                              self.__massAttSlot)
-            vboxLayout.addWidget(VerticalSpacer(vbox))
+            vboxLayout.addWidget(qt.VerticalSpacer(vbox))
             
         if self.__comments:
             #comment
@@ -657,7 +657,7 @@ class MaterialGUI(qt.QWidget):
                 nameLabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
             else:
                 nameLabel.setAlignment(qt.Qt.AlignVCenter)
-            nameHBoxLayout.addWidget(HorizontalSpacer(nameHBox))
+            nameHBoxLayout.addWidget(qt.HorizontalSpacer(nameHBox))
             if QTVERSION < '4.0.0':
                 self.__nameLine  = MyQLineEdit(nameHBox)
                 self.connect(self.__nameLine,qt.SIGNAL('returnPressed()'),
@@ -784,7 +784,7 @@ class MaterialGUI(qt.QWidget):
         gridLayout.addWidget(self.__transmissionButton, 5, 0)
         gridLayout.addWidget(self.__massAttButton, 5, 1)
         layout.addWidget(grid)
-        layout.addWidget(VerticalSpacer(self))
+        layout.addWidget(qt.VerticalSpacer(self))
 
         #build all the connections
         self.connect(self.__nameLine,qt.SIGNAL('editingFinished()'),
@@ -1173,17 +1173,6 @@ class MyQLineEdit(qt.QLineEdit):
                 palette.setColor(role,qcolor)
                 self.setPalette(palette)
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Expanding))
-        
 if __name__ == "__main__":
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),

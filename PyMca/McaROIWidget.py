@@ -90,7 +90,7 @@ class McaROIWidget(qt.QWidget):
         hboxlayout.setMargin(0)
         hboxlayout.setSpacing(0)
 
-        hboxlayout.addWidget(HorizontalSpacer(hbox))
+        hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         
         self.addbutton = qt.QPushButton(hbox)
         self.addbutton.setText("Add ROI")
@@ -102,7 +102,7 @@ class McaROIWidget(qt.QWidget):
         hboxlayout.addWidget(self.addbutton)
         hboxlayout.addWidget(self.delbutton)
         hboxlayout.addWidget(self.resetbutton)
-        hboxlayout.addWidget(HorizontalSpacer(hbox))
+        hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
 
         if QTVERSION > '4.0.0':
             self.loadButton = qt.QPushButton(hbox)
@@ -690,20 +690,6 @@ class McaROITable(QTable):
                         else:
                             item.setText(text)
                     self._myslot()
-
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                             qt.QSizePolicy.Fixed))
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                            qt.QSizePolicy.Expanding))
 
 class SimpleComboBox(qt.QComboBox):
         def __init__(self,parent = None,name = None,fl = 0,options=['1','2','3']):

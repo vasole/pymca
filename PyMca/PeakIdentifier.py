@@ -34,10 +34,6 @@ from PyMca.PyMca_Icons import IconDict
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
 
 class PeakIdentifier(qt.QWidget):
     def __init__(self,parent=None,energy=None,threshold=None,useviewer=None,
@@ -67,7 +63,7 @@ class PeakIdentifier(qt.QWidget):
         hbox.layout.setMargin(0)
         hbox.layout.setSpacing(0)
         layout.addWidget(hbox)
-        hbox.layout.addWidget(HorizontalSpacer(hbox))
+        hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
 
         l1=qt.QLabel(hbox)
         l1.setText('<b><nobr>Energy (keV)</nobr></b>')
@@ -81,7 +77,7 @@ class PeakIdentifier(qt.QWidget):
             self.energy.setValidator(self.energy._validator)
             self.energy.setToolTip('Press enter to validate your energy')
         hbox.layout.addWidget(self.energy)
-        hbox.layout.addWidget(HorizontalSpacer(hbox))
+        hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
         if QTVERSION < '4.0.0':
             self.connect(self.energy,qt.SIGNAL('returnPressed()'),
                          self._energySlot)

@@ -26,8 +26,9 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.10 $"
 import copy
+
 from PyMca import MaterialEditor
-qt = MaterialEditor.qt
+from PyMca import PyMcaQt as qt
 from PyMca import MatrixImage
 
 QTVERSION = qt.qVersion()
@@ -66,7 +67,7 @@ class MatrixEditor(qt.QWidget):
             self.materialEditor =  MaterialEditor.MaterialEditor(matBox,
                                                          comments=False, height=7)
             matBoxLayout.addWidget(self.materialEditor)
-            matBoxLayout.addWidget(VerticalSpacer(matBox))
+            matBoxLayout.addWidget(qt.VerticalSpacer(matBox))
         else:
             self.materialEditor = None
         
@@ -83,10 +84,10 @@ class MatrixEditor(qt.QWidget):
             labelHBox = qt.QWidget(sampleBox)
             sampleBoxLayout.addWidget(labelHBox)
             labelHBoxLayout = qt.QHBoxLayout(labelHBox)
-            labelHBoxLayout.addWidget(HorizontalSpacer(labelHBox))
+            labelHBoxLayout.addWidget(qt.HorizontalSpacer(labelHBox))
             label = MatrixImage.MatrixImage(labelHBox,size=size)
             labelHBoxLayout.addWidget(label)
-            labelHBoxLayout.addWidget(HorizontalSpacer(labelHBox))
+            labelHBoxLayout.addWidget(qt.HorizontalSpacer(labelHBox))
         else:
             labelHBox = qt.QWidget(sampleBox)
             sampleBoxLayout.addWidget(labelHBox)
@@ -96,7 +97,7 @@ class MatrixEditor(qt.QWidget):
             label = MatrixImage.MatrixImage(labelHBox,size=size)
             labelHBoxLayout.addWidget(label)
         if orientation != "vertical":
-            labelHBoxLayout.addWidget(VerticalSpacer(labelHBox))
+            labelHBoxLayout.addWidget(qt.VerticalSpacer(labelHBox))
         self.imageLabel = label
         #the input fields container
         self.__gridSampleBox = qt.QWidget(sampleBox)
@@ -177,8 +178,8 @@ class MatrixEditor(qt.QWidget):
         else:
             self.__thicknessLine  = None
 
-        gridLayout.addWidget(VerticalSpacer(grid), rowoffset, 0)
-        gridLayout.addWidget(VerticalSpacer(grid), rowoffset, 1)
+        gridLayout.addWidget(qt.VerticalSpacer(grid), rowoffset, 0)
+        gridLayout.addWidget(qt.VerticalSpacer(grid), rowoffset, 1)
 
         if QTVERSION < '4.0.0':
             self.connect(self.__angle1Line,qt.PYSIGNAL('MyQLineEditSignal'),
@@ -210,7 +211,7 @@ class MatrixEditor(qt.QWidget):
                        self.__angle3LabelSlot)
 
         if orientation == "vertical":
-            sampleBoxLayout.addWidget(VerticalSpacer(sampleBox))
+            sampleBoxLayout.addWidget(qt.VerticalSpacer(sampleBox))
     
     def setParameters(self, param):
         for key in param.keys():
@@ -363,17 +364,6 @@ class MyQLineEdit(qt.QLineEdit):
                 msg.exec_()
             self.setFocus()
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
-
-    
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Expanding))
-        
 if __name__ == "__main__":
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),app,qt.SLOT("quit()"))

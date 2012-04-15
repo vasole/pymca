@@ -26,13 +26,14 @@ __revision__ = "$Revision: 1.5 $"
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import qt
 import os
 import sys
 import time
 import McaCustomEvent
 import ConfigDict
 ROIWIDTH = 250.
+
+from PyMca import PyMcaQt as qt
 
 class Fit2SpecGUI(qt.QWidget):
     def __init__(self,parent=None,name="Fit to Spec Conversion",fl=qt.Qt.WDestructiveClose,
@@ -88,12 +89,12 @@ class Fit2SpecGUI(qt.QWidget):
 
     def __buildActions(self):
         box = qt.QHBox(self)
-        HorizontalSpacer(box)
+        qt.HorizontalSpacer(box)
         self.__dismissButton = qt.QPushButton(box)
-        HorizontalSpacer(box)
+        qt.HorizontalSpacer(box)
         self.__dismissButton.setText("Close")
         self.__startButton   = qt.QPushButton(box)
-        HorizontalSpacer(box)
+        qt.HorizontalSpacer(box)
         self.__startButton.setText("Start")
         self.connect(self.__dismissButton,qt.SIGNAL("clicked()"),self.close)
         self.connect(self.__startButton,qt.SIGNAL("clicked()"),self.start)
@@ -208,12 +209,7 @@ class Fit2SpecGUI(qt.QWidget):
         self.__b      = b
         window.show()
         b.start()
-    
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
+
         
 class Fit2SpecBatch(qt.QThread):
     def __init__(self, parent, filelist=None, outputdir = None):
@@ -300,12 +296,12 @@ class Fit2SpecWindow(qt.QWidget):
         self.buttonsBox = qt.QWidget(self)
         l = qt.QHBoxLayout(self.buttonsBox)
         l.setAutoAdd(1)
-        HorizontalSpacer(self.buttonsBox)
+        qt.HorizontalSpacer(self.buttonsBox)
         self.pauseButton = qt.QPushButton(self.buttonsBox)
-        HorizontalSpacer(self.buttonsBox)
+        qt.HorizontalSpacer(self.buttonsBox)
         self.pauseButton.setText("Pause")
         self.abortButton   = qt.QPushButton(self.buttonsBox)
-        HorizontalSpacer(self.buttonsBox)
+        qt.HorizontalSpacer(self.buttonsBox)
         self.abortButton.setText("Abort")
         self.update()
 

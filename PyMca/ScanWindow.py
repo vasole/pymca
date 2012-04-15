@@ -296,7 +296,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                                  self._pluginClicked,
                                  infotext)
 
-        self.toolBarLayout.addWidget(HorizontalSpacer(self.toolBar))
+        self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
@@ -465,7 +465,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         self._yPos.setReadOnly(1)
         self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
         self.graphBottomLayout.addWidget(self._yPos)
-        self.graphBottomLayout.addWidget(HorizontalSpacer(self.graphBottom))
+        self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
         self.mainLayout.addWidget(self.graphBottom)
 
     def setDispatcher(self, w):
@@ -1860,12 +1860,6 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             self.printPreview.show()        
         self.printPreview.raise_()
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                           qt.QSizePolicy.Fixed))
 
 def test():
     w = ScanWindow()

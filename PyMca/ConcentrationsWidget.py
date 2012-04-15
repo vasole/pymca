@@ -270,10 +270,10 @@ class ConcentrationsWidget(qt.QWidget):
         wf.layout = qt.QHBoxLayout(wf)
         wf.layout.setMargin(0)
         wf.layout.setSpacing(0)
-        wf.layout.addWidget(HorizontalSpacer(wf))
+        wf.layout.addWidget(qt.HorizontalSpacer(wf))
         self.fundamentalWidget = FundamentalWidget(wf)
         wf.layout.addWidget(self.fundamentalWidget)
-        wf.layout.addWidget(HorizontalSpacer(wf))
+        wf.layout.addWidget(qt.HorizontalSpacer(wf))
         self.matrixCheckBox = qt.QCheckBox(buttonGroup)
         self.matrixCheckBox.setText("From matrix composition")
         self.fluxCheckBox.setChecked(True)
@@ -282,7 +282,7 @@ class ConcentrationsWidget(qt.QWidget):
         wm.layout = qt.QHBoxLayout(wm)
         wm.layout.setMargin(0)
         wm.layout.setSpacing(0)
-        wm.layout.addWidget(HorizontalSpacer(wm))
+        wm.layout.addWidget(qt.HorizontalSpacer(wm))
         referenceLabel = qt.QLabel(wm)
         wm.layout.addWidget(referenceLabel)
         referenceLabel.setText("Matrix Reference Element:")
@@ -295,7 +295,7 @@ class ConcentrationsWidget(qt.QWidget):
         self.referenceLine.setFixedWidth(
             self.referenceLine.fontMetrics().width('#######'))
 
-        wm.layout.addWidget(HorizontalSpacer(wm))
+        wm.layout.addWidget(qt.HorizontalSpacer(wm))
         if QTVERSION < '4.0.0':
             self.connect(self.referenceLine,
                          qt.PYSIGNAL("MyQLineEditSignal"),
@@ -331,7 +331,7 @@ class ConcentrationsWidget(qt.QWidget):
         self.mMolarCheckBox.setText("Elemental mM concentrations (assuming 1 l of solution is 1000 * matrix_density grams)")
         layout.addWidget(self.mMolarCheckBox)
 
-        layout.addWidget(VerticalSpacer(self))
+        layout.addWidget(qt.VerticalSpacer(self))
         buttonGroup.show()
         if QTVERSION < '4.0.0':
             self.connect(self.fluxCheckBox, qt.SIGNAL("clicked()"),
@@ -846,21 +846,6 @@ class MyQLineEdit(qt.QLineEdit):
             self.emit(qt.PYSIGNAL("MyQLineEditSignal"), (ddict,))
         else:
             self.emit(qt.SIGNAL("MyQLineEditSignal"), ddict)
-
-
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
-
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                                          qt.QSizePolicy.Expanding))
 
 
 class MyQComboBox(qt.QComboBox):

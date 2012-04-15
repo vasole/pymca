@@ -41,18 +41,6 @@ except:
         from PyMca import Plot1DMatplotlib
 from PyMca import SpecfitFuns
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                                          qt.QSizePolicy.Expanding))
 
 class StripParametersWidget(qt.QWidget):
     def __init__(self, parent=None):
@@ -392,7 +380,7 @@ class StripBackgroundDialog(qt.QDialog):
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.okButton)
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)

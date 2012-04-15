@@ -29,12 +29,14 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
-from PyMca import PyMcaQt as qt
+
 from matplotlib import cm
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
+from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
@@ -74,12 +76,6 @@ colorlist  = [colordict['black'],
               colordict['darkbrown'],
               colordict['yellow']]
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
 
 class MatplotlibCurveTable(qt.QTableWidget):
     def __init__(self, parent=None):
@@ -300,7 +296,7 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
         self.dismissButton.setText("Dismiss")
         self.dismissButton.setAutoDefault(False)
         layout.addWidget(self.doNotShowAgain)
-        layout.addWidget(HorizontalSpacer(self.actionsWidget))
+        layout.addWidget(qt.HorizontalSpacer(self.actionsWidget))
         layout.addWidget(self.acceptButton)
         layout.addWidget(self.dismissButton)
         horizontal = False

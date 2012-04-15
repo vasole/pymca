@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import os
+
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
@@ -452,18 +453,6 @@ class McaCalInfoLine(qt.QWidget):
         self.caldict[self.currentcal]["B"] = pars["B"]
         self.caldict[self.currentcal]["C"] = pars["C"]
         self.caldict[self.currentcal]["order"] = order
-        
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed)
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Expanding)
 
 
 class SimpleComboBox(qt.QComboBox):

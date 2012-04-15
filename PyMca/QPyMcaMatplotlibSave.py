@@ -29,12 +29,14 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
-from PyMca import PyMcaQt as qt
+
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
+
+from PyMca import PyMcaQt as qt
 from PyMca import PyMcaMatplotlibSave
 from PyMca.PyMca_Icons import IconDict
 from PyMca import PyMcaPrintPreview
@@ -42,18 +44,6 @@ from PyMca import PyMcaDirs
 
 DEBUG = 0
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
-
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
-                                          qt.QSizePolicy.Expanding))
 
 class TopWidget(qt.QWidget):
     def __init__(self, parent = None):
@@ -414,7 +404,7 @@ class RightWidget(qt.QWidget):
             self.comboBoxList.append(line)
 
         self.mainLayout.addWidget(self.gridWidget)
-        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.mainLayout.addWidget(qt.VerticalSpacer(self))
         self.setPixmapMode(False)
 
     def setPixmapMode(self, flag):

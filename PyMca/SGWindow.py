@@ -32,11 +32,7 @@ from PyMca import MaskImageWidget
 from PyMca import ScanWindow
 from PyMca import SGModule
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
+
 class SGParametersWidget(qt.QWidget):
     def __init__(self, parent = None, length=2000):
         qt.QWidget.__init__(self, parent)
@@ -55,7 +51,7 @@ class SGParametersWidget(qt.QWidget):
             label = qt.QLabel(self)
             label.setText(text)
             self.mainLayout.addWidget(label, i, 0)        
-            #self.mainLayout.addWidget(HorizontalSpacer(self), i, 1)
+            #self.mainLayout.addWidget(qt.HorizontalSpacer(self), i, 1)
             i +=1 
 
         i = 0
@@ -171,7 +167,7 @@ class SGDialog(qt.QDialog):
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
         hboxLayout.addWidget(self.okButton)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)
         self.connect(self.dismissButton, qt.SIGNAL("clicked()"), self.reject)

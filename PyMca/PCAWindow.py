@@ -36,7 +36,7 @@ from PyMca import PCAModule
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
-HorizontalSpacer = qt.HorizontalSpacer
+
 
 class PCAParametersDialog(qt.QDialog):
     def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
@@ -113,7 +113,7 @@ class PCAParametersDialog(qt.QDialog):
             self.binningCombo.addItem("%d" % option)
         self.speedOptions.mainLayout.addWidget(labelPC, 0, 0)
         self.speedOptions.mainLayout.addWidget(self.nPC, 0, 1)
-        #self.speedOptions.mainLayout.addWidget(HorizontalSpacer(self), 0, 2)
+        #self.speedOptions.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
         self.binningCombo.setEnabled(False)
@@ -136,9 +136,9 @@ class PCAParametersDialog(qt.QDialog):
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("Accept")
         self.okButton.setAutoDefault(False)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.okButton)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.mainLayout.addWidget(self.speedOptions)
         if regions:
             self.mainLayout.addWidget(self.regionsWidget)

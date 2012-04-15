@@ -51,20 +51,8 @@ else:
     class Q3GridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
-        
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
 
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,\
-                                          qt.QSizePolicy.Fixed))
 
-class VerticalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,\
-                                          qt.QSizePolicy.Expanding))
-        
 class FitParamForm(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
         if QTVERSION < '4.0.0':
@@ -313,7 +301,7 @@ class FitParamForm(qt.QWidget):
                                     qt.QSizePolicy.Minimum)
             layout5.addMultiCell(spacer,10,10,1,2)
         else:
-            layout5.addWidget(HorizontalSpacer(self.tabFit),10,1)
+            layout5.addWidget(qt.HorizontalSpacer(self.tabFit),10,1)
         layout5.addMultiCellWidget(self.iterSpin,10,10,3,4)
 
         layout5.addWidget(self.chi2Label, 11, 0)
@@ -542,7 +530,7 @@ class FitParamForm(qt.QWidget):
                                       qt.QSizePolicy.Minimum)
             layout5_2.addItem(spacer_5,1,1)
         else:
-            layout5_2.addWidget(HorizontalSpacer(self.tabDetector),1,1)
+            layout5_2.addWidget(qt.HorizontalSpacer(self.tabDetector),1,1)
 
         self.noiseValue = qt.QLineEdit(self.tabDetector)
 

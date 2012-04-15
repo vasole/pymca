@@ -92,7 +92,7 @@ class ScanFit(qt.QWidget):
         self.fitbutton = qt.QPushButton(hbox)
         self.fitbutton.setText("Fit")
         hboxlayout.addWidget(self.estimatebutton)
-        hboxlayout.addWidget(HorizontalSpacer(hbox))
+        hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxlayout.addWidget(self.fitbutton)
 
         self.dismissbutton = qt.QPushButton(hbox)
@@ -108,7 +108,7 @@ class ScanFit(qt.QWidget):
             self.connect(self.specfitGUI,
                          qt.SIGNAL('SpecfitGUISignal') ,
                          self._specfitGUISignal)
-        hboxlayout.addWidget(HorizontalSpacer(hbox))
+        hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxlayout.addWidget(self.dismissbutton)
         layout.addWidget(self.headerlabel)
         layout.addWidget(self.specfitGUI)
@@ -339,12 +339,7 @@ class ScanFit(qt.QWidget):
         self.specfit.configure(**fitconfig)
         self.specfitGUI.updateGUI(configuration=fitconfig)
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
-      
+
 def test():
     app = qt.QApplication([])
     w = ScanFit()

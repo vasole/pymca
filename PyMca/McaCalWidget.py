@@ -33,7 +33,8 @@ from numpy.linalg import inv as inverse
 import copy
 
 from PyMca import QtBlissGraph
-qt = QtBlissGraph.qt
+from PyMca import PyMcaQt as qt
+
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -50,13 +51,7 @@ DEBUG = 0
 
 LOW_HEIGHT_THRESHOLD = 660
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-      
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding, qt.QSizePolicy.Fixed))
-      
-#class McaCalWidget(qt.QWidget):
+
 class McaCalWidget(qt.QDialog):
     def __init__(self, parent=None, name="MCA Calibration Widget", 
                 x = None,y=None,current=None,peaks=None,caldict=None,
@@ -160,7 +155,7 @@ class McaCalWidget(qt.QDialog):
         self.calpar. setSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed)
         """
         if QTVERSION < '4.0.0':
-            self.bottomPanel.layout.addWidget(HorizontalSpacer(self.bottomPanel))
+            self.bottomPanel.layout.addWidget(qt.HorizontalSpacer(self.bottomPanel))
         #self.cal.setSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding)
         self.peakpar.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
                                                   qt.QSizePolicy.Fixed))
@@ -219,7 +214,7 @@ class McaCalWidget(qt.QDialog):
                             self.manualsearch,
                             'Add a peak to the graph',
                             toggle=True)
-        self.toolbar.layout.addWidget(HorizontalSpacer(toolbar))
+        self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
         label.setText('<b>Channel:</b>')
         self.toolbar.layout.addWidget(label)
@@ -1331,7 +1326,7 @@ class InputLine(qt.QDialog):
         self.bottom = qt.QWidget(self)
         self.bottom.layout = qt.QHBoxLayout(self.bottom)
         layout.addWidget(self.bottom)
-        self.bottom.layout.addWidget(HorizontalSpacer(self.bottom))
+        self.bottom.layout.addWidget(qt.HorizontalSpacer(self.bottom))
         okbutton       = qt.QPushButton(self.bottom)
         self.bottom.layout.addWidget(okbutton)
         okbutton.setText('OK')
@@ -1341,7 +1336,7 @@ class InputLine(qt.QDialog):
 
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
-        self.bottom.layout.addWidget(HorizontalSpacer(self.bottom))
+        self.bottom.layout.addWidget(qt.HorizontalSpacer(self.bottom))
         self.connect(cancelbutton, qt.SIGNAL("clicked()"), self.reject)
         self.connect(okbutton, qt.SIGNAL("clicked()"), self.accept)
         if 'name' in peakpars:
@@ -1446,9 +1441,9 @@ class McaCalCopy(qt.QDialog):
         
         """
         l           = qt.QHBox(w)
-        HorizontalSpacer(l)
+        qt.HorizontalSpacer(l)
         sourcelabel = qt.QLabel(l)
-        HorizontalSpacer(l)
+        qt.HorizontalSpacer(l)
         f = sourcelabel.font()
         f.setBold(1)
         sourcelabel.setText('Calibration from Source')
@@ -1588,7 +1583,7 @@ class McaCalCopy(qt.QDialog):
         bottomlayout.setSpacing(0)
 
         layout0.addWidget(bottom)
-        bottomlayout.addWidget(HorizontalSpacer(bottom))
+        bottomlayout.addWidget(qt.HorizontalSpacer(bottom))
         
         okbutton       = qt.QPushButton(bottom)
         okbutton.setText('OK')
@@ -1601,7 +1596,7 @@ class McaCalCopy(qt.QDialog):
 
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
-        bottomlayout.addWidget(HorizontalSpacer(bottom))
+        bottomlayout.addWidget(qt.HorizontalSpacer(bottom))
         
         self.connect(cancelbutton, qt.SIGNAL("clicked()"), self.reject)
         self.connect(okbutton,     qt.SIGNAL("clicked()"), self.accept)

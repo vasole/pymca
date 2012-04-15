@@ -46,12 +46,6 @@ from PyMca import MatrixEditor
 import re
 DEBUG = 0
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
 
 class MyQLabel(qt.QLabel):
     def __init__(self, parent=None, name=None, fl=0, bold=True,
@@ -152,12 +146,12 @@ class CompoundFittingTab(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         hbox = qt.QWidget(self)
         hboxlayout  = qt.QHBoxLayout(hbox)
-        #hboxlayout.addWidget(HorizontalSpacer(hbox))
+        #hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         self._compoundFittingLabel = MyQLabel(hbox, color=qt.Qt.red)
         self._compoundFittingLabel.setText("Compound Fitting Mode is OFF")
         self._compoundFittingLabel.setAlignment(qt.QLabel.AlignCenter)
         hboxlayout.addWidget(self._compoundFittingLabel)
-        #hboxlayout.addWidget(HorizontalSpacer(hbox))
+        #hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         layout.addWidget(hbox)
 
         grid = qt.QWidget(self)
@@ -296,7 +290,7 @@ class CompoundFittingTab0(qt.QWidget):
         self.densityError = qt.QLineEdit(grid)
 
         gl.addWidget(densityLabel, 3, 0)
-        gl.addWidget(HorizontalSpacer(grid), 3, 1)
+        gl.addWidget(qt.HorizontalSpacer(grid), 3, 1)
         gl.addWidget(self.densityCheck, 3, 2)
         gl.addWidget(self.densityValue, 3, 3)
         gl.addWidget(densitySepLabel, 3, 4)
