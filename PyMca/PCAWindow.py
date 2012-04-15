@@ -25,24 +25,21 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-import sys
+
 import numpy
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import MaskImageWidget
 from PyMca import ScanWindow
 from PyMca import PCAModule
+
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
+HorizontalSpacer = qt.HorizontalSpacer
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
 class PCAParametersDialog(qt.QDialog):
-    def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10],
+    def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
                  regions=False):
         qt.QDialog.__init__(self, parent)
         if QTVERSION < '4.0.0':
@@ -53,10 +50,10 @@ class PCAParametersDialog(qt.QDialog):
         self.mainLayout.setMargin(11)
         self.mainLayout.setSpacing(0)
 
-        #
         self.methodOptions = qt.QGroupBox(self)
         self.methodOptions.setTitle('PCA Method to use')
-        self.methods = ['Covariance', 'Expectation Max.', 'Cov. Multiple Arrays']
+        self.methods = ['Covariance', 'Expectation Max.',
+                        'Cov. Multiple Arrays']
         self.functions = [PCAModule.numpyPCA,
                           PCAModule.expectationMaximizationPCA,
                           PCAModule.multipleArrayPCA]
@@ -89,6 +86,7 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.addButton(rButton)
             self.buttonGroup.setId(rButton, i)
             i += 1
+
         self.connect(self.buttonGroup,
                      qt.SIGNAL('buttonPressed(QAbstractButton *)'),
                      self._slot)
@@ -192,7 +190,7 @@ class PCAParametersDialog(qt.QDialog):
     def _graphSlot(self, ddict):
         if ddict['event'] == "markerMoved":
             marker = ddict['marker']
-            value =  ddict['x']
+            value = ddict['x']
             signal = False
             if marker == self.fromMarker:
                 self.regionsWidget.fromLine.setText("%f" % value)
@@ -201,7 +199,7 @@ class PCAParametersDialog(qt.QDialog):
             else:
                 signal = True
             self.regionsWidget._editingSlot(signal=signal)
-                
+
     def _slot(self, button):
         button.setChecked(True)
         index = self.buttonGroup.checkedId()
@@ -225,12 +223,14 @@ class PCAParametersDialog(qt.QDialog):
         if not isinstance(x, numpy.ndarray):
             x = numpy.array(x)
             y = numpy.array(y)
+
         self._x = x
         self._y = y
         self.regionsWidget.setLimits(x.min(), x.max())
         self._legend = legend
         self.updatePlot()
 
+    # value unused, but received with the Qt signal
     def _updatePlotFromBinningCombo(self, value):
         if self.scanWindow is None:
             return
@@ -243,9 +243,9 @@ class PCAParametersDialog(qt.QDialog):
         x.shape = 1, -1
         y.shape = 1, -1
         r, c = x.shape
-        x.shape = r, c/binning, binning
-        y.shape = r, c/binning, binning
-        x = x.sum(axis=-1)/binning
+        x.shape = r, c / binning, binning
+        y.shape = r, c / binning, binning
+        x = x.sum(axis=-1) / binning
         y = y.sum(axis=-1)
         x.shape = -1
         y.shape = -1
@@ -294,6 +294,7 @@ class PCAParametersDialog(qt.QDialog):
         ddict['mask'] = mask
         return ddict
 
+
 class RegionsWidget(qt.QGroupBox):
     def __init__(self, parent=None, nregions=10, limits=[0.0, 1000.]):
         qt.QGroupBox.__init__(self, parent)
@@ -302,10 +303,13 @@ class RegionsWidget(qt.QGroupBox):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         if nregions % 2:
-            nregions += 1            
+            nregions += 1
         self.nRegions = nregions
         self.regionList = []
         self.__limits = [limits[0], limits[1]]
+        # Nice hint -> What about:
+        # self.regionList.extend([[limits[0], limits[1]] * self.nRegions)
+        # instead of this loop with the useless i?
         for i in range(self.nRegions):
             self.regionList.append([limits[0], limits[1]])
         self.nRegionsLabel = qt.QLabel(self)
@@ -336,7 +340,7 @@ class RegionsWidget(qt.QGroupBox):
         label.setText("From:")
         self.fromLine = qt.QLineEdit(self)
         self.fromLine.setText("%f" % limits[0])
-        self.fromLine._v  = qt.QDoubleValidator(self.fromLine)
+        self.fromLine._v = qt.QDoubleValidator(self.fromLine)
         self.fromLine.setValidator(self.fromLine._v)
         self.mainLayout.addWidget(label, 0, 4)
         self.mainLayout.addWidget(self.fromLine, 0, 5)
@@ -348,7 +352,7 @@ class RegionsWidget(qt.QGroupBox):
         label.setText("To:")
         self.toLine = qt.QLineEdit(self)
         self.toLine.setText("%f" % limits[1])
-        self.toLine._v  = qt.QDoubleValidator(self.toLine)
+        self.toLine._v = qt.QDoubleValidator(self.toLine)
         self.toLine.setValidator(self.toLine._v)
         self.mainLayout.addWidget(label, 0, 6)
         self.mainLayout.addWidget(self.toLine, 0, 7)
@@ -381,13 +385,13 @@ class RegionsWidget(qt.QGroupBox):
                 self._currentRegionChanged(value)
 
     def _currentRegionChanged(self, value):
-        fromValue, toValue = self.regionList[value-1]
+        fromValue, toValue = self.regionList[value - 1]
         self.fromLine.setText("%f" % fromValue)
         self.toLine.setText("%f" % toValue)
         self.mySignal()
 
     def _editingSlot(self, signal=True):
-        current = self.currentRegionSpinBox.value()-1
+        current = self.currentRegionSpinBox.value() - 1
         self.regionList[current][0] = float(str(self.fromLine.text()))
         self.regionList[current][1] = float(str(self.toLine.text()))
         if self.regionList[current][0] < self.__limits[0]:
@@ -398,9 +402,9 @@ class RegionsWidget(qt.QGroupBox):
             self.mySignal()
 
     def mySignal(self):
-        current = self.currentRegionSpinBox.value()-1
+        current = self.currentRegionSpinBox.value() - 1
         ddict={}
-        ddict['event']= 'regionChanged'
+        ddict['event'] = 'regionChanged'
         ddict['from'] = self.regionList[current][0]
         ddict['to'] = self.regionList[current][1]
         self.emit(qt.SIGNAL('RegionsWidgetSignal'), ddict)
@@ -412,6 +416,7 @@ class RegionsWidget(qt.QGroupBox):
             for i in range(nRegions):
                 regions.append(self.regionList[i])
         return regions
+
 
 class PCAWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
@@ -428,16 +433,17 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         # The 1D graph
         self.vectorGraph = ScanWindow.ScanWindow(self)
         self.mainTab.addTab(self.vectorGraph, "VECTORS")
-        
+
         self.mainLayout.addWidget(self.slider)
         self.connect(self.slider,
                      qt.SIGNAL("valueChanged(int)"),
                      self._showImage)
 
         self.imageList = None
+        self.imageNames=None
         self.eigenValues = None
         self.eigenVectors = None
-        self.eigenNames = None
+        self.vectorNames = None
         self.vectorGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
@@ -452,15 +458,15 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             if QTVERSION > '4.0.0':
                 if MATPLOTLIB:
                     self._saveMenu.addAction(qt.QString("Matplotlib") ,
-                                     self._saveMatplotlibImage)
+                                             self._saveMatplotlibImage)
         self.multiplyIcon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         infotext = "Multiply image by -1"
         self.multiplyButton = self.graphWidget._addToolButton(\
                                         self.multiplyIcon,
                                         self._multiplyIconChecked,
                                         infotext,
-                                        toggle = False,
-                                        position = 12)
+                                        toggle=False,
+                                        position=12)
 
     def sizeHint(self):
         return qt.QSize(400, 400)
@@ -484,8 +490,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)
             if self.vectorGraphTitles is not None:
                 self.vectorGraph.graph.setTitle(self.vectorGraphTitles[index])
-                
-            
+
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
             return
@@ -497,7 +502,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             self.slider.setValue(index)
 
     def setPCAData(self, images, eigenvalues=None, eigenvectors=None,
-                   imagenames = None, vectornames = None):
+                   imagenames=None, vectornames=None):
         self.eigenValues = eigenvalues
         self.eigenVectors = eigenvectors
         if type(images) == type([]):
@@ -506,20 +511,20 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             nimages = images.shape[0]
             self.imageList = [0] * nimages
             for i in range(nimages):
-                self.imageList[i] = images[i,:]
+                self.imageList[i] = images[i, :]
                 if self.imageList[i].max() < 0:
                     self.imageList[i] *= -1
                     if self.eigenVectors is not None:
-                        self.eigenVectors [i] *= -1
+                        self.eigenVectors[i] *= -1
             if imagenames is None:
                 self.imageNames = []
                 for i in range(nimages):
                     self.imageNames.append("Eigenimage %02d" % i)
             else:
                 self.imageNames = imagenames
-                
+
         if self.imageList is not None:
-            self.slider.setMaximum(len(self.imageList)-1)
+            self.slider.setMaximum(len(self.imageList) - 1)
             self.showImage(0)
         else:
             self.slider.setMaximum(0)
@@ -533,17 +538,16 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                 self.vectorNames = vectornames
             legend = self.vectorNames[0]
             y = self.eigenVectors[0]
-            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True) 
-            
-        self.slider.setValue(0)
+            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)
 
+        self.slider.setValue(0)
 
     def saveImageList(self, filename=None, imagelist=None, labels=None):
         if self.imageList is None:
             return
         labels = []
         for i in range(len(self.imageList)):
-            labels.append(self.imageNames[i].replace(" ","_"))
+            labels.append(self.imageNames[i].replace(" ", "_"))
         return MaskImageWidget.MaskImageWidget.saveImageList(self,
                                                              imagelist=self.imageList,
                                                              labels=labels)
@@ -553,9 +557,9 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.eigenValues = None
         self.eigenVectors = None
         if imagelist is not None:
-            self.slider.setMaximum(len(self.imageList)-1)
+            self.slider.setMaximum(len(self.imageList) - 1)
             self.showImage(0)
-            
+
 
 def test2():
     app = qt.QApplication([])
@@ -565,13 +569,14 @@ def test2():
                        qt.SLOT('quit()'))
 
     dialog = PCAParametersDialog()
-    dialog.setParameters({'options':[1,3,5,7,9],'method':1, 'npc':8,'binning':3})
+    dialog.setParameters({'options': [1,3,5,7,9], 'method': 1, 'npc': 8,
+                          'binning': 3})
     dialog.setModal(True)
     ret = dialog.exec_()
     if ret:
         dialog.close()
         print(dialog.getParameters())
-    #app.exec_()
+
 
 def test():
     app = qt.QApplication([])
@@ -583,10 +588,12 @@ def test():
     container = PCAWindow()
     data = numpy.arange(20000)
     data.shape = 2, 100, 100
-    data[1, 0:100,0:50] = 100
-    container.setPCAData(data, eigenvectors=[numpy.arange(100.), numpy.arange(100.)+10],
-                                imagenames=["I1", "I2"], vectornames=["V1", "V2"])
+    data[1, 0:100, 0:50] = 100
+    container.setPCAData(data, eigenvectors=[numpy.arange(100.),
+                                             numpy.arange(100.) + 10],
+                         imagenames=["I1", "I2"], vectornames=["V1", "V2"])
     container.show()
+
     def theSlot(ddict):
         print(ddict['event'])
 
@@ -604,4 +611,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+
