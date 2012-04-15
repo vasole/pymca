@@ -47,9 +47,6 @@ except ImportError:
 
 DEBUG = 0
 
-HorizontalSpacer = SimpleFitConfigurationGUI.HorizontalSpacer
-VerticalSpacer = SimpleFitConfigurationGUI.VerticalSpacer
-
 class TopWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
@@ -87,10 +84,10 @@ class TopWidget(qt.QWidget):
         #arrange everything
         self.mainLayout.addWidget(self.functionLabel,     0, 0)
         self.mainLayout.addWidget(self.addFunctionButton,    0, 1)
-        self.mainLayout.addWidget(HorizontalSpacer(self), 0, 2)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
         self.mainLayout.addWidget(self.fitFunctionLabel,  0, 3)
         self.mainLayout.addWidget(self.fitFunctionCombo,  0, 4)
-        self.mainLayout.addWidget(HorizontalSpacer(self), 0, 5)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 5)
         self.mainLayout.addWidget(self.backgroundLabel,   0, 6)
         self.mainLayout.addWidget(self.backgroundCombo,   0, 7)
 

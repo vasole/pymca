@@ -84,7 +84,7 @@ class AttenuatorsTab(qt.QWidget):
         self.table  = AttenuatorsTableWidget(self, name, attenuators,
                                              funnyfilters=True)
         layout.addWidget(self.table)
-        spacer = MaterialEditor.VerticalSpacer(self)
+        spacer = qt.VerticalSpacer(self)
         layout.addWidget(spacer)
         if QTVERSION < '4.0.0':
             self.mainTab = qt.QTabWidget(self, "mainTab")
