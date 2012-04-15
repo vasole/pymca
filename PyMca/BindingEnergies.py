@@ -33,6 +33,8 @@ try:
 except ImportError:
     print("BindingEnergies.py is importing specfile from local directory")
     import specfile
+
+# PyMcaDataDir is created at installation time in setup.py
 from PyMca import PyMcaDataDir
 
 filename = "BindingEnergies.dat"
@@ -46,15 +48,15 @@ if not os.path.exists(inputfile):
             dirname = os.path.dirname(dirname)
             inputfile = os.path.join(dirname, filename)
     if not os.path.exists(inputfile):
-        print("Cannot find inputfile ",inputfile)
+        print("Cannot find inputfile ", inputfile)
         raise IOError("Cannot find BindingEnergies.dat file")
 
-sf=specfile.Specfile(os.path.join(dirname, filename))
+sf = specfile.Specfile(os.path.join(dirname, filename))
 ElementShells = sf[0].alllabels()
 ElementBinding = numpy.transpose(sf[0].data()).tolist()
 sf = None
 
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -62,15 +64,16 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
-if __name__ == "__main__":
+
+def main():
     import sys
     if len(sys.argv) > 1:
         ele = sys.argv[1]
@@ -78,8 +81,11 @@ if __name__ == "__main__":
             z = Elements.index(ele) + 1
             for shell in ElementShells:
                 i = ElementShells.index(shell)
-                if ElementBinding[z-1][i] > 0.0:                    
-                    print(shell, ElementBinding[z-1][i])
+                if ElementBinding[z - 1][i] > 0.0:
+                    print(shell, ElementBinding[z - 1][i])
             sys.exit()
     print("Usage:")
     print("python BindingEnergies.py [element]")
+
+if __name__ == "__main__":
+    main()

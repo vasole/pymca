@@ -72,7 +72,7 @@ def save2DArrayListAsASCII(datalist, filename,
     if os.path.exists(filename):
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
     if labels is None:
         labels = []
@@ -122,7 +122,7 @@ def save2DArrayListAsEDF(datalist, filename, labels=None, dtype=None):
     if os.path.exists(filename):
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
     if labels is None:
         labels = []
@@ -161,7 +161,7 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename,
     if os.path.exists(filename):
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
     if labels is None:
         labels = []
@@ -318,7 +318,7 @@ def save3DArrayAsMonochromaticTiff(data, filename,
     if os.path.exists(filename):
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
     if labels is None:
         labels = []
@@ -363,6 +363,8 @@ def save3DArrayAsMonochromaticTiff(data, filename,
     outfileInstance.close()  # force file close
 
 
+# TODO labels is useless in this method.
+# it should be used to name the data that for the time being is named 'data'.
 def save3DArrayAsHDF5(data, filename, labels=None, dtype=None, mode='nexus',
                       mcaindex=-1, interpretation=None, compression=None):
     if not HDF5:
@@ -583,10 +585,13 @@ def save3DArrayAsHDF5(data, filename, labels=None, dtype=None, mode='nexus',
     hdf.flush()
     hdf.close()
 
-
-if __name__ == "__main__":
+def main():
     a = numpy.arange(1000000.)
     a.shape = 20, 50, 1000
     save3DArrayAsHDF5(a, '/test.h5', mode='nexus+', interpretation='image')
-    b = getHDF5FileInstanceAndBuffer('/test2.h5', (100, 100, 100))
+    getHDF5FileInstanceAndBuffer('/test2.h5', (100, 100, 100))
     print("Date String = ", getDate())
+
+if __name__ == "__main__":
+    main()
+

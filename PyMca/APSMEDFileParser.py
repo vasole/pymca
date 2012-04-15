@@ -29,6 +29,7 @@ import sys
 from PyMca import MEDFile
 from PyMca import SpecFileAbstractClass
 
+
 class APSMEDFileParser(object):
     def __init__(self, filename, sum_all=False):
         if not os.path.exists(filename):
@@ -42,15 +43,37 @@ class APSMEDFileParser(object):
         header.append('#S 1  %s Unknown command' % os.path.basename(filename))
         header.append('#D %s' % self._medFileObject.mcas[0].start_time)
 
-        data = []
-        for mca in self._medFileObject.mcas:
-            header.append('#@CTIME %f %f %f' % (mca.realtime,
-                                                mca.realtime,
-                                                mca.livetime))
-            header.append('#@CALIB %f %f %f' % (mca.cal_offset,
-                                                mca.cal_slope,
-                                                mca.cal_quad))
-            data.append(mca.data)
+        if sum_all:
+            realtime = 0
+            livetime = 0
+            cal_offset = 0
+            cal_slope = 0
+            cal_quad = 0
+            n = float(len(self._medFileObject.mcas))
+            for mca in self._medFileObject.mcas:
+                realtime += (mca.realtime / n)
+                livetime += (mca.livetime / n)
+                cal_offset += (cal_offset / n)
+                cal_slope += (cal_slope / n)
+                cal_quad += (cal_quad / n)
+            data = [self._medFileObject.get_data(sum_all=sum_all)]
+            # this makes no sense in any case
+            header.append('#@CTIME %f %f %f' % (realtime,
+                                                realtime,
+                                                livetime))
+            header.append('#@CALIB %f %f %f' % (cal_offset,
+                                                cal_slope,
+                                                cal_quad))
+        else:
+            data = []
+            for mca in self._medFileObject.mcas:
+                header.append('#@CTIME %f %f %f' % (mca.realtime,
+                                                    mca.realtime,
+                                                    mca.livetime))
+                header.append('#@CALIB %f %f %f' % (mca.cal_offset,
+                                                    mca.cal_slope,
+                                                    mca.cal_quad))
+                data.append(mca.data)
 
         self.motorNames = []
         motorValues = []
@@ -74,7 +97,7 @@ class APSMEDFileParser(object):
         Gives back the number of scans in the file
         """
         return len(self._scan)
-        
+
     def list(self):
         return "1:1"
 
@@ -88,6 +111,7 @@ class APSMEDFileParser(object):
 
     def allmotors(self):
         return self.motorNames
+
 
 class APSMEDScan(SpecFileAbstractClass.SpecFileAbstractScan):
     def __init__(self, data, scantype='MCA',
@@ -103,15 +127,17 @@ class APSMEDScan(SpecFileAbstractClass.SpecFileAbstractScan):
     def allmotorpos(self):
         return self.motorValues
 
+
 def isAPSMEDFile(filename):
     #Obviously I should put a better test than this one
     if not filename.upper().endswith(".XRF"):
         return False
     return True
 
+
 def test(filename):
     if isAPSMEDFile(filename):
-        sf=APSMEDFileParser(filename)
+        sf = APSMEDFileParser(filename)
     else:
         print("Not an APS Multi-element detector file")
     print(sf[0].header('S'))
