@@ -25,7 +25,6 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-import sys
 import numpy
 from PyMca import PyMcaQt as qt
 from PyMca import ExternalImagesWindow
@@ -65,7 +64,7 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         infotext  = 'Toggle background image subtraction from current image\n'
         infotext += 'No action if no background image available.'
-        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         self.backgroundButton = self.graphWidget._addToolButton(\
                                     self.backgroundIcon,
                                     self.subtractBackground,
@@ -79,7 +78,7 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
                                   'row_width':1,
                                   'column_width':1}
         self._medianParametersWidget = MedianParameters(self)
-        self._medianParametersWidget.widthSpin.setValue(1)        
+        self._medianParametersWidget.widthSpin.setValue(1)
         self.layout().addWidget(self._medianParametersWidget)
         self.connect(self._medianParametersWidget.widthSpin,
                      qt.SIGNAL('valueChanged(int)'),
