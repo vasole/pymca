@@ -5,6 +5,8 @@ import sys
 import PyMca
 
 sys.path.insert(0, os.path.dirname(PyMca.__file__))
-
-execfile(os.path.join(os.path.dirname(PyMca.__file__), 'PyMcaBatch.py'))
-
+fname = os.path.join(os.path.dirname(PyMca.__file__), 'PyMcaBatch.py')
+if sys.version < '3.0':
+    execfile(fname)
+else:
+    exec(compile(open(fname).read(), fname, 'exec'))
