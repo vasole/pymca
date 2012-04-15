@@ -391,7 +391,7 @@ if USE_SMART_INSTALL_SCRIPTS:
                     if self.dry_run:
                         log.info("changing mode of %s", ffile)
                     else:
-                        mode = ((os.stat(ffile)[ST_MODE]) | 0555) & 07777
+                        mode = ((os.stat(ffile)[ST_MODE]) | 0o555) & 0o7777
                         log.info("changing mode of %s to %o", ffile, mode)
                         os.chmod(ffile, mode)
 
