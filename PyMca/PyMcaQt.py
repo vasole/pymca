@@ -25,13 +25,23 @@
 # is a problem for you.
 #############################################################################*/
 import sys
+"""
+This module simplifies writing code that has to deal with with PyQt and PyQt4.
+
+In the future may also be used to choose between PyQt4 and PySide depending
+on the one that has been previously chosen by the end user.
+
+"""
+# force cx_freeze to consider sip among the modules to add
+# to the binary packages
 import sip
 if 'qt' not in sys.modules:
     try:
         from PyQt4.QtCore import *
         from PyQt4.QtGui import *
         try:
-            #In case PyQwt is compiled with QtSvg
+            # In case PyQwt is compiled with QtSvg this forces
+            # cx_freeze to add PyQt4.QtSvg to the list of modules
             from PyQt4.QtSvg import *
         except:
             pass
