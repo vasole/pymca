@@ -26,15 +26,11 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF"
 from PyMca import PCAWindow
-qt = PCAWindow.qt
+from PyMca import PyMcaQt as qt
 from PyMca import NNMAModule
 QTVERSION = qt.qVersion()
 
-class HorizontalSpacer(qt.QWidget):
-    def __init__(self, *args):
-        qt.QWidget.__init__(self, *args)
-        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
-                                          qt.QSizePolicy.Fixed))
+
 class NNMAParametersDialog(qt.QDialog):
     def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10]):
         qt.QDialog.__init__(self, parent)
@@ -126,7 +122,7 @@ class NNMAParametersDialog(qt.QDialog):
             self.binningCombo.addItem("%d" % option)
         self.speedOptions.mainLayout.addWidget(labelPC, 0, 0)
         self.speedOptions.mainLayout.addWidget(self.nPC, 0, 1)
-        #self.speedOptions.mainLayout.addWidget(HorizontalSpacer(self), 0, 2)
+        #self.speedOptions.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
         self.binningCombo.setEnabled(True)
@@ -140,14 +136,14 @@ class NNMAParametersDialog(qt.QDialog):
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setAutoDefault(False)
         self.okButton.setText("Accept")
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.okButton)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setAutoDefault(False)
         self.dismissButton.setText("Dismiss")
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.dismissButton)
-        hboxLayout.addWidget(HorizontalSpacer(hbox))
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.mainLayout.addWidget(self.speedOptions)
         self.mainLayout.addWidget(hbox)
         self.connect(self.okButton,
@@ -302,4 +298,4 @@ def test():
 if __name__ == "__main__":
     import numpy
     test2()
-        
+
