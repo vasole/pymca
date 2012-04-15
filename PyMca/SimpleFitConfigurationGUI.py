@@ -28,9 +28,8 @@ import sys
 import os.path
 import numpy
 from PyMca import SimpleFitControlWidget
-qt = SimpleFitControlWidget.qt
-HorizontalSpacer = SimpleFitControlWidget.HorizontalSpacer
-VerticalSpacer = SimpleFitControlWidget.VerticalSpacer
+
+from PyMca import PyMcaQt as qt
 from PyMca import ConfigDict
 from PyMca import PyMca_Icons as Icons
 from PyMca import PyMcaDirs
@@ -50,9 +49,9 @@ class DummyWidget(qt.QWidget):
         self.label = qt.QLabel(self)
         self.label.setAlignment(qt.Qt.AlignHCenter)
         self.label.setText(text)
-        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.mainLayout.addWidget(qt.VerticalSpacer(self))
         self.mainLayout.addWidget(self.label)
-        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.mainLayout.addWidget(qt.VerticalSpacer(self))
         self._configuration = {}
 
     def setConfiguration(self, ddict):
@@ -178,7 +177,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
             self.mainLayout.addWidget(self.tabWidget)
             self._stripDialog = None
         self.buildAndConnectActions()
-        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.mainLayout.addWidget(qt.VerticalSpacer(self))
         self._fitFunctionWidgets = {}
         self._backgroundWidgets = {}
         self.setSimpleFitInstance(fit)

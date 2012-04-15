@@ -28,7 +28,6 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
 from PyMca import PyMcaQt as qt
-HorizontalSpacer = qt.HorizontalSpacer
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:

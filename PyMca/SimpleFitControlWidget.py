@@ -30,9 +30,6 @@ QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
     raise ImportError("This module requires Qt4")
 
-HorizontalSpacer = qt.HorizontalSpacer
-VerticalSpacer   = qt.VerticalSpacer
-
 class FitFunctionDefinition(qt.QGroupBox):
     def __init__(self, parent=None):
         qt.QGroupBox.__init__(self, parent)
@@ -57,7 +54,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.fitFunctionSetupButton.hide()
 
         self.mainLayout.addWidget(self.fitFunctionCheckBox,    row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self),   row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self),   row, 1)
         self.mainLayout.addWidget(self.fitFunctionSetupButton, row, 2)
         self.mainLayout.addWidget(self.fitFunctionCombo,       row, 3)
         row += 1        
@@ -77,7 +74,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.backgroundSetupButton.hide()
 
         self.mainLayout.addWidget(self.backgroundCheckBox,    row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self),     row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self),     row, 1)
         self.mainLayout.addWidget(self.backgroundSetupButton, row, 2)
         self.mainLayout.addWidget(self.backgroundCombo,       row, 3)
         row += 1
@@ -97,7 +94,7 @@ class FitFunctionDefinition(qt.QGroupBox):
                      self._stripComboActivated)
 
         self.mainLayout.addWidget(self.stripCheckBox,       row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self),   row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self),   row, 1)
         self.mainLayout.addWidget(self.stripSetupButton,    row, 2)
         self.mainLayout.addWidget(self.stripCombo,          row, 3)
         row += 1
@@ -262,7 +259,7 @@ class FitControl(qt.QGroupBox):
         self.fitAlgorithmCombo.addItem(str("Linear Fit"))
 
         self.mainLayout.addWidget(self.fitAlgorithmLabel, row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self), row, 1)
         self.mainLayout.addWidget(self.fitAlgorithmCombo, row, 3)
         row += 1
 
@@ -274,7 +271,7 @@ class FitControl(qt.QGroupBox):
         self.weightCombo.addItem(str("Poisson (1/Y)"))
 
         self.mainLayout.addWidget(self.weightLabel,       row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self), row, 1)
         self.mainLayout.addWidget(self.weightCombo,       row, 3)
         row += 1
 
@@ -314,7 +311,7 @@ class FitControl(qt.QGroupBox):
         self.iterSpin.setMaximum(10000)
         self.iterSpin.setValue(10)
         self.mainLayout.addWidget(self.iterLabel,         row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self), row, 1)
         self.mainLayout.addWidget(self.iterSpin,          row, 3)
         row += 1
 
@@ -335,7 +332,7 @@ class FitControl(qt.QGroupBox):
             self.chi2Value.setValue(0.001)
 
         self.mainLayout.addWidget(self.chi2Label,         row, 0)
-        self.mainLayout.addWidget(HorizontalSpacer(self), row, 1)
+        self.mainLayout.addWidget(qt.HorizontalSpacer(self), row, 1)
         self.mainLayout.addWidget(self.chi2Value,         row, 3)
         row +=1 
 
@@ -399,7 +396,7 @@ class SimpleFitControlWidget(qt.QWidget):
         self.fitControlWidget = FitControl(self)
         self.mainLayout.addWidget(self.functionDefinitionWidget)
         self.mainLayout.addWidget(self.fitControlWidget)
-        self.mainLayout.addWidget(VerticalSpacer(self))
+        self.mainLayout.addWidget(qt.VerticalSpacer(self))
         self.connect(self.functionDefinitionWidget,
                      qt.SIGNAL("FitFunctionDefinitionSignal"),
                      self._functionDefinitionSlot)
