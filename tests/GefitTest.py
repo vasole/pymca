@@ -5,7 +5,7 @@ import numpy
 class testGefit(unittest.TestCase):
     def setUp(self):
         """
-        import the specfile module
+        import the module
         """
         try:
             from PyMca import Gefit
@@ -22,7 +22,6 @@ class testGefit(unittest.TestCase):
         self.assertIsNotNone(self.gefit)
 
     def testGefitLeastSquares(self):
-        #"""Test specfile readout"""
         self.testGefitImport()
         x = numpy.arange(500.)
         originalParameters = numpy.array([10.5, 2, 1000.0, 200., 100],
