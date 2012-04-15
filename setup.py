@@ -369,8 +369,8 @@ if USE_SMART_INSTALL_SCRIPTS:
                     elif basename.startswith('pymca'):
                         modfile = 'PyMcaMain.py'
                     else:
-                        print " ignored" , filein
-                        continue                
+                        print("ignored %s" % filein)
+                        continue   
                 text  = "#!/bin/bash\n"
                 text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
                 #deal with sys.executables not named python
@@ -387,13 +387,13 @@ if USE_SMART_INSTALL_SCRIPTS:
             if os.name == 'posix':
                 # Set the executable bits (owner, group, and world) on
                 # all the scripts we just installed.
-                for file in self.get_outputs():
+                for ffile in self.get_outputs():
                     if self.dry_run:
-                        log.info("changing mode of %s", file)
+                        log.info("changing mode of %s", ffile)
                     else:
-                        mode = ((os.stat(file)[ST_MODE]) | 0555) & 07777
-                        log.info("changing mode of %s to %o", file, mode)
-                        os.chmod(file, mode)
+                        mode = ((os.stat(ffile)[ST_MODE]) | 0555) & 07777
+                        log.info("changing mode of %s to %o", ffile, mode)
+                        os.chmod(ffile, mode)
 
 # man pages handling
 def abspath(*path):
