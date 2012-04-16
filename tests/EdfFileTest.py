@@ -82,10 +82,16 @@ class testEdfFile(unittest.TestCase):
         edf =None
         gc.collect()
 
-def getSuite():
-    suite = unittest.TestLoader().loadTestsFromTestCase(testEdfFile)
-    return suite
+def getSuite(auto=True):
+    testSuite = unittest.TestSuite()
+    if auto:
+        testSuite.addTest(\
+            unittest.TestLoader().loadTestsFromTestCase(testEdfFile))
+    else:
+        # use a predefined order
+        testSuite.addTest(testEdfFile("testEdfFileImport"))
+        testSuite.addTest(testEdfFile("testEdfFileReadWrite"))
+    return testSuite
 
 if __name__ == '__main__':
-    #unittest.main()
-    unittest.TextTestRunner(verbosity=2).run(getSuite())
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))

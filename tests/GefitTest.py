@@ -38,10 +38,16 @@ class testGefit(unittest.TestCase):
         for i in range(len(originalParameters)):
             self.assertTrue(abs(fittedpar[i] - originalParameters[i]) < 0.01)
 
-def getSuite():
-    suite = unittest.TestLoader().loadTestsFromTestCase(testGefit)
-    return suite
+def getSuite(auto=True):
+    testSuite = unittest.TestSuite()
+    if auto:
+        testSuite.addTest(\
+            unittest.TestLoader().loadTestsFromTestCase(testGefit))
+    else:
+        # use a predefined order
+        testSuite.addTest(testGefit("testGefitImport"))
+        testSuite.addTest(testGefit("testGefitLeastSquares"))
+    return testSuite
 
 if __name__ == '__main__':
-    #unittest.main()
-    unittest.TextTestRunner(verbosity=2).run(getSuite())
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))

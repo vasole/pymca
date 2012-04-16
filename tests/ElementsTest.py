@@ -83,16 +83,15 @@ class testElements(unittest.TestCase):
         self.assertTrue('S' in lines[0]['elements'])
         self.assertTrue('Hg' in lines[0]['elements'])
 
-def getSuite():
+def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    if 1:
+    if auto:
         testSuite.addTest(\
             unittest.TestLoader().loadTestsFromTestCase(testElements))
     else:
-        testSuite.addTest(testData("testDataDirectoryPresence"))
-        testSuite.addTest(testData("testPeakIdentification"))
+        testSuite.addTest(testElements("testDataDirectoryPresence"))
+        testSuite.addTest(testElements("testPeakIdentification"))
     return testSuite
 
 if __name__ == '__main__':
-    #unittest.main()
-    unittest.TextTestRunner(verbosity=2).run(getSuite())
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))

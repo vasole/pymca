@@ -4,8 +4,8 @@ import sys
 import glob
 import unittest
 
-def getSuite():
-    pythonFiles = glob.glob(os.path.join(os.path.dirname(__file__),"*.py"))
+def getSuite(auto=True):
+    pythonFiles = glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))
     sys.path.insert(0, os.path.dirname(__file__))
     testSuite = unittest.TestSuite()
     for fname in pythonFiles:
@@ -18,9 +18,13 @@ def getSuite():
             print("Failed to import %s" % fname)
             continue
         if "getSuite" in dir(module):
-            testSuite.addTest(module.getSuite())
+            testSuite.addTest(module.getSuite(auto))
     return testSuite
 
 if __name__ == '__main__':
-    #unittest.main()
-    unittest.TextTestRunner(verbosity=2).run(getSuite())
+    import sys
+    if len(sys.argv) > 1:
+        auto = False
+    else:
+        auto = True
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))

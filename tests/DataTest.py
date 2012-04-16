@@ -78,15 +78,15 @@ class testData(unittest.TestCase):
                 print('File "%s" does not exist.' % fname)
                 raise
         
-def getSuite():
+def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    if 1:
+    if auto:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testData))
     else:
+        # use a predefined order
         testSuite.addTest(testData("testDataDirectoryPresence"))
         testSuite.addTest(testData("testDataFilePresence"))
     return testSuite
 
 if __name__ == '__main__':
-    #unittest.main()
-    unittest.TextTestRunner(verbosity=2).run(getSuite())
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))

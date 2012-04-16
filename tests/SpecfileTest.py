@@ -88,10 +88,18 @@ class testSpecfile(unittest.TestCase):
         self.assertEqual(datacol[1], data[0][1])
         gc.collect()
 
-def getSuite():
-    suite = unittest.TestLoader().loadTestsFromTestCase(testSpecfile)
-    return suite
+def getSuite(auto=True):
+    testSuite = unittest.TestSuite()
+    if auto:
+        testSuite.addTest(\
+            unittest.TestLoader().loadTestsFromTestCase(testSpecfile))
+    else:
+        # use a predefined order
+        testSuite.addTest(testSpecfile("testSpecfileImport"))
+        testSuite.addTest(testSpecfile("testSpecfileReading"))
+        testSuite.addTest(\
+            testSpecfile("testSpecfileReadingCompatibleWithUserLocale"))
+    return testSuite
 
 if __name__ == '__main__':
-    #unittest.main()
-    unittest.TextTestRunner(verbosity=2).run(getSuite())
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))
