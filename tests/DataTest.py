@@ -30,11 +30,6 @@ class testData(unittest.TestCase):
         except:
             self.dataDir = None
 
-    def gaussianPlusLinearBackground(self, param, t):
-        dummy = 2.3548200450309493 * (t - param[3])/ param[4]
-        return param[0] + param[1] * t +\
-               param[2] * numpy.exp(-0.5 * dummy * dummy)
-
     def testDataDirectoryPresence(self):
         # Testing directory presence
         try:
@@ -88,8 +83,8 @@ def getSuite():
     if 1:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testData))
     else:
-        testSuite.addTest(testData("testDirectoryPresence"))
-        testSuite.addTest(testData("testFilePresence"))
+        testSuite.addTest(testData("testDataDirectoryPresence"))
+        testSuite.addTest(testData("testDataFilePresence"))
     return testSuite
 
 if __name__ == '__main__':
