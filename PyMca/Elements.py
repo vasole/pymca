@@ -2528,16 +2528,20 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
 
     
 def getcandidates(energy,threshold=None,targetrays=None):
-    if threshold  is None:threshold = 0.010
-    if targetrays is None:targetrays=['K','L1','L2','L3']
-    if type(energy) != type([]):energy=[energy]
-    if type(targetrays) != type([]):targetrays=[targetrays]
+    if threshold  is None:
+        threshold = 0.010
+    if targetrays is None:
+        targetrays=['K', 'L1', 'L2', 'L3', 'M']
+    if type(energy) != type([]):
+        energy = [energy]
+    if type(targetrays) != type([]):
+        targetrays = [targetrays]
     #K lines
     lines ={}
     index = 0
     for ene in energy:
-        lines[index]={'energy':ene,
-                      'elements':[]}
+        lines[index] = {'energy':ene,
+                        'elements':[]}
         for ele in ElementList:
             for ray in targetrays:
                 rays = ray + " xrays"
@@ -2549,8 +2553,8 @@ def getcandidates(energy,threshold=None,targetrays=None):
                             if ele not in lines[index]['elements']:
                                 lines[index]['elements'].append(ele) 
                                 lines[index][ele]=[]  
-                            lines[index][ele].append([transition,e,r])
-        index+=1
+                            lines[index][ele].append([transition, e, r])
+        index += 1
     return lines
 
 
