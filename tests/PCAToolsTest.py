@@ -30,35 +30,27 @@ class testPCATools(unittest.TestCase):
         self.assertTrue(nData == nSpectra)
 
         # calculate covariance using PCATools and 2D stack
-        # while dynamically loading the data
-        pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
-                                                        force=True,
-                                                        center=True)
+        # directly and dynamically loading data
+        for force in [False, True]:
+            pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
+                                                            force=force,
+                                                            center=True)
         
-        self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
-        self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
-        self.assertTrue(nData == nSpectra)
+            self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
+            self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
+            self.assertTrue(nData == nSpectra)
 
         # calculate covariance using PCATools and 3D stack
+        # directly and dynamically loading data
         x.shape = 2, 2, -1
-        pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
-                                                        force=False,
-                                                        center=True)
+        for force in [False, True]:
+            pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
+                                                            force=force,
+                                                            center=True)
 
-        self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
-        self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
-        self.assertTrue(nData == nSpectra)
-
-        # calculate covariance using PCATools and 3D stack
-        # while dynamically loading the data
-        x.shape = 2, 2, -1
-        pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
-                                                        force=True,
-                                                        center=True)
-
-        self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
-        self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
-        self.assertTrue(nData == nSpectra)
+            self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
+            self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
+            self.assertTrue(nData == nSpectra)
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
