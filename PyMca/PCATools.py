@@ -500,8 +500,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
 
     N = int(nChannels / binning)
 
-    # sumSpectrum is unused, but it makes the code readable
-    cov, sumSpectrum, calculatedPixels = getCovarianceMatrix(stack,
+    # avgSpectrum is unused, but it makes the code readable
+    cov, avgSpectrum, calculatedPixels = getCovarianceMatrix(stack,
                                                              index=index,
                                                              binning=binning,
                                                              force=False,
@@ -514,9 +514,11 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
     #option to normalize to unit standard deviation
     normalizeToUnitStandardDeviation = False
     if normalizeToUnitStandardDeviation:
+        print("normalizing")
         for i in range(cov.shape[0]):
-            if totalVariance[i] != 0:
-                cov[i] /= totalVariance[i]
+            if totalVariance[i] > 0:
+                cov[i, :] /= numpy.sqrt(totalVariance[i])
+                cov[:, i] /= numpy.sqrt(totalVariance[i])
 
     if DEBUG:
         import time
@@ -539,10 +541,11 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
             i = a[i0][1]
             eigenvalues[i0] = evalues[i]
             if normalizeToUnitStandardDeviation:
-                print("Explained variance = ", i, evalues[i] / totalVariance)
+                print("PC%02d  Explained variance %.5f %% " %\
+                                (i0 + 1, 100. * evalues[i] / totalVariance.shape[0]))
             else:
-                print("Explained variance = ", i,
-                      evalues[i] / totalVariance.shape[0])
+                print("PC%02d  Explained variance %.5f %% " %\
+                                (i0 + 1, 100. * evalues[i] / totalVariance.sum()))
             eigenvectors[i0, :] = evectors[:, i]
     else:
         idx = numpy.argsort(evalues)
