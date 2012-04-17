@@ -12,6 +12,14 @@ class testPCATools(unittest.TestCase):
                          [4.0, -4.0,  4.0],
                          [4.0,  4.0,  4.0]])
         nSpectra = x.shape[0]
+
+        # test just multiplication
+        tmpArray = numpy.dot(x.T, x)
+        for force in [True, False]:
+            pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
+                                                            force=force,
+                                                            center=False)
+            self.assertTrue(numpy.allclose(tmpArray, pymcaCov * (nData - 1)))
         
         # calculate covariance using numpy
         numpyCov = numpy.cov(x.T)
@@ -19,15 +27,6 @@ class testPCATools(unittest.TestCase):
         tmpArray = x.T - numpyAvg
         numpyCov2 = numpy.dot(tmpArray, tmpArray.T) / nSpectra
         numpyAvg = numpyAvg.reshape(1, -1)
-
-        # calculate covariance using PCATools and 2D stack
-        pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
-                                                        force=False,
-                                                        center=True)
-        
-        self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
-        self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
-        self.assertTrue(nData == nSpectra)
 
         # calculate covariance using PCATools and 2D stack
         # directly and dynamically loading data
