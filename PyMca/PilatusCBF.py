@@ -36,8 +36,15 @@ __author__    = "Jerome Kieffer"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __license__   = "GPLv2+"
 
+import sys
 import os
 import numpy as np
+import logging
+if sys.version < '3':
+    _fileClass = file
+else:
+    import io
+    _fileClass = io.IOBase
 
 DEBUG = False
 
@@ -62,7 +69,7 @@ DEFAULT_VALUES = {
 
 class PilatusCBF(object):
     def __init__(self, filename):
-        if isinstance(filename, file):
+        if isinstance(filename, _fileClass):
             fd = filename
         else:
             #the b is needed for windows
@@ -71,7 +78,7 @@ class PilatusCBF(object):
         self.__data = np.array([])
         self.__info = {}
         #read the file
-        if isinstance(filename, file):
+        if isinstance(filename, _fileClass):
             self.read(filename.name)
         else:
             self.read(filename)
@@ -88,24 +95,41 @@ class PilatusCBF(object):
         @param inStream: the binary image (without any CIF decorators)
         @type inStream: python string.
         """
-        sep = "\r\n"
-        iSepPos = inStream.find(sep)
-        if iSepPos < 0 or iSepPos > 80:
-            sep = "\n" #switch back to unix representation
-
-        lines = inStream.split(sep)
-        for oneLine in lines[1:]:
-            if len(oneLine) < 10:
-                break
-            try:
-                key, val = oneLine.split(':' , 1)
-            except ValueError:
-                key, val = oneLine.split('=' , 1)
-            key = key.strip()
-            self.__header[key] = val.strip(" \"\n\r\t")
+        if sys.platform < '3.0' or\
+           isinstance(inStream, str):
+            sep = "\r\n"
+            iSepPos = inStream.find(sep)
+            if iSepPos < 0 or iSepPos > 80:
+                sep = "\n" #switch back to unix representation
+            lines = inStream.split(sep)
+            for oneLine in lines[1:]:
+                if len(oneLine) < 10:
+                    break
+                try:
+                    key, val = oneLine.split(':' , 1)
+                except ValueError:
+                    key, val = oneLine.split('=' , 1)
+                key = key.strip()
+                self.__header[key] = val.strip(" \"\n\r\t")
+        else:
+            sep = "\r\n".encode('utf-8')
+            iSepPos = inStream.find(sep)
+            if iSepPos < 0 or iSepPos > 80:
+                sep = "\n".encode('utf-8') #switch back to unix representation
+            lines = inStream.split(sep)
+            for oneLine in lines[1:]:
+                if len(oneLine) < 10:
+                    break
+                try:
+                    key, val = oneLine.split(':'.encode('utf-8') , 1)
+                except ValueError:
+                    key, val = oneLine.split('='.encode('utf-8') , 1)
+                key = key.strip()
+                self.__header[key.decode('utf-8')] = val.decode('utf-8').\
+                                                         strip(" \"\n\r\t")
         missing = []
         for item in MINIMUM_KEYS:
-            if item not in self.__header.iterkeys():
+            if item not in self.__header.keys():
                 missing.append(item)
         if len(missing) > 0:
             if DEBUG:
@@ -128,9 +152,17 @@ class PilatusCBF(object):
             @return list of NParrays
             """
             listnpa = []
-            key16 = "\x80"
-            key32 = "\x00\x80"
-            key64 = "\x00\x00\x00\x80"
+            if sys.version < '3.0' or\
+               isinstance(stream, str):
+                key16 = "\x80"
+                key32 = "\x00\x80"
+                key64 = "\x00\x00\x00\x80"
+            else:
+                # I avoid the b"..." syntax to try to keep python 2.5 compatibility
+                # encoding with utf-8 does not work
+                key16 = "\x80".encode('latin-1')
+                key32 = "\x00\x80".encode('latin-1')
+                key64 = "\x00\x040\x00\x80".encode('latin-1')
 #            idx = 0
             shift = 1
 #            position = 0
@@ -162,8 +194,13 @@ class PilatusCBF(object):
                 stream = stream[idx + shift:]
             return  listnpa
 
-
-        starter = "\x0c\x1a\x04\xd5"
+        if sys.version < '3.0' or\
+            isinstance(inStream, str):
+            starter = "\x0c\x1a\x04\xd5"
+        else:
+            # I avoid the b"..." syntax to try to keep python 2.5 compatibility
+            # encoding with utf-8 does not work
+            starter = "\x0c\x1a\x04\xd5".encode('latin-1')
         startPos = inStream.find(starter) + 4
         data = inStream[ startPos: startPos + int(self.__header["X-Binary-Size"])]
         myData = np.hstack(analyse(data)).cumsum()
@@ -177,8 +214,11 @@ class PilatusCBF(object):
         # backport contents of the CIF data to the headers
         for key in self.cif:
             if key != "_array_data.data":
-                self.__header[key] = self.cif[key].strip(" \"\n\r\t")
-
+                if isinstance(self.cif[key], str):
+                    self.__header[key] = self.cif[key].strip(" \"\n\r\t")
+                else:
+                    self.__header[key] = self.cif[key].decode('utf-8').\
+                                         strip(" \"\n\r\t")
         if not "_array_data.data" in self.cif:
             raise IOError("CBF file %s is corrupt, cannot find data block with '_array_data.data' key" % fname)
 
@@ -196,6 +236,7 @@ class PilatusCBF(object):
             bytecode = np.int32
             self.bpp = 32
             logging.warning("Defaulting type to int32")
+
         if self.__header["conversions"] == "x-CBF_BYTE_OFFSET":
             self.__data = self._readbinary_byte_offset(self.cif["_array_data.data"]).astype(bytecode).reshape((self.dim2, self.dim1))
         else:
@@ -206,10 +247,20 @@ class CIF(dict):
     """
     This is the CIF class, it represents the CIF dictionnary as a a python dictionnary thus inherits from the dict built in class.
     """
-    EOL = ["\r", "\n", "\r\n", "\n\r"]
-    BLANK = [" ", "\t"] + EOL
-    START_COMMENT = ["\"", "\'"]
-    BINARY_MARKER = "--CIF-BINARY-FORMAT-SECTION--"
+    if sys.version < '3.0':
+        EOL = ["\r", "\n", "\r\n", "\n\r"]
+        BLANK = [" ", "\t"] + EOL
+        START_COMMENT = ["\"", "\'"]
+        BINARY_MARKER = "--CIF-BINARY-FORMAT-SECTION--"
+    else:
+        EOL = ["\r", "\n", "\r\n", "\n\r",
+               "\r".encode('utf-8'),
+               "\n".encode('utf-8'),
+               "\r\n".encode('utf-8'),
+               "\n\r".encode('utf-8')]
+        BLANK = [" ", "\t", " ".encode('utf-8'), "\t".encode('utf-8')] + EOL
+        START_COMMENT = ["\"", "\'", "\"".encode('utf-8'), "\'".encode('utf-8')]
+        bBINARY_MARKER = "--CIF-BINARY-FORMAT-SECTION--".encode('utf-8')
 
     def __init__(self, _strFilename=None):
         """
@@ -316,7 +367,7 @@ class CIF(dict):
         lFields = CIF._splitCIF(sText.strip())
         #Then : look for loops
         for i in range(len(lFields)):
-            if lFields[i].lower() == "loop_":
+            if lFields[i].lower() in ["loop_", "loop_".encode('utf-8')]:
                 loopidx.append(i)
         if len(loopidx) > 0:
             for i in loopidx:
@@ -332,9 +383,15 @@ class CIF(dict):
             self["loop_"] = loop
 
         for i in range(len(lFields) - 1):
-            if len(lFields[i + 1]) == 0 : lFields[i + 1] = "?"
-            if lFields[i][0] == "_" and lFields[i + 1][0] != "_":
-                self[lFields[i]] = lFields[i + 1]
+            if len(lFields[i + 1]) == 0 :
+                lFields[i + 1] = "?"
+            if lFields[i][0:1] in ["_", "_".encode('utf-8')] and \
+               lFields[i + 1][0:1] not in ["_", "_".encode('utf-8')]:
+                if sys.version < '3.0' or\
+                   isinstance(lFields[i], str):
+                    self[lFields[i]] = lFields[i + 1]
+                else:
+                    self[lFields[i].decode('utf-8')] = lFields[i + 1]
 
     @staticmethod
     def _splitCIF(sText):
@@ -350,11 +407,12 @@ class CIF(dict):
         while True:
             if len(sText) == 0:
                 break
-            elif sText[0] == "'":
+            elif sText[0:1] in ["'", "'".encode('utf-8')]:
+                toTest = sText[0:1]
                 idx = 0
                 bFinished = False
                 while not  bFinished:
-                    idx += 1 + sText[idx + 1:].find("'")
+                    idx += 1 + sText[idx + 1:].find(sText[0])
     ##########debuging    in case we arrive at the end of the text             
                     if idx >= len(sText) - 1:
                         lFields.append(sText[1:-1].strip())
@@ -362,17 +420,18 @@ class CIF(dict):
                         bFinished = True
                         break
 
-                    if sText[idx + 1] in CIF.BLANK:
+                    if sText[idx + 1:idx + 2] in CIF.BLANK:
                         lFields.append(sText[1:idx].strip())
                         sText1 = sText[idx + 1:]
                         sText = sText1.strip()
                         bFinished = True
 
-            elif sText[0] == '"':
+            elif sText[0:1] in ['"', '"'.encode('utf-8')]:
+                toTest = sText[0:1]
                 idx = 0
                 bFinished = False
                 while not  bFinished:
-                    idx += 1 + sText[idx + 1:].find('"')
+                    idx += 1 + sText[idx + 1:].find(toTest)
     ##########debuging    in case we arrive at the end of the text             
                     if idx >= len(sText) - 1:
     #                    print sText,idx,len(sText)
@@ -382,25 +441,30 @@ class CIF(dict):
                         bFinished = True
                         break
 
-                    if sText[idx + 1] in CIF.BLANK:
+                    if sText[idx + 1:idx + 2] in CIF.BLANK:
                         lFields.append(sText[1:idx].strip())
                         #print lFields[-1]
                         sText1 = sText[idx + 1:]
                         sText = sText1.strip()
                         bFinished = True
-            elif sText[0] == ';':
-                if sText[1:].strip().find(CIF.BINARY_MARKER) == 0:
-                    idx = sText[32:].find(CIF.BINARY_MARKER)
+            elif sText[0:1] in [';', ';'.encode('utf-8')]:
+                toTest = sText[0:1]
+                if isinstance(sText, str):
+                    CIF_BINARY_MARKER = CIF.BINARY_MARKER
+                else:
+                    CIF_BINARY_MARKER = CIF.bBINARY_MARKER
+                if sText[1:].strip().find(CIF_BINARY_MARKER) == 0:
+                    idx = sText[32:].find(CIF_BINARY_MARKER)
                     if idx == -1:
                         idx = 0
                     else:
-                        idx += 32 + len(CIF.BINARY_MARKER)
+                        idx += 32 + len(CIF_BINARY_MARKER)
                 else:
                     idx = 0
                 bFinished = False
                 while not  bFinished:
-                    idx += 1 + sText[idx + 1:].find(';')
-                    if sText[idx - 1] in CIF.EOL:
+                    idx += 1 + sText[idx + 1:].find(toTest)
+                    if sText[idx - 1:idx] in CIF.EOL:
                         lFields.append(sText[1:idx - 1].strip())
                         sText1 = sText[idx + 1:]
                         sText = sText1.strip()
