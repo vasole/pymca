@@ -175,15 +175,18 @@ class  EdfFile(object):
         self.NumImages = 0
         self.FileName = FileName
         self.File = 0
-        if fastedf is None:fastedf = 0
+        if fastedf is None:
+            fastedf = 0
         self.fastedf = fastedf
         self.ADSC = False
         self.MARCCD = False
         self.TIFF = False
         self.PILATUS_CBF = False
         self.SPE = False
-        if sys.byteorder == "big": self.SysByteOrder = "HighByteFirst"
-        else: self.SysByteOrder = "LowByteFirst"
+        if sys.byteorder == "big":
+            self.SysByteOrder = "HighByteFirst"
+        else:
+            self.SysByteOrder = "LowByteFirst"
         if access is not None:
             if access[0].upper() == "R":
                 if not os.path.isfile(self.FileName):

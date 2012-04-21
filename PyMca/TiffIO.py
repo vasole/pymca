@@ -22,7 +22,6 @@ import sys
 import os
 import struct
 import numpy
-#import time
 
 DEBUG = 0
 ALLOW_MULTIPLE_STRIPS = False
@@ -103,8 +102,9 @@ class TiffIO(object):
         if ('w' in mode):
             if '+' not in mode:
                 mode += '+'
-        #if isinstance(filename, file): #does not work in python 3
-        if hasattr(filename, "seek"):
+
+        if hasattr(filename, "seek") and\
+           hasattr(filename, "read"):
             fd = filename
             self._access = None
         else:
