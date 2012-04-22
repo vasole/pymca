@@ -25,22 +25,20 @@
 # is a problem for you.
 #############################################################################*/
 import types
-import copy
 from PyMca import DataObject
 from PyMca import spswrap as sps
-import string
-DEBUG = 0
 
+DEBUG = 0
 SOURCE_TYPE = 'SPS'
 
+
 class SpsDataSource(object):
-    def __init__(self, name, object=None, copy = True):
-        if type(name) != types.StringType:
+    def __init__(self, name):
+        if type(name) not in types.StringTypes:
             raise TypeError("Constructor needs string as first argument")
         self.name = name
         self.sourceName = name
-        self.sourceType=SOURCE_TYPE
-
+        self.sourceType = SOURCE_TYPE
 
     def refresh(self):
         pass
@@ -54,17 +52,17 @@ class SpsDataSource(object):
         array name.
         """
         return self.__getSourceInfo()
-        
-    def getKeyInfo(self,key):
+
+    def getKeyInfo(self, key):
         if key in self.getSourceInfo()['KeyList']:
             return self.__getArrayInfo(key)
         else:
             return {}
-                
-    def getDataObject(self,key_list,selection=None):
+
+    def getDataObject(self, key_list, selection=None):
         if type(key_list) != types.ListType:
             nolist = True
-            key_list=[key_list]
+            key_list = [key_list]
         else:
             output = []
             nolist = False
@@ -77,35 +75,26 @@ class SpsDataSource(object):
                 #array = key
                 #create data object
                 data = DataObject.DataObject()
-                data.info=self.__getArrayInfo(key)
-                data.info ['selection'] = selection
-                """
-                info["row"]=row
-                info["col"]=col
-                if info["row"]!="ALL":
-                    data= sps.getdatarow(self.SourceName,array,info["row"])
-                    if data is not None: data=numpy.reshape(data,(1,data.shape[0]))
-                elif info["col"]!="ALL":
-                    data= sps.getdatacol(self.SourceName,array,info["col"])
-                    if data is not None: data=numpy.reshape(data,(data.shape[0],1))
-                else: data=sps.getdata (self.SourceName,array)
-                """
-                data.data=sps.getdata (self.name,key)
+                data.info = self.__getArrayInfo(key)
+                data.info['selection'] = selection
+                data.data = sps.getdata(self.name, key)
                 if nolist:
                     if selection is not None:
-                        scantest = (data.info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
+                        scantest = (data.info['flag'] &
+                                    sps.TAG_SCAN) == sps.TAG_SCAN
                         if ((key in ["SCAN_D"]) or scantest) \
-                            and selection.has_key('cntlist'):
+                            and 'cntlist' in selection:
                             data.x = None
                             data.y = None
                             data.m = None
-                            if data.info['envdict'].has_key('nopts'):
-                                nopts  = string.atoi(data.info['envdict']['nopts']) + 1
+                            if 'nopts' in data.info['envdict']:
+                                nopts = int(data.info['envdict']['nopts']) + 1
                             else:
-                                nopts  =data.info['rows']
-                            if not data.info.has_key('LabelNames'):
-                                data.info['LabelNames'] = selection['cntlist'] * 1
-                            if selection.has_key('x'):
+                                nopts = data.info['rows']
+                            if not 'LabelNames' in data.info:
+                                data.info['LabelNames'] =\
+                                    selection['cntlist'] * 1
+                            if 'x' in selection:
                                 for labelindex in selection['x']:
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
@@ -113,7 +102,7 @@ class SpsDataSource(object):
                                     index = data.info['LabelNames'].index(label)
                                     if data.x is None: data.x = []
                                     data.x.append(data.data[:nopts, index])
-                            if selection.has_key('y'):
+                            if 'y' in selection:
                                 for labelindex in selection['y']:
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
@@ -121,7 +110,7 @@ class SpsDataSource(object):
                                     index = data.info['LabelNames'].index(label)
                                     if data.y is None: data.y = []
                                     data.y.append(data.data[:nopts, index])
-                            if selection.has_key('m'):
+                            if 'm' in selection:
                                 for labelindex in selection['m']:
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
@@ -131,11 +120,11 @@ class SpsDataSource(object):
                                     data.m.append(data.data[:nopts, index])
                             data.info['selectiontype'] = "1D"
                             data.info['scanselection'] = True
-                            data.data = None 
+                            data.data = None
                             return data
-                        if (key in ["XIA_DATA"]) and selection.has_key("XIA"):
+                        if (key in ["XIA_DATA"]) and 'XIA' in selection:
                             if selection["XIA"]:
-                                if data.info.has_key('Detectors'):
+                                if 'Detectors' in data.info:
                                     for i in range(len(selection['rows']['y'])):
                                         selection['rows']['y'][i] = \
                                             data.info['Detectors'].index(selection['rows']['y'][i]) + 1
@@ -154,115 +143,113 @@ class SpsDataSource(object):
             return None
 
     def __getSourceInfo(self):
-        arraylist= []
+        arraylist = []
         sourcename = self.name
         for array in sps.getarraylist(sourcename):
-            arrayinfo= sps.getarrayinfo(sourcename, array)
-            arraytype= arrayinfo[2]
-            arrayflag= arrayinfo[3]
-            if arraytype != sps.STRING:                
+            arrayinfo = sps.getarrayinfo(sourcename, array)
+            arraytype = arrayinfo[2]
+            arrayflag = arrayinfo[3]
+            if arraytype != sps.STRING:
                 if (arrayflag & sps.TAG_ARRAY) == sps.TAG_ARRAY:
                     arraylist.append(array)
                     continue
             if DEBUG:
                 print("array not added %s" % array)
-        source_info={}
-        source_info["Size"]=len(arraylist)
-        source_info["KeyList"]=arraylist
+        source_info = {}
+        source_info["Size"] = len(arraylist)
+        source_info["KeyList"] = arraylist
         return source_info
 
+    def __getArrayInfo(self, array):
+        info = {}
+        info["SourceType"] = SOURCE_TYPE
+        info["SourceName"] = self.name
+        info["Key"] = array
 
-    def __getArrayInfo(self,array):
-        info={}
-        info["SourceType"]  = SOURCE_TYPE
-        info["SourceName"]  = self.name
-        info["Key"]         = array
-        
-        arrayinfo=sps.getarrayinfo (self.name,array)
-        info["rows"]=arrayinfo[0]
-        info["cols"]=arrayinfo[1]
-        info["type"]=arrayinfo[2]
-        info["flag"]=arrayinfo[3]
-        counter=sps.updatecounter (self.name,array)
-        info["updatecounter"]=counter
+        arrayinfo = sps.getarrayinfo(self.name, array)
+        info["rows"] = arrayinfo[0]
+        info["cols"] = arrayinfo[1]
+        info["type"] = arrayinfo[2]
+        info["flag"] = arrayinfo[3]
+        counter = sps.updatecounter(self.name, array)
+        info["updatecounter"] = counter
 
-        envdict={}
-        keylist=sps.getkeylist (self.name,array+"_ENV")
+        envdict = {}
+        keylist = sps.getkeylist(self.name, array + "_ENV")
         for i in keylist:
-            val=sps.getenv(self.name,array+"_ENV",i)
-            envdict[i]=val
-        info["envdict"]=envdict
+            val = sps.getenv(self.name, array + "_ENV", i)
+            envdict[i] = val
+        info["envdict"] = envdict
         scantest = (info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
-        if (array in ["SCAN_D"]) or scantest :
-            if info["envdict"].has_key('axistitles'):
+        if (array in ["SCAN_D"]) or scantest:
+            if 'axistitles' in info["envdict"]:
                 info["LabelNames"] = self._buildLabelsList(info['envdict']['axistitles'])
-            if info["envdict"].has_key('H'):
-                if info["envdict"].has_key('K'):
-                    if info["envdict"].has_key('L'):
+            if 'H' in info["envdict"]:
+                if 'K' in info["envdict"]:
+                    if 'L' in info["envdict"]:
                         info['hkl'] = [envdict['H'],
                                        envdict['K'],
                                        envdict['L']]
-                
-        calibarray= array + "_PARAM"
+        calibarray = array + "_PARAM"
         if calibarray in sps.getarraylist(self.name):
             try:
-                data= sps.getdata(self.name, calibarray)
-                updc= sps.updatecounter(self.name, calibarray)
-                info["EnvKey"]= calibarray
-                info["McaCalib"]= data.tolist()[0]
-                info["env_updatecounter"]= updc
+                data = sps.getdata(self.name, calibarray)
+                updc = sps.updatecounter(self.name, calibarray)
+                info["EnvKey"] = calibarray
+                # data is an array
+                info["McaCalib"] = data.tolist()[0]
+                info["env_updatecounter"] = updc
             except:
+                # Some of our C modules return NULL without setting
+                # an exception ...
                 pass
 
         if array in ["XIA_DATA", "XIA_BASELINE"]:
-            envarray= "XIA_DET"
+            envarray = "XIA_DET"
             if envarray in sps.getarraylist(self.name):
                 try:
-                    data= sps.getdata(self.name, envarray)
-                    updc= sps.updatecounter(self.name, envarray)
-                    info["EnvKey"]= envarray
-                    info["Detectors"]= data.tolist()[0]
-                    info["env_updatecounter"]= updc
+                    data = sps.getdata(self.name, envarray)
+                    updc = sps.updatecounter(self.name, envarray)
+                    info["EnvKey"] = envarray
+                    info["Detectors"] = data.tolist()[0]
+                    info["env_updatecounter"] = updc
                 except:
-                    pass        
+                    pass
         return info
 
     def _buildLabelsList(self, instr):
-       if DEBUG:
-           print('SpsDataSource : building counter list')
-       state = 0
-       llist  = ['']
-       for letter in instr:
-          if state == 0:
-             if letter == ' ':
-                state = 1
-             elif letter == '{':
-                state = 2
-             else:
-                llist[-1] = llist[-1] + letter
-          
-          elif state == 1:
-             if letter == ' ':
-                 pass
-             elif letter == '{':
-                 state = 2
-                 llist.append('')
-             else:
-                llist.append(letter)
-                state = 0
-
-          elif state == 2:
-             if letter == '}':
-                state = 0
-             else:
-                llist[-1] = llist[-1] + letter
-
-       try:
+        if DEBUG:
+            print('SpsDataSource : building counter list')
+        state = 0
+        llist  = ['']
+        for letter in instr:
+            if state == 0:
+                if letter == ' ':
+                    state = 1
+                elif letter == '{':
+                    state = 2
+                else:
+                    llist[-1] = llist[-1] + letter
+            elif state == 1:
+                if letter == ' ':
+                    pass
+                elif letter == '{':
+                    state = 2
+                    llist.append('')
+                else:
+                    llist.append(letter)
+                    state = 0
+            elif state == 2:
+                if letter == '}':
+                    state = 0
+                else:
+                    llist[-1] = llist[-1] + letter
+        try:
             llist.remove('')
-       except ValueError:
+        except ValueError:
             pass
 
-       return llist
+        return llist
 
     def isUpdated(self, sourceName, key):
         if sps.specrunning(sourceName):
@@ -270,38 +257,39 @@ class SpsDataSource(object):
                 return True
 
             #return True if its environment is updated
-            envkey = key+"_ENV" 
+            envkey = key + "_ENV"
             if envkey in sps.getarraylist(sourceName):
                 if sps.isupdated(sourceName, envkey):
                     return True
-                
         return False
 
-source_types = { SOURCE_TYPE: SpsDataSource}
+source_types = {SOURCE_TYPE: SpsDataSource}
 
+
+# TODO object is a builtins
 def DataSource(name="", object=None, copy=True, source_type=SOURCE_TYPE):
-  try:
-     sourceClass = source_types[source_type]
-  except KeyError:
-     #ERROR invalid source type
-     raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
-  
-  return sourceClass(name, object, copy)
+    try:
+        sourceClass = source_types[source_type]
+    except KeyError:
+        # ERROR invalid source type
+        raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
 
-        
-if __name__ == "__main__":
-    import sys,time
+    return sourceClass(name, object, copy)
+
+
+def main():
+    import sys
 
     try:
-        specname=sys.argv[1]
-        arrayname=sys.argv[2]        
-        obj  = DataSource(specname)
+        specname = sys.argv[1]
+        arrayname = sys.argv[2]
+        obj = DataSource(specname)
         data = obj.getData(arrayname)
-        #while(1):
-        #    time.sleep(1)
-        #    print obj.RefreshPage(specname,arrayname)
-        print("info = ",data.info)
+        print("info = ", data.info)
     except:
+        # give usage instructions
         print("Usage: SpsDataSource <specversion> <arrayname>")
         sys.exit()
 
+if __name__ == "__main__":
+    main()
