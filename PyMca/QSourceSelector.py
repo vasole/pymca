@@ -124,9 +124,10 @@ class QSourceSelector(qt.QWidget):
         if DEBUG:
             print("_reload called")
         qstring = self.fileCombo.currentText()
-        if not len(qstring): return
+        if not len(qstring):
+            return
 
-        key = str(qstring)
+        key = qt.safe_str(qstring)
         ddict = {}
         ddict["event"] = "SourceReloaded"
         ddict["combokey"] = key
@@ -221,7 +222,8 @@ class QSourceSelector(qt.QWidget):
                         ret = fdialog.exec_()
                         if ret == qt.QDialog.Accepted:
                             filelist = fdialog.selectedFiles()
-                            self.lastFileFilter = str(fdialog.selectedFilter())
+                            self.lastFileFilter = qt.safe_str(\
+                                                    fdialog.selectedFilter())
                             fdialog.close()
                             del fdialog                        
                         else:
@@ -231,7 +233,7 @@ class QSourceSelector(qt.QWidget):
                 #filelist.sort()
                 filename=[]
                 for f in filelist:
-                    filename.append(str(f))
+                    filename.append(qt.safe_str(f))
                 if not len(filename):
                     return
                 if len(filename):
@@ -303,8 +305,9 @@ class QSourceSelector(qt.QWidget):
             print("closeFile called")
         #get current combobox key
         qstring = self.fileCombo.currentText()
-        if not len(qstring): return
-        key = str(qstring)
+        if not len(qstring):
+            return
+        key = qt.safe_str(qstring)
         ddict = {}
         ddict["event"] = "SourceClosed"
         ddict["combokey"] = key

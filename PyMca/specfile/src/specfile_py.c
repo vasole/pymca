@@ -1399,9 +1399,36 @@ specfiletype_new(self,args)
    PyObject *ret;
    char *filename;
 
-   if (!PyArg_ParseTuple(args,"s",&filename)) 
+#ifdef WIN32
+   PyObject *input;
+   PyObject *bytesObject;
+    if (!PyArg_ParseTuple(args, "O", &input))
+    {
       return NULL;
-   ret = (PyObject *)specfile_open(filename);
+    }
+    {
+		if (PyUnicode_Check(input))
+		{
+			bytesObject = PyUnicode_AsMBCSString(input);
+			if (!bytesObject){
+				onError("Cannot generate String from object name attribute")
+			}
+			filename = PyBytes_AsString(bytesObject);
+		}else{
+			if (!PyArg_ParseTuple(args, "s", &filename))
+			{
+				return NULL;
+			}
+		}
+    }
+#else
+    if (!PyArg_ParseTuple(args, "s", &filename))
+    {
+        return NULL;
+    }
+#endif
+
+	ret = (PyObject *)specfile_open(filename);
 
    return ret;
  

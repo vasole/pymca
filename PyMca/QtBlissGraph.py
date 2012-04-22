@@ -1535,7 +1535,7 @@ class QtBlissGraph(Qwt5.QwtPlot):
 
 
     def legendClicked(self, item, index=None):
-        legendtext = str(item.title().text())
+        legendtext = qt.safe_str(item.title().text())
         if self.onlyoneactive:
             self.setactivecurve(legendtext)
         else:
@@ -2057,7 +2057,7 @@ class QtBlissGraph(Qwt5.QwtPlot):
             curve = self.insertCurve(key)
             blissCurve = False
             self.curves[key] ["curve"] = curve
-        self.curves[key] ["name"] = QString(str(key))
+        self.curves[key] ["name"] = QString(qt.safe_str(key))
         self.curveslist.append(key)
         self.curves[key] ["symbol"] = self.getnewsymbol()
         if symbol is not None:
@@ -2554,7 +2554,7 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
             else:
                 (image_buffer,size,minmax)= spslut.transform(self.xyzs, (1,0),
                                          (colormap[6],3.0),
-                                         "BGRX", COLORMAPLIST[int(str(colormap[0]))],
+                                         "BGRX", COLORMAPLIST[int(qt.safe_str(colormap[0]))],
                                           colormap[1], (colormap[2],colormap[3]))
             if QTVERSION < '4.0.0':
                 self.image=qt.QImage(image_buffer,size[0], size[1],
@@ -2761,7 +2761,7 @@ class MyQwt5LegendItem(Qwt5.QwtLegendItem):
 
     def __emitSignal(self, eventText):
         ddict = {}
-        ddict['legend'] = str(self.text().text())
+        ddict['legend'] = qt.safe_str(self.text().text())
         ddict['event']  = eventText
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("MyQwt5LegendItemSignal"), (ddict,))

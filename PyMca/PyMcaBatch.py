@@ -688,7 +688,7 @@ class McaBatchGUI(qt.QWidget):
                     self.raise_()
                 return
         if len(filelist):
-            filelist = [str(x) for x in filelist]
+            filelist = [qt.safe_str(x) for x in filelist]
             self.setFileList(filelist)
         if QTVERSION < '4.0.0':
             self.raiseW()
@@ -741,9 +741,9 @@ class McaBatchGUI(qt.QWidget):
 
         filename = []
         for f in filenameList:
-            filename.append(str(f))
+            filename.append(qt.safe_str(f))
 
-        if len(filename) == 1:self.setConfigFile(str(filename[0]))
+        if len(filename) == 1:self.setConfigFile(qt.safe_str(filename[0]))
         elif len(filenameList):self.setConfigFile(filename)
         if QTVERSION < '4.0.0':
             self.raiseW()
@@ -769,9 +769,9 @@ class McaBatchGUI(qt.QWidget):
             ret = outfile.exec_()
         if ret:
             if QTVERSION < '4.0.0':
-                outdir=str(outfile.selectedFile())
+                outdir=qt.safe_str(outfile.selectedFile())
             else:
-                outdir=str(outfile.selectedFiles()[0])
+                outdir=qt.safe_str(outfile.selectedFiles()[0])
             outfile.close()
             del outfile
             self.setOutputDir(outdir)
@@ -804,7 +804,7 @@ class McaBatchGUI(qt.QWidget):
                         self.raise_()
                     return
             if len(self.fileList) == 1:
-                if int(str(self.__splitSpin.text())) > 1:
+                if int(qt.safe_str(self.__splitSpin.text())) > 1:
                     allowSingleFileSplitProcesses = False
                     if HDF5SUPPORT:
                         if h5py.is_hdf5(self.fileList[0]):
@@ -860,7 +860,7 @@ class McaBatchGUI(qt.QWidget):
                 table = 1
         else:   table =0
         
-        #htmlindex = str(self.__htmlIndex.text())
+        #htmlindex = qt.safe_str(self.__htmlIndex.text())
         htmlindex = "index.html"
         if html:
             if  len(htmlindex)<5:
@@ -869,18 +869,18 @@ class McaBatchGUI(qt.QWidget):
                 htmlindex = "index.html" 
             if htmlindex[-5:] != "html":
                 htmlindex+=".html"
-        roiwidth = float(str(self.__roiSpin.text()))
+        roiwidth = float(qt.safe_str(self.__roiSpin.text()))
         if 0:
             overwrite= self.__overwrite.isChecked()
-            filestep = int(str(self.__fileSpin.text()))
-            mcastep  = int(str(self.__mcaSpin.text()))
+            filestep = int(qt.safe_str(self.__fileSpin.text()))
+            mcastep  = int(qt.safe_str(self.__mcaSpin.text()))
         else:
             overwrite= 1
             filestep = 1
             mcastep = 1
             if len(self.fileList) == 1:
                 if self.__splitBox.isChecked():
-                    nbatches = int(str(self.__splitSpin.text()))
+                    nbatches = int(qt.safe_str(self.__splitSpin.text()))
                     mcastep = nbatches
                 
         fitfiles = self.__fitBox.isChecked()
@@ -968,6 +968,9 @@ class McaBatchGUI(qt.QWidget):
             else:
                 frozen = False
                 myself = os.path.join(dirname, "PyMcaBatch.py")
+                if not os.path.exists(myself):
+                    dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                myself = os.path.join(dirname, "PyMcaBatch.py")
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
                 if not os.path.exists(viewer):
@@ -1026,7 +1029,7 @@ class McaBatchGUI(qt.QWidget):
                 print("cmd = %s" % cmd)
             import time
             if self.__splitBox.isChecked():
-                nbatches = int(str(self.__splitSpin.text()))
+                nbatches = int(qt.safe_str(self.__splitSpin.text()))
                 if len(self.fileList) > 1:
                     filechunk = int(len(self.fileList)/nbatches)
                     processList = []
@@ -1036,7 +1039,17 @@ class McaBatchGUI(qt.QWidget):
                         if (i+1) == nbatches:endoffset = 0
                         cmd1        = cmd + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
                                               (beginoffset, endoffset, i)
-                        processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
+                        try:
+                            processList.append(subprocess.Popen(cmd1,
+                                                            cwd=os.getcwd()))
+                        except UnicodeEncodeError:
+                            if sys.platform == 'win32':
+                                processList.append(subprocess.Popen(cmd1.encode('mbcs'),
+                                                            cwd=os.getcwd()))
+                            else:
+                                processList.append(subprocess.Popen(cmd1.encode('utf-8'),
+                                                            cwd=os.getcwd()))
+                            
                         if DEBUG:
                             print("cmd = %s" % cmd1)
                 else:
@@ -1062,7 +1075,22 @@ class McaBatchGUI(qt.QWidget):
                     print("timer was already active")
                 return
             else:
-                os.system(cmd)
+                print("command = ", cmd)
+                try:
+                    subprocess.call(cmd)
+                except UnicodeEncodeError:
+                    cmdToBeDone = True
+                    if sys.platform == 'win32':
+                        try:
+                            subprocess.call(cmd.encode('mbcs'))
+                            cmdToBeDone = False
+                        except UnicodeEncodeError:
+                            pass
+                    if cmdToBeDone:
+                        try:
+                            subprocess.call(cmd.encode('utf-8'))
+                        except UnicodeEncodeError:
+                            subprocess.call(cmd.encode('latin-1'))
             self.show()
         else:
             listfile = os.path.join(self.outputDir, "tmpfile")
@@ -1080,7 +1108,7 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(viewer):viewer = None
                 if not os.path.exists(rgb):rgb = None
             else:
-                myself = "PyMcaBatch.py"
+                myself = os.path.join(dirname, "PyMcaBatch.py")
                 if not os.path.exists(os.path.join(dirname, myself)):
                     dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
                     if not os.path.exists(os.path.join(dirname, myself)):
@@ -1090,7 +1118,7 @@ class McaBatchGUI(qt.QWidget):
                             self.raiseW()
                         else:
                             self.raise_()
-                        return                
+                        return
                 myself  = sys.executable+" "+ os.path.join(dirname, myself)
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
@@ -1126,7 +1154,7 @@ class McaBatchGUI(qt.QWidget):
             if self.__splitBox.isChecked():
                 self.hide()
                 qt.qApp.processEvents()
-                nbatches = int(str(self.__splitSpin.text()))
+                nbatches = int(qt.safe_str(self.__splitSpin.text()))
                 filechunk = int(len(self.fileList)/nbatches)
                 processList = []
                 for i in range(nbatches):
@@ -1160,7 +1188,7 @@ class McaBatchGUI(qt.QWidget):
                 else:
                     msg.exec_()
             
-    def genListFile(self,listfile, config=None):
+    def genListFile(self, listfile, config=None):
         if os.path.exists(listfile):
             try:
                 os.remove(listfile)
@@ -1182,9 +1210,9 @@ class McaBatchGUI(qt.QWidget):
                 ddict['PyMcaBatch']['selection'] = self._selection
                 ddict.write(listfile)
                 return
-        fd=open(listfile,'w')
+        fd=open(listfile, 'wb')
         for filename in lst:
-            fd.write('%s\n'%filename)
+            fd.write(('%s\n' % filename).encode('utf-8'))
         fd.close()
 
     def _pollProcessList(self):
@@ -1216,7 +1244,12 @@ class McaBatchGUI(qt.QWidget):
         if rgb is not None:
             if len(b):
                 if sys.platform == "win32":
-                    subprocess.Popen("%s %s" % (rgb, b[0]), cwd = os.getcwd())
+                    try:
+                        subprocess.Popen("%s %s" % (rgb, b[0]),
+                                         cwd = os.getcwd())
+                    except UnicodeEncodeError:
+                        subprocess.Popen(("%s %s" % (rgb, b[0])).encode('mbcs'),
+                                         cwd = os.getcwd())
                 else:
                     os.system("%s %s &" % (rgb, b[0]))
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
@@ -1793,18 +1826,18 @@ def main():
                 filelist = [filelist]
             selection = tmpDict['selection']
         else:
-            fd = open(listfile)
+            fd = open(listfile, 'rb')
             filelist = fd.readlines()
             fd.close()
             for i in range(len(filelist)):
-                filelist[i]=filelist[i].replace('\n','')
+                filelist[i]=filelist[i].decode('utf-8').replace('\n','')
             selection = None
     if cfglistfile is not None:
-        fd = open(cfglistfile)
+        fd = open(cfglistfile, 'rb')
         cfg = fd.readlines()
         fd.close()
         for i in range(len(cfg)):
-            cfg[i]=cfg[i].replace('\n','')
+            cfg[i]=cfg[i].decode('utf-8').replace('\n','')
     app=qt.QApplication(sys.argv) 
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)       

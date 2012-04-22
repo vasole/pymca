@@ -62,3 +62,35 @@ class VerticalSpacer(QWidget):
         QWidget.__init__(self, *args)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
                                           QSizePolicy.Expanding))
+
+if sys.version < '3.0':
+    import types
+    # perhaps a better name would be safe unicode?
+    # should this method be a more generic tool to
+    # be found outside PyMcaQt?
+    def safe_str(potentialQString):
+        if type(potentialQString) == types.StringType or\
+           type(potentialQString) == types.UnicodeType:
+            return potentialQString
+        try:
+            # default, just str
+            x = str(potentialQString)
+        except UnicodeEncodeError:
+            if sys.platform == 'win32':
+                # try user OS encoding
+                try:
+                    x = unicode(potentialQString, 'mbcs')
+                    return x
+                except UnicodeDecodeError:
+                    # follow unix path, priority to utf-8
+                    pass            
+            try:
+                x = unicode(potentialQString, 'utf-8')
+            except UnicodeDecodeError:
+                try:
+                    x = unicode(potentialQString, 'latin-1')
+                except UnicodeDecodeError:
+                    x = unicode(potentialQString, 'utf-16')
+        return x
+else:
+    safe_str = str

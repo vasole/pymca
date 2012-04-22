@@ -403,26 +403,46 @@ class McaAdvancedFitBatch(object):
                             #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
 
     def __getFitFile(self, filename, key):
-        fitdir = os.path.join(self._outputdir,"FIT")
-        fitdir = os.path.join(fitdir,filename+"_FITDIR")
+        fitdir = self.os_path_join(self._outputdir,"FIT")
+        fitdir = self.os_path_join(fitdir,filename+"_FITDIR")
         outfile = filename +"_"+key+".fit" 
-        outfile = os.path.join(fitdir,  outfile)           
+        outfile = self.os_path_join(fitdir,  outfile)           
         return outfile
 
-                
+    def os_path_join(self, a, b):
+        try:
+            outfile=os.path.join(a, b)
+        except UnicodeDecodeError:
+            toBeDone = True
+            if sys.platform == 'win32':
+                try:
+                    outfile=os.path.join(a.decode('mbcs'),
+                                         b.decode('mbcs'))
+                    toBeDone = False
+                except UnicodeDecodeError:
+                    pass
+            if toBeDone:
+                try:
+                    outfile = os.path.join(a.decode('utf-8'),
+                                           a.decode('utf-8'))
+                except UnicodeDecodeError:
+                    outfile = os.path.join(a.decode('latin-1'),
+                                           a.decode('latin-1'))
+        return outfile
+
     def __processOneMca(self,x,y,filename,key,info=None):
         self._concentrationsAsAscii = ""
         if not self.roiFit:
             result = None
             concentrationsdone = 0
             concentrations = None
-            outfile=os.path.join(self._outputdir,filename)
+            outfile=self.os_path_join(self._outputdir, filename)
             fitfile = self.__getFitFile(filename,key)
             if self.chunk is not None:
                 con_extension = "_%06d_partial_concentrations.txt" % self.chunk
             else:
                 con_extension = "_concentrations.txt"
-            self._concentrationsFile = os.path.join(self._outputdir,
+            self._concentrationsFile = self.os_path_join(self._outputdir,
                                     self._rootname+ con_extension)
             #                        self._rootname+"_concentrationsNEW.txt")
             if self.counter == 0:
@@ -534,14 +554,14 @@ class McaAdvancedFitBatch(object):
             #output options
             # .FIT files
             if self.fitFiles:
-                fitdir = os.path.join(self._outputdir,"FIT")
+                fitdir = self.os_path_join(self._outputdir,"FIT")
                 if not os.path.exists(fitdir):
                     try:
                         os.mkdir(fitdir)
                     except:
                         print("I could not create directory %s" % fitdir)
                         return
-                fitdir = os.path.join(fitdir,filename+"_FITDIR")
+                fitdir = self.os_path_join(fitdir,filename+"_FITDIR")
                 if not os.path.exists(fitdir):
                     try:
                         os.mkdir(fitdir)
@@ -552,7 +572,7 @@ class McaAdvancedFitBatch(object):
                     print("%s does not seem to be a valid directory" % fitdir)
                 else:
                     outfile = filename +"_"+key+".fit" 
-                    outfile = os.path.join(fitdir,  outfile)
+                    outfile = self.os_path_join(fitdir,  outfile)
                 if not useExistingResult:
                     result = self.mcafit.digestresult(outfile=outfile,
                                                       info=info)
@@ -573,7 +593,7 @@ class McaAdvancedFitBatch(object):
                 #python like output list
                 if not self.counter:
                     name = os.path.splitext(self._rootname)[0]+"_fitfilelist.py"
-                    name = os.path.join(self._outputdir,name)
+                    name = self.os_path_join(self._outputdir,name)
                     try:
                         os.remove(name)
                     except:
@@ -596,7 +616,7 @@ class McaAdvancedFitBatch(object):
                 #this only works with EDF
                 if self.__ncols is not None:
                     if not self.counter:
-                        imgdir = os.path.join(self._outputdir,"IMAGES")
+                        imgdir = self.os_path_join(self._outputdir,"IMAGES")
                         if not os.path.exists(imgdir):
                             try:
                                 os.mkdir(imgdir)
@@ -673,7 +693,7 @@ class McaAdvancedFitBatch(object):
                 #this only works with EDF
                 if self.__ncols is not None:
                     if not self.counter:
-                        imgdir = os.path.join(self._outputdir,"IMAGES")
+                        imgdir = self.os_path_join(self._outputdir,"IMAGES")
                         if not os.path.exists(imgdir):
                             try:
                                 os.mkdir(imgdir)
@@ -717,7 +737,7 @@ class McaAdvancedFitBatch(object):
         self.savedImages=[]
         if ffile is None:
             ffile = os.path.splitext(self._rootname)[0]
-            ffile = os.path.join(self.imgDir,ffile)
+            ffile = self.os_path_join(self.imgDir,ffile)
         if not self.roiFit:
             if (self.fileStep > 1) or (self.mcaStep > 1):
                 trailing = "_filestep_%02d_mcastep_%02d" % ( self.fileStep,
