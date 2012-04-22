@@ -25,34 +25,34 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+from __future__ import with_statement
 import os
 import sys
 import re
 import numpy
 from PyMca import DataObject
 
-DEBUG = 0
-SOURCE_TYPE="EdfFileStack"
+SOURCE_TYPE = "EdfFileStack"
+
 
 class LuciaMap(DataObject.DataObject):
     def __init__(self, filename, infofile=None):
         DataObject.DataObject.__init__(self)
 
-        fid = open(filename, 'r')
-        data=fid.read()
-        fid.close()
-        data.replace("\r\n","\n")
+        with open(filename, 'r') as f:
+            data = f.read()
+
+        data.replace("\r\n", "\n")
         self.sourceName = [filename]
         firstByte = data.index("\n\n")
-
 
         header = data[0:firstByte]
         #get rid of the date
         data = data[firstByte:]
 
         #leave only the '----' as separator
-        data.replace("\r","")
-        data.replace("\n","")
+        data.replace("\r", "")
+        data.replace("\n", "")
         sep = '-'
         while sep in data:
             sep = sep + '-'
@@ -63,7 +63,7 @@ class LuciaMap(DataObject.DataObject):
                 del data[-1]
             else:
                 del data[0]
-                
+
         #get the number of channels
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')
         spectrum = [float(x) for x in exp.findall(data[0])]
@@ -76,13 +76,14 @@ class LuciaMap(DataObject.DataObject):
             infofile = ""
             split = filename.split('_')
             if len(split) > 1:
-                for i in range(len(split)-1):
+                for i in range(len(split) - 1):
                     if i == 0:
                         infofile = split[i]
                     else:
                         infofile += "_" + split[i]
-                infofile = infofile + "_Infos_" + split[-1].replace('.mca', '.dat') 
-            
+                infofile = infofile + "_Infos_" +\
+                            split[-1].replace('.mca', '.dat')
+
         if os.path.exists(infofile):
             info = self._getInfo(infofile)
             if ('vwidth' in info) and ('vstep' in info):
@@ -92,7 +93,7 @@ class LuciaMap(DataObject.DataObject):
                     self.nRows = int((vwidth / vstep) + 1)
 
         #fill the header
-        self.header =header
+        self.header = header
 
         #arrange as an EDF Stack
         self.info = {}
@@ -101,8 +102,8 @@ class LuciaMap(DataObject.DataObject):
         self.__nImagesPerFile = 1
 
         #self.nRows = 41
-        self.nCols = self.nSpectra/self.nRows
-        
+        self.nCols = self.nSpectra / self.nRows
+
         self.data = numpy.zeros((self.nRows,
                                  self.nCols,
                                  self.nChannels),
@@ -112,12 +113,12 @@ class LuciaMap(DataObject.DataObject):
             for j in range(self.nCols):
                 s = data[n]
                 spectrum = numpy.array([float(x) for x in exp.findall(s)])
-                self.data[i,j,:] = spectrum[:]
+                self.data[i, j, :] = spectrum[:]
                 n = n + 1
 
         shape = self.data.shape
         for i in range(len(shape)):
-            key = 'Dim_%d' % (i+1,)
+            key = 'Dim_%d' % (i + 1,)
             self.info[key] = shape[i]
 
         self.info["SourceType"] = SOURCE_TYPE
@@ -129,36 +130,40 @@ class LuciaMap(DataObject.DataObject):
         self.info["Channel0"] = 0.0
 
     def _getInfo(self, filename):
-        # This dictionnary is to be internally normalized
-        # for the time being no I0 nor dead time
+        '''
+        This dictionnary is to be internally normalized for the time
+        being no I0 nor dead time
+        '''
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')
-        f = open(filename)
-        data = f.readlines()
-        f.close()
+        #read the file in one go to minimize access to disk
+        with open(filename) as f:
+            data = f.readlines()
         ddict = {}
         for line in data:
             if line.startswith("# Horizontal center position"):
                 ddict['center'] = [float(x) for x in exp.findall(line)][0]
             elif line.startswith("# Horizontal width"):
-                ddict['hwidth'] =  [float(x) for x in exp.findall(line)][0]
+                ddict['hwidth'] = [float(x) for x in exp.findall(line)][0]
             elif line.startswith("# Horizontal step"):
-                ddict['hstep'] =  [float(x) for x in exp.findall(line)][0]
+                ddict['hstep'] = [float(x) for x in exp.findall(line)][0]
             elif line.startswith("# Vertical width"):
-                ddict['vwidth'] =  [float(x) for x in exp.findall(line)][0]
+                ddict['vwidth'] = [float(x) for x in exp.findall(line)][0]
             elif line.startswith("# Vertical step"):
-                ddict['vstep'] =  [float(x) for x in exp.findall(line)][0]
-        return ddict        
-        
-        
-        
-if __name__ == "__main__":
+                ddict['vstep'] = [float(x) for x in exp.findall(line)][0]
+        return ddict
+
+
+def main():
     filename = None
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     elif os.path.exists("S10S_6_01.mca"):
         filename = "S10S_6_01.mca"
     if filename is not None:
-        DEBUG = 1   
         w = LuciaMap(filename)
+        print(w.info)
     else:
         print("Please supply input filename")
+
+if __name__ == "__main__":
+    main()
