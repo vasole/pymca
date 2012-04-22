@@ -895,7 +895,7 @@ class QSpsWidget(qt.QWidget):
                 arrayname = selection['Key']
                 if 'Key' not in sel:
                     sel['Key'] = selection['Key']
-                if arrayname not in sel):
+                if arrayname not in sel:
                     sel[arrayname] = {'rows':[],'cols':[]}
                 if selection['plot'] == 'XIA':
                      sel[arrayname]['rows'].append({'x':selection['x'],
