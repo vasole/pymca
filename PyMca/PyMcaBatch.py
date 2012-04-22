@@ -1075,7 +1075,6 @@ class McaBatchGUI(qt.QWidget):
                     print("timer was already active")
                 return
             else:
-                print("command = ", cmd)
                 try:
                     subprocess.call(cmd)
                 except UnicodeEncodeError:
