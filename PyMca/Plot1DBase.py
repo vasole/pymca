@@ -154,7 +154,7 @@ class Plot1DBase(object):
         print("removeCurve not implemented")
         return None
     
-    def getActiveCurve(self):
+    def getActiveCurve(self, just_legend=False):
         """
         Function to access the currently active curve.
         It returns None in case of not having an active curve.
@@ -171,7 +171,7 @@ class Plot1DBase(object):
         print("getActiveCurve not implemented")
         return None
 
-    def getAllCurves(self):
+    def getAllCurves(self, just_legend=False):
         """
         If just_legend is False:
             It returns a list of the form:

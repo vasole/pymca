@@ -41,14 +41,16 @@ It implements the Plot1D interface:
 """
 from PyMca import Plot1DBase
 
+
 class Plot1D(Plot1DBase.Plot1DBase):
     def __init__(self):
         Plot1DBase.Plot1DBase.__init__(self)
         self.curveList = []
         self.curveDict = {}
         self.activeCurve = None
-        
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+
+    def addCurve(self, x, y, legend=None, info=None, replace=False,
+                 replot=True):
         """
         Add the 1D curve given by x an y to the graph.
         """
@@ -66,7 +68,7 @@ class Plot1D(Plot1DBase.Plot1DBase):
         if replace:
             self.curveList = []
             self.curveDict = {}
-            
+
         if key in self.curveList:
             idx = self.curveList.index(key)
             self.curveList[idx] = key
@@ -83,14 +85,14 @@ class Plot1D(Plot1DBase.Plot1DBase):
         The graph will be updated if replot is true.
         """
         if legend is None:
-            return        
+            return
         if legend in self.curveList:
             idx = self.curveList.index(legend)
             del self.curveList[idx]
-        if legend in self.curveDict.keys(): 
+        if legend in self.curveDict.keys():
             del self.curveDict[legend]
         return
-    
+
     def getActiveCurve(self, just_legend=False):
         """
         Function to access the currently active curve.
@@ -166,15 +168,14 @@ class Plot1D(Plot1DBase.Plot1DBase):
 
     def getGraphXLimits(self):
         """
-        Get the graph X limits. 
+        Get the graph X limits.
         """
         xmin, ymin, xmax, ymax = self.__getAllLimits()
         return xmin, xmax
-        
 
     def getGraphYLimits(self):
         """
-        Get the graph Y (left) limits. 
+        Get the graph Y (left) limits.
         """
         xmin, ymin, xmax, ymax = self.__getAllLimits()
         return ymin, ymax
@@ -190,18 +191,21 @@ class Plot1D(Plot1DBase.Plot1DBase):
             self.activeCurve = key
         return self.activeCurve
 
-if __name__ == "__main__":
+
+def main():
     import numpy
+
     x = numpy.arange(100.)
     y = x * x
     plot = Plot1D()
     plot.addCurve(x, y, "dummy")
-    plot.addCurve(x+100, -x*x)
+    plot.addCurve(x + 100, -x * x)
     print("Active curve = ", plot.getActiveCurve())
-    print("X Limits = ",     plot.getGraphXLimits())
-    print("Y Limits = ",     plot.getGraphYLimits())
-    print("All curves = ",   plot.getAllCurves())
+    print("X Limits = ", plot.getGraphXLimits())
+    print("Y Limits = ", plot.getGraphYLimits())
+    print("All curves = ", plot.getAllCurves())
     plot.removeCurve("dummy")
-    print("All curves = ",   plot.getAllCurves())
+    print("All curves = ", plot.getAllCurves())
 
-    
+if __name__ == "__main__":
+    main()
