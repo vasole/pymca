@@ -377,7 +377,7 @@ class NexusDataSource(object):
             entryGroup = phynxFile[entry]
             output.info['Channel0'] = 0
             for key in ['y', 'x', 'm', 'data']:
-                if not selection.has_key(key):
+                if key not in selection:
                     continue
                 if type(selection[key]) != type([]):
                     selection[key] = [selection[key]]

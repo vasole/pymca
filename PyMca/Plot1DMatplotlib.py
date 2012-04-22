@@ -400,7 +400,7 @@ class MatplotlibGraph(FigureCanvas):
                 if label == legend:
                     break
         if label is not None:
-           if kw.has_key('marker'):
+           if 'marker' in kw:
                line2D.set_marker(kw['marker'])
            line2D.set_linestyle(style)
            #line2D.set_xdata(x)
@@ -508,9 +508,9 @@ class Plot1DMatplotlib(Plot1DWindowBase.Plot1DWindowBase):
             info = {}
         xlabel = info.get('xlabel', 'X')
         ylabel = info.get('ylabel', 'Y')
-        if kw.has_key('xlabel'):
+        if 'xlabel' in kw:
             info['xlabel'] = kw['xlabel'] 
-        if kw.has_key('ylabel'):
+        if 'ylabel' in kw:
             info['ylabel'] = kw['ylabel'] 
         Plot1DWindowBase.Plot1DWindowBase.addCurve(self, x, y, legend=legend,
                                info=info, replace=replace, replot=replot)

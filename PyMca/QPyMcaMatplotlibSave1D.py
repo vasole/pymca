@@ -407,13 +407,13 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                      self.updateFromTable)
 
     def setParameters(self,kw):
-        if kw.has_key('bw'):
+        if 'bw' in kw:
             self.setBlackAndWhiteEnabled(kw['bw'])
-        if kw.has_key('logx'):
+        if 'logx' in kw:
             self.setLogXEnabled(kw['logx'])
-        if kw.has_key('logy'):
+        if 'logy' in kw:
             self.setLogYEnabled(kw['logy'])
-        if kw.has_key('legends'):
+        if 'legends' in kw:
             self.setLegendsEnabled(kw['legends'])
         self._dataCounter = 0
         self.createAxes()

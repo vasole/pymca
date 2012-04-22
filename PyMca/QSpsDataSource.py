@@ -90,7 +90,7 @@ class QSpsDataSource(QSource.QSource):
                 for i in a:
                     objectId, info = self.selections[key][i]
                     scanselection = 0
-                    if info.has_key('scanselection'):
+                    if 'scanselection' in info:
                         scanselection = info['scanselection']
                     if info['legend'] in legendlist:
                         if not scanselection:

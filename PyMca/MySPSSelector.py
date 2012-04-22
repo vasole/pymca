@@ -435,12 +435,12 @@ class SPSSelector(qt.QWidget):
             sel = {}
             sel['SourceType'] = SOURCE_TYPE            
             for selection in selkeys:
-                if not sel.has_key('SourceName'):
+                if 'SourceName' not in sel:
                     sel['SourceName'] = selection['SourceName']
                 arrayname = selection['Key']
-                if not sel.has_key('Key'):
+                if 'Key' not in sel:
                     sel['Key'] = selection['Key']
-                if not sel.has_key(arrayname):
+                if arrayname not in sel:
                     sel[arrayname] = {'rows':[],'cols':[]}
                 if selection['plot'] == 'cols':
                      sel[arrayname]['cols'].append({'x':selection['x'],'y':selection['y']})
@@ -466,12 +466,12 @@ class SPSSelector(qt.QWidget):
             sel = {}
             sel['SourceType'] = SOURCE_TYPE            
             for selection in selkeys:
-                if not sel.has_key('SourceName'):
+                if 'SourceName' not in sel:
                     sel['SourceName'] = selection['SourceName']
                 arrayname = selection['Key']
-                if not sel.has_key('Key'):
+                if 'Key' not in sel:
                     sel['Key'] = selection['Key']
-                if not sel.has_key(arrayname):
+                if arrayname not in sel:
                     sel[arrayname] = {'rows':[],'cols':[]}
                 if selection['plot'] == 'cols':
                      sel[arrayname]['cols'].append({'x':selection['x'],'y':selection['y']})
@@ -519,13 +519,13 @@ class SPSSelector(qt.QWidget):
                 if self.selection is not None:
                     if DEBUG:
                         print("step 1")
-                    if self.selection.has_key(sel['SourceName']):
+                    if sel['SourceName'] in self.selection:
                         if DEBUG:
                             print("step 2")
-                        if self.selection[sel['SourceName']].has_key(arrayname):
+                        if arrayname in self.selection[sel['SourceName']]:
                             if DEBUG:
                                 print("step 3")
-                            if self.selection[sel['SourceName']][arrayname].has_key('rows'):
+                            if 'rows' in self.selection[sel['SourceName']][arrayname]:
                                 if DEBUG:
                                     print("step 4")
                                 for couple in  sel[arrayname]['rows']:
@@ -552,13 +552,13 @@ class SPSSelector(qt.QWidget):
                 if self.selection is not None:
                     if DEBUG:
                         print("step 1")
-                    if self.selection.has_key(sel['SourceName']):
+                    if sel['SourceName'] in self.selection:
                         if DEBUG:
                             print("step 2")
-                        if self.selection[sel['SourceName']].has_key(arrayname):
+                        if arrayname in self.selection[sel['SourceName']]:
                             if DEBUG:
                                 print("step 3")
-                            if self.selection[sel['SourceName']][arrayname].has_key('rows'):
+                            if 'rows' in self.selection[sel['SourceName']][arrayname]:
                                 if DEBUG:
                                     print("step 4")
                                 for couple in  sel[arrayname]['rows']:
@@ -597,15 +597,15 @@ class SPSSelector(qt.QWidget):
                 selkey = sel["Key"][0]
             else:
                 selkey = sel["Key"]
-            if not self.selection.has_key(specname):
+            if specname not in self.selection:
                 self.selection[specname]= {}
-            if not self.selection[specname].has_key(selkey):
+            if selkey not in self.selection[specname]:
                 self.selection[specname][selkey] = {'rows':[],'cols':[]}
-            if sel[selkey].has_key('rows'):
+            if 'rows' in sel[selkey]:
                 for rowsel in sel[selkey]['rows']:
                     if rowsel not in self.selection[specname][selkey]['rows']:
                         self.selection[specname][selkey]['rows'].append(rowsel)   
-            if sel[selkey].has_key('cols'):
+            if 'cols' in sel[selkey]:
                 for rowsel in sel[selkey]['cols']:
                     if rowsel not in self.selection[specname][selkey]['cols']:
                         self.selection[specname][selkey]['cols'].append(rowsel)   
@@ -647,11 +647,11 @@ class SPSSelector(qt.QWidget):
                 print("and self.selection.get(self.data.SourceName, {}) =",sel)
             self.scanList.markScanSelected(selkeys)
             scandict = sel.get(self.currentScan, {})
-            if scandict.has_key('mca'):
+            if 'mca' in scandict:
                 self.mcaTable.markMcaSelected(scandict['mca'])
             else:
                 self.mcaTable.markMcaSelected([])
-            if scandict.has_key('scan'):
+            if 'scan' in scandict:
                 self.cntTable.markCntSelected(scandict['scan'])
             else:
                 self.cntTable.markCntSelected({})
@@ -660,22 +660,22 @@ class SPSSelector(qt.QWidget):
         outsel = []
         if type(sellist) != type([]):
             sellist = [sellist]
-        for dict in  sellist:
+        for ddict in  sellist:
             #for dict in selection:
-                if dict.has_key('SourceName'):
-                    spec = dict['SourceName']
-                    if dict.has_key('Key'):
-                        shm  = dict['Key']
-                        if dict.has_key(shm):
+                if 'SourceName' in ddict:
+                    spec = ddict['SourceName']
+                    if 'Key' in ddict:
+                        shm  = ddict['Key']
+                        if shm in ddict:
                             check = 0
                             rows = []
                             cols = []
-                            if dict[shm].has_key('cols'):
-                                cols = dict[shm]['cols']
+                            if 'cols' in ddict[shm]:
+                                cols = ddict[shm]['cols']
                                 if len(cols):
                                     check =  1
-                            if dict[shm].has_key('rows'):
-                                rows = dict[shm]['rows']
+                            if 'rows' in ddict[shm]:
+                                rows = ddict[shm]['rows']
                                 if len(rows):
                                     check =  1
                             if check and sps.specrunning(spec):

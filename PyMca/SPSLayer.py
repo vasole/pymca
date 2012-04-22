@@ -55,9 +55,9 @@ class SPSLayer(object):
         self.GetData   = self.LoadSource
 
     def GetPageInfo(self,index={}):
-        if index.has_key('SourceName'):
+        if 'SourceName' in index:
             self.SetSource(index['SourceName'])
-            if index.has_key('Key'):
+            if 'Key' in index:
                 info=self.GetData(index['Key'])   
                 return info[0]
 

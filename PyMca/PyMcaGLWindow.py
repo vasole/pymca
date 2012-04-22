@@ -77,7 +77,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                 ylegend = 'y%d' % ycounter
                 if sel['selection'] is not None:
                     if type(sel['selection']) == type({}):
-                        if sel['selection'].has_key('y'):
+                        if 'y' in sel['selection']:
                             ilabel = sel['selection']['y'][ycounter]
                             ylegend = dataObject.info['LabelNames'][ilabel]
                 object3Dlegend = legend + " " + ylegend
@@ -101,7 +101,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
             source = sel['SourceName']
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
-            if sel['selection'].has_key('LabelNames'):
+            if 'LabelNames' in sel['selection']:
                 labelNames = sel['selection']['LabelNames']
             else:
                 labelNames = sel['selection']['cntlist']

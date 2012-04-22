@@ -124,7 +124,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             source = sel['SourceName']
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
-            #if not sel.has_key("scanselection"): continue
+            #if not "scanselection" in sel: continue
             #if not sel["scanselection"]:continue
             #if len(key.split(".")) > 2: continue
             dataObject = sel['dataobject']
