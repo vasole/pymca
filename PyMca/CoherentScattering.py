@@ -29,9 +29,9 @@ import numpy
 from PyMca import ConfigDict
 from PyMca import PyMcaDataDir
 
-dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
-ffile   = os.path.join(dirmod, "attdata")
-ffile   = os.path.join(ffile, "atomsf.dict")
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR
+ffile = os.path.join(dirmod, "attdata")
+ffile = os.path.join(ffile, "atomsf.dict")
 if not os.path.exists(ffile):
     #freeze does bad things with the path ...
     dirmod = os.path.dirname(dirmod)
@@ -41,12 +41,12 @@ if not os.path.exists(ffile):
         if dirmod.lower().endswith(".zip"):
             dirmod = os.path.dirname(dirmod)
             ffile = os.path.join(dirmod, "attdata")
-            ffile = os.path.join(ffile, "atomsf.dict")            
+            ffile = os.path.join(ffile, "atomsf.dict")
     if not os.path.exists(ffile):
         print("Cannot find file ", ffile)
         raise IOError("Cannot find file %s" % ffile)
 COEFFICIENTS = ConfigDict.ConfigDict()
-COEFFICIENTS.read(ffile)    
+COEFFICIENTS.read(ffile)
 KEVTOANG = 12.39852000
 R0 = 2.82E-13 #electron radius in cm
 
@@ -56,7 +56,7 @@ def getElementFormFactor(ele, theta, energy):
         getFormFactor(ele,theta, energy):
     
     ele   - Element
-    theta - Scattering angle in degrees
+    theta - Scattering angle or array of scattering angles in degrees
     energy- Photon Energy in keV
     
     This routine calculates the atomic form factor in electron units using 
@@ -74,7 +74,8 @@ def getElementFormFactor(ele, theta, energy):
                   (c[3] * numpy.exp(-b[3]*x))
 
 def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
-    if p1 is None:p1=0.0
+    if p1 is None:
+        p1=0.0
     if (p1 > 1.0) or (p1 < -1):
         raise ValueError(\
         "Invalid degree of linear polarization respect to the scattering plane")
@@ -92,4 +93,3 @@ if __name__ == "__main__":
     else:
         print("Usage:")
         print("python CoherentScattering.py Element Theta(deg) Energy(kev)")
-    
