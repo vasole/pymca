@@ -552,21 +552,23 @@ class McaBatchGUI(qt.QWidget):
                 self.lastInputDir = os.path.dirname(self.configFile)
         
     def setOutputDir(self,outputdir=None):
-        if outputdir is None:return
+        if outputdir is None:
+            return
         if self.__goodOutputDir(outputdir):
             self.outputDir = outputdir
             PyMcaDirs.outputDir = outputdir
             self.__outLine.setText(outputdir)
         else:
             qt.QMessageBox.critical(self, "ERROR",
-            "Cannot use output directory:\n%s"% (outputdir))
+                "Cannot use output directory:\n%s"% (outputdir))
 
     def __goodFileList(self,filelist):
-        if not len(filelist):return True
-        for file in filelist:
-            if not os.path.exists(file):
+        if not len(filelist):
+            return True
+        for ffile in filelist:
+            if not os.path.exists(ffile):
                 qt.QMessageBox.critical(self, "ERROR",
-                                    'File %s\ndoes not exists' % file)
+                                    'File %s\ndoes not exists' % ffile)
                 if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
@@ -589,28 +591,30 @@ class McaBatchGUI(qt.QWidget):
                     self.raise_()
                 return False
             elif len(configfile.split()) > 1:
+                if sys.platform != 'win32':
+                    qt.QMessageBox.critical(self,
+                                 "ERROR",'Configuration File:\n %s\ncontains spaces in the path' % configfile)
+                    if QTVERSION < '4.0.0':
+                        self.raiseW()
+                    else:
+                        self.raise_()
+                    return False
+        return True
+
+    def __goodOutputDir(self,outputdir):
+        if not os.path.isdir(outputdir):
+            return False
+        elif len(outputdir.split()) > 1:
+            if sys.platform != 'win32':
                 qt.QMessageBox.critical(self,
-                             "ERROR",'Configuration File:\n %s\ncontains spaces in the path' % configfile)
+                    "ERROR",
+                    'Output Directory:\n %s\ncontains spaces in the path' % outputdir)
                 if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
                     self.raise_()
                 return False
         return True
-
-    def __goodOutputDir(self,outputdir):
-        if not os.path.isdir(outputdir):return False
-        elif len(outputdir.split()) > 1:
-            qt.QMessageBox.critical(self,
-                "ERROR",
-                'Output Directory:\n %s\ncontains spaces in the path' % outputdir)
-            if QTVERSION < '4.0.0':
-                self.raiseW()
-            else:
-                self.raise_()
-            return False
-        else:
-            return True
 
     def __getFileType(self,inputfile):
         try:
@@ -743,8 +747,10 @@ class McaBatchGUI(qt.QWidget):
         for f in filenameList:
             filename.append(qt.safe_str(f))
 
-        if len(filename) == 1:self.setConfigFile(qt.safe_str(filename[0]))
-        elif len(filenameList):self.setConfigFile(filename)
+        if len(filename) == 1:
+            self.setConfigFile(qt.safe_str(filename[0]))
+        elif len(filenameList):
+            self.setConfigFile(filename)
         if QTVERSION < '4.0.0':
             self.raiseW()
         else:
@@ -954,17 +960,20 @@ class McaBatchGUI(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
             except:
-                dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                # __file__ is not defined in frozen versions
+                dirname = os.path.dirname(os.path.dirname(McaAdvancedFitBatch.__file__))
 
-            if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith(".zip")):
+            if dirname.lower().endswith("exe") or\
+               dirname.lower().endswith(".zip"):
                 frozen = True
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch.exe")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer.exe")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.exe")
-                if not os.path.exists(viewer):viewer = None
-                if not os.path.exists(rgb):rgb = None
+                if not os.path.exists(viewer):
+                    viewer = None
+                if not os.path.exists(rgb):
+                    rgb = None
             else:
                 frozen = False
                 myself = os.path.join(dirname, "PyMcaBatch.py")
@@ -987,7 +996,7 @@ class McaBatchGUI(qt.QWidget):
                 self.genListFile(cfglistfile, config=True)
                 dirname  = os.path.dirname(dirname)
                 if frozen:
-                    cmd = '"%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                    cmd = '"%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
                                                                   (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
@@ -996,7 +1005,7 @@ class McaBatchGUI(qt.QWidget):
                                                                     listfile,concentrations,
                                                                     table, fitfiles, selectionFlag)
                 else:
-                    cmd = '%s "%s" --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                    cmd = '%s "%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
                                                                   (sys.executable,myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
@@ -1006,7 +1015,7 @@ class McaBatchGUI(qt.QWidget):
                                                                     table, fitfiles, selectionFlag)
             else:
                 if not frozen:
-                    cmd = '%s "%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                    cmd = '%s "%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
                                                                   (sys.executable, myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
@@ -1015,7 +1024,7 @@ class McaBatchGUI(qt.QWidget):
                                                                     listfile,concentrations,
                                                                     table, fitfiles, selectionFlag)
                 else:
-                    cmd = '"%s" --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                    cmd = '"%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
                                                                   (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
@@ -1027,7 +1036,6 @@ class McaBatchGUI(qt.QWidget):
             qt.qApp.processEvents()
             if DEBUG:
                 print("cmd = %s" % cmd)
-            import time
             if self.__splitBox.isChecked():
                 nbatches = int(qt.safe_str(self.__splitSpin.text()))
                 if len(self.fileList) > 1:
@@ -1043,12 +1051,9 @@ class McaBatchGUI(qt.QWidget):
                             processList.append(subprocess.Popen(cmd1,
                                                             cwd=os.getcwd()))
                         except UnicodeEncodeError:
-                            if sys.platform == 'win32':
-                                processList.append(subprocess.Popen(cmd1.encode('mbcs'),
-                                                            cwd=os.getcwd()))
-                            else:
-                                processList.append(subprocess.Popen(cmd1.encode('utf-8'),
-                                                            cwd=os.getcwd()))
+                            processList.append(\
+                                subprocess.Popen(cmd1.encode(sys.getfilesystemencoding()),
+                                                 cwd=os.getcwd()))
                             
                         if DEBUG:
                             print("cmd = %s" % cmd1)
@@ -1078,14 +1083,10 @@ class McaBatchGUI(qt.QWidget):
                 try:
                     subprocess.call(cmd)
                 except UnicodeEncodeError:
-                    cmdToBeDone = True
-                    if sys.platform == 'win32':
-                        try:
-                            subprocess.call(cmd.encode('mbcs'))
-                            cmdToBeDone = False
-                        except UnicodeEncodeError:
-                            pass
-                    if cmdToBeDone:
+                    try:
+                        subprocess.call(cmd.encode(sys.getfilesystemencoding()))
+                    except:
+                        # be ready for any weird error like missing that encoding
                         try:
                             subprocess.call(cmd.encode('utf-8'))
                         except UnicodeEncodeError:
@@ -1097,15 +1098,18 @@ class McaBatchGUI(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
             except:
-                dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                dirname = os.path.dirname(\
+                        os.path.dirname(McaAdvancedFitBatch.__file__))
             if (dirname[-3:] == "exe") or\
                (dirname.lower().endswith(".zip")):
                 dirname  = os.path.dirname(dirname)
                 myself   = os.path.join(dirname, "PyMcaBatch") 
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch")
-                if not os.path.exists(viewer):viewer = None
-                if not os.path.exists(rgb):rgb = None
+                if not os.path.exists(viewer):
+                    viewer = None
+                if not os.path.exists(rgb):
+                    rgb = None
             else:
                 myself = os.path.join(dirname, "PyMcaBatch.py")
                 if not os.path.exists(os.path.join(dirname, myself)):
@@ -1148,10 +1152,7 @@ class McaBatchGUI(qt.QWidget):
                                                     listfile, concentrations, table, fitfiles, selectionFlag)
             if DEBUG:
                 print("cmd = %s" % cmd)
-            import time
-            import popen2
             if self.__splitBox.isChecked():
-                self.hide()
                 qt.qApp.processEvents()
                 nbatches = int(qt.safe_str(self.__splitSpin.text()))
                 filechunk = int(len(self.fileList)/nbatches)
@@ -1163,8 +1164,16 @@ class McaBatchGUI(qt.QWidget):
                     cmd1 = cmd.replace("&", "") + \
                            " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
                             (beginoffset, endoffset, i)
-                    processList.append(popen2.Popen4(cmd1))
+                    # unfortunately I have to set shell = True
+                    # otherways I get a file not found error in the
+                    # chold process
+                    processList.append(\
+                        subprocess.Popen(cmd1,
+                                         cwd=os.getcwd(),
+                                         shell=True,
+                                         close_fds=True))
                 self._processList = processList
+                self.hide()
                 self._pollProcessList()
                 if self._timer is None:
                     self._timer = qt.QTimer(self)
@@ -1211,7 +1220,8 @@ class McaBatchGUI(qt.QWidget):
                 return
         fd=open(listfile, 'wb')
         for filename in lst:
-            fd.write(('%s\n' % filename).encode('utf-8'))
+            # only the file system encoding makes sense here
+            fd.write(('%s\n' % filename).encode(sys.getfilesystemencoding()))
         fd.close()
 
     def _pollProcessList(self):
@@ -1220,10 +1230,8 @@ class McaBatchGUI(qt.QWidget):
         if QTVERSION < '4.0.0':rgb = None
         n = 0
         for process in processList:
-            if sys.platform == "win32":
-                if process.poll() is None: n += 1
-            else:
-                if process.poll() < 0: n += 1
+            if process.poll() is None:
+                n += 1
         if n > 0: return
         self._timer.stop()
         self.show()
@@ -1233,8 +1241,10 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
-        if DEBUG:a, b, c = work.buildOutput(delete=False)
-        else:a, b, c = work.buildOutput(delete=True)
+        if DEBUG:
+            a, b, c = work.buildOutput(delete=False)
+        else:
+            a, b, c = work.buildOutput(delete=True)
         if len(a):
             if self._edfSimpleViewer is None:
                 self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
@@ -1244,16 +1254,18 @@ class McaBatchGUI(qt.QWidget):
             if len(b):
                 if sys.platform == "win32":
                     try:
-                        subprocess.Popen("%s %s" % (rgb, b[0]),
+                        subprocess.Popen('%s "%s"' % (rgb, b[0]),
                                          cwd = os.getcwd())
                     except UnicodeEncodeError:
-                        subprocess.Popen(("%s %s" % (rgb, b[0])).encode('mbcs'),
+                        subprocess.Popen(('%s "%s"' % (rgb, b[0])).encode(sys.getfilesystemencoding()),
                                          cwd = os.getcwd())
                 else:
                     os.system("%s %s &" % (rgb, b[0]))
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-        if DEBUG:work.buildOutput(delete=False)
-        else:work.buildOutput(delete=True)
+        if DEBUG:
+            work.buildOutput(delete=False)
+        else:
+            work.buildOutput(delete=True)
 
 
 class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
@@ -1692,7 +1704,8 @@ class McaBatchWindow(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
             except:
-                dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                dirname = os.path.dirname(\
+                        os.path.dirname(McaAdvancedFitBatch.__file__))
             if (dirname[-3:] == "exe") or\
                (dirname.lower().endswith(".zip")):
                 myself  = os.path.dirname(dirname) 
@@ -1716,7 +1729,8 @@ class McaBatchWindow(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
             except:
-                dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                dirname = os.path.dirname(\
+                        os.path.dirname(McaAdvancedFitBatch.__file__))
             if DEBUG:
                 print("final dirname = %s" % dirname)
             if (dirname[-3:] == "exe") or\
@@ -1829,14 +1843,14 @@ def main():
             filelist = fd.readlines()
             fd.close()
             for i in range(len(filelist)):
-                filelist[i]=filelist[i].decode('utf-8').replace('\n','')
+                filelist[i]=filelist[i].decode(sys.getfilesystemencoding()).replace('\n','')
             selection = None
     if cfglistfile is not None:
         fd = open(cfglistfile, 'rb')
         cfg = fd.readlines()
         fd.close()
         for i in range(len(cfg)):
-            cfg[i]=cfg[i].decode('utf-8').replace('\n','')
+            cfg[i]=cfg[i].decode(sys.getfilesystemencoding()).replace('\n','')
     app=qt.QApplication(sys.argv) 
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)       

@@ -76,21 +76,27 @@ if sys.version < '3.0':
             # default, just str
             x = str(potentialQString)
         except UnicodeEncodeError:
-            if sys.platform == 'win32':
-                # try user OS encoding
-                try:
-                    x = unicode(potentialQString, 'mbcs')
-                    return x
-                except UnicodeDecodeError:
-                    # follow unix path, priority to utf-8
-                    pass            
+            
+            # try user OS file system encoding
+            # expected to be 'mbcs' under windows
+            # and 'utf-8' under MacOS X
             try:
-                x = unicode(potentialQString, 'utf-8')
-            except UnicodeDecodeError:
+                x = unicode(potentialQString, sys.getfilesystemencoding())
+                return x
+            except:
+                # on any error just keep going
+                pass
+            # reasonable tries are 'utf-8' and 'latin-1'
+            # should I really go beyond those?
+            # In fact, 'utf-8' is the default file encoding for python 3
+            encodingOptions = ['utf-8', 'latin-1', 'utf-16', 'utf-32']
+            for encodingOption in encodingOptions:
                 try:
-                    x = unicode(potentialQString, 'latin-1')
+                    x = unicode(potentialQString, encodingOption)
+                    break
                 except UnicodeDecodeError:
-                    x = unicode(potentialQString, 'utf-16')
+                    if encodingOption == encodingOptions[-1]:
+                        raise
         return x
 else:
     safe_str = str
