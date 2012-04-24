@@ -261,5 +261,5 @@ for i in range(1, 101):
             d += a
         line += " %.6E %.6E\n" % (photo[n]-d, total[n])       
         outfile.write(line)
-outfile.write('\n')
+    outfile.write('\n')
 outfile.close()
