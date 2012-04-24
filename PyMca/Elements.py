@@ -2698,14 +2698,16 @@ def getelementmassattcoef(ele,energy=None):
                 i += 1
             line = f.readline()
         if sys.version >= '3.0':
-            #next line gave problems under under windows
-            #just try numpy.argsort([1,1,1,1,1]) under linux and windows to see
-            #what I mean
-            i1=numpy.argsort(Element[ele]['xcom']['energy'])
+            # next line gave problems under under windows
+            # just try numpy.argsort([1,1,1,1,1]) under linux and windows to see
+            # what I mean
+            # i1=numpy.argsort(Element[ele]['xcom']['energy']) did not work
+            # (uses quicksort and gives problems with Pb not passing tests)
+            i1=numpy.argsort(Element[ele]['xcom']['energy'], kind='mergesort')
         else:
-            set = map(None,Element[ele]['xcom']['energy'],range(len(Element[ele]['xcom']['energy'])))
-            set.sort()
-            i1=numpy.array(map(lambda x:x[1],set))
+            sset = map(None,Element[ele]['xcom']['energy'],range(len(Element[ele]['xcom']['energy'])))
+            sset.sort()
+            i1=numpy.array([x[1] for x in sset])
         Element[ele]['xcom']['energy']=numpy.take(Element[ele]['xcom']['energy'],i1)
         Element[ele]['xcom']['coherent']=numpy.take(Element[ele]['xcom']['coherent'],i1)
         Element[ele]['xcom']['compton']=numpy.take(Element[ele]['xcom']['compton'],i1)
