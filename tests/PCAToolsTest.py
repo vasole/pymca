@@ -1,5 +1,12 @@
 import unittest
 import numpy
+import numpy.linalg
+try:
+    import mdp
+    MDP = True
+except:
+    # MDP can give very weird errors
+    MDP = False
 
 class testPCATools(unittest.TestCase):
     def testPCAToolsImport(self):
@@ -51,6 +58,82 @@ class testPCATools(unittest.TestCase):
             self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
             self.assertTrue(nData == nSpectra)
 
+    def testPCAToolsPCA(self):
+        from PyMca.PCATools import numpyPCA
+        x = numpy.array([[0.0,  2.0,  3.0],
+                         [3.0,  0.0, -1.0],
+                         [4.0, -4.0,  4.0],
+                         [4.0,  4.0,  4.0]])
+
+        # that corresponds to 4 spectra of 3 channels
+        nSpectra = x.shape[0]
+
+        # calculate eigenvalues and eigenvectors with numpy
+        tmpArray = numpy.dot(x.T, x)/(nSpectra - 1)
+        numpyEigenvalues, numpyEigenvectors = numpy.linalg.eigh(tmpArray)
+
+        # sort from higher to lower
+        idx = list(range(numpyEigenvalues.shape[0]-1, -1 , -1))
+        numpyEigenvalues = numpy.take(numpyEigenvalues, idx)
+        numpyEigenvectors = numpyEigenvectors[:, ::-1].T
+
+        # now use PyMca
+        # centering has to be false to obtain the same results
+        for force in [True, False]:
+            images, eigenvalues, eigenvectors = numpyPCA(x,
+                                                         ncomponents=x.shape[1],
+                                                         force=force,
+                                                         center=False,
+                                                         scale=False)
+            self.assertTrue(numpy.allclose(eigenvalues, numpyEigenvalues))
+            self.assertTrue(numpy.allclose(eigenvectors, numpyEigenvectors))
+
+        # test with a different shape
+        x.shape = 2, 2, -1
+        for force in [True, False]:
+            images, eigenvalues, eigenvectors = numpyPCA(x,
+                                                         ncomponents=3,
+                                                         force=force,
+                                                         center=False,
+                                                         scale=False)
+            self.assertTrue(numpy.allclose(eigenvalues, numpyEigenvalues))
+            self.assertTrue(numpy.allclose(eigenvectors, numpyEigenvectors))
+
+    if MDP:
+        def testPCAToolsMDP(self):
+            from PyMca.PCATools import getCovarianceMatrix, numpyPCA
+            x = numpy.array([[0.0,  2.0,  3.0],
+                             [3.0,  0.0, -1.0],
+                             [4.0, -4.0,  4.0],
+                             [4.0,  4.0,  4.0]])
+
+            # use mdp
+            pcaNode = mdp.nodes.PCANode()
+            pcaNode.train(x)
+            pcaNode.stop_training()
+            pcaEigenvectors = pcaNode.v.T
+
+            # and compare with PyMca
+            for force in [True, False]:
+                images, eigenvalues, eigenvectors = numpyPCA(x,
+                                                        ncomponents=x.shape[1],
+                                                        force=force,
+                                                        center=True,
+                                                        scale=False)
+
+                # the eigenvalues must be the same
+                self.assertTrue(numpy.allclose(eigenvalues, pcaNode.d))
+                # the eigenvectors can be multiplied by -1
+                for i in range(x.shape[1]):
+                    if (eigenvectors[i,0] >= 0 and pcaEigenvectors[i,0] >=0) or\
+                       (eigenvectors[i,0] <= 0 and pcaEigenvectors[i,0] <=0):
+                        # both same sign
+                        self.assertTrue(numpy.allclose(eigenvectors[i],
+                                                       pcaEigenvectors[i]))
+                    else:
+                        self.assertTrue(numpy.allclose(-eigenvectors[i],
+                                                       pcaEigenvectors[i]))
+
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
     if auto:
@@ -60,6 +143,9 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testPCATools("testPCAToolsImport"))
         testSuite.addTest(testPCATools("testPCAToolsCovariance"))
+        testSuite.addTest(testPCATools("testPCAToolsPCA"))
+        if MDP:
+            testSuite.addTest(testPCATools("testPCAToolsMDP"))
     return testSuite
 
 if __name__ == '__main__':

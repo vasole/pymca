@@ -468,7 +468,8 @@ def getCovarianceMatrix(stack,
     return covMatrix, sumSpectrum / usedPixels, usedPixels
 
 
-def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
+def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
+                center=True, scale=False, **kw):
     #recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
@@ -500,21 +501,24 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None, **kw):
 
     N = int(nChannels / binning)
 
+    if ncomponents > N:
+        msg = "Requested %d components for a maximum of %d" % (ncomponents, N)
+        raise ValueError(msg)
+
     # avgSpectrum is unused, but it makes the code readable
     cov, avgSpectrum, calculatedPixels = getCovarianceMatrix(stack,
                                                              index=index,
                                                              binning=binning,
                                                              force=False,
-                                                             center=True)
+                                                             center=center)
 
     #the total variance is the sum of the elements of the diagonal
     totalVariance = numpy.diag(cov)
     print("Total Variance = ", totalVariance.sum())
 
     #option to normalize to unit standard deviation
-    normalizeToUnitStandardDeviation = False
+    normalizeToUnitStandardDeviation = scale
     if normalizeToUnitStandardDeviation:
-        print("normalizing")
         for i in range(cov.shape[0]):
             if totalVariance[i] > 0:
                 cov[i, :] /= numpy.sqrt(totalVariance[i])
