@@ -1,6 +1,5 @@
 import unittest
 import os
-import sys
 import numpy
 
 DEBUG = 0
@@ -123,8 +122,6 @@ class testElements(unittest.TestCase):
                                            xcomData[1, :]))
             self.assertTrue(numpy.allclose(data['compton'],
                                            xcomData[2, :]))
-            print((numpy.array(data['photo'])-xcomData[-3,:]).max())
-            print((numpy.array(data['photo'])-xcomData[-3,:]).min())
             self.assertTrue(numpy.allclose(data['photo'],
                                            xcomData[-3, :]))
             self.assertTrue(numpy.allclose(data['pair'],
@@ -137,12 +134,58 @@ class testElements(unittest.TestCase):
             # Check the total is self-consistent
             self.assertTrue(numpy.allclose(total, xcomData[-1, :]))
 
+    def getCrossSections(self, element, energy):
+        # perform log-log interpolation in the read data
+        # to see if we get the same results
+        # now perform a log-log interpolation when needed
+        # lin-lin interpolation:
+        #
+        #              y0 (x1-x) + y1 (x-x0)
+        #        y = -------------------------
+        #                     x1 - x0
+        #
+        # log-log interpolation:
+        #
+        #                  log(y0) * log(x1/x) + log(y1) * log(x/x0)
+        #        log(y) = ------------------------------------------
+        #                                  log (x1/x0)
+        #
+        
+        log = numpy.log10
+
+        # make sure data for the element are loaded
+        # the test for proper loading is made somewhere else
+        self._elements.getelementmassattcoef(element)
+
+        # and work with them
+        xcomData = self._elements.Element[element]['xcom']
+
+        i0 = numpy.nonzero(xcomData['energy'] <= energy)[0].max()
+        i1 = numpy.nonzero(xcomData['energy'] >= energy)[0].min()
+        x = numpy.array(energy)
+        x0 = xcomData['energy'][i0]
+        x1 = xcomData['energy'][i1]
+        ddict = {}
+        total = 0.0
+        for key in ['coherent', 'compton', 'photo']:
+            y0 = xcomData[key][i0]
+            y1 = xcomData[key][i1]
+            if x1 != x0:
+                logy = (log(y0) * log(x1/x) + log(y1) * log(x/x0))\
+                               /log(x1/x0)
+                y = pow(10.0, logy)
+            else:
+                y = y1
+            ddict[key] = y
+            total += y
+        ddict['total'] = total
+        return ddict
+
     def testElementCrossSectionsCalculation(self):
         if DEBUG:
             print()
             print("Testing Element Mass Attenuation Cross Sections Calculation")
 
-        log = numpy.log10
         for ele in ['Ge', 'Mn', 'Au', 'U']:
             if DEBUG:
                 print("Testing element = %s" % ele)
@@ -150,48 +193,75 @@ class testElements(unittest.TestCase):
             energyList = [1.0533, 2.03166, 5.82353, 10.3123, 24.7431]
             data = self._elements.getelementmassattcoef(ele,
                                                         energy=energyList)
-
-            # now, perform log-log interpolation in the read data
-            # to see if we get the same results
-            # now perform a log-log interpolation when needed
-            # lin-lin interpolation:
-            #
-            #              y0 (x1-x) + y1 (x-x0)
-            #        y = -------------------------
-            #                     x1 - x0
-            #
-            # log-log interpolation:
-            #
-            #                  log(y0) * log(x1/x) + log(y1) * log(x/x0)
-            #        log(y) = ------------------------------------------
-            #                                  log (x1/x0)
-            #
-            
-            xcomData = self._elements.Element[ele]['xcom']
-            energyArray = numpy.array(energyList)
-            i = 0
+            energyIndex = 0
             for x in energyList:
                 if DEBUG:
                     print("Testing energy %f" % x)
-                i0 = numpy.nonzero(xcomData['energy'] <= x)[0].max()
-                i1 = numpy.nonzero(xcomData['energy'] >= x)[0].min()            
-                x0 = xcomData['energy'][i0]
-                x1 = xcomData['energy'][i1]
-                total = 0.0
-                for key in ['coherent', 'compton', 'photo']:
+                refData = self.getCrossSections(ele, x)
+                for key in ['coherent', 'compton', 'photo', 'total']:
                     if DEBUG:
                         print("Testing key = %s" % key)
-                    y0 = xcomData[key][i0]
-                    y1 = xcomData[key][i1]
-                    logy = (log(y0) * log(x1/x) + log(y1) * log(x/x0))\
-                                       /log(x1/x0)
-                    y = pow(10.0, logy)
-                    total += y
-                    self.assertTrue((100.0 * abs(data[key][i]-y)/y) < 0.01)
-                y = total
-                key = 'total'
-                self.assertTrue((100.0 * abs(data[key][i]-y)/y) < 0.01)
-                i += 1
+                    yRef = refData[key]
+                    yTest = data[key][energyIndex]
+                    self.assertTrue((100.0 * abs(yTest-yRef)/yRef) < 0.01)
+                energyIndex += 1
+
+    def testMaterialCrossSectionsCalculation(self):
+        if DEBUG:
+            print()
+            print("Testing Material Mass Attenuation Cross Sections Calculation")
+
+        formulae = ['H2O1', 'Hg1S1', 'Ca1C1O3']
+        unpackedFormulae = [(('H', 2), ('O', 1)),
+                            (('Hg', 1), ('S', 1)),
+                            (('Ca', 1), ('C', 1.0), ('O', 3.0))]
+
+        for i in range(len(unpackedFormulae)):
+            if DEBUG:
+                print("Testing formula %s" % formulae[i])
+            # calculate mass fractions
+            totalMass = 0.0
+            massFractions = numpy.zeros((len(unpackedFormulae[i]),),
+                                            numpy.float)
+            j = 0
+            for ele, amount in unpackedFormulae[i]:
+                tmpValue = amount * self._elements.Element[ele]['mass']
+                totalMass += tmpValue
+                massFractions[j] = tmpValue
+                j += 1
+            massFractions /= totalMass
+
+            # the list of energies
+            energyList = [1.5, 3.33, 10., 20.4, 30.6, 90.33]
+
+            # get the data to be checked
+            data = self._elements.getmassattcoef(formulae[i], energyList)
+
+            energyIndex = 0
+            for energy in energyList:
+                if DEBUG:
+                    print("Testing energy %f" % energy)
+                # initialize reference data
+                refData = {}
+                for key in ['coherent', 'compton', 'photo', 'total']:
+                    refData[key] = 0.0
+
+                # calculate reference data
+                for j in range(len(unpackedFormulae[i])):
+                    ele = unpackedFormulae[i][j][0]
+                    tmpData = self.getCrossSections(ele, energy)
+                    for key in ['coherent', 'compton', 'photo', 'total']:
+                        refData[key] += tmpData[key] * massFractions[j]
+
+                # test
+                for key in ['coherent', 'compton', 'photo', 'total']:
+                    if DEBUG:
+                        print("Testing key %s" % key)
+                    yRef = refData[key]
+                    yTest = data[key][energyIndex]
+                    self.assertTrue((100.0 * abs(yTest-yRef)/yRef) < 0.01)
+                energyIndex += 1
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
@@ -203,6 +273,7 @@ def getSuite(auto=True):
         testSuite.addTest(testElements("testPeakIdentification"))
         testSuite.addTest(testElements("testElementCrossSectionsReadout"))
         testSuite.addTest(testElements("testElementCrossSectionsCalculation"))
+        testSuite.addTest(testElements("testMaterialCrossSectionsCalculation"))
     return testSuite
 
 if __name__ == '__main__':
