@@ -26,7 +26,7 @@
 #############################################################################*/
 #
 #   Symbol  Atomic Number   x y ( positions on table )
-#       name,  mass, density 
+#       name,  mass, density
 #
 __revision__ = "$Revision: 2.00 $"
 LOGLOG = True
@@ -42,7 +42,7 @@ from PyMca import IncoherentScattering
 from PyMca import PyMcaEPDL97
 from PyMca import PyMcaDataDir
 
-""" 
+"""
 Constant                     Symbol      2006 CODATA value          Relative uncertainty
 Electron relative atomic mass   Ar(e) 5.485 799 0943(23) x 10-4     4.2 x 10-10
 Molar mass constant             Mu    0.001 kg/mol                   defined
@@ -201,19 +201,19 @@ def getsymbol(z):
         return ElementsInfo[int(z)-1][0]
     else:
         return None
-    
+
 def getname(z):
     if (z > 0) and (z<=len(ElementList)):
         return ElementsInfo[int(z)-1][4]
     else:
         return None
-    
+
 def getz(ele):
     if ele in ElementList:
         return ElementList.index(ele)+1
     else:
         return None
-        
+
 #fluorescence yields
 def getomegak(ele):
     index = KShell.ElementKShellConstants.index('omegaK')
@@ -439,7 +439,7 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
     z = getz(ele)
     if z > 101:
         element = getsymbol(101)
-        if z > 104: 
+        if z > 104:
             elework = getsymbol(104)
         else:
             elework = ele
@@ -493,7 +493,7 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
                         i+=1
                     #if less than 5 eV take that value (Scofield calculations
                     #do not seem to be self-consistent in tems of energy grid
-                    #and binding energy -see Lead with e=2.5 -> ework = 2.506 
+                    #and binding energy -see Lead with e=2.5 -> ework = 2.506
                     #that is below the binding energy of Scofield)
                     if False and (Scofield1973.dict[element]['energy'][i] - ework) < 0.005:
                         #this does not work for Cd and E=3.5376"
@@ -509,11 +509,11 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
                     else:
                         #if element == "Fr":
                         #    print "energy = ",energy," ework = ",ework
-                        #    print Scofield1973.dict[element]['energy'][i]    
+                        #    print Scofield1973.dict[element]['energy'][i]
                         #    print Scofield1973.dict[element]['energy'][i-1]
                         #    print Scofield1973.dict[element][key][i]
                         #    print Scofield1973.dict[element][key][i-1]
-                        #    print type( Scofield1973.dict[element][key][i-1] ) 
+                        #    print type( Scofield1973.dict[element][key][i-1] )
                         x2 = logf(Scofield1973.dict[element]['energy'][i])
                         x1 = logf(Scofield1973.dict[element]['energy'][i-1])
                         y2 = logf(Scofield1973.dict[element][key][i])
@@ -524,8 +524,8 @@ def getPhotoWeight(ele,shelllist,energy, normalize = None, totals = None):
                             y2 = logf(Scofield1973.dict[element]['total'][i])
                             y1 = logf(Scofield1973.dict[element]['total'][i-1])
                             totalPhotoi = expf(y1 + slope * (logf(ework) - x1))
-                        
-                        
+
+
         w += [wi]
         if totals:
             totalPhoto += [totalPhotoi]
@@ -563,7 +563,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
     #weights due to Coster - Kronig transitions
     #k shell is not affected
     ck= LShell.getCosterKronig(ele)
-    
+
     if cascade and (sum(wall[1:4]) > 0.0) and (wall[0] > 0.0):
         #l shell (considering holes due to k shell transitions)
         #I assume that approximately the auger transitions give
@@ -575,7 +575,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
             cor   = [auger,
                      auger + Element[ele]['KL2']['rate'] * Element[ele]['omegak'],
                      auger + Element[ele]['KL3']['rate'] * Element[ele]['omegak']]
-            w = [wall[1]+cor[0] * wall[0], 
+            w = [wall[1]+cor[0] * wall[0],
                  wall[2]+cor[1] * wall[0],
                  wall[3]+cor[2] * wall[0]]
         else:
@@ -588,7 +588,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
     w[0] = w[0]
     w[1] = w[1] + ck['f12'] * w[0]
     w[2] = w[2] + ck['f13'] * w[0] + ck['f23'] * w[1]
-    
+
     wall[1] = w[0] * 1.0
     wall[2] = w[1] * 1.0
     wall[3] = w[2] * 1.0
@@ -601,7 +601,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
             #K shell
             if 'KM2' in Element[ele]['K xrays']:
                 cor[1] += wall[0] * Element[ele]['KM2']['rate'] * \
-                           Element[ele]['omegak']                       
+                           Element[ele]['omegak']
             if 'KM3' in Element[ele]['K xrays']:
                 cor[2] += wall[0] * Element[ele]['KM3']['rate'] * \
                            Element[ele]['omegak']
@@ -611,14 +611,14 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
             cor[2] += wall[0] * 0.05 * (1.0 - Element[ele]['omegak'])
             cor[3] += wall[0] * 0.01 * (1.0 - Element[ele]['omegak'])
             cor[4] += wall[0] * 0.01 * (1.0 - Element[ele]['omegak'])
-        
+
         if sum(wall[1:4]) > 0:
             #L shell
             #X rays I can take them rigorously
             mlist = ['M1','M2','M3','M4','M5']
             i = 0
             #for the auger I take 95% of the value and
-            #equally distribute it among the shells    
+            #equally distribute it among the shells
             augerfactor = 0.95/ 5.0
             augercor    = 0.0
             for key in ['L1 xrays', 'L2 xrays', 'L3 xrays']:
@@ -642,10 +642,10 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
                     print("Error unknown shell, Please report")
                     omega = 0.0
                     #for the elements
-                    
+
                 #I consider Coster-Kronig for L1
                 if (i == 1) and (Element[ele]['Z'] >= 80):
-                    #f13 is the main transition 
+                    #f13 is the main transition
                     if Element[ele]['Z'] >= 90:
                         #L1-L3M5 is ~ 40 %
                         #L1-L3M4 is ~ 32 %
@@ -656,7 +656,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
                                   Element[ele]['CosterKronig']['L']['f13']
                         if Element[ele]['Z'] > 90:
                             cor[2] += 0.5 * wall[1] * \
-                                  Element[ele]['CosterKronig']['L']['f13']  
+                                  Element[ele]['CosterKronig']['L']['f13']
                     else:
                         #L1-L3M5 is ~ 43 %
                         #L1-L3M4 is ~ 32 %
@@ -671,9 +671,9 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
                         #L2-L3M5 ~ 3 %
                         #L2-L3M4 ~ 50%
                         cor[3] += 0.50 * wall[2] * \
-                            Element[ele]['CosterKronig']['L']['f23']    
+                            Element[ele]['CosterKronig']['L']['f23']
                         cor[4] += 0.03 * wall[2] * \
-                            Element[ele]['CosterKronig']['L']['f23']    
+                            Element[ele]['CosterKronig']['L']['f23']
                     else:
                         #L2-L3M5 ~ 6 %
                         cor[4] += 0.06 * wall[2] * \
@@ -707,7 +707,7 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
     wall[6] = w[2] * 1.0
     wall[7] = w[3] * 1.0
     wall[8] = w[4] * 1.0
-    
+
     #weights due to omega
     omega = [ getomegak(ele),
               getomegal1(ele), getomegal2(ele), getomegal3(ele),
@@ -722,10 +722,10 @@ def _getFluorescenceWeights(ele, energy, normalize = None, cascade = None):
                 w[i] /= cum
     return w
 
-def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = None, 
+def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = None,
                         alphain = None, cascade = None, fluorescencemode=None):
     """
-    getEscape(matrixlist, energy, 
+    getEscape(matrixlist, energy,
               ethreshold=None, ithreshold=None, nthreshold = None,
               alphain = None)
     matrixlist is a list of the form [material, density, thickness]
@@ -734,7 +734,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
     ithreshold is the minimum absolute peak intensity to consider
     nthreshold is maximum number of escape peaks to consider
     alphain  is the incoming beam angle with detector surface
-    It gives back a list of the form  [[energy0, intensity0, label0], 
+    It gives back a list of the form  [[energy0, intensity0, label0],
                                        [energy1, intensity1, label1],
                                        ....
                                        [energyn, intensityn, labeln]]
@@ -793,7 +793,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
                 outputDict[ele][transition]['energy'] = ene
                 if ene < 0.0:
                     print("element = ", ele, "transition = ", transition, "exc. energy = ", energy)
-                
+
             #matrix term
             formula   = matrix[0]
             thickness = matrix[1] * matrix[2]
@@ -806,13 +806,13 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
             # because there can be more than one element and
             # I also weight the mass fraction
             notalone = (muphoto[-1]/mutotal[-1]) *\
-                        0.5 * outputDict[ele]['mass fraction'] 
+                        0.5 * outputDict[ele]['mass fraction']
             del energies[-1]
             i = 0
             for transition in transitions:
                 trans = (mutotal[i]/sinAlphaOut)/(mutotal[-1]/sinAlphaIn)
                 trans = notalone * \
-                        (1.0 - trans * numpy.log(1.0 + 1.0/trans)) 
+                        (1.0 - trans * numpy.log(1.0 + 1.0/trans))
                 if thickness > 0.0:
                     #extremely thin case
                     trans0 = notalone * thickness * mutotal[-1]/sinAlphaIn
@@ -832,31 +832,31 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
         if 'K xrays' in outputDict[key]:
             rays += outputDict[key]['K xrays']
         for label in rays:
-            if fluorescencemode:            
+            if fluorescencemode:
                 peaklist.append([outputDict[key][label]['energy'],
-                                 outputDict[key][label]['rate'], 
+                                 outputDict[key][label]['rate'],
                                  key+' '+label.replace('*','')])
             else:
                 peaklist.append([energy - outputDict[key][label]['energy'],
-                             outputDict[key][label]['rate'], 
+                             outputDict[key][label]['rate'],
                              key+' '+label.replace('*','')])
-    
+
     return _filterPeaks(peaklist, ethreshold = ethreshold,
                                   ithreshold = ithreshold,
                                   nthreshold = nthreshold,
                                   absoluteithreshold = True,
                                   keeptotalrate = False)
-    
-        
-    #return outputDict 
 
-    
+
+    #return outputDict
+
+
 def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
                  nthreshold = None,
                  absoluteithreshold=None,
                  keeptotalrate=None):
     """
-    Given a list of peaks of the form [[energy0, intensity0, label0], 
+    Given a list of peaks of the form [[energy0, intensity0, label0],
                                        [energy1, intensity1, label1],
                                        ....
                                        [energyn, intensityn, labeln]]
@@ -933,10 +933,10 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
     for peak in mix:
         output.append(peak)
     output.sort()
-    
+
     #intensity threshold
     if len(output) <= 1:return output
-    if ithreshold is not None:        
+    if ithreshold is not None:
         imax = max([x[1] for x in output])
         if absoluteithreshold:
             threshold = ithreshold
@@ -945,7 +945,7 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
         for i in range(-len(output)+1,1):
             if output[i][1] < threshold:
                 del output[i]
-                
+
     #number threshold
     if nthreshold is not None:
         if nthreshold < len(output):
@@ -955,7 +955,7 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
             div = div[:nthreshold]
             output = [x[1] for x in div]
             output.sort()
-            
+
     #recover original rates
     if keeptotalrate:
         currenttotal = sum([x[1] for x in output])
@@ -998,7 +998,7 @@ def _getAttFilteredElementDict(elementsList,
                 energies += [ene]
                 rates.append(elementDict[transition]['rate'] * 1.0)
                 outputDict[ele][transition]['energy'] = ene
-            #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)    
+            #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)
 
             #attenuators
             coeffs = numpy.zeros(len(energies), numpy.float)
@@ -1055,7 +1055,7 @@ def _getAttFilteredElementDict(elementsList,
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
                     transFunny = funnyfactor * transFunny + \
-                                 (1.0 - funnyfactor)                     
+                                 (1.0 - funnyfactor)
                 for i in range(len(rates)):
                     rates[i] *= (trans[i] * transFunny[i])
 
@@ -1115,7 +1115,7 @@ def getMultilayerFluorescence(multilayer0,
     if (type(energyList) != type([])) and \
        (type(energyList) != numpy.ndarray):
         energyList = [energyList]
-        
+
     energyList = numpy.array(energyList, dtype=numpy.float)
     if layerList is None:
         layerList = list(range(len(multilayer)))
@@ -1139,7 +1139,7 @@ def getMultilayerFluorescence(multilayer0,
         flagList   = numpy.array(flagList)
     else:
         flagList = numpy.ones(len(energyList)).astype(numpy.float)
-            
+
     optimized = 0
     if beamfilters is None:beamfilters = []
     if len(beamfilters):
@@ -1188,8 +1188,8 @@ def getMultilayerFluorescence(multilayer0,
             except OverflowError:
                 for coef in coeffs:
                     if coef < 0.0:
-                        raise ValueError("Positive exponent in attenuators transmission term")    
-                trans = 0.0 * coeffs      
+                        raise ValueError("Positive exponent in attenuators transmission term")
+                trans = 0.0 * coeffs
             weightList = weightList * trans
     else:
         pass
@@ -1210,11 +1210,11 @@ def getMultilayerFluorescence(multilayer0,
     #forcepresent is to set concentration 1 for the fit
     #useless if elementsList is not given
     if forcepresent is None:forcepresent=0
-    forcedElementsList = []  
+    forcedElementsList = []
     if elementsList is not None:
         if forcepresent:
             forcedElementsList = elementsList * 1
-            keys = []            
+            keys = []
             for ilayer in list(range(len(multilayer))):
                 pseudomatrix = multilayer[ilayer] * 1
                 eleDict = getMaterialMassFractions([pseudomatrix[0]], [1.0])
@@ -1232,8 +1232,8 @@ def getMultilayerFluorescence(multilayer0,
                 for i in todelete:
                     del forcedElementsList[i]
         else:
-            forcedElementsList = [] 
-            
+            forcedElementsList = []
+
     #print "forcedElementsList = ",forcedElementsList
     #import time
     #t0 = time.time()
@@ -1266,7 +1266,7 @@ def getMultilayerFluorescence(multilayer0,
             newelementsList = keys
             for key in keys:
                 if key not in elementsListFinal:
-                    elementsListFinal.append(key)                
+                    elementsListFinal.append(key)
         else:
             newelementsList = []
             if optimized:
@@ -1284,14 +1284,14 @@ def getMultilayerFluorescence(multilayer0,
                 if optimized:
                     eleDict[group[1] * 1] = {}
                     eleDict[group[1] * 1] = 1.0
-                else: 
+                else:
                     eleDict[group * 1] = {}
-                    eleDict[group * 1] = 1.0   
+                    eleDict[group * 1] = 1.0
             if not len(newelementsList):
                 dictList.append({})
                 result.append({})
                 continue
-                
+
         #here I could recalculate the dictionnary
         if optimized:
             userElementDict = _getAttFilteredElementDict(newelementsList,
@@ -1412,7 +1412,7 @@ def getMultilayerFluorescence(multilayer0,
                 dictList.append(dict)
         #secondary fluorescence term from next layers
         if secondary:
-            newweightlist2 = newweightlist * 1        
+            newweightlist2 = newweightlist * 1
             for ilayer2 in range(len(multilayer)):
                 if ilayer2 <= ilayer:continue
                 #get beam intensity at the layer
@@ -1440,7 +1440,7 @@ def getMultilayerFluorescence(multilayer0,
                 #get beam2
                 for iene in  range(len(energyList)):
                     energy = energyList[iene]  * 1.0
-                    escape = getEscape(pseudomatrix2, 
+                    escape = getEscape(pseudomatrix2,
                                        energy,
                                        alphain    = alphain,
                                        cascade    = True,
@@ -1455,7 +1455,7 @@ def getMultilayerFluorescence(multilayer0,
                     #correct for attenuation in intermediate layers!!!
                     weightList3 = 1.0 * weightList2
                     for ilayer3 in range(len(multilayer)):
-                        if ilayer3 >= ilayer2:continue    
+                        if ilayer3 >= ilayer2:continue
                         if ilayer3 <= ilayer: continue
                         #I have an intermediate layer
                         beamfilter = multilayer[ilayer3] * 1
@@ -1478,7 +1478,7 @@ def getMultilayerFluorescence(multilayer0,
                                         #if we are here we know it is not an overflow and trans[i] has the proper value
                                         pass
                         weightList3 = weightList3 * trans
-                        
+
                     for iene2 in range(len(energyList2)):
                         energy = energyList2[iene2]
                         dict2 = getFluorescence(pseudomatrix, energy,
@@ -1525,7 +1525,7 @@ def getMultilayerFluorescence(multilayer0,
             return _combineMatrixFluorescenceDict(dictListList, newelementsList)
 
 def _combineMatrixFluorescenceDict(dictList, elementsList0):
-    finalDict = {} 
+    finalDict = {}
     elementsList = [[x[0], x[1]] for x in elementsList0]
     for z,ele in elementsList:
         #print ele
@@ -1579,7 +1579,7 @@ def _combineMatrixFluorescenceDict(dictList, elementsList0):
     return finalDict
 
 def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout = None,
-                                                elementsList = None, cascade=None, 
+                                                elementsList = None, cascade=None,
                                                 detector=None):
     if alphain  is None: alphain  = 45.0
     if alphaout is None: alphaout = 45.0
@@ -1597,27 +1597,27 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
 
     if energy is None:
         raise ValueError("Invalid Energy")
-    
+
     if elementsList is None:
         #get material elements and concentrations
         eleDict = getMaterialMassFractions([matrix[0]], [1.0])
-        if eleDict == {}: return {}    
+        if eleDict == {}: return {}
         #sort the elements according to atomic number (not needed because the output will be a dictionnary)
         keys = eleDict.keys()
         elementsList = [[getz(x),x] for x in keys]
         elementsList.sort()
     else:
         if (type(elementsList) != type([])) and (type(elementsList) != types.TupleType):
-            elementsList  = [elementsList] 
+            elementsList  = [elementsList]
         elementsList = [[getz(x),x] for x in elementsList]
         elementsList.sort()
         eleDict = {}
         for z, ele in elementsList:
-            eleDict[ele] = 1.0    
+            eleDict[ele] = 1.0
 
     if energy <= 0.10:
         raise ValueError("Invalid Energy %.5g keV" % energy)
-    
+
     #do the job
     outputDict = {}
     for z,ele in elementsList:
@@ -1638,7 +1638,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
             ene = outputDict[ele][rays]['energy']
             energies =[ene]
 
-            #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)    
+            #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)
             #attenuators
             for attenuator in attenuators:
                 formula   = attenuator[0]
@@ -1662,7 +1662,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                     trans = trans
                 for i in range(len(rates)):
                     rates[i] *= trans[i]
-            
+
             #detector term
             if detector is not None:
                 formula   = detector[0]
@@ -1672,7 +1672,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                     trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = numpy.ones(len(rates), numpy.float) 
+                    trans = numpy.ones(len(rates), numpy.float)
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1713,10 +1713,10 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                 outputDict[ele][rays]['rate'] = rates[i]
             outputDict[ele]['rates'][rays] = sum(rates)
             #outputDict[ele][rays]= Element[ele]['rays'] * 1
-    return outputDict 
+    return outputDict
 
 def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout = None,
-                                                elementsList = None, cascade=None, 
+                                                elementsList = None, cascade=None,
                                                 detector=None,
                                                 funnyfilters=None,
                                                 userElementDict=None,
@@ -1730,14 +1730,14 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
     attenuators is a list of the form [[material1, density1, thickness1],....]
     alphain  is the incoming beam angle with sample surface
     alphaout is the outgoing beam angle with sample surface
-    if a given elements list is given, the fluorescence rate will be calculated for ONLY 
-    for those elements without taking into account if they are present in the matrix and 
+    if a given elements list is given, the fluorescence rate will be calculated for ONLY
+    for those elements without taking into account if they are present in the matrix and
     considering a mass fraction of 1 to all of them. This should allow a program to fit
     directly concentrations.
     cascade is a flag to consider vacancy propagation (it is a crude approximation)
     detector is just one attenuator more but treated as (1 - Transmission)
              [material, density, thickness]
-    
+
     These formulae are strictly valid only for parallel beams.
     Needs to be corrected for detector efficiency (at least solid angle) and incoming intensity.
     Secondary transitions are neglected.
@@ -1780,13 +1780,13 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
 
     if energy is None:
         raise ValueError("Invalid Energy")
-    
+
     elementsRays = None
     if elementsList is None:
         #get material elements and concentrations
         eleDict = getMaterialMassFractions([matrix[0]], [1.0])
-        if eleDict == {}: return {}    
-        #sort the elements according to atomic number 
+        if eleDict == {}: return {}
+        #sort the elements according to atomic number
         #(not needed because the output will be a dictionnary)
         keys = eleDict.keys()
         elementsList = [[getz(x),x] for x in keys]
@@ -1805,11 +1805,11 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             elementsList.sort()
         eleDict = {}
         for z, ele in elementsList:
-            eleDict[ele] = 1.0    
+            eleDict[ele] = 1.0
 
     if energy <= 0.10:
         raise ValueError("Invalid Energy %.5g keV" % energy)
-    
+
     #do the job
     outputDict = {}
     shelllist = ['K', 'L1', 'L2', 'L3','M1', 'M2', 'M3', 'M4', 'M5']
@@ -1828,7 +1828,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
         fluoWeights = _getFluorescenceWeights(ele, energy, normalize = False,
                                                              cascade=cascade)
         outputDict[ele]['rays'] = elementDict['rays'] * 1
-        
+
         if elementsRays is None:
             raysforloop = elementDict['rays']
         else:
@@ -1850,14 +1850,14 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 outputDict[ele][transition]={}
                 outputDict[ele][transition]['rate'] = 0.0
                 if transition[0] == "K":
-                    rates.append(fluoWeights[0] *  elementDict[transition]['rate'])              
+                    rates.append(fluoWeights[0] *  elementDict[transition]['rate'])
                 else:
                     rates.append(fluoWeights[shelllist.index(transition[0:2])] * elementDict[transition]['rate'])
                 ene = elementDict[transition]['energy']
                 energies += [ene]
                 outputDict[ele][transition]['energy'] = ene
-                
-            #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)    
+
+            #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)
             #attenuators
             coeffs = numpy.zeros(len(energies), numpy.float)
             for attenuator in attenuators:
@@ -1908,7 +1908,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                 #if we are here we know it is not an overflow and trans[i] has the proper value
                                 pass
                     transFunny = funnyfactor * transFunny + \
-                                 (1.0 - funnyfactor)                     
+                                 (1.0 - funnyfactor)
                 for i in range(len(rates)):
                     rates[i] *= (trans[i] * transFunny[i])
 
@@ -1921,7 +1921,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                     trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = numpy.ones(len(rates), numpy.float) 
+                    trans = numpy.ones(len(rates), numpy.float)
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1953,7 +1953,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
             #muphoto  = allcoeffs['photo']
             muphoto  = getMaterialMassAttenuationCoefficients(ele,1.0,energy)['photo']
             del energies[-1]
-            i = 0            
+            i = 0
             for transition in transitions:
                 #thick target term
                 if rates[i] <= 0.0:trans=0.0
@@ -2009,7 +2009,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                 i += 1
             outputDict[ele]['rates'][rays] = sum(rates)
             #outputDict[ele][rays]= Element[ele]['rays'] * 1
-    return outputDict 
+    return outputDict
 
 
 def getLWeights(ele,energy=None, normalize = None, shellist = None):
@@ -2094,14 +2094,14 @@ def getxrayenergy(symbol,transition):
     if trans[0:1] == 'K':
         i=1
         emax = energies[ElementShells.index('K')+1]
-    elif trans[0:2] in ElementShells:    
+    elif trans[0:2] in ElementShells:
         i=2
         emax = energies[ElementShells.index(trans[0:2])+1]
     else:
         #print transition
         #print "Shell %s not in Element %s Shells" % (trans[0:2], ele)
         return -1
-    
+
     if trans[i:i+2] in ElementShells:
         emin = energies[ElementShells.index(trans[i:i+2])+1]
     else:
@@ -2163,7 +2163,7 @@ def getMaterialKey(compound):
         return matkeys[index]
     return None
 
-def getmassattcoef(compound,energy=None):
+def getmassattcoef(compound, energy=None):
     """
     Usage: getmassattcoef(element symbol/composite, energy in kev)
 	    Computes mass attenuation coefficients for a single element or a compound.
@@ -2175,12 +2175,12 @@ def getmassattcoef(compound,energy=None):
             dict['photo']      = [photoelectic effect cross section(energies)]
             dict['pair']       = [pair production cross section(energies)]
             dict['total']      = [total cross section]
-            
-	    A compound is defined with a string as follow: 
+
+	    A compound is defined with a string as follow:
 		'C22H10N2O5' means 22 * C, 10 * H, 2 * N, 5 * O
-        
+
 		xsection = SUM(xsection(zi)*ni*ai) / SUM(ai*ni)
-        
+
 		zi = Z of each element
 		ni = number of element zi
 		ai = atomic weight of element zi
@@ -2188,7 +2188,8 @@ def getmassattcoef(compound,energy=None):
 	    Result in cm2/g
 	"""
     #single element case
-    if compound in Element.keys():return getelementmassattcoef(compound,energy)
+    if compound in Element.keys():
+        return getelementmassattcoef(compound,energy)
     elts= [ w for w in re.split('[0-9]', compound) if w != '' ]
     nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
     if len(elts)==1 and len(nbs)==0:
@@ -2196,23 +2197,24 @@ def getmassattcoef(compound,energy=None):
             return getelementmassattcoef(compound,energy)
         else:
             return {}
-    if (len(elts)==0 and len(nbs)==0) or (len(elts) != len(nbs)):return {}
+    if (len(elts)==0 and len(nbs)==0) or (len(elts) != len(nbs)):
+        return {}
 
     fraction = [Element[elt]['mass'] *nb for (elt, nb) in zip(elts, nbs) ]
     div      = sum(fraction)
     fraction = [x/div for x in fraction]
     #print "fraction = ",fraction
-    dict={}
-    dict['energy']   = []
-    dict['coherent'] = []
-    dict['compton']  = []
-    dict['photo']    = []
-    dict['pair']     = []
-    dict['total']    = []
+    ddict={}
+    ddict['energy']   = []
+    ddict['coherent'] = []
+    ddict['compton']  = []
+    ddict['photo']    = []
+    ddict['pair']     = []
+    ddict['total']    = []
     eltindex = 0
     if energy is None:
         energy=[]
-        for ele in elts:            
+        for ele in elts:
             xcom_data = getelementmassattcoef(ele,None)['energy']
             for ene in xcom_data:
                 if ene not in energy:
@@ -2243,7 +2245,7 @@ def getmassattcoef(compound,energy=None):
                     cohe=xcom_data['coherent'][i1]
                     comp=xcom_data['compton'][i1]
                     photo=xcom_data['photo'][i1]
-                    pair=xcom_data['pair'][i1]            
+                    pair=xcom_data['pair'][i1]
                 else:
                     if LOGLOG:
                         A=xcom_data['energylog10'][i0]
@@ -2272,48 +2274,48 @@ def getmassattcoef(compound,energy=None):
                     else:
                         pair =0.0
             if eltindex == 0:
-                dict['energy'].append(ene)
-                dict['coherent'].append(cohe *fraction[eltindex])
-                dict['compton'].append(comp *fraction[eltindex])
-                dict['photo'].append(photo *fraction[eltindex])
-                dict['pair'].append(pair*fraction[eltindex])
-                dict['total'].append((cohe+comp+photo+pair)*fraction[eltindex])
+                ddict['energy'].append(ene)
+                ddict['coherent'].append(cohe *fraction[eltindex])
+                ddict['compton'].append(comp *fraction[eltindex])
+                ddict['photo'].append(photo *fraction[eltindex])
+                ddict['pair'].append(pair*fraction[eltindex])
+                ddict['total'].append((cohe+comp+photo+pair)*fraction[eltindex])
             else:
-                dict['coherent'][eneindex] += cohe  *fraction[eltindex]
-                dict['compton'] [eneindex] += comp  *fraction[eltindex]
-                dict['photo']   [eneindex] += photo *fraction[eltindex]
-                dict['pair']    [eneindex] += pair  *fraction[eltindex]
-                dict['total']   [eneindex] += (cohe+comp+photo+pair) * fraction[eltindex]
+                ddict['coherent'][eneindex] += cohe  *fraction[eltindex]
+                ddict['compton'] [eneindex] += comp  *fraction[eltindex]
+                ddict['photo']   [eneindex] += photo *fraction[eltindex]
+                ddict['pair']    [eneindex] += pair  *fraction[eltindex]
+                ddict['total']   [eneindex] += (cohe+comp+photo+pair) * fraction[eltindex]
             eneindex += 1
-        eltindex += 1    
-    return dict                                                          
+        eltindex += 1
+    return ddict
 
 def __materialInCompoundList(lst):
     for item in lst:
         if item in Material.keys():
             return True
     return False
-    
+
 def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
                             density=None, thickness=None, listoutput=True):
     """
     Usage:
     getMaterialTransmission(compoundList, fractionList, energy = None,
                             density=None, thickness=None):
-    
+
     Input
-    
+
     compoundlist - List of elements, compounds or materials
     fractionlist - List of floats indicating the amount of respective material
     energy       - Photon energy (it can be a list)
     density      - Density in g/cm3 (default is 1.0)
     thickness    - Thickness in cm  (default is 1.0)
-    
+
     The product density * thickness has to be in g/cm2
-    
+
     Output
-    
-    Detailed dictionary. 
+
+    Detailed dictionary.
     """
     if density   is None: density = 1.0
     if thickness is None: thickness = 1.0
@@ -2323,7 +2325,7 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
     mu     = numpy.array(dict['total'],numpy.float) * density * thickness
     if energy0 is not None:
         if type(energy0) != type([]):
-            listoutput = False    
+            listoutput = False
     if listoutput:
         dict['energy']   = energy.tolist()
         dict['density']  = density
@@ -2333,12 +2335,12 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
         dict['energy']   = energy
         dict['density']  = density
         dict['thickness'] = thickness
-        dict['transmission'] = numpy.exp(-mu)    
+        dict['transmission'] = numpy.exp(-mu)
     return dict
-    
+
 def getMaterialMassFractions(compoundList0, fractionList0):
     return getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, None, massfractions=True)
-    
+
 def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0 = None,massfractions=False):
     """
     Usage:
@@ -2346,7 +2348,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                                      energy = None,massfractions=False)
     compoundList - List of compounds into the material
     fractionList - List of masses of each compound
-    energy       - Energy at which the values are desired    
+    energy       - Energy at which the values are desired
     massfractions- Flag to supply mass fractions on output
     """
     if type(compoundList0) != type([]):
@@ -2362,7 +2364,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
     fractionList = [float(x) for x in fractionList]
 
     while __materialInCompoundList(compoundList):
-        total=sum(fractionList)   
+        total=sum(fractionList)
         compoundFractionList = [x/total for x in fractionList]
         #allow materials in compoundList
         newcompound = []
@@ -2374,7 +2376,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                     Material[compound]['CompoundList']=[Material[compound]['CompoundList']]
                 if type(Material[compound]['CompoundFraction']) != type([]):
                     Material[compound]['CompoundFraction']=[Material[compound]['CompoundFraction']]
-                Material[compound]['CompoundFraction'] = [float(x) for x in Material[compound]['CompoundFraction']]    
+                Material[compound]['CompoundFraction'] = [float(x) for x in Material[compound]['CompoundFraction']]
                 total = sum(Material[compound]['CompoundFraction'])
                 j = compoundList.index(compound)
                 compoundfraction = fractionList[j]
@@ -2390,12 +2392,12 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                 del compoundList[i]
                 del fractionList[i]
             for i in range(len(newcompound)):
-                compoundList.append(newcompound[i])    
+                compoundList.append(newcompound[i])
                 fractionList.append(newfraction[i])
-    total=sum(fractionList)   
+    total=sum(fractionList)
     compoundFractionList = [float(x)/total for x in fractionList]
     materialElements = {}
-    energy = energy0 
+    energy = energy0
     if energy0 is not None:
         if type(energy0) == type(2.):
             energy = [energy0]
@@ -2415,7 +2417,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
             try:
                 nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
             except:
-                raise ValueError("Compound '%s' not understood" % compound)                
+                raise ValueError("Compound '%s' not understood" % compound)
             if len(elts)==1 and len(nbs)==0:
                 elts=[compound]
                 nbs =[1]
@@ -2456,7 +2458,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
     eltindex = 0
     for ele in materialElements.keys():
         if 'xcom' in Element[ele]:
-            xcom_data = Element[ele]['xcom']       
+            xcom_data = Element[ele]['xcom']
         else:
             xcom_data = getelementmassattcoef(ele,None)
         #now I have to interpolate at the different energies
@@ -2481,7 +2483,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                     cohe=xcom_data['coherent'][i1]
                     comp=xcom_data['compton'][i1]
                     photo=xcom_data['photo'][i1]
-                    pair=xcom_data['pair'][i1]            
+                    pair=xcom_data['pair'][i1]
                 else:
                     if LOGLOG:
                         A=xcom_data['energylog10'][i0]
@@ -2523,10 +2525,10 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
                 dict['pair']    [eneindex] += pair  * materialElements[ele]
                 dict['total']   [eneindex] += (cohe+comp+photo+pair) *  materialElements[ele]
             eneindex += 1
-        eltindex += 1    
+        eltindex += 1
     return dict
 
-    
+
 def getcandidates(energy,threshold=None,targetrays=None):
     if threshold  is None:
         threshold = 0.010
@@ -2551,8 +2553,8 @@ def getcandidates(energy,threshold=None,targetrays=None):
                         r = Element[ele][transition]['rate']
                         if abs(ene-e) < threshold:
                             if ele not in lines[index]['elements']:
-                                lines[index]['elements'].append(ele) 
-                                lines[index][ele]=[]  
+                                lines[index]['elements'].append(ele)
+                                lines[index][ele]=[]
                             lines[index][ele].append([transition, e, r])
         index += 1
     return lines
@@ -2568,7 +2570,7 @@ def getElementFormFactor(ele, theta, energy):
             return CoherentScattering.getElementFormFactor(ele, theta, energy)
         except:
             raise ValueError("Unknown element %s" % ele)
-    
+
 
 def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
     #if ele in CoherentScattering.COEFFICIENTS.keys():
@@ -2599,7 +2601,7 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
                 getElementIncoherentScatteringFunction(ele, theta, energy)
         except:
           raise ValueError("Unknown element %s" % ele)
-    return value        
+    return value
 
 def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
     if ele in ElementList:
@@ -2613,7 +2615,7 @@ def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
             getElementComptonDifferentialCrossSection(ele, theta, energy, p1)
         except:
           raise ValueError("Unknown element %s" % ele)
-    return (value * 6.022142E23)/ Element[ele]['mass']        
+    return (value * 6.022142E23)/ Element[ele]['mass']
 
 def getelementmassattcoef(ele,energy=None):
     """
@@ -2628,7 +2630,7 @@ def getelementmassattcoef(ele,energy=None):
             dict['total']      = [total cross section]
     """
     if 'xcom' not in Element[ele].keys():
-        dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
+        dirmod = PyMcaDataDir.PYMCA_DATA_DIR
         #read xcom file
         #print dirmod+"/"+ele+".mat"
         xcomfile = os.path.join(dirmod, "attdata")
@@ -2660,7 +2662,7 @@ def getelementmassattcoef(ele,energy=None):
         while (line.split('COHERENT')[0] == line):
             line = line.split()
             for value in line:
-                Element[ele]['xcom']['energy'].append(float(value)*1000.)   
+                Element[ele]['xcom']['energy'].append(float(value)*1000.)
             line = f.readline()
         Element[ele]['xcom']['energy']=numpy.array(Element[ele]['xcom']['energy'])
         line = f.readline()
@@ -2674,27 +2676,27 @@ def getelementmassattcoef(ele,energy=None):
         while (line.split('PHOTO')[0] == line):
             line = line.split()
             for value in line:
-                Element[ele]['xcom']['compton'].append(float(value))   
+                Element[ele]['xcom']['compton'].append(float(value))
             line = f.readline()
         Element[ele]['xcom']['compton']=numpy.array(Element[ele]['xcom']['compton'])
         line = f.readline()
         while (line.split('PAIR')[0] == line):
             line = line.split()
             for value in line:
-                Element[ele]['xcom']['photo'].append(float(value))   
+                Element[ele]['xcom']['photo'].append(float(value))
             line = f.readline()
         line = f.readline()
         while (line.split('PAIR')[0] == line):
             line = line.split()
             for value in line:
-                Element[ele]['xcom']['pair'].append(float(value))   
+                Element[ele]['xcom']['pair'].append(float(value))
             line = f.readline()
         i = 0
         line = f.readline()
         while (len(line)):
             line = line.split()
             for value in line:
-                Element[ele]['xcom']['pair'][i] += float(value)   
+                Element[ele]['xcom']['pair'][i] += float(value)
                 i += 1
             line = f.readline()
         if sys.version >= '3.0':
@@ -2757,7 +2759,7 @@ def getelementmassattcoef(ele,energy=None):
                 cohe=Element[ele]['xcom']['coherent'][i1]
                 comp=Element[ele]['xcom']['compton'][i1]
                 photo=Element[ele]['xcom']['photo'][i1]
-                pair=Element[ele]['xcom']['pair'][i1]            
+                pair=Element[ele]['xcom']['pair'][i1]
             else:
                 if LOGLOG:
                     A=Element[ele]['xcom']['energylog10'][i0]
@@ -2770,7 +2772,7 @@ def getelementmassattcoef(ele,energy=None):
                     B=Element[ele]['xcom']['energy'][i1]
                     c2=(ene-A)/(B-A)
                     c1=(B-ene)/(B-A)
-                
+
                 cohe= pow(10.0,c2*Element[ele]['xcom']['coherentlog10'][i1]+\
                                c1*Element[ele]['xcom']['coherentlog10'][i0])
                 comp= pow(10.0,c2*Element[ele]['xcom']['comptonlog10'][i1]+\
@@ -2791,7 +2793,7 @@ def getelementmassattcoef(ele,energy=None):
         ddict['compton'].append(comp)
         ddict['photo'].append(photo)
         ddict['pair'].append(pair)
-        ddict['total'].append(cohe+comp+photo+pair)    
+        ddict['total'].append(cohe+comp+photo+pair)
     return ddict
 
 def getElementLShellRates(symbol,energy=None,photoweights = None):
@@ -2800,13 +2802,13 @@ def getElementLShellRates(symbol,energy=None,photoweights = None):
     gives LShell branching ratios at a given energy
     weights due to photoeffect, fluorescence and Coster-Kronig
     transitions are calculated and used unless photoweights is False,
-    in that case weights = [1.0, 1.0, 1.0, 1.0, 1.0] 
+    in that case weights = [1.0, 1.0, 1.0, 1.0, 1.0]
     """
     if photoweights is None:photoweights=True
     if photoweights:
         weights = getLWeights(symbol,energy=energy)
     else:
-        weights = [1.0, 1.0, 1.0] 
+        weights = [1.0, 1.0, 1.0]
     z = getz(symbol)
     index = z-1
     shellrates = numpy.arange(len(LShell.ElementLShellTransitions)).astype(numpy.float)
@@ -2833,13 +2835,13 @@ def getElementMShellRates(symbol,energy=None, photoweights = None):
     gives MShell branching ratios at a given energy
     weights due to photoeffect, fluorescence and Coster-Kronig
     transitions are calculated and used unless photoweights is False,
-    in that case weights = [1.0, 1.0, 1.0, 1.0, 1.0] 
+    in that case weights = [1.0, 1.0, 1.0, 1.0, 1.0]
     """
     if photoweights is None:photoweights=True
     if photoweights:
         weights = getMWeights(symbol,energy=energy)
     else:
-        weights = [1.0, 1.0, 1.0, 1.0, 1.0] 
+        weights = [1.0, 1.0, 1.0, 1.0, 1.0]
     z = getz(symbol)
     index = z-1
     shellrates = numpy.arange(len(MShell.ElementMShellTransitions)).astype(numpy.float)
@@ -2892,8 +2894,8 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
         else:
             indexoffset = 1
         for i in range(indexoffset, len(shelltransitions)):
-                rate = shellrates [i]            
-                transition = shelltransitions[i]        
+                rate = shellrates [i]
+                transition = shelltransitions[i]
                 if n==0:ddict[transition] = {}
                 if (rays == "Ka xrays"):
                     xenergy = getxrayenergy(ele,transition.replace('a',''))
@@ -2912,9 +2914,9 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
     ddict['buildparameters']['energy']    = energy
     ddict['buildparameters']['minenergy'] = minenergy
     ddict['buildparameters']['minrate']   = 0.0
-    return ddict    
+    return ddict
 
-    
+
 def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0.0010,
                                                      normalize = None, photoweights = None):
     if normalize   is None: normalize   = True
@@ -2952,9 +2954,9 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0
         cum     = 0.0
         if maxrate > minrate:
             for i in range(transitionoffset, len(shelltransitions)):
-                rate = shellrates [i]            
+                rate = shellrates [i]
                 if (rate/maxrate) > minrate:
-                    transition = shelltransitions[i]        
+                    transition = shelltransitions[i]
                     if (rays == "Ka xrays"):
                         xenergy = getxrayenergy(ele,transition.replace('a',''))
                     elif (rays == "Kb xrays"):
@@ -2971,19 +2973,19 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0
                             dict['rays'].append(rays)
             #cum = 1.00
             if normalize:
-                if cum > 0.0:   
+                if cum > 0.0:
                     for transition in dict[rays]:
                         dict[transition]['rate'] /= cum
     dict['buildparameters']={}
     dict['buildparameters']['energy']    = energy
     dict['buildparameters']['minenergy'] = minenergy
     dict['buildparameters']['minrate']   = minrate
-    
+
 def updateDict(energy=None, minenergy=MINENERGY, minrate=0.0010, cb=True):
     for ele in ElementList:
         _updateElementDict(ele, Element[ele], energy=energy, minenergy=minenergy, minrate=minrate)
     if cb:
-        _updateCallback()    
+        _updateCallback()
     return
 
 def _getMaterialDict():
@@ -3007,14 +3009,14 @@ def _getMaterialDict():
         return {}
     cDict.read(matdict)
     return cDict
-    
+
 class BoundMethodWeakref:
     """Helper class to get a weakref to a bound method"""
     def __init__(self, bound_method, onDelete=None):
         def remove(ref):
             if self.deleteCb is not None:
                 self.deleteCb(self)
-        
+
         self.deleteCb = onDelete
         self.func_ref = weakref.ref(bound_method.im_func, remove)
         self.obj_ref = weakref.ref(bound_method.im_self, remove)
@@ -3044,24 +3046,24 @@ def registerUpdate(callback):
             del _registeredCallbacks[i]
         except:
             pass
-          
+
     if hasattr(callback, 'im_self') and callback.im_self is not None:
-        ref = BoundMethodWeakref(callback, delCallback)   
+        ref = BoundMethodWeakref(callback, delCallback)
     else:
         # function weakref
         ref = weakref.ref(callback, delCallback)
 
     if ref not in  _registeredCallbacks:
         _registeredCallbacks.append(ref)
-    
+
 
 def _updateCallback():
     for methodref in _registeredCallbacks:
         method = methodref()
         if method is not None:
-            method()  
+            method()
 
-        
+
 Element={}
 for ele in ElementList:
     z = getz(ele)
@@ -3093,8 +3095,8 @@ for ele in ElementList:
 
     #Coster-Kronig
     Element[ele]['CosterKronig'] = {}
-    Element[ele]['CosterKronig']['L'] = getCosterKronig(ele) 
-    Element[ele]['CosterKronig']['M'] = MShell.getCosterKronig(ele) 
+    Element[ele]['CosterKronig']['L'] = getCosterKronig(ele)
+    Element[ele]['CosterKronig']['M'] = MShell.getCosterKronig(ele)
 
     #jump ratios
 
@@ -3142,7 +3144,7 @@ if __name__ == "__main__":
                     print("%s energy = %.5f  rate = %.5f" %\
                           (transition,Element[ele][transition]['energy'],
                                         Element[ele][transition]['rate']))
-            
+
         if len(sys.argv) > 2:
             LOGLOG = False
             print("OLD VALUES")
