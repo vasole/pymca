@@ -19,7 +19,7 @@ class testGefit(unittest.TestCase):
                param[2] * numpy.exp(-0.5 * dummy * dummy)
 
     def testGefitImport(self):
-        self.assertIsNotNone(self.gefit)
+        self.assertTrue(self.gefit is not None)
 
     def testGefitLeastSquares(self):
         self.testGefitImport()

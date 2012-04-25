@@ -28,11 +28,11 @@ class testEdfFile(unittest.TestCase):
 
     def testEdfFileImport(self):
         #"""Test successful import"""
-        self.assertIsNotNone(self.fileClass)
+        self.assertTrue(self.fileClass is not None)
 
     def testEdfFileReadWrite(self):
         # create a file
-        self.assertIsNotNone(self.fileClass)
+        self.assertTrue(self.fileClass is not None)
         data = numpy.arange(10000).astype(numpy.int32)
         data.shape = 100, 100
         edf = self.fileClass(self.fname, 'wb+')

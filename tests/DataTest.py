@@ -33,7 +33,7 @@ class testData(unittest.TestCase):
     def testDataDirectoryPresence(self):
         # Testing directory presence
         try:
-            self.assertIsNotNone(self.dataDir)
+            self.assertTrue(self.dataDir is not None)
             self.assertTrue(os.path.exists(self.dataDir))
             self.assertTrue(os.path.isdir(self.dataDir))
         except:

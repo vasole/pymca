@@ -48,11 +48,11 @@ class testSpecfile(unittest.TestCase):
 
     def testSpecfileImport(self):
         #"""Test successful import"""
-        self.assertIsNotNone(self.specfileClass)
+        self.assertTrue(self.specfileClass is not None)
 
     def testSpecfileReading(self):
         #"""Test specfile readout"""
-        self.assertIsNotNone(self.specfileClass)
+        self.assertTrue(self.specfileClass is not None)
         sf = self.specfileClass.Specfile(self.fname)
         # test the number of found scans
         self.assertEqual(len(sf), 2)
@@ -76,7 +76,7 @@ class testSpecfile(unittest.TestCase):
 
     def testSpecfileReadingCompatibleWithUserLocale(self):
         #"""Test specfile compatible with C locale"""
-        self.assertIsNotNone(self.specfileClass)
+        self.assertTrue(self.specfileClass is not None)
         sf = self.specfileClass.Specfile(self.fname)
         scan = sf[1]
         datacol = scan.datacol(1)
