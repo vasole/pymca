@@ -1,3 +1,9 @@
+import os
+if os.path.exists('PyMca'):
+    if os.path.exists('setup.py'):
+        if os.path.exists('py2app_setup.py'):
+            txt ='Tests cannnot be imported from top source directory'
+            raise ImportError(txt)
 from PyMca.tests.TestAll import main as testAll
 from PyMca.tests.EdfFileTest import test as testEdfFile
 from PyMca.tests.ElementsTest import test as testElements
