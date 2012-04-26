@@ -1,3 +1,11 @@
+include MANIFEST.in
+include qtconffile
+include build-deb.sh
+include stdeb.cfg
+include cx_setup.py
+include py2app_setup.py
+include PlatypusScript
+recursive-include doc/man *.1
 recursive-include PyMca/Object3D *.GPL *.txt
 include PyMca/Object3D/qtconffile
 recursive-include PyMca/Object3D/Object3DQhull *.py *.c
