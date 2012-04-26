@@ -41,15 +41,9 @@ ffile = open(os.path.join('PyMca', 'PyMcaMain.py'), 'r').readlines()
 for line in ffile:
     if line.startswith('__version__'):
         #remove spaces and split
-        __version__ = line.replace(' ','').split("=")[-1][:-1]
-        # Append cvs tag if working from cvs tree
-        if os.path.isdir('.svn') and os.path.isfile(os.sep.join(['.svn', 'entries'])):
-            import re
-            revision = 0
-            revre = re.compile('committed-rev="(\d+)"')
-            for match in revre.finditer(open(os.sep.join(['.svn', 'entries'])).read()):
-                revision = max(revision, int(match.group(1)))
-            __version__ += 'dev_r%i' % revision
+        __version__ = "%s" % line.replace(' ','').split("=")[-1][:-1]
+        #remove " or ' present
+        __version__ = __version__[1:-1]
         break
 
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
