@@ -276,6 +276,9 @@ def getSuite(auto=True):
         testSuite.addTest(testElements("testMaterialCrossSectionsCalculation"))
     return testSuite
 
+def test(auto=False):
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+
 if __name__ == '__main__':
     DEBUG = 1
-    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))
+    test()

@@ -101,5 +101,8 @@ def getSuite(auto=True):
             testSpecfile("testSpecfileReadingCompatibleWithUserLocale"))
     return testSuite
 
+def test(auto=False):
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+
 if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=False))
+    test()

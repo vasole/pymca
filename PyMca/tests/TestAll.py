@@ -9,7 +9,7 @@ def getSuite(auto=True):
     sys.path.insert(0, os.path.dirname(__file__))
     testSuite = unittest.TestSuite()
     for fname in pythonFiles:
-        if fname in ["__init__.py", "TestAll.py"]:
+        if os.path.basename(fname) in ["__init__.py", "TestAll.py"]:
             continue
         modName = os.path.splitext(os.path.basename(fname))[0]
         try:
@@ -17,14 +17,16 @@ def getSuite(auto=True):
         except ImportError:
             print("Failed to import %s" % fname)
             continue
-        if "getSuite" in dir(module):
+        if hasattr(module, "getSuite"):
             testSuite.addTest(module.getSuite(auto))
     return testSuite
 
+def main(auto=True):
+    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+
 if __name__ == '__main__':
-    import sys
     if len(sys.argv) > 1:
         auto = False
     else:
         auto = True
-    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+    main(auto)
