@@ -26,6 +26,7 @@
 #############################################################################*/
 import sys
 import os
+import traceback
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 from PyMca import QSourceSelector
@@ -144,7 +145,17 @@ class QDispatcher(qt.QWidget):
                                     text += "Source: %s\n" % source.sourceName
                                     text += "Key: %s\n"  % sel['Key']
                                     text += "Error: %s" % error[1]
-                                    qt.QMessageBox.critical(self,"%s" % error[0], text)
+                                    if QTVERSION < '4.0.0':
+                                        qt.QMessageBox.critical(self,
+                                                                "%s" % error[0],
+                                                                text)
+                                    else:
+                                        msg = qt.QMessageBox(self)
+                                        msg.setWindowTitle('Source Error')
+                                        msg.setIcon(qt.QMessageBox.Critical)
+                                        msg.setInformativeText(text)
+                                        msg.setDetailedText(\
+                                            traceback.format_exc())
                                     continue
                         else:
                             dataObject = source.getDataObject(sel['Key'],
