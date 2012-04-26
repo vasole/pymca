@@ -50,7 +50,7 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca','PyMca.PyMcaPlugins']
+packages = ['PyMca','PyMca.PyMcaPlugins', 'PyMca.tests']
 py_modules = []
 
 # Specify all the required PyMca data
@@ -89,7 +89,7 @@ NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
     py_modules.append('PyMca.py_nnma.__init__')
     py_modules.append('PyMca.py_nnma.nnma')
-
+    
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca", "Object3D")):
     LOCAL_OBJECT3D = True
@@ -517,7 +517,7 @@ distrib = setup(name="PyMca",
                 ext_modules = ext_modules,
                 data_files = data_files,
 ##                package_data = package_data,
-##                package_dir = {'': 'lib'},
+##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
                 cmdclass = cmdclass,
                 scripts=script_files,
                 py_modules=py_modules,
