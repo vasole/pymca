@@ -8,18 +8,25 @@ include cx_setup.py
 include py2app_setup.py
 include PlatypusScript
 recursive-include doc/man *.1
-recursive-include PyMca/Object3D *.GPL *.txt
+recursive-include PyMca/edf *.py *.c
+recursive-include PyMca/EPDL97 *.DAT
+include PyMca/EPDL97/LICENSE
 include PyMca/Object3D/qtconffile
-recursive-include PyMca/Object3D/Object3DQhull *.py *.c
+recursive-include PyMca/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib
+recursive-include PyMca/Object3D/doc *.py
+recursive-include PyMca/Object3D/Object3DQhull *.py *.c *.h *.txt
 recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
-recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
-recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
+recursive-include PyMca/Object3D/scripts *.py
+include PyMca/Object3D/LICENSE.GPL
+include PyMca/Object3D/README.txt
+include PyMca/Object3D/scripts/ob_scene
 recursive-include PyMca/py_nnma *.py
 include PyMca/py_nnma/LICENSE
 include PyMca/py_nnma/README
 recursive-include PyMca/PyMcaIOHelper *.py *.c
 recursive-include PyMca/PyMcaSciPy *.py *.c *.txt
 recursive-include PyMca/specfile *.py *.c *.h *.in
+recursive-include PyMca/specfit *.py *.c
 recursive-include PyMca/sps *.py *.c *.h *.in
 include PyMca/sps/LICENSE
 include PyMca/sps/MANIFEST.in
