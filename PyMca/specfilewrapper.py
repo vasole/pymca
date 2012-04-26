@@ -116,14 +116,17 @@ def Specfile(filename):
             return APSMEDFileParser.APSMEDFileParser(filename)
         if (not qxas) and (not amptek) and SRSFileParser.isSRSFile(filename):
             return SRSFileParser.SRSFileParser(filename)
-        output=specfilewrapper(filename, amptek=amptek, qxas = qxas)
+        output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
 
 class specfilewrapper(object):
-    def __init__(self,filename,amptek=None, qxas = None, dta = None):
-        if amptek is None: amptek = False
-        if qxas   is None: qxas   = False
-        if dta    is None: dta    = False
+    def __init__(self, filename, amptek=None, qxas=None, dta=None):
+        if amptek is None:
+            amptek = False
+        if qxas is None:
+            qxas = False
+        if dta is None:
+            dta = False
         self.amptek = amptek
         self.qxas   = qxas
         self.dta = dta
@@ -143,7 +146,8 @@ class specfilewrapper(object):
                                            sep='\t\r\n')
             self.header = ['#S1 %s' % os.path.basename(filename)]
             self.data.shape = -1, 1
-            self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header)]
+            self.scandata=[myscandata(self.data,'MCA','1.1',
+                                      scanheader=self.header)]
             return
         if self.qxas:
             f = open(filename)
@@ -280,17 +284,24 @@ class specfilewrapper(object):
             f.close()
             self.data = numpy.resize(numpy.array(outdata).astype(numpy.float),(nlines,ncol0))
         if self.amptek:
-            self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header)]
+            self.scandata=[myscandata(self.data,'MCA','1.1',
+                                      scanheader=self.header)]
         elif self.qxas:
-            self.scandata=[myscandata(self.data,'MCA','1.1',scanheader=self.header, qxas=self._qxasHeader)]
+            self.scandata=[myscandata(self.data,'MCA','1.1',
+                                      scanheader=self.header,
+                                      qxas=self._qxasHeader)]
         else:
             labels = None
-            if len(self.header) > 0:
+            if len(self.header) == 1:
                 if len(self.header[0]) > 0:
                     labels = self.header[0].split("  ")
                     if len(labels) != ncol0:
                         labels = None
-            self.scandata=[myscandata(self.data,'SCAN','1.1', labels=labels),myscandata(self.data,'MCA','2.1')]
+            self.scandata=[myscandata(self.data,'SCAN','1.1',
+                                      labels=labels,
+                                      fileheader=self.header),
+                           myscandata(self.data,'MCA','2.1',
+                                      fileheader=self.header)]
 
     def list(self):
         if self.amptek or self.qxas or self.dta:
@@ -300,6 +311,9 @@ class specfilewrapper(object):
         
     def __getitem__(self,item):
         return self.scandata[item]
+
+    def __len__(self):
+        return self.scanno()
         
     def select(self,i):
         n=i.split(".")
@@ -312,11 +326,17 @@ class specfilewrapper(object):
             return 2
 
 class myscandata(object):
-    def __init__(self,data,scantype=None,identification=None, scanheader=None, qxas=None, labels=None):
-        if identification is None:identification='1.1'
-        if scantype is None:scantype='SCAN'
+    def __init__(self, data, scantype=None, identification=None,
+                 scanheader=None, qxas=None, labels=None, fileheader=None):
+        if identification is None:
+            identification='1.1'
+        if scantype is None:
+            scantype='SCAN'
         self.qxas = qxas
         self.scanheader = scanheader
+        if fileheader is None:
+            fileheader = []
+        self._fileheader = fileheader
         #print shape(data)
         (rows, cols) = numpy.shape(data)
         if scantype == 'SCAN':
@@ -325,18 +345,29 @@ class myscandata(object):
             self.__data[:,1:] = data * 1
             self.__cols = cols + 1
             self.labels = ['Point']
+            if labels is None:
+                for i in range(cols):
+                    self.labels.append('Column %d'  % i)
+            else:
+                for label in labels:
+                    self.labels.append('%s' % label)
         else:
             self.__data = data
             self.__cols = cols
             self.labels = []
         self.scantype = scantype
         self.rows = rows
-        if labels is None:
-            for i in range(cols):
-                self.labels.append('Column %d'  % i)
-        else:
-            for label in labels:
-                self.labels.append('%s' % label)
+        if scanheader is None:
+            labels = '#L '
+            for label in self.labels:
+                labels += '  '+label            
+            if self.scantype == 'SCAN':
+                self.scanheader = ['#S1 Unknown command',
+                              '#N %d' % len(self.labels),
+                              labels]
+            else:
+                self.scanheader = ['#S1 Unknown command']
+            
         n = identification.split(".")
         self.__number = int(n[0])
         self.__order  = int(n[1])
@@ -386,34 +417,28 @@ class myscandata(object):
                     break
         return text
             
-    def fileheader(self):
+    def fileheader(self, key=''):
+        # key is there for compatibility
         if DEBUG:
             print("file header called")
-        labels = '#L '
-        for label in self.labels:
-            labels += '  '+label
-        if self.scantype == 'SCAN':
-            return ['#S1 Unknown command','#N %d' % len(self.labels), labels] 
-        else:
-            if self.scanheader is None:
-                return ['#S1 Unknown command']
-            else:
-                if DEBUG:
-                    print("returning ",self.scanheader)
-                return self.scanheader
+        return self._fileheader
     
-    def header(self,key):
+    def header(self, key):
         if self.qxas is not None:
             if key in self.qxas:
                 return self.qxas[key]
             elif key == "" or key == " ":
-                return self.fileheader()
-        if   key == 'S': return self.fileheader()[0]
-        elif key == 'N':return self.fileheader()[-2]
-        elif key == 'L':return self.fileheader()[-1]
+                return self.scanheader
+        if key == 'S':
+            return self.scanheader[0]
+        elif key == 'N':
+            return self.scanheader[-2]
+        elif key == 'L':
+            return self.scanheader[-1]
         elif key == '@CALIB':
             output = []
-            if self.scanheader is None: return output
+            if self.scanheader is None:
+                return output
             if self.scanheader[0][0:2] == '<<':
                 #amptek
                 try:
@@ -464,9 +489,9 @@ class myscandata(object):
                 except:
                     pass
             return output
-        elif key == "" or key == " ":return self.fileheader()
+        elif key == "" or key == " ":
+            return self.scanheader
         else:
-            #print "requested key = ",key 
             return []
     
     def order(self):
@@ -486,7 +511,7 @@ class myscandata(object):
             return 0
         else:
             return self.__cols
-        
+
     def mca(self,number):
         return self.__data[:,number-1]
 
