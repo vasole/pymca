@@ -266,7 +266,7 @@ static struct PyMethodDef  scandata_methods[] = {
 static PyObject * scandata_new    (void);                                             /* create */
 static PyObject * scandata_free   (PyObject *self);                                   /* dealloc */
 static Py_ssize_t scandata_size   (PyObject *self);                                   /* length */
-static PyObject * scandata_col    (PyObject *self, Py_ssize_t index);				  /* item */
+static PyObject * scandata_col    (PyObject *self, Py_ssize_t index);                  /* item */
 static PyObject * scandata_slice  (PyObject *self, Py_ssize_t lidx, Py_ssize_t hidx); /* slice */
 static int        scandata_print  (PyObject *self,FILE *fp, int flags);               /* print*/
 static PyObject * scandata_getattr(PyObject *self,char *name);                        /* getattr */
@@ -680,9 +680,9 @@ scandata_data(PyObject *self,PyObject *args) {
     if (!PyArg_ParseTuple(args,"") )
            onError("wrong arguments for data");
 
-	ret = SfData(sf,idx,&data,&data_info,&error);
-	if ( ret == -1 )
-		   onError("cannot read data");
+    ret = SfData(sf,idx,&data,&data_info,&error);
+    if ( ret == -1 )
+           onError("cannot read data");
 
 /*    printf("DATA: %d rows / %d columns\n", data_info[1], data_info[0]);*/
 
@@ -783,7 +783,7 @@ scandata_datacol(PyObject *self,PyObject *args) {
     }else{
         /* return an empty array? */
         printf("I should return an empty array ...\n");
-		PyArray_FILLWBYTE(r_array, 0);
+        PyArray_FILLWBYTE(r_array, 0);
     }
 
     return PyArray_Return(r_array);
@@ -1277,8 +1277,8 @@ scandata_col(PyObject *self, Py_ssize_t index) {
     }else{
         /* return an empty array? */
         printf("I should return an empty array ...\n");
-		PyArray_FILLWBYTE(r_array, 0);
-	}
+        PyArray_FILLWBYTE(r_array, 0);
+    }
 
 /*    return (PyObject *)array; */
 /* put back the PyArray_Return call instead of the previous line */
@@ -1407,19 +1407,27 @@ specfiletype_new(self,args)
       return NULL;
     }
     {
-		if (PyUnicode_Check(input))
-		{
-			bytesObject = PyUnicode_AsMBCSString(input);
-			if (!bytesObject){
-				onError("Cannot generate String from object name attribute")
-			}
-			filename = PyBytes_AsString(bytesObject);
-		}else{
-			if (!PyArg_ParseTuple(args, "s", &filename))
-			{
-				return NULL;
-			}
-		}
+        if (PyUnicode_Check(input))
+        {
+            bytesObject = PyUnicode_AsMBCSString(input);
+            if (!bytesObject){
+                onError("Cannot generate String from object name attribute")
+            }
+#ifndef PY_MINOR_VERSION
+#define PY_MINOR_VERSION 5
+#endif
+
+#if PY_MINOR_VERSION > 5
+            filename = PyBytes_AsString(bytesObject);
+#else
+            filename = PyString_AsString(bytesObject);
+#endif
+        }else{
+            if (!PyArg_ParseTuple(args, "s", &filename))
+            {
+                return NULL;
+            }
+        }
     }
 #else
     if (!PyArg_ParseTuple(args, "s", &filename))
@@ -1428,7 +1436,7 @@ specfiletype_new(self,args)
     }
 #endif
 
-	ret = (PyObject *)specfile_open(filename);
+    ret = (PyObject *)specfile_open(filename);
 
    return ret;
  
