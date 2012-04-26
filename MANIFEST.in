@@ -1,0 +1,15 @@
+recursive-include PyMca/Object3D *.GPL *.txt
+include PyMca/Object3D/qtconffile
+recursive-include PyMca/Object3D/Object3DQhull *.py *.c
+recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
+recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
+recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
+recursive-include PyMca/py_nnma *.py
+include PyMca/py_nnma/LICENSE
+include PyMca/py_nnma/README
+recursive-include PyMca/PyMcaIOHelper *.py *.c
+recursive-include PyMca/PyMcaSciPy *.py *.c *.txt
+recursive-include PyMca/specfile *.py *.c *.h *.in
+recursive-include PyMca/sps *.py *.c *.h *.in
+include PyMca/sps/LICENSE
+include PyMca/sps/MANIFEST.in
