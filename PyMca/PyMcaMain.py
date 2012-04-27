@@ -32,7 +32,11 @@ nativeFileDialogs = None
 DEBUG = 0
 if __name__ == '__main__':
     options     = '-f'
-    longoptions = ['spec=','shm=','debug=', 'qt=', 'nativefiledialogs=']
+    longoptions = ['spec=',
+                   'shm=',
+                   'debug=',
+                   'qt=',
+                   'nativefiledialogs=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -262,12 +266,16 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.openMenu = qt.QPopupMenu()
                 self.openMenu.insertItem("PyMca Configuration",0)
                 self.openMenu.insertItem("Data Source",1)
-                self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
+                self.connect(self.openMenu,qt.SIGNAL('activated(int)'),
+                             self.openSource)
             else:
                 self.openMenu = qt.QMenu()
                 self.openMenu.addAction("PyMca Configuration", self.openSource)
                 self.openMenu.addAction("Data Source",
                              self.sourceWidget.sourceSelector._openFileSlot)
+                self.openMenu.addAction("Load Training Data",
+                                            self.loadTrainingData)
+
                 #self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
             if QTVERSION > '4.0.0':
@@ -1606,6 +1614,20 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 os.mkdir('%s' % directory)
             finalfile =  os.path.join(directory, filename)
         return finalfile
+
+    def loadTrainingData(self):
+        try:
+            source = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
+                                    'XRFSpectrum.mca')
+            self.sourceWidget.sourceSelector.openSource(source)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Error opening data source")
+            msg.setText("Cannot open data source %s" % source)
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
 
     def openSource(self,index=0):
         if DEBUG:

@@ -60,7 +60,8 @@ class testData(unittest.TestCase):
                       'MShellConstants.dat',
                       'MShellRates.dat',
                       'Scofield1973.dict',
-                      'XCOM_CrossSections.dat']:
+                      'XCOM_CrossSections.dat',
+                      'XRFSpectrum.mca']:
             actualName = os.path.join(self.dataDir, fname)
             try:
                 self.assertTrue(os.path.exists(actualName))

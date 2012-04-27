@@ -12,7 +12,7 @@ recursive-include PyMca/edf *.py *.c
 recursive-include PyMca/EPDL97 *.DAT
 include PyMca/EPDL97/LICENSE
 include PyMca/Object3D/qtconffile
-recursive-include PyMca/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib
+recursive-include PyMca/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib *.mca
 recursive-include PyMca/Object3D/doc *.py
 recursive-include PyMca/Object3D/Object3DQhull *.py *.c *.h *.txt
 recursive-include PyMca/Object3D/Object3DCTools *.py *.c *.cpp
