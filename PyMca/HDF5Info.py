@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+import sys
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 import copy
@@ -447,7 +448,6 @@ def getInfo(hdf5File, node):
     return ddict
         
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) < 3:
         print("Usage:")
         print("python HDF5Info.py hdf5File node")
