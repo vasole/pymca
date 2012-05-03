@@ -1590,17 +1590,17 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             home = os.getenv('USERPROFILE')
             try:
                 l = len(home)
-                directory = os.path.join(home,"My Documents")
+                directory = os.path.join(home, "My Documents")
             except:
                 home = '\\'
                 directory = '\\'
             #print home
             #print directory
             if os.path.isdir('%s' % directory):
-                directory = os.path.join(directory,"PyMca")
+                directory = os.path.join(directory, "PyMca")
             else:
                 #print "My Documents is not there"
-                directory = os.path.join(home,"PyMca")
+                directory = os.path.join(home, "PyMca")
             if not os.path.exists('%s' % directory):
                 #print "PyMca directory not present"
                 os.mkdir('%s' % directory)
@@ -1609,7 +1609,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             #print finalfile
         else:
             home = os.getenv('HOME')
-            directory = os.path.join(home,"PyMca")
+            directory = os.path.join(home, "PyMca")
             if not os.path.exists('%s' % directory):
                 os.mkdir('%s' % directory)
             finalfile =  os.path.join(directory, filename)

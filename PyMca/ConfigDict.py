@@ -31,15 +31,17 @@ else:
     import configparser as ConfigParser
 try:
     import numpy
+    USE_NUMPY = True
 except:
-    pass
+    # do not use numpy, use lists
+    USE_NUMPY = False
 
 class ConfigDict(dict):
 
     def __init__(self, defaultdict={}, initdict=None, filelist=None):
         dict.__init__(self, defaultdict)
-        self.default= defaultdict
-        self.filelist= []
+        self.default = defaultdict
+        self.filelist = []
 
         if initdict is not None:
             self.update(initdict)
@@ -56,14 +58,15 @@ class ConfigDict(dict):
         """ Clear dictionnary
         """
         dict.clear(self)
-        self.filelist= []
+        self.filelist = []
 
     def _check(self):
         pass
 
     def __tolist(self, mylist):
-        if mylist is None: return None
-        if type(mylist)!=type([]):
+        if mylist is None:
+            return None
+        if type(mylist) != type([]):
             return [ mylist ]
         else:
             return mylist
@@ -72,7 +75,7 @@ class ConfigDict(dict):
         return self.filelist
 
     def getlastfile(self):
-        return self.filelist[len(self.filelist)-1]
+        return self.filelist[len(self.filelist) - 1]
 
     def __convert(obj, option):
         return option
@@ -81,33 +84,33 @@ class ConfigDict(dict):
         """
         read the input filename into the internal dictionary
         """
-        filelist= self.__tolist(filelist)
-        sections= self.__tolist(sections)
+        filelist = self.__tolist(filelist)
+        sections = self.__tolist(sections)
 
-        cfg= ConfigParser.ConfigParser()
-        cfg.optionxform= self.__convert
+        cfg = ConfigParser.ConfigParser()
+        cfg.optionxform = self.__convert
         cfg.read(filelist)
         self.__read(cfg, sections)
 
-        for file in filelist:
-                self.filelist.append([file, sections])
+        for ffile in filelist:
+            self.filelist.append([ffile, sections])
         self._check()
 
     def __read(self, cfg, sections=None):
-        cfgsect= cfg.sections()
+        cfgsect = cfg.sections()
 
         if sections is None:
-            readsect= cfgsect
+            readsect = cfgsect
         else:
-            readsect= [ sect for sect in cfgsect if sect in sections ]
+            readsect = [ sect for sect in cfgsect if sect in sections ]
 
         for sect in readsect:
-            ddict= self
+            ddict = self
             for subsectw in sect.split('.'):
                 subsect = subsectw.replace("_|_",".")
                 if not (subsect in ddict):
                     ddict[subsect]= {}
-                ddict= ddict[subsect]
+                ddict = ddict[subsect]
             for opt in cfg.options(sect):
                 ddict[opt]= self.__parse_data(cfg.get(sect, opt))
 
@@ -115,7 +118,7 @@ class ConfigDict(dict):
         if len(data):
             if data.find(',')== -1:
                 #it is not a list
-                if (data[0] == '[') and (data[-1] == ']'):
+                if USE_NUMPY and (data[0] == '[') and (data[-1] == ']'):
                     #this looks as an array
                     try:
                         return numpy.array([float(x) for x in data[1:-1].split()])
@@ -130,7 +133,7 @@ class ConfigDict(dict):
                                 return indata
                         except:
                             pass
-        dataline= [ line for line in data.splitlines() ]
+        dataline = [ line for line in data.splitlines() ]
         if len(dataline)==1:
             return self.__parse_line(dataline[0])
         else:
@@ -138,7 +141,8 @@ class ConfigDict(dict):
         
     def __parse_line(self, line):
         if line.find(',')!=-1:
-            return [ self.__parse_string(sstr.strip()) for sstr in line.split(',') ]
+            return [ self.__parse_string(sstr.strip())\
+                     for sstr in line.split(',') ]
         else:
             return self.__parse_string(line.strip())
 
@@ -153,8 +157,8 @@ class ConfigDict(dict):
 
     def tostring(self, sections=None):
         import StringIO
-        tmp= StringIO.StringIO()
-        sections= self.__tolist(sections)
+        tmp = StringIO.StringIO()
+        sections = self.__tolist(sections)
         self.__write(tmp, self, sections)
         return tmp.getvalue()
 
@@ -162,8 +166,8 @@ class ConfigDict(dict):
         """
         Write the current dictionary to the given filename
         """
-        sections= self.__tolist(sections)
-        fp= open(filename, "w")
+        sections = self.__tolist(sections)
+        fp = open(filename, "w")
         self.__write(fp, self, sections)
         fp.close()
 
@@ -180,13 +184,15 @@ class ConfigDict(dict):
                 valkey.append(key)
 
         for key in valkey:
-            if type(ddict[key])== numpy.ndarray:
-                fp.write('%s =' % key + ' [ '+ ' '.join([str(val) for val in ddict[key]])+' ]\n')
-            else:
-                fp.write('%s = %s\n'%(key, ddict[key]))
+            if USE_NUMPY:
+                if type(ddict[key])== numpy.ndarray:
+                    fp.write('%s =' % key + ' [ '+\
+                             ' '.join([str(val) for val in ddict[key]])+' ]\n')
+                    continue
+            fp.write('%s = %s\n'% (key, ddict[key]))
 
         for key in listkey:
-            fp.write('%s = '%key)
+            fp.write('%s = ' % key)
             llist= []
             sep= ', '
             for item in ddict[key]:
@@ -202,12 +208,12 @@ class ConfigDict(dict):
         #    print "dictkey after = ",dictkey
         for key in dictkey:
             if secthead is None:
-                newsecthead= key.replace(".","_|_")
+                newsecthead= key.replace(".", "_|_")
             else:
-                newsecthead = '%s.%s'%(secthead, key.replace(".","_|_"))
-            #print "newsecthead = ",newsecthead
-            fp.write('\n[%s]\n'%newsecthead)
-            self.__write(fp, ddict[key], key,newsecthead)
+                newsecthead = '%s.%s' % (secthead, key.replace(".","_|_"))
+            #print "newsecthead = ", newsecthead
+            fp.write('\n[%s]\n' % newsecthead)
+            self.__write(fp, ddict[key], key, newsecthead)
 
 
 def prtdict(ddict, lvl=0):
@@ -223,7 +229,6 @@ def prtdict(ddict, lvl=0):
                 print('-', key, '=', ddict[key])
 
 def test():
-    import sys
     if len(sys.argv)>1:
         config= ConfigDict(filelist=sys.argv[1:])
         prtdict(config)
