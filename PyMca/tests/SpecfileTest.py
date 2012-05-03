@@ -7,7 +7,7 @@ import tempfile
 class testSpecfile(unittest.TestCase):
     def setUp(self):
         """
-        import the specfile module
+        import the module
         """
         try:
             from PyMca import specfile
@@ -41,6 +41,10 @@ class testSpecfile(unittest.TestCase):
 
     def tearDown(self):
         """clean up any possible files"""
+        # make sure the file handle is free
+        self._sf = None
+        self._scan = None
+        # this should free the handle
         gc.collect()
         if self.specfileClass is not None:
             if os.path.exists(self.fname):
@@ -48,44 +52,63 @@ class testSpecfile(unittest.TestCase):
 
     def testSpecfileImport(self):
         #"""Test successful import"""
-        self.assertTrue(self.specfileClass is not None)
+        self.assertTrue(self.specfileClass is not None,
+                        'Unsuccessful PyMca.specfile import')
 
     def testSpecfileReading(self):
         #"""Test specfile readout"""
-        self.assertTrue(self.specfileClass is not None)
-        sf = self.specfileClass.Specfile(self.fname)
+        self.testSpecfileImport()
+        self._sf = self.specfileClass.Specfile(self.fname)
         # test the number of found scans
-        self.assertEqual(len(sf), 2)
-        self.assertEqual(sf.scanno(), 2)
+        self.assertEqual(len(self._sf), 2,
+                         'Expected to read 2 scans, read %s' %\
+                         len(self._sf))
+        self.assertEqual(self._sf.scanno(), 2,
+                         'Expected to read 2 scans, got %s' %\
+                         self._sf.scanno())
         # test scan iteration selection method
-        scan = sf[1]
-        labels = scan.alllabels()
+        self._scan = self._sf[1]
+        labels = self._scan.alllabels()
         expectedLabels = ['First', 'Second', 'Third']
-        self.assertEqual(len(labels), 3)
+        self.assertEqual(len(labels), 3,
+                         'Expected to read 3 scans, got %s' % len(labels))
         for i in range(3):
-            self.assertEqual(labels[i], expectedLabels[i])
+            self.assertEqual(labels[i], expectedLabels[i],
+                    'Read "%s" instead of "%s"' %\
+                     (labels[i], expectedLabels[i]))
         # test scan number selection method
-        scan = sf.select('20.1')
-        labels = scan.alllabels()
+        self._scan = self._sf.select('20.1')
+        labels = self._scan.alllabels()
         sf = None
         expectedLabels = ['First', 'Second', 'Third']
-        self.assertEqual(len(labels), 3)
+        self.assertEqual(len(labels), 3,
+                         'Expected to read 3 labels, got %s' % len(labels))
         for i in range(3):
-            self.assertEqual(labels[i], expectedLabels[i])
+            self.assertEqual(labels[i], expectedLabels[i],
+                'Read "%s" instead of "%s"' %\
+                (labels[i], expectedLabels[i]))
         gc.collect()
 
     def testSpecfileReadingCompatibleWithUserLocale(self):
         #"""Test specfile compatible with C locale"""
-        self.assertTrue(self.specfileClass is not None)
-        sf = self.specfileClass.Specfile(self.fname)
-        scan = sf[1]
-        datacol = scan.datacol(1)
-        data = scan.data()
-        sf = None
-        self.assertEqual(datacol[0], 1.3)
-        self.assertEqual(datacol[1], 2.5)
-        self.assertEqual(datacol[2], 3.7)
-        self.assertEqual(datacol[1], data[0][1])
+        self.testSpecfileImport()
+        self._sf = self.specfileClass.Specfile(self.fname)
+        self._scan = self._sf[1]
+        datacol = self._scan.datacol(1)
+        data = self._scan.data()
+        self._sf = None
+        self.assertEqual(datacol[0], 1.3,
+                    'Read %f instead of %f' %\
+                    (datacol[0], 1.3))
+        self.assertEqual(datacol[1], 2.5,
+                    'Read %f instead of %f' %\
+                    (datacol[1], 2.5))
+        self.assertEqual(datacol[2], 3.7,
+                    'Read %f instead of %f' %\
+                    (datacol[2], 3.7))
+        self.assertEqual(datacol[1], data[0][1],
+                    'Read %f instead of %f' %\
+                    (datacol[1], data[0][1]))
         gc.collect()
 
 def getSuite(auto=True):

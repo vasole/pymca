@@ -24,21 +24,23 @@ class testData(unittest.TestCase):
         """
         Get the data directory
         """
+        self._importSuccess = False
         try:
             from PyMca import PyMcaDataDir
+            self._importSuccess = True
             self.dataDir = PyMcaDataDir.PYMCA_DATA_DIR
         except:
             self.dataDir = None
 
     def testDataDirectoryPresence(self):
-        # Testing directory presence
-        try:
-            self.assertTrue(self.dataDir is not None)
-            self.assertTrue(os.path.exists(self.dataDir))
-            self.assertTrue(os.path.isdir(self.dataDir))
-        except:
-            print("\n Cannot find PyMcaData directory: %s" % self.dataDir)
-            raise
+        self.assertTrue(self._importSuccess,
+                        'Unsuccessful PyMca.PyMcaDataDir import')
+        self.assertTrue(self.dataDir is not None,
+                        'Unassigned PyMca.PyMcaDataDir.PYMCA_DATA_DIR')
+        self.assertTrue(os.path.exists(self.dataDir),
+                        'Directory "%s" does not exist' % self.dataDir)
+        self.assertTrue(os.path.isdir(self.dataDir),
+                        '"%s" expected to be a directory' % self.dataDir)
 
     def testDataFilePresence(self):
         # Testing file presence
@@ -63,22 +65,22 @@ class testData(unittest.TestCase):
                       'XCOM_CrossSections.dat',
                       'XRFSpectrum.mca']:
             actualName = os.path.join(self.dataDir, fname)
-            try:
-                self.assertTrue(os.path.exists(actualName))
-                self.assertTrue(os.path.isfile(actualName))
-            except:
-                print('File "%s" does not exist.' % actualName)
-                raise                
-        self.assertTrue(os.path.isdir(os.path.join(self.dataDir, 'attdata')))
+            self.assertTrue(os.path.exists(actualName),
+                            'File "%s" does not exist.' % actualName)
+            self.assertTrue(os.path.isfile(actualName),
+                            'File "%s" is not an actual file.' % actualName)
+        actualName = os.path.join(self.dataDir, 'attdata')
+        self.assertTrue(os.path.exists(actualName),
+                        'Directory "%s" does not exist' % actualName)
+        self.assertTrue(os.path.isdir(actualName),
+                        '"%s" expected to be a directory' % actualName)
         for i in range(92):
             fname = "%s%s" % (testData.ELEMENTS[i], ".mat")
             actualName = os.path.join(self.dataDir, 'attdata', fname)
-            try:
-                self.assertTrue(os.path.exists(actualName))
-                self.assertTrue(os.path.isfile(actualName))
-            except:
-                print('File "%s" does not exist.' % fname)
-                raise
+            self.assertTrue(os.path.exists(actualName),
+                            'File "%s" does not exist.' % actualName)
+            self.assertTrue(os.path.isfile(actualName),
+                            'File "%s" is not an actual file.' % actualName)
         
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()

@@ -52,7 +52,9 @@ class testEdfFile(unittest.TestCase):
 
         #the data information
         readData = edf.GetData(0)
-        self.assertEqual(readData.dtype, numpy.int32)
+        self.assertEqual(readData.dtype, numpy.int32,
+                         'Read type %s instead of %s' %\
+                        (readData.dtype, numpy.int32))
         self.assertEqual(readData[10,20], data[10,20])
         self.assertEqual(readData[20,10], data[20,10])
         edf =None
