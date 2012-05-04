@@ -1064,7 +1064,7 @@ class SectionFileDialog(qt.QFileDialog):
                 if hasattr(qt, "QString"):
                     self.setDir(qt.QString(initdir))
                 else:
-                    self.setDir(str(initdir))
+                    self.setDir(qt.safe_str(initdir))
                 
         if QTVERSION < '4.0.0':     
             self.sectionWidget= SectionFileWidget(self,
@@ -1086,10 +1086,10 @@ class SectionFileDialog(qt.QFileDialog):
 
     def getFilename(self):
         if QTVERSION < '4.0.0':
-            filename= str(self.selectedFile())
+            filename= qt.safe_str(self.selectedFile())
         else:
-            filename= str(self.selectedFiles()[0])
-        filetype= str(self.selectedFilter())
+            filename= qt.safe_str(self.selectedFiles()[0])
+        filetype= qt.safe_str(self.selectedFilter())
         if filetype.find("Config")==0:
             fileext= os.path.splitext(filename)[1]
             if not len(fileext):

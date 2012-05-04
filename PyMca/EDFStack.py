@@ -174,7 +174,7 @@ class EDFStack(DataObject.DataObject):
                                             "HDF5 files *.h5")
                                 if not len(hdf5file):
                                     raise IOError("Invalid output file")
-                                hdf5file = str(hdf5file)
+                                hdf5file = qt.safe_str(hdf5file)
                                 if not hdf5file.endswith(".h5"):
                                     hdf5file += ".h5"
                                 hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
@@ -366,7 +366,7 @@ class EDFStack(DataObject.DataObject):
                                         if not len(hdf5file):
                                             raise IOError(\
                                                 "Invalid output file")
-                                        hdf5file = str(hdf5file)
+                                        hdf5file = qt.safe_str(hdf5file)
                                         if not hdf5file.endswith(".h5"):
                                             hdf5file += ".h5"
                                         hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,

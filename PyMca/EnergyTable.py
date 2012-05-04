@@ -131,7 +131,7 @@ class EnergyTab(qt.QWidget):
                         "Choose energy table file",
                         wdir,
                         "Energy table files (*.csv)\n")
-            filename = str(filename)
+            filename = qt.safe_str(filename)
             if len(filename):
                 try:
                     self.loadEnergyTableParameters(filename)
@@ -232,9 +232,9 @@ class EnergyTab(qt.QWidget):
             del outfile
             return
         # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-        self.outputFilter = str(outfile.selectedFilter())
+        self.outputFilter = qt.safe_str(outfile.selectedFilter())
         filterused = self.outputFilter.split()
-        outputFile=str(outfile.selectedFiles()[0])
+        outputFile = qt.safe_str(outfile.selectedFiles()[0])
         try:            
             self.outputDir  = os.path.dirname(outputFile)
             PyMcaDirs.outputDir = os.path.dirname(outputFile) 

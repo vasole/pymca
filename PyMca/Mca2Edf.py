@@ -217,8 +217,9 @@ class Mca2EdfGUI(qt.QWidget):
             
         filelist = []
         for f in filelist0:
-            filelist.append(str(f))
-        if len(filelist):self.setFileList(filelist)
+            filelist.append(qt.safe_str(f))
+        if len(filelist):
+            self.setFileList(filelist)
         if QTVERSION < '4.0.0':
             self.raiseW()
         else:
@@ -233,8 +234,9 @@ class Mca2EdfGUI(qt.QWidget):
         else:
             self.raiseW()
             return
-        filename= str(filename)
-        if len(filename):self.setConfigFile(filename)  
+        filename= qt.safe_str(filename)
+        if len(filename):
+            self.setConfigFile(filename)  
         self.raiseW()
 
     def browseOutputDir(self):
@@ -257,9 +259,9 @@ class Mca2EdfGUI(qt.QWidget):
             ret = outfile.exec_()
         if ret:
             if QTVERSION < '4.0.0':
-                outdir=str(outfile.selectedFile())
+                outdir = qt.safe_str(outfile.selectedFile())
             else:
-                outdir=str(outfile.selectedFiles()[0])
+                outdir = qt.safe_str(outfile.selectedFiles()[0])
             outfile.close()
             del outfile
             self.setOutputDir(outdir)
@@ -291,7 +293,7 @@ class Mca2EdfGUI(qt.QWidget):
                                           os.path.basename(self.fileList[-1]))
 
         window =  Mca2EdfWindow(name="Mca 2 Edf "+name,actions=1)
-        self.fileStep = int(str(self.__fileSpin.text()))
+        self.fileStep = int(qt.safe_str(self.__fileSpin.text()))
         b = Mca2EdfBatch(window,self.fileList,self.outputDir, self.fileStep)
         def cleanup():
             b.pleasePause = 0

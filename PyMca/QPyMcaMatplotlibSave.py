@@ -66,7 +66,7 @@ class TopWidget(qt.QWidget):
         ddict = {}
         i = 0
         for label in self.keyList:
-            ddict[label] = str(self.lineEditList[i].text())
+            ddict[label] = qt.safe_str(self.lineEditList[i].text())
             i = i + 1
         return ddict
 
@@ -216,22 +216,18 @@ class SaveImageSetup(qt.QWidget):
         outfile.setDirectory(self.lastOutputDir)
         ret = outfile.exec_()
         if ret:
-            filterused = str(outfile.selectedFilter()).split()
+            filterused = qt.safe_str(outfile.selectedFilter()).split()
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
             try:
-                outstr=str(outfile.selectedFiles()[0])
-            except UnicodeError:
-                print("WARNING: Unsupported characters in file name, trying workaround")
-                try:
-                    outstr = str(outfile.selectedFiles()[0].toLocal8Bit())
-                except:
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Error saving image: %s" % sys.exc_info()[1])
-                    msg.setWindowTitle('Matplotlib Save Image')
-                    msg.exec_()
+                outstr = qt.safe_str(outfile.selectedFiles()[0])
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error saving image: %s" % sys.exc_info()[1])
+                msg.setWindowTitle('Matplotlib Save Image')
+                msg.exec_()
             try:            
                 outputDir  = os.path.dirname(outstr)
                 self.lastOutputDir = outputDir
@@ -301,7 +297,7 @@ class SimpleComboBox(qt.QComboBox):
 
     def setCurrentText(self, text):
         for i in range(self.count()):
-            if str(self.itemText(i)) == text:
+            if qt.safe_str(self.itemText(i)) == text:
                 self.setCurrentIndex(i)
                 break
 
@@ -427,7 +423,7 @@ class RightWidget(qt.QWidget):
         i = 0
         for label in self.keyList:
             if i > self.labelList.index('Image Background'):
-                text = str(self.comboBoxList[i].text())
+                text = qt.safe_str(self.comboBoxList[i].text())
                 if len(text):
                     if label == 'Output dpi':
                         ddict[label] = int(text)
@@ -436,7 +432,7 @@ class RightWidget(qt.QWidget):
                 else:
                     ddict[label] = None
             else:
-                ddict[label] = str(self.comboBoxList[i].currentText()).lower()
+                ddict[label] = qt.safe_str(self.comboBoxList[i].currentText()).lower()
             if (ddict[label] == 'none') or (ddict[label] == 'default'):
                 ddict[label] = None
             i = i + 1

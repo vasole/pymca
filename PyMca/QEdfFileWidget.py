@@ -31,7 +31,7 @@ from PyMca import QtBlissGraph
 from PyMca import PyMcaQt as qt
 
 if not hasattr(qt, 'QString'):
-    QString = str
+    QString = qt.safe_str
     QStringList = list
 else:
     QString = qt.QString
@@ -205,9 +205,9 @@ class EdfFile_StandardArray(qt.QWidget):
         for i in range(images):
             index = "%d" % i
             if qt.qVersion() < '4.0.0':
-                text = str(self.iCombo.text(i)).split(msg)[0]
+                text = qt.safe_str(self.iCombo.text(i)).split(msg)[0]
             else:
-                text = str(self.iCombo.itemText(i)).split(msg)[0]
+                text = qt.safe_str(self.iCombo.itemText(i)).split(msg)[0]
             key  = text.split()[-1]
             if qt.qVersion() < '4.0.0':
                 if key in imagelist:
@@ -226,7 +226,7 @@ class EdfFile_StandardArray(qt.QWidget):
         
         
     def markRowSelected(self, rowlist=[]):
-        if not str(self.plotCombo.currentText()) == "Rows":
+        if not qt.safe_str(self.plotCombo.currentText()) == "Rows":
             return
         current = self.yList.currentItem()
         n       = self.yList.count()
@@ -247,7 +247,7 @@ class EdfFile_StandardArray(qt.QWidget):
         #print "DONE"
     
     def markColSelected(self, collist=[]):
-        if not str(self.plotCombo.currentText()) == "Columns":
+        if not qt.safe_str(self.plotCombo.currentText()) == "Columns":
             return
         current = self.yList.currentItem()
         n       = self.yList.count()
@@ -559,13 +559,13 @@ class QEdfFileWidget(qt.QWidget):
             ret = outfile.exec_()
 
         if not ret: return
-        filterused = str(outfile.selectedFilter()).split()
+        filterused = qt.safe_str(outfile.selectedFilter()).split()
         filetype = filterused[0]
         extension = filterused[1]
         if QTVERSION < '4.0.0':
-            outstr=str(outfile.selectedFile())
+            outstr = qt.safe_str(outfile.selectedFile())
         else:
-            outstr=str(outfile.selectedFiles()[0])
+            outstr = qt.safe_str(outfile.selectedFiles()[0])
         try:            
             outputFile = os.path.basename(outstr)
         except:
@@ -874,7 +874,7 @@ class QEdfFileWidget(qt.QWidget):
             filename= qt.QFileDialog(self,"Open a new EdfFile", 1)
             filename.setFilters("EdfFiles (*.edf)\nEdfFiles (*.mca)\nEdfFiles (*ccd)\nAll files (*)")
             if filename.exec_loop() == qt.QDialog.Accepted:
-                filename= str(filename.selectedFile())
+                filename= qt.safe_str(filename.selectedFile())
             else:
                 return
             if not len(filename):    return
@@ -935,7 +935,7 @@ class QEdfFileWidget(qt.QWidget):
             #filelist.sort()
             filename=[]
             for f in filelist:
-                filename.append(str(f))
+                filename.append(qt.safe_str(f))
             if not len(filename):    return
             if len(filename):
                 self.lastInputDir  = os.path.dirname(filename[0])
@@ -972,12 +972,15 @@ class QEdfFileWidget(qt.QWidget):
                 self.selectFile(combokey,justloaded=justloaded)
 
 
-    def selectFile(self, filename=None,justloaded=None):
+    def selectFile(self, filename=None, justloaded=None):
         if justloaded is None:justloaded=0
         if filename is not None:
-            #if str(self.fileCombo.currentText())!=self.mapComboName[filename]:
-            if filename == 'EDF Stack':filename= self._edfstack
-            else: filename = self.mapComboName[filename]
+            #if qt.safe_str(self.fileCombo.currentText()) !=\
+            #   self.mapComboName[filename]:
+            if filename == 'EDF Stack':
+                filename= self._edfstack
+            else:
+                filename = self.mapComboName[filename]
             if justloaded and (filename==self._edfstack):
                 self.currentArray=len(self.data.getSourceInfo()['KeyList'])
             else:
@@ -1024,12 +1027,12 @@ class QEdfFileWidget(qt.QWidget):
 
     def closeFile(self, filename=None):
         if filename is None:
-            file= str(self.fileCombo.currentText())
+            ffile= qt.safe_str(self.fileCombo.currentText())
             #if file != "EDF Stack":
             #    filename = self.mapComboName[file]
             #else:
             #    filename ="EDF Stack"
-            filename = file
+            filename = ffile
 
         #print self.selection
         if (self.selection is not None) and filename in self.selection:
@@ -1057,7 +1060,8 @@ class QEdfFileWidget(qt.QWidget):
                     self.fileCombo.removeItem(idx)
                     del self.mapComboName[filename]
                     break
-            elif str(itext)==os.path.basename(self.mapComboName[filename]):
+            elif qt.safe_str(itext) ==\
+                 os.path.basename(self.mapComboName[filename]):
                 self.fileCombo.removeItem(idx)
                 del self.mapComboName[filename]
                 break
@@ -1069,10 +1073,10 @@ class QEdfFileWidget(qt.QWidget):
         else:
             self.selectFile(self.mapComboName.keys()[0])
 
-    def __fileSelection(self, file):
-        file= str(file)
+    def __fileSelection(self, ffile):
+        ffile= qt.safe_str(ffile)
         for filename, comboname in self.mapComboName.items():
-            if filename==file:
+            if filename == ffile:
                 self.selectFile(filename)
                 break
 
@@ -1312,7 +1316,7 @@ class QEdfFileWidget(qt.QWidget):
         f, i = sel['Key'].split(".")
         f = int(f) - 1
         sel['legend'] = os.path.basename(self.data.sourceName[f]) +\
-                        " "+ str(self.paramWidget.iCombo.currentText())
+                        " "+ qt.safe_str(self.paramWidget.iCombo.currentText())
         sel['selectiontype'] = '2D' 
         sel['imageselection']  = True
         sel['mcaselection']  = False

@@ -517,17 +517,17 @@ class RGBCorrelatorGraph(qt.QWidget):
             ret = outfile.exec_()
 
         if not ret: return
-        filterused = str(outfile.selectedFilter()).split()
+        filterused = qt.safe_str(outfile.selectedFilter()).split()
         filetype = filterused[0]
         extension = filterused[1]
         if QTVERSION < '4.0.0':
-            outstr=str(outfile.selectedFile())
+            outstr = qt.safe_str(outfile.selectedFile())
         else:
-            outstr=str(outfile.selectedFiles()[0])
+            outstr = qt.safe_str(outfile.selectedFiles()[0])
         try:            
             outputFile = os.path.basename(outstr)
         except:
-            outputFile  = outstr
+            outputFile = outstr
         outputDir  = os.path.dirname(outstr)
         self.saveDirectory = outputDir
         PyMcaDirs.outputDir = outputDir

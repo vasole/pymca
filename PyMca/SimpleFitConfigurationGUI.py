@@ -442,7 +442,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                         "Choose fit configuration file",
                         initdir,
                         "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = str(filename)
+            filename = qt.safe_str(filename)
             if len(filename):
                 self.loadConfiguration(filename)
                 self.initDir = os.path.dirname(filename)
@@ -459,7 +459,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                         "Choose fit configuration file",
                         initdir,
                         "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = str(filename)
+            filename = qt.safe_str(filename)
             if len(filename):
                 self.loadConfiguration(filename)
                 self.initDir = os.path.dirname(filename)
@@ -480,7 +480,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                         "Enter output fit configuration file",
                         initdir,
                         "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = str(filename)
+            filename = qt.safe_str(filename)
             if len(filename):
                 if len(filename) < 4:
                     filename = filename+".cfg"
@@ -501,7 +501,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
                         "Enter output fit configuration file",
                         initdir,
                         "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = str(filename)
+            filename = qt.safe_str(filename)
             if len(filename):
                 if len(filename) < 4:
                     filename = filename+".cfg"

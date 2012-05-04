@@ -254,16 +254,13 @@ class QStackWidget(StackBase.StackBase,
         filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
         if len(filename):
             try:
-                return str(filename)
+                return qt.safe_str(filename)
             except UnicodeEncodeError:
-                if 0:
-                    return str(unicode(filename).encode('utf-8'))
-                else:
-                    msg = qt.QMessageBox(self)
-                    msg.setWindowTitle("Encoding error")
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Please use ASCII characters in file name and path")
-                    msg.exec_()
+                msg = qt.QMessageBox(self)
+                msg.setWindowTitle("Encoding error")
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Please use ASCII characters in file name and path")
+                msg.exec_()
         return ""
 
     def _getOutputTiffFilename(self):
@@ -273,16 +270,13 @@ class QStackWidget(StackBase.StackBase,
         filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
         if len(filename):
             try:
-                return str(filename)
+                return qt.safe_str(filename)
             except UnicodeEncodeError:
-                if 0:
-                    return str(unicode(filename).encode('utf-8'))
-                else:
-                    msg = qt.QMessageBox(self)
-                    msg.setWindowTitle("Encoding error")
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Please use ASCII characters in file name and path")
-                    msg.exec_()
+                msg = qt.QMessageBox(self)
+                msg.setWindowTitle("Encoding error")
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Please use ASCII characters in file name and path")
+                msg.exec_()
         return ""
 
     def saveStackAsMonochromaticTiffImages(self, dtype=None):
@@ -444,9 +438,9 @@ class QStackWidget(StackBase.StackBase,
             a = menu.exec_(qt.QCursor.pos())
             if a is None:
                 return None
-            if str(a.text()).startswith("Load"):
+            if qt.safe_str(a.text()).startswith("Load"):
                 self._slave = None
-            elif str(a.text()).startswith("Show"):
+            elif qt.safe_str(a.text()).startswith("Show"):
                 self._slave.show()
                 self._slave.raise_()
                 return
@@ -544,7 +538,7 @@ class QStackWidget(StackBase.StackBase,
                 msg.exec_()
             return
         if idx == 1:
-            dirName = str(qt.QFileDialog.getExistingDirectory(self,
+            dirName = qt.safe_str(qt.QFileDialog.getExistingDirectory(self,
                                 "Enter user plugins directory",
                                 os.getcwd()))
             if len(dirName):
@@ -597,7 +591,7 @@ class QStackWidget(StackBase.StackBase,
             else:
                 msg.setWindowTitle("Plugin error")
                 msg.setText("An error has occured while executing the plugin:")
-                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             if DEBUG:
@@ -605,7 +599,7 @@ class QStackWidget(StackBase.StackBase,
 
     def _actionHovered(self, action):
         tip = action.toolTip()
-        if str(tip) != str(action.text()):
+        if qt.safe_str(tip) != qt.safe_str(action.text()):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
         
 
@@ -765,7 +759,7 @@ class QStackWidget(StackBase.StackBase,
         elif self._selectionMask.sum() == 0:
             legend = "Stack SUM"
         else:
-            title = str(self.roiGraphWidget.graph.title().text())
+            title = qt.safe_str(self.roiGraphWidget.graph.title().text())
             legend = "Stack " + title + " selection"
         return legend
 

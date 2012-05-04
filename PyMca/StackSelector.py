@@ -288,7 +288,7 @@ class StackSelector(object):
                     else:
                         return []
                 else:
-                    sample = str(filelist[0])
+                    sample = qt.safe_str(filelist[0])
                     for filetype in fileTypeList:
                         ftype = filetype.replace("(", "")
                         ftype = ftype.replace(")", "")
@@ -318,7 +318,7 @@ class StackSelector(object):
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
                     if getfilter:
-                        filterused = str(fdialog.selectedFilter())
+                        filterused = qt.safe_str(fdialog.selectedFilter())
                     fdialog.close()
                     del fdialog
                 else:
@@ -330,7 +330,7 @@ class StackSelector(object):
                         return []
         if sys.version < '3.0':
             try:
-                filelist = [str(x) for x in filelist]
+                filelist = [qt.safe_str(x) for x in filelist]
             except UnicodeEncodeError:
                 filelist = [unicode(x) for x in filelist]
         if not(len(filelist)):

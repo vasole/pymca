@@ -452,7 +452,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         wdir = PyMcaDirs.outputDir
         filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
         if len(filename):
-            return str(filename)
+            return qt.safe_str(filename)
         else:
             return ""
 
@@ -1417,12 +1417,12 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         if not hasattr(stack, "sourceName"):
             stack.sourceName = stack.info['SourceName']
         if QTVERSION < '4.0.0':
-            title = str(self.caption())+\
+            title = qt.safe_str(self.caption())+\
                     ": from %s to %s" % (os.path.basename(stack.sourceName[0]),
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setCaption(title)
         else:
-            title = str(self.windowTitle())+\
+            title = qt.safe_str(self.windowTitle())+\
                     ": from %s to %s" % (os.path.basename(stack.sourceName[0]),
                                         os.path.basename(stack.sourceName[-1]))                         
             self.setWindowTitle(title)
@@ -2256,7 +2256,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                           action = action)
 
     def __getLegend(self):
-        title = str(self.roiWindow.graphWidget.graph.title().text())
+        title = qt.safe_str(self.roiWindow.graphWidget.graph.title().text())
         return "Stack " + title + " selection"
     
     def _removeMcaClicked(self):
@@ -2351,7 +2351,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                     else:
                         return []
                 else:
-                    sample  = str(filelist[0])
+                    sample  = qt.safe_str(filelist[0])
                     for filetype in fileTypeList:
                         ftype = filetype.replace("(", "")
                         ftype = ftype.replace(")", "")
@@ -2378,7 +2378,7 @@ class QEDFStackWidget(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
                     if getfilter:
-                        filterused = str(fdialog.selectedFilter())                    
+                        filterused = qt.safe_str(fdialog.selectedFilter())                    
                     fdialog.close()
                     del fdialog                        
                 else:

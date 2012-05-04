@@ -143,7 +143,7 @@ class Fit2SpecGUI(qt.QWidget):
             return    
         filelist = []
         for f in filelist0:
-            filelist.append(str(f)) 
+            filelist.append(qt.safe_str(f)) 
         if len(filelist):self.setFileList(filelist)
         self.raiseW()
 
@@ -156,7 +156,7 @@ class Fit2SpecGUI(qt.QWidget):
         else:
             self.raiseW()
             return                
-        filename = str(filename)
+        filename = qt.safe_str(filename)
         if len(filename):
             self.setConfigFile(filename)
         self.raiseW()
@@ -166,7 +166,7 @@ class Fit2SpecGUI(qt.QWidget):
         outfile.setMode(outfile.DirectoryOnly)
         ret = outfile.exec_loop()
         if ret:
-            outdir=str(outfile.selectedFile())
+            outdir = qt.safe_str(outfile.selectedFile())
             outfile.close()
             del outfile
             self.setOutputDir(outdir)

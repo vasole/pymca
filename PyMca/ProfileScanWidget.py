@@ -91,7 +91,7 @@ class ProfileScanWidget(ScanWindow.ScanWindow):
     def _emitActionSignal(self, action='ADD'):
         if action not in ['ADD', 'REMOVE', 'REPLACE']:
             print("Unrecognized action %s" % action)
-            
+
         curveList = self.getAllCurves()
         if curveList in [None, []]:
             return

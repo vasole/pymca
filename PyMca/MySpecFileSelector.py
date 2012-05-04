@@ -158,17 +158,17 @@ class ScanList(qt.QWidget):
     def __doubleClicked(self, item):
         if item is not None:
             sn  = str(item.text(1))
-            dict={}
-            dict['Key']      = sn
-            dict['Command']  = str(item.text(2))
-            dict['NbPoints'] = int(str(item.text(3)))
-            dict['NbMca']    = int(str(item.text(4)))
-            self.emit(qt.PYSIGNAL("scanDoubleClicked"), (dict,))
+            ddict={}
+            ddict['Key']      = sn
+            ddict['Command']  = str(item.text(2))
+            ddict['NbPoints'] = int(str(item.text(3)))
+            ddict['NbMca']    = int(str(item.text(4)))
+            self.emit(qt.PYSIGNAL("scanDoubleClicked"), (ddict,))
 
         
     def __contextMenu(self, item, point, col=None):
         if item is not None:
-            sn= str(item.text(1))
+            sn = str(item.text(1))
             self.menu.setItemParameter(self.menu.idAt(0), self.scans.index(sn))
             self.menu.popup(point)
 
@@ -652,10 +652,11 @@ class SpecFileSelector(qt.QWidget):
             if sys.platform == "win32":
                 windir = self.lastInputDir
                 if windir is None:windir = ""
-                filename= str(qt.QFileDialog.getOpenFileName(windir,
-                                 self.lastInputFilter,
-                                 self,
-                                "openFile", "Open a new SpecFile"))
+                filename = qt.safe_str((qt.QFileDialog.getOpenFileName(windir,
+                                        self.lastInputFilter,
+                                        self,
+                                        "openFile",
+                                        "Open a new SpecFile"))
             else:
                 try:
                     filename = qt.QFileDialog(self, "Open a new SpecFile", 1)
@@ -664,19 +665,22 @@ class SpecFileSelector(qt.QWidget):
                         filename.setDir(self.lastInputDir)
                     filename.setMode(qt.QFileDialog.ExistingFile)
                     if filename.exec_loop() == qt.QDialog.Accepted:
-                        #selectedfilter = str(filename.selectedFilter())
-                        filename= str(filename.selectedFile())
+                        #selectedfilter = qt.safe_str(filename.selectedFilter())
+                        filename= qt.safe_str(filename.selectedFile())
                         #print selectedfilter
                     else:
                         return
                 except:
                     print("USING STATIC METHODS, PLEASE REPORT THIS ISSUE")
                     windir = self.lastInputDir
-                    if windir is None:windir = ""
-                    filename= str(qt.QFileDialog.getOpenFileName(windir,
-                                     self.lastInputFilter,
-                                     self,
-                                    "openFile", "Open a new SpecFile"))
+                    if windir is None:
+                        windir = ""
+                    filename= qt.safe_str(\
+                                    qt.QFileDialog.getOpenFileName(windir,
+                                    self.lastInputFilter,
+                                    self,
+                                    "openFile",
+                                    "Open a new SpecFile"))
                     
             if not len(filename):    return
             else:
@@ -703,9 +707,11 @@ class SpecFileSelector(qt.QWidget):
 
     def selectFile(self, filename=None):
         if filename is not None:
-            if str(self.fileCombo.currentText())!=self.mapComboName[filename]:
+            if qt.safe_str((self.fileCombo.currentText()) !=\
+                           self.mapComboName[filename]:
               for idx in range(self.fileCombo.count()):
-                if str(self.fileCombo.text(idx))==self.mapComboName[filename]:
+                if qt.safe_str(self.fileCombo.text(idx)) ==\
+                           self.mapComboName[filename]:
                     self.fileCombo.setCurrentItem(idx)
                     break
             self.data.SetSource(filename)
@@ -713,9 +719,9 @@ class SpecFileSelector(qt.QWidget):
 
     def closeFile(self, filename=None):
         if filename is None:
-            file= str(self.fileCombo.currentText())
+            ffile= qt.safe_str(self.fileCombo.currentText())
             for filename, comboname in self.mapComboName.items():
-                if comboname==file: break
+                if comboname == ffile: break
 
         if (self.selection is not None) and (filename in self.selection):
             mcakeys= []
@@ -742,7 +748,7 @@ class SpecFileSelector(qt.QWidget):
                 self.emit(qt.PYSIGNAL("delSelection"), (self.data.SourceName, cntkeys))
             
         for idx in range(self.fileCombo.count()):
-            if str(self.fileCombo.text(idx))==self.mapComboName[filename]:
+            if qt.safe_str(self.fileCombo.text(idx)) == self.mapComboName[filename]:
                 #if idx==self.fileCombo.currentItem():
                 self.fileCombo.removeItem(idx)
                 del self.mapComboName[filename]
@@ -753,10 +759,10 @@ class SpecFileSelector(qt.QWidget):
         else:
             self.selectFile(self.mapComboName.keys()[0])
 
-    def __fileSelection(self, file):
-        file= str(file)
+    def __fileSelection(self, ffile):
+        ffile= qt.safe_str(ffile)
         for filename, comboname in self.mapComboName.items():
-            if comboname==file:
+            if comboname == ffile:
                 self.selectFile(filename)
                 break
 

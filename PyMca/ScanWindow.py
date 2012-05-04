@@ -33,7 +33,7 @@ from PyMca import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 if __name__ == "__main__":
     app = qt.QApplication([])
 from PyMca import QtBlissGraph
@@ -371,7 +371,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
                 msg.exec_()
             return
         if idx == 1:
-            dirName = str(qt.QFileDialog.getExistingDirectory(self,
+            dirName = qt.safe_str(qt.QFileDialog.getExistingDirectory(self,
                                 "Enter user plugins directory",
                                 os.getcwd()))
             if len(dirName):
@@ -430,7 +430,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
 
     def _actionHovered(self, action):
         tip = action.toolTip()
-        if str(tip) != str(action.text()):
+        if qt.safe_str(tip) != qt.safe_str(action.text()):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     def _buildGraph(self):
@@ -1055,14 +1055,14 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             ret = outfile.exec_()
         if not ret:
             return None
-        self.outputFilter = str(outfile.selectedFilter())
+        self.outputFilter = qt.safe_str(outfile.selectedFilter())
         filterused = self.outputFilter.split()
         filetype  = filterused[1]
         extension = filterused[2]
         if QTVERSION < '4.0.0':
-            outdir=str(outfile.selectedFile())
+            outdir = qt.safe_str(outfile.selectedFile())
         else:
-            outdir=str(outfile.selectedFiles()[0])
+            outdir = qt.safe_str(outfile.selectedFiles()[0])
         try:            
             self.outputDir  = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
@@ -1481,8 +1481,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
 
         if sys.version < '3.0':
-            self.matplotlibDialog.setXLabel(str(self.graph.x1Label()))
-            self.matplotlibDialog.setYLabel(str(self.graph.y1Label()))
+            self.matplotlibDialog.setXLabel(qt.safe_str(self.graph.x1Label()))
+            self.matplotlibDialog.setYLabel(qt.safe_str(self.graph.y1Label()))
         else:
             self.matplotlibDialog.setXLabel(self.graph.x1Label())
             self.matplotlibDialog.setYLabel(self.graph.y1Label())
@@ -1730,13 +1730,13 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         if legend is None:
             key = "Unnamed curve 1.1"
         else:
-            key = str(legend)
+            key = qt.safe_str(legend)
         if info is None:
             info = {}
         xlabel = info.get('xlabel', 'X')
         ylabel = info.get('ylabel', 'Y')
-        info['xlabel'] = str(xlabel)
-        info['ylabel'] = str(ylabel)
+        info['xlabel'] = qt.safe_str(xlabel)
+        info['ylabel'] = qt.safe_str(ylabel)
         self.newCurve(x, y, legend, xlabel=xlabel, ylabel=ylabel,
                               replace=replace, replot=replot, info=info, **kw)
 
@@ -1755,19 +1755,19 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
     def getGraphTitle(self):
         title = self.graph.title()
         if sys.version < '3.0':
-            title = str(title)
+            title = qt.safe_str(title)
         return title
 
     def getGraphXTitle(self):
         title = self.graph.x1Label()
         if sys.version < '3.0':
-            title = str(title)
+            title = qt.safe_str(title)
         return title
 
     def getGraphYTitle(self):
         title = self.graph.y1Label()
         if sys.version < '3.0':
-            title = str(title)
+            title = qt.safe_str(title)
         return title
 
     #end of plugins interface

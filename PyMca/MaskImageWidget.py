@@ -35,7 +35,7 @@ QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 MATPLOTLIB = False
 if QTVERSION > '4.0.0':
     try:
@@ -376,7 +376,7 @@ class MaskImageWidget(qt.QWidget):
         try:
             title = self.graphWidget.graph.title().text()
             if sys.version < '3.0':
-                title = str(title)
+                title = qt.safe_str(title)
         except:
             title = ""
         return title
@@ -1602,9 +1602,9 @@ class MaskImageWidget(qt.QWidget):
         if not ret: return ""
         filename = filedialog.selectedFiles()[0]
         if len(filename):
-            filename = str(filename)
+            filename = qt.safe_str(filename)
             self.outputDir = os.path.dirname(filename)
-            self._saveFilter = str(filedialog.selectedFilter())
+            self._saveFilter = qt.safe_str(filedialog.selectedFilter())
             filterused = "."+self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:

@@ -31,7 +31,7 @@ from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
     
 QTVERSION = qt.qVersion()
 
@@ -221,7 +221,7 @@ class McaROIWidget(qt.QWidget):
             del outfile
             return
         # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-        outputFile = str(outfile.selectedFiles()[0])
+        outputFile = qt.safe_str(outfile.selectedFiles()[0])
         outfile.close()
         del outfile
         self.roiDir = os.path.dirname(outputFile)
@@ -263,7 +263,7 @@ class McaROIWidget(qt.QWidget):
             del outfile
             return
         # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-        outputFile = str(outfile.selectedFiles()[0])
+        outputFile = qt.safe_str(outfile.selectedFiles()[0])
         extension = ".ini"
         outfile.close()
         del outfile
@@ -551,8 +551,10 @@ class McaROITable(QTable):
                 text = str(self.text(row, 0))
             else:
                 item = self.item(row, 0)
-                if item is None:text=""
-                else:text = str(item.text())
+                if item is None:
+                    text=""
+                else:
+                    text = str(item.text())
             self.roilist[row] = text
             ddict['roi'  ] = self.roidict[self.roilist[row]]
             ddict['key']   = self.roilist[row]

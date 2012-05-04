@@ -36,7 +36,7 @@ from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 
 from PyMca.PyMca_Icons import IconDict
 from PyMca import McaControlGUI
@@ -578,14 +578,14 @@ class McaWidget(qt.QWidget):
             outfile.setDirectory(wdir)
             ret = outfile.exec_()
         if ret:
-            self.outputFilter = str(outfile.selectedFilter())
+            self.outputFilter = qt.safe_str(outfile.selectedFilter())
             filterused = self.outputFilter.split()
             filetype  = filterused[1]
             extension = filterused[2]
             if QTVERSION < '4.0.0':
-                outdir=str(outfile.selectedFile())
+                outdir=qt.safe_str(outfile.selectedFile())
             else:
-                outdir=str(outfile.selectedFiles()[0])
+                outdir=qt.safe_str(outfile.selectedFiles()[0])
             try:            
                 self.outputDir  = os.path.dirname(outdir)
                 PyMcaDirs.outputDir = os.path.dirname(outdir) 

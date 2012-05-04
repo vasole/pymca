@@ -30,12 +30,12 @@ import sys
 import os
 from PyMca import PyMcaDirs
 from PyMca import RGBCorrelator
-qt = RGBCorrelator.qt
+from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
     QStringList = qt.QStringList
 else:
-    QString = str
+    QString = qt.safe_str
     QStringList = list
 QTVERSION = qt.qVersion()
 
@@ -65,8 +65,8 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
             #very likely wrapped as EDF
             return self.addFileList([filename])
         
-        text = str(self.windowTitle())
-        text += ": " + str(os.path.basename(filename))
+        text = qt.safe_str(self.windowTitle())
+        text += ": " + qt.safe_str(os.path.basename(filename))
 
         self.setWindowTitle(text)
 
@@ -81,12 +81,12 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         """
         Expected to work just with EDF files
         """
-        text = str(self.windowTitle())
+        text = qt.safe_str(self.windowTitle())
         if len(filelist) == 1:
-            text += ": " + str(os.path.basename(filelist[0]))
+            text += ": " + qt.safe_str(os.path.basename(filelist[0]))
         else:
-            text += ": from " + str(os.path.basename(filelist[0])) + \
-                    " to " + str(os.path.basename(filelist[-1]))
+            text += ": from " + qt.safe_str(os.path.basename(filelist[0])) + \
+                    " to " + qt.safe_str(os.path.basename(filelist[-1]))
         self.setWindowTitle(text)
 
         self.controller.addFileList(filelist)
@@ -129,7 +129,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                 fdialog.close()
                 del fdialog
                 return []
-        filelist = [str(x) for x in filelist]
+        filelist = [qt.safe_str(x) for x in filelist]
         if not len(filelist):
             return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])

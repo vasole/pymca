@@ -105,7 +105,7 @@ class FileListPage(QtGui.QWizardPage):
             return            
         filelist = []
         for f in filelist0:
-            filelist.append(str(f))
+            filelist.append(qt.safe_str(f))
         if len(filelist):
             self.setFileList(filelist)
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
@@ -135,7 +135,7 @@ class StackIndexWidget(QtGui.QWidget):
                          self._slot)
 
     def _slot(self, button):
-        if "first" in str(button.text()).lower():
+        if "first" in qt.safe_str(button.text()).lower():
             self._stackIndex =  0
         else:
             self._stackIndex = -1
