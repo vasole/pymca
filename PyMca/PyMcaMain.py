@@ -75,7 +75,7 @@ from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 
 QTVERSION = qt.qVersion()
 
@@ -83,7 +83,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "4.6.0-RC2"
+__version__ = "4.6.0-RC3"
 if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1379,7 +1379,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     else:
                         return []
                 else:
-                    sample  = str(filelist[0])
+                    sample  = qt.safe_str(filelist[0])
                     for filetype in fileTypeList:
                         ftype = filetype.replace("(", "").replace(")","")
                         extensions = ftype.split()[2:]
@@ -1408,7 +1408,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
                     if getfilter:
-                        filterused = str(fdialog.selectedFilter())
+                        filterused = qt.safe_str(fdialog.selectedFilter())
                     fdialog.close()
                     del fdialog                        
                 else:
@@ -1418,7 +1418,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         return [], filterused
                     else:
                         return []
-        filelist = [str(x) for x in filelist]
+        filelist = [qt.safe_str(x) for x in filelist]
         if getfilter:
             return filelist, filterused
         else:
@@ -1529,12 +1529,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if QTVERSION < '4.0.0':ret = outfile.exec_loop()
         else:ret = outfile.exec_()
         if ret:
-            filterused = str(outfile.selectedFilter()).split()
+            filterused = qt.safe_str(outfile.selectedFilter()).split()
             extension = ".ini"
             if QTVERSION < '4.0.0':
-                outdir=str(outfile.selectedFile())
+                outdir=qt.safe_str(outfile.selectedFile())
             else:
-                outdir=str(outfile.selectedFiles()[0])
+                outdir=qt.safe_str(outfile.selectedFiles()[0])
             try:
                 outputDir  = os.path.dirname(outdir)
             except:
@@ -1649,8 +1649,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 outfile.setFileMode(outfile.ExistingFile)
                 ret = outfile.exec_()
             if ret:
-                if QTVERSION < '4.0.0':filename=str(outfile.selectedFile())
-                else:filename=str(outfile.selectedFiles()[0])
+                if QTVERSION < '4.0.0':
+                    filename = qt.safe_str(outfile.selectedFile())
+                else:
+                    filename = qt.safe_str(outfile.selectedFiles()[0])
                 outfile.close()
                 del outfile
             else:
@@ -1838,8 +1840,8 @@ if 0:
             Or None if not found
             """
             for graph in self.mdi.windowList():
-                    if str(graph.caption())==name:
-                            return graph
+                if qt.safe_str(graph.caption())== name:
+                    return graph
             return None
 
     def closeGraph(self, name):

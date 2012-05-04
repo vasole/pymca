@@ -24,6 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+import sys
 import os
 
 from PyMca import PyMcaQt as qt
@@ -31,7 +32,7 @@ QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 
 from PyMca import McaROIWidget
 from PyMca import PyMcaDirs
@@ -151,7 +152,7 @@ class McaControlGUI(qt.QWidget):
         self.__calboxactivated(item)
         
     def __calboxactivated(self,item):
-        item = str(item)
+        item = qt.safe_str(item)
         if DEBUG:
             print("Calibration box activated %s" % item)
         comboitem,combotext = self.calbox.getcurrent()
@@ -194,12 +195,12 @@ class McaControlGUI(qt.QWidget):
             windir = self.lastInputDir
             if windir is None:windir = os.getcwd()
             if qt.qVersion() < '4.0.0':
-                filename= str(qt.QFileDialog.getOpenFileName(windir,
+                filename= qt.safe_str(qt.QFileDialog.getOpenFileName(windir,
                              self.lastInputFilter,
                              self,
                             "Load File", "Load existing calibration file"))
             else:
-                filename= str(qt.QFileDialog.getOpenFileName(self,
+                filename= qt.safe_str(qt.QFileDialog.getOpenFileName(self,
                               "Load existing calibration file",
                               windir,
                               self.lastInputFilter))                
@@ -211,8 +212,8 @@ class McaControlGUI(qt.QWidget):
                     filename.setDir(self.lastInputDir)
                 filename.setMode(qt.QFileDialog.ExistingFile)
                 if filename.exec_loop() == qt.QDialog.Accepted:
-                    #selectedfilter = str(filename.selectedFilter())
-                    filename= str(filename.selectedFile())
+                    #selectedfilter = qt.safe_str(filename.selectedFilter())
+                    filename= qt.safe_str(filename.selectedFile())
                     #print selectedfilter
                 else:
                     return
@@ -235,7 +236,7 @@ class McaControlGUI(qt.QWidget):
                 ret = filename.exec_()
                 if ret:
                     if len(filename.selectedFiles()):
-                        filename = str(filename.selectedFiles()[0])
+                        filename = qt.safe_str(filename.selectedFiles()[0])
                     else:
                         return
                 else:
@@ -263,12 +264,12 @@ class McaControlGUI(qt.QWidget):
             windir = self.lastInputDir
             if windir is None:windir = ""
             if qt.qVersion() < '4.0.0':
-                filename= str(qt.QFileDialog.getSaveFileName(windir,
+                filename= qt.safe_str(qt.QFileDialog.getSaveFileName(windir,
                              self.lastInputFilter,
                              self,
                             "Save File", "Save a new calibration file"))
             else:
-                filename= str(qt.QFileDialog.getSaveFileName(self,
+                filename= qt.safe_str(qt.QFileDialog.getSaveFileName(self,
                               "Save a new calibration file",
                               windir,
                               self.lastInputFilter))                
@@ -280,8 +281,8 @@ class McaControlGUI(qt.QWidget):
                     filename.setDir(self.lastInputDir)
                 filename.setMode(qt.QFileDialog.AnyFile)
                 if filename.exec_loop() == qt.QDialog.Accepted:
-                    #selectedfilter = str(filename.selectedFilter())
-                    filename= str(filename.selectedFile())
+                    #selectedfilter = qt.safe_str(filename.selectedFilter())
+                    filename= qt.safe_str(filename.selectedFile())
                     #print selectedfilter
                 else:
                     return
@@ -304,7 +305,7 @@ class McaControlGUI(qt.QWidget):
                 ret = filename.exec_()
                 if ret:
                     if len(filename.selectedFiles()):
-                        filename = str(filename.selectedFiles()[0])
+                        filename = qt.safe_str(filename.selectedFiles()[0])
                     else:
                         return
                 else:
@@ -471,13 +472,12 @@ class SimpleComboBox(qt.QComboBox):
             
         def getcurrent(self):
             if qt.qVersion() < '4.0.0':
-                return   self.currentItem(),str(self.currentText())
+                return   self.currentItem(),qt.safe_str(self.currentText())
             else:
-                return   self.currentIndex(),str(self.currentText())
+                return   self.currentIndex(),qt.safe_str(self.currentText())
              
 
 if __name__ == '__main__':
-    import sys
     if 1:
         app = qt.QApplication(sys.argv)
         #demo = make()
