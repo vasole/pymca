@@ -1018,7 +1018,7 @@ class McaAdvancedFit(qt.QWidget):
         config = self.mcafit.configure()
         tool   = ConcentrationsTool.ConcentrationsTool()
         #this forces update
-        tool.getParameters()
+        tool.configure()
         dict = {}
         dict.update(config['concentrations'])
         tool.configure(dict)
