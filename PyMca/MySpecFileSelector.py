@@ -651,12 +651,13 @@ class SpecFileSelector(qt.QWidget):
                     self.lastInputDir = None   
             if sys.platform == "win32":
                 windir = self.lastInputDir
-                if windir is None:windir = ""
-                filename = qt.safe_str((qt.QFileDialog.getOpenFileName(windir,
-                                        self.lastInputFilter,
-                                        self,
-                                        "openFile",
-                                        "Open a new SpecFile"))
+                if windir is None:
+                    windir = ""
+                filename = qt.safe_str(qt.QFileDialog.getOpenFileName(windir,
+                                       self.lastInputFilter,
+                                       self,
+                                       "openFile",
+                                       "Open a new SpecFile"))
             else:
                 try:
                     filename = qt.QFileDialog(self, "Open a new SpecFile", 1)
