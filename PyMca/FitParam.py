@@ -85,7 +85,7 @@ class FitParamWidget(FitParamForm):
             self.attTable = self.tabAttenuators.table
             #self.multilayerTable =self.tabAttenuators.matrixTable
             tabAttLayout.addWidget(self.tabAttenuators,0,0)
-            self.mainTab.insertTab(self.tabAtt,str("ATTENUATORS"))
+            self.mainTab.insertTab(self.tabAtt, str("ATTENUATORS"))
         else:
             self.tabAtt = qt.QWidget()
             tabAttLayout = qt.QGridLayout(self.tabAtt)
@@ -130,7 +130,7 @@ class FitParamWidget(FitParamForm):
             self.attTable = self.tabAttenuators.table
             #self.multilayerTable =self.tabAttenuators.matrixTable
             tabAttLayout.addWidget(self.tabAttenuators,0,0)
-            self.mainTab.addTab(self.tabAtt,str("ATTENUATORS"))
+            self.mainTab.addTab(self.tabAtt, str("ATTENUATORS"))
             maxheight = qt.QDesktopWidget().height()
             #self.graph.hide()
             self.attPlotButton = qt.QPushButton(self.tabAttenuators)
@@ -153,7 +153,7 @@ class FitParamWidget(FitParamForm):
             self.tabMultilayer  = AttenuatorsTable.MultilayerTab(self.tabMul,"tabMultilayer")
             self.multilayerTable =self.tabMultilayer.matrixTable
             tabMultilayerLayout.addWidget(self.tabMultilayer,0,0)
-            self.mainTab.insertTab(self.tabMul,str("MATRIX"))
+            self.mainTab.insertTab(self.tabMul, str("MATRIX"))
             self.matrixGeometry = self.tabMultilayer.matrixGeometry
         else:
             self.tabMul = qt.QWidget()
@@ -163,7 +163,7 @@ class FitParamWidget(FitParamForm):
             self.tabMultilayer  = AttenuatorsTable.MultilayerTab(self.tabMul)
             self.multilayerTable =self.tabMultilayer.matrixTable
             tabMultilayerLayout.addWidget(self.tabMultilayer,0,0)
-            self.mainTab.addTab(self.tabMul,str("MATRIX"))
+            self.mainTab.addTab(self.tabMul, str("MATRIX"))
             self.matrixGeometry = self.tabMultilayer.matrixGeometry
 
         #The concentrations
@@ -174,7 +174,7 @@ class FitParamWidget(FitParamForm):
                                                      1,1,11,6,"tabConcentrationsLayout")
             self.concentrationsWidget   = ConcentrationsWidget.ConcentrationsWidget(self.tabConcentrations,"tabConcentrations")
             tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
-            self.mainTab.insertTab(self.tabConcentrations,str("CONCENTRATIONS"))
+            self.mainTab.insertTab(self.tabConcentrations, str("CONCENTRATIONS"))
         else:
             self.tabConcentrations =  qt.QWidget()
             tabConcentrationsLayout = qt.QGridLayout(self.tabConcentrations)
@@ -182,7 +182,7 @@ class FitParamWidget(FitParamForm):
             tabConcentrationsLayout.setSpacing(6)
             self.concentrationsWidget   = ConcentrationsWidget.ConcentrationsWidget(self.tabConcentrations,"tabConcentrations")
             tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
-            self.mainTab.addTab(self.tabConcentrations,str("CONCENTRATIONS"))
+            self.mainTab.addTab(self.tabConcentrations, str("CONCENTRATIONS"))
         #end concentrations tab
         
         #self.matrixGeometry = self.tabAttenuators.matrixGeometry
@@ -196,7 +196,7 @@ class FitParamWidget(FitParamForm):
                 self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
                                                                                "tabCompound_fit")
                 tabCompoundFitLayout.addWidget(self.compoundFitWidget,0,0)
-                self.mainTab.insertTab(self.tabCompoundFit,str("COMPOUND FIT"))
+                self.mainTab.insertTab(self.tabCompoundFit, str("COMPOUND FIT"))
             else:
                 self.tabCompoundFit =  qt.QWidget()
                 tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit)
@@ -205,7 +205,7 @@ class FitParamWidget(FitParamForm):
                 self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
                                                                                "tabCompound_fit")
                 tabConcentrationsLayout.addWidget(self.compoundFitWidget,0,0)
-                self.mainTab.addTab(self.tabConcentrations,str("COMPOUND FIT"))
+                self.mainTab.addTab(self.tabConcentrations, str("COMPOUND FIT"))
             #end compound fit tab
 
         self.layout().setMargin(0)
@@ -271,7 +271,7 @@ class FitParamWidget(FitParamForm):
             if QTVERSION < '4.0.0':
                 self.tabLabel.append(self.mainTab.label(idx))
             else:
-                self.tabLabel.append(str(self.mainTab.tabText(idx)))
+                self.tabLabel.append(qt.safe_str(self.mainTab.tabText(idx)))
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
         self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
@@ -316,7 +316,7 @@ class FitParamWidget(FitParamForm):
                     else:                                           
                         attenuators.append(pars[key][1:])
 
-        maxenergy = str(self.peakTable.energy.text())
+        maxenergy = qt.safe_str(self.peakTable.energy.text())
         if maxenergy=='None':
             maxenergy = 100.
             energies = numpy.arange(1, maxenergy, 0.1)
@@ -484,11 +484,15 @@ class FitParamWidget(FitParamForm):
         return 1
 
     def __get(self, section, key, default=0., conv=str):
-        sect= self.input.get(section, None)
-        if sect is None: ret=default
-        else: ret= sect.get(key, default)
-        if (conv is not None) and (ret is not None) and (ret != "None"): return conv(ret)
-        else: return ret
+        sect = self.input.get(section, None)
+        if sect is None:
+            ret = default
+        else:
+            ret = sect.get(key, default)
+        if (conv is not None) and (ret is not None) and (ret != "None"):
+            return conv(ret)
+        else:
+            return ret
 
     def __setInput(self, ndict):
         if self.input is None:
@@ -496,7 +500,8 @@ class FitParamWidget(FitParamForm):
         self.input.update(ndict)
 
     def setParameters(self, pardict=None):
-        if pardict is None:pardict={}
+        if pardict is None:
+            pardict={}
         self.__setInput(pardict)
         self.__setFitPar()
         self.__setPeaksPar()
@@ -1407,7 +1412,7 @@ class FitParamDialog(qt.QDialog):
                             "Choose fit configuration file",
                             initdir,
                             "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = str(filename)
+                filename = qt.safe_str(filename)
                 if len(filename):
                     self.loadParameters(filename, None)
                     self.initDir = os.path.dirname(filename)
@@ -1424,7 +1429,7 @@ class FitParamDialog(qt.QDialog):
                             "Choose fit configuration file",
                             initdir,
                             "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = str(filename)
+                filename = qt.safe_str(filename)
                 if len(filename):
                     self.loadParameters(filename, None)
                     self.initDir = os.path.dirname(filename)
@@ -1456,7 +1461,7 @@ class FitParamDialog(qt.QDialog):
                             "Enter output fit configuration file",
                             initdir,
                             "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = str(filename)
+                filename = qt.safe_str(filename)
                 if len(filename):
                     if len(filename) < 4:
                         filename = filename+".cfg"
@@ -1477,7 +1482,7 @@ class FitParamDialog(qt.QDialog):
                             "Enter output fit configuration file",
                             initdir,
                             "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = str(filename)
+                filename = qt.safe_str(filename)
                 if len(filename):
                     if len(filename) < 4:
                         filename = filename+".cfg"
