@@ -38,7 +38,7 @@ from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 
 QTVERSION = qt.qVersion()
 
@@ -765,7 +765,7 @@ class McaAdvancedFit(qt.QWidget):
         config = self.mcafit.configure()
         x = self.mcafit.xdata0[:]
         y = self.mcafit.ydata0[:]
-        legend = "Calibration for " +str(self.headerLabel.text())
+        legend = "Calibration for " + qt.safe_str(self.headerLabel.text())
         ndict={}
         ndict[legend] = {'A':config['detector']['zero'],
                'B':config['detector']['gain'],
@@ -1187,9 +1187,9 @@ class McaAdvancedFit(qt.QWidget):
                 ret = outfile.exec_()
             if ret:
                 if QTVERSION < '4.0.0':
-                    self.outdir=str(outfile.selectedFile())
+                    self.outdir = qt.safe_str(outfile.selectedFile())
                 else:
-                    self.outdir=str(outfile.selectedFiles()[0])
+                    self.outdir = qt.safe_str(outfile.selectedFiles()[0])
                 outfile.close()
                 del outfile
             else:
@@ -1321,7 +1321,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
     def __htmlheader(self):
-        header = "%s" % str(self.headerLabel.text())
+        header = "%s" % qt.safe_str(self.headerLabel.text())
         if header[0] == "<":
             header = header[3:-3]
         if self.mcafit.config['fit']['sumflag']:
@@ -1340,8 +1340,8 @@ class McaAdvancedFit(qt.QWidget):
             stripflag = "N"
         #bkg = self.mcafit.config['fit']['continuum']
         #theory = "Hypermet"
-        bkg    = "%s" % str(self.top.BkgComBox.currentText())
-        theory = "%s" % str(self.top.FunComBox.currentText())
+        bkg    = "%s" % qt.safe_str(self.top.BkgComBox.currentText())
+        theory = "%s" % qt.safe_str(self.top.FunComBox.currentText())
         hypermetflag=self.mcafit.config['fit']['hypermetflag']
         # g_term  = hypermetflag & 1
         st_term   = (hypermetflag >>1) & 1
@@ -1925,14 +1925,14 @@ class McaAdvancedFit(qt.QWidget):
             ret = outfile.exec_()
 
         if ret:
-            filterused = str(outfile.selectedFilter()).split()
+            filterused = qt.safe_str(outfile.selectedFilter()).split()
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
             if QTVERSION < '4.0.0':
-                outstr=str(outfile.selectedFile())
+                outstr = qt.safe_str(outfile.selectedFile())
             else:
-                outstr=str(outfile.selectedFiles()[0])
+                outstr = qt.safe_str(outfile.selectedFiles()[0])
             try:
                 outputDir  = os.path.dirname(outstr)
                 self.lastInputDir   = outputDir
