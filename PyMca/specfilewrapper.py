@@ -77,7 +77,7 @@ def Specfile(filename):
         if len(s) == 2:
             if len(s[-1]) == 0:
                 try:
-                    v = float(s[0])
+                    float(s[0])
                     f.close()
                     output = specfilewrapper(filename, dta=True)
                     f.close()
@@ -182,7 +182,7 @@ class specfilewrapper(object):
                 if line.startswith('$DATE_MEA'):
                     line = f.readline().replace("\n","")
                     self.header.append(line)
-                    self._qxasHeader['D'] = line                    
+                    self._qxasHeader['D'] = line
                 if line.startswith('$MEAS_TIM'):
                     line = f.readline().replace("\n","")
                     self.header.append(line)
@@ -207,7 +207,7 @@ class specfilewrapper(object):
                        if len(coefficients) == 2:
                            coefficients.append(0.0)
                        self._qxasHeader['@CALIB']=  ['#@CALIB %f  %f  %f' %\
-                                            (coefficients[0], coefficients[1], coefficients[2])]           
+                                            (coefficients[0], coefficients[1], coefficients[2])]
                     except:
                         pass
                 if line.startswith('$DATA:'):
@@ -248,7 +248,7 @@ class specfilewrapper(object):
                         if ncol0 < 0:ncol0 = ncols
                         if ncols == ncol0:
                             outdata.append(reals)
-                            nlines += 1                    
+                            nlines += 1
                     except:
                         if len(line) > 1:
                             if sys.version < '3.0':
@@ -308,17 +308,17 @@ class specfilewrapper(object):
             return "1:1"
         else:
             return "1:2"
-        
+
     def __getitem__(self,item):
         return self.scandata[item]
 
     def __len__(self):
         return self.scanno()
-        
+
     def select(self,i):
-        n=i.split(".")
-        return self.__getitem__(int(n[0])-1)
-        
+        n = i.split(".")
+        return self.__getitem__(int(n[0]) - 1)
+
     def scanno(self):
         if self.amptek or self.qxas:
             return 1
@@ -360,14 +360,14 @@ class myscandata(object):
         if scanheader is None:
             labels = '#L '
             for label in self.labels:
-                labels += '  '+label            
+                labels += '  '+label
             if self.scantype == 'SCAN':
                 self.scanheader = ['#S1 Unknown command',
                               '#N %d' % len(self.labels),
                               labels]
             else:
                 self.scanheader = ['#S1 Unknown command']
-            
+
         n = identification.split(".")
         self.__number = int(n[0])
         self.__order  = int(n[1])
@@ -380,10 +380,10 @@ class myscandata(object):
 
     def allmotorpos(self):
         return []
-        
+
     def cols(self):
         return self.__cols
-    
+
     def command(self):
         if DEBUG:
             print("command called")
@@ -394,17 +394,23 @@ class myscandata(object):
             if len(self.scanheader):
                 text = self.scanheader[0]
         return text
-        
+
     def data(self):
         return numpy.transpose(self.__data)
-    
-    def datacol(self,col):
-        return self.__data[:,col]
-        
-    def dataline(self,line):
-        return self.__data[line,:]
-        
-    
+
+    def datacol(self, col):
+        # it is awful that starts at one ...
+        if col <= 0:
+            raise ValueError("Specfile column numberig starts at 1")
+        return self.__data[:, col - 1]
+
+    def dataline(self, line):
+        # it is awful that starts at one ...
+        if line <= 0:
+            raise ValueError("Specfile line numberig starts at 1")
+        return self.__data[line - 1,:]
+
+
     def date(self):
         text = 'sometime'
         if self.qxas is not None:
@@ -416,13 +422,13 @@ class myscandata(object):
                     text = "%s" % line
                     break
         return text
-            
+
     def fileheader(self, key=''):
         # key is there for compatibility
         if DEBUG:
             print("file header called")
         return self._fileheader
-    
+
     def header(self, key):
         if self.qxas is not None:
             if key in self.qxas:
@@ -493,19 +499,19 @@ class myscandata(object):
             return self.scanheader
         else:
             return []
-    
+
     def order(self):
         return self.__order
-        
+
     def number(self):
         return self.__number
-    
+
     def lines(self):
         if self.scantype == 'SCAN':
             return self.rows
         else:
             return 0
-            
+
     def nbmca(self):
         if self.scantype == 'SCAN':
             return 0
@@ -513,6 +519,8 @@ class myscandata(object):
             return self.__cols
 
     def mca(self,number):
+        if number <= 0:
+            raise ValueError("Specfile mca numberig starts at 1")
         return self.__data[:,number-1]
 
 class BufferedFile(object):
@@ -549,7 +557,7 @@ class BufferedFile(object):
     def close(self):
         self.__currentLine = 0
         return
-            
+
 if __name__ == "__main__":
     filename = sys.argv[1]
     print(filename)
