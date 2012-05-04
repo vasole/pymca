@@ -35,7 +35,7 @@ from PyMca import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
-    QString = str
+    QString = qt.safe_str
 from PyMca import DataObject
 from PyMca import McaWindow
 from PyMca import StackBase
@@ -116,6 +116,10 @@ class QStackWidget(StackBase.StackBase,
                                                  self.saveStackAsNeXusSpectra)
                 self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Images"),
                                                  self.saveStackAsNeXusImages)
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Compressed Spectra"),
+                                                 self.saveStackAsNeXusCompressedSpectra)
+                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Compressed Images"),
+                                                 self.saveStackAsNeXusCompressedImages)
                 self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Spectra"),
                                                  self.saveStackAsFloat32NeXusSpectra)
                 self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Spectra"),
@@ -304,7 +308,7 @@ class QStackWidget(StackBase.StackBase,
     def saveStackAsFloat32TiffImages(self):
         return self.saveStackAsMonochromaticTiffImages(dtype=numpy.float32)    
 
-    def saveStackAsNeXus(self, dtype=None, interpretation=None):
+    def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
         mcaIndex = self._stack.info.get('McaIndex', -1)
         if interpretation is None:
             if mcaIndex in [0]:
@@ -335,11 +339,12 @@ class QStackWidget(StackBase.StackBase,
                                     dtype=dtype,
                                     mode='nexus',
                                     mcaindex=mcaIndex,
-                                    interpretation=interpretation)
+                                    interpretation=interpretation,
+                                    compression=compression)
 
-    def saveStackAsNeXusSpectra(self):
+    def saveStackAsNeXusSpectra(self, compression=False):
         try:
-            self.saveStackAsNeXus(interpretation="spectrum")
+            self.saveStackAsNeXus(interpretation="spectrum", compression=compression)
         except:
             msg = qt.QMessageBox(self)
             msg.setWindowTitle("Error saving stack")
@@ -351,7 +356,13 @@ class QStackWidget(StackBase.StackBase,
 
 
     def saveStackAsNeXusImages(self):
-        self.saveStackAsNeXus(interpretation="image")
+        self.saveStackAsNeXus(interpretation="image", compression=False)
+
+    def saveStackAsNeXusCompressedSpectra(self):
+        self.saveStackAsNeXusSpectra(compression=True)
+
+    def saveStackAsNeXusCompressedImages(self):
+        self.saveStackAsNeXus(interpretation="image", compression=True)
 
     def saveStackAsFloat32NeXusSpectra(self):
         self.saveStackAsNeXus(dtype=numpy.float32, interpretation="spectrum")
