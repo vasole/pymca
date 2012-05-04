@@ -28,12 +28,6 @@ import numpy
 import sys
 import os
 from PyMca import DataObject
-HDF5 = False
-try:
-    import h5py
-    HDF5 = True
-except:
-    pass
         
 SOURCE_TYPE = "EdfFileStack"
 DEBUG = 0
@@ -74,49 +68,24 @@ class TextImageStack(DataObject.DataObject):
         #try to allocate the memory
         shape = self.__nFiles, arrRet.shape[0], arrRet.shape[1]
         samplingStep = 1
-        hdf5done = False
         try:
             self.data = numpy.zeros(shape, self.__dtype)
         except (MemoryError, ValueError):
-            hdf5done = False
-            if HDF5 and ('PyMcaQt' in sys.modules):
-                import PyMcaQt as qt
-                import ArraySave
-                msg=qt.QMessageBox.information( None,
-                  "Memory error\n",
-                  "Do you want to convert your data to HDF5?\n",
-                  qt.QMessageBox.Yes,qt.QMessageBox.No)
-                if msg != qt.QMessageBox.No:
-                    hdf5file = qt.QFileDialog.getSaveFileName(None,
-                                "Please select output file name",
-                                os.path.dirname(filelist[0]),
-                                "HDF5 files *.h5")
-                    if not len(hdf5file):
-                        raise IOError("Invalid output file")
-            hdf5file = str(hdf5file)
-            if not hdf5file.endswith(".h5"):
-                hdf5file += ".h5"
-            hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
-                              shape,
-                              dtype=self.__dtype,
-                              interpretation="image",
-                              compression=None)
-            if not hdf5done:
-                for i in range(3):
-                    print("\7")
-                samplingStep = None
-                i = 2
-                while samplingStep is None:
-                    print("**************************************************")
-                    print(" Memory error!, attempting %dx%d sampling reduction ") % (i,i)
-                    print("**************************************************")
-                    s1, s2 = arrRet[::i, ::i].shape
-                    try:
-                        self.data = numpy.zeros((self.__nFiles, s1, s2),
-                                             self.__dtype)
-                        samplingStep = i
-                    except (MemoryError, ValueError):
-                        i += 1
+            for i in range(3):
+                print("\7")
+            samplingStep = None
+            i = 2
+            while samplingStep is None:
+                print("**************************************************")
+                print(" Memory error!, attempting %dx%d sampling reduction ") % (i,i)
+                print("**************************************************")
+                s1, s2 = arrRet[::i, ::i].shape
+                try:
+                    self.data = numpy.zeros((self.__nFiles, s1, s2),
+                                         self.__dtype)
+                    samplingStep = i
+                except (MemoryError, ValueError):
+                    i += 1
 
         #fill the array
         self.onBegin(self.__nFiles)
@@ -136,29 +105,16 @@ class TextImageStack(DataObject.DataObject):
                 self.incrProgressBar += 1
                 self.onProgress(self.incrProgressBar)
         self.onEnd()
-        if not isinstance(self.data, numpy.ndarray):
-            hdf.flush()
-            self.info["SourceType"] = "HDF5Stack1D"
-            if self.__imageStack:
-                self.info["McaIndex"] = 0
-                self.info["FileIndex"] = 1
-            else:
-                self.info["McaIndex"] = 2
-                self.info["FileIndex"] = 0
-            self.info["SourceName"] = [hdf5file]
-            self.info["NumberOfFiles"] = 1
-            self.info["Size"]       = 1
+        if self.__imageStack:
+            self.info["McaIndex"] = 0
+            self.info["FileIndex"] = 1
         else:
-            if self.__imageStack:
-                self.info["McaIndex"] = 0
-                self.info["FileIndex"] = 1
-            else:
-                self.info["McaIndex"] = 2
-                self.info["FileIndex"] = 0
-            self.info["SourceType"] = SOURCE_TYPE
-            self.info["SourceName"] = self.sourceName
-            self.info["NumberOfFiles"] = self.__nFiles * 1
-            self.info["Size"] = self.__nFiles * self.__nImagesPerFile
+            self.info["McaIndex"] = 2
+            self.info["FileIndex"] = 0
+        self.info["SourceType"] = SOURCE_TYPE
+        self.info["SourceName"] = self.sourceName
+        self.info["NumberOfFiles"] = self.__nFiles * 1
+        self.info["Size"] = self.__nFiles * self.__nImagesPerFile
 
     def onBegin(self, n):
         pass
