@@ -708,7 +708,7 @@ class SpecFileSelector(qt.QWidget):
 
     def selectFile(self, filename=None):
         if filename is not None:
-            if qt.safe_str((self.fileCombo.currentText()) !=\
+            if qt.safe_str(self.fileCombo.currentText()) !=\
                            self.mapComboName[filename]:
               for idx in range(self.fileCombo.count()):
                 if qt.safe_str(self.fileCombo.text(idx)) ==\
