@@ -957,16 +957,12 @@ class McaBatchGUI(qt.QWidget):
         elif sys.platform == 'win32':
             listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
-            try:
-                dirname = os.path.dirname(__file__)
-            except:
-                # __file__ is not defined in frozen versions
-                dirname = os.path.dirname(os.path.dirname(McaAdvancedFitBatch.__file__))
-
-            if dirname.lower().endswith("exe") or\
-               dirname.lower().endswith(".zip"):
+            dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+            tmpDirname = os.path.dirname(dirname)
+            if tmpDirname.lower().endswith("exe") or\
+               tmpDirname.lower().endswith(".zip"):
                 frozen = True
-                dirname  = os.path.dirname(dirname)
+                dirname  = os.path.dirname(tmpDirname)
                 myself   = os.path.join(dirname, "PyMcaBatch.exe")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer.exe")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.exe")
@@ -1095,14 +1091,12 @@ class McaBatchGUI(qt.QWidget):
         else:
             listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
-            try:
-                dirname = os.path.dirname(__file__)
-            except:
-                dirname = os.path.dirname(\
-                        os.path.dirname(McaAdvancedFitBatch.__file__))
-            if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith(".zip")):
-                dirname  = os.path.dirname(dirname)
+            dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+            tmpDirname = os.path.dirname(dirname)
+            if tmpDirname.lower().endswith("exe") or\
+               tmpDirname.lower().endswith(".zip"):
+                frozen = True
+                dirname  = os.path.dirname(tmpDirname)
                 myself   = os.path.join(dirname, "PyMcaBatch") 
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch")

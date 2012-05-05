@@ -83,7 +83,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "4.6.0-RC3"
+__version__ = "4.6.0-RC4"
 if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1293,32 +1293,46 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:self.identifier.raise_()
             
     def __batchFitting(self):
-        if self.__batch is None:self.__batch = PyMcaBatch.McaBatchGUI(fl=0,actions=1)
-        if self.__batch.isHidden():self.__batch.show()
-        if QTVERSION < '4.0.0': self.__batch.raiseW()
-        else: self.__batch.raise_()
+        if self.__batch is None:
+            self.__batch = PyMcaBatch.McaBatchGUI(fl=0,actions=1)
+        if self.__batch.isHidden():
+            self.__batch.show()
+        if QTVERSION < '4.0.0':
+            self.__batch.raiseW()
+        else:
+            self.__batch.raise_()
 
     def __mca2EdfConversion(self):
-        if self.__mca2Edf is None:self.__mca2Edf = Mca2Edf.Mca2EdfGUI(fl=0,actions=1)
-        if self.__mca2Edf.isHidden():self.__mca2Edf.show()
-        if QTVERSION < '4.0.0': self.__mca2Edf.raiseW()
-        else:self.__mca2Edf.raise_()
+        if self.__mca2Edf is None:
+            self.__mca2Edf = Mca2Edf.Mca2EdfGUI(fl=0,actions=1)
+        if self.__mca2Edf.isHidden():
+            self.__mca2Edf.show()
+        if QTVERSION < '4.0.0':
+            self.__mca2Edf.raiseW()
+        else:
+            self.__mca2Edf.raise_()
 
     def __fit2SpecConversion(self):
-        if self.__fit2Spec is None:self.__fit2Spec = Fit2Spec.Fit2SpecGUI(fl=0,actions=1)
-        if self.__fit2Spec.isHidden():self.__fit2Spec.show()
-        if QTVERSION < '4.0.0': self.__fit2Spec.raiseW()
-        else:self.__fit2Spec.raise_()
+        if self.__fit2Spec is None:
+            self.__fit2Spec = Fit2Spec.Fit2SpecGUI(fl=0,actions=1)
+        if self.__fit2Spec.isHidden():
+            self.__fit2Spec.show()
+        if QTVERSION < '4.0.0':
+            self.__fit2Spec.raiseW()
+        else:
+            self.__fit2Spec.raise_()
 
     def __rgbCorrelator(self):
-        if self.__correlator is None:self.__correlator = []
+        if self.__correlator is None:
+            self.__correlator = []
         fileTypeList = ["Batch Result Files (*dat)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "All Files (*)"]
         message = "Open ONE Batch result .dat file or SEVERAL EDF files"
         filelist = self.__getStackOfFiles(fileTypeList, message) 
-        if not(len(filelist)): return
+        if not(len(filelist)):
+            return
         filelist.sort()
         self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
@@ -1345,7 +1359,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     del self.__correlator[i]
                     break
 
-    def __getStackOfFiles(self, typelist, message = "", getfilter=False):
+    def __getStackOfFiles(self, typelist, message="", getfilter=False):
         wdir = PyMcaDirs.inputDir
         fileTypeList = typelist
         filterused = None
