@@ -24,13 +24,19 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
+try:
+    from PyMca import PyMcaQt as qt
+    safe_str = qt.safe_str
+except ImportError:
+    # for people using this widget without PyMca installed
+    import PyQt4.Qt as qt
+    safe_str = str
+
 DEBUG = 0
 
-class HDF5CounterTable(QtGui.QTableWidget):
+class HDF5CounterTable(qt.QTableWidget):
     def __init__(self, parent=None):
-        QtGui.QTableWidget.__init__(self, parent)
+        qt.QTableWidget.__init__(self, parent)
         self.cntList      = []
         self.aliasList    = []
         self.mcaList      = []
@@ -43,8 +49,8 @@ class HDF5CounterTable(QtGui.QTableWidget):
         for i in range(len(labels)):
             item = self.horizontalHeaderItem(i)
             if item is None:
-                item = QtGui.QTableWidgetItem(labels[i],
-                                           QtGui.QTableWidgetItem.Type)
+                item = qt.QTableWidgetItem(labels[i],
+                                           qt.QTableWidgetItem.Type)
             item.setText(labels[i])
             self.setHorizontalHeaderItem(i,item)
 
@@ -52,8 +58,8 @@ class HDF5CounterTable(QtGui.QTableWidget):
         #the cell is not the same as the check box
         #but I wonder about the checkboxes being destroyed
         """
-        QtCore.QObject.connect(self,
-                     QtCore.SIGNAL("cellChanged(int, int)"),
+        qt.QObject.connect(self,
+                     qt.SIGNAL("cellChanged(int, int)"),
                      self._aliasSlot)
 
     def build(self, cntlist, aliaslist=None):
@@ -90,15 +96,15 @@ class HDF5CounterTable(QtGui.QTableWidget):
         #the counter name
         item = self.item(i, 0)
         if item is None:
-            item = QtGui.QTableWidgetItem(cntlabel,
-                                       QtGui.QTableWidgetItem.Type)
-            item.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            item = qt.QTableWidgetItem(cntlabel,
+                                       qt.QTableWidgetItem.Type)
+            item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
             self.setItem(i, 0, item)
         else:
             item.setText(cntlabel)
 
         #item is just enabled (not selectable)
-        item.setFlags(QtCore.Qt.ItemIsEnabled)
+        item.setFlags(qt.Qt.ItemIsEnabled)
 
         #the checkboxes
         for j in range(1, 4, 1):
@@ -106,8 +112,8 @@ class HDF5CounterTable(QtGui.QTableWidget):
             if widget is None:
                 widget = CheckBoxItem(self, i, j)
                 self.setCellWidget(i, j, widget)
-                QtCore.QObject.connect(widget,
-                                   QtCore.SIGNAL('CheckBoxItemSignal'),
+                qt.QObject.connect(widget,
+                                   qt.SIGNAL('CheckBoxItemSignal'),
                                    self._mySlot)
             else:
                 pass
@@ -116,9 +122,9 @@ class HDF5CounterTable(QtGui.QTableWidget):
         item = self.item(i, 4)
         alias = self.aliasList[i]
         if item is None:
-            item = QtGui.QTableWidgetItem(alias,
-                                       QtGui.QTableWidgetItem.Type)
-            item.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            item = qt.QTableWidgetItem(alias,
+                                       qt.QTableWidgetItem.Type)
+            item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
             self.setItem(i, 4, item)
         else:
             item.setText(alias)
@@ -138,7 +144,7 @@ class HDF5CounterTable(QtGui.QTableWidget):
         if col != 4:
             return
         item = self.item(row, 4)
-        self.aliasList[row] = str(item.text())
+        self.aliasList[row] = safe_str(item.text())
 
     def _mySlot(self, ddict):
         row = ddict["row"]
@@ -208,7 +214,7 @@ class HDF5CounterTable(QtGui.QTableWidget):
                     widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
-        self.emit(QtCore.SIGNAL('HDF5CounterTableSignal'), ddict)        
+        self.emit(qt.SIGNAL('HDF5CounterTableSignal'), ddict)        
         
 
     def getCounterSelection(self):
@@ -277,12 +283,12 @@ class HDF5CounterTable(QtGui.QTableWidget):
         self._update()
         
 
-class CheckBoxItem(QtGui.QCheckBox):
+class CheckBoxItem(qt.QCheckBox):
     def __init__(self, parent, row, col):
-        QtGui.QCheckBox.__init__(self, parent)
+        qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
-        QtCore.QObject.connect(self, QtCore.SIGNAL("clicked(bool)"), self._mySignal)
+        qt.QObject.connect(self, qt.SIGNAL("clicked(bool)"), self._mySignal)
 
     def _mySignal(self, value):
         ddict = {}
@@ -290,13 +296,14 @@ class CheckBoxItem(QtGui.QCheckBox):
         ddict["state"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
-        self.emit(QtCore.SIGNAL('CheckBoxItemSignal'), ddict)
+        self.emit(qt.SIGNAL('CheckBoxItemSignal'), ddict)
 
 def main():
-    app = QtGui.QApplication([])
+    app = qt.QApplication([])
     tab = HDF5CounterTable()
     tab.build(["Cnt1", "Cnt2", "Cnt3"])
-    tab.setCounterSelection({'x':[1, 2], 'y':[4], 'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
+    tab.setCounterSelection({'x':[1, 2], 'y':[4],
+                        'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()
     app.exec_()
 

@@ -25,11 +25,13 @@
 # is a problem for you.
 #############################################################################*/
 try:
+    from PyMca import PyMcaQt as qt
     from PyMca.QNexusWidget import *
     from PyMca import QStackWidget
     from PyMca import HDF5Stack1D
-except:
+except ImportError:
     print("PyMcaNexusWidget importing from directory")
+    import PyMcaQt as qt
     from QNexusWidget import *
     import QStackWidget
     import HDF5Stack1D
@@ -54,7 +56,7 @@ class PyMcaNexusWidget(QNexusWidget):
             return self.showInfoWidget(filename, name, False)
         else:
             #handle a right click on a numeric dataset
-            _hdf5WidgetDatasetMenu = QtGui.QMenu(self)
+            _hdf5WidgetDatasetMenu = qt.QMenu(self)
             _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
                                         self._addToSelectionTable)
 
@@ -85,7 +87,7 @@ class PyMcaNexusWidget(QNexusWidget):
                 _hdf5WidgetDatasetMenu.addAction(QString("Load and show as 2D Stack"),
                                     self._loadStack2DSignal)
             self._lastDatasetDict= ddict
-            _hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
+            _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
             self._lastDatasetDict= None
             return
 
@@ -176,8 +178,9 @@ if __name__ == "__main__":
         #this is to add the 3D buttons ...
         from PyMca import Object3D
     except:
+        #not a big deal for this tests
         pass
-    app = QtGui.QApplication(sys.argv)
+    app = qt.QApplication(sys.argv)
     w = PyMcaNexusWidget()
     if 0:
         w.setFile(sys.argv[1])
@@ -192,7 +195,7 @@ if __name__ == "__main__":
     def replaceSelection(sel):
         print(sel)
     w.show()
-    QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
-    QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)
-    QtCore.QObject.connect(w, QtCore.SIGNAL("replaceSelection"), replaceSelection)
+    qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
+    qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
+    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)
     sys.exit(app.exec_())

@@ -24,21 +24,26 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import PyQt4.QtGui as QtGui
+try:
+    from PyMca import PyMcaQt as qt
+    safe_str = qt.safe_str
+except ImportError:
+    import PyQt4.Qt as qt
+    safe_str = str
 DEBUG = 0
 
-class HDF5Selection(QtGui.QWidget):
+class HDF5Selection(qt.QWidget):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
-        self.mainLayout = QtGui.QGridLayout(self)
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.selectionWidgetsDict = {}
         row = 0
         for key in ['x', 'y', 'm']:
-            label = QtGui.QLabel(self)
+            label = qt.QLabel(self)
             label.setText(key+":")
-            line  = QtGui.QLineEdit(self)
+            line  = qt.QLineEdit(self)
             line.setReadOnly(True)
             self.mainLayout.addWidget(label, row, 0)
             self.mainLayout.addWidget(line,  row, 1)
@@ -83,14 +88,14 @@ class HDF5Selection(QtGui.QWidget):
         selection = {}
         for key in ['x', 'y', 'm']:
             selection[key] = []
-            text = str(self.selectionWidgetsDict[key].text())
+            text = safe_str(self.selectionWidgetsDict[key].text())
             text = text.replace(" ","")
             if len(text):
                 selection[key] = text.split(',')
         return selection
 
 def main():
-    app = QtGui.QApplication([])
+    app = qt.QApplication([])
     tab = HDF5Selection()
     tab.setSelection({'x':[1, 2], 'y':[4], 'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()

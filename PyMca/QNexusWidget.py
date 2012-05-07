@@ -30,10 +30,16 @@ import posixpath
 import weakref
 import gc
 import h5py
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
-if hasattr(QtCore, 'QString'):
-    QString = QtCore.QString
+try:
+    from PyMca import PyMcaQt as qt
+    safe_str = qt.safe_str
+except ImportError:
+    # for people using this widget without PyMca installed
+    import PyQt4.Qt as qt
+    safe_str = str
+
+if hasattr(qt, 'QString'):
+    QString = qt.QString
 else:
     QString = str
 
@@ -47,13 +53,13 @@ if "PyMcaDirs" in sys.modules:
 
 DEBUG=0
 
-class Buttons(QtGui.QWidget):
+class Buttons(qt.QWidget):
     def __init__(self, parent=None, options=None):
-        QtGui.QWidget.__init__(self, parent)
-        self.mainLayout = QtGui.QGridLayout(self)
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        self.buttonGroup = QtGui.QButtonGroup(self)
+        self.buttonGroup = qt.QButtonGroup(self)
         self.buttonList = []
         i = 0
         if options is None:
@@ -65,24 +71,24 @@ class Buttons(QtGui.QWidget):
             row = optionList.index(option)
             for action in actionList:
                 col = actionList.index(action)
-                button = QtGui.QPushButton(self)
+                button = qt.QPushButton(self)
                 button.setText(action + " " + option)
                 self.mainLayout.addWidget(button, row, col)
                 self.buttonGroup.addButton(button)
                 self.buttonList.append(button)
         self.connect(self.buttonGroup,
-                     QtCore.SIGNAL('buttonClicked(QAbstractButton *)'),
+                     qt.SIGNAL('buttonClicked(QAbstractButton *)'),
                      self.emitSignal)
 
     def emitSignal(self, button):
         ddict={}
         ddict['event'] = 'buttonClicked'
-        ddict['action'] = str(button.text())
-        self.emit(QtCore.SIGNAL('ButtonsSignal'), ddict)
+        ddict['action'] = safe_str(button.text())
+        self.emit(qt.SIGNAL('ButtonsSignal'), ddict)
 
-class QNexusWidget(QtGui.QWidget):
+class QNexusWidget(qt.QWidget):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        qt.QWidget.__init__(self, parent)
         self.data = None
         self._dataSourceList = []
         self._oldCntSelection = None
@@ -98,12 +104,12 @@ class QNexusWidget(QtGui.QWidget):
         self.build()
 
     def build(self):
-        self.mainLayout = QtGui.QVBoxLayout(self)
-        self.splitter = QtGui.QSplitter(self)
-        self.splitter.setOrientation(QtCore.Qt.Vertical)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.splitter = qt.QSplitter(self)
+        self.splitter.setOrientation(qt.Qt.Vertical)
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
                                                 self.splitter)
-        self.hdf5Widget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
@@ -116,22 +122,22 @@ class QNexusWidget(QtGui.QWidget):
             self.cntTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
         self.connect(self.hdf5Widget,
-                     QtCore.SIGNAL('HDF5WidgetSignal'),
+                     qt.SIGNAL('HDF5WidgetSignal'),
                      self.hdf5Slot)
         self.connect(self.cntTable,
-                     QtCore.SIGNAL('customContextMenuRequested(QPoint)'),
+                     qt.SIGNAL('customContextMenuRequested(QPoint)'),
                      self._counterTableCustomMenuSlot)
         self.connect(self.buttons,
-                     QtCore.SIGNAL('ButtonsSignal'),
+                     qt.SIGNAL('ButtonsSignal'),
                      self.buttonsSlot)
 
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
         # this one.
-        self.cntTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.cntTable.setContextMenuPolicy(qt.Qt.CustomContextMenu)
 
-        self._cntTableMenu = QtGui.QMenu(self)
+        self._cntTableMenu = qt.QMenu(self)
         self._cntTableMenu.addAction(QString("Load"),
                                     self._loadCounterTableConfiguration)
         self._cntTableMenu.addAction(QString("Merge"),
@@ -146,7 +152,7 @@ class QNexusWidget(QtGui.QWidget):
 
     def _counterTableCustomMenuSlot(self, qpoint):
         self.getWidgetConfiguration()
-        self._cntTableMenu.exec_(QtGui.QCursor.pos())
+        self._cntTableMenu.exec_(qt.QCursor.pos())
 
     def _getConfigurationFromFile(self, fname):
         ddict = ConfigDict.ConfigDict()
@@ -157,15 +163,15 @@ class QNexusWidget(QtGui.QWidget):
             ddict = ddict['PyMca']
         
         if 'HDF5' not in ddict.keys():
-            msg = QtGui.QMessageBox(self)
-            msg.setIcon(QtGui.QMessageBox.Information)
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Information)
             msg.setText("File does not contain HDF5 configuration")
             msg.exec_()
             return None
 
         if 'WidgetConfiguration' not in ddict['HDF5'].keys():
-            msg = QtGui.QMessageBox(self)
-            msg.setIcon(QtGui.QMessageBox.Information)
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Information)
             msg.setText("File does not contain HDF5 WidgetConfiguration")
             msg.exec_()
             return None
@@ -175,15 +181,15 @@ class QNexusWidget(QtGui.QWidget):
 
         if ('counters' not in keys) or\
            ('aliases' not in keys):
-            msg = QtGui.QMessageBox(self)
-            msg.setIcon(QtGui.QMessageBox.Information)
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Information)
             msg.setText("File does not contain HDF5 counters information")
             msg.exec_()
             return None
 
         if len(ddict['counters']) != len(ddict['aliases']):
-            msg = QtGui.QMessageBox(self)
-            msg.setIcon(QtGui.QMessageBox.Critical)
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Number of counters does not match number of aliases")
             msg.exec_()
             return None
@@ -267,8 +273,8 @@ class QNexusWidget(QtGui.QWidget):
         ddict['aliases'] = []
         for i in range(self.cntTable.rowCount()):
             if i not in rowList:
-                name = str(self.cntTable.item(i, 0).text())
-                alias = str(self.cntTable.item(i, 4).text())
+                name = safe_str(self.cntTable.item(i, 0).text())
+                alias = safe_str(self.cntTable.item(i, 4).text())
                 ddict['counters'].append(name)
                 ddict['aliases'].append(alias)
 
@@ -287,7 +293,7 @@ class QNexusWidget(QtGui.QWidget):
         if not os.path.exists(inidir):
             inidir = os.getcwd()
 
-        ret = str(QtGui.QFileDialog.getOpenFileName(self,
+        ret = safe_str(qt.QFileDialog.getOpenFileName(self,
                                          "Select a .ini file",
                                          inidir,
                                          "*.ini"))
@@ -309,7 +315,7 @@ class QNexusWidget(QtGui.QWidget):
         if not os.path.exists(inidir):
             inidir = os.getcwd()
 
-        ret = str(QtGui.QFileDialog.getSaveFileName(self,
+        ret = safe_str(qt.QFileDialog.getSaveFileName(self,
                                          "Select a .ini file",
                                          inidir,
                                          "*.ini"))
@@ -432,7 +438,7 @@ class QNexusWidget(QtGui.QWidget):
             return
         else:
             #handle a right click on a numeric dataset
-            _hdf5WidgetDatasetMenu = QtGui.QMenu(self)
+            _hdf5WidgetDatasetMenu = qt.QMenu(self)
             _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
                                         self._addToSelectionTable)
 
@@ -446,7 +452,7 @@ class QNexusWidget(QtGui.QWidget):
                 _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                         self._showInfoWidgetSlot)
                 self._lastDatasetDict= ddict
-                _hdf5WidgetDatasetMenu.exec_(QtGui.QCursor.pos())
+                _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
                 self._lastDatasetDict= None
             return
 
@@ -634,13 +640,13 @@ class QNexusWidget(QtGui.QWidget):
                 ddict = {}
                 ddict['event'] = "SelectionTypeChanged"
                 ddict['SelectionType'] = selectionType.upper()
-                self.emit(QtCore.SIGNAL('otherSignals'), ddict)
+                self.emit(qt.SIGNAL('otherSignals'), ddict)
             if action.upper() == "ADD":
-                self.emit(QtCore.SIGNAL("addSelection"), selectionList)
+                self.emit(qt.SIGNAL("addSelection"), selectionList)
             if action.upper() == "REMOVE":
-                self.emit(QtCore.SIGNAL("removeSelection"), selectionList)
+                self.emit(qt.SIGNAL("removeSelection"), selectionList)
             if action.upper() == "REPLACE":
-                self.emit(QtCore.SIGNAL("replaceSelection"), selectionList)
+                self.emit(qt.SIGNAL("replaceSelection"), selectionList)
 
     def getSelectedEntries(self):
         return self.hdf5Widget.getSelectedEntries()
@@ -650,7 +656,7 @@ class QNexusWidget(QtGui.QWidget):
         for key in keyList:
             self._widgetDict[key].close()
             del self._widgetDict[key]
-        return QtGui.QWidget.closeEvent(self, event)
+        return qt.QWidget.closeEvent(self, event)
 
     def _checkWidgetDict(self):
         keyList = self._widgetDict.keys()
@@ -674,7 +680,7 @@ class QNexusWidget(QtGui.QWidget):
     
 if __name__ == "__main__":
     import sys
-    app = QtGui.QApplication(sys.argv)
+    app = qt.QApplication(sys.argv)
     try:
         #this is to add the 3D buttons ...
         from PyMca import Object3D
@@ -694,7 +700,7 @@ if __name__ == "__main__":
     def replaceSelection(sel):
         print(sel)
     w.show()
-    QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
-    QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)
-    QtCore.QObject.connect(w, QtCore.SIGNAL("replaceSelection"), replaceSelection)
+    qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
+    qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
+    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)
     sys.exit(app.exec_())

@@ -29,12 +29,12 @@ import numpy
 import h5py
 try:
     from PyMca import DataObject
-except:
+except ImportError:
     print("HDF5Stack1D importing DataObject from local directory!")
     import DataObject
 try:
     from PyMca import NexusDataSource
-except:
+except ImportError:
     print("HDF5Stack1D importing NexusDataSource from local directory!")
     import NexusDataSource
 

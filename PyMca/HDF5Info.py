@@ -25,28 +25,33 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
+try:
+    from PyMca import PyMcaQt as qt
+    safe_str = qt.safe_str
+except ImportError:
+    # for people using this widget without PyMca installed
+    import PyQt4.Qt as qt
+    safe_str = str
 import copy
 import posixpath
 
-class HDFInfoCustomEvent(QtCore.QEvent):
+class HDFInfoCustomEvent(qt.QEvent):
     def __init__(self, ddict):
         if ddict is None:
             ddict = {}
         self.dict = ddict
-        QtCore.QEvent.__init__(self, QtCore.QEvent.User)
+        qt.QEvent.__init__(self, qt.QEvent.User)
 
-class VerticalSpacer(QtGui.QWidget):
+class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
-        QtGui.QWidget.__init__(self, *args)
-        self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
-                                          QtGui.QSizePolicy.Expanding))
+        qt.QWidget.__init__(self, *args)
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
+                                          qt.QSizePolicy.Expanding))
 
-class SimpleInfoGroupBox(QtGui.QGroupBox):
+class SimpleInfoGroupBox(qt.QGroupBox):
     def __init__(self, parent, title=None, keys=None):
-        QtGui.QGroupBox.__init__(self, parent)
-        self.mainLayout = QtGui.QGridLayout(self)
+        qt.QGroupBox.__init__(self, parent)
+        self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         if title is not None:
@@ -61,9 +66,9 @@ class SimpleInfoGroupBox(QtGui.QGroupBox):
     def _build(self):
         i = 0
         for key in self.keyList:
-            label = QtGui.QLabel(self)
+            label = qt.QLabel(self)
             label.setText(key)
-            line = QtGui.QLineEdit(self)
+            line = qt.QLineEdit(self)
             line.setReadOnly(True)
             self.mainLayout.addWidget(label, i, 0)
             self.mainLayout.addWidget(line, i, 1)
@@ -99,7 +104,7 @@ class SimpleInfoGroupBox(QtGui.QGroupBox):
         if type(value) == type(""):
             self.keyDict[key][1].setText(value)
         else:
-            self.keyDict[key][1].setText(str(value))
+            self.keyDict[key][1].setText(safe_str(value))
 
 class NameGroupBox(SimpleInfoGroupBox):
     def __init__(self, parent, title=None, keys=[]):
@@ -110,9 +115,9 @@ class NameGroupBox(SimpleInfoGroupBox):
         if key in ddict.keys():
             if key not in self.keyList:
                 self.keyList.append(key)
-                label = QtGui.QLabel(self)
+                label = qt.QLabel(self)
                 label.setText(key)
-                line = QtGui.QLineEdit(self)
+                line = qt.QLineEdit(self)
                 line.setReadOnly(True)
                 i = self.keyList.index(key)
                 self.mainLayout.addWidget(label, i, 0)
@@ -134,16 +139,16 @@ class DimensionGroupBox(SimpleInfoGroupBox):
     def _getMappedDict(self, ddict):
         return copy.deepcopy(ddict)
 
-class MembersGroupBox(QtGui.QGroupBox):
+class MembersGroupBox(qt.QGroupBox):
     def __init__(self, parent):
-        QtGui.QGroupBox.__init__(self, parent)
-        self.mainLayout = QtGui.QVBoxLayout(self)
+        qt.QGroupBox.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.setTitle("Group Members")
-        self.label = QtGui.QLabel(self)
+        self.label = qt.QLabel(self)
         self.label.setText("Number of members: 0")
-        self.table = QtGui.QTableWidget(self)
+        self.table = qt.QTableWidget(self)
         #labels = ["Name", "Type", "Shape", "Value"]
         labels = ["Name", "Value", "Type"]
         nlabels = len(labels)
@@ -154,8 +159,8 @@ class MembersGroupBox(QtGui.QGroupBox):
         for i in range(nlabels):
             item = self.table.horizontalHeaderItem(i)
             if item is None:
-                item = QtGui.QTableWidgetItem(labels[i],
-                                           QtGui.QTableWidgetItem.Type)
+                item = qt.QTableWidgetItem(labels[i],
+                                           qt.QTableWidgetItem.Type)
             item.setText(labels[i])
             self.table.setHorizontalHeaderItem(i, item)
         self._tableLabels = labels
@@ -182,9 +187,9 @@ class MembersGroupBox(QtGui.QGroupBox):
         for key in keylist:
             item = self.table.item(row, 0)
             if item is None:
-                item = QtGui.QTableWidgetItem(key, QtGui.QTableWidgetItem.Type)
-                item.setFlags(QtCore.Qt.ItemIsSelectable|
-                                  QtCore.Qt.ItemIsEnabled)
+                item = qt.QTableWidgetItem(key, qt.QTableWidgetItem.Type)
+                item.setFlags(qt.Qt.ItemIsSelectable|
+                                  qt.Qt.ItemIsEnabled)
                 self.table.setItem(row, 0, item)
             else:
                 item.setText(key)
@@ -195,9 +200,9 @@ class MembersGroupBox(QtGui.QGroupBox):
                 info = ddict[key][label]
                 item = self.table.item(row, col)    
                 if item is None:
-                    item = QtGui.QTableWidgetItem(info, QtGui.QTableWidgetItem.Type)
-                    item.setFlags(QtCore.Qt.ItemIsSelectable|
-                                      QtCore.Qt.ItemIsEnabled)
+                    item = qt.QTableWidgetItem(info, qt.QTableWidgetItem.Type)
+                    item.setFlags(qt.Qt.ItemIsSelectable|
+                                      qt.Qt.ItemIsEnabled)
                     self.table.setItem(row, col, item)
                 else:
                     item.setText(info)                    
@@ -205,10 +210,10 @@ class MembersGroupBox(QtGui.QGroupBox):
         for i in range(self.table.columnCount()):
             self.table.resizeColumnToContents(i)
         
-class HDF5GeneralInfoWidget(QtGui.QWidget):
+class HDF5GeneralInfoWidget(qt.QWidget):
     def __init__(self, parent=None, ddict=None):
-        QtGui.QWidget.__init__(self, parent)
-        self.mainLayout = QtGui.QVBoxLayout(self)
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.nameWidget = NameGroupBox(self)
@@ -240,22 +245,22 @@ class HDF5GeneralInfoWidget(QtGui.QWidget):
         self.dimensionWidget.hide()
 
 
-class HDF5AttributesInfoWidget(QtGui.QWidget):
+class HDF5AttributesInfoWidget(qt.QWidget):
     def __init__(self, parent):
-        QtGui.QGroupBox.__init__(self, parent)
-        self.mainLayout = QtGui.QVBoxLayout(self)
+        qt.QGroupBox.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        self.label = QtGui.QLabel(self)
+        self.label = qt.QLabel(self)
         self.label.setText("Number of members: 0")
-        self.table = QtGui.QTableWidget(self)
+        self.table = qt.QTableWidget(self)
         labels = ["Name", "Value", "Type", "Size"]
         self.table.setColumnCount(len(labels))
         for i in range(len(labels)):
             item = self.table.horizontalHeaderItem(i)
             if item is None:
-                item = QtGui.QTableWidgetItem(labels[i],
-                                           QtGui.QTableWidgetItem.Type)
+                item = qt.QTableWidgetItem(labels[i],
+                                           qt.QTableWidgetItem.Type)
             item.setText(labels[i])
             self.table.setHorizontalHeaderItem(i, item)
         self._tableLabels = labels
@@ -289,9 +294,9 @@ class HDF5AttributesInfoWidget(QtGui.QWidget):
                 col = self._tableLabels.index(label)
                 item = self.table.item(row, col)
                 if item is None:
-                    item = QtGui.QTableWidgetItem(text, QtGui.QTableWidgetItem.Type)
-                    item.setFlags(QtCore.Qt.ItemIsSelectable|
-                                      QtCore.Qt.ItemIsEnabled)
+                    item = qt.QTableWidgetItem(text, qt.QTableWidgetItem.Type)
+                    item.setFlags(qt.Qt.ItemIsSelectable|
+                                      qt.Qt.ItemIsEnabled)
                     self.table.setItem(row, col, item)
                 else:
                     item.setText(text)
@@ -301,17 +306,17 @@ class HDF5AttributesInfoWidget(QtGui.QWidget):
         self.table.resizeColumnToContents(1)
         self.table.resizeColumnToContents(3)
         
-class HDF5InfoWidget(QtGui.QTabWidget):
+class HDF5InfoWidget(qt.QTabWidget):
     def __init__(self, parent=None, info=None):
-        QtGui.QTabWidget.__init__(self, parent)
+        qt.QTabWidget.__init__(self, parent)
         self._notifyCloseEventToWidget = []
         self._build()
         if info is not None:
             self.setInfoDict(info)
 
     def sizeHint(self):
-        return QtCore.QSize(2 * QtGui.QTabWidget.sizeHint(self).width(),
-                        QtGui.QTabWidget.sizeHint(self).height())
+        return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
+                        qt.QTabWidget.sizeHint(self).height())
                         
     def _build(self):
         self.generalInfoWidget = HDF5GeneralInfoWidget(self)
@@ -335,11 +340,11 @@ class HDF5InfoWidget(QtGui.QTabWidget):
                 ddict['id']    = id(self)
                 newEvent = HDFInfoCustomEvent(ddict)
                 try:
-                    QtGui.QApplication.postEvent(widget, newEvent)
+                    qt.QApplication.postEvent(widget, newEvent)
                 except:
                     print("Error notifying close event to widget", widget)
             self._notifyCloseEventToWidget = []
-        return QtGui.QWidget.closeEvent(self, event)
+        return qt.QWidget.closeEvent(self, event)
 
 def getInfo(hdf5File, node):
     data = hdf5File[node]
@@ -351,7 +356,7 @@ def getInfo(hdf5File, node):
         ddict['general']['Name'] = posixpath.basename(data.name)
     else:
         ddict['general']['Name'] = data.file.filename
-    ddict['general']['Type'] = str(data)
+    ddict['general']['Type'] = safe_str(data)
     if hasattr(data, 'dtype'):
         if ("%s" % data.dtype).startswith("|S") or\
            ("%s" % data.dtype).startswith("|O"):
@@ -379,13 +384,13 @@ def getInfo(hdf5File, node):
         ddict['general']['members'] = []
     for member in list(ddict['general']['members']):
         ddict['general'][member] = {}
-        ddict['general'][member]['Name'] = str(member)
+        ddict['general'][member]['Name'] = safe_str(member)
         if ddict['general']['Path'] == "/":
-            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+            ddict['general'][member]['Type'] = safe_str(hdf5File[node+"/"+member])
             continue
         memberObject = hdf5File[node][member]            
         if hasattr(memberObject, 'shape'):
-            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+            ddict['general'][member]['Type'] = safe_str(hdf5File[node+"/"+member])
             dtype = memberObject.dtype
             if hasattr(memberObject, 'shape'):
                 shape = memberObject.shape
@@ -417,7 +422,7 @@ def getInfo(hdf5File, node):
                 else:
                     pass
         else:
-            ddict['general'][member]['Type'] = str(hdf5File[node+"/"+member])
+            ddict['general'][member]['Type'] = safe_str(hdf5File[node+"/"+member])
 
     if hasattr(data.attrs, "keys"):
         ddict['attributes']['names'] = data.attrs.keys()
@@ -432,14 +437,14 @@ def getInfo(hdf5File, node):
         ddict['attributes'][key] = {}
         Name = key
         Value = data.attrs[key]
-        Type =  str(type(Value))
+        Type =  safe_str(type(Value))
         if type(Value) == type(""):
             Size = "%d" % len(Value)
         elif type(Value) in [type(1), type(0.0)]:
-            Value = str(Value)
+            Value = safe_str(Value)
             Size = "1"
         else:
-            Value = str(Value)
+            Value = safe_str(Value)
             Size = "Unknown"
         ddict['attributes'][key]['Name']  = Name
         ddict['attributes'][key]['Value'] = Value
@@ -456,7 +461,7 @@ if __name__ == "__main__":
     h=h5py.File(sys.argv[1])
     node = sys.argv[2]
     info = getInfo(h, node)
-    app = QtGui.QApplication([])
+    app = qt.QApplication([])
     w = HDF5InfoWidget()
     w.setInfoDict(info)
     w.show()

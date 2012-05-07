@@ -25,8 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
+from PyMca import PyMcaQt as qt
 from PyMca import HDF5Stack1D
 from PyMca import QHDF5StackWizard
 DEBUG = 0
@@ -42,7 +41,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
                 wizard.setFileList(filelist)
                 wizard.setStartId(1)
             ret = wizard.exec_()
-            if ret != QtGui.QDialog.Accepted:
+            if ret != qt.QDialog.Accepted:
                 raise ValueError("Incomplete selection")
             filelist, selection, scanlist = wizard.getParameters()
         HDF5Stack1D.HDF5Stack1D.__init__(self, filelist, selection,
@@ -50,13 +49,13 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
                                 dtype=dtype)
 
     def onBegin(self, nfiles):
-        self.bars =QtGui.QWidget()
+        self.bars =qt.QWidget()
         self.bars.setWindowTitle("Reading progress")
-        self.barsLayout = QtGui.QGridLayout(self.bars)
+        self.barsLayout = qt.QGridLayout(self.bars)
         self.barsLayout.setMargin(2)
         self.barsLayout.setSpacing(3)
-        self.progressBar   = QtGui.QProgressBar(self.bars)
-        self.progressLabel = QtGui.QLabel(self.bars)
+        self.progressBar   = qt.QProgressBar(self.bars)
+        self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('Mca Progress:')
         self.barsLayout.addWidget(self.progressLabel,0,0)        
         self.barsLayout.addWidget(self.progressBar,0,1)

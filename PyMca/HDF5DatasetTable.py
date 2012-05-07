@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import PyQt4.QtGui as QtGui
+import PyMcaQt as qt
 from PyMca import CloseEventNotifyingWidget
 from PyMca import NumpyArrayTableWidget
 
@@ -32,7 +32,7 @@ class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent=None):
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
-        self.mainLayout = QtGui.QVBoxLayout(self)
+        self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         self.arrayTableWidget =  NumpyArrayTableWidget.NumpyArrayTableWidget(self)

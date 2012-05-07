@@ -27,36 +27,36 @@
 import sys
 import os
 import posixpath
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
+from PyMca import PyMcaQt as qt
+safe_str = qt.safe_str
 from PyMca import QNexusWidget
 from PyMca import NexusDataSource
 from PyMca import PyMcaDirs
 
-class IntroductionPage(QtGui.QWizardPage):
+class IntroductionPage(qt.QWizardPage):
     def __init__(self, parent):
-        QtGui.QWizardPage.__init__(self, parent)
+        qt.QWizardPage.__init__(self, parent)
         self.setTitle("HDF5 Stack Selection Wizard")
         text  = "This wizard will help you to select the "
         text += "appropriate dataset(s) belonging to your stack"
         self.setSubTitle(text)
 
-class FileListPage(QtGui.QWizardPage):
+class FileListPage(qt.QWizardPage):
     def __init__(self, parent):
-        QtGui.QWizardPage.__init__(self, parent)
+        qt.QWizardPage.__init__(self, parent)
         self.setTitle("HDF5 Stack File Selection")
         text  = "The files below belong to your stack"
         self.setSubTitle(text)
         self.fileList = []
         self.inputDir = None
-        self.mainLayout= QtGui.QVBoxLayout(self)
-        listlabel   = QtGui.QLabel(self)
+        self.mainLayout= qt.QVBoxLayout(self)
+        listlabel   = qt.QLabel(self)
         listlabel.setText("Input File list")
-        self._listView = QtGui.QTextEdit(self)
+        self._listView = qt.QTextEdit(self)
         self._listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self._listView.setReadOnly(True)
         
-        self._listButton = QtGui.QPushButton(self)
+        self._listButton = qt.QPushButton(self)
         self._listButton.setText('Browse')
         self._listButton.setAutoDefault(False)
 
@@ -65,7 +65,7 @@ class FileListPage(QtGui.QWizardPage):
         self.mainLayout.addWidget(self._listButton)
 
         self.connect(self._listButton,
-                     QtCore.SIGNAL('clicked()'),
+                     qt.SIGNAL('clicked()'),
                      self.browseList)
 
     def setFileList(self, filelist):
@@ -87,7 +87,7 @@ class FileListPage(QtGui.QWizardPage):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        filedialog = QtGui.QFileDialog(self)
+        filedialog = qt.QFileDialog(self)
         filedialog.setWindowTitle("Open a set of files")
         filedialog.setDirectory(wdir)
         filedialog.setFilters(["HDF5 Files (*.nxs *.h5 *.hdf)",
@@ -98,14 +98,14 @@ class FileListPage(QtGui.QWizardPage):
         filedialog.setModal(1)
         filedialog.setFileMode(filedialog.ExistingFiles)
         ret = filedialog.exec_()
-        if  ret == QtGui.QDialog.Accepted:
+        if  ret == qt.QDialog.Accepted:
             filelist0=filedialog.selectedFiles()
         else:
             self.raise_()
             return            
         filelist = []
         for f in filelist0:
-            filelist.append(qt.safe_str(f))
+            filelist.append(safe_str(f))
         if len(filelist):
             self.setFileList(filelist)
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
@@ -113,17 +113,17 @@ class FileListPage(QtGui.QWizardPage):
         self.raise_()
 
 
-class StackIndexWidget(QtGui.QWidget):
+class StackIndexWidget(qt.QWidget):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
-        self.mainLayout = QtGui.QHBoxLayout(self)
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QHBoxLayout(self)
         #self.mainLayout.setMargin(0)
         #self.mainLayout.setSpacing(0)
 
-        self.buttonGroup = QtGui.QButtonGroup(self)
+        self.buttonGroup = qt.QButtonGroup(self)
         i = 0
         for text in ["1D data is first dimension", "1D data is last dimension"]:
-            rButton = QtGui.QRadioButton(self)
+            rButton = qt.QRadioButton(self)
             rButton.setText(text)
             self.mainLayout.addWidget(rButton)
             self.buttonGroup.addButton(rButton, i)
@@ -131,11 +131,11 @@ class StackIndexWidget(QtGui.QWidget):
         rButton.setChecked(True)
         self._stackIndex = -1
         self.connect(self.buttonGroup,
-                         QtCore.SIGNAL('buttonPressed(QAbstractButton *)'),
+                         qt.SIGNAL('buttonPressed(QAbstractButton *)'),
                          self._slot)
 
     def _slot(self, button):
-        if "first" in qt.safe_str(button.text()).lower():
+        if "first" in safe_str(button.text()).lower():
             self._stackIndex =  0
         else:
             self._stackIndex = -1
@@ -149,16 +149,16 @@ class StackIndexWidget(QtGui.QWidget):
             self.buttonGroup.button(1).setChecked(True)
 
 
-class DatasetSelectionPage(QtGui.QWizardPage):
+class DatasetSelectionPage(qt.QWizardPage):
     def __init__(self, parent):
-        QtGui.QWizardPage.__init__(self, parent)
+        qt.QWizardPage.__init__(self, parent)
         self.setTitle("HDF5 Dataset Selection")
         text  = "Double click on the datasets you want to consider "
         text += "and select the role they will play at the end by "
         text += "selecting the appropriate checkbox(es)"
         self.selection = None
         self.setSubTitle(text)
-        self.mainLayout = QtGui.QVBoxLayout(self)
+        self.mainLayout = qt.QVBoxLayout(self)
         self.nexusWidget = LocalQNexusWidget(self)
         self.nexusWidget.buttons.hide()
         self.mainLayout.addWidget(self.nexusWidget, 1)
@@ -265,14 +265,14 @@ class DatasetSelectionPage(QtGui.QWizardPage):
         return True
 
     def showMessage(self, text):
-        msg = QtGui.QMessageBox(self)
-        msg.setIcon(QtGui.QMessageBox.Information)
+        msg = qt.QMessageBox(self)
+        msg.setIcon(qt.QMessageBox.Information)
         msg.setText(text)
         msg.exec_()            
         
-class ShapePage(QtGui.QWizardPage):
+class ShapePage(qt.QWizardPage):
     def __init__(self, parent):
-        QtGui.QWizardPage.__init__(self, parent)
+        qt.QWizardPage.__init__(self, parent)
         self.setTitle("HDF5 Map Shape Selection")
         text  = "Adjust the shape of your map if necessary"
         self.setSubTitle(text)
@@ -281,12 +281,12 @@ class LocalQNexusWidget(QNexusWidget.QNexusWidget):
     def showInfoWidget(self, filename, name, dset=False):
         w = QNexusWidget.QNexusWidget.showInfoWidget(self, filename, name, dset)
         w.hide()
-        w.setWindowModality(QtCore.Qt.ApplicationModal)
+        w.setWindowModality(qt.Qt.ApplicationModal)
         w.show()
 
-class QHDF5StackWizard(QtGui.QWizard):
+class QHDF5StackWizard(qt.QWizard):
     def __init__(self, parent=None):
-        QtGui.QWizard.__init__(self, parent)
+        qt.QWizard.__init__(self, parent)
         self.setWindowTitle("HDF5 Stack Wizard")
         #self._introduction = self.createIntroductionPage()
         self._fileList     = self.createFileListPage()
@@ -296,13 +296,13 @@ class QHDF5StackWizard(QtGui.QWizard):
         self.addPage(self._fileList)
         self.addPage(self._datasetSelection)
         #self.addPage(self._shape)
-        #self.connect(QtCore.SIGNAL("currentIdChanged(int"),
+        #self.connect(qt.SIGNAL("currentIdChanged(int"),
         #             currentChanged)
 
     def sizeHint(self):
-        width = QtGui.QWizard.sizeHint(self).width()
-        height = QtGui.QWizard.sizeHint(self).height()
-        return QtCore.QSize(width, int(1.5 * height))
+        width = qt.QWizard.sizeHint(self).width()
+        height = qt.QWizard.sizeHint(self).height()
+        return qt.QSize(width, int(1.5 * height))
 
     def createIntroductionPage(self):
         return IntroductionPage(self)
@@ -331,11 +331,11 @@ class QHDF5StackWizard(QtGui.QWizard):
     
 if __name__ == "__main__":
     import sys
-    app = QtGui.QApplication(sys.argv)
+    app = qt.QApplication(sys.argv)
     w = QHDF5StackWizard()
     ret = w.exec_()
-    if ret == QtGui.QDialog.Accepted:
+    if ret == qt.QDialog.Accepted:
         print(w.getParameters())
-    #QtCore.QObject.connect(w, QtCore.SIGNAL("addSelection"),     addSelection)
-    #QtCore.QObject.connect(w, QtCore.SIGNAL("removeSelection"),  removeSelection)
-    #QtCore.QObject.connect(w, QtCore.SIGNAL("replaceSelection"), replaceSelection)
+    #qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
+    #qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
+    #qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)
