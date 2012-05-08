@@ -471,8 +471,7 @@ class install(dftinstall):
         if self.install_man is not None:
             if not os.path.exists(self.install_man):
                 try:
-                    # TODO: what access rights should be given?
-                    os.mkdir(self.install_man)
+                    os.makedirs(self.install_man)
                 except:
                     #we'll get the error in the next check
                     pass
