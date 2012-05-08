@@ -469,6 +469,13 @@ class install(dftinstall):
                     self.install_man = os.path.join(self.install_data,\
                                                     'share', 'man')
         if self.install_man is not None:
+            if not os.path.exists(self.install_man):
+                try:
+                    # TODO: what access rights should be given?
+                    os.mkdir(self.install_man)
+                except:
+                    #we'll get the error in the next check
+                    pass
             #check if we can write
             if not os.access(self.install_man, os.W_OK):
                 print("********************************")
