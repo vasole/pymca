@@ -1029,18 +1029,18 @@ class MaskImageWidget(qt.QWidget):
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
         tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[numpy.isfinite(self.__imageData)] = minValue
+        tmpData[True - numpy.isfinite(self.__imageData)] = minValue
         selectionMask[tmpData >= maxValue] = 1
         self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
         self._emitMaskChangedSignal()
         
     def _selectMiddle(self):
-        selectionMask = numpy.zeros(self.__imageData.shape,
+        selectionMask = numpy.ones(self.__imageData.shape,
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
         tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[numpy.isfinite(self.__imageData)] = maxValue
+        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
         selectionMask[tmpData >= maxValue] = 0
         selectionMask[tmpData <= minValue] = 0
         self.setSelectionMask(selectionMask, plot=False)
@@ -1052,7 +1052,7 @@ class MaskImageWidget(qt.QWidget):
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
         tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[numpy.isfinite(self.__imageData)] = maxValue
+        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
         selectionMask[tmpData <= minValue] = 1
         self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
