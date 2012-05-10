@@ -109,6 +109,24 @@ class testSpecfilewrapper(unittest.TestCase):
                     (datacol[1], data[1][1]))
         gc.collect()
 
+    def testTrainingSpectrumReading(self):
+        from PyMca import PyMcaDataDir
+        import numpy
+        fname = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
+                                  'XRFSpectrum.mca')
+        self._sf = self.specfileClass.Specfile(fname)
+        self._scan = self._sf[0]
+
+        # I find awful that starts counting at 1
+        # 1 is the point number
+        # 2 is the actual spectal data
+        datacol = self._scan.datacol(2)
+        self._scan = self._sf[1]
+
+        # The "second" scan is the readout as mca 
+        mca = self._scan.mca(1)
+        self.assertTrue(numpy.alltrue(datacol == mca))
+
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
     if auto:
@@ -121,6 +139,7 @@ def getSuite(auto=True):
         testSuite.addTest(\
             testSpecfilewrapper(\
                 "testSpecfilewrapperReadingCompatibleWithUserLocale"))
+        testSuite.addTest(testSpecfilewrapper("testTrainingSpectrumReading"))
     return testSuite
 
 def test(auto=False):
