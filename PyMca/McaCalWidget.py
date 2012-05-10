@@ -74,19 +74,19 @@ class McaCalWidget(qt.QDialog):
         self.__xrdLambda = lambda_
         self.__xrdEnergy = ""
         self.__xrdParticle = "Photon"
-        self.__manualsearch=0
-        self.foundpeaks    =[]
+        self.__manualsearch = 0
+        self.foundPeaks = []
         if caldict is None:
             caldict = {}
         self.dict = {}
         if x is None:
             if len(y):
                 x = numpy.arange(len(y)).astype(numpy.float)
-        self.dict ['x']        = x
-        self.dict ['y']        = y
-        self.dict ['legend']   = legend
+        self.dict ['x'] = x
+        self.dict ['y'] = y
+        self.dict ['legend'] = legend
         self.current = legend
-        self.caldict           = caldict
+        self.caldict = caldict
         if legend not in self.caldict.keys():
             self.caldict[legend] = {}
             self.caldict[legend]['order'] = 1  
@@ -148,8 +148,8 @@ class McaCalWidget(qt.QDialog):
             self.bottomPanel.layout.setMargin(2)
         else:
             self.bottomPanel.layout.setMargin(10)
-        self.peakpar        = PeakSearchParameters(self.bottomPanel)
-        self.bottomPanel.layout.addWidget(self.peakpar)
+        self.peakParameters        = PeakSearchParameters(self.bottomPanel)
+        self.bottomPanel.layout.addWidget(self.peakParameters)
         """
         self.calpar         = CalibrationParameters(self.bottomPanel)
         self.calpar. setSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed)
@@ -157,20 +157,20 @@ class McaCalWidget(qt.QDialog):
         if QTVERSION < '4.0.0':
             self.bottomPanel.layout.addWidget(qt.HorizontalSpacer(self.bottomPanel))
         #self.cal.setSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding)
-        self.peakpar.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
+        self.peakParameters.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
                                                   qt.QSizePolicy.Fixed))
         if self.__xrdMode:
-            self.peaktable      = XRDPeakTableWidget.XRDPeakTableWidget(self.bottomPanel)
+            self.peakTable      = XRDPeakTableWidget.XRDPeakTableWidget(self.bottomPanel)
         else:
-            self.peaktable      = PeakTableWidget.PeakTableWidget(self.bottomPanel)
-        self.bottomPanel.layout.addWidget(self.peaktable)
-        self.peaktable.verticalHeader().hide()
+            self.peakTable      = PeakTableWidget.PeakTableWidget(self.bottomPanel)
+        self.bottomPanel.layout.addWidget(self.peakTable)
+        self.peakTable.verticalHeader().hide()
         if QTVERSION < '4.0.0':
-            self.peaktable.setLeftMargin(0)
+            self.peakTable.setLeftMargin(0)
         self.container.layout.addWidget(self.graph)
         self.container.layout.addWidget(self.bottomPanel)
             
-        #self.peaktable.setRowReadOnly(0,1)
+        #self.peakTable.setRowReadOnly(0,1)
 
 
     def initIcons(self):
@@ -203,11 +203,11 @@ class McaCalWidget(qt.QDialog):
                             toggle=True)
         # Search
         self._addToolButton(self.searchIcon,
-                            self.peaksearch,
+                            self.peakSearch,
                             'Clear Peak Table and Search Peaks') 
         # Clear peaks
         self._addToolButton(self.peakResetIcon,
-                            self.clearpeaks,
+                            self.clearPeaks,
                             'Clear Peak Table') 
         # Manual Search
         self.__msb = self._addToolButton(self.peakIcon,
@@ -290,11 +290,11 @@ class McaCalWidget(qt.QDialog):
             return tb
         
     def connections(self):
-        self.connect(self.peakpar.searchbut,qt.SIGNAL('clicked()')  ,self.peaksearch)
+        self.connect(self.peakParameters.searchButton,qt.SIGNAL('clicked()')  ,self.peakSearch)
         if QTVERSION < '4.0.0':
             self.connect(self.graph, qt.PYSIGNAL('QtBlissGraphSignal')  ,
                          self.__graphsignal) 
-            self.connect(self.peaktable, qt.PYSIGNAL('PeakTableWidgetSignal') , 
+            self.connect(self.peakTable, qt.PYSIGNAL('PeakTableWidgetSignal') , 
                          self.__peaktablesignal)
             self.connect(self.calpar, qt.PYSIGNAL('CalibrationParametersSignal'),
                          self.__calparsignal)
@@ -303,8 +303,8 @@ class McaCalWidget(qt.QDialog):
         else:
             self.connect(self.graph, qt.SIGNAL('QtBlissGraphSignal')  ,
                          self.__graphsignal) 
-            self.connect(self.peaktable, qt.SIGNAL('PeakTableWidgetSignal') , 
-                         self.__peaktablesignal)
+            self.connect(self.peakTable, qt.SIGNAL('PeakTableWidgetSignal') , 
+                         self.__peakTableSignal)
             self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),
                          self.__calparsignal)
             self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
@@ -320,7 +320,7 @@ class McaCalWidget(qt.QDialog):
         #reset the zoom
         self.graph.ResetZoom()
         
-    def peaksearch(self):
+    def peakSearch(self):
         if DEBUG:
             print("Peak search called")
         if self.__manualsearch:
@@ -334,7 +334,7 @@ class McaCalWidget(qt.QDialog):
         #set the data into specfit
         self.specfit.setdata(x=self.dict['x'],y=self.dict['y'],xmin=xmin,xmax=xmax)
         #get the search parameters from the interface
-        pars = self.peakpar.getParameters()
+        pars = self.peakParameters.getParameters()
         if pars["AutoFwhm"]:
             fwhm = self.specfit.guess_fwhm()
         else:
@@ -344,19 +344,19 @@ class McaCalWidget(qt.QDialog):
         else:
             yscaling = pars["Yscaling"]
         sensitivity  = pars["Sensitivity"]
-        self.peakpar.FwhmText.setText("%d" % fwhm)
-        self.peakpar.YscalingText.setText("%f" % yscaling)
+        self.peakParameters.fwhmText.setText("%d" % fwhm)
+        self.peakParameters.yscalingText.setText("%f" % yscaling)
         ysearch = self.specfit.ydata*yscaling
         peaksidx=SpecfitFuns.seek(ysearch,1,len(ysearch),
                                     fwhm,
                                     sensitivity)
-        self.foundpeaks = []
+        self.foundPeaks = []
         self.graph.clearMarkers()
         self.__destroylinewidgets()
-        self.peaktable.setRowCount(0)
+        self.peakTable.setRowCount(0)
         i = 0
         for idx in peaksidx:
-            self.foundpeaks.append(self.specfit.xdata[int(idx)])            
+            self.foundPeaks.append(self.specfit.xdata[int(idx)])            
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
             self.graph.insertX1Marker(self.specfit.xdata[int(idx)],1.1)
             i += 1
@@ -367,10 +367,14 @@ class McaCalWidget(qt.QDialog):
 
 
     def clearpeaks(self):
-        self.foundpeaks = []
+        print("DEPRECATED: Use clearPeaks")
+        return self.clearPeaks()
+
+    def clearPeaks(self):
+        self.foundPeaks = []
         self.graph.clearMarkers()
         self.__destroylinewidgets()
-        self.peaktable.clearPeaks()
+        self.peakTable.clearPeaks()
         self.graph.replot()
 
     def manualsearch(self):
@@ -427,13 +431,13 @@ class McaCalWidget(qt.QDialog):
             self.caldict[current]['A'] =dict['caldict'][dict['calname']]['A']
             self.caldict[current]['B'] =dict['caldict'][dict['calname']]['B']
             self.caldict[current]['C'] =dict['caldict'][dict['calname']]['C']
-            peakdict = self.peaktable.getdict()
+            peakdict = self.peakTable.getDict()
             for peak in peakdict.keys():
                 channel = peakdict[peak]['channel']
                 calenergy  = self.caldict[current]['A'] + \
                                  self.caldict[current]['B'] * channel +\
                                  self.caldict[current]['C'] * channel * channel  
-                self.peaktable.configure(name=peak,use=0,
+                self.peakTable.configure(name=peak,use=0,
                                          calenergy=calenergy)
         elif dict['event'] == 'order':
             current = dict['calname' ]
@@ -445,25 +449,25 @@ class McaCalWidget(qt.QDialog):
                 if result is None:
                     return
                 peak0, npeaks, delta, deltat = result[:]
-                self.clearpeaks()
-                self.foundpeaks = []
+                self.clearPeaks()
+                self.foundPeaks = []
                 for i in range(int(npeaks)):
                     channel = peak0 + i * delta
                     calenergy = deltat * (i + 1)
-                    self.foundpeaks.append(channel)
+                    self.foundPeaks.append(channel)
                     marker = self.graph.insertX1Marker(channel,1.1)
                     self.graph.setmarkercolor(marker,'red')
                     name   = "%d" % i
-                    if name in self.peaktable.peaks.keys():
-                        self.peaktable.configure(number=name,
+                    if name in self.peakTable.peaks.keys():
+                        self.peakTable.configure(number=name,
                                              channel=channel,
                                              use=1,
                                              setenergy=calenergy,
                                              calenery=calenergy)
                     else:
-                        nlines=self.peaktable.rowCount()
-                        self.peaktable.newpeakline(name, nlines+1)
-                        self.peaktable.configure(number=name,
+                        nlines=self.peakTable.rowCount()
+                        self.peakTable.newpeakline(name, nlines+1)
+                        self.peakTable.configure(number=name,
                                              channel=channel,
                                              use=1,
                                              setenergy=calenergy,
@@ -479,7 +483,7 @@ class McaCalWidget(qt.QDialog):
                 if self.caldict[current]['order'] == 'TOF':
                     self.caldict[current]['vfix'] = dict['caldict'][current]['vfix']
                     
-            self.__peaktablesignal({'event':'use'})
+            self.__peakTableSignal({'event':'use'})
                     
         elif dict['event'] == 'savebox':
             current = dict['calname' ]
@@ -499,9 +503,9 @@ class McaCalWidget(qt.QDialog):
                 pass
             else:
                 if DEBUG:
-                    print("Unknown combobox",dict['boxname'])
+                    print("Unknown combobox", dict['boxname'])
         else:
-            print("Unknown signal ",dict)
+            print("Unknown signal ", dict)
 
     def __graphsignal(self, ddict):
         if DEBUG:
@@ -548,18 +552,18 @@ class McaCalWidget(qt.QDialog):
             else:
                 ret = linewidget.exec_()
             if ret == qt.QDialog.Accepted:
-                ddict=linewidget.getdict()
+                ddict=linewidget.getDict()
                 if DEBUG:
                     print("dict got from dialog = ",ddict)
                 if ddict != {}:
-                    if name in self.peaktable.peaks.keys():
-                        self.peaktable.configure(*ddict)
+                    if name in self.peakTable.peaks.keys():
+                        self.peakTable.configure(*ddict)
                     else:
-                        nlines=self.peaktable.rowCount()
+                        nlines=self.peakTable.rowCount()
                         ddict['name'] = name
-                        self.peaktable.newpeakline(name, nlines+1)
-                        self.peaktable.configure(**ddict)
-                    peakdict = self.peaktable.getdict()
+                        self.peakTable.newpeakline(name, nlines+1)
+                        self.peakTable.configure(**ddict)
+                    peakdict = self.peakTable.getDict()
                     usedpeaks = []
                     for peak in peakdict.keys():
                         if peakdict[peak]['use'] == 1:
@@ -579,7 +583,7 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['A'] = newcal[0]
                         self.caldict[current]['B'] = newcal[1]
                         self.caldict[current]['C'] = newcal[2]
-                    self.__peaktablesignal({'event':'use'}, calculate=False)
+                    self.__peakTableSignal({'event':'use'}, calculate=False)
             else:
                 if DEBUG:
                     print("Dialog cancelled or closed ")
@@ -603,7 +607,7 @@ class McaCalWidget(qt.QDialog):
                 y = ddict['y']
                 if (y <= 1.0): y=1.1
                 # insert the marker
-                self.foundpeaks.append(x)            
+                self.foundPeaks.append(x)            
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
                 self.graph.insertX1Marker(x,y)
                 self.graph.replot()
@@ -617,12 +621,12 @@ class McaCalWidget(qt.QDialog):
             if DEBUG:
                 print("Unhandled event ",   ddict['event'])
 
-    def __peaktablesignal(self, ddict, calculate=True):
+    def __peakTableSignal(self, ddict, calculate=True):
         if DEBUG:
             print("__peaktablesignal called dict = ",ddict)
         if (ddict['event'] == 'use') or (ddict['event'] == 'setenergy'):
             #get table dictionary
-            peakdict = self.peaktable.getdict()
+            peakdict = self.peakTable.getDict()
             usedpeaks = []
             for peak in peakdict.keys():
                 if peakdict[peak]['use'] == 1:
@@ -652,12 +656,12 @@ class McaCalWidget(qt.QDialog):
                                  self.caldict[current]['B'] * channel +\
                                  self.caldict[current]['C'] * channel * channel
                     if self.__xrdMode:
-                        self.peaktable.configure(name=peak, cal2theta=calenergy)
+                        self.peakTable.configure(name=peak, cal2theta=calenergy)
                     else:
-                        self.peaktable.configure(name=peak, calenergy=calenergy)
+                        self.peakTable.configure(name=peak, calenergy=calenergy)
 
     def timeCalibratorCalibration(self):
-        self.peaksearch()
+        self.peakSearch()
         # now we should have a list of peaks and the proper data to fit
         if 'Periodic Gaussians' not in self.specfit.theorylist:
             self.specfit.importfun("SpecfitFunctions.py")
@@ -856,15 +860,18 @@ class McaCalWidget(qt.QDialog):
             result= tuple(C.tolist())
         return result
 
-
     def getdict(self):
+        print("DEPRECATED. Use getDict")
+        return self.getDict()
+
+    def getDict(self):
         ddict = {}
         ddict.update(self.caldict)
         return ddict
-            
+
 class PeakSearchParameters(qt.QWidget):
     def __init__(self, parent=None, name="", specfit=None, config=None,
-                searchbutton=1,fl=0):
+                searchbutton=1, fl=0):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)    
             self.setCaption(name)
@@ -882,7 +889,7 @@ class PeakSearchParameters(qt.QWidget):
             autoscaling = config["AutoYscaling"]
         else:
             autoscaling = 0
-        self.searchbutton = searchbutton
+        self.searchButtonFlag = searchbutton
         parameters= { "FwhmPoints":  config["FwhmPoints"],
                       "Sensitivity": config["Sensitivity"],
                       "Yscaling":    config["Yscaling"],
@@ -924,7 +931,7 @@ class PeakSearchParameters(qt.QWidget):
         else:
             parw = self
         if QTVERSION < '4.0.0':
-            if self.searchbutton:
+            if self.searchButtonFlag:
                 grid= qt.QGridLayout(parw, 4, 3)
             else:
                 grid= qt.QGridLayout(parw, 3, 3)
@@ -939,64 +946,66 @@ class PeakSearchParameters(qt.QWidget):
         grid.addWidget(lab, 1, 0, qt.Qt.AlignLeft)
         lab= qt.QLabel("Yscaling", parw)
         grid.addWidget(lab, 2, 0, qt.Qt.AlignLeft)
-        self.SensitivityText= MyQLineEdit(parw)
-        grid.addWidget(self.SensitivityText, 0, 1)
-        self.FwhmText= MyQLineEdit(parw)
-        grid.addWidget(self.FwhmText, 1, 1)
-        self.YscalingText= MyQLineEdit(parw)
-        grid.addWidget(self.YscalingText, 2, 1)
-        self.FwhmAuto= qt.QCheckBox("Auto", parw)
-        self.connect(self.FwhmAuto, qt.SIGNAL("toggled(bool)"), self.__fwhmToggled)
-        grid.addWidget(self.FwhmAuto, 1, 2, qt.Qt.AlignLeft)
-        self.YscalingAuto= qt.QCheckBox("Auto", parw)
-        self.connect(self.YscalingAuto, qt.SIGNAL("toggled(bool)"), self.__yscalingToggled)
-        grid.addWidget(self.YscalingAuto, 2, 2, qt.Qt.AlignLeft)
-        if self.searchbutton:
-            self.searchbut = qt.QPushButton(parw)   
-            self.searchbut.setText('Search')
-            grid.addWidget(self.searchbut,3,1)
+        self.sensitivityText= MyQLineEdit(parw)
+        grid.addWidget(self.sensitivityText, 0, 1)
+        self.fwhmText= MyQLineEdit(parw)
+        grid.addWidget(self.fwhmText, 1, 1)
+        self.yscalingText= MyQLineEdit(parw)
+        grid.addWidget(self.yscalingText, 2, 1)
+        self.fwhmAuto= qt.QCheckBox("Auto", parw)
+        self.connect(self.fwhmAuto, qt.SIGNAL("toggled(bool)"), self.__fwhmToggled)
+        grid.addWidget(self.fwhmAuto, 1, 2, qt.Qt.AlignLeft)
+        self.yscalingAuto= qt.QCheckBox("Auto", parw)
+        self.connect(self.yscalingAuto, qt.SIGNAL("toggled(bool)"), self.__yscalingToggled)
+        grid.addWidget(self.yscalingAuto, 2, 2, qt.Qt.AlignLeft)
+        if self.searchButtonFlag:
+            self.searchButton = qt.QPushButton(parw)   
+            self.searchButton.setText('Search')
+            grid.addWidget(self.searchButton, 3, 1)
             if QTVERSION > '4.0.0':
-                self.searchbut.setAutoDefault(0)
+                self.searchButton.setAutoDefault(0)
         layout.addWidget(parf)
         if QTVERSION > '4.0.0':
             text  = "Enter a positive number above 2.0\n"
             text += "A higher number means a lower sensitivity."
-            self.SensitivityText.setToolTip(text)
+            self.sensitivityText.setToolTip(text)
             text  = "Enter a positive integer."
-            self.FwhmText.setToolTip(text)
+            self.fwhmText.setToolTip(text)
             text  = "If your data are averaged or normalized,\n"
             text += "enter the scaling factor for your data to\n"
             text += "follow a normal distribution."
-            self.YscalingText.setToolTip(text)
-            for w in [self.SensitivityText, self.FwhmText, self.YscalingText]:
+            self.yscalingText.setToolTip(text)
+            for w in [self.sensitivityText, self.fwhmText, self.yscalingText]:
                 validator = qt.QDoubleValidator(w)
                 w.setValidator(validator)
 
     def setParameters(self, pars):
-        self.SensitivityText.setText(str(pars["Sensitivity"]))
-        self.FwhmText.setText(str(pars["FwhmPoints"]))
-        self.YscalingText.setText(str(pars["Yscaling"]))
-        self.FwhmAuto.setChecked(pars["AutoFwhm"])
-        self.YscalingAuto.setChecked(pars["AutoYscaling"])
+        self.sensitivityText.setText(str(pars["Sensitivity"]))
+        self.fwhmText.setText(str(pars["FwhmPoints"]))
+        self.yscalingText.setText(str(pars["Yscaling"]))
+        self.fwhmAuto.setChecked(pars["AutoFwhm"])
+        self.yscalingAuto.setChecked(pars["AutoYscaling"])
         #self.specfit.configure(pars)
 
     def getParameters(self):
         pars= {}
-        pars["Sensitivity"]= float(str(self.SensitivityText.text()))
-        pars["FwhmPoints"]= float(str(self.FwhmText.text()))
-        pars["Yscaling"]= float(str(self.YscalingText.text()))
-        pars["AutoFwhm"]= self.FwhmAuto.isChecked()
-        pars["AutoYscaling"]= self.YscalingAuto.isChecked()
+        pars["Sensitivity"]= float(str(self.sensitivityText.text()))
+        pars["FwhmPoints"]= float(str(self.fwhmText.text()))
+        pars["Yscaling"]= float(str(self.yscalingText.text()))
+        pars["AutoFwhm"]= self.fwhmAuto.isChecked()
+        pars["AutoYscaling"]= self.yscalingAuto.isChecked()
         self.specfit.configure(**pars)
         return pars
 
     def __fwhmToggled(self, on):
-        if on: self.FwhmText.setReadOnly(1)
-        else: self.FwhmText.setReadOnly(0)
+        if on: self.fwhmText.setReadOnly(1)
+        else: self.fwhmText.setReadOnly(0)
 
     def __yscalingToggled(self, on):
-        if on: self.YscalingText.setReadOnly(1)
-        else: self.YscalingText.setReadOnly(0)
+        if on:
+            self.yscalingText.setReadOnly(1)
+        else:
+            self.yscalingText.setReadOnly(0)
 
 
 class CalibrationParameters(qt.QWidget):
@@ -1119,8 +1128,11 @@ class CalibrationParameters(qt.QWidget):
     def getcurrentcal(self):
         return self.current
     
-      
     def getdict(self):
+        print("DEPRECATED. Use getDict")
+        return self.getDict()
+      
+    def getDict(self):
         return self.caldict
 
     def _CFixSlot(self):
@@ -1382,9 +1394,12 @@ class InputLine(qt.QDialog):
                              setenergy=setenergy,
                              use=use,
                              calenergy=calenergy)
-
     def getdict(self):
-        ddict=self.table.getdict(self.peakname)
+        print("DEPRECATED. Use getDict")
+        return self.getDict()
+
+    def getDict(self):
+        ddict=self.table.getDict(self.peakname)
         return ddict
 
 class McaCalCopy(qt.QDialog):
@@ -1651,8 +1666,11 @@ class McaCalCopy(qt.QDialog):
         self.BText.setText("%.7g" % self.caldict[text]['B'])
         self.CText.setText("%.7g" % self.caldict[text]['C'])
             
-
     def getdict(self):
+        print("DEPRECATED. Use getDict")
+        return self.getDict()
+
+    def getDict(self):
         ddict = {}
         ddict[self.currentcal] = {}
         ddict[self.currentcal]['A'] = float(str(self.AText.text()))
@@ -1697,10 +1715,10 @@ def test(x,y,legend):
     else:
         ret=demo.exec_()
     if ret == qt.QDialog.Accepted:
-        dict=demo.getdict()
+        ddict=demo.getDict()
     else:
-        dict={}
-    print(" output = ",dict)
+        ddict={}
+    print(" output = ", ddict)
     demo.close()
     del demo
     #app.exec_loop()

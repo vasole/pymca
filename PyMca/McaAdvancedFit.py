@@ -784,12 +784,12 @@ class McaAdvancedFit(qt.QWidget):
         else:
             ret = caldialog.exec_()
         if ret == qt.QDialog.Accepted:
-            dict = caldialog.getdict()
-            config['detector']['zero'] = dict[legend]['A']
-            config['detector']['gain'] = dict[legend]['B']
+            ddict = caldialog.getDict()
+            config['detector']['zero'] = ddict[legend]['A']
+            config['detector']['gain'] = ddict[legend]['B']
             #self.mcafit.configure(config)
-            self.mcafit.config['detector']['zero'] = 1. * dict[legend]['A']
-            self.mcafit.config['detector']['gain'] = 1. * dict[legend]['B']
+            self.mcafit.config['detector']['zero'] = 1. * ddict[legend]['A']
+            self.mcafit.config['detector']['gain'] = 1. * ddict[legend]['B']
             self.__fitdone = 0
             self.plot()
         del caldialog

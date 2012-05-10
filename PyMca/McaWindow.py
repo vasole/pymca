@@ -481,15 +481,12 @@ class McaWidget(qt.QWidget):
         peaksidx=SpecfitFuns.seek(ysearch,1,len(ysearch),
                                     fwhm,
                                     sensitivity)
-        self.foundpeaks = []
+        self.foundPeaks = []
         self.graph.clearmarkers()
         self.__destroylinewidgets()
-        """
-        self.peaktable.setNumRows(0)
-        """
         i = 0
         for idx in peaksidx:
-            self.foundpeaks.append(self.specfit.xdata[int(idx)])            
+            self.foundPeaks.append(self.specfit.xdata[int(idx)])            
             self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
             i += 1
         self.graph.replot()
@@ -1062,7 +1059,7 @@ class McaWidget(qt.QWidget):
                         ret = caldialog.exec_()
 
                     if ret == qt.QDialog.Accepted:
-                        self.caldict.update(caldialog.getdict())
+                        self.caldict.update(caldialog.getDict())
                         item, text = self.control.calbox.getcurrent()
                         options = []
                         for option in self.calboxoptions:
@@ -1159,7 +1156,7 @@ class McaWidget(qt.QWidget):
                     else:
                         ret = caldialog.exec_()
                     if ret == qt.QDialog.Accepted:
-                        self.caldict.update(caldialog.getdict())
+                        self.caldict.update(caldialog.getDict())
                         item, text = self.control.calbox.getcurrent()
                         options = []
                         for option in self.calboxoptions:

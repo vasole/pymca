@@ -548,7 +548,11 @@ class PeakTableWidget(QTable):
                 return 0
         return 1
 
-    def getdict(self,*var):
+    def getdict(self, *var):
+        print("PeakTableWidget.getdict deprecated. Use getDict")
+        return self.getDict(*var)
+
+    def getDict(self,*var):
         dict={}
         if len(var) == 0:
             #asked for the dict of dicts
