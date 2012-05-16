@@ -26,7 +26,7 @@
 #############################################################################*/
 import sys
 from PyMca import PyMcaQt as qt
-if 'PyQt4.QtGui' in sys.modules:
+if 'PyQt4.QtGui' not in sys.modules:
     raise ImportError("QwtPlotItems only works under PyQt4")
 from PyQt4 import Qwt5
 
