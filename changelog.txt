@@ -1,3 +1,21 @@
+VERSION 4.6.0
+
+Add an X-ray fluorescence spectrum for training purposes.
+
+Improved unicode support.
+
+Added a simple stack normalization plugin to the ROI tool.
+
+Adapt installation script to simplify linux distribution maintainers task.
+
+Add a minimalistic set of post-installation tests.
+
+Add man pages.
+
+Correct variance information displayed in the terminal window.
+
+Restore functionality of colormap-based mask calculation.
+
 VERSION 4.5.0
 
 Support h5py version 2.x
