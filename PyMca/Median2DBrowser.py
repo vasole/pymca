@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import numpy
 try:
     from PyMca import StackBrowser
@@ -39,7 +39,7 @@ qt = StackBrowser.qt
 DEBUG = 0
 
 class MedianParameters(qt.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, use_conditional=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setMargin(0)
@@ -51,8 +51,18 @@ class MedianParameters(qt.QWidget):
         self.widthSpin.setMaximum(99)
         self.widthSpin.setValue(1)
         self.widthSpin.setSingleStep(2)
+        if use_conditional:
+            self.conditionalLabel = qt.QLabel(self)
+            self.conditionalLabel.setText("Conditional:")
+            self.conditionalSpin = qt.QSpinBox(self)
+            self.conditionalSpin.setMinimum(0)
+            self.conditionalSpin.setMaximum(1)
+            self.conditionalSpin.setValue(0)
         self.mainLayout.addWidget(self.label)
         self.mainLayout.addWidget(self.widthSpin)
+        if use_conditional:
+            self.mainLayout.addWidget(self.conditionalLabel)
+            self.mainLayout.addWidget(self.conditionalSpin)
 
 class Median2DBrowser(StackBrowser.StackBrowser):
     def __init__(self, *var, **kw):
@@ -60,13 +70,18 @@ class Median2DBrowser(StackBrowser.StackBrowser):
         self.setWindowTitle("Image Browser with Median Filter")
         self._medianParameters = {'use':True,
                                   'row_width':5,
-                                  'column_width':5}
-        self._medianParametersWidget = MedianParameters(self)
+                                  'column_width':5,
+                                  'conditional':0}
+        self._medianParametersWidget = MedianParameters(self,
+                                                        use_conditional=1)
         self._medianParametersWidget.widthSpin.setValue(5)        
         self.layout().addWidget(self._medianParametersWidget)
         self.connect(self._medianParametersWidget.widthSpin,
                      qt.SIGNAL('valueChanged(int)'),
                      self.setKernelWidth)
+        self.connect(self._medianParametersWidget.conditionalSpin,
+                     qt.SIGNAL('valueChanged(int)'),
+                     self.setConditionalFlag)
 
     def setKernelWidth(self, value):
         kernelSize = numpy.asarray(value)
@@ -78,12 +93,21 @@ class Median2DBrowser(StackBrowser.StackBrowser):
         current = self.slider.value()
         self.showImage(current, moveslider=False)
 
+    def setConditionalFlag(self, value):
+        self._medianParameters['conditional'] = int(value)
+        self._medianParametersWidget.conditionalSpin.setValue(int(value))
+        current = self.slider.value()
+        self.showImage(current, moveslider=False)
+
     def _buildTitle(self, legend, index):
         a = self._medianParameters['row_width']
         b = self._medianParameters['column_width']
         title = StackBrowser.StackBrowser._buildTitle(self, legend, index)
         if max(a, b) > 1:
-            return "Median Filter (%d,%d) of %s" % (a, b, title)
+            if self._medianParameters['conditional'] == 0:
+                return "Median Filter (%d,%d) of %s" % (a, b, title)
+            else:
+                return "Conditional Median Filter (%d,%d) of %s" % (a, b, title)
         else:
             return title
 
@@ -91,8 +115,10 @@ class Median2DBrowser(StackBrowser.StackBrowser):
         if self._medianParameters['use']:
             if max(self._medianParameters['row_width'],
                    self._medianParameters['column_width']) > 1:
+                conditional = self._medianParameters['conditional']
                 data = medfilt2d(data,[self._medianParameters['row_width'],
-                                   self._medianParameters['column_width']])
+                                   self._medianParameters['column_width']],
+                                 conditional=conditional)
         StackBrowser.StackBrowser.setImageData(self, data, **kw)
 
 if __name__ == "__main__":
