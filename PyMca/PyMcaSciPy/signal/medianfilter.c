@@ -17,15 +17,15 @@
 extern char *check_malloc (int);
 
 /* defined below */
-void f_medfilt2(float*,float*,int*,int*);
-void d_medfilt2(double*,double*,int*,int*);
-void b_medfilt2(unsigned char*,unsigned char*,int*,int*);
-void short_medfilt2(short*, short*,int*,int*);
-void ushort_medfilt2(unsigned short*,unsigned short*,int*,int*);
-void int_medfilt2(int*, int*,int*,int*);
-void uint_medfilt2(unsigned int*,unsigned int*,int*,int*);
-void long_medfilt2(long*, long*,int*,int*);
-void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*);
+void f_medfilt2(float*,float*,int*,int*, int);
+void d_medfilt2(double*,double*,int*,int*, int);
+void b_medfilt2(unsigned char*,unsigned char*,int*,int*,int);
+void short_medfilt2(short*, short*,int*,int*,int);
+void ushort_medfilt2(unsigned short*,unsigned short*,int*,int*,int);
+void int_medfilt2(int*, int*,int*,int*,int);
+void uint_medfilt2(unsigned int*,unsigned int*,int*,int*,int);
+void long_medfilt2(long*, long*,int*,int*,int);
+void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*,int);
 
 /* The QUICK_SELECT routine is based on Hoare's Quickselect algorithm,
  * with unrolled recursion. 
@@ -83,15 +83,15 @@ TYPE NAME(TYPE arr[], int n)                                            \
     }                                                                   \
 }
 
-
 /* 2-D median filter with zero-padding on edges. */
 #define MEDIAN_FILTER_2D(NAME, TYPE, SELECT)                            \
-void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                      \
+void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns, int flag)            \
 {                                                                       \
+    /* if flag is not 0, implements a conditional filter */             \
     int nx, ny, hN[2];                                                  \
     int pre_x, pre_y, pos_x, pos_y;                                     \
     int subx, suby, k, totN;                                            \
-    TYPE *myvals, *fptr1, *fptr2, *ptr1, *ptr2;                         \
+    TYPE *myvals, *fptr1, *fptr2, *ptr1, *ptr2, minval=0, maxval=0;     \
                                                                         \
     totN = Nwin[0] * Nwin[1];                                           \
     myvals = (TYPE *) check_malloc( totN * sizeof(TYPE));               \
@@ -112,28 +112,43 @@ void NAME(TYPE* in, TYPE* out, int* Nwin, int* Ns)                      \
             if (ny >= Ns[0] - hN[0]) pos_y = Ns[0] - ny - 1;            \
             fptr2 = myvals;                                             \
             ptr2 = ptr1 - pre_x - pre_y*Ns[1];                          \
-            for (suby = -pre_y; suby <= pos_y; suby++) {                \
-                for (subx = -pre_x; subx <= pos_x; subx++)              \
-                    *fptr2++ = *ptr2++;                                 \
-                ptr2 += Ns[1] - (pre_x + pos_x + 1);                    \
+            if (flag){                                                  \
+                minval = maxval = *ptr1;                                \
+                for (suby = -pre_y; suby <= pos_y; suby++) {            \
+                    for (subx = -pre_x; subx <= pos_x; subx++){         \
+                        minval = (*ptr2 < minval) ? *ptr2 : minval;     \
+                        maxval = (*ptr2 > maxval) ? *ptr2 : maxval;     \
+                        *fptr2++ = *ptr2++;                             \
+                    }                                                   \
+                    ptr2 += Ns[1] - (pre_x + pos_x + 1);                \
+                }                                                       \
+            }else{                                                      \
+                for (suby = -pre_y; suby <= pos_y; suby++) {            \
+                    for (subx = -pre_x; subx <= pos_x; subx++)          \
+                        *fptr2++ = *ptr2++;                             \
+                    ptr2 += Ns[1] - (pre_x + pos_x + 1);                \
+                }                                                       \
             }                                                           \
-            ptr1++;                                                     \
+            if ((flag == 0) || (*ptr1 == minval) || (*ptr1 == maxval)){ \
+                ptr1++;                                                 \
                                                                         \
-            k = (pre_x + pos_x + 1)*(pre_y + pos_y + 1);                \
-            /* Prefer a shrinking window to zero padding */             \
-            if (k > totN){                                              \
-                k = totN;                                               \
+                k = (pre_x + pos_x + 1)*(pre_y + pos_y + 1);            \
+                /* Prefer a shrinking window to zero padding */         \
+                if (k > totN){                                          \
+                    k = totN;                                           \
+                }                                                       \
+                *fptr1++ = SELECT(myvals, k);                           \
+                /* Zero pad alternative*/                               \
+                /*for ( ; k < totN; k++)                                \
+                    *fptr2++ = 0;                                       \
+                                                                        \
+                *fptr1++ = SELECT(myvals,totN); */                      \
+            }else{                                                      \
+                *fptr1++ = *ptr1++;                                     \
             }                                                           \
-            *fptr1++ = SELECT(myvals, k);                               \
-            /* Zero pad alternative*/                                   \
-            /*for ( ; k < totN; k++)                                    \
-                *fptr2++ = 0;                                           \
-                                                                        \
-            *fptr1++ = SELECT(myvals,totN); */                          \
         }                                                               \
     free(myvals);                                                       \
 }
-
 
 /* define quick_select for floats, doubles, and unsigned characters */
 QUICK_SELECT(f_quick_select, float)

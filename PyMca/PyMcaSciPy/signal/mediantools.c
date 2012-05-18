@@ -73,21 +73,22 @@ char *check_malloc (int size)
 }
 
    
-static char doc_median2d[] = "filt = _median2d(data, size)";
+static char doc_median2d[] = "filt = _median2d(data, size, conditional=0)";
 
-extern void f_medfilt2(float*,float*,int*,int*);
-extern void d_medfilt2(double*,double*,int*,int*);
-extern void b_medfilt2(unsigned char*,unsigned char*,int*,int*);
-extern void short_medfilt2(short*, short*,int*,int*);
-extern void ushort_medfilt2(unsigned short*,unsigned short*,int*,int*);
-extern void int_medfilt2(int*, int*,int*,int*);
-extern void uint_medfilt2(unsigned int*,unsigned int*,int*,int*);
-extern void long_medfilt2(long*, long*,int*,int*);
-extern void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*);
+extern void f_medfilt2(float*,float*,int*,int*,int);
+extern void d_medfilt2(double*,double*,int*,int*,int);
+extern void b_medfilt2(unsigned char*,unsigned char*,int*,int*,int);
+extern void short_medfilt2(short*, short*,int*,int*,int);
+extern void ushort_medfilt2(unsigned short*,unsigned short*,int*,int*,int);
+extern void int_medfilt2(int*, int*,int*,int*,int);
+extern void uint_medfilt2(unsigned int*,unsigned int*,int*,int*,int);
+extern void long_medfilt2(long*, long*,int*,int*,int);
+extern void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*,int);
 
 static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
 {
     PyObject *image=NULL, *size=NULL;
+    int conditional_flag=0;
     int typenum;
     PyArrayObject *a_image=NULL, *a_size=NULL;
     PyArrayObject *a_out=NULL;
@@ -95,7 +96,7 @@ static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
     long *lhelp;
     int Idims[2] = {0, 0};
 
-    if (!PyArg_ParseTuple(args, "O|O", &image, &size)) return NULL;
+    if (!PyArg_ParseTuple(args, "O|Oi", &image, &size, &conditional_flag)) return NULL;
 
     typenum = PyArray_ObjectType(image, 0);
     a_image = (PyArrayObject *)PyArray_ContiguousFromObject(image, typenum, 2, 2);
@@ -122,31 +123,40 @@ static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
     else {
     switch (typenum) {
     case PyArray_UBYTE:
-        b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out), Nwin, Idims);
+        b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_FLOAT:
-        f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out), Nwin, Idims);
+        f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_DOUBLE:
-        d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out), Nwin, Idims);
+        d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_SHORT:
-        short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out), Nwin, Idims);
+        short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out),\
+			Nwin, Idims, conditional_flag);
         break;
     case PyArray_USHORT:
-        ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out), Nwin, Idims);
+        ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_INT:
-        int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out), Nwin, Idims);
+        int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_UINT:
-        uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out), Nwin, Idims);
+        uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_LONG:
-        long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out), Nwin, Idims);
+        long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     case PyArray_ULONG:
-        ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out), Nwin, Idims);
+        ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out),\
+		       	Nwin, Idims, conditional_flag);
         break;
     default:
       PYERR("Median filter unsupported data type.");

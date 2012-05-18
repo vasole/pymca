@@ -8,7 +8,7 @@ except ImportError:
 
 from numpy import asarray
 
-def medfilt2d(input_data, kernel_size=None):
+def medfilt2d(input_data, kernel_size=None, conditional=0):
     """Median filter for 2-dimensional arrays.
 
   Description:
@@ -23,6 +23,7 @@ def medfilt2d(input_data, kernel_size=None):
                    median filter window in each dimension.  Elements of
                    kernel_size should be odd.  If kernel_size is a scalar,
                    then this scalar is used as the size in each dimension.
+    conditional -- If different from 0 implements a conditional median filter.
 
   Outputs: (out,)
 
@@ -42,9 +43,9 @@ def medfilt2d(input_data, kernel_size=None):
         if (size % 2) != 1:
             raise ValueError("Each element of kernel_size should be odd.")
 
-    return mediantools._medfilt2d(image, kernel_size)
+    return mediantools._medfilt2d(image, kernel_size, conditional)
 
-def medfilt1d(input_data, kernel_size=None):
+def medfilt1d(input_data, kernel_size=None, conditional=0):
     """Median filter 1-dimensional arrays.
 
   Description:
@@ -59,6 +60,7 @@ def medfilt1d(input_data, kernel_size=None):
                    median filter window in each dimension.  Elements of
                    kernel_size should be odd.  If kernel_size is a scalar,
                    then this scalar is used as the size in each dimension.
+    conditional -- If different from 0 implements a conditional median filter.
 
   Outputs: (out,)
 
@@ -80,7 +82,7 @@ def medfilt1d(input_data, kernel_size=None):
         if (size % 2) != 1:
             image.shape = oldShape
             raise ValueError("Kernel_size should be odd.")
-    output = mediantools._medfilt2d(image, kernel_size)
+    output = mediantools._medfilt2d(image, kernel_size, conditional)
     output.shape = oldShape
     image.shape = oldShape
     return output
