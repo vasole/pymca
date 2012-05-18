@@ -85,6 +85,13 @@ class Median2DBrowser(StackBrowser.StackBrowser):
 
     def setKernelWidth(self, value):
         kernelSize = numpy.asarray(value)
+        if not (int(value) % 2):
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Median filter error")
+            msg.setText("One odd values accepted")
+            msg.exec_()
+            return
         if len(kernelSize.shape) == 0:
             kernelSize = [kernelSize.item()] * 2
         self._medianParameters['row_width'] = kernelSize[0]
@@ -117,7 +124,7 @@ class Median2DBrowser(StackBrowser.StackBrowser):
                    self._medianParameters['column_width']) > 1:
                 conditional = self._medianParameters['conditional']
                 data = medfilt2d(data,[self._medianParameters['row_width'],
-                                   self._medianParameters['column_width']],
+                                 self._medianParameters['column_width']],
                                  conditional=conditional)
         StackBrowser.StackBrowser.setImageData(self, data, **kw)
 
