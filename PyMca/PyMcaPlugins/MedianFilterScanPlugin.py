@@ -97,14 +97,25 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
         if activeCurve is None:
             activeCurve = curves[0]
 
-        #sort the values
+        # apply between graph limits
         x0 = activeCurve[0][:]
         y0 = activeCurve[1][:]
+        xmin, xmax =self.getGraphXLimits()
+        idx = numpy.nonzero((x0 >= xmin) & (x0 <= xmax))
+        x0 = numpy.take(x0, idx)
+        y0 = numpy.take(y0, idx)
+
+        #sort the values
         idx = numpy.argsort(x0, kind='mergesort')
         x0 = numpy.take(x0, idx)
         y0 = numpy.take(y0, idx)
-        xmin = x0.min()
-        xmax = x0.max()
+
+        #remove duplicates
+        x0 = x0.ravel()
+        idx = numpy.nonzero((x0[1:] > x0[:-1]))
+        x0 = numpy.take(x0, idx)
+        y0 = numpy.take(y0, idx)
+
         x0.shape = -1, 1
         nChannels = x0.shape[0]
 
@@ -125,8 +136,14 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
             if not len(idx):
                 # no overlap
                 continue
-            
             x = numpy.take(x, idx)
+            y = numpy.take(y, idx)
+
+            #remove duplicates
+            x = x.ravel()
+            idx = numpy.nonzero((x[1:] > x[:-1]))
+            x = numpy.take(x, idx)
+            y = numpy.take(y, idx)
             x.shape = -1, 1
             if numpy.allclose(x, x0):
                 # no need for interpolation
@@ -134,9 +151,10 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
             else:
                 # we have to interpolate
                 x.shape = -1
+                y.shape = -1
                 xi = x0[:]
                 y = SpecfitFuns.interpol([x], y, xi, y0.min())
-            y.shape = -1 
+            y.shape = -1
             tmpArray[:, i] = y
             i += 1
 
