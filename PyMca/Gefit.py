@@ -171,7 +171,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
         if nc == 3:
             #dummy = abs(data[0:nr0:inc,2])
             if data0 is not None:
-                dummy = abs(numpy.array(map(lambda x:x[2],data0)))
+                dummy = abs(numpy.array([x[2] for x in data0])
             else:
                 dummy = abs(numpy.array(sigmadata))
             selfweight = 1.0 / (dummy + numpy.equal(dummy,0))
@@ -185,10 +185,10 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
     x=selfx
     y=selfy
     weight = selfweight
-    iter  = maxiter
+    iiter  = maxiter
     niter = 0
     newpar = parameters.__copy__()
-    while (iter>0):
+    while (iiter>0):
         niter+=1
         chisq0, alpha0, beta,\
         n_free, free_index, noigno, fitparam, derivfactor  =ChisqAlphaBeta(
@@ -210,7 +210,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
         for i in range(n_free):
             newpar[free_index[i]] = fittedpar[0,i]
         newpar=numpy.array(getparameters(newpar,constrains))
-        iter=-1
+        iiter=-1
     yfit = model(newpar,x)
     chisq = (weight * pow(y-yfit , 2)).sum()
     sigma0 = numpy.sqrt(abs(numpy.diag(inv(alpha0))))
@@ -271,7 +271,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
         x = data[1:2,0]
     fittedpar = parameters.__copy__()
     flambda = 0.001
-    iter = maxiter
+    iiter = maxiter
     niter = 0
     if ONED:
         selfx = data [:,0]
@@ -312,7 +312,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 selfweight = 1.0 / (abs(selfy) + numpy.equal(abs(selfy),0))
     n_param = len(parameters)
     index = numpy.arange(0,nr0,2)
-    while (iter > 0):
+    while (iiter > 0):
         niter = niter + 1
         if (niter < 2) and (n_param*3 < nr0):
                 x=numpy.take(selfx,index)
@@ -384,17 +384,17 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 flambda = flambda * 10.0
                 if flambda > 1000:
                     flag = 1
-                    iter = 0
+                    iiter = 0
             else:
                 flag = 1
                 fittedpar = newpar.__copy__()
                 lastdeltachi = (chisq0-chisq)/(chisq0+(chisq0==0))
                 if (lastdeltachi) < deltachi:
-                    iter = 0
+                    iiter = 0
                 chisq0 = chisq
                 flambda = flambda / 10.0
                 #print "iter = ",iter,"chisq = ", chisq
-            iter = iter -1
+            iiter = iiter -1
     sigma0 = numpy.sqrt(abs(numpy.diag(inv(alpha0))))
     sigmapar = getsigmaparameters(fittedpar,sigma0,constrains)
     if not fulloutput:
