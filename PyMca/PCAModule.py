@@ -435,9 +435,9 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
         binning = 1
 
     if hasattr(stack, "info") and hasattr(stack, "data"):
-        data = stack.data
+        data = stack.data[:]
     else:
-        data = stack
+        data = stack[:]
 
     oldShape = data.shape
     if len(data.shape) == 3:
@@ -604,9 +604,9 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
         binning = 1
 
     if hasattr(stack, "info") and hasattr(stack, "data"):
-        data = stack.data
+        data = stack.data[:]
     else:
-        data = stack
+        data = stack[:]
 
     oldShape = data.shape
     if len(data.shape) == 3:
