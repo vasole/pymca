@@ -10,6 +10,7 @@ functions:
     getStackData
     getStackInfo
     setStack
+    isStackFinite
 
     #images related
     addImage
@@ -133,6 +134,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
             if (spectrumLength % number) == 0:
                 binningOptions.append(number)
+        # TODO: Should inform the configuration widget about the possibility
+        #       to encounter non-finite data?
         ddict = {'options': binningOptions,
                  'binning': 1,
                  'method': 0}
@@ -173,6 +176,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         del pcaParameters['methodlabel']
         # binning = pcaParameters['binning']
         # mask = pcaParameters['mask']
+        if not self.isStackFinite():
+            # one has to check for NaNs in the used region(s)
+            # for the time being only in the global image
+            # spatial_mask = numpy.isfinite(image_data)
+            spatial_mask = numpy.isfinite(self.getStackOriginalImage())
+            pcaParameters['mask'] = spatial_mask 
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
             if stack.data.dtype not in [numpy.float, numpy.float32]:

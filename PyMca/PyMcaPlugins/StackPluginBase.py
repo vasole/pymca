@@ -10,6 +10,7 @@ These plugins will be compatible with any stack window that provides the functio
     getStackInfo
     setStack
     getStackROIImagesAndNames
+    isStackFinite
 
     #mask related
     setStackSelectionMask
@@ -44,7 +45,10 @@ class StackPluginBase(object):
         self._stackWindow = weakref.proxy(stackWindow)
         pass
 
-    #stack related functions    
+    #stack related functions
+    def isStackFinite(self):
+        return self._stackWindow.isStackFinite()
+        
     def getStackROIImagesAndNames(self):
         return self._stackWindow.getStackROIImagesAndNames()
 
@@ -53,6 +57,9 @@ class StackPluginBase(object):
 
     def getStackData(self):
         return self._stackWindow.getStackData()
+
+    def getStackOriginalImage(self):
+        return self._stackWindow.getStackOriginalImage()
 
     def getStackInfo(self):
         return self._stackWindow.getStackInfo()

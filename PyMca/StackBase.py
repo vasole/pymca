@@ -58,6 +58,7 @@ class StackBase(object):
         self._stack = DataObject.DataObject()
         self._stackImageData = None
         self._selectionMask = None
+        self._finiteData = True
         self._ROIDict = {'name': "ICR",
                          'type': "CHANNEL",
                          'calibration': [0, 1.0, 0.0],
@@ -273,8 +274,10 @@ class StackBase(object):
         #add the mca
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
         if goodData:
+            self._finiteData = True
             self.showOriginalMca()
         else:
+            self._finiteData = False
             self.handleNonFiniteData()
 
         #calculate the ROIs
@@ -287,6 +290,13 @@ class StackBase(object):
         self.updateROIImages()
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackUpdated()
+
+    def isStackFinite(self):
+        """
+        Returns True if stack does not contain inf or nans
+        Returns False if stack is not finite
+        """
+        return self._finiteData
 
     def handleNonFiniteData(self):
         pass
@@ -414,6 +424,9 @@ class StackBase(object):
 
     def getStackROIImagesAndNames(self):
         return self._ROIImageList, self._ROIImageNames
+
+    def getStackOriginalImage(self):
+        return self._stackImageData
 
     def calculateMcaDataObject(self, normalize=False):
         #original ICR mca

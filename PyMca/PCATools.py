@@ -469,7 +469,7 @@ def getCovarianceMatrix(stack,
 
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
-                center=True, scale=False, **kw):
+                center=True, scale=False, mask=None, **kw):
     #recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
@@ -510,7 +510,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                                                              index=index,
                                                              binning=binning,
                                                              force=False,
-                                                             center=center)
+                                                             center=center,
+                                                             spatial_mask=mask)
 
     #the total variance is the sum of the elements of the diagonal
     totalVariance = numpy.diag(cov)
