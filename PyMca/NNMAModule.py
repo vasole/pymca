@@ -191,9 +191,9 @@ def nnma(stack, ncomponents, binning=None,
         binning = 1
 
     if hasattr(stack, "info") and hasattr(stack, "data"):
-        data = stack.data
+        data = stack.data[:]
     else:
-        data = stack
+        data = stack[:]
 
 
     oldShape = data.shape
