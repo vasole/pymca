@@ -101,7 +101,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
         x0 = activeCurve[0][:]
         y0 = activeCurve[1][:]
         xmin, xmax =self.getGraphXLimits()
-        idx = numpy.nonzero((x0 >= xmin) & (x0 <= xmax))
+        idx = numpy.nonzero((x0 >= xmin) & (x0 <= xmax))[0]
         x0 = numpy.take(x0, idx)
         y0 = numpy.take(y0, idx)
 
@@ -112,7 +112,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
 
         #remove duplicates
         x0 = x0.ravel()
-        idx = numpy.nonzero((x0[1:] > x0[:-1]))
+        idx = numpy.nonzero((x0[1:] > x0[:-1]))[0]
         x0 = numpy.take(x0, idx)
         y0 = numpy.take(y0, idx)
 
@@ -141,7 +141,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
 
             #remove duplicates
             x = x.ravel()
-            idx = numpy.nonzero((x[1:] > x[:-1]))
+            idx = numpy.nonzero((x[1:] > x[:-1]))[0]
             x = numpy.take(x, idx)
             y = numpy.take(y, idx)
             x.shape = -1, 1
