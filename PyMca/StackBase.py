@@ -73,6 +73,8 @@ class StackBase(object):
                               'Right': None,
                               'Background': None}
 
+        self.__ROIImageCalculationIsUsingSuppliedEnergyAxis = False
+
         self._ROIImageList = []
         self._ROIImageNames = []
 
@@ -372,7 +374,7 @@ class StackBase(object):
             imiddle = max(numpy.nonzero(self._mcaData0.x[0] <= pos)[0])
             xw = self._mcaData0.x[0]
 
-        self._ROIImageDict = self.calculateROIImages(i1, i2, imiddle)
+        self._ROIImageDict = self.calculateROIImages(i1, i2, imiddle, energy=xw)
         if updateROIDict:
             self._ROIDict.update(ddict)
 
@@ -403,6 +405,10 @@ class StackBase(object):
                       '%s %.6g' % (cursor, xw[(i2 - 1)]),
                       '%s Background' % title]
 
+        if self.__ROIImageCalculationIsUsingSuppliedEnergyAxis:
+            imageNames[1] = "%s %s at Max." % (title, cursor)
+            imageNames[2] = "%s %s at Min." % (title, cursor)
+            
         self.showROIImageList(imageList, image_names=imageNames)
 
     def showOriginalImage(self):
@@ -616,11 +622,13 @@ class StackBase(object):
 
         return dataObject
 
-    def calculateROIImages(self, index1, index2, imiddle=None):
+    def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
         i1 = min(index1, index2)
         i2 = max(index1, index2)
         if imiddle is None:
             imiddle = int(0.5 * (i1 + i2))
+        if energy is None:
+            energy = self._mcaData0.x[0]
 
         if i1 == i2:
             dummy = numpy.zeros(self._stackImageData.shape, numpy.float)
@@ -633,16 +641,18 @@ class StackBase(object):
                       'Background': dummy}
             return imageDict
 
+        isUsingSuppliedEnergyAxis = False
         if self.fileIndex == 0:
             if self.mcaIndex == 1:
                 leftImage = self._stack.data[:, i1, :]
                 middleImage = self._stack.data[:, imiddle, :]
                 rightImage = self._stack.data[:, i2 - 1, :]
                 dataImage = self._stack.data[:, i1:i2, :]
-                maxImage = numpy.argmax(dataImage, axis=1).astype(numpy.int32)
-                minImage = numpy.argmin(dataImage, axis=1).astype(numpy.int32)
                 background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float)
+                maxImage = energy[(numpy.argmax(dataImage, axis=1) + i1)]
+                minImage = energy[(numpy.argmin(dataImage, axis=1) + i1)]
+                isUsingSuppliedEnergyAxis = True
             else:
                 if DEBUG:
                     t0 = time.time()
@@ -651,10 +661,11 @@ class StackBase(object):
                     middleImage = self._stack.data[:, :, imiddle]
                     rightImage = self._stack.data[:, :, i2 - 1]
                     dataImage = self._stack.data[:, :, i1:i2]
-                    maxImage = numpy.argmax(dataImage, axis=2).astype(numpy.int32)
-                    minImage = numpy.argmin(dataImage, axis=2).astype(numpy.int32)
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float)
+                    maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
+                    minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
+                    isUsingSuppliedEnergyAxis = True
                 else:
                     shape = self._stack.data.shape
                     roiImage = self._stackImageData * 0
@@ -690,8 +701,9 @@ class StackBase(object):
                     middleImage= self._stack.data[imiddle, :, :]
                     rightImage = self._stack.data[i2 - 1, :, :]
                     dataImage = self._stack.data[i1:i2, :, :]
-                    maxImage = numpy.argmax(dataImage, axis=0).astype(numpy.int32)
-                    minImage = numpy.argmin(dataImage, axis=0).astype(numpy.int32)
+                    maxImage = energy[numpy.argmax(dataImage, axis=0) + i1]
+                    minImage = energy[numpy.argmin(dataImage, axis=0) + i1]
+                    isUsingSuppliedEnergyAxis = True
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
                 else:
@@ -735,10 +747,11 @@ class StackBase(object):
                     middleImage = self._stack.data[:, :, imiddle]
                     rightImage = self._stack.data[:, :, i2 - 1]
                     dataImage = self._stack.data[:, :, i1:i2]
-                    maxImage = numpy.argmax(dataImage, axis=2).astype(numpy.int32)
-                    minImage = numpy.argmin(dataImage, axis=2).astype(numpy.int32)
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float)
+                    maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
+                    minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
+                    isUsingSuppliedEnergyAxis = True
                 else:
                     shape = self._stack.data.shape
                     roiImage = self._stackImageData * 0
@@ -762,7 +775,7 @@ class StackBase(object):
                                   maxImage[i:i+step,:])                            
                         leftImage[i:i+step, :]   += tmpData[:, :, 0]
                         middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
-                        rightImage[i:i+step, :]  += tmpData[:, :,-1]                                                        
+                        rightImage[i:i+step, :]  += tmpData[:, :,-1]
                     background = 0.5*(i2-i1)*(leftImage+rightImage)
                 if DEBUG:
                     print("ROI image calculation elapsed = %f" %\
@@ -775,18 +788,21 @@ class StackBase(object):
                 rightImage = self._stack.data[i2 - 1]
                 background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 dataImage = self._stack.data[i1:i2]
-                minImage = numpy.argmin(dataImage, axis=0).astype(numpy.int32)
-                maxImage = numpy.argmax(dataImage, axis=0).astype(numpy.int32)
                 roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
+                minImage = energy[numpy.argmin(dataImage, axis=0) + i1]
+                maxImage = energy[numpy.argmax(dataImage, axis=0) + i1]
+                isUsingSuppliedEnergyAxis = True
             else:
                 leftImage = self._stack.data[:, i1, :]
                 middleImage = self._stack.data[:, imiddle, :]
                 rightImage = self._stack.data[:, i2 - 1, :]
                 background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 dataImage = self._stack.data[:, i1:i2, :]
-                minImage = numpy.argmin(dataImage, axis=1).astype(numpy.int32)
-                maxImage = numpy.argmax(dataImage, axis=1).astype(numpy.int32)
                 roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float)
+                minImage = energy[numpy.argmin(dataImage, axis=1) + i1]
+                maxImage = energy[numpy.argmax(dataImage, axis=1) + i1]
+                isUsingSuppliedEnergyAxis = True
+
 
         imageDict = {'ROI': roiImage,
                      'Maximum': maxImage,
@@ -795,7 +811,7 @@ class StackBase(object):
                      'Middle': middleImage,
                      'Right': rightImage,
                      'Background': background}
-
+        self.__ROIImageCalculationIsUsingSuppliedEnergyAxis = isUsingSuppliedEnergyAxis
         return imageDict
 
     def setSelectionMask(self, mask):

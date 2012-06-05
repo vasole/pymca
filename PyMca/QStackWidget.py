@@ -710,6 +710,16 @@ class QStackWidget(StackBase.StackBase,
         msg.exec_()
         return
 
+    def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
+        #overwrite base method to update the default energy with the one
+        # currently used in the graph
+        x, y, legend, info = self.mcaWidget.getActiveCurve()
+        return StackBase.StackBase.calculateROIImages(self,
+                                                      index1,
+                                                      index2,
+                                                      imiddle=imiddle,
+                                                      energy=x)
+
     def showROIImageList(self, imageList, image_names=None):
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.setImageData(imageList[0]-imageList[-1])
