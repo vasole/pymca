@@ -44,14 +44,26 @@ def polynom(parameter_list, x):
         output += parameter_list[i] * pow(x, i)
     return output
 
-def polynom_derivative(parameter_list, parameter_index, x):
+def polynomDerivative(parameter_list, parameter_index, x):
     return pow(x, parameter_index)
 
 def victoreen(parameter_list, x):
     return parameter_list[0] * pow(x, -3) + parameter_list[1] * pow(x, -4)
 
+def victoreenDerivative(parameter_list, parameter_index, x):
+    if parameter_index == 0:
+        return pow(x, -3)
+    else:
+        return pow(x, -4)
+
 def modifiedVictoreen(parameter_list, x):
     return parameter_list[0] * pow(x, -3) + parameter_list[1]
+
+def modifiedVictoreenDerivative(parameter_list, parameter_index, x):
+    if parameter_index == 0:
+        return pow(x, -3)
+    else:
+        return numpy.ones(x.shape, dtype=numpy.float)
 
 def estimateXANESEdge(spectrum, energy=None, full=False):
     if energy is None:
@@ -232,12 +244,19 @@ def XASPolynomialNormalization(spectrum,
         p = numpy.arange(pre_edge_order + 1).astype(numpy.float)
         prePol = LeastSquaresFit(pre_edge_function, p,
                                  xdata=xPre, ydata=yPre,
-                                 model_deriv=polynom_derivative,
+                                 model_deriv=polynomDerivative,
                                  weightflag=0, linear=1)[0]
-    elif pre_edge_order < 0:
+    elif pre_edge_order == -1:
         p = numpy.array([1.0, 1.0])
         prePol = LeastSquaresFit(pre_edge_function, p,
                                  xdata=xPre, ydata=yPre,
+                                 model_deriv=victoreenDerivative,
+                                 weightflag=0, linear=1)[0]
+    elif pre_edge_order == -2:
+        p = numpy.array([1.0, 1.0])
+        prePol = LeastSquaresFit(pre_edge_function, p,
+                                 xdata=xPre, ydata=yPre,
+                                 model_deriv=modifiedVictoreenDerivative,
                                  weightflag=0, linear=1)[0]
 
     # get the proper post-edge function to be used
@@ -271,15 +290,25 @@ def XASPolynomialNormalization(spectrum,
         postPol = LeastSquaresFit(post_edge_function, p,
                                   xdata=xPost,
                                   ydata=yPost-baseLine,
-                                  model_deriv=polynom_derivative,
+                                  model_deriv=polynomDerivative,
                                   weightflag=0, linear=1)[0]
         normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))\
                              /post_edge_function(postPol, energy)
-    else:
+    elif post_edge_order == -1:
         p = numpy.array([1.0, 1.0])
         postPol = LeastSquaresFit(post_edge_function, p,
                                   xdata=xPost,
                                   ydata=yPost-baseLine,
+                                  model_deriv=victoreenDerivative,
+                                  weightflag=0, linear=1)[0]
+        normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))\
+                             /post_edge_function(postPol, energy)
+    elif post_edge_order == -2:
+        p = numpy.array([1.0, 1.0])
+        postPol = LeastSquaresFit(post_edge_function, p,
+                                  xdata=xPost,
+                                  ydata=yPost-baseLine,
+                                  model_deriv=modifiedVictoreenDerivative,
                                   weightflag=0, linear=1)[0]
         normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))\
                              /post_edge_function(postPol, energy)
