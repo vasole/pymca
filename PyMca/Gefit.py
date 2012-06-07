@@ -171,7 +171,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
         if nc == 3:
             #dummy = abs(data[0:nr0:inc,2])
             if data0 is not None:
-                dummy = abs(numpy.array([x[2] for x in data0])
+                dummy = abs(numpy.array([x[2] for x in data0]))
             else:
                 dummy = abs(numpy.array(sigmadata))
             selfweight = 1.0 / (dummy + numpy.equal(dummy,0))
