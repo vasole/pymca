@@ -300,7 +300,9 @@ class XASNormalizationWindow(qt.QWidget):
                             legend="Spectrum",
                             replot=True,
                             replace=True)
-        edgeEnergy = XASNormalization.estimateXANESEdge(y, energy=x, full=False)
+        edgeEnergy = XASNormalization.estimateXANESEdge(self.spectrum,
+                                                        energy=self.energy,
+                                                        full=False)
         self.parametersWidget.setEdgeEnergy(edgeEnergy)
         self.updateGraph(self.getParameters())
 
