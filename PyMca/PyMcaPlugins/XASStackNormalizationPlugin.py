@@ -165,9 +165,12 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
                     DONE = True
-                data[i,:c0] = spe[c0]
-                data[i, c0:c1] = spe[c0:c1]
-                data[i, c1:] = spe[c1]
+                if (spe.max()-spe.min()) > 10.:
+                    data[i, :] = 0.0
+                else:
+                    data[i,:c0] = spe[c0]
+                    data[i, c0:c1] = spe[c0:c1]
+                    data[i, c1:] = spe[c1]
             data.shape = oldShape
         elif mcaIndex == 0:
             data.shape = oldShape[0], -1
@@ -183,9 +186,12 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
                     DONE = True
-                data[:c0, i] = result[c0]
-                data[c0:c1, i] = result[c0:c1]
-                data[c1:, i] = result[c1]
+                if (spe.max()-spe.min()) > 10.:
+                    data[:, i] = 0.0
+                else:
+                    data[:c0, i] = result[c0]
+                    data[c0:c1, i] = result[c0:c1]
+                    data[c1:, i] = result[c1]
             data.shape = oldShape
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
