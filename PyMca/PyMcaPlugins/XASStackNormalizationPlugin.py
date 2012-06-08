@@ -110,7 +110,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                              ['polynomial']
             algorithm_parameters['post_edge_order'] = parameters['post_edge']\
                                                              ['polynomial']
-            XASNormalization.replaceStackByXASNormalizedData(stack,
+            self.replaceStackByXASNormalizedData(stack,
                                             energy=energy,
                                             edge=edge,
                                             pre_edge_regions=pre_edge_regions,
@@ -118,6 +118,72 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                             algorithm=algorithm,
                                             algorithm_parameters=algorithm_parameters)
             self.setStack(stack)
+
+    def replaceStackByXASNormalizedData(self,
+                                        stack,
+                                        energy=None,
+                                        edge=None,
+                                        pre_edge_regions=None,
+                                        post_edge_regions=None,
+                                        algorithm='polynomial',
+                                        algorithm_parameters=None):
+        """
+        Performs an in place replacement of a set of spectra by a set of
+        normalized spectra.
+        """
+        mcaIndex = -1
+        if hasattr(stack, "info") and hasattr(stack, "data"):
+            actualData = stack.data
+            mcaIndex = stack.info.get('McaIndex', -1)
+        else:
+            actualData = stack
+        if not isinstance(actualData, numpy.ndarray):
+            raise TypeError("Currently this method only supports numpy arrays")
+
+        # Take a data view
+        oldShape = actualData.shape
+        data = actualData[:]
+        DONE = 0
+        if mcaIndex in [-1, len(data.shape)-1]:
+            data.shape = -1, oldShape[-1]
+            for i in range(data.shape[0]):
+                ene, spe, ed = XASNormalization.XASNormalization(data[i,:],
+                                        energy=energy,
+                                        edge=edge,
+                                        pre_edge_regions=pre_edge_regions,
+                                        post_edge_regions=post_edge_regions,
+                                        algorithm=algorithm,
+                                        algorithm_parameters=algorithm_parameters)[0:3]
+                if not DONE:
+                    c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
+                    c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
+                    DONE = True
+                data[i,:c0] = spe[c0]
+                data[i, c0:c1] = spe[c0:c1]
+                data[i, c1:] = spe[c1]
+            data.shape = oldShape
+        elif mcaIndex == 0:
+            data.shape = oldShape[0], -1
+            for i in range(data.shape[-1]):
+                ene, spe, ed = XASNormalization.XASNormalization(data[i,:],
+                                        energy=energy,
+                                        edge=edge,
+                                        pre_edge_regions=pre_edge_regions,
+                                        post_edge_regions=post_edge_regions,
+                                        algorithm=algorithm,
+                                        algorithm_parameters=algorithm_parameters)[0:3]
+                if not DONE:
+                    c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
+                    c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
+                    DONE = True
+                data[:c0, i] = result[c0]
+                data[c0:c1, i] = result[c0:c1]
+                data[c1:, i] = result[c1]
+            data.shape = oldShape
+        else:
+            raise ValueError("Invalid 1D index %d" % mcaIndex)
+        return
+
 
 MENU_TEXT = "XAS Stack Normalization"
 def getStackPluginInstance(stackWindow, **kw):

@@ -317,7 +317,7 @@ def XASPolynomialNormalization(spectrum,
         plot(xPre, pre_edge_function(prePol, xPre), 'r')
         plot(xPost, post_edge_function(postPol, xPost)+pre_edge_function(prePol, xPost), 'y')
         show()
-    return energy, normalizedSpectrum, pre_edge_function, prePol, post_edge_function, postPol
+    return energy, normalizedSpectrum, edge, pre_edge_function, prePol, post_edge_function, postPol
 
 def XASVictoreenNormalization(spectrum,
                               energy,
@@ -364,59 +364,7 @@ def XASVictoreenNormalization(spectrum,
         plot(xPost,
              post_edge_function(postPol, xPost)+pre_edge_function(prePol, xPost), 'y')
         show()
-    return energy, normalizedSpectrum       
-
-
-def replaceStackByXASNormalizedData(stack,
-                                    energy=None,
-                                    edge=None,
-                                    pre_edge_regions=None,
-                                    post_edge_regions=None,
-                                    algorithm='polynomial',
-                                    algorithm_parameters=None):
-    """
-    Performs an in place replacement of a set of spectra by a set of
-    normalized spectra.
-    """
-    mcaIndex = -1
-    if hasattr(stack, "info") and hasattr(stack, "data"):
-        actualData = stack.data
-        mcaIndex = stack.info.get('McaIndex', -1)
-    else:
-        actualData = stack
-    if not isinstance(actualData, numpy.ndarray):
-        raise TypeError("Currently this method only supports numpy arrays")
-
-    # Take a data view
-    oldShape = actualData.shape
-    data = actualData[:]
-    if mcaIndex in [-1, len(data.shape)-1]:
-        data.shape = -1, oldShape[-1]
-        for i in range(data.shape[0]):
-            result = XASNormalization(data[i,:],
-                                    energy=energy,
-                                    edge=edge,
-                                    pre_edge_regions=pre_edge_regions,
-                                    post_edge_regions=post_edge_regions,
-                                    algorithm=algorithm,
-                                    algorithm_parameters=algorithm_parameters)[1]
-            data[i, :] = result
-        data.shape = oldShape
-    elif mcaIndex == 0:
-        data.shape = oldShape[0], -1
-        for i in range(data.shape[-1]):
-            result = XASNormalization(data[i,:],
-                                    energy=energy,
-                                    edge=edge,
-                                    pre_edge_regions=pre_edge_regions,
-                                    post_edge_regions=post_edge_regions,
-                                    algorithm=algorithm,
-                                    algorithm_parameters=algorithm_parameters)[1]
-            data[:, i] = result
-        data.shape = oldShape
-    else:
-        raise ValueError("Invalid 1D index %d" % mcaIndex)
-    return
+    return energy, normalizedSpectrum, edge       
 
 SUPPORTED_ALGORITHMS = {"polynomial":XASPolynomialNormalization,
                         "victoreen": XASVictoreenNormalization}
