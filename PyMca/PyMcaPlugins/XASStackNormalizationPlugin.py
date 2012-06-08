@@ -91,7 +91,14 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             self.widget = XASNormalizationWindow.XASNormalizationDialog(None,
                                                 spectrum, energy=x)
         else:
+            oldParameters = self.widget.getParameters()
+            oldEnergy = self.widget.parametersWidget.energy
+            oldEMin = oldEnergy.min()
+            oldEMax = oldEnergy.max()
             self.widget.setData(spectrum, energy=x)
+            if abs(oldEMin - x.min()) < 1:
+                if abs(oldEMax - x.max()) < 1:
+                    self.widget.setParameters(oldParameters)
         ret = self.widget.exec_()
         if ret:
             parameters = self.widget.getParameters()
