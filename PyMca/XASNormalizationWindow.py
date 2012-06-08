@@ -81,7 +81,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
         buttonGroup.setExclusive(True)
         userEnergy = qt.QLineEdit(edgeGroupBox)
         userEnergy.setEnabled(False)
-        validator = qt.QDoubleValidator()
+        validator = qt.QDoubleValidator(userEnergy)
         userEnergy.setValidator(validator)
         edgeGroupBoxLayout.addWidget(autoButton, 0, 0)
         edgeGroupBoxLayout.addWidget(userButton, 1, 0)
@@ -136,7 +136,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                 self.connect(self.widgetDict[key][text],
                              qt.SIGNAL('editingFinished()'),
                              self._regionParameterChanged)
-                validator = qt.QDoubleValidator()
+                validator = qt.QDoubleValidator(self.widgetDict[key][text])
                 self.widgetDict[key][text].setValidator(validator)
                 regionsGroupBoxLayout.addWidget(label, i, c)
                 regionsGroupBoxLayout.addWidget(self.widgetDict[key][text], i, c + 1)

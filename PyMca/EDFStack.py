@@ -385,9 +385,27 @@ class EDFStack(DataObject.DataObject):
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     else:
+                        # test for ID24 map
+                        ID24 = False
+                        if "_sample_" in filelist[0]:
+                            i0StartFile = filelist[0].replace("_sample_", "_I0start_")
+                            if os.path.exists(i0StartFile):
+                                ID24 = True
+                                id24idx = 0
+                                i0Start = EdfFile.EdfFile(i0StartFile, 'rb').GetData(0).astype(numpy.float)
+                                i0EndFile = filelist[0].replace("_sample_", "_I0end_")
+                                i0Slope = 0.0
+                                if os.path.exists(i0EndFile):
+                                    i0End = EdfFile.EdfFile(i0EndFile, 'rb').GetData(0)
+                                    i0Slope = (i0End-i0Start)/len(filelist)
                         for tempEdfFileName in filelist:
                             tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
-                            pieceOfStack=tempEdf.GetData(0)
+                            if ID24:
+                                pieceOfStack=-numpy.log(tempEdf.GetData(0)/(i0Start[0,:] + id24idx * i0Slope))
+                                pieceOfStack[numpy.isfinite(pieceOfStack) == False] = 1
+                                id24idx += 1
+                            else:
+                                pieceOfStack=tempEdf.GetData(0)
                             self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
