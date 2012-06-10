@@ -83,12 +83,14 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
     convolve = numpy.convolve
     mcaIndex = -1
     if hasattr(stack, "info") and hasattr(stack, "data"):
-        data = stack.data
+        actualData = stack.data
         mcaIndex = stack.info.get('McaIndex', -1)
     else:
-        data = stack
-    if not isinstance(data, numpy.ndarray):
+        actualData = stack
+    if not isinstance(actualData, numpy.ndarray):
         raise TypeError("This Plugin only supports numpy arrays")
+    # take a view
+    data = actualData[:]
     oldShape = data.shape
     if mcaIndex in [-1, len(data.shape)-1]:
         data.shape = -1, oldShape[-1]
