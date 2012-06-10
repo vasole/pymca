@@ -358,9 +358,9 @@ class XASNormalizationWindow(qt.QWidget):
             msg.exec_()
             return
             
-        nEnergy, nSpectrum, usedEdge = normalizationResult[0:3]
-        preEdgeFunction, preEdgeParameters = normalizationResult[3:5]
-        postEdgeFunction, postEdgeParameters = normalizationResult[5:7]
+        nEnergy, nSpectrum, usedEdge, jump = normalizationResult[0:4]
+        preEdgeFunction, preEdgeParameters = normalizationResult[4:6]
+        postEdgeFunction, postEdgeParameters = normalizationResult[6:8]
         idx = self.energy > (usedEdge + preRegions[0][0])
         x = self.energy[idx]
         yPre = preEdgeFunction(preEdgeParameters, x)

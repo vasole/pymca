@@ -312,12 +312,13 @@ def XASPolynomialNormalization(spectrum,
                                   weightflag=0, linear=1)[0]
         normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))\
                              /post_edge_function(postPol, energy)
+    jump = post_edge_function(postPol, edge)
     if DEBUG:
         plot(energy, spectrum, 'o')
         plot(xPre, pre_edge_function(prePol, xPre), 'r')
         plot(xPost, post_edge_function(postPol, xPost)+pre_edge_function(prePol, xPost), 'y')
         show()
-    return energy, normalizedSpectrum, edge, pre_edge_function, prePol, post_edge_function, postPol
+    return energy, normalizedSpectrum, edge, jump, pre_edge_function, prePol, post_edge_function, postPol
 
 def XASVictoreenNormalization(spectrum,
                               energy,

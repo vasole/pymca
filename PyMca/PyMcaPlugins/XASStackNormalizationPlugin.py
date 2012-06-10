@@ -35,10 +35,12 @@ except ImportError:
     from . import StackPluginBase
 
 try:
+    from PyMca import StackPluginResultsWindow
     from PyMca import XASNormalization
     from PyMca import XASNormalizationWindow
 except ImportError:
     print("XASStackNormalizationPlugin importing from somewhere else")
+    import StackPluginResultsWindow
     import XASNormalization
     import XASNormalizationWindow
 
@@ -59,12 +61,21 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
 
         self.__methodKeys = ["XANES Normalization"]
         self.widget = None
+        self.imageWidget = None
         
     #Methods implemented by the plugin
     def stackUpdated(self):
         if self.widget is not None:
             self.widget.close()
         self.widget = None
+
+    def selectionMaskUpdated(self):
+        if self.imageWidget is None:
+            return
+        if self.imageWidget.isHidden():
+            return
+        mask = self.getStackSelectionMask()
+        self.imageWidget.setSelectionMask(mask)
 
     def getMethods(self):
         return self.__methodKeys
@@ -78,6 +89,22 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
     def applyMethod(self, name):
         return self.methodDict[name][0]()
 
+    
+    # own stuff
+    def mySlot(self, ddict):
+        if DEBUG:
+            print("mySlot ", ddict['event'], ddict.keys())
+        if ddict['event'] == "selectionMaskChanged":
+            self.setStackSelectionMask(ddict['current'])
+        elif ddict['event'] == "addImageClicked":
+            self.addImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "removeImageClicked":
+            self.removeImage(ddict['title'])
+        elif ddict['event'] == "replaceImageClicked":
+            self.replaceImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "resetSelection":
+            self.setStackSelectionMask(None)
+    
     def XASNormalize(self):
         stack = self.getStackDataObject()
         if not isinstance(stack.data, numpy.ndarray):
@@ -117,14 +144,45 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                              ['polynomial']
             algorithm_parameters['post_edge_order'] = parameters['post_edge']\
                                                              ['polynomial']
-            self.replaceStackByXASNormalizedData(stack,
+            edges, jumps, errors  = self.replaceStackByXASNormalizedData(stack,
                                             energy=energy,
                                             edge=edge,
                                             pre_edge_regions=pre_edge_regions,
                                             post_edge_regions=post_edge_regions,
                                             algorithm=algorithm,
                                             algorithm_parameters=algorithm_parameters)
+            images, names = self.getStackROIImagesAndNames()
+            edges.shape = images[0].shape
+            jumps.shape = images[0].shape
+            errors.shape = images[0].shape
             self.setStack(stack)
+            if self.imageWidget is None:
+                self.imageWidget = StackPluginResultsWindow.StackPluginResultsWindow(\
+                                        usetab=False)
+                self.imageWidget.buildAndConnectImageButtonBox()
+                qt = StackPluginResultsWindow.qt
+                qt.QObject.connect(self.imageWidget,
+                           qt.SIGNAL('MaskImageWidgetSignal'),
+                           self.mySlot)
+                self.methodDict["Show Images"] =[self._showImageWidget,
+                                                 "Show calculated jump and edge position images",
+                                                 None]
+                self.__methodKeys.append("Show Images")
+                self.imageWidget.setStackPluginResults([jumps, errors, edges],
+                                                        image_names=['Jump',
+                                                                     'Errors',
+                                                                     'Edge Position'])
+            self._showImageWidget()
+
+    def _showImageWidget(self):
+        if self.imageWidget is None:
+            return
+        #Show
+        self.imageWidget.show()
+        self.imageWidget.raise_()
+
+        #update
+        self.selectionMaskUpdated()
 
     def replaceStackByXASNormalizedData(self,
                                         stack,
@@ -153,49 +211,87 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
         DONE = 0
         if mcaIndex in [-1, len(data.shape)-1]:
             data.shape = -1, oldShape[-1]
+            edges = numpy.zeros(data.shape[0], numpy.float32)
+            jumps = numpy.zeros(data.shape[0], numpy.float32)
+            errors = numpy.zeros(data.shape[0], numpy.float32)
             for i in range(data.shape[0]):
-                ene, spe, ed = XASNormalization.XASNormalization(data[i,:],
-                                        energy=energy,
-                                        edge=edge,
-                                        pre_edge_regions=pre_edge_regions,
-                                        post_edge_regions=post_edge_regions,
-                                        algorithm=algorithm,
-                                        algorithm_parameters=algorithm_parameters)[0:3]
+                try:
+                    ene, spe, ed, jmp = XASNormalization.XASNormalization(data[i,:],
+                                energy=energy,
+                                edge=edge,
+                                pre_edge_regions=pre_edge_regions,
+                                post_edge_regions=post_edge_regions,
+                                algorithm=algorithm,
+                                algorithm_parameters=algorithm_parameters)[0:4]
+                except:
+                    # what to do?
+                    # for the data is clear (set to 0)
+                    # for the jump 0 is also a good compromise
+                    # for the edge?
+                    data[i, :] = 0
+                    errors[i] = 1
+                    jumps[i] = 0
+                    edges[i] = 0
+                    continue
                 if not DONE:
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
                     DONE = True
                 if (spe.max()-spe.min()) > 10.:
                     data[i, :] = 0.0
+                    # should I give some useless values?
+                    edges[i] = 0.0
+                    jumps[i] = 0.0
                 else:
                     data[i,:c0] = spe[c0]
                     data[i, c0:c1] = spe[c0:c1]
                     data[i, c1:] = spe[c1]
+                    edges[i] = ed
+                    jumps[i] = jmp
             data.shape = oldShape
         elif mcaIndex == 0:
             data.shape = oldShape[0], -1
+            edges = numpy.zeros(data.shape[-1], numpy.float32)
+            jumps = numpy.zeros(data.shape[-1], numpy.float32)
+            errors = numpy.zeros(data.shape[0], numpy.float32)
             for i in range(data.shape[-1]):
-                ene, spe, ed = XASNormalization.XASNormalization(data[i,:],
-                                        energy=energy,
-                                        edge=edge,
-                                        pre_edge_regions=pre_edge_regions,
-                                        post_edge_regions=post_edge_regions,
-                                        algorithm=algorithm,
-                                        algorithm_parameters=algorithm_parameters)[0:3]
+                try:
+                    ene, spe, ed, jump = XASNormalization.XASNormalization(data[i,:],
+                              energy=energy,
+                              edge=edge,
+                              pre_edge_regions=pre_edge_regions,
+                              post_edge_regions=post_edge_regions,
+                              algorithm=algorithm,
+                              algorithm_parameters=algorithm_parameters)[0:4]
+                except:
+                    # what to do?
+                    # for the data is clear (set to 0)
+                    # for the jump 0 is also a good compromise
+                    # for the edge?
+                    data[:, i] = 0
+                    jumps[i] = 0
+                    edges[i] = 0
+                    errors[i] = 1
+                    continue
                 if not DONE:
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
                     DONE = True
                 if (spe.max()-spe.min()) > 10.:
                     data[:, i] = 0.0
+                    # should I give some useless values?
+                    edges[i] = 0.0
+                    jumps[i] = 0.0
                 else:
                     data[:c0, i] = result[c0]
                     data[c0:c1, i] = result[c0:c1]
                     data[c1:, i] = result[c1]
+                    edges[i] = ed
+                    jumps[i] = jmp
             data.shape = oldShape
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
-        return
+        return edges, jumps, errors
 
 
 MENU_TEXT = "XAS Stack Normalization"
