@@ -151,10 +151,10 @@ class XASNormalizationParametersWidget(qt.QWidget):
         #give a dummy value
         ddict['edge_energy'] = 0.0
         ddict['pre_edge'] = {}
-        ddict['pre_edge']['regions'] = [[-200., -50.]]
+        ddict['pre_edge']['regions'] = [[-100., -40.]]
         ddict['pre_edge']['polynomial'] = 'Constant'
         ddict['post_edge'] = {}
-        ddict['post_edge']['regions'] = [[20., 500.]]
+        ddict['post_edge']['regions'] = [[20., 300.]]
         ddict['post_edge']['polynomial'] = 'Linear'
         return ddict
 
@@ -235,9 +235,31 @@ class XASNormalizationParametersWidget(qt.QWidget):
         # make sure a copy is given back
         return copy.deepcopy(self.__parametersDict)
 
-    def setEdgeEnergy(self, energy):
+    def setEdgeEnergy(self, energy, emin=None, emax=None):
         self.userEdgeEnergy.setText("%f" % energy)
         self.__parametersDict['edge_energy'] = energy
+        ddict = None
+        if emin is not None:
+            for region in self.__parametersDict['pre_edge']['regions']:
+                if (region[0] + energy) < emin:
+                    ddict = {}
+                    ddict['pre_edge'] = {}
+                    xmin = emin - energy
+                    xmax = 0.5 * xmin - energy
+                    ddict['pre_edge']['regions'] = [[xmin, xmax]] 
+                    break
+        if emax is not None:
+            for region in self.__parametersDict['post_edge']['regions']:
+                if (region[1] + energy) > emax:
+                    if ddict is None:
+                        ddict = {}
+                    ddict['post_edge'] = {}
+                    xmax = emax - energy
+                    xmin = 0.1 * xmax
+                    ddict['post_edge']['regions'] = [[xmin, xmax]] 
+                    break
+        if ddict is not None:
+            self.setParameters(ddict, signal=True)
 
 class XASNormalizationWindow(qt.QWidget):
     def __init__(self, parent, spectrum, energy=None):
@@ -275,7 +297,7 @@ class XASNormalizationWindow(qt.QWidget):
                 XASNormalization.estimateXANESEdge(spectrum, energy=self.energy, full=True)
         self._xPrime = xPrime
         self._yPrime = yPrime
-        self.parametersWidget.setEdgeEnergy(edgeEnergy)
+        self.parametersWidget.setEdgeEnergy(edgeEnergy, emin=self.energy.min(), emax=self.energy.max())
         self.getParameters = self.parametersWidget.getParameters
         self.setParameters = self.parametersWidget.setParameters
         self.connect(self.parametersWidget,
