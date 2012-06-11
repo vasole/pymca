@@ -6,6 +6,9 @@ Improved unicode support.
 
 Added a simple stack normalization plugin to the ROI tool.
 
+Added a simple XANES normalization plugins to the ROI tool and the scan
+window.
+
 Adapt installation script to simplify linux distribution maintainers task.
 
 Add a minimalistic set of post-installation tests.
