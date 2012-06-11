@@ -228,6 +228,26 @@ class QStackWidget(StackBase.StackBase,
                 self.stackWidget.setImageData(None)
                 self.roiWidget.setImageData(None)
                 StackBase.StackBase.setStack(self, self._stack, **kw)
+        try:
+            if 'SourceName' in self._stack.info:
+                if type(self._stack.info['SourceName']) == type([]):
+                    if len(self._stack.info['SourceName']) == 1:
+                        title = qt.safe_str(self._stack.info['SourceName'])
+                    else:
+                        f0 = qt.safe_str(self._stack.info['SourceName'][0])
+                        f1 = qt.safe_str(self._stack.info['SourceName'][-1])
+                        try:
+                            f0 = os.path.basename(f0)
+                            f1 = os.path.basename(f1)
+                        except:
+                            pass
+                        title = "Stack from %s to %s"  % (f0, f1)
+                else:
+                    title = qt.safe_str(self._stack.info['SourceName'])
+                self.setWindowTitle(title)
+        except:
+            # TODO: give a reasonable title
+            pass
 
     def normalizeIconChecked(self):
         pass
@@ -408,25 +428,6 @@ class QStackWidget(StackBase.StackBase,
             self.setSlave(slave)
         else:
             self.setStack(stack)
-
-    def setStack(self, *var, **kw):
-        self.stackWidget.setImageData(None)
-        self.roiWidget.setImageData(None)
-        StackBase.StackBase.setStack(self, *var, **kw)
-        if (1 in self._stack.data.shape) and\
-           isinstance(self._stack.data, numpy.ndarray):
-            oldshape = self._stack.data.shape
-            dialog = ImageShapeDialog(self, shape = oldshape[0:2])
-            dialog.setModal(True)
-            ret = dialog.exec_()
-            if ret:
-                shape = dialog.getImageShape()
-                dialog.close()
-                del dialog
-                self._stack.data.shape = [shape[0], shape[1], oldshape[2]]
-                self.stackWidget.setImageData(None)
-                self.roiWidget.setImageData(None)
-                StackBase.StackBase.setStack(self, self._stack, **kw)
 
     def loadSlaveStack(self):
         if self._slave is not None:
