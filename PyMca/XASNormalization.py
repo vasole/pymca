@@ -39,7 +39,10 @@ if DEBUG:
     from pylab import *
 
 def polynom(parameter_list, x):
-    output = numpy.zeros(x.shape)
+    if hasattr(x, 'shape'):
+        output = numpy.zeros(x.shape)
+    else:
+        output = 0.0
     for i in range(len(parameter_list)):
         output += parameter_list[i] * pow(x, i)
     return output
