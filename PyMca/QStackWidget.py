@@ -274,7 +274,12 @@ class QStackWidget(StackBase.StackBase,
         filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
         if len(filename):
             try:
-                return qt.safe_str(filename)
+                fname = qt.safe_str(filename)
+                if fname.endswith('.h5') or\
+                   fname.endswith('.hdf'):
+                    return fname
+                else:
+                    return fname + ".h5"
             except UnicodeEncodeError:
                 msg = qt.QMessageBox(self)
                 msg.setWindowTitle("Encoding error")
@@ -290,7 +295,14 @@ class QStackWidget(StackBase.StackBase,
         filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
         if len(filename):
             try:
-                return qt.safe_str(filename)
+                fname = qt.safe_str(filename)
+                if fname.endswith('.tif') or\
+                   fname.endswith('.tiff') or\
+                   fname.endswith('.TIF') or\
+                   fname.endswith('.TIFF'):
+                    return fname
+                else:
+                    return fname + ".tif"
             except UnicodeEncodeError:
                 msg = qt.QMessageBox(self)
                 msg.setWindowTitle("Encoding error")
