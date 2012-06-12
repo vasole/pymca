@@ -77,10 +77,18 @@ except ImportError:
 
 DEBUG = 0
 
-if QTVERSION < '4.6.0':
-    USE_PICKER = True
-else:
-    USE_PICKER = False
+
+# set this variable to false if you get crashes when moving the mouse
+# over the images.
+# Before I thought it had to do with the Qt version used, but it seems
+# to be related to some sip versions.
+#if QTVERSION < '4.6.0':
+#    USE_PICKER = True
+#else:
+#    USE_PICKER = False
+
+USE_PICKER = True
+
 class MyPicker(Qwt5.QwtPlotPicker):
     def __init__(self, *var):
         Qwt5.QwtPlotPicker.__init__(self, *var)
