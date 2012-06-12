@@ -115,6 +115,8 @@ class StackSelector(object):
                 fileindex = 0
                 stack = QStack(imagestack=True)
             elif line[0] == "{":
+                if filelist[0].upper().endswith("RAW"):
+                    imagestack=True
                 stack = QStack(imagestack=imagestack)
             elif line[0:2] in ["II", "MM"]:
                 stack = QStack(imagestack=True)
@@ -358,7 +360,7 @@ class StackSelector(object):
                         "HDF5 Files (*.nxs *.hdf *.h5)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
-                        "Image Files (*edf *ccd)",
+                        "Image Files (*edf *ccd *raw)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
                         "All Files (*)"]
