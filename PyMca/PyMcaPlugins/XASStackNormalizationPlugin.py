@@ -29,17 +29,22 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
-try:
-    import StackPluginBase
-except ImportError:
-    from . import StackPluginBase
 
 try:
+    import StackPluginBase
+    import CalculationThread
+except ImportError:
+    from . import StackPluginBase
+    from . import CalculationThread
+
+try:
+    from PyMca import PyMcaQt as qt
     from PyMca import StackPluginResultsWindow
     from PyMca import XASNormalization
     from PyMca import XASNormalizationWindow
 except ImportError:
     print("XASStackNormalizationPlugin importing from somewhere else")
+    import PyMcaQt as qt
     import StackPluginResultsWindow
     import XASNormalization
     import XASNormalizationWindow
@@ -144,13 +149,19 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                              ['polynomial']
             algorithm_parameters['post_edge_order'] = parameters['post_edge']\
                                                              ['polynomial']
-            edges, jumps, errors  = self.replaceStackByXASNormalizedData(stack,
+
+            result  = self.__replaceStackByXASNormalizedData(stack,
                                             energy=energy,
                                             edge=edge,
                                             pre_edge_regions=pre_edge_regions,
                                             post_edge_regions=post_edge_regions,
                                             algorithm=algorithm,
                                             algorithm_parameters=algorithm_parameters)
+            if result[0] == 'Exception':
+                # exception occurred
+                raise Exception(result[1], result[2], result[3])
+            else:
+                edges, jumps, errors = result
             images, names = self.getStackROIImagesAndNames()
             edges.shape = images[0].shape
             jumps.shape = images[0].shape
@@ -173,6 +184,25 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                                      'Errors',
                                                                      'Edge Position'])
             self._showImageWidget()
+
+    def __replaceStackByXASNormalizedData(self, *var, **kw):
+        self._progress = 0.0
+        thread = CalculationThread.CalculationThread(\
+                calculation_method=self.replaceStackByXASNormalizedData,
+                calculation_vars=var,
+                calculation_kw=kw)
+        thread.start()
+        CalculationThread.waitingMessageDialog(thread,
+                                               message="Please wait. Calculation going on.",
+                                               parent=self.widget,
+                                               modal=True,
+                                               update_callback=self._waitingCallback)
+        return thread.result
+
+    def _waitingCallback(self):
+        ddict = {}
+        ddict['message'] = "Calculation Progress = %d %%" % self._progress
+        return ddict
 
     def _showImageWidget(self):
         if self.imageWidget is None:
@@ -214,7 +244,9 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             edges = numpy.zeros(data.shape[0], numpy.float32)
             jumps = numpy.zeros(data.shape[0], numpy.float32)
             errors = numpy.zeros(data.shape[0], numpy.float32)
+            total = 0.01 * data.shape[0]
             for i in range(data.shape[0]):
+                self._progress = i / total
                 try:
                     ene, spe, ed, jmp = XASNormalization.XASNormalization(data[i,:],
                                 energy=energy,
@@ -248,13 +280,16 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     data[i, c1:] = spe[c1]
                     edges[i] = ed
                     jumps[i] = jmp
+            self._progress = 100
             data.shape = oldShape
         elif mcaIndex == 0:
             data.shape = oldShape[0], -1
             edges = numpy.zeros(data.shape[-1], numpy.float32)
             jumps = numpy.zeros(data.shape[-1], numpy.float32)
             errors = numpy.zeros(data.shape[0], numpy.float32)
+            total = 0.01 * data.shape[-1]
             for i in range(data.shape[-1]):
+                self._progress = i / total 
                 try:
                     ene, spe, ed, jump = XASNormalization.XASNormalization(data[i,:],
                               energy=energy,
@@ -288,6 +323,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     data[c1:, i] = result[c1]
                     edges[i] = ed
                     jumps[i] = jmp
+            self._progress = 100
             data.shape = oldShape
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
