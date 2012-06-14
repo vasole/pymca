@@ -161,7 +161,10 @@ class StackBase(object):
         #unfortunaly python 3 reports
         #isinstance(stack, DataObject.DataObject) as false
         #for DataObject derived classes like OmnicMap!!!!
-        if isinstance(stack, DataObject.DataObject) or\
+        if id(stack) == id(self._stack):
+            # just updated
+            pass
+        elif isinstance(stack, DataObject.DataObject) or\
            ("DataObject.DataObject" in ("%s" % type(stack))) or\
            ("QStack" in ("%s" % type(stack))) or\
            ("Map" in ("%s" % type(stack)))or\
@@ -623,8 +626,7 @@ class StackBase(object):
                            "selectiontype": "1D",
                            "SourceName": "Stack",
                            "Key": "Selection"}
-        dataObject.x = [numpy.arange(len(mcaData)).astype(numpy.float)
-                        + self._stack.info['Channel0']]
+        dataObject.x = [self._mcaData0.x[0]]
         dataObject.y = [mcaData]
 
         return dataObject
