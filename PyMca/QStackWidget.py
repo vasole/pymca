@@ -79,7 +79,7 @@ class QStackWidget(StackBase.StackBase,
                 self.setMaximumWidth(int(screenWidth)-5)
             self.setMinimumWidth(min(int(0.5*screenWidth),800))
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.mcaWidget = mcawidget
         self.rgbWidget = rgbwidget
@@ -96,12 +96,14 @@ class QStackWidget(StackBase.StackBase,
         box = qt.QSplitter(self)
         if vertical:
             box.setOrientation(qt.Qt.Vertical)
+            boxmainlayout = qt.QVBoxLayout(box)
         else:
             box.setOrientation(qt.Qt.Horizontal)
+            boxmainlayout = qt.QHBoxLayout(box)
 
         self.stackWindow = qt.QWidget(box)
         self.stackWindow.mainLayout = qt.QVBoxLayout(self.stackWindow)
-        self.stackWindow.mainLayout.setMargin(0)
+        self.stackWindow.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.stackWindow.mainLayout.setSpacing(0)
 
         #if HDF5:
@@ -148,7 +150,7 @@ class QStackWidget(StackBase.StackBase,
 
         self.roiWindow = qt.QWidget(box)
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
-        self.roiWindow.mainLayout.setMargin(0)
+        self.roiWindow.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.roiWindow.mainLayout.setSpacing(0)
         standaloneSaving = True        
         self.roiWidget = MaskImageWidget.MaskImageWidget(parent=self.roiWindow,
@@ -173,6 +175,8 @@ class QStackWidget(StackBase.StackBase,
         self.roiWindow.mainLayout.addWidget(self.roiWidget)
         box.addWidget(self.stackWindow)
         box.addWidget(self.roiWindow)
+        boxmainlayout.addWidget(self.stackWindow)
+        boxmainlayout.addWidget(self.roiWindow)
         self.mainLayout.addWidget(box)
 
 
@@ -647,7 +651,7 @@ class QStackWidget(StackBase.StackBase,
         #the MCA selection
         self.mcaButtonBox = qt.QWidget(self.stackWindow)
         self.mcaButtonBoxLayout = qt.QHBoxLayout(self.mcaButtonBox)
-        self.mcaButtonBoxLayout.setMargin(0)
+        self.mcaButtonBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.mcaButtonBoxLayout.setSpacing(0)
         self.addMcaButton = qt.QPushButton(self.mcaButtonBox)
         self.addMcaButton.setText("ADD MCA")
