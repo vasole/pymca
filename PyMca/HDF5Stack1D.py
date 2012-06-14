@@ -83,12 +83,22 @@ class HDF5Stack1D(DataObject.DataObject):
             if isinstance(tmpHdf["/"+key], h5py.Group):
                 entryNames.append(key)
 
-        #built the selection in terms of HDF terms
-        #for the time being, the x selection will be ignored but not the
-        #monitor and only one y is taken
+        # built the selection in terms of HDF terms
+        # for the time being, the only the firs item in x selection used
+        xSelection = selection['x']
+        if type(xSelection) == type([]):
+            if len(xSelection):
+                xSelection = xSelection[0]
+            else:
+                xSelection = None
+        else:
+            xSelection = None
+        # only one y is taken
         ySelection = selection['y']
         if type(ySelection) == type([]):
             ySelection = ySelection[0]
+
+        # monitor selection
         mSelection = selection['m']
         if type(mSelection) == type([]):
             if len(mSelection):
@@ -98,7 +108,8 @@ class HDF5Stack1D(DataObject.DataObject):
         else:
             mSelection = None
 
-        #deal with the pathological case where the scanlist corresponds to a selected top level dataset
+        # deal with the pathological case where the scanlist corresponds
+        # to a selected top level dataset
         if len(entryNames) == 0:
             if scanlist is not None:
                 if len(scanlist) == 1:
@@ -178,10 +189,15 @@ class HDF5Stack1D(DataObject.DataObject):
             path = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + ySelection
             if mSelection is not None:
                 mpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + mSelection
+            if xSelection is not None:
+                xpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + xSelection
         else:
             path = scanlist[0] +  ySelection
             if mSelection is not None:
                 mpath = scanlist[0] + mSelection
+            if xSelection is not None:
+                xpath = scanlist[0] + xSelection
+        
         yDataset = tmpHdf[path]
 
         if self.__dtype is None:
@@ -205,9 +221,9 @@ class HDF5Stack1D(DataObject.DataObject):
                 bytefactor = 8
 
             neededMegaBytes = nFiles * dim0 * dim1 * mcaDim * bytefactor/(1024*1024.)
-            if (neededMegaBytes > 2000) and (nFiles == 1) and (len(shape) == 3):
+            if (neededMegaBytes > 3000) and (nFiles == 1) and (len(shape) == 3):
                 if self.__dtype0 is None:
-                    if (bytefactor == 8) and (neededMegaBytes <4000):
+                    if (bytefactor == 8) and (neededMegaBytes <6000):
                         #try reading as float32
                         self.__dtype = numpy.float32
                     else:
@@ -222,8 +238,11 @@ class HDF5Stack1D(DataObject.DataObject):
                 print("Attempting dynamic loading")
                 self.data = yDataset
                 if mSelection is not None:
-                    mDataset = tmpHdf[mpath]
-                    self.monitor = mDataset
+                    mDataset = tmpHdf[mpath].value
+                    self.monitor = [mDataset]
+                if xSelection is not None:
+                    xDataset = tmpHdf[xpath].value
+                    self.x = [xDataset]
                 if h5py.version.version < '2.0':
                     #prevent automatic closing keeping a reference
                     #to the open file
@@ -251,11 +270,17 @@ class HDF5Stack1D(DataObject.DataObject):
                         if mSelection is not None:
                             mpath = entryName + mSelection
                             mDataset = hdf[mpath].value
+                        if xSelection is not None:
+                            xpath = entryName + xSelection
+                            xDataset = hdf[xpath].value
                     else:
                         path = scan + ySelection
                         if mSelection is not None:
                             mpath = scan + mSelection
                             mDataset = hdf[mpath].value
+                        if xSelection is not None:
+                            xpath = scan + xSelection
+                            xDataset = hdf[xpath].value
                     try:
                         yDataset = hdf[path]
                         tmpShape = yDataset.shape
@@ -426,6 +451,11 @@ class HDF5Stack1D(DataObject.DataObject):
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)
             self.info[key] = shape[i]
+        if xSelection is not None:
+            if xDataset.size == shape[self.info['McaIndex']]:
+                self.x = [xDataset.reshape(-1)]
+            else:
+                print("Ignoring xSelection")
 
 
     def getDimensions(self, nFiles, nScans, shape, index=None):

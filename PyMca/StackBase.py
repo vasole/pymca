@@ -56,6 +56,7 @@ except:
 class StackBase(object):
     def __init__(self):
         self._stack = DataObject.DataObject()
+        self._stack.x = None
         self._stackImageData = None
         self._selectionMask = None
         self._finiteData = True
@@ -169,6 +170,7 @@ class StackBase(object):
             self._stack.info['SourceName'] = stack.info.get('SourceName',
                                                             "Data of unknown origin")
         else:
+            self._stack.x = None
             self._stack.data = stack
             self._stack.info['SourceName'] = "Data of unknown origin"
 
@@ -261,9 +263,14 @@ class StackBase(object):
                            "selectiontype": "1D",
                            "SourceName": "Stack",
                            "Key": "SUM"}
-
-        dataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)
-                        + self._stack.info.get('Channel0', 0.0)]
+        if not hasattr(self._stack, 'x'):
+            self._stack.x = None
+        if self._stack.x in [None, []]:
+            dataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)
+                            + self._stack.info.get('Channel0', 0.0)]
+        else:
+            # for the time being it can only contain one axis
+            dataObject.x = [self._stack.x[0]]            
 
         dataObject.y = [mcaData0]
 
