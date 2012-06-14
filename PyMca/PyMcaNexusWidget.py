@@ -166,7 +166,6 @@ class PyMcaNexusWidget(QNexusWidget):
                 axes = axes.split(",")
                 for axis in axes:
                     if axis in group.keys():
-                        print "axis", axis
                         axesList.append(posixpath.join(groupName, axis))
                 if len(axesList):
                     xData = phynxFile[axesList[index]].value

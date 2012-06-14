@@ -213,6 +213,7 @@ class DatasetSelectionPage(qt.QWizardPage):
         #try to get the signals
         signalList = []
         axesList = []
+        interpretation = ""
         for key in nxData.keys():
             if 'signal' in nxData[key].attrs.keys():
                 if int(nxData[key].attrs['signal']) == 1:
@@ -255,8 +256,17 @@ class DatasetSelectionPage(qt.QWizardPage):
             path = posixpath.join("/",nxDataList[0], axis)
             ddict['counters'].append(path)
             ddict['aliases'].append(posixpath.basename(axis))
+
         self.nexusWidget.setWidgetConfiguration(ddict)
-        self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
+        if len(signalList):
+            if len(axesList) == 0:
+                self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
+            elif interpretation == "image":
+                self.nexusWidget.cntTable.setCounterSelection({'y':[0], 'x':[1]})
+            elif interpretation == "spectrum":
+                self.nexusWidget.cntTable.setCounterSelection({'y':[0], 'x':[len(axesList)]})
+            else:
+                self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
 
     def validatePage(self):
         cntSelection = self.nexusWidget.cntTable.getCounterSelection()
