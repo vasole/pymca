@@ -212,6 +212,7 @@ class DatasetSelectionPage(qt.QWizardPage):
 
         #try to get the signals
         signalList = []
+        axesList = []
         for key in nxData.keys():
             if 'signal' in nxData[key].attrs.keys():
                 if int(nxData[key].attrs['signal']) == 1:
@@ -226,6 +227,17 @@ class DatasetSelectionPage(qt.QWizardPage):
                                     print("WARNING: Cannot decode interpretation")
                             if interpretation == "image":
                                 self.stackIndexWidget.setIndex(0)
+                        if 'axes' in nxData[key].attrs.keys():
+                            axes = nxData[key].attrs['axes']
+                            if sys.version > '2.9':
+                                try:
+                                    axes = axes.decode('utf-8')
+                                except:
+                                    print("WARNING: Cannot decode axes")
+                            axes = axes.split(",")
+                            for axis in axes:
+                                if axis in nxData.keys():
+                                    axesList.append(axis)
 
         if not len(signalList):
             return
@@ -238,6 +250,11 @@ class DatasetSelectionPage(qt.QWizardPage):
             path = posixpath.join("/",nxDataList[0], signal)
             ddict['counters'].append(path)
             ddict['aliases'].append(posixpath.basename(signal))
+
+        for axis in axesList:
+            path = posixpath.join("/",nxDataList[0], axis)
+            ddict['counters'].append(path)
+            ddict['aliases'].append(posixpath.basename(axis))
         self.nexusWidget.setWidgetConfiguration(ddict)
         self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
 

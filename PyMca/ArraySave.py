@@ -529,6 +529,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         dset.attrs['signal'] = "1".encode('utf-8')
         if interpretation is not None:
             dset.attrs['interpretation'] = interpretation.encode('utf-8')
+        axesAttribute = []
         for i in range(len(shape)):
             if axes is None:
                 dim = numpy.arange(shape[i]).astype(numpy.float32)
@@ -536,18 +537,20 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
             elif axes[i] is not None:
                 dim = axes[i]
                 try:
-                    dimlabel = labels[i]
+                    dimlabel = "%s" % labels[i]
                 except:
                     dimlabel = 'dim_%d' % i
             else:
                 dim = numpy.arange(shape[i]).astype(numpy.float32)
                 dimlabel = 'dim_%d' % i
-            dset = nxData.require_dataset(dimlabel,
+            axesAttribute.append(dimlabel)
+            adset = nxData.require_dataset(dimlabel,
                                    dim.shape,
                                    dim.dtype,
                                    compression=None)
-            dset[:] = dim[:]
-            dset.attrs['axis'] = i + 1
+            adset[:] = dim[:]
+            adset.attrs['axis'] = i + 1
+        dset.attrs['axes'] = ",".join(axesAttribute)
         nxEntry['end_time'] = getDate().encode('utf-8')
         if mode.lower() == 'nexus+':
             #create link

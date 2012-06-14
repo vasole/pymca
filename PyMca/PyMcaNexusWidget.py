@@ -24,14 +24,18 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+import sys
+import posixpath
 try:
     from PyMca import PyMcaQt as qt
+    from PyMca import DataObject
     from PyMca.QNexusWidget import *
     from PyMca import QStackWidget
     from PyMca import HDF5Stack1D
 except ImportError:
     print("PyMcaNexusWidget importing from directory")
     import PyMcaQt as qt
+    import DataObject
     from QNexusWidget import *
     import QStackWidget
     import HDF5Stack1D
@@ -86,7 +90,7 @@ class PyMcaNexusWidget(QNexusWidget):
                                     self._stack2DSignal)
                 _hdf5WidgetDatasetMenu.addAction(QString("Load and show as 2D Stack"),
                                     self._loadStack2DSignal)
-            self._lastDatasetDict= ddict
+            self._lastDatasetDict = ddict
             _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
             self._lastDatasetDict= None
             return
@@ -135,6 +139,8 @@ class PyMcaNexusWidget(QNexusWidget):
             useInstance = True
         else:
             useInstance = False
+
+        groupName = posixpath.dirname(name)
         if useInstance:
             #this crashes with h5py 1.x
             #this way it is not loaded into memory unless requested
@@ -142,7 +148,34 @@ class PyMcaNexusWidget(QNexusWidget):
             stack = phynxFile[name]
         else:
             #create a new instance
-            stack = h5py.File(filename, 'r')[name]
+            phynxFile = h5py.File(filename, 'r')
+            stack = phynxFile[name]
+
+        # try to find out the "energy" axis
+        axesList = []
+        xData = None
+        try:
+            group = phynxFile[groupName]
+            if 'axes' in stack.attrs.keys():
+                axes = stack.attrs['axes']
+                if sys.version > '2.9':
+                    try:
+                        axes = axes.decode('utf-8')
+                    except:
+                        print("WARNING: Cannot decode axes")
+                axes = axes.split(",")
+                for axis in axes:
+                    if axis in group.keys():
+                        print "axis", axis
+                        axesList.append(posixpath.join(groupName, axis))
+                if len(axesList):
+                    xData = phynxFile[axesList[index]].value
+        except:
+            # I cannot afford this Nexus specific things
+            # to break the generic HDF5 functionality
+            if DEBUG:
+                raise
+            axesList = []
 
         #the only problem is that, if the shape is not of type (a, b, c),
         #it will not be possible to reshape it. In that case I have to
@@ -156,24 +189,33 @@ class PyMcaNexusWidget(QNexusWidget):
                 n = 1
                 for dim in shape[:-2]:
                     n = n * dim
-                stack.shape = n, shape[-2], shape[-1]
+                stack.shape = n, shape[-2], shape[-1]                
+                if len(axesList):
+                    if xData.size != n:
+                        xData = None
             else:
                 #stack of mca
                 n = 1
                 for dim in shape[:-1]:
                     n = n * dim
                 stack.shape = 1, n, shape[-1]
+                if len(axesList):
+                    if xData.size != shape[-1]:
+                        xData = None
                 #index equal -1 should be able to handle it
                 #if not, one would have to uncomment next line
                 #index = 2
-        widget.setStack(stack, mcaindex=index)
+        actualStack = DataObject.DataObject()
+        actualStack.data = stack
+        if xData is not None:
+            actualStack.x = [xData]
+        widget.setStack(actualStack, mcaindex=index)        
         wid = id(widget)
         self._lastWidgetId = wid
         self._widgetDict[wid] = widget
         widget.show()
 
 if __name__ == "__main__":
-    import sys
     try:
         #this is to add the 3D buttons ...
         from PyMca import Object3D
