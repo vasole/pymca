@@ -363,27 +363,45 @@ class QStackWidget(StackBase.StackBase,
             view = self._stack.data[:, row0:row1+1, col0:col1+1]
         else:
             view = self._stack.data[row0:row1+1, col0:col1+1,:]
-        ArraySave.save3DArrayAsHDF5(view,
+        # the current graph axis is saved
+        axes = [None] * len(self._stack.data.shape)
+        labels = [None] * len(self._stack.data.shape)
+        try:
+            xLabel = qt.safe_str(self.mcaWidget.graph.xlabel())
+        except:
+            xLabel = None
+        try:
+            xData, y, legend, info = self.mcaWidget.getActiveCurve()
+        except:
+            xData = self._mcaData0.x[0]
+            xLabel = 'Channels'
+        if interpretation == 'image':
+            labels[0] = xLabel
+            axes[0] = xData
+        else:
+            labels[-1] = xLabel
+            axes[-1] = xData
+        try:
+            ArraySave.save3DArrayAsHDF5(view,
                                     filename,
-                                    labels = None,
+                                    axes=axes,
+                                    labels=labels,
                                     dtype=dtype,
                                     mode='nexus',
                                     mcaindex=mcaIndex,
                                     interpretation=interpretation,
                                     compression=compression)
-
-    def saveStackAsNeXusSpectra(self, compression=False):
-        try:
-            self.saveStackAsNeXus(interpretation="spectrum", compression=compression)
         except:
             msg = qt.QMessageBox(self)
-            msg.setWindowTitle("Error saving stack")
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+            msg.setWindowTitle("Save error")
+            msg.setText("An error has occured while saving the data:")
+            msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
-            if DEBUG:
-                raise
 
+    def saveStackAsNeXusSpectra(self, compression=False):
+        self.saveStackAsNeXus(interpretation="spectrum", compression=compression)
 
     def saveStackAsNeXusImages(self):
         self.saveStackAsNeXus(interpretation="image", compression=False)

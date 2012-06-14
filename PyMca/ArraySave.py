@@ -362,10 +362,8 @@ def save3DArrayAsMonochromaticTiff(data, filename,
                 print("Saved image %d of %d" % (i + 1, ndata))
     outfileInstance.close()  # force file close
 
-
-# TODO labels is useless in this method.
 # it should be used to name the data that for the time being is named 'data'.
-def save3DArrayAsHDF5(data, filename, labels=None, dtype=None, mode='nexus',
+def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='nexus',
                       mcaindex=-1, interpretation=None, compression=None):
     if not HDF5:
         raise IOError('h5py does not seem to be installed in your system')
@@ -532,12 +530,23 @@ def save3DArrayAsHDF5(data, filename, labels=None, dtype=None, mode='nexus',
         if interpretation is not None:
             dset.attrs['interpretation'] = interpretation.encode('utf-8')
         for i in range(len(shape)):
-            dim = numpy.arange(shape[i]).astype(numpy.float32)
-            dset = nxData.require_dataset('dim_%d' % i,
+            if axes is None:
+                dim = numpy.arange(shape[i]).astype(numpy.float32)
+                dimlabel = 'dim_%d' % i
+            elif axes[i] is not None:
+                dim = axes[i]
+                try:
+                    dimlabel = labels[i]
+                except:
+                    dimlabel = 'dim_%d' % i
+            else:
+                dim = numpy.arange(shape[i]).astype(numpy.float32)
+                dimlabel = 'dim_%d' % i
+            dset = nxData.require_dataset(dimlabel,
                                    dim.shape,
                                    dim.dtype,
-                                   dim,
                                    compression=None)
+            dset[:] = dim[:]
             dset.attrs['axis'] = i + 1
         nxEntry['end_time'] = getDate().encode('utf-8')
         if mode.lower() == 'nexus+':
