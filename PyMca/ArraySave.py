@@ -550,7 +550,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                                    compression=None)
             adset[:] = dim[:]
             adset.attrs['axis'] = i + 1
-        dset.attrs['axes'] = ",".join(axesAttribute)
+        dset.attrs['axes'] = ":".join(axesAttribute)
         nxEntry['end_time'] = getDate().encode('utf-8')
         if mode.lower() == 'nexus+':
             #create link

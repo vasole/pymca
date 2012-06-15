@@ -163,7 +163,7 @@ class PyMcaNexusWidget(QNexusWidget):
                         axes = axes.decode('utf-8')
                     except:
                         print("WARNING: Cannot decode axes")
-                axes = axes.split(",")
+                axes = axes.split(":")
                 for axis in axes:
                     if axis in group.keys():
                         axesList.append(posixpath.join(groupName, axis))
