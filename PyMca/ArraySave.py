@@ -440,7 +440,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                     tmp = data[:, :, i:i + 1]
                     tmp.shape = 1, shape[1], shape[2]
                     dset[i, 0:shape[1], :] = tmp
-                    print("Saved item %d of %d" % (i, data.shape[-1]))
+                    print("Saved item %d of %d" % (i + 1, data.shape[-1]))
             elif 0:
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. However, it is much faster
