@@ -291,7 +291,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             for i in range(data.shape[-1]):
                 self._progress = i / total 
                 try:
-                    ene, spe, ed, jump = XASNormalization.XASNormalization(data[i,:],
+                    ene, spe, ed, jmp = XASNormalization.XASNormalization(data[i,:],
                               energy=energy,
                               edge=edge,
                               pre_edge_regions=pre_edge_regions,
@@ -312,7 +312,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
                     DONE = True
-                if (spe.max()-spe.min()) > 10.:
+                if ((spe.max()-spe.min()) > 10.) or (jmp < 0):
                     data[:, i] = 0.0
                     # should I give some useless values?
                     edges[i] = 0.0
