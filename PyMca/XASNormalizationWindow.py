@@ -237,29 +237,29 @@ class XASNormalizationParametersWidget(qt.QWidget):
 
     def setEdgeEnergy(self, energy, emin=None, emax=None):
         self.userEdgeEnergy.setText("%f" % energy)
-        self.__parametersDict['edge_energy'] = energy
-        ddict = None
+        signal = True
+        if self.__parametersDict['edge_energy'] == energy:
+            signal = False
+        ddict ={'edge_energy':energy}
         if emin is not None:
             for region in self.__parametersDict['pre_edge']['regions']:
                 if (region[0] + energy) < emin:
-                    ddict = {}
+                    signal = True
                     ddict['pre_edge'] = {}
                     xmin = emin - energy
-                    xmax = 0.5 * xmin - energy
+                    xmax = 0.5 * xmin
                     ddict['pre_edge']['regions'] = [[xmin, xmax]] 
                     break
         if emax is not None:
             for region in self.__parametersDict['post_edge']['regions']:
                 if (region[1] + energy) > emax:
-                    if ddict is None:
-                        ddict = {}
+                    signal=True
                     ddict['post_edge'] = {}
                     xmax = emax - energy
                     xmin = 0.1 * xmax
                     ddict['post_edge']['regions'] = [[xmin, xmax]] 
                     break
-        if ddict is not None:
-            self.setParameters(ddict, signal=True)
+        self.setParameters(ddict, signal=signal)
 
 class XASNormalizationWindow(qt.QWidget):
     def __init__(self, parent, spectrum, energy=None):
@@ -297,7 +297,9 @@ class XASNormalizationWindow(qt.QWidget):
                 XASNormalization.estimateXANESEdge(spectrum, energy=self.energy, full=True)
         self._xPrime = xPrime
         self._yPrime = yPrime
-        self.parametersWidget.setEdgeEnergy(edgeEnergy, emin=self.energy.min(), emax=self.energy.max())
+        self.parametersWidget.setEdgeEnergy(edgeEnergy,
+                                            emin=self.energy.min(),
+                                            emax=self.energy.max())
         self.getParameters = self.parametersWidget.getParameters
         self.setParameters = self.parametersWidget.setParameters
         self.connect(self.parametersWidget,
@@ -325,7 +327,9 @@ class XASNormalizationWindow(qt.QWidget):
         edgeEnergy = XASNormalization.estimateXANESEdge(self.spectrum,
                                                         energy=self.energy,
                                                         full=False)
-        self.parametersWidget.setEdgeEnergy(edgeEnergy)
+        self.parametersWidget.setEdgeEnergy(edgeEnergy,
+                                            emin=self.energy.min(),
+                                            emax=self.energy.max())
         self.updateGraph(self.getParameters())
 
     def updateGraph(self, ddict):
@@ -343,8 +347,12 @@ class XASNormalizationWindow(qt.QWidget):
                                     (self.energy <= xmax))[0]
                 x = numpy.take(self.energy, idx)
                 y = numpy.take(self.spectrum, idx)
-                edgeEnergy = XASNormalization.estimateXANESEdge(y, energy=x, full=False)
-                self.parametersWidget.setEdgeEnergy(edgeEnergy)
+                edgeEnergy = XASNormalization.estimateXANESEdge(y,
+                                                                energy=x,
+                                                                full=False)
+                self.parametersWidget.setEdgeEnergy(edgeEnergy,
+                                            emin=self.energy.min(),
+                                            emax=self.energy.max())
                 self.__lastDict['edge_energy'] = edgeEnergy
             except:
                 pass
@@ -447,10 +455,14 @@ class XASNormalizationWindow(qt.QWidget):
         marker = ddict['marker']
         edgeEnergy =  self.__lastDict['edge_energy']
         x = ddict['x']
-        ddict ={}
         if marker == self.__edgeMarker:
-            ddict['edge_energy'] = x
-        elif marker == self.__preEdgeMarkers[0]:
+            self.parametersWidget.setEdgeEnergy(x,
+                                    emin=self.energy.min(),
+                                    emax=self.energy.max())
+            return
+
+        ddict ={}
+        if marker == self.__preEdgeMarkers[0]:
             ddict['pre_edge'] ={}
             xmin = x - edgeEnergy
             xmax = self.__lastDict['pre_edge']['regions'][0][1]
