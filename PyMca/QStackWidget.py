@@ -355,13 +355,17 @@ class QStackWidget(StackBase.StackBase,
         col0, col1 = self.stackWidget.graph.getX1AxisLimits()
         #this should go to array save ...
         shape = self._stack.data.shape
-        row0 = int(max([row0+0.5, 0]))
-        row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
-        col0 = int(max([col0+0.5, 0]))
-        col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
         if mcaIndex in [0]:
+            row0 = int(max([row0+0.5, 0]))
+            row1 = int(min([row1+0.5, self._stack.data.shape[1]]))
+            col0 = int(max([col0+0.5, 0]))
+            col1 = int(min([col1+0.5, self._stack.data.shape[2]]))
             view = self._stack.data[:, row0:row1+1, col0:col1+1]
         else:
+            row0 = int(max([row0+0.5, 0]))
+            row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
+            col0 = int(max([col0+0.5, 0]))
+            col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
             view = self._stack.data[row0:row1+1, col0:col1+1,:]
         # the current graph axis is saved
         axes = [None] * len(self._stack.data.shape)
