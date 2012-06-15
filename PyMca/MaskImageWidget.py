@@ -81,13 +81,16 @@ DEBUG = 0
 # set this variable to false if you get crashes when moving the mouse
 # over the images.
 # Before I thought it had to do with the Qt version used, but it seems
-# to be related to some sip versions.
-#if QTVERSION < '4.6.0':
-#    USE_PICKER = True
-#else:
-#    USE_PICKER = False
+# to be related to old PyQwt versions. (In fact, the 5.2.1 version is
+# a recent snapshot)
+if Qwt5.QWT_VERSION_STR < '5.2.1':
+    USE_PICKER = False
+else:
+    USE_PICKER = True
 
-USE_PICKER = True
+# Uncomment next line if you experience crashes moving the mouse on
+# top of the images
+#USE_PICKER = True
 
 class MyPicker(Qwt5.QwtPlotPicker):
     def __init__(self, *var):
