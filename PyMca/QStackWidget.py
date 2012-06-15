@@ -752,6 +752,7 @@ class QStackWidget(StackBase.StackBase,
     def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
         #overwrite base method to update the default energy with the one
         # currently used in the graph
+        # TODO: Handle the case of not having an active curve!!!
         x, y, legend, info = self.mcaWidget.getActiveCurve()
         return StackBase.StackBase.calculateROIImages(self,
                                                       index1,
