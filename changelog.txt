@@ -21,6 +21,8 @@ Restore functionality of colormap-based mask calculation.
 
 Add a progress bar to the stack simple fitting plugin.
 
+Possibility to perform simple fitting of masked stack regions. 
+
 VERSION 4.5.0
 
 Support h5py version 2.x
