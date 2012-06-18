@@ -48,8 +48,8 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
             message = "Please wait. Calculation going on."
         windowTitle = "Please Wait"
         msg = qt.QDialog(parent)#, qt.Qt.FramelessWindowHint)
-        if modal:
-            msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
+        #if modal:
+        #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
         msg.setModal(modal)
         msg.setWindowTitle(windowTitle)
         layout = qt.QHBoxLayout(msg)

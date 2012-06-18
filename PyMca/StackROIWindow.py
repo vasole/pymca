@@ -120,6 +120,8 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
             else:
                 self.graphWidget.graph.setTitle(mfText+self.imageNames[index])
         else:
+            # TODO: Should the channel at max. and channel at min. be
+            # recalculated?
             self.setImageData(self.imageList[index]-\
                               self.imageList[backgroundIndex])
             if self.imageNames is None:
