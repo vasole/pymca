@@ -19,6 +19,8 @@ Correct variance information displayed in the terminal window.
 
 Restore functionality of colormap-based mask calculation.
 
+Add a progress bar to the stack simple fitting plugin.
+
 VERSION 4.5.0
 
 Support h5py version 2.x
