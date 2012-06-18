@@ -20,8 +20,8 @@ global USE_SMART_INSTALL_SCRIPTS
 # Dear (Debian, RPM, ...) package makers, please feel free to customize the
 # following paths to the directory containing module's data relative to the
 # directory containing the python modules (aka. installation directory) 
-PYMCA_DATA_DIR = 'PyMca/PYMCADATA'
-PYMCA_DOC_DIR = 'PyMca/DOC'
+PYMCA_DATA_DIR = 'PyMca/PyMcaData'
+PYMCA_DOC_DIR = 'PyMca/PyMcaData'
 USE_SMART_INSTALL_SCRIPTS = False
 if "--install-scripts" in sys.argv:
     USE_SMART_INSTALL_SCRIPTS = True
