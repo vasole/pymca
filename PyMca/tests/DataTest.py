@@ -105,6 +105,7 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testData("testDataDirectoryPresence"))
         testSuite.addTest(testData("testDataFilePresence"))
+        testSuite.addTest(testData("testDocDirectoryPresence"))
     return testSuite
 
 def test(auto=False):
