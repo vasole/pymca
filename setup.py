@@ -18,9 +18,10 @@ global USE_SMART_INSTALL_SCRIPTS
 
 #package maintainers customization
 # Dear (Debian, RPM, ...) package makers, please feel free to customize the
-# following path to the directory containing module's data relative to the
+# following paths to the directory containing module's data relative to the
 # directory containing the python modules (aka. installation directory) 
-PYMCA_DATA_DIR = 'PyMca/PyMcaData'
+PYMCA_DATA_DIR = 'PyMca/PYMCADATA'
+PYMCA_DOC_DIR = 'PyMca/DOC'
 USE_SMART_INSTALL_SCRIPTS = False
 if "--install-scripts" in sys.argv:
     USE_SMART_INSTALL_SCRIPTS = True
@@ -77,9 +78,9 @@ data_files = [(PYMCA_DATA_DIR, ['LICENSE.GPL',
                          'PyMca/PyMcaData/XCOM_CrossSections.dat',
                          'PyMca/PyMcaData/XRFSpectrum.mca']),
               (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca/PyMcaData/attdata/*')),
-              (PYMCA_DATA_DIR+'/HTML', glob.glob('PyMca/PyMcaData/HTML/*.*')),
-              (PYMCA_DATA_DIR+'/HTML/IMAGES', glob.glob('PyMca/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DATA_DIR+'/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
+              (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca/PyMcaData/HTML/*.*')),
+              (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca/PyMcaData/HTML/IMAGES/*')),
+              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
 
 if os.path.exists(os.path.join("PyMca", "EPDL97")):
     packages.append('PyMca.EPDL97')
@@ -253,6 +254,7 @@ class smart_install_data(install_data):
     def run(self):
         global PYMCA_INSTALL_DIR
         global PYMCA_DATA_DIR
+        global PYMCA_DOC_DIR
         #need to change self.install_dir to the library dir
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
@@ -291,7 +293,15 @@ class smart_install_data(install_data):
                                           PYMCA_DATA_DIR)
             #packager should have given the complete path
             #in other cases
-        f.write("import os\nPYMCA_DATA_DIR = '%s'\n" % PYMCA_DATA_DIR)
+        if PYMCA_DOC_DIR == 'PyMca/PyMcaData':
+            #default, just make sure the complete path is there
+            PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                          PYMCA_DOC_DIR)
+            #packager should have given the complete path
+            #in other cases
+        f.write("import os\n")
+        f.write("PYMCA_DATA_DIR = '%s'\n" % PYMCA_DATA_DIR)
+        f.write("PYMCA_DOC_DIR = '%s'\n" % PYMCA_DOC_DIR)
         f.write("# what follows is only used in frozen versions\n")
         f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
         f.write("    tmp_dir = os.path.dirname(__file__)\n")
@@ -303,6 +313,18 @@ class smart_install_data(install_data):
         f.write("        tmp_dir = os.path.dirname(tmp_dir)\n")
         f.write("        PYMCA_DATA_DIR = os.path.join(tmp_dir, basename)\n")
         f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
+        f.write("    raise IOError('%s directory not found' % basename)\n")
+        f.write("# do the same for the directory containing HTML files\n")
+        f.write("if not os.path.exists(PYMCA_DOC_DIR):\n")
+        f.write("    tmp_dir = os.path.dirname(__file__)\n")
+        f.write("    basename = os.path.basename(PYMCA_DOC_DIR)\n")
+        f.write("    PYMCA_DOC_DIR = os.path.join(tmp_dir,basename)\n")
+        f.write("    while len(PYMCA_DOC_DIR) > 14:\n")
+        f.write("        if os.path.exists(PYMCA_DOC_DIR):\n")
+        f.write("            break\n")
+        f.write("        tmp_dir = os.path.dirname(tmp_dir)\n")
+        f.write("        PYMCA_DOC_DIR = os.path.join(tmp_dir, basename)\n")
+        f.write("if not os.path.exists(PYMCA_DOC_DIR):\n")
         f.write("    raise IOError('%s directory not found' % basename)\n")
         #f.write("print('Using: %s' % PYMCA_DATA_DIR)\n")
         f.close()
@@ -533,6 +555,7 @@ distrib = setup(name="PyMca",
 try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
     print("PyMca data files are installed in %s " % PYMCA_DATA_DIR)
+    print("HTML help files are installed in %s " % PYMCA_DOC_DIR)
 except:
     #I really do not see how this may happen but ...
     pass

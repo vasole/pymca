@@ -1696,7 +1696,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.menuBrowser.setCaption(QString("Main Menu Help"))
             else:
                 self.menuBrowser.setWindowTitle(QString("Main Menu Help"))
-            ddir=PyMcaDataDir.PYMCA_DATA_DIR
+            ddir=PyMcaDataDir.PYMCA_DOC_DIR
             if not os.path.exists(os.path.join(ddir,"HTML","Menu.html")):
                 ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
@@ -1706,9 +1706,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.menuBrowser.setSearchPaths([os.path.join(ddir,"HTML")])
                 self.menuBrowser.setSource(qt.QUrl(QString("Menu.html")))
             self.menuBrowser.show()
-        if self.menuBrowser.isHidden():self.menuBrowser.show()
-        if QTVERSION < '4.0.0': self.menuBrowser.raiseW()
-        else: self.menuBrowser.raise_()
+        if self.menuBrowser.isHidden():
+            self.menuBrowser.show()
+        if QTVERSION < '4.0.0':
+            self.menuBrowser.raiseW()
+        else:
+            self.menuBrowser.raise_()
 
     def onDisplayHowto(self):
         if self.displayBrowser is None:
@@ -1717,7 +1720,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.displayBrowser.setCaption(QString("Data Display HOWTO"))
             else:
                 self.displayBrowser.setWindowTitle(QString("Data Display HOWTO"))                
-            ddir=PyMcaDataDir.PYMCA_DATA_DIR
+            ddir=PyMcaDataDir.PYMCA_DOC_DIR
             if not os.path.exists(os.path.join(ddir,"HTML","Display-HOWTO.html")):
                 ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
@@ -1741,7 +1744,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mcaBrowser.setCaption(QString("MCA HOWTO"))
             else:
                 self.mcaBrowser.setWindowTitle(QString("MCA HOWTO"))
-            ddir=PyMcaDataDir.PYMCA_DATA_DIR
+            ddir=PyMcaDataDir.PYMCA_DOC_DIR
             if not os.path.exists(ddir+"/HTML"+"/MCA-HOWTO.html"):
                 ddir = os.path.dirname(ddir)
             if QTVERSION < '4.0.0':
@@ -1769,6 +1772,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.changeLog.setCursor(self.cursor())
             self.changeLog.setWindowTitle("PyMCA %s Changes" % __version__)
             self.changeLog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+            # Does this belong to the data dir or the doc dir?
             mpath = PyMcaDataDir.PYMCA_DATA_DIR
             fname = os.path.join(mpath,'changelog.txt')
             if not os.path.exists(fname):
@@ -1879,7 +1883,7 @@ class MyQTextBrowser(qt.QTextBrowser):
     def  setSource(self,name):
         if name == QString("./PyMCA.html"):
             if sys.platform == 'win32':
-                ddir=PyMcaDataDir.PYMCA_DATA_DIR
+                ddir=PyMcaDataDir.PYMCA_DOC_DIR
                 if not os.path.exists(ddir+"/HTML"+"/PyMCA.html"):
                     ddir = os.path.dirname(ddir)
                 cmd = ddir+"/HTML/PyMCA.pdf"
@@ -1890,7 +1894,7 @@ class MyQTextBrowser(qt.QTextBrowser):
             except:
                 self.report = qt.QTextBrowser()
                 self.report.setCaption(QString("PyMca Report"))
-                ddir=PyMcaDataDir.PYMCA_DATA_DIR
+                ddir=PyMcaDataDir.PYMCA_DOC_DIR
                 self.report.mimeSourceFactory().addFilePath(QString(ddir+"/HTML"))
                 self.report.mimeSourceFactory().addFilePath(QString(ddir+"/HTML/PyMCA_files"))
                 self.report.setSource(name)

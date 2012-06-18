@@ -32,6 +32,11 @@ class testData(unittest.TestCase):
         except:
             self.dataDir = None
 
+        try:
+            self.docDir = PyMcaDataDir.PYMCA_DOC_DIR
+        except:
+            self.docDir = None
+
     def testDataDirectoryPresence(self):
         self.assertTrue(self._importSuccess,
                         'Unsuccessful PyMca.PyMcaDataDir import')
@@ -81,6 +86,16 @@ class testData(unittest.TestCase):
                             'File "%s" does not exist.' % actualName)
             self.assertTrue(os.path.isfile(actualName),
                             'File "%s" is not an actual file.' % actualName)
+
+    def testDocDirectoryPresence(self):
+        self.assertTrue(self._importSuccess,
+                        'Unsuccessful PyMca.PyMcaDataDir import')
+        self.assertTrue(self.docDir is not None,
+                        'Unassigned PyMca.PyMcaDataDir.PYMCA_DOC_DIR')
+        self.assertTrue(os.path.exists(self.dataDir),
+                        'Directory "%s" does not exist' % self.docDir)
+        self.assertTrue(os.path.isdir(self.dataDir),
+                        '"%s" expected to be a directory' % self.docDir)
         
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
