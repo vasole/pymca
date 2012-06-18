@@ -29,7 +29,7 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 try:
-    import StackPluginBase
+    from PyMca import StackPluginBase
 except ImportError:
     from . import StackPluginBase
 try:

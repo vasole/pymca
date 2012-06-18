@@ -32,10 +32,10 @@ functions:
 """
 import numpy
 try:
-    import StackPluginBase
-    import CalculationThread
+    from PyMca import StackPluginBase
+    from PyMca import CalculationThread
 except ImportError:
-    #python 3 needs this
+    #python 3 might need this
     from . import StackPluginBase
     from . import CalculationThread
 try:

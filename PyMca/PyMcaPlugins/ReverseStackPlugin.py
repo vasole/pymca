@@ -30,7 +30,7 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import numpy
 try:
-    import StackPluginBase
+    from PyMca import StackPluginBase
 except ImportError:
     from . import StackPluginBase
 

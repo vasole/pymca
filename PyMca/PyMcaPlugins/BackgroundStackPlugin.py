@@ -30,15 +30,13 @@ functions:
     selectionMaskUpdated
 """
 try:
-    import StackPluginBase
-except ImportError:
-    from . import StackPluginBase
-try:
+    from PyMca import StackPluginBase
     from PyMca import SGWindow
     from PyMca import SNIPWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("Plugin importing from somewhere else")
+    import StackPluginBase
     import SGWindow
     import SNIPWindow
     import PyMca_Icons

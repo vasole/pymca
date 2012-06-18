@@ -30,10 +30,7 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import os
 try:
-    import StackPluginBase
-except ImportError:
-    from . import StackPluginBase
-try:
+    from PyMca import StackPluginBase
     from PyMca import PyMcaQt as qt
     from PyMca import EDFStack
     from PyMca import PyMcaFileDialogs
@@ -42,6 +39,7 @@ try:
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("ExternalImagesWindow importing from somewhere else")
+    import StackPluginBase
     import PyMcaQt as qt
     import EDFStack
     import PyMcaFileDialogs

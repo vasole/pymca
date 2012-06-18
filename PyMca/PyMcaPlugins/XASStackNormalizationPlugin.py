@@ -31,9 +31,10 @@ These plugins will be compatible with any stack window that provides the functio
 import numpy
 
 try:
-    import StackPluginBase
-    import CalculationThread
+    from PyMca import StackPluginBase
+    from PyMca import CalculationThread
 except ImportError:
+    print("XASStackNormalizationPlugin importing bases from somewhere else")
     from . import StackPluginBase
     from . import CalculationThread
 

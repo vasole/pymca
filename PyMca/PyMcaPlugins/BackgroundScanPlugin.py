@@ -1,15 +1,13 @@
-try:
-    import Plugin1DBase
-except ImportError:
-    from . import Plugin1DBase
 import numpy
 
 try:
+    from PyMca import Plugin1DBase
     from PyMca import SGWindow
     from PyMca import SNIPWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("Plugin importing from somewhere else")
+    import Plugin1DBase
     import SGWindow
     import SNIPWindow
     import PyMca_Icons

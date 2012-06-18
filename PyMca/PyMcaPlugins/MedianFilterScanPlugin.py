@@ -1,8 +1,9 @@
 import numpy
 
 try:
-    import Plugin1DBase
+    from PyMca import Plugin1DBase
 except ImportError:
+    print("WARNING:MedianFilterScanPlugin import from somewhere else")
     from . import Plugin1DBase
 
 from PyMca import SpecfitFuns

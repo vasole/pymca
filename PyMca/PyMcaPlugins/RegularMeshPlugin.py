@@ -2,7 +2,7 @@ import numpy
 from numpy import cos, sin
 import sys
 try:
-    import Plugin1DBase
+    from PyMca import Plugin1DBase
 except ImportError:
     from . import Plugin1DBase
 

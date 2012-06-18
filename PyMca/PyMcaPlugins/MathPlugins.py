@@ -1,8 +1,8 @@
+import numpy
 try:
-    import Plugin1DBase
+    from PyMca import Plugin1DBase
 except ImportError:
     from . import Plugin1DBase
-import numpy
 try:
     import PyMca.PyMca_Icons as PyMca_Icons
     import PyMca.SimpleMath as SimpleMath
