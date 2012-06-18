@@ -27,20 +27,16 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
+import traceback
+import time
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDirs
 from PyMca import SimpleFitGUI
 from PyMca.PyMca_Icons import IconDict
 from PyMca import StackSimpleFit
 from PyMca import ArraySave
-
-class CalculationThread(qt.QThread):
-    def __init__(self, parent=None, calculation_method=None):
-        qt.QThread.__init__(self, parent)
-        self.calculation_method = calculation_method
-
-    def run(self):
-        self.calculation_method()
+from PyMca import CalculationThread
+safe_str = qt.safe_str
 
 class OutputParameters(qt.QWidget):
     def __init__(self, parent=None):
@@ -70,16 +66,15 @@ class OutputParameters(qt.QWidget):
         self.mainLayout.addWidget(self.outputDirButton, 0, 2)
         self.mainLayout.addWidget(self.outputFileLabel,  1, 0)
         self.mainLayout.addWidget(self.outputFileLine,   1, 1)
-
         self.connect(self.outputDirButton,
                      qt.SIGNAL('clicked()'),
                      self.browseDirectory)
-
+        
     def getOutputDirectory(self):
-        return str(self.outputDirLine.text())
+        return safe_str(self.outputDirLine.text())
 
     def getOutputFileBaseName(self):
-        return str(self.outputFileLine.text())
+        return safe_str(self.outputFileLine.text())
 
     def setOutputDirectory(self, txt):
         if os.path.exists(txt):
@@ -101,7 +96,7 @@ class OutputParameters(qt.QWidget):
                                                         "Please select output directory",
                                                         wdir)
         if len(outputDir):
-            self.setOutputDirectory(str(outputDir))
+            self.setOutputDirectory(safe_str(outputDir))
 
 class StackSimpleFitWindow(qt.QWidget):
     def __init__(self, parent=None):
@@ -131,13 +126,11 @@ class StackSimpleFitWindow(qt.QWidget):
                      self.startStackFit)
 
         #progress handling
+        self._total = 100
+        self._index = 0
         self.stackFitInstance.setProgressCallback(self.progressBarUpdate)
-        self.thread = CalculationThread(self,
-                                        calculation_method=self.processStack)
-        #TODO Restore a working progress bar
-        #self.progressBar = qt.QProgressBar(self)
-        #self.mainLayout.addWidget(self.progressBar)
-        self.connect(self.thread, qt.SIGNAL('finished()'), self.threadFinished)
+        self.progressBar = qt.QProgressBar(self)
+        self.mainLayout.addWidget(self.progressBar)
 
     #def setSpectrum(self, x, y, sigma=None, xmin=None, xmax=None):
     def setSpectrum(self, *var, **kw):
@@ -205,14 +198,44 @@ class StackSimpleFitWindow(qt.QWidget):
                     qt.QMessageBox.NoButton,
                     qt.QMessageBox.NoButton)
                 return
-        self.thread.start()
+        try:
+            self._startWork()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Stack Fitting Error")
+            msg.setText("Error has occured while processing the data")
+            msg.setInformativeText(safe_str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+        finally:
+            self.progressBar.hide()
+            self.setEnabled(True)
+
+    def _startWork(self):
         self.setEnabled(False)
+        self.progressBar.show()
+        thread = CalculationThread.CalculationThread(parent=self,
+                                calculation_method=self.processStack)
+        thread.start()
+        self._total = 100
+        self._index = 0
+        while thread.isRunning():
+            time.sleep(2)
+            qt.qApp.processEvents()
+            self.progressBar.setMaximum(self._total)
+            self.progressBar.setValue(self._index)
+        self.progressBar.hide()
+        self.setEnabled(True)
+        if thread.result is not None:
+            if len(thread.result):
+                raise Exception(*thread.result[1:])
 
     def progressBarUpdate(self, idx, total):
-        #self.progressBar.show()
-        #self.progressBar.setMaximum(total)
-        #self.progressBar.setValue(idx)
-        print("Fit %d of %d" % (idx, total))
+        self._index = int(idx)
+        self._total = int(total)
+        if idx % 10 == 0:
+            print("Fited %d of %d" % (idx, total))
 
     def threadFinished(self):
         self.setEnabled(True)
@@ -220,7 +243,7 @@ class StackSimpleFitWindow(qt.QWidget):
 if __name__ == "__main__":
     import numpy
     from PyMca import SpecfitFuns
-    from PyMca import DefaultFitFunctions as Functions
+    from PyMca import SimpleFitUserEstimatedFunctions as Functions
     x = numpy.arange(1000.)
     data = numpy.zeros((50, 1000), numpy.float)
 

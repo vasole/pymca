@@ -51,6 +51,8 @@ class StackSimpleFit(object):
         self.outputDir = PyMcaDirs.outputDir
         self.outputFile = None
         self.fixedLenghtOutput = True
+        self._progress = 0.0
+        self._status = "Ready"
         self.progressCallback = None
         self.dataIndex = None
         # optimization variables
@@ -62,6 +64,17 @@ class StackSimpleFit(object):
         The method will be called as method(current_fit_index, total_fit_index)
         """
         self.progressCallback = method
+
+    def progressUpdate(self):
+        """
+        This methos returns a dictionnary with the keys
+        progress: A number between 0 and 100 indicating the fit progress
+        status: Status of the calculation thread.
+        """
+        ddict = {}
+        ddict['progress'] = self._progress
+        ddict['status'] = self._status
+        return ddict
 
     def setOutputDirectory(self, outputdir):
         self.outputDir = outputdir
@@ -157,7 +170,10 @@ class StackSimpleFit(object):
         self._parameters = None
         self._row = 0
         self._column = -1
+        self._progress = 0
+        self._status = "Fitting"
         for i in range(nPixels):
+            self._progress = (i * 100.)/ nPixels
             if (self._column+1) == self._nColumns:
                 self._column = 0
                 self._row   += 1
@@ -172,6 +188,7 @@ class StackSimpleFit(object):
                 if DEBUG:
                     raise
         self.onProcessStackFinished()
+        self._status = "Ready"
         if self.progressCallback is not None:
             self.progressCallback(nPixels, nPixels)
 
@@ -389,7 +406,9 @@ class StackSimpleFit(object):
     def onProcessStackFinished(self):
         if DEBUG:
             print("Stack proccessed")
+        self._status = "Stack Fitting finished"
         if self.fixedLenghtOutput:
+            self._status = "Writing output files"
             nParameters = len(self._parameters)
             datalist = [None] * (2*len(self._sigmas.keys())+1)
             labels = []
@@ -413,7 +432,6 @@ class StackSimpleFit(object):
                                            edfName,
                                            labels = labels,
                                            dtype=numpy.float32)
-
 
 def test():
     import numpy
