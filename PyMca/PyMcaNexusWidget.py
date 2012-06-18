@@ -85,6 +85,8 @@ class PyMcaNexusWidget(QNexusWidget):
             if stack1D:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show as 1D Stack"),
                                     self._stack1DSignal)
+                _hdf5WidgetDatasetMenu.addAction(QString("Load and show as 1D Stack"),
+                                    self._loadStack1DSignal)
             if stack2D:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show as 2D Stack"),
                                     self._stack2DSignal)
@@ -98,7 +100,12 @@ class PyMcaNexusWidget(QNexusWidget):
     def _stack1DSignal(self):
         if DEBUG:
             print("_stack1DSignal")
-        self._stackSignal(index=-1)
+        self._stackSignal(index=-1, load=False)
+
+    def _loadStack1DSignal(self):
+        if DEBUG:
+            print("_stack1DSignal")
+        self._stackSignal(index=-1, load=True)
 
     def _loadStack2DSignal(self):
         if DEBUG:
@@ -197,7 +204,8 @@ class PyMcaNexusWidget(QNexusWidget):
                 n = 1
                 for dim in shape[:-1]:
                     n = n * dim
-                stack.shape = 1, n, shape[-1]
+                if nDim != 3:
+                    stack.shape = 1, n, shape[-1]
                 if len(axesList):
                     if xData.size != shape[-1]:
                         xData = None
