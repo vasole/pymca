@@ -57,8 +57,8 @@
 #define SF_WRITEFLAG  O_CREAT | O_WRONLY
 #define SF_UMASK      0666
 #else   /* if not windows */
-#define SF_OPENFLAG   0
-#define SF_WRITEFLAG  0x101
+#define SF_OPENFLAG   O_RDONLY
+#define SF_WRITEFLAG  O_CREAT | O_WRONLY
 #define SF_UMASK      0666
 #endif
 
