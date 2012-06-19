@@ -1,3 +1,21 @@
+#/*##########################################################################
+# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+#############################################################################*/
+__author__ = "V.A. Sole - ESRF Software Group"
 """
 
 A Stack plugin is a module that will be automatically added to the PyMca stack windows
