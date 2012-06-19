@@ -15,6 +15,7 @@
 # details.
 #
 #############################################################################*/
+__author__ = "S. Petitdemange & V.A. Sole"
 import sys
 import struct
 import numpy
