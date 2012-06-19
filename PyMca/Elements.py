@@ -4,30 +4,18 @@
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option)
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
-# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License along with
-# PyMca; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
-# used as a free plugin for a non-free program.
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem for you.
 #############################################################################*/
-#
-#   Symbol  Atomic Number   x y ( positions on table )
-#       name,  mass, density
-#
+__author__ = "V.A. Sole - ESRF Data Analysis"
 __revision__ = "$Revision: 2.00 $"
 LOGLOG = True
 import sys
@@ -54,7 +42,10 @@ Avogadro constant               NA    6.022 141 79(30) x 10+23 mol-1 5.0 x 10-8
 """
 MINENERGY = 0.175
 AVOGADRO_NUMBER = 6.02214179E23
-
+#
+#   Symbol  Atomic Number   x y ( positions on table )
+#       name,  mass, density
+#
 ElementsInfo = [
    ["H",   1,    1,1,   "hydrogen",   1.00800,     1008.00   ],
    ["He",  2,   18,1,   "helium",     4.00300,     0.118500  ],
