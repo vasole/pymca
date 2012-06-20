@@ -16,8 +16,8 @@
 # details.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
 from __future__ import with_statement
+__author__ = "V.A. Sole - ESRF Data Analysis"
 import os
 import sys
 import re
