@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-___revision__ = "$Revision: 1.77 $"
+__author__ = "V.A. Sole - ESRF Data Analysis"
 import os
 import sys
 import numpy
@@ -866,7 +866,7 @@ class McaTheory:
             if self.ydata0 is not None:
                 if DEBUG:
                     print("Limits changed")
-                self.setdata(x=self.xdata0,
+                self.setData(x=self.xdata0,
                              y=self.ydata0,
                              sigmay=self.sigmay0,
                              xmin = self.config['fit']['xmin'],
@@ -893,6 +893,7 @@ class McaTheory:
                 self.laststrip = 0
                          
     def setdata(self, *var, **kw):
+        print("ClassMcaTheory.setdata deprecated, please use setData")
         return self.setData(*var, **kw)
 
     def setData(self,*var,**kw):
@@ -1498,10 +1499,6 @@ class McaTheory:
             f2 = self.linearMcaTheory(newpar, x)
             #print "f1,f2,delta = ",f1,f2,delta
             return (f1-f2) / (2.0 * delta)
-
-    def anal_deriv(self, param0, index, t0):
-        print("anal_deriv deprecated. Please use analyticalDerivative")
-        return self.analyticalDerivative(param0, index, t0)
 
     def analyticalDerivative(self, param0, index, t0):
         """
@@ -2740,7 +2737,7 @@ def test(inputfile=None,scankey=None,pkm=None,
             y0= numpy.array(mcadata)
             x = numpy.arange(len(y0))*1.0
     t0=time.time()
-    mcafit.setdata(x,y0,xmin=xmin,xmax=xmax)
+    mcafit.setData(x,y0,xmin=xmin,xmax=xmax)
     print("set data time",time.time()-t0)
     mcafit.estimate()
     print("estimation time ",time.time()-t0)

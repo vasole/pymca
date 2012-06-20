@@ -987,7 +987,7 @@ class McaWidget(qt.QWidget):
             self.advancedfit.raise_()
         if info is not None:
             xlabel = 'Channel'
-            self.advancedfit.setdata(x=x,y=y,
+            self.advancedfit.setData(x=x,y=y,
                                      xmin=xmin,
                                      xmax=xmax,
                                      legend=legend,

@@ -1525,7 +1525,7 @@ class McaAdvancedFit(qt.QWidget):
             self.info[key] = "Unknown Source"
         self.__var = var
         self.__kw  = kw
-        self.mcafit.setdata(*var,**kw)
+        self.mcafit.setData(*var,**kw)
         if self.configDialog is not None:
             self.configDialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0)
