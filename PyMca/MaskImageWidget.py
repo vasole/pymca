@@ -105,8 +105,8 @@ class MyPicker(Qwt5.QwtPlotPicker):
                 self.__text.setText("%g, %g" % (d.x(), d.y()))
             else:
                 limits = self.data.shape
-                x = round(d.y())
-                y = round(d.x())
+                x = int(d.y())
+                y = int(d.x())
                 if x < 0: x = 0
                 if y < 0: y = 0
                 x = min(int(x), limits[0]-1)

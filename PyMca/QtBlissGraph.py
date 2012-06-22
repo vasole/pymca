@@ -1180,6 +1180,12 @@ class QtBlissGraph(Qwt5.QwtPlot):
                 xmax = self.invTransform(Qwt5.QwtPlot.xBottom, xmax0)
                 ymin = self.invTransform(Qwt5.QwtPlot.yLeft, ymin0)
                 ymax = self.invTransform(Qwt5.QwtPlot.yLeft, ymax0)
+                if self.plotImage is not None:
+                    # prevent problem of misaligned image
+                    xmin = int(xmin)
+                    xmax = int(xmax)
+                    ymin = int(ymin)
+                    ymax = int(ymax)
                 graphXMin, graphXMax = self.getX1AxisLimits()
                 if xmin < graphXMin:
                     xmin = graphXMin
@@ -2481,11 +2487,12 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
             yMaps1 = yMap.s1()
         if DEBUG:
             print("working drawImage xMap,yMap",\
-			xMap.s1(),xMap.s2(), yMaps1,yMaps2)
+                        xMap.s1(),xMap.s2(), yMaps1,yMaps2)
+
         y1 = y2 = self.image.height()
         y1 *= (self.yMap.s2() - yMaps2)
         y1 /= (self.yMap.s2() - self.yMap.s1())
-        y1 = max(0, int(y1-0.5))
+        y1 = max(0, int(y1))
         y2 *= (self.yMap.s2() - yMaps1)
         y2 /= (self.yMap.s2() - self.yMap.s1())
         y2 = min(self.image.height(), int(y2+0.5))
@@ -2494,11 +2501,10 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
         #x1 *= (self.xMap.d2() - xMap.d2())
         x1 *= (xMap.s1() - self.xMap.s1())
         x1 /= (self.xMap.s2() - self.xMap.s1())
-        x1 = max(0, int(x1-0.5))
+        x1 = max(0, int(x1))
         x2 *= (xMap.s2()-self.xMap.s1())
         x2 /= (self.xMap.s2() - self.xMap.s1())
         x2 = min(self.image.width(), int(x2+0.5))
-        #print x1,x2,y1,y2
         # copy
         image = self.image.copy(x1, y1, x2-x1, y2-y1)
         # zoom

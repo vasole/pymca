@@ -266,9 +266,9 @@ class RGBImageCalculator(qt.QWidget):
             if self._imageData is None:
                 self.graphWidget.setInfoText("    X = ???? Y = ???? Z =????")
                 return
-            x = round(ddict['y'])
+            x = int(ddict['y'])
             if x < 0: x = 0
-            y = round(ddict['x'])
+            y = int(ddict['x'])
             if y < 0: y = 0
             limits = self._imageData.shape
             x = min(int(x), limits[0]-1)
