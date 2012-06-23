@@ -28,6 +28,9 @@ __revision__ = "$Revision: 2.02 $"
 #############################################################################*/
 import sys, getopt
 import traceback
+if sys.platform == 'win32':
+    import ctypes
+    from ctypes.wintypes import MAX_PATH
 nativeFileDialogs = None
 DEBUG = 0
 if __name__ == '__main__':
@@ -83,7 +86,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "4.6.0"
+__version__ = "4.6.1-RC1"
 if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -1605,14 +1608,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def __getDefaultSettingsFile(self):
         filename = "PyMca.ini"
         if sys.platform == 'win32':
-            import ctypes
-            from ctypes.wintypes import MAX_PATH
-
+            # recipe based on: http://bugs.python.org/issue1763#msg62242
             dll = ctypes.windll.shell32
             buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
             if dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False):
                 directory = buf.value
             else:
+                # the above should have worked
                 home = os.getenv('USERPROFILE')
                 try:
                     l = len(home)
