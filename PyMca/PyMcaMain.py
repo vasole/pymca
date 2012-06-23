@@ -383,8 +383,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 else:
                     self.mcawindow.showMaximized()
             currentConfigDict = ConfigDict.ConfigDict()
-            defaultFileName = self.__getDefaultSettingsFile()
-            self.configDir  = os.path.dirname(defaultFileName)
+            try:
+                defaultFileName = self.__getDefaultSettingsFile()
+                self.configDir  = os.path.dirname(defaultFileName)
+            except:
+                if not ('fresh' in kw):
+                    raise
             if not ('fresh' in kw):
                 if os.path.exists(defaultFileName):
                     currentConfigDict.read(defaultFileName)
@@ -1601,15 +1605,23 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def __getDefaultSettingsFile(self):
         filename = "PyMca.ini"
         if sys.platform == 'win32':
-            home = os.getenv('USERPROFILE')
-            try:
-                l = len(home)
-                directory = os.path.join(home, "My Documents")
-            except:
-                home = '\\'
-                directory = '\\'
-            #print home
-            #print directory
+            import ctypes
+            from ctypes.wintypes import MAX_PATH
+
+            dll = ctypes.windll.shell32
+            buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
+            if dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False):
+                directory = buf.value
+            else:
+                home = os.getenv('USERPROFILE')
+                try:
+                    l = len(home)
+                    directory = os.path.join(home, "My Documents")
+                except:
+                    home = '\\'
+                    directory = '\\'
+                #print home
+                #print directory
             if os.path.isdir('%s' % directory):
                 directory = os.path.join(directory, "PyMca")
             else:
