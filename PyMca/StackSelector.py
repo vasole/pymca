@@ -126,6 +126,14 @@ class StackSelector(object):
             elif line.startswith('#\tDate'):
                 stack = LuciaMap.LuciaMap(filelist[0])
                 omnicfile = True
+            elif filelist[0].upper().endswith("RAW.GZ")or\
+                 filelist[0].upper().endswith("EDF.GZ")or\
+                 filelist[0].upper().endswith("CCD.GZ")or\
+                 filelist[0].upper().endswith("RAW.BZ2")or\
+                 filelist[0].upper().endswith("EDF.BZ2")or\
+                 filelist[0].upper().endswith("CCD.BZ2"):
+                imagestack=True
+                stack = QStack(imagestack=imagestack)
             elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
                 stack = SupaVisioMap.SupaVisioMap(filelist[0])
                 omnicfile = True
@@ -360,7 +368,7 @@ class StackSelector(object):
                         "HDF5 Files (*.nxs *.hdf *.h5)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
-                        "Image Files (*edf *ccd *raw)",
+                        "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
                         "All Files (*)"]

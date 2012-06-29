@@ -136,6 +136,13 @@ def getSourceType(sourceName0):
             mccd = False
         if (line.startswith("{")) or mccd:
             return EdfFileDataSource.SOURCE_TYPE
+        elif sourceName.lower().endswith('edf.gz') or\
+             sourceName.lower().endswith('ccd.gz') or\
+             sourceName.lower().endswith('raw.gz') or\
+             sourceName.lower().endswith('edf.bz2') or\
+             sourceName.lower().endswith('ccd.bz2') or\
+             sourceName.lower().endswith('raw.bz2'):
+            return EdfFileDataSource.SOURCE_TYPE
         else:
             if NEXUS:
                 ishdf5 = False

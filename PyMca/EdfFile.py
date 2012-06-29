@@ -86,6 +86,16 @@ import sys
 import numpy
 import os.path #, tempfile, shutil
 try:
+    import gzip
+    GZIP = True
+except:
+    GZIP = False
+try:
+    import bz2
+    BZ2 = True
+except:
+    BZ2 = False
+try:
     from PyMca import MarCCD
     MARCCD_SUPPORT = True
 except ImportError:
@@ -179,69 +189,98 @@ class  EdfFile(object):
             self.SysByteOrder = "HighByteFirst"
         else:
             self.SysByteOrder = "LowByteFirst"
-        if access is not None:
-            if access[0].upper() == "R":
-                if not os.path.isfile(self.FileName):
-                    raise IOError("File %s not found" % FileName)
-            if 'b' not in access:
-                access += 'b'
-        try:
-            if not os.path.isfile(self.FileName):
-                #write access
-                if access is None:
-                    #allow writing and reading
-                    access = "ab+"
-                    self.File = open(self.FileName, access)
-                    self.File.seek(0, 0)
-                    return
+
+        if hasattr(FileName, "seek") and\
+           hasattr(FileName, "read"):
+            # this looks like a file descriptor ...
+            self.__ownedOpen = False
+            self.File = FileName
+            try:
+                self.FileName = self.File.name
+            except AttributeError:
+                self.FileName = self.File.filename
+        elif FileName.lower().endswith('.gz'):
+            if GZIP:
+                self.__ownedOpen = False
+                self.File = gzip.GzipFile(FileName)
+            else:
+                raise IOError("No gzip module support in this system")
+        elif FileName.lower().endswith('.bz2'):
+            if BZ2:
+                self.__ownedOpen = False
+                self.File = bz2.BZ2File(FileName)
+            else:
+                raise IOError("No bz2 module support in this system")
+        else:
+            self.__ownedOpen = True
+
+        if self.File in [0, None]:
+            if access is not None:
+                if access[0].upper() == "R":
+                    if not os.path.isfile(self.FileName):
+                        raise IOError("File %s not found" % FileName)
                 if 'b' not in access:
                     access += 'b'
-                self.File = open(self.FileName, access)
-                return
-            else:
-                if access is None:
-                    if (os.access(self.FileName, os.W_OK)):
-                        access = "r+b"
-                    else:
-                        access = "rb"
-                self.File = open(self.FileName, access)
-                self.File.seek(0, 0)
-                twoChars = self.File.read(2)
-                tiff = False
-                if sys.version < '3.0':
-                    if twoChars in ["II", "MM"]:
-                        tiff = True
-                elif twoChars in [eval('b"II"'), eval('b"MM"')]:
-                        tiff = True
-                if tiff:
-                    fileExtension = os.path.splitext(self.FileName)[-1]
-                    if fileExtension.lower() in [".tif", ".tiff"] or\
-                       sys.version > '2.9':
-                        if not TIFF_SUPPORT:
-                            raise IOError("TIFF support not implemented")
-                        else:
-                            self.TIFF = True
-                    elif not MARCCD_SUPPORT:
-                        if not TIFF_SUPPORT:
-                            raise IOError("MarCCD support not implemented")
-                        else:
-                            self.TIFF = True
-                    else:
-                        self.MARCCD = True
-                if os.path.basename(FileName).upper().endswith('.CBF'):
-                    if not PILATUS_CBF_SUPPORT:
-                        raise IOError("CBF support not implemented")
-                    if twoChars[0] != "{":
-                        self.PILATUS_CBF = True
-                elif os.path.basename(FileName).upper().endswith('.SPE'):
-                    if twoChars[0] != "$":
-                        self.SPE = True
-        except:
             try:
-                self.File.close()
+                if not os.path.isfile(self.FileName):
+                    #write access
+                    if access is None:
+                        #allow writing and reading
+                        access = "ab+"
+                        self.File = open(self.FileName, access)
+                        self.File.seek(0, 0)
+                        return
+                    if 'b' not in access:
+                        access += 'b'
+                    self.File = open(self.FileName, access)
+                    return
+                else:
+                    if access is None:
+                        if (os.access(self.FileName, os.W_OK)):
+                            access = "r+b"
+                        else:
+                            access = "rb"
+                    self.File = open(self.FileName, access)
+                    self.File.seek(0, 0)
+                    twoChars = self.File.read(2)
+                    tiff = False
+                    if sys.version < '3.0':
+                        if twoChars in ["II", "MM"]:
+                            tiff = True
+                    elif twoChars in [eval('b"II"'), eval('b"MM"')]:
+                            tiff = True
+                    if tiff:
+                        fileExtension = os.path.splitext(self.FileName)[-1]
+                        if fileExtension.lower() in [".tif", ".tiff"] or\
+                           sys.version > '2.9':
+                            if not TIFF_SUPPORT:
+                                raise IOError("TIFF support not implemented")
+                            else:
+                                self.TIFF = True
+                        elif not MARCCD_SUPPORT:
+                            if not TIFF_SUPPORT:
+                                raise IOError("MarCCD support not implemented")
+                            else:
+                                self.TIFF = True
+                        else:
+                            self.MARCCD = True
+                    if os.path.basename(FileName).upper().endswith('.CBF'):
+                        if not PILATUS_CBF_SUPPORT:
+                            raise IOError("CBF support not implemented")
+                        if twoChars[0] != "{":
+                            self.PILATUS_CBF = True
+                    elif os.path.basename(FileName).upper().endswith('.SPE'):
+                        if twoChars[0] != "$":
+                            self.SPE = True
+                    elif os.path.basename(FileName).upper().endswith('EDF.GZ') or\
+                         os.path.basename(FileName).upper().endswith('CCD.GZ'):
+                        self.GZIP = True
             except:
-                pass
-            raise IOError("EdfFile: Error opening file")
+                try:
+                    self.File.close()
+                except:
+                    pass
+                raise IOError("EdfFile: Error opening file")
 
         self.File.seek(0, 0)
         if self.TIFF:
@@ -886,6 +925,8 @@ class  EdfFile(object):
     def __makeSureFileIsOpen(self):
         if DEBUG:
             print("Making sure file is open")
+        if not self.__ownedOpen:
+            return
         if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
             if DEBUG:
                 print("Special case. Image is buffered")
@@ -905,6 +946,8 @@ class  EdfFile(object):
     def __makeSureFileIsClosed(self):
         if DEBUG:
             print("Making sure file is closed")
+        if not self.__ownedOpen:
+            return
         if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
             if DEBUG:
                 print("Special case. Image is buffered")
@@ -1110,7 +1153,7 @@ def GetRegion(Arr, Pos, Size):
         ArrRet = None
     return ArrRet
 
-#EXEMPLE CODE:        
+#EXAMPLE CODE:        
 if __name__ == "__main__":
     if 1:
 #        import os
