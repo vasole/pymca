@@ -55,7 +55,7 @@ class StackSelector(object):
     def __init__(self, parent=None):
         self.parent = parent
 
-    def getStack(self, filelist=None, imagestack=False):
+    def getStack(self, filelist=None, imagestack=None):
         if filelist in [None, []]:
             filelist, filefilter = self._getStackOfFiles(getfilter=True)
         else:
@@ -111,15 +111,19 @@ class StackSelector(object):
                   filelist[0].upper().endswith("TIFF")):
                 stack = TiffStack.TiffStack(imagestack=True)
             elif filefilter.upper().startswith("IMAGE"):
-                imagestack = True
+                if imagestack is None:
+                    imagestack = True
                 fileindex = 0
-                stack = QStack(imagestack=True)
+                stack = QStack(imagestack=imagestack)
             elif line[0] == "{":
                 if filelist[0].upper().endswith("RAW"):
-                    imagestack=True
+                    if imagestack is None:
+                        imagestack=True
                 stack = QStack(imagestack=imagestack)
             elif line[0:2] in ["II", "MM"]:
-                stack = QStack(imagestack=True)
+                if imagestack is None:
+                    imagestack = True
+                stack = QStack(imagestack=imagestack)
             elif line.startswith('Spectral'):
                 stack = OmnicMap.OmnicMap(filelist[0])
                 omnicfile = True
@@ -132,7 +136,8 @@ class StackSelector(object):
                  filelist[0].upper().endswith("RAW.BZ2")or\
                  filelist[0].upper().endswith("EDF.BZ2")or\
                  filelist[0].upper().endswith("CCD.BZ2"):
-                imagestack=True
+                if imagestack is None:
+                    imagestack = True
                 stack = QStack(imagestack=imagestack)
             elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
                 stack = SupaVisioMap.SupaVisioMap(filelist[0])
@@ -239,6 +244,15 @@ class StackSelector(object):
                 raise IOError(\
                     "No HDF5 support while trying to read an HDF5 file")
             stack = QHDF5Stack1D.QHDF5Stack1D(args)
+        elif args[0].upper().endswith("RAW.GZ")or\
+             args[0].upper().endswith("EDF.GZ")or\
+             args[0].upper().endswith("CCD.GZ")or\
+             args[0].upper().endswith("RAW.BZ2")or\
+             args[0].upper().endswith("EDF.BZ2")or\
+             args[0].upper().endswith("CCD.BZ2"):
+            if imagestack is None:
+                imagestack = True
+            stack = QStack(imagestack=imagestack)            
         else:
             if HDF5:
                 if h5py.is_hdf5(args[0]):

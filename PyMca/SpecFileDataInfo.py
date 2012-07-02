@@ -164,7 +164,12 @@ class SpecFileDataInfo(qt.QTabWidget):
             if names is not None:
                 if key != nameKeys[0]:
                     #EDF like ...
-                    names = names.split()
+                    tmpString = names.replace('"','')
+                    #ID01 specific
+                    tmpKey = key + '~1'
+                    if tmpKey in self.info:
+                        tmpString += self.info[tmpKey].replace('"','')
+                    names = tmpString.split()
                 break
         valKeys = ["MotorValues", "motor_pos"] 
         for key in valKeys:
@@ -172,7 +177,12 @@ class SpecFileDataInfo(qt.QTabWidget):
             if pos is not None:
                 if key != valKeys[0]:
                     #EDF like ...
-                    pos = pos.split()
+                    tmpString = pos.replace('"', '')
+                    #ID01 specific
+                    tmpKey = key + '~1'
+                    if tmpKey in self.info:
+                        tmpString += self.info[tmpKey].replace('"','')                    
+                    pos = tmpString.split()
                 break
         if names is not None and pos is not None:
             num= len(names)
