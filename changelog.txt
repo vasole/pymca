@@ -1,3 +1,16 @@
+VERSION 4.6.1
+
+Support GZIP compressed EDF files (extensions: edf.gz, ccd.gz, raw.gz)
+
+Fix annoying issue of having to select the left side of a pixel in order to
+have the pixel actually selected. 
+
+Fix windows problem of PyMca not starting when the "My Documents" folder has
+been relocated (issue number 3537267)
+
+Fix Debian hurd-i386 build from source problem.
+
+
 VERSION 4.6.0
 
 Add an X-ray fluorescence spectrum for training purposes.
