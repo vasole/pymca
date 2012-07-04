@@ -471,7 +471,7 @@ class McaAdvancedFitBatch(object):
                 try:
                     #I make sure I take the fit limits configuration
                     self.mcafit.config['fit']['use_limit'] = 1
-                    self.mcafit.setdata(x,y)
+                    self.mcafit.setData(x,y)
                 except:
                     print("Error entering data of file with output = %s" %\
                           filename)
