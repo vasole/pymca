@@ -44,6 +44,8 @@ class TiffArray(object):
         outputShape = []
         scalarArgs = []
         args = []
+        if not hasattr(args0, "__len__"):
+            args0 = [args0]
         for i in range(len(self.__shape)):
             if i < len(args0):
                 args.append(args0[i])
@@ -76,7 +78,7 @@ class TiffArray(object):
                     indices.append([int(x) for x in args[i]])
                 else:
                     standardSlice = False
-            elif type(args[i]) in [1, long(1)]:
+            elif type(args[i]) in [type(1), type(long(1))]:
                 start = args[i]
                 if start < 0:
                     start = self.__shape[i] - start
