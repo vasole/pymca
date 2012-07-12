@@ -84,7 +84,7 @@ def getCovarianceMatrix(stack,
     #
 
     #the starting number of channels or of images
-    N = oldShape[index]
+    N = oldShape[actualIndex]
 
     # our binning (better said sampling) is spectral, in order not to
     # affect the spatial resolution
@@ -97,7 +97,7 @@ def getCovarianceMatrix(stack,
     if spatial_mask is not None:
         cleanMask = spatial_mask[:].reshape(nPixels)
         usedPixels = cleanMask.sum()
-        badMask = ~spatial_mask
+        badMask = (spatial_mask < 1).astype(cleanMask.dtype)
         badMask.shape = nPixels
     else:
         cleanMask = None
@@ -163,7 +163,7 @@ def getCovarianceMatrix(stack,
         data = None
         raise
 
-    if index in [0]:
+    if actualIndex in [0]:
         #divider is used to decide the fraction of images to keep in memory
         #in order to limit file access on dynamically loaded data.
         #Since two chunks of the same size are used, the amount of memory
