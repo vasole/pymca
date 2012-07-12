@@ -103,6 +103,15 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
         x, y, legend0, info = activeCurve
         if self.widget is None:
             self._createWidget(y, energy=x)
+        else:
+            oldParameters = self.widget.getParameters()
+            oldEnergy = self.widget.parametersWidget.energy
+            oldEMin = oldEnergy.min()
+            oldEMax = oldEnergy.max()
+            self.widget.setData(y, energy=x)
+            if abs(oldEMin - x.min()) < 1:
+                if abs(oldEMax - x.max()) < 1:
+                    self.widget.setParameters(oldParameters)            
 
         ret = self.widget.exec_()
         if ret:
