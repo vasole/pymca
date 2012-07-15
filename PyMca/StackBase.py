@@ -156,6 +156,12 @@ class StackBase(object):
         if id(stack) == id(self._stack):
             # just updated
             pass
+        elif hasattr(stack, "shape") and\
+             hasattr(stack, "dtype"):
+            # array like
+            self._stack.x = None
+            self._stack.data = stack
+            self._stack.info['SourceName'] = "Data of unknown origin"
         elif isinstance(stack, DataObject.DataObject) or\
            ("DataObject.DataObject" in ("%s" % type(stack))) or\
            ("QStack" in ("%s" % type(stack))) or\
@@ -560,16 +566,16 @@ class StackBase(object):
                         if DEBUG:
                             print("Dynamic loading case 3")
                         #try to minimize access to the file
+                        row_list = []
                         row_dict = {}
                         for r, c in cleanMask:
-                            if r not in row_dict.keys():
-                                key = '%d' % r
-                                row_dict[key] = []
-                            row_dict[key].append(c)
-                        for key in row_dict.keys():
-                            r = int(key)
-                            tmpMcaData = self._stack.data[r:r + 1, row_dict[key], :]
-                            tmpMcaData.shape = 1, -1
+                            if r not in row_list:
+                                row_list.append(r)
+                                row_dict[r] = []
+                            row_dict[r].append(c)
+                        for r in row_list:
+                            tmpMcaData = self._stack.data[r:r + 1, row_dict[r], :]
+                            tmpMcaData.shape = -1, mcaData.shape[0]
                             mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float)
                 else:
                     raise IndexError("Wrong combination of indices. Case 1")
@@ -580,7 +586,7 @@ class StackBase(object):
                             mcaData += self._stack.data[r, :, c]
                     else:
                         raise IndexError("Dynamic loading case 4")
-                elif self.mcaIndex == 2:
+                elif self.mcaIndex in [2, -1]:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, c, :]
@@ -588,17 +594,17 @@ class StackBase(object):
                         if DEBUG:
                             print("Dynamic loading case 5")
                         #try to minimize access to the file
+                        row_list = []
                         row_dict = {}
                         for r, c in cleanMask:
-                            if r not in row_dict.keys():
-                                key = '%d' % r
-                                row_dict[key] = []
-                            row_dict[key].append(c)
-                        for key in row_dict.keys():
-                            r = int(key)
-                            tmpMcaData = self._stack.data[r:r + 1, row_dict[key], :]
-                            tmpMcaData.shape = 1, -1
-                            mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float)
+                            if r not in row_list:
+                                row_list.append(r)
+                                row_dict[r] = []
+                            row_dict[r].append(c)
+                        for r in row_list:
+                            tmpMcaData = self._stack.data[r:r + 1, row_dict[r], :]
+                            tmpMcaData.shape = -1, mcaData.shape[0]
+                            mcaData += tmpMcaData.sum(axis=0, dtype=numpy.float)
                 else:
                     raise IndexError("Wrong combination of indices. Case 2")
             else:

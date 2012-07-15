@@ -29,7 +29,7 @@ from PyMca import SpecfitFuns
 arctan = numpy.arctan
 pi = numpy.pi
 
-class SimpleFitDefaultFunctions:
+class SimpleFitDefaultFunctions(object):
     def __init__(self):
         self.gaussian = SpecfitFuns.gauss
         self.areaGaussian = SpecfitFuns.agauss
