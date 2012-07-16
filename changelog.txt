@@ -1,3 +1,10 @@
+VERSION 4.6.2
+
+Fix calculation of the MCA associated to a region when using dynamically
+loaded 1D stacks.
+
+Fix scan XANES normalization. All curves normalized instead of just the active one.
+
 VERSION 4.6.1
 
 Support GZIP compressed EDF files (extensions: edf.gz, ccd.gz, raw.gz)
