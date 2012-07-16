@@ -47,25 +47,6 @@ class DummyArray(object):
     dtype = property(getDType)
 
 class testStackBase(unittest.TestCase):
-    def setUp(self):
-        return
-        if not hasattr(self, '_data1D'):
-            print "DOING IT"
-            nrows = 100
-            ncolumns = 200
-            nchannels = 1024
-            a = numpy.ones((nrows, ncolumns), numpy.float)
-            self._data1D = numpy.zeros((nrows, ncolumns, nchannels),
-                                       numpy.float)
-            self._data2D = numpy.zeros((nchannels, nrows, ncolumns),
-                                       numpy.float)
-            for i in range(nchannels):
-                self._data1D[:, :, i] = a * i
-                self._data2D[i, :, :] = a * i
-            self._dummyDataObject1D = DummyDataObject(self._data1D)
-            self._dummyDataObject2D = DummyDataObject(self._data2D)
-            self._dummyDataObject2D.info['mcaIndex'] = 0
-        
     def testStackBaseImport(self):
         from PyMca import StackBase
 
