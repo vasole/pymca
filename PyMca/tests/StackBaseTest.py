@@ -88,43 +88,46 @@ class testStackBase(unittest.TestCase):
         maskedMca = referenceData[mask>0, :].sum(axis=0)
 
 
-        j = 0
-        for data in [referenceData, dummyArray]:
-            if j == 0:
-                dynamic = ""
-                j = 1
-            else:
-                dynamic = "dynamic "
-            stackBase = StackBase.StackBase()
-            stackBase.setStack(data, mcaindex=2)
-            channels, counts = stackBase.getActiveCurve()[0:2]
-            self.assertTrue(numpy.allclose(defaultMca, counts),
-                                           "Incorrect %sdefault mca" % dynamic)
+        for fileindex in [0, 1]:
+            #usually only one file index case is used but
+            #we test both to have a better coverage
+            j = 0
+            for data in [referenceData, dummyArray]:
+                if j == 0:
+                    dynamic = ""
+                    j = 1
+                else:
+                    dynamic = "dynamic "
+                stackBase = StackBase.StackBase()
+                stackBase.setStack(data, mcaindex=2, fileindex=fileindex)
+                channels, counts = stackBase.getActiveCurve()[0:2]
+                self.assertTrue(numpy.allclose(defaultMca, counts),
+                                               "Incorrect %sdefault mca" % dynamic)
 
-            # set mask
-            stackBase.setSelectionMask(mask)
-            self.assertTrue(numpy.allclose(stackBase.getSelectionMask(), mask),
-                                           "Incorrect mask set and get")
+                # set mask
+                stackBase.setSelectionMask(mask)
+                self.assertTrue(numpy.allclose(stackBase.getSelectionMask(), mask),
+                                               "Incorrect mask set and get")
 
-            # get mca from mask
-            mcaDataObject = stackBase.calculateMcaDataObject()
-            self.assertTrue(numpy.allclose(mcaDataObject.y[0], maskedMca),
-                                    "Incorrect %smca from mask calculation" % dynamic)
+                # get mca from mask
+                mcaDataObject = stackBase.calculateMcaDataObject()
+                self.assertTrue(numpy.allclose(mcaDataObject.y[0], maskedMca),
+                                        "Incorrect %smca from mask calculation" % dynamic)
 
-            #get image from roi
-            i0 = 100
-            imiddle = 200
-            i1 = 500
-            # calculate
-            imageDict = stackBase.calculateROIImages(100, 500, imiddle=200)
-            self.assertTrue(numpy.allclose(imageDict['ROI'], data[:,:,i0:i1].sum(axis=-1)),
-                    "Incorrect ROI image from %sROI calculation"  % dynamic)
-            self.assertTrue(numpy.allclose(imageDict['Left'], data[:,:,i0]),
-                    "Incorrect Left image from %sROI calculation" % dynamic)
-            self.assertTrue(numpy.allclose(imageDict['Right'], data[:,:,i1-1]),
-                    "Incorrect Right image from %sROI calculation"  % dynamic)
-            self.assertTrue(numpy.allclose(imageDict['Middle'], data[:,:,imiddle]),
-                    "Incorrect Middle image from %sROI calculation" % dynamic)
+                #get image from roi
+                i0 = 100
+                imiddle = 200
+                i1 = 500
+                # calculate
+                imageDict = stackBase.calculateROIImages(100, 500, imiddle=200)
+                self.assertTrue(numpy.allclose(imageDict['ROI'], data[:,:,i0:i1].sum(axis=-1)),
+                        "Incorrect ROI image from %sROI calculation"  % dynamic)
+                self.assertTrue(numpy.allclose(imageDict['Left'], data[:,:,i0]),
+                        "Incorrect Left image from %sROI calculation" % dynamic)
+                self.assertTrue(numpy.allclose(imageDict['Right'], data[:,:,i1-1]),
+                        "Incorrect Right image from %sROI calculation"  % dynamic)
+                self.assertTrue(numpy.allclose(imageDict['Middle'], data[:,:,imiddle]),
+                        "Incorrect Middle image from %sROI calculation" % dynamic)
 
     def testStackBaseStack2DDataHandling(self):
         from PyMca import StackBase
@@ -145,43 +148,46 @@ class testStackBase(unittest.TestCase):
         maskedMca = referenceData[:,mask>0].sum(axis=1)
 
 
-        j = 0
-        for data in [referenceData, dummyArray]:
-            if j == 0:
-                dynamic = ""
-                j = 1
-            else:
-                dynamic = "dynamic "
-            stackBase = StackBase.StackBase()
-            stackBase.setStack(data, mcaindex=0)
-            channels, counts = stackBase.getActiveCurve()[0:2]
-            self.assertTrue(numpy.allclose(defaultMca, counts),
-                                           "Incorrect %sdefault mca" % dynamic)
+        for fileindex in [1, 2]:
+            #usually only one file index case is used but
+            #we test both to have a better coverage
+            j = 0
+            for data in [referenceData, dummyArray]:
+                if j == 0:
+                    dynamic = ""
+                    j = 1
+                else:
+                    dynamic = "dynamic "
+                stackBase = StackBase.StackBase()
+                stackBase.setStack(data, mcaindex=0, fileindex=fileindex)
+                channels, counts = stackBase.getActiveCurve()[0:2]
+                self.assertTrue(numpy.allclose(defaultMca, counts),
+                                               "Incorrect %sdefault mca" % dynamic)
 
-            # set mask
-            stackBase.setSelectionMask(mask)
-            self.assertTrue(numpy.allclose(stackBase.getSelectionMask(), mask),
-                                           "Incorrect mask set and get")
+                # set mask
+                stackBase.setSelectionMask(mask)
+                self.assertTrue(numpy.allclose(stackBase.getSelectionMask(), mask),
+                                               "Incorrect mask set and get")
 
-            # get mca from mask
-            mcaDataObject = stackBase.calculateMcaDataObject()
-            self.assertTrue(numpy.allclose(mcaDataObject.y[0], maskedMca),
-                                    "Incorrect %smca from mask calculation" % dynamic)
+                # get mca from mask
+                mcaDataObject = stackBase.calculateMcaDataObject()
+                self.assertTrue(numpy.allclose(mcaDataObject.y[0], maskedMca),
+                                        "Incorrect %smca from mask calculation" % dynamic)
 
-            #get image from roi
-            i0 = 100
-            imiddle = 200
-            i1 = 500
-            # calculate
-            imageDict = stackBase.calculateROIImages(100, 500, imiddle=200)
-            self.assertTrue(numpy.allclose(imageDict['ROI'], data[i0:i1, :,:].sum(axis=0)),
-                    "Incorrect ROI image from %sROI calculation"  % dynamic)
-            self.assertTrue(numpy.allclose(imageDict['Left'], data[i0,:,:]),
-                    "Incorrect Left image from %sROI calculation" % dynamic)
-            self.assertTrue(numpy.allclose(imageDict['Right'], data[i1-1,:,:]),
-                    "Incorrect Right image from %sROI calculation"  % dynamic)
-            self.assertTrue(numpy.allclose(imageDict['Middle'], data[imiddle,:,:]),
-                    "Incorrect Middle image from %sROI calculation" % dynamic)
+                #get image from roi
+                i0 = 100
+                imiddle = 200
+                i1 = 500
+                # calculate
+                imageDict = stackBase.calculateROIImages(100, 500, imiddle=200)
+                self.assertTrue(numpy.allclose(imageDict['ROI'], data[i0:i1, :,:].sum(axis=0)),
+                        "Incorrect ROI image from %sROI calculation"  % dynamic)
+                self.assertTrue(numpy.allclose(imageDict['Left'], data[i0,:,:]),
+                        "Incorrect Left image from %sROI calculation" % dynamic)
+                self.assertTrue(numpy.allclose(imageDict['Right'], data[i1-1,:,:]),
+                        "Incorrect Right image from %sROI calculation"  % dynamic)
+                self.assertTrue(numpy.allclose(imageDict['Middle'], data[imiddle,:,:]),
+                        "Incorrect Middle image from %sROI calculation" % dynamic)
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
