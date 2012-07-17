@@ -52,9 +52,9 @@ class testStackBase(unittest.TestCase):
 
     def testStackBaseStack1DDataHandling(self):
         from PyMca import StackBase
-        nrows = 100
-        ncolumns = 200
-        nchannels = 1024
+        nrows = 50
+        ncolumns = 100
+        nchannels = 500
         a = numpy.ones((nrows, ncolumns), numpy.float)
         referenceData = numpy.zeros((nrows, ncolumns, nchannels),
                                    numpy.float)
@@ -98,9 +98,9 @@ class testStackBase(unittest.TestCase):
                 #get image from roi
                 i0 = 100
                 imiddle = 200
-                i1 = 500
+                i1 = 400
                 # calculate
-                imageDict = stackBase.calculateROIImages(100, 500, imiddle=200)
+                imageDict = stackBase.calculateROIImages(i0, i1, imiddle=imiddle)
                 self.assertTrue(numpy.allclose(imageDict['ROI'], data[:,:,i0:i1].sum(axis=-1)),
                         "Incorrect ROI image from %sROI calculation"  % dynamic)
                 self.assertTrue(numpy.allclose(imageDict['Left'], data[:,:,i0]),
@@ -112,14 +112,14 @@ class testStackBase(unittest.TestCase):
 
     def testStackBaseStack2DDataHandling(self):
         from PyMca import StackBase
-        nrows = 100
-        ncolumns = 200
-        nchannels = 1024
+        nrows = 50
+        ncolumns = 100
+        nchannels = 500
         a = numpy.ones((nrows, ncolumns), numpy.float)
         referenceData = numpy.zeros((nchannels, nrows, ncolumns),
                                    numpy.float)
         for i in range(nchannels):
-            referenceData[i, :, :] = a * i
+            referenceData[i] = a * i
         mask = numpy.zeros((nrows, ncolumns), numpy.uint8)
         mask[20:30, 15:50] = 1
 
@@ -158,9 +158,9 @@ class testStackBase(unittest.TestCase):
                 #get image from roi
                 i0 = 100
                 imiddle = 200
-                i1 = 500
+                i1 = 400
                 # calculate
-                imageDict = stackBase.calculateROIImages(100, 500, imiddle=200)
+                imageDict = stackBase.calculateROIImages(i0, i1, imiddle=imiddle)
                 self.assertTrue(numpy.allclose(imageDict['ROI'], data[i0:i1, :,:].sum(axis=0)),
                         "Incorrect ROI image from %sROI calculation"  % dynamic)
                 self.assertTrue(numpy.allclose(imageDict['Left'], data[i0,:,:]),
