@@ -27,7 +27,7 @@ class DummyArray(object):
 
         This allows detection of the PyMca bug track issue 3544665
         """
-        self.data = numpy.array(data, copy=True)
+        self.data = numpy.array(data, copy=False)
 
     def __getitem__(self, *var):
         if len(var) == 1:
@@ -60,6 +60,7 @@ class testStackBase(unittest.TestCase):
                                    numpy.float)
         for i in range(nchannels):
             referenceData[:, :, i] = a * i
+        a = None
         mask = numpy.zeros((nrows, ncolumns), numpy.uint8)
         mask[20:30, 15:50] = 1
 
@@ -109,6 +110,10 @@ class testStackBase(unittest.TestCase):
                         "Incorrect Right image from %sROI calculation"  % dynamic)
                 self.assertTrue(numpy.allclose(imageDict['Middle'], data[:,:,imiddle]),
                         "Incorrect Middle image from %sROI calculation" % dynamic)
+        stackBase = None
+        data = None
+        dummyArray = None
+        referenceData = None
 
     def testStackBaseStack2DDataHandling(self):
         from PyMca import StackBase
@@ -120,6 +125,7 @@ class testStackBase(unittest.TestCase):
                                    numpy.float)
         for i in range(nchannels):
             referenceData[i] = a * i
+        a = None
         mask = numpy.zeros((nrows, ncolumns), numpy.uint8)
         mask[20:30, 15:50] = 1
 
@@ -169,6 +175,10 @@ class testStackBase(unittest.TestCase):
                         "Incorrect Right image from %sROI calculation"  % dynamic)
                 self.assertTrue(numpy.allclose(imageDict['Middle'], data[imiddle,:,:]),
                         "Incorrect Middle image from %sROI calculation" % dynamic)
+        stackBase = None
+        data = None
+        dummyArray = None
+        referenceData = None
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
