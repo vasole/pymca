@@ -29,8 +29,9 @@ from PyMca import Plot1DWindowBase
 from PyMca import QtBlissGraph
 qt = QtBlissGraph.qt
 
+
 class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
-    def __init__(self, parent=None,**kw):
+    def __init__(self, parent=None, **kw):
         Plot1DWindowBase.Plot1DWindowBase.__init__(self, parent, **kw)
         mainLayout = self.layout()
         if not ('usecrosscursor' in kw):
@@ -45,9 +46,13 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
         self._logY = False
         self.__toggleCounter = 0
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
+    def addCurve(self, x, y, legend=None, info=None, replace=False,
+                 replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
+        Additional recognized keywords:
+            xlabel
+            ylabel
         """
         if legend is None:
             key = "Unnamed curve 1.1"
@@ -58,11 +63,12 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
         xlabel = info.get('xlabel', 'X')
         ylabel = info.get('ylabel', 'Y')
         if 'xlabel' in kw:
-            info['xlabel'] = kw['xlabel'] 
+            info['xlabel'] = kw['xlabel']
         if 'ylabel' in kw:
-            info['ylabel'] = kw['ylabel'] 
+            info['ylabel'] = kw['ylabel']
         Plot1DWindowBase.Plot1DWindowBase.addCurve(self, x, y, legend=legend,
-                               info=info, replace=replace, replot=replot)        
+                                                   info=info, replace=replace,
+                                                   replot=replot)
         if replot:
             if replace:
                 self.replot('REPLACE')
@@ -74,28 +80,29 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
         """
-        Plot1DWindowBase.Plot1DWindowBase.removeCurve(self, legend, replot=replot)
+        Plot1DWindowBase.Plot1DWindowBase.removeCurve(self, legend,
+                                                      replot=replot)
         if legend in self.graph.curves.keys():
             self.graph.removeCurve(legend)
         self._updateActiveCurve()
         if replot:
             self.graph.replot()
         return
-        
+
     def replot(self, mode=None):
         if mode in [None, 'REPLACE']:
             if mode == 'REPLACE':
                 self.graph.clearCurves()
             for curve in self.curveList:
-                x, y, legend, info = self.curveDict[curve] 
+                x, y, legend, info = self.curveDict[curve]
                 self.graph.newCurve(curve, x, y, logfilter=self._logY)
             self._updateActiveCurve()
             self.graph.replot()
             return
-        
+
         if mode.upper() == 'ADD':
             for curve in self.curveList:
-                x, y, legend, info = self.curveDict[curve] 
+                x, y, legend, info = self.curveDict[curve]
                 self.graph.newCurve(curve, x, y, logfilter=self._logY)
             self._updateActiveCurve()
             self.graph.replot()
@@ -109,8 +116,7 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
             if len(self.curveList):
                 self.activeCurve = self.curveList[0]
         if self.activeCurve is not None:
-            self.graph.setActiveCurve(self.activeCurve)            
-
+            self.graph.setActiveCurve(self.activeCurve)
 
     def _zoomReset(self):
         self.graph.zoomReset()
@@ -122,7 +128,9 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
             self.yAutoScaleButton.setChecked(False)
             self.graph.setY1AxisLimits(*self.graph.getY1AxisLimits())
             y2limits = self.graph.getY2AxisLimits()
-            if y2limits is not None:self.graph.setY2AxisLimits(*y2limits)
+            if y2limits is not None:
+                y2min, y2max = y2limits[0:2]
+                self.graph.setY2AxisLimits(y2min, y2max)
         else:
             self.graph.yAutoScale = True
             self.yAutoScaleButton.setDown(True)
@@ -146,7 +154,7 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
             self._logY = True
         activeCurve = self.graph.getActiveCurve(justlegend=1)
         self.activeCurve = activeCurve
-        self.graph.clearCurves()    
+        self.graph.clearCurves()
         self.graph.toggleLogY()
         self.replot(mode="ADD")
         self.graph.setActiveCurve(activeCurve)
@@ -167,14 +175,14 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
 
     def getGraphXLimits(self):
         """
-        Get the graph X limits. 
+        Get the graph X limits.
         """
         xmin, xmax = self.graph.getX1AxisLimits()
         return xmin, xmax
-        
+
     def getGraphYLimits(self):
         """
-        Get the graph Y (left) limits. 
+        Get the graph Y (left) limits.
         """
         ymin, ymax = self.graph.getY1AxisLimits()
         return ymin, ymax
@@ -192,7 +200,7 @@ class Plot1DQwt(Plot1DWindowBase.Plot1DWindowBase):
         return self.activeCurve
 
 
-if __name__ == "__main__":
+def main():
     import numpy
     x = numpy.arange(100.)
     y = x * x
@@ -200,13 +208,11 @@ if __name__ == "__main__":
     plot = Plot1DQwt(uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
-    plot.addCurve(x+100, -x*x)
+    plot.addCurve(x + 100, -x * x)
     print("Active curve = ", plot.getActiveCurve())
-    print("X Limits = ",     plot.getGraphXLimits())
-    print("Y Limits = ",     plot.getGraphYLimits())
-    #print "All curves = ",   plot.getAllCurves()
-    #plot.removeCurve("dummy")
-    #print "All curves = ",   plot.getAllCurves()
+    print("X Limits = ", plot.getGraphXLimits())
+    print("Y Limits = ", plot.getGraphYLimits())
     app.exec_()
 
-    
+if __name__ == "__main__":
+    main()
