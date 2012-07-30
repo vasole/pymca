@@ -66,14 +66,15 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 
 if QTVERSION > '4.0.0':
     from PyQt4 import Qwt5
+    try:
+        from PyMca import QwtPlotItems
+        OVERLAY_DRAW = True
+    except ImportError:
+        OVERLAY_DRAW = False
 else:
+    OVERLAY_DRAW = False
     import Qwt5
 
-try:
-    from PyMca import QwtPlotItems
-    OVERLAY_DRAW = True
-except ImportError:
-    OVERLAY_DRAW = False
 
 DEBUG = 0
 
