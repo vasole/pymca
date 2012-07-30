@@ -1820,13 +1820,22 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def onPrint(self):
         if DEBUG:
             print("onPrint called")
-        if self.scanwindow.hasFocus():
-            self.scanwindow.graph.printps() 
-        else:
+        if not self.scanwindow.isHidden():
+            self.scanwindow.graph.printps()
+            return
+
+        if not self.__useTabWidget:
             self.mcawindow.show()
-            if QTVERSION < '4.0.0':self.mcawindow.raiseW()
-            else:self.mcawindow.raise_()
-            self.mcawindow.graph.printps()    
+            if QTVERSION < '4.0.0':
+                self.mcawindow.raiseW()
+            else:
+                self.mcawindow.raise_()
+        else:
+            if QTVERSION < '4.0.0':         
+                self.mainTabWidget.setCurrentPage(self.mainTab.indexOf(self.mcawindow))
+            else:
+                self.mainTabWidget.setCurrentWidget(self.mcawindow)
+        self.mcawindow.graph.printps()
 
     def __McaWindowSignal(self, ddict):
         if ddict['event'] == 'NewScanCurve':
