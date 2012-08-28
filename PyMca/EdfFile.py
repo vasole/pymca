@@ -15,7 +15,7 @@
 # details.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "Alexandre Gobbo, V.A. Sole - ESRF Data Analysis"
 """
     EdfFile.py
     Generic class for Edf files manipulation.    
@@ -78,8 +78,6 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
       section is going to be translated into an 1D, 2D or 3D Numpy Array, and accessed
       through GetData method call.      
 """
-__author__ = 'Alexandre Gobbo (gobbo@esrf.fr)'
-__version__ = '$Revision: 1.6 $'
 DEBUG = 0
 ################################################################################  
 import sys
