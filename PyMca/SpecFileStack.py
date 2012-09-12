@@ -89,7 +89,6 @@ class SpecFileStack(DataObject.DataObject):
             SLOW_METHOD = True
         else:
             SLOW_METHOD = False
-        
         #get last mca of first point
         key = "%s.1.%s" % (keylist[-1], numberofmca)
         dataObject = tempInstance._getMcaData(key)
@@ -142,7 +141,7 @@ class SpecFileStack(DataObject.DataObject):
                 #it can only be here if there is one scan per file
                 #prevent problems if the scan number is different
                 #scan = tempInstance.select(keylist[-1])
-                scan = tempInstance[0]
+                scan = tempInstance[-1]
                 iterationList = range(scan.nbmca()) 
                 for i in iterationList:
                     #mcadata = scan_obj.mca(i)
@@ -165,7 +164,7 @@ class SpecFileStack(DataObject.DataObject):
                     #it can only be here if there is one scan per file
                     #prevent problems if the scan number is different
                     #scan = tempInstance.select(keylist[-1])
-                    scan = tempInstance[0]
+                    scan = tempInstance[-1]
                     for i in iterlist:
                         #mcadata = scan_obj.mca(i)
                         self.data[filecounter,
@@ -223,7 +222,7 @@ class SpecFileStack(DataObject.DataObject):
                             #it can only be here if there is one scan per file
                             #prevent problems if the scan number is different
                             #scan = tempInstance.select(keylist[-1])
-                            scan = tempInstance[0]
+                            scan = tempInstance[-1]
                             nRow = int(self.incrProgressBar/stackImageShape[1])
                             nCol = self.incrProgressBar%stackImageShape[1]
                             for i in iterlist:
