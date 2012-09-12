@@ -673,6 +673,9 @@ class StackBase(object):
                     maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
                     isUsingSuppliedEnergyAxis = True
+                    if DEBUG:
+                        print("1 ROI image calculation elapsed = %f " %\
+                              (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
                     roiImage = self._stackImageData * 0
@@ -698,21 +701,28 @@ class StackBase(object):
                         middleImage[i:i + step, :] += tmpData[:, :, imiddle - i1]
                         rightImage[i:i + step, :] += tmpData[:, :, -1]
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
-                if DEBUG:
-                    print("ROI image calculation elapsed = %f " %\
-                          (time.time() - t0))
+                    if DEBUG:
+                        print("2 Dynamic ROI image calculation elapsed = %f " %\
+                              (time.time() - t0))
         elif self.fileIndex == 1:
             if self.mcaIndex == 0:
+                if DEBUG:
+                    t0 = time.time()
                 if isinstance(self._stack.data, numpy.ndarray):
                     leftImage = self._stack.data[i1, :, :]
                     middleImage= self._stack.data[imiddle, :, :]
                     rightImage = self._stack.data[i2 - 1, :, :]
                     dataImage = self._stack.data[i1:i2, :, :]
+                    # this calculation is very slow but it is extremely useful
+                    # for XANES studies
                     maxImage = energy[numpy.argmax(dataImage, axis=0) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=0) + i1]
                     isUsingSuppliedEnergyAxis = True
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
+                    if DEBUG:
+                        print("3 ROI image calculation elapsed = %f " %\
+                              (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
                     roiImage = self._stackImageData * 0
@@ -722,8 +732,6 @@ class StackBase(object):
                     rightImage = roiImage * 1
                     maxImage = roiImage * 1
                     minImage = roiImage * 1
-                    if DEBUG:
-                        t0 = time.time()
                     istep = 1
                     for i in range(i1, i2):
                         tmpData = self._stack.data[i:i + istep]
@@ -741,11 +749,11 @@ class StackBase(object):
                             middleImage = tmpData
                         elif i == (i2 - 1):
                             rightImage = tmpData
-                    if DEBUG:
-                        print("Dynamic ROI elapsed = %f" %\
-                              (time.time() - t0))
                     if i2 > i1:
                         background = (leftImage + rightImage) * 0.5 * (i2 - i1)
+                    if DEBUG:
+                        print("4 Dynamic ROI elapsed = %f" %\
+                              (time.time() - t0))
             else:
                 if DEBUG:
                     t0 = time.time()
@@ -759,6 +767,9 @@ class StackBase(object):
                     maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
                     isUsingSuppliedEnergyAxis = True
+                    if DEBUG:
+                        print("5 ROI Image elapsed = %f" %\
+                              (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
                     roiImage = self._stackImageData * 0
@@ -784,11 +795,13 @@ class StackBase(object):
                         middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
                         rightImage[i:i+step, :]  += tmpData[:, :,-1]
                     background = 0.5*(i2-i1)*(leftImage+rightImage)
-                if DEBUG:
-                    print("ROI image calculation elapsed = %f" %\
-                          (time.time() - t0))
+                    if DEBUG:
+                        print("6 Dynamic ROI image calculation elapsed = %f" %\
+                                          (time.time() - t0))
         else:
             #self.fileIndex = 2
+            if DEBUG:
+                t0 = time.time()
             if self.mcaIndex == 0:
                 leftImage = self._stack.data[i1]
                 middleImage = self._stack.data[imiddle]
@@ -799,6 +812,9 @@ class StackBase(object):
                 minImage = energy[numpy.argmin(dataImage, axis=0) + i1]
                 maxImage = energy[numpy.argmax(dataImage, axis=0) + i1]
                 isUsingSuppliedEnergyAxis = True
+                if DEBUG:
+                   print("7 Default ROI image calculation elapsed = %f" %\
+                                          (time.time() - t0))
             else:
                 leftImage = self._stack.data[:, i1, :]
                 middleImage = self._stack.data[:, imiddle, :]
@@ -809,7 +825,9 @@ class StackBase(object):
                 minImage = energy[numpy.argmin(dataImage, axis=1) + i1]
                 maxImage = energy[numpy.argmax(dataImage, axis=1) + i1]
                 isUsingSuppliedEnergyAxis = True
-
+                if DEBUG:
+                   print("8 Default ROI image calculation elapsed = %f" %\
+                                          (time.time() - t0))
 
         imageDict = {'ROI': roiImage,
                      'Maximum': maxImage,
