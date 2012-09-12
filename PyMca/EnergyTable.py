@@ -708,8 +708,8 @@ def main(args):
     def dummy(ddict):
         print("dict =",ddict)
     tab = EnergyTable(None)
-    energy = numpy.arange(100.).astype(Float)+ 1.5
-    weight = numpy.ones(len(energy), Float)
+    energy = numpy.arange(100.).astype(numpy.float)+ 1.5
+    weight = numpy.ones(len(energy), numpy.float)
     flag  = numpy.zeros(len(energy)).tolist()
     scatterlist = numpy.zeros(len(energy))
     scatterlist[0:10] = 1
