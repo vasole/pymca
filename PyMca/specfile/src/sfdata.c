@@ -202,9 +202,9 @@ SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error 
 
      char    strval[100];
      double  val;
-     double  valline[200];
+     double  valline[512];
      long    cols,
-             maxcol=200;
+             maxcol=512;
      long    rows;
      int     i;
 #ifndef _GNU_SOURCE
