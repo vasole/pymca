@@ -21,7 +21,7 @@ Elements = ['H', 'He',
 def getHeader(filename):
     text  = '#F %s\n' % filename
     text += '#U00 This file is a conversion to specfile format of \n'
-    text += '#U01 directly extracted EADL97 Binding energies.\n'
+    text += '#U01 directly extracted EADL97 Shell constants.\n'
     text += '#U02 EADL itself can be found at:\n'
     text += '#U03           http://www-nds.iaea.org/epdl97/libsall.htm\n'
     text += '#U04 The code used to generate this file has been:\n'
