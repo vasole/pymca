@@ -311,7 +311,6 @@ if(0){
 	setlocale(LC_NUMERIC, "C\0");
 #endif
 #endif
-
     for ( ; ptr < to; ptr++) {
         /* get a complete line */
         i=0;
@@ -319,8 +318,10 @@ if(0){
         /*I should be at the start of a line */ 
         while(*(ptr) != '\n'){
             if (*(ptr-1) == '\n'){
-                /*I am at the start of a line */ 
+                /*I am at the start of a line */
                 while(*ptr == '#'){
+                    if (ptr >= to)
+                        break;
                     for (ptr = ptr; ptr < to;ptr++){
                         if (*ptr == '\n'){
                             break;
@@ -329,7 +330,7 @@ if(0){
                     /* on exit is equal to newline */
                     if (ptr < to) {
                         ptr++;
-                    }              
+                    }
                 }
                 if (*ptr == '@') {
                      /*
@@ -344,6 +345,8 @@ if(0){
                     }
                 }
                 while(*ptr == '#'){
+                    if (ptr >= to)
+                        break;
                     for (ptr = ptr; ptr < to;ptr++){
                         if (*ptr == '\n'){
                             break;
@@ -352,7 +355,7 @@ if(0){
                     /* on exit is equal to newline */
                     if (ptr < to) {
                         ptr++;
-                    }              
+                    }
                 }
                 /* first characters of buffer
                 */
