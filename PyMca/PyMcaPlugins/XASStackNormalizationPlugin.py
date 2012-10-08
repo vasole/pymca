@@ -302,10 +302,19 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     # should I give some useless values?
                     edges[i] = 0.0
                     jumps[i] = 0.0
-                else:
+                elif 0:
+                    # this approach removed
                     data[i,:c0] = spe[c0]
                     data[i, c0:c1] = spe[c0:c1]
                     data[i, c1:] = spe[c1]
+                    edges[i] = ed
+                    jumps[i] = jmp
+                else:
+                    # it seems more appropriate to set the channels below and
+                    # above limits to 0 than to the corresponding limits of the region
+                    data[i,:c0] = 0.0
+                    data[i, c0:c1] = spe[c0:c1]
+                    data[i, c1:] = 0.0
                     edges[i] = ed
                     jumps[i] = jmp
             self._progress = 100
@@ -346,9 +355,11 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     edges[i] = 0.0
                     jumps[i] = 0.0
                 else:
-                    data[:c0, i] = spe[c0]
+                    # it seems more appropriate to set the channels below and
+                    # above limits to 0 than to the corresponding limits of the region
+                    data[:c0, i] = 0.0
                     data[c0:c1, i] = spe[c0:c1]
-                    data[c1:, i] = spe[c1]
+                    data[c1:, i] = 0.0
                     edges[i] = ed
                     jumps[i] = jmp
             self._progress = 100
