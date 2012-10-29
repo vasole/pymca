@@ -31,7 +31,8 @@ except ImportError:
 
 class ConfigDict(dict):
     def __init__(self, defaultdict=None, initdict=None, filelist=None):
-        defaultdict = {}
+        if defaultdict is None:
+            defaultdict = {}
         dict.__init__(self, defaultdict)
         self.default = defaultdict
         self.filelist = []
@@ -190,7 +191,10 @@ class ConfigDict(dict):
             sep = ', '
             for item in ddict[key]:
                 if isinstance(item, list):
-                    llist.append(', '.join([str(val) for val in item]))
+                    if len(item) == 1:
+                        llist.append('%s,' % item[0])
+                    else:
+                        llist.append(', '.join([str(val) for val in item]))
                     sep = '\n\t'
                 else:
                     llist.append(str(item))
