@@ -194,10 +194,10 @@ def _initializeElement(element):
 
 def getElementCrossSections(element, energy=None, forced_shells=None):
     """
-    getCrossSections(element, energy, excited_shells=None)
+    getElementCrossSections(element, energy, forced_shells=None)
     Returns total and partial cross sections of element at the specified
-    energies. If excited_shells are not specified, it uses the internal
-    binding energies of EPDL97 for all shells. If excited_shells is specified,
+    energies. If forced_shells are not specified, it uses the internal
+    binding energies of EPDL97 for all shells. If forced_shells is specified,
     it enforces excitation of the relevant shells via log-log extrapolation
     if needed.
     """
