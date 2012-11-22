@@ -366,9 +366,10 @@ class SpecFileDataSource:
                       with a 3D array (pts_mot1*pts_mot2*mca)
         """
         key_type= self.__getKeyType(key)
-        if key_type=="scan": scan_key= key
-        elif key_type=="mca": (scan_key, mca_no)=self.__getMcaPars(key)
-
+        if key_type=="scan":
+            scan_key= key
+        elif key_type=="mca":
+            (scan_key, mca_no)=self.__getMcaPars(key)
         if self.__source_info_cached is None:
             sourceinfo = self.getSourceInfo()
             sourcekeys = sourceinfo['KeyList']
@@ -479,7 +480,7 @@ class SpecFileDataSource:
                     SPECFILE = False
                 for i in range(npoints):
                     if SPECFILE:
-                        wmca_no= (mca_no-1)*output.info['NbMcaDet'] + int(i+1)
+                        wmca_no= mca_no + output.info['NbMcaDet'] * i
                         mcaData= scan_obj.mca(wmca_no)
                     else:
                         mca_key = '%s.%d' % (scan_key, mca_no)
