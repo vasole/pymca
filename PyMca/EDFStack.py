@@ -152,9 +152,10 @@ class EDFStack(DataObject.DataObject):
                             self.onProgress(self.incrProgressBar)
                     except (MemoryError, ValueError):
                         hdf5done = False
-                        if HDF5 and ('PyMcaQt' in sys.modules):
-                            import PyMcaQt as qt
-                            import ArraySave
+                        if HDF5 and (('PyMcaQt' in sys.modules) or\
+                           ('PyMca.PyMcaQt' in sys.modules)):
+                            from PyMca import PyMcaQt as qt
+                            from PyMca import ArraySave
                             msg=qt.QMessageBox.information( None,
                               "Memory error\n",
                               "Do you want to convert your data to HDF5?\n",
@@ -342,9 +343,10 @@ class EDFStack(DataObject.DataObject):
                                                        numpy.float32)
                                 except (MemoryError, ValueError):
                                     text = "Memory Error: Attempt subsampling or convert to HDF5"
-                                    if HDF5 and ('PyMcaQt' in sys.modules):
-                                        import PyMcaQt as qt
-                                        import ArraySave
+                                    if HDF5 and (('PyMcaQt' in sys.modules) or\
+                                       ('PyMca.PyMcaQt' in sys.modules)):
+                                        from PyMca import PyMcaQt as qt
+                                        from PyMca import ArraySave
                                         msg=qt.QMessageBox.information( None,
                                           "Memory error\n",
                                           "Do you want to convert your data to HDF5?\n",
@@ -551,7 +553,7 @@ if __name__ == "__main__":
     print("getZSelectionArray  shape = ", stack.getZSelectionArray().shape)
     print("getXYSelectionArray shape = ", stack.getXYSelectionArray().shape)
 
-    import PyMcaQt as qt
+    from PyMca import PyMcaQt as qt
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
