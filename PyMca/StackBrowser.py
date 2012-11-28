@@ -95,6 +95,11 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         self.slider.hide()
         self.buildAndConnectImageButtonBox(replace=True)
 
+    def setBackgroundImage(self, image=None):
+        self._backgroundImage = image
+        if self._backgroundSubtraction:
+            self.subtractBackground()
+            
     def setStackDataObject(self, stack, index=None, stack_name=None):
         if hasattr(stack, "info") and hasattr(stack, "data"):            
             dataObject = stack
@@ -287,8 +292,11 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
             return
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
-        data = self._getImageDataFromSingleIndex(index)       
-        self.setImageData(data, clearmask=False)
+        data = self._getImageDataFromSingleIndex(index)
+        if self._backgroundSubtraction and (self._backgroundImage is not None):
+            self.setImageData(data - self._backgroundImage)
+        else:
+            self.setImageData(data, clearmask=False)
         txt = self._buildTitle(legend, index)
         self.graphWidget.graph.setTitle(txt)
         self.name.setText(txt)

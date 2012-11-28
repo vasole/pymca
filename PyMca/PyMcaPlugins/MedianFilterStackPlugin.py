@@ -87,8 +87,17 @@ class MedianFilterStackPlugin(StackPluginBase.StackPluginBase):
             return
         stack = self.getStackDataObject()
         self.widget.setStackDataObject(stack, stack_name="Stack Index")
+        self.widget.setBackgroundImage(self._getBackgroundImage())
         mask = self.getStackSelectionMask()
         self.widget.setSelectionMask(mask)
+
+    def _getBackgroundImage(self):
+        images, names = self.getStackROIImagesAndNames()
+        B = None
+        for key in names:
+            if key.endswith("ackground"):
+                B = images[names.index(key)]
+        return B
 
     def selectionMaskUpdated(self):
         if self.widget is None:
@@ -97,6 +106,11 @@ class MedianFilterStackPlugin(StackPluginBase.StackPluginBase):
             return
         mask = self.getStackSelectionMask()
         self.widget.setSelectionMask(mask)
+
+    def stackROIImageListUpdated(self):
+        if self.widget is None:
+            return
+        self.widget.setBackgroundImage(self._getBackgroundImage())
 
     def mySlot(self, ddict):
         if DEBUG:

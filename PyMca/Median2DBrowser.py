@@ -118,6 +118,22 @@ class Median2DBrowser(StackBrowser.StackBrowser):
         else:
             return title
 
+    def showImage(self, index=0, moveslider=True):
+        if not len(self.dataObjectsList):
+            return
+        legend = self.dataObjectsList[0]
+        dataObject = self.dataObjectsDict[legend]
+        data = self._getImageDataFromSingleIndex(index)
+        if self._backgroundSubtraction and (self._backgroundImage is not None):
+            self.setImageData(data - self._backgroundImage)
+        else:
+            self.setImageData(data, clearmask=False)
+        txt = self._buildTitle(legend, index)
+        self.graphWidget.graph.setTitle(txt)
+        self.name.setText(txt)
+        if moveslider:
+            self.slider.setValue(index)
+
     def setImageData(self, data, **kw):
         if self._medianParameters['use']:
             if max(self._medianParameters['row_width'],
@@ -126,6 +142,7 @@ class Median2DBrowser(StackBrowser.StackBrowser):
                 data = medfilt2d(data,[self._medianParameters['row_width'],
                                  self._medianParameters['column_width']],
                                  conditional=conditional)
+        # this method is in fact of MaskImageWidget
         StackBrowser.StackBrowser.setImageData(self, data, **kw)
 
 if __name__ == "__main__":
