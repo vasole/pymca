@@ -93,11 +93,32 @@ else:
 # top of the images
 #USE_PICKER = True
 
+def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+    if xScale is None:
+        c = x
+    else:
+        if x < xScale[0]:
+            x = xScale[0]        
+        c = shape[1] *(x - xScale[0]) / (xScale[1] - xScale[0])
+    if yScale is None:
+        r = y
+    else:
+        if y < yScale[0]:
+            y = yScale[0]        
+        r = shape[0] *(y - yScale[0]) / (yScale[1] - yScale[0])
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        r = min(int(r), shape[0] - 1)
+    return r, c
+
 class MyPicker(Qwt5.QwtPlotPicker):
     def __init__(self, *var):
         Qwt5.QwtPlotPicker.__init__(self, *var)
         self.__text = Qwt5.QwtText()
         self.data = None
+        self.xScale = None
+        self.yScale = None
 
     if USE_PICKER:
         def trackerText(self, var):
@@ -105,15 +126,13 @@ class MyPicker(Qwt5.QwtPlotPicker):
             if self.data is None:
                 self.__text.setText("%g, %g" % (d.x(), d.y()))
             else:
-                limits = self.data.shape
-                x = int(d.y())
-                y = int(d.x())
-                if x < 0: x = 0
-                if y < 0: y = 0
-                x = min(int(x), limits[0]-1)
-                y = min(int(y), limits[1]-1)
-                z = self.data[x, y]
-                self.__text.setText("%d, %d, %.4g" % (y, x, z))
+                x = d.x()
+                y = d.y()
+                r, c = convertToRowAndColumn(x, y, self.data.shape,
+                                             xScale=self.xScale,
+                                             yScale=self.yScale, safe=True)
+                z = self.data[r, c]
+                self.__text.setText("%.1f, %.1f, %.4g" % (x, y, z))
             return self.__text
     
 class MaskImageWidget(qt.QWidget):
@@ -142,6 +161,9 @@ class MaskImageWidget(qt.QWidget):
         self.__selectionMask = None
         self.__imageData = None
         self.__image = None
+        self._xScale = None
+        self._yScale = None
+
         self.colormap = None
         self.colormapDialog = None
         self.setDefaultColormap(2, False)
@@ -424,7 +446,7 @@ class MaskImageWidget(qt.QWidget):
         if ddict['mode'].upper() in ["HLINE", "HORIZONTAL"]:
             deltaDistance = 1.0
             if width < 1:
-                row = int(ddict['y'][0])
+                row = int(ddict['row'][0])
                 if row < 0:
                     row = 0
                 if row >= shape[0]:
@@ -440,12 +462,12 @@ class MaskImageWidget(qt.QWidget):
                                          replace=True,
                                          replot=True)
             else:
-                row0 = int(ddict['y'][0]) - 0.5 * width
+                row0 = int(ddict['row'][0]) - 0.5 * width
                 if row0 < 0:
                     row0 = 0
                     row1 = row0 + width
                 else:
-                    row1 = int(ddict['y'][0]) + 0.5 * width
+                    row1 = int(ddict['row'][0]) + 0.5 * width
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
                     row0 = max(0, row1 - width)
@@ -463,7 +485,7 @@ class MaskImageWidget(qt.QWidget):
         elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
             deltaDistance = 1.0
             if width < 1:
-                column = int(ddict['x'][0])
+                column = int(ddict['column'][0])
                 if column < 0:
                     column = 0
                 if column >= shape[1]:
@@ -479,12 +501,12 @@ class MaskImageWidget(qt.QWidget):
                                          replace=True,
                                          replot=True)
             else:
-                col0 = int(ddict['x'][0]) - 0.5 * width
+                col0 = int(ddict['column'][0]) - 0.5 * width
                 if col0 < 0:
                     col0 = 0
                     col1 = col0 + width
                 else:
-                    col1 = int(ddict['x'][0]) + 0.5 * width
+                    col1 = int(ddict['column'][0]) + 0.5 * width
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
                     col0 = max(0, col1 - width)
@@ -500,21 +522,26 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
         elif ddict['mode'].upper() in ["LINE"]:
-            if len(ddict['x']) == 1:
+            if len(ddict['column']) == 1:
                 #only one point given
                 return
             #the coordinates of the reference points
             x0 = numpy.arange(float(shape[0]))
             y0 = numpy.arange(float(shape[1]))
             #get the interpolation points
-            col0, col1 = [int(x) for x in ddict['x']]
-            row0, row1 = [int(x) for x in ddict['y']]
+            col0, col1 = [int(x) for x in ddict['column']]
+            row0, row1 = [int(x) for x in ddict['row']]
             deltaCol = abs(col0 - col1)
             deltaRow = abs(row0 - row1)
             if deltaCol > deltaRow:
                 npoints = deltaCol+1
             else:    
                 npoints = deltaRow+1
+            if npoints == 1:
+                #all points are the same
+                if DEBUG:
+                    print("START AND END POINT ARE THE SAME!!")
+                return
             #get the abscisa in distance units
             deltaDistance = numpy.sqrt(float(deltaCol)*deltaCol +
                                        float(deltaRow)*deltaRow)/(npoints-1.0)
@@ -537,17 +564,17 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             elif deltaCol == 0:
                 #vertical line
-                col0 = int(ddict['x'][0]) - 0.5 * width
+                col0 = int(ddict['column'][0]) - 0.5 * width
                 if col0 < 0:
                     col0 = 0
                     col1 = col0 + width
                 else:
-                    col1 = int(ddict['x'][0]) + 0.5 * width
+                    col1 = int(ddict['column'][0]) + 0.5 * width
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
                     col0 = max(0, col1 - width)
-                row0 = int(ddict['y'][0])
-                row1 = int(ddict['y'][1])
+                row0 = int(ddict['row'][0])
+                row1 = int(ddict['row'][1])
                 if row0 > row1:
                     tmp = row0
                     row0 = row1
@@ -570,17 +597,17 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             elif deltaRow == 0:
                 #horizontal line
-                row0 = int(ddict['y'][0]) - 0.5 * width
+                row0 = int(ddict['row'][0]) - 0.5 * width
                 if row0 < 0:
                     row0 = 0
                     row1 = row0 + width
                 else:
-                    row1 = int(ddict['y'][0]) + 0.5 * width
+                    row1 = int(ddict['row'][0]) + 0.5 * width
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
                     row0 = max(0, row1 - width)
-                col0 = int(ddict['x'][0])
-                col1 = int(ddict['x'][1])
+                col0 = int(ddict['column'][0])
+                col1 = int(ddict['column'][1])
                 if col0 > col1:
                     tmp = col0
                     col0 = col1
@@ -835,9 +862,24 @@ class MaskImageWidget(qt.QWidget):
                 for key in delKeys:
                     del self._overlayItemsDict[name][key]
                 del self._overlayItemsDict[name]
-        overlayItem.setData(x, y)
-        self._overlayItemsDict[legend]['x'] = x
-        self._overlayItemsDict[legend]['y'] = y
+        #the type of x can be list or array
+        shape = self.__imageData.shape
+        if self._xScale is None:
+            xList = x
+        else:
+            xList = []
+            for i in x:
+                xList.append(self._xScale[0] + i * (self._xScale[1] - self._xScale[0])/float(shape[1]))
+
+        if self._yScale is None:
+            yList = y
+        else:
+            yList = []
+            for i in y:
+                yList.append(self._yScale[0] + i * (self._yScale[1] - self._yScale[0])/float(shape[0]))
+        overlayItem.setData(xList, yList)
+        self._overlayItemsDict[legend]['x'] = xList
+        self._overlayItemsDict[legend]['y'] = yList
         self._overlayItemsDict[legend]['info'] = info
         if replot:
             self.graphWidget.graph.replot()
@@ -1112,8 +1154,10 @@ class MaskImageWidget(qt.QWidget):
             return numpy.zeros(self.__imageData.shape, numpy.uint8)
         return self.__selectionMask
 
-    def setImageData(self, data, clearmask=False):
+    def setImageData(self, data, clearmask=False, xScale=None, yScale=None):
         self.__image = None
+        self._xScale = xScale
+        self._yScale = yScale
         if data is None:
             self.__imageData = data
             self.__selectionMask = None
@@ -1175,6 +1219,8 @@ class MaskImageWidget(qt.QWidget):
         else:
             self.__imageData = data
             self.__imageData.shape = height, width
+        self._xScale = None
+        self._yScale = None
         self.__pixmap0 = pixmap
         if clearmask:
             self.__selectionMask = None
@@ -1184,12 +1230,16 @@ class MaskImageWidget(qt.QWidget):
         if self.__imageData is None:
             self.graphWidget.graph.clear()
             self.graphWidget.picker.data = None
+            self.graphWidget.picker.xScale = None
+            self.graphWidget.picker.yScale = None
             return
 
         if update:
             self.getPixmapFromData()
             self.__pixmap0 = self.__pixmap.copy()
             self.graphWidget.picker.data = self.__imageData
+            self.graphWidget.picker.xScale = self._xScale
+            self.graphWidget.picker.yScale = self._yScale
             if self.colormap is None:
                 if self.__defaultColormap < 2:
                     self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.green))
@@ -1207,7 +1257,9 @@ class MaskImageWidget(qt.QWidget):
         self.graphWidget.graph.pixmapPlot(self.__pixmap.tostring(),
             (self.__imageData.shape[1], self.__imageData.shape[0]),
                                         xmirror = 0,
-                                        ymirror = not self._y1AxisInverted)
+                                        ymirror = not self._y1AxisInverted,
+                                        xScale = self._xScale,
+                                        yScale = self._yScale)
 
         if not self.graphWidget.graph.yAutoScale:
             self.graphWidget.graph.setY1AxisLimits(ylimits[0], ylimits[1],
@@ -1502,22 +1554,33 @@ class MaskImageWidget(qt.QWidget):
         if self.__imageData is None:
             return
         if ddict['event'] == "MouseSelection":
-            if ddict['xmin'] < ddict['xmax']:
-                xmin = ddict['xmin']
-                xmax = ddict['xmax']
+            if ddict['column_min'] < ddict['column_max']:
+                xmin = ddict['column_min']
+                xmax = ddict['column_max']
             else:
-                xmin = ddict['xmax']
-                xmax = ddict['xmin']
-            if ddict['ymin'] < ddict['ymax']:
-                ymin = ddict['ymin']
-                ymax = ddict['ymax']
+                xmin = ddict['column_max']
+                xmax = ddict['column_min']
+            if ddict['row_min'] < ddict['row_max']:
+                ymin = ddict['row_min']
+                ymax = ddict['row_max']
             else:
-                ymin = ddict['ymax']
-                ymax = ddict['ymin']
+                ymin = ddict['row_max']
+                ymax = ddict['row_min']
+            """
+            if not (self._xScale is None and self._yScale is None):
+                ymin, xmin = convertToRowAndColumn(xmin, ymin, self.__imageData.shape,
+                                                  xScale=self._xScale,
+                                                  yScale=self._yScale,
+                                                  safe=True)
+                ymax, xmax = convertToRowAndColumn(xmax, ymax, self.__imageData.shape,
+                                                  xScale=self._xScale,
+                                                  yScale=self._yScale,
+                                                  safe=True)
+            """
             i1 = max(int(round(xmin)), 0)
-            i2 = min(abs(int(round(xmax)))+1, self.__imageData.shape[1])
+            i2 = min(abs(int(round(xmax))) + 1, self.__imageData.shape[1])
             j1 = max(int(round(ymin)),0)
-            j2 = min(abs(int(round(ymax)))+1,self.__imageData.shape[0])
+            j2 = min(abs(int(round(ymax))) + 1, self.__imageData.shape[0])
             if self.__selectionMask is None:
                 self.__selectionMask = numpy.zeros(self.__imageData.shape,
                                      numpy.uint8)
@@ -1533,19 +1596,35 @@ class MaskImageWidget(qt.QWidget):
                 #if follow mouse is not activated
                 #it only enters here when the mouse is pressed.
                 #Therefore is perfect for "brush" selections.
+                """
+                if not (self._xScale is None and self._yScale is None):
+                    y, x = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
+                                                      xScale=self._xScale,
+                                                      yScale=self._yScale,
+                                                      safe=True)
+                else:
+                    x = ddict['x']
+                    y = ddict['y']
+                """
+                y = ddict['row']
+                x = ddict['column']
                 width = self.__brushWidth   #in (row, column) units
                 r = self.__imageData.shape[0]
                 c = self.__imageData.shape[1]
-                xmin = max((ddict['x']-0.5*width), 0)
-                xmax = min((ddict['x']+0.5*width), c)
-                ymin = max((ddict['y']-0.5*width), 0)
-                ymax = min((ddict['y']+0.5*width), r)
+
+                xmin = max((x-0.5*width), 0)
+                xmax = min((x+0.5*width), c)
+                ymin = max((y-0.5*width), 0)
+                ymax = min((y+0.5*width), r)
+                
                 i1 = min(int(round(xmin)), c-1)
                 i2 = min(int(round(xmax)), c)
                 j1 = min(int(round(ymin)),r-1)
                 j2 = min(int(round(ymax)), r)
-                if i1 == i2: i2 = i1+1
-                if j1 == j2: j2 = j1+1
+                if i1 == i2:
+                    i2 = i1+1
+                if j1 == j2:
+                    j2 = j1+1
                 if self.__selectionMask is None:
                     self.__selectionMask = numpy.zeros(self.__imageData.shape,
                                      numpy.uint8)
@@ -1611,7 +1690,8 @@ class MaskImageWidget(qt.QWidget):
         filedialog.selectFilter(self._saveFilter)
         filedialog.setDirectory(initdir)
         ret = filedialog.exec_()
-        if not ret: return ""
+        if not ret:
+            return ""
         filename = filedialog.selectedFiles()[0]
         if len(filename):
             filename = qt.safe_str(filename)
@@ -1749,7 +1829,7 @@ def test():
         data = numpy.arange(40000).astype(numpy.int32)
         data.shape = 200, 200
         #data = numpy.eye(200)
-        container.setImageData(data)
+        container.setImageData(data, xScale=(100, 200), yScale=(1000., 2000.))
         #data.shape = 100, 400
         #container.setImageData(None)
         #container.setImageData(data)

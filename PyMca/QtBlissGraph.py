@@ -638,6 +638,18 @@ class QtBlissGraph(Qwt5.QwtPlot):
                  'ypixel': ypixelList,
                  'xcurve': None,
                  'ycurve': None}
+        if self.plotImage is not None:
+            rowList = []
+            columnList = []
+            for i in range(len(xList)):
+                r, c = self.plotImage.convertToRowAndColumn(xList[i],
+                                                            yList[i],
+                                                            safe=True)
+                rowList.append(r)
+                columnList.append(c)
+            ddict['row'] = rowList
+            ddict['column'] = columnList
+            
         #let the calling program replot
         #self.replot()
         if QTVERSION < '4.0.0':
@@ -865,7 +877,9 @@ class QtBlissGraph(Qwt5.QwtPlot):
                 self.setAxisScale(Qwt5.QwtPlot.yLeft, ymax, ymin)
         return flag
 
-    def pixmapPlot(self, pixmap, size, xmirror=None, ymirror=None):
+    def pixmapPlot(self, pixmap, size,
+                   xmirror=None, ymirror=None,
+                   xScale=None, yScale=None):
         if xmirror is None:
             xmirror = self._xImageMirror
         if ymirror is None:
@@ -873,10 +887,12 @@ class QtBlissGraph(Qwt5.QwtPlot):
         if self.plotImage is None:
             self.plotImage = Qwt5PlotImage(self)
         self.plotImage.setPixmap(pixmap, size,
-                                 xmirror=xmirror, ymirror=ymirror)
+                                 xmirror=xmirror, ymirror=ymirror,
+                                 xScale=xScale, yScale=yScale)
 
     def imagePlot(self, data=None, colormap=None,
-                xmirror=None, ymirror=None):
+                    xmirror=None, ymirror=None,
+                    xScale=None, yScale=None):
         if data is not None:
             #get the current limits
             xmin = self.canvasMap(Qwt5.QwtPlot.xBottom).s1()
@@ -897,7 +913,7 @@ class QtBlissGraph(Qwt5.QwtPlot):
                                        ymirror=ymirror)
             else:
                 #let the scale be governed by the image
-                self.plotImage.setData(data, None, None,
+                self.plotImage.setData(data, xScale, yScale,
                                        colormap=colormap,
                                        xmirror=xmirror,
                                        ymirror=ymirror)
@@ -1048,7 +1064,10 @@ class QtBlissGraph(Qwt5.QwtPlot):
                     ddict['ycurve'] = curve.y(p[0])
                     ddict['point'] = p[0]
                     ddict['distance'] = p[1]
-
+        if self.plotImage is not None:
+            r, c = self.plotImage.convertToRowAndColumn(x, y, safe=True)
+            ddict['row'] = r
+            ddict['column'] = c
 
         if qt.qVersion() < '4.0.0':
             self.emit(qt.PYSIGNAL('QtBlissGraphSignal'), (ddict,))
@@ -1166,6 +1185,10 @@ class QtBlissGraph(Qwt5.QwtPlot):
                 ddict['xpixel'] = xpixel
                 ddict['y'] = y
                 ddict['ypixel'] = ypixel
+                if self.plotImage is not None:
+                    r, c = self.plotImage.convertToRowAndColumn(x, y, safe=True)
+                    ddict['row'] = r
+                    ddict['column'] = c
                 if QTVERSION < '4.0.0':
                     self.emit(qt.PYSIGNAL("QtBlissGraphSignal"), (ddict,))
                 else:
@@ -1276,6 +1299,17 @@ class QtBlissGraph(Qwt5.QwtPlot):
                 ddict['xpixel_max'] = max(xmin0, xmax0)
                 ddict['ymax'] = max(ymin, ymax)
                 ddict['ypixel_max'] = max(ymin0, ymax0)
+                if self.plotImage is not None:
+                    x0, y0 = ddict['xmin'], ddict['ymin']
+                    r, c = self.plotImage.convertToRowAndColumn(x0,
+                                                                y0, safe=True)
+                    ddict['row_min'] = r
+                    ddict['column_min'] = c                
+                    x0, y0 = ddict['xmax'], ddict['ymax']
+                    r, c = self.plotImage.convertToRowAndColumn(x0,
+                                                                y0, safe=True)
+                    ddict['row_max'] = r
+                    ddict['column_max'] = c                
                 if qt.qVersion() < '4.0.0':
                     self.emit(qt.PYSIGNAL("QtBlissGraphSignal"), (ddict,))
                 else:
@@ -1304,6 +1338,10 @@ class QtBlissGraph(Qwt5.QwtPlot):
                             ddict['xpixel'] = xpixel
                             ddict['y'] = y
                             ddict['ypixel'] = ypixel
+                            if self.plotImage is not None:
+                                r, c = self.plotImage.convertToRowAndColumn(x, y, safe=True)
+                                ddict['row'] = r
+                                ddict['column'] = c
                             if qt.qVersion() < '4.0.0':
                                 self.emit(qt.PYSIGNAL("QtBlissGraphSignal"),
                                           (ddict,))
@@ -2461,6 +2499,8 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
         self.xyzs = None
         self.attach(parent)
         self.image = None
+        self._xScale = None
+        self._yScale = None
         if not USE_SPS_LUT:
             if palette is None:
                 self.palette = fuzzypalette()
@@ -2572,6 +2612,9 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
                                        qt.QImage.Format_RGB32).mirrored(xmirror,
                                                                         ymirror)
             self.image_buffer = image_buffer
+        self._xScale = xScale
+        self._yScale = yScale
+        self._shape = shape
 
     def setPixmap(self, pixmap, size = None, xScale = None, yScale = None,
                   xmirror = 0, ymirror = 1):
@@ -2639,7 +2682,31 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
                                    qt.QImage.Format_RGB32).mirrored(xmirror,
                                                                     ymirror)
         self.image_buffer = pixmap
+        self._xScale = xScale
+        self._yScale = yScale
+        self._shape = shape
 
+    def convertToRowAndColumn(self, x, y, safe=True):
+        xScale = self._xScale
+        yScale = self._yScale
+        shape = self._shape
+        if xScale is None:
+            c = x
+        else:
+            if x < xScale[0]:
+                x = xScale[0]        
+            c = shape[1] *(x - xScale[0]) / (xScale[1] - xScale[0])
+        if yScale is None:
+            r = y
+        else:
+            if y < yScale[0]:
+                y = yScale[0]        
+            r = shape[0] *(y - yScale[0]) / (yScale[1] - yScale[0])
+
+        if safe:
+            c = min(int(c), shape[1] - 1)
+            r = min(int(r), shape[0] - 1)
+        return r, c
 
 class MyPicker(Qwt5.QwtPicker):
     def __init__(self, parent):
