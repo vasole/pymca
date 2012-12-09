@@ -50,7 +50,7 @@ class SimpleMath(object):
         minDelta = deltax.min()
         xInter = numpy.arange(x[0]-minDelta,x[-1]+minDelta,minDelta)
         yInter = numpy.interp(xInter, x, y, left=y[0], right=y[-1])
-        if len(yInter) > 50:
+        if len(yInter) > 499:
             npoints = 5
         else:
             npoints = 3
