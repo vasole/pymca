@@ -104,14 +104,13 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self._x = x
         self._y = y
         if 'Header' not in info:
-            raise ValueError("This does not seem to be a mesh scan")
+            raise ValueError("Active curve does not seem to be a mesh scan")
             
-        #print "INFO = ", info
         header = info['Header'][0]
-        #print header
+
         item = header.split()
         if item[2] not in ['mesh', 'hklmesh']:
-            raise ValueError("This does not seem to be a mesh scan")
+            raise ValueError("Active curve does not seem to be a mesh scan")
 
         self._xLabel = self.getGraphXTitle()
         self._yLabel = self.getGraphYTitle()
@@ -151,24 +150,14 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                                         selection=False,
                                         profileselection=True,
                                         scanwindow=self)
-        self.stackWidget.setImageData(y)
+        self.stackWidget.setImageData(y,
+                                      xScale=(self._motor0[0],
+                                              self._motor0[-1]),                                              
+                                      yScale=(self._motor1[0],
+                                              self._motor1[-1]))
+        self.stackWidget.setXLabel(self._motor0Mne)
+        self.stackWidget.setYLabel(self._motor1Mne)
         self.stackWidget.show()
-
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
-        info['LabelNames'][1] = self._yLabel
-        if info['SourceName'].startswith('Row ='):
-            x = self._motor0
-            info['xlabel'] = self._motor0Mne
-        elif info['SourceName'].startswith('Column ='):
-            x = self._motor1
-            info['xlabel'] = self._motor1Mne
-        info['legend'] = info['selectionlegend']
-        info['ylabel'] = self._yLabel
-        legend = info['selectionlegend']
-        return self._plotWindow.addCurve(x, y, legend=legend,
-                                         info=info,
-                                         replace=replace,
-                                         replot=replot)
 
 MENU_TEXT = "RegularMeshPlugins"
 def getPlugin1DInstance(plotWindow, **kw):
@@ -178,10 +167,6 @@ def getPlugin1DInstance(plotWindow, **kw):
 if __name__ == "__main__":
     from PyMca import Plot1D
     app = qt.QApplication([])
-    #w = ConfigurationWidget()
-    #w.exec_()
-    #sys.exit(0)
-    
     DEBUG = 1
     x = numpy.arange(100.)
     y = x * x

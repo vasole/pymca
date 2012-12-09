@@ -302,6 +302,18 @@ class RGBCorrelatorGraph(qt.QWidget):
     def infoText(self):
         return self.infoWidget.label.text()
 
+    def setXLabel(self, label="Column"):
+        return self.graph.x1Label(label)
+
+    def setYLabel(self, label="Row"):
+        return self.graph.ylabel(label)
+
+    def getXLabel(self):
+        return self.graph.x1Label()
+
+    def getYLabel(self):
+        return self.graph.y1Label()
+
     def hideImageIcons(self):
         if self.imageToolButton is None:return
         self.imageToolButton.hide()

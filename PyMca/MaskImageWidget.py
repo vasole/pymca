@@ -914,6 +914,18 @@ class MaskImageWidget(qt.QWidget):
         self._y1AxisInverted = value
         self.graphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
 
+    def setXLabel(self, label="Column"):
+        return self.graphWidget.setXLabel(label)
+
+    def setYLabel(self, label="Row"):
+        return self.graphWidget.setYLabel(label)
+
+    def getXLabel(self):
+        return self.graphWidget.getXLabel()
+
+    def getYLabel(self):
+        return self.graphWidget.getYLabel()
+
     def buildAndConnectImageButtonBox(self, replace=True):
         # The IMAGE selection
         self.imageButtonBox = qt.QWidget(self)
@@ -1539,6 +1551,17 @@ class MaskImageWidget(qt.QWidget):
             else:
                 ddict['valuemin'] = 0
                 ddict['valuemax'] = 0
+            """
+            #this sets the actual dimensions
+            if self._xScale is not None:
+                ddict['xorigin'] = self._xScale[0]
+                ddict['xpixelsize'] = (self._xScale[1] - self._xScale[0])/\
+                                          float(imageData.shape[1])
+            if self._yScale is not None:
+                ddict['yorigin'] = self._yScale[0]
+                ddict['ypixelsize'] = (self._yScale[1] - self._yScale[0])/\
+                                          float(imageData.shape[0])
+            """
             self._matplotlibSaveImage.setParameters(ddict)
         self._matplotlibSaveImage.setImageData(imageData)
         self._matplotlibSaveImage.show()

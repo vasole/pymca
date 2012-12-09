@@ -1641,7 +1641,7 @@ class QtBlissGraph(Qwt5.QwtPlot):
     def x1Label(self,label=None):
         # set axis titles
         if label is None:
-            return self.axisTitle(Qwt5.QwtPlot.xBottom).text()
+            return qt.safe_str(self.axisTitle(Qwt5.QwtPlot.xBottom).text())
         else:
             return self.setAxisTitle(Qwt5.QwtPlot.xBottom, label)
 
@@ -1652,7 +1652,7 @@ class QtBlissGraph(Qwt5.QwtPlot):
     def y1Label(self,label=None):
         # set axis titles
         if label is None:
-            return self.axisTitle(Qwt5.QwtPlot.yLeft).text()
+            return qt.safe_str(self.axisTitle(Qwt5.QwtPlot.yLeft).text())
         else:
             return self.setAxisTitle(Qwt5.QwtPlot.yLeft, label)
 
