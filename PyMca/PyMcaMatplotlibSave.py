@@ -25,7 +25,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import os
 import numpy
 from matplotlib import cm
@@ -34,6 +34,7 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
+from matplotlib.ticker import MaxNLocator, AutoLocator
 
 DEBUG = 0
 
@@ -254,21 +255,23 @@ class PyMcaMatplotlibSave(FigureCanvas):
 
 class PyMcaMatplotlibSaveImage:
     def __init__(self, imageData=None, fileName=None,
-		     dpi=300,
+                     dpi=300,
                      size=(5, 5),
                      xaxis='off',
                      yaxis='off',
                      xlabel='',
                      ylabel='',
+                     nxlabels=0,
+                     nylabels=0,
                      colorbar=None,
                      title='',
                      interpolation='nearest',
-		     colormap=None,
+                     colormap=None,
                      linlogcolormap='linear',                 
                      origin='lower',
-		     contour='off',
-		     contourlabels='on',
-		     contourlabelformat='%.3f',
+                     contour='off',
+                     contourlabels='on',
+                     contourlabelformat='%.3f',
                      contourlevels=10,
                      xorigin=0.0,
                      yorigin=0.0,
@@ -288,6 +291,8 @@ class PyMcaMatplotlibSaveImage:
                     'title':title,
                     'xlabel':xlabel,
                     'ylabel':ylabel,
+                    'nxlabels':nxlabels,
+                    'nylabels':nylabels,
                     'colorbar':colorbar,
                     'colormap':colormap,
                     'linlogcolormap':linlogcolormap,                     
@@ -385,10 +390,19 @@ class PyMcaMatplotlibSaveImage:
             self.axes.xaxis.set_visible(False)
         else:
             self.axes.xaxis.set_visible(True)
+            nLabels = self.config['nxlabels']
+            if nLabels not in ['Auto', 'auto', '0', 0]:
+                self.axes.xaxis.set_major_locator(MaxNLocator(nLabels))
+            else:
+                self.axes.xaxis.set_major_locator(AutoLocator())
         if self.config['yaxis'] == 'off':
             self.axes.yaxis.set_visible(False)
         else:
             self.axes.yaxis.set_visible(True)
+            if nLabels not in ['Auto', 'auto', '0', 0]:
+                self.axes.yaxis.set_major_locator(MaxNLocator(nLabels))
+            else:
+                self.axes.yaxis.set_major_locator(AutoLocator())
 
         if self.pixmapImage is not None:
             self._savePixmapFigure(filename)

@@ -29,12 +29,14 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
+import traceback
 
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
+from matplotlib.ticker import MaxNLocator, AutoLocator
 
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaMatplotlibSave
@@ -173,7 +175,9 @@ class SaveImageSetup(qt.QWidget):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error updating image: %s" % sys.exc_info()[1])
+            msg.setText("Error updating image:")
+            msg.setInformativeText("%s" % sys.exc_info()[1])
+            msg.setDetailedText(traceback.format_exc())
             msg.setWindowTitle('Matplotlib Save Image')
             msg.exec_()
             
@@ -311,6 +315,8 @@ class RightWidget(qt.QWidget):
         self.gridLayout.setSpacing(2)
         self.labelList = ['X Axis',
                         'Y Axis',
+                        'N X Labels',
+                        'N Y Labels',
                         'Origin',
                         'Interpolation',
                         'Colormap',
@@ -341,6 +347,8 @@ class RightWidget(qt.QWidget):
             label.setText(self.labelList[i])
             if self.labelList[i] in ['X Axis', 'Y Axis']:
                 options = ['Off', 'On']
+            if self.labelList[i] in ['N X Labels', 'N Y Labels']:
+                options = ['Auto', '1', '2', '3', '4', '5', '6', '7', '8', '9']
             elif self.labelList[i] in ['Colormap']:
                 options = ['Temperature','Grey', 'Yerg',\
                            'Red', 'Green', 'Blue',\
@@ -425,8 +433,11 @@ class RightWidget(qt.QWidget):
             if i > self.labelList.index('Image Background'):
                 text = qt.safe_str(self.comboBoxList[i].text())
                 if len(text):
-                    if label == 'Output dpi':
-                        ddict[label] = int(text)
+                    if label in ['Output dpi', "N X Labels", "N Y Labels"]:
+                        if ddict[label] in ['Auto', 'auto', '0', 0]:
+                            ddict['label'] = 0
+                        else:
+                            ddict[label] = int(text)
                     else:
                         ddict[label] = float(text)
                 else:
@@ -444,8 +455,14 @@ class RightWidget(qt.QWidget):
                 i = self.keyList.index(label)
                 if i > self.labelList.index('Image Background'):
                     if ddict[label] is not None:
-                        if label == 'Output dpi':
+                        if label in ['Output dpi']:
                             self.comboBoxList[i].setText("%d" % int(ddict[label]))
+                        elif label in ['N X Labels', 'N Y Labels']:
+                            if ddict[label] in ['Auto', 'auto', '0', 0]:
+                                self.comboBoxList[i].setText("Auto")
+                            else:
+                                self.comboBoxList[i].setText("%d" %\
+                                                             int(ddict[label]))
                         else:
                             self.comboBoxList[i].setText("%f" % ddict[label])
                 else:
@@ -458,7 +475,7 @@ class RightWidget(qt.QWidget):
                             pass
                     self.comboBoxList[i].setCurrentText(txt)
         return
-	
+
 class MyLineEdit(qt.QLineEdit):
     def sizeHint(self):
         return qt.QSize(0.6 * qt.QLineEdit.sizeHint(self).width(),
@@ -467,12 +484,14 @@ class MyLineEdit(qt.QLineEdit):
 
 class QPyMcaMatplotlibImage(FigureCanvas):
     def __init__(self, parent, imageData=None,
-		     dpi=100,
+                     dpi=100,
                      size=(5, 5),
                      xaxis='off',
                      yaxis='off',
                      xlabel='',
                      ylabel='',
+                     nxlabels=0,
+                     nylabels=0,
                      colorbar=None,
                      title='',
                      interpolation='nearest',
@@ -509,6 +528,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      'title':title,
                      'xlabel':xlabel,
                      'ylabel':ylabel,
+                     'nxlabels':nxlabels,
+                     'nylabels':nylabels,
                      'colorbar':colorbar,
                      'colormap':colormap,
                      'linlogcolormap':linlogcolormap,
@@ -595,16 +616,26 @@ class QPyMcaMatplotlibImage(FigureCanvas):
            (self.pixmapImage is None):
             return
 
-	# The axes
+        # The axes
         self.axes = self.figure.add_axes([.15, .15, .75, .8])
         if self.config['xaxis'] == 'off':
             self.axes.xaxis.set_visible(False)
         else:
             self.axes.xaxis.set_visible(True)
+            nLabels = self.config['nxlabels']
+            if nLabels not in ['Auto', 'auto', '0', 0]:
+                self.axes.xaxis.set_major_locator(MaxNLocator(nLabels))
+            else:
+                self.axes.xaxis.set_major_locator(AutoLocator())
         if self.config['yaxis'] == 'off':
             self.axes.yaxis.set_visible(False)
         else:
             self.axes.yaxis.set_visible(True)
+            nLabels = self.config['nylabels']
+            if nLabels not in ['Auto', 'auto', '0', 0]:
+                self.axes.yaxis.set_major_locator(MaxNLocator(nLabels))
+            else:
+                self.axes.yaxis.set_major_locator(AutoLocator())
 
         if self.pixmapImage is not None:
             self._updatePixmapFigure()

@@ -1532,8 +1532,8 @@ class MaskImageWidget(qt.QWidget):
                                                             image=None)
         title = "Matplotlib " + self.getGraphTitle()
         self._matplotlibSaveImage.setWindowTitle(title)        
+        ddict = self._matplotlibSaveImage.getParameters()
         if self.colormap is not None:
-            ddict = self._matplotlibSaveImage.getParameters()
             colormapType = ddict['linlogcolormap']
             try:
                 colormapIndex, autoscale, vmin, vmax,\
@@ -1551,18 +1551,26 @@ class MaskImageWidget(qt.QWidget):
             else:
                 ddict['valuemin'] = 0
                 ddict['valuemax'] = 0
-            """
-            #this sets the actual dimensions
-            if self._xScale is not None:
-                ddict['xorigin'] = self._xScale[0]
-                ddict['xpixelsize'] = (self._xScale[1] - self._xScale[0])/\
-                                          float(imageData.shape[1])
-            if self._yScale is not None:
-                ddict['yorigin'] = self._yScale[0]
-                ddict['ypixelsize'] = (self._yScale[1] - self._yScale[0])/\
-                                          float(imageData.shape[0])
-            """
-            self._matplotlibSaveImage.setParameters(ddict)
+            
+        #this sets the actual dimensions
+        if self._xScale is not None:
+            ddict['xorigin'] = self._xScale[0]
+            ddict['xpixelsize'] = (self._xScale[1] - self._xScale[0])/\
+                                      float(imageData.shape[1])
+        if self._yScale is not None:
+            ddict['yorigin'] = self._yScale[0]
+            ddict['ypixelsize'] = (self._yScale[1] - self._yScale[0])/\
+                                      float(imageData.shape[0])
+        ddict['xlabel'] = self.getXLabel()
+        ddict['ylabel'] = self.getYLabel()
+        limits = self.graphWidget.graph.getX1AxisLimits()
+        ddict['zoomxmin'] = limits[0]
+        ddict['zoomxmax'] = limits[1]
+        limits = self.graphWidget.graph.getY1AxisLimits()
+        ddict['zoomymin'] = limits[0] 
+        ddict['zoomymax'] = limits[1]
+        
+        self._matplotlibSaveImage.setParameters(ddict)
         self._matplotlibSaveImage.setImageData(imageData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
