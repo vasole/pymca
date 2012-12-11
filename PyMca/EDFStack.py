@@ -400,7 +400,20 @@ class EDFStack(DataObject.DataObject):
                                 id24idx += 1
                             else:
                                 pieceOfStack=tempEdf.GetData(0)
-                            self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
+                            try:
+                                self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
+                            except:
+                                if pieceOfStack.shape[1] != arrRet.shape[1]:
+                                    print(" ERROR on file %s" % tempEdfFileName)
+                                    print(" DIM 1 error Assuming missing data were at the end!!!")
+                                if pieceOfStack.shape[0] != arrRet.shape[0]:
+                                    print(" ERROR on file %s" % tempEdfFileName)
+                                    print(" DIM 0 error Assuming missing data were at the end!!!")
+                                self.data[self.incrProgressBar,\
+                                         :pieceOfStack.shape[0],\
+                                         :pieceOfStack.shape[1]] = pieceOfStack[:,:]
+
+                                
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
