@@ -191,10 +191,12 @@ class MaskImageWidget(qt.QWidget):
         self._buildConnections()
         self._matplotlibSaveImage = None
 
-        #the overlay items to be drawn
+        # the overlay items to be drawn
         self._overlayItemsDict = {}
-        #the last overlay legend used
+        # the last overlay legend used
         self.__lastOverlayLegend = None
+        # the projection mode
+        self.__lineProjectionMode = 'D'
 
     def _build(self, standalonesave, profileselection=False):
         self.mainLayout = qt.QVBoxLayout(self)
@@ -415,6 +417,24 @@ class MaskImageWidget(qt.QWidget):
             title = ""
         return title
 
+    def setLineProjectionMode(self, mode):
+        """
+        Set the line projection mode.
+
+        mode: 1 character string. Allowed options 'D', 'X' 'Y'
+        D - Plot the intensity over the drawn line over as many intervals as pixels over the axis
+            containing the longest projection in pixels.
+        X - Plot the intensity over the drawn line over as many intervals as pixels over the X axis
+        Y - Plot the intensity over the drawn line over as many intervals as pixels over the Y axis
+        """
+        m = mode.upper()
+        if m not in ['D', 'X', 'Y']:
+            raise ValueError("Invalid mode %s. It has to be 'D', 'X' or 'Y'")
+        self.__lineProjectionMode = m
+
+    def getLineProjectionMode(self):
+        return self.__lineProjectionMode
+
     def _getProfileCurve(self, ddict, image=None, overlay=OVERLAY_DRAW):
         if image is None:
             imageData = self.__imageData
@@ -444,6 +464,7 @@ class MaskImageWidget(qt.QWidget):
         shape = imageData.shape
         width = ddict['pixelwidth'] - 1
         if ddict['mode'].upper() in ["HLINE", "HORIZONTAL"]:
+            xLabel = self.getXLabel()
             deltaDistance = 1.0
             if width < 1:
                 row = int(ddict['row'][0])
@@ -482,7 +503,10 @@ class MaskImageWidget(qt.QWidget):
                                          replace=True,
                                          replot=True)
             xdata  = numpy.arange(shape[1]).astype(numpy.float)
+            if self._xScale is not None:
+                xdata = self._xScale[0] + xdata * (self._xScale[1] - self._xScale[0]) / float(shape[1])
         elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
+            xLabel = self.getYLabel()
             deltaDistance = 1.0
             if width < 1:
                 column = int(ddict['column'][0])
@@ -521,6 +545,8 @@ class MaskImageWidget(qt.QWidget):
                                          replace=True,
                                          replot=True)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
+            if self._yScale is not None:
+                xdata = self._yScale[0] + xdata * (self._yScale[1] - self._yScale[0]) / float(shape[0])
         elif ddict['mode'].upper() in ["LINE"]:
             if len(ddict['column']) == 1:
                 #only one point given
@@ -533,18 +559,21 @@ class MaskImageWidget(qt.QWidget):
             row0, row1 = [int(x) for x in ddict['row']]
             deltaCol = abs(col0 - col1)
             deltaRow = abs(row0 - row1)
-            if deltaCol > deltaRow:
-                npoints = deltaCol+1
-            else:    
-                npoints = deltaRow+1
+            if self.__lineProjectionMode == 'D':
+                if deltaCol >= deltaRow:
+                    npoints = deltaCol + 1
+                else:    
+                    npoints = deltaRow + 1
+            elif self.__lineProjectionMode == 'X':
+                npoints = deltaCol + 1
+            else:
+                npoints = deltaRow + 1
             if npoints == 1:
                 #all points are the same
                 if DEBUG:
                     print("START AND END POINT ARE THE SAME!!")
                 return
-            #get the abscisa in distance units
-            deltaDistance = numpy.sqrt(float(deltaCol)*deltaCol +
-                                       float(deltaRow)*deltaRow)/(npoints-1.0)
+
             if width < 1:
                 x = numpy.zeros((npoints, 2), numpy.float)
                 x[:, 0] = numpy.linspace(row0, row1, npoints)
@@ -635,10 +664,6 @@ class MaskImageWidget(qt.QWidget):
                 m = (row1 - row0) / float((col1 - col0))
                 b = row0 - m * col0
                 alpha = numpy.arctan(m)
-                if deltaRow > deltaCol:
-                    npoints = deltaRow + 1
-                else:
-                    npoints = deltaCol + 1
                 #imagine the following sequence
                 # - change origin to the first point
                 # - clock-wise rotation to bring the line on the x axis of a new system
@@ -777,19 +802,33 @@ class MaskImageWidget(qt.QWidget):
                                          info=ddict,
                                          replace=True,
                                          replot=True)
+            if self.__lineProjectionMode == 'X':
+                xLabel = self.getXLabel()
+                xdata += col0
+                if self._xScale is not None:
+                    xdata = self._xScale[0] + xdata * (self._xScale[1] - self._xScale[0]) / float(shape[1])
+            elif self.__lineProjectionMode == 'Y':
+                xLabel = self.getYLabel()
+                xdata += row0
+                if self._xScale is not None:
+                    xdata = self._yScale[0] + xdata * (self._yScale[1] - self._yScale[0]) / float(shape[0])
+            else:
+                xLabel = "Distance"
+                deltaCol *= (self._xScale[1] - self._xScale[0])/float(shape[1])
+                deltaRow *= (self._yScale[1] - self._yScale[0])/float(shape[0])
+                #get the abscisa in distance units
+                deltaDistance = numpy.sqrt(float(deltaCol) * deltaCol +
+                                    float(deltaRow) * deltaRow)/(npoints-1.0)
+                xdata *= deltaDistance
         else:
             if DEBUG:
                 print("Mode %s not supported yet" % ddict['mode'])
             return
+
         info = {}
+        info['xlabel'] = xLabel
         info['ylabel'] = "Z"
-        if 0:
-            info['xlabel'] = "Point"
-            return xdata, ydata, legend, info
-        else:
-            #users prefer to work with distance
-            info['xlabel'] = "Distance"
-            return xdata * deltaDistance, ydata, legend, info
+        return xdata, ydata, legend, info
 
     def _profileSelectionSlot(self, ddict):
         if DEBUG:
