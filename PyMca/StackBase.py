@@ -75,6 +75,10 @@ class StackBase(object):
         self.pluginList = []
         self.pluginInstanceDict = {}
         self.getPlugins()
+        # beyond 5 million elements, iterate to calculate the sums
+        # preventing huge intermediate use of memory when calculating
+        # the sums.
+        self._dynamicLimit = 5.0E6
 
     def setPluginDirectoryList(self, dirlist):
         for directory in dirlist:
@@ -209,7 +213,8 @@ class StackBase(object):
         """
         Recalculates the different images associated to the stack
         """
-        if isinstance(self._stack.data, numpy.ndarray):
+        if  (self._stack.data.size < self._dynamicLimit)\
+           and isinstance(self._stack.data, numpy.ndarray):
             self._stackImageData = numpy.sum(self._stack.data, self.mcaIndex)
             #original ICR mca
             if DEBUG:
@@ -630,6 +635,8 @@ class StackBase(object):
         return dataObject
 
     def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
+        if DEBUG:
+            print("Calculating ROI images")
         i1 = min(index1, index2)
         i2 = max(index1, index2)
         if imiddle is None:
@@ -663,7 +670,8 @@ class StackBase(object):
             else:
                 if DEBUG:
                     t0 = time.time()
-                if isinstance(self._stack.data, numpy.ndarray):
+                if (self._stack.data.size < self._dynamicLimit)\
+                       and isinstance(self._stack.data, numpy.ndarray):
                     leftImage = self._stack.data[:, :, i1]
                     middleImage = self._stack.data[:, :, imiddle]
                     rightImage = self._stack.data[:, :, i2 - 1]
@@ -837,6 +845,8 @@ class StackBase(object):
                      'Right': rightImage,
                      'Background': background}
         self.__ROIImageCalculationIsUsingSuppliedEnergyAxis = isUsingSuppliedEnergyAxis
+        if DEBUG:
+            print("ROI images calculated")
         return imageDict
 
     def setSelectionMask(self, mask):
