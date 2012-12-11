@@ -1309,7 +1309,7 @@ class QtBlissGraph(Qwt5.QwtPlot):
                     r, c = self.plotImage.convertToRowAndColumn(x0,
                                                                 y0, safe=True)
                     ddict['row_max'] = r
-                    ddict['column_max'] = c                
+                    ddict['column_max'] = c
                 if qt.qVersion() < '4.0.0':
                     self.emit(qt.PYSIGNAL("QtBlissGraphSignal"), (ddict,))
                 else:
@@ -2684,7 +2684,7 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
         self.image_buffer = pixmap
         self._xScale = xScale
         self._yScale = yScale
-        self._shape = shape
+        self._shape = shape[1], shape[0]
 
     def convertToRowAndColumn(self, x, y, safe=True):
         xScale = self._xScale
@@ -2695,13 +2695,13 @@ class Qwt5PlotImage(Qwt5.QwtPlotItem):
         else:
             if x < xScale[0]:
                 x = xScale[0]        
-            c = shape[1] *(x - xScale[0]) / (xScale[1] - xScale[0])
+            c = shape[1] *(x - xScale[0]) / float(xScale[1] - xScale[0])
         if yScale is None:
             r = y
         else:
             if y < yScale[0]:
                 y = yScale[0]        
-            r = shape[0] *(y - yScale[0]) / (yScale[1] - yScale[0])
+            r = shape[0] *(y - yScale[0]) / float(yScale[1] - yScale[0])
 
         if safe:
             c = min(int(c), shape[1] - 1)
@@ -2716,7 +2716,7 @@ class MyPicker(Qwt5.QwtPicker):
 
     def widgetMousePressEvent(self, event):
         if DEBUG:
-            print ("mouse press")
+            print("mouse press")
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("MousePressed(const QMouseEvent&)"),
                       (event,))
@@ -2736,7 +2736,7 @@ class MyPicker(Qwt5.QwtPicker):
 
     def widgetMouseDoubleClickEvent(self, event):
         if DEBUG:
-            print ("mouse doubleclick")
+            print("mouse doubleclick")
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("MouseDoubleClicked(const QMouseEvent&)"),
                       (event,))
@@ -2746,7 +2746,7 @@ class MyPicker(Qwt5.QwtPicker):
 
     def widgetMouseMoveEvent(self, event):
         if DEBUG:
-            print ("mouse move")
+            print("mouse move")
         self.__mouseToBeMoved = False
         if QTVERSION < '4.0.0':
             self.emit(qt.PYSIGNAL("MouseMoved(const QMouseEvent&)"), (event,))
@@ -2756,7 +2756,7 @@ class MyPicker(Qwt5.QwtPicker):
 
     def widgetKeyPressEvent(self, event):
         if DEBUG:
-            print ("Key Pressed")
+            print("Key Pressed")
         self._keyPressed = event.key()
         if self._keyPressed in [qt.Qt.Key_Left,
                                 qt.Qt.Key_Right,
@@ -2767,7 +2767,7 @@ class MyPicker(Qwt5.QwtPicker):
 
     def widgetKeyReleaseEvent(self, event):
         if DEBUG:
-            print ("Key Released")
+            print("Key Released")
 
         if self.__mouseToBeMoved:
             if self._keyPressed in [qt.Qt.Key_Left,

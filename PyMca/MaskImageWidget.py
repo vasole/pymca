@@ -1896,10 +1896,10 @@ def test():
             container.setQImage(image, 200, 200)
     else:
         container = MaskImageWidget(profileselection=True)
-        data = numpy.arange(40000).astype(numpy.int32)
-        data.shape = 200, 200
+        data = numpy.arange(400 * 200).astype(numpy.int32)
+        data.shape = 400, 200
         #data = numpy.eye(200)
-        container.setImageData(data, xScale=(100, 200), yScale=(1000., 2000.))
+        container.setImageData(data, xScale=(200, 800), yScale=(400., 800.))
         #data.shape = 100, 400
         #container.setImageData(None)
         #container.setImageData(data)
