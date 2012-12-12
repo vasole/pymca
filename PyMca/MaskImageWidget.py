@@ -402,6 +402,9 @@ class MaskImageWidget(qt.QWidget):
         xdata, ydata, legend, info = curve            
         replot=True
         replace=True
+        idx = numpy.isfinite(ydata)
+        xdata = xdata[idx]
+        ydata = ydata[idx]
         self._profileSelectionWindow.addCurve(xdata, ydata,
                                               legend=legend,
                                               info=info,
@@ -1326,25 +1329,29 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap = self.__pixmap0.copy()
             return
 
-        tmpData = numpy.isfinite(self.__imageData)
-        goodData = tmpData.min()
+        if hasattr(self.__imageData, 'mask'):
+            data = self.__imageData.data
+        else:
+            data = self.__imageData
+
+        finiteData = numpy.isfinite(data)
+        goodData = finiteData.min()
         
         if self.colormapDialog is not None:
             minData = self.colormapDialog.dataMin
             maxData = self.colormapDialog.dataMax
         else:
             if goodData:
-                minData = self.__imageData.min()
-                maxData = self.__imageData.max()
+                minData = data.min()
+                maxData = data.max()
             else:
-                tmpData = self.__imageData[tmpData]
+                tmpData = data[finiteData]
                 minData = tmpData.min()
                 maxData = tmpData.max()
-        tmpData = None
-                
+                tmpData = None
         if colormap is None:
             (self.__pixmap,size,minmax)= spslut.transform(\
-                                self.__imageData,
+                                data,
                                 (1,0),
                                 (self.__defaultColormapType,3.0),
                                 "BGRX",
@@ -1357,7 +1364,7 @@ class MaskImageWidget(qt.QWidget):
                 colormap.append(spslut.LINEAR)
             if goodData:
                 (self.__pixmap,size,minmax)= spslut.transform(\
-                                self.__imageData,
+                                data,
                                 (1,0),
                                 (colormap[6],3.0),
                                 "BGRX",
@@ -1368,7 +1375,7 @@ class MaskImageWidget(qt.QWidget):
             elif colormap[1]:
                 #autoscale
                 (self.__pixmap,size,minmax)= spslut.transform(\
-                                self.__imageData,
+                                data,
                                 (1,0),
                                 (colormap[6],3.0),
                                 "BGRX",
@@ -1378,7 +1385,7 @@ class MaskImageWidget(qt.QWidget):
                                 (0,255), 1)
             else:
                 (self.__pixmap,size,minmax)= spslut.transform(\
-                                self.__imageData,
+                                data,
                                 (1,0),
                                 (colormap[6],3.0),
                                 "BGRX",
@@ -1389,9 +1396,10 @@ class MaskImageWidget(qt.QWidget):
 
         self.__pixmap = self.__pixmap.astype(numpy.ubyte)
 
-        self.__pixmap.shape = [self.__imageData.shape[0],
-                                    self.__imageData.shape[1],
-                                    4]
+        self.__pixmap.shape = [data.shape[0], data.shape[1], 4]
+
+        if not goodData:
+            self.__pixmap[finiteData < 1] = 255
 
     def __applyMaskToImage(self):
         if self.__selectionMask is None:

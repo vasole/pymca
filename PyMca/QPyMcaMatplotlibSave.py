@@ -326,6 +326,7 @@ class RightWidget(qt.QWidget):
                         'Contour Labels',
                         'Contour Label Format',
                         'Contour Levels',
+                        'Contour Line Width',
                         'Image Background',
                         'X Pixel Size',
                         'Y Pixel Size',
@@ -353,8 +354,13 @@ class RightWidget(qt.QWidget):
                 options = ['Temperature','Grey', 'Yerg',\
                            'Red', 'Green', 'Blue',\
                            'Rainbow', 'Jet','Hot', 'Cool', 'Copper']
-                if hasattr(cm, 'spectral'):
-                    options.append('Spectral')
+                for candidate in ['spectral', 'Paired', 'Paired_r',
+                                  'PuBu', 'PuBu_r', 'RdBu', 'RdBu_r',
+                                  'gist_earth', 'gist_earth_r',
+                                  'Blues', 'Blues_r',
+                                  'YlGnBu', 'YlGnBu_r']:
+                    if hasattr(cm, candidate):
+                        options.append(candidate)
             elif self.labelList[i] in ['Lin/Log Colormap']:
                 options = ['Linear','Logarithmic']
             elif self.labelList[i] in ['Colorbar']:
@@ -373,7 +379,18 @@ class RightWidget(qt.QWidget):
                 options = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]
             elif self.labelList[i] in ['Image Background']:
                 options = ['Black', 'White', 'Grey']
-            if i <= self.labelList.index('Image Background'):
+                
+            if self.labelList[i] in ['Contour Levels']:
+                line = qt.QSpinBox(self)
+                line.setMinimum(1)
+                line.setMaximum(1000)
+                line.setValue(10)
+            elif self.labelList[i] in ['Contour Line Width']:
+                line = qt.QSpinBox(self)
+                line.setMinimum(1)
+                line.setMaximum(100)
+                line.setValue(10)
+            elif i <= self.labelList.index('Image Background'):
                 line = SimpleComboBox(self, options)
             else:
                 line = MyLineEdit(self)
@@ -430,7 +447,11 @@ class RightWidget(qt.QWidget):
         ddict = {}
         i = 0
         for label in self.keyList:
-            if i > self.labelList.index('Image Background'):
+            if i == self.labelList.index('Contour Levels'):
+                ddict[label] = self.comboBoxList[i].value()
+            elif i == self.labelList.index('Contour Line Width'):
+                ddict[label] = self.comboBoxList[i].value()
+            elif i > self.labelList.index('Image Background'):
                 text = qt.safe_str(self.comboBoxList[i].text())
                 if len(text):
                     if label in ['Output dpi', "N X Labels", "N Y Labels"]:
@@ -453,7 +474,11 @@ class RightWidget(qt.QWidget):
         for label in ddict.keys():
             if label.lower() in self.keyList:
                 i = self.keyList.index(label)
-                if i > self.labelList.index('Image Background'):
+                if i == self.labelList.index('Contour Levels'):
+                    self.comboBoxList[i].setValue(int(ddict[label]))
+                elif i == self.labelList.index('Contour Line Width'):
+                    self.comboBoxList[i].setValue(int(ddict[label]))
+                elif i > self.labelList.index('Image Background'):
                     if ddict[label] is not None:
                         if label in ['Output dpi']:
                             self.comboBoxList[i].setText("%d" % int(ddict[label]))
@@ -502,6 +527,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      contourlabels='on',
                      contourlabelformat='%.3f',                 
                      contourlevels=2,
+                     contourlinewidth=10,
                      extent=None,
                      xpixelsize=1.0,
                      ypixelsize=1.0,
@@ -539,6 +565,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      'contourlabels':contourlabels,
                      'contourlabelformat':contourlabelformat,
                      'contourlevels':contourlevels,
+                     'contourlinewidth':contourlinewidth,
                      'extent':extent,
                      'imagebackground':'black',
                      'xorigin':xorigin,
@@ -674,6 +701,33 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             cmap = self.__blueCmap
         elif self.config['colormap']=='temperature':
             cmap = self.__temperatureCmap
+        elif self.config['colormap'] == 'paired':
+            cmap = cm.Paired
+        elif self.config['colormap'] == 'paired_r':
+            cmap = cm.Paired_r
+        elif self.config['colormap'] == 'pubu':
+            cmap = cm.PuBu
+        elif self.config['colormap'] == 'pubu_r':
+            cmap = cm.PuBu_r
+        elif self.config['colormap'] == 'rdbu':
+            cmap = cm.RdBu
+        elif self.config['colormap'] == 'rdbu_r':
+            cmap = cm.RdBu_r
+        elif self.config['colormap'] == 'gist_earth':
+            cmap = cm.gist_earth
+        elif self.config['colormap'] == 'gist_earth_r':
+            cmap = cm.gist_earth_r
+        elif self.config['colormap'] == 'blues':
+            cmap = cm.Blues
+        elif self.config['colormap'] == 'blues_r':
+            cmap = cm.Blues_r
+        elif self.config['colormap'] == 'ylgnbu':
+            cmap = cm.YlGnBu
+        elif self.config['colormap'] == 'ylgnbu_r':
+            cmap = cm.YlGnBu_r
+        else:
+            print("Unsupported colormap %s" % self.config['colormap'])
+
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
@@ -735,7 +789,8 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             dataMax = imageData.max()
             ncontours = int(self.config['contourlevels'])
             levels = (numpy.arange(ncontours)) *\
-                     (dataMax - dataMin)/float(ncontours)	    
+                     (dataMax - dataMin)/float(ncontours)
+            contourlinewidth = int(self.config['contourlinewidth'])/10.
             if self.config['contour'] == 'filled':
                 self._contour = self.axes.contourf(imageData, levels,
                      origin=origin,
@@ -745,7 +800,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                 self._contour = self.axes.contour(imageData, levels,
                      origin=origin,
                      cmap=ccmap,
-                     linewidths=2,
+                     linewidths=contourlinewidth,
                      extent=extent)
             if self.config['contourlabels'] != 'off':
                 self.axes.clabel(self._contour, fontsize=9,

@@ -273,6 +273,7 @@ class PyMcaMatplotlibSaveImage:
                      contourlabels='on',
                      contourlabelformat='%.3f',
                      contourlevels=10,
+                     contourlinewidth=10,
                      xorigin=0.0,
                      yorigin=0.0,
                      xpixelsize=1.0,
@@ -301,7 +302,8 @@ class PyMcaMatplotlibSaveImage:
                     'contour':contour,
                     'contourlabels':contourlabels,
                     'contourlabelformat':contourlabelformat,
-                    'contourlevels':10,
+                    'contourlevels':contourlevels,
+                    'contourlinewidth':contourlinewidth,
                     'xpixelsize':xpixelsize,
                     'ypixelsize':ypixelsize,
                     'xorigin':xorigin,
@@ -441,6 +443,32 @@ class PyMcaMatplotlibSaveImage:
             cmap = self.__blueCmap
         elif self.config['colormap']=='temperature':
             cmap = self.__temperatureCmap
+        elif self.config['colormap'] == 'paired':
+            cmap = cm.Paired
+        elif self.config['colormap'] == 'paired_r':
+            cmap = cm.Paired_r
+        elif self.config['colormap'] == 'pubu':
+            cmap = cm.PuBu
+        elif self.config['colormap'] == 'pubu_r':
+            cmap = cm.PuBu_r
+        elif self.config['colormap'] == 'rdbu':
+            cmap = cm.RdBu
+        elif self.config['colormap'] == 'rdbu_r':
+            cmap = cm.RdBu_r
+        elif self.config['colormap'] == 'gist_earth':
+            cmap = cm.gist_earth
+        elif self.config['colormap'] == 'gist_earth_r':
+            cmap = cm.gist_earth_r
+        elif self.config['colormap'] == 'blues':
+            cmap = cm.Blues
+        elif self.config['colormap'] == 'blues_r':
+            cmap = cm.Blues_r
+        elif self.config['colormap'] == 'ylgnbu':
+            cmap = cm.YlGnBu
+        elif self.config['colormap'] == 'ylgnbu_r':
+            cmap = cm.YlGnBu_r
+        else:
+            print("Unsupported colormap %s" % self.config['colormap'])
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
@@ -500,6 +528,7 @@ class PyMcaMatplotlibSaveImage:
             dataMin = imageData.min()
             dataMax = imageData.max()
             ncontours = int(self.config['contourlevels'])
+            contourlinewidth = int(self.config['contourlinewidth'])/10.
             levels = (numpy.arange(ncontours)) *\
                      (dataMax - dataMin)/float(ncontours)
             if self.config['contour'] == 'filled':
@@ -511,7 +540,7 @@ class PyMcaMatplotlibSaveImage:
                 self._contour = self.axes.contour(imageData, levels,
                      origin=origin,
                      cmap=ccmap,
-                     linewidths=2,
+                     linewidths=contourlinewidth,
                      extent=extent)
             if self.config['contourlabels'] != 'off':                
                 self.axes.clabel(self._contour, fontsize=9,

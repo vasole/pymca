@@ -218,9 +218,9 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                                             profileselection=True,
                                             scanwindow=self)
                 self._rixsWidget.setLineProjectionMode('X')
-            actualMax = zData.max()
-            actualMin = zData.min()
-            zz = numpy.where(numpy.isfinite(zz), zz, actualMax)
+            #actualMax = zData.max()
+            #actualMin = zData.min()
+            #zz = numpy.where(numpy.isfinite(zz), zz, actualMax)
             self._rixsWidget.setImageData(zz,
                                           xScale=(xx.min(), xx.max()),
                                           yScale=(yy.min(), yy.max()))
