@@ -1,4 +1,4 @@
-This is the GPL version of the PyMCA XRF Toolkit.
+This is the GPL version of the PyMca XRF Toolkit.
 Please read the LICENSE.GPL file to know what that means.
 
 That license grants you the rights to distribute this code under
@@ -16,7 +16,7 @@ In order to simplify the tasks, I have put all the .py modules together.
 You will need to build some libraries (sps, specfile, specfit, edf, ...)
 Those libraries can be build in the respective directories thru the usual
 python setup.py build methods. Alternatively you can use the toplevel
-setup.py contributed by D. Dale and install PyMCA in a specific directory.
+setup.py contributed by D. Dale and install PyMca in a specific directory.
 
 Examples of use:
 
@@ -46,7 +46,7 @@ python setup.py bdist_wininst --skip-build --install-script pymca_win_post_insta
 
 You will need:
 
-- Python (at least 2.3.x) I use mostly 2.5.x except for linux.
+- Python (at least 2.5.x)
 
 - Numpy
 
@@ -60,12 +60,12 @@ OR
 
 - PyQt4 + PyQwt5    GPL ON ALL PLATFORMS FROM 3.9.4Qt4 - RECOMMENDED
 
-If you want to embed PyMCA in your own PyQt application, I recommend you to use
+If you want to embed PyMca in your own PyQt application, I recommend you to use
 the McaAdvancedFit.py module. It is very easy to embed. A bit harder, but not so
 much would be to embed the McaWindow but you would not gain much more than the
 possibility to select ROIs.
 
-PyQt4 + PyQwt5 is the current main development platform for PyMCA.
+PyQt4 + PyQwt5 is the current main development platform for PyMca.
 
 The program will take profit of a matplotlib installation if present in order to
 generate publication quality output. Originally I intended to replace PyQwt by
