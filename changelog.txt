@@ -22,6 +22,8 @@ Add ID26 RIXS plugin as part of MultiScanToMesh plugins.
 
 Stacks of DESY fio files readable by windows binary.
 
+Reduce memory usage when working with large in-memory stacks.
+
 VERSION 4.6.2
 
 Fix calculation of the MCA associated to a region when using dynamically
