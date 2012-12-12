@@ -1,3 +1,27 @@
+VERSION 4.7.RC1
+
+Solve printing issue when printing from the File menu while the SCAN window is
+active
+
+Recover reading support of SPE files from SLAC
+
+Correct reading of .chi files maps
+
+Extend the maximum number of counters supported in a specfile.
+
+Prevent endless loop in specfile when the last character limiting a scan is '#'
+
+Correct bug plotting a set of MCAs as one image when the number of MCA
+detectors is more than one.
+
+Background subtraction methods also work on stack browsers.
+
+Handling of scales in image plots.
+
+Add ID26 RIXS plugin as part of MultiScanToMesh plugins.
+
+Stacks of DESY fio files readable by windows binary.
+
 VERSION 4.6.2
 
 Fix calculation of the MCA associated to a region when using dynamically
