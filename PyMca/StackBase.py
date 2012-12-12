@@ -79,6 +79,7 @@ class StackBase(object):
         # preventing huge intermediate use of memory when calculating
         # the sums.
         self._dynamicLimit = 5.0E6
+        self._tryNumpy = True
 
     def setPluginDirectoryList(self, dirlist):
         for directory in dirlist:
@@ -213,8 +214,15 @@ class StackBase(object):
         """
         Recalculates the different images associated to the stack
         """
-        if  (self._stack.data.size < self._dynamicLimit)\
-           and isinstance(self._stack.data, numpy.ndarray):
+        self._tryNumpy = True
+        if hasattr(self._stack.data, "size"):
+            if self._stack.data.size >= self._dynamicLimit:
+                self._tryNumpy = False
+        else:
+            # is not a numpy ndarray in any case
+            self._tryNumpy = False
+
+        if self._tryNumpy and isinstance(self._stack.data, numpy.ndarray):
             self._stackImageData = numpy.sum(self._stack.data, self.mcaIndex)
             #original ICR mca
             if DEBUG:
@@ -670,8 +678,8 @@ class StackBase(object):
             else:
                 if DEBUG:
                     t0 = time.time()
-                if (self._stack.data.size < self._dynamicLimit)\
-                       and isinstance(self._stack.data, numpy.ndarray):
+                if self._tryNumpy and\
+                   isinstance(self._stack.data, numpy.ndarray):
                     leftImage = self._stack.data[:, :, i1]
                     middleImage = self._stack.data[:, :, imiddle]
                     rightImage = self._stack.data[:, :, i2 - 1]

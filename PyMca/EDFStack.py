@@ -248,8 +248,7 @@ class EDFStack(DataObject.DataObject):
                                 tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                 for i in range(nImages):
                                     pieceOfStack=tempEdf.GetData(i)
-                                    self.data[self.incrProgressBar,
-                                              i,:] = \
+                                    self.data[self.incrProgressBar, i,:] = \
                                                               pieceOfStack[:,:]
                                 self.incrProgressBar += 1
                                 self.onProgress(self.incrProgressBar)
@@ -263,9 +262,8 @@ class EDFStack(DataObject.DataObject):
                                 tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                                 for i in range(nImages):
                                     pieceOfStack=tempEdf.GetData(i)
-                                    self.data[self.incrProgressBar,
-                                              i,:] = \
-                                                              pieceOfStack[:,:]
+                                    self.data[self.incrProgressBar, i,:] = \
+                                                            pieceOfStack[:,:]
                                 self.incrProgressBar += 1
                                 self.onProgress(self.incrProgressBar)
                     else:
@@ -279,8 +277,7 @@ class EDFStack(DataObject.DataObject):
                             for i in range(nImages):
                                 pieceOfStack=tempEdf.GetData(i)
                                 self.data[nImages*self.incrProgressBar+i,
-                                          :,:] = \
-                                                          pieceOfStack[:,:]
+                                          :,:] = pieceOfStack[:,:]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
@@ -290,86 +287,70 @@ class EDFStack(DataObject.DataObject):
                         bytefactor = 8
                     else:
                         bytefactor = 4
-                        
+
+                    # calculate needed megabytes
                     needed_ = self.nbFiles * \
                                    arrRet.shape[0] *\
                                    arrRet.shape[1] * bytefactor/(1024*1024)
-                    if (needed_ > 2000) and (sys.platform == 'linux2'):
-                        swapfile = '/tmp/pymcaroitool.dat'
-                        swapdir = '/buffer/%s1' %  os.getenv('HOSTNAME')
-                        if os.path.isdir(swapdir):
-                            swapfile = '/buffer/%s1/pymcaroitool.dat' %\
-                                            os.getenv('HOSTNAME')
-                        print("needed megabytes = %f" % needed_)
-                        print("using a buffer: %s" % swapfile)
-                        if os.path.exists(swapfile):
-                            os.remove(swapfile)
-
-                        self.data = numpy.memmap(swapfile,
-                                    shape= (self.nbFiles, arrRet.shape[0],
-                                            arrRet.shape[1]),
-                                    dtype= self.__dtype,
-                                    mode='w+')
-                        os.system(('chmod 777 %s' % swapfile))
-                    else:
-                        if fileindex == 1:
+                    # I should put a limit on the maximum allocated memory
+                    # on 64 bit machines converting the data to HDF5 ...
+                    if fileindex == 1:
+                        try:
+                            self.data = numpy.zeros((arrRet.shape[0],
+                                                    self.nbFiles,
+                                                   arrRet.shape[1]),
+                                                   self.__dtype)
+                        except:
                             try:
                                 self.data = numpy.zeros((arrRet.shape[0],
-                                                        self.nbFiles,
-                                                       arrRet.shape[1]),
-                                                       self.__dtype)
+                                                    self.nbFiles,
+                                                   arrRet.shape[1]),
+                                                   numpy.float32)
                             except:
-                                try:
-                                    self.data = numpy.zeros((arrRet.shape[0],
-                                                        self.nbFiles,
-                                                       arrRet.shape[1]),
-                                                       numpy.float32)
-                                except:
-                                    self.data = numpy.zeros((arrRet.shape[0],
-                                                        self.nbFiles,
-                                                       arrRet.shape[1]),
-                                                       numpy.int16)
-                        else:
+                                self.data = numpy.zeros((arrRet.shape[0],
+                                                    self.nbFiles,
+                                                   arrRet.shape[1]),
+                                                   numpy.int16)
+                    else:
+                        try:
+                            self.data = numpy.zeros((self.nbFiles,
+                                                   arrRet.shape[0],
+                                                   arrRet.shape[1]),
+                                                   self.__dtype)
+                        except:
                             try:
                                 self.data = numpy.zeros((self.nbFiles,
-                                                       arrRet.shape[0],
-                                                       arrRet.shape[1]),
-                                                       self.__dtype)
-                            except:
-                                try:
-                                    self.data = numpy.zeros((self.nbFiles,
-                                                       arrRet.shape[0],
-                                                       arrRet.shape[1]),
-                                                       numpy.float32)
-                                except (MemoryError, ValueError):
-                                    text = "Memory Error: Attempt subsampling or convert to HDF5"
-                                    if HDF5 and (('PyMcaQt' in sys.modules) or\
-                                       ('PyMca.PyMcaQt' in sys.modules)):
-                                        from PyMca import PyMcaQt as qt
-                                        from PyMca import ArraySave
-                                        msg=qt.QMessageBox.information( None,
-                                          "Memory error\n",
-                                          "Do you want to convert your data to HDF5?\n",
-                                          qt.QMessageBox.Yes,qt.QMessageBox.No)
-                                        if msg == qt.QMessageBox.No:
-                                            raise MemoryError(text)
-                                        hdf5file = qt.QFileDialog.getSaveFileName(None,
-                                                    "Please select output file name",
-                                                    os.path.dirname(filelist[0]),
-                                                    "HDF5 files *.h5")
-                                        if not len(hdf5file):
-                                            raise IOError(\
-                                                "Invalid output file")
-                                        hdf5file = qt.safe_str(hdf5file)
-                                        if not hdf5file.endswith(".h5"):
-                                            hdf5file += ".h5"
-                                        hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
-                                                      (self.nbFiles,
-                                                       arrRet.shape[0],
-                                                       arrRet.shape[1]))               
-                                    else:    
-                                        raise MemoryError(\
-                                            "Memory Error")
+                                                   arrRet.shape[0],
+                                                   arrRet.shape[1]),
+                                                   numpy.float32)
+                            except (MemoryError, ValueError):
+                                text = "Memory Error: Attempt subsampling or convert to HDF5"
+                                if HDF5 and (('PyMcaQt' in sys.modules) or\
+                                   ('PyMca.PyMcaQt' in sys.modules)):
+                                    from PyMca import PyMcaQt as qt
+                                    from PyMca import ArraySave
+                                    msg=qt.QMessageBox.information( None,
+                                      "Memory error\n",
+                                      "Do you want to convert your data to HDF5?\n",
+                                      qt.QMessageBox.Yes,qt.QMessageBox.No)
+                                    if msg == qt.QMessageBox.No:
+                                        raise MemoryError(text)
+                                    hdf5file = qt.QFileDialog.getSaveFileName(None,
+                                                "Please select output file name",
+                                                os.path.dirname(filelist[0]),
+                                                "HDF5 files *.h5")
+                                    if not len(hdf5file):
+                                        raise IOError(\
+                                            "Invalid output file")
+                                    hdf5file = qt.safe_str(hdf5file)
+                                    if not hdf5file.endswith(".h5"):
+                                        hdf5file += ".h5"
+                                    hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
+                                                  (self.nbFiles,
+                                                   arrRet.shape[0],
+                                                   arrRet.shape[1]))               
+                                else:    
+                                    raise MemoryError("Memory Error")
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
@@ -411,9 +392,7 @@ class EDFStack(DataObject.DataObject):
                                     print(" DIM 0 error Assuming missing data were at the end!!!")
                                 self.data[self.incrProgressBar,\
                                          :pieceOfStack.shape[0],\
-                                         :pieceOfStack.shape[1]] = pieceOfStack[:,:]
-
-                                
+                                         :pieceOfStack.shape[1]] = pieceOfStack[:,:]                                
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()

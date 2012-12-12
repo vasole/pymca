@@ -43,8 +43,15 @@ class DummyArray(object):
     def getDType(self):
         return self.data.dtype
 
+    def getSize(self):
+        s = 1
+        for item in self.__shape:
+            s *= item
+        return s
+
     shape = property(getShape)
     dtype = property(getDType)
+    size = property(getSize)
 
 class testStackBase(unittest.TestCase):
     def testStackBaseImport(self):
@@ -133,7 +140,6 @@ class testStackBase(unittest.TestCase):
 
         defaultMca = referenceData.sum(axis=2, dtype=numpy.float64).sum(axis=1)
         maskedMca = referenceData[:,mask>0].sum(axis=1)
-
 
         for fileindex in [1, 2]:
             #usually only one file index case is used but

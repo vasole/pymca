@@ -163,6 +163,13 @@ class TiffArray(object):
         return self.__dtype
     dtype = property(getDtype)
 
+    def getSize(self):
+        s = 1
+        for item in self.__shape:
+            s *= item
+        return s
+    size = property(getSize)
+
 class TiffStack(DataObject.DataObject):
     def __init__(self, filelist=None, imagestack=None, dtype=None):
         DataObject.DataObject.__init__(self)
