@@ -1825,7 +1825,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             comment = info['scan'].get('scan', None)+"\n"
             h, k, l = info['scan'].get('hkl')
             if h != "----":
-                comment += "H = %s  K = %s  L = %s\n" % (k, k, l)
+                comment += "H = %s  K = %s  L = %s\n" % (h, k, l)
             peak   = info['graph']['peak']
             peakAt = info['graph']['peakat']
             fwhm   = info['graph']['fwhm']
