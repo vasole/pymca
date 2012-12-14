@@ -19,6 +19,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 from PyMca import DataObject
 from PyMca import EdfFile
 from PyMca import EdfFileDataSource
+from PyMca import PhysicalMemory
 import numpy
 import sys
 import os
@@ -139,6 +140,20 @@ class EDFStack(DataObject.DataObject):
                 else:
                     #this is the common case
                     try:
+                        # calculate needed megabytes
+                        if self.__dtype == numpy.float:
+                            bytefactor = 8
+                        else:
+                            bytefactor = 4
+                        needed_ = self.nbFiles * \
+                                   arrRet.shape[0] *\
+                                   arrRet.shape[1] * bytefactor
+                        physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+                        if physicalMemory is not None:
+                            # spare 5% or memory
+                            if physicalMemory < (1.05 * needed_):
+                                raise MemoryError("Not enough physical memory available")
+                        
                         self.data = numpy.zeros((arrRet.shape[0],
                                                  arrRet.shape[1],
                                                  self.nbFiles),
@@ -282,18 +297,6 @@ class EDFStack(DataObject.DataObject):
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
                 else:
-                    #this is the common case
-                    if self.__dtype == numpy.float:
-                        bytefactor = 8
-                    else:
-                        bytefactor = 4
-
-                    # calculate needed megabytes
-                    needed_ = self.nbFiles * \
-                                   arrRet.shape[0] *\
-                                   arrRet.shape[1] * bytefactor/(1024*1024)
-                    # I should put a limit on the maximum allocated memory
-                    # on 64 bit machines converting the data to HDF5 ...
                     if fileindex == 1:
                         try:
                             self.data = numpy.zeros((arrRet.shape[0],
@@ -313,12 +316,33 @@ class EDFStack(DataObject.DataObject):
                                                    numpy.int16)
                     else:
                         try:
+                            # calculate needed megabytes
+                            if self.__dtype == numpy.float:
+                                bytefactor = 8
+                            else:
+                                bytefactor = 4
+                            needed_ = self.nbFiles * \
+                                       arrRet.shape[0] *\
+                                       arrRet.shape[1] * 4
+                            physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+                            if physicalMemory is not None:
+                                # spare 5% of memory
+                                if physicalMemory < (1.05 * needed_):
+                                    raise MemoryError("Not enough physical memory available")
                             self.data = numpy.zeros((self.nbFiles,
                                                    arrRet.shape[0],
                                                    arrRet.shape[1]),
                                                    self.__dtype)
                         except:
                             try:
+                                needed_ = self.nbFiles * \
+                                           arrRet.shape[0] *\
+                                           arrRet.shape[1] * 4
+                                physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+                                if physicalMemory is not None:
+                                    # spare 5 % of memory
+                                    if physicalMemory < (1.05 * needed_):
+                                        raise MemoryError("Not enough physical memory available")
                                 self.data = numpy.zeros((self.nbFiles,
                                                    arrRet.shape[0],
                                                    arrRet.shape[1]),

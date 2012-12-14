@@ -29,9 +29,11 @@ import numpy
 import h5py
 try:
     from PyMca import DataObject
+    from PyMca import PhysicalMemory
 except ImportError:
     print("HDF5Stack1D importing DataObject from local directory!")
     import DataObject
+    import PhysicalMemory
 try:
     from PyMca import NexusDataSource
 except ImportError:
@@ -221,9 +223,16 @@ class HDF5Stack1D(DataObject.DataObject):
                 bytefactor = 8
 
             neededMegaBytes = nFiles * dim0 * dim1 * mcaDim * bytefactor/(1024*1024.)
-            if (neededMegaBytes > 3000) and (nFiles == 1) and (len(shape) == 3):
+            physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+            if physicalMemory is None:
+                # 5 Gigabytes should be a good compromise
+                physicalMemory = 6000
+            else:
+                physicalMemory /= (1024*1024.)
+            if (neededMegaBytes > (0.95*physicalMemory))\
+               and (nFiles == 1) and (len(shape) == 3):
                 if self.__dtype0 is None:
-                    if (bytefactor == 8) and (neededMegaBytes <6000):
+                    if (bytefactor == 8) and (neededMegaBytes < (2*physicalMemory)):
                         #try reading as float32
                         self.__dtype = numpy.float32
                     else:

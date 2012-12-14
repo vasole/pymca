@@ -24,6 +24,9 @@ Stacks of DESY fio files readable by windows binary.
 
 Reduce memory usage when working with large in-memory stacks.
 
+Decide to load dynamically the data based on the amount of physical memory
+installed instead of a fixed amount.
+
 VERSION 4.6.2
 
 Fix calculation of the MCA associated to a region when using dynamically
