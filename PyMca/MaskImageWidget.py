@@ -75,7 +75,8 @@ else:
     OVERLAY_DRAW = False
     import Qwt5
 
-
+DEFAULT_COLORMAP_INDEX = 2
+DEFAULT_COLORMAP_LOG_FLAG = False
 DEBUG = 0
 
 
@@ -166,7 +167,8 @@ class MaskImageWidget(qt.QWidget):
 
         self.colormap = None
         self.colormapDialog = None
-        self.setDefaultColormap(2, False)
+        self.setDefaultColormap(DEFAULT_COLORMAP_INDEX,
+                                DEFAULT_COLORMAP_LOG_FLAG)
         self.rgbWidget = rgbwidget
 
         self.__imageIconsFlag = imageicons
