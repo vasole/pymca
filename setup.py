@@ -122,19 +122,19 @@ def build_specfile(ext_modules):
             specfile_define_macros = [('_GNU_SOURCE', 1)]
     else:
         specfile_define_macros = define_macros
-    sources = glob.glob('PyMca/specfile/src/*.c')
-    if sys.version < '3.0':
-        todelete = 'specfile_py3.c'
-    else:
-        todelete = 'specfile_py.c'
-    for i in range(len(sources)):
-        if todelete in sources[i]:
-            del sources[i]
-            break
+    srcfiles = [ 'sfheader','sfinit','sflists','sfdata','sfindex',
+             'sflabel' ,'sfmca', 'sftools','locale_management','specfile_py']
+    if sys.version >= '3.0':
+        srcfiles[-1] += '3'
+    sources = [] 
+    specfile_source_dir = os.path.join('PyMca', 'specfile', 'src')
+    specfile_include_dir = os.path.join('PyMca', 'specfile', 'include')
+    for ffile in srcfiles:
+      sources.append(os.path.join(specfile_source_dir, ffile+'.c'))
     module  = Extension(name = 'PyMca.specfile',
                         sources = sources,
                         define_macros = specfile_define_macros,
-                        include_dirs = ['PyMca/specfile/include',
+                        include_dirs = [specfile_include_dir,
                                             numpy.get_include()])
     ext_modules.append(module)
 
