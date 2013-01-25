@@ -819,8 +819,9 @@ class MaskImageWidget(qt.QWidget):
                     xdata = self._yScale[0] + xdata * (self._yScale[1] - self._yScale[0]) / float(shape[0])
             else:
                 xLabel = "Distance"
-                deltaCol *= (self._xScale[1] - self._xScale[0])/float(shape[1])
-                deltaRow *= (self._yScale[1] - self._yScale[0])/float(shape[0])
+                if self._xScale is not None:
+                    deltaCol *= (self._xScale[1] - self._xScale[0])/float(shape[1])
+                    deltaRow *= (self._yScale[1] - self._yScale[0])/float(shape[0])
                 #get the abscisa in distance units
                 deltaDistance = numpy.sqrt(float(deltaCol) * deltaCol +
                                     float(deltaRow) * deltaRow)/(npoints-1.0)
