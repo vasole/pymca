@@ -677,46 +677,50 @@ def getTotalTripletCrossSection(z, lines=None, getmode=False):
         return energy, value
 
 if __name__ == "__main__":
-    energy, value, mode = getTotalCoherentCrossSection(82, EPDL97_DATA, getmode=True)
+    if len(sys.argv) > 1:
+        Z = int(sys.argv[1])
+    else:
+        Z = 82
+    energy, value, mode = getTotalCoherentCrossSection(Z, EPDL97_DATA, getmode=True)
     print("TOTAL COHERENT ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
                 print(energy[i], value[i])
 
-    energy, value, mode = getTotalIncoherentCrossSection(82, EPDL97_DATA , getmode=True)
+    energy, value, mode = getTotalIncoherentCrossSection(Z, EPDL97_DATA , getmode=True)
     print("TOTAL INCOHERENT ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
                 print(energy[i], value[i])
 
-    energy, value, mode = getTotalPhotoelectricCrossSection(82, EPDL97_DATA, getmode=True)
+    energy, value, mode = getTotalPhotoelectricCrossSection(Z, EPDL97_DATA, getmode=True)
     print("TOTAL PHOTOELECTRIC ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
                 print(energy[i], value[i])
 
-    energy, value, mode = getTotalPairCrossSection(82, EPDL97_DATA, getmode=True)
+    energy, value, mode = getTotalPairCrossSection(Z, EPDL97_DATA, getmode=True)
     print(" TOTAL PAIR ", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
                 print(energy[i], value[i])
             
-    energy, value, mode = getPartialPhotoelectricCrossSection(82, 'L1', EPDL97_DATA, getmode=True)
+    energy, value, mode = getPartialPhotoelectricCrossSection(Z, 'L1', EPDL97_DATA, getmode=True)
     print("L1 SHELL PARTIAL PHOTOELECTRIC IDX")
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
                 print(energy[i], value[i], mode)
 
-    energy, value, mode = getPartialPhotoelectricCrossSection(82, 'K', EPDL97_DATA, getmode=True)
+    energy, value, mode = getPartialPhotoelectricCrossSection(Z, 'K', EPDL97_DATA, getmode=True)
     print("K SHELL PARTIAL PHOTOELECTRIC")
     for i in range(len(energy)):
         if energy[i] > 0.088:
             if energy[i] < 0.090:
                 print(energy[i], value[i], mode)
 
-    print("atomic weight = ", getAtomicWeights()[82-1])
+    print("atomic weight = ", getAtomicWeights()[Z-1])

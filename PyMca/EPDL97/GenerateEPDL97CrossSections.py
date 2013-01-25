@@ -17,8 +17,12 @@ getTotalTripletCrossSection = EPDLParser.getTotalTripletCrossSection
 
 if len(sys.argv) < 3:
     print("Usage:")
-    print("python EPDL97GenerateCrossSections SPEC_output_filename barns_flag")
+    print("python EPDL97GenerateCrossSections SPEC_output_filename barns_flag [short_output_flag]")
     sys.exit(0)
+
+SHORT_OUTPUT_FLAG = 0
+if len(sys.argv) > 3:
+    SHORT_OUTPUT_FLAG = int(sys.argv[3])
 
 def getHeader(filename):
     text  = '#F %s\n' % filename
@@ -28,8 +32,13 @@ def getHeader(filename):
     text += '#U03 EPDL97 itself can be found at:\n'
     text += '#U04           http://www-nds.iaea.org/epdl97/libsall.htm\n'
     text += '#U05\n'
-    text += '#U06 The program used to generate this file has been:\n'
-    text += '#U07 %s\n' % os.path.basename(__file__)
+    text += '#U06 The command used to generate this file has been:\n'
+    if len(sys.argv) > 3:
+        text += '#U07 %s %s %s %s\n' % (os.path.basename(__file__),\
+                                           sys.argv[1], sys.argv[2], sys.argv[3])
+    else:
+        text += '#U07 %s %s %s\n' % (os.path.basename(__file__),\
+                                        sys.argv[1], sys.argv[2])
     text += '\n'
     return text
 
@@ -53,8 +62,25 @@ bad_shells = ['L (', 'L23',
               'P (', 'P23', 'P45', 'P67', 'P89', 'P101',
               'Q (', 'Q23', 'Q45', 'Q67']
 LONG_LABELS = True
+
+#find the first element for which EPDL has N1 or P1 shell attenuation data
+if SHORT_OUTPUT_FLAG:
+    testShell = "N1"
+else:
+    testShell = "P1"
+z = 0
+i = 0
+while z == 0:
+    i += 1
+    try:
+        dummy = getPartialPhotoelectricCrossSection(i, testShell, getmode=True)
+        z = i
+    except IOError:
+        pass
+
+firstNonZeroPhotoelectric = z
+
 for i in range(1, 101):
-#for i in range(82, 83):
     print("i = %d element = %s" % (i, Elements[i-1]))
     #coherent
     energy_cohe, value_cohe, mode_cohe = getTotalCoherentCrossSection(i,
@@ -106,8 +132,13 @@ for i in range(1, 101):
             continue
         if shell[0:4] in bad_shells:
             continue
-        if shell[0] in ['P', 'Q']:
-            continue
+        # do not generate partial photoelectric cross sections for these shells
+        if SHORT_OUTPUT_FLAG:
+            if shell[0] in ['N', 'O', 'P', 'Q']:
+                continue
+        else:
+            if shell[0] in ['P', 'Q']:
+                continue
         photo_long_label_list.append(shell)
         actual_shell = shell.replace(' ','').split("(")[0]
         photo_label_list.append(actual_shell)
@@ -259,7 +290,11 @@ for i in range(1, 101):
             else:
                 line += " 0." % a
             d += a
-        line += " %.6E %.6E\n" % (photo[n]-d, total[n])       
+        restOfShells = photo[n]-d
+        if (i < firstNonZeroPhotoelectric) or (restOfShells < 1.0E-7):
+            line += " 0.0 %.6E\n" % (total[n])
+        else:
+            line += " %.6E %.6E\n" % (restOfShells, total[n])  
         outfile.write(line)
     outfile.write('\n')
 outfile.close()

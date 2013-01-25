@@ -154,6 +154,10 @@ def _initializeElement(element):
             EPDL97_DICT[element]['EPDL97']['compton'] = data[i, :]
             EPDL97_DICT[element]['EPDL97']['compton'].shape = -1
             continue
+        if 'allother' in label:
+            EPDL97_DICT[element]['EPDL97']['all other'] = data[i, :]
+            EPDL97_DICT[element]['EPDL97']['all other'].shape = -1
+            continue
         label = label.replace(" ","").split("(")[0]
         if 'energy' in label:
             EPDL97_DICT[element]['EPDL97']['energy'] = data[i, :]
@@ -175,23 +179,34 @@ def _initializeElement(element):
             EPDL97_DICT[element]['EPDL97'][label.upper()] = data[i, :]
             EPDL97_DICT[element]['EPDL97'][label.upper()].shape = -1
             continue
-    EPDL97_DICT[element]['EPDL97']['pair'] = 0.0 * EPDL97_DICT[element]['EPDL97']['energy']
-    EPDL97_DICT[element]['EPDL97']['total'] =\
-            EPDL97_DICT[element]['EPDL97']['coherent']+\
-            EPDL97_DICT[element]['EPDL97']['compton']+\
-            EPDL97_DICT[element]['EPDL97']['pair']+\
-            EPDL97_DICT[element]['EPDL97']['photo']
-    EPDL97_DICT[element]['EPDL97']['all other']=1 *\
-            EPDL97_DICT[element]['EPDL97']['photo']
-    atomic_shells = ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']
-    for key in atomic_shells:
-        EPDL97_DICT[element]['EPDL97']['all other']-=\
-                EPDL97_DICT[element]['EPDL97'][key]
+    EPDL97_DICT[element]['EPDL97']['pair'] = 0.0 *\
+                                             EPDL97_DICT[element]['EPDL97']['energy']
+    EPDL97_DICT[element]['EPDL97']['photo'] = \
+            EPDL97_DICT[element]['EPDL97']['total'] -\
+            EPDL97_DICT[element]['EPDL97']['compton']-\
+            EPDL97_DICT[element]['EPDL97']['coherent']-\
+            EPDL97_DICT[element]['EPDL97']['pair']
+
+    atomic_shells = ['M5', 'M4', 'M3', 'M2', 'M1', 'L3', 'L2', 'L1', 'K']
+
+    # with the new (short) version of the cross-sections file, "all other" contains all
+    # shells above the M5. Nevertheless, we calculate it
+    if scan_index > 17:
+        idx = EPDL97_DICT[element]['EPDL97']['all other'] > 0.0
+        delta = 0.0
+        for key in atomic_shells:
+            delta += EPDL97_DICT[element]['EPDL97'][key]
+        EPDL97_DICT[element]['EPDL97']['all other'] =\
+                        (EPDL97_DICT[element]['EPDL97']['photo'] - delta) * idx
+    else:
+        EPDL97_DICT[element]['EPDL97']['all other'] = 0.0 * \
+                        EPDL97_DICT[element]['EPDL97']['photo']
 
     #take care of rounding problems
-    EPDL97_DICT[element]['EPDL97']['all other']\
-        [EPDL97_DICT[element]['EPDL97']['all other'] < 0.0] = 0.0
-
+    idx = EPDL97_DICT[element]['EPDL97']['all other'] < 0.0
+    EPDL97_DICT[element]['EPDL97']['all other'][idx] = 0.0
+    
+    
 def getElementCrossSections(element, energy=None, forced_shells=None):
     """
     getElementCrossSections(element, energy, forced_shells=None)
@@ -232,7 +247,7 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
     ddict['pair']       = 0.0 * energy
     ddict['all other']  = 0.0 * energy
     ddict['total']      = 0.0 * energy
-    atomic_shells = ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']
+    atomic_shells = ['M5', 'M4', 'M3', 'M2', 'M1', 'L3', 'L2', 'L1', 'K']
     for key in atomic_shells:
         ddict[key] = 0.0 * energy
 
@@ -244,13 +259,13 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
             print("Warning: Extrapolating data at the end")
             j1 = len(wdata['energy']) - 1 
             j0 = j1 - 1
-        elif x < wdata['energy'][0]:
+        elif x <= wdata['energy'][0]:
             #take first value or extrapolate?
             print("Warning: Extrapolating data at the beginning")
             j1 = 1 
             j0 = 0
         else:
-            j0 = numpy.max(numpy.nonzero(wdata['energy'] <= x), axis=1)
+            j0 = numpy.max(numpy.nonzero(wdata['energy'] < x), axis=1)
             j1 = j0 + 1
         x0 = wdata['energy'][j0]
         x1 = wdata['energy'][j1]
@@ -259,15 +274,11 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
         for key in ['coherent', 'compton', 'all other']:
             y0 = wdata[key][j0]
             y1 = wdata[key][j1]
-            #if key == 'all other':
-            #    print "energy = ", x
-            #    print "x0 = ", x0
-            #    print "x1 = ", x1
-            #    print 1, y0
-            #    print 2, y1
             if (y0 > 0) and (y1 > 0):
                 ddict[key][i] = exp((log(y0) * log(x1/x) +\
                                  log(y1) * log(x/x0))/log(x1/x0))
+            elif (y1 > 0) and ((x-x0) > 1.E-5):
+                ddict[key][i] = exp((log(y1) * log(x/x0))/log(x1/x0))
             
 
         #partial cross sections
