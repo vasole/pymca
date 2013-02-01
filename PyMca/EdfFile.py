@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -303,6 +303,7 @@ class  EdfFile(object):
         selectedLines = [""]
         if sys.version > '2.6':
             selectedLines.append(eval('b""'))
+        parsingHeader = False
         while line not in selectedLines:
             #decode to make sure I have character string
             #str to make sure python 2.x sees it as string and not unicode
@@ -321,6 +322,7 @@ class  EdfFile(object):
                         except UnicodeDecodeError:
                             line = "%s" % line
             if (line.count("{\n") >= 1) or (line.count("{\r\n") >= 1):
+                parsingHeader = True
                 Index = self.NumImages
                 self.NumImages = self.NumImages + 1
                 self.Images.append(Image())
@@ -340,7 +342,8 @@ class  EdfFile(object):
                     self.Images[Index].StaticHeader[typeItem] = valueItem
                 else:
                     self.Images[Index].Header[typeItem] = valueItem
-            if (line.count("}\n") >= 1) or (line.count("}\r") >= 1):
+            if ((line.count("}\n") >= 1) or (line.count("}\r") >= 1)) and (parsingHeader):
+                parsingHeader = False
                 #for i in STATIC_HEADER_ELEMENTS_CAPS:
                 #    if self.Images[Index].StaticHeader[i]=="":
                 #        raise "Bad File Format"
