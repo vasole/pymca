@@ -276,6 +276,17 @@ for i in range(1, 101):
     photo  *= factor
     total  *= factor
     for n in range(len(energy)):
+        if energy[n] == (1000. * energy_photo[0]):
+            # one additional line
+            line = fformat % (energy[n],
+                  cohe[n],
+                  incohe[n],
+                  cohe[n]+incohe[n],
+                  0.0)
+            for l in photo_label_list:
+                line += " 0."
+            line += " 0.0 %.6E\n" % (cohe[n]+incohe[n])
+            outfile.write(line)
         line = fformat % (energy[n],
                           cohe[n],
                           incohe[n],
@@ -288,7 +299,7 @@ for i in range(1, 101):
             if a > 0.0:
                 line += " %.6E" % a
             else:
-                line += " 0." % a
+                line += " 0."
             d += a
         restOfShells = photo[n]-d
         if (i < firstNonZeroPhotoelectric) or (restOfShells < 1.0E-7):

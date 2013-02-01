@@ -252,7 +252,8 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
         ddict[key] = 0.0 * energy
 
     #find interpolation point
-    for i in range(len(energy)):
+    len_energy = len(energy)
+    for i in range(len_energy):
         x = energy[i]
         if x > wdata['energy'][-2]:
             #take last value or extrapolate?
@@ -269,16 +270,26 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
             j1 = j0 + 1
         x0 = wdata['energy'][j0]
         x1 = wdata['energy'][j1]
+        if x == x1:
+            if (j1 + 1 ) < len(wdata['energy']):
+                if x1 == wdata['energy'][j1 + 1]:
+                    j0 = j1
+                    j1 += 1
+                    x0 = wdata['energy'][j0]
+                    x1 = wdata['energy'][j1]
 
         #coherent and incoherent
-        for key in ['coherent', 'compton', 'all other']:
-            y0 = wdata[key][j0]
-            y1 = wdata[key][j1]
-            if (y0 > 0) and (y1 > 0):
-                ddict[key][i] = exp((log(y0) * log(x1/x) +\
-                                 log(y1) * log(x/x0))/log(x1/x0))
-            elif (y1 > 0) and ((x-x0) > 1.E-5):
-                ddict[key][i] = exp((log(y1) * log(x/x0))/log(x1/x0))
+        for key in ['coherent', 'compton', 'pair', 'all other']:
+            if (j0 == j1) or ((x1 - x0) < 5.E-10) or ((x1 - x) < 5.E-10) :
+                ddict[key][i] =  wdata[key][j1]
+            else:
+                y0 = wdata[key][j0]
+                y1 = wdata[key][j1]
+                if (y0 > 0) and (y1 > 0):
+                    ddict[key][i] = exp((log(y0) * log(x1/x) +\
+                                     log(y1) * log(x/x0))/log(x1/x0))
+                elif (y1 > 0) and ((x-x0) > 1.E-5):
+                    ddict[key][i] = exp((log(y1) * log(x/x0))/log(x1/x0))
             
 
         #partial cross sections
