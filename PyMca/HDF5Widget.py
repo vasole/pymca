@@ -60,11 +60,16 @@ def h5py_sorting(object_list):
     if n < 2:
         return object_list
 
+    if hasattr(object_list[0], "keys"):
+        # we have received values
+        names = list(object_list[0].keys())
+    else:
+        # we have received items, not values
+        names = [item[0] for item in object_list]
+    
     # This implementation only sorts entries
-    if posixpath.dirname(object_list[0].name) != "/":
+    if posixpath.dirname(names[0]) != "/":
         return object_list
-
-    names = list(object_list[0].keys())
 
     sorting_key = None
     for key in sorting_list:
@@ -173,17 +178,33 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
-                tmpList = list(self.getNode(self.name).values())
+                items = self.getNode(self.name).items()
+                if posixpath.dirname(self.name) == "/":
+                    # top level item
+                    doit = True
+                else:
+                    doit = False
                 try:
-                    finalList = h5py_sorting(tmpList)
+                    # better handling of external links
+                    finalList = h5py_sorting(items)
+                    for i in range(len(finalList)):
+                        finalList[i][1]._posixPath = posixpath.join(self.name,
+                                                               items[i][0])
+                    self._children = [H5NodeProxy(self.file, i[1], self)
+                                      for i in finalList]
                 except:
-                    #one cannot afford any error
+                    #one cannot afford any error, so I revert to the old
+                    # method where values where used instead of items
                     if DEBUG:
                         raise
                     else:
+                        tmpList = list(self.getNode(self.name).values())                
                         finalList = tmpList
-                self._children = [H5NodeProxy(self.file, i, self)
-                                  for i in finalList]
+                    for i in range(len(finalList)):
+                        finalList[i]._posixPath = posixpath.join(self.name,
+                                                               items[i][0])
+                    self._children = [H5NodeProxy(self.file, i, self)
+                                      for i in finalList]
         return self._children
 
     @property
@@ -232,11 +253,14 @@ class H5NodeProxy(object):
         return self._parent
 
 
-    def __init__(self, ffile, node, parent=None):
+    def __init__(self, ffile, node, parent=None, path=None):
         if 1:#with ffile.plock:
             self._file = ffile
-            self._parent = parent
-            self._name = node.name
+            self._parent = parent    
+            if hasattr(node, '_posixPath'):
+                self._name = node._posixPath
+            else:
+                self._name = node.name
             """
             if hasattr(node, "_sourceName"):
                 self._name = node._sourceName
@@ -643,7 +667,6 @@ if __name__ == "__main__":
         sys.exit(0)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
-    #fileModel.openFile('/home/darren/temp/PSI.hdf')
     phynxFile = fileModel.openFile(sys.argv[1])
     def mySlot(ddict):
         print(ddict)

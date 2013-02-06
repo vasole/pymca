@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -347,15 +347,42 @@ class HDF5InfoWidget(qt.QTabWidget):
         return qt.QWidget.closeEvent(self, event)
 
 def getInfo(hdf5File, node):
+    """
+    hdf5File is and HDF5 file-like insance
+    node is the posix path to the node
+    """
     data = hdf5File[node]
     ddict = {}
     ddict['general'] = {}
     ddict['attributes'] = {}
-    ddict['general']['Path'] = data.name
-    if ddict['general']['Path'] != "/":
-        ddict['general']['Name'] = posixpath.basename(data.name)
+
+    externalFile = False
+    if hasattr(hdf5File, "file"):
+        if hasattr(hdf5File.file, "filename"):
+            if data.file.filename != hdf5File.file.filename:
+                externalFile = True
+
+    if externalFile:
+        path = node
+        if path != "/":
+            name = posixpath.basename(node)
+        else:
+            name = hdf5File.file.filename
+        if data.name != node:
+            path += " external link to %s" % data.name
+            path += " in %s" % safe_str(data.file.filename)
+            name += " external link to %s" % data.name
+            name += " in %s" % safe_str(data.file.filename)
+        else:
+            name = data.name
+        ddict['general']['Path'] = path
+        ddict['general']['Name'] = name
     else:
-        ddict['general']['Name'] = data.file.filename
+        ddict['general']['Path'] = data.name
+        if ddict['general']['Path'] != "/":
+            ddict['general']['Name'] = posixpath.basename(data.name)
+        else:
+            ddict['general']['Name'] = data.file.filename
     ddict['general']['Type'] = safe_str(data)
     if hasattr(data, 'dtype'):
         if ("%s" % data.dtype).startswith("|S") or\
