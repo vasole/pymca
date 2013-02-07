@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -616,23 +616,23 @@ class QNexusWidget(qt.QWidget):
                 elif selectionType.upper() == "MCA":
                     sel['scanselection'] = False
                     sel['mcaselection']  = True
-                    aliases = cntSelection['aliaslist'] 
-                    if len(cntSelection['x']) and len(cntSelection['m']):
-                        addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
-                                                       aliases[cntSelection['m'][0]],
-                                                       aliases[cntSelection['x'][0]])
-                    elif len(cntSelection['x']):
-                        addLegend = " %s vs %s" % (aliases[yCnt],
-                                                   aliases[cntSelection['x'][0]])
-                    elif len(cntSelection['m']):
-                        addLegend = " (%s/%s)" % (aliases[yCnt],
-                                                aliases[cntSelection['m'][0]])
-                    else:
-                        addLegend = " %s" % aliases[yCnt]
-                    sel['legend'] += addLegend
                 else:
                     sel['scanselection'] = False
                     sel['mcaselection']  = False
+                aliases = cntSelection['aliaslist'] 
+                if len(cntSelection['x']) and len(cntSelection['m']):
+                    addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
+                                                   aliases[cntSelection['m'][0]],
+                                                   aliases[cntSelection['x'][0]])
+                elif len(cntSelection['x']):
+                    addLegend = " %s vs %s" % (aliases[yCnt],
+                                               aliases[cntSelection['x'][0]])
+                elif len(cntSelection['m']):
+                    addLegend = " (%s/%s)" % (aliases[yCnt],
+                                            aliases[cntSelection['m'][0]])
+                else:
+                    addLegend = " %s" % aliases[yCnt]
+                sel['legend'] += addLegend
                 selectionList.append(sel)
         self._lastAction = "%s" % ddict['action']
         if len(selectionList):

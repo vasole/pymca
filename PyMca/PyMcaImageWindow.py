@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -147,7 +147,16 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 if hasattr(dataObject, 'm'):
                     if dataObject.m is not None:
                         for m in dataObject.m:
-                            self._imageData = self._imageData / float(m)
+                            if hasattr(m, "size"):
+                                if m.size == self._imageData.size:
+                                    tmpView = m[:]
+                                    tmpView.shape = shape
+                                    self._imageData /= tmpView.astype(numpy.float)
+                                else:
+                                    #let numpy raise the appropriate error
+                                    self._imageData /= numpy.float(m)
+                            else:
+                                self._imageData /= numpy.float(m)
                 self.slider.hide()
                 self.setName(legend)
             else:
