@@ -82,7 +82,7 @@ for shell in workingShells:
                 if tmpKey in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
                         continue                    
-                for key1 in workingShells:
+                for key1 in shellList:
                     tmpKey = key1.split()[0]
                     if tmpKey in workingShells:
                         if workingShells.index(tmpKey) <= workingShells.index(shell):
@@ -95,6 +95,8 @@ for shell in workingShells:
             text += tmpText + '\n'
         else:
             text = ''
+        # this loop calculates the totals, because it cannot be deduced from the subset
+        # transitions written in the file
         total = 0.0
         for key0 in shellList:
             tmpKey = key0.split()[0]
@@ -114,7 +116,7 @@ for shell in workingShells:
             if tmpKey in workingShells:
                 if workingShells.index(tmpKey) <= workingShells.index(shell):
                     continue                    
-            for key1 in workingShells:
+            for key1 in shellList:
                 tmpKey = key1.split()[0]
                 if tmpKey in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
