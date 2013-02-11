@@ -122,7 +122,11 @@ for shell in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
                         continue                    
                 key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
-                text += '  %.7E' % ddict.get(key, [0.0, 0.0])[0]
+                valueToWrite = ddict.get(key, [0.0, 0.0])[0]
+                if valueToWrite == 0.0:
+                    text += '  0.0'
+                else:
+                    text += '  %.7E' % valueToWrite
         text += '\n'
         if sys.version < '3.0':
             outfile.write(text)
