@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2008-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2008-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -132,8 +132,13 @@ class OmnicMap(DataObject.DataObject):
         fmt = "%df" % self.nChannels
         for i in range(self.__nFiles):
             for j in range(self.nRows):
-                self.data[i, j, :] = struct.unpack(fmt,\
-                                        data[offset:(offset + delta - 100)])
+                # this approach is inneficient when compared to a direct
+                # data readout, but it allows to deal with nan at the source
+                tmpData = numpy.zeros((self.nChannels,), dtype=numpy.float32)
+                tmpData[:] = struct.unpack(fmt,\
+                                data[offset:(offset + delta - 100)])
+                finiteData = numpy.isfinite(tmpData)
+                self.data[i, j, finiteData] = tmpData[finiteData]
                 offset = int(offset + delta)
         shape = self.data.shape
         for i in range(len(shape)):
@@ -291,6 +296,7 @@ if __name__ == "__main__":
         w = OmnicMap(filename)
         print(type(w))
         print(type(w.data[0:10]))
+        print w.data[0:10]
         print("shape = ", w.data.shape)
         print(type(w.info))
         print("INFO = ", w.info['OmnicInfo'])
