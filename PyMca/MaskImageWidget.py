@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF BLISS Group"
+__author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
@@ -1349,11 +1349,26 @@ class MaskImageWidget(qt.QWidget):
                 maxData = data.max()
             else:
                 tmpData = data[finiteData]
-                minData = tmpData.min()
-                maxData = tmpData.max()
+                if tmpData.size > 0:
+                    minData = tmpData.min()
+                    maxData = tmpData.max()
+                else:
+                    minData = None
+                    maxData = None
                 tmpData = None
         if colormap is None:
-            (self.__pixmap,size,minmax)= spslut.transform(\
+            if minData is None:
+                (self.__pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (self.__defaultColormapType,3.0),
+                                "BGRX",
+                                self.__defaultColormap,
+                                1,
+                                (0, 1),
+                                (0, 255), 1)
+            else:
+                (self.__pixmap,size,minmax)= spslut.transform(\
                                 data,
                                 (1,0),
                                 (self.__defaultColormapType,3.0),
@@ -1377,7 +1392,18 @@ class MaskImageWidget(qt.QWidget):
                                 (0,255), 1)                
             elif colormap[1]:
                 #autoscale
-                (self.__pixmap,size,minmax)= spslut.transform(\
+                if minData is None:
+                    (self.__pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (self.__defaultColormapType,3.0),
+                                "BGRX",
+                                self.__defaultColormap,
+                                1,
+                                (0, 1),
+                                (0, 255), 1)
+                else:
+                    (self.__pixmap,size,minmax)= spslut.transform(\
                                 data,
                                 (1,0),
                                 (colormap[6],3.0),
@@ -1483,6 +1509,8 @@ class MaskImageWidget(qt.QWidget):
             return
         if self.colormapDialog is None:
             self.__initColormapDialog()
+            if self.colormapDialog is None:
+                return
         if self.colormapDialog.isHidden():
             self.colormapDialog.show()
         if QTVERSION < '4.0.0':
@@ -1493,8 +1521,13 @@ class MaskImageWidget(qt.QWidget):
 
     def __initColormapDialog(self):
         goodData = self.__imageData[numpy.isfinite(self.__imageData)]
-        maxData = goodData.max()
-        minData = goodData.min()
+        if goodData.size > 0:
+            maxData = goodData.max()
+            minData = goodData.min()
+        else:
+            qt.QMessageBox.critical(self,"No Data",
+                "Image data does not contain any real value")
+            return
         self.colormapDialog = ColormapDialog.ColormapDialog()
         colormapIndex = self.__defaultColormap
         if colormapIndex == 1:
