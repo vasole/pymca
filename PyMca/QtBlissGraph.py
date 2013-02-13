@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1776,6 +1776,10 @@ class QtBlissGraph(Qwt5.QwtPlot):
                 if x is None:
                     x=numpy.arange(len(y))
                 if logfilter:
+                    # should I filter more the data?
+                    #finiteData = numpy.isfinite(y)
+                    #x = x[finiteData]
+                    #y = y[finiteData]
                     i1=numpy.nonzero(y>0.0)[0]
                     x= numpy.take(x,i1)
                     y= numpy.take(y,i1)

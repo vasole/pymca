@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -461,8 +461,12 @@ class StackBase(object):
             return
         mcaData = None
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
+        if DEBUG:
+            print("Stack data is not finite")
         if (self._selectionMask is None) and goodData:
             if normalize:
+                if DEBUG:
+                    print("Case 1")
                 npixels = self._stackImageData.shape[0] *\
                           self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
@@ -470,24 +474,36 @@ class StackBase(object):
                 dataObject.x = [self._mcaData0.x[0]]
                 dataObject.y = [self._mcaData0.y[0] / npixels];
             else:
+                if DEBUG:
+                    print("Case 2")
                 dataObject = self._mcaData0
             return dataObject
 
         #deal with NaN and inf values
         if self._selectionMask is None:
-            actualSelectionMask = numpy.isfinite(self._stackImageData)
+            try:
+                actualSelectionMask = self._selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
+            except:
+                actualSelectionMask = numpy.isfinite(self._stackImageData)
         else:
-            actualSelectionMask = self._selectionMask * numpy.isfinite(self._stackImageData)
+            try:
+                actualSelectionMask = self._selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
+            except:
+                actualSelectionMask = self._selectionMask * numpy.isfinite(self._stackImageData)
 
         npixels = actualSelectionMask.sum()
         if (npixels == 0) and goodData:
             if normalize:
+                if DEBUG:
+                    print("Case 3")
                 npixels = self._stackImageData.shape[0] * self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self._mcaData0.info)
                 dataObject.x = [self._mcaData0.x[0]]
                 dataObject.y = [self._mcaData0.y[0] / npixels]
             else:
+                if DEBUG:
+                    print("Case 4")
                 dataObject = self._mcaData0
             return dataObject
 
@@ -503,6 +519,8 @@ class StackBase(object):
         else:
                 arrayMask = (actualSelectionMask > 0)
 
+        if DEBUG:
+            print("Reached MCA calculation")
         cleanMask = numpy.nonzero(arrayMask)
         if DEBUG:
             print("self.fileIndex, self.mcaIndex = %d , %d" %\
@@ -510,10 +528,14 @@ class StackBase(object):
         if DEBUG:
             t0 = time.time()
         if len(cleanMask[0]) and len(cleanMask[1]):
+            if DEBUG:
+                print("USING MASK")
             cleanMask = numpy.array(cleanMask).transpose()
             if self.fileIndex == 2:
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
+                        if DEBUG:
+                            print("In memory case 0")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[:, r, c]
                     else:
@@ -544,6 +566,8 @@ class StackBase(object):
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
+                        if DEBUG:
+                            print("In memory case 2")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[:, r, c]
                     else:
@@ -573,6 +597,8 @@ class StackBase(object):
                                 mcaData[i] = (tmpData[0] * arrayMask).sum(dtype=numpy.float)
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
+                        if DEBUG:
+                            print("In memory case 3")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, c, :]
                     else:
@@ -595,12 +621,16 @@ class StackBase(object):
             elif self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
+                        if DEBUG:
+                            print("In memory case 4")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, :, c]
                     else:
                         raise IndexError("Dynamic loading case 4")
                 elif self.mcaIndex in [2, -1]:
                     if isinstance(self._stack.data, numpy.ndarray):
+                        if DEBUG:
+                            print("In memory case 5")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, c, :]
                     else:
@@ -622,6 +652,10 @@ class StackBase(object):
                     raise IndexError("Wrong combination of indices. Case 2")
             else:
                 raise IndexError("File index undefined")
+        else:
+            if DEBUG:
+                print("NOT USING MASK !")
+
         if DEBUG:
             print("Mca sum elapsed = %f" % (time.time() - t0))
         if goodData:
@@ -865,7 +899,10 @@ class StackBase(object):
         if goodData:
             self._selectionMask = mask
         else:
-            self._selectionMask = mask * numpy.isfinite(self._stackImageData)
+            try:
+                self._selectionMask = mask * numpy.isfinite(self._ROIImageDict["ROI"])
+            except:
+                self._selectionMask = mask * numpy.isfinite(self._stackImageData)
 
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].selectionMaskUpdated()

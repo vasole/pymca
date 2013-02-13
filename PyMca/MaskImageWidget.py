@@ -1199,7 +1199,9 @@ class MaskImageWidget(qt.QWidget):
     def setSelectionMask(self, mask, plot=True):
         if mask is not None:
             if self.__imageData is not None:
-                mask *=  numpy.isfinite(self.__imageData)
+                # this operation will be made when retrieving the mask
+                #mask *= numpy.isfinite(self.__imageData)
+                pass
         self.__selectionMask = mask
         if plot:
             self.plotImage(update=False)
@@ -1208,8 +1210,10 @@ class MaskImageWidget(qt.QWidget):
         if self.__imageData is None:
             return None
         if self.__selectionMask is None:
-            return numpy.zeros(self.__imageData.shape, numpy.uint8)
-        return self.__selectionMask
+             return numpy.zeros(self.__imageData.shape, numpy.uint8) *\
+                    numpy.isfinite(self.__imageData)
+        return self.__selectionMask *\
+                    numpy.isfinite(self.__imageData)
 
     def setImageData(self, data, clearmask=False, xScale=None, yScale=None):
         self.__image = None
