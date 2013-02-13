@@ -481,14 +481,16 @@ class StackBase(object):
 
         #deal with NaN and inf values
         if self._selectionMask is None:
-            try:
+            if (self._ROIImageDict["ROI"] is not None) and\
+               (self.mcaIndex != 0):
                 actualSelectionMask = self._selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
-            except:
+            else:
                 actualSelectionMask = numpy.isfinite(self._stackImageData)
         else:
-            try:
+            if (self._ROIImageDict["ROI"] is not None) and\
+               (self.mcaIndex != 0):
                 actualSelectionMask = self._selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
-            except:
+            else:
                 actualSelectionMask = self._selectionMask * numpy.isfinite(self._stackImageData)
 
         npixels = actualSelectionMask.sum()
@@ -899,9 +901,10 @@ class StackBase(object):
         if goodData:
             self._selectionMask = mask
         else:
-            try:
+            if (self._ROIImageDict["ROI"] is not None) and\
+               (self.mcaIndex != 0):
                 self._selectionMask = mask * numpy.isfinite(self._ROIImageDict["ROI"])
-            except:
+            else:
                 self._selectionMask = mask * numpy.isfinite(self._stackImageData)
 
         for key in self.pluginInstanceDict.keys():
