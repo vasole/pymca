@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -400,6 +400,7 @@ class ConcentrationsWidget(qt.QWidget):
             elif len(current) == 1:
                 current = current.upper()[0]
             else:
+                self.referenceLine.setText('Auto')
                 msg = qt.QMessageBox(self.referenceLine)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
@@ -410,8 +411,10 @@ class ConcentrationsWidget(qt.QWidget):
                 self.referenceLine.setFocus()
                 return
             if (current == '') or (current.upper() == 'AUTO'):
+                self.referenceLine.setText('Auto')
                 self._mySignal()
             elif not Elements.isValidFormula(current):
+                self.referenceLine.setText('Auto')
                 msg = qt.QMessageBox(self.referenceLine)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
@@ -419,8 +422,6 @@ class ConcentrationsWidget(qt.QWidget):
                     msg.exec_loop()
                 else:
                     msg.exec_()
-
-                self.referenceLine.setText('Auto')
                 self.referenceLine.setFocus()
             else:
                 self.referenceLine.setText(current)
@@ -546,7 +547,7 @@ class FundamentalWidget(qt.QWidget):
         c0l0.setText("Flux (photons/s)")
 
         c0l1 = qt.QLabel(c0)
-        c0l1.setText("Active Area (mm2)")
+        c0l1.setText("Active Area (cm2)")
 
         c0.layout.addWidget(c0l0)
         c0.layout.addWidget(c0l1)
@@ -576,7 +577,7 @@ class FundamentalWidget(qt.QWidget):
         c2l0.setText("x time(seconds)")
 
         c2l1 = qt.QLabel(c2)
-        c2l1.setText("distance (mm)")
+        c2l1.setText("distance (cm)")
 
         c2.layout.addWidget(c2l0)
         c2.layout.addWidget(c2l1)
