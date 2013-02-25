@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -208,7 +208,7 @@ class ConcentrationsTool(object):
         return copy.deepcopy(self.config)
 
     def processFitResult(self, config=None, fitresult=None,
-                         elementsfrommatrix=False, fluorates=None):
+                         elementsfrommatrix=False, fluorates=None, addinfo=False):
         # I should check if fit was successful ...
         if fitresult is None:
             fitresult = self.fitresult
@@ -459,27 +459,46 @@ class ConcentrationsTool(object):
                         fom = newfom
                         referenceElement = key
                 referenceLayers  = referenceLayerDict[referenceElement]
-            solidangle    = 1.0
+
+            referenceTransitions = None
             for group in groupsList:
                 item = group.split()
                 element = item[0]
-                transitions = item[1] + " xrays"
                 if element == referenceElement:
+                    transitions = item[1] + " xrays"
+                    if referenceTransitions is None:
+                        referenceTransitions = transitions
+                        referenceGroup = group
+                    elif (referenceTransitions[0] == transitions[0]) and\
+                         (referenceTransitions[0] == 'L'):
+                        # this prevents selecting L1 and selects L3 although
+                        # given the appropriate area, L2 can be a safer choice.
+                        referenceGroup = group
+                        referenceTransitions = transitions
+                elif referenceTransitions is not None:
                     break
             theoretical = 0.0
             for ilayer in referenceLayers:
                 if elementsfrommatrix:
-                    theoretical += fluolist[ilayer][referenceElement]['rates'][transitions] * \
+                    theoretical += fluolist[ilayer][referenceElement]['rates'][referenceTransitions] * \
                                    fluolist[ilayer][referenceElement]['mass fraction']
                 else:
                     theoretical  += materialComposition[ilayer][referenceElement] * \
-                                    fluolist[ilayer][referenceElement]['rates'][transitions]
+                                    fluolist[ilayer][referenceElement]['rates'][referenceTransitions]
             if theoretical <= 0.0:
                 raise ValueError(\
                     "Theoretical rate is almost 0.0 Impossible to determine flux")
             else:
-                flux = fitresult['result'][group]['fitarea'] / theoretical
+                if (config['distance'] > 0.0) and (config['area'] > 0.0):
+                    #solidangle = config['area']/(4.0 * numpy.pi * pow(config['distance'],2))
+                    radius2 = config['area']/numpy.pi
+                    solidangle = 0.5 * (1.0 -  (config['distance']/numpy.sqrt(pow(config['distance'],2)+ radius2)))
+                else:
+                    solidangle = 1.0
+                flux = fitresult['result'][referenceGroup]['fitarea'] / (theoretical * solidangle)
         else:
+            referenceElement = None
+            referenceTransitions = None
             #solidangle = config['area']/(4.0 * numpy.pi * pow(config['distance'],2))
             radius2 = config['area']/numpy.pi
             solidangle = 0.5 * (1.0 -  (config['distance']/numpy.sqrt(pow(config['distance'],2)+ radius2)))
@@ -609,8 +628,22 @@ class ConcentrationsTool(object):
                     for layer in ddict['layerlist']:
                         if group in ddict[layer]['area'].keys():
                             ddict['area'][group] += ddict[layer]['area'][group]
-
-        return ddict
+        if addinfo:
+            addInfo = {}
+            addInfo['ReferenceElement'] = referenceElement
+            addInfo['ReferenceTransitions'] = referenceTransitions
+            addInfo['SolidAngle'] = solidangle
+            if config['time'] > 0.0:
+                addInfo['Time'] = config['time']
+            else:
+                addInfo['Time'] = 1.0
+            addInfo['Flux'] = flux / addInfo['Time']       
+            addInfo['I0'] = flux
+            addInfo['DetectorDistance'] = config['distance']
+            addInfo['DetectorArea'] = config['area']
+            return ddict , addInfo
+        else:
+            return ddict
 
     def _figureOfMerit(self, element, fluo, fitresult):
         weight = 0.0
