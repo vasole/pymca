@@ -86,7 +86,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "4.7.RC3"
+__version__ = "4.7.RC4"
 if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
@@ -932,7 +932,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def __configureFit(self, d):
         if 'Configuration' in d:
-            self.mcawindow.advancedfit.mcafit.configure(d['Configuration'])
+            self.mcawindow.advancedfit.configure(d['Configuration'])
             if not self.mcawindow.advancedfit.isHidden():
                 self.mcawindow.advancedfit._updateTop()
         if 'ConfigDir' in d:

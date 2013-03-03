@@ -28,6 +28,7 @@ recursive-include PyMca/PyMcaSciPy *.py *.c *.txt
 recursive-include PyMca/specfile *.py *.c *.h *.in
 recursive-include PyMca/specfit *.py *.c
 recursive-include PyMca/sps *.py *.c *.h *.in
+recursive-include PyMca/XRFMC *.py 
 include PyMca/sps/LICENSE
 include PyMca/sps/MANIFEST.in
 recursive-include scripts *.py *.bat
