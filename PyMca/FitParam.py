@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -40,7 +40,15 @@ from PyMca import AttenuatorsTable
 from PyMca import ConcentrationsWidget
 from PyMca import EnergyTable
 from PyMca import PyMcaDirs
+XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
+    if sys.platform == 'win32':
+        try:
+            import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
+            XRFMC_FLAG = True
+        except ImportError:
+            # no XRFMC support
+            pass
     from PyMca import StripBackgroundWidget
     # This strange looking import is to workaround an endless import
     SCANWINDOW = False
@@ -204,9 +212,19 @@ class FitParamWidget(FitParamForm):
                 tabCompoundFitLayout.setSpacing(6)
                 self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
                                                                                "tabCompound_fit")
-                tabConcentrationsLayout.addWidget(self.compoundFitWidget,0,0)
-                self.mainTab.addTab(self.tabConcentrations, str("COMPOUND FIT"))
+                tabCompoundFitLayout.addWidget(self.compoundFitWidget,0,0)
+                self.mainTab.addTab(self.tabCompoundFit, str("COMPOUND FIT"))
             #end compound fit tab
+
+        if XRFMC_FLAG:
+            self.tabXRFMC =  qt.QWidget()
+            tabXRFMCLayout = qt.QGridLayout(self.tabXRFMC)
+            tabXRFMCLayout.setMargin(11)
+            tabXRFMCLayout.setSpacing(6)
+            self.tabXRFMCWidget   = XRFMCPyMca.XRFMCTabWidget(\
+                                                self.tabXRFMC)
+            tabXRFMCLayout.addWidget(self.tabXRFMCWidget,0,0)
+            self.mainTab.addTab(self.tabXRFMC, str("XRFMC"))
 
         self.layout().setMargin(0)
 
@@ -257,11 +275,15 @@ class FitParamWidget(FitParamForm):
         self.input = None
         self.linpolOrder= None
         self.exppolOrder= None
-        self.setParameters(pardict={'attenuators':{'Air'       :[0,"Air",0.001204790,1.0],
-                                                   'Contact'   :[0,"Au1",19.370,1.0E-06],
-                                                   'Deadlayer' :[0,"Si1",2.330,0.0020],
-                                                   'Window'    :[0,"Be1",1.848,0.0100]},
-                                    'concentrations':self.concentrationsWidget.getParameters()})
+        pardict={'attenuators':{'Air'       :[0,"Air",0.001204790,1.0],
+                                'Contact'   :[0,"Au1",19.370,1.0E-06],
+                                'Deadlayer' :[0,"Si1",2.330,0.0020],
+                                'Window'    :[0,"Be1",1.848,0.0100]},
+                 'concentrations':self.concentrationsWidget.getParameters()}             
+        if XRFMC_FLAG:
+            pardict = self.tabXRFMCWidget.getParameters()
+        self.setParameters(pardict=pardict)
+        
         
 
         self.prevTabIdx= None
@@ -512,6 +534,9 @@ class FitParamWidget(FitParamForm):
         self.__setPeakShapePar()
         if "tube" in pardict:
             self.xRayTube.setParameters(pardict["tube"])
+        if "xrfmc" in pardict:
+            if XRFMC_FLAG:
+                self.tabXRFMCWidget.setParameters(pardict)
 
     def getParameters(self):
         pars= {}
@@ -519,6 +544,8 @@ class FitParamWidget(FitParamForm):
         sections.append('multilayer')
         sections.append('materials')
         sections.append('tube')
+        if XRFMC_FLAG:
+            sections.append('xrfmc')
         for key in sections:
             pars[key]= self.__getPar(key)
         return pars
@@ -542,6 +569,9 @@ class FitParamWidget(FitParamForm):
             return self.__getTubePar()
         if parname in ["concentrations", "CONCENTRATIONS"]:
             return self.__getConPar()
+        if parname in ["xrfmc", "XRFMC"]:
+            if XRFMC_FLAG:
+                return self.tabXRFMCWidget.getParameters()["xrfmc"]
         return None
 
     def __setAttPar(self, pardict):
