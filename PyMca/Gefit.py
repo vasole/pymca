@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -452,6 +452,8 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
         pwork [free_index[i]] = fitparam [i]
     newpar = getparameters(pwork.tolist(),constrains)
     newpar = numpy.take(newpar,noigno)
+    if n_free == 0:
+        raise ValueError("No free parameters to fit")
     for i in range(n_free):
         if model_deriv is None:
             #pwork = parameters.__copy__()
