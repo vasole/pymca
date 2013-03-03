@@ -1,7 +1,11 @@
 import sys
 import os
 import tempfile
+import subprocess
+import time
+import shutil
 try:
+    from PyMca import ConfigDict
     from PyMca.XRFMC import XMSOParser
 except ImportError:
     print("Trying to import XMSOParser directly")
@@ -96,6 +100,8 @@ def getOutputFileNames(fitFile, outputDir=None):
     newFile = os.path.join(outputDir, os.path.basename(fitFile))
     if newFile.lower().endswith(".fit"):
         rootName = newFile[:-4]
+    elif newFile.lower().endswith(".cfg"):
+        rootName = newFile[:-4]
     else:
         rootName = newFile
     scriptName = rootName + "_script"
@@ -112,6 +118,136 @@ def getOutputFileNames(fitFile, outputDir=None):
     ddict['spe'] = speName
     ddict['xmso'] = xmsoName
     return ddict
+
+def getXRFMCCorrectionFactors(fitConfiguration, xmimsim_pymca=None, verbose=False):
+    outputDir=tempfile.mkdtemp(prefix="pymcaTmp")
+    if 'result' in fitConfiguration:
+        # we have to create a .fit file with the information
+        ddict = ConfigDict.ConfigDict()
+        ddict.update(fitConfiguration)
+    else:
+        # for the time being we have to build a "fit-like" file with the information
+        import numpy
+        from PyMca import ClassMcaTheory 
+        fitConfiguration['fit']['linearfitflag']=1
+        fitConfiguration['fit']['stripflag']=0
+        fitConfiguration['fit']['stripiterations']=0
+        xmin = fitConfiguration['fit']['xmin']
+        xmax = fitConfiguration['fit']['xmax']
+        #xdata = numpy.arange(xmin, xmax + 1) * 1.0
+        xdata = numpy.arange(0, xmax + 1) * 1.0
+        ydata = 0.0 + 0.1 * xdata
+        mcaFit = ClassMcaTheory.McaTheory()
+        mcaFit.configure(fitConfiguration)
+        mcaFit.setData(x=xdata, y=ydata, xmin=xmin, xmax=xmax)
+        mcaFit.estimate()
+        fitresult, result = mcaFit.startfit(digest=1)
+        ddict=ConfigDict.ConfigDict()
+        ddict['result'] = result
+        ddict['xrfmc'] = fitConfiguration['xrfmc']
+    handle, fitFile = tempfile.mkstemp(suffix=".fit", prefix="pymca",
+                                       dir=outputDir, text=False)
+    os.close(handle)
+    ddict.write(fitFile)
+    ddict = None
+
+    # we have the input file ready
+    fileNamesDict = getOutputFileNames(fitFile, outputDir)
+    scriptFile = getScriptFile(pathToExecutable=xmimsim_pymca,
+                                    name=fileNamesDict['script'])
+    xmsoName = fileNamesDict['xmso']
+    # basic parameters
+    args = [scriptFile,
+           "--enable-single-run",
+           #"--set-threads=2",
+           #"--verbose",
+           #"--spe-file=%s" % speName,
+           #"--csv-file=%s" % csvName,
+           #"--enable-roi-normalization",
+           #"--disable-roi-normalization", #default
+           #"--enable-pile-up"
+           #"--disable-pile-up" #default
+           #"--enable-poisson",
+           #"--disable-poisson", #default no noise
+           #"--set-threads=2", #overwrite default maximum
+           fitFile,
+           xmsoName]
+    if verbose:
+        args.insert(2, "--verbose")
+    process = subprocess.Popen(args,
+                               bufsize=0,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               universal_newlines=True)
+    while process.poll() is None:
+        # process did not finish yet
+        time.sleep(0.1)
+        line = process.stdout.readline()
+        if verbose:
+            if len(line) > 1:
+                print("OUTPUT = <%s>" % line[:-1])
+    returnCode = process.returncode
+    line = process.stdout.readline()
+    while len(line) > 1:
+        if verbose:
+            print("OUTPUT = %s" % line[:-1])
+        line = process.stdout.readline()
+    if returnCode:
+        text = ""
+        line = process.stderr.readline()
+        while len(line) > 1:
+            text += line
+            if verbose:
+                print("ERROR = %s" % line[:-1])
+            line = process.stderr.readline()
+            removeDirectory(outputDir)
+        raise IOError("Program terminated with error code %d:\n%s" % (returnCode, text))
+    corrections = getXMSOFileFluorescenceInformation(xmsoName)
+    xmsoName = None
+    removeDirectory(outputDir)
+    return corrections
+    
+def removeDirectory(dirName):
+    if os.path.exists(dirName):
+        if os.path.isdir(dirName):
+            shutil.rmtree(dirName)
+
+def start(fitFile, outputDir, xmimsim_pymca, parameters=None, verbose=True):
+    args = XRFMCHelper.getBasicSubprocessCommand(fitFile, outputDir, xmimsim_pymca)   
+    if parameters is None:
+        parameters = ["--enable-single-run",
+                      "--set-threads=2"]
+    i = 0
+    for parameter in parameters:
+        i += 1             
+        args.insert(1, parameter)
+    process = subprocess.Popen(args,
+                               bufsize=0,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               universal_newlines=True)
+    while process.poll() is None:
+        # process did not finish yet
+        time.sleep(0.1)
+        line = process.stdout.readline()
+        if verbose:
+            if len(line) > 1:
+                print("OUTPUT = <%s>" % line[:-1])
+    returnCode = process.returncode
+    line = process.stdout.readline()
+    while len(line) > 1:
+        if verbose:
+            print("OUTPUT = %s" % line[:-1])
+        line = process.stdout.readline()
+    if returnCode:
+        text = ""
+        line = process.stderr.readline()
+        while len(line) > 1:
+            text += line
+            if verbose:
+                print("ERROR = %s" % line[:-1])
+            line = process.stderr.readline()
+        raise IOError("Program terminated with error code %d:\n%s" % (returnCode, text))    
 
 def getBasicSubprocessCommand(fitFile, outputDir=None, xmimsim_pymca=None):
      ddict = getOutputFileNames(fitFile, outputDir)
@@ -148,11 +284,28 @@ def getBasicSubprocessCommand(fitFile, outputDir=None, xmimsim_pymca=None):
             xmsoName]
      return args
 
+
+def test(filename):
+    fitConfig = ConfigDict.ConfigDict()
+    fitConfig.read(filename)
+    ddict = getXRFMCCorrectionFactors(fitConfig, verbose=True)
+    fitConfig = None
+    for element in ddict:
+        for line in ddict[element]:
+            if line == "z":
+                #atomic number
+                continue
+            if line in ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']:
+                correction1 = ddict[element][line]['correction_factor'][1]
+                correctionn = ddict[element][line]['correction_factor'][-1]
+                print("Element %s Line %s Correction 2 = %f Correction n = %f" %\
+                            (element, line,correction1, correctionn))
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        print(getScriptFile(sys.argv[1]))
+        test(sys.argv[1])
     else:
         print("Usage:")
-        print("python XRFMCCommand.py path_to_xmimsim-pymca_executable")
-        print("The returned file name is to be deleted!!!")
+        print("python XRFMCHelper.py path_to_cfg_or_fit_file")
 
