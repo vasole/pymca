@@ -125,19 +125,33 @@ class Concentrations(qt.QWidget):
     def processFitResult(self, *var, **kw):
         self.__lastVar = var
         self.__lastKw = kw
+        addInfo = False
+        if 'addinfo' in kw:
+            if kw['addinfo']:
+                addInfo = True
         if DEBUG:
-            ddict = self.concentrationsTool.processFitResult(*var, **kw)
-            self.concentrationsTable.fillFromResult(ddict)
-            return ddict
+            if addInfo:
+                ddict, info = self.concentrationsTool.processFitResult(*var, **kw)
+                self.concentrationsTable.fillFromResult(ddict)
+                return ddict, info
+            else:
+                ddict = self.concentrationsTool.processFitResult(*var, **kw)
+                self.concentrationsTable.fillFromResult(ddict)
+                return ddict
         try:
             threadResult = self._submitThread(*var, **kw)
             if type(threadResult) == type((1,)):
                 if len(threadResult):
                     if threadResult[0] == "Exception":
                         raise Exception(threadResult[1], threadResult[2])
-            ddict = threadResult
-            self.concentrationsTable.fillFromResult(ddict)
-            return ddict
+            if addInfo:
+                ddict, info = threadResult
+                self.concentrationsTable.fillFromResult(ddict)
+                return ddict, info
+            else:
+                ddict = threadResult
+                self.concentrationsTable.fillFromResult(ddict)
+                return ddict
         except:
             self.__lastKw = None
             self.concentrationsTable.setRowCount(0)
