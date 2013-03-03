@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,14 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-
-__revision__ = "$Revision: 1.65 $"
-__author__="V.A. Sole - ESRF BLISS Group"
+__author__="V.A. Sole - ESRF Sofware Group"
 import sys
 import os
 import numpy
 import time
 import copy
+import tempfile
+import shutil
 import traceback
 
 from PyMca import PyMcaQt as qt
@@ -65,17 +65,29 @@ from PyMca import QtBlissGraph
 from PyMca.PyMca_Icons import IconDict
 from PyMca import McaCalWidget
 from PyMca import PeakIdentifier
+from PyMca import SubprocessLogWidget
 from PyMca import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
 from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
-USE_BOLD_FONT = True
+from PyMca import ConfigDict
 DEBUG = 0
 if DEBUG:
     print("############################################")
     print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
     print("############################################")
+XRFMC_FLAG = False
+if QTVERSION > '4.0.0':
+    if sys.platform == 'win32':
+        try:
+            from PyMca.XRFMC import XRFMCHelper
+            XRFMC_FLAG = True
+        except ImportError:
+            if DEBUG:
+                print("Cannot import XRFMCHelper module")
+                raise
+USE_BOLD_FONT = True
 
 class McaAdvancedFit(qt.QWidget):
     """
@@ -129,6 +141,7 @@ class McaAdvancedFit(qt.QWidget):
         self.sthread = None
         self.elementsInfo = None
         self.identifier   = None
+        self.logWidget = None
         if False and len(sections) == 1:
             w = self
             self.mcatable  = McaAdvancedTable.McaTable(w)
@@ -282,6 +295,8 @@ class McaAdvancedFit(qt.QWidget):
         self.info        = {}
         self.__fitdone   = 0
         self._concentrationsDict = None
+        self._concentrationsInfo = None
+        self._xrfmcMatrixSpectra = None
         #self.graph.hide()
         #self.guiconfig = FitParam.Fitparam()
         """
@@ -318,10 +333,16 @@ class McaAdvancedFit(qt.QWidget):
         self.matrixSpectrumButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.matrixSpectrumButton)
         self.matrixSpectrumButton.setText("Matrix Spectrum")
+        if QTVERSION > '4.0.0':
+            self.matrixXRFMCSpectrumButton = qt.QPushButton(hbox)
+            self.matrixXRFMCSpectrumButton.setText("MC Matrix Spectrum")
+            hboxLayout.addWidget(self.matrixXRFMCSpectrumButton)
+            self.matrixXRFMCSpectrumButton.hide()
         self.peaksSpectrumButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.peaksSpectrumButton)
         self.peaksSpectrumButton.setText("Peaks Spectrum")
         if QTVERSION < '4.0.0':
+            self.matrixXRFMCSpectrumButton = None
             self.matrixSpectrumButton.setToggleButton(1)
             self.peaksSpectrumButton.setToggleButton(1)
             self.matrixSpectrumButton.isChecked = self.matrixSpectrumButton.isOn
@@ -329,6 +350,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.matrixSpectrumButton.setCheckable(1)
             self.peaksSpectrumButton.setCheckable(1)
+            
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.dismissButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.dismissButton)
@@ -345,6 +367,7 @@ class McaAdvancedFit(qt.QWidget):
             self.printButton.setToolTip('Print Active Tab')
             self.htmlReportButton.setToolTip('Generate Browser Compatible Output\nin Chosen Directory')
             self.matrixSpectrumButton.setToolTip('Toggle Matrix Spectrum Calculation On/Off')
+            self.matrixXRFMCSpectrumButton.setToolTip('Calculate Matrix Spectrum Using Monte Carlo')
             self.peaksSpectrumButton.setToolTip('Toggle Individual Peaks Spectrum Calculation On/Off')
 
         self.mcafit   = ClassMcaTheory.McaTheory()
@@ -353,6 +376,10 @@ class McaAdvancedFit(qt.QWidget):
         self.connect(self.printButton,              qt.SIGNAL("clicked()"),self.printActiveTab)
         self.connect(self.htmlReportButton,         qt.SIGNAL("clicked()"),self.htmlReport)
         self.connect(self.matrixSpectrumButton,     qt.SIGNAL("clicked()"),self.__toggleMatrixSpectrum)
+        if self.matrixXRFMCSpectrumButton is not None:
+            self.connect(self.matrixXRFMCSpectrumButton,
+                         qt.SIGNAL("clicked()"),
+                         self.xrfmcSpectrum)
         self.connect(self.peaksSpectrumButton,      qt.SIGNAL("clicked()"),self.__togglePeaksSpectrum)
         self.connect(self.dismissButton,            qt.SIGNAL("clicked()"),self.dismiss)
         self.connect(self.top.configureButton,qt.SIGNAL("clicked()") ,   self.__configure)
@@ -489,8 +516,10 @@ class McaAdvancedFit(qt.QWidget):
                 self.configDialog = dialog
             else:
                 dialog = self.configDialog
-                if self.__fitdone: dialog.setFitResult(self.dict['result'])
-                else:dialog.setFitResult(None)
+                if self.__fitdone:
+                    dialog.setFitResult(self.dict['result'])
+                else:
+                    dialog.setFitResult(None)
             dialog.setParameters(config)
             dialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0)
@@ -503,8 +532,10 @@ class McaAdvancedFit(qt.QWidget):
                 ret = dialog.exec_loop()
             else:
                 ret = dialog.exec_()
-            if dialog.initDir is not None: self.configDir = 1 * dialog.initDir
-            else: self.configDir = None
+            if dialog.initDir is not None:
+                self.configDir = 1 * dialog.initDir
+            else:
+                self.configDir = None
             if ret != qt.QDialog.Accepted:
                 dialog.close()
                 #del dialog
@@ -532,6 +563,8 @@ class McaAdvancedFit(qt.QWidget):
         self.graph.replot()
         self.__fitdone = False
         self._concentrationsDict = None
+        self._concentrationsInfo = None
+        self._xrfmcMatrixSpectra = None
         if self.concentrationsWidget is not None:
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
         if self.mcatable is not None:
@@ -541,6 +574,16 @@ class McaAdvancedFit(qt.QWidget):
         #materials in the fit configuration
         for material in Elements.Material.keys():
             self.mcafit.config['materials'][material] =copy.deepcopy(Elements.Material[material])
+        if QTVERSION > '4.0.0':
+            hideButton = True
+            if 'program' in config['xrfmc']:
+                if os.path.exists(config['xrfmc']['program']):
+                    if os.path.isfile(config['xrfmc']['program']):
+                        hideButton = False
+            if hideButton:
+                self.matrixXRFMCSpectrumButton.hide()
+            else:
+                self.matrixXRFMCSpectrumButton.show()
 
         if DEBUG:
             self.mcafit.configure(config)
@@ -592,6 +635,8 @@ class McaAdvancedFit(qt.QWidget):
         if ddict['event'] == 'updated':
             if 'concentrations' in ddict:
                 self._concentrationsDict = ddict['concentrations']
+                self._concentrationsInfo = None
+                self._xrfmcMatrixSpectra = None
 
     def __elementclicked(self,ddict):
         ddict['event'] = 'McaAdvancedFitElementClicked'
@@ -913,6 +958,8 @@ class McaAdvancedFit(qt.QWidget):
 
     def concentrations(self):
         self._concentrationsDict = None
+        self._concentrationsInfo = None
+        self._xrfmcMatrixSpectra = None
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -927,10 +974,10 @@ class McaAdvancedFit(qt.QWidget):
             return
         fitresult = self.dict
         if False:
-            #from the fit
+            #from the fit, it misses any update from concentrations
             config = fitresult['result']['config']
         else:
-            #from current
+            #from current, it should be up to date
             config = self.mcafit.configure()
         #tool = ConcentrationsWidget.Concentrations(fl=qt.Qt.WDestructiveClose)
         if self.concentrationsWidget is None:
@@ -944,18 +991,20 @@ class McaAdvancedFit(qt.QWidget):
         tool = self.concentrationsWidget
         #this forces update
         tool.getParameters()
-        dict = {}
-        dict.update(config['concentrations'])
-        tool.setParameters(dict, signal=False)
-        if DEBUG:
-            dict = tool.processFitResult(config=dict,fitresult=fitresult,
-                    elementsfrommatrix=False,
-                    fluorates = self.mcafit._fluoRates)
+        ddict = {}
+        ddict.update(config['concentrations'])
+        tool.setParameters(ddict, signal=False)
+        if 1 or  DEBUG:
+            ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
+                                                elementsfrommatrix=False,
+                                                fluorates = self.mcafit._fluoRates,
+                                                addinfo=True)
         else:
             try:
-                dict = tool.processFitResult(config=dict,fitresult=fitresult,
-                    elementsfrommatrix=False,
-                    fluorates = self.mcafit._fluoRates)
+                ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
+                                                    elementsfrommatrix=False,
+                                                    fluorates = self.mcafit._fluoRates,
+                                                    addinfo=True)
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -967,7 +1016,8 @@ class McaAdvancedFit(qt.QWidget):
                 if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
                     self.mainTab.setCurrentIndex(0)
                 return
-        self._concentrationsDict = dict
+        self._concentrationsDict = ddict
+        self._concentrationsInfo = info
         tool.show()
         tool.setFocus()
         if QTVERSION < '4.0.0':
@@ -996,7 +1046,11 @@ class McaAdvancedFit(qt.QWidget):
         delcurves = []
         for key in self.graph.curves.keys():
             if key not in ["Data", "Fit", "Continuum", "Pile-up", "Matrix"]:
-                delcurves.append(key)
+                if key.startswith('MC Matrix'):
+                    if self._xrfmcMatrixSpectra in [None, []]:
+                        delcurves.append(key)
+                else:
+                    delcurves.append(key)
         for key in delcurves:
             self.graph.delcurve(key)
 
@@ -1102,6 +1156,144 @@ class McaAdvancedFit(qt.QWidget):
             print("xmatrix shape = ", xmatrix.shape)
             print("continuum shape = ", dict['result']['continuum'].shape)
             print("zz      shape = ", self.mcafit.zz.shape)
+
+    def xrfmcSpectrum(self):
+        if not self.__fitdone:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            text = "Sorry, current implementation requires you to perform a fit first\n"
+            msg.setText(text)
+            if QTVERSION < '4.0.0':
+                msg.exec_loop()
+            else:
+                msg.exec_()
+            return
+        fitresult = self.dict
+        self._xrfmcMatrixSpectra = None
+        if self._concentrationsInfo is None:
+            # concentrations have to be calculated too
+            self.concentrations()
+
+        # force the Monte Carlo to work on fundamental parameters mode
+        ddict = copy.deepcopy(self.dict)
+        ddict['result']['config']['concentrations']['usematrix'] = 0
+        ddict['result']['config']['concentrations']['flux'] = self._concentrationsInfo['Flux']
+        ddict['result']['config']['concentrations']['time'] = self._concentrationsInfo['Time']
+
+        if hasattr(self, "__tmpMatrixSpectrumDir"):
+            if self.__tmpMatrixSpectrumDir is not None:
+                self.removeDirectory(self.__tmpMatrixSpectrumDir)
+
+        self.__tmpMatrixSpectrumDir = tempfile.mkdtemp(prefix="pymcaTmp")
+        nfile = ConfigDict.ConfigDict()
+        nfile.update(ddict)
+        #the Monte Carlo expects this at top level
+        nfile['xrfmc'] = ddict['result']['config']['xrfmc']
+        newFile = os.path.join(self.__tmpMatrixSpectrumDir, "pymcaTmpFitFile.fit")
+        if os.path.exists(newFile):
+            # this should never happen
+            os.remove(newFile)
+        nfile.write(newFile)
+        nfile = None
+        fileNamesDict = XRFMCHelper.getOutputFileNames(newFile,
+                                                       outputDir=self.__tmpMatrixSpectrumDir)
+        if newFile != fileNamesDict['fit']:
+            removeDirectory(self.__tmpMatrixSpectrumDir)
+            raise ValueError("Inconsistent internal behaviour!")
+
+        self._xrfmcFileNamesDict = fileNamesDict
+        xrfmcProgram = ddict['result']['config']['xrfmc']['program']
+
+        scriptName = fileNamesDict['script']
+        scriptFile = XRFMCHelper.getScriptFile(xrfmcProgram, name=scriptName)
+        csvName = fileNamesDict['csv']
+        speName = fileNamesDict['spe']
+        xmsoName = fileNamesDict['xmso']
+        # basic parameters
+        args = [scriptFile,
+               "--verbose",
+               "--spe-file=%s" % speName,
+               "--csv-file=%s" % csvName,
+               #"--enable-roi-normalization",
+               #"--disable-roi-normalization", #default
+               #"--enable-pile-up"
+               #"--disable-pile-up" #default
+               #"--enable-poisson",
+               #"--disable-poisson", #default no noise
+               #"--set-threads=2", #overwrite default maximum
+               newFile,
+               xmsoName]
+
+        # additionalParameters
+        simulationParameters = ["--enable-single-run",
+                                "--set-threads=2"]
+        i = 0
+        for parameter in simulationParameters:
+            i += 1             
+            args.insert(1, parameter)
+
+        # show the command on the log widget
+        text = "%s" % scriptFile 
+        for arg in args[1:]:
+            text += " %s" % arg
+        if self.logWidget is None:
+            self.logWidget = SubprocessLogWidget.SubprocessLogWidget()
+            self.logWidget.setMinimumWidth(400)
+            self.connect(self.logWidget,
+                     qt.SIGNAL('SubprocessLogWidgetSignal'),
+                     self._xrfmcSubprocessSlot)
+        self.logWidget.clear()
+        self.logWidget.show()
+        self.logWidget.raise_()
+        self.logWidget.append(text)
+        self.logWidget.start(args=args)
+
+    def removeDirectory(self, dirName):
+        if os.path.exists(dirName):
+            if os.path.isdir(dirName):
+                shutil.rmtree(dirName)
+
+    def _xrfmcSubprocessSlot(self, ddict):
+        if ddict['event'] == "ProcessFinished":
+            returnCode = ddict['code']
+            msg = qt.QMessageBox(self)
+            msg.setWindowTitle("Simulation finished")
+            if returnCode != 0:
+                msg = qt.QMessageBox(self)
+                msg.setWindowTitle("Simulation Error")
+                msg.setIcon(qt.QMessageBox.Critical)
+                text = "Simulation finished with error code %d\n" % (returnCode)
+                for line in ddict['message']:
+                    text += line
+                msg.setText(text)
+                msg.exec_()
+                return
+
+            from PyMca import specfilewrapper as specfile
+            sf = specfile.Specfile(self._xrfmcFileNamesDict['csv'])
+            nScans = len(sf)
+            scan = sf[nScans - 1]
+            nMca = scan.nbmca()
+            # specfile starts numbering at one
+            # and the first mca corresponds to the energy
+            self._xrfmcMatrixSpectra = []
+            for i in range(1, nMca + 1):
+                self._xrfmcMatrixSpectra.append(scan.mca(i))
+            scan = None
+            sf = None
+            self.removeDirectory(self.__tmpMatrixSpectrumDir)
+            self.logWidget.hide()
+            self.plot()
+            ddict=copy.deepcopy(self.dict)
+            ddict['event'] = "McaAdvancedFitXRFMCMatrixFinished"
+            if 0:
+                # this for later
+                try:
+                    self.__anasignal(ddict)
+                except:
+                    print("Error generating Monte Carlo matrix output. ")
+                    print(sys.exc_info())
+            
 
     def peaksSpectrum(self):
         if not self.__fitdone:
@@ -1660,6 +1852,10 @@ class McaAdvancedFit(qt.QWidget):
         else:
             if "Matrix" in self.graph.curves.keys():
                 self.graph.delcurve("Matrix")
+
+        # clear the Monte Carlo spectra (if any)
+        self._xrfmcMatrixSpectra = None
+
         # add the peaks spectrum
         if self.peaksSpectrumButton.isChecked():
             self.peaksSpectrum()
@@ -1822,13 +2018,34 @@ class McaAdvancedFit(qt.QWidget):
             if "Matrix" in self.graph.curves.keys():
                 self.graph.delcurve("Matrix")
 
+        if self._xrfmcMatrixSpectra is not None:
+            if len(self._xrfmcMatrixSpectra):
+                if self._energyAxis:
+                    mcxdata = self._xrfmcMatrixSpectra[0]
+                else:
+                    mcxdata = numpy.arange(float(len(self._xrfmcMatrixSpectra[0])))
+                mcydata0 = self._xrfmcMatrixSpectra[1]
+                mcydatan = self._xrfmcMatrixSpectra[-1]
+                self.graph.newCurve('MC Matrix 1',
+                                    mcxdata,
+                                    mcydata0,
+                                    logfilter=logfilter)
+                self.graph.newCurve('MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 1),
+                                    mcxdata,
+                                    mcydatan,
+                                    logfilter=logfilter)
+
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
             for group in dict['result']['groups']:
                 keep += ['y'+group]
             for key in list(self.graph.curves.keys()):
                 if key not in keep:
-                    self.graph.delcurve(key)
+                    if key.startswith('MC Matrix'):
+                        if self._xrfmcMatrixSpectra in [None, []]:
+                            self.graph.delcurve(key)
+                    else:
+                        self.graph.delcurve(key)
             for group in dict['result']['groups']:
                 label = 'y'+group
                 if label in dict['result']:
@@ -2031,6 +2248,24 @@ class McaAdvancedFit(qt.QWidget):
                                 numpy.take(fitresult['result']['ymatrix'],index),
                                 legend='matrix',
                                 linewidth=1.5)
+                    if self._xrfmcMatrixSpectra is not None:
+                        if len(self._xrfmcMatrixSpectra):
+                            if self._energyAxis:
+                                mcxdata = self._xrfmcMatrixSpectra[0]
+                            else:
+                                mcxdata = numpy.arange(float(len(self._xrfmcMatrixSpectra[0])))
+                            mcindex = numpy.nonzero((xmin <= mcxdata) & (mcxdata <= xmax))[0]
+                            mcxdatax = numpy.take(mcxdata, mcindex)
+                            mcydata0 = numpy.take(self._xrfmcMatrixSpectra[1], mcindex)
+                            mcydatan = numpy.take(self._xrfmcMatrixSpectra[-1], mcindex)
+                            mtplt.addDataToPlot(mcxdatax,
+                                                mcydata0,
+                                                legend='MC Matrix 1',
+                                                linewidth=1.5)
+                            mtplt.addDataToPlot(mcxdatax,
+                                                mcydatan,
+                                                legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 1),
+                                                linewidth=1.5)
                     if self.peaksSpectrumButton.isChecked():
                         for group in fitresult['result']['groups']:
                             label = 'y'+group
