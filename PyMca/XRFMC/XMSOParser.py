@@ -33,8 +33,13 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
             ddict[element][line]['total']=0
             transitionsAffected = []
             for key in transitions:
-                if line.startswith(key):            
+                if line.startswith(key):
                     transitionsAffected.append(key)
+                elif line.startswith('KL') and (key == 'Ka'):
+                    transitionsAffected.append(key)
+                elif line.startswith('K') and (key == 'Kb'):
+                    if not line.startswith('KL'):
+                        transitionsAffected.append(key)
             cumulator = 0
             for b in a.iter('counts'):
                 if DEBUG:
