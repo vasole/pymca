@@ -994,7 +994,7 @@ class McaAdvancedFit(qt.QWidget):
         ddict = {}
         ddict.update(config['concentrations'])
         tool.setParameters(ddict, signal=False)
-        if 1 or  DEBUG:
+        if DEBUG:
             ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
                                                 elementsfrommatrix=False,
                                                 fluorates = self.mcafit._fluoRates,
@@ -1070,6 +1070,7 @@ class McaAdvancedFit(qt.QWidget):
         #fitresult = self.dict['result']
         fitresult = self.dict
         config = self.mcafit.configure()
+        self._concentrationsInfo = None
         tool   = ConcentrationsTool.ConcentrationsTool()
         #this forces update
         tool.configure()
@@ -1077,19 +1078,22 @@ class McaAdvancedFit(qt.QWidget):
         dict.update(config['concentrations'])
         tool.configure(dict)
         if DEBUG:
-            dict = tool.processFitResult(fitresult=fitresult,
-                                         elementsfrommatrix=True)
+            dict, info = tool.processFitResult(fitresult=fitresult,
+                                         elementsfrommatrix=True,
+                                         addinfo=True)
         else:
             try:
                 threadResult = self._submitThread(tool.processFitResult,
-                                   {'fitresult':fitresult,'elementsfrommatrix':True},
+                                   {'fitresult':fitresult,
+                                    'elementsfrommatrix':True,
+                                    'addinfo':True},
                                    "Calculating Matrix Spectrum",
                                    True)
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
-                dict = threadResult
+                dict, info = threadResult
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1099,6 +1103,7 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     msg.exec_()
                 return
+        self._concentrationsInfo = info
         groupsList = fitresult['result']['groups']
 
         if type(groupsList) != type([]):
@@ -1225,8 +1230,9 @@ class McaAdvancedFit(qt.QWidget):
                xmsoName]
 
         # additionalParameters
-        simulationParameters = ["--enable-single-run",
-                                "--set-threads=2"]
+        simulationParameters = ["--enable-single-run"]
+        #simulationParameters = ["--enable-single-run",
+        #                        "--set-threads=2"]
         i = 0
         for parameter in simulationParameters:
             i += 1             
@@ -1269,6 +1275,20 @@ class McaAdvancedFit(qt.QWidget):
                 msg.exec_()
                 return
 
+            xmsoFile = self._xrfmcFileNamesDict['xmso']
+            corrections = XRFMCHelper.getXMSOFileFluorescenceInformation(xmsoFile)
+            self.dict['result']['config']['xrfmc']['corrections'] = corrections
+            elementsList = list(corrections.keys())
+            elementsList.sort()
+            for element in elementsList:
+                for key in ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']:
+                    if corrections[element][key]['total'] > 0.0:
+                        value = corrections[element][key]['correction_factor'][-1]
+                        if value != 1.0:
+                            text = "%s %s xrays multiple excitation factor = %.3f" % \
+                                   (element, key, value)                
+                            self.logWidget.append(text)
+
             from PyMca import specfilewrapper as specfile
             sf = specfile.Specfile(self._xrfmcFileNamesDict['csv'])
             nScans = len(sf)
@@ -1282,7 +1302,7 @@ class McaAdvancedFit(qt.QWidget):
             scan = None
             sf = None
             self.removeDirectory(self.__tmpMatrixSpectrumDir)
-            self.logWidget.hide()
+            #self.logWidget.hide()
             self.plot()
             ddict=copy.deepcopy(self.dict)
             ddict['event'] = "McaAdvancedFitXRFMCMatrixFinished"

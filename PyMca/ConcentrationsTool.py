@@ -26,10 +26,12 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.26 $"
 __author__ = "V.A. Sole - ESRF Software Group"
-from PyMca import Elements
+import sys
 import copy
 import numpy
-
+from PyMca import Elements
+if sys.platform == "win32":
+    from PyMca.XRFMC import XRFMCHelper
 
 class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations=None):
@@ -189,6 +191,7 @@ class ConcentrationsTool(object):
         self.config['usematrix'] = 0
         self.config['useattenuators'] = 1
         self.config['usemultilayersecondary'] = 0
+        self.config['usexrfmc'] = 0
         self.config['flux'] = 1.0E10
         self.config['time'] = 1.0
         self.config['area'] = 30.0
@@ -208,7 +211,8 @@ class ConcentrationsTool(object):
         return copy.deepcopy(self.config)
 
     def processFitResult(self, config=None, fitresult=None,
-                         elementsfrommatrix=False, fluorates=None, addinfo=False):
+                         elementsfrommatrix=False, fluorates=None,
+                         addinfo=False):
         # I should check if fit was successful ...
         if fitresult is None:
             fitresult = self.fitresult
@@ -220,7 +224,13 @@ class ConcentrationsTool(object):
             self.config = config
         if 'usemultilayersecondary' not in self.config:
             self.config['usemultilayersecondary'] = 0
+        if 'usexrfmc' not in self.config:
+            self.config['usexrfmc'] = 0
         secondary = self.config['usemultilayersecondary']
+        xrfmcSecondary = self.config['usexrfmc']
+        if secondary and xrfmcSecondary:
+            txt = "Only one of built-in secondary and Monte Carlo correction can be used"
+            raise ValueError(txt) 
         # get attenuators and matrix from fit
         attenuators = []
         beamfilters = []
@@ -269,6 +279,9 @@ class ConcentrationsTool(object):
             multilayer = [matrix]
             if not Elements.isValidMaterial(matrix[0]):
                 raise ValueError("Material %s is not defined" % matrix[0])
+        if xrfmcSecondary and (len(layerlist) > 1):
+            txt = "Multilayer Monte Carlo correction not implemented yet"
+            raise ValueError(txt)
         energyList = fitresult['result']['config']['fit']['energy']
         if energyList is None:
             raise ValueError("Invalid energy")
@@ -628,6 +641,45 @@ class ConcentrationsTool(object):
                     for layer in ddict['layerlist']:
                         if group in ddict[layer]['area'].keys():
                             ddict['area'][group] += ddict[layer]['area'][group]
+        if xrfmcSecondary and (not elementsfrommatrix):
+            xrfmcCorrections = None
+            if 'xrfmc' in fitresult:
+                xrfmcCorrections = fitresult['xrfmc'].get('corrections', None)
+            if xrfmcCorrections is None:
+                if 'xrfmc' in fitresult['result']:
+                    xrfmcCorrections = fitresult['result']['xrfmc'].get('corrections', None)
+            if xrfmcCorrections is None:
+                # try to see if they were in the configuration
+                if 'xrfmc' in fitresult['result']['config']:
+                    xrfmcCorrections = fitresult['result']['config']['xrfmc'].get('corrections',
+                                                                                  None)
+            if xrfmcCorrections is None:
+                # calculate the corrections
+                xrfmcCorrections = XRFMCHelper.getXRFMCCorrectionFactors(fitresult['result']['config'])
+
+            
+            if referenceElement is not None:
+                referenceLines = referenceTransitions.split()[0]
+                referenceCorrection = xrfmcCorrections[referenceElement][referenceLines]\
+                                            ['correction_factor'][-1]
+                xrfmcCorrections[referenceElement][referenceLines]\
+                                            ['correction_factor'][-1] = 1.0
+                for group in groupsList:
+                    item = group.split()
+                    element = item[0]
+                    lines = item[1]
+                    if element in xrfmcCorrections:
+                        if element != referenceElement:
+                            if lines != referenceLines:
+                                xrfmcCorrections[element][lines]['correction_factor'][-1] *= referenceCorrection
+            # now we have to apply the corrections
+            for group in groupsList:
+                item = group.split()
+                element = item[0]
+                lines = item[1]
+                if element in xrfmcCorrections:
+                    correction = xrfmcCorrections[element][item[1]]['correction_factor'][-1]
+                    ddict['mass fraction'][group] /= correction
         if addinfo:
             addInfo = {}
             addInfo['ReferenceElement'] = referenceElement
@@ -663,7 +715,6 @@ class ConcentrationsTool(object):
                     if weightHelp > weight:
                         weight = weightHelp
         return weight
-
 
 def main():
     import sys

@@ -27,12 +27,18 @@
 __revision__ = "$Revision: 1.21 $"
 import sys
 from PyMca import PyMcaQt as qt
+
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = str
 
 QTVERSION = qt.qVersion()
+
+XRFMC_FLAG = False
+if QTVERSION > '4.0.0':
+    if sys.platform == 'win32':
+        XRFMC_FLAG = True        
 
 if QTVERSION < '4.0.0':
     import qttable
@@ -257,6 +263,7 @@ class ConcentrationsWidget(qt.QWidget):
         ddict = {}
         ddict['usematrix'] = 0
         ddict['useattenuators'] = 1
+        ddict['usexrfmc'] = 0
         ddict['flux'] = 1.0E10
         ddict['time'] = 1.0
         ddict['area'] = 30.0
@@ -340,6 +347,12 @@ class ConcentrationsWidget(qt.QWidget):
         self.secondaryCheckBox.setText("Consider secondary excitation from deeper matrix layers (non intralayer nor above layers)")
         layout.addWidget(self.attenuatorsCheckBox)
         layout.addWidget( self.secondaryCheckBox)
+        #XRFMC secondary excitation
+        if XRFMC_FLAG:
+            self.xrfmcCheckBox = qt.QCheckBox(self)
+            self.xrfmcCheckBox.setText("use Monte Carlo code to correct higher order excitations")
+            layout.addWidget( self.xrfmcCheckBox)
+
         #mM checkbox
         self.mMolarCheckBox = qt.QCheckBox(self)
         self.mMolarCheckBox.setText("Elemental mM concentrations (assuming 1 l of solution is 1000 * matrix_density grams)")
@@ -359,8 +372,15 @@ class ConcentrationsWidget(qt.QWidget):
                          self.checkBoxSlot)
         self.connect(self.attenuatorsCheckBox, qt.SIGNAL("clicked()"),
                      self.checkBoxSlot)
-        self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
-                     self.checkBoxSlot)
+        if XRFMC_FLAG:
+            self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
+                         self._secondaryCheckBoxSlot)
+            self.connect(self.xrfmcCheckBox, qt.SIGNAL("clicked()"),
+                         self._xrfmcCheckBoxSlot)
+        else:
+            self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
+                         self.checkBoxSlot)
+            
         self.connect(self.mMolarCheckBox, qt.SIGNAL("clicked()"),
                      self.checkBoxSlot)
 
@@ -390,6 +410,16 @@ class ConcentrationsWidget(qt.QWidget):
             self.matrixCheckBox.setChecked(True)
         self.checkBoxSlot()
 
+    def _secondaryCheckBoxSlot(self):
+        if self.secondaryCheckBox.isChecked():
+            self.xrfmcCheckBox.setChecked(False)
+        self.checkBoxSlot()
+
+    def _xrfmcCheckBoxSlot(self):
+        if self.xrfmcCheckBox.isChecked():
+            self.secondaryCheckBox.setChecked(False)
+        self.checkBoxSlot()
+
     def checkBoxSlot(self):
         if self.matrixCheckBox.isChecked():
             self.fundamentalWidget.setInputDisabled(True)
@@ -401,6 +431,8 @@ class ConcentrationsWidget(qt.QWidget):
             self.referenceLine.setEnabled(False)
             if QTVERSION > '4.0.0':
                 self.fluxCheckBox.setChecked(True)
+                self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
+                     self.checkBoxSlot)
         self._mySignal()
 
     def _referenceLineSlot(self, ddict):
@@ -464,6 +496,10 @@ class ConcentrationsWidget(qt.QWidget):
             ddict['usemultilayersecondary'] = 1
         else:
             ddict['usemultilayersecondary'] = 0
+        ddict['usexrfmc'] = 0
+        if XRFMC_FLAG:
+            if self.xrfmcCheckBox.isChecked():
+                ddict['usexrfmc'] = 1
         if self.mMolarCheckBox.isChecked():
             ddict['mmolarflag'] = 1
         else:
@@ -486,6 +522,13 @@ class ConcentrationsWidget(qt.QWidget):
                 self.secondaryCheckBox.setChecked(False)
         else:
             self.secondaryCheckBox.setChecked(False)
+
+        if XRFMC_FLAG:
+            if 'usexrfmc' in ddict:
+                if ddict['usexrfmc']:
+                    self.xrfmcCheckBox.setChecked(True)
+                else:
+                    self.xrfmcCheckBox.setChecked(False)
 
         if 'mmolarflag' in ddict:
             if ddict['mmolarflag']:
