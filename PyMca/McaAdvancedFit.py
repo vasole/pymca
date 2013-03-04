@@ -577,9 +577,11 @@ class McaAdvancedFit(qt.QWidget):
         if QTVERSION > '4.0.0':
             hideButton = True
             if 'program' in config['xrfmc']:
-                if os.path.exists(config['xrfmc']['program']):
-                    if os.path.isfile(config['xrfmc']['program']):
-                        hideButton = False
+                programFile = config['xrfmc']['program']
+                if programFile is not None:
+                    if os.path.exists():
+                        if os.path.isfile(config['xrfmc']['program']):
+                            hideButton = False
             if hideButton:
                 self.matrixXRFMCSpectrumButton.hide()
             else:
