@@ -115,8 +115,16 @@ class Concentrations(qt.QWidget):
         if ddict['event'] == 'updated':
             self.concentrationsTool.configure(ddict)
             if self.__lastKw is not None:
+                addInfo = False
+                if 'addinfo' in self.__lastKw:
+                    if self.__lastKw['addinfo']:
+                        addInfo = True
                 try:
-                    ddict['concentrations'] = self.processFitResult(*self.__lastVar, **self.__lastKw)
+                    if addInfo:
+                        concentrations, info = self.processFitResult(*self.__lastVar, **self.__lastKw)
+                    else:
+                        concentrations = self.processFitResult(*self.__lastVar, **self.__lastKw)
+                    ddict['concentrations'] = concentrations
                 except:
                     self.__lastKw = None
                     raise

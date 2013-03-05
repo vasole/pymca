@@ -579,7 +579,7 @@ class McaAdvancedFit(qt.QWidget):
             if 'program' in config['xrfmc']:
                 programFile = config['xrfmc']['program']
                 if programFile is not None:
-                    if os.path.exists():
+                    if os.path.exists(programFile):
                         if os.path.isfile(config['xrfmc']['program']):
                             hideButton = False
             if hideButton:
@@ -2043,16 +2043,16 @@ class McaAdvancedFit(qt.QWidget):
         if self._xrfmcMatrixSpectra is not None:
             if len(self._xrfmcMatrixSpectra):
                 if self._energyAxis:
-                    mcxdata = self._xrfmcMatrixSpectra[0]
+                    mcxdata = self._xrfmcMatrixSpectra[1]
                 else:
-                    mcxdata = numpy.arange(float(len(self._xrfmcMatrixSpectra[0])))
-                mcydata0 = self._xrfmcMatrixSpectra[1]
+                    mcxdata = self._xrfmcMatrixSpectra[0]
+                mcydata0 = self._xrfmcMatrixSpectra[2]
                 mcydatan = self._xrfmcMatrixSpectra[-1]
                 self.graph.newCurve('MC Matrix 1',
                                     mcxdata,
                                     mcydata0,
                                     logfilter=logfilter)
-                self.graph.newCurve('MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 1),
+                self.graph.newCurve('MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
                                     mcxdata,
                                     mcydatan,
                                     logfilter=logfilter)
@@ -2273,12 +2273,12 @@ class McaAdvancedFit(qt.QWidget):
                     if self._xrfmcMatrixSpectra is not None:
                         if len(self._xrfmcMatrixSpectra):
                             if self._energyAxis:
-                                mcxdata = self._xrfmcMatrixSpectra[0]
+                                mcxdata = self._xrfmcMatrixSpectra[1]
                             else:
-                                mcxdata = numpy.arange(float(len(self._xrfmcMatrixSpectra[0])))
+                                mcxdata = self._xrfmcMatrixSpectra[0]
                             mcindex = numpy.nonzero((xmin <= mcxdata) & (mcxdata <= xmax))[0]
                             mcxdatax = numpy.take(mcxdata, mcindex)
-                            mcydata0 = numpy.take(self._xrfmcMatrixSpectra[1], mcindex)
+                            mcydata0 = numpy.take(self._xrfmcMatrixSpectra[2], mcindex)
                             mcydatan = numpy.take(self._xrfmcMatrixSpectra[-1], mcindex)
                             mtplt.addDataToPlot(mcxdatax,
                                                 mcydata0,
@@ -2286,7 +2286,7 @@ class McaAdvancedFit(qt.QWidget):
                                                 linewidth=1.5)
                             mtplt.addDataToPlot(mcxdatax,
                                                 mcydatan,
-                                                legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 1),
+                                                legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
                                                 linewidth=1.5)
                     if self.peaksSpectrumButton.isChecked():
                         for group in fitresult['result']['groups']:

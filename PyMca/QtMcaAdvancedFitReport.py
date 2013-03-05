@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -690,10 +690,12 @@ class QtMcaAdvancedFitReport:
             return ""
 
     def getConcentrations(self):
-        return self.concentrationsConversion.getConcentrationsAsHtml(self.concentrations)
+        return self.concentrationsConversion.getConcentrationsAsHtml(\
+                                                self.concentrations)
 
     def getConcentrationsASCII(self):
-        return self.concentrationsConversion.getConcentrationsAsAscii(self.concentrations)
+        return self.concentrationsConversion.getConcentrationsAsAscii(\
+                                                self.concentrations)
 
     def getResult(self):
         text = ""

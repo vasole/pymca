@@ -398,34 +398,6 @@ class XRFMCParameters(qt.QGroupBox):
             i += 1
         return labels, values
 
-class XRFMCTabWidget(qt.QWidget):
-    def __init__(self, parent=None):
-        qt.QWidget.__init__(self, parent)
-        self.setWindowTitle("XRFMC Tab Widget")
-        self.build()
-
-    def build(self):
-        self.mainLayout = qt.QVBoxLayout(self)
-        self.programWidget = XRFMCProgramFile(self)
-        self.parametersWidget = XRFMCParameters(self)
-        self.mainLayout.addWidget(self.programWidget)
-        self.mainLayout.addWidget(self.parametersWidget)
-        self.mainLayout.addWidget(VerticalSpacer(self))
-
-    def getParameters(self):
-        ddict = self.parametersWidget.getParameters()
-        program = self.programWidget.getFileList()
-        if len(program) > 0:
-            ddict['xrfmc']['program'] = program[0]
-        else:
-            ddict['xrfmc']['program'] = None
-        return ddict
-
-    def setParameters(self, ddict):
-        self.parametersWidget.setParameters(ddict)
-        if ddict['xrfmc']['program'] not in ["None", None, ""]:
-            self.programWidget.setFileList([ddict['xrfmc']['program']])
-
 class XRFMCSimulationControl(qt.QGroupBox):
     def __init__(self, parent=None):
         qt.QGroupBox.__init__(self, parent)
@@ -436,30 +408,81 @@ class XRFMCSimulationControl(qt.QGroupBox):
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
-        label = qt.QLabel(self)
-        label.setText("Run Number (0 for first run):")
-        self.__runNumber = qt.QSpinBox(self)
-        self.__runNumber.setMinimum(0)
-        self.__runNumber.setValue(0)
 
-        self.mainLayout.addWidget(label, 0, 0)
-        self.mainLayout.addWidget(self.__runNumber, 0, 1)
-        
-        label = qt.QLabel(self)
-        label.setText("Number of simulations per run:")
-        self.__nSimulations = qt.QSpinBox(self)
-        self.__nSimulations.setMinimum(1)
-        self.__nSimulations.setValue(10)
-        
-        self.mainLayout.addWidget(label, 1, 0)
-        self.mainLayout.addWidget(self.__nSimulations, 1, 1)
+        i = 0
+        if 0:
+            label = qt.QLabel(self)
+            label.setText("Run Number (0 for first run):")
+            self.__runNumber = qt.QSpinBox(self)
+            self.__runNumber.setMinimum(0)
+            self.__runNumber.setValue(0)
+            
+            self.mainLayout.addWidget(label, i, 0)
+            self.mainLayout.addWidget(self.__runNumber, i, 1)
+            i += 1
+        if 1:
+            label = qt.QLabel(self)
+            label.setText("Number of histories:")
+            self.__nHistories = qt.QSpinBox(self)
+            self.__nHistories.setMinimum(1000)
+            self.__nHistories.setMaximum(10000000)
+            self.__nHistories.setValue(100000)
+            self.__nHistories.setSingleStep(50000)
+            
+            self.mainLayout.addWidget(label, i, 0)
+            self.mainLayout.addWidget(self.__nHistories, i, 1)
+            i += 1
 
     def getParameters(self):
         ddict = {}
-        ddict['run'] = self.__runNumber.value()
-        ddict['nsimulations'] = self.__nSimulations.value()
+        if 0:
+            ddict['run'] = self.__runNumber.value()
+        ddict['histories'] = self.__nHistories.value()
         return ddict
+
+    def setParameters(self, ddict0):
+        if ddict0.has_key('xrfmc'):
+            ddict = ddict0['xrfmc']['setup']
+        else:
+            ddict= ddict0
+
+        if 'histories' in ddict:
+            self.__nHistories.setValue(int(ddict['histories']))
                 
+
+class XRFMCTabWidget(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle("XRFMC Tab Widget")
+        self.build()
+
+    def build(self):
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.programWidget = XRFMCProgramFile(self)
+        self.parametersWidget = XRFMCParameters(self)
+        self.simulationWidget = XRFMCSimulationControl(self)
+        self.mainLayout.addWidget(self.programWidget)
+        self.mainLayout.addWidget(self.parametersWidget)
+        self.mainLayout.addWidget(self.simulationWidget)
+        self.mainLayout.addWidget(VerticalSpacer(self))
+
+    def getParameters(self):
+        ddict = self.parametersWidget.getParameters()
+        program = self.programWidget.getFileList()
+        control = self.simulationWidget.getParameters()
+        ddict['xrfmc']['setup']['histories'] = control['histories']
+        if len(program) > 0:
+            ddict['xrfmc']['program'] = program[0]
+        else:
+            ddict['xrfmc']['program'] = None
+        return ddict
+
+    def setParameters(self, ddict):
+        self.parametersWidget.setParameters(ddict)
+        if ddict['xrfmc']['program'] not in ["None", None, ""]:
+            self.programWidget.setFileList([ddict['xrfmc']['program']])
+        self.simulationWidget.setParameters(ddict)
+
 class XRFMCActions(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
@@ -491,7 +514,7 @@ class XRFMCPyMca(qt.QWidget):
         #self.iniFileWidget = XRFMCIniFile(self)
         self.outputDirWidget = XRFMCOutputDir(self)
         self.parametersWidget = XRFMCParameters(self)
-        #self.simulationWidget = XRFMCSimulationControl(self)
+        self.simulationWidget = XRFMCSimulationControl(self)
         self.actions = XRFMCActions(self)
         self.logWidget = SubprocessLogWidget.SubprocessLogWidget()
         self.logWidget.setMinimumWidth(400)
@@ -507,8 +530,8 @@ class XRFMCPyMca(qt.QWidget):
         i += 1
         self.mainLayout.addWidget(self.parametersWidget, i, 0)
         i += 1
-        #self.mainLayout.addWidget(self.simulationWidget, i, 0)
-        #i += 1
+        self.mainLayout.addWidget(self.simulationWidget, i, 0)
+        i += 1
         self.mainLayout.addWidget(self.actions, i, 0)
         i += 1
         self.mainLayout.addWidget(VerticalSpacer(self), i,0)
@@ -659,10 +682,8 @@ class XRFMCPyMca(qt.QWidget):
         self.__outputDir = outputDir[0]
 
         #the simulation parameters
-        if hasattr(self, "simulationWidget"):
-            simPar = self.simulationWidget.getParameters()
-            runNumber = simPar['run']
-            nSim = simPar['nsimulations']
+        simPar = self.simulationWidget.getParameters()
+        ddict['xrfmc']['setup']['histories'] = simPar['histories']
 
         #write a file containing both, PyMca and XRFMC configuration in output dir
         if pymcaFitFile.lower().endswith(".cfg"):
