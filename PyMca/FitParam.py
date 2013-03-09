@@ -443,6 +443,9 @@ class FitParamWidget(FitParamForm):
             self._stripDialog = StripBackgroundWidget.StripBackgroundDialog()
             self._stripDialog.setWindowIcon(qt.QIcon(\
                                 qt.QPixmap(Icons.IconDict["gioconda16"])))
+            if self.height() < 801:
+                self._stripDialog.setMinimumHeight(int(0.85*self.height()))
+                self._stripDialog.setMaximumHeight(int(0.85*self.height()))
 
         self._stripDialog.setParameters(pars)
         self._stripDialog.setData(x, y)
