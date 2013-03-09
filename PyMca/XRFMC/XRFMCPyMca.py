@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import traceback
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDirs as xrfmc_dirs
 from PyMca import ConfigDict
@@ -109,11 +110,10 @@ class GetFileList(qt.QGroupBox):
 
 class PyMcaFitFileList(GetFileList):
     def __init__(self, parent=None):
-        GetFileList.__init__(self, parent, title='PyMca Fit Result File')
+        GetFileList.__init__(self, parent, title='PyMca Configuruation or Fit Result File')
         self.build("")
 
     def _browseList(self, filetypes=\
-        #            "PyMca .fit Files (*.fit)"):
                     "PyMca .fit Files (*.fit)\nPyMca .cfg Files (*.cfg)"):
         GetFileList._browseList(self, filetypes)
 
@@ -399,9 +399,10 @@ class XRFMCParameters(qt.QGroupBox):
         return labels, values
 
 class XRFMCSimulationControl(qt.QGroupBox):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, fit=False):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle("Simulation Control")
+        self._fit = fit
         self.build()
 
     def build(self):
@@ -420,6 +421,19 @@ class XRFMCSimulationControl(qt.QGroupBox):
             self.mainLayout.addWidget(label, i, 0)
             self.mainLayout.addWidget(self.__runNumber, i, 1)
             i += 1
+
+        if self._fit:
+            label = qt.QLabel(self)
+            label.setText("Select simulation or fit mode:")
+            self._simulationMode = qt.QComboBox(self)
+            self._simulationMode.setEditable(False)
+            self._simulationMode.addItem("Simulation")
+            self._simulationMode.addItem("Fit")
+            
+            self.mainLayout.addWidget(label, i, 0)
+            self.mainLayout.addWidget(self._simulationMode, i, 1)
+            i += 1
+
         if 1:
             label = qt.QLabel(self)
             label.setText("Number of histories:")
@@ -449,6 +463,20 @@ class XRFMCSimulationControl(qt.QGroupBox):
         if 'histories' in ddict:
             self.__nHistories.setValue(int(ddict['histories']))
                 
+    def getSimulationMode(self):
+        current = self._simulationMode.currentIndex()
+        if current:
+            mode = "Fit"
+        else:
+            mode = "Simulation"
+        return mode
+
+    def setSimulationMode(self, mode=""):
+        current = 0
+        if hasattr(mode, "lower"):
+            if mode.lower() == "fit":
+                current = 1
+        self._simulationMode.setCurrentIndex(current)
 
 class XRFMCTabWidget(qt.QWidget):
     def __init__(self, parent=None):
@@ -460,7 +488,7 @@ class XRFMCTabWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.programWidget = XRFMCProgramFile(self)
         self.parametersWidget = XRFMCParameters(self)
-        self.simulationWidget = XRFMCSimulationControl(self)
+        self.simulationWidget = XRFMCSimulationControl(self, fit=False)
         self.mainLayout.addWidget(self.programWidget)
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.simulationWidget)
@@ -514,7 +542,7 @@ class XRFMCPyMca(qt.QWidget):
         #self.iniFileWidget = XRFMCIniFile(self)
         self.outputDirWidget = XRFMCOutputDir(self)
         self.parametersWidget = XRFMCParameters(self)
-        self.simulationWidget = XRFMCSimulationControl(self)
+        self.simulationWidget = XRFMCSimulationControl(self, fit=True)
         self.actions = XRFMCActions(self)
         self.logWidget = SubprocessLogWidget.SubprocessLogWidget()
         self.logWidget.setMinimumWidth(400)
@@ -643,6 +671,18 @@ class XRFMCPyMca(qt.QWidget):
         msg.exec_()
 
     def start(self):
+        try:
+            self._start()
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Plugin error")
+            msg.setText("An error has occured while executing the plugin:")
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+
+    def _start(self):
         """
         """
         if self.logWidget is not None:
@@ -692,7 +732,7 @@ class XRFMCPyMca(qt.QWidget):
             newFile=ConfigDict.ConfigDict()
             newFile.read(pymcaFitFile)
             #perform a dummy fit till xmimsim-pymca is upgraded
-            if 1:
+            if 0:
                 import numpy
                 from PyMca import ClassMcaTheory 
                 newFile['fit']['linearfitflag']=1
@@ -759,8 +799,11 @@ class XRFMCPyMca(qt.QWidget):
         self.__fileNamesDict = fileNamesDict
 
         # additionalParameters
-        simulationParameters = ["--enable-single-run",
-                                "--set-threads=2"]
+        if self.simulationWidget.getSimulationMode().lower() == "fit":
+            simulationParameters = []
+        else:
+            simulationParameters = ["--enable-single-run",
+                                    "--set-threads=2"]
         i = 0
         for parameter in simulationParameters:
             i += 1             
