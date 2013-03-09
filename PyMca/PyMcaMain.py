@@ -81,6 +81,15 @@ else:
     QString = qt.safe_str
 
 QTVERSION = qt.qVersion()
+XRFMC_FLAG = False
+if QTVERSION > '4.0.0':
+    if sys.platform == "win32":
+        try:
+            from PyMca.XRFMC import XRFMCPyMca
+            XRFMC_FLAG = True
+        except:
+            pass
+
 
 from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
@@ -265,6 +274,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__fit2Spec  = None
             self.__correlator  = None
             self.__imagingTool = None
+            self._xrfmcTool = None
             if QTVERSION < '4.0.0':
                 self.openMenu = qt.QPopupMenu()
                 self.openMenu.insertItem("PyMca Configuration",0)
@@ -868,10 +878,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if 'SourceName' in dict[source]:
                     if type(dict[source]['SourceName']) != type([]):
                         dict[source]['SourceName'] = [dict[source]['SourceName'] * 1]
-                    for SourceName in dict[source]['SourceName']:
+                    for SourceName0 in dict[source]['SourceName']:
+                        if type(SourceName0) == type([]):
+                            SourceName = SourceName0[0]
+                        else:
+                            SourceName = SourceName0
                         if len(SourceName):
                             try:
-                                if not os.path.exists(SourceName): continue
+                                if not os.path.exists(SourceName):
+                                    continue
                                 self.sourceWidget.sourceSelector.openFile(SourceName, justloaded =1)
                                 continue
                                 #This event is not needed
@@ -887,10 +902,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                             except:
                                 msg = qt.QMessageBox(self)
                                 msg.setIcon(qt.QMessageBox.Critical)
-                                msg.setText("Error: %s\n opening file %s" % (sys.exc_info()[1],SourceName ))
+                                txt = "Error: %s\n opening file %s" % (sys.exc_info()[1],SourceName )
                                 if QTVERSION < '4.0.0':
+                                    msg.setText(txt)
                                     msg.exec_loop()
                                 else:
+                                    msg.setInformativeText(txt)
+                                    msg.setDetailedText(traceback.format_exc())
                                     msg.exec_()
 
                 if 'WidgetConfiguration' in dict[source]:
@@ -1190,7 +1208,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def _startupSelection(self, source, selection):
         self.sourceWidget.sourceSelector.openSource(source)
-        if selection is None:return
+        if selection is None:
+            return
         
         if len(selection) >= 8:
             if selection[0:8] == "MCA_DATA":
@@ -1256,6 +1275,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if XIA_CORRECT:
                 self.menuTools.addAction("XIA Correct",
                                          self.__xiaCorrect)
+            if XRFMC_FLAG:
+                self.menuTools.addAction("XMI-MSIM PyMca",
+                                         self._xrfmcPyMca)                
         if DEBUG:
             print("Fit to Specfile missing")
             
@@ -1504,6 +1526,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def __xiaCorrect(self):
         XiaCorrect.mainGUI(qt.qApp)
+
+    def _xrfmcPyMca(self):
+        if self._xrfmcTool is None:
+            self._xrfmcTool = XRFMCPyMca.XRFMCPyMca()
+        self._xrfmcTool.show()
+        self._xrfmcTool.raise_()
     
     def onOpen(self):
         if QTVERSION < '4.0.0':
@@ -1697,8 +1725,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         source = SOURCESLIST[index]
         if self.sourceFrame.isHidden():
             self.sourceFrame.show()
-        if QTVERSION < '4.0.0':self.sourceFrame.raiseW()
-        else:self.sourceFrame.raise_()
+        if QTVERSION < '4.0.0':
+            self.sourceFrame.raiseW()
+        else:
+            self.sourceFrame.raise_()
         self.sourceBrowserTab.showPage(self.sourceWidget[source])
         qt.qApp.processEvents()
         self.sourceWidget[source].openFile()

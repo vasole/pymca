@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004 - 2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004 - 2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -134,8 +134,15 @@ class ConfigDict(dict):
 
     def __parse_line(self, line):
         if line.find(',') != -1:
-            return [self.__parse_string(sstr.strip())
-                    for sstr in line.split(',')]
+            if line.endswith(','):
+                if ',' in line[:-1]:
+                    return [self.__parse_string(sstr.strip())
+                            for sstr in line[:-1].split(',')]
+                else:
+                    return [self.__parse_string(line[:-1].strip())]
+            else:
+                return [self.__parse_string(sstr.strip())
+                        for sstr in line.split(',')]
         else:
             return self.__parse_string(line.strip())
 
