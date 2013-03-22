@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -36,18 +36,11 @@ except ImportError:
 import os
 try:
     from PyMca import PyMcaQt as qt
-    from PyMca import PyMcaDirs
-    PYMCADIR = True
 except ImportError:
     print("WARNING: RegularMeshPlugin Using huge PyQt4 import")
     import PyQt4.Qt as qt
-    PYMCADIR = False
 
-try:
-    from PyMca import QStackWidget
-    from PyMca import MaskImageWidget
-except ImportError:
-    import QStackWidget
+from PyMca import MaskImageWidget
 
 DEBUG = 0
 
@@ -59,7 +52,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                                              "Show mesh as image",
                                              None]
                            
-        self.stackWidget = None
+        self.imageWidget = None
         
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
@@ -95,7 +88,6 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
             try:
                 self.methodDict[name][0]()
             except:
-                import sys
                 print(sys.exc_info())
                 raise
 
@@ -144,20 +136,20 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self._legend = legend
         self._info = info
         y.shape = len(self._motor1), len(self._motor0)
-        if self.stackWidget is None:
-            self.stackWidget = MaskImageWidget.MaskImageWidget(\
+        if self.imageWidget is None:
+            self.imageWidget = MaskImageWidget.MaskImageWidget(\
                                         imageicons=False,
                                         selection=False,
                                         profileselection=True,
                                         scanwindow=self)
-        self.stackWidget.setImageData(y,
+        self.imageWidget.setImageData(y,
                                       xScale=(self._motor0[0],
                                               self._motor0[-1]),                                              
                                       yScale=(self._motor1[0],
                                               self._motor1[-1]))
-        self.stackWidget.setXLabel(self._motor0Mne)
-        self.stackWidget.setYLabel(self._motor1Mne)
-        self.stackWidget.show()
+        self.imageWidget.setXLabel(self._motor0Mne)
+        self.imageWidget.setYLabel(self._motor1Mne)
+        self.imageWidget.show()
 
 MENU_TEXT = "RegularMeshPlugins"
 def getPlugin1DInstance(plotWindow, **kw):
