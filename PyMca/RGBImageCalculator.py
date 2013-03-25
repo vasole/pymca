@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -57,6 +57,8 @@ class RGBImageCalculator(qt.QWidget):
         self.imageList   = None
         self.imageDict   = None
         self._imageData = None
+        self._xScale = None
+        self._yScale = None
         self.__imagePixmap   = None
         self.__imageColormap = None
         self.__imageColormapDialog = None
@@ -159,8 +161,10 @@ class RGBImageCalculator(qt.QWidget):
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
 
-    def plotImage(self, update = True):
-        self.graphWidget.setImageData(self._imageData)
+    def plotImage(self, update=True):
+        self.graphWidget.setImageData(self._imageData,
+                                      xScale=self._xScale,
+                                      yScale=self._yScale)
         return self.graphWidget.plotImage(update=update)
 
     def _calculateClicked(self):

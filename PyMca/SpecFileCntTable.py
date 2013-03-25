@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -314,6 +314,7 @@ else:
             self.ySelection   = []
             self.monSelection = []
             self.__is3DEnabled = False
+            self.__is2DEnabled = False
             labels = ['Counter', 'X    ', 'Y    ', 'Mon']
             self.setColumnCount(len(labels))
             for i in range(len(labels)):
@@ -401,12 +402,25 @@ else:
                     pass
 
         def set3DEnabled(self, value):
+            self.__is2DEnabled = False
             if value:
                 self.__is3DEnabled = True
                 if len(self.xSelection) > 3:
                     self.xSelection = self.xSelection[-3:]
             else:
                 self.__is3DEnabled = False
+                if len(self.xSelection) > 1:
+                    self.xSelection = [1 * self.xSelection[0]]                    
+            self._update()
+
+        def set2DEnabled(self, value):
+            self.__is3DEnabled = False
+            if value:
+                self.__is2DEnabled = True
+                if len(self.xSelection) > 2:
+                    self.xSelection = self.xSelection[-2:]
+            else:
+                self.__is2DEnabled = False
                 if len(self.xSelection) > 1:
                     self.xSelection = [1 * self.xSelection[0]]                    
             self._update()
@@ -425,8 +439,9 @@ else:
                     if len(self.xSelection) > 2:
                         #that is to support mesh plots
                         self.xSelection = self.xSelection[-2:]
-                    if len(self.xSelection) > 1:
-                        self.xSelection = self.xSelection[-1:]
+                    if not self.__is2DEnabled:
+                        if len(self.xSelection) > 1:
+                            self.xSelection = self.xSelection[-1:]
                 elif len(self.xSelection) > 3:
                     self.xSelection = self.xSelection[-3:]
 

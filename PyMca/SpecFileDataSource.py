@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -417,7 +417,8 @@ class SpecFileDataSource:
                         if label not in output.info['LabelNames']:
                             raise ValueError("Label %s not in scan labels" % label)
                         index = output.info['LabelNames'].index(label)
-                        if output.x is None: output.x = []
+                        if output.x is None:
+                            output.x = []
                         output.x.append(output.data[:, index])
                         indexlist.append(index)
                     output.info['selection']['x'] = indexlist
@@ -446,7 +447,8 @@ class SpecFileDataSource:
                         if label not in output.info['LabelNames']:
                             raise ValueError("Label %s not in scan labels" % label)
                         index = output.info['LabelNames'].index(label)
-                        if output.m is None: output.m = []
+                        if output.m is None:
+                            output.m = []
                         output.m.append(output.data[:, index])
                         indexlist.append(index)
                     output.info['selection']['m'] = indexlist

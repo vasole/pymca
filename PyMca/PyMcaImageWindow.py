@@ -87,9 +87,12 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
 
 
     def _addImageClicked(self):
-        if self.correlator is None: self._connectCorrelator()
-        if self._imageData is None:return
-        if self._imageData == []:return
+        if self.correlator is None:
+            self._connectCorrelator()
+        if self._imageData is None:
+            return
+        if self._imageData == []:
+            return
 
         if not RGBImageCalculator.RGBImageCalculator._addImageClicked(self):
             #if self.ownCorrelator:
@@ -121,6 +124,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             sellist = [selectionlist]
 
         for sel in sellist:
+            self._xScale = None
+            self._yScale = None
             source = sel['SourceName']
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
@@ -136,11 +141,49 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 if hasattr(dataObject, "y"):
                     if dataObject.y is not None:
                         dataObject.data = dataObject.y[0]
+                        data0 = dataObject.y[0]
+                        if len(data0.shape) == 1:
+                            #we have to figure out the shape ...                            
+                            if hasattr(dataObject, "x"):
+                                if len(dataObject.x) == 2:
+                                    x0 = dataObject.x[0][:]
+                                    x0.shape = -1
+                                    x1 = dataObject.x[1][:]
+                                    x1.shape = -1
+                                    if abs(x0[1] - x0[0]) < 1.0e-6:
+                                        nColumns = numpy.argmin(abs(x0-x0[0]) < 1.0e-6)
+                                        nRows = x1.size / nColumns
+                                        if nRows!= int(nRows):
+                                            raise ValueError("2D Selection not understood")
+                                        transpose = False
+                                        self._yScale = x0[0] + 100, x0[-1] + 100
+                                        self._xScale = x1[0] - 1000, x1[-1] - 1000
+                                    elif abs(x1[1] - x1[0]) < 1.0e-6:
+                                        nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
+                                        nColumns = x0.size / nRows
+                                        if nColumns != int(nColumns):
+                                            raise ValueError("2D Selection not understood")
+                                        transpose = True
+                                        self._xScale = x0[0], x0[-1]
+                                        self._yScale = x1[0], x1[-1]
+                                    else:
+                                        raise TypeError("2D Selection is not a regular mesh")
+                                    dataObject.data = numpy.zeros((len(dataObject.y),
+                                                                   int(nRows),
+                                                                   int(nColumns)),
+                                                                   data0.dtype)
+                                    for yIndex in range(len(dataObject.y)):
+                                        if transpose:
+                                            tmpData = numpy.transpose(dataObject.y[yIndex])[:]
+                                        else:
+                                            tmpData = dataObject.y[yIndex][:]
+                                        tmpData.shape = nRows, nColumns
+                                        dataObject.data[yIndex] = tmpData                                            
                     else:
                         print("Nothing to plot")
             self.dataObjectsList = [legend]
             self.dataObjectsDict = {legend:dataObject}
-            shape = dataObject.data.shape 
+            shape = dataObject.data.shape
             if len(shape) == 2:
                 self._nImages = 1
                 self._imageData = dataObject.data
@@ -151,12 +194,12 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                 if m.size == self._imageData.size:
                                     tmpView = m[:]
                                     tmpView.shape = shape
-                                    self._imageData /= tmpView.astype(numpy.float)
+                                    self._imageData = self._imageData / tmpView.astype(numpy.float)
                                 else:
                                     #let numpy raise the appropriate error
-                                    self._imageData /= numpy.float(m)
+                                    self._imageData = self._imageData / numpy.float(m)
                             else:
-                                self._imageData /= numpy.float(m)
+                                self._imageData = self._imageData / numpy.float(m)
                 self.slider.hide()
                 self.setName(legend)
             else:
@@ -185,7 +228,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 if dataObject.m is not None:
                     #is a list
                     for m in dataObject.m:
-                        data = data / float(m)
+                        data = data / numpy.float(m)
             return data
         if len(shape) == 3:
             data = dataObject.data[index:index+1,:,:]
@@ -193,7 +236,15 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             if hasattr(dataObject, 'm'):
                 if dataObject.m is not None:
                     for m in dataObject.m:
-                        data = data / m[index].astype(numpy.float)
+                        if hasattr(m, "size"):
+                            if m.size == data.size:
+                                tmpView = m[:]
+                                tmpView.shape = data.shape
+                                data = data / tmpView.astype(numpy.float)
+                            else:
+                                data = data / numpy.float(m)
+                        else:
+                            data = data / numpy.float(m)
             return data
 
         #I have to deduce the appropriate indices from the given index
@@ -205,12 +256,17 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             data = dataObject.data[i, j]
             if hasattr(dataObject, 'm'):
                 if dataObject.m is not None:
-                    for m0 in dataObject.m:
-                         m = numpy.array(m0).astype(numpy.float)
-                         m.shape = -1
-                         data = data / m[index]
+                    for m in dataObject.m:
+                        if hasattr(m, "size"):
+                            if m.size == data.size:
+                                tmpView = m[:]
+                                tmpView.shape = data.shape
+                                data = data / tmpView.astype(numpy.float)
+                            else:
+                                data = data / numpy.float(m)
+                        else:
+                            data = data / numpy.float(m)
             return data
-
         raise IndexError("Unhandled dimension")
 
     def setPlotEnabled(self, value=True):
@@ -242,7 +298,12 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def _replaceSelection(self, selectionlist):
         if DEBUG:
             print("_replaceSelection(self, selectionlist)",selectionlist)
+        current = self.slider.value()
         self._addSelection(selectionlist)
+        if current < self._nImages:
+            self.showImage(current, moveslider=False)
+        else:
+            self.showImage(0, moveslider=True)
 
     def closeEvent(self, event):
         if self.ownCorrelator:
@@ -262,6 +323,10 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         
         if moveslider:
             self.slider.setValue(index)
+
+    def plotImage(self, update=True):
+        self.graphWidget.setImageData(self._imageData, xScale=self._xScale, yScale=self._yScale)
+        return self.graphWidget.plotImage(update=update)
         
 class TimerLoop:
     def __init__(self, function = None, period = 1000):

@@ -77,8 +77,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.cntTable = SpecFileCntTable.SpecFileCntTable()
         self.mcaTable = SpecFileMcaTable.SpecFileMcaTable()
 
-        self.mainTab.addTab(self.cntTable,str("Counters"))
-        self.mainTab.addTab(self.mcaTable,str("MCA"))
+        self.mainTab.addTab(self.cntTable, str("Counters"))
+        self.mainTab.addTab(self.mcaTable, str("MCA"))
         if QTVERSION < '4.0.0':
             self.mainTab.setCurrentPage(self.mainTab.indexOf(self.mcaTable))
         else:
@@ -108,6 +108,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.connect(self.mcaTable,
                          qt.SIGNAL("McaDeviceSelected"),
                          self.mcaDeviceSelected)
+
+        if QTVERSION > '4.0.0':
+            self.meshBox = qt.QCheckBox(autoBox)
+            self.meshBox.setText("Mesh")
+            self.meshBox.setToolTip("Consider selection as a regular mesh")
+            autoBoxLayout.addWidget(self.meshBox)
+
 
         autoBoxLayout.addWidget(self.autoOffBox)
         autoBoxLayout.addWidget(self.autoAddBox)
@@ -206,7 +213,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                              self.__headerSectionDoubleClicked)
         if OBJECT3D:
             self.connect(self.object3DBox, qt.SIGNAL("clicked()"),
-                     self._setObject3DBox)            
+                     self._setObject3DBox)
+        if hasattr(self, 'meshBox'):
+            self.connect(self.meshBox, qt.SIGNAL("clicked()"),
+                     self._setMeshBox)
+
         self.connect(self.autoOffBox, qt.SIGNAL("clicked()"),
                      self._setAutoOff)
         self.connect(self.autoAddBox, qt.SIGNAL("clicked()"),
@@ -237,15 +248,27 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def _setObject3DBox(self):
         self.autoAddBox.setChecked(False)
+        self.meshBox.setChecked(False)
         self.autoReplaceBox.setChecked(False)
         self.autoOffBox.setChecked(False)
         self.cntTable.set3DEnabled(True)
         self.object3DBox.setChecked(True)
 
+    def _setMeshBox(self):
+        self.autoAddBox.setChecked(False)
+        self.autoReplaceBox.setChecked(False)
+        self.autoOffBox.setChecked(False)
+        self.cntTable.set2DEnabled(True)
+        self.object3DBox.setChecked(False)
+        self.meshBox.setChecked(True)
+
     def _setAutoOff(self):
         if OBJECT3D:
             self.cntTable.set3DEnabled(False)
             self.object3DBox.setChecked(False)
+        if hasattr(self, "meshBox"):
+            self.cntTable.set2DEnabled(False)
+            self.meshBox.setChecked(False)
         self.autoAddBox.setChecked(False)
         self.autoReplaceBox.setChecked(False)
         self.autoOffBox.setChecked(True)
@@ -254,6 +277,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if OBJECT3D:
             self.cntTable.set3DEnabled(False)
             self.object3DBox.setChecked(False)
+        if hasattr(self, "meshBox"):
+            self.meshBox.setChecked(False)
+            self.cntTable.set2DEnabled(False)
         self.autoOffBox.setChecked(False)
         self.autoReplaceBox.setChecked(False)
         self.autoAddBox.setChecked(True)
@@ -262,6 +288,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if OBJECT3D:
             self.cntTable.set3DEnabled(False)
             self.object3DBox.setChecked(False)
+        if hasattr(self, "meshBox"):
+            self.cntTable.set2DEnabled(False)
+            self.meshBox.setChecked(False)
         self.autoOffBox.setChecked(False)
         self.autoAddBox.setChecked(False)
         self.autoReplaceBox.setChecked(True)
@@ -271,9 +300,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if OBJECT3D:
                 self.object3DBox.setChecked(False)
                 self.object3DBox.setEnabled(False)
+            if hasattr(self, "meshBox"):
+                self.meshBox.setChecked(False)
+                self.meshBox.setEnabled(False)
         else:
             if OBJECT3D:
                 self.object3DBox.setEnabled(True)
+            if hasattr(self, "meshBox"):
+                self.meshBox.setEnabled(True)
 
     # 
     # Data management
@@ -585,7 +619,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         #get selected counter keys
         cnt_sel = self.cntTable.getCounterSelection()
         if len(cnt_sel['cntlist']):
-            if len(cnt_sel['y']): self._oldCntSelection = cnt_sel
+            if len(cnt_sel['y']):
+                self._oldCntSelection = cnt_sel
         mca_sel = self.mcaTable.getCurrentlySelectedMca()
 
         sel_list = []
@@ -612,7 +647,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                         sel['scanselection']  = "MCA"
                     else:
                         sel['scanselection']  = True
-                    sel['selection']['x'] = cnt_sel['x'] 
+                    sel['selection']['x'] = cnt_sel['x']
+                    if len(sel['selection']['x']) == 2:
+                        if self.meshBox.isChecked():
+                            sel['selection']['selectiontype'] = "2D"
                     sel['selection']['y'] = cnt_sel['y'] 
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
@@ -671,7 +709,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                         sel['scanselection']  = "MCA"
                     else:
                         sel['scanselection']  = True
-                    sel['selection']['x'] = cnt_sel['x'] 
+                    sel['selection']['x'] = cnt_sel['x']
+                    if len(sel['selection']['x']) == 2:
+                        if self.meshBox.isChecked():
+                            sel['selection']['selectiontype'] = "2D"
                     sel['selection']['y'] = cnt_sel['y'] 
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
@@ -725,7 +766,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     else:
                         sel['scanselection']  = True #This could also be SCAN
                     sel['selection'] = {}
-                    sel['selection']['x'] = cnt_sel['x'] 
+                    sel['selection']['x'] = cnt_sel['x']
+                    if len(sel['selection']['x']) == 2:
+                        if self.meshBox.isChecked():
+                            sel['selection']['selectiontype'] = "2D"
                     sel['selection']['y'] = cnt_sel['y'] 
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
