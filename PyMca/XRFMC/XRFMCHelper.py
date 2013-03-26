@@ -17,7 +17,6 @@ getXMSOFileFluorescenceInformation =\
 XMIMSIM_PYMCA = None
 if sys.platform == "win32":
     try:
-            
         # try to get the installation directory from the registry
         if sys.version < '3.0':
             import _winreg as winreg
@@ -44,6 +43,25 @@ if sys.platform == "win32":
     except:
         # this cannot afford failing
         pass
+else:
+    try:
+        testDirectories = ["/Applications", "/usr/local/bin", "/usr/bin", os.getcwd()]
+        scriptName = "xmimsim-pymca"
+        if sys.platform == "darwin":
+            scriptName = os.path.join("XMI-MSIM.app",
+                                      "Contents",
+                                      "Resources",
+                                       scriptName)
+        for dirName in testDirectories:
+            pathToExecutable = os.path.join(dirName, scriptName)
+            if not os.path.exists(pathToExecutable):
+                pathToExecutable = None
+            else:
+                break
+        XMIMSIM_PYMCA = pathToExecutable
+    except:
+        # this cannot afford failing
+        pass
 
 def getScriptFile(pathToExecutable=None, args=None, name=None):
     if pathToExecutable is None:
@@ -64,10 +82,10 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
     if os.path.basename(xmimsim_directory).lower() == "bin":
         xmimsim_directory = os.path.dirname(xmimsim_directory)
 
-    binDir = os.path.join(xmimsim_directory, "bin")
-    libDir = os.path.join(xmimsim_directory, "lib")
-    gtk2Dir = os.path.join(xmimsim_directory, "GTK2")
     if sys.platform == "win32":
+        binDir = os.path.join(xmimsim_directory, "bin")
+        libDir = os.path.join(xmimsim_directory, "lib")
+        gtk2Dir = os.path.join(xmimsim_directory, "GTK2")
         path = os.getenv("PATH")
         txt = "echo off\n"
         txt += "set PATH=%s;%s;%s;%s\n" % (binDir, libDir, gtk2Dir, os.getenv("PATH"))
@@ -90,7 +108,30 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
             f.write(txt)
             f.close()
     else:
-        raise NotImplemented("Sorry, platform not implemented yet")
+        binDir = xmimsim_directory
+        libDir = os.path.join(xmimsim_directory, "lib")
+        path = os.getenv("PATH")
+        txt = "#!/bin/bash\n"
+        txt += "export PATH=%s:%s:%s\n" % (binDir, libDir, os.getenv("PATH"))
+        txt += "%s " % executable
+        if len(args):
+            for arg in args:
+                txt += arg + " ";
+            txt += "\n"
+        else:
+            txt += "$*"
+        if name is None:
+            handle, fullPath = tempfile.mkstemp(suffix=".sh", prefix="pymca", text=False)
+            os.write(handle, txt)
+            os.close(handle)
+        else:
+            fullPath = name
+            if not fullPath.endswith(".sh"):
+                fullPath = name + ".sh"
+            f = open(fullPath, "wb")
+            f.write(txt)
+            f.close()
+        os.system("chmod +x %s"  % fullPath)
     return fullPath
 
 def getOutputFileNames(fitFile, outputDir=None):

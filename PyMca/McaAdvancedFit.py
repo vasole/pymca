@@ -79,14 +79,13 @@ if DEBUG:
     print("############################################")
 XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
-    if sys.platform == 'win32':
-        try:
-            from PyMca.XRFMC import XRFMCHelper
-            XRFMC_FLAG = True
-        except ImportError:
-            if DEBUG:
-                print("Cannot import XRFMCHelper module")
-                raise
+    try:
+        from PyMca.XRFMC import XRFMCHelper
+        XRFMC_FLAG = True
+    except ImportError:
+        if DEBUG:
+            print("Cannot import XRFMCHelper module")
+            raise
 USE_BOLD_FONT = True
 
 class McaAdvancedFit(qt.QWidget):
@@ -576,8 +575,8 @@ class McaAdvancedFit(qt.QWidget):
             self.mcafit.config['materials'][material] =copy.deepcopy(Elements.Material[material])
         if QTVERSION > '4.0.0':
             hideButton = True
-            if 'program' in config['xrfmc']:
-                programFile = config['xrfmc']['program']
+            if 'xrfmc' in config:
+                programFile = config['xrfmc'].get('program', None)
                 if programFile is not None:
                     if os.path.exists(programFile):
                         if os.path.isfile(config['xrfmc']['program']):

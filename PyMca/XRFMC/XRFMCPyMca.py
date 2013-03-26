@@ -85,8 +85,6 @@ class GetFileList(qt.QGroupBox):
 
         if len(self.fileList):
             self.fileList.sort()
-            self.inputDir = os.path.dirname(self.fileList[0])
-            xrfmc_dirs.inputDir = os.path.dirname(self.fileList[0])
             for i in range(len(self.fileList)):
                 ffile = self.fileList[i]
                 if i == 0:
@@ -94,8 +92,8 @@ class GetFileList(qt.QGroupBox):
                 else:
                     text += "\n%s" % ffile
             if len(self.fileList):
-                self.inputDir = os.path.dirname(self.fileList[0])
-                xrfmc_dirs.inputDir = os.path.dirname(self.fileList[0])
+                self.inputDir = os.path.dirname(qt.safe_str(self.fileList[0]))
+                xrfmc_dirs.inputDir = os.path.dirname(qt.safe_str(self.fileList[0]))
         self.__listView.clear()
         self.__listView.insertPlainText(text)
         ddict = {}
@@ -124,15 +122,49 @@ class XRFMCProgramFile(GetFileList):
         if XRFMCHelper.XMIMSIM_PYMCA is not None:
             self.setFileList([XRFMCHelper.XMIMSIM_PYMCA])
 
-    def _browseList(self, filetypes  = "XMIMSIM-PyMca Program File (xmimsim*)"):
-        GetFileList._browseList(self, filetypes)
+    def _browseList(self, filetypes="All Files (*)"):
+        self.inputDir = xrfmc_dirs.inputDir
+        if not os.path.exists(self.inputDir):
+            self.inputDir =  os.getcwd()
+        wdir = self.inputDir
 
+        filedialog = qt.QFileDialog(self)
+        if sys.platform == "darwin":
+            filedialog.setWindowTitle("Select XMI-MSIM application bundle")
+        else:
+            filedialog.setWindowTitle("Select xmimsim-pymca executable")
+        filedialog.setDirectory(wdir)
+        filedialog.setModal(1)
+        filedialog.setFileMode(filedialog.ExistingFiles)
+        if sys.platform == 'darwin':
+            filelist = filedialog.exec_()
+            if filelist:
+                filelist = filedialog.selectedFiles()
+                filelist = filelist[0]
+                xmimsim = os.path.join(qt.safe_str(filelist),
+                                       "Contents",
+                                       "Resources",
+                                       "xmimsim-pymca")
+                filelist = [xmimsim]
+        else:
+            filelist = qt.QFileDialog.getOpenFileName(self,
+                        "Selec xmimsim-pymca executable",
+                        wdir,
+                        filetypes,
+                        None)
+            if len(filelist):
+                filelist = [filelist]
+        self.setFileList(filelist)
+            
     def setFileList(self, fileList):
         oldInputDir = xrfmc_dirs.inputDir
         oldOutputDir = xrfmc_dirs.outputDir
-        GetFileList.setFileList(self, fileList)
-        xrfmc_dirs.inputDir = oldInputDir
-        xrfmc_dirs.outputDir = oldOutputDir
+        if os.path.exists(fileList[0]):
+            GetFileList.setFileList(self, fileList)
+        if oldInputDir is not None:
+            xrfmc_dirs.inputDir = oldInputDir
+        if oldOutputDir is not None:
+            xrfmc_dirs.outputDir = oldOutputDir
 
 class XRFMCIniFile(GetFileList):
     def __init__(self, parent=None):

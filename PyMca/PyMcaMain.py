@@ -83,13 +83,11 @@ else:
 QTVERSION = qt.qVersion()
 XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
-    if sys.platform == "win32":
-        try:
-            from PyMca.XRFMC import XRFMCPyMca
-            XRFMC_FLAG = True
-        except:
-            pass
-
+    try:
+        from PyMca.XRFMC import XRFMCPyMca
+        XRFMC_FLAG = True
+    except:
+        pass
 
 from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
@@ -173,6 +171,7 @@ if __name__ == "__main__":
         else:
             splash = qt.QSplashScreen()
         splash.show()
+        splash.raise_()
         from PyMca import ChangeLog
         font = splash.font()
         font.setBold(1)
@@ -2013,6 +2012,7 @@ if __name__ == '__main__':
     else:
         splash.finish(PyMcaMainWidgetInstance)
         PyMcaMainWidgetInstance.show()
+        PyMcaMainWidgetInstance.raise_()
         #try to interpret rest of command line arguments as data sources
         try:
             for source in args:

@@ -42,13 +42,12 @@ from PyMca import EnergyTable
 from PyMca import PyMcaDirs
 XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
-    if sys.platform == 'win32':
-        try:
-            import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
-            XRFMC_FLAG = True
-        except ImportError:
-            # no XRFMC support
-            pass
+    try:
+        import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
+        XRFMC_FLAG = True
+    except ImportError:
+        # no XRFMC support
+        pass
     from PyMca import StripBackgroundWidget
     # This strange looking import is to workaround an endless import
     SCANWINDOW = False
