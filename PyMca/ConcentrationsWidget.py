@@ -37,8 +37,7 @@ QTVERSION = qt.qVersion()
 
 XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
-    if sys.platform == 'win32':
-        XRFMC_FLAG = True        
+    XRFMC_FLAG = True
 
 if QTVERSION < '4.0.0':
     import qttable

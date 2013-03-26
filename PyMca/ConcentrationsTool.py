@@ -30,8 +30,7 @@ import sys
 import copy
 import numpy
 from PyMca import Elements
-if sys.platform == "win32":
-    from PyMca.XRFMC import XRFMCHelper
+from PyMca.XRFMC import XRFMCHelper
 
 class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations=None):
