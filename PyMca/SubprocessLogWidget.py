@@ -58,8 +58,8 @@ class SubprocessLogWidget(qt.QWidget):
 
     def stop(self):
         if self.isSubprocessRunning():
-            print("MESSAGE TO KILL PROCESS")
-            print("HOW TO KILL IT IN A GOOD WAY?")
+            #print("MESSAGE TO KILL PROCESS")
+            #print("HOW TO KILL IT IN A GOOD WAY?")
             self._p.kill()
 
     def isSubprocessRunning(self):
