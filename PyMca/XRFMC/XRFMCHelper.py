@@ -111,7 +111,7 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
         #the bundle has everything needed
         txt = "#!/bin/bash\n"
         #this line is critical in order to avoid interference by the bundled PyMca
-        txt += 'export DYLD_LIBRARY_PATH=""\n'
+        txt += 'DYLD_LIBRARY_PATH=""\n'
         txt += "%s " % pathToExecutable
         if len(args):
             for arg in args:
