@@ -107,6 +107,30 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
             f = open(fullPath, "wb")
             f.write(txt)
             f.close()
+    elif sys.platform == "darwin":
+        #the bundle has everything needed
+        txt = "#!/bin/bash\n"
+        #this line is critical in order to avoid interference by the bundled PyMca
+        txt += 'export DYLD_LIBRARY_PATH=""\n'
+        txt += "%s " % pathToExecutable
+        if len(args):
+            for arg in args:
+                txt += arg + " ";
+            txt += "\n"
+        else:
+            txt += "$*"
+        if name is None:
+            handle, fullPath = tempfile.mkstemp(suffix=".sh", prefix="pymca", text=False)
+            os.write(handle, txt)
+            os.close(handle)
+        else:
+            fullPath = name
+            if not fullPath.endswith(".sh"):
+                fullPath = name + ".sh"
+            f = open(fullPath, "wb")
+            f.write(txt)
+            f.close()
+        os.system("chmod +x %s"  % fullPath)
     else:
         binDir = xmimsim_directory
         libDir = os.path.join(xmimsim_directory, "lib")
