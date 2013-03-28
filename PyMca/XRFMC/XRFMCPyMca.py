@@ -112,7 +112,7 @@ class PyMcaFitFileList(GetFileList):
         self.build("")
 
     def _browseList(self, filetypes=\
-                    "PyMca .fit Files (*.fit)\nPyMca .cfg Files (*.cfg)"):
+                    "PyMca .cfg Files (*.cfg)\nPyMca .fit Files (*.fit)"):
         GetFileList._browseList(self, filetypes)
 
 class XRFMCProgramFile(GetFileList):
@@ -841,7 +841,7 @@ class XRFMCPyMca(qt.QWidget):
             i += 1             
             args.insert(1, parameter)
 
-        # show the command on the log widget            
+        # show the command on the log widget
         text = "%s" % scriptFile 
         for arg in args[1:]:
             text += " %s" % arg
