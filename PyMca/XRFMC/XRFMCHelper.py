@@ -46,6 +46,10 @@ if sys.platform == "win32":
 else:
     try:
         testDirectories = ["/Applications", "/usr/local/bin", "/usr/bin", os.getcwd()]
+        #look in the user PATH
+        path = os.getenv('PATH')
+        if path is not None:
+            testDirectories += path.split(":")
         scriptName = "xmimsim-pymca"
         if sys.platform == "darwin":
             scriptName = os.path.join("XMI-MSIM.app",
