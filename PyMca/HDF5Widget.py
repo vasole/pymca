@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -179,7 +179,7 @@ class H5NodeProxy(object):
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
                 items = self.getNode(self.name).items()
-                # Next line seems to retrieve an iterator under Python 3.3
+                # previous line seems to retrieve an iterator under Python 3.3
                 if (sys.version > '3.2') and\
                    (h5py.version.version > '2.1.1'):
                     items = list(items)
