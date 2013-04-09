@@ -296,7 +296,7 @@ if __name__ == "__main__":
         w = OmnicMap(filename)
         print(type(w))
         print(type(w.data[0:10]))
-        print w.data[0:10]
+        print(w.data[0:10])
         print("shape = ", w.data.shape)
         print(type(w.info))
         print("INFO = ", w.info['OmnicInfo'])

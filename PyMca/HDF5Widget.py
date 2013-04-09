@@ -179,6 +179,10 @@ class H5NodeProxy(object):
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
                 items = self.getNode(self.name).items()
+                # Next line seems to retrieve an iterator under Python 3.3
+                if (sys.version > '3.2') and\
+                   (h5py.version.version > '2.1.1'):
+                    items = list(items)
                 if posixpath.dirname(self.name) == "/":
                     # top level item
                     doit = True
