@@ -119,3 +119,11 @@ class SubprocessLogWidget(qt.QWidget):
     def append(self, text):
         self.logWidget.append(text)
 
+    def closeEvent(self, event):
+        if self._p is not None:
+            try:
+                self.stop()
+            except:
+                # this may happen if the process finished in the mean time
+                pass
+        qt.QWidget.closeEvent(self, event)
