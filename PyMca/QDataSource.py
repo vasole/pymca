@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 """
-Demo example of generic access to data sources.
+Generic access to data sources.
 
 """
 import sys
@@ -33,19 +33,12 @@ import os
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-#import QSPSDataSource
-#import QSpecFileDataSource
-#import QEdfFileDataSource
 from PyMca import SpecFileDataSource
 from PyMca import EdfFileDataSource
 from PyMca import QEdfFileWidget
-if 0 and QTVERSION < '4.0.0':
-    from PyMca import MySpecFileSelector as QSpecFileWidget
-    QSpecFileWidget.QSpecFileWidget = QSpecFileWidget.SpecFileSelector
-else:
-    from PyMca import QSpecFileWidget
+from PyMca import QSpecFileWidget
 
-if (sys.platform == "win32") or (sys.platform == "darwin"):
+if sys.platform == "win32":
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource}
 
@@ -53,7 +46,6 @@ if (sys.platform == "win32") or (sys.platform == "darwin"):
                        EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget}
     sps = None 
 else:
-    #import SpsDataSource
     from PyMca import QSpsDataSource
     sps = QSpsDataSource.SpsDataSource.sps
     from PyMca import QSpsWidget
@@ -71,6 +63,7 @@ try:
     from PyMca import PyMcaNexusWidget
     import h5py
 except:
+    # HDF5 file format support is not mandatory
     NEXUS = False
 
 
