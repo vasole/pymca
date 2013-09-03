@@ -67,6 +67,7 @@ except ImportError:
     import SGWindow
     import SNIPWindow
     import PyMca_Icons
+import numpy
 
 DEBUG = 0
 
@@ -99,10 +100,15 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         info = SNIP2Dtext
         self.methodDict["Subtract SNIP 2D Background"] = [function, info, icon]
 
+        function = self.subtractActiveCurve
+        info = "Replace current stack by one in which\nthe active curve has been subtracted"
+        self.methodDict["Subtract active curve"] = [function, info, icon]
+
         self.__methodKeys = ["Savitzky-Golay Filtering",
                              "Deglitch with SNIP 1D Background",
                              "Subtract SNIP 1D Background",
-                             "Subtract SNIP 2D Background"]
+                             "Subtract SNIP 2D Background",
+                             "Subtract active curve"]
 
     def stackUpdated(self):
         self.dialogWidget = None
@@ -185,6 +191,26 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
             stack = self.getStackDataObject()
             function(stack, *arguments)
             self.setStack(stack)
+
+    def subtractActiveCurve(self):
+        curve = self.getActiveCurve()
+        if curve is None:
+            raise ValueError("No active curve")
+        x, y = curve[0:2]
+        stack = self.getStackDataObject()
+        if not isinstance(stack.data, numpy.ndarray):
+            text = "This method does not work with dynamically loaded stacks"
+            raise TypeError(text)
+        mcaIndex = stack.info.get('McaIndex', -1)
+        if mcaIndex in [-1, 2]:
+            for i in range(stack.data.shape[-1]):
+                stack.data[:, :, i] -= y[i]
+        elif mcaIndex == 0:
+            for i in range(stack.data.shape[0]):
+                stack.data[i] -= y[i]
+        else:
+            raise ValueError("Invalid 1D index %d" % mcaIndex)
+        self.setStack(stack) 
 
 MENU_TEXT = "Stack Filtering Options"
 
