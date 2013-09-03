@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -80,7 +80,7 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
- 
+
     ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
 
@@ -129,7 +129,7 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
- 
+
     ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 2, 2, NPY_ENSURECOPY);
 
@@ -180,7 +180,7 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
- 
+
     ret = (PyArrayObject *)
              PyArray_FROMANY(input, PyArray_DOUBLE, 3, 3, NPY_ENSURECOPY);
 
@@ -3926,8 +3926,8 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
 
     /* do the work */
     data_pointer = (double *) ydata->data;
-    grid_pointerf = (float *) grid->data; 
-    grid_pointerd = (double *) grid->data; 
+    grid_pointerf = (float *) grid->data;
+    grid_pointerd = (double *) grid->data;
     hits_pointer = (int *) hits->data;
 
     for (i=0;i<npoints;i++){
@@ -3966,7 +3966,7 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     Py_DECREF(limits);
     for (i=0;i<nd_grid;i++){
         Py_DECREF(xdata[i]);
-    }        
+    }
     free(xdata);
     free(delta_index);
     Py_INCREF(Py_None);
