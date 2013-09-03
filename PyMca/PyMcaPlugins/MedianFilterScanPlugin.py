@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -159,7 +159,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, idx)
             y = numpy.take(y, idx)
 
-            #take the portion ox x between limits
+            #take the portion of x between limits
             idx = numpy.nonzero((x>=xmin) & (x<=xmax))[0]
             if not len(idx):
                 # no overlap
