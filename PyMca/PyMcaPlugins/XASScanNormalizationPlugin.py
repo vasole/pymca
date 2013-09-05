@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -205,7 +205,7 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
             else:
                 replot = False
                 replace = False
-            newLegend = " ".join(legend.split(" ")[:-2])
+            newLegend = " ".join(legend.split(" ")[:-1])
             if not newLegend.startswith('Norm.'):
                 newLegend = "Norm. " + newLegend
             self.addCurve(x, y,
