@@ -40,8 +40,8 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None
     LeastSquaresFit(model_function, parameters, xdata=xvalues, ydata=yvalues)
 
         model_function - it has the form model_function(parameters, x) where parameters is a sequence
-    containing the initial values of the parameters to be refined and x is the array of values in which
-    the function is to be evaluated.
+                         containing the parameters to be refined and x is the array of values in which
+                         the function is to be evaluated.
 
         parameters - sequence with the initial values to be refined
 
@@ -51,7 +51,7 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None
 
     Additional keywords:
 
-        sigmadata - array with the uncertainities associated to ydata (default is sqrt(y) )
+        sigmadata - array with the uncertainties associated to ydata (default is sqrt(y) )
 
         weightflag - 0 Means no weighted fit 1 means weighted fit
 
