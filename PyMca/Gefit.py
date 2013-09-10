@@ -34,6 +34,56 @@ ONED = 0
 def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None,
                         weightflag = 0,model_deriv=None,deltachi=None,fulloutput=0,
                         xdata=None,ydata=None,sigmadata=None,linear=None):
+    """
+    Typical use:
+
+    LeastSquaresFit(model_function, parameters, xdata=xvalues, ydata=yvalues)
+
+        model_function - it has the form model_function(parameters, x) where parameters is a sequence
+    containing the initial values of the parameters to be refined and x is the array of values in which
+    the function is to be evaluated.
+
+        parameters - sequence with the initial values to be refined
+
+        xdata - array with the x axis data points
+
+        ydata - array with the y axis data points
+
+    Additional keywords:
+
+        sigmadata - array with the uncertainities associated to ydata (default is sqrt(y) )
+
+        weightflag - 0 Means no weighted fit 1 means weighted fit
+
+        constrains - if provided, it is a 2D sequence of dimension (3, n_parameters) where, for each
+                     parameter denoted by the index i, the meaning is
+
+                     constrains[0][i] -> 0 - Free (Gefit.CFREE)
+                                         1 - Positive (Gefit.CPOSITIVE)
+                                         2 - Quoted (Gefit.CQUOTED)
+                                         3 - Fixed (Gefit.CFIXED)
+                                         4 - Factor (Gefit.CFACTOR)
+                                         5 - Delta (Gefit.CDELTA)
+                                         6 - Sum (Gefit.CSUM)
+
+
+                     constrains[1][i] -> Ignored if constrains[0][i] is 0, 1, 3
+                                         Min value of the parameter if constrains[0][i] is Gefit.CQUOTED
+                                         Index of fitted parameter to which it is related
+
+                     constrains[2][i] -> Ignored if constrains[0][i] is 0, 1, 3
+                                         Max value of the parameter if constrains[0][i] is Gefit.CQUOTED
+                                         Factor to apply to related parameter with index constrains[1][i]
+                                         Difference with parameter with index constrains[1][i]
+                                         Sum obtained when adding parameter with index constrains[1][i]
+
+        linear - Flag to indicate a linear fit instead of a non-linear. Default is non-linear fit (=false)
+
+    Output:
+
+        fitted_parameters, reduced_chi_square, uncertainties
+
+    """
     if constrains is None:
         constrains = []
     parameters = numpy.array(parameters0).astype(numpy.float)
