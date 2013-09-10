@@ -77,7 +77,14 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None
                                          Difference with parameter with index constrains[1][i]
                                          Sum obtained when adding parameter with index constrains[1][i]
 
+        model_deriv - function providing the derivatives of the fitting function respect to the fitted parameters.
+                      It will be called as model_deriv(parameters, index, x) where parameters are the current values
+                      of the fitting parameters, index is the fitting parameter index of which the the derivative has
+                      to be provided in the supplied array of x points.
+
         linear - Flag to indicate a linear fit instead of a non-linear. Default is non-linear fit (=false)
+
+        maxiter - Maximum number of iterations (default is 100)
 
     Output:
 
