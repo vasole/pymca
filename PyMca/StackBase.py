@@ -760,7 +760,8 @@ class StackBase(object):
             if self.mcaIndex == 0:
                 if DEBUG:
                     t0 = time.time()
-                if isinstance(self._stack.data, numpy.ndarray):
+                if isinstance(self._stack.data, numpy.ndarray) and\
+                   self._tryNumpy:
                     leftImage = self._stack.data[i1, :, :]
                     middleImage= self._stack.data[imiddle, :, :]
                     rightImage = self._stack.data[i2 - 1, :, :]
@@ -809,7 +810,8 @@ class StackBase(object):
             else:
                 if DEBUG:
                     t0 = time.time()
-                if isinstance(self._stack.data, numpy.ndarray):
+                if self._tryNumpy and\
+                   isinstance(self._stack.data, numpy.ndarray):
                     leftImage = self._stack.data[:, :, i1]
                     middleImage = self._stack.data[:, :, imiddle]
                     rightImage = self._stack.data[:, :, i2 - 1]
