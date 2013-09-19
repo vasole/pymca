@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -110,6 +110,8 @@ def getCovarianceMatrix(stack,
     eigenvectorLength = nChannels
 
     if (not force)and isinstance(data, numpy.ndarray):
+        if DEBUG:
+            print("Memory consuming calculation")
         #make a direct calculation (memory cosuming)
         #take a view to the data
         dataView = data[:]
@@ -477,6 +479,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     else:
         data = stack
 
+    force = kw.get("force", True)
     oldShape = data.shape
     if index not in [0, -1, len(oldShape) - 1]:
         data = None
@@ -509,7 +512,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     cov, avgSpectrum, calculatedPixels = getCovarianceMatrix(stack,
                                                              index=index,
                                                              binning=binning,
-                                                             force=False,
+                                                             force=force,
                                                              center=center,
                                                              spatial_mask=mask)
 
