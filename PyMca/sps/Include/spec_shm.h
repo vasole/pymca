@@ -3,7 +3,7 @@
 *
 *   "Spec" Release 5
 *
-*   Copyright (c) 1995-2010 Certified Scientific Software
+*   Copyright (c) 1995-2013 Certified Scientific Software
 *
 *   The software contained in this file "spec_shm.h" describes the
 *   shared-data structures used and defined by the CSS "spec" package.
@@ -93,7 +93,7 @@ struct  shm_head {
 	u32_t   latest_frame;           /* most recently updated frame */
 };
 
-#define SHM_MAX_IDS     128
+#define SHM_MAX_IDS     256
 
 struct  shm_status {
 	u32_t    spec_state;
