@@ -1,14 +1,14 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2011 Certified Scientific Software (CSS)
-*   Copyright (c) 1998-2011 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2010 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2013 Certified Scientific Software (CSS)
 *
 *   The software contained in this file "sps.h" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
 *   with other utility software.
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a
-*   copy of the software in this file and associated header files (the
+*   copy of the software in this file and associated source file (the
 *   "Software"), to deal in the Software without restriction, including
 *   without limitation the rights to use, copy, modify, merge, publish,
 *   distribute, sublicense, and/or sell copies of the Software, and to
@@ -27,6 +27,16 @@
 *   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 ****************************************************************************/
+/****************************************************************************
+*   @(#)sps.h	6.1  07/13/13 CSS
+*
+*   "spec" Release 6
+*
+*   This file was mostly an ESRF creation, but includes code from and is
+*   maintained by Certified Scientific Software.
+*
+****************************************************************************/
+
 /* Small documentation for the library:
    Your program might get a list of available arrays with the two functions
    ------------------------------------------------------------------------ 
@@ -254,6 +264,11 @@
 #define SPS_STRING      8
 #define SPS_LONG        9
 #define SPS_ULONG       10
+
+#ifndef SPEC_TYPE_DEFS
+typedef int     s32_t;
+typedef unsigned int    u32_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -643,7 +658,7 @@ int SPS_UpdateDone (char *fullname, char *array);
 int 
 SPS_GetArrayInfo (char * spec_version, char * array_name, int *rows, 
 		  int *cols, int *type, int *flag);
- 
+
 /*
   Retrieve and return the Shared Memory Id (as with ipcs)
 
@@ -681,6 +696,17 @@ SPS_CreateArray (char * spec_version, char *arrayname,
 /* Deletes everything which there is */
 /* Should be called before you quit the program */
 void SPS_CleanUpAll (void);
+
+
+/* The following require spec_shm.h with SHM_VERSION 6 */
+
+char *SPS_GetMetaData(char *spec_version, char *array_name, u32_t *length);
+
+char *SPS_GetInfoString(char *spec_version, char *array_name);
+
+int SPS_PutMetaData(char *spec_version, char *array_name, char *data, u32_t length);
+
+int SPS_PutInfoString(char *spec_version, char *array_name, char *info);
 
 #ifdef __cplusplus
 }
