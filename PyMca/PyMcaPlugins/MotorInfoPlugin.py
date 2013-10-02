@@ -5,7 +5,7 @@ except ImportError:
     from . import Plugin1DBase
 
 try:
-    from PyMca import MotorInfoWindow
+    from PyMca.PyMcaPlugins import MotorInfoWindow
 except ImportError:
     print("MotorInfoPlugin importing from somewhere else")
     import MotorInfoWindow
