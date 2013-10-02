@@ -5,24 +5,15 @@
 # the ESRF by the Software group.
 #
 # This toolkit is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
+# under the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License along with
-# PyMca; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
-# used as a free plugin for a non-free program.
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem for you.
 #############################################################################*/
 __author__ = "Darren Dale (CHESS) & V.A. Sole (ESRF)"
 __license__ = "GPL2+ if used with PyQt - LGPL2+ if adapted to PySide"
@@ -60,23 +51,18 @@ def h5py_sorting(object_list):
     if n < 2:
         return object_list
 
-    if hasattr(object_list[0], "keys"):
-        # we have received values
-        names = list(object_list[0].keys())
-    else:
-        # we have received items, not values
-        names = [item[0] for item in object_list]
+    # we have received items, not values
+    posixNames = [item[1].name for item in object_list]
     
     # This implementation only sorts entries
-    if posixpath.dirname(names[0]) != "/":
+    if posixpath.dirname(posixNames[0]) != "/":
         return object_list
 
     sorting_key = None
     for key in sorting_list:
-        if key in names:
+        if key in object_list[0][1]:
             sorting_key = key
             break
-        
     if sorting_key is None:
         if 'name' in sorting_list:
             sorting_key = 'name'
@@ -85,13 +71,13 @@ def h5py_sorting(object_list):
 
     try:
         if sorting_key != 'name':
-            sorting_list = [(o[sorting_key].value, o)
+            sorting_list = [(o[1][sorting_key].value, o)
                            for o in object_list]
             sorted_list = sorted(sorting_list, key=itemgetter(0))
             return [x[1] for x in sorted_list]
 
         if sorting_key == 'name':
-            sorting_list = [(_get_number_list(o.name),o)
+            sorting_list = [(_get_number_list(o[1].name),o)
                            for o in object_list]
             sorting_list.sort()
             return [x[1] for x in sorting_list]
@@ -193,7 +179,7 @@ class H5NodeProxy(object):
                     finalList = h5py_sorting(items)
                     for i in range(len(finalList)):
                         finalList[i][1]._posixPath = posixpath.join(self.name,
-                                                               items[i][0])
+                                                               finalList[i][0])
                     self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
                 except:
