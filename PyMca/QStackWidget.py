@@ -752,8 +752,16 @@ class QStackWidget(StackBase.StackBase,
     def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
         #overwrite base method to update the default energy with the one
         # currently used in the graph
-        # TODO: Handle the case of not having an active curve!!!
-        x, y, legend, info = self.mcaWidget.getActiveCurve()
+        activeCurve = self.mcaWidget.getActiveCurve()
+        if activeCurve is None:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Information)
+            msg.setWindowTitle("No active curve selected")
+            text  = "Please select the MCA active curve."
+            msg.setText(text)
+            msg.exec_()
+            return
+        x, y, legend, info = activeCurve
         return StackBase.StackBase.calculateROIImages(self,
                                                       index1,
                                                       index2,
