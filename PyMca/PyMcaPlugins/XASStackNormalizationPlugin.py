@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -301,6 +301,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     data[i, :] = 0.0
                     # should I give some useless values?
                     edges[i] = 0.0
+                    # perhaps the case of large jump should be kept ...
                     jumps[i] = 0.0
                 elif 0:
                     # this approach removed
