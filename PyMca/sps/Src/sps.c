@@ -28,7 +28,7 @@
 *
 ****************************************************************************/
 /****************************************************************************
-*   @(#)sps.c	6.4  07/26/13 CSS
+*   @(#)sps.c	6.5  10/16/13 CSS
 *
 *   "spec" Release 6
 *
@@ -108,7 +108,7 @@ typedef struct sps_array {
 	int     pointer_got_count;
 	u32_t   id;
 	void    *private_data_copy;
-	int     buffer_len;
+	size_t  buffer_len;
 	void    *private_meta_copy;
 	u32_t   meta_len;
 	void    *private_info_copy;
@@ -143,7 +143,6 @@ static  SPS_ARRAY add_private_shm(SHM *shm, char *fullname, char *array, int wri
 static  SPS_ARRAY convert_to_handle(char *spec_version, char *array_name);
 static  char    *GetNextAll(int flag);
 static  char    *composeVersion(char *version, u32_t pid);
-static  int     CheckSpecRunning(SHM *shm);
 static  int     DeconnectArray(SPS_ARRAY private_shm);
 static  int     ReconnectToArray(SPS_ARRAY private_shm, int write_flag);
 static  int     SearchSpecVersions(void);
@@ -340,32 +339,6 @@ static int iscomposed(char *fullname) {
   return (strchr(fullname, '(')? 1:0);
 }
 
-/* Checks if the update program is still running */
-static int CheckSpecRunning(SHM *shm) {
-  int id = shm->head.head.shmid;
-  struct shmid_ds info;
-
-  shmctl(id, IPC_STAT, &info);
-
-  if (info.shm_perm.uid != getuid())
-    return 1; /* Can not test if process still runs */
-  
-  if (shm->head.head.pid && kill(shm->head.head.pid, 0) == 0)
-    return 1; 
-  
-  /* Shared Memory ID not longer updated id, shm->head.head.pid */
-
-#if SHM_CLEANUP
-  shmctl(id, IPC_STAT, &info);
-  if (info.shm_nattch == 1) {
-    shmctl(id, IPC_RMID, NULL);
-  }
-  delete_id_from_list(id);
-#endif
-
-  return 0;
-}
-
 static void delete_SpecIDTab(void)
 {
   int i,j;
@@ -407,10 +380,6 @@ static int SearchSpecVersions(void)
   for (n = 0, i = 0; i < SpecIDNo; i++) {
     if ((shm = (SHM *) c_shmat(id_ptr[i], NULL, SHM_RDONLY)) == (SHM *) -1)
       continue;
-    if (CheckSpecRunning(shm) == 0) {
-      c_shmdt((void *) shm);
-      continue;
-    }
 
     /* Find if the name of the spec_version is already used */
     for (found = 0, j = 0; j < n; j++) 
@@ -748,6 +717,8 @@ static void delete_id_from_list(u32_t id) {
 */
 
 static int checkSHM(SHM *shm, char *spec_version, char *name, u32_t type) {
+	int     id;
+	struct  shmid_ds info;
 	char    spec_name[512];
 	u32_t   pid;
 
@@ -776,7 +747,23 @@ static int checkSHM(SHM *shm, char *spec_version, char *name, u32_t type) {
 	if (type && (type&shm->head.head.flags) != type)
 		return(0);
 
-	return(CheckSpecRunning(shm));
+	/* check that id still in system */
+	id = shm->head.head.shmid;
+	if (shmctl(id, IPC_STAT, &info) < 0)
+		return(0);
+
+	/* If we own process we can test if it is still running */
+	if (info.shm_perm.uid == getuid() && shm->head.head.pid && kill(shm->head.head.pid, 0) < 0) {
+#if SHM_CLEANUP
+		if (!id_is_our_creation(id)) {
+			if (info.shm_nattch == 1)
+				shmctl(id, IPC_RMID, NULL);
+			delete_id_from_list(id);
+		}
+#endif
+		return(0);
+	}
+	return(1);
 }
 
 
@@ -1519,7 +1506,8 @@ static void *CopyDataRC(char *fullname, char *array, int my_type,
   int rows, cols, type;
   void *buffer = NULL;
   SPS_ARRAY private_shm;
-  int was_attached, size;
+  int was_attached;
+  size_t size;
   void *data_ptr;
   int n_to_copy = 0;
 
@@ -1820,7 +1808,7 @@ void *SPS_GetDataCopy(char *fullname, char *array, int my_type,
       goto error;
     allocated = 1;
     private_shm->private_data_copy = buffer;
-    private_shm->buffer_len = (int) size;
+    private_shm->buffer_len = size;
   }
 
   if (typedcp_private(private_shm, private_shm->private_data_copy,
@@ -2272,7 +2260,6 @@ int SPS_IsUpdated(char *fullname, char *array) {
   private_shm->utime = private_shm->shm->head.head.utime;
 
   updated = (private_shm->shm->head.head.utime == utime)? 0:1;
-
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
 
@@ -2845,9 +2832,9 @@ void SPS_CleanUpAll(void)
 
 #include <sys/time.h>
 
-static bench_mark();
+static void bench_mark();
  
-static PrintIDDir()
+static void PrintIDDir()
 {
   int i, j;
   char *spec_version, *array;
@@ -2856,10 +2843,10 @@ static PrintIDDir()
   double *double_buf=NULL;
   int k_row, k_col;
   
-  for (i=0; spec_version = SPS_GetNextSpec(i); i++) {
+  for (i=0; (spec_version = SPS_GetNextSpec(i)); i++) {
     state = SPS_GetSpecState(spec_version);
     printf("%s state = 0x%x\n",spec_version, state);
-    for (j=0; array = SPS_GetNextArray(spec_version, j); j++) {
+    for (j=0; (array = SPS_GetNextArray(spec_version, j)); j++) {
       SPS_GetArrayInfo(spec_version, array, &rows, &cols, &type, &flags);
       printf("    %s: %dx%d type:%d flags:0x%x \n",
 	      array, rows, cols, type, flags);
@@ -2877,6 +2864,7 @@ static PrintIDDir()
   }
 }   
 
+int
 main()
 {
   char buf[256];
@@ -2910,7 +2898,7 @@ main()
       PrintIDDir();
       break;
     case '*':
-      for (j=0; array = SPS_GetNextArray(NULL, j); j++) {
+      for (j=0; (array = SPS_GetNextArray(NULL, j)); j++) {
 	SPS_GetArrayInfo(NULL, array, &rows, &cols, &type, &flags);
 	printf("    %s: %dx%d type:%d flags:0x%x \n",
 		array, rows, cols, type, flags);
@@ -2986,7 +2974,7 @@ main()
 }
 
 /* Benchmark our routines */
-static bench(char *str) {
+static void bench(char *str) {
 static struct timeval start, stop;
   struct timezone tzp;
 
@@ -3004,7 +2992,7 @@ static struct timeval start, stop;
 }
 
 
-static bench_mark()
+static void bench_mark()
 {
   int i;
 
