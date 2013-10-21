@@ -483,7 +483,7 @@ class StackBase(object):
         if self._selectionMask is None:
             if (self._ROIImageDict["ROI"] is not None) and\
                (self.mcaIndex != 0):
-                actualSelectionMask = self._selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
+                actualSelectionMask = numpy.isfinite(self._ROIImageDict["ROI"])
             else:
                 actualSelectionMask = numpy.isfinite(self._stackImageData)
         else:
