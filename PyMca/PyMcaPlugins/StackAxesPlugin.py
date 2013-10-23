@@ -1,0 +1,122 @@
+#/*##########################################################################
+# Copyright (C) 2013-2013 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# This toolkit is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# PyMca; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
+# used as a free plugin for a non-free program.
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
+# is a problem for you.
+#############################################################################*/
+__author__ = "V.A. Sole - ESRF Data Analysis"
+"""
+
+A Stack plugin is a module that will be automatically added to the PyMca
+stack windows in order to perform user defined operations on the data stack.
+
+These plugins will be compatible with any stack window that provides the
+functions:
+    #data related
+    getStackDataObject
+    getStackData
+    getStackInfo
+    setStack
+
+    #images related
+    addImage
+    removeImage
+    replaceImage
+
+    #mask related
+    setSelectionMask
+    getSelectionMask
+
+    #displayed curves
+    getActiveCurve
+    getGraphXLimits
+    getGraphYLimits
+
+    #information method
+    stackUpdated
+    selectionMaskUpdated
+"""
+import numpy
+if 1:#try:
+    from PyMca import StackPluginBase
+    from PyMca import PyMcaFileDialogs
+    import PyMca.PyMca_Icons as PyMca_Icons
+else:#except ImportError:
+    print("Plugin importing from somewhere else")
+    import StackPluginBase
+    import PyMcaFileDialogs
+    import PyMca_Icons
+
+DEBUG = 0
+
+
+class StackAxesPlugin(StackPluginBase.StackPluginBase):
+    def __init__(self, stackWindow, **kw):
+        StackPluginBase.DEBUG = DEBUG
+        StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
+        text = "Replace current 1D axis by list of numbers found in ASCII file"
+        self.methodDict = {}
+        function = self.replace1DAxisWithASCII
+        info = text
+        icon = None
+        self.methodDict["1D axis from file"] = [function, info, icon]
+        self.__methodKeys = ["1D axis from file"]
+
+    #Methods implemented by the plugin
+    def getMethods(self):
+        return self.__methodKeys
+
+    def getMethodToolTip(self, name):
+        return self.methodDict[name][1]
+
+    def getMethodPixmap(self, name):
+        return self.methodDict[name][2]
+
+    def applyMethod(self, name):
+        return self.methodDict[name][0]()
+
+    def replace1DAxisWithASCII(self):
+        stack = self.getStackDataObject()
+        mcaIndex = stack.info.get('McaIndex', -1)
+        nPoints = stack.data.shape[mcaIndex]
+        fileList = PyMcaFileDialogs.getFileList(None,
+                                           filetypelist=["ASCII files (*)"],
+                                           message="Select ASCII file",
+                                           mode="OPEN",
+                                           getfilter=False,
+                                           single=True)
+        if not len(fileList):
+            return
+        filename = fileList[0]
+        data = numpy.loadtxt(filename)
+        data.shape = -1
+        if data.size != nPoints:
+            raise ValueError("Number of read values not equal to %d" % nPoints)
+        else:
+            stack.x = [data]
+            self.setStack(stack, mcaindex=mcaIndex)
+
+MENU_TEXT = "Stack Axes Options"
+def getStackPluginInstance(stackWindow, **kw):
+    ob = StackAxesPlugin(stackWindow)
+    return ob
