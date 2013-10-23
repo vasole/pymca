@@ -7,8 +7,12 @@ except ImportError:
 try:
     from PyMca.PyMcaPlugins import MotorInfoWindow
 except ImportError:
-    print("MotorInfoPlugin importing from somewhere else")
-    import MotorInfoWindow
+    try:
+        # Frozen version
+        from PyMcaPlugins import MotorInfoWindow
+    except:
+        print("MotorInfoPlugin importing from somewhere else")
+        import MotorInfoWindow
     
 DEBUG = 0
 class MotorInfo(Plugin1DBase.Plugin1DBase):
