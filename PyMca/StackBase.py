@@ -734,7 +734,8 @@ class StackBase(object):
                               (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
-                    roiImage = self._stackImageData * 0.0
+                    roiImage = numpy.zeros(self._stackImageData.shape,
+                                           numpy.float)
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -782,7 +783,8 @@ class StackBase(object):
                               (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
-                    roiImage = self._stackImageData * 0.0
+                    roiImage = numpy.zeros(self._stackImageData.shape,
+                                           numpy.float)
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -830,7 +832,8 @@ class StackBase(object):
                               (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
-                    roiImage = self._stackImageData * 0.0
+                    roiImage = numpy.zeros(self._stackImageData.shape,
+                                           numpy.float)
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
