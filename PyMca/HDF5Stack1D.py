@@ -204,6 +204,10 @@ class HDF5Stack1D(DataObject.DataObject):
 
         if self.__dtype is None:
             self.__dtype = yDataset.dtype
+            if self.__dtype in [numpy.int16, numpy.uint16]:
+                self.__dtype = numpy.float32
+            elif self.__dtype in [numpy.int32, numpy.uint32]:
+                self.__dtype = numpy.float64
 
         #figure out the shape of the stack
         shape = yDataset.shape
