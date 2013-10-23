@@ -92,7 +92,7 @@ else:
 
 # Uncomment next line if you experience crashes moving the mouse on
 # top of the images
-#USE_PICKER = True
+#USE_PICKER = False
 
 def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     if xScale is None:
@@ -197,6 +197,7 @@ class MaskImageWidget(qt.QWidget):
         self._overlayItemsDict = {}
         # the last overlay legend used
         self.__lastOverlayLegend = None
+        self.__lastOverlayWidth = None
         # the projection mode
         self.__lineProjectionMode = 'D'
 
@@ -351,6 +352,23 @@ class MaskImageWidget(qt.QWidget):
             self.connect(self.graphWidget.graph,
                      qt.SIGNAL("QtBlissGraphSignal"),
                      self._graphSignal)
+
+    def updateProfileSelectionWindow(self):
+        mode = self.graphWidget.getPickerSelectionMode()
+        if self.__lastOverlayLegend is not None:
+            if mode is None:
+                # remove the overlay if present
+                legend = self.__lastOverlayLegend
+                if legend in self._overlayItemsDict:
+                    self._overlayItemsDict[legend]['item'].detach()
+                    del self._overlayItemsDict[legend]
+            elif self.__lastOverlayWidth is not None:
+                # create a fake signal
+                ddict = {}
+                ddict['event'] = "PolygonWidthChanged"
+                ddict['pixelwidth'] = self.__lastOverlayWidth
+                ddict['mode'] = mode
+                self._polygonSignalSlot(ddict)
 
     def _polygonSignalSlot(self, ddict):
         if DEBUG:
@@ -831,6 +849,7 @@ class MaskImageWidget(qt.QWidget):
                 print("Mode %s not supported yet" % ddict['mode'])
             return
 
+        self.__lastOverlayWidth = width
         info = {}
         info['xlabel'] = xLabel
         info['ylabel'] = "Z"
@@ -1329,6 +1348,7 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.graph.setX1AxisLimits(xlimits[0], xlimits[1],
                                                    replot=False)
         self.graphWidget.graph.replot()
+        self.updateProfileSelectionWindow()
 
     def getPixmapFromData(self):
         colormap = self.colormap

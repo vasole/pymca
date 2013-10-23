@@ -302,6 +302,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         self.name.setText(txt)
         if moveslider:
             self.slider.setValue(index)
+        self.updateProfileSelectionWindow()
 
 if __name__ == "__main__":
     #create a dummy stack

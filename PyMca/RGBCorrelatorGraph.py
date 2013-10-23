@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -397,6 +397,17 @@ class RGBCorrelatorGraph(qt.QWidget):
             button.show()
         self._pickerSelectionWidthLabel.show()
         self._pickerSelectionWidthValue.show()
+
+    def getPickerSelectionMode(self):
+        if not len(self._pickerSelectionButtons):
+            return None
+        if self.hLineProfileButton.isChecked():
+            return "HORIZONTAL"
+        if self.vLineProfileButton.isChecked():
+            return "VERTICAL"
+        if self.lineProfileButton.isChecked():
+            return "LINE"
+        return None
 
     def _setPickerSelectionMode(self, mode=None):
         if mode is None:
