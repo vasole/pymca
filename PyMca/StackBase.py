@@ -223,21 +223,25 @@ class StackBase(object):
             self._tryNumpy = False
 
         if self._tryNumpy and isinstance(self._stack.data, numpy.ndarray):
-            self._stackImageData = numpy.sum(self._stack.data, self.mcaIndex)
+            self._stackImageData = numpy.sum(self._stack.data,
+                                             axis=self.mcaIndex,
+                                             dtype=numpy.float)
             #original ICR mca
             if DEBUG:
                 print("(self.otherIndex, self.fileIndex) = (%d, %d)" %\
                       (self.otherIndex, self.fileIndex))
             i = max(self.otherIndex, self.fileIndex)
             j = min(self.otherIndex, self.fileIndex)
-            mcaData0 = numpy.sum(numpy.sum(self._stack.data, i), j) * 1.0
+            mcaData0 = numpy.sum(numpy.sum(self._stack.data,
+                                           axis=i,
+                                           dtype=numpy.float), j)
         else:
             if DEBUG:
                 t0 = time.time()
             shape = self._stack.data.shape
             if self.mcaIndex in [2, -1]:
                 self._stackImageData = numpy.zeros((shape[0], shape[1]),
-                                                self._stack.data.dtype)
+                                                dtype=numpy.float)
                 mcaData0 = numpy.zeros((shape[2],), numpy.float)
                 step = 1
                 if hasattr(self._stack, "monitor"):
@@ -254,7 +258,7 @@ class StackBase(object):
                     numpy.add(mcaData0, numpy.sum(tmpData, 0), mcaData0)
             elif self.mcaIndex == 0:
                 self._stackImageData = numpy.zeros((shape[1], shape[2]),
-                                                self._stack.data.dtype)
+                                                dtype=numpy.float)
                 mcaData0 = numpy.zeros((shape[0],), numpy.float)
                 step = 1
                 for i in range(shape[0]):
@@ -730,7 +734,7 @@ class StackBase(object):
                               (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
-                    roiImage = self._stackImageData * 0
+                    roiImage = self._stackImageData * 0.0
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -778,7 +782,7 @@ class StackBase(object):
                               (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
-                    roiImage = self._stackImageData * 0
+                    roiImage = self._stackImageData * 0.0
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -826,7 +830,7 @@ class StackBase(object):
                               (time.time() - t0))
                 else:
                     shape = self._stack.data.shape
-                    roiImage = self._stackImageData * 0
+                    roiImage = self._stackImageData * 0.0
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
