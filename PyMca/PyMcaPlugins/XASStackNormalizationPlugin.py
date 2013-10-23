@@ -197,7 +197,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             self.setStack(stack)
             if self.imageWidget is None:
                 self.imageWidget = StackPluginResultsWindow.StackPluginResultsWindow(\
-                                        usetab=False)
+                                        usetab=False,profileselection=True)
                 self.imageWidget.buildAndConnectImageButtonBox()
                 qt = StackPluginResultsWindow.qt
                 qt.QObject.connect(self.imageWidget,
