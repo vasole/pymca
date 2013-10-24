@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -214,6 +214,7 @@ class HDF5Stack1D(DataObject.DataObject):
         mcaIndex = selection.get('index', len(shape)-1)
         if mcaIndex == -1:
             mcaIndex = len(shape) - 1
+        considerAsImages = False
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
                                                 index=mcaIndex)
         try:
@@ -243,7 +244,13 @@ class HDF5Stack1D(DataObject.DataObject):
                         raise MemoryError("Force dynamic loading")
                 else:
                     raise MemoryError("Force dynamic loading")
-            self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
+            if (mcaIndex == 0) and ( nFiles == 1) and (nScans == 1):
+                #keep the original arrangement but in memory
+                self.data = numpy.zeros(yDataset.shape, self.__dtype)
+                considerAsImages = True
+            else:
+                # force arrangement as spectra
+                self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
             DONE = False
         except (MemoryError, ValueError):
             #some versions report ValueError instead of MemoryError
@@ -265,7 +272,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 #what to do if the number of dimensions is only 2?
                 raise
         
-        if not DONE:
+        if (not DONE) and (not considerAsImages):
             self.info["McaIndex"] = 2
             n = 0
 
@@ -446,6 +453,55 @@ class HDF5Stack1D(DataObject.DataObject):
                 if dim0 != 1:
                     self.onProgress(i)
             self.onEnd()
+        elif not DONE:
+            # data into memory but as images
+            print("MCAIndex = %d" % mcaIndex)
+            self.info["McaIndex"] = mcaIndex            
+            if 1:#for hdf in hdfStack._sourceObjectList:
+                hdf = hdfStack._sourceObjectList[0]
+                entryNames = list(hdf["/"].keys())
+                for scan in scanlist:
+                    if JUST_KEYS:
+                        entryName = entryNames[int(scan.split(".")[-1])-1]
+                        path = entryName + ySelection
+                        if mSelection is not None:
+                            mpath = entryName + mSelection
+                            mDataset.shape
+                        if xSelection is not None:
+                            xpath = entryName + xSelection
+                            xDataset = hdf[xpath].value
+                    else:
+                        path = scan + ySelection
+                        if mSelection is not None:
+                            mpath = scan + mSelection
+                            mDataset = hdf[mpath].value
+                        if xSelection is not None:
+                            xpath = scan + xSelection
+                            xDataset = hdf[xpath].value
+                    if mSelection is not None:
+                        nMonitorData = mDataset.size
+                        case = -1
+                        yDatasetShape = yDataset.shape 
+                        if nMonitorData == yDatasetShape[0]:
+                            #as many monitor data as images
+                            mDataset.shape = yDatasetShape[0]
+                            case = 0
+                        elif nMonitorData == (yDatasetShape[1] * yDatasetShape[2]):
+                            #as many monitorData as pixels
+                            case = 1
+                            mDataset.shape = yDatasetShape[1], yDatasetShape[2]
+                        if case == -1:
+                            raise ValueError(\
+                                "I do not know how to handle this monitor data")
+                        if case == 0:
+                            for i in range(yDatasetShape[0]):
+                                self.data[i] = yDataset[i].value / mDataset[i]
+                        elif case == 1:
+                            for i in range(yDataset.shape[0]):
+                                self.data[i] = yDataset[i] / mDataset
+                    else:
+                            for i in range(yDataset.shape[0]):
+                                self.data[i:i+1] = yDataset[i:i+1]
         else:
             self.info["McaIndex"] = mcaIndex
 
