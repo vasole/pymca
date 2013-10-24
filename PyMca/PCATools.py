@@ -36,7 +36,6 @@ except ImportError:
 
 DEBUG = 0
 
-
 def getCovarianceMatrix(stack,
                         index=-1,
                         binning=None,
@@ -472,6 +471,11 @@ def getCovarianceMatrix(stack,
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 center=True, scale=False, mask=None, **kw):
+    if DEBUG:
+        print("PCATools.numpyPCA")
+        print("index = %d" % index)
+        print("center = %s" % center)
+        print("scale = %s" % scale)
     #recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
@@ -545,16 +549,19 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         a = [(evalues[i], i) for i in range(len(evalues))]
         a.sort()
         a.reverse()
+        totalExplainedVariance = 0.0
         for i0 in range(ncomponents):
             i = a[i0][1]
             eigenvalues[i0] = evalues[i]
             if normalizeToUnitStandardDeviation:
-                print("PC%02d  Explained variance %.5f %% " %\
-                                (i0 + 1, 100. * evalues[i] / totalVariance.shape[0]))
+                partialExplainedVariance = 100. * evalues[i] / totalVariance.shape[0]
             else:
-                print("PC%02d  Explained variance %.5f %% " %\
-                                (i0 + 1, 100. * evalues[i] / totalVariance.sum()))
+                partialExplainedVariance = 100. * evalues[i] / totalVariance.sum()
+            print("PC%02d  Explained variance %.5f %% " %\
+                                        (i0 + 1, partialExplainedVariance))
+            totalExplainedVariance += partialExplainedVariance
             eigenvectors[i0, :] = evectors[:, i]
+        print("Total explained variance = %.2f %% " % totalExplainedVariance)
     else:
         idx = numpy.argsort(evalues)
         eigenvalues[:]  = evalues[idx]

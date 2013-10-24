@@ -398,7 +398,12 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
     """
     This is a covariance method using numpy
     """
+    if DEBUG:
+        print("PCAModule.numpyPCA called")
+    if hasattr(stack, "info"):
+        index = stack.info.get('McaIndex', -1)
     return PCATools.numpyPCA(stack,
+                             index=index,
                              ncomponents=ncomponents,
                              binning=binning,
                              **kw)
