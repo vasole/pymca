@@ -175,15 +175,21 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
 
     def _executeFunctionAndParameters(self):
         self.widget = None
-        self.thread = CalculationThread.CalculationThread(\
-                            calculation_method=self.actualCalculation)
-        qt.QObject.connect(self.thread,
-                     qt.SIGNAL('finished()'),
-                     self.threadFinished)
         self.configurationWidget.show()
-        self.thread.start()
-        message = "Please wait. PCA Calculation going on."
-        CalculationThread.waitingMessageDialog(self.thread,
+        if DEBUG:
+            self.thread = CalculationThread.CalculationThread(\
+                            calculation_method=self.actualCalculation)
+            self.thread.result = self.actualCalculation()
+            self.threadFinished()
+        else:
+            self.thread = CalculationThread.CalculationThread(\
+                            calculation_method=self.actualCalculation)
+            qt.QObject.connect(self.thread,
+                         qt.SIGNAL('finished()'),
+                         self.threadFinished)
+            self.thread.start()
+            message = "Please wait. PCA Calculation going on."
+            CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
                                 parent=self.configurationWidget)
 

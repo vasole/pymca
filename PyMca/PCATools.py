@@ -25,6 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
+import sys
 import numpy
 import numpy.linalg
 try:
@@ -96,7 +97,7 @@ def getCovarianceMatrix(stack,
     if spatial_mask is not None:
         cleanMask = spatial_mask[:].reshape(nPixels)
         usedPixels = cleanMask.sum()
-        badMask = (spatial_mask < 1).astype(cleanMask.dtype)
+        badMask = numpy.array(spatial_mask < 1, dtype=cleanMask.dtype)
         badMask.shape = nPixels
     else:
         cleanMask = None
@@ -163,6 +164,24 @@ def getCovarianceMatrix(stack,
         averageMatrix = None
         data = None
         raise
+
+    #workaround a problem with h5py
+    try:
+        if actualIndex in [0]:
+            testException = data[0:1]
+        else:
+            if len(data.shape) == 2:
+                testException = data[0:1,-1]
+            elif len(data.shape) == 3:
+                testException = data[0:1,0:1,-1]
+    except AttributeError:
+        txt = "%s" % type(data)
+        if 'h5py' in txt:
+            print("Implementing h5py workaround")
+            import h5py
+            data = h5py.Dataset(data.id)
+        else:
+            raise
 
     if actualIndex in [0]:
         #divider is used to decide the fraction of images to keep in memory
@@ -495,6 +514,24 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     else:
         actualIndex = index
 
+    #workaround a problem with h5py
+    try:
+        if actualIndex in [0]:
+            testException = data[0:1]
+        else:
+            if len(data.shape) == 2:
+                testException = data[0:1,-1]
+            elif len(data.shape) == 3:
+                testException = data[0:1,0:1,-1]
+    except AttributeError:
+        txt = "%s" % type(data)
+        if 'h5py' in txt:
+            print("Implementing h5py workaround")
+            import h5py
+            data = h5py.Dataset(data.id)
+        else:
+            raise
+
     #the number of spatial pixels
     nPixels = 1
     for i in range(len(oldShape)):
@@ -718,13 +755,11 @@ def test():
 
 
 if __name__ == "__main__":
-    import sys
     test()
     sys.exit(0)
     from PyMca import EDFStack
     from PyMca import EdfFile
     import os
-    import sys
     import time
     #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"
     inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
