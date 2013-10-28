@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -139,6 +139,13 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
 
     #The specific part
     def calculate(self):
+        stack = self.getStackDataObject()
+        mcaIndex = stack.info.get('McaIndex')
+        shape = stack.data.shape
+        stack = None
+        if mcaIndex not in [-1, len(shape) - 1]:
+            raise IndexError("NNMA does not support stacks of images yet")
+            return
         if self.configurationWidget is None:
             self.configurationWidget = NNMAParametersDialog(None)
             self._status = qt.QLabel(self.configurationWidget)
