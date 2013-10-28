@@ -389,8 +389,8 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
             #should I raise an error?
             pass
 
-        nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
-        nxEntry['start_time'] = getDate().encode('utf-8')
+        nxEntry['title'] = numpy.string_("PyMca saved 3D Array".encode('utf-8'))
+        nxEntry['start_time'] = numpy.string_(getDate().encode('utf-8'))
         nxData = nxEntry.require_group('NXdata')
         if ('NX_class' not in nxData.attrs):
             nxData.attrs['NX_class'] = 'NXdata'.encode('utf-8')
@@ -543,7 +543,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
             adset[:] = dim[:]
             adset.attrs['axis'] = i + 1
         dset.attrs['axes'] = (":".join(axesAttribute)).encode('utf-8')
-        nxEntry['end_time'] = getDate().encode('utf-8')
+        nxEntry['end_time'] = numpy.string_(getDate().encode('utf-8'))
         if mode.lower() == 'nexus+':
             #create link
             g = h5py.h5g.open(hdf.fid, '/'.encode('utf-8'))
