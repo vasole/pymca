@@ -34,8 +34,8 @@ __doc__ = "This is a python module to measure image offsets using fftpack"
 import os, time
 import numpy
 from numpy.fft import fft2, ifft2, fftshift, ifftshift
-PYMCA = FALSE
-SCIPY = FALSE
+PYMCA = False
+SCIPY = False
 try:
     from PyMca import SpecfitFuns
     PYMCA = True
@@ -81,13 +81,13 @@ def shiftImage(img, shift, method=None):
         if PYMCA:
             return shiftBilinear(img, shift)
         elif SCIPY:
-            return scipy.ndimage.interpolation.shift(img, shift, mode="wrap", order="infinity")
+            return scipy.ndimage.interpolation.shift(img, shift, mode="wrap")
         else:
             return shiftFFT(img, shift)
     elif method.lower() == "pymca":
         return shiftBilinear(img, shift)
     elif method.lower() == "scipy":
-        return scipy.ndimage.interpolation.shift(img, shift, mode="wrap", order="infinity")
+        return scipy.ndimage.interpolation.shift(img, shift, mode="wrap")
     else:
         return shiftFFT(img, shift)
     
@@ -105,12 +105,15 @@ def measure_offset(img1, img2, method="fft", withLog=False):
     assert img2.shape == shape
     if 1:
         #use numpy fftpack
-        i1f = fft2(img1)
-        i2f = fft2(img2)
+        if img1.dtype not in [numpy.float32, numpy.float64, numpy.float]:
+            i1f = fft2(img1.astype(numpy.float32))
+            i2f = fft2(img2.astype(numpy.float32))
+        else:
+            i1f = fft2(img1)
+            i2f = fft2(img2)
         return measure_offset_from_ffts(i1f, i2f, withLog=withLog)
 
 def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
-    """Return translation vector to register images."""
     shape = img0_fft2.shape
     logs = []
     f0 = img0_fft2
@@ -130,10 +133,11 @@ def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
     total = 0.0
     for i in range(a0-w, a0+w+1):
         for j in range(a1-w, a1 + w + 1):
-            if res[i, j] > 0.5 * resmax:
-                x0 += i * res[i, j]
-                x1 += j * res[i, j]
-                total += res[i, j]
+            if res[i, j] > 0.1 * resmax:
+                tmp = res[i, j]
+                x0 += i * tmp
+                x1 += j * tmp
+                total += tmp
     offset = [shape[0]//2 - x0/total, shape[1] // 2 - x1/total]
     logs.append("MeasureOffset: fine result of the centered image: %.3f %.3fs " % (offset[0], offset[1]))
     t3 = time.time()
