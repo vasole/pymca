@@ -455,7 +455,6 @@ class HDF5Stack1D(DataObject.DataObject):
             self.onEnd()
         elif not DONE:
             # data into memory but as images
-            print("MCAIndex = %d" % mcaIndex)
             self.info["McaIndex"] = mcaIndex            
             if 1:#for hdf in hdfStack._sourceObjectList:
                 hdf = hdfStack._sourceObjectList[0]
