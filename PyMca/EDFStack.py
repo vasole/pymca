@@ -96,6 +96,7 @@ class EDFStack(DataObject.DataObject):
 
         self.onBegin(self.nbFiles)
         singleImageShape = arrRet.shape
+        actualImageStack = False
         if (fileindex == 2) or (self.__imageStack):
             self.__imageStack = True
             if len(singleImageShape) == 1:
@@ -153,18 +154,31 @@ class EDFStack(DataObject.DataObject):
                             # spare 5% or memory
                             if physicalMemory < (1.05 * needed_):
                                 raise MemoryError("Not enough physical memory available")
-                        
-                        self.data = numpy.zeros((arrRet.shape[0],
-                                                 arrRet.shape[1],
-                                                 self.nbFiles),
-                                                 self.__dtype)
-                        self.incrProgressBar=0
-                        for tempEdfFileName in filelist:
-                            tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
-                            pieceOfStack=tempEdf.GetData(0)    
-                            self.data[:,:, self.incrProgressBar] = pieceOfStack
-                            self.incrProgressBar += 1
-                            self.onProgress(self.incrProgressBar)
+                        if self.__imageStack:
+                            self.data = numpy.zeros((self.nbFiles,
+                                                     arrRet.shape[0],
+                                                     arrRet.shape[1]),
+                                                     self.__dtype)
+                            self.incrProgressBar=0
+                            for tempEdfFileName in filelist:
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
+                                pieceOfStack=tempEdf.GetData(0)    
+                                self.data[self.incrProgressBar] = pieceOfStack
+                                self.incrProgressBar += 1
+                                self.onProgress(self.incrProgressBar)
+                            actualImageStack = True
+                        else:
+                            self.data = numpy.zeros((arrRet.shape[0],
+                                                     arrRet.shape[1],
+                                                     self.nbFiles),
+                                                     self.__dtype)
+                            self.incrProgressBar=0
+                            for tempEdfFileName in filelist:
+                                tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
+                                pieceOfStack=tempEdf.GetData(0)    
+                                self.data[:,:, self.incrProgressBar] = pieceOfStack
+                                self.incrProgressBar += 1
+                                self.onProgress(self.incrProgressBar)
                     except (MemoryError, ValueError):
                         hdf5done = False
                         if HDF5 and (('PyMcaQt' in sys.modules) or\
@@ -438,6 +452,13 @@ class EDFStack(DataObject.DataObject):
             self.info["SourceName"] = [hdf5file]
             self.info["NumberOfFiles"] = 1
             self.info["Size"]       = 1
+        elif actualImageStack:
+            self.info["SourceType"] = SOURCE_TYPE
+            self.info["McaIndex"] = 0
+            self.info["FileIndex"] = 1
+            self.info["SourceName"] = self.sourceName
+            self.info["NumberOfFiles"] = self.__nFiles * 1
+            self.info["Size"] = self.__nFiles * self.__nImagesPerFile
         else:
             self.info["SourceType"] = SOURCE_TYPE
             self.info["FileIndex"] = fileindex
