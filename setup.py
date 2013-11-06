@@ -87,6 +87,15 @@ if os.path.exists(os.path.join("PyMca", "EPDL97")):
     data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
     data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca/EPDL97/LICENSE']))
 
+global SIFT_OPENCL_FILES
+SIFT_OPENCL_FILES = []
+SIFT_DIRTY_INSTALLATION = False
+if os.path.exists(os.path.join("PyMca", "sift")):
+    packages.append('PyMca.sift')
+    SIFT_OPENCL_FILES = glob.glob('PyMca/sift/*.cl')
+    if not SIFT_DIRTY_INSTALLATION:
+        data_files.append((os.path.join('PyMca', 'sift'), SIFT_OPENCL_FILES))
+
 NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
     py_modules.append('PyMca.py_nnma.__init__')
@@ -260,6 +269,11 @@ class smart_install_data(install_data):
         self.install_dir = getattr(install_cmd, 'install_lib')
         PYMCA_INSTALL_DIR = self.install_dir
         print("PyMca to be installed in %s" %  self.install_dir)
+
+        # Dirty way to put the cl files together with the sift python modules
+        if SIFT_DIRTY_INSTALLATION and SIFT_OPENCL_FILES:
+            self.data_files.append((os.path.join(PYMCA_INSTALL_DIR,'PyMca', 'sift'),
+                                    SIFT_OPENCL_FILES))
         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "Plugins1D")
         if os.path.exists(pymcaOld):
             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
