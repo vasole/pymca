@@ -25,6 +25,7 @@ include PyMca/py_nnma/LICENSE
 include PyMca/py_nnma/README
 recursive-include PyMca/PyMcaIOHelper *.py *.c
 recursive-include PyMca/PyMcaSciPy *.py *.c *.txt
+recursive-include PyMca/sift *.py *.cl
 recursive-include PyMca/specfile *.py *.c *.h *.in
 recursive-include PyMca/specfit *.py *.c
 recursive-include PyMca/sps *.py *.c *.h *.in
