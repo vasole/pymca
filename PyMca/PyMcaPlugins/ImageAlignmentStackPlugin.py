@@ -60,24 +60,14 @@ import numpy
 try:
     from PyMca import StackPluginBase
     from PyMca import PyMcaQt as qt
-    from PyMca import EDFStack
-    from PyMca import PyMcaFileDialogs
-    from PyMca import StackPluginResultsWindow
     from PyMca import FFTAlignmentWindow
-    from PyMca import ExternalImagesWindow
     from PyMca import ImageRegistration
-    import PyMca.PyMca_Icons as PyMca_Icons
     from PyMca import SpecfitFuns
     from PyMca import CalculationThread    
 except ImportError:
     print("ExternalImagesWindow importing from somewhere else")
     import StackPluginBase
     import PyMcaQt as qt
-    import EDFStack
-    import PyMcaFileDialogs
-    import StackPluginResultsWindow
-    import ExternalImagesWindow
-    import PyMca_Icons
     import ImageRegistration
     import FFTAlignmentWindow
     import SpecfitFuns
@@ -97,40 +87,15 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                             "Align using FFT",
                                             None]}
         self.__methodKeys = ['FFT Alignment']
-        if SIFT:
-            key = 'SIFT Alignment'
-            self.methodDict[key] = [self._siftAlignment,
-                                    "Align using SIFT Algorithm",
-                                    None]
-            self.__methodKeys.append(key) 
+        key = 'SIFT Alignment'
+        self.methodDict[key] = [self._siftAlignment,
+                                "Align using SIFT Algorithm",
+                                None]
+        self.__methodKeys.append(key) 
         self.widget = None
 
     def stackUpdated(self):
         self.widget = None
-
-    """
-
-    def selectionMaskUpdated(self):
-        if self.widget is None:
-            return
-        if self.widget.isHidden():
-            return
-        mask = self.getStackSelectionMask()
-        self.widget.setSelectionMask(mask)
-    def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
-        if ddict['event'] == "selectionMaskChanged":
-            self.setStackSelectionMask(ddict['current'])
-        elif ddict['event'] == "addImageClicked":
-            self.addImage(ddict['image'], ddict['title'])
-        elif ddict['event'] == "removeImageClicked":
-            self.removeImage(ddict['title'])
-        elif ddict['event'] == "replaceImageClicked":
-            self.replaceImage(ddict['image'], ddict['title'])
-        elif ddict['event'] == "resetSelection":
-            self.setStackSelectionMask(None)
-    """
 
     #Methods implemented by the plugin
     def getMethods(self):
@@ -248,6 +213,11 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         return ddict        
 
     def _siftAlignment(self):
+        if not SIFT:
+            try:
+                import pyopencl
+            except:
+                raise ImportError("PyOpenCL does not seem to be installed on your system")
         if sift.opencl.ocl is None:
             raise ImportError("PyOpenCL does not seem to be installed on your system")
         stack = self.getStackDataObject()
