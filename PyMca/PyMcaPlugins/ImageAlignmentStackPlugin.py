@@ -63,7 +63,9 @@ try:
     from PyMca import FFTAlignmentWindow
     from PyMca import ImageRegistration
     from PyMca import SpecfitFuns
-    from PyMca import CalculationThread    
+    from PyMca import CalculationThread
+    from PyMca import ArraySave
+    
 except ImportError:
     print("ExternalImagesWindow importing from somewhere else")
     import StackPluginBase
@@ -72,11 +74,18 @@ except ImportError:
     import FFTAlignmentWindow
     import SpecfitFuns
     import CalculationThread
+    import ArraySave
 try:
     from PyMca import sift
     SIFT = True
 except:
     SIFT = False
+
+try:
+    import h5py
+    HDF5 = True
+except:
+    HDF5 = False
 
 DEBUG = 0
 class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
@@ -136,6 +145,9 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 filename = ddict['file_name']
             else:
                 filename = None
+            if filename is not None:
+                self.__hdf5 = self.initializeHDF5File(filename)
+
             if DEBUG:
                 shifts = self.calculateShiftsFFT(stack,
                                                  reference,
@@ -146,7 +158,6 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                          -shifts,
                                          crop=crop,
                                          filename=filename)
-
             else:
                 result = self.__calculateShiftsFFT(stack,
                                                    reference,
@@ -158,6 +169,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                     raise Exception(result[1], result[2], result[3])
                 else:
                     shifts = result
+                if filename is not None:
+                    self.__hdf5 = self.initializeHDF5File(filename)
                 result = self.__shiftStack(stack,
                                            -shifts,
                                            crop=crop,
@@ -165,7 +178,55 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 if result is not None:
                     # exception occurred
                     raise Exception(result[1], result[2], result[3])
-            self.setStack(stack)
+            if filename is not None:
+                hdf = self.__hdf5
+                alignmentGroup = hdf['/entry_000/Alignment']
+                outputShifts = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                                     shape=(stack.data.shape[mcaIndex], 2),
+                                                     name="shifts",
+                                                     dtype=numpy.float32)
+                outputShifts[:,:] = shifts
+                attributes={'interpretation':'image'}
+                referenceFrame = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                                     shape=reference.shape,
+                                                     name="reference_frame",
+                                                     dtype=numpy.float32,
+                                                     attributes=attributes)
+                referenceFrame[:,:] = reference[:,:]
+                maskFrame = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                                   shape=reference.shape,
+                                                   name="reference_mask",
+                                                   dtype=numpy.uint8,
+                                                   attributes=attributes)
+                
+                maskData = numpy.zeros(reference.shape, dtype=numpy.uint8)
+                maskData[offsets[0]:offsets[0] + widths[0], offsets[1] : offsets[1] + widths[1]] = 1
+                maskFrame[:,:] = maskData[:,:]
+                # fill the axes information
+                dataGroup = hdf['/entry_000/Data']
+                try:
+                    activeCurve = self.getActiveCurve()
+                    if activeCurve is None:
+                        activeCurve = self.getAllCurves()[0]
+                    x, y, legend, info = activeCurve
+                    dataGroup[info['xlabel']] = numpy.array(x, dtype=numpy.float32)
+                    dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
+                    axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
+                except:
+                    if DEBUG:
+                        raise
+                    dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
+                    dataGroup['dim_0'].attrs['axis'] = numpy.int32(1)
+                    axesAttribute = 'dim_0:dim_1:dim_2'
+                dataGroup['dim_1'] = numpy.arange(reference.shape[0]).astype(numpy.float32)
+                dataGroup['dim_1'].attrs['axis'] = numpy.int32(2)
+                dataGroup['dim_2'] = numpy.arange(reference.shape[1]).astype(numpy.float32)
+                dataGroup['dim_2'].attrs['axis'] = numpy.int32(3)
+                dim2 = numpy.arange(reference.shape[1]).astype(numpy.float32)
+                dataGroup['data'].attrs['axes'] = axesAttribute
+                self.finishHDF5File(hdf)
+            else:
+                self.setStack(stack)
 
     def __calculateShiftsFFT(self, *var, **kw):
         self._progress = 0.0
@@ -354,16 +415,74 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         window[d0_start:d0_end, d1_start:d1_end] = 1.0
         self._progress = 0.0
         total = float(data.shape[mcaIndex])
+        if filename is not None:
+            hdf = self.__hdf5
+            dataGroup = hdf['/entry_000/Data']
+            attributes = {}
+            attributes['interpretation'] = "image"
+            attributes['signal'] = numpy.int32(1)
+            outputStack = self.getHDF5BufferIntoGroup(dataGroup,
+                                                      shape=(data.shape[mcaIndex],
+                                                            shape[0],
+                                                            shape[1]),
+                                                      name="data",
+                                                      dtype=numpy.float32,
+                                                      attributes=attributes)
         for i in range(data.shape[mcaIndex]):
             #tmpImage = ImageRegistration.shiftFFT(data[i], shifts[i])
             if mcaIndex == 0:
                 tmpImage = ImageRegistration.shiftBilinear(data[i], shifts[i])
-                stack.data[i] = tmpImage * window
+                if filename is None:
+                    stack.data[i] = tmpImage * window
+                else:
+                    outputStack[i] = tmpImage * window
             else:
                 tmpImage = ImageRegistration.shiftBilinear(data[:,:,i], shifts[i])
-                stack.data[:, :, i] = tmpImage * window
+                if filename is None:
+                    stack.data[:, :, i] = tmpImage * window
+                else:
+                    outputStack[i] = tmpImage * window
             print("Index %d bilinear shifted" % i)
             self._progress = (100 * i) / total
+
+    def initializeHDF5File(self, fname):
+        #for the time being overwriting
+        hdf = h5py.File(fname, 'w')
+        entryName = "entry_000"
+        nxEntry = hdf.require_group(entryName)
+        if 'NX_class' not in nxEntry.attrs:
+            nxEntry.attrs['NX_class'] = 'NXentry'.encode('utf-8')
+        nxEntry['title'] = numpy.string_("PyMca saved 3D Array".encode('utf-8'))
+        nxEntry['start_time'] = numpy.string_(ArraySave.getDate().encode('utf-8'))
+
+        alignmentGroup = nxEntry.require_group('Alignment')
+        dataGroup = nxEntry.require_group('Data')
+        dataGroup.attrs['NX_class'] = 'NXdata'.encode('utf-8')        
+        return hdf
+
+    def finishHDF5File(self, hdf):
+        #add final date
+        toplevelEntry = hdf["entry_000"]
+        toplevelEntry['end_time'] = numpy.string_(ArraySave.getDate().encode('utf-8'))
+    
+    def getHDF5BufferIntoGroup(self, h5Group, shape,
+                               name="data", dtype=numpy.float32,
+                               attributes=None,
+                               compression=None,
+                               shuffle=False,
+                               chunks=None,
+                               chunk_cache=None):
+        dataset = h5Group.require_dataset(name,
+                                          shape=shape,
+                                          dtype=dtype,
+                                          chunks=chunks,
+                                          shuffle=shuffle,
+                                          compression=compression)
+        if attributes is None:
+            attributes = {}
+        for attribute in attributes:
+            dataset.attrs[attribute] = attributes[attribute]
+        return dataset
 
 MENU_TEXT = "Image Alignment Tool"
 def getStackPluginInstance(stackWindow, **kw):
