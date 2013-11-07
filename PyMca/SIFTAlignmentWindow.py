@@ -34,9 +34,9 @@ from PyMca import sift
 DEBUG = 0
 
 __doc__ ="""
-The SIFT algorithm is protected by a copyright. If you are on a country that
-agrees on patenting algorithms (like the USA), you will only be allowed to
-use this algorithm for research or academic purposes.
+The SIFT algorithm belongs to the University of British Columbia. It is
+protected by patent US6711293. If you are on a country where this pattent
+applies (like the USA), please check if you are allowed to use it.
 
 This SIFT implementation uses the code developed by Jerome Kieffer and
 Pierre Paleo.
@@ -62,9 +62,9 @@ Mac users should have OpenCL provided with their operating system.
 Linux users probably need to install PyMca as provided by their distribution.
 Please note that introduces an additional dependency of PyMca on PyOpenCL. 
 
-License follows:
+sift_pyocl license follows:
 
-Copyright European Synchrotron Radiation Facility, Grenoble, France
+Copyright(C) 2013 European Synchrotron Radiation Facility, Grenoble, France
 
  Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -107,20 +107,21 @@ class ParametersWidget(qt.QWidget):
     def _build(self):
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.aboutSiftButton = qt.QPushButton(self)
-        self.aboutSiftButton.setText("About SIFT")
-        self.aboutSiftButton.clicked.connect(self._showInfo)
+        #self.aboutSiftButton = qt.QPushButton(self)
+        #self.aboutSiftButton.setText("Please read prior to use!")
+        #self.aboutSiftButton.clicked.connect(self._showInfo)
         # info
         self._infoDocument = qt.QTextEdit()
         self._infoDocument.setReadOnly(True)
+        self._infoDocument.setMaximumHeight(100)
         self._infoDocument.setText(__doc__)
-        self._infoDocument.hide()
+        #self._infoDocument.hide()
         label = qt.QLabel(self)
         label.setText("OpenCL Device:")
         self.deviceSelector = qt.QComboBox(self)
         self.deviceSelector.addItem("(-1, -1) No OpenCL device found")
-        self.mainLayout.addWidget(self.aboutSiftButton, 0, 0, 1, 2)
-        self.mainLayout.addWidget(self._infoDocument, 1, 0, 1, 2)
+        #self.mainLayout.addWidget(self.aboutSiftButton, 0, 0, 1, 2)
+        self.mainLayout.addWidget(self._infoDocument, 0, 0, 2, 2)
         self.mainLayout.addWidget(label, 2, 0)
         self.mainLayout.addWidget(self.deviceSelector, 2, 1)
 
