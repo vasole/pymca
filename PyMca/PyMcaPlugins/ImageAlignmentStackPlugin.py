@@ -315,10 +315,11 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             else:
                 result = self.__calculateShiftsSIFT(stack, reference, mask=mask, device=device,
                                                     crop=crop, filename=filename)
-                if len(result):
-                    if result[0] == 'Exception':
-                        # exception occurred
-                        raise Exception(result[1], result[2], result[3])
+                if result is not None:
+                    if len(result):
+                        if result[0] == 'Exception':
+                            # exception occurred
+                            raise Exception(result[1], result[2], result[3])
             if filename is None:
                 self.setStack(stack)
         
@@ -536,7 +537,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                     stack.data[:, :, i] = tmpImage * window
                 else:
                     outputStack[i] = tmpImage * window
-            print("Index %d bilinear shifted" % i)
+            if DEBUG:
+                print("Index %d bilinear shifted" % i)
             self._progress = (100 * i) / total
 
     def initializeHDF5File(self, fname):
