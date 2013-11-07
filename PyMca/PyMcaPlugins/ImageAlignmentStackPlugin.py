@@ -77,6 +77,7 @@ except ImportError:
     import ArraySave
 try:
     from PyMca import sift
+    from PyMca import SIFTAlignmentWindow
     SIFT = True
 except:
     SIFT = False
@@ -155,7 +156,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                  widths=widths,
                                                  crop=crop)
                 result = self.shiftStack(stack,
-                                         -shifts,
+                                         shifts,
                                          crop=crop,
                                          filename=filename)
             else:
@@ -172,7 +173,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 if filename is not None:
                     self.__hdf5 = self.initializeHDF5File(filename)
                 result = self.__shiftStack(stack,
-                                           -shifts,
+                                           shifts,
                                            crop=crop,
                                            filename=filename)
                 if result is not None:
@@ -288,9 +289,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         if stack is None:
             return
         mcaIndex = stack.info.get('McaIndex')
-        if mcaIndex != 0:
-            raise IndexError("For the time being only stacks of images supported")
-        from PyMca import SIFTAlignmentWindow
+        if not (mcaIndex in [0, 2, -1]):
+             raise IndexError("Unsupported 1D index %d" % mcaIndex)
         widget = SIFTAlignmentWindow.SIFTAlignmentDialog()
         widget.setStack(stack)
         mask = self.getStackSelectionMask()
@@ -299,19 +299,28 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         if ret:
             ddict = widget.getParameters()
             widget.setDummyStack()
-            reference = stack.data[ddict['reference_index']] * 1
+            reference = ddict['reference_image']
             mask = ddict['mask']
             if ddict['file_use']:
                 filename = ddict['file_name']
             else:
                 filename = None
+            if filename is not None:
+                self.__hdf5 = self.initializeHDF5File(filename)
             crop = False
             device = ddict['opencl_device']
             if DEBUG:
-                result = self.calculateShiftsSIFT(stack, reference, mask=mask, device=device, crop=crop, filename=filename)
+                result = self.calculateShiftsSIFT(stack, reference, mask=mask, device=device,
+                                                  crop=crop, filename=filename)
             else:
-                result = self.__calculateShiftsSIFT(stack, reference, mask=mask, device=device, crop=crop, filename=filename)                
-            self.setStack(stack)
+                result = self.__calculateShiftsSIFT(stack, reference, mask=mask, device=device,
+                                                    crop=crop, filename=filename)
+                if len(result):
+                    if result[0] == 'Exception':
+                        # exception occurred
+                        raise Exception(result[1], result[2], result[3])
+            if filename is None:
+                self.setStack(stack)
         
     def calculateShiftsSIFT(self, stack, reference, mask=None, device=None, crop=None, filename=None):
         mask = self.getStackSelectionMask()
@@ -324,17 +333,102 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             siftInstance = sift.LinearAlign(reference.astype(numpy.float32), device=device)
         data = stack.data
         mcaIndex = stack.info['McaIndex']
-        if mcaIndex != 0:
-             raise IndexError("For the time being only stacks of images supported")
+        if not (mcaIndex in [0, 2, -1]):
+             raise IndexError("Unsupported 1D index %d" % mcaIndex)
         total = float(data.shape[mcaIndex])
-        for i in range(data.shape[mcaIndex]):
-            if DEBUG:
-                print("SIFT Shifting image %d" % i)
-            result = siftInstance.align(data[i].astype(numpy.float32), shift_only=True, return_all=True)
-            if DEBUG:
-                print("Index = %d shift = %.4f, %.4f" % (i, result['offset'][0], result['offset'][1]))
-            stack.data[i] = result['result']
-            self._progress = (100 * i) / total
+        if filename is not None:
+            hdf = self.__hdf5
+            dataGroup = hdf['/entry_000/Data']
+            attributes = {}
+            attributes['interpretation'] = "image"
+            attributes['signal'] = numpy.int32(1)
+            outputStack = self.getHDF5BufferIntoGroup(dataGroup,
+                                                      shape=(data.shape[mcaIndex],
+                                                            reference.shape[0],
+                                                            reference.shape[1]),
+                                                      name="data",
+                                                      dtype=numpy.float32,
+                                                      attributes=attributes)
+        shifts = numpy.zeros((data.shape[mcaIndex], 2), dtype=numpy.float32)
+        if mcaIndex == 0:
+            for i in range(data.shape[mcaIndex]):
+                if DEBUG:
+                    print("SIFT Shifting image %d" % i)
+                result = siftInstance.align(data[i].astype(numpy.float32), shift_only=True, return_all=True)
+                if DEBUG:
+                    print("Index = %d shift = %.4f, %.4f" % (i, result['offset'][0], result['offset'][1]))
+                if filename is None:
+                    stack.data[i] = result['result']
+                else:
+                    outputStack[i] = result['result']
+                shifts[i, 0] = result['offset'][0]
+                shifts[i, 1] = result['offset'][1]
+                self._progress = (100 * i) / total
+        else:
+            image2 = numpy.zeros(reference.shape, dtype=numpy.float32)
+            for i in range(data.shape[mcaIndex]):
+                if DEBUG:
+                    print("SIFT Shifting image %d" % i)
+                image2[:, :] = data[:, :, i]
+                result = siftInstance.align(image2, shift_only=True, return_all=True)
+                if DEBUG:
+                    print("Index = %d shift = %.4f, %.4f" % (i, result['offset'][0], result['offset'][1]))
+                if filename is None:
+                    stack.data[:, :, i] = result['result']
+                else:
+                    outputStack[i] = result['result']
+                shifts[i, 0] = result['offset'][0]
+                shifts[i, 1] = result['offset'][1]
+                self._progress = (100 * i) / total
+        if filename is not None:
+            hdf = self.__hdf5
+            alignmentGroup = hdf['/entry_000/Alignment']
+            outputShifts = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                                 shape=(stack.data.shape[mcaIndex], 2),
+                                                 name="shifts",
+                                                 dtype=numpy.float32)
+            outputShifts[:,:] = shifts
+            attributes={'interpretation':'image'}
+            referenceFrame = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                                 shape=reference.shape,
+                                                 name="reference_frame",
+                                                 dtype=numpy.float32,
+                                                 attributes=attributes)
+            referenceFrame[:,:] = reference[:,:]
+            maskFrame = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                               shape=reference.shape,
+                                               name="reference_mask",
+                                               dtype=numpy.uint8,
+                                               attributes=attributes)
+
+            if mask is None:
+                maskData = numpy.ones(reference.shape, dtype=numpy.uint8)
+            else:
+                maskData = mask
+            maskFrame[:,:] = maskData[:,:]
+            # fill the axes information
+            dataGroup = hdf['/entry_000/Data']
+            try:
+                activeCurve = self.getActiveCurve()
+                if activeCurve is None:
+                    activeCurve = self.getAllCurves()[0]
+                x, y, legend, info = activeCurve
+                dataGroup[info['xlabel']] = numpy.array(x, dtype=numpy.float32)
+                dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
+                axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
+            except:
+                if DEBUG:
+                    raise
+                dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
+                dataGroup['dim_0'].attrs['axis'] = numpy.int32(1)
+                axesAttribute = 'dim_0:dim_1:dim_2'
+            dataGroup['dim_1'] = numpy.arange(reference.shape[0]).astype(numpy.float32)
+            dataGroup['dim_1'].attrs['axis'] = numpy.int32(2)
+            dataGroup['dim_2'] = numpy.arange(reference.shape[1]).astype(numpy.float32)
+            dataGroup['dim_2'].attrs['axis'] = numpy.int32(3)
+            dim2 = numpy.arange(reference.shape[1]).astype(numpy.float32)
+            dataGroup['data'].attrs['axes'] = axesAttribute
+            self.finishHDF5File(hdf)            
 
     def calculateShiftsFFT(self, stack, reference, offsets=None, widths=None, crop=False):
         if DEBUG:
@@ -377,8 +471,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                offsets[1]:offsets[1]+widths[1]]
                    
                 image1fft2 = fft2Function(image1)
-                shifts[i] = ImageRegistration.measure_offset_from_ffts(image1fft2,
-                                                                       image2fft2)
+                shifts[i] = ImageRegistration.measure_offset_from_ffts(image2fft2,
+                                                                       image1fft2)
                 if DEBUG:
                     print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
                 self._progress = (100 * i) / total
@@ -388,8 +482,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                offsets[1]:offsets[1]+widths[1]]
                    
                 image1fft2 = fft2Function(image1)
-                shifts[i] = ImageRegistration.measure_offset_from_ffts(image1fft2,
-                                                                       image2fft2)
+                shifts[i] = ImageRegistration.measure_offset_from_ffts(image2fft2,
+                                                                       image1fft2)
                 if DEBUG:
                     print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
                 self._progress = (100 * i) / total
