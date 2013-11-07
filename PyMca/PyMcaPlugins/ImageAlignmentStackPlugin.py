@@ -115,8 +115,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         if stack is None:
             return
         mcaIndex = stack.info.get('McaIndex')
-        if mcaIndex != 0:
-            raise IndexError("For the time being only stacks of images supported")
+        if not (mcaIndex in [0, -1, 2]):
+            raise IndexError("1D index must be 0, 2, or -1")
 
         if self.widget is None:
             self.widget = FFTAlignmentWindow.FFTAlignmentDialog()
@@ -127,7 +127,10 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setDummyStack()
             offsets = [ddict['Dim 0']['offset'], ddict['Dim 1']['offset']] 
             widths = [ddict['Dim 0']['width'], ddict['Dim 1']['width']]
-            reference = stack.data[ddict['reference_index']]
+            if mcaIndex == 0:
+                reference = stack.data[ddict['reference_index']]
+            else:
+                reference = ddict['reference_image']
             crop = False
             if ddict['file_use']:
                 filename = ddict['file_name']
@@ -246,8 +249,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             if DEBUG:
                 result = self.calculateShiftsSIFT(stack, reference, mask=mask, device=device, crop=crop, filename=filename)
             else:
-                result = self.__calculateShiftsSIFT(stack, reference, mask=mask, device=device, crop=crop, filename=filename)
-                
+                result = self.__calculateShiftsSIFT(stack, reference, mask=mask, device=device, crop=crop, filename=filename)                
             self.setStack(stack)
         
     def calculateShiftsSIFT(self, stack, reference, mask=None, device=None, crop=None, filename=None):
@@ -304,19 +306,34 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         image2[:,:] = window * reference[offsets[0]:offsets[0]+widths[0],
                                          offsets[1]:offsets[1]+widths[1]]
         image2fft2 = fft2Function(image2)
-        shifts = numpy.zeros((data.shape[0], 2), numpy.float)
+        mcaIndex = stack.info.get('McaIndex')
+        shifts = numpy.zeros((data.shape[mcaIndex], 2), numpy.float)
         image1 = numpy.zeros(image2.shape, dtype=DTYPE)
-        total = float(data.shape[0])
-        for i in range(data.shape[0]):
-            image1[:,:] = window * data[i][offsets[0]:offsets[0]+widths[0],
-                                           offsets[1]:offsets[1]+widths[1]]
-               
-            image1fft2 = fft2Function(image1)
-            shifts[i] = ImageRegistration.measure_offset_from_ffts(image1fft2,
-                                                                   image2fft2)
-            if DEBUG:
-                print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
-            self._progress = (100 * i) / total
+        total = float(data.shape[mcaIndex])
+        if mcaIndex == 0:
+            for i in range(data.shape[mcaIndex]):
+                image1[:,:] = window * data[i][offsets[0]:offsets[0]+widths[0],
+                                               offsets[1]:offsets[1]+widths[1]]
+                   
+                image1fft2 = fft2Function(image1)
+                shifts[i] = ImageRegistration.measure_offset_from_ffts(image1fft2,
+                                                                       image2fft2)
+                if DEBUG:
+                    print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
+                self._progress = (100 * i) / total
+        elif mcaIndex in [2, -1]:
+            for i in range(data.shape[mcaIndex]):
+                image1[:,:] = window * data[:,:,i][offsets[0]:offsets[0]+widths[0],
+                                               offsets[1]:offsets[1]+widths[1]]
+                   
+                image1fft2 = fft2Function(image1)
+                shifts[i] = ImageRegistration.measure_offset_from_ffts(image1fft2,
+                                                                       image2fft2)
+                if DEBUG:
+                    print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
+                self._progress = (100 * i) / total
+        else:
+            raise IndexError("Only stacks of images or spectra supported. 1D index should be 0 or 2")
         return shifts
 
     def shiftStack(self, stack, shifts, crop=False, filename=None):
@@ -324,9 +341,12 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         """
         data = stack.data
         mcaIndex = stack.info['McaIndex']
-        if mcaIndex != 0:
-             raise IndexError("For the time being only stacks of images supported")
-        shape = data[mcaIndex].shape
+        if mcaIndex not in [0, 2, -1]:
+             raise IndexError("Only stacks of images or spectra supported. 1D index should be 0 or 2")
+        if mcaIndex == 0:
+            shape = data[mcaIndex].shape
+        else:
+            shape = data.shape[0], data.shape[1]
         d0_start, d0_end, d1_start, d1_end = ImageRegistration.get_crop_indices(shape,
                                                                                 shifts[:, 0],
                                                                                 shifts[:, 1])
@@ -336,10 +356,13 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         total = float(data.shape[mcaIndex])
         for i in range(data.shape[mcaIndex]):
             #tmpImage = ImageRegistration.shiftFFT(data[i], shifts[i])
-            tmpImage = ImageRegistration.shiftBilinear(data[i], shifts[i])
-            print("Index %d bilinear shifted" % i)
-            if filename is None:
+            if mcaIndex == 0:
+                tmpImage = ImageRegistration.shiftBilinear(data[i], shifts[i])
                 stack.data[i] = tmpImage * window
+            else:
+                tmpImage = ImageRegistration.shiftBilinear(data[:,:,i], shifts[i])
+                stack.data[:, :, i] = tmpImage * window
+            print("Index %d bilinear shifted" % i)
             self._progress = (100 * i) / total
 
 MENU_TEXT = "Image Alignment Tool"
