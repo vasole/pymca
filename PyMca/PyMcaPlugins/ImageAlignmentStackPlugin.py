@@ -97,11 +97,12 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                             "Align using FFT",
                                             None]}
         self.__methodKeys = ['FFT Alignment']
-        key = 'SIFT Alignment'
-        self.methodDict[key] = [self._siftAlignment,
-                                "Align using SIFT Algorithm",
-                                None]
-        self.__methodKeys.append(key) 
+        if SIFT:
+            key = 'SIFT Alignment'
+            self.methodDict[key] = [self._siftAlignment,
+                                    "Align using SIFT Algorithm",
+                                    None]
+            self.__methodKeys.append(key) 
         self.widget = None
 
     def stackUpdated(self):
