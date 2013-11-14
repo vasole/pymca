@@ -13,7 +13,7 @@ from __future__ import division
 
 __authors__ = ["Jérôme Kieffer"]
 __contact__ = "jerome.kieffer@esrf.eu"
-__license__ = "BSD"
+__license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __date__ = "2013-05-28"
 __status__ = "beta"
@@ -45,7 +45,7 @@ import os, logging
 logger = logging.getLogger("sift.opencl")
 
 try:
-    import pyopencl
+    import pyopencl, pyopencl.array
 #    from pyFAI.opencl import ocl
 except ImportError:
     logger.error("Unable to import pyOpenCl. Please install it from: http://pypi.python.org/pypi/pyopencl")

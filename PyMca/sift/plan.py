@@ -13,7 +13,7 @@ from __future__ import division, print_function
 
 __authors__ = ["Jérôme Kieffer"]
 __contact__ = "jerome.kieffer@esrf.eu"
-__license__ = "BSD"
+__license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __date__ = "2013-07-19"
 __status__ = "beta"
@@ -44,12 +44,11 @@ import time, math, os, logging, threading
 # import sys
 import gc
 import numpy
-import pyopencl, pyopencl.array
 from .param import par
-from .opencl import ocl
+from .opencl import ocl, pyopencl
+
 from .utils import calc_size, kernel_size  # , sizeof
 logger = logging.getLogger("sift.plan")
-# from pyopencl import mem_flags as MF
 
 class SiftPlan(object):
     """

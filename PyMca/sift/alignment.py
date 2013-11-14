@@ -13,7 +13,7 @@ from __future__ import division, print_function, with_statement
 
 __authors__ = ["Jérôme Kieffer"]
 __contact__ = "jerome.kieffer@esrf.eu"
-__license__ = "BSD"
+__license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __date__ = "2013-07-24"
 __status__ = "beta"
@@ -43,14 +43,18 @@ OTHER DEALINGS IN THE SOFTWARE.
 import os, gc
 from threading import Semaphore
 import numpy
-import pyopencl, pyopencl.array
 from .param import par
-from .opencl import ocl
+from .opencl import ocl, pyopencl
 from .utils import calc_size, kernel_size, sizeof, matching_correction
 import logging
 logger = logging.getLogger("sift.alignment")
 from pyopencl import mem_flags as MF
 from . import MatchPlan, SiftPlan
+
+try:
+    import feature
+except ImportError:
+    feature = None
 
 def arrow_start(kplist):
     x_ref = kplist.x
@@ -195,7 +199,7 @@ class LinearAlign(object):
         """
         self.program = None
 
-    def align(self, img, shift_only=False, return_all=False, double_check=False, relative=False):
+    def align(self, img, shift_only=False, return_all=False, double_check=False, relative=False, orsa=False):
         """
         Align image on reference image
 
@@ -227,8 +231,17 @@ class LinearAlign(object):
             matching[:, 0] = self.ref_kp[raw_matching[:, 0]]
             matching[:, 1] = kp[raw_matching[:, 1]]
 
+            if orsa:
+                if feature:
+                    matching = feature.sift_orsa(matching, self.shape, 1)
+                else:
+                    logger.warning("feature is not available. No ORSA filtering")
+
             if (len_match < 3 * 6) or (shift_only):  # 3 points per DOF
-                logger.warning("Shift Only mode: Common keypoints: %s" % len_match)
+                if shift_only:
+                    logger.debug("Shift Only mode: Common keypoints: %s" % len_match)
+                else:
+                    logger.warning("Shift Only mode: Common keypoints: %s" % len_match)
                 dx = matching[:, 1].x - matching[:, 0].x
                 dy = matching[:, 1].y - matching[:, 0].y
                 matrix = numpy.identity(2, dtype=numpy.float32)
@@ -310,7 +323,13 @@ class LinearAlign(object):
 
 #        print (self.buffers["offset"])
         if return_all:
-            return {"result":result, "keypoint":kp, "matching":matching, "offset":offset, "matrix": matrix}
+#            corr = numpy.dot(matrix, numpy.vstack((matching[:, 1].y, matching[:, 1].x))).T - \
+#                   offset.T - numpy.vstack((matching[:, 0].y, matching[:, 0].x)).T
+            corr = numpy.dot(matrix, numpy.vstack((matching[:, 0].y, matching[:, 0].x))).T + offset.T - numpy.vstack((matching[:, 1].y, matching[:, 1].x)).T
+            rms = numpy.sqrt((corr * corr).sum(axis= -1).mean())
+
+            # Todo: calculate the RMS of deplacement and return it:
+            return {"result":result, "keypoint":kp, "matching":matching, "offset":offset, "matrix": matrix, "rms":rms}
         return result
 
     def log_profile(self):
