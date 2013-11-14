@@ -1552,7 +1552,7 @@ class MaskImageWidget(qt.QWidget):
             qt.QMessageBox.critical(self,"No Data",
                 "Image data does not contain any real value")
             return
-        self.colormapDialog = ColormapDialog.ColormapDialog()
+        self.colormapDialog = ColormapDialog.ColormapDialog(self)
         colormapIndex = self.__defaultColormap
         if colormapIndex == 1:
             colormapIndex = 0
