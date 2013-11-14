@@ -76,8 +76,6 @@ def getSavitzkyGolay(spectrum, npoints=3, degree=1, order=0):
     return result
 
 def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
-    #Warning: Not checked if the last dimension is the one containing the
-    #spectra as it is assuming!!!!
     coeff = calc_coeff(npoints, degree, order)
     N = numpy.size(coeff-1)/2
     convolve = numpy.convolve
@@ -103,7 +101,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
     elif mcaIndex == 0:
         data.shape = oldShape[0], -1
         for i in range(data.shape[-1]):
-            data[N:-N, i] = convolve(data[i,:],coeff, mode='valid')
+            data[N:-N, i] = convolve(data[:, i],coeff, mode='valid')
             if order > 0:
                 data[:N, i] = data[N, i]
                 data[-N:, i] = data[-(N+1), i]            
