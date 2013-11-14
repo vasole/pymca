@@ -36,7 +36,9 @@ DEBUG = 0
 __doc__ ="""
 The SIFT algorithm belongs to the University of British Columbia. It is
 protected by patent US6711293. If you are on a country where this pattent
-applies (like the USA), please check if you are allowed to use it.
+applies (like the USA), please check if you are allowed to use it. The
+University of British Columbia does not require a license for its use for
+non-commercial research applications.
 
 This SIFT implementation uses the code developed by Jerome Kieffer and
 Pierre Paleo.
