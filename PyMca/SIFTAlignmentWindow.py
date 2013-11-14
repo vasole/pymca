@@ -33,18 +33,16 @@ from PyMca import PyMcaFileDialogs
 from PyMca import sift
 DEBUG = 0
 
-__doc__ ="""
-The SIFT algorithm belongs to the University of British Columbia. It is
+__doc__ ="""The SIFT algorithm belongs to the University of British Columbia. It is
 protected by patent US6711293. If you are on a country where this pattent
 applies (like the USA), please check if you are allowed to use it. The
 University of British Columbia does not require a license for its use for
 non-commercial research applications.
 
 This SIFT implementation uses the code developed by Jerome Kieffer and
-Pierre Paleo.
+Pierre Paleo. The project is hosted at:
 
-The project is hosted at:
-            https://github.com/kif/sift_pyocl
+https://github.com/kif/sift_pyocl
 
 This algorithm should provide better results than FFT based algorithms
 provided the images to be aligned provide enough registration points
@@ -115,7 +113,7 @@ class ParametersWidget(qt.QWidget):
         # info
         self._infoDocument = qt.QTextEdit()
         self._infoDocument.setReadOnly(True)
-        self._infoDocument.setMaximumHeight(100)
+        self._infoDocument.setMaximumHeight(150)
         self._infoDocument.setText(__doc__)
         #self._infoDocument.hide()
         label = qt.QLabel(self)
