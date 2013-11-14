@@ -235,7 +235,7 @@ static PyObject *sps_attach(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name;
   int rows, cols, type, flag;
-  int dims[2];
+  npy_intp dims[2];
   int ptype, stype;
   PyArrayObject *arrobj;
   void *data;
@@ -304,7 +304,7 @@ static PyObject *sps_create(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name;
   int rows, cols, type = SPS_DOUBLE, flag = 0;
-  int dims[2];
+  npy_intp dims[2];
   int ptype, stype;
   PyArrayObject *arrobj;
   void *data;
@@ -448,7 +448,7 @@ static PyObject *sps_getdatacol(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name;
   int rows, cols, type, flag, in_row = 0, in_col;
-  int dims[2];
+  npy_intp dims[2];
   int ptype, stype;
   PyArrayObject *arrobj, *arrobj_nc;
 
