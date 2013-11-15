@@ -7,7 +7,7 @@
 #include "libqhull.h"
 #include "qset.h"		/* for FOREACHneighbor_() */
 #include "poly.h"		/* for qh_vertexneighbors() */
-
+#include "geom.h"       /* for qh_facetcenter() */
 
 /* Doc strings */
 #if (REALfloat == 1)
@@ -154,10 +154,10 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
     /* printf("flags = %s\n", cQhullFlags); */
     
     /* dimension to pass to Qhull */
-    dimension = pointArray->dimensions[1];
+    dimension = (int) pointArray->dimensions[1];
     
     /* number of points for Qhull */
-    nPoints = pointArray->dimensions[0];
+    nPoints = (int) pointArray->dimensions[0];
     
     
     /* the points themselves for Qhull */
@@ -167,7 +167,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 			       ismalloc, cQhullFlags, NULL, stderr);
 
     if (qhullResult)
-      {
+    {
 		/* Free the memory allocated by Qhull */
 		qh_freeqhull(qh_ALL);
 		Py_DECREF (pointArray);
@@ -176,51 +176,51 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 		}
 		qhullResultFailure(qhullResult);
 		return NULL;
-      }
+    }
     
     /* Get the number of facets */
     /* Probably there is a better way to do it */
     FORALLfacets {
-      if (facet->upperdelaunay)
-	continue;
-      nFacets ++;
+		if (facet->upperdelaunay)
+			continue;
+		nFacets ++;
     }
     /* printf("Number of facets = %d\n", nFacets); */
     
     /* Allocate the memory for the output array */
     if (0)	// As triangles
-      {
-	/* It has the form: [nfacets, dimension, 3] */
-	outDimensions[0] = nFacets;
-	outDimensions[1] = 3;
-	outDimensions[2] = dimension;
-	result = (PyArrayObject *)
-	  PyArray_SimpleNew(3, outDimensions, PyArray_FLOAT);
-	if (result == NULL)
-	  {
-	    qh_freeqhull(qh_ALL);
-	    Py_DECREF (pointArray);
-		if(input3) {
-			Py_DECREF (inner_pointArray);
+    {
+		/* It has the form: [nfacets, dimension, 3] */
+		outDimensions[0] = nFacets;
+		outDimensions[1] = 3;
+		outDimensions[2] = dimension;
+		result = (PyArrayObject *)
+		  PyArray_SimpleNew(3, outDimensions, PyArray_FLOAT);
+		if (result == NULL)
+		{
+			qh_freeqhull(qh_ALL);
+			Py_DECREF (pointArray);
+			if(input3) {
+				Py_DECREF (inner_pointArray);
+			}
+			PyErr_SetString(Object3DQhullError, "Error allocating output memory");
+			return NULL;
 		}
-	    PyErr_SetString(Object3DQhullError, "Error allocating output memory");
-	    return NULL;
-	  }
 #if (REALfloat == 1)
-	p = (float *) result->data;
+		p = (float *) result->data;
 #else
-	p = (double *) result->data;
+		p = (double *) result->data;
 #endif
-	FORALLfacets {
-	  if (facet->upperdelaunay)
-	    continue;
-	  FOREACHvertex_(facet->vertices)	{
-	    for (j = 0; j < (qh hull_dim - 1); ++j) {
-	      *p =  vertex->point[j];
-	      ++p;
-	    }
-	  }
-	}
+		FORALLfacets {
+			if (facet->upperdelaunay)
+				continue;
+			FOREACHvertex_(facet->vertices)	{
+				for (j = 0; j < (qh hull_dim - 1); ++j) {
+					*p =  vertex->point[j];
+					++p;
+				}
+			}
+		}
 	}
     else // As indices
 	{
@@ -230,21 +230,22 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 		result = (PyArrayObject *)
     					PyArray_SimpleNew(2, outDimensions, PyArray_UINT32);
 
-		if( input3 ) {
-		  inner_nPoints = inner_pointArray->dimensions[0];
+		if( input3 )
+		{
+			inner_nPoints = (int) inner_pointArray->dimensions[0];
 
-		  outDimensions[0] = inner_nPoints;
-		  outDimensions[1] = dimension+1;
-		  inner_result = (PyArrayObject *)
-		    PyArray_SimpleNew(2, outDimensions, PyArray_UINT32);
-		  if (inner_result == NULL)
-		    {
-		      qh_freeqhull(qh_ALL);
-		      Py_DECREF (pointArray);
-		      Py_DECREF (inner_pointArray);
-		      PyErr_SetString(Object3DQhullError, "Error allocating output memory for inner points facets");
-		      return NULL;
-		    }
+			outDimensions[0] = inner_nPoints;
+			outDimensions[1] = dimension+1;
+			inner_result = (PyArrayObject *)
+			PyArray_SimpleNew(2, outDimensions, PyArray_UINT32);
+			if (inner_result == NULL)
+			{
+				qh_freeqhull(qh_ALL);
+				Py_DECREF (pointArray);
+				Py_DECREF (inner_pointArray);
+				PyErr_SetString(Object3DQhullError, "Error allocating output memory for inner points facets");
+				return NULL;
+			}
 		}
 
 		if (result == NULL)
@@ -252,7 +253,10 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 			qh_freeqhull(qh_ALL);
 			Py_DECREF (pointArray);
 			{
-			  if(inner_pointArray){  Py_DECREF (inner_pointArray) ;} 
+				if(inner_pointArray)
+				{
+					Py_DECREF (inner_pointArray) ;
+				} 
 			}
 			PyErr_SetString(Object3DQhullError, "Error allocating output memory");
 			return NULL;
@@ -263,40 +267,47 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 			if (facet->upperdelaunay)
 				continue;
 			FOREACHvertex_(facet->vertices)	{
-					*uintP =  qh_pointid(vertex->point);
-					++uintP;
+				*uintP =  qh_pointid(vertex->point);
+				++uintP;
 			}
 		}
-		if(input3) {
-		  uintP = (unsigned int *) inner_result->data;
+		if(input3)
+		{
+			uintP = (unsigned int *) inner_result->data;
 #if (REALfloat == 1) 
-		  p = (float *) inner_pointArray->data;
+			p = (float *) inner_pointArray->data;
 #else
-		  p = (double *) inner_pointArray->data;
+			p = (double *) inner_pointArray->data;
 #endif
-		  for (i=0; i< inner_nPoints; i++)
-		    {
-		      for(j=0; j<dimension; j++) {
-			point[j] = *( p++)     ;
-		      }
-		      
-		      qh_setdelaunay(  dimension+1 , 1, point);
-		      
-		      facet = qh_findbestfacet(point, qh_ALL, &bestdist, &isoutside);
+			for (i=0; i< inner_nPoints; i++)
+			{
+				for(j=0; j<dimension; j++)
+				{
+					point[j] = *( p++);
+				}
+			  
+				qh_setdelaunay(  dimension+1 , 1, point);
 
+				facet = qh_findbestfacet(point, qh_ALL, &bestdist, &isoutside);
 
-		      if (facet && !facet->upperdelaunay && facet->simplicial) {
-			FOREACHvertex_(facet->vertices)	{
-			  *uintP =  qh_pointid(vertex->point);
-			  ++uintP;
-			}			
-		      } else {
-			{ qh_freeqhull(qh_ALL);} 
-			Py_DECREF (pointArray);
-			if(pointArray) {  Py_DECREF (inner_pointArray);} 
-			PyErr_SetString(Object3DQhullError, "Error allocating output memory");
-			return NULL;
-		      }
+				if (facet && !facet->upperdelaunay && facet->simplicial) 
+				{
+					FOREACHvertex_(facet->vertices)	{
+						*uintP =  qh_pointid(vertex->point);
+						++uintP;
+					}			
+				} 
+				else
+				{
+					qh_freeqhull(qh_ALL); 
+					Py_DECREF (pointArray);
+					if(pointArray) 
+					{  
+						Py_DECREF (inner_pointArray);
+					} 
+					PyErr_SetString(Object3DQhullError, "Error allocating output memory");
+					return NULL;
+				}
 		    }
 		}
 	}
@@ -307,10 +318,13 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 	
 	Py_DECREF (pointArray);
 	
-	if( input3==NULL) {
-	  return PyArray_Return(result);
-	} else {
-	  return  Py_BuildValue("NN", result, inner_result );
+	if( input3==NULL) 
+	{
+		return PyArray_Return(result);
+	} 
+	else
+	{
+		return  Py_BuildValue("NN", result, inner_result );
 	}
 }
 
@@ -343,31 +357,16 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 	int			nFacets = 0;
 	npy_intp	outDimensions[2];
 	facetT *facet;		/* needed by FORALLfacets */
-	vertexT *vertex, **vertexp;
-	setT *vertices;
 	pointT *center;
 
-  int numcenters, format=0, numvertices= 0, numneighbors, numinf, vid=1, vertex_i, vertex_n;
-  facetT *neighbor, **neighborp;
-  boolT islower;
-  unsigned int numfacets;
-
+  int format=0, numvertices= 0, vid=1;
 
 	int j, i;
 #if (REALfloat == 1)
 	float *p;
-	float bestdist;
-	float point[4];
 #else
 	double *p;
-	double bestdist;
-	double point[4];
 #endif
-	unsigned int *uintP;
-	boolT isoutside;
-
-
-
 
     /* ------------- statements ---------------*/
     if (!PyArg_ParseTuple(args, "O|zO", &input1, &input2, &input3 ))
@@ -422,10 +421,10 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     /* printf("flags = %s\n", cQhullFlags); */
     
     /* dimension to pass to Qhull */
-    dimension = pointArray->dimensions[1];
+    dimension = (int) pointArray->dimensions[1];
     
     /* number of points for Qhull */
-    nPoints = pointArray->dimensions[0];
+    nPoints = (int) pointArray->dimensions[0];
     
     
     /* the points themselves for Qhull */
