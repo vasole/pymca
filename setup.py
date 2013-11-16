@@ -17,9 +17,12 @@ global USE_SMART_INSTALL_SCRIPTS
 
 
 #package maintainers customization
-# Dear (Debian, RPM, ...) package makers, please feel free to customize the
+# Dear (Debian, RedHat, ...) package makers, please feel free to customize the
 # following paths to the directory containing module's data relative to the
-# directory containing the python modules (aka. installation directory) 
+# directory containing the python modules (aka. installation directory).
+# The sift module implements a patented algorithm. The algorithm can be used
+# for non-commercial research purposes. If you do not want to distribute it
+# with the PyMca sources you just need to delete the PyMca/sift directory.
 PYMCA_DATA_DIR = 'PyMca/PyMcaData'
 PYMCA_DOC_DIR = 'PyMca/PyMcaData'
 USE_SMART_INSTALL_SCRIPTS = False
