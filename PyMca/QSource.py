@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,13 +33,15 @@ SOURCE_EVENT = qt.QEvent.User
 if QTVERSION < '4.0.0':
     class SourceEvent(qt.QCustomEvent):
         def __init__(self, ddict=None):
-            if ddict is None: ddict = {}
+            if ddict is None:
+                ddict = {}
             qt.QCustomEvent.__init__(self, SOURCE_EVENT)
             self.dict = ddict
 else:
     class SourceEvent(qt.QEvent):
         def __init__(self, ddict=None):
-            if ddict is None: ddict = {}
+            if ddict is None:
+                ddict = {}
             self.dict = ddict
             qt.QEvent.__init__(self, SOURCE_EVENT)
 
@@ -156,11 +158,15 @@ class QSource(qt.QObject):
                             else:
                                 event.dict['scanselection'] = False
                             try:
-                                qt.qApp.processEvents()
-                                if QTVERSION < '4.0.0':qt.qApp.lock()
+                                if QTVERSION < '4.0.0':
+                                    qt.qApp.processEvents()
+                                    qt.qApp.lock()
+                                # Should one make a list of events to prevent
+                                # posting the same event twice?
                                 qt.QApplication.postEvent(self, event)
                             finally:
-                                if QTVERSION < '4.0.0':qt.qApp.unlock()
+                                if QTVERSION < '4.0.0':
+                                    qt.qApp.unlock()
                         else:
                             del self.surveyDict[key]
                             del self.selections[key] 
@@ -168,6 +174,8 @@ class QSource(qt.QObject):
                         if DEBUG:
                             print("key error in loop")
                         pass
+            if QTVERSION > '4.0.0':
+                qt.qApp.processEvents()
             time.sleep(self._pollTime)
             if DEBUG:
                 print("woke up")
