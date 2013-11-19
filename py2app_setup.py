@@ -49,6 +49,11 @@ try:
     PACKAGES.append('mdp')
 except:
     pass
+try:
+    import pyopencl
+    PACKAGES.append('pyopencl')
+except:
+    pass
 PY2APP_OPTIONS = {'packages':PACKAGES}
 BUNDLE_ICON = '/Users/sole/Installation/PythonSnake.icns' 
 if os.path.exists(BUNDLE_ICON):
