@@ -153,6 +153,16 @@ except ImportError:
     MATPLOTLIB = False
 
 try:
+    import pyopencl
+    OPENCL = True
+    # put the sift kernels in a dedicated directory
+    for ffile in glob.glob(os.path.join("PyMca", "sift","*.cl")):
+        include_files.append((ffile,
+                    os.path.join("sift_kernels", os.path.basename(ffile))))
+except :
+    OPENCL = False
+
+try:
     import mdp
     MDP = True
 except ImportError:
@@ -198,6 +208,8 @@ if OBJECT3D:
                   os.path.dirname(Object3D.__file__)]
     if H5PY_SPECIAL:
         special_modules.append(os.path.dirname(h5py.__file__))
+    if OPENCL:
+        special_modules.append(os.path.dirname(pyopencl.__file__))
     if MDP:
         #mdp versions above 2.5 need special treatment
         if mdp.__version__  > '2.5':
@@ -221,6 +233,8 @@ else:
     special_modules = [os.path.dirname(ctypes.__file__)]
     if H5PY_SPECIAL:
         special_modules.append(os.path.dirname(h5py.__file__))
+    if OPENCL:
+        special_modules.append(os.path.dirname(pyopencl.__file__))
     if MDP:
         #mdp versions above 2.5 need special treatment
         if mdp.__version__  > '2.5':
@@ -308,6 +322,38 @@ setup(
                        install_exe = installOptions
                        ),
         executables = executables)
+
+
+if OPENCL:
+    # pyopencl __init__.py needs to be patched
+    initFile = os.path.join(install_dir, "pyopencl", "__init__.py")
+    print("initFile = ", initFile)
+    f = open(initFile, "r")
+    content = f.readlines()
+    f.close()
+    i = 0
+    i0 = 0
+    for line in content:
+        if "def _find_pyopencl_include_path():" in line:
+            i0 = i - 1
+        elif (i0 != 0) and ("}}}" in line):
+            i1 = i
+            break
+        i += 1
+    f = open(initFile, "w")
+    for i in range(0, i0):
+        f.write(content[i])
+    txt ='\n'
+    txt +='def _find_pyopencl_include_path():\n'
+    txt +='     print("USING ARMANDO 2")\n'
+    txt +='     from os.path import dirname, join, realpath\n'
+    txt +="     return '\"%s\"' % join(realpath(dirname(__file__)), \"cl\")"
+    txt +="\n"
+    txt +="\n"
+    f.write(txt)
+    for line in content[i1:]:
+        f.write(line)
+    f.close()
 
 if not sys.platform.startswith('win'):
     #rename the executables to .exe for easier handling by the start scripts
