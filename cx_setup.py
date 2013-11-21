@@ -327,7 +327,6 @@ setup(
 if OPENCL:
     # pyopencl __init__.py needs to be patched
     initFile = os.path.join(install_dir, "pyopencl", "__init__.py")
-    print("initFile = ", initFile)
     f = open(initFile, "r")
     content = f.readlines()
     f.close()
