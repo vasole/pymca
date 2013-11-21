@@ -323,4 +323,4 @@ if __name__ == "__main__":
     w.setStack(stackData, index=0)
     ret = w.exec_()
     if ret:
-        print w.getParameters()
+        print(w.getParameters())
