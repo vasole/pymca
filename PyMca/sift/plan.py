@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 #
+# This code implements the SIFT algorithm
+# The SIFT algorithm belongs to the University of British Columbia. It is
+# protected by patent US6711293. If you are on a country where this pattent
+# applies (like the USA), please check if you are allowed to use it. The
+# University of British Columbia does not require a license for its use for
+# non-commercial research applications.
+#
 #    Project: Sift implementation in Python + OpenCL
 #             https://github.com/kif/sift_pyocl
 #
