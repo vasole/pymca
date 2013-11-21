@@ -374,17 +374,17 @@ class StackSelector(object):
         if getfilter is None:
             getfilter = False
         fileTypeList = ["EDF Files (*edf)",
+                        "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz)",
+                        "Image Files (*tif *tiff *TIF *TIFF)",
+                        "TextImage Files (*txt)",
+                        "HDF5 Files (*.nxs *.hdf *.h5)",
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
-                        "HDF5 Files (*.nxs *.hdf *.h5)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
-                        "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz)",
-                        "Image Files (*tif *tiff *TIF *TIFF)",
-                        "TextImage Files (*txt)",
                         "All Files (*)"]
         if not HDF5:
             idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)")
