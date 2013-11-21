@@ -118,8 +118,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             return
         if len(self.imageList) == 0:
             return
-        self.setImageData(self.imageList[index])
+        # first the title to update any related selection curve legend
         self.graphWidget.graph.setTitle(self.imageNames[index])
+        self.setImageData(self.imageList[index])
         if moveslider:
             self.slider.setValue(index)
 

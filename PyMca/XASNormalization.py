@@ -99,7 +99,7 @@ def estimateXANESEdge(spectrum, energy=None, full=False):
     if dmax != dmin:
         # choose the number of points or deduce it from
         # the input data length?
-        nchannels = 5 * len(spectrum)
+        nchannels = 2 * len(spectrum)
         xi = numpy.linspace(x[1], x[-2], nchannels).reshape(-1, 1)
         x.shape = -1
         y.shape = -1
@@ -116,12 +116,18 @@ def estimateXANESEdge(spectrum, energy=None, full=False):
     # get the index at maximum value
     iMax = numpy.argmax(yPrime)
 
+    # get the center of mass
+    w = 2 * npoints
+    selection = yPrime[iMax-w:iMax+w+1]
+    edge = (selection * xPrime[iMax-w:iMax+w+1]).sum(dtype=numpy.float)/\
+           selection.sum(dtype=numpy.float)
+
     if full:
         # return intermediate information
-        return x[iMax], sortedX, sortedY, xPrime, yPrime
+        return edge, sortedX, sortedY, xPrime, yPrime
     else:
         # return the corresponding x value
-        return x[iMax]
+        return edge
         
 def getRegionsData(x0, y0, regions, edge=0.0):
     """
