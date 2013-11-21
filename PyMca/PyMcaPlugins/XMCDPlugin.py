@@ -47,7 +47,7 @@ class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
                 beamline = 'ID08'
                 break
         if DEBUG:
-            print '_createWidget -- beamline = "%s"'%beamline
+            print('_createWidget -- beamline = "%s"' % beamline)
         parent = None
         self.widget = XMCDWindow.XMCDWidget(parent,
                                               self._plotWindow,
