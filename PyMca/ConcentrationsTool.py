@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 1.26 $"
+__revision__ = "$Revision: 1.27 $"
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import copy
@@ -141,9 +141,9 @@ class ConcentrationsConversion(object):
         for mmolarflag in mmolarflaglist:
             labels = ['Element', 'Group', 'Fit_Area', 'Sigma_Area']
             if mmolarflag:
-                labels += 'mM_Concentration'
+                labels += ['mM_Concentration']
             else:
-                labels += 'Mass_fraction'
+                labels += ['Mass_fraction']
             if 'layerlist' in result:
                 if type(result['layerlist']) != type([]):
                     result['layerlist'] = [result['layerlist']]
