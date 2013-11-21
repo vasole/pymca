@@ -165,9 +165,8 @@ def isSRSFile(filename):
            f.close()
            return True
     except:
-        f.close()
         pass
-    
+    f.close()    
     return False
 
 def test(filename):
