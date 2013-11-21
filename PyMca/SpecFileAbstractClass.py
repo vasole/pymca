@@ -216,6 +216,8 @@ class SpecFileAbstractScan(object):
     def mca(self,number):
         if number <= 0:
             raise IndexError("Mca numbering starts at 1")
+        elif number > self.nbmca():
+            raise IndexError("Only %d MCAs in file" % self.nbmca())
         if hasattr(self.__data, "shape"):
             return self.__data[:,number-1]
         else:

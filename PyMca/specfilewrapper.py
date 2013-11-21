@@ -36,6 +36,7 @@ except ImportError:
 from PyMca import Fit2DChiFileParser
 from PyMca import APSMEDFileParser
 from PyMca import SRSFileParser
+from PyMca import BAXSCSVFileParser
 try:
     from PyMca import SPXFileParser
     SPX = True
@@ -116,6 +117,8 @@ def Specfile(filename):
             return APSMEDFileParser.APSMEDFileParser(filename)
         if (not qxas) and (not amptek) and SRSFileParser.isSRSFile(filename):
             return SRSFileParser.SRSFileParser(filename)
+        if (not qxas) and (not amptek) and BAXSCSVFileParser.isBAXSCSVFile(filename):
+            return BAXSCSVFileParser.BAXSCSVFileParser(filename)
         output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
 
