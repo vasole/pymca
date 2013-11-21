@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,36 +33,23 @@ DEBUG = 0
 
 class BufferedFile(object):
     def __init__(self, filename):
-        f = open(filename, 'rb')
+        f = open(filename, 'r')
         self.__buffer = f.read()
         f.close()
-        if sys.version < '3.0':
-            self.__buffer=self.__buffer.replace("\r", "\n")
-            self.__buffer=self.__buffer.replace("\n\n", "\n")
-            self.__buffer = self.__buffer.split("\n")
-        else:
-            tmp = bytes("\n", 'utf-8')
-            self.__buffer=self.__buffer.replace(bytes("\r", 'utf-8'), tmp)
-            self.__buffer=self.__buffer.replace(bytes("\n\n", 'utf-8'), tmp)
-            self.__buffer = self.__buffer.split(tmp)
+        self.__buffer = self.__buffer.replace("\r", "\n")
+        self.__buffer = self.__buffer.replace("\n\n", "\n")
+        self.__buffer = self.__buffer.split("\n")
         self.__currentLine = 0
 
-    if sys.version < '3.0':
-        def readline(self):
-            if self.__currentLine >= len(self.__buffer):
-                return ""
-            line = self.__buffer[self.__currentLine] + "\n"
-            self.__currentLine += 1
-            return line
-    else:
-        def readline(self):
-            if self.__currentLine >= len(self.__buffer):
-                return bytes("", 'utf-8')
-            line = self.__buffer[self.__currentLine] + bytes("\n", 'utf-8')
-            self.__currentLine += 1
-            return str(line, 'utf-8')
+    def readline(self):
+        if self.__currentLine >= len(self.__buffer):
+            return ""
+        line = self.__buffer[self.__currentLine]
+        self.__currentLine += 1
+        return line
 
     def close(self):
+        self.__buffer = [""]
         self.__currentLine = 0
         return
 
@@ -172,16 +159,11 @@ class SRSScan(SpecFileAbstractClass.SpecFileAbstractScan):
         return self.motorValues
 
 def isSRSFile(filename):
-    f = open(filename, mode = 'rb')
+    f = open(filename, mode = 'r')
     try:
-        if sys.version < '3.0':
-            if '&SRS' in f.readline():
-                f.close()
-                return True
-        else:
-            if '&SRS' in str(f.readline(), 'utf-8'):
-                f.close()
-                return True
+       if '&SRS' in f.readline():
+           f.close()
+           return True
     except:
         f.close()
         pass
