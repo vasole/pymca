@@ -345,7 +345,6 @@ if OPENCL:
         f.write(content[i])
     txt ='\n'
     txt +='def _find_pyopencl_include_path():\n'
-    txt +='     print("USING ARMANDO 2")\n'
     txt +='     from os.path import dirname, join, realpath\n'
     txt +="     return '\"%s\"' % join(realpath(dirname(__file__)), \"cl\")"
     txt +="\n"
