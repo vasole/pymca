@@ -49,6 +49,7 @@ class BufferedFile(object):
         return line
 
     def close(self):
+        self.__buffer = [""]
         self.__currentLine = 0
         return
 
