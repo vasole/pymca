@@ -392,7 +392,8 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             idx = 0
         else:
             actionList = []
-            methods.sort()
+            # allow the plugin designer to specify the order
+            #methods.sort()
             menu = qt.QMenu(self)
             for method in methods:
                 text = QString(method)
