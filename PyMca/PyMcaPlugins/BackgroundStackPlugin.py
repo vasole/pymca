@@ -214,7 +214,6 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
 
 MENU_TEXT = "Stack Filtering Options"
 
-
 def getStackPluginInstance(stackWindow, **kw):
     ob = BackgroundStackPlugin(stackWindow)
     return ob

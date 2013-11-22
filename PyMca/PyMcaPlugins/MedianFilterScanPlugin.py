@@ -61,7 +61,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
         self.__methodKeys.append(method)
         function = self.applyMedianFilter
         for i in [3, 5, 7, 9]:
-            info = "Replace curves by %d-point median filter" % i
+            info = "Replace curves by their %d-point median filter average" % i
             method = "Replace by %d-point median filter" % i
             self.methodDict[method] = [function,
                                        info,
@@ -205,7 +205,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
                       replot=True,
                       replace=True)
 
-MENU_TEXT = "1D Median Filter"
+MENU_TEXT = "Median Filter Average"
 def getPlugin1DInstance(plotWindow, **kw):
     ob = MedianFilterScanPlugin(plotWindow)
     return ob
