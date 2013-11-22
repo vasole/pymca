@@ -159,11 +159,11 @@ class XMCDOptions(qt.QDialog):
         groupBox = qt.QGroupBox(title, None)
         gbLayout = qt.QVBoxLayout(None)
         gbLayout.addStretch(1)
-        for (id, radioText) in enumerate(optionList):
+        for (idx, radioText) in enumerate(optionList):
             radio = qt.QRadioButton(radioText)
             gbLayout.addWidget(radio)
             if buttongroup:
-                buttongroup.addButton(radio, id)
+                buttongroup.addButton(radio, idx)
             if first:
                 radio.setChecked(True)
                 first = False
@@ -568,7 +568,7 @@ class XMCDScanWindow(sw.ScanWindow):
         normBefore = self.optsDict['normBeforeAvg']
         normAfter  = self.optsDict['normAfterAvg']
         for idx in ['A','B']:
-            sel = self.selectionDict[id]
+            sel = self.selectionDict[idx]
             if not len(sel):
                 continue
             xvalList = []
@@ -802,14 +802,14 @@ class XMCDScanWindow(sw.ScanWindow):
         self._zoomReset()
         self.xmcd = self.dataObjectsList[-1]
 
-    def selectionInfo(self, id, key):
+    def selectionInfo(self, idx, key):
         '''
         Convenience function to retrieve values
         from the info dictionaries of the curves
         stored selectionDict.
         '''
-        sel = self.selectionDict[id]
-        ret = '%s: '%id
+        sel = self.selectionDict[idx]
+        ret = '%s: '%idx
         for legend in sel:
             curr = self.curvesDict[legend]
             value = curr.info.get(key, None)
@@ -1049,15 +1049,16 @@ class XMCDTreeWidget(qt.QTreeWidget):
 
     selectionModifiedSignal = qt.pyqtSignal()
 
-    def __init__(self,  parent, identifiers = ['B','A','D'], color=True):
+    def __init__(self,  parent, groups = ['B','A','D'], color=True):
         qt.QTreeWidget.__init__(self,  parent)
-        self.identifiers = identifiers
+        # Last identifier in groups is the ignore instruction
+        self.groupList = groups
         self.actionList  = []
         self.contextMenu = qt.QMenu('Perform',  self)
         self.color = color
         self.colorDict = {
-            identifiers[0] : qt.QBrush(qt.QColor(220, 220, 255)),
-            identifiers[1] : qt.QBrush(qt.QColor(255, 210, 210)),
+            groups[0] : qt.QBrush(qt.QColor(220, 220, 255)),
+            groups[1] : qt.QBrush(qt.QColor(255, 210, 210)),
             '': qt.QBrush(qt.QColor(255, 255, 255))
         }
 
@@ -1165,10 +1166,10 @@ class XMCDTreeWidget(qt.QTreeWidget):
         Sets the items currently selected to 
         the identifier given in id.
         '''
-        if idx not in self.identifiers:
+        if idx not in self.groupList:
             raise ValueError('XMCDTreeWidget: invalid identifer \'%s\'' % idx)
         sel = self.selectedItems()
-        if idx == self.identifiers[-1]:
+        if idx == self.groupList[-1]:
             idx = ''
         for item in sel:
             item.setText(0, idx)
@@ -1195,14 +1196,14 @@ class XMCDTreeWidget(qt.QTreeWidget):
             seq, chk = qt.QInputDialog.\
                 getText(None, 
                         'Sequence Dialog', 
-                        'Valid identifiers are: ' + ', '.join(self.identifiers),
+                        'Valid identifiers are: ' + ', '.join(self.groupList),
                         qt.QLineEdit.Normal, 
                         'Enter sequence')
         seq = str(seq).upper()
         if not chk:
             return
         for idx in seq:
-            if idx not in self.identifiers:
+            if idx not in self.groupList:
                 invalidMsg = qt.QMessageBox(None)
                 invalidMsg.setText('Invalid identifier. Try again.')
                 invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
@@ -1216,7 +1217,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
             # invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
             # invalidMsg.exec_()
         for (idx, item) in zip(seq, sel):
-            if idx == self.identifiers[-1]:
+            if idx == self.groupList[-1]:
                 idx = ''
             item.setText(0, idx)
             if self.color:
@@ -1248,15 +1249,15 @@ class XMCDTreeWidget(qt.QTreeWidget):
         which the respective identifier is
         assigned to.
         '''
-        out = dict((id, []) for id in self.identifiers)
+        out = dict((group, []) for group in self.groupList)
         root = self.invisibleRootItem()
         for i in range(root.childCount()):
             item   = root.child(i)
-            id     = str(item.text(0))
+            group  = str(item.text(0))
             legend = str(item.text(1))
-            if len(id) == 0:
-                id = self.identifiers[-1]
-            out[id] += [legend]
+            if len(group) == 0:
+                group = self.groupList[-1]
+            out[group] += [legend]
         for value in out.values():
             value.sort()
         return out
@@ -1573,21 +1574,25 @@ class XMCDWidget(qt.QWidget):
         self.updatePlots()
 
     def updateSelectionDict(self):
+        # selDict has format {IDENTIFIER0: LIST_OF_IDENTS0, ... }
         selDict = self.list.getSelection()
         # self.selectionDict -> Uses ScanNumbers instead of legends...
         newDict = {}
         if self.ident == 'Key':
+            # List contains scannumber in the order they were added
             scanNumberList = [info['Key'] for info in self.infoList]
         for (idx, selList) in selDict.items():
             if idx not in newDict.keys():
                 newDict[idx] = []
             if self.ident == 'selectionlegend':
+                # Uses selectionlegend as identification for scans
                 for legend in selList:
                     newDict[idx] += [legend]
             else:
+                # Uses Key (scan number) as identification for scans:
                 for scanNumber in selList:
-                    idx = scanNumberList.index(scanNumber)
-                    legend = self.legendList[idx]
+                    scanIdx = scanNumberList.index(scanNumber)
+                    legend = self.legendList[scanIdx]
                     newDict[idx] += [legend]
         self.selectionDict = newDict
         self.setSelectionSignal.emit(self.selectionDict['A'],
