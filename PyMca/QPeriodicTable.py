@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -76,7 +76,7 @@ Elements = [
    ["Zn",  30,  12,4,   "zinc",       65.3800,     7140.00   ],
    ["Ga",  31,  13,4,   "gallium",    69.7200,     5903.00   ],
    ["Ge",  32,  14,4,   "germanium",  72.5900,     5323.00   ],
-   ["As",  33,  15,4,   "arsenic",    74.9200,     5.73000   ],
+   ["As",  33,  15,4,   "arsenic",    74.9200,     5730.00   ],
    ["Se",  34,  16,4,   "selenium",   78.9600,     4790.00   ],
    ["Br",  35,  17,4,   "bromine",    79.9200,     3120.00   ],
    ["Kr",  36,  18,4,   "krypton",    83.8000,     3.74000   ],
