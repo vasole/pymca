@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
-
+#/*##########################################################################
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+#############################################################################*/
+__author__ = "Ana Sancho Tomas and V.A. Sole"
 import copy
 import numpy
 from PyMca import ConfigDict
@@ -16,7 +33,6 @@ class XASSelfAttenuationCorrection(object):
         if configuration is None:
             self._configuration = None
             return
-
         good, message = isValidConfiguration(configuration)
         if not good:
             raise RuntimeError(message)
