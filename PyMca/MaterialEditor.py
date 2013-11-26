@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 2.01 $"
+__revision__ = "$Revision: 2.02 $"
 import sys
 import os
 import copy
@@ -98,7 +98,7 @@ class MaterialEditor(qt.QWidget):
             hboxlayout.setMargin(0)
             hboxlayout.setSpacing(0)
             label = qt.QLabel(hbox)
-            label.setText("Material")
+            label.setText("Enter name of material to be defined:")
             self.matCombo = MaterialComboBox(hbox,options=a)
             hboxlayout.addWidget(label)
             hboxlayout.addWidget(self.matCombo)
@@ -925,9 +925,9 @@ class MaterialGUI(qt.QWidget):
                 print("self._current after = ", self._current)
 
     def __densitySlot(self, silent=False):
-        qstring = self.__densityLine.text()
-        text = str(qstring)
         try:
+            qstring = self.__densityLine.text()
+            text = str(qstring)
             if len(text):
                 value = float(str(qstring))
                 self._current['Density'] = value
@@ -944,9 +944,9 @@ class MaterialGUI(qt.QWidget):
             self.__densityLine.setFocus()
     
     def __thicknessSlot(self, silent=False):
-        qstring = self.__thicknessLine.text()
-        text = str(qstring)
         try:
+            qstring = self.__thicknessLine.text()
+            text = str(qstring)
             if len(text):
                 value = float(text)
                 self._current['Thickness'] = value
