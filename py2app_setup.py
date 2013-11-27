@@ -15,6 +15,7 @@ os.system("/bin/rm -rf dist")
 os.system("/bin/rm -rf build")
 os.system("/bin/rm -rf *.pyc")
 
+BUNDLE_ICON = os.path.join('icons', 'PyMca.icns')
 
 #obtain the current PyMca version from the source file
 ffile = open(os.path.join('PyMca', 'PyMcaMain.py'), 'r').readlines()
@@ -55,7 +56,7 @@ try:
 except:
     pass
 PY2APP_OPTIONS = {'packages':PACKAGES}
-BUNDLE_ICON = '/Users/sole/Installation/PythonSnake.icns' 
+
 if os.path.exists(BUNDLE_ICON):
     PY2APP_OPTIONS['iconfile'] = BUNDLE_ICON
 else:
