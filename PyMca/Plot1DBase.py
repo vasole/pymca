@@ -117,7 +117,11 @@ class Plot1DBase(object):
                         del self.pluginInstanceDict[plugin]
                     if plugin in sys.modules:
                         if hasattr(sys.modules[plugin], targetMethod):
-                            reload(sys.modules[plugin])
+                            if sys.version.startswith('3.3'):
+                                import imp
+                                imp.reload(sys.modules[plugin])
+                            else:
+                                reload(sys.modules[plugin])
                     else:
                         __import__(plugin)
                     if hasattr(sys.modules[plugin], targetMethod):

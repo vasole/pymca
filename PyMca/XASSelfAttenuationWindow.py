@@ -34,7 +34,7 @@ from PyMca import MatrixImage
 from PyMca import MaterialEditor
 from PyMca import ConfigDict
 
-if not hasattr(qt, "QString"):
+if hasattr(qt, "QString"):
     qstring = qt.QString
 else:
     qstring = str
