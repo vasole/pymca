@@ -1,6 +1,11 @@
-VERSION 4.7.RC2
+VERSION 4.7.0
 
-Improved handling of HDF5 external links
+Add basic support for calculating multiple excitation corrections via the
+XMI-MSIM Monte Carlo code.
+
+Add Image alignment capabilities to the ROI Imaging tool.
+
+Improved handling of HDF5 external links.
 
 Solve printing issue when printing from the File menu while the SCAN window is
 active
@@ -22,12 +27,16 @@ Handling of scales in image plots.
 
 Add ID26 RIXS plugin as part of MultiScanToMesh plugins.
 
+Add XMCD and XAS plugins from ID08 and ID12.
+
+Add plugin to align curves.
+
 Stacks of DESY fio files readable by windows binary.
 
 Reduce memory usage when working with large in-memory stacks.
 
 Decide to load dynamically the data based on the amount of physical memory
-installed instead of a fixed amount.
+installed instead of based on a fixed data size.
 
 VERSION 4.6.2
 
