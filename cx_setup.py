@@ -257,6 +257,7 @@ buildOptions = dict(
         include_files = include_files,
         excludes = excludes,
         includes = includes,
+        icon = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico"),
         #includes = ["scipy.interpolate", "scipy.linalg"]
         #optimize=2,
         #packages = packages,
