@@ -1101,7 +1101,6 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         return tmpstr
         
     def __QSimpleOperation(self, operation):
-        return self.__simpleOperation(operation)
         try:
             self.__simpleOperation(operation)
         except:
@@ -1417,7 +1416,9 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             sel['scanselection'] = True
             sel['selection'] = copy.deepcopy(dataObject.info['selection'])
             sel['selectiontype'] = "1D"
-            if operation != 'fit':
+            if operation == 'average':
+                self._replaceSelection([sel])
+            elif operation != 'fit':
                 self._addSelection([sel])
             else:
                 self.__fitDataObject = newDataObject
