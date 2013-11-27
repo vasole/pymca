@@ -251,19 +251,19 @@ for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
 
 #Next line was for the plugins in frozen but now is in shared zip library
 #include_files.append((PyMcaDir, "PyMca"))
-
 buildOptions = dict(
         compressed = True,
         include_files = include_files,
         excludes = excludes,
         includes = includes,
-        icon = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico"),
         #includes = ["scipy.interpolate", "scipy.linalg"]
         #optimize=2,
         #packages = packages,
         #includes = ["Object3D"],
         #path = [PyMcaDir] + sys.path
         )
+if sys.platform.startswith('win'):
+    buildOptions['icon'] = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico")
 install_dir = PyMcaDir + " " + PyMcaMain.__version__
 if not sys.platform.startswith('win'):
     install_dir = install_dir.replace(" ","")
