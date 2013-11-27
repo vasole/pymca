@@ -154,18 +154,19 @@ class XASSelfAttenuationCorrection(object):
             crossSections = EPDL.getElementCrossSections(ele, fluoLine[0])
             muTotalFluorescence += massFractions[ele] * crossSections['total'][0]
     
-        
-        #FORMULA ANA ========================================================================
+        #define some convenience variables        
         sinIn = numpy.sin(numpy.deg2rad(alphaIn))
         sinOut= numpy.sin(numpy.deg2rad(alphaOut))
         g = sinIn / sinOut
         if 1:
+            # thick sample
             idx = numpy.where(muSampleJump > 0.0)[0][0]
             muSampleJump[0:idx] = muSampleJump[idx]
             ALPHA = g * (muTotalFluorescence/muSampleJump) + totalCrossSectionBackground/muSampleJump
             return (spectrum * ALPHA)/(1 + ALPHA - spectrum)
-        elif 0:
-            d = thickness * density #
+        elif 1:
+            # all samples (to be tested)
+            d = thickness * density
             idx = numpy.where(muSampleJump > 0.0)[0][0]
             muSampleJump[0:idx] = muSampleJump[idx]
             ALPHA = g * (muTotalFluorescence/muSampleJump) + totalCrossSectionBackground/muSampleJump
@@ -174,13 +175,11 @@ class XASSelfAttenuationCorrection(object):
             x = spectrum
             t = (ALPHA + 1)  * d * muSampleJump/sinIn
             if t.max() < 0.001:
-                print("A Approximated")
                 A = 1 - t
             else:
                 A = numpy.exp(-t)
             t = (ALPHA * d * muSampleJump/sinIn)
             if t.max() < 0.001:
-                print("B Approximated")
                 B = 1.0 - t
             else:
                 B = numpy.exp(-t)
@@ -192,15 +191,7 @@ class XASSelfAttenuationCorrection(object):
                                    (1.0 - B * numpy.exp(- x * d * muSampleJump/sinIn))
                 delta = numpy.abs(x - old).max()
                 i += 1
-                print "%d delta %f" % (i, delta)
             return x
-        elif 0:
-            # FORMULA Booth and Bridges for infinite sample
-            idx = numpy.where(muSampleJump > 0.0)[0][0]
-            muSampleJump[0:idx] = muSampleJump[idx]
-            ALPHA =  g * muTotalFluorescence + totalCrossSection
-            return (spectrum - (totalCrossSection/ALPHA) * (spectrum - 1) - (muSampleJump/ALPHA))/\
-                   (1.0 - (totalCrossSection/ALPHA) * (spectrum - 1) - (muSampleJump/ALPHA))
         else:
             thickness = 1.0
             density = 1.0e-6
@@ -209,7 +200,6 @@ class XASSelfAttenuationCorrection(object):
             tmpFloat0 = density * thickness * ALPHA / sinIn
             tmpFloat1 = numpy.exp(-tmpFloat0)
             BETA = (muSampleJump * tmpFloat0) * tmpFloat1
-            print "BETA = ", BETA
             GAMMA = 1.0 - tmpFloat1
             b = GAMMA * ( ALPHA  - muSampleJump * spectrum + BETA)
             discriminant = b*b + 4 * ALPHA * BETA * GAMMA * (spectrum - 1.0)
