@@ -209,7 +209,6 @@ class SampleConfiguration(qt.QWidget):
     def setParameters(self, ddict=None):
         if ddict is None:
             ddict = {}
-        print "ddict = ", ddict
         key = "material"
         if key in ddict:
             material = ddict['material']
