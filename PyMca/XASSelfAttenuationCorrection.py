@@ -124,7 +124,7 @@ class XASSelfAttenuationCorrection(object):
         # calculate the mass attenuation coefficient of the sample at the fluorescent energy
         # assume we are detecting the main fluorescence line of the element shell
         if edge == 'K':
-            rays = Elements.Element[element]['Ka rays']
+            rays = Elements.Element[element]["Ka xrays"]
         elif edge[0] == 'L':
             rays = Elements.Element[element][edge + " xrays"]
         elif edge[0] == 'M':
