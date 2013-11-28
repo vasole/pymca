@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2011 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2013 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps_py.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -519,7 +519,8 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
     PyErr_SetString(SPSError, "Error copying data to shared memory");
     Py_DECREF(src);
     return NULL;
-  }
+  }else
+   Py_DECREF(src);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -563,7 +564,8 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
     PyErr_SetString(SPSError, "Error copying data to shared memory");
     Py_DECREF(src);
     return NULL;
-  }
+  }else
+   Py_DECREF(src);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -601,7 +603,8 @@ static PyObject *sps_putdatacol(PyObject *self, PyObject *args)
     PyErr_SetString(SPSError, "Error copying data to shared memory");
     Py_DECREF(src);
     return NULL;
-  }
+  }else
+   Py_DECREF(src);
 
   Py_INCREF(Py_None);
   return Py_None;
