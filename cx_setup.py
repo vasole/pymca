@@ -322,7 +322,7 @@ for python_module in exec_list:
     icon = None
     # this allows to map a different icon to each executable
     if sys.platform.startswith('win'):
-        if python_module in ["PyMcaMain"]:
+        if python_module in ["PyMcaMain", "QStackWidget"]:
             icon = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico")
     executables.append(Executable(os.path.join(PyMcaDir, python_module+".py"),
                                   icon=icon))
