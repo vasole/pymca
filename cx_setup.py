@@ -155,11 +155,12 @@ except ImportError:
 try:
     import pyopencl
     OPENCL = True
-    # put the sift kernels in a dedicated directory
-    for ffile in glob.glob(os.path.join("PyMca", "sift","*.cl")):
-        include_files.append((ffile,
-                    os.path.join("sift_kernels", os.path.basename(ffile))))
+    import sift
 except :
+    OPENCL = False
+
+if sys.platform.lower().startswith("linux"):
+    # no sense to freeze
     OPENCL = False
 
 try:
@@ -210,6 +211,10 @@ if OBJECT3D:
         special_modules.append(os.path.dirname(h5py.__file__))
     if OPENCL:
         special_modules.append(os.path.dirname(pyopencl.__file__))
+        excludes.append("PyMca.sift")
+        special_modules.append(os.path.dirname(sift.__file__))
+    else:
+        excludes.append("pyopencl")
     if MDP:
         #mdp versions above 2.5 need special treatment
         if mdp.__version__  > '2.5':
@@ -234,7 +239,11 @@ else:
     if H5PY_SPECIAL:
         special_modules.append(os.path.dirname(h5py.__file__))
     if OPENCL:
+        excludes.append("PyMca.sift")
+        special_modules.append(os.path.dirname(sift.__file__))
         special_modules.append(os.path.dirname(pyopencl.__file__))
+    else:
+        excludes.append("pyopencl")
     if MDP:
         #mdp versions above 2.5 need special treatment
         if mdp.__version__  > '2.5':
@@ -262,8 +271,6 @@ buildOptions = dict(
         #includes = ["Object3D"],
         #path = [PyMcaDir] + sys.path
         )
-if sys.platform.startswith('win'):
-    buildOptions['icon'] = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico")
 install_dir = PyMcaDir + " " + PyMcaMain.__version__
 if not sys.platform.startswith('win'):
     install_dir = install_dir.replace(" ","")
@@ -312,7 +319,13 @@ for f in exec_list:
          
 executables = []
 for python_module in exec_list:
-    executables.append(Executable(os.path.join(PyMcaDir, python_module+".py")))
+    icon = None
+    # this allows to map a different icon to each executable
+    if sys.platform.startswith('win'):
+        if python_module in ["PyMcaMain"]:
+            icon = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico")
+    executables.append(Executable(os.path.join(PyMcaDir, python_module+".py"),
+                                  icon=icon))
 
 
 setup(

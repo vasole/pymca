@@ -77,8 +77,8 @@ except ImportError:
     import CalculationThread
     import ArraySave
 try:
-    from PyMca import sift
     from PyMca import SIFTAlignmentWindow
+    sift = SIFTAlignmentWindow.sift
     SIFT = True
 except:
     SIFT = False

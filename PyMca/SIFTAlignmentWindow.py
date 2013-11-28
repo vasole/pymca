@@ -25,14 +25,29 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+import os
 import sys
 import numpy
 from PyMca import PyMcaQt as qt
 from PyMca import ExternalImagesWindow
 from PyMca import PyMcaFileDialogs
-from PyMca import sift
+try:
+    from PyMca import sift
+except:
+    if sys.platform.lower().startswith("linux"):
+        raise
+    if ".zip" in os.path.abspath(__file__):
+        #frozen version
+        import pyopencl
+        import sift
+    else:
+        raise
+
 DEBUG = 0
 
+if DEBUG:
+    print("SIFT coming from %s" % os.path.abspath(sift.__file__))
+    
 __doc__ ="""The SIFT algorithm belongs to the University of British Columbia. It is
 protected by patent US6711293. If you are on a country where this pattent
 applies (like the USA), please check if you are allowed to use it. The
