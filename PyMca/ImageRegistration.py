@@ -119,7 +119,26 @@ def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
     f0 = img0_fft2
     f1 = img1_fft2
     t0 = time.time()
-    res = abs(fftshift(ifft2((f0 * f1.conjugate()) / (abs(f0) * abs(f1)))))
+    absf0 = abs(f0)
+    absf1 = abs(f1)
+    if 0:
+        # one way to deal with zeros
+        if (absf0 < 1.0e-20).any() or (absf1 < 1.0e-20).any():
+            ofsset = [0.0, 0.0]
+            logs.append("MeasureOffset: empty or uniform image?")
+            if withLog:
+                return offset, logs
+            else:
+                return offset
+    else:
+        # this one seems better because numerator is expected to be zero
+        idx = absf0 < 1.0e-20
+        if idx.any():
+            absf0[idx] = 1.0
+        idx = absf1 < 1.0e-20
+        if idx.any():
+            absf1[idx] = 1.0
+    res = abs(fftshift(ifft2((f0 * f1.conjugate()) / (absf0 * absf1))))
     t1 = time.time()
     a0, a1 = numpy.unravel_index(numpy.argmax(res), shape)
     resmax = res[a0, a1]
@@ -131,8 +150,12 @@ def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
     x0 = 0.0
     x1 = 0.0
     total = 0.0
-    for i in range(a0-w, a0+w+1):
-        for j in range(a1-w, a1 + w + 1):
+    a00 = int(max(a0-w, 0))
+    a01 = int(min(a0+w+1, shape[0]))
+    a10 = int(max(a1-w, 0))
+    a11 = int(min(a1+w+1, shape[1]))
+    for i in range(a00, a01):
+        for j in range(a10, a11):
             if res[i, j] > 0.1 * resmax:
                 tmp = res[i, j]
                 x0 += i * tmp
