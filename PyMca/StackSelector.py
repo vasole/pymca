@@ -31,6 +31,7 @@ import copy
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDirs
 from PyMca import DataObject
+from PyMca import MRCMap
 from PyMca import OmnicMap
 from PyMca import OpusDPTMap
 from PyMca import LuciaMap
@@ -150,6 +151,10 @@ class StackSelector(object):
                 #Roper Scientific format
                 #handle it as MarCCD stack
                 stack = QStack(imagestack=True)
+            elif MRCMap.isMRCFile(filelist[0]):
+                stack = MRCMap.MRCMap(filelist[0])
+                omnicfile = True
+                imagestack = True
             else:
                 stack = QSpecFileStack()
 
@@ -385,6 +390,7 @@ class StackSelector(object):
                         "OPUS-DPT Files (*.DPT *.dpt)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
+                        "MRC files (*.mrc *.st)",
                         "All Files (*)"]
         if not HDF5:
             idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)")

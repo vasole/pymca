@@ -33,7 +33,7 @@ class OmnicMap(DataObject.DataObject):
 
     It reads the spectra into a DataObject instance.
     This class  info member contains all the parsed information.
-    This calss data member contains the map itself as a 3D array.
+    This class data member contains the map itself as a 3D array.
     '''
     def __init__(self, filename):
         '''
