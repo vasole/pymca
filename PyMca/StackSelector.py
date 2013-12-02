@@ -65,7 +65,7 @@ class StackSelector(object):
         if not len(filelist):
             return None
 
-        if filefilter == "":
+        if filefilter in ["", "All Files (*)"]:
             if HDF5:
                 if h5py.is_hdf5(filelist[0]):
                     filefilter = "HDF5"
@@ -83,7 +83,11 @@ class StackSelector(object):
                 if sys.version < '3.0':
                     line = f.read(10)
                 else:
-                    line = str(f.read(10).decode())
+                    try:
+                        line = str(f.read(10).decode())
+                    except UnicodeDecodeError:
+                        #give a dummy value
+                        line = "          "
                 f.close()
             omnicfile = False
             if filefilter.upper().startswith('HDF5'):
