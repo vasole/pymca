@@ -123,7 +123,6 @@ class HDF5Stack1D(DataObject.DataObject):
             #the scans containing the selection, not that all the scans
             #contain the selection.
             scanlist = []
-            print("HERE")
             if 0:
                 JUST_KEYS = False
                 #expect same entry names in the files
@@ -524,8 +523,6 @@ class HDF5Stack1D(DataObject.DataObject):
             key = 'Dim_%d' % (i+1,)
             self.info[key] = shape[i]
         if xSelection is not None:
-            print("x size = ", xDataset.size)
-            print("info = ", self.info)
             if xDataset.size == shape[self.info['McaIndex']]:
                 self.x = [xDataset.reshape(-1)]
             else:
