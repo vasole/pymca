@@ -123,6 +123,7 @@ class HDF5Stack1D(DataObject.DataObject):
             #the scans containing the selection, not that all the scans
             #contain the selection.
             scanlist = []
+            print("HERE")
             if 0:
                 JUST_KEYS = False
                 #expect same entry names in the files
@@ -141,15 +142,13 @@ class HDF5Stack1D(DataObject.DataObject):
                 if len(entryNames):
                     i = 0
                     for entry in entryNames:
-                        i += 1
                         path = "/"+entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
-                        try:
-                            if base in tmpHdf[dirname].keys():                        
+                        if hasattr(tmpHdf[dirname], "keys"):
+                            i += 1
+                            if base in tmpHdf[dirname].keys():
                                 scanlist.append("1.%d" % i)
-                        except:
-                            pass
                     if not len(scanlist):
                         path = "/" + ySelection
                         dirname = posixpath.dirname(path)
@@ -283,9 +282,14 @@ class HDF5Stack1D(DataObject.DataObject):
             self.incrProgressBar=0
             for hdf in hdfStack._sourceObjectList:
                 entryNames = list(hdf["/"].keys())
+                goodEntryNames = []
+                for entry in entryNames:
+                    tmpPath = "/" + entry
+                    if hasattr(tmpHdf[tmpPath], "keys"):
+                        goodEntryNames.append(entry)
                 for scan in scanlist:
                     if JUST_KEYS:
-                        entryName = entryNames[int(scan.split(".")[-1])-1]
+                        entryName = goodEntryNames[int(scan.split(".")[-1])-1]
                         path = entryName + ySelection
                         if mSelection is not None:
                             mpath = entryName + mSelection
@@ -520,6 +524,8 @@ class HDF5Stack1D(DataObject.DataObject):
             key = 'Dim_%d' % (i+1,)
             self.info[key] = shape[i]
         if xSelection is not None:
+            print("x size = ", xDataset.size)
+            print("info = ", self.info)
             if xDataset.size == shape[self.info['McaIndex']]:
                 self.x = [xDataset.reshape(-1)]
             else:
