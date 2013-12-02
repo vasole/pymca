@@ -57,18 +57,11 @@ functions:
     selectionMaskUpdated
 """
 import numpy
-if 1:#try:
-    from PyMca import StackPluginBase
-    from PyMca import PyMcaFileDialogs
-    import PyMca.PyMca_Icons as PyMca_Icons
-else:#except ImportError:
-    print("Plugin importing from somewhere else")
-    import StackPluginBase
-    import PyMcaFileDialogs
-    import PyMca_Icons
+from PyMca import StackPluginBase
+from PyMca import PyMcaFileDialogs
+import PyMca.PyMca_Icons as PyMca_Icons
 
 DEBUG = 0
-
 
 class StackAxesPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
@@ -79,8 +72,22 @@ class StackAxesPlugin(StackPluginBase.StackPluginBase):
         function = self.replace1DAxisWithASCII
         info = text
         icon = None
-        self.methodDict["1D axis from file"] = [function, info, icon]
-        self.__methodKeys = ["1D axis from file"]
+        self.methodDict["1D axis from ASCII file"] = [function, info, icon]
+        self.__methodKeys = ["1D axis from ASCII file"]
+
+        function = self.replace1DAxisWithActiveCurveXValues
+        text = "Replace current 1D axis by X values in current MCA curve"
+        info = text
+        icon = None
+        self.methodDict["1D axis from MCA curve X values"] = [function, info, icon]
+        self.__methodKeys.append("1D axis from MCA curve X values")
+
+        function = self.replace1DAxisWithActiveCurveYValues
+        text = "Replace current 1D axis by Y values in current MCA curve"
+        info = text
+        icon = None
+        self.methodDict["1D axis from MCA curve Y values"] = [function, info, icon]
+        self.__methodKeys.append("1D axis from MCA curve Y values")
 
     #Methods implemented by the plugin
     def getMethods(self):
@@ -107,8 +114,35 @@ class StackAxesPlugin(StackPluginBase.StackPluginBase):
                                            single=True)
         if not len(fileList):
             return
+
         filename = fileList[0]
         data = numpy.loadtxt(filename)
+        data.shape = -1
+        if data.size != nPoints:
+            raise ValueError("Number of read values not equal to %d" % nPoints)
+        else:
+            stack.x = [data]
+            self.setStack(stack, mcaindex=mcaIndex)
+
+    def replace1DAxisWithActiveCurveYValues(self):
+        stack = self.getStackDataObject()
+        mcaIndex = stack.info.get('McaIndex', -1)
+        nPoints = stack.data.shape[mcaIndex]
+        curve = self.getActiveCurve()
+        data = curve[1]
+        data.shape = -1
+        if data.size != nPoints:
+            raise ValueError("Number of read values not equal to %d" % nPoints)
+        else:
+            stack.x = [data]
+            self.setStack(stack, mcaindex=mcaIndex)
+
+    def replace1DAxisWithActiveCurveXValues(self):
+        stack = self.getStackDataObject()
+        mcaIndex = stack.info.get('McaIndex', -1)
+        nPoints = stack.data.shape[mcaIndex]
+        curve = self.getActiveCurve()
+        data = curve[0]
         data.shape = -1
         if data.size != nPoints:
             raise ValueError("Number of read values not equal to %d" % nPoints)
