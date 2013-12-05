@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,8 +39,8 @@ DEBUG = 0
 CONTINUUM_LIST = [None,'Constant','Linear','Parabolic','Linear Polynomial','Exp. Polynomial']
 OLDESCAPE = 0
 MAX_ATTENUATION = 1.0E-300
-class McaTheory:
-    def __init__(self,initdict=None,filelist=None,**kw):
+class McaTheory(object):
+    def __init__(self, initdict=None, filelist=None, **kw):
         self.ydata0  = None
         self.xdata0  = None
         self.sigmay0 = None
@@ -117,8 +117,10 @@ class McaTheory:
         return self.configure()
             
     def configure(self,newdict=None):
-        if newdict is None:return copy.deepcopy(self.config)
-        if newdict == {}  :return copy.deepcopy(self.config)
+        if newdict is None:
+            return copy.deepcopy(self.config)
+        if newdict == {}:
+            return copy.deepcopy(self.config)
         self.config.update(newdict)
         self.__configure()
         return copy.deepcopy(self.config)
@@ -959,14 +961,20 @@ class McaTheory:
         if not self.config['fit']['use_limit']:
             if 'xmin' in kw:
                 xmin=kw['xmin']
-                self.config['fit']['xmin'] = xmin
+                if xmin is not None:
+                    self.config['fit']['xmin'] = xmin
+                else:
+                    xmin=min(self.xdata)
             elif len(self.xdata):
                 xmin=min(self.xdata)
         xmax = self.config['fit']['xmax']
         if not self.config['fit']['use_limit']:
             if 'xmax' in kw:
                 xmax=kw['xmax']
-                self.config['fit']['xmax'] = xmax
+                if xmax is not None:
+                    self.config['fit']['xmax'] = xmax
+                else:
+                    xmax=max(self.xdata)
             elif len(self.xdata):
                     xmax=max(self.xdata)
 
@@ -1250,8 +1258,7 @@ class McaTheory:
             matrix[:,i] = result[:,0]
         return matrix
 
-    def linearMcaTheory(self,param0,t0,hypermet=None,
-                        continuum=None,summing=None):
+    def linearMcaTheory(self, param0, t0, hypermet=None, continuum=None, summing=None):
         if continuum is None:
             continuum = self.__CONTINUUM
         if hypermet is None:
@@ -1463,7 +1470,7 @@ class McaTheory:
     def linearMcaTheoryDerivative(self,param0,index,t0):
         NGLOBAL = self.NGLOBAL
         if index > NGLOBAL-1:
-             return self.linearMatrix[:,index-NGLOBAL]
+             return self.linearMatrix[:, index-NGLOBAL]
         PARAMETERS = self.PARAMETERS
         if self.__CONTINUUM and (PARAMETERS[index] == 'Constant'):
             return numpy.ones(len(t0)).astype(numpy.float)
@@ -1659,7 +1666,7 @@ class McaTheory:
             return (f1-f2) / (2.0 * delta)
         
     def estimate(self):
-        self.parameters,self.codes = self.specfitestimate(self.xdata, self.ydata,self.zz)        
+        self.parameters, self.codes = self.specfitestimate(self.xdata, self.ydata,self.zz)        
         #self.estimatelinpoly(self.xdata, self.ydata,self.zz) 
         #self.estimateexppoly(self.xdata, self.ydata,self.zz)
         #print self.codes[:,3] 
@@ -1984,7 +1991,7 @@ class McaTheory:
             #print "Elapsed = ",time.time() - e0
             if self._batchFlag and self.linearMatrix is None:
                     self.linearMatrix = self.getPeakMatrixContribution(newpar)
-        return newpar,codes
+        return newpar, codes
     
     def startfit(self,digest=0, linear=None):
         if linear is None:
