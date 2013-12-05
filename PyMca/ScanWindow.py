@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1720,6 +1720,12 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             return self.graph.getY1AxisLimits()
         else:
             return self.graph.getY2AxisLimits()
+
+    def setGraphXLimits(self, xmin, xmax, replot=False):
+        return self.graph.setX1AxisLimits(xmin, xmax, replot=replot)
+
+    def setGraphYLimits(self, ymin, ymax, replot=False):
+        return self.graph.setY1AxisLimits(ymin, ymax, replot=replot)
 
     def setActiveCurve(self, legend):
         self.graph.setActiveCurve(legend)

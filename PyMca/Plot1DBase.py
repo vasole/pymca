@@ -197,6 +197,20 @@ class Plot1DBase(object):
         print("getGraphYLimits not implemented")
         return 0.0, 100.0
 
+    def setGraphXLimits(self, xmin, xmax, replot=False):
+        """
+        set the graph X limits. 
+        """
+        print("setGraphXLimits not implemented")
+        return
+
+    def getGraphYLimits(self, ymin, ymax, replot=False):
+        """
+        set the graph Y (left) limits. 
+        """
+        print("setGraphYLimits not implemented")
+        return
+
     def setActiveCurve(self, legend):
         """
         Funtion to request the plot window to set the curve with the specified legend
