@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -157,7 +157,7 @@ class McaAdvancedFitBatch(object):
                         self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
             self.mcafit.enableOptimizedLinearFit()
             inputfile   = self._filelist[i]
-            self.__row += 1
+            self.__row += 1 #should be plus fileStep?
             self.onNewFile(inputfile, self._filelist)
             self.file = self.getFileHandle(inputfile)
             if self.pleaseBreak: break
@@ -170,6 +170,9 @@ class McaAdvancedFitBatch(object):
                             self.__stack = True
             if self.__stack:
                 self.__processStack()
+                if self._HDF5:
+                    # The complete stack has been analyzed
+                    break
             else:
                 self.__processOneFile()
         if self.counter:
@@ -188,7 +191,8 @@ class McaAdvancedFitBatch(object):
                 if h5py.is_hdf5(inputfile):
                     self._HDF5 = True
                     try:
-                        return HDF5Stack1D.HDF5Stack1D([inputfile], self.selection)
+                        return HDF5Stack1D.HDF5Stack1D(self._filelist,
+                                                      self.selection)
                     except:
                         raise
             ffile = self.__tryEdf(inputfile)
