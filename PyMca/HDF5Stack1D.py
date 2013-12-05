@@ -284,7 +284,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 goodEntryNames = []
                 for entry in entryNames:
                     tmpPath = "/" + entry
-                    if hasattr(tmpHdf[tmpPath], "keys"):
+                    if hasattr(hdf[tmpPath], "keys"):
                         goodEntryNames.append(entry)
                 for scan in scanlist:
                     if JUST_KEYS:
