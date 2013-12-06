@@ -260,11 +260,11 @@ if __name__ == "__main__":
     import glob
     from PyMca import EDFStack
     if 1:
-        configurationFile = "G4-4720eV-NOWEIGHT-Constant-batch.cfg"
+        configurationFile = "E:\Curso-ESRF-20130219\CFG-FILES\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
         fileList = glob.glob("E:\DATA\PyMca-Training\G4-4720eV\G4_mca_0012*.edf")
     else:
         configurationFile = "E2_line.cfg"
-        fileList = glob.glob("E:\DATA\PyMca-Data\FDM55\AS_EDF\E2_line*.edf")
+        fileList = glob.glob("E:\DATA\PyMca-Training\FDM55\AS_EDF\E2_line*.edf")
     dataStack = EDFStack.EDFStack(filelist=fileList)
 
     t0 = time.time()
