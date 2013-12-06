@@ -151,7 +151,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                          qt.SIGNAL('finished()'),
                          self.threadFinished)
             self.thread.start()
-            message = "Please wait. PCA Calculation going on."
+            message = "Please wait. Calculation going on."
             CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
                                 parent=self.configurationWidget)
