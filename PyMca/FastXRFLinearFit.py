@@ -23,7 +23,7 @@ from PyMca import ConfigDict
 
 DEBUG = 0
 
-class McaFastLinearFit(object):
+class FastXRFLinearFit(object):
     def __init__(self, mcafit=None):
         self._config = None
         if mcafit is None:
@@ -40,9 +40,14 @@ class McaFastLinearFit(object):
         self.setFitConfiguration(configuration)
 
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
-                           configuration=None, concentrations=False):
+                           configuration=None, concentrations=False,
+                           ysum=None):
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
+
+        if concentrations:
+            txt = "Fast concentration calculation not implemented yet"
+            raise NotImplemented(txt)
 
         if configuration is not None:
             self._mcaTheory.setConfiguration(configuration)
@@ -86,21 +91,34 @@ class McaFastLinearFit(object):
             mcaIndex = y.info.get("McaIndex", -1)
         else:
             data = y
+            mcaIndex = -1
 
         if len(data.shape) != 3:
             txt = "For the time being only three dimensional arrays supported"
+            raise IndexError(txt)
+        elif mcaIndex not in [-1, 2]:
+            txt = "For the time being only mca arrays supported"
             raise IndexError(txt)
         else:
             # if the cumulated spectrum is present it should be better
             nRows = data.shape[0]
             nColumns = data.shape[1]
-            nPixels =  nRows * nColumns 
-            firstSpectrum = data[0, 0, :]
+            nPixels =  nRows * nColumns
+            if ysum is not None:
+                firstSpectrum = ysum
+            elif not concentrations:
+                # just one spectrum is enough for the setup
+                firstSpectrum = data[0, 0, :]
+            else:
+                firstSpectrum = data[0, :, :].sum(axis=0, dtype=numpy.float)
 
         # make sure we calculate the matrix of the contributions
         self._mcaTheory.enableOptimizedLinearFit()
 
         # initialize the fit
+        # print("xmin = ", xmin)
+        # print("xmax = ", xmax)
+        # print("firstShape = ", firstSpectrum.shape)
         self._mcaTheory.setData(x=x, y=firstSpectrum, xmin=xmin, xmax=xmax)
         self._mcaTheory.estimate()
         
@@ -111,10 +129,13 @@ class McaFastLinearFit(object):
         # but we are still missing the derivatives from the background
         nFree = 0
         freeNames = []
+        nFreeBackgroundParameters = 0
         for i, param in enumerate(self._mcaTheory.PARAMETERS):
             if self._mcaTheory.codes[0][i] != ClassMcaTheory.Gefit.CFIXED:
                 nFree += 1
                 freeNames.append(param)
+                if i < self._mcaTheory.NGLOBAL:
+                    nFreeBackgroundParameters += 1
 
         #build the matrix of derivatives
         derivatives = None
@@ -162,9 +183,11 @@ class McaFastLinearFit(object):
             iXMax = numpy.nonzero(x >= xdata[-1])[0][0]
 
         dummySpectrum = firstSpectrum[iXMin:iXMax+1].reshape(-1, 1)
+        # print("dummy = ", dummySpectrum.shape)
 
         # allocate the output buffer
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
+        uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
 
         #perform the inital fit
         for i in range(data.shape[0]):
@@ -195,28 +218,69 @@ class McaFastLinearFit(object):
                     chunk[k] -= background
 
             # perform the multiple fit to all the spectra in the chunk
+            # print("SHAPES")
+            # print(derivatives.shape)
+            # print(chunk.shape)
             ddict=lstsq(derivatives, chunk, weight=weight, digested_output=True)
             parameters = ddict['parameters'] 
             results[:, i, :] = parameters
+            uncertainties[:, i, :] = ddict['uncertainties']
 
         # cleanup zeros
         # start with the parameter with the largest amount of negative values
         negativePresent = True
-        badParameters = []
+        nFits = 0
         while negativePresent:
             zeroList = []
             for i in range(nFree):
                 #we have to skip the background parameters
-                t = results[i] < 0
-                zeroList.append((t.sum(), i, t))
+                if i >= nFreeBackgroundParameters:
+                    t = results[i] < 0
+                    if t.sum() > 0:
+                        zeroList.append((t.sum(), i, t))
+
+            if len(zeroList) == 0:
+                negativePresent = False
+                continue
+
+            if nFits > (2 * (nFree - nFreeBackgroundParameters)):
+                # we are probably in an endless loop
+                # force negative pixels
+                for item in zeroList:
+                    i = item[1]
+                    badMask = item[2]
+                    results[i][badMask] = 0.0
+                    print("WARNING: %d pixels of parameter %s set to zero" % (item[0], freeNames[i]))
+                continue
             zeroList.sort()
             zeroList.reverse()
-            if zeroList[0][0] == 0:
-                negativePresent = False
+            
+            badParameters = []
+            badParameters.append(zeroList[0][1])
+            badMask = zeroList[0][2]
+            if 1:
+                # prevent and endless loop if two or more parameters have common pixels where they are
+                # negative and one of them remains negative when forcing other one to zero
+                for i, item in enumerate(zeroList):
+                    if item[1] not in badParameters:
+                        if item[0] > 0:
+                            #check if they have common negative pixels
+                            t = badMask * item[-1]
+                            if t.sum() > 0:
+                                badParameters.append(item[1])
+                                badMask = t
+            if badMask.sum() < (0.0025 * nPixels):
+                # fit not worth
+                for i in badParameters:
+                    results[i][badMask] = 0.0
+                    uncertainties[i][badMask] = 0.0
+                    if DEBUG:
+                        print("WARNING: %d pixels of parameter %s set to zero" % (badMask.sum(),
+                                                                                  freeNames[i]))
             else:
-                badParameters.append(zeroList[0][1])
-                badMask = zeroList[0][2]
-                results[zeroList[0][1]][badMask] = 0.0
+                if DEBUG:
+                    print("Number of secondary fits = %d" % (nFits + 1))
+                nFits += 1
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
                 spectra = data[badMask, iXMin:iXMax+1]
@@ -246,29 +310,28 @@ class McaFastLinearFit(object):
                 idx = 0
                 for i in range(nFree):
                     if i in badParameters:
-                        continue
-                    results[i][badMask] = ddict['parameters'][idx]
-                    idx += 1
-
-        if concentrations:
-            raise NotImplemented("Fast concentrations calculation not implemented yet")
-
-        return results
+                        results[i][badMask] = 0.0
+                        uncertainties[i][badMask] = 0.0
+                    else:
+                        results[i][badMask] = ddict['parameters'][idx]
+                        uncertainties[i][badMask] = ddict['uncertainties'][idx]
+                        idx += 1
+        return {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
         
 if __name__ == "__main__":
     import time
     import glob
     from PyMca import EDFStack
     if 1:
-        configurationFile = "E:\Curso-ESRF-20130219\CFG-FILES\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
-        fileList = glob.glob("E:\DATA\PyMca-Training\G4-4720eV\G4_mca_0012*.edf")
+        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
+        fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_0*.edf")
     else:
         configurationFile = "E2_line.cfg"
         fileList = glob.glob("E:\DATA\PyMca-Training\FDM55\AS_EDF\E2_line*.edf")
     dataStack = EDFStack.EDFStack(filelist=fileList)
 
     t0 = time.time()
-    fastFit = McaFastLinearFit()
+    fastFit = FastXRFLinearFit()
     fastFit.setFitConfigurationFile(configurationFile)
     print("Configuring Elapsed = % s " % (time.time() - t0))
     results = fastFit.fitMultipleSpectra(y=dataStack)
