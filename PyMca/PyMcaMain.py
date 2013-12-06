@@ -93,7 +93,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "4.7.0"
+__version__ = "4.7.01"
 if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",
