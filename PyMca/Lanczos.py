@@ -1,18 +1,18 @@
 ## /************************************************************************
-
+##
 ##   Copyright
 ##   Alessandro MIRONE
 ##   mirone@esrf.fr
-
+##
 ##   Copyright 2002  by European Synchrotron Radiation Facility, Grenoble, 
 ##                   France
-
+##
 ##                                ----------
- 
+## 
 ##                            All Rights Reserved
- 
+## 
 ##                                ----------
-
+##
 ## Permission to use, copy, modify, and distribute this software and its
 ## documentation for any purpose and without fee is hereby granted,
 ## provided that the above copyright notice appear in all copies and that
@@ -21,7 +21,7 @@
 ## Radiation Facility or ESRF or SCISOFT not be used in advertising or 
 ## publicity pertaining to distribution of the software without specific, 
 ## written prior permission.
-
+##
 ## EUROPEAN SYNCHROTRON RADIATION FACILITY DISCLAIMS ALL WARRANTIES WITH
 ## REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
 ## MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL EUROPEAN SYNCHROTRON
@@ -30,9 +30,10 @@
 ## DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 ## TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ## PERFORMANCE OF THIS SOFTWARE.
-
+##
 ## **************************************************************************/
 __author__ = "A. Mirone - ESRF SciSoft Group"
+__license__ = "BSD"
 import math
 sparsamodulo=0
 PARALLEL=0
