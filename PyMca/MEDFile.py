@@ -18,6 +18,8 @@
 #   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 #   SOFTWARE OR THE USE OR OTHER DEALINGS IN THIS SOFTWARE.
 #
+__license__ = "BSD"
+__author__ = "M. Newville - The University of Chicago"
 """
 Simple interface to M. River's Multi-Element MCA Data Format
 
