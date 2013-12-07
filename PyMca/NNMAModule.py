@@ -1,4 +1,5 @@
 __author__ = "Uwe Schmitt uschmitt@mineway.de, wrapped by V.A. Sole - ESRF"
+__license__ = "BSD"
 __doc__ = """
 This module is a simple wrapper to the py_nnma module of Uwe Schmitt (uschmitt@mineway.de)
 in order to integrate it into PyMca. What follows is the documentation of py_nnma
