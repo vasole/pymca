@@ -1,5 +1,4 @@
 # coding: utf8
-#
 #/*********************************************************************************************
 #
 # Copyright (c) 2013 J. Kieffer and V.A. Sole, European Synchrotron Radiation Facility (ESRF)
@@ -23,7 +22,6 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 #********************************************************************************************/
-
 _author__ = "Jérôme Kieffer and V.Armando Solé"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
