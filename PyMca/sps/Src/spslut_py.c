@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2011 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -50,6 +50,9 @@
 */
 #include <stdio.h>
 #include <Python.h>
+/*
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+*/
 #include <numpy/arrayobject.h>
 #include <sps_lut.h>
 
@@ -172,11 +175,11 @@ static PyObject *spslut_transform(PyObject *self, PyObject *args)
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
-                PyArray_NOTYPE, 2, 2))) {
+                NPY_NOTYPE, 2, 2))) {
     onError("Input Array is not a 2x2 array");
   }
 
-  switch (src->descr->type_num) {
+  switch (PyArray_DESCR(src)->type_num) {
   case NPY_UINT:
     type = SPS_UINT; break;
   case NPY_ULONG:
@@ -201,9 +204,9 @@ static PyObject *spslut_transform(PyObject *self, PyObject *args)
     onError("Input Array type not supported");
   }
 
-  data = src->data;
-  cols = (int) src->dimensions[1];  /*FIX THIS cols and rows are turned around */
-  rows = (int) src->dimensions[0];  /*###CHANGED - ALEXANDRE 24/07/2001*/
+  data = PyArray_DATA(src);
+  cols = (int) PyArray_DIMS(src)[1];  /*FIX THIS cols and rows are turned around */
+  rows = (int) PyArray_DIMS(src)[0];  /*###CHANGED - ALEXANDRE 24/07/2001*/
 
 
 
@@ -234,7 +237,7 @@ static PyObject *spslut_transform(PyObject *self, PyObject *args)
       Py_DECREF(src);
       return NULL;
   }
-  as_pointer = (char *) as_aux -> data;
+  as_pointer = (char *) PyArray_DATA(as_aux);
   as_r = (char *) r;
 
   memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
@@ -307,11 +310,11 @@ static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
-                PyArray_NOTYPE, 2, 2))) {
+                NPY_NOTYPE, 2, 2))) {
 		onError("spslut.transformarray: Input Array is not a 2x2 array");
   }
 
-  switch (src->descr->type_num) {
+  switch (PyArray_DESCR(src)->type_num) {
   case NPY_ULONG:
     type = SPS_ULONG; break;
   case NPY_UINT:
@@ -336,9 +339,9 @@ static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
     onError("Input Array type not supported");
   }
 
-  data = src->data;
-  cols = (int) src->dimensions[1];  /*FIX THIS cols and rows are turned around */
-  rows = (int) src->dimensions[0];  /*###CHANGED - ALEXANDRE 24/07/2001*/
+  data = PyArray_DATA(src);
+  cols = (int) PyArray_DIMS(src);  /*FIX THIS cols and rows are turned around */
+  rows = (int) PyArray_DIMS(src);  /*###CHANGED - ALEXANDRE 24/07/2001*/
 
   r = SPS_PaletteArray (data, type, cols, rows, reduc, fastreduc, meth, gamma,
             autoscale, mapmin, mapmax, Xservinfo, palette_code,
@@ -350,13 +353,13 @@ static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
   as_dim[0] = strlen(mode);
   as_dim[1] = prows * pcols;
 /*  printf("dim[0] = %d dim[1] = %d \"%s\" \n",as_dim[0],as_dim[1],mode); */
-  aux = (PyArrayObject*) PyArray_SimpleNew(2, as_dim, PyArray_CHAR);
+  aux = (PyArrayObject*) PyArray_SimpleNew(2, as_dim, NPY_CHAR);
   if (aux == NULL){
       free(r);
       Py_DECREF(src);
       return NULL;
   }
-  as_pointer = (char *) aux -> data;
+  as_pointer = (char *) PyArray_DATA(aux);
   as_r = (char *) r;
   memcpy(as_pointer, as_r, as_dim[0] * as_dim[1]);
   free(r);

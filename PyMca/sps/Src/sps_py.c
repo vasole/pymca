@@ -30,6 +30,9 @@
 #include <sps.h>
 /* #include <stdio.h> */
 #include <Python.h>
+/* adding next line may raise errors ...
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+*/
 #include <numpy/arrayobject.h>
 
 static PyObject *SPSError;
