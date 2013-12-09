@@ -30,7 +30,6 @@ import numpy
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import PyMcaFileDialogs
-from PyMca import ConfigDict
 
 DEBUG = 0
 

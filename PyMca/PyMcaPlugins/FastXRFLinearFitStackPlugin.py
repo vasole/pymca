@@ -55,6 +55,8 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
+import os
+import time
 from PyMca import StackPluginBase
 from PyMca import FastXRFLinearFit
 from PyMca import FastXRFLinearFitWindow
@@ -63,7 +65,7 @@ from PyMca import StackPluginResultsWindow
 from PyMca import PyMcaFileDialogs
 import PyMca.PyMca_Icons as PyMca_Icons
 from PyMca import PyMcaQt as qt
-import time
+from PyMca import ArraySave
 
 DEBUG = 0
 
@@ -133,7 +135,6 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
 
     def _executeFunctionAndParameters(self):
         parameters = self.configurationWidget.getParameters()
-
         self.widget = None
         if self.fitInstance is None:
             self.fitInstance = FastXRFLinearFit.FastXRFLinearFit()
@@ -193,7 +194,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     return
         images = result['parameters']
         imageNames = result['names']
-        nimages = images.shape[0]
+        nImages = images.shape[0]
         self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=False)
         self.widget.buildAndConnectImageButtonBox()
@@ -205,6 +206,24 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         self.widget.setStackPluginResults(images,
                                           image_names=imageNames)
         self._showWidget()
+
+        # save to output directory
+        parameters = self.configurationWidget.getParameters()
+        outputDir = parameters["output_dir"]
+        if outputDir in [None, ""]:
+            if DEBUG:
+                print("Nothing to be saved")
+                return
+        if not os.path.isdir(outputDir):
+            raise IOError("<%s>  is not a valid output directory" % outputDir)
+        imagesDir = os.path.join(outputDir, "IMAGES")
+        imageList = [None] * nImages
+        for i in range(nImages):
+            imageList[i] = images[i]
+        fileName = os.path.join(imagesDir, "images.edf")
+        ArraySave.save2DArrayListAsEDF(imageList, fileName, labels=imageNames)
+        fileName = os.path.join(imagesDir, "images.csv")
+        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True, labels=imageNames)                    
 
     def _showWidget(self):
         if self.widget is None:
