@@ -6,6 +6,9 @@ is granted under the SciPy License.
 */
 
 #include "Python.h"
+/* adding next line may raise errors ...
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+*/
 #include "numpy/noprefix.h"
 
 #include <setjmp.h>
@@ -44,16 +47,6 @@ static struct module_state _state;
 #define PYERR(message)  \
         {struct module_state *st = GETSTATE(self);\
             PyErr_SetString(st->error, message);goto fail;}
-
-#define DATA(arr) ((arr)->data)
-#define DIMS(arr) ((arr)->dimensions)
-#define STRIDES(arr) ((arr)->strides)
-#define ELSIZE(arr) ((arr)->descr->elsize)
-#define OBJECTTYPE(arr) ((arr)->descr->type_num)
-#define BASEOBJ(arr) ((PyArrayObject *)((arr)->base))
-#define RANK(arr) ((arr)->nd)
-#define ISCONTIGUOUS(m) ((m)->flags & CONTIGUOUS)
-
 
 jmp_buf MALLOC_FAIL;
 
@@ -103,18 +96,18 @@ static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
     if (a_image == NULL) goto fail;
 
     if (size != NULL) {
-    a_size = (PyArrayObject *)PyArray_ContiguousFromObject(size, PyArray_LONG, 1, 1);
+    a_size = (PyArrayObject *)PyArray_ContiguousFromObject(size, NPY_LONG, 1, 1);
     if (a_size == NULL) goto fail;
-    if ((RANK(a_size) != 1) || (DIMS(a_size)[0] < 2)) 
+    if ((PyArray_NDIM(a_size) != 1) || (PyArray_DIMS(a_size)[0] < 2)) 
         PYERR("Size must be a length two sequence");
-    lhelp = (long *) DATA(a_size);
+    lhelp = (long *) PyArray_DATA(a_size);
     Nwin[0] = (int) (*lhelp);
     Nwin[1] = (int) (*(lhelp++));
-    Idims[0] = (int) (a_image->dimensions[0]);
-    Idims[1] = (int) (a_image->dimensions[1]);
+    Idims[0] = (int) (PyArray_DIMS(a_image)[0]);
+    Idims[1] = (int) (PyArray_DIMS(a_image)[1]);
     }  
 
-    a_out = (PyArrayObject *)PyArray_SimpleNew(2,DIMS(a_image),typenum);
+    a_out = (PyArrayObject *)PyArray_SimpleNew(2,PyArray_DIMS(a_image),typenum);
     if (a_out == NULL) goto fail;
 
     if (setjmp(MALLOC_FAIL)) {
@@ -122,41 +115,41 @@ static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
     }
     else {
     switch (typenum) {
-    case PyArray_UBYTE:
-        b_medfilt2((unsigned char *)DATA(a_image), (unsigned char *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_UBYTE:
+        b_medfilt2((unsigned char *)PyArray_DATA(a_image), (unsigned char *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_FLOAT:
-        f_medfilt2((float *)DATA(a_image), (float *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_FLOAT:
+        f_medfilt2((float *)PyArray_DATA(a_image), (float *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_DOUBLE:
-        d_medfilt2((double *)DATA(a_image), (double *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_DOUBLE:
+        d_medfilt2((double *)PyArray_DATA(a_image), (double *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_SHORT:
-        short_medfilt2((short *)DATA(a_image), (short *)DATA(a_out),\
-			Nwin, Idims, conditional_flag);
+    case NPY_SHORT:
+        short_medfilt2((short *)PyArray_DATA(a_image), (short *)PyArray_DATA(a_out),\
+            Nwin, Idims, conditional_flag);
         break;
-    case PyArray_USHORT:
-        ushort_medfilt2((unsigned short *)DATA(a_image), (unsigned short *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_USHORT:
+        ushort_medfilt2((unsigned short *)PyArray_DATA(a_image), (unsigned short *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_INT:
-        int_medfilt2((int *)DATA(a_image), (int *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_INT:
+        int_medfilt2((int *)PyArray_DATA(a_image), (int *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_UINT:
-        uint_medfilt2((unsigned int *)DATA(a_image), (unsigned int *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_UINT:
+        uint_medfilt2((unsigned int *)PyArray_DATA(a_image), (unsigned int *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_LONG:
-        long_medfilt2((long *)DATA(a_image), (long *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_LONG:
+        long_medfilt2((long *)PyArray_DATA(a_image), (long *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
-    case PyArray_ULONG:
-        ulong_medfilt2((unsigned long *)DATA(a_image), (unsigned long *)DATA(a_out),\
-		       	Nwin, Idims, conditional_flag);
+    case NPY_ULONG:
+        ulong_medfilt2((unsigned long *)PyArray_DATA(a_image), (unsigned long *)PyArray_DATA(a_out),\
+                   Nwin, Idims, conditional_flag);
         break;
     default:
       PYERR("Median filter unsupported data type.");
