@@ -16,6 +16,9 @@
 #
 #############################################################################*/
 #include <Python.h>
+/* adding next line may raise errors ...
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+*/
 #include <numpy/arrayobject.h>
 #include <SpecFile.h>
 
@@ -522,13 +525,13 @@ scandata_col(PyObject *self, Py_ssize_t index) {
     if (ret == -1 )
           onError("cannot get data for column");
 
-    r_array = (PyArrayObject *)PyArray_SimpleNew(1,&ret,PyArray_DOUBLE);
+    r_array = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
 
     if ( r_array == NULL ) 
           onError("cannot get memory for array data");
 
     if (data != (double *) NULL){
-        memcpy(r_array->data,data,PyArray_NBYTES(r_array));
+        memcpy(PyArray_DATA(r_array), data, PyArray_NBYTES(r_array));
         free(data);
     }else{
         /* return an empty array? */
@@ -582,7 +585,7 @@ scandata_data(PyObject *self,PyObject *args) {
 
     dimensions[0] = data_info[1];
     dimensions[1] = data_info[0];
-    r_array = (PyArrayObject *)PyArray_SimpleNew(2,dimensions,PyArray_DOUBLE);
+    r_array = (PyArrayObject *)PyArray_SimpleNew(2,dimensions,NPY_DOUBLE);
 
    /*
     * Copy
@@ -592,7 +595,7 @@ scandata_data(PyObject *self,PyObject *args) {
     for (i=0;i<dimensions[0];i++) {
        for (j=0;j<dimensions[1];j++) {
           didx = j + i * dimensions[1];
-          ((double *)r_array->data)[didx] = data[j][i];
+          ((double *)PyArray_DATA(r_array))[didx] = data[j][i];
        }
     }
     /* memcpy(array->data,data,PyArray_NBYTES(array)); */
@@ -631,9 +634,9 @@ scandata_dataline(PyObject *self,PyObject *args) {
     if (ret == -1 )
           onError("cannot get data for line");
 
-    r_array  = (PyArrayObject *)PyArray_SimpleNew(1,&ret,PyArray_DOUBLE);
+    r_array  = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
 
-    memcpy(r_array->data,data,PyArray_NBYTES(r_array));
+    memcpy(PyArray_DATA(r_array),data,PyArray_NBYTES(r_array));
 
     return (PyObject *)r_array;
 }
@@ -669,10 +672,10 @@ scandata_datacol(PyObject *self,PyObject *args) {
     if (ret == -1 )
       onError("cannot get data for column");
     
-    r_array      = (PyArrayObject *)PyArray_SimpleNew(1,&ret,PyArray_DOUBLE);
+    r_array      = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
     
    if (data != (double *) NULL){
-        memcpy(r_array->data,data,PyArray_NBYTES(r_array));
+        memcpy(PyArray_DATA(r_array),data,PyArray_NBYTES(r_array));
         free(data);
     }else{
         /* return an empty array? */
@@ -1053,11 +1056,11 @@ scandata_mca      (PyObject *self,PyObject *args)
     if (ret == -1) 
         onError("cannot get mca for scan");
 
-    r_array = (PyArrayObject *)PyArray_SimpleNew(1,&ret,PyArray_DOUBLE);
+    r_array = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
 
 
     if (mcadata != (double *) NULL){
-        memcpy(r_array->data,mcadata,PyArray_NBYTES(r_array));
+        memcpy(PyArray_DATA(r_array),mcadata,PyArray_NBYTES(r_array));
         free(mcadata);
     }else{
         printf("I should give back an empty array\n");
