@@ -1,4 +1,8 @@
 #include "Python.h"
+/* adding next line may raise errors ...
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+*/
+
 #include <./numpy/arrayobject.h>
 #include <stdio.h>
 
@@ -35,7 +39,7 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O|d", &input, &nChannels))
         return NULL;
     inputArray = (PyArrayObject *)
-                PyArray_ContiguousFromObject(input, PyArray_USHORT, 2,2);
+                PyArray_ContiguousFromObject(input, NPY_USHORT, 2,2);
     if (inputArray == NULL)
     {
 	    struct module_state *st = GETSTATE(self);
@@ -43,17 +47,17 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    dataPointer = (unsigned short *) inputArray->data;
+    dataPointer = (unsigned short *) PyArray_DATA(inputArray);
     dataPointer++;
     dimensions[1] = *dataPointer++;
     dimensions[0] = *dataPointer++;
     dimensions[2] = nChannels;
-    outputArray = (PyArrayObject *) PyArray_SimpleNew(3, dimensions, PyArray_UINT);
+    outputArray = (PyArrayObject *) PyArray_SimpleNew(3, dimensions, NPY_UINT);
     PyArray_FILLWBYTE(outputArray, 0);
     /* Do the job */
     maxy=maxch=0;
-    outputPointer = (unsigned int *) outputArray->data; 
-    for (i=3; i<inputArray->dimensions[0]; i++)
+    outputPointer = (unsigned int *) PyArray_DATA(outputArray); 
+    for (i = 3; i < PyArray_DIMS(inputArray)[0]; i++)
     {
         y = *dataPointer++;
     x = *dataPointer++;
@@ -114,11 +118,11 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
     dimensions[1] = 128;
     dimensions[2] = nChannels;
 
-    outputArray = (PyArrayObject *) PyArray_SimpleNew(3, dimensions, PyArray_UINT);
+    outputArray = (PyArrayObject *) PyArray_SimpleNew(3, dimensions, NPY_UINT);
     PyArray_FILLWBYTE(outputArray, 0);
 
     /* Do the job */
-    outputPointer = (unsigned int *) outputArray->data;
+    outputPointer = (unsigned int *) PyArray_DATA(outputArray);
     while(fscanf(fd, "%2c%c%c", (char *)&channel, &x, &y) == 3)
     {
         if (channel >= nChannels)
