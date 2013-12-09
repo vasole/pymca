@@ -233,17 +233,24 @@ def build_Object3DCTools(ext_modules):
                         include_dirs = includes)
     ext_modules.append(module)
 
-def build_Object3DQhull(ext_modules):
+
+def build_Object3DQhull(extensions):
     if sys.platform == "win32":
         libraries = ['opengl32', 'glu32']
     else:
-        libraries = ['GL', 'GLU']        
-    module  = Extension(name = 'PyMca.Object3D.Object3DQhull',
-                        sources = glob.glob('PyMca/Object3D/Object3DQhull/src/*.c'),
-                        define_macros = define_macros,
-                        include_dirs = [numpy.get_include()])
+        libraries = ['GL', 'GLU']
+    sources = ["PyMca/Object3D/Object3DQhull/Object3DQhull.c"]
+    sources += glob.glob("third-party/qhull/src/*.c")
 
-    ext_modules.append(module)
+    module = Extension(name='PyMca.Object3D.Object3DQhull',
+                       sources=sources,
+                       define_macros=define_macros,
+                       libraries=libraries,
+                       include_dirs=[numpy.get_include(),
+                                     "third-party/qhull/src"])
+
+    extensions.append(module)
+
 
 def build_PyMcaSciPy(ext_modules):
     packages.append('PyMca.PyMcaSciPy')
