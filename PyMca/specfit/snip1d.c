@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2009 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -39,7 +39,8 @@
 
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
-void snip1d(double *data, int size, int width);
+void snip1d(double *data, int n_channels, int snip_width);
+void snip1d_multiple(double *data, int n_channels, int snip_width, int n_spectra);
 void lsdf(double *data, int size, int fwhm, double f, double A, double M, double ratio);
 
 void lls(double *data, int size)
@@ -114,26 +115,37 @@ void lsdf(double *data, int size, int fwhm, double f, double A, double M, double
 }
 
 
-void snip1d(double *data, int size, int width)
+void snip1d(double *data, int n_channels, int snip_width)
+{
+	snip1d_multiple(data, n_channels, snip_width, 1);
+}
+
+void snip1d_multiple(double *data, int n_channels, int snip_width, int n_spectra)
 {
 	int i;
+	int j;
 	int p;
+	int offset;
 	double *w;
 
-	i = (int) (0.5*width);
+	i = (int) (0.5 * snip_width);
 	/* lsdf(data, size, i, 1.5, 75., 10., 1.3); */
 	
-	w = (double *) malloc(size * sizeof(double));
+	w = (double *) malloc(n_channels * sizeof(double));
 
-	for (p=width; p > 0; p--)
+	for (j=0; j < n_spectra; j++)
 	{
-		for (i=p; i<(size-p); i++)
+		offset = j * n_channels;
+		for (p = snip_width; p > 0; p--)
 		{
-			w[i] = MIN(data[i], 0.5*(data[i-p]+data[i+p]));
-		}
-		for (i=p; i<(size-p); i++)
-		{
-			data[i] = w[i];
+			for (i=p; i<(n_channels - p); i++)
+			{
+				w[i] = MIN(data[i + offset], 0.5*(data[i + offset - p] + data[ i + offset + p]));
+			}
+			for (i=p; i<(n_channels - p); i++)
+			{
+				data[i+offset] = w[i];
+			}
 		}
 	}
 	free(w);
