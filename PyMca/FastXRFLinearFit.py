@@ -19,6 +19,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 from PyMca.linalg import lstsq
 from PyMca import ClassMcaTheory
+from PyMca import SpecfitFuns
 from PyMca import ConfigDict
 
 DEBUG = 0
@@ -67,22 +68,6 @@ class FastXRFLinearFit(object):
             else:
                 raise RuntimeError("Please use the faster SNIP background")
 
-            #loop for anchors
-            anchorslist = []
-            if config['fit']['stripanchorsflag']:
-                if config['fit']['stripanchorslist'] is not None:
-                    ravelled = numpy.ravel(mcaTheory.xdata)
-                    for channel in config['fit']['stripanchorslist']:
-                        if channel <= ravelled[0]:continue
-                        index = numpy.nonzero(ravelled >= channel)[0]
-                        if len(index):
-                            index = min(index)
-                            if index > 0:
-                                anchorslist.append(index)
-            if len(anchorslist) == 0:
-                anchorlist = [0, mcaTheory.ydata.size - 1]
-            anchorslist.sort()
-
         # and now configure the fit
         self._mcaTheory.setConfiguration(config)
 
@@ -120,6 +105,26 @@ class FastXRFLinearFit(object):
         # print("xmax = ", xmax)
         # print("firstShape = ", firstSpectrum.shape)
         self._mcaTheory.setData(x=x, y=firstSpectrum, xmin=xmin, xmax=xmax)
+
+        #loop for anchors
+        if config['fit']['stripflag']:
+            anchorslist = []
+            if config['fit']['stripanchorsflag']:
+                if config['fit']['stripanchorslist'] is not None:
+                    ravelled = numpy.ravel(self._mcaTheory.xdata)
+                    for channel in config['fit']['stripanchorslist']:
+                        if channel <= ravelled[0]:
+                            continue
+                        index = numpy.nonzero(ravelled >= channel)[0]
+                        if len(index):
+                            index = min(index)
+                            if index > 0:
+                                anchorslist.append(index)
+            if len(anchorslist) == 0:
+                anchorlist = [0, self._mcaTheory.ydata.size - 1]
+            anchorslist.sort()
+
+        # and initialize the derivatives
         self._mcaTheory.estimate()
         
         # now we can get the derivatives respect to the free parameters

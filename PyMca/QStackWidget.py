@@ -621,7 +621,7 @@ class QStackWidget(StackBase.StackBase,
                 if a.text() == action[0]:
                     idx = actionList.index(action)
         try:
-            self.pluginInstanceDict[key].applyMethod(methods[idx])    
+            self.pluginInstanceDict[key].applyMethod(methods[idx])
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)

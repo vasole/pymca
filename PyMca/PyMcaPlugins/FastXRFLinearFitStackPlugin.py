@@ -57,11 +57,13 @@ These plugins will be compatible with any stack window that provides the functio
 """
 from PyMca import StackPluginBase
 from PyMca import FastXRFLinearFit
+from PyMca import FastXRFLinearFitWindow
 from PyMca import CalculationThread
 from PyMca import StackPluginResultsWindow
 from PyMca import PyMcaFileDialogs
 import PyMca.PyMca_Icons as PyMca_Icons
-qt = StackPluginResultsWindow.qt
+from PyMca import PyMcaQt as qt
+import time
 
 DEBUG = 0
 
@@ -77,14 +79,15 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                        info,
                                        icon]
         self.__methodKeys = ["Fit Stack"]
-        self.configurationWidget = None
+        self.configurationWidget = \
+                    FastXRFLinearFitWindow.FastXRFLinearFitDialog()
+        self.fitInstance = None
         self.widget = None
         self.thread = None
 
     def stackUpdated(self):
         if DEBUG:
             print("FastXRFLinearFitStackPlugin.stackUpdated() called")
-        self.configurationWidget = None
         self.widget = None
 
     def selectionMaskUpdated(self):
@@ -124,21 +127,19 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
 
     # The specific part
     def calculate(self):
-        self._executeFunctionAndParameters()
+        ret = self.configurationWidget.exec_()
+        if ret:
+            self._executeFunctionAndParameters()
 
     def _executeFunctionAndParameters(self):
+        parameters = self.configurationWidget.getParameters()
+
         self.widget = None
-        self.fitInstance = FastXRFLinearFit.FastXRFLinearFit()
-        if 1:
-            fitFile = PyMcaFileDialogs.getFileList(filetypelist=["Configuration files (*.cfg)"],
-                                                   message="Please select fit configuration file",
-                                                   mode="OPEN",
-                                                   single=True)
-            if not len(fitFile):
-                return
-            self._fitConfigurationFile = fitFile[0]
-        else:
-            self._fitConfigurationFile="E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
+        if self.fitInstance is None:
+            self.fitInstance = FastXRFLinearFit.FastXRFLinearFit()
+        self._fitConfigurationFile = parameters['configuration']
+        #self._fitConfigurationFile="E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
+        
         if DEBUG:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
@@ -147,14 +148,17 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         else:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-            qt.QObject.connect(self.thread,
-                         qt.SIGNAL('finished()'),
-                         self.threadFinished)
+            #qt.QObject.connect(self.thread,
+            #             qt.SIGNAL('finished()'),
+            #             self.threadFinished)
             self.thread.start()
             message = "Please wait. Calculation going on."
             CalculationThread.waitingMessageDialog(self.thread,
-                                message=message,
-                                parent=self.configurationWidget)
+                                parent=self.configurationWidget,
+                                message=message)
+            while self.thread.isRunning():
+                time.sleep(2)
+            self.threadFinished()
 
     def actualCalculation(self):
         activeCurve = self.getActiveCurve()
@@ -184,6 +188,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             #if we receive a tuple there was an error
             if len(result):
                 if result[0] == "Exception":
+                    # somehow this exception is not caught
                     raise Exception(result[1], result[2])
                     return
         images = result['parameters']
