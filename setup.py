@@ -597,8 +597,8 @@ if sphinx:
             # code so that the documentation is built on this and not a
             # previously installed version
 
-            #build = self.get_finalized_command('build')
-            #sys.path.insert(0, os.path.abspath(build.build_lib))
+            build = self.get_finalized_command('build')
+            sys.path.insert(0, os.path.abspath(build.build_lib))
 
             # Build the Users Guide in HTML and TeX format
             for builder in ('html', 'latex'):
