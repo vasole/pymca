@@ -63,6 +63,13 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._outButton.setAutoDefault(False)
         self._outButton.clicked.connect(self.browseOutputDir)
 
+        # output file name
+        fileLabel   = qt.QLabel(self)
+        fileLabel.setText("Output file root:")
+        self._fileLine = qt.QLineEdit(self)
+        self._fileLine.setReadOnly(False)
+        self._fileLine.setText("images")
+
         # concentrations
         self._concentrationsBox = qt.QCheckBox(self)
         self._concentrationsBox.setText("calculate concentrations")
@@ -76,7 +83,9 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self.mainLayout.addWidget(outLabel, 1, 0)
         self.mainLayout.addWidget(self._outLine, 1, 1)
         self.mainLayout.addWidget(self._outButton, 1, 2)
-        self.mainLayout.addWidget(self._concentrationsBox, 2, 0, 1, 2)
+        self.mainLayout.addWidget(fileLabel, 2, 0)
+        self.mainLayout.addWidget(self._fileLine, 2, 1)
+        self.mainLayout.addWidget(self._concentrationsBox, 3, 0, 1, 2)
 
     def sizeHint(self):
         return qt.QSize(int(1.8 * qt.QWidget.sizeHint(self).width()),
@@ -102,6 +111,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         ddict = {}
         ddict['configuration'] = qt.safe_str(self._configLine.text())
         ddict['output_dir'] = qt.safe_str(self._outLine.text())
+        ddict['file_root'] = qt.safe_str(self._fileLine.text())
         if self._concentrationsBox.isChecked():
             ddict['concentrations'] = 1
         else:
@@ -128,9 +138,9 @@ class FastXRFLinearFitDialog(qt.QDialog):
         self.rejectButton.clicked.connect(self.reject)
         self.acceptButton.clicked.connect(self.accept)
         
-        self.mainLayout.addWidget(self.parametersWidget, 0, 0, 4, 4)
-        self.mainLayout.addWidget(self.rejectButton, 5, 1)
-        self.mainLayout.addWidget(self.acceptButton, 5, 2)
+        self.mainLayout.addWidget(self.parametersWidget, 0, 0, 5, 5)
+        self.mainLayout.addWidget(self.rejectButton, 6, 1)
+        self.mainLayout.addWidget(self.acceptButton, 6, 2)
 
     def getParameters(self):
         return self.parametersWidget.getParameters()

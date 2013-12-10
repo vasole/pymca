@@ -214,15 +214,19 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             if DEBUG:
                 print("Nothing to be saved")
                 return
-        if not os.path.isdir(outputDir):
-            raise IOError("<%s>  is not a valid output directory" % outputDir)
+        if parameters["file_root"] is None:
+            fileRoot = ""
+        else:
+            fileRoot = parameters["file_root"].replace(" ","")
+        if fileRoot in [None, ""]:
+            fileRoot = "images"
         imagesDir = os.path.join(outputDir, "IMAGES")
         imageList = [None] * nImages
         for i in range(nImages):
             imageList[i] = images[i]
-        fileName = os.path.join(imagesDir, "images.edf")
+        fileName = os.path.join(imagesDir, fileRoot) + ".edf"
         ArraySave.save2DArrayListAsEDF(imageList, fileName, labels=imageNames)
-        fileName = os.path.join(imagesDir, "images.csv")
+        fileName = os.path.join(imagesDir, fileRoot) + ".csv"
         ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True, labels=imageNames)                    
 
     def _showWidget(self):
