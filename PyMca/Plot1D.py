@@ -20,7 +20,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 This module can be used for plugin testing purposes as well as for doing
 the bookkeeping of actual plot windows.
 
-It implements the Plot1D interface:
+It implements the Plot1DBase interface:
 
     addCurve(self, x, y, legend=None, info=None, replace=False, replot=True)
     getActiveCurve(self, just_legend=False)
@@ -44,6 +44,18 @@ class Plot1D(Plot1DBase.Plot1DBase):
                  replot=True):
         """
         Add the 1D curve given by x an y to the graph.
+        :param x: The data corresponding to the x axis
+        :type x: list or numpy.ndarray
+        :param y: The data corresponding to the y axis
+        :type y: list or numpy.ndarray
+        :param legend: The legend to be associated to the curve
+        :type legend: string or None
+        :param info: Dictionary of information associated to the curve
+        :type info: dict or None
+        :param replace: Flag to indicate if already existing curves are to be deleted
+        :type replace: boolean default False
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
         """
         if legend is None:
             key = "Unnamed curve 1.1"
@@ -74,6 +86,10 @@ class Plot1D(Plot1DBase.Plot1DBase):
         """
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
+        :param legend: The legend associated to the curve to be deleted
+        :type legend: string or None
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True        
         """
         if legend is None:
             return
@@ -86,7 +102,11 @@ class Plot1D(Plot1DBase.Plot1DBase):
 
     def getActiveCurve(self, just_legend=False):
         """
-        Function to access the currently active curve.
+        :param just_legend: Flag to specify the type of output required
+        :type just_legend: boolean
+        :return: legend of the active curve or list [x, y, legend, info]
+        :rtype: string or list 
+        Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
         Default output has the form:
@@ -109,6 +129,12 @@ class Plot1D(Plot1DBase.Plot1DBase):
 
     def getAllCurves(self, just_legend=False):
         """
+        :param just_legend: Flag to specify the type of output required
+        :type just_legend: boolean
+        :return: legend of the curves or list [[x, y, legend, info], ...]
+        :rtype: list of strings or list of curves 
+
+        It returns an empty list in case of not having any curve.
         If just_legend is False:
             It returns a list of the form:
                 [[xvalues0, yvalues0, legend0, dict0],
@@ -125,10 +151,13 @@ class Plot1D(Plot1DBase.Plot1DBase):
         keys = self.curveDict.keys()
         for key in self.curveList:
             if key in keys:
-                output.append(self.curveDict[key])
+                if just_legend:
+                    output.append(key)
+                else:
+                    output.append(self.curveDict[key])
         return output
 
-    def __getAllLimits(self):
+    def _getAllLimits(self):
         keys = self.curveDict.keys()
         if not len(keys):
             return 0.0, 0.0, 100., 100.
@@ -159,23 +188,36 @@ class Plot1D(Plot1DBase.Plot1DBase):
 
     def getGraphXLimits(self):
         """
-        Get the graph X limits.
+        Set the graph X limits.
+        :param xmin:  minimum value of the axis
+        :type xmin: float
+        :param xmax:  minimum value of the axis
+        :type xmax: float
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default False
         """
-        xmin, ymin, xmax, ymax = self.__getAllLimits()
+        xmin, ymin, xmax, ymax = self._getAllLimits()
         return xmin, xmax
 
     def getGraphYLimits(self):
         """
-        Get the graph Y (left) limits.
+        Set the graph Y (left) limits.
+        :param ymin:  minimum value of the axis
+        :type ymin: float
+        :param ymax:  minimum value of the axis
+        :type ymax: float
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default False
         """
-        xmin, ymin, xmax, ymax = self.__getAllLimits()
+        xmin, ymin, xmax, ymax = self._getAllLimits()
         return ymin, ymax
 
     def setActiveCurve(self, legend):
         """
-        Funtion to request the plot window to set the curve with the specified
-        legend as the active curve.
-        It returns the active curve legend.
+        Funtion to request the plot window to set the curve with the specified legend
+        as the active curve.
+        :param legend: The legend associated to the curve
+        :type legend: string
         """
         key = str(legend)
         if key in self.curveDict.keys():
@@ -185,7 +227,6 @@ class Plot1D(Plot1DBase.Plot1DBase):
 
 def main():
     import numpy
-
     x = numpy.arange(100.)
     y = x * x
     plot = Plot1D()
