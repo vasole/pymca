@@ -16,7 +16,8 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-"""
+__license__ = "LGPL"
+__doc__ = """
 
 Any window willing to accept 1D plugins should implement the methods defined
 in this class.
@@ -26,8 +27,11 @@ The plugins will be compatible with any 1D-plot window that provides the methods
     removeCurve
     getActiveCurve
     getAllCurves
+    setGraphTitle
     getGraphXLimits
     getGraphYLimits
+    setGraphXLimits
+    setGraphYLimits
     setActiveCurve
 
 On instantiation, this clase imports all the plugins found in the PyMcaPlugins
@@ -63,6 +67,10 @@ class Plot1DBase(object):
         self.getPlugins()
 
     def setPluginDirectoryList(self, dirlist):
+        """
+        :param dirlist: Set directories to search for Plot1D plugins
+        :type dirlist: list
+        """
         for directory in dirlist:
             if not os.path.exists(directory):
                 raise IOError("Directory:\n%s\ndoes not exist." % directory)                
@@ -70,12 +78,15 @@ class Plot1DBase(object):
         self.__pluginDirList = dirlist
 
     def getPluginDirectoryList(self):
+        """
+        :return dirlist: List of directories to search for Plot1D plugins
+        """
         return self.__pluginDirList
 
     def getPlugins(self):
         """
         Import or reloads all the available plugins.
-        It returns the number of plugins loaded.
+        :return: The number of plugins loaded.
         """
         if self.__pluginDirList == []:
            self.__pluginDirList = [PLUGINS_DIR] 
@@ -137,6 +148,18 @@ class Plot1DBase(object):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
         """
         Add the 1D curve given by x an y to the graph.
+        :param x: The data corresponding to the x axis
+        :type x: list or numpy.ndarray
+        :param y: The data corresponding to the y axis
+        :type y: list or numpy.ndarray
+        :param legend: The legend to be associated to the curve
+        :type legend: string or None
+        :param info: Dictionary of information associated to the curve
+        :type info: dict or None
+        :param replace: Flag to indicate if already existing curves are to be deleted
+        :type replace: boolean default False
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
         """
         print("addCurve not implemented")
         return None
@@ -145,13 +168,21 @@ class Plot1DBase(object):
         """
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
+        :param legend: The legend associated to the curve to be deleted
+        :type legend: string or None
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True        
         """
         print("removeCurve not implemented")
         return None
     
     def getActiveCurve(self, just_legend=False):
         """
-        Function to access the currently active curve.
+        :param just_legend: Flag to specify the type of output required
+        :type just_legend: boolean
+        :return: legend of the active curve or list [x, y, legend, info]
+        :rtype: string or list 
+        Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
         Default output has the form:
@@ -168,6 +199,12 @@ class Plot1DBase(object):
 
     def getAllCurves(self, just_legend=False):
         """
+        :param just_legend: Flag to specify the type of output required
+        :type just_legend: boolean
+        :return: legend of the curves or list [[x, y, legend, info], ...]
+        :rtype: list of strings or list of curves 
+
+        It returns an empty list in case of not having any curve.
         If just_legend is False:
             It returns a list of the form:
                 [[xvalues0, yvalues0, legend0, dict0],
@@ -185,7 +222,8 @@ class Plot1DBase(object):
 
     def getGraphXLimits(self):
         """
-        Get the graph X limits. 
+        :return: Two floats with the X axis limits
+        Get the graph X limits.
         """
         print("getGraphXLimits not implemented")
         return 0.0, 100.0
@@ -193,20 +231,33 @@ class Plot1DBase(object):
     def getGraphYLimits(self):
         """
         Get the graph Y (left) limits. 
+        :return: Two floats with the Y (left) axis limits
         """
         print("getGraphYLimits not implemented")
         return 0.0, 100.0
 
     def setGraphXLimits(self, xmin, xmax, replot=False):
         """
-        set the graph X limits. 
+        Set the graph X limits.
+        :param xmin:  minimum value of the axis
+        :type xmin: float
+        :param xmax:  minimum value of the axis
+        :type xmax: float
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default False
         """
         print("setGraphXLimits not implemented")
         return
 
     def getGraphYLimits(self, ymin, ymax, replot=False):
         """
-        set the graph Y (left) limits. 
+        Set the graph Y (left) limits.
+        :param ymin:  minimum value of the axis
+        :type ymin: float
+        :param ymax:  minimum value of the axis
+        :type ymax: float
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default False
         """
         print("setGraphYLimits not implemented")
         return
@@ -215,27 +266,53 @@ class Plot1DBase(object):
         """
         Funtion to request the plot window to set the curve with the specified legend
         as the active curve.
+        :param legend: The legend associated to the curve
+        :type legend: string
         """
         print("setActiveCurve not implemented")
         return None
 
     def setGraphTitle(self, title):
+        """
+        :param title: The title to be set
+        :type title: string
+        """
         print("setGraphTitle not implemented")
 
     def setGraphXTitle(self, title):
+        """
+        :param title: The title to be associated to the X axis
+        :type title: string
+        """
         print("setGraphXTitle not implemented")
 
     def setGraphYTitle(self, title):
+        """
+        :param title: The title to be associated to the X axis
+        :type title: string
+        """
         print("setGraphYTitle not implemented")
+        
 
     def getGraphTitle(self):
+        """
+        :return: The graph title
+        :rtype: string
+        """
         print("getGraphTitle not implemented")
         return "Title"
 
     def getGraphXTitle(self):
+        """
+        :return: The graph X axis label
+        :rtype: string
+        """
         print("getGraphXTitle not implemented")
         return "X"
 
     def getGraphYTitle(self):
-        print("getGraphYTitle not implemented")
+        """
+        :return: The graph Y axis label
+        :rtype: string
+        """
         return "Y"

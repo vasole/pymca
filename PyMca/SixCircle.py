@@ -19,6 +19,11 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __license__ = "LGPL"
+__doc__ = """
+Methods to convert single point or complete images to reciprocal space.
+It is fully vectorized and therefore very fast for converting complete
+images.
+"""
 import numpy
 
 cos = numpy.cos
@@ -400,7 +405,7 @@ def getHKL(wavelength, ub, phi=0., chi=0., theta=0., mu=0.,
     :param gamma_first: if delta and gamma are arrays, which one variates first.
     :type gamma_first: boolean
 
-    :return: Hkl values for all the given delta, gamma values
+    :return: HKL values for all the given delta, gamma values
 
     A convenience function that takes the whole input in one go
     """
