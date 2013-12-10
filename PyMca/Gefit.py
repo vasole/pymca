@@ -14,8 +14,11 @@
 # FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
+# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
+__license__ = "LGPL"
 import numpy
 from numpy.linalg import inv
 import time
