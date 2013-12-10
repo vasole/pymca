@@ -74,13 +74,13 @@ class MatchPlan(object):
         """
         Constructor of the class:
 
-        @param size: size of the input keypoint-list alocated on the GPU.
-        @param devicetype: can be CPU or GPU
-        @param profile: set to true to activate profiling information collection
-        @param device: 2-tuple of integer, see clinfo
-        @param max_workgroup_size: CPU on MacOS, limit to 1 
-        @param roi: Region Of Interest: TODO
-        @param context: Use an external context (discard devicetype and device options)
+        :param size: size of the input keypoint-list alocated on the GPU.
+        :param devicetype: can be CPU or GPU
+        :param profile: set to true to activate profiling information collection
+        :param device: 2-tuple of integer, see clinfo
+        :param max_workgroup_size: CPU on MacOS, limit to 1 
+        :param roi: Region Of Interest: TODO
+        :param context: Use an external context (discard devicetype and device options)
         """
         self.profile = bool(profile)
         self.max_workgroup_size = max_workgroup_size
@@ -195,8 +195,8 @@ class MatchPlan(object):
         """
         calculate the matching of 2 keypoint list
 
-        @param nkp1, nkp2: numpy 1D recarray of keypoints or equivalent GPU buffer
-        @param raw_results: if true return the 2D array of indexes of matching keypoints (not the actual keypoints)
+        :param nkp1, nkp2: numpy 1D recarray of keypoints or equivalent GPU buffer
+        :param raw_results: if true return the 2D array of indexes of matching keypoints (not the actual keypoints)
 
         TODO: implement the ROI ...
 
@@ -294,7 +294,7 @@ class MatchPlan(object):
         """
         Defines the region of interest
 
-        @param roi: region of interest as 2D numpy array with non zero where
+        :param roi: region of interest as 2D numpy array with non zero where
         valid pixels are.
         """
         with self._sem:

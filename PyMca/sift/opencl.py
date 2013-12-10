@@ -114,8 +114,8 @@ class Platform(object):
         """
         Return a device according to key
 
-        @param key: identifier for a device, either it's id (int) or it's name
-        @type key: int or str
+        :param key: identifier for a device, either it's id (int) or it's name
+        :type key: int or str
         """
         out = None
         try:
@@ -174,8 +174,8 @@ class OpenCL(object):
         """
         Return a platform according
 
-        @param key: identifier for a platform, either an Id (int) or it's name
-        @type key: int or str
+        :param key: identifier for a platform, either an Id (int) or it's name
+        :type key: int or str
         """
         out = None
         try:
@@ -193,10 +193,10 @@ class OpenCL(object):
         """
         Select a device based on few parameters (at the end, keep the one with most memory)
 
-        @param type: "gpu" or "cpu" or "all" ....
-        @param memory: minimum amount of memory (int)
-        @param extensions: list of extensions to be present
-        @param best: shall we look for the
+        :param type: "gpu" or "cpu" or "all" ....
+        :param memory: minimum amount of memory (int)
+        :param extensions: list of extensions to be present
+        :param best: shall we look for the
         """
         type = type.upper()
         best_found = None
@@ -227,11 +227,11 @@ class OpenCL(object):
         Suggested are GPU,CPU.
         For each setting to work there must be such an OpenCL device and properly installed.
         E.g.: If Nvidia driver is installed, GPU will succeed but CPU will fail. The AMD SDK kit is required for CPU via OpenCL.
-        @param devicetype: string in ["cpu","gpu", "all", "acc"]
-        @param useFp64: boolean specifying if double precision will be used
-        @param platformid: integer
-        @param devid: integer
-        @return: OpenCL context on the selected device
+        :param devicetype: string in ["cpu","gpu", "all", "acc"]
+        :param useFp64: boolean specifying if double precision will be used
+        :param platformid: integer
+        :param devid: integer
+        :return: OpenCL context on the selected device
         """
         if (platformid is not None) and (deviceid is not None):
             platformid = int(platformid)

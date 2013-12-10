@@ -99,15 +99,15 @@ class SiftPlan(object):
         """
         Contructor of the class
 
-        @param shape: shape of the input image
-        @param dtype: data type of the input image
-        @param devicetype: can be 'CPU' or 'GPU'
-        @param template: extract shape and dtype from an image
-        @param profile: collect timing info
-        @param device: 2-tuple of integers
-        @param PIX_PER_KP: number of keypoint pre-allocated: 1 for 10 pixel
-        @param  max_workgroup_size: set to 1 under macosX
-        @param context: provide an external context
+        :param shape: shape of the input image
+        :param dtype: data type of the input image
+        :param devicetype: can be 'CPU' or 'GPU'
+        :param template: extract shape and dtype from an image
+        :param profile: collect timing info
+        :param device: 2-tuple of integers
+        :param PIX_PER_KP: number of keypoint pre-allocated: 1 for 10 pixel
+        :param  max_workgroup_size: set to 1 under macosX
+        :param context: provide an external context
         """
         self.buffers = {}
         self.programs = {}
@@ -288,7 +288,7 @@ class SiftPlan(object):
         Create a buffer of the right size according to the width of the gaussian ...
 
 
-        @param  sigma: width of the gaussian, the length of the function will be 8*sigma + 1
+        :param  sigma: width of the gaussian, the length of the function will be 8*sigma + 1
 
         Same calculation done on CPU
         x = numpy.arange(size) - (size - 1.0) / 2.0
@@ -394,7 +394,7 @@ class SiftPlan(object):
     def keypoints(self, image):
         """
         Calculates the keypoints of the image
-        @param image: ndimage of 2D (or 3D if RGB)
+        :param image: ndimage of 2D (or 3D if RGB)
         """
         self.reset_timer()
         with self._sem:
@@ -493,10 +493,10 @@ class SiftPlan(object):
         """
         Calculate the gaussian convolution with precalculated kernels.
 
-        @param input_data: pyopencl array with input
-        @param output_data: pyopencl array with result
-        @param sigma: width of the gaussian
-        @param octave: related to the size on the input images
+        :param input_data: pyopencl array with input
+        :param output_data: pyopencl array with result
+        :param sigma: width of the gaussian
+        :param octave: related to the size on the input images
 
         * Uses a temporary buffer
         * Needs gaussian kernel to be available on device
@@ -516,7 +516,7 @@ class SiftPlan(object):
         """
         Does all scales within an octave
 
-        @param octave: number of the octave
+        :param octave: number of the octave
         """
         prevSigma = par.InitSigma
         logger.info("Calculating octave %i" % octave)
@@ -714,8 +714,8 @@ class SiftPlan(object):
         """
         Compact the vector of keypoints starting from start
 
-        @param start: start compacting at this adress. Before just copy
-        @type start: numpy.int32
+        :param start: start compacting at this adress. Before just copy
+        :type start: numpy.int32
         """
         wgsize = self.max_workgroup_size,  # (max(self.wgsize[0]),) #TODO: optimize
         kpsize32 = numpy.int32(self.kpsize)
