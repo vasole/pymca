@@ -1,5 +1,5 @@
 #
-# These Python module have been developed by V.A. Sole, from the European
+# This Python module has been developed by V.A. Sole, from the European
 # Synchrotron Radiation Facility (ESRF) to build PyMca.
 # Given the nature of this work, these module can be considered public domain. 
 # Therefore redistribution and use in source and binary forms, with or without
@@ -575,6 +575,40 @@ if os.name == "posix":
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
 """
+
+#######################
+# build_doc commands #
+#######################
+
+try:
+    import sphinx
+    import sphinx.util.console
+    sphinx.util.console.color_terminal = lambda: False
+    from sphinx.setup_command import BuildDoc
+except ImportError:
+    sphinx = None
+
+if sphinx:
+    class build_doc(BuildDoc):
+
+        def run(self):
+
+            # make sure the python path is pointing to the newly built
+            # code so that the documentation is built on this and not a
+            # previously installed version
+
+            #build = self.get_finalized_command('build')
+            #sys.path.insert(0, os.path.abspath(build.build_lib))
+
+            # Build the Users Guide in HTML and TeX format
+            for builder in ('html', 'latex'):
+                self.builder = builder
+                self.builder_target_dir = os.path.join(self.build_dir, builder)
+                self.mkpath(self.builder_target_dir)
+                builder_index = 'index_{0}.txt'.format(builder)
+                BuildDoc.run(self)
+            sys.path.pop(0)
+    cmdclass['build_doc'] = build_doc
 
 distrib = setup(name="PyMca",
                 version= __version__,
