@@ -27,7 +27,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "2013, ESRF, Grenoble"
 __date__ = "20131028"
-__doc__ = "This is a python module to measure image offsets using fftpack"
+__doc__ = "This is a python module to measure image offsets"
 
 import os, time
 import numpy
@@ -46,11 +46,10 @@ except ImportError:
 
 def shiftFFT(img, shift):
     """
-    Do shift using FFTs
-    Shift an array like  scipy.ndimage.interpolation.shift(input, shift, mode="wrap", order="infinity")
-    @param input: 2d numpy array
-    @param shift: 2-tuple of float
-    @return: shifted image
+    Shift an array using FFTs
+    :param input: 2d numpy array
+    :param shift: 2-tuple of float
+    :return: shifted image
 
     """
     d0, d1 = img.shape
@@ -65,6 +64,13 @@ def shiftFFT(img, shift):
     return abs(out)
 
 def shiftBilinear(img, shift):
+    """
+    Shift an array like  scipy.ndimage.interpolation.shift(input, shift, mode="wrap", order="infinity")
+    :param input: 2d numpy array
+    :param shift: 2-tuple of float
+    :return: shifted image
+
+    """
     shape = img.shape
     x = numpy.zeros((shape[0] * shape[1], 2), numpy.float)
     x[:,0] = shift[0] + numpy.outer(numpy.arange(shape[1]), numpy.ones(shape[0])).reshape(-1)
@@ -75,6 +81,14 @@ def shiftBilinear(img, shift):
     return shifted
 
 def shiftImage(img, shift, method=None):
+    """
+    Shift an array like  scipy.ndimage.interpolation.shift(input, shift, mode="wrap", order="infinity")
+    :param input: 2d numpy array
+    :param shift: 2-tuple of float
+    :param method: string set to PYMCA, SCIPY or FFT. Default is to try the first of those that is possible.
+    :return: shifted image
+
+    """
     if method is None:
         if PYMCA:
             return shiftBilinear(img, shift)
@@ -93,10 +107,10 @@ def measure_offset(img1, img2, method="fft", withLog=False):
     """
     Measure the actual offset between 2 images. The first one is the reference. That means, if
     the image to be shifted is the second one, the shift has to be multiplied byt -1.
-    @param img1: ndarray, first image
-    @param img2: ndarray, second image, same shape as img1
-    @param withLog: shall we return logs as well ? boolean
-    @return: tuple of floats with the offsets of the second respect to the first
+    :param img1: ndarray, first image
+    :param img2: ndarray, second image, same shape as img1
+    :param withLog: shall we return logs as well ? boolean
+    :return: tuple of floats with the offsets of the second respect to the first
     """
     method = str(method)
     shape = img1.shape
@@ -112,6 +126,15 @@ def measure_offset(img1, img2, method="fft", withLog=False):
         return measure_offset_from_ffts(i1f, i2f, withLog=withLog)
 
 def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
+    """
+    Convenience method to measure the actual offset between 2 images taing their FFTs as inpuy
+    The first FFT one is the one of the reference. That means, if the image to be shifted is the
+    second one, the shift has to be multiplied byt -1.
+    :param img1: ndarray, FFT of first image
+    :param img2: ndarray, FFT of the second image, same shape as img1
+    :param withLog: shall we return logs as well ? boolean
+    :return: tuple of floats with the offsets of the second respect to the first
+    """
     shape = img0_fft2.shape
     logs = []
     f0 = img0_fft2
@@ -169,6 +192,11 @@ def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
         return offset
 
 def get_crop_indices(shape, shifts0, shifts1):
+    """
+    Get the indices of the valid region to be used when aligning a set of images
+    :param shitfs0: Shifts applied to the first dimension
+    :param shitfs1: Shifts applied to the second dimension
+    """
     shifts0_min = numpy.min(shifts0)
     shifts0_max = numpy.max(shifts0)
     shifts1_min = numpy.min(shifts1)
