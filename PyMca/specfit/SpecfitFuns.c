@@ -25,8 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 #include <Python.h>
+/* adding next line may raise errors
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+*/
 #include <./numpy/arrayobject.h>
 #include <math.h>
+
+#ifndef NPY_ARRAY_ENSURECOPY
+#define NPY_ARRAY_ENSURECOPY NPY_ENSURECOPY
+#endif
 
 struct module_state {
     PyObject *error;
@@ -58,6 +65,7 @@ static struct module_state _state;
 void lls(double *data, int size);
 void lls_inv(double *data, int size);
 void snip1d(double *data, int size, int width);
+void snip1d_multiple(double *data, int n_channels, int snip_width, int n_spectra);
 void snip2d(double *data, int nrows, int ncolumns, int width);
 void snip3d(double *data, int nx, int ny, int nz, int width);
 void lsdf(double *data, int size, int fwhm, double f, double A, double M, double ratio);
@@ -76,42 +84,57 @@ SpecfitFuns_snip1d(PyObject *self, PyObject *args)
     int smooth_iterations = 0;
     int llsflag = 0;
     PyArrayObject   *ret;
-    int i, size, width;
+    double *doublePointer;
+    int i, n, n_channels, n_spectra, width;
 
     if (!PyArg_ParseTuple(args, "Od|ii", &input, &width0, &smooth_iterations, &llsflag))
         return NULL;
 
     ret = (PyArrayObject *)
-             PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
+             PyArray_FROMANY(input, NPY_DOUBLE, 1, 2, NPY_ARRAY_ENSURECOPY);
 
     if (ret == NULL){
         printf("Cannot create 1D array from input\n");
         return NULL;
     }
 
-    size = 1;
-    for (i=0; i<ret->nd; i++)
+    if(PyArray_NDIM(ret) == 1)
     {
-        size = (int) (size * ret->dimensions[i]);
+        n_spectra = 1;
+        n_channels = (int) (PyArray_DIMS(ret)[0]);
+    }
+    else
+    {
+        n_spectra = (int) (PyArray_DIMS(ret)[0]);
+        n_channels = (int) (PyArray_DIMS(ret)[1]);
     }
 
     width = (int )width0;
 
-    for (i=0; i<smooth_iterations; i++)
+    for (n = 0; n < n_spectra; n++)
     {
-        smooth1d((double *) ret->data, size);
+        for (i=0; i<smooth_iterations; i++)
+        {
+            doublePointer = (double *) PyArray_DATA(ret);
+            smooth1d(&(doublePointer[n*n_channels]), n_channels);
+        }
+        if (llsflag)
+        {
+            doublePointer = (double *) PyArray_DATA(ret);
+            lls(&(doublePointer[n*n_channels]), n_channels);
+        }
     }
 
-    if (llsflag)
-    {
-        lls((double *) ret->data, size);
-    }
 
-    snip1d((double *) ret->data, size, width);
+    snip1d_multiple((double *) PyArray_DATA(ret), n_channels, width, n_spectra);
 
-    if (llsflag)
+    for (n = 0; n < n_spectra; n++)
     {
-        lls_inv((double *) ret->data, size);
+        if (llsflag)
+        {
+            doublePointer = (double *) PyArray_DATA(ret);
+            lls_inv(&(doublePointer[n*n_channels]), n_channels);
+        }
     }
 
     return PyArray_Return(ret);
@@ -131,7 +154,7 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
         return NULL;
 
     ret = (PyArrayObject *)
-             PyArray_FROMANY(input, PyArray_DOUBLE, 2, 2, NPY_ENSURECOPY);
+             PyArray_FROMANY(input, NPY_DOUBLE, 2, 2, NPY_ARRAY_ENSURECOPY);
 
     if (ret == NULL){
         printf("Cannot create 2D array from input\n");
@@ -139,30 +162,30 @@ SpecfitFuns_snip2d(PyObject *self, PyObject *args)
     }
 
     size = 1;
-    for (i=0; i<ret->nd; i++)
+    for (i=0; i<PyArray_NDIM(ret); i++)
     {
-        size = (int) (size * ret->dimensions[i]);
+        size = (int) (size * PyArray_DIMS(ret)[i]);
     }
-    nrows = (int) ret->dimensions[0];
-    ncolumns = (int) ret->dimensions[1];
+    nrows = (int) PyArray_DIMS(ret)[0];
+    ncolumns = (int) PyArray_DIMS(ret)[1];
 
     width = (int )width0;
 
     for (i=0; i<smooth_iterations; i++)
     {
-        smooth2d((double *) ret->data, nrows, ncolumns);
+        smooth2d((double *) PyArray_DATA(ret), nrows, ncolumns);
     }
 
     if (llsflag)
     {
-        lls((double *) ret->data, size);
+        lls((double *) PyArray_DATA(ret), size);
     }
 
-    snip2d((double *) ret->data, nrows, ncolumns, width);
+    snip2d((double *) PyArray_DATA(ret), nrows, ncolumns, width);
 
     if (llsflag)
     {
-        lls_inv((double *) ret->data, size);
+        lls_inv((double *) PyArray_DATA(ret), size);
     }
 
     return PyArray_Return(ret);
@@ -182,7 +205,7 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
         return NULL;
 
     ret = (PyArrayObject *)
-             PyArray_FROMANY(input, PyArray_DOUBLE, 3, 3, NPY_ENSURECOPY);
+             PyArray_FROMANY(input, NPY_DOUBLE, 3, 3, NPY_ARRAY_ENSURECOPY);
 
     if (ret == NULL){
         printf("Cannot create 3D array from input\n");
@@ -190,31 +213,31 @@ SpecfitFuns_snip3d(PyObject *self, PyObject *args)
     }
 
     size = 1;
-    for (i=0; i<ret->nd; i++)
+    for (i=0; i<PyArray_NDIM(ret); i++)
     {
-        size = (int) (size * ret->dimensions[i]);
+        size = (int) (size * PyArray_DIMS(ret)[i]);
     }
-    nx = (int) ret->dimensions[0];
-    ny = (int) ret->dimensions[1];
-    nz = (int) ret->dimensions[2];
+    nx = (int) PyArray_DIMS(ret)[0];
+    ny = (int) PyArray_DIMS(ret)[1];
+    nz = (int) PyArray_DIMS(ret)[2];
 
     width = (int )width0;
 
     for (i=0; i<smooth_iterations; i++)
     {
-        smooth3d((double *) ret->data, nx, ny, nz);
+        smooth3d((double *) PyArray_DATA(ret), nx, ny, nz);
     }
 
     if (llsflag)
     {
-        lls((double *) ret->data, size);
+        lls((double *) PyArray_DATA(ret), size);
     }
 
-    snip3d((double *) ret->data, nx, ny, nz, width);
+    snip3d((double *) PyArray_DATA(ret), nx, ny, nz, width);
 
     if (llsflag)
     {
-        lls_inv((double *) ret->data, size);
+        lls_inv((double *) PyArray_DATA(ret), size);
     }
 
     return PyArray_Return(ret);
@@ -238,20 +261,20 @@ SpecfitFuns_subacold(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O|dd", &input, &c, &niter0))
         return NULL;
     iarray = (PyArrayObject *)
-             PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
+             PyArray_CopyFromObject(input, NPY_DOUBLE,1,1);
     if (iarray == NULL)
         return NULL;
     niter = (int ) niter0;
-    n = iarray->dimensions[0];
-    dimensions[0] = iarray->dimensions[0];
-    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
+    n = PyArray_DIMS(iarray)[0];
+    dimensions[0] = PyArray_DIMS(iarray)[0];
+    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(iarray);
         return NULL;
     }
 
     /* Do the job */
-    data = (double *) iarray->data;
+    data = (double *) PyArray_DATA(iarray);
     for (i=0;i<niter;i++){
         t_old = *(data);
         for (j=1;j<n-1;j++) {
@@ -293,21 +316,21 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
     iarray = (PyArrayObject *)
-             PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
+             PyArray_CopyFromObject(input, NPY_DOUBLE,1,1);
     if (iarray == NULL)
         return NULL;
     deltai= (int ) deltai0;
     if (deltai <=0) deltai = 1;
     niter = (int ) niter0;
-    n = (int) iarray->dimensions[0];
-    dimensions[0] = iarray->dimensions[0];
-    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
+    n = (int) PyArray_DIMS(iarray)[0];
+    dimensions[0] = PyArray_DIMS(iarray)[0];
+    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(iarray);
         return NULL;
     }
     PyArray_FILLWBYTE(ret, 0);
-    memcpy(ret->data, iarray->data, iarray->dimensions[0] * sizeof(double));
+    memcpy(PyArray_DATA(ret), PyArray_DATA(iarray), PyArray_DIMS(iarray)[0] * sizeof(double));
 
     if (n < (2*deltai+1)){
         /*ret = (PyArrayObject *) PyArray_Copy(array);*/
@@ -315,21 +338,21 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
         return PyArray_Return(ret);
     }
     /* do the job */
-    data   = (double *) iarray->data;
-    retdata   = (double *) ret->data;
+    data   = (double *) PyArray_DATA(iarray);
+    retdata   = (double *) PyArray_DATA(ret);
 
     if (anchors0 != NULL)
     {
         if (PySequence_Check(anchors0)){
             anchors = (PyArrayObject *)
-                 PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
+                 PyArray_ContiguousFromObject(anchors0, NPY_INT, 1, 1);
             if (anchors == NULL)
             {
                 Py_DECREF(iarray);
                 Py_DECREF(ret);
                 return NULL;
             }
-            anchordata = (int *) anchors->data;
+            anchordata = (int *) PyArray_DATA(anchors);
             nanchors   = (int) PySequence_Size(anchors0);
             for (i=0;i<niter;i++){
                 for (j=deltai;j<n-deltai;j++) {
@@ -352,7 +375,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
                     if (*(retdata+j) > (t_mean * c))
                                 *(retdata+j) = t_mean;
                 }
-                memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
+                memcpy(PyArray_DATA(iarray), PyArray_DATA(ret), PyArray_DIMS(iarray)[0] * sizeof(double));
             }
             Py_DECREF(anchors);
             notdone = 0;
@@ -366,7 +389,7 @@ SpecfitFuns_subac(PyObject *self, PyObject *args)
             if (*(retdata+j) > (t_mean * c))
                     *(retdata+j) = t_mean;
             }
-            memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
+            memcpy(PyArray_DATA(iarray), PyArray_DATA(ret), PyArray_DIMS(iarray)[0] * sizeof(double));
         }
     }
     Py_DECREF(iarray);
@@ -394,20 +417,20 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O|dddO", &input, &c, &niter0,&deltai0, &anchors0))
         return NULL;
     iarray = (PyArrayObject *)
-             PyArray_CopyFromObject(input, PyArray_DOUBLE,1,1);
+             PyArray_CopyFromObject(input, NPY_DOUBLE,1,1);
     if (iarray == NULL)
         return NULL;
     deltai= (int ) deltai0;
     if (deltai <=0) deltai = 1;
     niter = (int ) niter0;
-    n = iarray->dimensions[0];
-    dimensions[0] = iarray->dimensions[0];
-    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
+    n = PyArray_DIMS(iarray)[0];
+    dimensions[0] = PyArray_DIMS(iarray)[0];
+    ret = (PyArrayObject *) PyArray_SimpleNew(1, dimensions, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(iarray);
         return NULL;
     }
-    memcpy(ret->data, iarray->data, iarray->dimensions[0] * sizeof(double));
+    memcpy(PyArray_DATA(ret), PyArray_DATA(iarray), PyArray_DIMS(iarray)[0] * sizeof(double));
 
     if (n < (2*deltai+1)){
         /*ret = (PyArrayObject *) PyArray_Copy(array);*/
@@ -415,19 +438,19 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
         return PyArray_Return(ret);
     }
     /* do the job */
-    retdata   = (double *) ret->data;
+    retdata   = (double *) PyArray_DATA(ret);
     if (PySequence_Check(anchors0)){
         anchors = (PyArrayObject *)
-             PyArray_ContiguousFromObject(anchors0, PyArray_INT, 1, 1);
+             PyArray_ContiguousFromObject(anchors0, NPY_INT, 1, 1);
         if (anchors == NULL)
         {
             Py_DECREF(iarray);
             Py_DECREF(ret);
             return NULL;
         }
-        anchordata = (int *) anchors->data;
+        anchordata = (int *) PyArray_DATA(anchors);
         nanchors   = (int) PySequence_Size(anchors0);
-        memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
+        memcpy(PyArray_DATA(iarray), PyArray_DATA(ret), PyArray_DIMS(iarray)[0] * sizeof(double));
         for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
                 notdoit = 0;
@@ -454,7 +477,7 @@ SpecfitFuns_subacfast(PyObject *self, PyObject *args)
     }
     else
     {
-        memcpy(iarray->data, ret->data, iarray->dimensions[0] * sizeof(double));
+        memcpy(PyArray_DATA(iarray), PyArray_DATA(ret), PyArray_DIMS(iarray)[0] * sizeof(double));
         for (i=0;i<niter;i++){
             for (j=deltai;j<n-deltai;j++) {
                 t_mean = 0.5 * (*(retdata+j-deltai) + *(retdata+j+deltai));
@@ -510,40 +533,40 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
     }
 
     param = (PyArrayObject *)
-             PyArray_ContiguousFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -566,7 +589,7 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -576,12 +599,12 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
 
     log2 = 0.69314718055994529;
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        pgauss = (gaussian *) param->data;
+        pgauss = (gaussian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             dhelp = pgauss[i].fwhm/(2.0*sqrt(2.0*log2));
             dhelp = (*px - pgauss[i].centroid)/dhelp;
@@ -596,7 +619,7 @@ SpecfitFuns_gauss(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            pgauss = (gaussian *) param->data;
+            pgauss = (gaussian *) PyArray_DATA(param);
             for (i=0;i<(npars/3);i++){
                 dhelp = pgauss[i].fwhm/(2.0*sqrt(2.0*log2));
                 dhelp = (*px - pgauss[i].centroid)/dhelp;
@@ -639,40 +662,40 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -695,7 +718,7 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -708,12 +731,12 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        pgauss = (gaussian *) param->data;
+        pgauss = (gaussian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             sigma = pgauss[i].fwhm*tosigma;
             dhelp = (*px - pgauss[i].centroid)/sigma;
@@ -726,12 +749,12 @@ SpecfitFuns_agauss(PyObject *self, PyObject *args)
         for (j=0;j<nd_x;j++){
             k = (int) (dim_x [j] * k);
         }
-        pgauss = (gaussian *) param->data;
+        pgauss = (gaussian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             sigma  = pgauss[i].fwhm*tosigma;
             dhelp0 = pgauss[i].area/(sigma*sqrt2PI);
-            px = (double *) x->data;
-            pret = (double *) ret->data;
+            px = (double *) PyArray_DATA(x);
+            pret = (double *) PyArray_DATA(ret);
             for (j=0;j<k;j++){
                 if (i==0)
                     *pret = 0.0;
@@ -782,40 +805,40 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -838,7 +861,7 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -851,12 +874,12 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        pgauss = (gaussian *) param->data;
+        pgauss = (gaussian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             sigma = pgauss[i].fwhm*tosigma;
             dhelp = (*px - pgauss[i].centroid)/sigma;
@@ -869,12 +892,12 @@ SpecfitFuns_fastagauss(PyObject *self, PyObject *args)
         for (j=0;j<nd_x;j++){
             k = (int) (dim_x [j] * k);
         }
-        pgauss = (gaussian *) param->data;
+        pgauss = (gaussian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             sigma  = pgauss[i].fwhm*tosigma;
             dhelp0 = pgauss[i].area/(sigma*sqrt2PI);
-            px = (double *) x->data;
-            pret = (double *) ret->data;
+            px = (double *) PyArray_DATA(x);
+            pret = (double *) PyArray_DATA(ret);
             for (j=0;j<k;j++){
                 if (i==0)
                     *pret = 0.0;
@@ -935,40 +958,40 @@ SpecfitFuns_splitgauss(PyObject *self, PyObject *args)
     }
 
     param = (PyArrayObject *)
-             PyArray_ContiguousFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -991,7 +1014,7 @@ SpecfitFuns_splitgauss(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1001,24 +1024,24 @@ SpecfitFuns_splitgauss(PyObject *self, PyObject *args)
 
     log2 = 0.69314718055994529;
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        pgauss = (gaussian *) param->data;
+        pgauss = (gaussian *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
-			dhelp = (*px - pgauss[i].centroid) * (2.0*sqrt(2.0*log2));
-			if (dhelp > 0)
-			{
-				dhelp = dhelp/pgauss[i].fwhm2;
-			}else{
-				dhelp = dhelp/pgauss[i].fwhm1;
-			}
+            dhelp = (*px - pgauss[i].centroid) * (2.0*sqrt(2.0*log2));
+            if (dhelp > 0)
+            {
+                dhelp = dhelp/pgauss[i].fwhm2;
+            }else{
+                dhelp = dhelp/pgauss[i].fwhm1;
+            }
             if (dhelp <= 20) {
                 *pret += pgauss[i].height * exp (-0.5 * dhelp * dhelp);
             }
-		}
+        }
     }else{
         k = 1;
         for (j=0;j<nd_x;j++){
@@ -1026,17 +1049,17 @@ SpecfitFuns_splitgauss(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            pgauss = (gaussian *) param->data;
+            pgauss = (gaussian *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
-				dhelp = (*px - pgauss[i].centroid) * (2.0*sqrt(2.0*log2));
-				if (dhelp > 0)
-				{
-					dhelp = dhelp /pgauss[i].fwhm2;
-				}else{
-					dhelp = dhelp /pgauss[i].fwhm1;
-				}
+                dhelp = (*px - pgauss[i].centroid) * (2.0*sqrt(2.0*log2));
+                if (dhelp > 0)
+                {
+                    dhelp = dhelp /pgauss[i].fwhm2;
+                }else{
+                    dhelp = dhelp /pgauss[i].fwhm1;
+                }
                 if (dhelp <= 20) {
-					*pret += pgauss[i].height * exp (-0.5 * dhelp * dhelp);
+                    *pret += pgauss[i].height * exp (-0.5 * dhelp * dhelp);
                 }
             }
             pret++;
@@ -1075,40 +1098,40 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -1131,7 +1154,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1140,12 +1163,12 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        ppvoigt = (pvoigtian *) param->data;
+        ppvoigt = (pvoigtian *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1159,7 +1182,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            ppvoigt = (pvoigtian *) param->data;
+            ppvoigt = (pvoigtian *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1178,11 +1201,11 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
-        ppvoigt = (pvoigtian *) param->data;
+        ppvoigt = (pvoigtian *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
             sigma = ppvoigt[i].fwhm * tosigma;
             dhelp = (*px - ppvoigt[i].centroid)/sigma;
@@ -1198,7 +1221,7 @@ SpecfitFuns_apvoigt(PyObject *self, PyObject *args)
             k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
-            ppvoigt = (pvoigtian *) param->data;
+            ppvoigt = (pvoigtian *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
                 sigma = ppvoigt[i].fwhm * tosigma;
                 dhelp = (*px - ppvoigt[i].centroid)/sigma;
@@ -1249,40 +1272,40 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -1305,7 +1328,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1314,12 +1337,12 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        ppvoigt = (pvoigtian *) param->data;
+        ppvoigt = (pvoigtian *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1332,7 +1355,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            ppvoigt = (pvoigtian *) param->data;
+            ppvoigt = (pvoigtian *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
             dhelp = (*px - ppvoigt[i].centroid) / (0.5 * ppvoigt[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1348,11 +1371,11 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
     log2 = 0.69314718055994529;
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
-        ppvoigt = (pvoigtian *) param->data;
+        ppvoigt = (pvoigtian *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
             dhelp = ppvoigt[i].fwhm/(2.0*sqrt(2.0*log2));
             dhelp = (*px - ppvoigt[i].centroid)/dhelp;
@@ -1367,7 +1390,7 @@ SpecfitFuns_pvoigt(PyObject *self, PyObject *args)
             k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
-            ppvoigt = (pvoigtian *) param->data;
+            ppvoigt = (pvoigtian *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
                 dhelp = ppvoigt[i].fwhm/(2.0*sqrt(2.0*log2));
                 dhelp = (*px - ppvoigt[i].centroid)/dhelp;
@@ -1416,40 +1439,40 @@ SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -1472,7 +1495,7 @@ SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1481,19 +1504,19 @@ SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        ppvoigt = (pvoigtian *) param->data;
+        ppvoigt = (pvoigtian *) PyArray_DATA(param);
         for (i=0;i<(npars/5);i++){
             dhelp = (*px - ppvoigt[i].centroid);
-			if (dhelp > 0){
-				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm2);
-			}else{
-				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm1);
-			}
+            if (dhelp > 0){
+                dhelp = dhelp /(0.5 * ppvoigt[i].fwhm2);
+            }else{
+                dhelp = dhelp /(0.5 * ppvoigt[i].fwhm1);
+            }
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += ppvoigt[i].eta * (ppvoigt[i].height / dhelp);
         }
@@ -1504,14 +1527,14 @@ SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            ppvoigt = (pvoigtian *) param->data;
+            ppvoigt = (pvoigtian *) PyArray_DATA(param);
             for (i=0;i<(npars/5);i++){
             dhelp = (*px - ppvoigt[i].centroid);
-			if (dhelp > 0){
-				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm2);
-			}else{
-				dhelp = dhelp /(0.5 * ppvoigt[i].fwhm1);
-			}
+            if (dhelp > 0){
+                dhelp = dhelp /(0.5 * ppvoigt[i].fwhm2);
+            }else{
+                dhelp = dhelp /(0.5 * ppvoigt[i].fwhm1);
+            }
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += ppvoigt[i].eta * (ppvoigt[i].height / dhelp);
             }
@@ -1525,18 +1548,18 @@ SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
     log2 = 0.69314718055994529;
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
-        ppvoigt = (pvoigtian *) param->data;
+        ppvoigt = (pvoigtian *) PyArray_DATA(param);
         for (i=0;i<(npars/5);i++){
-			dhelp = (*px - ppvoigt[i].centroid);
-			if (dhelp >0){
-				dhelp = dhelp /(ppvoigt[i].fwhm2/(2.0*sqrt(2.0*log2)));
-			}else{
-				dhelp = dhelp /(ppvoigt[i].fwhm1/(2.0*sqrt(2.0*log2)));
-			}
+            dhelp = (*px - ppvoigt[i].centroid);
+            if (dhelp >0){
+                dhelp = dhelp /(ppvoigt[i].fwhm2/(2.0*sqrt(2.0*log2)));
+            }else{
+                dhelp = dhelp /(ppvoigt[i].fwhm1/(2.0*sqrt(2.0*log2)));
+            }
             if (dhelp <= 35) {
                 *pret += (1.0 - ppvoigt[i].eta) * ppvoigt[i].height \
                         * exp (-0.5 * dhelp * dhelp);
@@ -1548,14 +1571,14 @@ SpecfitFuns_splitpvoigt(PyObject *self, PyObject *args)
             k = (int) (dim_x [j] * k);
         }
         for (j=0;j<k;j++){
-            ppvoigt = (pvoigtian *) param->data;
+            ppvoigt = (pvoigtian *) PyArray_DATA(param);
             for (i=0;i<(npars/5);i++){
-				dhelp = (*px - ppvoigt[i].centroid);
-				if (dhelp > 0){
-					dhelp = dhelp /(ppvoigt[i].fwhm2/(2.0*sqrt(2.0*log2)));
-				}else{
-					dhelp = dhelp /(ppvoigt[i].fwhm1/(2.0*sqrt(2.0*log2)));
-				}
+                dhelp = (*px - ppvoigt[i].centroid);
+                if (dhelp > 0){
+                    dhelp = dhelp /(ppvoigt[i].fwhm2/(2.0*sqrt(2.0*log2)));
+                }else{
+                    dhelp = dhelp /(ppvoigt[i].fwhm1/(2.0*sqrt(2.0*log2)));
+                }
                 if (dhelp <= 35) {
                 *pret += (1.0 - ppvoigt[i].eta) * ppvoigt[i].height \
                         * exp (-0.5 * dhelp * dhelp);
@@ -1599,40 +1622,40 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -1655,7 +1678,7 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1664,12 +1687,12 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        plorentz = (lorentzian *) param->data;
+        plorentz = (lorentzian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1682,7 +1705,7 @@ SpecfitFuns_lorentz(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            plorentz = (lorentzian *) param->data;
+            plorentz = (lorentzian *) PyArray_DATA(param);
             for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1724,40 +1747,40 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -1780,7 +1803,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1789,12 +1812,12 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        plorentz = (lorentzian *) param->data;
+        plorentz = (lorentzian *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1807,7 +1830,7 @@ SpecfitFuns_alorentz(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            plorentz = (lorentzian *) param->data;
+            plorentz = (lorentzian *) PyArray_DATA(param);
             for (i=0;i<(npars/3);i++){
             dhelp = (*px - plorentz[i].centroid) / (0.5 * plorentz[i].fwhm);
             dhelp = 1.0 + (dhelp * dhelp);
@@ -1849,40 +1872,40 @@ SpecfitFuns_splitlorentz(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -1905,7 +1928,7 @@ SpecfitFuns_splitlorentz(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -1914,19 +1937,19 @@ SpecfitFuns_splitlorentz(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        *pret = 0;
-        plorentz = (lorentzian *) param->data;
+        plorentz = (lorentzian *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
             dhelp = *px - plorentz[i].centroid;
-			if (dhelp > 0){
-				dhelp = dhelp /(0.5 * plorentz[i].fwhm2);
-			}else{
-				dhelp = dhelp /(0.5 * plorentz[i].fwhm1);
-			}
+            if (dhelp > 0){
+                dhelp = dhelp /(0.5 * plorentz[i].fwhm2);
+            }else{
+                dhelp = dhelp /(0.5 * plorentz[i].fwhm1);
+            }
             dhelp = 1.0 + (dhelp * dhelp);
             *pret += (plorentz[i].height / dhelp);
         }
@@ -1937,16 +1960,16 @@ SpecfitFuns_splitlorentz(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            plorentz = (lorentzian *) param->data;
+            plorentz = (lorentzian *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
             dhelp = *px - plorentz[i].centroid;
-				if (dhelp > 0){
-					dhelp = dhelp /(0.5 * plorentz[i].fwhm2);
-				}else{
-					dhelp = dhelp /(0.5 * plorentz[i].fwhm1);
-				}
-			    dhelp = 1.0 + (dhelp * dhelp);
-				*pret += (plorentz[i].height / dhelp);
+                if (dhelp > 0){
+                    dhelp = dhelp /(0.5 * plorentz[i].fwhm2);
+                }else{
+                    dhelp = dhelp /(0.5 * plorentz[i].fwhm1);
+                }
+                dhelp = 1.0 + (dhelp * dhelp);
+                *pret += (plorentz[i].height / dhelp);
             }
             pret++;
             px++;
@@ -1985,40 +2008,40 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -2041,7 +2064,7 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -2050,15 +2073,15 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     tosigma=1.0/(2.0*sqrt(2.0*log(2.0)));
 
 
     if (nd_x == 0){
        *pret = 0;
-        perrorfc = (errorfc *) param->data;
+        perrorfc = (errorfc *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             dhelp = perrorfc[i].fwhm * tosigma;
             dhelp = (*px - perrorfc[i].centroid) / (sqrt(2)*dhelp);
@@ -2071,7 +2094,7 @@ SpecfitFuns_downstep(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            perrorfc = (errorfc *) param->data;
+            perrorfc = (errorfc *) PyArray_DATA(param);
             for (i=0;i<(npars/3);i++){
             dhelp = perrorfc[i].fwhm * tosigma;
             dhelp = (*px - perrorfc[i].centroid) / (sqrt(2)*dhelp);
@@ -2114,40 +2137,40 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -2170,7 +2193,7 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -2179,14 +2202,14 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     tosigma=1.0/(2.0*sqrt(2.0*log(2.0)));
 
     if (nd_x == 0){
        *pret = 0;
-        perrorf = (errorf *) param->data;
+        perrorf = (errorf *) PyArray_DATA(param);
         for (i=0;i<(npars/3);i++){
             dhelp = perrorf[i].fwhm * tosigma;
             dhelp = (*px - perrorf[i].centroid) / (sqrt(2)*dhelp);
@@ -2199,7 +2222,7 @@ SpecfitFuns_upstep(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            perrorf = (errorf *) param->data;
+            perrorf = (errorf *) PyArray_DATA(param);
             for (i=0;i<(npars/3);i++){
             dhelp = perrorf[i].fwhm * tosigma;
             dhelp = (*px - perrorf[i].centroid) / (sqrt(2)*dhelp);
@@ -2243,40 +2266,40 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
 
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -2299,7 +2322,7 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -2308,14 +2331,14 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     tosigma=1.0/(2.0*sqrt(2.0*log(2.0)));
 
     if (nd_x == 0){
        *pret = 0;
-        perrorf = (errorf *) param->data;
+        perrorf = (errorf *) PyArray_DATA(param);
         for (i=0;i<(npars/4);i++){
             dhelp = perrorf[i].beamfwhm * tosigma;
             centroid1=perrorf[i].position - 0.5 * perrorf[i].fwhm;
@@ -2331,7 +2354,7 @@ SpecfitFuns_slit(PyObject *self, PyObject *args)
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            perrorf = (errorf *) param->data;
+            perrorf = (errorf *) PyArray_DATA(param);
             for (i=0;i<(npars/4);i++){
             dhelp = perrorf[i].beamfwhm * tosigma;
             centroid1=perrorf[i].position - 0.5 * perrorf[i].fwhm;
@@ -2370,26 +2393,26 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
         return NULL;
 
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (x == NULL){
         return NULL;
     }
 
-    nd_x = x->nd;
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_x = %d\n",nd_x);
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -2398,7 +2421,7 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(x);
         return NULL;
@@ -2406,8 +2429,8 @@ SpecfitFuns_erfc(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        dhelp = *px;
@@ -2450,26 +2473,26 @@ SpecfitFuns_erf(PyObject *self, PyObject *args)
         return NULL;
 
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (x == NULL){
         return NULL;
     }
 
-    nd_x = x->nd;
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_x = %d\n",nd_x);
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
@@ -2478,7 +2501,7 @@ SpecfitFuns_erf(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(x);
         return NULL;
@@ -2486,8 +2509,8 @@ SpecfitFuns_erf(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if (nd_x == 0){
        dhelp = *px;
@@ -2546,46 +2569,46 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
     /* The gaussian terms must always be there */
     if(tails <= 0){
         /* I give back a matrix filled with zeros */
-        ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+        ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
         if (ret == NULL){
             Py_DECREF(param);
             Py_DECREF(x);
@@ -2627,7 +2650,7 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -2640,9 +2663,9 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
-    phyper = (hypermet *) param->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
+    phyper = (hypermet *) PyArray_DATA(param);
 if(0){
 if(debug !=0){
     for (i=0;i<(npars/expected_pars);i++){
@@ -2652,7 +2675,7 @@ printf("Area%d=%f,Pos%d=%f,FWHM%d=%f\n",i,phyper[i].area,i,phyper[i].position,i,
 }
     if (nd_x == 0){
        *pret = 0;
-        phyper = (hypermet *) param->data;
+        phyper = (hypermet *) PyArray_DATA(param);
         for (i=0;i<(npars/expected_pars);i++){
             /* g_term = st_term = lt_term = step_term = 0; */
             x1 = phyper[i].area;
@@ -2716,7 +2739,7 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
         }
         for (j=0;j<k;j++){
             *pret = 0;
-            phyper = (hypermet *) param->data;
+            phyper = (hypermet *) PyArray_DATA(param);
          for (i=0;i<(npars/expected_pars);i++){
             /* g_term = st_term = lt_term = step_term = 0; */
             x1 = phyper[i].area;
@@ -2867,46 +2890,46 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
         return NULL;
 
     param = (PyArrayObject *)
-             PyArray_ContiguousFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(input1, NPY_DOUBLE,0,0);
     if (param == NULL)
         return NULL;
     x = (PyArrayObject *)
-             PyArray_ContiguousFromObject(input2, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(input2, NPY_DOUBLE,0,0);
     if (x == NULL){
         Py_DECREF(param);
         return NULL;
     }
 
-    nd_param = param->nd;
-    nd_x = x->nd;
+    nd_param = PyArray_NDIM(param);
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_param = %d nd_x = %d\n",nd_param,nd_x);
     }
     if (nd_param == 1) {
-        dim_param [0] = param->dimensions[0];
+        dim_param [0] = PyArray_DIMS(param)[0];
         dim_param [1] = 0;
     }else{
-        dim_param [0] = param->dimensions[0];
-        dim_param [1] = param->dimensions[1];
+        dim_param [0] = PyArray_DIMS(param)[0];
+        dim_param [1] = PyArray_DIMS(param)[1];
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
 
     /* The gaussian terms must always be there */
     if(tails <= 0){
         /* I give back a matrix filled with zeros */
-        ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+        ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
         if (ret == NULL){
             Py_DECREF(param);
             Py_DECREF(x);
@@ -2948,7 +2971,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(param);
         Py_DECREF(x);
@@ -2961,9 +2984,9 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     tosigma=1.0/(2.0*sqrt(2.0*log2));
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
-    phyper = (hypermet *) param->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
+    phyper = (hypermet *) PyArray_DATA(param);
 if(0){
 if(debug !=0){
     for (i=0;i<(npars/expected_pars);i++){
@@ -2973,7 +2996,7 @@ printf("Area%d=%f,Pos%d=%f,FWHM%d=%f\n",i,phyper[i].area,i,phyper[i].position,i,
 }
     if (nd_x == 0){
        *pret = 0;
-        phyper = (hypermet *) param->data;
+        phyper = (hypermet *) PyArray_DATA(param);
         for (i=0;i<(npars/expected_pars);i++){
             /* g_term = st_term = lt_term = step_term = 0; */
             x1 = phyper[i].area;
@@ -3040,13 +3063,13 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
         for (j=0;j<nd_x;j++){
             k = (int) (dim_x [j] * k);
         }
-        phyper = (hypermet *) param->data;
+        phyper = (hypermet *) PyArray_DATA(param);
         for (i=0;i<(npars/expected_pars);i++){
           if (i == 0){
                 *pret = 0;
           }else{
-            px = (double *) x->data;
-            pret = (double *) ret->data;
+            px = (double *) PyArray_DATA(x);
+            pret = (double *) PyArray_DATA(ret);
           }
           x1 = phyper[i].area;
           x2 = phyper[i].position;
@@ -3174,29 +3197,29 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
                                     &debug_info, &relevance_info ))
         return NULL;
     yspec = (PyArrayObject *)
-             PyArray_CopyFromObject(input, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input, NPY_DOUBLE,0,0);
     if (yspec == NULL)
         return NULL;
     if (Sensitivity < 0.1) {
         Sensitivity = 3.25;
     }
 
-    nd = yspec->nd;
+    nd = PyArray_NDIM(yspec);
     if (nd == 0) {
         printf("I need at least a vector!\n");
         Py_DECREF(yspec);
         return NULL;
     }
 
-    nchannels = (long) yspec->dimensions[0];
+    nchannels = (long) PyArray_DIMS(yspec)[0];
 
     if (nd > 1) {
         if (nchannels == 1){
-            nchannels = (long) yspec->dimensions[0];
+            nchannels = (long) PyArray_DIMS(yspec)[0];
         }
     }
 
-    pvalues = (double *) yspec->data;
+    pvalues = (double *) PyArray_DATA(yspec);
 
     seek_result=SpecfitFuns_seek2(BeginChannel, EndChannel, nchannels,
                     FWHM, Sensitivity, debug_info,
@@ -3215,19 +3238,18 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
     if (relevance_info) {
         dimensions [0] = npeaks;
         dimensions [1] = 2;
-        result = (PyArrayObject *) PyArray_SimpleNew(2,dimensions,PyArray_DOUBLE);
+        result = (PyArrayObject *) PyArray_SimpleNew(2,dimensions,NPY_DOUBLE);
+        pvalues = (double *) PyArray_DATA(result);
         for (i=0;i<npeaks;i++){
-            /*printf("Peak %ld found at %g rel %g\n",i+1,peaks[i],relevances[i]);*/
-            *((double *) (result->data + i*result->strides[0])) =  peaks[i];
-            *((double *) (result->data +(i*result->strides[0] + result->strides[1]))) =  relevances[i];
+            pvalues[2*i] =  peaks[i];
+            pvalues[2*i + 1] =  relevances[i];
         }
-
     }else{
         dimensions [0] = npeaks;
-        result = (PyArrayObject *) PyArray_SimpleNew(1,dimensions,PyArray_DOUBLE);
+        result = (PyArrayObject *) PyArray_SimpleNew(1,dimensions,NPY_DOUBLE);
+        pvalues = (double *) PyArray_DATA(result);
         for (i=0;i<npeaks;i++){
-            /*printf("Peak %ld found at %g\n",i+1,peaks[i]);*/
-            *((double *) (result->data +i*result->strides[0])) =  peaks[i];
+            pvalues[i] = peaks[i];
         }
     }
     return PyArray_Return(result);
@@ -3507,8 +3529,8 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     npy_intp    nd_y, nd_x, index1, *points, *indices, max_points;
     /*int         dimensions[1];*/
     npy_intp npoints;
-    npy_intp dimensions[1];
-    npy_intp dim_xinter[1];
+    npy_intp dimensions[2];
+    npy_intp dim_xinter[2];
     double *helppointer;
 
     /* statements */
@@ -3517,12 +3539,12 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
         return NULL;
     }
     ydata = (PyArrayObject *)
-             PyArray_CopyFromObject(yinput, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(yinput, NPY_DOUBLE,0,0);
     if (ydata == NULL){
         printf("Copy from Object error!\n");
         return NULL;
     }
-    nd_y = ydata->nd;
+    nd_y = PyArray_NDIM(ydata);
     if (nd_y == 0) {
         printf("I need at least a vector!\n");
         Py_DECREF(ydata);
@@ -3530,7 +3552,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     }
 /*
     for (i=0;i<nd_y;i++){
-        printf("Dimension %d = %d\n",i,ydata->dimensions[i]);
+        printf("Dimension %d = %d\n",i,PyArray_DIMS(ydata)[i]);
     }
 */
     /* xdata parsing */
@@ -3548,11 +3570,11 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     for (i=0;i<nd_y;i++){
        /* printf("i = %d\n",i);*/
         /*xdata[i] = (PyArrayObject *)
-                    PyArray_CopyFromObject(yinput,PyArray_DOUBLE,0,0);
+                    PyArray_CopyFromObject(yinput,NPY_DOUBLE,0,0);
         */
         xdata[i] = (PyArrayObject *)
                     PyArray_CopyFromObject((PyObject *)
-                    (PySequence_Fast_GET_ITEM(xinput,i)), PyArray_DOUBLE,0,0);
+                    (PySequence_Fast_GET_ITEM(xinput,i)), NPY_DOUBLE,0,0);
         if (xdata[i] == NULL){
             printf("x Copy from Object error!\n");
             for (j=0;j<i;j++){
@@ -3567,13 +3589,13 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     /* check x dimensions are appropriate */
     j=0;
     for (i=0;i<nd_y;i++){
-        nd_x = xdata[i]->nd;
+        nd_x = PyArray_NDIM(xdata[i]);
         if (nd_x != 1) {
             printf("I need a vector!\n");
             j++;
             break;
         }
-        if (xdata[i]->dimensions[0] != ydata->dimensions[i]){
+        if (PyArray_DIMS(xdata[i])[0] != PyArray_DIMS(ydata)[i]){
             printf("xdata[%d] does not have appropriate dimension\n", (int) i);
             j++;
             break;
@@ -3588,10 +3610,10 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    xinter = (PyArrayObject *) PyArray_ContiguousFromObject(xinter0, PyArray_DOUBLE,0,0);
+    xinter = (PyArrayObject *) PyArray_ContiguousFromObject(xinter0, NPY_DOUBLE,0,0);
 
-    if (xinter->nd == 1){
-        dim_xinter[0] = xinter->dimensions[0];
+    if (PyArray_NDIM(xinter) == 1){
+        dim_xinter[0] = PyArray_DIMS(xinter)[0];
         dim_xinter[1] = 0;
         if (dim_xinter[0] != nd_y){
             printf("Wrong size\n");
@@ -3604,8 +3626,8 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
             return NULL;
         }
     }else{
-        dim_xinter[0] = xinter->dimensions[0];
-        dim_xinter[1] = xinter->dimensions[1];
+        dim_xinter[0] = PyArray_DIMS(xinter)[0];
+        dim_xinter[1] = PyArray_DIMS(xinter)[1];
         if (dim_xinter[1] != nd_y){
             printf("Wrong size\n");
             for (j=0;j<nd_y;j++){
@@ -3618,8 +3640,8 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
         }
     }
 
-    npoints = xinter->dimensions[0];
-    helppointer = (double *) xinter->data;
+    npoints = PyArray_DIMS(xinter)[0];
+    helppointer = (double *) PyArray_DATA(xinter);
 /*    printf("npoints = %d\n",npoints);
     printf("ndimensions y  = %d\n",nd_y);
 */
@@ -3637,7 +3659,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
     factors = malloc(nd_y * sizeof(double));
     dimensions [0] = npoints;
 
-    result = (PyArrayObject *) PyArray_SimpleNew(1,dimensions,PyArray_DOUBLE);
+    result = (PyArrayObject *) PyArray_SimpleNew(1,dimensions,NPY_DOUBLE);
 
     for (i=0;i<npoints;i++){
         badpoint = 0;
@@ -3645,8 +3667,8 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
             index1 = -1;
             if (badpoint == 0){
                 value = *helppointer++;
-                k=xdata[j]->dimensions[0] - 1;
-                nvalue = (double *) (xdata[j]->data + k * xdata[j]->strides[0]);
+                k=PyArray_DIMS(xdata[j])[0] - 1;
+                nvalue = (double *) (PyArray_BYTES(xdata[j]) + k * (PyArray_STRIDES(xdata[j])[0]));
                 /* test against other version
                 valueold = PyFloat_AsDouble(
                     PySequence_Fast_GET_ITEM(PySequence_Fast_GET_ITEM(xinter0,i),j));
@@ -3657,20 +3679,20 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                 if (value > *nvalue){
                     badpoint = 1;
                 }else{
-                    nvalue = (double *) (xdata[j]->data);
+                    nvalue = (double *) (PyArray_DATA(xdata[j]));
                     if (value < *nvalue){
                          badpoint = 1;
                     }
                 }
                 if (badpoint == 0){
                     if (1){
-                        k = xdata[j]->dimensions[0];
+                        k = PyArray_DIMS(xdata[j])[0];
                         jl = -1;
                         ju = k-1;
                         if (badpoint == 0){
                             while((ju-jl) > 1){
                                 k = (ju+jl)/2;
-                                nvalue = (double *) (xdata[j]->data + k * xdata[j]->strides[0]);
+                                nvalue = (double *) (PyArray_BYTES(xdata[j]) + k * (PyArray_STRIDES(xdata[j])[0]));
                                 if (value >= *nvalue){
                                     jl=k;
                                 }else{
@@ -3684,8 +3706,8 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                     if (0){
                         k=0;
                         ju = -1;
-                        while(k < (xdata[j]->dimensions[0] - 1)){
-                            nvalue = (double *) (xdata[j]->data + k * xdata[j]->strides[0]);
+                        while(k < (PyArray_DIMS(xdata[j])[0] - 1)){
+                            nvalue = (double *) (PyArray_BYTES(xdata[j]) + k * (PyArray_STRIDES(xdata[j])[0]));
                             /*printf("nvalue = %g\n",*nvalue);*/
                             if (value >= *nvalue){
                                 ju = k;
@@ -3694,14 +3716,14 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                         }
                         if (ju != index1){
                             printf("i = %d, j= %d, value = %.5f indexvalue = %d, newvalue = %d\n",\
-					    (int) i, (int) j,value, (int) ju, (int) index1);
+                        (int) i, (int) j,value, (int) ju, (int) index1);
                         }
                     }
                     if (index1 < 0){
                         badpoint = 1;
                     }else{
-                        x1 = (double *) (xdata[j]->data + index1 * xdata[j]->strides[0]);
-                        x2 = (double *) (xdata[j]->data + (index1+1) * xdata[j]->strides[0]);
+                        x1 = (double *) (PyArray_BYTES(xdata[j])+ index1 * (PyArray_STRIDES(xdata[j])[0]));
+                        x2 = (double *) (PyArray_BYTES(xdata[j])+(index1+1) * (PyArray_STRIDES(xdata[j])[0]));
                         factors[j] = (value - *x1) / (*x2 - *x1);
                         indices[j] = index1;
                     }
@@ -3738,7 +3760,7 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                 }else{
                     l = ((nd_y * k) + j);
                 }
-                offset += points[(nd_y * k) + j] * (ydata -> strides[j]);
+                offset += points[(nd_y * k) + j] * (PyArray_STRIDES(ydata)[j]);
                 /*printf("factors[%d] = %g\n",j,factors[j]);*/
                 if ((l % 2) == 0){
                     dhelp = (1.0 - factors[j]) * dhelp;
@@ -3746,10 +3768,10 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                     dhelp =  factors[j] * dhelp;
                 }
             }
-            yresult += *((double *) (ydata -> data + offset)) * dhelp;
+            yresult += *((double *) (PyArray_BYTES(ydata) + offset)) * dhelp;
           }
         }
-       *((double *) (result->data +i*result->strides[0])) =  yresult;
+       *((double *) (PyArray_BYTES(result) + i*PyArray_STRIDES(result)[0])) =  yresult;
     }
     free(points);
     free(indices);
@@ -3800,8 +3822,8 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     }
 
     grid = (PyArrayObject *)
-             PyArray_ContiguousFromObject(grid_input, PyArray_NOTYPE,0,0);
-    switch (grid->descr->type_num){
+             PyArray_ContiguousFromObject(grid_input, NPY_NOTYPE,0,0);
+    switch (PyArray_DESCR(grid)->type_num){
         case NPY_DOUBLE:
             double_flag = 1;
             break;
@@ -3811,12 +3833,12 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     Py_DECREF(grid);
     if (double_flag){
         grid = (PyArrayObject *)
-             PyArray_ContiguousFromObject(grid_input, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(grid_input, NPY_DOUBLE,0,0);
     } else {
         grid = (PyArrayObject *)
-             PyArray_ContiguousFromObject(grid_input, PyArray_FLOAT,0,0);
+             PyArray_ContiguousFromObject(grid_input, NPY_FLOAT,0,0);
     }
-    nd_grid = grid->nd;
+    nd_grid = PyArray_NDIM(grid);
     if (nd_grid == 0) {
         printf("Grid should be at least a vector!\n");
         Py_DECREF(grid);
@@ -3824,7 +3846,7 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     }
 
     hits = (PyArrayObject *)
-             PyArray_ContiguousFromObject(hits_input, PyArray_INT,0,0);
+             PyArray_ContiguousFromObject(hits_input, NPY_INT,0,0);
     if (hits == NULL) {
         Py_DECREF(grid);
         return NULL;
@@ -3846,7 +3868,7 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     }
 
     ydata = (PyArrayObject *)
-             PyArray_ContiguousFromObject(yinput, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(yinput, NPY_DOUBLE,0,0);
     if (ydata == NULL){
         printf("Contiguous from object error!\n");
         Py_DECREF(grid);
@@ -3855,7 +3877,7 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     }
 
     limits = (PyArrayObject *)
-             PyArray_ContiguousFromObject(limits_input, PyArray_DOUBLE,0,0);
+             PyArray_ContiguousFromObject(limits_input, NPY_DOUBLE,0,0);
     if (limits == NULL){
         printf("Limits. Contiguous from object error!\n");
         Py_DECREF(grid);
@@ -3878,7 +3900,7 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
     for (i=0;i<nd_grid;i++){
         xdata[i] = (PyArrayObject *)
                     PyArray_ContiguousFromObject((PyObject *)
-                    (PySequence_Fast_GET_ITEM(xinput,i)), PyArray_DOUBLE,0,0);
+                    (PySequence_Fast_GET_ITEM(xinput,i)), NPY_DOUBLE,0,0);
         if (xdata[i] == NULL){
             printf("x Copy from Object error!\n");
             for (j=0;j<i;j++){
@@ -3911,24 +3933,24 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
         if (i==0){
             delta_index[nd_grid-1] = 1;
         }else{
-            delta_index[nd_grid-1-i] = delta_index[nd_grid-i] * grid->dimensions[nd_grid-i];
+            delta_index[nd_grid-1-i] = delta_index[nd_grid-i] * PyArray_DIMS(grid)[nd_grid-i];
         }
     }
 
     /* get the number of points in each of the arrays */
     npoints = 0;
-    for (i=0; i<ydata->nd;i++){
+    for (i=0; i<PyArray_NDIM(ydata);i++){
         if (i==0)
-            npoints = ydata->dimensions[0];
+            npoints = PyArray_DIMS(ydata)[0];
         else
-            npoints *= ydata->dimensions[i];
+            npoints *= PyArray_DIMS(ydata)[i];
     }
 
     /* do the work */
-    data_pointer = (double *) ydata->data;
-    grid_pointerf = (float *) grid->data;
-    grid_pointerd = (double *) grid->data;
-    hits_pointer = (int *) hits->data;
+    data_pointer = (double *) PyArray_DATA(ydata);
+    grid_pointerf = (float *) PyArray_DATA(grid);
+    grid_pointerd = (double *) PyArray_DATA(grid);
+    hits_pointer = (int *) PyArray_DATA(hits);
 
     for (i=0;i<npoints;i++){
         if (use_datathreshold){
@@ -3938,13 +3960,13 @@ SpecfitFuns_voxelize(PyObject *self, PyObject *args)
         goodpoint = 1;
         grid_position = 0;
         for (j=0; j< nd_grid; j++){
-            double_pointer = (double *) xdata[j]->data;
+            double_pointer = (double *) PyArray_DATA(xdata[j]);
             value = *(double_pointer+i);
-            double_pointer = (double *) limits->data;
+            double_pointer = (double *) PyArray_DATA(limits);
             limit0 = *(double_pointer+j);
             limit1 = *(double_pointer+j+nd_grid);
-            index = (int)(grid->dimensions[j]*(value - limit0)/(limit1-limit0));
-            if ((index < 0) || (index >= grid->dimensions[j]))
+            index = (int)(PyArray_DIMS(grid)[j]*(value - limit0)/(limit1-limit0));
+            if ((index < 0) || (index >= PyArray_DIMS(grid)[j]))
             {
                 /* this point is not going to contribute */
                 goodpoint = 0;
@@ -3993,25 +4015,25 @@ SpecfitFuns_pileup(PyObject *self, PyObject *args)
         return NULL;
 
     x = (PyArrayObject *)
-             PyArray_CopyFromObject(input1, PyArray_DOUBLE,0,0);
+             PyArray_CopyFromObject(input1, NPY_DOUBLE,0,0);
     if (x == NULL)
        return NULL;
 
-    nd_x = x->nd;
+    nd_x = PyArray_NDIM(x);
     if(debug !=0) {
         printf("nd_x = %d\n",nd_x);
     }
 
     if (nd_x == 1) {
-        dim_x [0] = x->dimensions[0];
+        dim_x [0] = PyArray_DIMS(x)[0];
         dim_x [1] = 0;
     }else{
         if (nd_x == 0) {
             dim_x [0] = 0;
             dim_x [1] = 0;
         }else{
-            dim_x [0] = x->dimensions[0];
-            dim_x [1] = x->dimensions[1];
+            dim_x [0] = PyArray_DIMS(x)[0];
+            dim_x [1] = PyArray_DIMS(x)[1];
         }
     }
     if(debug !=0) {
@@ -4019,7 +4041,7 @@ SpecfitFuns_pileup(PyObject *self, PyObject *args)
     }
 
     /* Create the output array */
-    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, PyArray_DOUBLE);
+    ret = (PyArrayObject *) PyArray_SimpleNew(nd_x, dim_x, NPY_DOUBLE);
     if (ret == NULL){
         Py_DECREF(x);
         return NULL;
@@ -4027,17 +4049,17 @@ SpecfitFuns_pileup(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(ret, 0);
 
     /* the pointer to the starting position of par data */
-    px = (double *) x->data;
-    pret = (double *) ret->data;
+    px = (double *) PyArray_DATA(x);
+    pret = (double *) PyArray_DATA(ret);
 
     if(1){
         *pret = 0;
         k = (int )(zero/gain);
         for (i=input2;i<dim_x[0];i++){
-            pall=(double *) x->data;
+            pall=(double *) PyArray_DATA(x);
             if ((i+k) >= 0)
             {
-                pret = (double *) ret->data+(i+k);
+                pret = (double *) PyArray_DATA(ret)+(i+k);
                 for (j=0;j<dim_x[0]-i-k;j++){
                     *pret += *px * (*pall);
                     pall++;
@@ -4070,7 +4092,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
         return NULL;
 
     ret = (PyArrayObject *)
-             PyArray_FROMANY(input, PyArray_DOUBLE, 1, 1, NPY_ENSURECOPY);
+             PyArray_FROMANY(input, NPY_DOUBLE, 1, 1, NPY_ARRAY_ENSURECOPY);
 
     if (ret == NULL){
         printf("Cannot create 1D array from input\n");
@@ -4079,7 +4101,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     npoints = (int )  dpoints;
     if (!(npoints % 2)) npoints +=1;
 
-    n = (int) ret->dimensions[0];
+    n = (int) PyArray_DIMS(ret)[0];
 
     if((npoints < MIN_SAVITSKY_GOLAY_WIDTH) ||  (n < npoints))
     {
@@ -4096,7 +4118,7 @@ SpecfitFuns_SavitskyGolay(PyObject *self, PyObject *args)
     }
 
     /* do the job */
-    output = (double *) ret->data;
+    output = (double *) PyArray_DATA(ret);
 
     /* simple smoothing at the beginning */
     for (j=0; j<=(int)(npoints/3); j++)

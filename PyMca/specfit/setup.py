@@ -22,7 +22,7 @@ setup (
         name         = "SpecfitFuns",
         version      = "2.1",
         description  = "fit functions module",
-        author       = "V.A. Sole - BLISS Group",
+        author       = "V.A. Sole - Software Group",
         author_email = "sole@esrf.fr",
         url          = "http://www.esrf.fr/computing/bliss/",
 
