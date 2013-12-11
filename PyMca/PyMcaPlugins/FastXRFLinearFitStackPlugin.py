@@ -204,10 +204,6 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     return
         if 'concentrations' in result:
             imageNames = result['names']
-            nImages = result['parameters'].shape[0] +\
-                      result['concentrations'].shape[0]
-            for i in range(result['concentrations'].shape[0]):
-                imageNames.append("X(%s)" % imageNames[i])
             images = numpy.concatenate((result['parameters'],
                                         result['concentrations']), axis=0)
         else:

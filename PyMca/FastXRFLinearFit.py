@@ -392,6 +392,7 @@ class FastXRFLinearFit(object):
                 if DEBUG:
                     print("No reference")
                 for i, group in enumerate(fitresult['result']['groups']):
+                    outputDict['names'].append("C(%s)" % group)
                     massFractions[i] = results[nFreeBackgroundParameters+i] *\
                         (concentrations['mass fraction'][group]/fitresult['result'][param]['fitarea'])
             else:
@@ -412,6 +413,7 @@ class FastXRFLinearFit(object):
                 goodIdx = results[nFreeBackgroundParameters+idx] > 0
                 massFractions[idx] = referenceConcentrations                
                 for i, group in enumerate(fitresult['result']['groups']):
+                    outputDict['names'].append("C(%s)" % group)
                     if i == idx:
                         continue
                     goodI = results[nFreeBackgroundParameters+i] > 0
