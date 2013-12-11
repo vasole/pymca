@@ -16,9 +16,12 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
+__license__ = "LGPL"
 import numpy
 from PyMca.linalg import lstsq
 from PyMca import ClassMcaTheory
+from PyMca import Gefit
+from PyMca import ConcentrationsTool
 from PyMca import SpecfitFuns
 from PyMca import ConfigDict
 
@@ -46,9 +49,9 @@ class FastXRFLinearFit(object):
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
 
-        if concentrations:
-            txt = "Fast concentration calculation not implemented yet"
-            raise NotImplemented(txt)
+        #if concentrations:
+        #    txt = "Fast concentration calculation not implemented yet"
+        #    raise NotImplemented(txt)
 
         if configuration is not None:
             self._mcaTheory.setConfiguration(configuration)
@@ -193,7 +196,9 @@ class FastXRFLinearFit(object):
         # allocate the output buffer
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
         uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
-
+        if concentrations:
+            massFractions = numpy.zeros((nFree - nFreeBackgroundParameters, nRows, nColumns),
+                                        numpy.float32)
         #perform the inital fit
         for i in range(data.shape[0]):
             #chunks of nColumns spectra
@@ -321,7 +326,102 @@ class FastXRFLinearFit(object):
                         results[i][badMask] = ddict['parameters'][idx]
                         uncertainties[i][badMask] = ddict['uncertainties'][idx]
                         idx += 1
-        return {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
+        outputDict = {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
+        if concentrations:
+            # check if an internal reference is used and if it is set to auto
+            ####################################################
+            # CONCENTRATIONS
+            cTool = ConcentrationsTool.ConcentrationsTool()
+            cToolConf = cTool.configure()
+            cToolConf.update(config['concentrations'])
+
+            fitFirstSpectrum = False
+            if config['concentrations']['usematrix']:
+                if DEBUG:
+                    print("USING MATRIX")
+                if config['concentrations']['reference'].upper() == "AUTO":
+                    fitFirstSpectrum = True
+
+            fitresult = {}
+            if fitFirstSpectrum:
+                # we have to fit the "reference" spectrum just to get the reference element
+                mcafitresult = self._mcaTheory.startfit(digest=0, linear=True)
+                # if one of the elements has zero area this cannot be made directly
+                fitresult['result'] = self._mcaTheory.imagingDigestResult()
+                fitresult['result']['config'] = config
+                concentrations, addInfo = cTool.processFitResult(config=cToolConf,
+                                                    fitresult=fitresult,
+                                                    elementsfrommatrix=False,
+                                                    fluorates=self._mcaTheory._fluoRates,
+                                                    addinfo=True)
+                # and we have to make sure that all the areas are positive
+                for group in fitresult['result']['groups']:
+                    if fitresult['result'][group]['fitarea'] <= 0.0:
+                        # give a tiny area
+                        fitresult['result'][group]['fitarea'] = 1.0e-6
+                config['concentrations']['reference'] = addInfo['ReferenceElement']
+            else:
+                fitresult['result'] = {}
+                fitresult['result']['config'] = config
+                fitresult['result']['groups'] = []
+                idx = 0
+                for i, param in enumerate(self._mcaTheory.PARAMETERS):
+                    if self._mcaTheory.codes[0][i] == Gefit.CFIXED:
+                        continue
+                    if i < self._mcaTheory.NGLOBAL:
+                        # background
+                        pass
+                    else:
+                        fitresult['result']['groups'].append(param)
+                        fitresult['result'][param] = {}
+                        # we are just interested on the factor to be applied to the area to get the
+                        # concentrations
+                        fitresult['result'][param]['fitarea'] = 1.0
+                        fitresult['result'][param]['sigmaarea'] = 1.0
+                    idx += 1
+            concentrations, addInfo = cTool.processFitResult(config=cToolConf,
+                                                    fitresult=fitresult,
+                                                    elementsfrommatrix=False,
+                                                    fluorates=self._mcaTheory._fluoRates,
+                                                    addinfo=True)
+            referenceElement = addInfo['ReferenceElement'] 
+            referenceTransitions = addInfo['ReferenceTransitions']
+            if DEBUG:
+                print("Reference <%s>  transition <%s>" % (referenceElement, referenceTransitions))
+            if referenceElement in ["", None, "None"]:
+                if DEBUG:
+                    print("No reference")
+                for i, group in enumerate(fitresult['result']['groups']):
+                    massFractions[i] = results[nFreeBackgroundParameters+i] *\
+                        (concentrations['mass fraction'][group]/fitresult['result'][param]['fitarea'])
+            else:
+                if DEBUG:
+                    print("With reference")
+                idx = None
+                testGroup = referenceElement+ " " + referenceTransitions.split()[0]
+                for i, group in enumerate(fitresult['result']['groups']):
+                    if group == testGroup:
+                        idx = i
+                if idx is None:
+                    raise ValueError("Invalid reference:  <%s> <%s>" %\
+                                     (referenceElement, referenceTransitions))
+
+                group = fitresult['result']['groups'][idx]
+                referenceArea = fitresult['result'][group]['fitarea']
+                referenceConcentrations = concentrations['mass fraction'][group]
+                goodIdx = results[nFreeBackgroundParameters+idx] > 0
+                massFractions[idx] = referenceConcentrations                
+                for i, group in enumerate(fitresult['result']['groups']):
+                    if i == idx:
+                        continue
+                    goodI = results[nFreeBackgroundParameters+i] > 0
+                    tmp = results[nFreeBackgroundParameters+idx][goodI]
+                    massFractions[i][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
+                                ((referenceArea/fitresult['result'][group]['fitarea']) *\
+                                (concentrations['mass fraction'][group]))
+            outputDict['concentrations'] = massFractions
+            ####################################################
+        return outputDict
         
 if __name__ == "__main__":
     import time
@@ -339,6 +439,6 @@ if __name__ == "__main__":
     fastFit = FastXRFLinearFit()
     fastFit.setFitConfigurationFile(configurationFile)
     print("Configuring Elapsed = % s " % (time.time() - t0))
-    results = fastFit.fitMultipleSpectra(y=dataStack)
+    results = fastFit.fitMultipleSpectra(y=dataStack, concentrations=True)
     print("Total Elapsed = % s " % (time.time() - t0))
 

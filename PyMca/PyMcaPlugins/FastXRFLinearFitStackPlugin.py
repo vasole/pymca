@@ -56,6 +56,7 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import os
+import numpy
 import time
 from PyMca import StackPluginBase
 from PyMca import FastXRFLinearFit
@@ -80,25 +81,31 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         self.methodDict["Fit Stack"] =[function,
                                        info,
                                        icon]
-        self.__methodKeys = ["Fit Stack"]
+        function = self._showWidget
+        info = "Show last results"
+        icon = PyMca_Icons.brushselect
+        self.methodDict["Show"] =[function,
+                                  info,
+                                  icon]
+        self.__methodKeys = ["Fit Stack", "Show"]
         self.configurationWidget = \
                     FastXRFLinearFitWindow.FastXRFLinearFitDialog()
         self.fitInstance = None
-        self.widget = None
+        self._widget = None
         self.thread = None
 
     def stackUpdated(self):
         if DEBUG:
             print("FastXRFLinearFitStackPlugin.stackUpdated() called")
-        self.widget = None
+        self._widget = None
 
     def selectionMaskUpdated(self):
-        if self.widget is None:
+        if self._widget is None:
             return
-        if self.widget.isHidden():
+        if self._widget.isHidden():
             return
         mask = self.getStackSelectionMask()
-        self.widget.setSelectionMask(mask)
+        self._widget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
         if DEBUG:
@@ -116,7 +123,10 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
     
     #Methods implemented by the plugin
     def getMethods(self):
-        return self.__methodKeys
+        if self._widget is None:
+            return [self.__methodKeys[0]]
+        else:
+            return self.__methodKeys
 
     def getMethodToolTip(self, name):
         return self.methodDict[name][1]
@@ -134,11 +144,10 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             self._executeFunctionAndParameters()
 
     def _executeFunctionAndParameters(self):
-        parameters = self.configurationWidget.getParameters()
-        self.widget = None
+        self._parameters = self.configurationWidget.getParameters()
+        self._widget = None
         if self.fitInstance is None:
             self.fitInstance = FastXRFLinearFit.FastXRFLinearFit()
-        self._fitConfigurationFile = parameters['configuration']
         #self._fitConfigurationFile="E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
         
         if DEBUG:
@@ -174,11 +183,12 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             # spatial_mask = numpy.isfinite(image_data)
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
         stack = self.getStackDataObject()
-
-        self.fitInstance.setFitConfigurationFile(self._fitConfigurationFile)
+        fitConfigurationFile = self._parameters['configuration']
+        concentrations = self._parameters['concentrations']
+        self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
         result = self.fitInstance.fitMultipleSpectra(x=None,
                                                      y=stack,
-                                                     concentrations=False,
+                                                     concentrations=concentrations,
                                                      ysum=spectrum)
         return result
 
@@ -192,18 +202,27 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     # somehow this exception is not caught
                     raise Exception(result[1], result[2])
                     return
-        images = result['parameters']
-        imageNames = result['names']
+        if 'concentrations' in result:
+            imageNames = result['names']
+            nImages = result['parameters'].shape[0] +\
+                      result['concentrations'].shape[0]
+            for i in range(result['concentrations'].shape[0]):
+                imageNames.append("X(%s)" % imageNames[i])
+            images = numpy.concatenate((result['parameters'],
+                                        result['concentrations']), axis=0)
+        else:
+            images = result['parameters']
+            imageNames = result['names']
         nImages = images.shape[0]
-        self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
+        self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=False)
-        self.widget.buildAndConnectImageButtonBox()
+        self._widget.buildAndConnectImageButtonBox()
         qt = StackPluginResultsWindow.qt
-        qt.QObject.connect(self.widget,
+        qt.QObject.connect(self._widget,
                            qt.SIGNAL('MaskImageWidgetSignal'),
                            self.mySlot)
 
-        self.widget.setStackPluginResults(images,
+        self._widget.setStackPluginResults(images,
                                           image_names=imageNames)
         self._showWidget()
 
@@ -220,21 +239,25 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             fileRoot = parameters["file_root"].replace(" ","")
         if fileRoot in [None, ""]:
             fileRoot = "images"
+        if not os.path.exists(outputDir):
+            os.mkdir(outputDir)
         imagesDir = os.path.join(outputDir, "IMAGES")
+        if not os.path.exists(imagesDir):
+            os.mkdir(imagesDir)
         imageList = [None] * nImages
         for i in range(nImages):
             imageList[i] = images[i]
-        fileName = os.path.join(imagesDir, fileRoot) + ".edf"
+        fileName = os.path.join(imagesDir, fileRoot+".edf")
         ArraySave.save2DArrayListAsEDF(imageList, fileName, labels=imageNames)
-        fileName = os.path.join(imagesDir, fileRoot) + ".csv"
+        fileName = os.path.join(imagesDir, fileRoot+".csv")
         ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True, labels=imageNames)                    
 
     def _showWidget(self):
-        if self.widget is None:
+        if self._widget is None:
             return
         #Show
-        self.widget.show()
-        self.widget.raise_()
+        self._widget.show()
+        self._widget.raise_()
 
         #update
         self.selectionMaskUpdated()
