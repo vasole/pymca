@@ -598,7 +598,7 @@ class QStackWidget(StackBase.StackBase,
             idx = 0
         else:
             actionList = []
-            methods.sort()
+            #methods.sort()
             menu = qt.QMenu(self)
             for method in methods:
                 text = QString(method)
