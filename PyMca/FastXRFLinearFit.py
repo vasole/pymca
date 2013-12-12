@@ -196,9 +196,7 @@ class FastXRFLinearFit(object):
         # allocate the output buffer
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
         uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
-        if concentrations:
-            massFractions = numpy.zeros((nFree - nFreeBackgroundParameters, nRows, nColumns),
-                                        numpy.float32)
+
         #perform the inital fit
         for i in range(data.shape[0]):
             #chunks of nColumns spectra
@@ -327,6 +325,7 @@ class FastXRFLinearFit(object):
                         uncertainties[i][badMask] = ddict['uncertainties'][idx]
                         idx += 1
         outputDict = {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
+        
         if concentrations:
             # check if an internal reference is used and if it is set to auto
             ####################################################
@@ -349,7 +348,7 @@ class FastXRFLinearFit(object):
                 # if one of the elements has zero area this cannot be made directly
                 fitresult['result'] = self._mcaTheory.imagingDigestResult()
                 fitresult['result']['config'] = config
-                concentrations, addInfo = cTool.processFitResult(config=cToolConf,
+                concentrationsResult, addInfo = cTool.processFitResult(config=cToolConf,
                                                     fitresult=fitresult,
                                                     elementsfrommatrix=False,
                                                     fluorates=self._mcaTheory._fluoRates,
@@ -379,11 +378,18 @@ class FastXRFLinearFit(object):
                         fitresult['result'][param]['fitarea'] = 1.0
                         fitresult['result'][param]['sigmaarea'] = 1.0
                     idx += 1
-            concentrations, addInfo = cTool.processFitResult(config=cToolConf,
+            concentrationsResult, addInfo = cTool.processFitResult(config=cToolConf,
                                                     fitresult=fitresult,
                                                     elementsfrommatrix=False,
                                                     fluorates=self._mcaTheory._fluoRates,
                                                     addinfo=True)
+            nValues = 1
+            if len(concentrationsResult['layerlist']) > 1:
+                nValues += len(concentrationsResult['layerlist'])
+            massFractions = numpy.zeros((nValues * (nFree - nFreeBackgroundParameters), nRows, nColumns),
+                                        numpy.float32)
+
+
             referenceElement = addInfo['ReferenceElement'] 
             referenceTransitions = addInfo['ReferenceTransitions']
             if DEBUG:
@@ -391,10 +397,18 @@ class FastXRFLinearFit(object):
             if referenceElement in ["", None, "None"]:
                 if DEBUG:
                     print("No reference")
+                counter = 0
                 for i, group in enumerate(fitresult['result']['groups']):
                     outputDict['names'].append("C(%s)" % group)
-                    massFractions[i] = results[nFreeBackgroundParameters+i] *\
-                        (concentrations['mass fraction'][group]/fitresult['result'][param]['fitarea'])
+                    massFractions[counter] = results[nFreeBackgroundParameters+i] *\
+                        (concentrationsResult['mass fraction'][group]/fitresult['result'][param]['fitarea'])
+                    if len(concentrationsResult['layerlist']) > 1:
+                        for layer in concentrationsResult['layerlist']:
+                            outputDict['names'].append("C(%s)-%s" % (group, layer))
+                            massFractions[counter] = results[nFreeBackgroundParameters+i] *\
+                        (concentrationsResult[layer]['mass fraction'][group]/fitresult['result'][param]['fitarea'])
+                            counter += 1
+                    counter += 1
             else:
                 if DEBUG:
                     print("With reference")
@@ -409,9 +423,10 @@ class FastXRFLinearFit(object):
 
                 group = fitresult['result']['groups'][idx]
                 referenceArea = fitresult['result'][group]['fitarea']
-                referenceConcentrations = concentrations['mass fraction'][group]
+                referenceConcentrations = concentrationsResult['mass fraction'][group]
                 goodIdx = results[nFreeBackgroundParameters+idx] > 0
-                massFractions[idx] = referenceConcentrations                
+                massFractions[idx] = referenceConcentrations
+                counter = 0
                 for i, group in enumerate(fitresult['result']['groups']):
                     outputDict['names'].append("C(%s)" % group)
                     if i == idx:
@@ -420,7 +435,15 @@ class FastXRFLinearFit(object):
                     tmp = results[nFreeBackgroundParameters+idx][goodI]
                     massFractions[i][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
                                 ((referenceArea/fitresult['result'][group]['fitarea']) *\
-                                (concentrations['mass fraction'][group]))
+                                (concentrationsResult['mass fraction'][group]))
+                    if len(concentrationsResult['layerlist']) > 1:
+                        for layer in concentrationsResult['layerlist']:
+                            outputDict['names'].append("C(%s)-%s" % (group, layer))
+                            massFractions[i][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
+                                ((referenceArea/fitresult['result'][group]['fitarea']) *\
+                                (concentrationsResult[layer]['mass fraction'][group]))
+                            counter += 1                    
+                    counter += 1
             outputDict['concentrations'] = massFractions
             ####################################################
         return outputDict
