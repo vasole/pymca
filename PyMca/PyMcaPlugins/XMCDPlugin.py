@@ -78,7 +78,7 @@ class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
         self.widget = XMCDWindow.XMCDWidget(parent,
                                               self._plotWindow,
                                               beamline,
-                                              nSelectors = 2)
+                                              nSelectors = 5)
         
 
 MENU_TEXT = "XLD/XMCD Analysis"

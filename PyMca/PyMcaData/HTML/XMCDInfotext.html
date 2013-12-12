@@ -1,0 +1,702 @@
+<html>
+<head>
+    <style type="text/css">
+        body {
+            background-color:white;
+            width:400px
+        }
+        th, tr, td {
+            text-align:left;
+            vertical-align:bottom;
+            border: 2px solid #CCCCCC;
+            border-style:solid;
+        }
+        table {
+            font-family:"Monospace";
+            font-size:75%;
+            border: 2px solid grey;
+            border-collapse:collapse;
+            width:390px;
+            margin-left:0px;
+            margin-right:0px;
+            margin-top:10px;
+            margin-bottom:10px;
+        }
+        div.indent {
+            color:#333333;
+            text-align:justify;
+            margin-left:20px;
+            margin-right:20px;
+            margin-top:20px;
+            margin-bottom:20px;
+        }
+        div.main {
+            text-align:justify;
+            margin-left:5px;
+            margin-right:5px;
+            margin-top:5px;
+            margin-bottom:20px;
+        }
+        div.elem {
+            text-align:left;
+            margin-left:5px;
+            margin-right:5px;
+            margin-top:5px;
+            margin-bottom:5px;
+        }
+        div.code {
+            color:#333333;
+            background:#EEEEEE;
+            text-align:left;
+            margin-left:20px;
+            margin-right:20px;
+            margin-top:20px;
+            margin-bottom:20px;
+        }
+        div.highlight {
+            background: #f8f8f8;
+            font-size:80%;
+        }
+        div.highlight .hll { background-color: #ffffcc }
+        div.highlight .c   { color: #408080; font-style: italic } /* Comment */
+        div.highlight .err { border: 1px solid #FF0000 } /* Error */
+        div.highlight .k  { color: #008000; font-weight: bold } /* Keyword */
+        div.highlight .o  { color: #666666 } /* Operator */
+        div.highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+        div.highlight .cp { color: #BC7A00 } /* Comment.Preproc */
+        div.highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
+        div.highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
+        div.highlight .gd { color: #A00000 } /* Generic.Deleted */
+        div.highlight .ge { font-style: italic } /* Generic.Emph */
+        div.highlight .gr { color: #FF0000 } /* Generic.Error */
+        div.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+        div.highlight .gi { color: #00A000 } /* Generic.Inserted */
+        div.highlight .go { color: #808080 } /* Generic.Output */
+        div.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+        div.highlight .gs { font-weight: bold } /* Generic.Strong */
+        div.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+        div.highlight .gt { color: #0040D0 } /* Generic.Traceback */
+        div.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+        div.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+        div.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+        div.highlight .kp { color: #008000 } /* Keyword.Pseudo */
+        div.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+        div.highlight .kt { color: #B00040 } /* Keyword.Type */
+        div.highlight .m { color: #666666 } /* Literal.Number */
+        div.highlight .s { color: #BA2121 } /* Literal.String */
+        div.highlight .na { color: #7D9029 } /* Name.Attribute */
+        div.highlight .nb { color: #008000 } /* Name.Builtin */
+        div.highlight .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+        div.highlight .no { color: #880000 } /* Name.Constant */
+        div.highlight .nd { color: #AA22FF } /* Name.Decorator */
+        div.highlight .ni { color: #999999; font-weight: bold } /* Name.Entity */
+        div.highlight .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+        div.highlight .nf { color: #0000FF } /* Name.Function */
+        div.highlight .nl { color: #A0A000 } /* Name.Label */
+        div.highlight .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+        div.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+        div.highlight .nv { color: #19177C } /* Name.Variable */
+        div.highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+        div.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+        div.highlight .mf { color: #666666 } /* Literal.Number.Float */
+        div.highlight .mh { color: #666666 } /* Literal.Number.Hex */
+        div.highlight .mi { color: #666666 } /* Literal.Number.Integer */
+        div.highlight .mo { color: #666666 } /* Literal.Number.Oct */
+        div.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
+        div.highlight .sc { color: #BA2121 } /* Literal.String.Char */
+        div.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+        div.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
+        div.highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+        div.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
+        div.highlight .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+        div.highlight .sx { color: #008000 } /* Literal.String.Other */
+        div.highlight .sr { color: #BB6688 } /* Literal.String.Regex */
+        div.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
+        div.highlight .ss { color: #19177C } /* Literal.String.Symbol */
+        div.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
+        div.highlight .vc { color: #19177C } /* Name.Variable.Class */
+        div.highlight .vg { color: #19177C } /* Name.Variable.Global */
+        div.highlight .vi { color: #19177C } /* Name.Variable.Instance */
+        div.highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
+    </style>
+</head>
+
+<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc 
+marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
+
+<a NAME=Up></a>
+<H3>XLD/XMCD Analysis HOWTO</H3>
+
+<H4>
+Contents
+</H4>
+<br>
+<a href=#Usage>1. Usage</a><br>
+<a href=#Description>2. Description</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#Toprow>2.1 Top row</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#OptionsWindow>2.2 Options window</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=#OptionsWindowNorm>2.2.1 Normalization</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=#OptionsWindowInterp>2.2.2 Interpolation</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=#OptionsWindowMotors>2.2.3 Motor selection</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#Table>2.3 Table</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#AnalysisWindow>2.4 Analysis window</a><br>
+<a href=#EditAutoAssign>3. Extend the automatic assignment</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#EditExpDict>3.1 Edit the experiments dictionary</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#EditComboBox>3.2 Edit the drop down menu</a><br>
+&nbsp;&nbsp;&nbsp;<a href=#EditSelectExp>3.3 Edit the selectExperiment function</a><br>
+<br>
+
+<H4>
+Synopsis
+</H4>
+
+<div class='main'>
+Xray linear dichorism (XLD) and Xray magnetic circular dichorism (XMCD)
+measurements as performed at Beamlines ID08 and ID12 of the ESRF
+probe the sample with x-rays of two different polarizations. From two spectra
+with different polarizations, one calculates the difference spectrum (the
+XLD/XMCD spectrum) as well as the average spectrum (XAS spectrum). The present
+plug-in aims to ease the evaluation process.<br>
+<br>
+To assign the recorded spectra into two groups (labeled 'A' and 'B') depending
+on their polarization, the plug-in displays meta data obtained from the spec file
+and provides methods to automate the assignment process. A separate plot
+window allows a preview on calculated XLD/XMCD spectra. Several options relevant
+to the treatment of the data can be specified and saved. The results of an analysis
+can be exported into spec-files.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H3><a NAME=Usage>
+1. Usage
+</a></H3>
+
+<div class='main'>
+From the open spec-File, select the relevant scans in the scan selection window
+on the left side of your PyMca session. Assign the relevant counters to the
+respective axes and load the scans in the plot window on the right. Load the plug-in
+from the plug-in menu (gearbox item in the top row of the plot window). 
+Notice that if one selects a section of the data by zooming in before starting the
+plug-in, only the data within that energy range is used for the analysis.<br>
+<br>
+The selected spectra now appears in the table of the plug-in.
+Per default, the spectra remain unassigned as indicated by the drop down menu showing
+the entry 'Generic dichorism'. Either one selects an existing experiment from the
+drop down menu (which also provides automatic division of spectra into groups) or does all
+settings by hand using the options menu. The options menu also allows to determine
+if and when a normalization is applied to the spectra and the specifics of the interpolation
+carried out during the calculation.<br>
+If all necessary information is displayed in the table, the assignment of spectra to
+either group 'A' or 'B' can be done by right-clicking on the table. A context menu appears
+offering several ways to assign a selected spectrum a group.<br>
+<br>
+Once a selection is made, the result of calculations is displayed immediately in the analysis window.
+An average is calculated on the spectra that belong to groups 'A' and 'B' (curves labeled
+avg_A resp. avg_B). The difference spectrum (curve labeled XMCD) is calculated as Avg(B)- Avg(A). 
+The XAS spectrum is calculated as the average of both groups: (Avg(A) + Avg(B))/2<br>
+The finished analysis can be saved in a spec file using the Save Button in the top button row
+of the analysis window.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H3><a NAME=Description>
+2. Description
+</a></H3>
+
+<div class='main'>
+The plug-in consists of four elements: the top row of buttons, the table
+listing the spectra and the analysis window. Another important element is the options
+window.
+</div>
+
+<H4><a NAME=Toprow>
+2.1 Top row
+</a></H4>
+
+<div class='main'>
+The top row contains the following buttons in order from left to right: the Update
+Button, the Options Button and the Experiment Selection.
+</div>
+
+<div class=elem><i>Update Button</i></div>
+    <div class='indent'>
+    Loads plots from the main window of the PyMca session into the plug-in. Notice: 
+    If the plot window of the main application is zoomed in or out, only the data
+    within the zoomed in energy range is considered for analysis. After zooming in
+    or out in the main application, the spectra in the plug-in should be updated.    
+    </div>
+
+<div class=elem><i>Options Button</i></div>
+    <div class='indent'>
+    Allows to specify the plug-in behavior during the analysis. For information in
+    can be found in <a href=#OptionsWindow>section 2.2</a>.
+    </div>
+
+<div class='elem'><i>Experiment Selection:</i></div>
+    <div class='indent'>
+    The options for the experiments carried out at beamlines ID08 and ID12 are 
+    embedded in the plug-in. Selecting one of the experiments sets these options
+    and divides the spectra automatically into groups 'A' and 'B'.    
+    A new experimental configuration can be added using the 'Add new configuration'
+    option. A window will open and ask the user to name the configuration.
+    Once accepted, an option window is opened and can be used to define the experimental
+    configuration. This can be done by either loading an existing configuration
+    or by specifying it by hand.   
+    The new experimental configuration can now be selected in the drop down menu and
+    remains there until the end of the PyMca session. It sets all options as specified,
+    however the spectra assignment into groups has still to be done by hand.
+    </div>
+
+<br><a href=#Up>up</a>
+    
+<H4><a NAME=OptionsWindow>
+2.2 Options Window
+</a></H4>
+
+<div class='main'>
+With the Options Window, the user can control the details of the analysis and
+determine the information shown in the table. A configuration made in the Options
+Window can be saved and an existing configuration can be loaded. Notice that once
+the 'OK' button is clicked, the analysis is immediately recalculated.<br>
+<br>
+The saved options are stored in a config file. If the result of a XLD/XMCD
+analysis is saved a spec file, the current configuration is automatically
+saved in a separate file.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=OptionsWindowNorm>
+2.2.1 Normalization
+</a></H4>
+
+<div class='main'>
+One can select if and when a normalization is applied, the normalization method can
+be specified. Either no normalization is applied at all or it is applied before
+performing the averages over groups 'A' and 'B'. The third option is to perform
+the normalization after averaging over both groups.<br>
+<br>
+The following table explains the various normalization methods in detail.
+</div>
+
+<table border="1">
+    <colgroup>
+        <col span="1" style="width: 45%;">
+        <col span="1" style="width: 55%;">
+    </colgroup>
+    <tr>
+        <th text-align='left'>Option</th>
+        <th>Explanation</th>
+    </tr>
+    <tr>
+        <td>(y-min(y))<br>/trapz(max(y)-min(y),x)</td>
+        <td>
+        Default selection. Subtracts the minimum value as offset from the spectrum
+        and normalizes it to its integral
+        </td>
+    </tr>
+    <tr>
+        <td>y/max(y)</td>
+        <td>
+        Normalizes the curve to its maximum value
+        </td>
+    </tr>
+    <tr>
+        <td>(y-min(y))<br>/(max(y)-min(y))</td>
+        <td>
+        Subtracts the minimum value as offset from the spectrum and normalizes to the
+        resulting maximum, effectively putting all spectral values between zero and one
+        </td>
+    </tr>
+    <tr>
+        <td>(y-min(y))<br>/sum(max(y)-min(y))</td>
+        <td>
+        Similar to the default options, but uses the summation over all spectral values
+        instead of the integral
+        </td>
+    </tr>
+</table>
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=OptionsWindowInterp>
+2.2.2 Interpolation
+</a></H4>
+
+<div class='main'>
+The plug-in performs an interpolation of the spectra selected to be used in the analysis
+before calculation averages and differences. In the "Interpolation x-range" section the
+user can select, which energy range is used for interpolation. To guarantee numerical
+stability of the interpolation, the spectra are cleaned up before being copied from
+the main application to the plug-in.
+The clean up process consists of sorting the data with respect to the energy (i.e. x)
+range as well as removing energies that have been measured twice.<br>
+<br>
+One can chose between selecting one of the energy ranges that actually have been measured or
+let the plug-in determine a equidistant energy range, which might be beneficial for further
+analysis such as Savitzky-Golay smoothing. Options that conserve at least one measured
+energy range are 'First curve in sequence' or 'Active curve' (i.e. taking the active curve in
+the plot window of the main application).
+</div>
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=OptionsWindowMotors>
+2.2.3 Motor Selection
+</a></H4>
+
+<div class='main'>
+The drop down menus allow to select the motors positions to be shown in the plug-in
+table. Notice that all motors in the drop down menu are not hard coded in the plug-in
+but are obtained dynamically from meta data in the spec file. Motor names are treated
+case sensitive by the plug-in.
+</div>
+
+
+<div class='elem'><i>Motors for ID08 are:</i></div>
+<div class='indent'>
+phaseD, PhaseD, oxPS, magnet
+</div>
+
+<div class='elem'><i>Motors for ID12 are:</i></div>
+<div class='indent'>
+Phase, PhaseA, BRUKER, CRYO, OXFORD
+</div>
+
+<div class='main'>
+Notice that ID12 also uses different counters to differ between polarizations.
+</div>
+
+<br><a href=#Up>up</a>
+    
+<H4><a NAME=Table>
+2.3 Table
+</a></H4>
+
+<div class='main'>
+The table, positioned beneath the top row, shows the spectra that are included
+in the XLD/XMCD analysis. The table shows the group to which a curve is assigned,
+the curves' legend, the scan number and the counter of a spectrum. The
+remaining columns display settings of various physical or virtual motors that were
+recorded during the course of the measurement and stored in the meta data of the
+spec file.
+Every column of the table can be used to sort it with respect to the values in this
+column by double clicking the right top corner of the respective header section.<br>
+<br>
+Right click on the table provides the user with a context menu with the following
+options:
+</div>
+
+<div class='elem'><i>Perform Analysis</i></div>
+    <div class='indent'>
+    Although most calculation is triggered automatically upon selection of a set
+    of scans, selecting this option forces the plug-in to recalculate the XLD/XMCD spectrum.
+    </div>
+
+<div class='elem'><i>Set as A</i> resp. <i>Set as B</i></div>
+    <div class='indent'>
+    Assigns a scan selected in the table to the respective group and triggers a
+    recalculation of the XLD/XMCD Analysis.
+    </div>
+    
+<div class='elem'><i>Enter sequence</i></div>
+    <div class='indent'>
+    Opens a window and allows to enter a sequence of letters ('A', 'B', 'D'). The
+    spectra in the table are sorted after their scan number and assigned into 
+    groups 'A' and 'B' based on the sequence, 'D' leaves a spectrum unselected.
+    If no scan number is present, the spectra remain unsorted.
+    The length of the sequence does not need to match the number of spectra. If the
+    length of the sequence is smaller than the number of spectra, the plug-in assumes
+    the entered sequence as a pattern and repeats it.
+    </div>
+    
+<div class='elem'><i>Remove selection</i></div>
+    <div class='indent'>
+    Removes a scan from the selection, effectively setting its group to 'D'
+    </div>
+
+<div class='elem'><i>Invert selection</i></div>
+    <div class='indent'>
+    Selects scans in the table that are not selected yet and deselects the selected
+    scans.
+    </div>
+    
+<div class='elem'><i>Remove curves</i></div>
+    <div class='indent'>
+    Removes curves from the table and the plot window in the main application.
+    </div>
+    
+<br><a href=#Up>up</a>
+
+<H4><a NAME=AnalysisWindow>
+2.4 Analysis Window
+</a></H4>
+
+<div class='main'>
+The analysis window beneath the table shows the result of the XLD/XMCD analysis. Four
+curves are displayed: the arithmetic averages over groups A and B, the XAS spectrum 
+(an arithmetic average over the averages of groups A and B) and the difference spectrum
+(group B - group A) called the XMCD spectrum.<br>
+<br>
+Notice that the XMCD spectrum usually is not in the same order of magnitude as the average
+spectra and the XAS spectrum. Thus, the XMCD spectrum is plotted to the secondary y axis
+on the right. In order to hide individual spectra, one can right-click on the legend and 
+select 'Hide curve'.<br>
+<br>
+In the analysis window behaves exactly like the plot window of the main application. The
+plot can be zoomed and the spectra can be manipulated using the usual tools of PyMca. Only
+the save routine has been modified to the specific demands of XLD/XMCD analysis.
+</div>
+
+<div class='elem'><i>Save routine</i></div>
+    <div class='indent'>
+    The save icon in the analysis window allows the users to save all results of the XLD/XMCD
+    analysis at once in a single spec file. The data is divided into multiple columns. The
+    first column contains the energy range over which the analysis is carried out, followed
+    by the averages over groups 'A' and 'B'. The last two columns are occupied by the XLD/XMCD
+    spectra.<br>
+    The save dialog also allows to enter a comment that will be written in the spec file. 
+    If multiple datasets are analyzed consecutively, the results can be still saved in a single
+    spec file by selecting the 'Append to existing file' option. Every individual scan is saved
+    in a separate file, too. Therefore, the original file name is extended by an underscore and 
+    the number of scans already present in the file to which the analysis is appended to.<br>
+    Along with the data, the configuration from the options menu is also saved under the same
+    file name, but with the extension 'cfg'.
+    </div>
+    
+<div class='elem'>Buttons <i>Add, Add all, Replace </i>and<i> Replace All</i></div>
+    <div class='indent'>
+    Allow to push the resulting spectra from the plug-in window to the plot window of the main
+    application. While 'Add' and 'Replace' only affect the active curve in the plug-in plot
+    window, 'Add all' and 'Replace all' copy all curves from the analysis to the main application.
+    Notice: If one plans to compare two or more analyzed spectra by consecutively pushing them 
+    to the main window, the spectra should be renamed beforehand. The name for each analyzed
+    spectrum remains the same (avg_A, avg_B, XMCD, XAS) and moving spectra of the same name
+    to the plot window in the main application just replaces them there.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=EditAutoAssign>
+3. Extend the automatic assignment
+</a></H4>
+
+<div class='main'>
+The scope of this paragraph is to explain the additions to the source code necessary to make to
+define a new experiment. The paragraph assumes entry level knowledge of the Python programming
+language.<br>
+<br>
+Data measured on beamline ID08 or ID12 of the ESRF can automatically be assigned to one of groups 'A'
+or 'B', as long as it is saved in spec files. By selecting one of the experiments from the drop down
+menu in the top row, the XLD/XMCD plug-in sets the motors resp. counters controlling the polarization
+in the options menu. This displays the respective values in the plug-ins table. To achieve the
+automatic assignment, the plug-in reads the displayed values and guesses the affiliation of a
+spectrum based on a set of rules.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=EditExpDict>
+3.1 Edit the experiments dictionary
+</a></H4>
+
+<div class='main'>
+The experiments dictionary contains the settings specific to an experiments. The options concern
+the normalization settings and method, the interpolation settings and most importantly the motors
+on which the assignment depends.<br>
+<br>
+The following code fragment shows the exemplary entry 'Generic Dichorism' in the experiments
+dictionary.
+</div>
+
+<div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">experimentsDict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;Generic Dichorism&#39;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s">&#39;xrange&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+          <span class="s">&#39;normalization&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+          <span class="s">&#39;normalizationMethod&#39;</span><span class="p">:</span> <span class="s">&#39;offsetAndArea&#39;</span><span class="p">,</span>
+          <span class="s">&#39;motor0&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+          <span class="s">&#39;motor1&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+          <span class="s">&#39;motor2&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+          <span class="s">&#39;motor3&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+          <span class="s">&#39;motor4&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</div>
+
+<div class='main'>
+Notice that every experiment is represented by a dictionary itself, with the different options
+as keys and the respective settings as values. Valid values for each option, as well as the
+necessary types are shown in the following table.
+
+<table border="1">
+    <colgroup>
+       <col span="1" style="width: 15%;">
+       <col span="1" style="width: 15%;">
+       <col span="1">
+    </colgroup>
+    <tr>
+    <th text-align='left'>Option</th>
+    <th>Type</th>
+    <th>Values: Explanation</th>
+    </tr>
+    <tr>
+    <td>xrange</td>
+    <td>Int</td>
+    <td>
+    <b>0</b>: First curve in sequence<br>
+    <b>1</b>: Active curve<br>
+    <b>2</b>: Equidistant x-range</td>
+    </tr>
+    <tr>
+    <td>normalization</td>
+    <td>Int</td>
+    <td>
+    <b>0</b>: No normalization<br>
+    <b>1</b>: Normalize after average<br>
+    <b>2</b>: Normalize before average</td>
+    </tr>
+    <tr>
+    <td>normalizationMethod</td>
+    <td>String</td>
+    <td>
+    <b>OffsetAndArea</b>: Subtracts minimum and normalizes to the integral,
+    <b>OffsetAndCounts</b>: Subtracts minimum and normalizes to the sum,
+    <b>OffsetAndMaximum</b>: Subtracts minimum and normalizes to the maximum
+    <b>NormToMaximum</b>: Normalizes to the maximum
+    </td>
+    </tr>
+    </tr>
+    <tr>
+    <td>motor0,<br>motor1,<br>motor2,<br>motor3,<br>motor4</td>
+    <td>String</td>
+    <td>
+    Assumes knowledge of the motor settings in the experimental apparatus.
+    If unsure, consult the Motor Info plug-in or a Beamline Scientist.
+    </td>
+    </tr>
+</table>
+
+Notice that up to five motors can be specified, however no motor must be specified. If a
+motor is not needed, just set the variable to an empty string.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=EditComboBox>
+3.2 Edit the drop down menu
+</a></H4>
+
+<div class='main'>
+Now that a new experiment is present in the experiments dictionary, it can be added into
+the selection of the drop down menu. The drop down menu itself is a QComboBox whose items are
+added using the addItem member function. The explicit code to do so (at least in the initial
+version of this program) looks as follows:
+
+<div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">expCBox</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span>
+    <span class="p">[</span><span class="s">&#39;Generic Dichorism&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID08: XLD 9 Tesla Magnet&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID08: XLD 5 Tesla Magnet&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID08: XMCD 9 Tesla Magnet&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID08: XMCD 5 Tesla Magnet&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID12: XLD (quater wave plate)&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID12: XMCD (Flipper)&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ID12: XMCD&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Add new configuration&#39;</span><span class="p">])</span>
+</pre></div>
+
+It is important, that the registered string is the exact key of the experiment in the experiments
+dictionary. New experiments should be added above the 'Add new configuration' option.
+
+<br><a href=#Up>up</a>
+
+<H4><a NAME=EditSelectExp>
+3.3 Edit the selectExperiment function
+</a></H4>
+
+<div class='main'>
+The selectExperiment function is called every time a item from the drop down menu is selected. In the process,
+the selected option is passed on to the function as a string. Based on this string, the function then sets
+the options as defined in the experiments dictionary. This triggers the table of the plug-in to display the
+information, especially if motors are present in the options.<br>
+<br>
+In a second step, the function reads all values shown in the tables motor columns (that is columns 4 to 8). If
+needed (as in case of two of the ID12 experiments), the counter column (no. 3) might as well be read out.
+The code fragment below shows the updating of the table and the readout.
+</div>
+
+<div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">updateTree</span><span class="p">()</span>
+<span class="n">values0</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">getColumn</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">convertType</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+<span class="n">values1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">getColumn</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">convertType</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+<span class="n">values2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">getColumn</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">convertType</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+<span class="n">values3</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">getColumn</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">convertType</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+<span class="n">values4</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">getColumn</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">convertType</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+</pre></div>
+
+<div class='main'>
+The table function getColumn returns the entries of a table column as a list while conserving the current order
+of the table rows. The type of the list elements can be specified using the convertType option. The numpy
+Arrays values0 to values4 now contain different motor positions, each values array has the length of the
+number of scans in question<br>
+<br>
+The next section consists of a succession of if/else statements to determine the specific experiment. Within
+such a statement, the values from the table are reduced to a single vector named 'values' that determines
+the affiliation of a spectrum to groups 'A' or 'B'. This array contains numerical values for every spectrum.
+The second step here is to set a pivot element (or threshold value), so that if the value for a spectrum is 
+above this value, the spectrum belongs to group 'A' and below to group 'B'. New assignment routines must be
+implemented here as a new elif block.<br>
+<br>
+In case of the XLD experiment of ID08, the decision process is shown in the code fragment below.
+</div>
+
+<div class="highlight"><pre><span class="k">if</span> <span class="n">exp</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;ID08: XLD&#39;</span><span class="p">):</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">values0</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">minmax</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">minmax</span><span class="p">):</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">minmax</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">minmax</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">vpivot</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="n">vmax</span> <span class="o">+</span> <span class="n">vmin</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="s">&#39;NaN&#39;</span><span class="p">)]</span><span class="o">*</span><span class="n">numOfSpectra</span><span class="p">)</span>
+</pre></div>
+
+<div class='main'>
+In this case, the motor 'PhaseD' (or 'phaseD', depending on the magnet) determines the polarization on the sample
+and is thus set in the options dictionary. All motor positions are then contained in numpy array 'values0'. Since no
+further calculations are needed, we can directly assign 'values0' to 'values'. The pivot element in this case is
+calculated as the average between maximal and minimal values in 'values'.<br>
+<br>
+The last step of the assignment processes is to loop though the 'values' array and check if the element is
+above or below threshold, as shown in the next code fragement.
+</div>
+
+<div class="highlight"><pre><span class="n">seq</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;nan&#39;</span><span class="p">:</span>
+        <span class="n">seq</span> <span class="o">+=</span> <span class="s">&#39;D&#39;</span>
+    <span class="k">elif</span> <span class="n">x</span><span class="o">&gt;</span><span class="n">vpivot</span><span class="p">:</span>
+        <span class="n">seq</span> <span class="o">+=</span> <span class="s">&#39;A&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">seq</span> <span class="o">+=</span> <span class="s">&#39;B&#39;</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">setSelectionToSequence</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+</pre></div>
+
+<div class='main'>
+Notice that not-a-number float values in the 'values' array are set to the dummy identifier 'D' and thus are ignored in
+the selection. The resulting sequence of this procedure is then passed on to the table function setToSequence, which
+assigns the selection. Once a selection is made, a recalculation is triggered automatically.
+</div>
+
+<br><a href=#Up>up</a>
+
+</body>
+</html>
