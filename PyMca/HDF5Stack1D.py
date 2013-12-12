@@ -40,7 +40,7 @@ except ImportError:
     print("HDF5Stack1D importing NexusDataSource from local directory!")
     import NexusDataSource
 
-DEBUG = 0    
+DEBUG = 0
 SOURCE_TYPE = "HDF5Stack1D"
 
 class HDF5Stack1D(DataObject.DataObject):
@@ -74,6 +74,10 @@ class HDF5Stack1D(DataObject.DataObject):
                  That means scanlist = ["/whatever1"]
                  and               selection['y'] = "/whatever2/counts"
         """
+        if DEBUG:
+            print("filelist = ", filelist)
+            print("selection = ", selection)
+            print("scanlist = ", scanlist)
         # all the files in the same source
         hdfStack = NexusDataSource.NexusDataSource(filelist)
 
@@ -86,7 +90,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 entryNames.append(key)
 
         # built the selection in terms of HDF terms
-        # for the time being, the only the firs item in x selection used
+        # for the time being, only the first item in x selection used
         xSelection = selection['x']
         if type(xSelection) == type([]):
             if len(xSelection):
@@ -126,6 +130,7 @@ class HDF5Stack1D(DataObject.DataObject):
             if 0:
                 JUST_KEYS = False
                 #expect same entry names in the files
+                #Unfortunately this does not work for SOLEIL
                 for entry in entryNames:
                     path = "/"+entry + ySelection
                     dirname = posixpath.dirname(path)
@@ -137,7 +142,8 @@ class HDF5Stack1D(DataObject.DataObject):
                         pass
             else:
                 JUST_KEYS = True
-                #expect same structure in the files
+                #expect same structure in the files even if the
+                #names are different (SOLEIL ...)
                 if len(entryNames):
                     i = 0
                     for entry in entryNames:
@@ -183,6 +189,10 @@ class HDF5Stack1D(DataObject.DataObject):
             if not nScans:
                 raise IOError("No entry contains the required data")
 
+        if DEBUG:
+            print("Retained number of files = %d" % nFiles)
+            print("Retained number of scans = %d" % nScans)
+
         #Now is to decide the number of mca ...
         #I assume all the scans contain the same number of mca
         if JUST_KEYS:
@@ -212,6 +222,8 @@ class HDF5Stack1D(DataObject.DataObject):
         mcaIndex = selection.get('index', len(shape)-1)
         if mcaIndex == -1:
             mcaIndex = len(shape) - 1
+        if DEBUG:
+            print("mcaIndex = %d" % mcaIndex)
         considerAsImages = False
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
                                                 index=mcaIndex)
@@ -225,7 +237,7 @@ class HDF5Stack1D(DataObject.DataObject):
             else:
                 bytefactor = 8
 
-            neededMegaBytes = nFiles * dim0 * dim1 * mcaDim * bytefactor/(1024*1024.)
+            neededMegaBytes = nFiles * dim0 * dim1 * (mcaDim * bytefactor/(1024*1024.))
             physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
             if physicalMemory is None:
                 # 5 Gigabytes should be a good compromise
@@ -459,8 +471,7 @@ class HDF5Stack1D(DataObject.DataObject):
         elif not DONE:
             # data into memory but as images
             self.info["McaIndex"] = mcaIndex            
-            if 1:#for hdf in hdfStack._sourceObjectList:
-                hdf = hdfStack._sourceObjectList[0]
+            for hdf in hdfStack._sourceObjectList:
                 entryNames = list(hdf["/"].keys())
                 for scan in scanlist:
                     if JUST_KEYS:
