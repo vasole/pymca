@@ -58,24 +58,17 @@ These plugins will be compatible with any stack window that provides the functio
 import sys
 import os
 import numpy
-try:
-    from PyMca import StackPluginBase
-    from PyMca import PyMcaQt as qt
-    from PyMca import FFTAlignmentWindow
-    from PyMca import ImageRegistration
-    from PyMca import SpecfitFuns
-    from PyMca import CalculationThread
-    from PyMca import ArraySave
-    
-except ImportError:
-    print("ExternalImagesWindow importing from somewhere else")
-    import StackPluginBase
-    import PyMcaQt as qt
-    import ImageRegistration
-    import FFTAlignmentWindow
-    import SpecfitFuns
-    import CalculationThread
-    import ArraySave
+from PyMca import StackPluginBase
+from PyMca import PyMcaQt as qt
+from PyMca import FFTAlignmentWindow
+from PyMca import ImageRegistration
+from PyMca import SpecfitFuns
+from PyMca import CalculationThread
+from PyMca import ArraySave
+from PyMca import PyMcaFileDialogs
+from PyMca import specfilewrapper
+from PyMca import HDF5Widget
+
 try:
     from PyMca import SIFTAlignmentWindow
     sift = SIFTAlignmentWindow.sift
@@ -104,6 +97,11 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                     "Align using SIFT Algorithm",
                                     None]
             self.__methodKeys.append(key) 
+        key = 'From File Alignment'
+        self.methodDict[key] = [self._shiftFromFile,
+                                "Align using shifts from file",
+                                None]
+        self.__methodKeys.append(key) 
         self.widget = None
 
     def stackUpdated(self):
@@ -507,6 +505,149 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         else:
             raise IndexError("Only stacks of images or spectra supported. 1D index should be 0 or 2")
         return shifts
+
+    def _shiftFromFile(self):
+        stack = self.getStackDataObject()
+        if stack is None:
+            return
+        data = stack.data
+        mcaIndex = stack.info.get('McaIndex')
+        if not (mcaIndex in [0, -1, 2]):
+            raise IndexError("1D index must be 0, 2, or -1")
+        filefilter = ['HDF5 Files (*.h5 *.nxs *.hdf)', 'CSV 2-column (*.csv)', 'ASCII 2-column (*)']
+        filename, ffilter = PyMcaFileDialogs.\
+                    getFileList(parent=None,
+                        filetypelist=filefilter,
+                        message='Load',
+                        mode='OPEN',
+                        single=True,
+                        getfilter=True,
+                        currentfilter=filefilter[0])
+        if len(filename):
+            if DEBUG:
+                print("file name = %s file filter = %s" % (filename, ffilter))
+        else:
+            if DEBUG:
+                print("nothing selected")
+            return
+        filename = filename[0]
+        if ffilter.startswith('HDF5'):
+            # browse
+            self.__hdf5Dialog = qt.QDialog()
+            self.__hdf5Dialog.setWindowTitle('Select your data set by a double click')
+            self.__hdf5Dialog.mainLayout = qt.QVBoxLayout(self.__hdf5Dialog)
+            self.__hdf5Dialog.mainLayout.setMargin(0)
+            self.__hdf5Dialog.mainLayout.setSpacing(0)
+            fileModel = HDF5Widget.FileModel()
+            fileView = HDF5Widget.HDF5Widget(fileModel)
+            hdf5File = fileModel.openFile(filename)
+            shiftsDataset = None
+            qt.QObject.connect(fileView, qt.SIGNAL("HDF5WidgetSignal"), self._hdf5WidgetSlot)
+            self.__hdf5Dialog.mainLayout.addWidget(fileView)
+            self.__hdf5Dialog.resize(400, 200)
+            ret = self.__hdf5Dialog.exec_()
+            if not ret:
+                return
+            shifts = hdf5File[self.__shitfsDataset].value
+        else:
+            sf = specfilewrapper.Specfile(filename)
+            nScans = len(sf)
+            targetScan = None
+            for scan in sf:
+                if scan.lines() ==  data.shape[stack.info['McaIndex']]:
+                    targetScan = scan
+                    break
+            if targetScan is None:
+                scan = None
+                sf = None
+                raise IOError("Number of read lines does not match stack shape")
+            shifts = targetScan.data()
+            targetScan = None
+            scan = None
+            sf = None
+            if shifts.shape[0] == 3 and\
+               shifts.shape[1] == data.shape[stack.info['McaIndex']]:
+                # one column was added (point number)
+                shifts = shifts[1:].T
+
+        filename = None
+        if not isinstance(data, numpy.ndarray):
+            filefilter = ['HDF5 Files (*.h5)']
+            filename = PyMcaFileDialogs.\
+                        getFileList(parent=None,
+                        filetypelist=filefilter,
+                        message='Select output file',
+                        mode='SAVE',
+                        single=True,
+                        getfilter=False,
+                        currentfilter=filefilter[0])
+            if len(filename):
+                filename = filename[0]
+                if DEBUG:
+                    print("file name = %s" % filename)
+            else:
+                raise IOError("No output file selected")
+        if filename is not None:
+            self.__hdf5 = self.initializeHDF5File(filename)
+        crop = False
+        if DEBUG:
+            result = self.shiftStack(stack,
+                                     shifts,
+                                     crop=crop,
+                                     filename=filename)
+        else:
+            result = self.__shiftStack(stack,
+                                       shifts,
+                                       crop=crop,
+                                       filename=filename)
+            if result is not None:
+                # exception occurred
+                raise Exception(result[1], result[2], result[3])
+
+        if filename is not None:
+            hdf = self.__hdf5
+            alignmentGroup = hdf['/entry_000/Alignment']
+            outputShifts = self.getHDF5BufferIntoGroup(alignmentGroup,
+                                                 shape=(stack.data.shape[mcaIndex], 2),
+                                                 name="shifts",
+                                                 dtype=numpy.float32)
+            outputShifts[:,:] = shifts
+            attributes={'interpretation':'image'}
+            # fill the axes information
+            dataGroup = hdf['/entry_000/Data']
+            if mcaIndex == 0:
+                reference_shape = data[0].shape
+            else:
+                reference_shape = data.shape[0], data.shape[1]
+            try:
+                activeCurve = self.getActiveCurve()
+                if activeCurve is None:
+                    activeCurve = self.getAllCurves()[0]
+                x, y, legend, info = activeCurve
+                dataGroup[info['xlabel']] = numpy.array(x, dtype=numpy.float32)
+                dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
+                axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
+            except:
+                if DEBUG:
+                    raise
+                dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
+                dataGroup['dim_0'].attrs['axis'] = numpy.int32(1)
+                axesAttribute = 'dim_0:dim_1:dim_2'
+            dataGroup['dim_1'] = numpy.arange(reference_shape[0]).astype(numpy.float32)
+            dataGroup['dim_1'].attrs['axis'] = numpy.int32(2)
+            dataGroup['dim_2'] = numpy.arange(reference_shape[1]).astype(numpy.float32)
+            dataGroup['dim_2'].attrs['axis'] = numpy.int32(3)
+            dim2 = numpy.arange(reference_shape[1]).astype(numpy.float32)
+            dataGroup['data'].attrs['axes'] = axesAttribute
+            self.finishHDF5File(hdf)
+        else:
+            self.setStack(stack)
+                
+    def _hdf5WidgetSlot(self, ddict):
+        if ddict['event'] == "itemDoubleClicked":
+            if ddict['type'].lower() in ['dataset']:
+                self.__shitfsDataset = ddict['name']
+                self.__hdf5Dialog.accept()
 
     def shiftStack(self, stack, shifts, crop=False, filename=None):
         """
