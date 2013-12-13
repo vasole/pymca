@@ -219,7 +219,6 @@ def build_Object3DCTools(ext_modules):
         libraries = ['opengl32', 'glu32']
     elif sys.platform == "darwin":
         libraries = []
-        define_macros = []
     else:
         libraries = ['GL', 'GLU']        
     if sys.platform == 'windows':
@@ -240,7 +239,6 @@ def build_Object3DQhull(extensions):
         libraries = ['opengl32', 'glu32']
     elif sys.platform == "darwin":
         libraries = []
-        define_macros = []
     else:
         libraries = ['GL', 'GLU']
     sources = ["PyMca/Object3D/Object3DQhull/Object3DQhull.c"]
