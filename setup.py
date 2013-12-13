@@ -587,7 +587,7 @@ try:
     import sphinx.util.console
     sphinx.util.console.color_terminal = lambda: False
     from sphinx.setup_command import BuildDoc
-except ImportError:
+except:
     sphinx = None
 
 if sphinx:
