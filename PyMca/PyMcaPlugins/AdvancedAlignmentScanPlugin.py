@@ -1017,7 +1017,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         '''
         helpFileName = pathjoin(PyMcaDataDir.PYMCA_DOC_DIR,
                                 "HTML",
-                                "AdvancedAlignmentScanPluginInfo.html")
+                                "AdvancedAlignmentScanPlugin.html")
         self.helpFileBrowser = qt.QTextBrowser()
         self.helpFileBrowser.setWindowTitle('Alignment Scan Plug-in Documentation')
         self.helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
