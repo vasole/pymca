@@ -1,0 +1,246 @@
+<html>
+<head>
+    <style type="text/css">
+        body {
+            background-color:white;
+            width:400px
+        }
+        th, tr, td {
+            text-align:left;
+            vertical-align:bottom;
+            border: 2px solid #CCCCCC;
+            border-style:solid;
+        }
+        table {
+            font-family:"Monospace";
+            font-size:75%;
+            border: 2px solid grey;
+            border-collapse:collapse;
+            width:390px;
+            margin-left:0px;
+            margin-right:0px;
+            margin-top:10px;
+            margin-bottom:10px;
+        }
+        div.indent {
+            color:#333333;
+            text-align:justify;
+            margin-left:20px;
+            margin-right:20px;
+            margin-top:20px;
+            margin-bottom:20px;
+        }
+        div.main {
+            text-align:justify;
+            margin-left:5px;
+            margin-right:5px;
+            margin-top:5px;
+            margin-bottom:20px;
+        }
+        div.elem {
+            text-align:left;
+            margin-left:5px;
+            margin-right:5px;
+            margin-top:5px;
+            margin-bottom:5px;
+        }
+        div.code {
+            color:#333333;
+            background:#EEEEEE;
+            text-align:left;
+            margin-left:20px;
+            margin-right:20px;
+            margin-top:20px;
+            margin-bottom:20px;
+        }
+        div.highlight {
+            background: #f8f8f8;
+            font-size:80%;
+        }
+        div.highlight .hll { background-color: #ffffcc }
+        div.highlight .c   { color: #408080; font-style: italic } /* Comment */
+        div.highlight .err { border: 1px solid #FF0000 } /* Error */
+        div.highlight .k  { color: #008000; font-weight: bold } /* Keyword */
+        div.highlight .o  { color: #666666 } /* Operator */
+        div.highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+        div.highlight .cp { color: #BC7A00 } /* Comment.Preproc */
+        div.highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
+        div.highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
+        div.highlight .gd { color: #A00000 } /* Generic.Deleted */
+        div.highlight .ge { font-style: italic } /* Generic.Emph */
+        div.highlight .gr { color: #FF0000 } /* Generic.Error */
+        div.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+        div.highlight .gi { color: #00A000 } /* Generic.Inserted */
+        div.highlight .go { color: #808080 } /* Generic.Output */
+        div.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+        div.highlight .gs { font-weight: bold } /* Generic.Strong */
+        div.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+        div.highlight .gt { color: #0040D0 } /* Generic.Traceback */
+        div.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+        div.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+        div.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+        div.highlight .kp { color: #008000 } /* Keyword.Pseudo */
+        div.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+        div.highlight .kt { color: #B00040 } /* Keyword.Type */
+        div.highlight .m { color: #666666 } /* Literal.Number */
+        div.highlight .s { color: #BA2121 } /* Literal.String */
+        div.highlight .na { color: #7D9029 } /* Name.Attribute */
+        div.highlight .nb { color: #008000 } /* Name.Builtin */
+        div.highlight .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+        div.highlight .no { color: #880000 } /* Name.Constant */
+        div.highlight .nd { color: #AA22FF } /* Name.Decorator */
+        div.highlight .ni { color: #999999; font-weight: bold } /* Name.Entity */
+        div.highlight .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+        div.highlight .nf { color: #0000FF } /* Name.Function */
+        div.highlight .nl { color: #A0A000 } /* Name.Label */
+        div.highlight .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+        div.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+        div.highlight .nv { color: #19177C } /* Name.Variable */
+        div.highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+        div.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+        div.highlight .mf { color: #666666 } /* Literal.Number.Float */
+        div.highlight .mh { color: #666666 } /* Literal.Number.Hex */
+        div.highlight .mi { color: #666666 } /* Literal.Number.Integer */
+        div.highlight .mo { color: #666666 } /* Literal.Number.Oct */
+        div.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
+        div.highlight .sc { color: #BA2121 } /* Literal.String.Char */
+        div.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+        div.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
+        div.highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+        div.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
+        div.highlight .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+        div.highlight .sx { color: #008000 } /* Literal.String.Other */
+        div.highlight .sr { color: #BB6688 } /* Literal.String.Regex */
+        div.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
+        div.highlight .ss { color: #19177C } /* Literal.String.Symbol */
+        div.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
+        div.highlight .vc { color: #19177C } /* Name.Variable.Class */
+        div.highlight .vg { color: #19177C } /* Name.Variable.Global */
+        div.highlight .vi { color: #19177C } /* Name.Variable.Instance */
+        div.highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
+    </style>
+</head>
+
+<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc 
+marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
+
+<a NAME=Up></a>
+<H3>Alignment plug-in Documentation</H3>
+
+<H4>
+Contents
+</H4>
+<br>
+<a href=#Description>1. Usage and Description</a><br>
+<a href=#Methods>2. Methods used by the plug-in</a><br>
+<br>
+
+<H4>
+Synopsis
+</H4>
+
+Due to uncertainties in the experimental set-up, recorded data might be shifted unrelated
+to physical effects probed in the experiment. The present plug-in calculates this shift and
+corrects the data using a variety of different methods.
+
+<H3><a NAME=Description>
+1. Usage and Description
+</a></H3>
+
+<div class='main'>
+Data that is subject to a shift must be loaded into the plot window of the main application.
+The plug-in offers two ways to treat the data: a shortcut options called 'Perform FFT Shift'
+calculates the shift and directly corrects the data and the 'Show Alignment Window' option
+showing a window that allows for specification of the shift and alignment methods as well as
+offering the possibility to safe calculated shifts respectively load previously calculated
+shifts from a file. It is also possible to enter shift values by hand.</br>
+</br>
+Once the Alignment Window is opened, the alignment method and the shift method must be specified.
+The alignment method specifies how the shift is calculated while the shift method determines
+how the shift is applied to the data.</br>
+</br>
+The table shows three columns: The first one shows the plot legend of the data that will be
+corrected by the shift method. The second column shows the plot legend from which the shift
+is calculated. The third column shows the shift values calculated by the alignment method in
+units of the plot windows x-axis. While columns one and two can not be edited, shift values
+can be entered by hand. Another way of setting the shift values is to load them from a existing
+*.shift file using the Load button.</br>
+</br>
+Once the shift values are set, they can either be directly applied to the data present in the
+plot window using the Apply button or the data can be stored in memory. The latter options allow
+to use a reference signal recorded during the experiment to determine the shift and then apply
+the shift values to a different set of data.</br>
+</br>
+Notice: In order to match different sets of data to another, as necessary in the case of a
+reference signal, the order in which the data is added to the plot window is crucial. If one
+switches between two sets of data where one set aligns the other one it is highly encouraged
+to consult the table in the Alignment window to check if every element in the two different
+sets of data is assigned to its correct counterpart before applying the shift.</br>
+</br>
+If the data in the plot window is zoomed in to a distinct feature, only of the data is used to 
+calculate the shift.
+</div>
+
+<br><a href=#Up>up</a>
+
+<H3><a NAME=Methods>
+1. Usage and Description
+</a></H3>
+
+<div class='main'>
+Alignment methods are used to calculate the shift. Present methods include FFT, MAX, FIT and
+FIT DRV.
+</div>
+
+<div class=elem><i>FFT</i></div>
+    <div class='indent'>
+    Uses the Fourier Transform of the curves to calculated their cross-correlation. The maximum
+    of the correlation is determined and yields the shift value. This method is the default option,
+    since it is not affected by the peak shape, fast and numerically robust. Notice: the shifts
+    are given in real space values.
+    </div>
+    
+<div class=elem><i>MAX</i></div>
+    <div class='indent'>
+    Determines the maximum of each curve, the shift is given by its the differences in the x-position
+    of the maxima. Notice that this method is highly vulnerable to noise in the data and spikes.
+    </div>
+
+<div class=elem><i>FIT</i></div>
+    <div class='indent'>
+    Method subtracts a background from the data using the SNIP algorithm (c.f. plug-in section,
+    Background subtraction tools) and searches for peaks in the data. For every curve, the single
+    most pronounced feature is selected. The peak is fitted by a Gaussian model, the shifts are then
+    given by differences in the x-offsets of the fitted Gaussians.
+    </div>
+    
+<div class=elem><i>FIT</i></div>
+    <div class='indent'>
+    Uses the same procedure as the FIT method, however the fit is applied to the first derivative of
+    the data. This method only recommended for X-ray absorption data.
+    </div>
+    
+<div class='main'>
+Shift methods are used to apply the calculated shift to the data. Present methods include 'Shift x-range'
+and 'Inverse FFT shift'.
+</div>
+
+<div class=elem><i>Shift x-range</i></div>
+    <div class='indent'>
+    This method takes the x-range of the respective curve and adds the calculated shift value to every
+    point.
+    </div>
+    
+<div class=elem><i>Inverse FFT shift</i></div>
+    <div class='indent'>
+    Takes the Fourier Transform of a curve and multiplies the shift as a phase factor. The multiplication
+    of a phase factor in Fourier space translates to a shift in the x-range in real space. The shifted data
+    is given by the inverse Fourier transform.
+    
+    Notice: In the process, the data needs to have a equidistant x-range. If this is not the case, the data 
+    will be interpolated on a equidistant x-range. Due to the cyclic nature of the Fourier transform, this
+    method is recommended for data that has linear background.
+    </div>
+    
+<br><a href=#Up>up</a>
+</body>
