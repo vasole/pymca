@@ -126,7 +126,7 @@ class HDF5Stack1D(DataObject.DataObject):
             # deal with the SOLEIL case of one entry but with different name
             # in different files
             USE_JUST_KEYS = True
-        elif scanlist in [None, []] or\
+        elif scanlist in [None, []]:
             USE_JUST_KEYS = True
         if USE_JUST_KEYS:
             #if the scanlist is None, it is assumed we are interested on all
