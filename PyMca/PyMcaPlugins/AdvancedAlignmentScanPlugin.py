@@ -24,8 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "Tonn Rueter & V.A. Sole - ESRF Data Analysis"
 import numpy
+import sys
+import traceback
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
 from PyMca import ConfigDict
@@ -165,10 +167,19 @@ class AlignmentWidget(qt.QDialog):
 
     def triggerCalculateShift(self, methodName=None):
         # Need to call the plugin instance to perform calculations
-        if methodName != None:
-            self.plugin.setAlignmentMethod(methodName)
-        llist, ddict = self.plugin.calculateShifts()
-        self.setDict(llist, ddict)
+        try:
+            if methodName != None:
+                self.plugin.setAlignmentMethod(methodName)
+            llist, ddict = self.plugin.calculateShifts()
+            self.setDict(llist, ddict)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Plugin error")
+            msg.setText("An error has occured while executing the plugin:")
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
 
     def store(self):
         self.done(self._storeCode)

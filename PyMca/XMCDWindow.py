@@ -35,6 +35,13 @@ from PyMca import specfilewrapper as specfile
 from PyMca import PyMcaDataDir
 from PyMca import ScanWindow as sw
 
+if hasattr(qt, "QString"):
+    QString = qt.QString
+    QStringList = qt.QStringList
+else:
+    QString = str
+    QStringList = list
+
 DEBUG = 0
 if DEBUG:
     numpy.set_printoptions(threshold=50)
@@ -213,7 +220,7 @@ class XMCDOptions(qt.QDialog):
             'offsetAndCounts' : r'(y-min(y))/sum(max(y)-min(y))',
             'offsetAndArea'   : r'(y-min(y))/trapz(max(y)-min(y),x)'
         }
-        for (name, eq) in normDict.iteritems():
+        for (name, eq) in normDict.items():
             if ident == name:
                 return eq
             if ident == eq:
@@ -336,7 +343,7 @@ class XMCDOptions(qt.QDialog):
                     name = self.normalizationMethod(name)
                 if option.startswith('Motor') and name == 'None':
                     name = ''
-                idx = obj.findText(qt.QString(name))
+                idx = obj.findText(QString(name))
                 obj.setCurrentIndex(idx)
             elif isinstance(obj, qt.QButtonGroup):
                 try:
@@ -1831,7 +1838,7 @@ class XMCDWidget(qt.QWidget):
                         counter = cntList[yIdx]
                     except Exception:
                         counter = ''
-            tmp = qt.QStringList([selection, filename, scanNo, counter])
+            tmp = QStringList([selection, filename, scanNo, counter])
             # Determine value for each motor
             for m in mList:
                 if len(m) == 0:
