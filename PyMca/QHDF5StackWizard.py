@@ -257,6 +257,14 @@ class DatasetSelectionPage(qt.QWizardPage):
             ddict['counters'].append(path)
             ddict['aliases'].append(posixpath.basename(axis))
 
+        if sys.platform == "darwin" and\
+           len(ddict['counters']) > 3 and\
+           qt.qVersion().startswith('4.8'):
+            # workaround a strange bug on Mac:
+            # when the counter list has to be scrolled
+            # the selected button also changes!!!!
+            return
+
         self.nexusWidget.setWidgetConfiguration(ddict)
         if len(signalList):
             if len(axesList) == 0:
