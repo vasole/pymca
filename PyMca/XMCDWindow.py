@@ -1607,7 +1607,7 @@ class XMCDWidget(qt.QWidget):
         if self.helpFileBrowser is None:
             msg = qt.QMessageBox()
             msg.setWindowTitle('XLD/XMCD Error')
-            msg.setText('No help file found.'%helpfile)
+            msg.setText('No help file found.')
             msg.exec_()
             return
         else:
