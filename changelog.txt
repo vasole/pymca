@@ -1,3 +1,17 @@
+VERSION 4.7.1
+
+Support SOLEIL multiple-file different-scan-number maps.
+
+Support batch fitting of multiple HDF5 files.
+
+Fast XRF linear fit stack plugin.
+
+Possibility to load image shifts in the image alignment stack plugin.
+
+Basic support of MRC file format.
+
+Add ID08 advanced alignment scan plugin.
+
 VERSION 4.7.0
 
 Add basic support for calculating multiple excitation corrections via the
