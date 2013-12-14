@@ -241,15 +241,31 @@ def build_Object3DQhull(extensions):
         libraries = []
     else:
         libraries = ['GL', 'GLU']
+
     sources = ["PyMca/Object3D/Object3DQhull/Object3DQhull.c"]
-    sources += glob.glob("third-party/qhull/src/*.c")
+    include_dirs = [numpy.get_include()]
+
+    # check if the user provide some information about a system qhull
+    # library
+    QHULL_CFLAGS = os.getenv("QHULL_CFLAGS")
+    QHULL_LIBS = os.getenv("QHULL_LIBS")
+
+    extra_compile_args = []
+    extra_link_args = []
+    if QHULL_CFLAGS and QHULL_LIBS:
+        extra_compile_args += [QHULL_CFLAGS]
+        extra_link_args += [QHULL_LIBS]
+    else:
+        sources += glob.glob("third-party/qhull/src/*.c")
+        include_dirs += "third-party/qhull/src"
 
     module = Extension(name='PyMca.Object3D.Object3DQhull',
                        sources=sources,
                        define_macros=define_macros,
                        libraries=libraries,
-                       include_dirs=[numpy.get_include(),
-                                     "third-party/qhull/src"])
+                       include_dirs=include_dirs,
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
 
     extensions.append(module)
 
