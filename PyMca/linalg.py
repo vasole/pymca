@@ -1,4 +1,31 @@
+#    Copyright (c) 2018-2013 V.A. Sole, ESRF
+#
+#   Permission to use and redistribute the source code or binary forms of
+#   this software and its documentation, with or without modification is
+#   hereby granted provided that the above notice of copyright, these
+#   terms of use, and the disclaimer of warranty below appear in the
+#   source code and documentation, and that none of the names of The
+#   European Synchrotron Radiation Facility, or the authors
+#   appear in advertising or endorsement of works derived from this
+#   software without specific prior written permission from all parties.
+#
+#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+#   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+#   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+#   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+#   SOFTWARE OR THE USE OR OTHER DEALINGS IN THIS SOFTWARE.
+#
 import numpy
+__license__ = "BSD"
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__doc__ = """
+Similar function to the numpy lstsq function with a more rigorous uncertainty
+treatement besides other optimizations in view of simultaneously solving several
+equations of the form `a x = b`. Hopefully licensed under the same terms as
+numpy itself (BSD license).
+"""
 
 # Linear Least Squares
 
