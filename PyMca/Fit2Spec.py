@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __revision__ = "$Revision: 1.5 $"
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -36,9 +36,9 @@ ROIWIDTH = 250.
 from PyMca import PyMcaQt as qt
 
 class Fit2SpecGUI(qt.QWidget):
-    def __init__(self,parent=None,name="Fit to Spec Conversion",fl=qt.Qt.WDestructiveClose,
+    def __init__(self,parent=None,name="Fit to Spec Conversion",
                 filelist=None,outputdir=None, actions=0):
-        qt.QWidget.__init__(self,parent,name,fl)
+        qt.QWidget.__init__(self,parent,name)
         layout = qt.QVBoxLayout(self)
         layout.setAutoAdd(1)
         self.setCaption(name)
