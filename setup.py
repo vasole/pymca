@@ -257,7 +257,7 @@ def build_Object3DQhull(extensions):
         extra_link_args += [QHULL_LIBS]
     else:
         sources += glob.glob("third-party/qhull/src/*.c")
-        include_dirs += "third-party/qhull/src"
+        include_dirs += ["third-party/qhull/src"]
 
     module = Extension(name='PyMca.Object3D.Object3DQhull',
                        sources=sources,
