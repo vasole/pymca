@@ -1,5 +1,5 @@
-PyMca.PyMcaIO.O Package
-================
+PyMca.PyMcaIO Package
+=====================
 
 
 :mod:`APSMEDFileParser` Module
