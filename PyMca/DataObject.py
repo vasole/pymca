@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -21,21 +21,17 @@ class DataObject(object):
     '''
     Simple container of an array and associated information.
     Basically it has the members:
-    info
-        A dictionnary
-    data
-        An array, usually 2D, 3D, ...
+    info: A dictionnary
+    data: An array, usually 2D, 3D, ...
 
     In the past also incorporated selection methods.
     Now each different data source implements its selection methods.
 
     Plotting routines may add additional members
-    x
-        A list containing arrays to be considered axes
-    y
-        A list of data to be considered as signals
-    m
-        A list containing the monitor data
+    
+    x: A list containing arrays to be considered axes
+    y: A list of data to be considered as signals
+    m: A list containing the monitor data
     '''
     GETINFO_DEPRECATION_WARNING = True
     GETDATA_DEPRECATION_WARNING = True
