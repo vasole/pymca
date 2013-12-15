@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -48,7 +48,7 @@ else:
 from PyMca import ColormapDialog
 from PyMca import spslut
 from PyMca import PyMcaDirs
-from PyMca import ArraySave
+from PyMca.PyMcaIO import ArraySave
 try:
     from PyMca import ProfileScanWidget
 except ImportError:

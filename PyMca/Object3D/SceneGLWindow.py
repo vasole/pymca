@@ -5,7 +5,7 @@ import OpenGL.GL  as GL
 import OpenGL.GLU as GLU
 #This is to simplify freezing
 try:
-    from PyMca import EDFStack
+    from PyMca.PyMcaIO import EDFStack
     from PyMca import spslut
 except:
     try:

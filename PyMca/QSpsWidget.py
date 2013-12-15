@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.3 $"
 import sys
-from PyMca import spswrap as sps
+from PyMca.PyMcaIO import spswrap as sps
 from PyMca import PyMcaQt as qt
 from PyMca import SpecFileCntTable
 from PyMca import MaskImageWidget

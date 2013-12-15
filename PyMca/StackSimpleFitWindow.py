@@ -34,7 +34,7 @@ from PyMca import PyMcaDirs
 from PyMca import SimpleFitGUI
 from PyMca.PyMca_Icons import IconDict
 from PyMca import StackSimpleFit
-from PyMca import ArraySave
+from PyMca.PyMcaIO import ArraySave
 from PyMca import CalculationThread
 safe_str = qt.safe_str
 

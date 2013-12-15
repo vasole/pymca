@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,11 +34,11 @@ from PyMca import RGBCorrelatorTable
 from PyMca import RGBImageCalculator
 from PyMca import spslut
 from PyMca.PyMca_Icons import IconDict
-from PyMca import ArraySave
+from PyMca.PyMcaIO import ArraySave
 from PyMca import PyMcaDirs
 from PyMca import EdfFileDataSource
 from PyMca import ExternalImagesWindow
-from PyMca import TiffIO
+from PyMca.PyMcaIO import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False

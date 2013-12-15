@@ -26,7 +26,7 @@
 #############################################################################*/
 import types
 from PyMca import DataObject
-from PyMca import spswrap as sps
+from PyMca.PyMcaIO import spswrap as sps
 
 DEBUG = 0
 SOURCE_TYPE = 'SPS'

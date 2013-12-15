@@ -30,7 +30,7 @@ import numpy
 try:
     from PyMca import ConfigDict
     from PyMca import SimpleFitModule
-    from PyMca import ArraySave
+    from PyMca.PyMcaIO import ArraySave
     from PyMca import PyMcaDirs
 except ImportError:
     print("StackSimpleFit is importing from somewhere else")

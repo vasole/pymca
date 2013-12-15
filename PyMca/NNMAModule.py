@@ -333,8 +333,8 @@ def nnma(stack, ncomponents, binning=None,
     return new_images, values, new_vectors        
 
 if __name__ == "__main__":
-    from PyMca import EDFStack
-    from PyMca import EdfFile
+    from PyMca.PyMcaIO import EDFStack
+    from PyMca.PyMcaIO import EdfFile
     import os
     import sys
     import time

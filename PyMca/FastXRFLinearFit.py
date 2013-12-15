@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2013 European Synchrotron Radiation Facility
+# Copyright (C) 2013-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -451,7 +451,7 @@ class FastXRFLinearFit(object):
 if __name__ == "__main__":
     import time
     import glob
-    from PyMca import EDFStack
+    from PyMca.PyMcaIO import EDFStack
     if 1:
         configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
         fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_0*.edf")

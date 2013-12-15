@@ -45,18 +45,18 @@ if QTVERSION > '4.0.0':
 from PyMca import RGBCorrelatorGraph
 from PyMca.PyMca_Icons import IconDict
 from PyMca import DataObject
-from PyMca import EDFStack
+from PyMca.PyMcaIO import EDFStack
 from PyMca import SpecFileStack
 from PyMca import ColormapDialog
 from PyMca import spslut
 from PyMca import PyMcaDirs
 from PyMca import SpecfitFuns
-from PyMca import OmnicMap
-from PyMca import OpusDPTMap
-from PyMca import LuciaMap
-from PyMca import SupaVisioMap
-from PyMca import AifiraMap
-from PyMca import ArraySave
+from PyMca.PyMcaIO import OmnicMap
+from PyMca.PyMcaIO import OpusDPTMap
+from PyMca.PyMcaIO import LuciaMap
+from PyMca.PyMcaIO import SupaVisioMap
+from PyMca.PyMcaIO import AifiraMap
+from PyMca.PyMcaIO import ArraySave
 try:
     from PyMca import QHDF5Stack1D
     HDF5 = True

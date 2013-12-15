@@ -31,7 +31,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca import PyMcaDirs, PyMcaFileDialogs
 from PyMca import ConfigDict
 from PyMca import PyMcaQt as qt
-from PyMca import specfilewrapper as specfile
+from PyMca.PyMcaIO import specfilewrapper as specfile
 from PyMca import PyMcaDataDir
 from PyMca import ScanWindow as sw
 

@@ -47,7 +47,7 @@ from PyMca.RGBCorrelatorWidget import ImageShapeDialog
 from PyMca.PyMca_Icons import IconDict
 from PyMca import StackSelector
 from PyMca import PyMcaDirs
-from PyMca import ArraySave
+from PyMca.PyMcaIO import ArraySave
 HDF5 = ArraySave.HDF5
 
 DEBUG = 0

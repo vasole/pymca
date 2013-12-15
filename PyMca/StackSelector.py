@@ -31,14 +31,14 @@ import copy
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDirs
 from PyMca import DataObject
-from PyMca import MRCMap
-from PyMca import OmnicMap
-from PyMca import OpusDPTMap
-from PyMca import LuciaMap
-from PyMca import SupaVisioMap
-from PyMca import AifiraMap
-from PyMca import TextImageStack
-from PyMca import TiffStack
+from PyMca.PyMcaIO import MRCMap
+from PyMca.PyMcaIO import OmnicMap
+from PyMca.PyMcaIO import OpusDPTMap
+from PyMca.PyMcaIO import LuciaMap
+from PyMca.PyMcaIO import SupaVisioMap
+from PyMca.PyMcaIO import AifiraMap
+from PyMca.PyMcaIO import TextImageStack
+from PyMca.PyMcaIO import TiffStack
 from PyMca.QEDFStackWidget import QStack, QSpecFileStack
 try:
     from PyMca import QHDF5Stack1D

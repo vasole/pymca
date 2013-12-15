@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.4 $"
-from PyMca import spswrap as sps
+from PyMca.PyMcaIO import spswrap as sps
 from PyMca import PyMcaQt as qt
 import PyMca.PyMca_Icons as icons
 DEBUG = 0

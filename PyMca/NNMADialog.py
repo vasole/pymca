@@ -243,7 +243,7 @@ class NNMADialog(qt.QDialog):
 
 if __name__ == "__main__":
     import os
-    from PyMca import EdfFile
+    from PyMca.PyMcaIO import EdfFile
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

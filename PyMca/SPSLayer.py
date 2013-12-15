@@ -32,7 +32,7 @@
 import numpy
 ################################################################################  
 #from Data import *
-from PyMca import spswrap as sps
+from PyMca.PyMcaIO import spswrap as sps
 ################################################################################
 
 SOURCE_TYPE = "SPS"    

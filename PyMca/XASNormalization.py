@@ -381,7 +381,7 @@ SUPPORTED_ALGORITHMS = {"polynomial":XASPolynomialNormalization,
 
 if __name__ == "__main__":
     import sys
-    from PyMca import specfilewrapper as specfile
+    from PyMca.PyMcaIO import specfilewrapper as specfile
     import time
     sf = specfile.Specfile(sys.argv[1])
     scan = sf[0]

@@ -8,7 +8,7 @@ except ImportError:
 
 try:
     from PyMca import spslut
-    from PyMca import EdfFile
+    from PyMca.PyMcaIO import EdfFile
 except ImportError:
     import spslut
     import EdfFile

@@ -28,7 +28,7 @@
 import sys
 import os
 import numpy
-from PyMca import SpecFileAbstractClass
+from PyMca.PyMcaIO import SpecFileAbstractClass
 
 class Fit2DChiFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename):

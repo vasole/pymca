@@ -283,7 +283,7 @@ class PCADialog(qt.QDialog):
 if __name__ == "__main__":
     DEBUG = 1
     import os
-    from PyMca import EdfFile
+    from PyMca.PyMcaIO import EdfFile
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

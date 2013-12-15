@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,9 +26,8 @@
 #############################################################################*/
 import os
 import sys
-from PyMca import MEDFile
-from PyMca import SpecFileAbstractClass
-
+from PyMca.PyMcaIO import MEDFile
+from PyMca.PyMcaIO import SpecFileAbstractClass
 
 class APSMEDFileParser(object):
     def __init__(self, filename, sum_all=False):

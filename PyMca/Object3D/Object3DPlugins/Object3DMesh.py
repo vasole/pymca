@@ -535,7 +535,7 @@ def getObject3DInstance(config=None):
     #because the modules could be instanstiated without using
     #this method
     try:
-        from PyMca import EdfFile
+        from PyMca.PyMcaIO import EdfFile
     except ImportError:
         import EdfFile
 
@@ -571,7 +571,7 @@ if __name__ == "__main__":
     import os
     from Object3D import SceneGLWindow
     try:
-        from PyMca import EdfFile
+        from PyMca.PyMcaIO import EdfFile
     except ImportError:
         import EdfFile
     app = qt.QApplication(sys.argv)

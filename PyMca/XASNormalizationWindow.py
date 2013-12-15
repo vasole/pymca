@@ -543,7 +543,7 @@ class XASNormalizationDialog(qt.QDialog):
 if __name__ == "__main__":
     app = qt.QApplication([])
     if len(sys.argv) > 1:
-        from PyMca import specfilewrapper as specfile
+        from PyMca.PyMcaIO import specfilewrapper as specfile
         sf = specfile.Specfile(sys.argv[1])
         scan = sf[0]
         data = scan.data()

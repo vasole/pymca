@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,14 +33,15 @@ try:
 except ImportError:
     print("specfilewrapper importting specfile directly")
     import specfile
-from PyMca import Fit2DChiFileParser
-from PyMca import APSMEDFileParser
-from PyMca import SRSFileParser
-from PyMca import BAXSCSVFileParser
+from PyMca.PyMcaIO import Fit2DChiFileParser
+from PyMca.PyMcaIO import APSMEDFileParser
+from PyMca.PyMcaIO import SRSFileParser
+from PyMca.PyMcaIO import BAXSCSVFileParser
 try:
-    from PyMca import SPXFileParser
+    from PyMca.PyMcaIO import SPXFileParser
     SPX = True
 except:
+    print("specfilewrapper cannot import SPXFileParser")
     SPX = False
 
 DEBUG = 0

@@ -206,7 +206,7 @@ class XASSelfAttenuationCorrection(object):
             return 1 + (-b + numpy.sqrt(discriminant))/(2 * BETA)
         
 if __name__ == "__main__":
-    from PyMca import specfilewrapper
+    from PyMca.PyMcaIO import specfilewrapper
     instance = XASSelfAttenuationCorrection()
     configuration = {}
     configuration['XAS'] = {}

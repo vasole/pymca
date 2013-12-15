@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -21,8 +21,8 @@ import numpy
 import time
 
 try:
-    from PyMca import EdfFile
-    from PyMca import TiffIO
+    from PyMca.PyMcaIO import EdfFile
+    from PyMca.PyMcaIO import TiffIO
 except ImportError:
     print("ArraySave.py is importing EdfFile and TiffIO from local directory")
     import EdfFile

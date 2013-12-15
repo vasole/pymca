@@ -31,7 +31,7 @@ import traceback
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
 from PyMca import ConfigDict
-from PyMca import specfilewrapper as SFW
+from PyMca.PyMcaIO import specfilewrapper as SFW
 from PyMca import SpecfitFunctions as SF
 from PyMca import SNIPModule as snip
 from PyMca.Gefit import LeastSquaresFit as LSF

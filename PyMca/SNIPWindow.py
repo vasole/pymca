@@ -394,7 +394,7 @@ if __name__ == "__main__":
         y=numpy.arange(1000.)
         w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     elif len(sys.argv) > 1:
-        from PyMca import EdfFile
+        from PyMca.PyMcaIO import EdfFile
         edf = EdfFile.EdfFile(sys.argv[1])
         data = edf.GetData(0)
         w = SNIPDialog(None, data)    

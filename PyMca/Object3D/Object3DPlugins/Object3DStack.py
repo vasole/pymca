@@ -483,8 +483,8 @@ def getObject3DInstance(config=None):
     #because the modules could be instanstiated without using
     #this method
     try:
-        from PyMca import EDFStack
-        from PyMca import TiffStack
+        from PyMca.PyMcaIO import EDFStack
+        from PyMca.PyMcaIO import TiffStack
     except ImportError:
         import EDFStack
         import TiffStack
@@ -529,8 +529,8 @@ if __name__ == "__main__":
     from Object3D import SceneGLWindow
     import os
     try:
-        from PyMca import EDFStack
-        from PyMca import EdfFile
+        from PyMca.PyMcaIO import EDFStack
+        from PyMca.PyMcaIO import EdfFile
     except ImportError:
         import EDFStack
         import EdfFile

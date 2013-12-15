@@ -757,8 +757,8 @@ def test():
 if __name__ == "__main__":
     test()
     sys.exit(0)
-    from PyMca import EDFStack
-    from PyMca import EdfFile
+    from PyMca.PyMcaIO import EDFStack
+    from PyMca.PyMcaIO import EdfFile
     import os
     import time
     #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"

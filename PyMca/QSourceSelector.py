@@ -29,7 +29,7 @@ import os
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 import PyMca.PyMca_Icons as icons
-from PyMca import spswrap as sps
+from PyMca.PyMcaIO import spswrap as sps
 from PyMca import PyMcaDirs
 
 DEBUG = 0

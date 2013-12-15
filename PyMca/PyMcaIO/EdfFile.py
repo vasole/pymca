@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -94,19 +94,19 @@ try:
 except:
     BZ2 = False
 try:
-    from PyMca import MarCCD
+    from PyMca.PyMcaIO import MarCCD
     MARCCD_SUPPORT = True
 except ImportError:
     #MarCCD
     MARCCD_SUPPORT = False
 try:
-    from PyMca import TiffIO
+    from PyMca.PyMcaIO import TiffIO
     TIFF_SUPPORT = True
 except ImportError:
     #MarCCD
     TIFF_SUPPORT = False
 try:
-    from PyMca import PilatusCBF
+    from PyMca.PyMcaIO import PilatusCBF
     PILATUS_CBF_SUPPORT = True
 except ImportError:
     PILATUS_CBF_SUPPORT = False

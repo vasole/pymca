@@ -64,9 +64,9 @@ from PyMca import FFTAlignmentWindow
 from PyMca import ImageRegistration
 from PyMca import SpecfitFuns
 from PyMca import CalculationThread
-from PyMca import ArraySave
+from PyMca.PyMcaIO import ArraySave
 from PyMca import PyMcaFileDialogs
-from PyMca import specfilewrapper
+from PyMca.PyMcaIO import specfilewrapper
 from PyMca import HDF5Widget
 
 try:
