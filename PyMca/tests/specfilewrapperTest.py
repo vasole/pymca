@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -28,7 +28,7 @@ class testSpecfilewrapper(unittest.TestCase):
         import the module
         """
         try:
-            from PyMca import specfilewrapper as specfile
+            from PyMca.PyMcaIO import specfilewrapper as specfile
             self.specfileClass = specfile
         except:
             self.specfileClass = None
