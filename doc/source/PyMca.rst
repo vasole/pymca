@@ -9,42 +9,10 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`APSMEDFileParser` Module
-------------------------------
-
-.. automodule:: PyMca.APSMEDFileParser
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`AifiraMap` Module
------------------------
-
-.. automodule:: PyMca.AifiraMap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`ArraySave` Module
------------------------
-
-.. automodule:: PyMca.ArraySave
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`AttenuatorsTable` Module
 ------------------------------
 
 .. automodule:: PyMca.AttenuatorsTable
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`BAXSCSVFileParser` Module
--------------------------------
-
-.. automodule:: PyMca.BAXSCSVFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -153,22 +121,6 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`EDFStack` Module
-----------------------
-
-.. automodule:: PyMca.EDFStack
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`EdfFile` Module
----------------------
-
-.. automodule:: PyMca.EdfFile
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`EdfFileDataSource` Module
 -------------------------------
 
@@ -273,14 +225,6 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`Fit2DChiFileParser` Module
---------------------------------
-
-.. automodule:: PyMca.Fit2DChiFileParser
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`Fit2Spec` Module
 ----------------------
 
@@ -349,14 +293,6 @@ PyMca Package
 -------------------
 
 .. automodule:: PyMca.Gefit
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`GenerateXCOMCrossSections` Module
----------------------------------------
-
-.. automodule:: PyMca.GenerateXCOMCrossSections
     :members:
     :undoc-members:
     :show-inheritance:
@@ -457,42 +393,10 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`LuciaMap` Module
-----------------------
-
-.. automodule:: PyMca.LuciaMap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`MEDFile` Module
----------------------
-
-.. automodule:: PyMca.MEDFile
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`MRCMap` Module
---------------------
-
-.. automodule:: PyMca.MRCMap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`MShell` Module
 --------------------
 
 .. automodule:: PyMca.MShell
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`MarCCD` Module
---------------------
-
-.. automodule:: PyMca.MarCCD
     :members:
     :undoc-members:
     :show-inheritance:
@@ -641,14 +545,6 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`MySpecFileSelector` Module
---------------------------------
-
-.. automodule:: PyMca.MySpecFileSelector
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`NNMADialog` Module
 ------------------------
 
@@ -701,22 +597,6 @@ PyMca Package
 -----------------------------------
 
 .. automodule:: PyMca.NumpyArrayTableWidget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`OmnicMap` Module
-----------------------
-
-.. automodule:: PyMca.OmnicMap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`OpusDPTMap` Module
-------------------------
-
-.. automodule:: PyMca.OpusDPTMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -781,14 +661,6 @@ PyMca Package
 ----------------------------
 
 .. automodule:: PyMca.PhysicalMemory
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`PilatusCBF` Module
-------------------------
-
-.. automodule:: PyMca.PilatusCBF
     :members:
     :undoc-members:
     :show-inheritance:
@@ -997,14 +869,6 @@ PyMca Package
 ------------------------
 
 .. automodule:: PyMca.PyMca_help
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`Q3PyMcaPrintPreview` Module
----------------------------------
-
-.. automodule:: PyMca.Q3PyMcaPrintPreview
     :members:
     :undoc-members:
     :show-inheritance:
@@ -1297,22 +1161,6 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`SPXFileParser` Module
----------------------------
-
-.. automodule:: PyMca.SPXFileParser
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`SRSFileParser` Module
----------------------------
-
-.. automodule:: PyMca.SRSFileParser
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`ScanFit` Module
 ---------------------
 
@@ -1413,14 +1261,6 @@ PyMca Package
 ----------------------------
 
 .. automodule:: PyMca.SpecArithmetic
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`SpecFileAbstractClass` Module
------------------------------------
-
-.. automodule:: PyMca.SpecFileAbstractClass
     :members:
     :undoc-members:
     :show-inheritance:
@@ -1585,14 +1425,6 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`SupaVisioMap` Module
---------------------------
-
-.. automodule:: PyMca.SupaVisioMap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`TabSheets` Module
 -----------------------
 
@@ -1605,30 +1437,6 @@ PyMca Package
 -----------------------
 
 .. automodule:: PyMca.TextField
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`TextImageStack` Module
-----------------------------
-
-.. automodule:: PyMca.TextImageStack
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`TiffIO` Module
---------------------
-
-.. automodule:: PyMca.TiffIO
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`TiffStack` Module
------------------------
-
-.. automodule:: PyMca.TiffStack
     :members:
     :undoc-members:
     :show-inheritance:
@@ -1713,22 +1521,6 @@ PyMca Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`specfilewrapper` Module
------------------------------
-
-.. automodule:: PyMca.specfilewrapper
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`spswrap` Module
----------------------
-
-.. automodule:: PyMca.spswrap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 
@@ -1736,6 +1528,7 @@ Subpackages
 
     PyMca.EPDL97
     PyMca.Object3D
+    PyMca.PyMcaIO
     PyMca.PyMcaPlugins
     PyMca.PyMcaSciPy
     PyMca.XRFMC
