@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -545,6 +545,8 @@ class QStackWidget(StackBase.StackBase,
         actionList.append(text)
         menu.addSeparator()
         callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
+        additionalItems = []
+        SORTED = True
         for m in self.pluginList:
             if m == "PyMcaPlugins.StackPluginBase":
                 continue
@@ -561,6 +563,14 @@ class QStackWidget(StackBase.StackBase,
             methods = self.pluginInstanceDict[m].getMethods()
             if not len(methods):
                 continue
+            if SORTED:
+                additionalItems.append((text, m))
+            else:
+                menu.addAction(text)
+                actionList.append(text)
+                callableKeys.append(m)
+        additionalItems.sort()
+        for text, m in additionalItems:
             menu.addAction(text)
             actionList.append(text)
             callableKeys.append(m)
