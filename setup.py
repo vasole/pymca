@@ -42,8 +42,8 @@ global USE_SMART_INSTALL_SCRIPTS
 # The sift module implements a patented algorithm. The algorithm can be used
 # for non-commercial research purposes. If you do not want to distribute it
 # with the PyMca sources you just need to delete the PyMca/sift directory.
-PYMCA_DATA_DIR = 'PyMca/PyMcaData'
-PYMCA_DOC_DIR = 'PyMca/PyMcaData'
+PYMCA_DATA_DIR = os.path.join('PyMca','PyMcaData')
+PYMCA_DOC_DIR = os.path.join('PyMca','PyMcaData')
 USE_SMART_INSTALL_SCRIPTS = False
 if "--install-scripts" in sys.argv:
     USE_SMART_INSTALL_SCRIPTS = True
@@ -111,12 +111,10 @@ if os.path.exists(os.path.join("PyMca", "EPDL97")):
 
 global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
-SIFT_DIRTY_INSTALLATION = False
 if os.path.exists(os.path.join("PyMca", "sift")):
     packages.append('PyMca.sift')
     SIFT_OPENCL_FILES = glob.glob('PyMca/sift/*.cl')
-    if not SIFT_DIRTY_INSTALLATION:
-        data_files.append((os.path.join('PyMca', 'sift'), SIFT_OPENCL_FILES))
+    data_files.append((os.path.join('PyMca', 'sift'), SIFT_OPENCL_FILES))
 
 NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
@@ -235,13 +233,7 @@ def build_Object3DCTools(ext_modules):
 
 
 def build_Object3DQhull(extensions):
-    if sys.platform == "win32":
-        libraries = ['opengl32', 'glu32']
-    elif sys.platform == "darwin":
-        libraries = []
-    else:
-        libraries = ['GL', 'GLU']
-
+    libraries = []
     sources = ["PyMca/Object3D/Object3DQhull/Object3DQhull.c"]
     include_dirs = [numpy.get_include()]
 
@@ -304,6 +296,46 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
         print(sys.exc_info())
 build_PyMcaSciPy(ext_modules)
 
+from distutils.command.build_py import build_py
+class smart_build_py(build_py):
+    def run (self):
+        toReturn = build_py.run(self)
+        global PYMCA_DATA_DIR
+        global PYMCA_DOC_DIR
+        global PYMCA_INSTALL_DIR
+        defaultPath = os.path.join('PyMca','PyMcaData')
+        if (PYMCA_DATA_DIR == defaultPath) or\
+           (PYMCA_DOC_DIR == defaultPath):
+            #default, just make sure the complete path is there
+            install_cmd = self.get_finalized_command('install')
+            PYMCA_INSTALL_DIR = getattr(install_cmd, 'install_lib')
+
+        #packager should have given the complete path
+        #in other cases
+        if PYMCA_DATA_DIR == defaultPath:
+            PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                          PYMCA_DATA_DIR)
+        if PYMCA_DOC_DIR == defaultPath:
+            #default, just make sure the complete path is there
+            PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                          PYMCA_DOC_DIR)
+        target = os.path.join(self.build_lib, "PyMca", "PyMcaDataDir.py")
+        fid = open(target,'r')
+        content = fid.readlines()
+        fid.close()
+        fid = open(target,'w')
+        for line in content:
+            lineToBeWritten = line
+            txt = 'DATA_DIR_FROM_SETUP'
+            if txt in line:
+                lineToBeWritten = line.replace(txt, PYMCA_DATA_DIR)
+            txt = 'DOC_DIR_FROM_SETUP'
+            if txt in line:
+                lineToBeWritten = line.replace(txt, PYMCA_DOC_DIR)
+            fid.write(lineToBeWritten)
+        fid.close()
+        return toReturn
+
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
 from distutils.command.install_data import install_data
 class smart_install_data(install_data):
@@ -317,10 +349,7 @@ class smart_install_data(install_data):
         PYMCA_INSTALL_DIR = self.install_dir
         print("PyMca to be installed in %s" %  self.install_dir)
 
-        # Dirty way to put the cl files together with the sift python modules
-        if SIFT_DIRTY_INSTALLATION and SIFT_OPENCL_FILES:
-            self.data_files.append((os.path.join(PYMCA_INSTALL_DIR,'PyMca', 'sift'),
-                                    SIFT_OPENCL_FILES))
+        #cleanup old stuff if present
         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "Plugins1D")
         if os.path.exists(pymcaOld):
             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
@@ -339,56 +368,6 @@ class smart_install_data(install_data):
         if os.path.exists(pymcaOld):
             print("Removing previously installed file %s" % pymcaOld)
             os.remove(pymcaOld)
-        #create file with package data information destination
-        pymca_directory = os.path.join(PYMCA_INSTALL_DIR, "PyMca")
-        if not os.path.exists(pymca_directory):
-            os.mkdir(pymca_directory)
-        tmpName = os.path.join(pymca_directory, 'PyMcaDataDir.py')
-        if os.path.exists(tmpName):
-            print("Removing previously installed file %s" % tmpName)
-            os.remove(tmpName)
-        f = open(tmpName, 'w')
-        if PYMCA_DATA_DIR == 'PyMca/PyMcaData':
-            #default, just make sure the complete path is there
-            PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
-                                          PYMCA_DATA_DIR)
-            #packager should have given the complete path
-            #in other cases
-        if PYMCA_DOC_DIR == 'PyMca/PyMcaData':
-            #default, just make sure the complete path is there
-            PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
-                                          PYMCA_DOC_DIR)
-            #packager should have given the complete path
-            #in other cases
-        f.write("import os\n")
-        f.write("PYMCA_DATA_DIR = '%s'\n" % PYMCA_DATA_DIR)
-        f.write("PYMCA_DOC_DIR = '%s'\n" % PYMCA_DOC_DIR)
-        f.write("# what follows is only used in frozen versions\n")
-        f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
-        f.write("    tmp_dir = os.path.dirname(__file__)\n")
-        f.write("    basename = os.path.basename(PYMCA_DATA_DIR)\n")
-        f.write("    PYMCA_DATA_DIR = os.path.join(tmp_dir,basename)\n")
-        f.write("    while len(PYMCA_DATA_DIR) > 14:\n")
-        f.write("        if os.path.exists(PYMCA_DATA_DIR):\n")
-        f.write("            break\n")
-        f.write("        tmp_dir = os.path.dirname(tmp_dir)\n")
-        f.write("        PYMCA_DATA_DIR = os.path.join(tmp_dir, basename)\n")
-        f.write("if not os.path.exists(PYMCA_DATA_DIR):\n")
-        f.write("    raise IOError('%s directory not found' % basename)\n")
-        f.write("# do the same for the directory containing HTML files\n")
-        f.write("if not os.path.exists(PYMCA_DOC_DIR):\n")
-        f.write("    tmp_dir = os.path.dirname(__file__)\n")
-        f.write("    basename = os.path.basename(PYMCA_DOC_DIR)\n")
-        f.write("    PYMCA_DOC_DIR = os.path.join(tmp_dir,basename)\n")
-        f.write("    while len(PYMCA_DOC_DIR) > 14:\n")
-        f.write("        if os.path.exists(PYMCA_DOC_DIR):\n")
-        f.write("            break\n")
-        f.write("        tmp_dir = os.path.dirname(tmp_dir)\n")
-        f.write("        PYMCA_DOC_DIR = os.path.join(tmp_dir, basename)\n")
-        f.write("if not os.path.exists(PYMCA_DOC_DIR):\n")
-        f.write("    raise IOError('%s directory not found' % basename)\n")
-        #f.write("print('Using: %s' % PYMCA_DATA_DIR)\n")
-        f.close()
         return install_data.run(self)
 
 
@@ -580,7 +559,8 @@ class install(dftinstall):
 
 
 # end of man pages handling
-cmdclass = {'install_data':smart_install_data}
+cmdclass = {'install_data':smart_install_data,
+            'build_py':smart_build_py}
 
 if USE_SMART_INSTALL_SCRIPTS:
     # typical use of user without superuser privileges
