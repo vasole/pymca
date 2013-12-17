@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-"""
+__doc__ = """
 This module can be used for plugin testing purposes as well as for doing
 the bookkeeping of actual plot windows.
 
@@ -30,8 +30,8 @@ It implements the Plot1DBase interface:
     removeCurve(self, legend, replot=True)
     setActiveCurve(self)
 """
-from PyMca import Plot1DBase
 
+from PyMca import Plot1DBase
 
 class Plot1D(Plot1DBase.Plot1DBase):
     def __init__(self):
@@ -186,28 +186,18 @@ class Plot1D(Plot1DBase.Plot1DBase):
                 ymax = max(ymax, y.max())
         return xmin, ymin, xmax, ymax
 
+    #Graph related functions
     def getGraphXLimits(self):
         """
-        Set the graph X limits.
-        :param xmin:  minimum value of the axis
-        :type xmin: float
-        :param xmax:  minimum value of the axis
-        :type xmax: float
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default False
+        Get the graph X (bottom) limits.
+        :return:  Minimum and maximum values of the X axis
         """
-        xmin, ymin, xmax, ymax = self._getAllLimits()
-        return xmin, xmax
+        return self._plotWindow.getGraphXLimits()
 
     def getGraphYLimits(self):
         """
-        Set the graph Y (left) limits.
-        :param ymin:  minimum value of the axis
-        :type ymin: float
-        :param ymax:  minimum value of the axis
-        :type ymax: float
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default False
+        Get the graph Y (left) limits.
+        :return:  Minimum and maximum values of the Y axis
         """
         xmin, ymin, xmax, ymax = self._getAllLimits()
         return ymin, ymax

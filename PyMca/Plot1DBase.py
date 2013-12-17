@@ -19,20 +19,25 @@ __author__ = "V.A. Sole - ESRF Software Group"
 __license__ = "LGPL"
 __doc__ = """
 
-Any window willing to accept 1D plugins should implement the methods defined
-in this class.
+Any plot window willing to accept 1D plugins should implement the methods
+defined in this class.
 
 The plugins will be compatible with any 1D-plot window that provides the methods:
     addCurve
-    removeCurve
     getActiveCurve
     getAllCurves
-    setGraphTitle
     getGraphXLimits
     getGraphYLimits
+    getGraphTitle
+    getGraphXTitle
+    getGraphYTitle    
+    removeCurve
+    setActiveCurve
+    setGraphTitle
     setGraphXLimits
     setGraphYLimits
-    setActiveCurve
+    setGraphXTitle
+    setGraphYTitle
 
 On instantiation, this clase imports all the plugins found in the PyMcaPlugins
 directory and stores them into the attributes pluginList and pluginInstanceDict
@@ -164,18 +169,6 @@ class Plot1DBase(object):
         print("addCurve not implemented")
         return None
 
-    def removeCurve(self, legend, replot=True):
-        """
-        Remove the curve associated to the supplied legend from the graph.
-        The graph will be updated if replot is true.
-        :param legend: The legend associated to the curve to be deleted
-        :type legend: string or None
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
-        """
-        print("removeCurve not implemented")
-        return None
-    
     def getActiveCurve(self, just_legend=False):
         """
         :param just_legend: Flag to specify the type of output required
@@ -236,6 +229,29 @@ class Plot1DBase(object):
         print("getGraphYLimits not implemented")
         return 0.0, 100.0
 
+    def getGraphTitle(self):
+        """
+        :return: The graph title
+        :rtype: string
+        """
+        print("getGraphTitle not implemented")
+        return "Title"
+
+    def getGraphXTitle(self):
+        """
+        :return: The graph X axis label
+        :rtype: string
+        """
+        print("getGraphXTitle not implemented")
+        return "X"
+
+    def getGraphYTitle(self):
+        """
+        :return: The graph Y axis label
+        :rtype: string
+        """
+        return "Y"
+
     def setGraphXLimits(self, xmin, xmax, replot=False):
         """
         Set the graph X limits.
@@ -249,7 +265,7 @@ class Plot1DBase(object):
         print("setGraphXLimits not implemented")
         return
 
-    def getGraphYLimits(self, ymin, ymax, replot=False):
+    def setGraphYLimits(self, ymin, ymax, replot=False):
         """
         Set the graph Y (left) limits.
         :param ymin:  minimum value of the axis
@@ -261,6 +277,18 @@ class Plot1DBase(object):
         """
         print("setGraphYLimits not implemented")
         return
+
+    def removeCurve(self, legend, replot=True):
+        """
+        Remove the curve associated to the supplied legend from the graph.
+        The graph will be updated if replot is true.
+        :param legend: The legend associated to the curve to be deleted
+        :type legend: string or None
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True        
+        """
+        print("removeCurve not implemented")
+        return None
 
     def setActiveCurve(self, legend):
         """
@@ -292,27 +320,4 @@ class Plot1DBase(object):
         :type title: string
         """
         print("setGraphYTitle not implemented")
-        
-
-    def getGraphTitle(self):
-        """
-        :return: The graph title
-        :rtype: string
-        """
-        print("getGraphTitle not implemented")
-        return "Title"
-
-    def getGraphXTitle(self):
-        """
-        :return: The graph X axis label
-        :rtype: string
-        """
-        print("getGraphXTitle not implemented")
-        return "X"
-
-    def getGraphYTitle(self):
-        """
-        :return: The graph Y axis label
-        :rtype: string
-        """
-        return "Y"
+            
