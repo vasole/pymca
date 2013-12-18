@@ -67,111 +67,92 @@ class SimpleMath(object):
                               right=yInterPrime[-1])
         return x, result
 
-    def average(self,xdata0,ydata0):
-        #check if all the x axis are identical (no interpolation needed)
-        allthesamex=1
-        x0=xdata0[0]
-        for xaxis in xdata0:
-            if len(x0) == len(xaxis):
-                if numpy.alltrue(x0==xaxis):
+    def average(self, xarr, yarr, x=None):
+        """
+        :param xarr : List containing x values in 1-D numpy arrays
+        :param yarr : List containing y Values in 1-D numpy arrays
+        :param x: x values of the final average spectrum (or None)
+        :return: Average spectrum. In case of invalid input (None, None) tuple is returned.
+
+        From the spectra given in xarr & yarr, the method determines the overlap in
+        the x-range. For spectra with unequal x-ranges, the method interpolates all
+        spectra on the values given in x if provided or the first curve and averages them.
+        """
+        if (len(xarr) != len(yarr)) or\
+           (len(xarr) == 0) or (len(yarr) == 0):
+            if DEBUG:
+                print('specAverage -- invalid input!')
+                print('Array lengths do not match or are 0')
+            return None, None 
+
+        same = True
+        if x == None:
+            SUPPLIED = False
+            x0 = xarr[0]
+        else:
+            SUPPLIED = True
+            x0 = x
+        for x in xarr:
+            if len(x0) == len(x):
+                if numpy.all(x0 == x):
                     pass
                 else:
-                    allthesamex=0
+                    same = False
                     break
             else:
-                allthesamex=0
+                same = False
                 break
 
-        if allthesamex:
-            xdata=[]
-            ydata=[]
-            i=0
-            for x0 in xdata0:
-                x=numpy.array(x0)
-                xdata.append(x)
-                ydata.append(numpy.array(ydata0[i]))
-                i=i+1
-                
-            finalx=numpy.array(x0)
-            finalx=xdata0[0]
-            finaly=numpy.zeros(finalx.shape ,numpy.float)
-            i = 0
-            for x0 in xdata0:
-                finaly += ydata[i]
-                i=i+1
-        else:
-            #sort the data
-            xdata=[]
-            ydata=[]
-            i=0
-            for x0 in xdata0:
-                x=numpy.array(x0)
-                i1=numpy.argsort(x)
-                xdata.append(numpy.take(x,i1))
-                ydata.append(numpy.take(numpy.array(ydata0[i]),i1))
-                i=i+1         
-            
-            #get the max and the min x axis
-            xmin=xdata[0][0]
-            xmax=xdata[0][-1]
-            for x in xdata:
-                if xmin < x[0]:
-                    xmin=x[0]
-                if xmax > x[-1]:
-                    xmax=x[-1]
-            #take the data in between
-            x=[]
-            y=[]
-            i=0
-            minimumLength = len(xdata[0])
-            for x0 in xdata:
-                i1=numpy.nonzero((x0>=xmin) & (x0<=xmax))[0]
-                x.append(numpy.take(x0,i1))
-                y.append(numpy.take(numpy.array(ydata[i]),i1))
-                if len(x0) < minimumLength:
-                    minimumLength = len(x0)
-                i=i+1
+        xsort = []
+        ysort = []
+        for (x,y) in zip(xarr, yarr):
+            if numpy.all(numpy.diff(x) > 0.):
+                # All values sorted
+                xsort.append(x)
+                ysort.append(y)
+            else:
+                # Sort values
+                mask = numpy.argsort(x)
+                xsort.append(x.take(mask))
+                ysort.append(y.take(mask))
 
-            if minimumLength < 2:
-                raise ValueError("Not enough points to take a meaningfull average")
-            #take as x axis the first
-            finalx=x[0]
-            for i in range(len(x)):
-                if x[i][0] > finalx[0]:
-                    finalx = x[i] 
-            finaly=numpy.zeros(finalx.shape, numpy.float)
-            j=-1
-            allthesamex=0
-            for p in range(len(finalx)):
-              point=finalx[p] 
-              i=0
-              j=j+1
-              try:            
-                for x0 in x:
-                    if allthesamex:
-                        finaly[p]+=y[i][p]
-                    else:
-                        i1=max(numpy.nonzero(x0<=point)[0])
-                        i2=min(numpy.nonzero(x0>=point)[0])
-                        if i1 >= i2:
-                            #take the point as it is
-                            finaly[p]+=y[i][i1]
-                        else:
-                            #interpolation
-                            A=(x0[i2]-point)/(x0[i2]-x0[i1])
-                            B=1.-A
-                            finaly[p]+=A*y[i][i1]+B*y[i][i2]
-                    i=i+1
-              except:
-                break
-        if allthesamex:
-              finalx=finalx[0:]
-              finaly=finaly[0:]/len(xdata0)      
+        if SUPPLIED:
+            xmin0 = x0.min()
+            xmax0 = x0.max()
         else:
-              finalx=finalx[0:j]
-              finaly=finaly[0:j]/len(xdata0)
-     
-        return finalx,finaly
+            xmin0 = xsort[0][0]
+            xmax0 = xsort[0][-1]
+        if (not same) or (not SUPPLIED):
+            # Determine global xmin0 & xmax0
+            for x in xsort:
+                xmin = x.min()
+                xmax = x.max()
+                if xmin > xmin0:
+                    xmin0 = xmin
+                if xmax < xmax0:
+                    xmax0 = xmax
+            if xmax <= xmin:
+                if DEBUG:
+                    print('specAverage -- ')
+                    print('No overlap between spectra!')
+                return numpy.array([]), numpy.array([])
+
+        # Clip xRange to maximal overlap in spectra
+        mask = numpy.nonzero((x0 >= xmin0) & 
+                             (x0 <= xmax0))[0]
+        xnew = numpy.take(x0, mask)
+        ynew = numpy.zeros(len(xnew))
+
+        # Perform average
+        for (x, y) in zip(xsort, ysort):
+            if same:
+                ynew += y  
+            else:
+                yinter = numpy.interp(xnew, x, y)
+                ynew   += numpy.asarray(yinter)
+        num = len(yarr)
+        ynew /= num
+        return xnew, ynew
 
     def smooth(self, *var, **kw):
         """
