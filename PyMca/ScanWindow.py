@@ -492,181 +492,185 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
             sellist = selectionlist
         else:
             sellist = [selectionlist]
-
-        for sel in sellist:
-            source = sel['SourceName']
-            key    = sel['Key']
-            legend = sel['legend'] #expected form sourcename + scan key
-            if not ("scanselection" in sel): continue
-            if sel['scanselection'] == "MCA":
-                continue
-            if not sel["scanselection"]:continue
-            if len(key.split(".")) > 2: continue
-            dataObject = sel['dataobject']
-            #only one-dimensional selections considered
-            if dataObject.info["selectiontype"] != "1D": continue
-            
-            #there must be something to plot
-            if not hasattr(dataObject, 'y'): continue                
-            if not hasattr(dataObject, 'x'):
-                ylen = len(dataObject.y[0]) 
-                if ylen:
-                    xdata = numpy.arange(ylen).astype(numpy.float)
-                else:
-                    #nothing to be plot
+        #try to improve things when dealing with many curves
+        self.graph.setAutoReplot(False)
+        try:
+            for sel in sellist:
+                source = sel['SourceName']
+                key    = sel['Key']
+                legend = sel['legend'] #expected form sourcename + scan key
+                if not ("scanselection" in sel): continue
+                if sel['scanselection'] == "MCA":
                     continue
-            if dataObject.x is None:
-                ylen = len(dataObject.y[0]) 
-                if ylen:
-                    xdata = numpy.arange(ylen).astype(numpy.float)
+                if not sel["scanselection"]:continue
+                if len(key.split(".")) > 2: continue
+                dataObject = sel['dataobject']
+                #only one-dimensional selections considered
+                if dataObject.info["selectiontype"] != "1D": continue
+                
+                #there must be something to plot
+                if not hasattr(dataObject, 'y'): continue                
+                if not hasattr(dataObject, 'x'):
+                    ylen = len(dataObject.y[0]) 
+                    if ylen:
+                        xdata = numpy.arange(ylen).astype(numpy.float)
+                    else:
+                        #nothing to be plot
+                        continue
+                if dataObject.x is None:
+                    ylen = len(dataObject.y[0]) 
+                    if ylen:
+                        xdata = numpy.arange(ylen).astype(numpy.float)
+                    else:
+                        #nothing to be plot
+                        continue                    
+                elif len(dataObject.x) > 1:
+                    if DEBUG:
+                        print("Mesh plots")
+                    continue
                 else:
-                    #nothing to be plot
-                    continue                    
-            elif len(dataObject.x) > 1:
-                if DEBUG:
-                    print("Mesh plots")
-                continue
-            else:
-                xdata = dataObject.x[0]
-            sps_source = False
-            if 'SourceType' in sel:
-                if sel['SourceType'] == 'SPS':
-                    sps_source = True
+                    xdata = dataObject.x[0]
+                sps_source = False
+                if 'SourceType' in sel:
+                    if sel['SourceType'] == 'SPS':
+                        sps_source = True
 
-            if sps_source:
-                ycounter = -1
-                dataObject.info['selection'] = copy.deepcopy(sel['selection'])
-                for ydata in dataObject.y:
-                    ycounter += 1
-                    if dataObject.m is None:
-                        mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
-                    elif len(dataObject.m[0]) > 0:
-                        if len(dataObject.m[0]) == len(ydata):
-                            index = numpy.nonzero(dataObject.m[0])[0]
-                            if not len(index):
-                                continue
-                            xdata = numpy.take(xdata, index)
-                            ydata = numpy.take(ydata, index)
-                            mdata = numpy.take(dataObject.m[0], index)
-                            #A priori the graph only knows about plots
-                            ydata = ydata/mdata
+                if sps_source:
+                    ycounter = -1
+                    dataObject.info['selection'] = copy.deepcopy(sel['selection'])
+                    for ydata in dataObject.y:
+                        ycounter += 1
+                        if dataObject.m is None:
+                            mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
+                        elif len(dataObject.m[0]) > 0:
+                            if len(dataObject.m[0]) == len(ydata):
+                                index = numpy.nonzero(dataObject.m[0])[0]
+                                if not len(index):
+                                    continue
+                                xdata = numpy.take(xdata, index)
+                                ydata = numpy.take(ydata, index)
+                                mdata = numpy.take(dataObject.m[0], index)
+                                #A priori the graph only knows about plots
+                                ydata = ydata/mdata
+                            else:
+                                raise ValueError("Monitor data length different than counter data")
                         else:
-                            raise ValueError("Monitor data length different than counter data")
-                    else:
-                        mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
-                    ylegend = 'y%d' % ycounter
-                    if sel['selection'] is not None:
-                        if type(sel['selection']) == type({}):
-                            if 'x' in sel['selection']:
-                                #proper scan selection
-                                ilabel = dataObject.info['selection']['y'][ycounter]
-                                ylegend = dataObject.info['LabelNames'][ilabel]
-                    newLegend = legend + " " + ylegend
-                    #here I should check the log or linear status
-                    if newLegend not in self.dataObjectsList:
-                        self.dataObjectsList.append(newLegend)
-                    self.dataObjectsDict[newLegend] = dataObject
-                    if self.__toggleCounter in [1, 2]:
-                        symbol = 'o'
-                    else:
-                        symbol = None
-                    self.graph.newCurve(newLegend,
-                                        x=xdata,
-                                        y=ydata,
-                                        logfilter=self._logY,
-                                        symbol=symbol)
-                    if self.scanWindowInfoWidget is not None:
-                        activeLegend = self.graph.getActiveCurve(justlegend=1)
-                        if activeLegend is not None:
-                            if activeLegend == newLegend:
-                                self.scanWindowInfoWidget.updateFromDataObject\
-                                                            (dataObject)
-                        else:
-                            dummyDataObject = DataObject.DataObject()
-                            dummyDataObject.y=[numpy.array([])]
-                            dummyDataObject.x=[numpy.array([])]
-                            self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)                            
-            else:
-                #we have to loop for all y values
-                ycounter = -1
-                for ydata in dataObject.y:
-                    ylen = len(ydata)
-                    if ylen == 1:
-                        if len(xdata) > 1:
-                            ydata = ydata[0] * numpy.ones(len(xdata)).astype(numpy.float)
-                    elif len(xdata) == 1:
-                        xdata = xdata[0] * numpy.ones(ylen).astype(numpy.float)
-                    ycounter += 1
-                    newDataObject   = DataObject.DataObject()
-                    newDataObject.info = copy.deepcopy(dataObject.info)
-                    if dataObject.m is None:
-                        mdata = numpy.ones(len(ydata)).astype(numpy.float)
-                    elif len(dataObject.m[0]) > 0:
-                        if len(dataObject.m[0]) == len(ydata):
-                            index = numpy.nonzero(dataObject.m[0])[0]
-                            if not len(index):
-                                continue
-                            xdata = numpy.take(xdata, index)
-                            ydata = numpy.take(ydata, index)
-                            mdata = numpy.take(dataObject.m[0], index)
-                            #A priori the graph only knows about plots
-                            ydata = ydata/mdata
-                        elif len(dataObject.m[0]) == 1:
-                            mdata = numpy.ones(len(ydata)).astype(numpy.float)
-                            mdata *= dataObject.m[0][0]
-                            index = numpy.nonzero(dataObject.m[0])[0]
-                            if not len(index):
-                                continue
-                            xdata = numpy.take(xdata, index)
-                            ydata = numpy.take(ydata, index)
-                            mdata = numpy.take(dataObject.m[0], index)
-                            #A priori the graph only knows about plots
-                            ydata = ydata/mdata
-                        else:
-                            raise ValueError("Monitor data length different than counter data")
-                    else:
-                        mdata = numpy.ones(len(ydata)).astype(numpy.float)
-                    newDataObject.x = [xdata]
-                    newDataObject.y = [ydata]
-                    newDataObject.m = [mdata]
-                    newDataObject.info['selection'] = copy.deepcopy(sel['selection'])
-                    ylegend = 'y%d' % ycounter
-                    if sel['selection'] is not None:
-                        if type(sel['selection']) == type({}):
-                            if 'x' in sel['selection']:
-                                #proper scan selection
-                                newDataObject.info['selection']['x'] = sel['selection']['x'] 
-                                newDataObject.info['selection']['y'] = [sel['selection']['y'][ycounter]]
-                                newDataObject.info['selection']['m'] = sel['selection']['m']
-                                ilabel = newDataObject.info['selection']['y'][0]
-                                ylegend = newDataObject.info['LabelNames'][ilabel]
-                    if ('operations' in dataObject.info) and len(dataObject.y) == 1:
-                        newDataObject.info['legend'] = legend
-                        symbol = 'x'
-                    else:
-                        newDataObject.info['legend'] = legend + " " + ylegend
-                        newDataObject.info['selectionlegend'] = legend
+                            mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
+                        ylegend = 'y%d' % ycounter
+                        if sel['selection'] is not None:
+                            if type(sel['selection']) == type({}):
+                                if 'x' in sel['selection']:
+                                    #proper scan selection
+                                    ilabel = dataObject.info['selection']['y'][ycounter]
+                                    ylegend = dataObject.info['LabelNames'][ilabel]
+                        newLegend = legend + " " + ylegend
+                        #here I should check the log or linear status
+                        if newLegend not in self.dataObjectsList:
+                            self.dataObjectsList.append(newLegend)
+                        self.dataObjectsDict[newLegend] = dataObject
                         if self.__toggleCounter in [1, 2]:
                             symbol = 'o'
                         else:
                             symbol = None
-                    maptoy2 = False
-                    if 'operations' in dataObject.info:
-                        if dataObject.info['operations'][-1] == 'derivate':
-                            maptoy2 = True
-                        
-                    #here I should check the log or linear status
-                    if newDataObject.info['legend'] not in self.dataObjectsList:
-                        self.dataObjectsList.append(newDataObject.info['legend'])
-                    self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
-                    self.graph.newCurve(newDataObject.info['legend'],
-                                        x=xdata,
-                                        y=ydata,
-                                        logfilter=self._logY,
-                                        symbol=symbol,
-                                        maptoy2=maptoy2)
-        if replot:
-            self.graph.replot()
+                        self.graph.newCurve(newLegend,
+                                            x=xdata,
+                                            y=ydata,
+                                            logfilter=self._logY,
+                                            symbol=symbol)
+                        if self.scanWindowInfoWidget is not None:
+                            activeLegend = self.graph.getActiveCurve(justlegend=1)
+                            if activeLegend is not None:
+                                if activeLegend == newLegend:
+                                    self.scanWindowInfoWidget.updateFromDataObject\
+                                                                (dataObject)
+                            else:
+                                dummyDataObject = DataObject.DataObject()
+                                dummyDataObject.y=[numpy.array([])]
+                                dummyDataObject.x=[numpy.array([])]
+                                self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)                            
+                else:
+                    #we have to loop for all y values
+                    ycounter = -1
+                    for ydata in dataObject.y:
+                        ylen = len(ydata)
+                        if ylen == 1:
+                            if len(xdata) > 1:
+                                ydata = ydata[0] * numpy.ones(len(xdata)).astype(numpy.float)
+                        elif len(xdata) == 1:
+                            xdata = xdata[0] * numpy.ones(ylen).astype(numpy.float)
+                        ycounter += 1
+                        newDataObject   = DataObject.DataObject()
+                        newDataObject.info = copy.deepcopy(dataObject.info)
+                        if dataObject.m is None:
+                            mdata = numpy.ones(len(ydata)).astype(numpy.float)
+                        elif len(dataObject.m[0]) > 0:
+                            if len(dataObject.m[0]) == len(ydata):
+                                index = numpy.nonzero(dataObject.m[0])[0]
+                                if not len(index):
+                                    continue
+                                xdata = numpy.take(xdata, index)
+                                ydata = numpy.take(ydata, index)
+                                mdata = numpy.take(dataObject.m[0], index)
+                                #A priori the graph only knows about plots
+                                ydata = ydata/mdata
+                            elif len(dataObject.m[0]) == 1:
+                                mdata = numpy.ones(len(ydata)).astype(numpy.float)
+                                mdata *= dataObject.m[0][0]
+                                index = numpy.nonzero(dataObject.m[0])[0]
+                                if not len(index):
+                                    continue
+                                xdata = numpy.take(xdata, index)
+                                ydata = numpy.take(ydata, index)
+                                mdata = numpy.take(dataObject.m[0], index)
+                                #A priori the graph only knows about plots
+                                ydata = ydata/mdata
+                            else:
+                                raise ValueError("Monitor data length different than counter data")
+                        else:
+                            mdata = numpy.ones(len(ydata)).astype(numpy.float)
+                        newDataObject.x = [xdata]
+                        newDataObject.y = [ydata]
+                        newDataObject.m = [mdata]
+                        newDataObject.info['selection'] = copy.deepcopy(sel['selection'])
+                        ylegend = 'y%d' % ycounter
+                        if sel['selection'] is not None:
+                            if type(sel['selection']) == type({}):
+                                if 'x' in sel['selection']:
+                                    #proper scan selection
+                                    newDataObject.info['selection']['x'] = sel['selection']['x'] 
+                                    newDataObject.info['selection']['y'] = [sel['selection']['y'][ycounter]]
+                                    newDataObject.info['selection']['m'] = sel['selection']['m']
+                                    ilabel = newDataObject.info['selection']['y'][0]
+                                    ylegend = newDataObject.info['LabelNames'][ilabel]
+                        if ('operations' in dataObject.info) and len(dataObject.y) == 1:
+                            newDataObject.info['legend'] = legend
+                            symbol = 'x'
+                        else:
+                            newDataObject.info['legend'] = legend + " " + ylegend
+                            newDataObject.info['selectionlegend'] = legend
+                            if self.__toggleCounter in [1, 2]:
+                                symbol = 'o'
+                            else:
+                                symbol = None
+                        maptoy2 = False
+                        if 'operations' in dataObject.info:
+                            if dataObject.info['operations'][-1] == 'derivate':
+                                maptoy2 = True
+                            
+                        #here I should check the log or linear status
+                        if newDataObject.info['legend'] not in self.dataObjectsList:
+                            self.dataObjectsList.append(newDataObject.info['legend'])
+                        self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+                        self.graph.newCurve(newDataObject.info['legend'],
+                                            x=xdata,
+                                            y=ydata,
+                                            logfilter=self._logY,
+                                            symbol=symbol,
+                                            maptoy2=maptoy2)
+            if replot:
+                self.graph.replot()
+        finally:
+            self.graph.setAutoReplot(True)
 
             
     def _removeSelection(self, selectionlist):
