@@ -341,10 +341,7 @@ class McaAdvancedFitBatch(object):
                         mca = 0 + self.mcaOffset + mca_index * self.mcaStep
                         if self.pleaseBreak: break
                         self.__col += 1
-                        if int(nrows) > int(ncols):
-                            mcadata = data[mca,:]
-                        else:
-                            mcadata = data[:,mca]
+                        mcadata = data[mca,:]
                         if 'MCA start ch' in info:
                             xmin = float(info['MCA start ch'])
                         else:
