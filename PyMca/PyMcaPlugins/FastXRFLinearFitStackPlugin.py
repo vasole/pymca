@@ -188,7 +188,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         if stack.x in [None, []]:
             x = None
         else:
-            x = stack.x
+            x = stack.x[0]
         result = self.fitInstance.fitMultipleSpectra(x=x,
                                                      y=stack,
                                                      concentrations=concentrations,

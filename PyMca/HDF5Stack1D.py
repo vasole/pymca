@@ -91,7 +91,11 @@ class HDF5Stack1D(DataObject.DataObject):
 
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
+        
         xSelection = selection['x']
+        if xSelection is not None:
+            if type(xSelection) != type([]):
+                xSelection = [xSelection]
         if type(xSelection) == type([]):
             if len(xSelection):
                 xSelection = xSelection[0]

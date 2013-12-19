@@ -284,8 +284,8 @@ class StackBase(object):
         if not hasattr(self._stack, 'x'):
             self._stack.x = None
         if self._stack.x in [None, []]:
-            self._stack.x = numpy.arange(len(mcaData0)).astype(numpy.float)+\
-                                self._stack.info.get('Channel0', 0.0)
+            self._stack.x = [numpy.arange(len(mcaData0)).astype(numpy.float)+\
+                                self._stack.info.get('Channel0', 0.0)]
             dataObject.x = [self._stack.x * 1]
         else:
             # for the time being it can only contain one axis

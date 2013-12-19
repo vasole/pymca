@@ -513,8 +513,8 @@ class McaBatchGUI(qt.QWidget):
                         self._selection = selection
                         self._hdf5Widget.setSelection(selection)
                         #they are not used yet
-                        self._hdf5Widget.selectionWidgetsDict['x'].hide()
-                        self._hdf5Widget.selectionWidgetsDict['m'].hide()
+                        #self._hdf5Widget.selectionWidgetsDict['x'].hide()
+                        #self._hdf5Widget.selectionWidgetsDict['m'].hide()
                         if self._hdf5Widget.isHidden():
                             self._hdf5Widget.show()
                 elif filelist[0][-3:].lower() in ['.h5', 'nxs', 'hdf']:

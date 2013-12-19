@@ -276,6 +276,14 @@ class McaAdvancedFitBatch(object):
         stack = self.file
         info = stack.info
         data = stack.data
+        xStack = None
+        if hasattr(stack, "x"):
+            if stack.x not in [None, []]:
+                if type(stack.x) == type([]):
+                    xStack = stack.x[0]
+                else:
+                    print("THIS SHOULD NOT BE USED")
+                    xStack = stack.x
         nimages = stack.info['Dim_1']
         self.__nrows = nimages
         numberofmca = stack.info['Dim_2']
@@ -303,14 +311,17 @@ class McaAdvancedFitBatch(object):
                 if self.pleaseBreak: break
                 self.__col = mca
                 mcadata = cache_data[mca, :]
-                if 'MCA start ch' in info:
-                    xmin = float(info['MCA start ch'])
+                y0  = numpy.array(mcadata)
+                if xStack is None:
+                    if 'MCA start ch' in info:
+                        xmin = float(info['MCA start ch'])
+                    else:
+                        xmin = 0.0
+                    x = numpy.arange(len(y0))*1.0 + xmin
                 else:
-                    xmin = 0.0
+                    x = xStack
                 #key = "%s.%s.%02d.%02d" % (scan,order,row,col)
                 key = "%s.%04d" % (keylist[i], mca)
-                y0  = numpy.array(mcadata)
-                x = numpy.arange(len(y0))*1.0 + xmin
                 #I only process the first file of the stack?
                 filename = os.path.basename(info['SourceName'][0])
                 infoDict = {}
