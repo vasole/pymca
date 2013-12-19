@@ -185,7 +185,11 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         fitConfigurationFile = self._parameters['configuration']
         concentrations = self._parameters['concentrations']
         self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
-        result = self.fitInstance.fitMultipleSpectra(x=None,
+        if stack.x in [None, []]:
+            x = None
+        else:
+            x = stack.x
+        result = self.fitInstance.fitMultipleSpectra(x=x,
                                                      y=stack,
                                                      concentrations=concentrations,
                                                      ysum=spectrum)

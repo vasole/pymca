@@ -187,7 +187,7 @@ class FastXRFLinearFit(object):
             iXMin = xdata[0]
             iXMax = xdata[-1]
         else:
-            iXMin = numpy.nonzero(x <= xdata[0])[0][0]
+            iXMin = numpy.nonzero(x <= xdata[0])[0][-1]
             iXMax = numpy.nonzero(x >= xdata[-1])[0][0]
 
         dummySpectrum = firstSpectrum[iXMin:iXMax+1].reshape(-1, 1)
@@ -460,9 +460,15 @@ if __name__ == "__main__":
     if 1:
         configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
         fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_0*.edf")
+        concentrations = True
+    elif 0:
+        configurationFile = "D:\RIVARD\config_3-6kev_OceanIsland_batch_NO_BACKGROUND.cfg"
+        fileList = glob.glob("D:\RIVARD\m*.edf")
+        concentrations = False
     else:
         configurationFile = "E2_line.cfg"
         fileList = glob.glob("E:\DATA\PyMca-Training\FDM55\AS_EDF\E2_line*.edf")
+        concentrations = False
     dataStack = EDFStack.EDFStack(filelist=fileList)
 
     t0 = time.time()
