@@ -386,7 +386,8 @@ class FastXRFLinearFit(object):
             nValues = 1
             if len(concentrationsResult['layerlist']) > 1:
                 nValues += len(concentrationsResult['layerlist'])
-            massFractions = numpy.zeros((nValues * (nFree - nFreeBackgroundParameters), nRows, nColumns),
+            nElements = len(list(concentrationsResult['mass fraction'].keys()))
+            massFractions = numpy.zeros((nValues * nElements, nRows, nColumns),
                                         numpy.float32)
 
 
@@ -399,6 +400,10 @@ class FastXRFLinearFit(object):
                     print("No reference")
                 counter = 0
                 for i, group in enumerate(fitresult['result']['groups']):
+                    if group.lower().startswith("scatter"):
+                        if DEBUG:
+                            print("skept %s" % group)
+                        continue
                     outputDict['names'].append("C(%s)" % group)
                     massFractions[counter] = results[nFreeBackgroundParameters+i] *\
                         (concentrationsResult['mass fraction'][group]/fitresult['result'][param]['fitarea'])
@@ -407,8 +412,6 @@ class FastXRFLinearFit(object):
                             outputDict['names'].append("C(%s)-%s" % (group, layer))
                             massFractions[counter] = results[nFreeBackgroundParameters+i] *\
                         (concentrationsResult[layer]['mass fraction'][group]/fitresult['result'][param]['fitarea'])
-                            counter += 1
-                    counter += 1
             else:
                 if DEBUG:
                     print("With reference")
@@ -428,6 +431,10 @@ class FastXRFLinearFit(object):
                 massFractions[idx] = referenceConcentrations
                 counter = 0
                 for i, group in enumerate(fitresult['result']['groups']):
+                    if group.lower().startswith("scatter"):
+                        if DEBUG:
+                            print("skept %s" % group)
+                        continue
                     outputDict['names'].append("C(%s)" % group)
                     if i == idx:
                         continue
@@ -442,8 +449,6 @@ class FastXRFLinearFit(object):
                             massFractions[i][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
                                 ((referenceArea/fitresult['result'][group]['fitarea']) *\
                                 (concentrationsResult[layer]['mass fraction'][group]))
-                            counter += 1                    
-                    counter += 1
             outputDict['concentrations'] = massFractions
             ####################################################
         return outputDict
