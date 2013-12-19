@@ -334,7 +334,7 @@ class McaAdvancedFitBatch(object):
                 if info['SourceType'] == "EdfFile":
                     nrows = int(info['Dim_1'])
                     ncols = int(info['Dim_2'])
-                    numberofmca  = min(nrows,ncols)
+                    numberofmca  = ncols
                     self.__ncols = len(range(0+self.mcaOffset,numberofmca,self.mcaStep))
                     self.__col  = -1
                     for mca_index in range(self.__ncols):
