@@ -110,6 +110,9 @@ class HDF5Stack1D(DataObject.DataObject):
 
         # monitor selection
         mSelection = selection['m']
+        if mSelection not in [None, []]:
+            if type(mSelection) != type([]):
+                mSelection = [mSelection]            
         if type(mSelection) == type([]):
             if len(mSelection):
                 mSelection = mSelection[0]
