@@ -1,28 +1,20 @@
+# -*- coding: utf-8 -*-
 #/*##########################################################################
 # Copyright (C) 2004-2013 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option)
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
-# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License along with
-# PyMca; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
-# used as a free plugin for a non-free program.
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
 """
@@ -296,6 +288,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                 if not DONE:
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
+                    c1 += 1
                     DONE = True
                 if ((spe.max()-spe.min()) > 10.) or (jmp < 0):
                     data[i, :] = 0.0
@@ -307,7 +300,8 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     # this approach removed
                     data[i,:c0] = spe[c0]
                     data[i, c0:c1] = spe[c0:c1]
-                    data[i, c1:] = spe[c1]
+                    if c1 < data.shape[1]:
+                        data[i, c1:] = spe[c1]
                     edges[i] = ed
                     jumps[i] = jmp
                 else:
@@ -349,6 +343,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                 if not DONE:
                     c0 = (numpy.nonzero(energy >= (ed + pre_edge_regions[0][0]))[0]).min()
                     c1 = (numpy.nonzero(energy <= (ed + post_edge_regions[-1][1]))[-1]).max()
+                    c1 += 1
                     DONE = True
                 if ((spe.max()-spe.min()) > 10.) or (jmp < 0):
                     data[:, i] = 0.0
@@ -360,13 +355,14 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     # above limits to 0 than to the corresponding limits of the region
                     data[:c0, i] = 0.0
                     data[c0:c1, i] = spe[c0:c1]
-                    data[c1:, i] = 0.0
+                    if c1 < data.shape[0]:
+                        data[c1:, i] = 0.0
                     edges[i] = ed
                     jumps[i] = jmp
             self._progress = 100
             data.shape = oldShape
         else:
-            raise ValueError("Invalid 1D index %d" % mcaIndex)
+            raise ValueError("Unsupported 1D index %d" % mcaIndex)
         return edges, jumps, errors
 
 
