@@ -219,6 +219,15 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         pg.PlotWidget.__init__(self, parent, viewBox=vb,
                                    enableMenu=enableMenu, **kw)
         PlotBackend.PlotBackend.__init__(self, parent)
+
+        self.setMouseTracking(True)
+
+        #increase from default of 2
+        self.scene().setClickRadius(5)
+
+        # this only sends the position in pixel coordenates
+        self.scene().sigMouseMoved.connect(self._mouseMoved)
+
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
         self._logX = False
@@ -229,11 +238,24 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             x = numpy.arange(10000*200.)
             x.shape = 200, 10000
             self.invertY(True)
-            #vb.invertY(True)
             self._imageItem = pg.ImageItem(image=x)
             self._imageItem.setZValue(0)
             #self._imageItem.setCompositionMode(QtGui.QPainter.CompositionMode_Multiply)
             self.addItem(self._imageItem)
+        
+
+    def _mouseMoved(self, pos):
+        if self.sceneBoundingRect().contains(pos):
+            mousePoint = self.getViewBox().mapSceneToView(pos)
+            x = mousePoint.x()
+            y = mousePoint.y()
+            ddict = {}
+            ddict["event"] = "MouseAt"
+            ddict['x'] = x
+            ddict['y'] = y
+            ddict["xpixel"] = pos.x()
+            ddict["ypixel"] = pos.y()
+            self._callback(ddict)
                 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
@@ -590,6 +612,12 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
     def insertMarker(self, x, y, label, **kw):
         print("Plot1DBackend insertMarker not implemented")
 
+    def invertYAxis(self, flag=True):
+        if flag:
+            self.invertY(True)
+        else:
+            self.invertY(False)
+
     def _xMarkerMoved(self, item):
         label = item._plot1d_info['label']
         ddict = {}
@@ -679,4 +707,6 @@ if __name__ == "__main__":
     y = x * x
     w = main()
     w.widget.show()
+    #w.invertYAxis(True)
+    #w.invertYAxis(False)
     app.exec_()
