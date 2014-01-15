@@ -339,13 +339,50 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
                              'symbol':symbol,
                              'label':legend,
                              'type':'curve'}
-        if self._imageItem is not None:
-            item.setZValue(1)
+        item.setZValue(10)
         item.curve.setClickable(True)
         item.sigClicked.connect(self._curveClicked)
         #both work, perhaps legend is safer?
         #return legend
         return item
+
+    def addImage(self, data, legend=None, info=None,
+                    replace=True, replot=True,
+                    xScale=None, yScale=None, z=0, **kw):
+        """
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :type data: numpy.ndarray
+        :param legend: The legend to be associated to the curve
+        :type legend: string or None
+        :param info: Dictionary of information associated to the image
+        :type info: dict or None
+        :param replace: Flag to indicate if already existing images are to be deleted
+        :type replace: boolean default True
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
+        :param xScale: Two floats defining the x scale
+        :type xScale: list or numpy.ndarray
+        :param yScale: Two floats defining the y scale
+        :type yScale: list or numpy.ndarray
+        :param z: level at which the image is to be located (to allow overlays).
+        :type z: A number bigger than or equal to zero (default)  
+        :returns: The legend/handle used by the backend to univocally access it.
+        """
+        item = pg.ImageItem(image=data)
+        item.setZValue(z)
+        #self._imageItem.setCompositionMode(QtGui.QPainter.CompositionMode_Multiply)
+        if xScale is None:
+            xScale = [0.0, 1.0]
+        if yScale is None:
+            yScale = [0.0, 1.0]
+        item._plot1d_info = {'label':legend,
+                             'type':'image',
+                             'xScale':xScale,
+                             'yScale':yScale,
+                             'z':z}
+        self.addItem(item)
+        if replot:
+            self.replot()
 
     def removeCurve(self, handle, replot=True):
         if hasattr(handle, '_plot1d_info'):
@@ -571,8 +608,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             line._plot1d_options.append('draggable')
         if selectable or draggable:
             line.sigPositionChangeFinished.connect(self._xMarkerMoved)
-        if self._imageItem is not None:
-            line.setZValue(1)
+        line.setZValue(10)
         self.addItem(line)
         return line
         
@@ -604,8 +640,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             line._plot1d_options.append('draggable')
         if selectable or draggable:
             line.sigPositionChangeFinished.connect(self._yMarkerMoved)
-        if self._imageItem is not None:
-            line.setZValue(1)
+        line.setZValue(10)
         self.addItem(line)
         return line
 
@@ -698,13 +733,14 @@ def main():
     print("Y Limits = ", plot.getGraphYLimits())
     print("All curves = ", plot.getAllCurves())
     plot.insertXMarker(50., draggable=True)
+    data = numpy.arange(1000.*1000)
+    data.shape = 1000,1000
+    plot.addImage(data, "image")
     return plot
 
 if __name__ == "__main__":
     import numpy
     app = QtGui.QApplication([])
-    x = numpy.arange(100.)
-    y = x * x
     w = main()
     w.widget.show()
     #w.invertYAxis(True)

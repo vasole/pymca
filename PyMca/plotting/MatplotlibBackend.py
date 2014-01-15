@@ -33,14 +33,14 @@ Rectangle = patches.Rectangle
 Polygon = patches.Polygon
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
-from matplotlib.image import AxesImage
+from matplotlib.image import AxesImage, NonUniformImage
 import PyQt4.Qt as qt
 
 DEBUG = 0
 
 class MatplotlibGraph(FigureCanvas):
     def __init__(self, parent, **kw):
-       	#self.figure = Figure(figsize=size, dpi=dpi) #in inches
+        #self.figure = Figure(figsize=size, dpi=dpi) #in inches
         self.fig = Figure()
         self._canvas = FigureCanvas.__init__(self, self.fig)
         self.ax = self.fig.add_axes([.15, .15, .75, .75])
@@ -936,22 +936,130 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.setDrawModeEnabled(False)
             self._selecting = False
 
-if __name__ == "__main__":
-    app = qt.QApplication([])
+    def addImage(self, data, legend=None, info=None,
+                    replace=True, replot=True,
+                    xScale=None, yScale=None, z=0, **kw):
+        """
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :type data: numpy.ndarray
+        :param legend: The legend to be associated to the curve
+        :type legend: string or None
+        :param info: Dictionary of information associated to the image
+        :type info: dict or None
+        :param replace: Flag to indicate if already existing images are to be deleted
+        :type replace: boolean default True
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
+        :param xScale: Two floats defining the x scale
+        :type xScale: list or numpy.ndarray
+        :param yScale: Two floats defining the y scale
+        :type yScale: list or numpy.ndarray
+        :param z: level at which the image is to be located (to allow overlays).
+        :type z: A number bigger than or equal to zero (default)  
+        :returns: The legend/handle used by the backend to univocally access it.
+        """
+        if not hasattr(self, "__temperatureCmap"):
+            # Temperature as defined in spslut
+            from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (0.5, 0.0, 0.0),
+                             (0.75, 1.0, 1.0),
+                             (1.0, 1.0, 1.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (0.25, 1.0, 1.0),
+                               (0.75, 1.0, 1.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 1.0, 1.0),
+                              (0.25, 1.0, 1.0),
+                              (0.5, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            #but limited to 256 colors for a faster display (of the colorbar)
+            self.__temperatureCmap = LinearSegmentedColormap('temperature',
+                                                             cdict, 256)
+
+        # Non-uniform image
+        #http://wiki.scipy.org/Cookbook/Histograms
+        # Non-linear axes
+        #http://stackoverflow.com/questions/11488800/non-linear-axes-for-imshow-in-matplotlib
+
+        cmap = self.__temperatureCmap
+        if xScale is None:
+            xScale = [0.0, 1.0]
+        if yScale is None:
+            yScale = [0.0, 1.0]
+        h, w = data.shape[0:2]
+        xmin = xScale[0]
+        xmax = xmin + xScale[1] * w
+        ymin = yScale[0]
+        ymax = ymin + yScale[1] * h
+        extent = (xmin, xmax, ymin, ymax)
+
+        if 0:
+            # this supports non regularly spaced coordenates!!!!
+            x = xmin + numpy.arange(w) * xScale[1] 
+            y = ymin + numpy.arange(h) * yScale[1] 
+            image = NonUniformImage(self.ax,
+                                    interpolation='nearest',
+                                    #aspect='auto',
+                                    extent=extent,
+                                    cmap=cmap)
+                                                     
+                                               
+
+            image.set_data(x, y, data)
+            xmin, xmax = self.getGraphXLimits()
+            ymin, ymax = self.getGraphYLimits()
+            self.ax.images.append(image)
+            self.ax.set_xlim(xmin, xmax)
+            self.ax.set_ylim(ymin, ymax)
+        else:
+            image = self.ax.imshow(data,
+                      interpolation='nearest',
+                      cmap=cmap,
+                      aspect='auto',
+                      extent=extent,  
+                      norm=Normalize(data.min(), data.max())),
+                           #origin='upper',
+                           #cmap=cmap,
+                           #norm=Normalize(0, 1000*1000.))
+        #print image
+        #print dir(self.ax)
+        return image
+
+    def invertYAxis(self, flag=True):
+        if flag:
+            if not self.ax.yaxis_inverted():
+                self.ax.invert_yaxis()
+        else:
+            if self.ax.yaxis_inverted():
+                self.ax.invert_yaxis()
+
+def main():
     import Plot1D
-    import numpy
     x = numpy.arange(100.)
     y = x * x
     plot = Plot1D.Plot1D(backend=MatplotlibBackend)
-    plot.widget.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
     print("Active curve = ", plot.getActiveCurve())
-    print("X Limits = ", plot.getGraphXLimits())
+    print("X Limits) = ", plot.getGraphXLimits())
     print("Y Limits = ", plot.getGraphYLimits())
     print("All curves = ", plot.getAllCurves())
     #plot.removeCurve("dummy")
     plot.setActiveCurve("To set Active")
     print("All curves = ", plot.getAllCurves())
-    plot.insertXMarker(50.)
+    plot.insertXMarker(50., draggable=True)
+    #plot.resetZoom()
+    data = numpy.arange(1000.*1000)
+    data.shape = 10000,100
+    plot.addImage(data, "image", xScale=(25, 1.0) , yScale=(-1000, 1.0))
+    return plot
+
+if __name__ == "__main__":
+    app = qt.QApplication([])
+    w = main()
+    w.widget.show()
+    #w.invertYAxis(True)
+    w.replot()
+    #w.invertYAxis(False)
     app.exec_()

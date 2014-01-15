@@ -40,13 +40,14 @@ insertYMarker
 invertYAxis
 isXAxisAutoScale
 isYAxisAutoScale
-removeImage (*)
 removeCurve
+removeImage (*)
 removeMarker
 resetZoom
 replot
 replot_
 setActiveCurve
+setActiveImage (*)
 setCallback
 setDrawModeEnabled
 setGraphTitle
@@ -158,17 +159,17 @@ class PlotBackend(object):
         return legend
 
     def addImage(self, data, legend=None, info=None,
-                    replace=False, replot=True,
+                    replace=True, replot=True,
                     xScale=None, yScale=None, z=0, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
         :param legend: The legend to be associated to the curve
         :type legend: string or None
-        :param info: Dictionary of information associated to the curve
+        :param info: Dictionary of information associated to the image
         :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
+        :param replace: Flag to indicate if already existing images are to be deleted
+        :type replace: boolean default True
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
         :param xScale: Two floats defining the x scale
@@ -331,6 +332,18 @@ class PlotBackend(object):
         print("PlotBackend removeCurve not implemented")
         return
 
+    def removeImage(self, legend, replot=True):
+        """
+        Remove the image associated to the supplied legend from the graph.
+        The graph will be updated if replot is true.
+        :param legend: The legend associated to the image to be deleted
+        :type legend: string or handle
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True        
+        """
+        print("PlotBackend removeImage not implemented")
+        return
+
     def removeMarker(self, label, replot=True):
         """
         Remove the marker associated to the supplied handle from the graph.
@@ -365,6 +378,17 @@ class PlotBackend(object):
         :type replot: boolean default True
         """
         print("PlotBackend setActiveCurve not implemented")
+        return
+
+    def setActiveImage(self, legend, replot=True):
+        """
+        Make the image identified by the supplied legend active.
+        :param legend: The legend associated to the image
+        :type legend: string
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
+        """
+        print("PlotBackend setActiveImage not implemented")
         return
 
     def setCallback(self, callback_function):

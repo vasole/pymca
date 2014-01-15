@@ -18,17 +18,15 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __doc__ = """
 This module can be used for plugin testing purposes as well as for doing
-the bookkeeping of actual plot windows.
-
-It inherits from Plot1DBase.
+the bookkeeping of actual plot windows. 
 
 Functions to be implemented by an actual plotter can be found in the
 abstract class PlotBackend.
 
 """
 import numpy
-import Plot1DBase
 import PlotBackend
+import Plot1DBase
 
 DEBUG = 0
 
@@ -68,9 +66,9 @@ colorlist  = [colordict['black'],
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 
-class Plot1D(Plot1DBase.Plot1DBase):
+#class Plot1D(Plot1DBase.Plot1DBase):
+class Plot1D(PlotBackend.PlotBackend):
     def __init__(self, parent=None, backend=None, callback=None):
-        Plot1DBase.Plot1DBase.__init__(self)
         self._parent = parent
         if backend is None:
             self._plot = PlotBackend.PlotBackend(parent)
@@ -79,6 +77,7 @@ class Plot1D(Plot1DBase.Plot1DBase):
             self._default = False
             self.getGraphXLimits = self._plot.getGraphXLimits
             self.getGraphYLimits = self._plot.getGraphYLimits
+        super(Plot1D, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
             self.widget = self._plot
@@ -94,6 +93,11 @@ class Plot1D(Plot1DBase.Plot1DBase):
         self._curveList = []
         self._curveDict = {}
         self._activeCurve = None
+
+        #image handling
+        self._imageList = []
+        self._imageDict = {}
+        self._activeImage = None
 
         # marker handling
         self._markerDict = {}
@@ -261,7 +265,8 @@ class Plot1D(Plot1DBase.Plot1DBase):
         else:
             xplot, yplot = x, y
         if len(xplot):
-            curveHandle = self._plot.addCurve(xplot, yplot, key, info)
+            curveHandle = self._plot.addCurve(xplot, yplot, key, info,
+                                              replot=False, replace=replace)
             info['plot_handle'] = curveHandle
         else:
             info['plot_handle'] = key
@@ -272,6 +277,62 @@ class Plot1D(Plot1DBase.Plot1DBase):
             self.resetZoom()
             self.replot()
         return legend
+
+    def addImage(self, data, legend=None, info=None,
+                    replace=True, replot=True,
+                    xScale=None, yScale=None, z=0, **kw):
+        """
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :type data: numpy.ndarray
+        :param legend: The legend to be associated to the curve
+        :type legend: string or None
+        :param info: Dictionary of information associated to the image
+        :type info: dict or None
+        :param replace: Flag to indicate if already existing images are to be deleted
+        :type replace: boolean default True
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
+        :param xScale: Two floats defining the x scale
+        :type xScale: list or numpy.ndarray
+        :param yScale: Two floats defining the y scale
+        :type yScale: list or numpy.ndarray
+        :param z: level at which the image is to be located (to allow overlays).
+        :type z: A number bigger than or equal to zero (default)  
+        :returns: The legend/handle used by the backend to univocally access it.
+        """
+        if legend is None:
+            key = "Unnamed curve 1.1"
+        else:
+            key = str(legend)
+        if info is None:
+            info = {}
+        xlabel = info.get('xlabel', 'Column')
+        ylabel = info.get('ylabel', 'Row')
+        if 'xlabel' in kw:
+            info['xlabel'] = kw['xlabel']
+        if 'ylabel' in kw:
+            info['ylabel'] = kw['ylabel']
+        info['xlabel'] = str(xlabel)
+        info['ylabel'] = str(ylabel)
+
+        if replace:
+            self._imageList = []
+            self._imageDict = {}
+        if data is not None:
+            imageHandle = self._plot.addImage(data, legend=key, info=info,
+                                              replot=False, replace=replace,
+                                              xScale=xScale, yScale=yScale,
+                                              z=z, **kw)
+            info['plot_handle'] = imageHandle
+        else:
+            info['plot_handle'] = key
+        self._imageDict[key] = [data, key, info, xScale, yScale, z]
+        if len(self._imageDict) == 1:
+            self.setActiveImage(key)
+        if replot:
+            self.resetZoom()
+            self.replot()
+        return key
 
     def removeCurve(self, legend, replot=True):
         """
@@ -292,6 +353,27 @@ class Plot1D(Plot1DBase.Plot1DBase):
             del self._curveDict[legend]
             if handle is not None:
                 self._plot.removeCurve(handle, replot=replot)
+
+    def removeImage(self, legend, replot=True):
+        """
+        Remove the image associated to the supplied legend from the graph.
+        The graph will be updated if replot is true.
+        :param legend: The legend associated to the image to be deleted
+        :type legend: string or handle
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True        
+        """
+        if legend is None:
+            return
+        if legend in self._imageList:
+            idx = self._imageList.index(legend)
+            del self._imageList[idx]
+        if legend in self._imageDict:
+            handle = self._imageDict[image][2].get('plot_handle', None)
+            del self._imageDict[legend]
+            if handle is not None:
+                self._plot.removeImage(handle, replot=replot)
+        return
 
     def getActiveCurve(self, just_legend=False):
         """
@@ -319,6 +401,33 @@ class Plot1D(Plot1DBase.Plot1DBase):
             return None
         else:
             return self._curveDict[self._activeCurve] * 1
+
+    def getActiveImage(self, just_legend=False):
+        """
+        :param just_legend: Flag to specify the type of output required
+        :type just_legend: boolean
+        :return: legend of the active image or list [data, legend, info, xScale, yScale, z]
+        :rtype: string or list 
+        Function to access the plot currently active image.
+        It returns None in case of not having an active image.
+
+        Default output has the form:
+            data, legend, dict, xScale, yScale, z
+            where dict is a dictionnary containing image info.
+            For the time being, only the plot labels associated to the
+            image are warranted to be present under the keys xlabel, ylabel.
+
+        If just_legend is True:
+            The legend of the active imagee (or None) is returned.
+        """
+        if self._activeImage not in self._imageDict:
+            self._activeImage = None
+        if just_legend:
+            return self._activeImage
+        if self._activeImage is None:
+            return None
+        else:
+            return self._imageDict[self._activeImage] * 1
 
     def getAllCurves(self, just_legend=False):
         """
@@ -399,6 +508,23 @@ class Plot1D(Plot1DBase.Plot1DBase):
         #if self._activeCurve != oldActiveCurve:
         self._plot.setActiveCurve(self._activeCurve, replot=replot)
         return self._activeCurve
+
+    def setActiveImage(self, legend, replot=True):
+        """
+        Funtion to request the plot window to set the image with the specified legend
+        as the active image.
+        :param legend: The legend associated to the image
+        :type legend: string
+        """
+        oldActiveImage = self.getActiveImage(just_legend=True)
+        key = str(legend)
+        if key in self._imageDict.keys():
+            self._activeImage = key
+        self._plot.setActiveImage(self._activeImage, replot=replot)
+        return self._activeImage
+
+    def invertYAxis(self, flag=True):
+        self._plot.invertYAxis(flag)
 
     def isYAxisLogarithmic(self):
         if self._logY:
@@ -497,13 +623,14 @@ class Plot1D(Plot1DBase.Plot1DBase):
         self.replot()
 
     def replot(self):
-        try:
-            self._plot.replot()
-        except:
-            if hasattr(self._plot, 'replot_'):
-                self._plot.replot_()
-            else:
-                raise
+        if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
+            for image in self._imageDict.keys():
+                self._plot.removeImage(image[1]) 
+        if hasattr(self._plot, 'replot_'):
+            plot = self._plot.replot_
+        else:
+            plot = self._plot.replot
+        
 
     def clear(self):
         self._curveList = []
@@ -511,6 +638,8 @@ class Plot1D(Plot1DBase.Plot1DBase):
         self._colorIndex = 1
         self._styleIndex = 0
         self._markerDict = {}
+        self._imageList = []
+        self._imageDict = {}        
         self._markerList = []
         self._plot.clear()
         self.replot()
@@ -522,6 +651,16 @@ class Plot1D(Plot1DBase.Plot1DBase):
         self._styleIndex = 0
         self._plot.clearCurves()
         self.replot()
+
+    def clearImages(self):
+        """
+        Clear all images from the plot. Not the curves or markers.
+        """
+        self._imageList = []
+        self._imageDict = {}
+        self._plot.clearImages()
+        self.replot()
+        return
 
     def resetZoom(self):
         self._plot.resetZoom()

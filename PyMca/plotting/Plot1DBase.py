@@ -39,6 +39,8 @@ The plugins will be compatible with any 1D-plot window that provides the methods
     setGraphXTitle
     setGraphYTitle
 
+The simplest way to achieve that is to inherit from Plot1D
+
 On instantiation, this clase imports all the plugins found in the PyMcaPlugins
 directory and stores them into the attributes pluginList and pluginInstanceDict
 
