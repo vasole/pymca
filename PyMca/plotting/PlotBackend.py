@@ -160,7 +160,8 @@ class PlotBackend(object):
 
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
-                    xScale=None, yScale=None, z=0, **kw):
+                    xScale=None, yScale=None, z=0,
+                    selectable=False, draggable=False, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -178,6 +179,10 @@ class PlotBackend(object):
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
         :type z: A number bigger than or equal to zero (default)  
+        :param selectable: Flag to indicate if the image can be selected
+        :type selectable: boolean, default False
+        :param draggable: Flag to indicate if the image can be moved
+        :type draggable: boolean, default False
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addImage not implemented")

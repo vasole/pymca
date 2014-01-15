@@ -279,8 +279,9 @@ class Plot1D(PlotBackend.PlotBackend):
         return legend
 
     def addImage(self, data, legend=None, info=None,
-                    replace=True, replot=True,
-                    xScale=None, yScale=None, z=0, **kw):
+                 replace=True, replot=True,
+                 xScale=None, yScale=None, z=0,
+                 selectable=False, draggable=False, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -297,7 +298,11 @@ class Plot1D(PlotBackend.PlotBackend):
         :param yScale: Two floats defining the y scale
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
-        :type z: A number bigger than or equal to zero (default)  
+        :type z: A number bigger than or equal to zero (default)
+        :param selectable: Flag to indicate if the image can be selected
+        :type selectable: boolean, default False
+        :param draggable: Flag to indicate if the image can be moved
+        :type draggable: boolean, default False
         :returns: The legend/handle used by the backend to univocally access it.
         """
         if legend is None:
@@ -322,7 +327,10 @@ class Plot1D(PlotBackend.PlotBackend):
             imageHandle = self._plot.addImage(data, legend=key, info=info,
                                               replot=False, replace=replace,
                                               xScale=xScale, yScale=yScale,
-                                              z=z, **kw)
+                                              z=z,
+                                              selectable=selectable,
+                                              draggable=draggable,
+                                              **kw)
             info['plot_handle'] = imageHandle
         else:
             info['plot_handle'] = key

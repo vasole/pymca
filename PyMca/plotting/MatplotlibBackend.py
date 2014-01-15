@@ -91,9 +91,14 @@ class MatplotlibGraph(FigureCanvas):
     def onPick(self, event):
         middleButton = 2
         rightButton = 3
-        if event.mouseevent.button == middleButton:
+        button = event.mouseevent.button 
+        if button == middleButton:
             # do nothing with the midle button
             return
+        elif button == rightButton:
+            button = "right"
+        else:
+            button = "left"
         if self._drawModeEnabled:
             # forget about picking or zooming
             # should one disconnect when setting the mode?
@@ -103,33 +108,33 @@ class MatplotlibGraph(FigureCanvas):
         if isinstance(event.artist, Line2D):
             # we only handle curves and markers for the time being
             self.__picking = True
-            thisline = event.artist
-            label = thisline.get_label()
+            artist = event.artist
+            label = artist.get_label()
             ind = event.ind
             #xdata = thisline.get_xdata()
             #ydata = thisline.get_ydata()
             #print('onPick line:', zip(numpy.take(xdata, ind),
             #                           numpy.take(ydata, ind)))
-            self._pickingInfo['artist'] = thisline
+            self._pickingInfo['artist'] = artist
             self._pickingInfo['event_ind'] = ind
             if label.startswith("__MARKER__"):
                 label = label[10:]
                 self._pickingInfo['type'] = 'marker' 
                 self._pickingInfo['label'] = label[10:]
-                if 'draggable' in thisline._plot1d_options:
+                if 'draggable' in artist._plot1d_options:
                     self._pickingInfo['draggable'] = True
                 else:
                     self._pickingInfo['draggable'] = False
-                if 'selectable' in thisline._plot1d_options:
+                if 'selectable' in artist._plot1d_options:
                     self._pickingInfo['selectable'] = True
                 else:
                     self._pickingInfo['selectable'] = False                
             else:
                 self._pickingInfo['type'] = 'curve' 
                 self._pickingInfo['label'] = label
-                self._pickingInfo['artist'] = thisline
-                xdata = thisline.get_xdata()
-                ydata = thisline.get_ydata()
+                self._pickingInfo['artist'] = artist
+                xdata = artist.get_xdata()
+                ydata = artist.get_ydata()
                 self._pickingInfo['xdata'] = xdata[ind]
                 self._pickingInfo['ydata'] = ydata[ind]
             if self._infoText is None:
@@ -150,6 +155,28 @@ class MatplotlibGraph(FigureCanvas):
         elif isinstance(event.artist, Text):
             text = event.artist
             print('onPick text:', text.get_text())
+        elif isinstance(event.artist, AxesImage):
+            self.__picking = True
+            artist = event.artist
+            #print dir(artist)
+            self._pickingInfo['artist'] = artist
+            #self._pickingInfo['event_ind'] = ind
+            label = artist.get_label()
+            self._pickingInfo['type'] = 'image' 
+            self._pickingInfo['label'] = label
+            self._pickingInfo['draggable'] = False
+            self._pickingInfo['selectable'] = False
+            if hasattr(artist, "_plot1d_options"):
+                if 'draggable' in artist._plot1d_options:
+                    self._pickingInfo['draggable'] = True
+                else:
+                    self._pickingInfo['draggable'] = False
+                if 'selectable' in artist._plot1d_options:
+                    self._pickingInfo['selectable'] = True
+                else:
+                    self._pickingInfo['selectable'] = False
+        else:
+            print("unhandled", event.artist)
 
     def setDrawModeEnabled(self, flag=True):
         self._drawModeEnabled = flag
@@ -226,8 +253,10 @@ class MatplotlibGraph(FigureCanvas):
                         artist.set_ydata(event.ydata)
                     self.fig.canvas.draw()
                     ddict = {}
-                    ddict['event'] = "markerMoving"
-                    ddict['button'] = "left"
+                    if self.__markerMoving:
+                        ddict['event'] = "markerMoving"
+                    else:
+                        ddict['event'] = "markerClicked"
                     ddict['label'] = self._pickingInfo['label']
                     ddict['type'] = self._pickingInfo['type']
                     ddict['draggable'] = self._pickingInfo['draggable']
@@ -238,7 +267,12 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['ypixel'] = self._y0Pixel
                     ddict['xdata'] = artist.get_xdata()
                     ddict['ydata'] = artist.get_ydata()
+                    if button == leftButton:
+                        ddict['button'] = "left"
+                    else:
+                        ddict['button'] = "right"
                     self._callback(ddict)
+                return
             elif self._pickingInfo['type'] == "curve":
                 ddict = {}
                 ddict['event'] = "curveClicked"
@@ -256,7 +290,29 @@ class MatplotlibGraph(FigureCanvas):
                 else:
                     ddict['button'] = "right"
                 self._callback(ddict)
-            return
+                return
+            elif self._pickingInfo['type'] == "image":
+                artist = self._pickingInfo['artist']
+                ddict = {}
+                ddict['event'] = "imageClicked"
+                #ddict['event'] = "legendClicked"
+                ddict['label'] = self._pickingInfo['label']
+                ddict['type'] = self._pickingInfo['type']
+                ddict['x'] = self._x0
+                ddict['y'] = self._y0
+                ddict['xpixel'] = self._x0Pixel
+                ddict['ypixel'] = self._y0Pixel
+                xScale = artist._plot1d_info['xScale']
+                yScale = artist._plot1d_info['yScale']
+                col = (ddict['x'] - xScale[0])/float(xScale[1])
+                row = (ddict['y'] - yScale[0])/float(yScale[1])
+                ddict['row'] = int(row)
+                ddict['col'] = int(col)
+                if button == leftButton:
+                    ddict['button'] = "left"
+                else:
+                    ddict['button'] = "right"
+                self._callback(ddict)
 
         if event.button == rightButton:
             #right click
@@ -938,7 +994,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
-                    xScale=None, yScale=None, z=0, **kw):
+                    xScale=None, yScale=None, z=0,
+                    selectable=False, draggable=False, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -956,6 +1013,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
         :type z: A number bigger than or equal to zero (default)  
+        :param selectable: Flag to indicate if the image can be selected
+        :type selectable: boolean, default False
+        :param draggable: Flag to indicate if the image can be moved
+        :type draggable: boolean, default False
         :returns: The legend/handle used by the backend to univocally access it.
         """
         if not hasattr(self, "__temperatureCmap"):
@@ -994,6 +1055,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         ymax = ymin + yScale[1] * h
         extent = (xmin, xmax, ymin, ymax)
 
+        if selectable or draggable:
+            picker = True
+        else:
+            picker = None
         if 0:
             # this supports non regularly spaced coordenates!!!!
             x = xmin + numpy.arange(w) * xScale[1] 
@@ -1002,6 +1067,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                     interpolation='nearest',
                                     #aspect='auto',
                                     extent=extent,
+                                    picker=picker,
                                     cmap=cmap)
                                                      
                                                
@@ -1014,17 +1080,29 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.set_ylim(ymin, ymax)
         else:
             image = self.ax.imshow(data,
+                      label=legend,
                       interpolation='nearest',
                       cmap=cmap,
                       aspect='auto',
-                      extent=extent,  
+                      extent=extent,
+                      picker=picker,
                       norm=Normalize(data.min(), data.max())),
                            #origin='upper',
                            #cmap=cmap,
                            #norm=Normalize(0, 1000*1000.))
+        image[-1]._plot1d_info = {'label':legend,
+                              'type':'image',
+                              'xScale':xScale,
+                              'yScale':yScale,
+                              'z':z}
+        image[-1]._plot1d_options = []
+        if draggable:
+            image[-1]._plot1d_options.append('draggable')
+        if selectable:
+            image[-1]._plot1d_options.append('selectable')
         #print image
         #print dir(self.ax)
-        return image
+        return image[-1]
 
     def invertYAxis(self, flag=True):
         if flag:
@@ -1052,7 +1130,8 @@ def main():
     #plot.resetZoom()
     data = numpy.arange(1000.*1000)
     data.shape = 10000,100
-    plot.addImage(data, "image", xScale=(25, 1.0) , yScale=(-1000, 1.0))
+    plot.addImage(data, legend="image 0", xScale=(25, 1.0) , yScale=(-1000, 1.0),
+                  selectable=True)
     return plot
 
 if __name__ == "__main__":

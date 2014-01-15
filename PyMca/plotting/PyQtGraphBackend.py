@@ -340,7 +340,6 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
                              'label':legend,
                              'type':'curve'}
         item.setZValue(10)
-        item.curve.setClickable(True)
         item.sigClicked.connect(self._curveClicked)
         #both work, perhaps legend is safer?
         #return legend
@@ -380,6 +379,13 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
                              'xScale':xScale,
                              'yScale':yScale,
                              'z':z}
+        item._plot1d_options = []
+        if selectable or draggable:
+            picker = True
+            if draggable:
+                self._plot1d_options.append('draggable')
+            else:
+                self._plot1d_options.append('selectable')
         self.addItem(item)
         if replot:
             self.replot()
