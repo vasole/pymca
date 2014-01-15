@@ -140,7 +140,8 @@ class StackSelector(object):
                  filelist[0].upper().endswith("CCD.GZ")or\
                  filelist[0].upper().endswith("RAW.BZ2")or\
                  filelist[0].upper().endswith("EDF.BZ2")or\
-                 filelist[0].upper().endswith("CCD.BZ2"):
+                 filelist[0].upper().endswith("CCD.BZ2")or\
+                 filelist[0].upper().endswith(".CBF"):
                 if imagestack is None:
                     imagestack = True
                 stack = QStack(imagestack=imagestack)
@@ -383,7 +384,7 @@ class StackSelector(object):
         if getfilter is None:
             getfilter = False
         fileTypeList = ["EDF Files (*edf)",
-                        "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz)",
+                        "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz *cbf)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
                         "HDF5 Files (*.nxs *.hdf *.h5)",
