@@ -377,7 +377,7 @@ class Plot1D(PlotBackend.PlotBackend):
             idx = self._imageList.index(legend)
             del self._imageList[idx]
         if legend in self._imageDict:
-            handle = self._imageDict[image][2].get('plot_handle', None)
+            handle = self._imageDict[legend][2].get('plot_handle', None)
             del self._imageDict[legend]
             if handle is not None:
                 self._plot.removeImage(handle, replot=replot)

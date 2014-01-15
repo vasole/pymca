@@ -35,6 +35,7 @@ from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.image import AxesImage, NonUniformImage
 import PyQt4.Qt as qt
+import time
 
 DEBUG = 0
 
@@ -51,6 +52,7 @@ class MatplotlibGraph(FigureCanvas):
                                    qt.QSizePolicy.Expanding,
                                    qt.QSizePolicy.Expanding)
 
+        self.__lastMouseClick = ["middle", time.time()]
         self.__zooming = False
         self.__picking = False
         self._zoomStack = []
@@ -312,17 +314,20 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['button'] = "left"
                 else:
                     ddict['button'] = "right"
+                self.__picking = False
                 self._callback(ddict)
 
+        self.__time0 = -1.0
         if event.button == rightButton:
             #right click
+            self.__zooming = False
             if self._drawingPatch is not None:
                 self._drawingPatch.remove()
                 self.draw()
-            self._drawingPatch = None
-            self.__zooming = False
+                self._drawingPatch = None
             return
 
+        self.__time0 = time.time()
         self.__zooming = self._zoomEnabled
         self._zoomRect = None
         self._xmin, self._xmax  = self.ax.get_xlim()
@@ -343,7 +348,7 @@ class MatplotlibGraph(FigureCanvas):
         self._y1 = event.ydata
         self._x1Pixel = event.x
         self._y1Pixel = event.y
-        ddict= {'event':'MouseAt',
+        ddict= {'event':'mouseMoved',
               'x':self._x1,
               'y':self._y1,
               'xpixel':self._x1Pixel,
@@ -505,6 +510,7 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['ydata'] = artist.get_ydata()
                 self._callback(ddict)
             return
+
         if not hasattr(self, "__zoomstack"):
             self.__zoomstack = []
 
@@ -526,9 +532,6 @@ class MatplotlibGraph(FigureCanvas):
                 self.setLimits(xmin, xmax, ymin, ymax)
                 self.draw()
 
-        if self._x0 is None:
-            return
-
         if self.__drawing and (self._drawingPatch is not None):
             nrows, ncols = self._mouseData.shape                
             self._mouseData = numpy.resize(self._mouseData, (nrows+1,2))
@@ -536,8 +539,36 @@ class MatplotlibGraph(FigureCanvas):
             self._mouseData[-1,1] = self._y1
             self._drawingPatch.set_xy(self._mouseData)
 
-        if (self._zoomRectangle is None):
+        if self._x0 is None:
+            print("How can it be here???")
             return
+
+        if self._zoomRectangle is None:
+            currentTime = time.time() 
+            deltaT =  currentTime - self.__time0
+            if (deltaT < 0.1) or (self.__time0 < 0):
+                # single or double click, no zooming
+                self.__zooming = False
+                ddict = {'x':event.xdata,
+                         'y':event.ydata,
+                         'xpixel':event.x,
+                         'ypixel':event.y}
+                leftButton = 1
+                middleButton = 2
+                rightButton = 3
+                button = event.button
+                if button == rightButton:
+                    ddict['button'] = "right"
+                else:
+                    ddict['button'] = "left"
+                if (button == self.__lastMouseClick[0]) and\
+                   ((currentTime - self.__lastMouseClick[1]) < 0.6):
+                    ddict['event'] = "mouseDoubleCliked"
+                else:
+                    ddict['event'] = "mouseClicked"
+                self.__lastMouseClick = [button, time.time()]
+                self._callback(ddict)
+                return
 
         if self._zoomRectangle is not None:
             x, y = self._zoomRectangle.get_xy()
@@ -851,6 +882,23 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if replot:
             self.replot()
 
+    def removeImage(self, handle, replot=True):
+        if hasattr(handle, "remove"):
+            if handle in self.ax.images:
+                handle.remove()
+        else:
+            # we have received a legend!
+            legend = handle
+            handle = None
+            for item in self.ax.images:
+                label = item.get_label()
+                if label == legend:
+                    handle = item
+            if handle is not None:
+                handle.remove()
+        if replot:
+            self.replot()
+
     def removeMarker(self, handle, replot=True):
         if hasattr(handle, "remove"):
             handle.remove()
@@ -1053,12 +1101,13 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         xmax = xmin + xScale[1] * w
         ymin = yScale[0]
         ymax = ymin + yScale[1] * h
-        extent = (xmin, xmax, ymin, ymax)
-
+        extent = (xmin, xmax, ymax, ymin)
+        
         if selectable or draggable:
             picker = True
         else:
             picker = None
+            
         if 0:
             # this supports non regularly spaced coordenates!!!!
             x = xmin + numpy.arange(w) * xScale[1] 
@@ -1078,6 +1127,19 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.images.append(image)
             self.ax.set_xlim(xmin, xmax)
             self.ax.set_ylim(ymin, ymax)
+        elif 1:
+            image = AxesImage(self.ax,
+                              label=legend,
+                              interpolation='nearest',
+                              #origin=
+                              cmap=cmap,
+                              extent=extent,
+                              picker=picker,
+                              zorder=z,
+                              norm=Normalize(data.min(), data.max()))
+            image.set_data(data)
+            self.ax.add_artist(image)
+            #self.ax.draw_artist(image)
         else:
             image = self.ax.imshow(data,
                       label=legend,
@@ -1086,23 +1148,24 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                       aspect='auto',
                       extent=extent,
                       picker=picker,
-                      norm=Normalize(data.min(), data.max())),
+                      zorder=z,
+                      norm=Normalize(data.min(), data.max()))[-1]
                            #origin='upper',
                            #cmap=cmap,
                            #norm=Normalize(0, 1000*1000.))
-        image[-1]._plot1d_info = {'label':legend,
+        image._plot1d_info = {'label':legend,
                               'type':'image',
                               'xScale':xScale,
                               'yScale':yScale,
                               'z':z}
-        image[-1]._plot1d_options = []
+        image._plot1d_options = []
         if draggable:
-            image[-1]._plot1d_options.append('draggable')
+            image._plot1d_options.append('draggable')
         if selectable:
-            image[-1]._plot1d_options.append('selectable')
+            image._plot1d_options.append('selectable')
         #print image
         #print dir(self.ax)
-        return image[-1]
+        return image
 
     def invertYAxis(self, flag=True):
         if flag:
@@ -1128,10 +1191,6 @@ def main():
     print("All curves = ", plot.getAllCurves())
     plot.insertXMarker(50., draggable=True)
     #plot.resetZoom()
-    data = numpy.arange(1000.*1000)
-    data.shape = 10000,100
-    plot.addImage(data, legend="image 0", xScale=(25, 1.0) , yScale=(-1000, 1.0),
-                  selectable=True)
     return plot
 
 if __name__ == "__main__":
@@ -1140,5 +1199,25 @@ if __name__ == "__main__":
     w.widget.show()
     #w.invertYAxis(True)
     w.replot()
-    #w.invertYAxis(False)
+    #w.invertYAxis(True)
+    data = numpy.arange(1000.*1000)
+    data.shape = 10000,100
+    #plot.replot()
+    #w.invertYAxis(True)
+    #w.replot()
+    #w.widget.show()
+    w.addImage(data, legend="image 0", xScale=(25, 1.0) , yScale=(-1000, 1.0),
+                  selectable=True)
+    w.removeImage("image 0")
+    #w.invertYAxis(True)
+    #w.replot()
+    w.addImage(data, legend="image 1", xScale=(25, 1.0) , yScale=(-1000, 1.0),
+                  replot=False, selectable=True)
+    #w.invertYAxis(True)
+    w.widget.ax.axis('auto') # appropriate for curves, no aspect ratio
+    #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
+    #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
+    print("aspect = %s" % w.widget.ax.get_aspect())
+    #print(w.widget.ax.get_images())
+    #print(w.widget.ax.get_lines())
     app.exec_()

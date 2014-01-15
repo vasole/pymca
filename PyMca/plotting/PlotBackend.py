@@ -109,14 +109,14 @@ markerSelected
     draggable - True if it is a movable marker
     selectable - True if the marker can be selected (it should be True)
 
-MouseAt
+mouseMoved
     To export the mouse position in pixel and graph coordenates
 
-MouseClick
+mouseClicked
     NOT USED?
     Emitted on mouse relase when not zooming, nor drawing, nor picking
 
-MouseDoubleClick
+mouseDoubleClicked
     NOT USED?
     Emitted on mouse relase when not zooming, nor drawing, nor picking
 
