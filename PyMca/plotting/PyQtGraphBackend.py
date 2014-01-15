@@ -21,6 +21,7 @@ __doc__ = """
 This module implements a PyQtGraph plotting backend.
 """
 import sys
+import time
 if ("pyqtgraph" not in sys.modules):
     import pyqtgraph as pg
     pg.setConfigOption('background', 'w')
@@ -44,11 +45,11 @@ class CustomViewBox(pg.ViewBox):
             if len(self.axHistory) > 1:
                 del self.axHistory[-1]
                 self.setRange(self.axHistory[-1])
+                ev.accept()
             else:
                 self.autoRange()
-            #setXRange
-            #setYRange
-            #setRange
+
+        
             
     def mouseDragEvent(self, ev):
         if ev.button() == QtCore.Qt.RightButton:
@@ -228,6 +229,11 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         # this only sends the position in pixel coordenates
         self.scene().sigMouseMoved.connect(self._mouseMoved)
 
+        # this sends a mouse event
+        self.scene().sigMouseClicked.connect(self._mouseClicked)
+
+        self.__lastMouseClick = ["middle", time.time()]
+
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
         self._logX = False
@@ -250,13 +256,43 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             x = mousePoint.x()
             y = mousePoint.y()
             ddict = {}
-            ddict["event"] = "MouseAt"
+            ddict["event"] = "mouseMoved"
             ddict['x'] = x
             ddict['y'] = y
             ddict["xpixel"] = pos.x()
             ddict["ypixel"] = pos.y()
             self._callback(ddict)
-                
+
+    def _mouseClicked(self, ev):
+        if ev.button() == QtCore.Qt.RightButton:
+            button = "right"
+        elif ev.button() == QtCore.Qt.LeftButton:
+            button = "left"
+        else:
+            return
+        ddict = {}
+        if (button == self.__lastMouseClick[0]) and\
+           ((time.time() - self.__lastMouseClick[1]) < 0.6):
+            ddict['event'] = "mouseDoubleCliked"
+        else:
+            ddict['event'] = "mouseClicked"
+        self.__lastMouseClick = [button, time.time()]
+        ddict["type"] = "scene"
+        ddict["button"] = button
+        #print dir(ev)
+        pos = ev.pos()
+        ddict["x"] = pos.x()
+        ddict["y"] = pos.y()
+        pos = ev.screenPos()
+        #pos = ev.scenePos()
+        ddict["xpixel"] = pos.x()
+        ddict["ypixel"] = pos.y()
+        self._callback(ddict)
+
+    def setCallback(self, ffunction):
+        #self.getViewBox().setCallback(ffunction)
+        PlotBackend.PlotBackend.setCallback(self, ffunction)
+                        
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
@@ -347,7 +383,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
 
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
-                    xScale=None, yScale=None, z=0, **kw):
+                    xScale=None, yScale=None, z=0,
+                    selectable=False, draggable=False, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -365,6 +402,10 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
         :type z: A number bigger than or equal to zero (default)  
+        :param selectable: Flag to indicate if the image can be selected
+        :type selectable: boolean, default False
+        :param draggable: Flag to indicate if the image can be moved
+        :type draggable: boolean, default False
         :returns: The legend/handle used by the backend to univocally access it.
         """
         item = pg.ImageItem(image=data.T)
@@ -381,14 +422,15 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
                              'z':z}
         item._plot1d_options = []
         if selectable or draggable:
-            picker = True
             if draggable:
-                self._plot1d_options.append('draggable')
+                item._plot1d_options.append('draggable')
             else:
-                self._plot1d_options.append('selectable')
+                item._plot1d_options.append('selectable')
+        # TODO: handle image selection
         self.addItem(item)
         if replot:
             self.replot()
+        return item
 
     def removeCurve(self, handle, replot=True):
         if hasattr(handle, '_plot1d_info'):
@@ -713,6 +755,25 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         #ddict['ydata'] = artist.get_ydata()
         self._callback(ddict)
 
+    def removeImage(self, handle, replot=True):
+        if hasattr(handle, '_plot1d_info'):
+            actualHandle = handle
+        else:
+            # we have received a legend
+            legend = handle
+            actualHandle = None
+            a = self.items()
+            for item in a:
+                if hasattr(item, '_plot1d_info'):
+                    label = item._plot1d_info['label']
+                    if label == legend:
+                        actualHandle = item
+                        break
+        if actualHandle is not None:
+            self.removeItem(actualHandle)
+            if replot:
+                self.replot()
+
     if _USE_ORIGINAL:
         def _curveClicked(self, item):
             label = item._plot1d_info['label']
@@ -732,25 +793,23 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             ddict['label'] = label
             ddict['type'] = 'curve'
             self._callback(ddict)
-            
 
 def main():
-    import numpy
+    import Plot1D
     x = numpy.arange(100.)
     y = x * x
-    import Plot1D
     plot = Plot1D.Plot1D(backend=PyQtGraphBackend)
     plot.addCurve(x, y, "dummy")
-    plot.addCurve(x + 100, -x * x)
+    plot.addCurve(x + 100, -x * x, "To set Active")
     print("Active curve = ", plot.getActiveCurve())
-    print("X Limits = ", plot.getGraphXLimits())
+    print("X Limits) = ", plot.getGraphXLimits())
     print("Y Limits = ", plot.getGraphYLimits())
     print("All curves = ", plot.getAllCurves())
+    #plot.removeCurve("dummy")
+    plot.setActiveCurve("To set Active")
+    print("All curves = ", plot.getAllCurves())
     plot.insertXMarker(50., draggable=True)
-    plot.insertXMarker(75., selectable=True)
-    data = numpy.arange(1000.*1000)
-    data.shape = 10000,100
-    plot.addImage(data, "image", xScale=(25, 1.0) , yScale=(-1000, 1.0))
+    #plot.resetZoom()
     return plot
 
 if __name__ == "__main__":
@@ -759,5 +818,20 @@ if __name__ == "__main__":
     w = main()
     w.widget.show()
     #w.invertYAxis(True)
-    #w.invertYAxis(False)
+    w.replot()
+    #w.invertYAxis(True)
+    data = numpy.arange(1000.*1000)
+    data.shape = 10000,100
+    #plot.replot()
+    #w.invertYAxis(True)
+    #w.replot()
+    #w.widget.show()
+    w.addImage(data, legend="image 0", xScale=(25, 1.0) , yScale=(-1000, 1.0),
+                  selectable=True)
+    w.removeImage("image 0")
+    #w.invertYAxis(True)
+    w.replot()
+    #w.addImage(data, legend="image 1", xScale=(25, 1.0) , yScale=(-1000, 1.0),
+    #              replot=False, selectable=True)
+    #w.invertYAxis(True)
     app.exec_()
