@@ -368,7 +368,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type z: A number bigger than or equal to zero (default)  
         :returns: The legend/handle used by the backend to univocally access it.
         """
-        item = pg.ImageItem(image=data)
+        item = pg.ImageItem(image=data.T)
         item.setZValue(z)
         #self._imageItem.setCompositionMode(QtGui.QPainter.CompositionMode_Multiply)
         if xScale is None:
@@ -597,7 +597,11 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :return: Handle used by the backend to univocally access the marker
         """
         label = "__MARKER__" + label
-        line = InfiniteLine(angle=90, movable=draggable)
+        if selectable or draggable:
+            movable = True
+        else:
+            movable = False
+        line = InfiniteLine(angle=90, movable=movable)
         line.setPos(x)
         line.setY(1.)
         line._plot1d_info = {'label':label}
@@ -629,7 +633,11 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :return: Handle used by the backend to univocally access the marker
         """
         label = "__MARKER__" + label
-        line = InfiniteLine(angle=0, movable=draggable)
+        if selectable or draggable:
+            movable = True
+        else:
+            movable = False
+        line = InfiniteLine(angle=0, movable=movable)
         line.setPos(y)
         line.setX(1.)
         line._plot1d_info = {'label':label}
@@ -733,9 +741,10 @@ def main():
     print("Y Limits = ", plot.getGraphYLimits())
     print("All curves = ", plot.getAllCurves())
     plot.insertXMarker(50., draggable=True)
+    plot.insertXMarker(75., selectable=True)
     data = numpy.arange(1000.*1000)
-    data.shape = 1000,1000
-    plot.addImage(data, "image")
+    data.shape = 10000,100
+    plot.addImage(data, "image", xScale=(25, 1.0) , yScale=(-1000, 1.0))
     return plot
 
 if __name__ == "__main__":
