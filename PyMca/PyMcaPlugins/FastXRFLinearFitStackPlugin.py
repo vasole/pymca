@@ -55,6 +55,7 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
+import sys
 import os
 import numpy
 import time
@@ -87,8 +88,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                   info,
                                   icon]
         self.__methodKeys = ["Fit Stack", "Show"]
-        self.configurationWidget = \
-                    FastXRFLinearFitWindow.FastXRFLinearFitDialog()
+        self.configurationWidget = None
         self.fitInstance = None
         self._widget = None
         self.thread = None
@@ -138,6 +138,9 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
 
     # The specific part
     def calculate(self):
+        if self.configurationWidget is None:
+            self.configurationWidget = \
+                            FastXRFLinearFitWindow.FastXRFLinearFitDialog()
         ret = self.configurationWidget.exec_()
         if ret:
             self._executeFunctionAndParameters()
