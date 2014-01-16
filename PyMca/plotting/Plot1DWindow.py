@@ -38,7 +38,7 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 
 class Plot1DWindow(Plot1DWindowBase.Plot1DWindowBase):
-    def __init__(self, parent=None, **kw):
+    def __init__(self, parent=None, backend=None, **kw):
         super(Plot1DWindow, self).__init__(parent=parent,
                                            backend=backend,
                                            **kw)

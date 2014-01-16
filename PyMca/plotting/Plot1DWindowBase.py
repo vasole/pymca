@@ -52,7 +52,7 @@ class Plot1DWindowBase(qt.QWidget):
         self.graph.setGraphYLabel("Y")
 
         try:
-            self.mainLayout.addWidget(self.graph.widget)
+            self.mainLayout.addWidget(self.graph.getWidgetHandle())
         except:
         #    #testing
             pass

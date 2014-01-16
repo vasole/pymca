@@ -123,11 +123,11 @@ class MatplotlibGraph(FigureCanvas):
                 label = label[10:]
                 self._pickingInfo['type'] = 'marker' 
                 self._pickingInfo['label'] = label[10:]
-                if 'draggable' in artist._plot1d_options:
+                if 'draggable' in artist._plot_options:
                     self._pickingInfo['draggable'] = True
                 else:
                     self._pickingInfo['draggable'] = False
-                if 'selectable' in artist._plot1d_options:
+                if 'selectable' in artist._plot_options:
                     self._pickingInfo['selectable'] = True
                 else:
                     self._pickingInfo['selectable'] = False                
@@ -168,12 +168,12 @@ class MatplotlibGraph(FigureCanvas):
             self._pickingInfo['label'] = label
             self._pickingInfo['draggable'] = False
             self._pickingInfo['selectable'] = False
-            if hasattr(artist, "_plot1d_options"):
-                if 'draggable' in artist._plot1d_options:
+            if hasattr(artist, "_plot_options"):
+                if 'draggable' in artist._plot_options:
                     self._pickingInfo['draggable'] = True
                 else:
                     self._pickingInfo['draggable'] = False
-                if 'selectable' in artist._plot1d_options:
+                if 'selectable' in artist._plot_options:
                     self._pickingInfo['selectable'] = True
                 else:
                     self._pickingInfo['selectable'] = False
@@ -246,9 +246,9 @@ class MatplotlibGraph(FigureCanvas):
                 if button == leftButton:
                     if self._pickingInfo['draggable']:
                         self.__markerMoving = True
-                    if 'xmarker' in artist._plot1d_options:
+                    if 'xmarker' in artist._plot_options:
                         artist.set_xdata(event.xdata)
-                    elif 'ymarker' in artist._plot1d_options:
+                    elif 'ymarker' in artist._plot_options:
                         artist.set_ydata(event.ydata)
                     else:
                         artist.set_xdata(event.xdata)
@@ -304,8 +304,8 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['y'] = self._y0
                 ddict['xpixel'] = self._x0Pixel
                 ddict['ypixel'] = self._y0Pixel
-                xScale = artist._plot1d_info['xScale']
-                yScale = artist._plot1d_info['yScale']
+                xScale = artist._plot_info['xScale']
+                yScale = artist._plot_info['yScale']
                 col = (ddict['x'] - xScale[0])/float(xScale[1])
                 row = (ddict['y'] - yScale[0])/float(yScale[1])
                 ddict['row'] = int(row)
@@ -367,10 +367,10 @@ class MatplotlibGraph(FigureCanvas):
                 if label.startswith("__MARKER__"):
                     #data = artist.get_xydata()[0:1]
                     xPixel, yPixel = self.ax.transData.transform(artist.get_xydata()[0])
-                    if 'xmarker' in artist._plot1d_options:
+                    if 'xmarker' in artist._plot_options:
                         if abs(xPixel-event.x) < 5:
                             marker = artist
-                    elif 'ymarker' in artist._plot1d_options:
+                    elif 'ymarker' in artist._plot_options:
                         if abs(yPixel-event.y) < 5:
                             marker = artist
                     elif (abs(xPixel-event.x) < 5) and \
@@ -381,11 +381,11 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['event'] = 'hover'
                 ddict['type'] = 'marker' 
                 ddict['label'] = marker.get_label()[10:]
-                if 'draggable' in marker._plot1d_options:
+                if 'draggable' in marker._plot_options:
                     ddict['draggable'] = True
                 else:
                     ddict['draggable'] = False
-                if 'selectable' in marker._plot1d_options:
+                if 'selectable' in marker._plot_options:
                     ddict['selectable'] = True
                 else:
                     ddict['selectable'] = False
@@ -398,9 +398,9 @@ class MatplotlibGraph(FigureCanvas):
         if self.__picking:
             if self.__markerMoving:
                 artist = self._pickingInfo['artist']
-                if 'xmarker' in artist._plot1d_options:
+                if 'xmarker' in artist._plot_options:
                     artist.set_xdata(event.xdata)
-                elif 'ymarker' in artist._plot1d_options:
+                elif 'ymarker' in artist._plot_options:
                     artist.set_ydata(event.ydata)
                 else:
                     artist.set_xdata(event.xdata)
@@ -714,7 +714,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       picker=3,
                                       **kw)
         curveList[-1].set_marker(symbol)
-        curveList[-1]._plot1d_info = {'color':color,
+        curveList[-1]._plot_info = {'color':color,
                                       'linewidth':linewidth,
                                       'brush':brush,
                                       'style':style,
@@ -818,11 +818,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line = self.ax.axvline(x, label=label, color=color, picker=5)
         else:
             line = self.ax.axvline(x, label=label, color=color)
-        line._plot1d_options = ["xmarker"]
+        line._plot_options = ["xmarker"]
         if selectable:
-            line._plot1d_options.append('selectable')
+            line._plot_options.append('selectable')
         if draggable:
-            line._plot1d_options.append('draggable')
+            line._plot_options.append('draggable')
         return line
         
     def insertYMarker(self, y, label,
@@ -846,11 +846,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line = self.ax.axhline(y, label=label, color=color, picker=5)
         else:
             line = self.ax.axhline(y, label=label, color=color)
-        line._plot1d_options = ["ymarker"]
+        line._plot_options = ["ymarker"]
         if selectable:
-            line._plot1d_options.append('selectable')
+            line._plot_options.append('selectable')
         if draggable:
-            line._plot1d_options.append('draggable')
+            line._plot_options.append('draggable')
         return line
 
     def isXAxisAutoScale(self):
@@ -962,13 +962,13 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             raise KeyError("Curve %s not found" % legend)
         if self._oldActiveCurve in self.ax.lines:
-            color = self._oldActiveCurve._plot1d_info['color']
+            color = self._oldActiveCurve._plot_info['color']
             self._oldActiveCurve.set_color(color)
         elif self._oldActiveCurveLegend is not None:
             for line2d in self.ax.lines:
                 label = line2d.get_label()
                 if label == self._oldActiveCurveLegend:
-                    color = line2d._plot1d_info['color']
+                    color = line2d._plot_info['color']
                     line2d.set_color(color)
                     break
         self._oldActiveCurve = handle
@@ -1153,16 +1153,16 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                            #origin='upper',
                            #cmap=cmap,
                            #norm=Normalize(0, 1000*1000.))
-        image._plot1d_info = {'label':legend,
-                              'type':'image',
-                              'xScale':xScale,
-                              'yScale':yScale,
-                              'z':z}
-        image._plot1d_options = []
+        image._plot_info = {'label':legend,
+                            'type':'image',
+                            'xScale':xScale,
+                            'yScale':yScale,
+                            'z':z}
+        image._plot_options = []
         if draggable:
-            image._plot1d_options.append('draggable')
+            image._plot_options.append('draggable')
         if selectable:
-            image._plot1d_options.append('selectable')
+            image._plot_options.append('selectable')
         #print image
         #print dir(self.ax)
         return image
