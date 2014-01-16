@@ -25,12 +25,14 @@ abstract class PlotBackend.
 
 """
 import numpy
-import PlotBackend
 import Plot1DBase
+from Plot1DBase import Plot1DBackend
 
 DEBUG = 0
+if DEBUG:
+    Plot1DBase.DEBUG = True
 
-# should the color handling belong to a separate class?
+# should the color handling belong to the PlotBase class?
 colordict = {}
 colordict['b'] = colordict['blue']   = '#0000ff'
 colordict['r'] = colordict['red']    = '#ff0000'
@@ -67,16 +69,18 @@ colorlist  = [colordict['black'],
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 
 #class Plot1D(Plot1DBase.Plot1DBase):
-class Plot1D(PlotBackend.PlotBackend):
+#class Plot1D(PlotBackend.PlotBackend):
+class Plot1D(Plot1DBase.Plot1DBase):
+    PLUGINS_DIR = None
+
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
         if backend is None:
+            # an empty backend for testing purposes
             self._plot = PlotBackend.PlotBackend(parent)
         else:
             self._plot = backend(parent)
             self._default = False
-            self.getGraphXLimits = self._plot.getGraphXLimits
-            self.getGraphYLimits = self._plot.getGraphYLimits
         super(Plot1D, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
@@ -838,6 +842,12 @@ class Plot1D(PlotBackend.PlotBackend):
     def isMarkerModeEnabled(self, flag):
         raise NotImplemented("Not necessary?")
         pass
+
+    def getGraphXLimits(self):
+        return self._plot.getGraphXLimits
+
+    def getGraphYLimits(self):
+        return self._plot.getGraphYLimits
 
 def main():
     import numpy

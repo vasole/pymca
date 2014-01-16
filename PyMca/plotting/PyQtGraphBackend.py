@@ -828,7 +828,7 @@ if __name__ == "__main__":
     #w.widget.show()
     w.addImage(data, legend="image 0", xScale=(25, 1.0) , yScale=(-1000, 1.0),
                   selectable=True)
-    w.removeImage("image 0")
+    #w.removeImage("image 0")
     #w.invertYAxis(True)
     w.replot()
     #w.addImage(data, legend="image 1", xScale=(25, 1.0) , yScale=(-1000, 1.0),
