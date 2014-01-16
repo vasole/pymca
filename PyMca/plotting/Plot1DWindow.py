@@ -33,15 +33,6 @@ from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 import Plot1DWindowBase
 import Plot
-import time
-if "matplotlib" in sys.argv:
-    from MatplotlibBackend import MatplotlibBackend as backend
-    print("USING matplotlib")
-    time.sleep(1)
-else:
-    from PyQtGraphBackend import PyQtGraphBackend as backend
-    print("USING PyQtGraph")
-    time.sleep(1)
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
@@ -251,10 +242,20 @@ class Plot1DWindow(Plot1DWindowBase.Plot1DWindowBase):
 
 if __name__ == "__main__":
     import numpy
+    import time
+    if "matplotlib" in sys.argv:
+        from MatplotlibBackend import MatplotlibBackend as backend
+        print("USING matplotlib")
+        time.sleep(1)
+    else:
+        from PyQtGraphBackend import PyQtGraphBackend as backend
+        print("USING PyQtGraph")
+        time.sleep(1)
+
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
-    plot = Plot1DWindow(uselegendmenu=True)
+    plot = Plot1DWindow(backend=backend, uselegendmenu=True)
     plot.show()
     if 1:
         plot.addCurve(x, y, "dummy")

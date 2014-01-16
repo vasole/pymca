@@ -45,10 +45,10 @@ colordict['orange'] = '#ff9900'
 colordict['violet'] = '#6600ff'
 colordict['grey']   = '#808080'
 colordict['y'] = colordict['yellow'] = '#ffff00'
-colordict['darkgreen'] = 'g'
+colordict['darkgreen'] = '#006400'
 colordict['darkbrown'] = '#660000' 
-colordict['magenta']   = 'm' 
-colordict['cyan']      = 'c'
+colordict['m'] = colordict['magenta'] = '#ff00ff'
+colordict['c'] = colordict['cyan'] = '#00ffff'
 colordict['bluegreen'] = '#33ffff'
 colorlist  = [colordict['black'],
               colordict['blue'],
@@ -82,9 +82,9 @@ class Plot(PlotBase.PlotBase):
         super(Plot, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
-            self.widget = self._plot
+            self.widget_ = self._plot
         else:
-            self.widget = widget
+            self.widget_ = widget
 
         if callback is None:
             self._plot.setCallback(self.graphCallback)
@@ -125,6 +125,12 @@ class Plot(PlotBase.PlotBase):
         self.enableZoom = self.setZoomModeEnabled
         self.setZoomModeEnabled(True)
 
+    def getWidgetHandle(self):
+        return self.widget_
+
+    def setCallback(self, callbackFunction):
+        self._callback = callbackFunction
+
     def graphCallback(self, ddict=None):
         """
         This callback is foing to receive all the events from the plot.
@@ -134,13 +140,14 @@ class Plot(PlotBase.PlotBase):
 
         if ddict is None:
             ddict = {}
-        if 1 or DEBUG:
+        if DEBUG:
             print("Received dict keys = ", ddict.keys())
             print(ddict)
         if ddict['event'] in ["legendClicked", "curveClicked"]:
             if ddict['button'] == "left":
-                print("Setting active curve")
                 self.setActiveCurve(ddict['label'])
+        if self._callback is not None:
+            self._callback(ddict)
     
     def setDefaultPlotPoints(self, flag):
         if flag:
