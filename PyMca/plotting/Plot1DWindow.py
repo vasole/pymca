@@ -32,7 +32,7 @@ import traceback
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 import Plot1DWindowBase
-import Plot1D
+import Plot
 import time
 if "matplotlib" in sys.argv:
     from MatplotlibBackend import MatplotlibBackend as backend
@@ -51,7 +51,7 @@ class Plot1DWindow(Plot1DWindowBase.Plot1DWindowBase):
         super(Plot1DWindow, self).__init__(parent=parent,
                                            backend=backend,
                                            **kw)
-        #self.graph is the  Plot1D.Plot1D(parent=self, backend=backend)
+        #self.graph is the  Plot.Plot(parent=self, backend=backend)
         #self.graph.widget is the widget but it should not be needed
         #self.graph.setGraphTitle("Title")
         #self.graph.setGraphXLabel("X")
@@ -61,7 +61,7 @@ class Plot1DWindow(Plot1DWindowBase.Plot1DWindowBase):
         self._logX = False
         
     def __getattr__(self, attr):
-        # implicitly wrap methods from Plot1D
+        # implicitly wrap methods from Plot
         if hasattr(self.graph, attr):
             m = getattr(self.graph, attr)
             if hasattr(m, '__call__'):

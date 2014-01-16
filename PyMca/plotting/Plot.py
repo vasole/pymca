@@ -25,12 +25,12 @@ abstract class PlotBackend.
 
 """
 import numpy
-import Plot1DBase
-from Plot1DBase import Plot1DBackend
+import PlotBase
+from PlotBase import PlotBackend
 
 DEBUG = 0
 if DEBUG:
-    Plot1DBase.DEBUG = True
+    PlotBase.DEBUG = True
 
 # should the color handling belong to the PlotBase class?
 colordict = {}
@@ -68,9 +68,7 @@ colorlist  = [colordict['black'],
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 
-#class Plot1D(Plot1DBase.Plot1DBase):
-#class Plot1D(PlotBackend.PlotBackend):
-class Plot1D(Plot1DBase.Plot1DBase):
+class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
 
     def __init__(self, parent=None, backend=None, callback=None):
@@ -81,7 +79,7 @@ class Plot1D(Plot1DBase.Plot1DBase):
         else:
             self._plot = backend(parent)
             self._default = False
-        super(Plot1D, self).__init__()
+        super(Plot, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
             self.widget = self._plot
@@ -853,7 +851,7 @@ def main():
     import numpy
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D()
+    plot = Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
     print("Active curve = ", plot.getActiveCurve())

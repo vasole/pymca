@@ -19,158 +19,46 @@ __author__ = "V.A. Sole - ESRF Software Group"
 __license__ = "LGPL"
 __doc__ = """
 
-Any plot window willing to accept 1D plugins should implement the methods
+Any plot window willing to accept plugins should implement the methods
 defined in this class.
 
-The plugins will be compatible with any 1D-plot window that provides the methods:
-    addCurve
+That way the plot will respect the Plot backend interface besides additional
+methods:
+The plugins will be compatible with any plot window that provides the methods:
     getActiveCurve
+    getActiveImage
     getAllCurves
-    getGraphXLimits
-    getGraphYLimits
-    getGraphTitle
-    getGraphXTitle
-    getGraphYTitle    
-    removeCurve
+    getMonotonicCurves
+    hideCurve
+    hideImage
+    isCurveHidden
+    isImageHidden
     setActiveCurve
-    setGraphTitle
-    setGraphXLimits
-    setGraphYLimits
-    setGraphXTitle
-    setGraphYTitle
+    showCurve
+    showImage
 
-The simplest way to achieve that is to inherit from Plot1D
-
-On instantiation, this clase imports all the plugins found in the PyMcaPlugins
-directory and stores them into the attributes pluginList and pluginInstanceDict
-
+The simplest way to achieve that is to inherit from Plot
 """
+
 import os
 import sys
 import glob
-
-PLUGINS_DIR = None
 try:
-    if os.path.exists(os.path.join(os.path.dirname(__file__), "PyMcaPlugins")):
-        from PyMca import PyMcaPlugins
-        PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
-    else:
-        directory = os.path.dirname(__file__)
-        while True:
-            if os.path.exists(os.path.join(directory, "PyMcaPlugins")):
-                PLUGINS_DIR = os.path.join(directory, "PyMcaPlugins")
-                break
-            directory = os.path.dirname(directory)
-            if len(directory) < 5:
-                break
-except:
-    pass
+    import PlotBackend
+    import PluginLoader
+except ImportError:
+    from . import PlotBackend
+    from . import PluginLoader
+
 DEBUG = 0
 
-class Plot1DBase(object):
-    def __init__(self):
-        self.__pluginDirList = []
-        self.pluginList = []
-        self.pluginInstanceDict = {}
-        self.getPlugins()
+class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
+    def __init__(self, parent=None):
+        # This serves to define the plugins
+        PluginLoader.PluginLoader.__init__(self)
 
-    def setPluginDirectoryList(self, dirlist):
-        """
-        :param dirlist: Set directories to search for Plot1D plugins
-        :type dirlist: list
-        """
-        for directory in dirlist:
-            if not os.path.exists(directory):
-                raise IOError("Directory:\n%s\ndoes not exist." % directory)                
-
-        self.__pluginDirList = dirlist
-
-    def getPluginDirectoryList(self):
-        """
-        :return dirlist: List of directories to search for Plot1D plugins
-        """
-        return self.__pluginDirList
-
-    def getPlugins(self):
-        """
-        Import or reloads all the available plugins.
-        :return: The number of plugins loaded.
-        """
-        if self.__pluginDirList == []:
-           self.__pluginDirList = [PLUGINS_DIR] 
-        self.pluginList = []
-        for directory in self.__pluginDirList:
-            if directory is None:
-                continue
-            if not os.path.exists(directory):
-                raise IOError("Directory:\n%s\ndoes not exist." % directory)
-
-            fileList = glob.glob(os.path.join(directory, "*.py"))
-            targetMethod = 'getPlugin1DInstance'
-            # prevent unnecessary imports
-            moduleList = []
-            for fname in fileList:
-                # in Python 3, rb implies bytes and not strings
-                f = open(fname, 'r')
-                lines = f.readlines()
-                f.close()
-                f = None
-                for line in lines:
-                    if line.startswith("def"):
-                        if line.split(" ")[1].startswith(targetMethod):
-                            moduleList.append(fname)
-                            break
-            for module in moduleList:
-                try:
-                    pluginName = os.path.basename(module)[:-3]
-                    if directory == PLUGINS_DIR:
-                        plugin = "PyMcaPlugins." + pluginName
-                    else:
-                        plugin = pluginName
-                        if directory not in sys.path:
-                            sys.path.insert(0, directory)
-                    if pluginName in self.pluginList:
-                        idx = self.pluginList.index(pluginName)
-                        del self.pluginList[idx]
-                    if plugin in self.pluginInstanceDict.keys():
-                        del self.pluginInstanceDict[plugin]
-                    if plugin in sys.modules:
-                        if hasattr(sys.modules[plugin], targetMethod):
-                            if sys.version.startswith('3.3'):
-                                import imp
-                                imp.reload(sys.modules[plugin])
-                            else:
-                                reload(sys.modules[plugin])
-                    else:
-                        __import__(plugin)
-                    if hasattr(sys.modules[plugin], targetMethod):
-                        self.pluginInstanceDict[plugin] = \
-                                sys.modules[plugin].getPlugin1DInstance(self)
-                        self.pluginList.append(plugin)
-                except:
-                    if DEBUG:
-                        print("Problem importing module %s" % plugin)
-                        raise
-        return len(self.pluginList)
-    
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
-        """
-        Add the 1D curve given by x an y to the graph.
-        :param x: The data corresponding to the x axis
-        :type x: list or numpy.ndarray
-        :param y: The data corresponding to the y axis
-        :type y: list or numpy.ndarray
-        :param legend: The legend to be associated to the curve
-        :type legend: string or None
-        :param info: Dictionary of information associated to the curve
-        :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True
-        """
-        print("addCurve not implemented")
-        return None
+        # And this to complete the interface
+        PlotBackend.PlotBackend.__init__(self, parent)
 
     def getActiveCurve(self, just_legend=False):
         """
@@ -190,7 +78,11 @@ class Plot1DBase(object):
         If just_legend is True:
             The legend of the active curve (or None) is returned.
         """
-        print("getActiveCurve not implemented")
+        print("PlotBase getActiveCurve not implemented")
+        return None
+
+    def getActiveImage(self, just_legend=False):
+        print("PlotBase getActiveImage not implemented")
         return None
 
     def getAllCurves(self, just_legend=False):
@@ -213,7 +105,7 @@ class Plot1DBase(object):
                 [legend0, legend1, ..., legendn]
             or just an empty list.
         """
-        print("getAllCurves not implemented")
+        print("PlotBase getAllCurves not implemented")
         return []
 
     def getMonotonicCurves(self):
@@ -232,6 +124,8 @@ class Plot1DBase(object):
         allCurves = self.getAllCurves() * 1
         for i in range(len(allCurves)):
             x, y, legend, info = curve[0:4]
+            if self.isCurveHidden(legend):
+                continue
             # Sort
             idx = numpy.argsort(x, kind='mergesort')
             xproc = numpy.take(x, idx)
@@ -244,83 +138,53 @@ class Plot1DBase(object):
             allCurves[i][0:2] = x, y
         return allCurves
 
-    def getGraphXLimits(self):
+    def hideCurve(self, legend, replot=True):
         """
-        :return: Two floats with the X axis limits
-        Get the graph X limits.
-        """
-        print("getGraphXLimits not implemented")
-        return 0.0, 100.0
-
-    def getGraphYLimits(self):
-        """
-        Get the graph Y (left) limits. 
-        :return: Two floats with the Y (left) axis limits
-        """
-        print("getGraphYLimits not implemented")
-        return 0.0, 100.0
-
-    def getGraphTitle(self):
-        """
-        :return: The graph title
-        :rtype: string
-        """
-        print("getGraphTitle not implemented")
-        return "Title"
-
-    def getGraphXTitle(self):
-        """
-        :return: The graph X axis label
-        :rtype: string
-        """
-        print("getGraphXTitle not implemented")
-        return "X"
-
-    def getGraphYTitle(self):
-        """
-        :return: The graph Y axis label
-        :rtype: string
-        """
-        return "Y"
-
-    def setGraphXLimits(self, xmin, xmax, replot=False):
-        """
-        Set the graph X limits.
-        :param xmin:  minimum value of the axis
-        :type xmin: float
-        :param xmax:  minimum value of the axis
-        :type xmax: float
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default False
-        """
-        print("setGraphXLimits not implemented")
-        return
-
-    def setGraphYLimits(self, ymin, ymax, replot=False):
-        """
-        Set the graph Y (left) limits.
-        :param ymin:  minimum value of the axis
-        :type ymin: float
-        :param ymax:  minimum value of the axis
-        :type ymax: float
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default False
-        """
-        print("setGraphYLimits not implemented")
-        return
-
-    def removeCurve(self, legend, replot=True):
-        """
-        Remove the curve associated to the supplied legend from the graph.
+        Remove the curve associated to the legend form the graph.
+        It is still kept in the list of curves.
         The graph will be updated if replot is true.
-        :param legend: The legend associated to the curve to be deleted
-        :type legend: string or None
+        :param legend: The legend associated to the curve to be hidden
+        :type legend: string or handle
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
+        """
+        print("PlotBase hideCurve not implemented")
+        return
+
+    def hideImage(self, legend, replot=True):
+        """
+        Remove the image associated to the supplied legend from the graph.
+        I is still kept in the list of curves.
+        The graph will be updated if replot is true.
+        :param legend: The legend associated to the image to be hidden
+        :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True        
         """
-        print("removeCurve not implemented")
-        return None
+        print("PlotBase hideImage not implemented")
+        return
 
+    def isCurveHidden(self, legend):
+        """
+        :param legend: The legend associated to the curve
+        :type legend: string or handle
+        :return: True if the associated curve is hidden
+        """
+        if DEBUG:
+            print("PlotBase isCurveHidden not implemented")
+        return False
+        
+    def isImageHidden(self, legend):
+        """
+        :param legend: The legend associated to the image
+        :type legend: string or handle
+        :return: True if the associated image is hidden
+        """
+        if DEBUG:
+            print("PlotBase isImageHidden not implemented")
+        return False
+
+        
     def setActiveCurve(self, legend):
         """
         Funtion to request the plot window to set the curve with the specified legend
@@ -331,24 +195,24 @@ class Plot1DBase(object):
         print("setActiveCurve not implemented")
         return None
 
-    def setGraphTitle(self, title):
+    def showCurve(self, legend, replot=True):
         """
-        :param title: The title to be set
-        :type title: string
+        Show the curve associated to the legend in the graph.
+        :param legend: The legend associated to the curve
+        :type legend: string
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True        
         """
-        print("setGraphTitle not implemented")
+        print("PlotBase showCurve not implemented")
+        return False
 
-    def setGraphXTitle(self, title):
+    def showImage(self, legend, replot=True):
         """
-        :param title: The title to be associated to the X axis
-        :type title: string
+        Show the image associated to the legend in the graph.
+        :param legend: The legend associated to the image
+        :type legend: string
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
         """
-        print("setGraphXTitle not implemented")
-
-    def setGraphYTitle(self, title):
-        """
-        :param title: The title to be associated to the X axis
-        :type title: string
-        """
-        print("setGraphYTitle not implemented")
-            
+        print("PlotBase showImage not implemented")
+        return False

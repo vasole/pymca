@@ -29,7 +29,7 @@ import sys
 import os
 import traceback
 from PyMca import PyMcaQt as qt
-import Plot1D
+import Plot
 from PyMca.PyMca_Icons import IconDict
 QTVERSION = qt.qVersion()
 DEBUG = 0
@@ -45,7 +45,7 @@ class Plot1DWindowBase(qt.QWidget):
         self.plotType=None      # None, "SCAN", "MCA"
         self._initIcons()
         self._buildToolBar()
-        self.graph = Plot1D.Plot1D(parent=self, backend=backend)
+        self.graph = Plot.Plot(parent=self, backend=backend)
         # initialize title and labels
         self.graph.setGraphTitle("Title")
         self.graph.setGraphXLabel("X")
