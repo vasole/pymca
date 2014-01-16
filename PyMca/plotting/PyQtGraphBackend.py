@@ -67,8 +67,8 @@ class CustomViewBox(pg.ViewBox):
 class InfiniteLine(pg.InfiniteLine):
     def mouseClickEvent(self, ev):
         if ev.button() == QtCore.Qt.LeftButton:
-            if hasattr(self, "_plot1d_options"):
-                if "selectable" in self._plot1d_options:
+            if hasattr(self, "_plot_options"):
+                if "selectable" in self._plot_options:
                     ev.accept()
                     self.moving = False
                     self.sigPositionChangeFinished.emit(self)
@@ -76,22 +76,22 @@ class InfiniteLine(pg.InfiniteLine):
         pg.InfiniteLine.mouseClickEvent(self, ev)
 
     def mouseDragEvent(self, ev):
-        if hasattr(self, "_plot1d_options"):
-            if "selectable" in self._plot1d_options:
+        if hasattr(self, "_plot_options"):
+            if "selectable" in self._plot_options:
                 ev.ignore()
                 return
         pg.InfiniteLine.mouseDragEvent(self, ev)
 
     def setMouseHover(self, hover):
-        if hasattr(self, "_plot1d_options"):
-            if "selectable" in self._plot1d_options:
+        if hasattr(self, "_plot_options"):
+            if "selectable" in self._plot_options:
                 if hover != self.mouseHovering:                    
                     if hover:
                         self._oldCursorShape = self.cursor().shape()
                         self.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
                     else:
                         self.setCursor(QtGui.QCursor(self._oldCursorShape))
-            elif "draggable" in self._plot1d_options:
+            elif "draggable" in self._plot_options:
                 oldShape = self.cursor().shape()
                 if oldShape not in [QtCore.Qt.SizeHorCursor,
                                     QtCore.Qt.SizeVerCursor,
@@ -101,9 +101,9 @@ class InfiniteLine(pg.InfiniteLine):
                     self._originalCursorShape = oldShape
                 if hover:
                     oldShape = self.cursor().shape()
-                    if 'xmarker' in self._plot1d_options:
+                    if 'xmarker' in self._plot_options:
                         shape = QtCore.Qt.SizeHorCursor
-                    elif 'ymarker' in self._plot1d_options:
+                    elif 'ymarker' in self._plot_options:
                         shape = QtCore.Qt.SizeVerCursor
                     else:
                         shape = QtCore.Qt.OpenHandCursor
@@ -140,6 +140,27 @@ class PlotCurveItem(pg.PlotCurveItem):
         ddict["item"] = self
         ev.accept()
         self.sigClicked.emit(ddict)
+
+    def hoverEvent(self, ev):
+        if not ev.isExit():
+            oldShape = self.cursor().shape()
+            if oldShape not in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                self._originalCursorShape = oldShape
+                self.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        else:
+            if self._originalCursorShape in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                #arrow as default
+                self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            else:
+                self.setCursor(QtGui.QCursor(self._originalCursorShape))
 
 class ScatterPlotItem(pg.ScatterPlotItem):
     def mouseClickEvent(self, ev):
@@ -182,14 +203,40 @@ class ScatterPlotItem(pg.ScatterPlotItem):
         else:
             ev.ignore()
 
+    def hoverEvent(self, ev):
+        if not ev.isExit():
+            oldShape = self.cursor().shape()
+            if oldShape not in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                self._originalCursorShape = oldShape
+                self.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        else:
+            if self._originalCursorShape in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                #arrow as default
+                self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            else:
+                self.setCursor(QtGui.QCursor(self._originalCursorShape))
+
 class PlotDataItem(pg.PlotDataItem):
     def __init__(self, *args, **kargs):
         pg.PlotDataItem.__init__(self, *args, **kargs)
+        # this prevents hover events on the children
+        #self.setFlag(self.ItemHasNoContents)
         self.curve.sigClicked.disconnect()
         self.scatter.sigClicked.disconnect()
         #self.removeItem(self.curve)
         #self.removeItem(self.scatter)
         self.clear()
+        #this restores hover events but it does not work as well as expected
+        #and leaves the mouse always changed 
+        #self.setFiltersChildEvents(True)
         self.curve = PlotCurveItem()
         self.scatter = ScatterPlotItem()
         self.curve.setParentItem(self)
@@ -200,7 +247,7 @@ class PlotDataItem(pg.PlotDataItem):
             self.setData(*args, **kargs)
 
     def curveClicked(self, ddict=None):
-        if self._plot1d_info['linewidth'] > 0:
+        if self._plot_info['linewidth'] > 0:
             ddict["item"] = self
             self.sigClicked.emit(ddict)
         elif DEBUG:
@@ -223,8 +270,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
 
         self.setMouseTracking(True)
 
-        #increase from default of 2
-        self.scene().setClickRadius(5)
+        #the default was 2 when first testing
+        self.scene().setClickRadius(2)
 
         # this only sends the position in pixel coordenates
         self.scene().sigMouseMoved.connect(self._mouseMoved)
@@ -366,9 +413,15 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self.addItem(item)
         if style in [None, " "]:
             item.curve.clickable = False
+            item.curve.setAcceptHoverEvents(False)
         else:
             item.curve.clickable = True
-        item._plot1d_info = {'color':color,
+            item.curve.setAcceptHoverEvents(True)
+        if symbol is None:
+            item.scatter.setAcceptHoverEvents(False)
+        else:
+            item.scatter.setAcceptHoverEvents(True)
+        item._plot_info = {'color':color,
                              'linewidth':linewidth,
                              'brush':brush,
                              'style':style,
@@ -415,17 +468,17 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             xScale = [0.0, 1.0]
         if yScale is None:
             yScale = [0.0, 1.0]
-        item._plot1d_info = {'label':legend,
-                             'type':'image',
-                             'xScale':xScale,
-                             'yScale':yScale,
-                             'z':z}
-        item._plot1d_options = []
+        item._plot_info = {'label':legend,
+                           'type':'image',
+                           'xScale':xScale,
+                           'yScale':yScale,
+                           'z':z}
+        item._plot_options = []
         if selectable or draggable:
             if draggable:
-                item._plot1d_options.append('draggable')
+                item._plot_options.append('draggable')
             else:
-                item._plot1d_options.append('selectable')
+                item._plot_options.append('selectable')
         # TODO: handle image selection
         self.addItem(item)
         if replot:
@@ -433,7 +486,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         return item
 
     def removeCurve(self, handle, replot=True):
-        if hasattr(handle, '_plot1d_info'):
+        if hasattr(handle, '_plot_info'):
             actualHandle = handle
         else:
             # we have received a legend
@@ -441,8 +494,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             actualHandle = None
             a = self.items()
             for item in a:
-                if hasattr(item, '_plot1d_info'):
-                    label = item._plot1d_info['label']
+                if hasattr(item, '_plot_info'):
+                    label = item._plot_info['label']
                     if label == legend:
                         actualHandle = item
                         break
@@ -452,24 +505,23 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
                 self.replot()
 
     def setActiveCurve(self, legend, replot=True):
-        if hasattr(legend, '_plot1d_info'):
+        if hasattr(legend, '_plot_info'):
             # we have received an actual item
             handle = legend
         else:
             # we have received a legend
-            print("Received a legend")
             handle = None
             items = self.items()
             for item in items:
-                if hasattr(item, '_plot1d_info'):
-                    label = item._plot1d_info['label']
+                if hasattr(item, '_plot_info'):
+                    label = item._plot_info['label']
                     if label == legend:
                         handle = item
         #TODO: use setPen, setBrush, setSymbolPen, setSymbolBrush, setSymbol, ...
         if handle is not None:
             #print("handle found")
             color = '#000000'
-            if handle._plot1d_info['linewidth'] > 0:
+            if handle._plot_info['linewidth'] > 0:
                 handle.opts['pen'] = color
             handle.opts['symbolPen'] = color
             handle.opts['symbolBrush'] = color
@@ -478,9 +530,9 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             raise KeyError("Curve %s not found" % legend)
         if self._oldActiveCurve in self.items():
             #print("old still present")
-            if self._oldActiveCurve._plot1d_info['label'] != legend:
-                color = self._oldActiveCurve._plot1d_info['color']
-            if self._oldActiveCurve._plot1d_info['linewidth'] > 0:
+            if self._oldActiveCurve._plot_info['label'] != legend:
+                color = self._oldActiveCurve._plot_info['color']
+            if self._oldActiveCurve._plot_info['linewidth'] > 0:
                 self._oldActiveCurve.opts['pen'] = color
             self._oldActiveCurve.opts['symbolPen'] = color
             self._oldActiveCurve.opts['symbolBrush'] = color
@@ -489,18 +541,18 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             #print("old legend", self._oldActiveCurveLegend)
             items = self.items()
             for item in items:
-                if hasattr(item, '_plot1d_info'):
-                    label = item._plot1d_info['label']
+                if hasattr(item, '_plot_info'):
+                    label = item._plot_info['label']
                     if label == self._oldActiveCurveLegend:
-                        color = item._plot1d_info['color']
-                        if item._plot1d_info['linewidth'] > 0:
+                        color = item._plot_info['color']
+                        if item._plot_info['linewidth'] > 0:
                             item.opts['pen'] = color
                         item.opts['symbolPen'] = color
                         item.opts['symbolBrush'] = color
                         item.updateItems()
                         break
         self._oldActiveCurve = handle
-        self._oldActiveCurveLegend = handle._plot1d_info['label']
+        self._oldActiveCurveLegend = handle._plot_info['label']
         if replot:
             self.replot()
 
@@ -519,8 +571,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         #self.getPlotItem().clearPlots()
         itemList = self.items()
         for item in itemList:
-            if hasattr(item, '_plot1d_info'):
-                label = item._plot1d_info['label']
+            if hasattr(item, '_plot_info'):
+                label = item._plot_info['label']
                 if not label.startswith("__MARKER__"):
                     self.removeItem(item)
 
@@ -652,12 +704,12 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line = InfiniteLine(angle=90, movable=movable)
         line.setPos(x)
         line.setY(1.)
-        line._plot1d_info = {'label':label}
-        line._plot1d_options = ["xmarker"]
+        line._plot_info = {'label':label}
+        line._plot_options = ["xmarker"]
         if selectable:
-            line._plot1d_options.append('selectable')
+            line._plot_options.append('selectable')
         elif draggable:
-            line._plot1d_options.append('draggable')
+            line._plot_options.append('draggable')
         if selectable or draggable:
             line.sigPositionChangeFinished.connect(self._xMarkerMoved)
         line.setZValue(10)
@@ -688,12 +740,12 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line = InfiniteLine(angle=0, movable=movable)
         line.setPos(y)
         line.setX(1.)
-        line._plot1d_info = {'label':label}
-        line._plot1d_options = ["ymarker"]
+        line._plot_info = {'label':label}
+        line._plot_options = ["ymarker"]
         if selectable:
-            line._plot1d_options.append('selectable')
+            line._plot_options.append('selectable')
         elif draggable:
-            line._plot1d_options.append('draggable')
+            line._plot_options.append('draggable')
         if selectable or draggable:
             line.sigPositionChangeFinished.connect(self._yMarkerMoved)
         line.setZValue(10)
@@ -710,16 +762,16 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self.invertY(False)
 
     def _xMarkerMoved(self, item):
-        label = item._plot1d_info['label']
+        label = item._plot_info['label']
         ddict = {}
         ddict['event'] = "markerMoved"
-        ddict['label'] = item._plot1d_info['label'][10:]
+        ddict['label'] = item._plot_info['label'][10:]
         ddict['type'] = 'marker'
-        if 'draggable' in item._plot1d_options:
+        if 'draggable' in item._plot_options:
             ddict['draggable'] = True
         else:
             ddict['draggable'] = False
-        if 'selectable' in item._plot1d_options:
+        if 'selectable' in item._plot_options:
             ddict['selectable'] = True
             ddict['event'] = "markerSelected"
         else:
@@ -733,16 +785,16 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         self._callback(ddict)
 
     def _yMarkerMoved(self, item):
-        label = item._plot1d_info['label']
+        label = item._plot_info['label']
         ddict = {}
         ddict['event'] = "markerMoved"
-        ddict['label'] = item._plot1d_info['label'][10:]
+        ddict['label'] = item._plot_info['label'][10:]
         ddict['type'] = 'marker'
-        if 'draggable' in item._plot1d_options:
+        if 'draggable' in item._plot_options:
             ddict['draggable'] = True
         else:
             ddict['draggable'] = False
-        if 'selectable' in item._plot1d_options:
+        if 'selectable' in item._plot_options:
             ddict['selectable'] = True
             ddict['event'] = "markerSelected"
         else:
@@ -756,7 +808,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         self._callback(ddict)
 
     def removeImage(self, handle, replot=True):
-        if hasattr(handle, '_plot1d_info'):
+        if hasattr(handle, '_plot_info'):
             actualHandle = handle
         else:
             # we have received a legend
@@ -764,8 +816,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             actualHandle = None
             a = self.items()
             for item in a:
-                if hasattr(item, '_plot1d_info'):
-                    label = item._plot1d_info['label']
+                if hasattr(item, '_plot_info'):
+                    label = item._plot_info['label']
                     if label == legend:
                         actualHandle = item
                         break
@@ -776,7 +828,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
 
     if _USE_ORIGINAL:
         def _curveClicked(self, item):
-            label = item._plot1d_info['label']
+            label = item._plot_info['label']
             ddict = {}
             ddict['event'] = "curveClicked"
             ddict['button'] = 'left'
@@ -786,7 +838,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
     else:
         def _curveClicked(self, ddict0):
             item = ddict0['item']
-            label = item._plot1d_info['label']
+            label = item._plot_info['label']
             ddict = {}
             ddict['event'] = "curveClicked"
             ddict['button'] = 'left'
