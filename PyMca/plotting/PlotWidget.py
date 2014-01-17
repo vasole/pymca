@@ -27,7 +27,7 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import Plot
+from . import Plot
 
 #TODO check for PySide
 from PyQt4 import QtCore, QtGui
@@ -72,11 +72,11 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
 if __name__ == "__main__":
     import time
     if "matplotlib" in sys.argv:
-        from MatplotlibBackend import MatplotlibBackend as backend
+        from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
         print("USING matplotlib")
         time.sleep(1)
     else:
-        from PyQtGraphBackend import PyQtGraphBackend as backend
+        from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
         print("USING PyQtGraph")
         time.sleep(1)
     import numpy

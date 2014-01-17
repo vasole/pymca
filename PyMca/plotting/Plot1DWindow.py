@@ -31,8 +31,8 @@ import traceback
 
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
-import Plot1DWindowBase
-import Plot
+from PyMca.plotting import Plot1DWindowBase
+from PyMca.plotting import Plot
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
@@ -244,11 +244,11 @@ if __name__ == "__main__":
     import numpy
     import time
     if "matplotlib" in sys.argv:
-        from MatplotlibBackend import MatplotlibBackend as backend
+        from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
         print("USING matplotlib")
         time.sleep(1)
     else:
-        from PyQtGraphBackend import PyQtGraphBackend as backend
+        from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
         print("USING PyQtGraph")
         time.sleep(1)
 

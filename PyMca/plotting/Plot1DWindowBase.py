@@ -28,14 +28,14 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import traceback
-import Plot
+from PyMca.plotting import Plot
 try:
-    import MatplotlibBackend
+    from PyMca.plotting.backends import MatplotlibBackend
     MATPLOTLIB = True
 except:
     MATPLOTLIB = False
 try:
-    import PyQtGraphBackend
+    from PyMca.plotting.backends import PyQtGraphBackend
     PYQTGRAPH = True
 except:
     PYQTGRAPH = False

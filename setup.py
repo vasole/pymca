@@ -73,7 +73,9 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca','PyMca.PyMcaPlugins', 'PyMca.tests', 'PyMca.XRFMC', 'PyMca.PyMcaIO']
+packages = ['PyMca','PyMca.PyMcaPlugins', 'PyMca.tests', 'PyMca.XRFMC',
+            'PyMca.PyMcaIO',
+            'PyMca.plotting','PyMca.plotting.backends','PyMca.widgets']
 py_modules = []
 
 # Specify all the required PyMca data

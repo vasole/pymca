@@ -33,14 +33,14 @@ It handles the plugins and adds a toolbar to the PlotWidget
 import sys
 import os
 import traceback
-import PlotWidget
+from PyMca.plotting import PlotWidget
 try:
-    import MatplotlibBackend
+    from PyMca.plotting.backends import MatplotlibBackend
     MATPLOTLIB = True
 except:
     MATPLOTLIB = False
 try:
-    import PyQtGraphBackend
+    from PyMca.plotting.backends import PyQtGraphBackend
     PYQTGRAPH = True
 except:
     PYQTGRAPH = False

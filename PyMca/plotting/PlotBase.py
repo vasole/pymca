@@ -48,12 +48,8 @@ try:
 except ImportError:
     print("WARNING: numpy not present")
 
-try:
-    import PlotBackend
-    import PluginLoader
-except ImportError:
-    from . import PlotBackend
-    from . import PluginLoader
+from . import PlotBackend
+from . import PluginLoader
 
 DEBUG = 0
 

@@ -528,7 +528,7 @@ class PlotBackend(object):
         
 def main():
     import numpy
-    from Plot1D import Plot1D
+    from .Plot1D import Plot1D
     x = numpy.arange(100.)
     y = x * x
     plot = Plot1D()

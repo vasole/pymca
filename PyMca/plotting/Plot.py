@@ -25,8 +25,8 @@ abstract class PlotBackend.
 
 """
 import numpy
-import PlotBase
-from PlotBase import PlotBackend
+from . import PlotBase
+from .PlotBase import PlotBackend
 
 DEBUG = 0
 if DEBUG:

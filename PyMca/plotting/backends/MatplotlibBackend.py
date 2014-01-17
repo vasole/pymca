@@ -22,7 +22,7 @@ Matplotlib Plot backend.
 """
 import numpy
 import sys
-import PlotBackend
+from .. import PlotBackend
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 # This should be independent of Qt
@@ -1196,7 +1196,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 self.ax.invert_yaxis()
 
 def main(parent=None):
-    import Plot
+    from .. import Plot
     x = numpy.arange(100.)
     y = x * x
     plot = Plot.Plot(parent, backend=MatplotlibBackend)

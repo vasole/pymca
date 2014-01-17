@@ -30,7 +30,7 @@ if ("pyqtgraph" not in sys.modules):
 else:
     import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import PlotBackend
+from .. import PlotBackend
 _USE_ORIGINAL = False
 DEBUG = 0
 
@@ -848,7 +848,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self._callback(ddict)
 
 def main():
-    import Plot
+    from .. import Plot
     x = numpy.arange(100.)
     y = x * x
     plot = Plot.Plot(backend=PyQtGraphBackend)
