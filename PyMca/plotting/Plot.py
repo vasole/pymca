@@ -157,7 +157,7 @@ class Plot(PlotBase.PlotBase):
         for key in self._curveList:
             del self._curveDict[key][3]['plot_symbol']
         if len(self._curveList):
-            self.update()
+            self.update_()
 
     def setDefaultPlotLines(self, flag):
         if flag:
@@ -165,7 +165,7 @@ class Plot(PlotBase.PlotBase):
         else:
             self._plotLines = False
         if len(self._curveList):
-            self.update()
+            self.update_()
 
     def _getColorAndStyle(self):
         self._lastColorIndex = self._colorIndex
@@ -566,7 +566,7 @@ class Plot(PlotBase.PlotBase):
                     print("y axis was in linear mode")
                 self._plot.clearCurves()
                 self._plot.setYAxisLogarithmic(self._logY)
-                self.update()
+                self.update_()
         else:
             if self._logY:
                 if DEBUG:
@@ -574,7 +574,7 @@ class Plot(PlotBase.PlotBase):
                 self._logY = False
                 self._plot.clearCurves()
                 self._plot.setYAxisLogarithmic(self._logY)
-                self.update()
+                self.update_()
             else:
                 if DEBUG:
                     print("y axis was already linear mode")
@@ -591,14 +591,14 @@ class Plot(PlotBase.PlotBase):
                     print("x axis was in linear mode")
                 self._plot.clearCurves()
                 self._plot.setXAxisLogarithmic(self._logX)
-                self.update()
+                self.update_()
         else:
             if self._logX:
                 if DEBUG:
                     print("x axis was in log mode")
                 self._logX = False
                 self._plot.setXAxisLogarithmic(self._logX)
-                self.update()
+                self.update_()
             else:
                 if DEBUG:
                     print("x axis was already linear mode")
@@ -624,7 +624,7 @@ class Plot(PlotBase.PlotBase):
             y = numpy.take(y, idx)
         return x, y
 
-    def update(self):
+    def update_(self):
         curveList = self.getAllCurves()
         activeCurve = self.getActiveCurve(just_legend=True)
         #self._plot.clearCurves()
@@ -847,12 +847,6 @@ class Plot(PlotBase.PlotBase):
     def isMarkerModeEnabled(self, flag):
         raise NotImplemented("Not necessary?")
         pass
-
-    def getGraphXLimits(self):
-        return self._plot.getGraphXLimits
-
-    def getGraphYLimits(self):
-        return self._plot.getGraphYLimits
 
 def main():
     import numpy
