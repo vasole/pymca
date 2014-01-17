@@ -539,7 +539,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self._oldActiveCurve.updateItems()
         elif self._oldActiveCurveLegend is not None:
             #print("old legend", self._oldActiveCurveLegend)
-            if self._oldActiveCurveLegend != handle._plot_info['label']
+            if self._oldActiveCurveLegend != handle._plot_info['label']:
                 items = self.items()
                 for item in items:
                     if hasattr(item, '_plot_info'):
