@@ -539,18 +539,19 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self._oldActiveCurve.updateItems()
         elif self._oldActiveCurveLegend is not None:
             #print("old legend", self._oldActiveCurveLegend)
-            items = self.items()
-            for item in items:
-                if hasattr(item, '_plot_info'):
-                    label = item._plot_info['label']
-                    if label == self._oldActiveCurveLegend:
-                        color = item._plot_info['color']
-                        if item._plot_info['linewidth'] > 0:
-                            item.opts['pen'] = color
-                        item.opts['symbolPen'] = color
-                        item.opts['symbolBrush'] = color
-                        item.updateItems()
-                        break
+            if self._oldActiveCurveLegend != handle._plot_info['label']
+                items = self.items()
+                for item in items:
+                    if hasattr(item, '_plot_info'):
+                        label = item._plot_info['label']
+                        if label == self._oldActiveCurveLegend:
+                            color = item._plot_info['color']
+                            if item._plot_info['linewidth'] > 0:
+                                item.opts['pen'] = color
+                            item.opts['symbolPen'] = color
+                            item.opts['symbolBrush'] = color
+                            item.updateItems()
+                            break
         self._oldActiveCurve = handle
         self._oldActiveCurveLegend = handle._plot_info['label']
         if replot:
@@ -753,7 +754,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         return line
 
     def insertMarker(self, x, y, label, **kw):
-        print("Plot1DBackend insertMarker not implemented")
+        print("PlotBackend insertMarker not implemented")
 
     def invertYAxis(self, flag=True):
         if flag:
@@ -847,10 +848,10 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self._callback(ddict)
 
 def main():
-    import Plot1D
+    import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D(backend=PyQtGraphBackend)
+    plot = Plot.Plot(backend=PyQtGraphBackend)
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
     print("Active curve = ", plot.getActiveCurve())
@@ -868,7 +869,7 @@ if __name__ == "__main__":
     import numpy
     app = QtGui.QApplication([])
     w = main()
-    w.widget.show()
+    w.getWidgetHandle().show()
     #w.invertYAxis(True)
     w.replot()
     #w.invertYAxis(True)

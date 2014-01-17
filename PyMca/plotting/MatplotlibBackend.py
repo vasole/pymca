@@ -26,7 +26,19 @@ import PlotBackend
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 # This should be independent of Qt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+if "tk" in sys.argv:
+    if sys.version < '3.0':
+        import Tkinter as Tk
+    else:
+        import tkinter as Tk
+else:
+    from PyQt4 import QtCore, QtGui
+if ("PyQt4" in sys.modules) or ("PySide" in sys.modules): 
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    TK = False
+elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
+    TK = True
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
 Rectangle = patches.Rectangle
@@ -34,23 +46,26 @@ Polygon = patches.Polygon
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.image import AxesImage, NonUniformImage
-import PyQt4.Qt as qt
 import time
 
 DEBUG = 0
 
 class MatplotlibGraph(FigureCanvas):
-    def __init__(self, parent, **kw):
+    def __init__(self, parent=None, **kw):
         #self.figure = Figure(figsize=size, dpi=dpi) #in inches
         self.fig = Figure()
-        self._canvas = FigureCanvas.__init__(self, self.fig)
+        if TK:
+            self._canvas = FigureCanvas.__init__(self, self.fig, master=parent)
+        else:
+            self._canvas = FigureCanvas.__init__(self, self.fig)
         self.ax = self.fig.add_axes([.15, .15, .75, .75])
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
         # This should be independent of Qt
-        FigureCanvas.setSizePolicy(self,
-                                   qt.QSizePolicy.Expanding,
-                                   qt.QSizePolicy.Expanding)
+        if "PyQt4" in sys.modules or "PySide" in sys.modules:
+            FigureCanvas.setSizePolicy(self,
+                                   QtGui.QSizePolicy.Expanding,
+                                   QtGui.QSizePolicy.Expanding)
 
         self.__lastMouseClick = ["middle", time.time()]
         self.__zooming = False
@@ -773,7 +788,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         :return: Backend widget.
         """
-        return self.graph
+        if hasattr(self.graph, "get_tk_widget"):
+            return self.graph.get_tk_widget()
+        else:
+            return self.graph
 
     def insertMarker(self, x, y, label, color='k',
                       selectable=False, draggable=False,
@@ -945,7 +963,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         return
 
     def setActiveCurve(self, legend, replot=True):
-        if hasattr(legend, "remove"):
+        if hasattr(legend, "_plot_info"):
             # we have received an actual item
             handle = legend
         else:
@@ -962,15 +980,17 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             raise KeyError("Curve %s not found" % legend)
         if self._oldActiveCurve in self.ax.lines:
-            color = self._oldActiveCurve._plot_info['color']
-            self._oldActiveCurve.set_color(color)
+            if self._oldActiveCurve._plot_info['label'] != legend:
+                color = self._oldActiveCurve._plot_info['color']
+                self._oldActiveCurve.set_color(color)
         elif self._oldActiveCurveLegend is not None:
-            for line2d in self.ax.lines:
-                label = line2d.get_label()
-                if label == self._oldActiveCurveLegend:
-                    color = line2d._plot_info['color']
-                    line2d.set_color(color)
-                    break
+            if self._oldActiveCurveLegend != handle._plot_info['label']:
+                for line2d in self.ax.lines:
+                    label = line2d.get_label()
+                    if label == self._oldActiveCurveLegend:
+                        color = line2d._plot_info['color']
+                        line2d.set_color(color)
+                        break
         self._oldActiveCurve = handle
         self._oldActiveCurveLegend = handle.get_label()
         if replot:
@@ -1175,11 +1195,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if self.ax.yaxis_inverted():
                 self.ax.invert_yaxis()
 
-def main():
-    import Plot1D
+def main(parent=None):
+    import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D(backend=MatplotlibBackend)
+    plot = Plot.Plot(parent, backend=MatplotlibBackend)
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
     print("Active curve = ", plot.getActiveCurve())
@@ -1194,9 +1214,19 @@ def main():
     return plot
 
 if __name__ == "__main__":
-    app = qt.QApplication([])
-    w = main()
-    w.widget.show()
+    if "tkinter" in sys.modules or "Tkinter" in sys.modules:
+        root = Tk.Tk()
+        parent=root
+        #w = MatplotlibGraph(root)
+        #Tk.mainloop()
+        #sys.exit(0)
+        w = main(parent)
+        widget = w._plot.graph
+    else:        
+        app = QtGui.QApplication([])
+        parent=None
+        w = main(parent)
+        widget = w.getWidgetHandle()
     #w.invertYAxis(True)
     w.replot()
     #w.invertYAxis(True)
@@ -1214,10 +1244,16 @@ if __name__ == "__main__":
     w.addImage(data, legend="image 1", xScale=(25, 1.0) , yScale=(-1000, 1.0),
                   replot=False, selectable=True)
     #w.invertYAxis(True)
-    w.widget.ax.axis('auto') # appropriate for curves, no aspect ratio
+    widget.ax.axis('auto') # appropriate for curves, no aspect ratio
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
-    print("aspect = %s" % w.widget.ax.get_aspect())
+    print("aspect = %s" % widget.ax.get_aspect())
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())
-    app.exec_()
+    if "tkinter" in sys.modules or "Tkinter" in sys.modules:
+        tkWidget = w.getWidgetHandle()
+        tkWidget.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        Tk.mainloop()
+    else:        
+        widget.show()
+        app.exec_()
