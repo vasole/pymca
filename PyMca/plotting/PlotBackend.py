@@ -113,11 +113,9 @@ mouseMoved
     To export the mouse position in pixel and graph coordenates
 
 mouseClicked
-    NOT USED?
     Emitted on mouse relase when not zooming, nor drawing, nor picking
 
 mouseDoubleClicked
-    NOT USED?
     Emitted on mouse relase when not zooming, nor drawing, nor picking
 
 MouseZoom
@@ -489,10 +487,10 @@ class PlotBackend(object):
             self._xAutoScale = False
         print("PlotBackend setXAxisAutoScale not implemented")
 
-    def setXAxisLogarithmic(self, flag):
+    def setXAxisLogarithmic(self, flag=True):
         """
         :param flag: If True, the bottom axis will use a log scale
-        :type flag: boolean
+        :type flag: boolean, default True
         """
         print("PlotBackend setXAxisLogarithmic not implemented")
         

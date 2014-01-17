@@ -44,6 +44,11 @@ import os
 import sys
 import glob
 try:
+    from numpy import argsort, nonzero, take
+except ImportError:
+    print("WARNING: numpy not present")
+
+try:
     import PlotBackend
     import PluginLoader
 except ImportError:
@@ -118,9 +123,6 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
                  [...],
                  [xvaluesn, yvaluesn, legendn, dictn]]
         """
-        #should I move this import to top since in any case numpy
-        #will be used somwhere?
-        import numpy
         allCurves = self.getAllCurves() * 1
         for i in range(len(allCurves)):
             x, y, legend, info = curve[0:4]
@@ -128,13 +130,13 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
                 continue
             # Sort
             idx = numpy.argsort(x, kind='mergesort')
-            xproc = numpy.take(x, idx)
-            yproc = numpy.take(y, idx)
+            xproc = take(x, idx)
+            yproc = take(y, idx)
             # Ravel, Increase
             xproc = xproc.ravel()
-            idx = numpy.nonzero((xproc[1:] > xproc[:-1]))[0]
-            xproc = numpy.take(xproc, idx)
-            yproc = numpy.take(yproc, idx)
+            idx = nonzero((xproc[1:] > xproc[:-1]))[0]
+            xproc = take(xproc, idx)
+            yproc = take(yproc, idx)
             allCurves[i][0:2] = x, y
         return allCurves
 

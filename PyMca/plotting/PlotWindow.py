@@ -25,10 +25,15 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
+__doc__ = """
+This window is a solution for PyMca.
+It handles the plugins and adds a toolbar to the PlotWidget
+
+"""
 import sys
 import os
 import traceback
-import Plot
+import PlotWidget
 try:
     import MatplotlibBackend
     MATPLOTLIB = True
@@ -39,39 +44,31 @@ try:
     PYQTGRAPH = True
 except:
     PYQTGRAPH = False
+
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
-class Plot1DWindowBase(qt.QWidget):
-    def __init__(self, parent=None, backend=None, plugins=True, newplot=False,**kw):
-        qt.QWidget.__init__(self, parent)
-        self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.mainLayout.setSpacing(2)
-        self.pluginsIconFlag = plugins
-        self.newplotIconsFlag = newplot
-        self.plotType=None      # None, "SCAN", "MCA"
+class PlotWindow(PlotWidget.PlotWidget):
+    def __init__(self, parent=None, backend=None, plugins=True, newplot=False, **kw):
         if backend is None:
             if PYQTGRAPH:
                 backend = PyQtGraphBackend.PyQtGraphBackend
             elif MATPLOTLIB:
                 backend = MatplotlibBackend.MatplotlibBackend
+        super(PlotWindow, self).__init__(parent=parent, backend=backend)
+        self.pluginsIconFlag = plugins
+        self.newplotIconsFlag = newplot
+        self.setWindowType(None)      # None, "SCAN", "MCA"
         self._initIcons()
-        self._buildToolBar()
-        self.graph = Plot.Plot(parent=self, backend=backend)
-
-        # initialize title and labels
-        self.graph.setGraphTitle("Title")
-        self.graph.setGraphXLabel("X")
-        self.graph.setGraphYLabel("Y")
-        try:
-            self.mainLayout.addWidget(self.graph.getWidgetHandle())
-        except:
-        #    #testing
-            pass
+        self._buildToolBar(kw)
         self._toggleCounter = 0
+
+    def setWindowType(self, wtype=None):
+        if wtype not in [None, "SCAN", "MCA"]:
+            print("Unsupported window type. Default to None")
+        self.plotType = wtype
 
     def _initIcons(self):
         self.normalIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
@@ -105,12 +102,10 @@ class Plot1DWindowBase(qt.QWidget):
 
         self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"])) 
 
-    def _buildToolBar(self):
-        self.toolBar = qt.QWidget(self)
-        self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
-        self.toolBarLayout.setMargin(0)
-        self.toolBarLayout.setSpacing(2)
-        self.layout().insertWidget(0, self.toolBar)
+    def _buildToolBar(self, kw=None):
+        if kw is None:
+            kw = {}
+        self.toolBar = qt.QToolBar(self)
         #Autoscale
         self._addToolButton(self.zoomResetIcon,
                             self._zoomReset,
@@ -134,20 +129,22 @@ class Plot1DWindowBase(qt.QWidget):
         self.xAutoScaleButton.setDown(True)
 
         #y Logarithmic
-        self.yLogButton = self._addToolButton(self.logyIcon,
-                            self._toggleLogY,
-                            'Toggle Logarithmic Y Axis (On/Off)',
-                            toggle = True)
-        self.yLogButton.setChecked(False)
-        self.yLogButton.setDown(False)
+        if kw.get('logy', True):
+            self.yLogButton = self._addToolButton(self.logyIcon,
+                                self._toggleLogY,
+                                'Toggle Logarithmic Y Axis (On/Off)',
+                                toggle = True)
+            self.yLogButton.setChecked(False)
+            self.yLogButton.setDown(False)
 
         #x Logarithmic
-        self.xLogButton = self._addToolButton(self.logxIcon,
-                            self._toggleLogX,
-                            'Toggle Logarithmic X Axis (On/Off)',
-                            toggle = True)
-        self.xLogButton.setChecked(False)
-        self.xLogButton.setDown(False)
+        if kw.get('logx', True):
+            self.xLogButton = self._addToolButton(self.logxIcon,
+                                self._toggleLogX,
+                                'Toggle Logarithmic X Axis (On/Off)',
+                                toggle = True)
+            self.xLogButton.setChecked(False)
+            self.xLogButton.setDown(False)
 
         #toggle Points/Lines
         tb = self._addToolButton(self.togglePointsIcon,
@@ -156,8 +153,9 @@ class Plot1DWindowBase(qt.QWidget):
 
 
         #fit icon
-        self.fitButton = self._addToolButton(self.fitIcon,
-                                 self._fitIconSignal,
+        if kw.get('fit', False):
+            self.fitButton = self._addToolButton(self.fitIcon,
+                                         self._fitIconSignal,
                                  'Simple Fit of Active Curve')
 
 
@@ -197,12 +195,14 @@ class Plot1DWindowBase(qt.QWidget):
                                  self._pluginClicked,
                                  infotext)
 
-        self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
+        self.toolBar.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
                                  'Prints the Graph')
+
+        self.addToolBar(self.toolBar)
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)            
@@ -211,28 +211,82 @@ class Plot1DWindowBase(qt.QWidget):
         if toggle is not None:
             if toggle:
                 tb.setCheckable(1)
-        self.toolBarLayout.addWidget(tb)
-        #self.connect(tb,qt.SIGNAL('clicked()'), action)
+        self.toolBar.addWidget(tb)
         tb.clicked.connect(action)
         return tb
                 
     def _zoomReset(self):
-        print("reset zoom")
+        if DEBUG:
+            print("_zoomReset")
+        self.resetZoom()
 
     def _yAutoScaleToggle(self):
-        print("toggle Y auto scaling")
+        if DEBUG:
+            print("toggle Y auto scaling")
+        if self.isYAxisAutoScale():
+            self.setYAxisAutoScale(False)
+            self.yAutoScaleButton.setDown(False)
+            self.yAutoScaleButton.setChecked(False)
+            ymin, ymax = self.getGraphYLimits()
+            self.setGraphYLimits(ymin, ymax)
+        else:
+            self.setYAxisAutoScale(True)
+            self.yAutoScaleButton.setDown(True)
+            self.resetZoom()
 
     def _xAutoScaleToggle(self):
-        print("toggle X auto scaling")
+        if DEBUG:
+            print("toggle X auto scaling")
+        if self.isXAxisAutoScale():
+            self.setXAxisAutoScale(False)
+            self.xAutoScaleButton.setDown(False)
+            self.xAutoScaleButton.setChecked(False)
+            xmin, xmax = self.getGraphXLimits()
+            self.setGraphXLimits(xmin, xmax)
+        else:
+            self.setXAxisAutoScale(True)
+            self.xAutoScaleButton.setDown(True)
+            self.resetZoom()
                        
     def _toggleLogX(self):
-        print("toggle logarithmic X scale")
+        if DEBUG:
+            print("toggle logarithmic X scale")
+        if self.isXAxisLogarithmic():
+            self.setXAxisLogarithmic(False)
+        else:
+            self.setXAxisLogarithmic(True)
+
+    def setXAxisLogarithmic(self, flag=True):
+        super(PlotWindow, self).setXAxisLogarithmic(flag) 
+        self.xLogButton.setChecked(flag)
+        self.xLogButton.setDown(flag)
 
     def _toggleLogY(self):
-        print("toggle logarithmic Y scale")
+        if DEBUG:
+            print("_toggleLogY")
+        if self.isYAxisLogarithmic():
+            self.setYAxisLogarithmic(False)
+        else:
+            self.setYAxisLogarithmic(True)
+
+    def setYAxisLogarithmic(self, flag=True):
+        super(PlotWindow, self).setYAxisLogarithmic(flag) 
+        self.yLogButton.setChecked(flag)
+        self.yLogButton.setDown(flag)
 
     def _togglePointsSignal(self):
-        print("toggle points signal")
+        if DEBUG:
+            print("toggle points signal")
+        self._toggleCounter = (self._toggleCounter + 1) % 3
+        if self._toggleCounter == 1:
+            self.setDefaultPlotLines(True)
+            self.setDefaultPlotPoints(True)
+        elif self._toggleCounter == 2:
+            self.setDefaultPlotPoints(True)
+            self.setDefaultPlotLines(False)
+        else:
+            self.setDefaultPlotLines(True)
+            self.setDefaultPlotPoints(False)
 
     def _fitIconSignal(self):
         print("fit icon signal")
@@ -267,7 +321,7 @@ class Plot1DWindowBase(qt.QWidget):
         menu.addSeparator()
         callableKeys = ["Dummy"]
         for m in self.pluginList:
-            if m == "PyMcaPlugins.Plugin1DBase":
+            if m in ["PyMcaPlugins.Plugin1DBase", "Plugin1DBase"]:
                 continue
             module = sys.modules[m]
             if hasattr(module, 'MENU_TEXT'):
@@ -298,7 +352,7 @@ class Plot1DWindowBase(qt.QWidget):
                 msg.exec_()
             return        
         key = callableKeys[idx]
-        methods = self.pluginInstanceDict[key].getMethods(plottype="SCAN")
+        methods = self.pluginInstanceDict[key].getMethods(plottype=self.plotType)
         if len(methods) == 1:
             idx = 0
         else:
@@ -330,13 +384,10 @@ class Plot1DWindowBase(qt.QWidget):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            if QTVERSION < '4.0.0':
-                msg.setText("%s" % sys.exc_info()[1])
-            else:
-                msg.setWindowTitle("Plugin error")
-                msg.setText("An error has occured while executing the plugin:")
-                msg.setInformativeText(str(sys.exc_info()[1]))
-                msg.setDetailedText(traceback.format_exc())
+            msg.setWindowTitle("Plugin error")
+            msg.setText("An error has occured while executing the plugin:")
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def _actionHovered(self, action):
@@ -352,17 +403,18 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
-    plot = Plot1DWindowBase(uselegendmenu=True)
+    plot = PlotWindow()#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)
-    print("Active curve = ", plot.getActiveCurve())
+    plot.addCurve(x, -y, "- dummy")
+    print("Active curve = ", plot.getActiveCurve(just_legend=True))
     print("X Limits = ",     plot.getGraphXLimits())
     print("Y Limits = ",     plot.getGraphYLimits())
-    print("All curves = ",   plot.getAllCurves())
-    plot.removeCurve("dummy")
-    plot.addCurve(x, y, "dummy 2")
-    print("All curves = ",   plot.getAllCurves())
+    print("All curves = ",   plot.getAllCurves(just_legend=True))
+    #plot.removeCurve("dummy")
+    #plot.addCurve(x, 2 * y, "dummy 2")
+    #print("All curves = ",   plot.getAllCurves())
     app.exec_()
 
     

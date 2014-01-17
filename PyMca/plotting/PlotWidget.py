@@ -27,7 +27,6 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-import traceback
 import Plot
 
 #TODO check for PySide
@@ -39,17 +38,21 @@ DEBUG = 0
 if DEBUG:
     Plot.DEBUG = DEBUG
 
-class PlotWidget(QtGui.QWidget, Plot.Plot):
-
+class PlotWidget(QtGui.QMainWindow, Plot.Plot):
     sigPlotSignal = QtCore.Signal(object)
 
     def __init__(self, parent=None, backend=None,
                          legends=False, callback=None, **kw):
-        QtGui.QWidget.__init__(self, parent)
-        Plot.Plot.__init__(self, parent, backend=backend, **kw)
-        self.mainLayout = QtGui.QHBoxLayout(self)
-        self.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.mainLayout.addWidget(self.getWidgetHandle())
+        QtGui.QMainWindow.__init__(self, parent)
+        Plot.Plot.__init__(self, parent, backend=backend)
+        if parent is not None:
+            # behave as a widget
+            self.setWindowFlags(QtCore.Qt.Widget)
+        widget = self.getWidgetHandle()
+        if widget is not None:
+            self.setCentralWidget(widget)
+        else:
+            print("WARNING: No backend. Using default.")
         if legends:
             print("Legends widget to be implemented")
         self.setGraphTitle("  ")
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = QtGui.QApplication([])
-    plot = PlotWidget(backend=backend, legends=True)
+    plot = PlotWidget(None, backend=backend, legends=True)
     plot.show()
     if 1:
         plot.addCurve(x, y, "dummy")
@@ -113,4 +116,5 @@ if __name__ == "__main__":
         plot.insertXMarker(5., draggable=True)
         plot.insertYMarker(5., draggable=True)
     print("All curves = ", plot.getAllCurves(just_legend=True))
+    plot.setYAxisLogarithmic(True)
     app.exec_()
