@@ -31,8 +31,11 @@ clear
 clearCurves
 clearImages (*)
 clearMarkers
+getGraphXLabel
 getGraphXLimits
+getGraphYLabel
 getGraphYLimits
+getGraphTitle
 getWidgetHandle
 insertMarker
 insertXMarker
@@ -221,6 +224,14 @@ class PlotBackend(object):
         print("PlotBackend default callback called")
         print(ddict)
 
+    def getGraphTitle(self):
+        """
+        Get the graph title.
+        :return:  string
+        """
+        print("PlotBackend getGraphTitle not implemented")
+        return ""
+
     def getGraphXLimits(self):
         """
         Get the graph X (bottom) limits.
@@ -229,6 +240,14 @@ class PlotBackend(object):
         print("Get the graph X (bottom) limits")
         return self._xMin, self._xMax
 
+    def getGraphXLabel(self):
+        """
+        Get the graph X (bottom) label.
+        :return:  string
+        """
+        print("PlotBackend getGraphXLabel not implemented")
+        return "X"
+
     def getGraphYLimits(self):
         """
         Get the graph Y (left) limits.
@@ -236,6 +255,14 @@ class PlotBackend(object):
         """
         print("Get the graph Y (left) limits")
         return self._yMin, self._yMax
+
+    def getGraphYLabel(self):
+        """
+        Get the graph Y (left) label.
+        :return:  string
+        """
+        print("PlotBackend getGraphYLabel not implemented")
+        return "Y"
 
     def getWidgetHandle(self):
         """
