@@ -58,7 +58,6 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         self.setGraphTitle("  ")
         self.setGraphXLabel("X")
         self.setGraphYLabel("Y")
-        callback = kw.get("callback", None)
         self.setCallback(callback)
 
     def showLegends(self, flag=True):

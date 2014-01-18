@@ -86,8 +86,7 @@ class Plot(PlotBase.PlotBase):
         else:
             self.widget_ = widget
 
-        if callback is None:
-            self._plot.setCallback(self.graphCallback)
+        self.setCallback(callback)
 
         self.setLimits = self._plot.setLimits
 
@@ -129,13 +128,16 @@ class Plot(PlotBase.PlotBase):
         return self.widget_
 
     def setCallback(self, callbackFunction):
-        self._callback = callbackFunction
+        if callbackFunction is None:
+            self._plot.setCallback(self.graphCallback)
+        else:
+            self._plot.setCallback(callbackFunction)
 
     def graphCallback(self, ddict=None):
         """
         This callback is foing to receive all the events from the plot.
         Those events will consist on a dictionnary and among the dictionnary
-        keys the key 'event' is madatory to describe the type of event.
+        keys the key 'event' is mandatory to describe the type of event.
         """
 
         if ddict is None:
@@ -146,8 +148,6 @@ class Plot(PlotBase.PlotBase):
         if ddict['event'] in ["legendClicked", "curveClicked"]:
             if ddict['button'] == "left":
                 self.setActiveCurve(ddict['label'])
-        if self._callback is not None:
-            self._callback(ddict)
     
     def setDefaultPlotPoints(self, flag):
         if flag:
