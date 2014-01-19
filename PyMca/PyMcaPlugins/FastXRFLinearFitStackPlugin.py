@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2013 European Synchrotron Radiation Facility
+# Copyright (C) 2013-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -246,13 +246,25 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         imagesDir = os.path.join(outputDir, "IMAGES")
         if not os.path.exists(imagesDir):
             os.mkdir(imagesDir)
-        imageList = [None] * nImages
+        imageList = [None] * (nImages + len(result['uncertainties']))
+        fileImageNames = [None] * (nImages + len(result['uncertainties']))
+        j = 0
         for i in range(nImages):
-            imageList[i] = images[i]
+            name = imageNames[i].replace(" ","-")
+            fileImageNames[j] = name
+            imageList[j] = images[i]
+            j += 1
+            if not imageNames[i].startswith("C("):
+                # fitted parameter
+                fileImageNames[j] = "s(%s)" % name
+                imageList[j] = result['uncertainties'][i]
+                j += 1
         fileName = os.path.join(imagesDir, fileRoot+".edf")
-        ArraySave.save2DArrayListAsEDF(imageList, fileName, labels=imageNames)
+        ArraySave.save2DArrayListAsEDF(imageList, fileName,
+                                       labels=fileImageNames)
         fileName = os.path.join(imagesDir, fileRoot+".csv")
-        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True, labels=imageNames)                    
+        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
+                                         labels=fileImageNames)                    
 
     def _showWidget(self):
         if self._widget is None:
