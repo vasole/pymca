@@ -288,6 +288,10 @@ class ScanWindow(PlotWindow.PlotWindow):
         else:
             sellist = [selectionlist]
 
+        if len(self._curveList):
+            activeCurve = self.getActiveCurve(just_legend=True)
+        else:
+            activeCurve = None
         for sel in sellist:
             source = sel['SourceName']
             key    = sel['Key']
@@ -439,11 +443,17 @@ class ScanWindow(PlotWindow.PlotWindow):
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     symbol=symbol,maptoy2=maptoy2, replot=False)
-        self.dataObjectsList = self._curveList
         if replot:
             self.replot()
             self.resetZoom()
-
+        self.dataObjectsList = self._curveList
+        if activeCurve is None:
+            if len(self._curveList) > 0:
+                activeCurve = self._curveList[0]
+            ddict = {}
+            ddict['event'] = "curveClicked"
+            ddict['label'] = activeCurve
+            self._graphSignalReceived(ddict)
             
     def _removeSelection(self, selectionlist):
         if DEBUG:
@@ -531,7 +541,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self._yPos.setText('%.7g' % ddict['y'])
             return
         if ddict['event'] in ["curveClicked", "legendClicked"]:
-            print "ddict", ddict
             legend = ddict["label"]
             if legend is None:
                 if len(self.dataObjectsList):
@@ -558,6 +567,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.setActiveCurve(legend)
             self.setGraphYLabel(ylabel)
             self.setGraphXLabel(xlabel)
+            #self.setGraphTitle(legend)
             if self.scanWindowInfoWidget is not None:
                 self.scanWindowInfoWidget.updateFromDataObject\
                                                             (dataObject)
@@ -1217,7 +1227,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 #sel['selection']['y'] = [ilabel]
                 sel['selectiontype'] = "1D"
                 sel_list.append(sel)
-        if False:
+        if True:
             #The legend menu was not working with the next line
             #but if works if I add the list
             self._replaceSelection(sel_list)
