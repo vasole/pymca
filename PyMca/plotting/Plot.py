@@ -694,6 +694,15 @@ class Plot(PlotBase.PlotBase):
     def isYAxisAutoScale(self):
         return self._plot.isYAxisAutoScale()
 
+    def getGraphTitle(self):
+        return self._plot.getGraphTitle()
+
+    def getGraphXLabel(self):
+        return self._plot.getGraphXLabel()
+
+    def getGraphYLabel(self):
+        return self._plot.getGraphYLabel()
+
     def setGraphYLimits(self, ymin, ymax, replot=False):
         self._plot.setGraphYLimits(ymin, ymax)
         if replot:

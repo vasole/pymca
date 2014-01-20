@@ -607,6 +607,18 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         return
 
     #Graph related functions
+    def getGraphTitle(self):
+        # there should be a function for this
+        return self.plotItem.titleLabel.text
+
+    def getGraphXLabel(self):
+        # there should be a function for this
+        return self.getAxis('bottom').labelText
+
+    def getGraphYLabel(self):
+        # there should be a function for this
+        return self.getAxis('left').labelText
+    
     def setGraphTitle(self, title=""):
         self.setTitle(title)
 

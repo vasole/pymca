@@ -1001,6 +1001,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         # Should I call the base to keep a copy?
         # It does not seem necessary since the graph will do it.
 
+    def getGraphTitle(self):
+        return self.ax.get_title()
+
+    def getGraphXLabel(self):
+        return self.ax.get_xlabel()
+
+    def getGraphYLabel(self):
+        return self.ax.get_ylabel()
+
     def setGraphTitle(self, title=""):
         self.ax.set_title(title)
 
