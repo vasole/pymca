@@ -43,28 +43,39 @@ colordict['pink']   = '#ff66ff'
 colordict['brown']  = '#a52a2a'
 colordict['orange'] = '#ff9900'
 colordict['violet'] = '#6600ff'
-colordict['grey']   = '#808080'
+colordict['gray'] = colordict['grey']   = '#a0a0a4'
+#colordict['darkGray'] = colordict['darkGrey']   = '#808080'
+#colordict['lightGray'] = colordict['lightGrey']   = '#c0c0c0'
 colordict['y'] = colordict['yellow'] = '#ffff00'
-colordict['darkgreen'] = '#006400'
-colordict['darkbrown'] = '#660000' 
 colordict['m'] = colordict['magenta'] = '#ff00ff'
 colordict['c'] = colordict['cyan'] = '#00ffff'
-colordict['bluegreen'] = '#33ffff'
+colordict['darkBlue'] = '#000080'
+colordict['darkRed'] = '#800000'
+colordict['darkGreen'] = '#008000'
+colordict['darkBrown'] = '#660000' 
+colordict['darkCyan'] = '#008080'
+colordict['darkYellow'] = '#808000'
+colordict['darkMagenta'] = '#800080'
 colorlist  = [colordict['black'],
               colordict['blue'],
               colordict['red'],
               colordict['green'],
               colordict['pink'],
+              colordict['yellow'],
               colordict['brown'],
               colordict['cyan'],
+              colordict['magenta'],
               colordict['orange'],
               colordict['violet'],
               #colordict['bluegreen'],
               colordict['grey'],
-              colordict['magenta'],
-              colordict['darkgreen'],
-              colordict['darkbrown'],
-              colordict['yellow']]
+              colordict['darkBlue'],
+              colordict['darkRed'],
+              colordict['darkGreen'],
+              colordict['darkCyan'],
+              colordict['darkMagenta'],
+              colordict['darkYellow'],
+              colordict['darkBrown']]
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 

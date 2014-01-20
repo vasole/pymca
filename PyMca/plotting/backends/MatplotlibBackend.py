@@ -58,6 +58,13 @@ class MatplotlibGraph(FigureCanvas):
             self._canvas = FigureCanvas.__init__(self, self.fig, master=parent)
         else:
             self._canvas = FigureCanvas.__init__(self, self.fig)
+            # get the default widget color
+            color = self.palette().color(self.backgroundRole())
+            color = "#%x" % color.rgb()
+            if len(color) == 9:
+                color = "#" + color[3:]
+            self.fig.set_facecolor(color)
+            # that's it
         self.ax = self.fig.add_axes([.15, .15, .75, .75])
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
@@ -746,29 +753,42 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Clear all curvers and other items from the plot
         """
-        for line2d in self.ax.lines:
+        n = range(len(self.ax.lines))
+        n.reverse()
+        for i in n:
+            line2d = self.ax.lines[i]
             line2d.remove()
+            del line2d
+        self.ax.clear()
 
     def clearCurves(self):
         """
         Clear all curves from the plot. Not the markers!!
         """
-        for line2d in self.ax.lines:
+        n = range(len(self.ax.lines))
+        n.reverse()
+        for i in n:
+            line2d = self.ax.lines[i]
             label = line2d.get_label()
             if label.startswith("__MARKER__"):
                 #it is a marker
                 continue
             line2d.remove()
+            del line2d
 
     def clearMarkers(self):
         """
         Clear all markers from the plot. Not the curves!!
         """
-        for line2d in self.ax.lines:
+        n = range(len(self.ax.lines))
+        n.reverse()
+        for i in n:
+            line2d = self.ax.lines[i]
             label = line2d.get_label()
             if label.startswith("__MARKER__"):
                 #it is a marker
                 line2d.remove()
+                del line2d
 
     def getGraphXLimits(self):
         """
