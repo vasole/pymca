@@ -64,10 +64,12 @@ from PyMca import PyMcaPlugins
 
 DEBUG = 0
 class ScanWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, name="Scan Window", specfit=None):
+    def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None, **kw):
         super(ScanWindow, self).__init__(parent,
                                          newplot=True,
-                                         plugins=True)
+                                         plugins=True,
+                                         backend=backend,
+                                         **kw)
         # this two objects are the same
         self.dataObjectsList = self._curveList
         # but this is tricky
@@ -440,6 +442,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.dataObjectsList = self._curveList
         if replot:
             self.replot()
+            self.resetZoom()
 
             
     def _removeSelection(self, selectionlist):
@@ -527,8 +530,9 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self._xPos.setText('%.7g' % ddict['x'])
                 self._yPos.setText('%.7g' % ddict['y'])
             return
-        if ddict['event'] == "SetActiveCurveEvent":
-            legend = ddict["legend"]
+        if ddict['event'] in ["curveClicked", "legendClicked"]:
+            print "ddict", ddict
+            legend = ddict["label"]
             if legend is None:
                 if len(self.dataObjectsList):
                     legend = self.dataObjectsList[0]
@@ -551,6 +555,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             if len(dataObject.info['selection']['m']):
                 ilabel = dataObject.info['selection']['m'][0]
                 ylabel += "/" + dataObject.info['LabelNames'][ilabel]
+            self.setActiveCurve(legend)
             self.setGraphYLabel(ylabel)
             self.setGraphXLabel(xlabel)
             if self.scanWindowInfoWidget is not None:
@@ -1285,7 +1290,23 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     #end of plugins interface
     def addCurve(self, x, y, legend=None, info=None, **kw):
+        #administrate the colors properly
+        if legend in self._curveList:
+            if info is None:
+                info = {}
+            oldStuff = self.getCurve(legend)
+            if len(oldStuff):
+                oldX, oldY, oldLegend, oldInfo = oldStuff
+            else:
+                oldInfo = {}
+            color = info.get("plot_color", oldInfo.get("plot_color", None))
+            symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
+            line_style =  info.get("plot_line_style",oldInfo.get("plot_line_style", None))
+            info['plot_color'] = color
+            info['plot_symbol'] = symbol
+            info['plot_line_style'] = line_style
         if legend in self.dataObjectsDict:
+            # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
         else:
             # create the data object
@@ -1331,7 +1352,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def printGraph(self):
         #temporary print
-        pixmap = qt.QPixmap.grabWidget(self)
+        pixmap = qt.QPixmap.grabWidget(self.centralWidget())
 
         if self.scanWindowInfoWidget is not None:
             info = self.scanWindowInfoWidget.getInfo()

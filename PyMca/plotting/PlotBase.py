@@ -28,6 +28,7 @@ The plugins will be compatible with any plot window that provides the methods:
     getActiveCurve
     getActiveImage
     getAllCurves
+    getCurve
     getMonotonicCurves
     hideCurve
     hideImage
@@ -107,6 +108,24 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
             or just an empty list.
         """
         print("PlotBase getAllCurves not implemented")
+        return []
+
+    def getCurve(self, legend):
+        """
+        :param legend: legend assiciated to the curve
+        :type legend: boolean
+        :return: list [x, y, legend, info]
+        :rtype: list 
+        Function to access the graph currently active curve.
+        It returns None in case of not having an active curve.
+
+        Default output has the form:
+            xvalues, yvalues, legend, dict
+            where dict is a dictionnary containing curve info.
+            For the time being, only the plot labels associated to the
+            curve are warranted to be present under the keys xlabel, ylabel.
+        """
+        print("PlotBase getCurve not implemented")
         return []
 
     def getMonotonicCurves(self):

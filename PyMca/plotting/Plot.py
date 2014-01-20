@@ -59,7 +59,7 @@ colorlist  = [colordict['black'],
               colordict['cyan'],
               colordict['orange'],
               colordict['violet'],
-              colordict['bluegreen'],
+              #colordict['bluegreen'],
               colordict['grey'],
               colordict['magenta'],
               colordict['darkgreen'],
@@ -173,11 +173,12 @@ class Plot(PlotBase.PlotBase):
         color = self._colorList[self._colorIndex]
         style = self._styleList[self._styleIndex]
         self._colorIndex += 1
+        #print("color index = ", self._colorIndex, "ncolors = ", self._nColors)
         if self._colorIndex >= self._nColors:
             self._colorIndex = 1
             self._styleIndex += 1
             if self._styleIndex >= self._nStyles:
-                self._styleIndex = 0        
+                self._styleIndex = 0
         return color, style
 
     def setZoomModeEnabled(self, flag=True):
@@ -221,19 +222,24 @@ class Plot(PlotBase.PlotBase):
         if replace:
             self._curveList = []
             self._curveDict = {}
-            self._colorIndex = 0
+            self._colorIndex = 1
             self._styleIndex = 0
             self._plot.clearCurves()
 
+        symbol = None
+        color = None
+        line_style = None
         if key in self._curveList:
             idx = self._curveList.index(key)
             self._curveList[idx] = key
             handle = self._curveDict[key][3].get('plot_handle', None)
             if handle is not None:
                 # this can give errors if it is not present in the plot
-                # self._plot.removeCurve(handle, replot=False)
-                # this is safer
                 self._plot.removeCurve(key, replot=False)
+                symbol = self._curveDict[key][3].get('plot_symbol', symbol)
+                color = self._curveDict[key][3].get('plot_color', color)
+                line_style = self._curveDict[key][3].get('plot_line_style',
+                                                    line_style)
         else:
             self._curveList.append(key)
         #print("TODO: Here we can add properties to the info dictionnary")
@@ -242,13 +248,12 @@ class Plot(PlotBase.PlotBase):
         #print("The actual plotting stuff should only take care of handling")
         #print("logarithmic filtering if needed")
         # deal with the symbol
-        symbol = None
         symbol = info.get("plot_symbol", symbol)
         symbol = kw.get("symbol", symbol)
         if self._plotPoints:
             symbol = 'o'
         info["plot_symbol"] = symbol
-        color = info.get("plot_color", None)
+        color = info.get("plot_color", color)
         color = kw.get("color", color)
 
         line_style = info.get("plot_line_style", None)
@@ -265,7 +270,7 @@ class Plot(PlotBase.PlotBase):
             dummy, line_style = self._getColorAndStyle()
         elif color is None:
             color, dummy = self._getColorAndStyle()
-
+        #print("Legend = ", legend, "color = ", color, "style = ", line_style)
         info["plot_color"] = color
         info["plot_line_style"] = line_style
 
@@ -476,6 +481,25 @@ class Plot(PlotBase.PlotBase):
                     output.append(self._curveDict[key])
         return output
 
+    def getCurve(self, legend):
+        """
+        :param legend: legend assiciated to the curve
+        :type legend: boolean
+        :return: list [x, y, legend, info]
+        :rtype: list 
+        Function to access the graph currently active curve.
+        It returns None in case of not having an active curve.
+
+        Default output has the form:
+            xvalues, yvalues, legend, dict
+            where dict is a dictionnary containing curve info.
+            For the time being, only the plot labels associated to the
+            curve are warranted to be present under the keys xlabel, ylabel.
+        """
+        # let it raise en exception if not present
+        return self._curveDict[legend] * 1
+
+
     def _getAllLimits(self):
         """
         Internal method to retrieve the limits based on the curves, not
@@ -625,6 +649,8 @@ class Plot(PlotBase.PlotBase):
         return x, y
 
     def _update(self):
+        if DEBUG:
+            print("_update called")
         curveList = self.getAllCurves()
         activeCurve = self.getActiveCurve(just_legend=True)
         #self._plot.clearCurves()
@@ -635,11 +661,12 @@ class Plot(PlotBase.PlotBase):
         if len(curveList):
             if activeCurve not in curveList:
                 activeCurve = curveList[0][2]
-            print("setting active Curve", activeCurve)
             self.setActiveCurve(activeCurve)
         self.replot()
 
     def replot(self):
+        if DEBUG:
+            print("replot called")
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             for image in self._imageDict.keys():
                 self._plot.removeImage(image[1]) 
@@ -664,7 +691,7 @@ class Plot(PlotBase.PlotBase):
     def clearCurves(self):
         self._curveList = []
         self._curveDict = {}
-        self._colorIndex = 0
+        self._colorIndex = 1
         self._styleIndex = 0
         self._plot.clearCurves()
         self.replot()

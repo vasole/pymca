@@ -364,6 +364,14 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         brush = color
         style = info.get('plot_line_style', '-')
         linewidth = 1
+        if hasattr(x, "shape"):
+            if len(x.shape) == 2:
+                if x.shape[1] == 1:
+                    x = x.reshape(-1)
+        if hasattr(y, "shape"):
+            if len(y.shape) == 2:
+                if y.shape[1] == 1:
+                    y = y.reshape(-1)
         """
         Better control instantiating a curve item and a scatter item
         because mouse coordenates are not emitted and right click is not
