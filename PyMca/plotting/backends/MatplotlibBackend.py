@@ -152,7 +152,8 @@ class MatplotlibGraph(FigureCanvas):
                 if 'selectable' in artist._plot_options:
                     self._pickingInfo['selectable'] = True
                 else:
-                    self._pickingInfo['selectable'] = False                
+                    self._pickingInfo['selectable'] = False
+                self._pickingInfo['infoText'] = artist._infoText
             else:
                 self._pickingInfo['type'] = 'curve' 
                 self._pickingInfo['label'] = label
@@ -161,15 +162,18 @@ class MatplotlibGraph(FigureCanvas):
                 ydata = artist.get_ydata()
                 self._pickingInfo['xdata'] = xdata[ind]
                 self._pickingInfo['ydata'] = ydata[ind]
-            if self._infoText is None:
-                self._infoText = self.ax.text(event.mouseevent.xdata,
-                                              event.mouseevent.ydata,
-                                              label)
-            else:
-                self._infoText.set_position((event.mouseevent.xdata,
-                                            event.mouseevent.ydata))
-                self._infoText.set_text(label)
-            self._infoText.set_visible(True)
+                self._pickingInfo['infoText'] = None
+            if self._pickingInfo['infoText'] is None:
+                if self._infoText is None:
+                    self._infoText = self.ax.text(event.mouseevent.xdata,
+                                                  event.mouseevent.ydata,
+                                                  label)
+                else:
+                    self._infoText.set_position((event.mouseevent.xdata,
+                                                event.mouseevent.ydata))
+                    self._infoText.set_text(label)
+                self._pickingInfo['infoText'] = self._infoText
+            self._pickingInfo['infoText'].set_visible(True)
             if DEBUG:
                 print("%s %s selected" % (self._pickingInfo['type'].upper(),
                                           self._pickingInfo['label']))
@@ -420,15 +424,19 @@ class MatplotlibGraph(FigureCanvas):
         if self.__picking:
             if self.__markerMoving:
                 artist = self._pickingInfo['artist']
+                infoText = self._pickingInfo['infoText']
                 if 'xmarker' in artist._plot_options:
                     artist.set_xdata(event.xdata)
+                    ymin, ymax = self.ax.get_ylim()
+                    delta = abs(ymax - ymin)
+                    ymax = max(ymax, ymin) - 0.005 * delta
+                    infoText.set_position((event.xdata, ymax))
                 elif 'ymarker' in artist._plot_options:
                     artist.set_ydata(event.ydata)
+                    infoText.set_position((event.xdata, event.ydata))
                 else:
                     artist.set_xdata(event.xdata)
                     artist.set_ydata(event.ydata)
-                if self._infoText is not None:
-                    self._infoText.set_position((event.xdata, event.ydata))
                 self.fig.canvas.draw()
                 ddict = {}
                 ddict['event'] = "markerMoving"
@@ -851,11 +859,21 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
+        text = " " + label
         label = "__MARKER__" + label
         if selectable or draggable:
             line = self.ax.axvline(x, label=label, color=color, picker=5)
         else:
             line = self.ax.axvline(x, label=label, color=color)
+        if label is not None:
+            ymin, ymax = self.getGraphYLimits()
+            delta = abs(ymax - ymin)
+            if ymin > ymax:
+                ymax = ymin
+            ymax -= 0.005 * delta
+            line._infoText = self.ax.text(x, ymax, text,
+                                          horizontalalignment='left',
+                                          verticalalignment='top')
         line._plot_options = ["xmarker"]
         if selectable:
             line._plot_options.append('selectable')
@@ -939,7 +957,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def removeMarker(self, handle, replot=True):
         if hasattr(handle, "remove"):
+            self._removeInfoText(handle)
             handle.remove()
+            del handle
         else:
             # we have received a legend!
             legend = handle
@@ -949,9 +969,18 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if label == ("__MARKER__"+legend):
                     handle = line2d
             if handle is not None:
+                self._removeInfoText(handle)
                 handle.remove()
+                del handle
         if replot:
             self.replot()
+
+    def _removeInfoText(self, handle):
+        if hasattr(handle, "_infoText"):
+            t = handle._infoText
+            handle._infoText = None
+            t.remove()
+            del t
 
     def resetZoom(self):
         """
