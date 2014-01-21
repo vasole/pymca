@@ -146,7 +146,7 @@ class MatplotlibGraph(FigureCanvas):
             if label.startswith("__MARKER__"):
                 label = label[10:]
                 self._pickingInfo['type'] = 'marker' 
-                self._pickingInfo['label'] = label[10:]
+                self._pickingInfo['label'] = label
                 if 'draggable' in artist._plot_options:
                     self._pickingInfo['draggable'] = True
                 else:
@@ -902,6 +902,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line._plot_options.append('selectable')
         if draggable:
             line._plot_options.append('draggable')
+        self.replot()
         return line
         
     def insertYMarker(self, y, label,

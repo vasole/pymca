@@ -47,6 +47,11 @@ except:
 
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
+try:
+    from PyMca.widgets import McaROIWidget
+    ROIWIDGET = True
+except ImportError:
+    ROIWIDGET = False
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
@@ -157,9 +162,9 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.roiButton = self._addToolButton(self.roiIcon,
                                          self._toggleROI,
                                          'Show/Hide ROI widget',
-                                         toggle=True)
-            self.roiButton.setChecked(False)
-            self.roiButton.setDown(False)
+                                         toggle=False)
+            self.currentROI = None
+            self.middleROIMarkerFlag = False
 
         #fit icon
         if kw.get('fit', False):
@@ -298,7 +303,34 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.setDefaultPlotPoints(False)
 
     def _toggleROI(self):
-        print("_toggleROI signal")
+        if DEBUG or (not ROIWIDGET):
+            print("_toggleROI called")
+        if ROIWIDGET:
+            if not hasattr(self, "roiWidget"):
+                self.roiWidget = None
+            if self.roiWidget is None:
+                self.roiWidget = McaROIWidget.McaROIWidget()
+                w = self.centralWidget().width()
+                h = self.centralWidget().height()
+                self.roiDockWidget = qt.QDockWidget(self)
+                self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+                self.roiDockWidget.setWidget(self.roiWidget)
+                if w > h:
+                    self.addDockWidget(qt.Qt.LeftDockWidgetArea,
+                                       self.roiDockWidget)
+                else:
+                    self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                       self.roiDockWidget)
+                self.roiWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
+                self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
+            elif self.roiDockWidget.isHidden():            
+                self.roiDockWidget.show()
+            else:
+                self.roiDockWidget.hide()
+
+    def _roiSignal(self, ddict):
+        print("_roiSignal, ROI Widget Signal received")
+        print(ddict)
 
     def _fitIconSignal(self):
         print("fit icon signal")

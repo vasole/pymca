@@ -144,7 +144,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
             if self.isCurveHidden(legend):
                 continue
             # Sort
-            idx = numpy.argsort(x, kind='mergesort')
+            idx = argsort(x, kind='mergesort')
             xproc = take(x, idx)
             yproc = take(y, idx)
             # Ravel, Increase

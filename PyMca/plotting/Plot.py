@@ -515,7 +515,7 @@ class Plot(PlotBase.PlotBase):
         """
         Internal method to retrieve the limits based on the curves, not
         on the plot. It might be of use to reset the zoom when one of the
-        X or Y axesis not set to autoscale.
+        X or Y axes is not set to autoscale.
         """
         keys = list(self._curveDict.keys())
         if not len(keys):
@@ -680,12 +680,11 @@ class Plot(PlotBase.PlotBase):
             print("replot called")
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             for image in self._imageDict.keys():
-                self._plot.removeImage(image[1]) 
+                self._plot.removeImage(image[1])
         if hasattr(self._plot, 'replot_'):
             plot = self._plot.replot_
         else:
-            plot = self._plot.replot
-        
+            plot = self._plot.replot        
 
     def clear(self):
         self._curveList = []
@@ -792,6 +791,8 @@ class Plot(PlotBase.PlotBase):
         """
         kw ->symbol
         """
+        if DEBUG:
+            print("Received label = %s" % label)
         if color is None:
             color = colordict['black']
         elif color in colordict:
@@ -804,7 +805,7 @@ class Plot(PlotBase.PlotBase):
                 label = "Unnamed X Marker %d" % i
 
         if label in self._markerList:
-            self.clearMarker(label)
+            self.removeMarker(label)
         marker = self._plot.insertXMarker(x, label,
                                           color=color,
                                           selectable=selectable,
@@ -813,6 +814,7 @@ class Plot(PlotBase.PlotBase):
         self._markerList.append(label)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
+        return marker
 
     def insertYMarker(self, y, label=None,
                      color=None,
@@ -842,6 +844,7 @@ class Plot(PlotBase.PlotBase):
         self._markerList.append(label)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
+        return marker
 
     def insertMarker(self, x, y, label=None,
                      color=None,
@@ -869,17 +872,24 @@ class Plot(PlotBase.PlotBase):
         self._markerList.append(label)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
+        return marker
 
     def clearMarkers(self):
         self._markerDict = {}
         self._markerList = []
         self._plot.clearMarkers()
+        self.replot()
 
     def removeMarker(self, marker):
         if marker in self._markerList:
             idx = self._markerList.index(marker)
-            self._plot.removeMarker(self._markerDict[marker]['marker'])
-            del self._markerDict[marker]
+            try:
+                self._plot.removeMarker(self._markerDict[marker]['marker'])
+                del self._markerDict[marker]
+            except KeyError:
+                if DEBUG:
+                    print("Marker was not present %s"  %\
+                          self._markerDict[marker]['marker'])
 
     def setMarkerFollowMouse(self, marker, boolean):
         raise NotImplemented("Not necessary?")
