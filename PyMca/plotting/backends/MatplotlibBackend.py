@@ -36,8 +36,10 @@ else:
 if ("PyQt4" in sys.modules) or ("PySide" in sys.modules): 
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
+    QT = True
 elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
     TK = True
+    QT = False
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
@@ -380,7 +382,6 @@ class MatplotlibGraph(FigureCanvas):
               'xpixel':self._x1Pixel,
               'ypixel':self._y1Pixel}
         self._callback(ddict)
-
         # should this be made by Plot1D with the previous call???
         # The problem is Plot1D does not know if one is zooming or drawing
         if not (self.__zooming or self.__drawing or self.__picking):
@@ -402,6 +403,14 @@ class MatplotlibGraph(FigureCanvas):
                     elif (abs(xPixel-event.x) < 5) and \
                          (abs(yPixel-event.y) < 5):
                             marker = artist
+            if QT:
+                oldShape = self.cursor().shape()
+                if oldShape not in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                    self._originalCursorShape = oldShape
             if marker is not None:
                 ddict = {}
                 ddict['event'] = 'hover'
@@ -409,10 +418,14 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['label'] = marker.get_label()[10:]
                 if 'draggable' in marker._plot_options:
                     ddict['draggable'] = True
+                    if QT:
+                        self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
                 else:
                     ddict['draggable'] = False
                 if 'selectable' in marker._plot_options:
                     ddict['selectable'] = True
+                    if QT:
+                        self.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
                 else:
                     ddict['selectable'] = False
                 ddict['x'] = self._x1
@@ -420,6 +433,15 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['xpixel'] = self._x1Pixel,
                 ddict['ypixel'] = self._y1Pixel
                 self._callback(ddict)
+            elif QT:
+                if self._originalCursorShape in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                    self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                else:
+                    self.setCursor(QtGui.QCursor(self._originalCursorShape))
             return
         if self.__picking:
             if self.__markerMoving:
@@ -872,6 +894,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 ymax = ymin
             ymax -= 0.005 * delta
             line._infoText = self.ax.text(x, ymax, text,
+                                          color=color,
                                           horizontalalignment='left',
                                           verticalalignment='top')
         line._plot_options = ["xmarker"]
@@ -1267,7 +1290,6 @@ def main(parent=None):
     #plot.removeCurve("dummy")
     plot.setActiveCurve("To set Active")
     print("All curves = ", plot.getAllCurves())
-    plot.insertXMarker(50., draggable=True)
     #plot.resetZoom()
     return plot
 
@@ -1306,6 +1328,7 @@ if __name__ == "__main__":
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
     print("aspect = %s" % widget.ax.get_aspect())
+    w.insertXMarker(50., label="Label", color='pink', draggable=True)
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())
     if "tkinter" in sys.modules or "Tkinter" in sys.modules:
