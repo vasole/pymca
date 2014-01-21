@@ -69,6 +69,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          newplot=True,
                                          plugins=True,
                                          backend=backend,
+                                         #roi=True,
+                                         fit=True,
                                          **kw)
         # this two objects are the same
         self.dataObjectsList = self._curveList
@@ -117,13 +119,9 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.dataObjectsList = []
 
         if 1:
-            #fit icon
-            self.fitButton = self._addToolButton(self.fitIcon,
-                                 self._fitIconMenu,
-                                 'Simple Fit of Active Curve')
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
-                                   self._fitIconSignal)
+                                   self._simpleFitSignal)
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
 
@@ -624,12 +622,14 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
             
-    def _fitIconMenu(self):
-        self.fitButtonMenu.exec_(self.cursor().pos())        
-
     def _fitIconSignal(self):
         if DEBUG:
             print("_fitIconSignal")
+        self.fitButtonMenu.exec_(self.cursor().pos())
+
+    def _simpleFitSignal(self):
+        if DEBUG:
+            print("_simpleFitSignal")
         self.__QSimpleOperation("fit")
 
     def _customFitSignal(self):

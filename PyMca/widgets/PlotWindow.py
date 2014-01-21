@@ -152,11 +152,20 @@ class PlotWindow(PlotWidget.PlotWidget):
                              'Toggle Points/Lines')
 
 
+        #roi icon
+        if kw.get('roi', False):
+            self.roiButton = self._addToolButton(self.roiIcon,
+                                         self._toggleROI,
+                                         'Show/Hide ROI widget',
+                                         toggle=True)
+            self.roiButton.setChecked(False)
+            self.roiButton.setDown(False)
+
         #fit icon
         if kw.get('fit', False):
             self.fitButton = self._addToolButton(self.fitIcon,
                                          self._fitIconSignal,
-                                 'Simple Fit of Active Curve')
+                                         'Simple Fit of Active Curve')
 
 
         if self.newplotIconsFlag:
@@ -287,6 +296,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             self.setDefaultPlotLines(True)
             self.setDefaultPlotPoints(False)
+
+    def _toggleROI(self):
+        print("_toggleROI signal")
 
     def _fitIconSignal(self):
         print("fit icon signal")
