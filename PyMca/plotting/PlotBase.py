@@ -140,6 +140,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         """
         allCurves = self.getAllCurves() * 1
         for i in range(len(allCurves)):
+            curve = allCurves[i]
             x, y, legend, info = curve[0:4]
             if self.isCurveHidden(legend):
                 continue

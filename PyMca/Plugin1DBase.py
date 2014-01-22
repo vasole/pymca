@@ -51,6 +51,10 @@ The main items are reproduced here and can be directly accessed as plugin method
 
 """
 import weakref
+try:
+    from numpy import argsort, nonzero, take
+except ImportError:
+    print("WARNING: numpy not present")
 
 class Plugin1DBase(object):
     def __init__(self, plotWindow, **kw):
@@ -125,6 +129,32 @@ class Plugin1DBase(object):
             or just an empty list.
         """
         return self._plotWindow.getAllCurves(just_legend=just_legend)
+
+    def getMonotonicCurves(self):
+        """
+        Convenience method that calls getAllCurves and makes sure that all of
+        the X values are strictly increasing.
+        :return: It returns a list of the form:
+                [[xvalues0, yvalues0, legend0, dict0],
+                 [xvalues1, yvalues1, legend1, dict1],
+                 [...],
+                 [xvaluesn, yvaluesn, legendn, dictn]]
+        """
+        allCurves = self.getAllCurves() * 1
+        for i in range(len(allCurves)):
+            curve = allCurves[i]
+            x, y, legend, info = curve[0:4]
+            # Sort
+            idx = argsort(x, kind='mergesort')
+            xproc = take(x, idx)
+            yproc = take(y, idx)
+            # Ravel, Increase
+            xproc = xproc.ravel()
+            idx = nonzero((xproc[1:] > xproc[:-1]))[0]
+            xproc = take(xproc, idx)
+            yproc = take(yproc, idx)
+            allCurves[i][0:2] = x, y
+        return allCurves
     
     def getGraphXLimits(self):
         """

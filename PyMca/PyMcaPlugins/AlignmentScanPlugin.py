@@ -83,41 +83,41 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         return self.methodDict[name][0]()
 
     def fftAlignment(self):
-        curves = self.getAllCurves()
+        curves = self.getMonotonicCurves()
         nCurves = len(curves)
         if nCurves < 2:
             raise ValueError("At least 2 curves needed")
             return
 
-        # get active curve            
-        activeCurve = self.getActiveCurve()
-        if activeCurve is None:
+        # get legend of active curve
+        try:
+            activeCurveLegend = self.getActiveCurve()[2]
+            if activeCurveLegend is None:
+                activeCurveLegend = curves[0][2]
+            for curve in curves:
+                if curve[2] == activeCurveLegend:
+                    activeCurve = curve
+                    break
+        except:
             activeCurve = curves[0]
 
         # apply between graph limits
-        x0 = activeCurve[0][:]
-        y0 = activeCurve[1][:]
+        x0, y0 = activeCurve[0:2]
         xmin, xmax =self.getGraphXLimits()
+
+        for curve in curves:
+            xmax = float(min(xmax, curve[0][-1]))
+            xmin = float(max(xmin, curve[0][0]))
+        
         idx = numpy.nonzero((x0 >= xmin) & (x0 <= xmax))[0]
-        x0 = numpy.take(x0, idx)
-        y0 = numpy.take(y0, idx)
-
-        #sort the values
-        idx = numpy.argsort(x0, kind='mergesort')
-        x0 = numpy.take(x0, idx)
-        y0 = numpy.take(y0, idx)
-
-        #remove duplicates
-        x0 = x0.ravel()
-        idx = numpy.nonzero((x0[1:] > x0[:-1]))[0]
         x0 = numpy.take(x0, idx)
         y0 = numpy.take(y0, idx)
 
         #make sure values are regularly spaced
         xi = numpy.linspace(x0[0], x0[-1], len(idx)).reshape(-1, 1)
         yi = SpecfitFuns.interpol([x0], y0, xi, y0.min())
-        x0 = xi
-        y0 = yi
+        x0 = xi * 1
+        y0 = yi * 1
 
         y0.shape = -1
         fft0 = numpy.fft.fft(y0)
@@ -126,57 +126,35 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         nChannels = x0.shape[0]
 
         # built a couple of temporary array of spectra for handy access
-        tmpArray = numpy.zeros((nChannels, nCurves), numpy.float)
-        fftList = []
         shiftList = []
         curveList = []
         i = 0
         for idx in range(nCurves):
             x, y, legend, info = curves[idx][0:4]
-            #sort the values
-            x = x[:]
-            idx = numpy.argsort(x, kind='mergesort')
-            x = numpy.take(x, idx)
-            y = numpy.take(y, idx)
 
-            #take the portion of x between limits
-            idx = numpy.nonzero((x>=xmin) & (x<=xmax))[0]
-            if not len(idx):
-                # no overlap
-                continue
-            x = numpy.take(x, idx)
-            y = numpy.take(y, idx)
-
-            #remove duplicates
-            x = x.ravel()
-            idx = numpy.nonzero((x[1:] > x[:-1]))[0]
-            x = numpy.take(x, idx)
-            y = numpy.take(y, idx)
-            x.shape = -1, 1
-            if numpy.allclose(x, x0):
+            if x.size != x0.size:
+                needInterpolation = True
+            elif numpy.allclose(x, x0):
                 # no need for interpolation
-                pass
+                needInterpolation = False
             else:
+                needInterpolation = True
+
+            if needInterpolation:
                 # we have to interpolate
                 x.shape = -1
                 y.shape = -1
-                xi = x0[:]
+                xi = x0[:] * 1
                 y = SpecfitFuns.interpol([x], y, xi, y0.min())
+                x = xi
+
             y.shape = -1
-            tmpArray[:, i] = y
             i += 1
 
             # now calculate the shift
             ffty = numpy.fft.fft(y)
-            fftList.append(ffty)
-            if 0:
-                self.addCurve(x,
-                      y,
-                      legend="NEW Y%d" % i,
-                      info=None,
-                      replot=True,
-                      replace=False)
-            elif numpy.allclose(fft0, ffty):
+            
+            if numpy.allclose(fft0, ffty):
                 shiftList.append(0.0)
             else:
                 shift = numpy.fft.ifft(fft0 * ffty.conjugate()).real
@@ -184,14 +162,7 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                 m = shift2.size//2
                 shift2[m:] = shift[:-m]
                 shift2[:m] = shift[-m:]
-                if 0:
-                    self.addCurve(numpy.arange(len(shift2)),
-                          shift2,
-                          legend="SHIFT",
-                          info=None,
-                          replot=True,
-                          replace=False)
-                threshold = 0.50*shift2.max()
+                threshold = 0.80*shift2.max()
                 #threshold = shift2.mean()
                 idx = numpy.nonzero(shift2 > threshold)[0]
                 #print("max indices = %d" % (m - idx))
@@ -202,11 +173,10 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                 shift = (shift - m) * (x[1]-x[0])
                 x.shape = -1
                 y = numpy.fft.ifft(numpy.exp(-2.0*numpy.pi*numpy.sqrt(numpy.complex(-1))*\
-                                numpy.fft.fftfreq(len(x), d=x[1]-x[0])*shift)*numpy.fft.fft(y))
+                                numpy.fft.fftfreq(len(x), d=x[1]-x[0])*shift)*ffty)
                 y = y.real
                 y.shape = -1
             curveList.append([x, y, legend + "SHIFT", False, False])
-        tmpArray = None
         curveList[-1][-2] = True
         curveList[-1][-1] = False
         x, y, legend, replot, replace = curveList[0]
@@ -220,21 +190,6 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                           replot=replot,
                           replace=False)
         return
-
-        
-        # now get the final spectrum
-        y = medianSpectra.sum(axis=1) / nCurves
-        x0.shape = -1
-        y.shape = x0.shape
-        legend = "%d Median from %s to %s" % (width,
-                                              curves[0][2],
-                                              curves[-1][2])
-        self.addCurve(x0,
-                      y,
-                      legend=legend,
-                      info=None,
-                      replot=True,
-                      replace=True)
 
 MENU_TEXT = "Alignment Plugin"
 def getPlugin1DInstance(plotWindow, **kw):
