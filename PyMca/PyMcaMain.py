@@ -39,6 +39,7 @@ if __name__ == '__main__':
                    'shm=',
                    'debug=',
                    'qt=',
+                   'backend=',
                    'nativefiledialogs=']
     try:
         opts, args = getopt.getopt(
@@ -52,6 +53,7 @@ if __name__ == '__main__':
     keywords={}
     debugreport = 0
     qtversion = '4'
+    backend=None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -64,6 +66,8 @@ if __name__ == '__main__':
             keywords['fresh'] = 1
         elif opt in ('--qt'):
             qtversion = arg
+        elif opt in ('--backend'):
+            backend = arg
         elif opt in ('--nativefiledialogs'):
             if int(arg):
                 nativeFileDialogs = True
@@ -74,6 +78,13 @@ if __name__ == '__main__':
 
 from PyMca import PyMcaMdi
 from PyMca import PyMcaQt as qt
+if backend is not None:
+    if backend.lower() == "matplotlib":
+        from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+    elif backend.lower() == "pyqtgraph":
+        from PyMca.plotting.backends.PyQtGrapgBackend import PyQtGraphBackend as backend
+    else:
+        backend = None
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -183,7 +194,10 @@ if __name__ == "__main__":
             qt.qApp.processEvents()
 
 from PyMca import McaWindow
-from PyMca import ScanWindow
+if backend is None:
+    from PyMca import ScanWindow
+else:
+    from PyMca.widgets import ScanWindow
 OBJECT3D = False
 if QTVERSION > '4.0.0':
     from PyMca import PyMcaImageWindow
@@ -340,7 +354,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     self.mainTabWidget = qt.QTabWidget(self.mdi)
                     self.mainTabWidget.setWindowTitle("Main Window")
                     self.mcawindow = McaWindow.McaWidget()
-                    self.scanwindow = ScanWindow.ScanWindow()
+                    if backend is None:
+                        self.scanwindow = ScanWindow.ScanWindow()
+                    else:
+                        self.scanwindow = ScanWindow.ScanWindow(backend=backend)
                     if OBJECT3D:
                         self.glWindow = SceneGLWindow.SceneGLWindow()
                     self.mainTabWidget.addTab(self.mcawindow, "MCA")
