@@ -163,7 +163,7 @@ class PlotWindow(PlotWidget.PlotWidget):
 
 
         #roi icon
-        if kw.get('roi', True):#False):
+        if kw.get('roi', False):
             self.roiButton = self._addToolButton(self.roiIcon,
                                          self._toggleROI,
                                          'Show/Hide ROI widget',
@@ -653,7 +653,7 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
-    plot = PlotWindow()#uselegendmenu=True)
+    plot = PlotWindow(roi=True)#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)
