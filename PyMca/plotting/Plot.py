@@ -43,28 +43,39 @@ colordict['pink']   = '#ff66ff'
 colordict['brown']  = '#a52a2a'
 colordict['orange'] = '#ff9900'
 colordict['violet'] = '#6600ff'
-colordict['grey']   = '#808080'
+colordict['gray'] = colordict['grey']   = '#a0a0a4'
+#colordict['darkGray'] = colordict['darkGrey']   = '#808080'
+#colordict['lightGray'] = colordict['lightGrey']   = '#c0c0c0'
 colordict['y'] = colordict['yellow'] = '#ffff00'
-colordict['darkgreen'] = '#006400'
-colordict['darkbrown'] = '#660000' 
 colordict['m'] = colordict['magenta'] = '#ff00ff'
 colordict['c'] = colordict['cyan'] = '#00ffff'
-colordict['bluegreen'] = '#33ffff'
+colordict['darkBlue'] = '#000080'
+colordict['darkRed'] = '#800000'
+colordict['darkGreen'] = '#008000'
+colordict['darkBrown'] = '#660000' 
+colordict['darkCyan'] = '#008080'
+colordict['darkYellow'] = '#808000'
+colordict['darkMagenta'] = '#800080'
 colorlist  = [colordict['black'],
               colordict['blue'],
               colordict['red'],
               colordict['green'],
               colordict['pink'],
+              colordict['yellow'],
               colordict['brown'],
               colordict['cyan'],
+              colordict['magenta'],
               colordict['orange'],
               colordict['violet'],
-              colordict['bluegreen'],
+              #colordict['bluegreen'],
               colordict['grey'],
-              colordict['magenta'],
-              colordict['darkgreen'],
-              colordict['darkbrown'],
-              colordict['yellow']]
+              colordict['darkBlue'],
+              colordict['darkRed'],
+              colordict['darkGreen'],
+              colordict['darkCyan'],
+              colordict['darkMagenta'],
+              colordict['darkYellow'],
+              colordict['darkBrown']]
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 
@@ -86,8 +97,7 @@ class Plot(PlotBase.PlotBase):
         else:
             self.widget_ = widget
 
-        if callback is None:
-            self._plot.setCallback(self.graphCallback)
+        self.setCallback(callback)
 
         self.setLimits = self._plot.setLimits
 
@@ -129,13 +139,16 @@ class Plot(PlotBase.PlotBase):
         return self.widget_
 
     def setCallback(self, callbackFunction):
-        self._callback = callbackFunction
+        if callbackFunction is None:
+            self._plot.setCallback(self.graphCallback)
+        else:
+            self._plot.setCallback(callbackFunction)
 
     def graphCallback(self, ddict=None):
         """
         This callback is foing to receive all the events from the plot.
         Those events will consist on a dictionnary and among the dictionnary
-        keys the key 'event' is madatory to describe the type of event.
+        keys the key 'event' is mandatory to describe the type of event.
         """
 
         if ddict is None:
@@ -146,8 +159,6 @@ class Plot(PlotBase.PlotBase):
         if ddict['event'] in ["legendClicked", "curveClicked"]:
             if ddict['button'] == "left":
                 self.setActiveCurve(ddict['label'])
-        if self._callback is not None:
-            self._callback(ddict)
     
     def setDefaultPlotPoints(self, flag):
         if flag:
@@ -173,11 +184,12 @@ class Plot(PlotBase.PlotBase):
         color = self._colorList[self._colorIndex]
         style = self._styleList[self._styleIndex]
         self._colorIndex += 1
+        #print("color index = ", self._colorIndex, "ncolors = ", self._nColors)
         if self._colorIndex >= self._nColors:
             self._colorIndex = 1
             self._styleIndex += 1
             if self._styleIndex >= self._nStyles:
-                self._styleIndex = 0        
+                self._styleIndex = 0
         return color, style
 
     def setZoomModeEnabled(self, flag=True):
@@ -221,19 +233,24 @@ class Plot(PlotBase.PlotBase):
         if replace:
             self._curveList = []
             self._curveDict = {}
-            self._colorIndex = 0
+            self._colorIndex = 1
             self._styleIndex = 0
             self._plot.clearCurves()
 
+        symbol = None
+        color = None
+        line_style = None
         if key in self._curveList:
             idx = self._curveList.index(key)
             self._curveList[idx] = key
             handle = self._curveDict[key][3].get('plot_handle', None)
             if handle is not None:
                 # this can give errors if it is not present in the plot
-                # self._plot.removeCurve(handle, replot=False)
-                # this is safer
                 self._plot.removeCurve(key, replot=False)
+                symbol = self._curveDict[key][3].get('plot_symbol', symbol)
+                color = self._curveDict[key][3].get('plot_color', color)
+                line_style = self._curveDict[key][3].get('plot_line_style',
+                                                    line_style)
         else:
             self._curveList.append(key)
         #print("TODO: Here we can add properties to the info dictionnary")
@@ -242,13 +259,12 @@ class Plot(PlotBase.PlotBase):
         #print("The actual plotting stuff should only take care of handling")
         #print("logarithmic filtering if needed")
         # deal with the symbol
-        symbol = None
         symbol = info.get("plot_symbol", symbol)
         symbol = kw.get("symbol", symbol)
         if self._plotPoints:
             symbol = 'o'
         info["plot_symbol"] = symbol
-        color = info.get("plot_color", None)
+        color = info.get("plot_color", color)
         color = kw.get("color", color)
 
         line_style = info.get("plot_line_style", None)
@@ -265,7 +281,7 @@ class Plot(PlotBase.PlotBase):
             dummy, line_style = self._getColorAndStyle()
         elif color is None:
             color, dummy = self._getColorAndStyle()
-
+        #print("Legend = ", legend, "color = ", color, "style = ", line_style)
         info["plot_color"] = color
         info["plot_line_style"] = line_style
 
@@ -476,11 +492,30 @@ class Plot(PlotBase.PlotBase):
                     output.append(self._curveDict[key])
         return output
 
+    def getCurve(self, legend):
+        """
+        :param legend: legend assiciated to the curve
+        :type legend: boolean
+        :return: list [x, y, legend, info]
+        :rtype: list 
+        Function to access the graph currently active curve.
+        It returns None in case of not having an active curve.
+
+        Default output has the form:
+            xvalues, yvalues, legend, dict
+            where dict is a dictionnary containing curve info.
+            For the time being, only the plot labels associated to the
+            curve are warranted to be present under the keys xlabel, ylabel.
+        """
+        # let it raise en exception if not present
+        return self._curveDict[legend] * 1
+
+
     def _getAllLimits(self):
         """
         Internal method to retrieve the limits based on the curves, not
         on the plot. It might be of use to reset the zoom when one of the
-        X or Y axesis not set to autoscale.
+        X or Y axes is not set to autoscale.
         """
         keys = list(self._curveDict.keys())
         if not len(keys):
@@ -625,6 +660,8 @@ class Plot(PlotBase.PlotBase):
         return x, y
 
     def _update(self):
+        if DEBUG:
+            print("_update called")
         curveList = self.getAllCurves()
         activeCurve = self.getActiveCurve(just_legend=True)
         #self._plot.clearCurves()
@@ -635,19 +672,19 @@ class Plot(PlotBase.PlotBase):
         if len(curveList):
             if activeCurve not in curveList:
                 activeCurve = curveList[0][2]
-            print("setting active Curve", activeCurve)
             self.setActiveCurve(activeCurve)
         self.replot()
 
     def replot(self):
+        if DEBUG:
+            print("replot called")
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             for image in self._imageDict.keys():
-                self._plot.removeImage(image[1]) 
+                self._plot.removeImage(image[1])
         if hasattr(self._plot, 'replot_'):
             plot = self._plot.replot_
         else:
-            plot = self._plot.replot
-        
+            plot = self._plot.replot        
 
     def clear(self):
         self._curveList = []
@@ -664,7 +701,7 @@ class Plot(PlotBase.PlotBase):
     def clearCurves(self):
         self._curveList = []
         self._curveDict = {}
-        self._colorIndex = 0
+        self._colorIndex = 1
         self._styleIndex = 0
         self._plot.clearCurves()
         self.replot()
@@ -693,6 +730,15 @@ class Plot(PlotBase.PlotBase):
 
     def isYAxisAutoScale(self):
         return self._plot.isYAxisAutoScale()
+
+    def getGraphTitle(self):
+        return self._plot.getGraphTitle()
+
+    def getGraphXLabel(self):
+        return self._plot.getGraphXLabel()
+
+    def getGraphYLabel(self):
+        return self._plot.getGraphYLabel()
 
     def setGraphYLimits(self, ymin, ymax, replot=False):
         self._plot.setGraphYLimits(ymin, ymax)
@@ -745,6 +791,8 @@ class Plot(PlotBase.PlotBase):
         """
         kw ->symbol
         """
+        if DEBUG:
+            print("Received label = %s" % label)
         if color is None:
             color = colordict['black']
         elif color in colordict:
@@ -757,7 +805,7 @@ class Plot(PlotBase.PlotBase):
                 label = "Unnamed X Marker %d" % i
 
         if label in self._markerList:
-            self.clearMarker(label)
+            self.removeMarker(label)
         marker = self._plot.insertXMarker(x, label,
                                           color=color,
                                           selectable=selectable,
@@ -766,6 +814,7 @@ class Plot(PlotBase.PlotBase):
         self._markerList.append(label)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
+        return marker
 
     def insertYMarker(self, y, label=None,
                      color=None,
@@ -795,6 +844,7 @@ class Plot(PlotBase.PlotBase):
         self._markerList.append(label)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
+        return marker
 
     def insertMarker(self, x, y, label=None,
                      color=None,
@@ -822,17 +872,24 @@ class Plot(PlotBase.PlotBase):
         self._markerList.append(label)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
+        return marker
 
     def clearMarkers(self):
         self._markerDict = {}
         self._markerList = []
         self._plot.clearMarkers()
+        self.replot()
 
     def removeMarker(self, marker):
         if marker in self._markerList:
             idx = self._markerList.index(marker)
-            self._plot.removeMarker(self._markerDict[marker]['marker'])
-            del self._markerDict[marker]
+            try:
+                self._plot.removeMarker(self._markerDict[marker]['marker'])
+                del self._markerDict[marker]
+            except KeyError:
+                if DEBUG:
+                    print("Marker was not present %s"  %\
+                          self._markerDict[marker]['marker'])
 
     def setMarkerFollowMouse(self, marker, boolean):
         raise NotImplemented("Not necessary?")

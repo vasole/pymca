@@ -364,6 +364,14 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         brush = color
         style = info.get('plot_line_style', '-')
         linewidth = 1
+        if hasattr(x, "shape"):
+            if len(x.shape) == 2:
+                if x.shape[1] == 1:
+                    x = x.reshape(-1)
+        if hasattr(y, "shape"):
+            if len(y.shape) == 2:
+                if y.shape[1] == 1:
+                    y = y.reshape(-1)
         """
         Better control instantiating a curve item and a scatter item
         because mouse coordenates are not emitted and right click is not
@@ -607,6 +615,18 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         return
 
     #Graph related functions
+    def getGraphTitle(self):
+        # there should be a function for this
+        return self.plotItem.titleLabel.text
+
+    def getGraphXLabel(self):
+        # there should be a function for this
+        return self.getAxis('bottom').labelText
+
+    def getGraphYLabel(self):
+        # there should be a function for this
+        return self.getAxis('left').labelText
+    
     def setGraphTitle(self, title=""):
         self.setTitle(title)
 

@@ -36,8 +36,10 @@ else:
 if ("PyQt4" in sys.modules) or ("PySide" in sys.modules): 
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
+    QT = True
 elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
     TK = True
+    QT = False
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
@@ -58,6 +60,13 @@ class MatplotlibGraph(FigureCanvas):
             self._canvas = FigureCanvas.__init__(self, self.fig, master=parent)
         else:
             self._canvas = FigureCanvas.__init__(self, self.fig)
+            # get the default widget color
+            color = self.palette().color(self.backgroundRole())
+            color = "#%x" % color.rgb()
+            if len(color) == 9:
+                color = "#" + color[3:]
+            self.fig.set_facecolor(color)
+            # that's it
         self.ax = self.fig.add_axes([.15, .15, .75, .75])
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
@@ -137,7 +146,7 @@ class MatplotlibGraph(FigureCanvas):
             if label.startswith("__MARKER__"):
                 label = label[10:]
                 self._pickingInfo['type'] = 'marker' 
-                self._pickingInfo['label'] = label[10:]
+                self._pickingInfo['label'] = label
                 if 'draggable' in artist._plot_options:
                     self._pickingInfo['draggable'] = True
                 else:
@@ -145,7 +154,8 @@ class MatplotlibGraph(FigureCanvas):
                 if 'selectable' in artist._plot_options:
                     self._pickingInfo['selectable'] = True
                 else:
-                    self._pickingInfo['selectable'] = False                
+                    self._pickingInfo['selectable'] = False
+                self._pickingInfo['infoText'] = artist._infoText
             else:
                 self._pickingInfo['type'] = 'curve' 
                 self._pickingInfo['label'] = label
@@ -154,15 +164,18 @@ class MatplotlibGraph(FigureCanvas):
                 ydata = artist.get_ydata()
                 self._pickingInfo['xdata'] = xdata[ind]
                 self._pickingInfo['ydata'] = ydata[ind]
-            if self._infoText is None:
-                self._infoText = self.ax.text(event.mouseevent.xdata,
-                                              event.mouseevent.ydata,
-                                              label)
-            else:
-                self._infoText.set_position((event.mouseevent.xdata,
-                                            event.mouseevent.ydata))
-                self._infoText.set_text(label)
-            self._infoText.set_visible(True)
+                self._pickingInfo['infoText'] = None
+            if self._pickingInfo['infoText'] is None:
+                if self._infoText is None:
+                    self._infoText = self.ax.text(event.mouseevent.xdata,
+                                                  event.mouseevent.ydata,
+                                                  label)
+                else:
+                    self._infoText.set_position((event.mouseevent.xdata,
+                                                event.mouseevent.ydata))
+                    self._infoText.set_text(label)
+                self._pickingInfo['infoText'] = self._infoText
+            self._pickingInfo['infoText'].set_visible(True)
             if DEBUG:
                 print("%s %s selected" % (self._pickingInfo['type'].upper(),
                                           self._pickingInfo['label']))
@@ -369,7 +382,6 @@ class MatplotlibGraph(FigureCanvas):
               'xpixel':self._x1Pixel,
               'ypixel':self._y1Pixel}
         self._callback(ddict)
-
         # should this be made by Plot1D with the previous call???
         # The problem is Plot1D does not know if one is zooming or drawing
         if not (self.__zooming or self.__drawing or self.__picking):
@@ -391,6 +403,14 @@ class MatplotlibGraph(FigureCanvas):
                     elif (abs(xPixel-event.x) < 5) and \
                          (abs(yPixel-event.y) < 5):
                             marker = artist
+            if QT:
+                oldShape = self.cursor().shape()
+                if oldShape not in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                    self._originalCursorShape = oldShape
             if marker is not None:
                 ddict = {}
                 ddict['event'] = 'hover'
@@ -398,10 +418,14 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['label'] = marker.get_label()[10:]
                 if 'draggable' in marker._plot_options:
                     ddict['draggable'] = True
+                    if QT:
+                        self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
                 else:
                     ddict['draggable'] = False
                 if 'selectable' in marker._plot_options:
                     ddict['selectable'] = True
+                    if QT:
+                        self.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
                 else:
                     ddict['selectable'] = False
                 ddict['x'] = self._x1
@@ -409,19 +433,32 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['xpixel'] = self._x1Pixel,
                 ddict['ypixel'] = self._y1Pixel
                 self._callback(ddict)
+            elif QT:
+                if self._originalCursorShape in [QtCore.Qt.SizeHorCursor,
+                                QtCore.Qt.SizeVerCursor,
+                                QtCore.Qt.PointingHandCursor,
+                                QtCore.Qt.OpenHandCursor,
+                                QtCore.Qt.SizeAllCursor]:
+                    self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                else:
+                    self.setCursor(QtGui.QCursor(self._originalCursorShape))
             return
         if self.__picking:
             if self.__markerMoving:
                 artist = self._pickingInfo['artist']
+                infoText = self._pickingInfo['infoText']
                 if 'xmarker' in artist._plot_options:
                     artist.set_xdata(event.xdata)
+                    ymin, ymax = self.ax.get_ylim()
+                    delta = abs(ymax - ymin)
+                    ymax = max(ymax, ymin) - 0.005 * delta
+                    infoText.set_position((event.xdata, ymax))
                 elif 'ymarker' in artist._plot_options:
                     artist.set_ydata(event.ydata)
+                    infoText.set_position((event.xdata, event.ydata))
                 else:
                     artist.set_xdata(event.xdata)
                     artist.set_ydata(event.ydata)
-                if self._infoText is not None:
-                    self._infoText.set_position((event.xdata, event.ydata))
                 self.fig.canvas.draw()
                 ddict = {}
                 ddict['event'] = "markerMoving"
@@ -746,29 +783,42 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Clear all curvers and other items from the plot
         """
-        for line2d in self.ax.lines:
+        n = range(len(self.ax.lines))
+        n.reverse()
+        for i in n:
+            line2d = self.ax.lines[i]
             line2d.remove()
+            del line2d
+        self.ax.clear()
 
     def clearCurves(self):
         """
         Clear all curves from the plot. Not the markers!!
         """
-        for line2d in self.ax.lines:
+        n = range(len(self.ax.lines))
+        n.reverse()
+        for i in n:
+            line2d = self.ax.lines[i]
             label = line2d.get_label()
             if label.startswith("__MARKER__"):
                 #it is a marker
                 continue
             line2d.remove()
+            del line2d
 
     def clearMarkers(self):
         """
         Clear all markers from the plot. Not the curves!!
         """
-        for line2d in self.ax.lines:
+        n = range(len(self.ax.lines))
+        n.reverse()
+        for i in n:
+            line2d = self.ax.lines[i]
             label = line2d.get_label()
             if label.startswith("__MARKER__"):
                 #it is a marker
                 line2d.remove()
+                del line2d
 
     def getGraphXLimits(self):
         """
@@ -831,16 +881,28 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
+        text = " " + label
         label = "__MARKER__" + label
         if selectable or draggable:
             line = self.ax.axvline(x, label=label, color=color, picker=5)
         else:
             line = self.ax.axvline(x, label=label, color=color)
+        if label is not None:
+            ymin, ymax = self.getGraphYLimits()
+            delta = abs(ymax - ymin)
+            if ymin > ymax:
+                ymax = ymin
+            ymax -= 0.005 * delta
+            line._infoText = self.ax.text(x, ymax, text,
+                                          color=color,
+                                          horizontalalignment='left',
+                                          verticalalignment='top')
         line._plot_options = ["xmarker"]
         if selectable:
             line._plot_options.append('selectable')
         if draggable:
             line._plot_options.append('draggable')
+        self.replot()
         return line
         
     def insertYMarker(self, y, label,
@@ -919,7 +981,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def removeMarker(self, handle, replot=True):
         if hasattr(handle, "remove"):
+            self._removeInfoText(handle)
             handle.remove()
+            del handle
         else:
             # we have received a legend!
             legend = handle
@@ -929,9 +993,18 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if label == ("__MARKER__"+legend):
                     handle = line2d
             if handle is not None:
+                self._removeInfoText(handle)
                 handle.remove()
+                del handle
         if replot:
             self.replot()
+
+    def _removeInfoText(self, handle):
+        if hasattr(handle, "_infoText"):
+            t = handle._infoText
+            handle._infoText = None
+            t.remove()
+            del t
 
     def resetZoom(self):
         """
@@ -1000,6 +1073,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.graph.setCallback(callbackFunction)
         # Should I call the base to keep a copy?
         # It does not seem necessary since the graph will do it.
+
+    def getGraphTitle(self):
+        return self.ax.get_title()
+
+    def getGraphXLabel(self):
+        return self.ax.get_xlabel()
+
+    def getGraphYLabel(self):
+        return self.ax.get_ylabel()
 
     def setGraphTitle(self, title=""):
         self.ax.set_title(title)
@@ -1209,7 +1291,6 @@ def main(parent=None):
     #plot.removeCurve("dummy")
     plot.setActiveCurve("To set Active")
     print("All curves = ", plot.getAllCurves())
-    plot.insertXMarker(50., draggable=True)
     #plot.resetZoom()
     return plot
 
@@ -1248,6 +1329,7 @@ if __name__ == "__main__":
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
     print("aspect = %s" % widget.ax.get_aspect())
+    w.insertXMarker(50., label="Label", color='pink', draggable=True)
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())
     if "tkinter" in sys.modules or "Tkinter" in sys.modules:
