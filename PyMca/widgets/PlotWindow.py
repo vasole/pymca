@@ -73,6 +73,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self._initIcons()
         self._buildToolBar(kw)
         self._toggleCounter = 0
+        self.gridLevel = 0
         self.setCallback(self._graphSignalReceived)
         
     def setWindowType(self, wtype=None):
@@ -95,6 +96,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.logyIcon	= qt.QIcon(qt.QPixmap(IconDict["logy"]))
         self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
         self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
+        self.gridIcon	= qt.QIcon(qt.QPixmap(IconDict["grid16"]))
         self.togglePointsIcon = qt.QIcon(qt.QPixmap(IconDict["togglepoints"]))
 
         self.fitIcon	= qt.QIcon(qt.QPixmap(IconDict["fit"]))
@@ -155,6 +157,15 @@ class PlotWindow(PlotWidget.PlotWidget):
                                 toggle = True)
             self.xLogButton.setChecked(False)
             self.xLogButton.setDown(False)
+
+        #grid
+        if kw.get('grid', True):
+            tb = self._addToolButton(self.gridIcon,
+                                self.changeGridLevel,
+                                'Change Grid',
+                                toggle = False)
+            self.gridTb = tb
+
 
         #toggle Points/Lines
         tb = self._addToolButton(self.togglePointsIcon,
@@ -332,6 +343,18 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self.roiDockWidget.show()
             else:
                 self.roiDockWidget.hide()
+
+    def changeGridLevel(self):
+        self.gridLevel += 1
+        #self.gridLevel = self.gridLevel % 3
+        self.gridLevel = self.gridLevel % 2
+        if self.gridLevel == 0:
+            self.showGrid(False)
+        elif self.gridLevel == 1:
+            self.showGrid(1)
+        elif self.gridLevel == 2:
+            self.showGrid(2)
+        self.replot()
 
     def _fitIconSignal(self):
         print("fit icon signal")

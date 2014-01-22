@@ -64,6 +64,7 @@ setXAxisLogarithmic
 setYAxisAutoScale
 setYAxisLogarithmic
 setZoomModeEnabled
+showGrid
 
 PlotBackend "signals/events"
 
@@ -552,6 +553,13 @@ class PlotBackend(object):
         else:
             self._zoomEnabled = True
         print("PlotBackend setZoomModeEnabled not implemented")
+
+    def showGrid(self, flag=True):
+        """
+        :param flag: If True, the grid will be shown. 
+        :type flag: boolean, default True
+        """
+        print("PlotBackend showGrid not implemented")
         
 def main():
     import numpy

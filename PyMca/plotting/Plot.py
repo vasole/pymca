@@ -905,6 +905,11 @@ class Plot(PlotBase.PlotBase):
         raise NotImplemented("Not necessary?")
         pass
 
+    def showGrid(self, flag=True):
+        if DEBUG:
+            print("Plot showGrid called")
+        self._plot.showGrid(flag)
+
 def main():
     import numpy
     x = numpy.arange(100.)
