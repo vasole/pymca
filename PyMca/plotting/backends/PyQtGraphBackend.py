@@ -357,6 +357,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type replot: boolean default True
         :returns: The legend/handle used by the backend to univocally access it.
         """
+        self.removeCurve(legend, replot=False)
         if info is None:
             info = {}
         color = info.get('plot_color', '#000000')
@@ -469,6 +470,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type draggable: boolean, default False
         :returns: The legend/handle used by the backend to univocally access it.
         """
+        self.removeImage(legend, replot=False)
         item = pg.ImageItem(image=data.T)
         item.setZValue(z)
         #self._imageItem.setCompositionMode(QtGui.QPainter.CompositionMode_Multiply)
