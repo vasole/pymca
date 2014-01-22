@@ -791,6 +791,24 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             del line2d
         self.ax.clear()
 
+    def clearImages(self):
+        n = range(len(self.ax.images))
+        n.reverse()
+        for i in n:
+            image = self.ax.images[i]
+            image.remove()
+            del image
+            del self.ax.images[i]
+
+        n = range(len(self.ax.artists))
+        n.reverse()
+        for i in n:
+            artist = self.ax.artists[i]
+            label = artist.get_label()
+            if label.startswith("__IMAGE__"):
+                artist.remove()
+                del artist
+
     def clearCurves(self):
         """
         Clear all curves from the plot. Not the markers!!
@@ -959,23 +977,30 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     handle = line2d
             if handle is not None:
                 handle.remove()
+                del handle
         if replot:
             self.replot()
 
     def removeImage(self, handle, replot=True):
         if hasattr(handle, "remove"):
-            if handle in self.ax.images:
+            if (handle in self.ax.images) or (handle in self.ax.artists):
                 handle.remove()
         else:
             # we have received a legend!
             legend = handle
             handle = None
-            for item in self.ax.images:
+            for item in self.ax.artists:
                 label = item.get_label()
-                if label == legend:
+                if label == ("__IMAGE__" + legend):
                     handle = item
+            if handle is None:
+                for item in self.ax.images:
+                    label = item.get_label()
+                    if label == legend:
+                        handle = item                
             if handle is not None:
                 handle.remove()
+                del handle
         if replot:
             self.replot()
 
@@ -1192,6 +1217,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         #http://wiki.scipy.org/Cookbook/Histograms
         # Non-linear axes
         #http://stackoverflow.com/questions/11488800/non-linear-axes-for-imshow-in-matplotlib
+        if replace:
+            self.clearImages()
+        else:
+            # make sure we do not cummulate images with same name
+            self.removeImage(legend, replot=False)
 
         cmap = self.__temperatureCmap
         if xScale is None:
@@ -1230,8 +1260,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.set_xlim(xmin, xmax)
             self.ax.set_ylim(ymin, ymax)
         elif 1:
+            #the normalization can be a source of time waste
             image = AxesImage(self.ax,
-                              label=legend,
+                              label="__IMAGE__"+legend,
                               interpolation='nearest',
                               #origin=
                               cmap=cmap,
@@ -1242,19 +1273,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             image.set_data(data)
             self.ax.add_artist(image)
             #self.ax.draw_artist(image)
-        else:
-            image = self.ax.imshow(data,
-                      label=legend,
-                      interpolation='nearest',
-                      cmap=cmap,
-                      aspect='auto',
-                      extent=extent,
-                      picker=picker,
-                      zorder=z,
-                      norm=Normalize(data.min(), data.max()))[-1]
-                           #origin='upper',
-                           #cmap=cmap,
-                           #norm=Normalize(0, 1000*1000.))
         image._plot_info = {'label':legend,
                             'type':'image',
                             'xScale':xScale,
@@ -1265,8 +1283,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             image._plot_options.append('draggable')
         if selectable:
             image._plot_options.append('selectable')
-        #print image
-        #print dir(self.ax)
         return image
 
     def invertYAxis(self, flag=True):

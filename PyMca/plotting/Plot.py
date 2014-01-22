@@ -331,7 +331,7 @@ class Plot(PlotBase.PlotBase):
         :returns: The legend/handle used by the backend to univocally access it.
         """
         if legend is None:
-            key = "Unnamed curve 1.1"
+            key = "Unnamed Image 1.1"
         else:
             key = str(legend)
         if info is None:
