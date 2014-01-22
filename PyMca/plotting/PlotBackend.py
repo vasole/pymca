@@ -351,6 +351,13 @@ class PlotBackend(object):
         print("PlotBackend isYAxisAutoScale not implemented")
         return True
 
+    def isYAxisInverted(self):
+        """
+        :return: True if left axis is inverted
+        """
+        print("PlotBackend isYAxisInverted not implemented")
+
+
     def removeCurve(self, legend, replot=True):
         """
         Remove the curve associated to the supplied legend from the graph.

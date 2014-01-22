@@ -97,6 +97,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
         self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
         self.gridIcon	= qt.QIcon(qt.QPixmap(IconDict["grid16"]))
+        self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
         self.togglePointsIcon = qt.QIcon(qt.QPixmap(IconDict["togglepoints"]))
 
         self.fitIcon	= qt.QIcon(qt.QPixmap(IconDict["fit"]))
@@ -157,6 +158,20 @@ class PlotWindow(PlotWidget.PlotWidget):
                                 toggle = True)
             self.xLogButton.setChecked(False)
             self.xLogButton.setDown(False)
+
+        #colormap
+        if kw.get('colormap', False):
+            tb = self._addToolButton(self.colormapIcon,
+                                     self._colormapIconSignal,
+                                    'Change Colormap')
+            self.colormapToolButton = tb
+
+        #flip
+        if kw.get('flip', False):
+            tb = self._addToolButton(self.hFlipIcon,
+                                 self._hFlipIconSignal,
+                                 'Flip Horizontal')
+            self.hFlipToolButton = tb
 
         #grid
         if kw.get('grid', True):
@@ -317,6 +332,18 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             self.setDefaultPlotLines(True)
             self.setDefaultPlotPoints(False)
+
+    def _hFlipIconSignal(self):
+        if DEBUG:
+            print("_hFlipIconSignal called")
+        if self.isYAxisInverted():
+            self.invertYAxis(False)
+        else:
+            self.invertYAxis(True)
+        
+    def _colormapIconSignal(self):
+        if DEBUG:
+            print("_colormapIconSignal called")
 
     def _toggleROI(self):
         if DEBUG or (not ROIWIDGET):

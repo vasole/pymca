@@ -578,6 +578,9 @@ class Plot(PlotBase.PlotBase):
     def invertYAxis(self, flag=True):
         self._plot.invertYAxis(flag)
 
+    def isYAxisInverted(self):
+        return self._plot.isYAxisInverted()
+
     def isYAxisLogarithmic(self):
         if self._logY:
             return True

@@ -1293,6 +1293,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if self.ax.yaxis_inverted():
                 self.ax.invert_yaxis()
 
+    def isYAxisInverted(self):
+        return self.ax.yaxis_inverted()
+
     def showGrid(self, flag=True):
         if flag == 1:
             self.ax.xaxis.set_tick_params(which='major')
