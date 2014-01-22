@@ -717,7 +717,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                            cmap=cmap,
                            norm=Normalize(0, 1000*1000.))
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
+    def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         :param x: The data corresponding to the x axis
@@ -734,6 +734,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type replot: boolean default True
         :returns: The legend/handle used by the backend to univocally access it.
         """
+        if replace:
+            self.clearCurves()
+        else:
+            self.removeCurve(legend, replot=False)
         if info is None:
             info = {}
         color = info.get('plot_color', 'k')
@@ -901,6 +905,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         #line = self.ax.axvline(x, picker=True)
         text = " " + label
         label = "__MARKER__" + label
+        self.removeMarker(label, replot=False)
         if selectable or draggable:
             line = self.ax.axvline(x, label=label, color=color, picker=5)
         else:
